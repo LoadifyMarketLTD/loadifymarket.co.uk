@@ -17,6 +17,7 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import SellerDashboardPage from './pages/SellerDashboardPage';
 import SellerProfilePage from './pages/SellerProfilePage';
+import SellerReturnsPage from './pages/SellerReturnsPage';
 import ProductFormPage from './pages/ProductFormPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import OrdersPage from './pages/OrdersPage';
@@ -96,6 +97,7 @@ function App() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="seller" element={<SellerDashboardPage />} />
           <Route path="seller/profile" element={<SellerProfilePage />} />
+          <Route path="seller/returns" element={<SellerReturnsPage />} />
           <Route path="seller/products/new" element={<ProductFormPage />} />
           <Route path="seller/products/:id/edit" element={<ProductFormPage />} />
           <Route path="admin" element={<AdminDashboardPage />} />
