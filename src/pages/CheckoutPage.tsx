@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore, useAuthStore } from '../store';
-import { CreditCard, MapPin, Package } from 'lucide-react';
+import { CreditCard, MapPin, Package, Truck } from 'lucide-react';
+import { SHIPPING_OPTIONS } from '../types/shipping';
 
 interface Address {
   line1: string;
@@ -17,6 +18,7 @@ export default function CheckoutPage() {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [sameAsShipping, setSameAsShipping] = useState(true);
+  const [selectedShipping, setSelectedShipping] = useState(SHIPPING_OPTIONS[0]);
 
   const [shippingAddress, setShippingAddress] = useState<Address>({
     line1: '',
@@ -46,11 +48,10 @@ export default function CheckoutPage() {
 
   const VAT_RATE = 0.20;
   const COMMISSION_RATE = 0.07;
-  const SHIPPING_FLAT_RATE = 5.99; // Flat shipping fee in GBP
 
   const subtotal = total / (1 + VAT_RATE);
   const vatAmount = total - subtotal;
-  const shippingAmount = SHIPPING_FLAT_RATE;
+  const shippingAmount = selectedShipping.price;
   const commissionAmount = subtotal * COMMISSION_RATE;
   const grandTotal = total + shippingAmount;
 
@@ -89,6 +90,8 @@ export default function CheckoutPage() {
           buyerId: user.id,
           shippingAddress,
           billingAddress: sameAsShipping ? shippingAddress : billingAddress,
+          shipping_method: selectedShipping.id,
+          shipping_cost: selectedShipping.price,
           shippingAmount,
         }),
       });
@@ -184,6 +187,41 @@ export default function CheckoutPage() {
                       <option value="IE">Ireland</option>
                     </select>
                   </div>
+                </div>
+              </div>
+
+              {/* Shipping Method */}
+              <div className="card mb-6">
+                <div className="flex items-center mb-4">
+                  <Truck className="h-6 w-6 text-navy-800 mr-2" />
+                  <h2 className="text-xl font-bold">Shipping Method</h2>
+                </div>
+
+                <div className="space-y-3">
+                  {SHIPPING_OPTIONS.map((option) => (
+                    <label
+                      key={option.id}
+                      className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                        selectedShipping.id === option.id
+                          ? 'border-amber-500 bg-amber-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="shipping"
+                        value={option.id}
+                        checked={selectedShipping.id === option.id}
+                        onChange={() => setSelectedShipping(option)}
+                        className="mr-3"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium">{option.name}</div>
+                        <div className="text-sm text-gray-600">{option.description}</div>
+                      </div>
+                      <div className="text-lg font-bold">{formatPrice(option.price)}</div>
+                    </label>
+                  ))}
                 </div>
               </div>
 

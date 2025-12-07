@@ -120,6 +120,8 @@ export interface Order {
   total: number;
   commission: number;
   shippingAmount?: number;
+  shipping_method?: string;
+  shipping_cost?: number;
   status: OrderStatus;
   shippingAddress: Address;
   billingAddress: Address;

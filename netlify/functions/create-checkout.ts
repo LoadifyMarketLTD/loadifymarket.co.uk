@@ -30,6 +30,9 @@ interface CheckoutRequest {
     postal_code: string;
     country: string;
   };
+  shippingAmount?: number;
+  shipping_method?: string;
+  shipping_cost?: number;
 }
 
 export const handler: Handler = async (event) => {
@@ -42,7 +45,7 @@ export const handler: Handler = async (event) => {
 
   try {
     const body: CheckoutRequest = JSON.parse(event.body || '{}');
-    const { items, buyerId, shippingAddress, billingAddress } = body;
+    const { items, buyerId, shippingAddress, billingAddress, shipping_method, shipping_cost } = body;
 
     // Calculate totals
     const VAT_RATE = 0.20; // 20% UK VAT
@@ -50,7 +53,8 @@ export const handler: Handler = async (event) => {
 
     const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const vatAmount = subtotal * VAT_RATE;
-    const total = subtotal + vatAmount;
+    const shippingAmount = shipping_cost || body.shippingAmount || 0;
+    const total = subtotal + vatAmount + shippingAmount;
     const commissionAmount = subtotal * COMMISSION_RATE;
 
     // Create line items for Stripe
@@ -65,6 +69,20 @@ export const handler: Handler = async (event) => {
       quantity: item.quantity,
     }));
 
+    // Add shipping as a line item if present
+    if (shippingAmount > 0) {
+      lineItems.push({
+        price_data: {
+          currency: 'gbp',
+          product_data: {
+            name: shipping_method || 'Shipping',
+          },
+          unit_amount: Math.round(shippingAmount * 100),
+        },
+        quantity: 1,
+      });
+    }
+
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -77,10 +95,13 @@ export const handler: Handler = async (event) => {
         subtotal: subtotal.toFixed(2),
         vatAmount: vatAmount.toFixed(2),
         commissionAmount: commissionAmount.toFixed(2),
+        shippingAmount: shippingAmount.toFixed(2),
         total: total.toFixed(2),
         shippingAddress: JSON.stringify(shippingAddress),
         billingAddress: JSON.stringify(billingAddress),
         items: JSON.stringify(items),
+        shipping_method: shipping_method || '',
+        shipping_cost: shipping_cost?.toFixed(2) || '0',
       },
       customer_email: event.headers['user-email'] || undefined,
     });
