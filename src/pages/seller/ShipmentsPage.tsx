@@ -56,12 +56,12 @@ export default function ShipmentsPage() {
       if (ordersError) throw ordersError;
 
       // Map the data to match our Order interface
-      const mappedOrders = (ordersData || []).map((order: any) => ({
-        id: order.id,
-        orderNumber: order.orderNumber,
-        createdAt: order.createdAt,
-        total: order.total,
-        status: order.status,
+      const mappedOrders = (ordersData || []).map((order) => ({
+        id: order.id as string,
+        orderNumber: order.orderNumber as string,
+        createdAt: order.createdAt as string,
+        total: order.total as number,
+        status: order.status as string,
         products: Array.isArray(order.products) ? order.products[0] : order.products,
       }));
 
@@ -77,7 +77,7 @@ export default function ShipmentsPage() {
       if (shipmentsError) throw shipmentsError;
 
       // Map shipments data
-      const mappedShipments = (shipmentsData || []).map((shipment: any) => ({
+      const mappedShipments = (shipmentsData || []).map((shipment) => ({
         ...shipment,
         orders: {
           ...shipment.orders,
