@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useCartStore } from '../store';
+import { useWishlist } from '../lib/useWishlist';
 import type { Product } from '../types';
 import { ShoppingCart, Heart, Share2, Star } from 'lucide-react';
 
@@ -13,6 +14,7 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const { addItem } = useCartStore();
+  const { isInWishlist, loading: wishlistLoading, checkWishlist, toggleWishlist } = useWishlist();
 
   const fetchProduct = useCallback(async () => {
     if (!id) return;
@@ -43,8 +45,9 @@ export default function ProductPage() {
   useEffect(() => {
     if (id) {
       fetchProduct();
+      checkWishlist(id);
     }
-  }, [id, fetchProduct]);
+  }, [id, fetchProduct, checkWishlist]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -222,8 +225,22 @@ export default function ProductPage() {
                   <ShoppingCart className="h-5 w-5" />
                   <span>{product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}</span>
                 </button>
-                <button className="btn-outline p-3">
-                  <Heart className="h-5 w-5" />
+                <button
+                  onClick={async () => {
+                    if (product) {
+                      const added = await toggleWishlist(product.id);
+                      if (added !== null) {
+                        alert(added ? 'Added to wishlist!' : 'Removed from wishlist!');
+                      }
+                    }
+                  }}
+                  disabled={wishlistLoading}
+                  className={`btn-outline p-3 transition-colors ${
+                    isInWishlist ? 'bg-red-50 border-red-300' : ''
+                  }`}
+                  title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+                >
+                  <Heart className={`h-5 w-5 ${isInWishlist ? 'fill-red-500 text-red-500' : ''}`} />
                 </button>
                 <button className="btn-outline p-3">
                   <Share2 className="h-5 w-5" />

@@ -26,6 +26,7 @@ import TrackingPage from './pages/TrackingPage';
 import ReturnsPage from './pages/ReturnsPage';
 import DisputesPage from './pages/DisputesPage';
 import WishlistPage from './pages/WishlistPage';
+import NotificationSettingsPage from './pages/NotificationSettingsPage';
 import HelpPage from './pages/HelpPage';
 import ContactPage from './pages/ContactPage';
 import TermsPage from './pages/legal/TermsPage';
@@ -107,6 +108,7 @@ function App() {
           <Route path="returns" element={<ReturnsPage />} />
           <Route path="disputes" element={<DisputesPage />} />
           <Route path="wishlist" element={<WishlistPage />} />
+          <Route path="notifications" element={<NotificationSettingsPage />} />
           <Route path="help" element={<HelpPage />} />
           <Route path="contact" element={<ContactPage />} />
           
