@@ -82,7 +82,7 @@ export const generateSitemap = async (): Promise<string> => {
       .eq('isActive', true);
 
     if (products) {
-      products.forEach((product) => {
+      products.forEach((product: any) => {
         urls.push({
           loc: `${baseUrl}/product/${product.id}`,
           lastmod: product.updatedAt,
@@ -98,7 +98,7 @@ export const generateSitemap = async (): Promise<string> => {
       .select('slug');
 
     if (categories) {
-      categories.forEach((category) => {
+      categories.forEach((category: any) => {
         urls.push({
           loc: `${baseUrl}/catalog?category=${category.slug}`,
           changefreq: 'daily',
