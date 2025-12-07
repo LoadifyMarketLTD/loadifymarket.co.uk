@@ -46,10 +46,13 @@ export default function CheckoutPage() {
 
   const VAT_RATE = 0.20;
   const COMMISSION_RATE = 0.07;
+  const SHIPPING_FLAT_RATE = 5.99; // Flat shipping fee in GBP
 
   const subtotal = total / (1 + VAT_RATE);
   const vatAmount = total - subtotal;
+  const shippingAmount = SHIPPING_FLAT_RATE;
   const commissionAmount = subtotal * COMMISSION_RATE;
+  const grandTotal = total + shippingAmount;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-GB', {
@@ -86,6 +89,7 @@ export default function CheckoutPage() {
           buyerId: user.id,
           shippingAddress,
           billingAddress: sameAsShipping ? shippingAddress : billingAddress,
+          shippingAmount,
         }),
       });
 
@@ -309,14 +313,19 @@ export default function CheckoutPage() {
                   <span>{formatPrice(vatAmount)}</span>
                 </div>
 
+                <div className="flex justify-between text-sm">
+                  <span>Shipping</span>
+                  <span>{formatPrice(shippingAmount)}</span>
+                </div>
+
                 <div className="flex justify-between text-sm text-gray-600">
-                  <span>Platform Fee (7%)</span>
+                  <span>Marketplace Commission (7%)</span>
                   <span>{formatPrice(commissionAmount)}</span>
                 </div>
 
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
-                  <span>Total</span>
-                  <span>{formatPrice(total)}</span>
+                  <span>Grand Total</span>
+                  <span>{formatPrice(grandTotal)}</span>
                 </div>
               </div>
 

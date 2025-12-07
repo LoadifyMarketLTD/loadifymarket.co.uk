@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
-import type { Product, Order } from '../types';
-import { Package, Plus, Edit, Eye, TrendingUp, DollarSign } from 'lucide-react';
+import type { Product, Order, SellerProfile } from '../types';
+import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle } from 'lucide-react';
 
 export default function SellerDashboardPage() {
   const { user } = useAuthStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [profile, setProfile] = useState<SellerProfile | null>(null);
   const [stats, setStats] = useState({
     totalProducts: 0,
     activeProducts: 0,
@@ -24,6 +25,15 @@ export default function SellerDashboardPage() {
 
     setLoading(true);
     try {
+      // Fetch seller profile
+      const { data: profileData } = await supabase
+        .from('seller_profiles')
+        .select('*')
+        .eq('userId', user.id)
+        .single();
+
+      setProfile(profileData);
+
       // Fetch products
       const { data: productsData } = await supabase
         .from('products')
@@ -94,11 +104,35 @@ export default function SellerDashboardPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Seller Dashboard</h1>
-          <Link to="/seller/products/new" className="btn-primary flex items-center space-x-2">
-            <Plus className="h-5 w-5" />
-            <span>Add Product</span>
-          </Link>
+          <div className="flex space-x-3">
+            <Link to="/seller/profile" className="btn-outline flex items-center space-x-2">
+              <User className="h-5 w-5" />
+              <span>Profile</span>
+            </Link>
+            <Link to="/seller/products/new" className="btn-primary flex items-center space-x-2">
+              <Plus className="h-5 w-5" />
+              <span>Add Product</span>
+            </Link>
+          </div>
         </div>
+
+        {/* Profile Completeness Alert */}
+        {profile && (profile.profileCompleteness || 0) < 75 && (
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 text-yellow-600 mr-3" />
+              <div>
+                <p className="font-medium text-yellow-800">Complete your profile</p>
+                <p className="text-sm text-yellow-700">
+                  Your profile is {profile.profileCompleteness || 0}% complete. Complete at least 75% to publish products.
+                </p>
+              </div>
+            </div>
+            <Link to="/seller/profile" className="btn-secondary text-sm">
+              Complete Profile
+            </Link>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="mb-6 border-b border-gray-200">
