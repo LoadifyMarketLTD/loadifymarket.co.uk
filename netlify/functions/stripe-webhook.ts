@@ -151,7 +151,35 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     },
   ]);
 
-  // TODO: Send confirmation email via SendGrid
+  // Send confirmation email (async, don't wait)
+  fetch(`${process.env.URL}/.netlify/functions/send-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to: session.customer_email,
+      subject: `Order Confirmation - ${orderNumber}`,
+      template: 'order_confirmation',
+      data: {
+        customerName: 'Customer',
+        orderNumber,
+        orderDate: new Date().toLocaleDateString('en-GB'),
+        total: parseFloat(metadata.total),
+        items: items.map((item: any) => ({
+          title: item.title,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      },
+    }),
+  }).catch(err => console.error('Email send failed:', err));
+
+  // Generate invoice (async, don't wait)
+  fetch(`${process.env.URL}/.netlify/functions/generate-invoice`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderId: order.id }),
+  }).catch(err => console.error('Invoice generation failed:', err));
+
   console.log(`Order ${orderNumber} created successfully`);
 }
 
