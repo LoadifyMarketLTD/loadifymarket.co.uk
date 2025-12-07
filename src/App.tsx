@@ -21,11 +21,14 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const SellerDashboardPage = lazy(() => import('./pages/SellerDashboardPage'));
 const SellerProfilePage = lazy(() => import('./pages/SellerProfilePage'));
 const SellerReturnsPage = lazy(() => import('./pages/SellerReturnsPage'));
+const SellerShipmentsPage = lazy(() => import('./pages/seller/ShipmentsPage'));
 const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+const AdminShipmentsPage = lazy(() => import('./pages/admin/ShipmentsAdmin'));
 const OrdersPage = lazy(() => import('./pages/OrdersPage'));
 const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage'));
 const TrackingPage = lazy(() => import('./pages/TrackingPage'));
+const TrackOrder = lazy(() => import('./pages/TrackOrder'));
 const ReturnsPage = lazy(() => import('./pages/ReturnsPage'));
 const DisputesPage = lazy(() => import('./pages/DisputesPage'));
 const WishlistPage = lazy(() => import('./pages/WishlistPage'));
@@ -139,6 +142,11 @@ function App() {
               <SellerReturnsPage />
             </Suspense>
           } />
+          <Route path="seller/shipments" element={
+            <Suspense fallback={<PageLoader />}>
+              <SellerShipmentsPage />
+            </Suspense>
+          } />
           <Route path="seller/products/new" element={
             <Suspense fallback={<PageLoader />}>
               <ProductFormPage />
@@ -154,6 +162,11 @@ function App() {
               <AdminDashboardPage />
             </Suspense>
           } />
+          <Route path="admin/shipments" element={
+            <Suspense fallback={<PageLoader />}>
+              <AdminShipmentsPage />
+            </Suspense>
+          } />
           <Route path="orders" element={
             <Suspense fallback={<PageLoader />}>
               <OrdersPage />
@@ -167,6 +180,11 @@ function App() {
           <Route path="tracking/:orderNumber" element={
             <Suspense fallback={<PageLoader />}>
               <TrackingPage />
+            </Suspense>
+          } />
+          <Route path="track-order" element={
+            <Suspense fallback={<PageLoader />}>
+              <TrackOrder />
             </Suspense>
           } />
           <Route path="returns" element={

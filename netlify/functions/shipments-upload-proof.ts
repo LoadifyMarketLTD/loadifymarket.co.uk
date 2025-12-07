@@ -4,7 +4,6 @@ import { createSupabaseAdmin, verifyAuth } from './utils/supabase-admin';
 interface UploadProofRequest {
   shipment_id: string;
   file_name: string;
-  content_type: string;
 }
 
 export const handler: Handler = async (event) => {
@@ -27,7 +26,7 @@ export const handler: Handler = async (event) => {
 
     const supabase = createSupabaseAdmin();
     const body: UploadProofRequest = JSON.parse(event.body || '{}');
-    const { shipment_id, file_name, content_type } = body;
+    const { shipment_id, file_name } = body;
 
     if (!shipment_id || !file_name) {
       return {
