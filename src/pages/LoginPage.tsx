@@ -22,8 +22,8 @@ export default function LoginPage() {
 
       if (error) throw error;
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Failed to login');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to login');
     } finally {
       setLoading(false);
     }

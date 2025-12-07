@@ -49,8 +49,8 @@ export default function RegisterPage() {
       }
 
       navigate('/login');
-    } catch (err: any) {
-      setError(err.message || 'Failed to register');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to register');
     } finally {
       setLoading(false);
     }
