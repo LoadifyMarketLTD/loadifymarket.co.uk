@@ -16,6 +16,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import SellerDashboardPage from './pages/SellerDashboardPage';
+import ProductFormPage from './pages/ProductFormPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import OrdersPage from './pages/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage';
@@ -93,6 +94,8 @@ function App() {
           <Route path="register" element={<RegisterPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="seller" element={<SellerDashboardPage />} />
+          <Route path="seller/products/new" element={<ProductFormPage />} />
+          <Route path="seller/products/:id/edit" element={<ProductFormPage />} />
           <Route path="admin" element={<AdminDashboardPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="orders/:id" element={<OrderDetailPage />} />
