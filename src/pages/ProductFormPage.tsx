@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
@@ -34,13 +34,7 @@ export default function ProductFormPage() {
     },
   });
 
-  useEffect(() => {
-    if (id) {
-      fetchProduct();
-    }
-  }, [id]);
-
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     if (!id) return;
 
     setLoading(true);
@@ -74,7 +68,13 @@ export default function ProductFormPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchProduct();
+    }
+  }, [id, fetchProduct]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

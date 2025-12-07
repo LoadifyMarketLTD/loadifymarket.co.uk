@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Product } from '../types';
 import { Grid, List, SlidersHorizontal } from 'lucide-react';
 
 export default function CatalogPage() {
-  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -17,11 +16,7 @@ export default function CatalogPage() {
   const [selectedType, setSelectedType] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('createdAt_desc');
 
-  useEffect(() => {
-    fetchProducts();
-  }, [searchParams, sortBy, selectedCondition, selectedType, priceRange]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase
@@ -53,7 +48,11 @@ export default function CatalogPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [sortBy, selectedCondition, selectedType, priceRange]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-GB', {

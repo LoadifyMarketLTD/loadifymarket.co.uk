@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, MessageCircle, CheckCircle, Clock, XCircle, FileText } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -38,19 +38,7 @@ export default function DisputesPage() {
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
 
-  useEffect(() => {
-    if (user) {
-      fetchDisputes();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (selectedDispute) {
-      fetchMessages(selectedDispute.id);
-    }
-  }, [selectedDispute]);
-
-  const fetchDisputes = async () => {
+  const fetchDisputes = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -71,7 +59,19 @@ export default function DisputesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchDisputes();
+    }
+  }, [user, fetchDisputes]);
+
+  useEffect(() => {
+    if (selectedDispute) {
+      fetchMessages(selectedDispute.id);
+    }
+  }, [selectedDispute]);
 
   const fetchMessages = async (disputeId: string) => {
     try {

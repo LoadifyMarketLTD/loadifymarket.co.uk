@@ -7,14 +7,14 @@ import type { User } from '@supabase/supabase-js';
 
 // Mock data storage
 const mockStorage = {
-  users: new Map<string, any>(),
-  products: new Map<string, any>(),
-  orders: new Map<string, any>(),
-  reviews: new Map<string, any>(),
-  returns: new Map<string, any>(),
-  disputes: new Map<string, any>(),
-  shipments: new Map<string, any>(),
-  categories: new Map<string, any>(),
+  users: new Map<string, Record<string, unknown>>(),
+  products: new Map<string, Record<string, unknown>>(),
+  orders: new Map<string, Record<string, unknown>>(),
+  reviews: new Map<string, Record<string, unknown>>(),
+  returns: new Map<string, Record<string, unknown>>(),
+  disputes: new Map<string, Record<string, unknown>>(),
+  shipments: new Map<string, Record<string, unknown>>(),
+  categories: new Map<string, Record<string, unknown>>(),
 };
 
 // Initialize with sample data
@@ -93,28 +93,28 @@ export const createMockSupabaseClient = () => {
           error: null,
         };
       },
-      onAuthStateChange: (_callback: any) => {
+      onAuthStateChange: () => {
         console.log('[MOCK] Auth state change listener registered');
         return { data: { subscription: { unsubscribe: () => {} } } };
       },
     },
     from: (table: string) => ({
       select: (columns?: string) => ({
-        eq: (column: string, value: any) => ({
+        eq: (column: string, value: unknown) => ({
           single: async () => {
             console.log(`[MOCK] SELECT from ${table} WHERE ${column} = ${value}`);
             const data = Array.from(mockStorage[table as keyof typeof mockStorage]?.values() || [])
-              .find((item: any) => item[column] === value);
+              .find((item) => (item as Record<string, unknown>)[column] === value);
             return { data, error: null };
           },
           data: async () => {
             console.log(`[MOCK] SELECT from ${table} WHERE ${column} = ${value}`);
             const data = Array.from(mockStorage[table as keyof typeof mockStorage]?.values() || [])
-              .filter((item: any) => item[column] === value);
+              .filter((item) => (item as Record<string, unknown>)[column] === value);
             return { data, error: null };
           },
         }),
-        order: (column: string, _options?: any) => ({
+        order: (column: string) => ({
           limit: (count: number) => ({
             data: async () => {
               console.log(`[MOCK] SELECT from ${table} ORDER BY ${column} LIMIT ${count}`);
@@ -135,26 +135,26 @@ export const createMockSupabaseClient = () => {
           return { data, error: null };
         },
       }),
-      insert: (values: any) => ({
+      insert: (values: Record<string, unknown>) => ({
         select: () => ({
           single: async () => {
             console.log(`[MOCK] INSERT into ${table}`, values);
             const id = values.id || `${table}-${Date.now()}`;
             const newItem = { ...values, id };
-            mockStorage[table as keyof typeof mockStorage]?.set(id, newItem);
+            mockStorage[table as keyof typeof mockStorage]?.set(id as string, newItem);
             return { data: newItem, error: null };
           },
         }),
       }),
-      update: (values: any) => ({
-        eq: (column: string, value: any) => ({
+      update: (values: Record<string, unknown>) => ({
+        eq: (column: string, value: unknown) => ({
           select: () => ({
             single: async () => {
               console.log(`[MOCK] UPDATE ${table} SET ... WHERE ${column} = ${value}`);
               const storage = mockStorage[table as keyof typeof mockStorage];
               if (storage) {
                 for (const [key, item] of storage.entries()) {
-                  if ((item as any)[column] === value) {
+                  if ((item as Record<string, unknown>)[column] === value) {
                     const updated = { ...item, ...values };
                     storage.set(key, updated);
                     return { data: updated, error: null };
@@ -167,13 +167,13 @@ export const createMockSupabaseClient = () => {
         }),
       }),
       delete: () => ({
-        eq: (column: string, value: any) => ({
+        eq: (column: string, value: unknown) => ({
           data: async () => {
             console.log(`[MOCK] DELETE from ${table} WHERE ${column} = ${value}`);
             const storage = mockStorage[table as keyof typeof mockStorage];
             if (storage) {
               for (const [key, item] of storage.entries()) {
-                if ((item as any)[column] === value) {
+                if ((item as Record<string, unknown>)[column] === value) {
                   storage.delete(key);
                 }
               }
@@ -185,7 +185,7 @@ export const createMockSupabaseClient = () => {
     }),
     storage: {
       from: (bucket: string) => ({
-        upload: async (path: string, _file: File) => {
+        upload: async (path: string) => {
           console.log(`[MOCK] Upload to ${bucket}/${path}`);
           return { data: { path }, error: null };
         },
