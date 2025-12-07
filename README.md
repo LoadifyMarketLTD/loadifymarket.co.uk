@@ -7,11 +7,12 @@ A comprehensive B2B & B2C marketplace platform for products, pallets, and bulk l
 - **Multi-User System**: Guest, Buyer, Seller, and Admin roles with RBAC
 - **Product Management**: Support for individual products, pallets, lots, and clearance items
 - **Secure Payments**: Stripe Connect integration with escrow system
+- **DHL-like Shipping & Tracking**: Comprehensive shipment management with real-time tracking, proof of delivery, and email notifications
 - **Order Tracking**: Complete order flow from checkout to delivery
 - **Reviews & Ratings**: Product and seller ratings with verified purchase badges
 - **Returns & Disputes**: 14-day return policy with dispute resolution center
-- **Seller Dashboard**: Comprehensive tools for inventory, orders, and payouts management
-- **Admin Panel**: Full platform control including user management, product moderation, and analytics
+- **Seller Dashboard**: Comprehensive tools for inventory, orders, payouts, and shipment management
+- **Admin Panel**: Full platform control including user management, product moderation, shipment oversight, and analytics
 - **GDPR Compliant**: Cookie consent, data export, and account deletion
 - **Responsive Design**: Mobile-first approach with Tailwind CSS
 
@@ -111,6 +112,19 @@ src/
 - Input validation and sanitization
 - HTTPS only in production
 - Secure payment processing with Stripe
+
+## 📦 Shipping & Tracking
+
+The platform includes a comprehensive DHL-like shipping and tracking system. For detailed documentation, see [docs/SHIPPING.md](docs/SHIPPING.md).
+
+**Key Features:**
+- Multiple shipping options (Standard, Express, Pallet)
+- Real-time shipment tracking with status history
+- Automated email notifications for status changes
+- Proof of delivery upload and management
+- Seller shipment dashboard
+- Admin shipment oversight
+- Public order tracking page
 
 ## 📧 Contact
 
