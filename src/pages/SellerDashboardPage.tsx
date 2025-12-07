@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
-import type { Product, Order } from '../types';
-import { Package, Plus, Edit, Eye, TrendingUp, DollarSign } from 'lucide-react';
+import type { Product, Order, SellerProfile } from '../types';
+import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3 } from 'lucide-react';
 
 export default function SellerDashboardPage() {
   const { user } = useAuthStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [profile, setProfile] = useState<SellerProfile | null>(null);
   const [stats, setStats] = useState({
     totalProducts: 0,
     activeProducts: 0,
@@ -17,13 +18,22 @@ export default function SellerDashboardPage() {
     pendingOrders: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'products' | 'orders'>('overview');
 
   const fetchData = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
     try {
+      // Fetch seller profile
+      const { data: profileData } = await supabase
+        .from('seller_profiles')
+        .select('*')
+        .eq('userId', user.id)
+        .single();
+
+      setProfile(profileData);
+
       // Fetch products
       const { data: productsData } = await supabase
         .from('products')
@@ -94,11 +104,35 @@ export default function SellerDashboardPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Seller Dashboard</h1>
-          <Link to="/seller/products/new" className="btn-primary flex items-center space-x-2">
-            <Plus className="h-5 w-5" />
-            <span>Add Product</span>
-          </Link>
+          <div className="flex space-x-3">
+            <Link to="/seller/profile" className="btn-outline flex items-center space-x-2">
+              <User className="h-5 w-5" />
+              <span>Profile</span>
+            </Link>
+            <Link to="/seller/products/new" className="btn-primary flex items-center space-x-2">
+              <Plus className="h-5 w-5" />
+              <span>Add Product</span>
+            </Link>
+          </div>
         </div>
+
+        {/* Profile Completeness Alert */}
+        {profile && (profile.profileCompleteness || 0) < 75 && (
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center justify-between">
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 text-yellow-600 mr-3" />
+              <div>
+                <p className="font-medium text-yellow-800">Complete your profile</p>
+                <p className="text-sm text-yellow-700">
+                  Your profile is {profile.profileCompleteness || 0}% complete. Complete at least 75% to publish products.
+                </p>
+              </div>
+            </div>
+            <Link to="/seller/profile" className="btn-secondary text-sm">
+              Complete Profile
+            </Link>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="mb-6 border-b border-gray-200">
@@ -112,6 +146,16 @@ export default function SellerDashboardPage() {
               }`}
             >
               Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`pb-4 px-2 font-medium transition-colors ${
+                activeTab === 'analytics'
+                  ? 'border-b-2 border-navy-800 text-navy-800'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Analytics
             </button>
             <button
               onClick={() => setActiveTab('products')}
@@ -218,6 +262,207 @@ export default function SellerDashboardPage() {
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Analytics Tab */}
+            {activeTab === 'analytics' && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold mb-2">Sales Analytics</h2>
+                  <p className="text-gray-600">Track your sales performance over time</p>
+                </div>
+
+                {/* Time Period Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  <div className="card">
+                    <div className="flex items-center mb-2">
+                      <BarChart3 className="h-5 w-5 text-navy-800 mr-2" />
+                      <h3 className="font-semibold text-sm text-gray-600">Last 30 Days</h3>
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-xs text-gray-500">Sales</p>
+                        <p className="text-2xl font-bold">
+                          {formatPrice(
+                            orders
+                              .filter((o) => {
+                                const orderDate = new Date(o.createdAt);
+                                const thirtyDaysAgo = new Date();
+                                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                                return orderDate >= thirtyDaysAgo;
+                              })
+                              .reduce((sum, o) => sum + (o.total - o.commission), 0)
+                          )}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Orders</p>
+                        <p className="text-xl font-bold">
+                          {
+                            orders.filter((o) => {
+                              const orderDate = new Date(o.createdAt);
+                              const thirtyDaysAgo = new Date();
+                              thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                              return orderDate >= thirtyDaysAgo;
+                            }).length
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="card">
+                    <div className="flex items-center mb-2">
+                      <TrendingUp className="h-5 w-5 text-green-600 mr-2" />
+                      <h3 className="font-semibold text-sm text-gray-600">All Time</h3>
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-xs text-gray-500">Total Sales</p>
+                        <p className="text-2xl font-bold">{formatPrice(stats.totalRevenue)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Total Orders</p>
+                        <p className="text-xl font-bold">{stats.totalOrders}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="card">
+                    <div className="flex items-center mb-2">
+                      <DollarSign className="h-5 w-5 text-gold-500 mr-2" />
+                      <h3 className="font-semibold text-sm text-gray-600">Average Order Value</h3>
+                    </div>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-xs text-gray-500">Per Order</p>
+                        <p className="text-2xl font-bold">
+                          {stats.totalOrders > 0
+                            ? formatPrice(stats.totalRevenue / stats.totalOrders)
+                            : formatPrice(0)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Top Products */}
+                <div className="card mb-8">
+                  <h3 className="text-xl font-bold mb-4">Top 5 Products by Revenue</h3>
+                  {(() => {
+                    // Calculate revenue per product
+                    const productRevenue: Record<string, { product: Product; revenue: number; orderCount: number }> = {};
+                    
+                    orders.forEach((order) => {
+                      if (!productRevenue[order.productId]) {
+                        const product = products.find((p) => p.id === order.productId);
+                        if (product) {
+                          productRevenue[order.productId] = {
+                            product,
+                            revenue: 0,
+                            orderCount: 0,
+                          };
+                        }
+                      }
+                      
+                      if (productRevenue[order.productId]) {
+                        productRevenue[order.productId].revenue += order.total - order.commission;
+                        productRevenue[order.productId].orderCount += 1;
+                      }
+                    });
+
+                    // Sort by revenue and take top 5
+                    const topProducts = Object.values(productRevenue)
+                      .sort((a, b) => b.revenue - a.revenue)
+                      .slice(0, 5);
+
+                    if (topProducts.length === 0) {
+                      return (
+                        <p className="text-gray-600 text-center py-8">
+                          No sales data available yet. Start selling to see analytics!
+                        </p>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-4">
+                        {topProducts.map(({ product, revenue, orderCount }, index) => (
+                          <div key={product.id} className="flex items-center justify-between border-b pb-3">
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-navy-100 text-navy-800 font-bold">
+                                {index + 1}
+                              </div>
+                              <div>
+                                <p className="font-medium">{product.title}</p>
+                                <p className="text-sm text-gray-600">{orderCount} orders</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-lg">{formatPrice(revenue)}</p>
+                              <p className="text-sm text-gray-600">revenue</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Simple Sales Chart - using text-based visualization */}
+                <div className="card">
+                  <h3 className="text-xl font-bold mb-4">Sales Trend (Last 7 Days)</h3>
+                  {(() => {
+                    // Group orders by date for last 7 days
+                    const last7Days: { date: string; revenue: number; orders: number }[] = [];
+                    
+                    for (let i = 6; i >= 0; i--) {
+                      const date = new Date();
+                      date.setDate(date.getDate() - i);
+                      const dateStr = date.toISOString().split('T')[0];
+                      
+                      const dayOrders = orders.filter((o) => {
+                        const orderDate = o.createdAt.split('T')[0];
+                        return orderDate === dateStr;
+                      });
+
+                      last7Days.push({
+                        date: date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' }),
+                        revenue: dayOrders.reduce((sum, o) => sum + (o.total - o.commission), 0),
+                        orders: dayOrders.length,
+                      });
+                    }
+
+                    const maxRevenue = Math.max(...last7Days.map((d) => d.revenue), 1);
+
+                    return (
+                      <div className="space-y-3">
+                        {last7Days.map((day) => (
+                          <div key={day.date}>
+                            <div className="flex justify-between mb-1">
+                              <span className="text-sm font-medium">{day.date}</span>
+                              <span className="text-sm text-gray-600">
+                                {formatPrice(day.revenue)} ({day.orders} orders)
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-6">
+                              <div
+                                className="bg-navy-800 h-6 rounded-full transition-all flex items-center justify-end pr-2"
+                                style={{ width: `${(day.revenue / maxRevenue) * 100}%` }}
+                              >
+                                {day.revenue > 0 && (
+                                  <span className="text-xs text-white font-medium">
+                                    {formatPrice(day.revenue)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}

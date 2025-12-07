@@ -29,6 +29,16 @@ export interface SellerProfile {
   rating: number;
   totalSales: number;
   commission: number; // percentage
+  companyRegistrationNumber?: string;
+  businessAddress?: Address;
+  contactPhone?: string;
+  payoutDetails?: {
+    accountHolderName?: string;
+    sortCode?: string;
+    accountNumber?: string;
+    bankName?: string;
+  };
+  profileCompleteness?: number;
 }
 
 export interface Address {
@@ -109,6 +119,7 @@ export interface Order {
   vatAmount: number;
   total: number;
   commission: number;
+  shippingAmount?: number;
   status: OrderStatus;
   shippingAddress: Address;
   billingAddress: Address;
@@ -167,6 +178,8 @@ export interface Return {
   images?: string[];
   status: ReturnStatus;
   refundAmount?: number;
+  buyerTrackingNumber?: string;
+  sellerTrackingNumber?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -213,4 +226,14 @@ export interface Banner {
   linkUrl?: string;
   isActive: boolean;
   order: number;
+}
+
+export interface NotificationSettings {
+  userId: string;
+  orderConfirmation: boolean;
+  shippingUpdates: boolean;
+  deliveryConfirmation: boolean;
+  promotionalEmails: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }

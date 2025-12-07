@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import type { User, Product, Order, Dispute } from '../types';
-import { Users, Package, ShoppingBag, AlertCircle, CheckCircle, XCircle, DollarSign, Download, Settings } from 'lucide-react';
+import { Users, Package, ShoppingBag, AlertCircle, CheckCircle, XCircle, DollarSign, Download, Settings, TrendingUp } from 'lucide-react';
 import { 
   exportToCSV, 
   prepareOrdersExport, 
@@ -15,8 +15,9 @@ import {
 
 export default function AdminDashboardPage() {
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'products' | 'orders' | 'disputes' | 'exports'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'users' | 'products' | 'orders' | 'disputes' | 'exports'>('overview');
   const [loading, setLoading] = useState(true);
+  const [dateRange, setDateRange] = useState<'7days' | '30days' | 'all'>('30days');
 
   const [users, setUsers] = useState<User[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -218,7 +219,7 @@ export default function AdminDashboardPage() {
         {/* Tabs */}
         <div className="mb-6 border-b border-gray-200">
           <div className="flex space-x-8">
-            {['overview', 'users', 'products', 'orders', 'disputes', 'exports'].map((tab) => (
+            {['overview', 'analytics', 'users', 'products', 'orders', 'disputes', 'exports'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as typeof activeTab)}
@@ -348,6 +349,271 @@ export default function AdminDashboardPage() {
                     )}
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Analytics Tab */}
+            {activeTab === 'analytics' && (
+              <div>
+                <div className="mb-6 flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-2">Analytics Dashboard</h2>
+                    <p className="text-gray-600">Comprehensive marketplace insights and metrics</p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => setDateRange('7days')}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        dateRange === '7days'
+                          ? 'bg-navy-800 text-white'
+                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      7 Days
+                    </button>
+                    <button
+                      onClick={() => setDateRange('30days')}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        dateRange === '30days'
+                          ? 'bg-navy-800 text-white'
+                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      30 Days
+                    </button>
+                    <button
+                      onClick={() => setDateRange('all')}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        dateRange === 'all'
+                          ? 'bg-navy-800 text-white'
+                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      All Time
+                    </button>
+                  </div>
+                </div>
+
+                {(() => {
+                  // Filter data by date range
+                  const filterByDate = (dateStr: string) => {
+                    const date = new Date(dateStr);
+                    const now = new Date();
+                    if (dateRange === '7days') {
+                      const sevenDaysAgo = new Date();
+                      sevenDaysAgo.setDate(now.getDate() - 7);
+                      return date >= sevenDaysAgo;
+                    } else if (dateRange === '30days') {
+                      const thirtyDaysAgo = new Date();
+                      thirtyDaysAgo.setDate(now.getDate() - 30);
+                      return date >= thirtyDaysAgo;
+                    }
+                    return true; // all time
+                  };
+
+                  const filteredOrders = orders.filter((o) => filterByDate(o.createdAt));
+                  const filteredUsers = users.filter((u) => filterByDate(u.createdAt));
+                  
+                  const gmv = filteredOrders.reduce((sum, o) => sum + o.total, 0);
+                  const totalCommission = filteredOrders.reduce((sum, o) => sum + o.commission, 0);
+                  const newSellers = filteredUsers.filter((u) => u.role === 'seller').length;
+
+                  // Orders by status
+                  const ordersByStatus = {
+                    paid: filteredOrders.filter((o) => o.status === 'paid').length,
+                    shipped: filteredOrders.filter((o) => o.status === 'shipped').length,
+                    delivered: filteredOrders.filter((o) => o.status === 'delivered').length,
+                    cancelled: filteredOrders.filter((o) => o.status === 'cancelled').length,
+                    refunded: filteredOrders.filter((o) => o.status === 'refunded').length,
+                  };
+
+                  return (
+                    <>
+                      {/* Key Metrics */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div className="card">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-gray-600 text-sm">GMV</p>
+                              <p className="text-2xl font-bold mt-1">
+                                {new Intl.NumberFormat('en-GB', {
+                                  style: 'currency',
+                                  currency: 'GBP',
+                                }).format(gmv)}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">Gross Merchandise Volume</p>
+                            </div>
+                            <ShoppingBag className="h-12 w-12 text-navy-800 opacity-20" />
+                          </div>
+                        </div>
+
+                        <div className="card">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-gray-600 text-sm">Commission</p>
+                              <p className="text-2xl font-bold mt-1">
+                                {new Intl.NumberFormat('en-GB', {
+                                  style: 'currency',
+                                  currency: 'GBP',
+                                }).format(totalCommission)}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">7% marketplace fee</p>
+                            </div>
+                            <DollarSign className="h-12 w-12 text-gold-500 opacity-20" />
+                          </div>
+                        </div>
+
+                        <div className="card">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-gray-600 text-sm">New Users</p>
+                              <p className="text-2xl font-bold mt-1">{filteredUsers.length}</p>
+                              <p className="text-xs text-gray-500 mt-1">All new registrations</p>
+                            </div>
+                            <Users className="h-12 w-12 text-blue-600 opacity-20" />
+                          </div>
+                        </div>
+
+                        <div className="card">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-gray-600 text-sm">New Sellers</p>
+                              <p className="text-2xl font-bold mt-1">{newSellers}</p>
+                              <p className="text-xs text-gray-500 mt-1">Seller registrations</p>
+                            </div>
+                            <TrendingUp className="h-12 w-12 text-green-600 opacity-20" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Orders by Status */}
+                      <div className="card mb-8">
+                        <h3 className="text-xl font-bold mb-4">Orders by Status</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-yellow-800 font-medium">Paid</p>
+                                <p className="text-2xl font-bold text-yellow-900 mt-1">
+                                  {ordersByStatus.paid}
+                                </p>
+                              </div>
+                              <CheckCircle className="h-8 w-8 text-yellow-600" />
+                            </div>
+                          </div>
+
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-blue-800 font-medium">Shipped</p>
+                                <p className="text-2xl font-bold text-blue-900 mt-1">
+                                  {ordersByStatus.shipped}
+                                </p>
+                              </div>
+                              <Package className="h-8 w-8 text-blue-600" />
+                            </div>
+                          </div>
+
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-green-800 font-medium">Delivered</p>
+                                <p className="text-2xl font-bold text-green-900 mt-1">
+                                  {ordersByStatus.delivered}
+                                </p>
+                              </div>
+                              <CheckCircle className="h-8 w-8 text-green-600" />
+                            </div>
+                          </div>
+
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-gray-800 font-medium">Cancelled</p>
+                                <p className="text-2xl font-bold text-gray-900 mt-1">
+                                  {ordersByStatus.cancelled}
+                                </p>
+                              </div>
+                              <XCircle className="h-8 w-8 text-gray-600" />
+                            </div>
+                          </div>
+
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-red-800 font-medium">Refunded</p>
+                                <p className="text-2xl font-bold text-red-900 mt-1">
+                                  {ordersByStatus.refunded}
+                                </p>
+                              </div>
+                              <AlertCircle className="h-8 w-8 text-red-600" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Revenue Trend */}
+                      <div className="card">
+                        <h3 className="text-xl font-bold mb-4">Revenue Trend</h3>
+                        {(() => {
+                          const days = dateRange === '7days' ? 7 : dateRange === '30days' ? 30 : 90;
+                          const trendData: { date: string; gmv: number; commission: number }[] = [];
+
+                          for (let i = days - 1; i >= 0; i--) {
+                            const date = new Date();
+                            date.setDate(date.getDate() - i);
+                            const dateStr = date.toISOString().split('T')[0];
+
+                            const dayOrders = orders.filter((o) => {
+                              const orderDate = o.createdAt.split('T')[0];
+                              return orderDate === dateStr;
+                            });
+
+                            trendData.push({
+                              date: date.toLocaleDateString('en-GB', { 
+                                day: 'numeric', 
+                                month: 'short' 
+                              }),
+                              gmv: dayOrders.reduce((sum, o) => sum + o.total, 0),
+                              commission: dayOrders.reduce((sum, o) => sum + o.commission, 0),
+                            });
+                          }
+
+                          const maxGMV = Math.max(...trendData.map((d) => d.gmv), 1);
+
+                          return (
+                            <div className="space-y-2">
+                              {trendData.map((day) => (
+                                <div key={day.date}>
+                                  <div className="flex justify-between mb-1">
+                                    <span className="text-sm font-medium">{day.date}</span>
+                                    <div className="text-sm text-gray-600">
+                                      GMV: {new Intl.NumberFormat('en-GB', {
+                                        style: 'currency',
+                                        currency: 'GBP',
+                                      }).format(day.gmv)}
+                                      {' | '}
+                                      Commission: {new Intl.NumberFormat('en-GB', {
+                                        style: 'currency',
+                                        currency: 'GBP',
+                                      }).format(day.commission)}
+                                    </div>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-4">
+                                    <div
+                                      className="bg-gradient-to-r from-navy-800 to-gold-500 h-4 rounded-full transition-all"
+                                      style={{ width: `${(day.gmv / maxGMV) * 100}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
 

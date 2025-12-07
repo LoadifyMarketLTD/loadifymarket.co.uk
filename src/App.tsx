@@ -1,37 +1,54 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { supabase } from './lib/supabase';
 import { useAuthStore } from './store';
 
 // Layout
 import Layout from './components/Layout';
 
-// Pages
+// Critical pages loaded immediately
 import HomePage from './pages/HomePage';
 import CatalogPage from './pages/CatalogPage';
 import ProductPage from './pages/ProductPage';
-import CartPage from './pages/CartPage';
-import CheckoutPage from './pages/CheckoutPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import DashboardPage from './pages/DashboardPage';
-import SellerDashboardPage from './pages/SellerDashboardPage';
-import ProductFormPage from './pages/ProductFormPage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
-import OrdersPage from './pages/OrdersPage';
-import OrderDetailPage from './pages/OrderDetailPage';
-import TrackingPage from './pages/TrackingPage';
-import ReturnsPage from './pages/ReturnsPage';
-import DisputesPage from './pages/DisputesPage';
-import WishlistPage from './pages/WishlistPage';
-import HelpPage from './pages/HelpPage';
-import ContactPage from './pages/ContactPage';
-import TermsPage from './pages/legal/TermsPage';
-import PrivacyPage from './pages/legal/PrivacyPage';
-import CookiePage from './pages/legal/CookiePage';
-import ReturnsPolicy from './pages/legal/ReturnsPolicyPage';
-import ShippingPolicy from './pages/legal/ShippingPolicyPage';
 import NotFoundPage from './pages/NotFoundPage';
+
+// Lazy load heavy/secondary pages
+const CartPage = lazy(() => import('./pages/CartPage'));
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const SellerDashboardPage = lazy(() => import('./pages/SellerDashboardPage'));
+const SellerProfilePage = lazy(() => import('./pages/SellerProfilePage'));
+const SellerReturnsPage = lazy(() => import('./pages/SellerReturnsPage'));
+const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+const OrdersPage = lazy(() => import('./pages/OrdersPage'));
+const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage'));
+const TrackingPage = lazy(() => import('./pages/TrackingPage'));
+const ReturnsPage = lazy(() => import('./pages/ReturnsPage'));
+const DisputesPage = lazy(() => import('./pages/DisputesPage'));
+const WishlistPage = lazy(() => import('./pages/WishlistPage'));
+const NotificationSettingsPage = lazy(() => import('./pages/NotificationSettingsPage'));
+const HelpPage = lazy(() => import('./pages/HelpPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+const TermsPage = lazy(() => import('./pages/legal/TermsPage'));
+const PrivacyPage = lazy(() => import('./pages/legal/PrivacyPage'));
+const CookiePage = lazy(() => import('./pages/legal/CookiePage'));
+const ReturnsPolicy = lazy(() => import('./pages/legal/ReturnsPolicyPage'));
+const ShippingPolicy = lazy(() => import('./pages/legal/ShippingPolicyPage'));
+
+// Loading component
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800"></div>
+        <p className="mt-4 text-gray-600">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const { setUser, setLoading } = useAuthStore();
@@ -88,30 +105,127 @@ function App() {
           <Route index element={<HomePage />} />
           <Route path="catalog" element={<CatalogPage />} />
           <Route path="product/:id" element={<ProductPage />} />
-          <Route path="cart" element={<CartPage />} />
-          <Route path="checkout" element={<CheckoutPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="seller" element={<SellerDashboardPage />} />
-          <Route path="seller/products/new" element={<ProductFormPage />} />
-          <Route path="seller/products/:id/edit" element={<ProductFormPage />} />
-          <Route path="admin" element={<AdminDashboardPage />} />
-          <Route path="orders" element={<OrdersPage />} />
-          <Route path="orders/:id" element={<OrderDetailPage />} />
-          <Route path="tracking/:orderNumber" element={<TrackingPage />} />
-          <Route path="returns" element={<ReturnsPage />} />
-          <Route path="disputes" element={<DisputesPage />} />
-          <Route path="wishlist" element={<WishlistPage />} />
-          <Route path="help" element={<HelpPage />} />
-          <Route path="contact" element={<ContactPage />} />
+          
+          {/* Lazy loaded routes with Suspense */}
+          <Route path="cart" element={
+            <Suspense fallback={<PageLoader />}>
+              <CartPage />
+            </Suspense>
+          } />
+          <Route path="checkout" element={
+            <Suspense fallback={<PageLoader />}>
+              <CheckoutPage />
+            </Suspense>
+          } />
+          <Route path="dashboard" element={
+            <Suspense fallback={<PageLoader />}>
+              <DashboardPage />
+            </Suspense>
+          } />
+          <Route path="seller" element={
+            <Suspense fallback={<PageLoader />}>
+              <SellerDashboardPage />
+            </Suspense>
+          } />
+          <Route path="seller/profile" element={
+            <Suspense fallback={<PageLoader />}>
+              <SellerProfilePage />
+            </Suspense>
+          } />
+          <Route path="seller/returns" element={
+            <Suspense fallback={<PageLoader />}>
+              <SellerReturnsPage />
+            </Suspense>
+          } />
+          <Route path="seller/products/new" element={
+            <Suspense fallback={<PageLoader />}>
+              <ProductFormPage />
+            </Suspense>
+          } />
+          <Route path="seller/products/:id/edit" element={
+            <Suspense fallback={<PageLoader />}>
+              <ProductFormPage />
+            </Suspense>
+          } />
+          <Route path="admin" element={
+            <Suspense fallback={<PageLoader />}>
+              <AdminDashboardPage />
+            </Suspense>
+          } />
+          <Route path="orders" element={
+            <Suspense fallback={<PageLoader />}>
+              <OrdersPage />
+            </Suspense>
+          } />
+          <Route path="orders/:id" element={
+            <Suspense fallback={<PageLoader />}>
+              <OrderDetailPage />
+            </Suspense>
+          } />
+          <Route path="tracking/:orderNumber" element={
+            <Suspense fallback={<PageLoader />}>
+              <TrackingPage />
+            </Suspense>
+          } />
+          <Route path="returns" element={
+            <Suspense fallback={<PageLoader />}>
+              <ReturnsPage />
+            </Suspense>
+          } />
+          <Route path="disputes" element={
+            <Suspense fallback={<PageLoader />}>
+              <DisputesPage />
+            </Suspense>
+          } />
+          <Route path="wishlist" element={
+            <Suspense fallback={<PageLoader />}>
+              <WishlistPage />
+            </Suspense>
+          } />
+          <Route path="notifications" element={
+            <Suspense fallback={<PageLoader />}>
+              <NotificationSettingsPage />
+            </Suspense>
+          } />
+          <Route path="help" element={
+            <Suspense fallback={<PageLoader />}>
+              <HelpPage />
+            </Suspense>
+          } />
+          <Route path="contact" element={
+            <Suspense fallback={<PageLoader />}>
+              <ContactPage />
+            </Suspense>
+          } />
           
           {/* Legal Pages */}
-          <Route path="terms" element={<TermsPage />} />
-          <Route path="privacy" element={<PrivacyPage />} />
-          <Route path="cookies" element={<CookiePage />} />
-          <Route path="returns-policy" element={<ReturnsPolicy />} />
-          <Route path="shipping-policy" element={<ShippingPolicy />} />
+          <Route path="terms" element={
+            <Suspense fallback={<PageLoader />}>
+              <TermsPage />
+            </Suspense>
+          } />
+          <Route path="privacy" element={
+            <Suspense fallback={<PageLoader />}>
+              <PrivacyPage />
+            </Suspense>
+          } />
+          <Route path="cookies" element={
+            <Suspense fallback={<PageLoader />}>
+              <CookiePage />
+            </Suspense>
+          } />
+          <Route path="returns-policy" element={
+            <Suspense fallback={<PageLoader />}>
+              <ReturnsPolicy />
+            </Suspense>
+          } />
+          <Route path="shipping-policy" element={
+            <Suspense fallback={<PageLoader />}>
+              <ShippingPolicy />
+            </Suspense>
+          } />
           
           <Route path="*" element={<NotFoundPage />} />
         </Route>

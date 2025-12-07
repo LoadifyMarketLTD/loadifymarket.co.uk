@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, AlertCircle, CheckCircle, Clock, XCircle, RotateCcw } from 'lucide-react';
+import { Package, AlertCircle, CheckCircle, Clock, XCircle, RotateCcw, Truck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 
@@ -11,6 +11,8 @@ interface Return {
   reason: string;
   status: string;
   refundAmount: number;
+  buyerTrackingNumber?: string;
+  sellerTrackingNumber?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +25,8 @@ export default function ReturnsPage() {
   const [selectedOrder, setSelectedOrder] = useState('');
   const [reason, setReason] = useState('');
   const [description, setDescription] = useState('');
+  const [editingTracking, setEditingTracking] = useState<string | null>(null);
+  const [trackingNumber, setTrackingNumber] = useState('');
 
   const fetchReturns = useCallback(async () => {
     if (!user) return;
@@ -83,6 +87,30 @@ export default function ReturnsPage() {
     } catch (error) {
       console.error('Error creating return:', error);
       alert('Failed to submit return request');
+    }
+  };
+
+  const handleUpdateTracking = async (returnId: string) => {
+    if (!trackingNumber.trim()) {
+      alert('Please enter a tracking number');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('returns')
+        .update({ buyerTrackingNumber: trackingNumber })
+        .eq('id', returnId);
+
+      if (error) throw error;
+
+      alert('Tracking number updated successfully!');
+      setEditingTracking(null);
+      setTrackingNumber('');
+      fetchReturns();
+    } catch (error) {
+      console.error('Error updating tracking:', error);
+      alert('Failed to update tracking number');
     }
   };
 
@@ -276,9 +304,83 @@ export default function ReturnsPage() {
                   <p className="text-gray-600 text-sm mb-2">
                     Reason: {returnItem.reason}
                   </p>
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-gray-500 text-sm mb-3">
                     Requested: {new Date(returnItem.createdAt).toLocaleDateString()}
                   </p>
+
+                  {/* Tracking Information */}
+                  <div className="mt-4 border-t pt-3 space-y-2">
+                    {/* Buyer Tracking (for return shipment) */}
+                    {returnItem.status === 'approved' && (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Truck className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm font-medium">Your Return Tracking:</span>
+                        </div>
+                        {editingTracking === returnItem.id ? (
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={trackingNumber}
+                              onChange={(e) => setTrackingNumber(e.target.value)}
+                              placeholder="Enter tracking number"
+                              className="input-field text-sm py-1 px-2"
+                            />
+                            <button
+                              onClick={() => handleUpdateTracking(returnItem.id)}
+                              className="btn-primary text-sm py-1 px-3"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingTracking(null);
+                                setTrackingNumber('');
+                              }}
+                              className="btn-outline text-sm py-1 px-3"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : returnItem.buyerTrackingNumber ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                              {returnItem.buyerTrackingNumber}
+                            </span>
+                            <button
+                              onClick={() => {
+                                setEditingTracking(returnItem.id);
+                                setTrackingNumber(returnItem.buyerTrackingNumber || '');
+                              }}
+                              className="text-sm text-navy-800 hover:underline"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setEditingTracking(returnItem.id)}
+                            className="text-sm text-navy-800 hover:underline"
+                          >
+                            Add tracking number
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Seller Tracking (for replacement shipment) */}
+                    {returnItem.sellerTrackingNumber && (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm font-medium">Replacement Tracking:</span>
+                        </div>
+                        <span className="text-sm font-mono bg-green-100 px-2 py-1 rounded">
+                          {returnItem.sellerTrackingNumber}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {returnItem.refundAmount > 0 && (
