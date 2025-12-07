@@ -2,11 +2,20 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import type { User, Product, Order, Dispute } from '../types';
-import { Users, Package, ShoppingBag, AlertCircle, CheckCircle, XCircle, DollarSign } from 'lucide-react';
+import { Users, Package, ShoppingBag, AlertCircle, CheckCircle, XCircle, DollarSign, Download, Settings } from 'lucide-react';
+import { 
+  exportToCSV, 
+  prepareOrdersExport, 
+  prepareSalesExport, 
+  prepareCommissionExport, 
+  prepareVATExport,
+  prepareProductsExport,
+  prepareUsersExport 
+} from '../lib/exportUtils';
 
 export default function AdminDashboardPage() {
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'products' | 'orders' | 'disputes'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'products' | 'orders' | 'disputes' | 'exports'>('overview');
   const [loading, setLoading] = useState(true);
 
   const [users, setUsers] = useState<User[]>([]);
@@ -124,6 +133,71 @@ export default function AdminDashboardPage() {
     }).format(price);
   };
 
+  // Export functions
+  const handleExportOrders = () => {
+    const data = prepareOrdersExport(orders);
+    exportToCSV(data, `orders-${new Date().toISOString().split('T')[0]}.csv`);
+  };
+
+  const handleExportSales = () => {
+    const data = prepareSalesExport(orders);
+    exportToCSV(data, `sales-report-${new Date().toISOString().split('T')[0]}.csv`);
+  };
+
+  const handleExportCommissions = () => {
+    const data = prepareCommissionExport(orders);
+    exportToCSV(data, `commissions-${new Date().toISOString().split('T')[0]}.csv`);
+  };
+
+  const handleExportVAT = () => {
+    const data = prepareVATExport(orders);
+    exportToCSV(data, `vat-report-${new Date().toISOString().split('T')[0]}.csv`);
+  };
+
+  const handleExportProducts = () => {
+    const data = prepareProductsExport(products);
+    exportToCSV(data, `products-${new Date().toISOString().split('T')[0]}.csv`);
+  };
+
+  const handleExportUsers = () => {
+    const data = prepareUsersExport(users);
+    exportToCSV(data, `users-${new Date().toISOString().split('T')[0]}.csv`);
+  };
+
+  const handleSuspendUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to suspend this user?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ isActive: false })
+        .eq('id', userId);
+
+      if (error) throw error;
+      alert('User suspended successfully');
+      fetchData();
+    } catch (error) {
+      console.error('Error suspending user:', error);
+      alert('Failed to suspend user');
+    }
+  };
+
+  const handleActivateUser = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ isActive: true })
+        .eq('id', userId);
+
+      if (error) throw error;
+      alert('User activated successfully');
+      fetchData();
+    } catch (error) {
+      console.error('Error activating user:', error);
+      alert('Failed to activate user');
+    }
+  };
+
   if (!user || user.role !== 'admin') {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -144,7 +218,7 @@ export default function AdminDashboardPage() {
         {/* Tabs */}
         <div className="mb-6 border-b border-gray-200">
           <div className="flex space-x-8">
-            {['overview', 'users', 'products', 'orders', 'disputes'].map((tab) => (
+            {['overview', 'users', 'products', 'orders', 'disputes', 'exports'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as typeof activeTab)}
@@ -280,7 +354,13 @@ export default function AdminDashboardPage() {
             {/* Users Tab */}
             {activeTab === 'users' && (
               <div className="card">
-                <h2 className="text-xl font-bold mb-4">All Users</h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold">All Users</h2>
+                  <button onClick={handleExportUsers} className="btn-primary flex items-center gap-2">
+                    <Download className="h-4 w-4" />
+                    Export Users
+                  </button>
+                </div>
                 <div className="space-y-3">
                   {users.map((u) => (
                     <div key={u.id} className="flex items-center justify-between border-b pb-3">
@@ -296,9 +376,26 @@ export default function AdminDashboardPage() {
                         }`}>
                           {u.role}
                         </span>
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          u.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {u.isActive ? 'Active' : 'Suspended'}
+                        </span>
                         <span className="text-sm text-gray-600">
                           {new Date(u.createdAt).toLocaleDateString()}
                         </span>
+                        {u.role !== 'admin' && (
+                          <button
+                            onClick={() => u.isActive ? handleSuspendUser(u.id) : handleActivateUser(u.id)}
+                            className={`text-sm px-3 py-1 rounded border ${
+                              u.isActive 
+                                ? 'border-red-300 text-red-600 hover:bg-red-50' 
+                                : 'border-green-300 text-green-600 hover:bg-green-50'
+                            }`}
+                          >
+                            {u.isActive ? 'Suspend' : 'Activate'}
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -309,7 +406,13 @@ export default function AdminDashboardPage() {
             {/* Products Tab */}
             {activeTab === 'products' && (
               <div className="card">
-                <h2 className="text-xl font-bold mb-4">All Products</h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold">All Products</h2>
+                  <button onClick={handleExportProducts} className="btn-primary flex items-center gap-2">
+                    <Download className="h-4 w-4" />
+                    Export Products
+                  </button>
+                </div>
                 <div className="space-y-3">
                   {products.map((product) => (
                     <div key={product.id} className="flex items-center justify-between border-b pb-3">
@@ -356,7 +459,13 @@ export default function AdminDashboardPage() {
             {/* Orders Tab */}
             {activeTab === 'orders' && (
               <div className="card">
-                <h2 className="text-xl font-bold mb-4">All Orders</h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold">All Orders</h2>
+                  <button onClick={handleExportOrders} className="btn-primary flex items-center gap-2">
+                    <Download className="h-4 w-4" />
+                    Export Orders
+                  </button>
+                </div>
                 <div className="space-y-3">
                   {orders.map((order) => (
                     <div key={order.id} className="flex items-center justify-between border-b pb-3">
@@ -409,6 +518,139 @@ export default function AdminDashboardPage() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Exports Tab */}
+            {activeTab === 'exports' && (
+              <div className="space-y-6">
+                <div className="card">
+                  <h2 className="text-2xl font-bold mb-6">Export Data</h2>
+                  <p className="text-gray-600 mb-8">
+                    Download your marketplace data in CSV format for analysis and reporting.
+                  </p>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Orders Export */}
+                    <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-4">
+                        <ShoppingBag className="h-8 w-8 text-navy-800" />
+                        <div>
+                          <h3 className="font-bold text-lg">Orders Export</h3>
+                          <p className="text-sm text-gray-600">{orders.length} orders</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Export all orders with customer details, totals, and status.
+                      </p>
+                      <button onClick={handleExportOrders} className="btn-primary w-full flex items-center justify-center gap-2">
+                        <Download className="h-4 w-4" />
+                        Download Orders CSV
+                      </button>
+                    </div>
+
+                    {/* Sales Report */}
+                    <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-4">
+                        <DollarSign className="h-8 w-8 text-green-600" />
+                        <div>
+                          <h3 className="font-bold text-lg">Sales Report</h3>
+                          <p className="text-sm text-gray-600">Daily summary</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Export daily sales totals with VAT and commission breakdown.
+                      </p>
+                      <button onClick={handleExportSales} className="btn-primary w-full flex items-center justify-center gap-2">
+                        <Download className="h-4 w-4" />
+                        Download Sales Report
+                      </button>
+                    </div>
+
+                    {/* Commissions Export */}
+                    <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-4">
+                        <Settings className="h-8 w-8 text-gold-600" />
+                        <div>
+                          <h3 className="font-bold text-lg">Commission Report</h3>
+                          <p className="text-sm text-gray-600">7% marketplace fee</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Export commission earnings per order for financial tracking.
+                      </p>
+                      <button onClick={handleExportCommissions} className="btn-primary w-full flex items-center justify-center gap-2">
+                        <Download className="h-4 w-4" />
+                        Download Commissions CSV
+                      </button>
+                    </div>
+
+                    {/* VAT Report */}
+                    <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-4">
+                        <AlertCircle className="h-8 w-8 text-blue-600" />
+                        <div>
+                          <h3 className="font-bold text-lg">VAT Report</h3>
+                          <p className="text-sm text-gray-600">Monthly breakdown</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Export monthly VAT summary for HMRC reporting (20% UK rate).
+                      </p>
+                      <button onClick={handleExportVAT} className="btn-primary w-full flex items-center justify-center gap-2">
+                        <Download className="h-4 w-4" />
+                        Download VAT Report
+                      </button>
+                    </div>
+
+                    {/* Products Export */}
+                    <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-4">
+                        <Package className="h-8 w-8 text-purple-600" />
+                        <div>
+                          <h3 className="font-bold text-lg">Products Export</h3>
+                          <p className="text-sm text-gray-600">{products.length} products</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Export all products with pricing, stock, and approval status.
+                      </p>
+                      <button onClick={handleExportProducts} className="btn-primary w-full flex items-center justify-center gap-2">
+                        <Download className="h-4 w-4" />
+                        Download Products CSV
+                      </button>
+                    </div>
+
+                    {/* Users Export */}
+                    <div className="border rounded-lg p-6 hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-4">
+                        <Users className="h-8 w-8 text-indigo-600" />
+                        <div>
+                          <h3 className="font-bold text-lg">Users Export</h3>
+                          <p className="text-sm text-gray-600">{users.length} users</p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Export all users with roles, status, and registration dates.
+                      </p>
+                      <button onClick={handleExportUsers} className="btn-primary w-full flex items-center justify-center gap-2">
+                        <Download className="h-4 w-4" />
+                        Download Users CSV
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card bg-blue-50 border-blue-200">
+                  <h3 className="font-bold mb-2">About CSV Exports</h3>
+                  <ul className="text-sm text-gray-700 space-y-1 list-disc list-inside">
+                    <li>All dates are in DD/MM/YYYY format</li>
+                    <li>All amounts are in GBP (£)</li>
+                    <li>CSV files can be opened in Excel, Google Sheets, or any spreadsheet software</li>
+                    <li>Data is exported from the current database state</li>
+                    <li>For custom reports, contact support at loadifymarket.co.uk@gmail.com</li>
+                  </ul>
+                </div>
               </div>
             )}
           </>
