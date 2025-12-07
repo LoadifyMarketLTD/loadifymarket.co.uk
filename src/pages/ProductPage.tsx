@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useCartStore } from '../store';
@@ -14,13 +14,7 @@ export default function ProductPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const { addItem } = useCartStore();
 
-  useEffect(() => {
-    if (id) {
-      fetchProduct();
-    }
-  }, [id]);
-
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     if (!id) return;
     
     setLoading(true);
@@ -44,7 +38,13 @@ export default function ProductPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchProduct();
+    }
+  }, [id, fetchProduct]);
 
   const handleAddToCart = () => {
     if (!product) return;

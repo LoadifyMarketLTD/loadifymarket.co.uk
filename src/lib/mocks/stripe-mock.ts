@@ -5,7 +5,7 @@
 
 export const createMockStripeService = () => {
   return {
-    createCheckoutSession: async (items: any[], metadata: any) => {
+    createCheckoutSession: async (items: Array<{ price: number; quantity: number }>, metadata: Record<string, unknown>) => {
       console.log('[MOCK STRIPE] Creating checkout session', { items, metadata });
       
       // Calculate mock total
@@ -21,7 +21,7 @@ export const createMockStripeService = () => {
       };
     },
     
-    createPaymentIntent: async (amount: number, metadata: any) => {
+    createPaymentIntent: async (amount: number, metadata: Record<string, unknown>) => {
       console.log('[MOCK STRIPE] Creating payment intent', { amount, metadata });
       
       return {
@@ -60,7 +60,7 @@ export const createMockStripeService = () => {
       };
     },
     
-    constructWebhookEvent: (_payload: any, _signature: string) => {
+    constructWebhookEvent: () => {
       console.log('[MOCK STRIPE] Constructing webhook event');
       
       return {
@@ -97,7 +97,7 @@ export const createMockStripeConnect = () => {
       };
     },
     
-    createAccountLink: async (accountId: string, _returnUrl: string, _refreshUrl: string) => {
+    createAccountLink: async (accountId: string) => {
       console.log('[MOCK STRIPE CONNECT] Creating account link', { accountId });
       
       return {
@@ -106,7 +106,7 @@ export const createMockStripeConnect = () => {
       };
     },
     
-    createTransfer: async (amount: number, destination: string, metadata: any) => {
+    createTransfer: async (amount: number, destination: string, metadata: Record<string, unknown>) => {
       console.log('[MOCK STRIPE CONNECT] Creating transfer', { amount, destination, metadata });
       
       return {

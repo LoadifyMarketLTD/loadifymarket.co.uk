@@ -35,11 +35,11 @@ export const handler: Handler = async (event) => {
       sig,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
-  } catch (err: any) {
-    console.error('Webhook signature verification failed:', err.message);
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err instanceof Error ? err.message : 'Unknown error');
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: `Webhook Error: ${err.message}` }),
+      body: JSON.stringify({ error: `Webhook Error: ${err instanceof Error ? err.message : 'Unknown error'}` }),
     };
   }
 
@@ -77,11 +77,11 @@ export const handler: Handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({ received: true }),
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Webhook handler error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error.message }),
+      body: JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
     };
   }
 };
@@ -122,7 +122,15 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   // Create order items
-  const orderItems = items.map((item: any) => ({
+  interface CartItem {
+    productId: string;
+    sellerId: string;
+    quantity: number;
+    price: number;
+    title: string;
+  }
+
+  const orderItems = (items as CartItem[]).map((item) => ({
     orderId: order.id,
     productId: item.productId,
     sellerId: item.sellerId,
@@ -164,7 +172,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         orderNumber,
         orderDate: new Date().toLocaleDateString('en-GB'),
         total: parseFloat(metadata.total),
-        items: items.map((item: any) => ({
+        items: (items as CartItem[]).map((item) => ({
           title: item.title,
           quantity: item.quantity,
           price: item.price,

@@ -48,7 +48,7 @@ class PerformanceMonitor {
         }
       });
       perfObserver.observe({ entryTypes: ['paint'] });
-    } catch (e) {
+    } catch {
       console.warn('FCP measurement not supported');
     }
   }
@@ -62,7 +62,7 @@ class PerformanceMonitor {
         console.log('[Performance] LCP:', lastEntry.startTime.toFixed(2), 'ms');
       });
       perfObserver.observe({ entryTypes: ['largest-contentful-paint'] });
-    } catch (e) {
+    } catch {
       console.warn('LCP measurement not supported');
     }
   }
@@ -77,7 +77,7 @@ class PerformanceMonitor {
         }
       });
       perfObserver.observe({ entryTypes: ['first-input'] });
-    } catch (e) {
+    } catch {
       console.warn('FID measurement not supported');
     }
   }
@@ -87,16 +87,16 @@ class PerformanceMonitor {
       let clsValue = 0;
       const perfObserver = new PerformanceObserver((entryList) => {
         for (const entry of entryList.getEntries()) {
-          const layoutShift = entry as any;
+          const layoutShift = entry as PerformanceEntry & { hadRecentInput?: boolean; value?: number };
           if (!layoutShift.hadRecentInput) {
-            clsValue += layoutShift.value;
+            clsValue += layoutShift.value || 0;
           }
         }
         this.metrics.CLS = clsValue;
         console.log('[Performance] CLS:', clsValue.toFixed(4));
       });
       perfObserver.observe({ entryTypes: ['layout-shift'] });
-    } catch (e) {
+    } catch {
       console.warn('CLS measurement not supported');
     }
   }
@@ -108,7 +108,7 @@ class PerformanceMonitor {
         this.metrics.TTFB = navigationTiming.responseStart - navigationTiming.requestStart;
         console.log('[Performance] TTFB:', this.metrics.TTFB.toFixed(2), 'ms');
       }
-    } catch (e) {
+    } catch {
       console.warn('TTFB measurement not supported');
     }
   }
@@ -177,7 +177,7 @@ export const performanceMonitor = new PerformanceMonitor();
 export const markPerformance = (name: string) => {
   try {
     performance.mark(name);
-  } catch (e) {
+  } catch {
     console.warn('Performance marking not supported');
   }
 };
@@ -189,7 +189,7 @@ export const measurePerformance = (name: string, startMark: string, endMark: str
     const measure = performance.getEntriesByName(name)[0];
     console.log(`[Performance] ${name}:`, measure.duration.toFixed(2), 'ms');
     return measure.duration;
-  } catch (e) {
+  } catch {
     console.warn('Performance measurement not supported');
     return 0;
   }

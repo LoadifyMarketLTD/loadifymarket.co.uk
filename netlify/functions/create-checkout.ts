@@ -53,15 +53,6 @@ export const handler: Handler = async (event) => {
     const total = subtotal + vatAmount;
     const commissionAmount = subtotal * COMMISSION_RATE;
 
-    // Group items by seller for split payments
-    const itemsBySeller = items.reduce((acc, item) => {
-      if (!acc[item.sellerId]) {
-        acc[item.sellerId] = [];
-      }
-      acc[item.sellerId].push(item);
-      return acc;
-    }, {} as Record<string, CartItem[]>);
-
     // Create line items for Stripe
     const lineItems = items.map(item => ({
       price_data: {
@@ -101,12 +92,12 @@ export const handler: Handler = async (event) => {
         url: session.url,
       }),
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Stripe checkout error:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: error.message || 'Failed to create checkout session',
+        error: error instanceof Error ? error.message : 'Failed to create checkout session',
       }),
     };
   }

@@ -38,7 +38,7 @@ function App() {
 
   useEffect(() => {
     // Check active session
-    supabase.auth.getSession().then(({ data: { session } }: any) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         // Fetch user profile with role
         supabase
@@ -46,7 +46,7 @@ function App() {
           .select('*')
           .eq('id', session.user.id)
           .single()
-          .then(({ data }: any) => {
+          .then(({ data }) => {
             if (data) {
               setUser(data);
             } else {
@@ -61,14 +61,14 @@ function App() {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         supabase
           .from('users')
           .select('*')
           .eq('id', session.user.id)
           .single()
-          .then(({ data }: any) => {
+          .then(({ data }) => {
             if (data) {
               setUser(data);
             }

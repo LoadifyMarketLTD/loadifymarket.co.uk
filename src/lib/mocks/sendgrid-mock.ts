@@ -66,7 +66,7 @@ export const createMockSendGridService = () => {
 
 // Email template generators
 export const mockEmailTemplates = {
-  orderConfirmation: (orderData: any) => {
+  orderConfirmation: (orderData: { orderNumber: string; total: number }) => {
     return {
       subject: `Order Confirmation - #${orderData.orderNumber}`,
       html: `
@@ -96,7 +96,7 @@ export const mockEmailTemplates = {
     };
   },
   
-  orderShipped: (trackingData: any) => {
+  orderShipped: (trackingData: { trackingNumber: string; carrier: string }) => {
     return {
       subject: `Your order has been shipped - Tracking #${trackingData.trackingNumber}`,
       html: `
@@ -122,7 +122,7 @@ export const mockEmailTemplates = {
     };
   },
   
-  returnRequested: (returnData: any) => {
+  returnRequested: (returnData: { returnNumber: string; reason?: string }) => {
     return {
       subject: `Return Request Received - #${returnData.returnNumber}`,
       html: `
@@ -134,7 +134,7 @@ export const mockEmailTemplates = {
             <div style="padding: 20px;">
               <h2>Return Request Received</h2>
               <p>Return Number: <strong>#${returnData.returnNumber}</strong></p>
-              <p>Reason: ${returnData.reason}</p>
+              ${returnData.reason ? `<p>Reason: ${returnData.reason}</p>` : ''}
               <hr>
               <p>We're processing your return request. You'll receive an update within 24 hours.</p>
             </div>

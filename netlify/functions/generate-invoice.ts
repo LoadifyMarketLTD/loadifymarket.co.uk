@@ -34,17 +34,11 @@ export const handler: Handler = async (event) => {
       throw new Error('Order not found');
     }
 
-    // Fetch buyer and seller details
+    // Fetch buyer details
     const { data: buyer } = await supabase
       .from('users')
       .select('*, buyer_profiles(*)')
       .eq('id', order.buyerId)
-      .single();
-
-    const { data: seller } = await supabase
-      .from('users')
-      .select('*, seller_profiles(*)')
-      .eq('id', order.sellerId)
       .single();
 
     // Generate PDF
@@ -183,12 +177,12 @@ export const handler: Handler = async (event) => {
         filename: `Invoice-${order.orderNumber}.pdf`,
       }),
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Invoice generation error:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: error.message || 'Failed to generate invoice',
+        error: error instanceof Error ? error.message : 'Failed to generate invoice',
       }),
     };
   }

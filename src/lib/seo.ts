@@ -78,7 +78,17 @@ export const generateOrganizationSchema = () => {
   };
 };
 
-export const generateProductSchema = (product: any) => {
+export const generateProductSchema = (product: {
+  id: string;
+  title: string;
+  description: string;
+  images?: string[];
+  price: number;
+  stock: number;
+  condition: string;
+  averageRating?: number;
+  reviewCount?: number;
+}) => {
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -144,7 +154,7 @@ export const generateWebsiteSchema = () => {
   };
 };
 
-export const injectStructuredData = (schema: any) => {
+export const injectStructuredData = (schema: Record<string, unknown>) => {
   const script = document.createElement('script');
   script.type = 'application/ld+json';
   script.text = JSON.stringify(schema);

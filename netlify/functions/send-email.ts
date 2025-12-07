@@ -7,7 +7,7 @@ interface EmailRequest {
   to: string;
   subject: string;
   template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened';
-  data: any;
+  data: Record<string, unknown>;
 }
 
 export const handler: Handler = async (event) => {
@@ -37,18 +37,18 @@ export const handler: Handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({ success: true, message: 'Email sent' }),
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Email sending error:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: error.message || 'Failed to send email',
+        error: error instanceof Error ? error.message : 'Failed to send email',
       }),
     };
   }
 };
 
-function generateEmailHTML(template: string, data: any): string {
+function generateEmailHTML(template: string, data: Record<string, unknown>): string {
   const header = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
       <div style="background-color: #243b53; padding: 20px; text-align: center;">
@@ -73,20 +73,20 @@ function generateEmailHTML(template: string, data: any): string {
     case 'order_confirmation':
       content = `
         <h2 style="color: #243b53;">Order Confirmation</h2>
-        <p>Hi ${data.customerName},</p>
+        <p>Hi ${String(data.customerName || 'Customer')},</p>
         <p>Thank you for your order! Your order has been confirmed and is being processed.</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Order Number:</strong> ${data.orderNumber}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Order Date:</strong> ${data.orderDate}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Total:</strong> £${data.total.toFixed(2)}</p>
+          <p style="margin: 0;"><strong>Order Number:</strong> ${String(data.orderNumber || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Order Date:</strong> ${String(data.orderDate || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Total:</strong> £${typeof data.total === 'number' ? data.total.toFixed(2) : '0.00'}</p>
         </div>
         <h3 style="color: #243b53;">Order Items:</h3>
-        ${data.items.map((item: any) => `
+        ${Array.isArray(data.items) ? data.items.map((item: Record<string, unknown>) => `
           <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
-            <p style="margin: 0;"><strong>${item.title}</strong></p>
-            <p style="margin: 5px 0 0 0; color: #666;">Quantity: ${item.quantity} | Price: £${item.price.toFixed(2)}</p>
+            <p style="margin: 0;"><strong>${String(item.title || '')}</strong></p>
+            <p style="margin: 5px 0 0 0; color: #666;">Quantity: ${String(item.quantity || 0)} | Price: £${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}</p>
           </div>
-        `).join('')}
+        `).join('') : ''}
         <p style="margin-top: 20px;">We'll send you another email when your order has been shipped.</p>
         <p>If you have any questions, please contact us at loadifymarket.co.uk@gmail.com</p>
       `;

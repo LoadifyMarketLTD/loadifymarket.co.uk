@@ -13,5 +13,5 @@ if (useMock) {
 }
 
 export const supabase = useMock 
-  ? (createMockSupabaseClient() as any)
+  ? (createMockSupabaseClient() as unknown as ReturnType<typeof createClient>)
   : createClient(supabaseUrl, supabaseAnonKey);

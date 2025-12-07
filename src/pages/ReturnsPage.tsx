@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Package, AlertCircle, CheckCircle, Clock, XCircle, RotateCcw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -24,13 +24,7 @@ export default function ReturnsPage() {
   const [reason, setReason] = useState('');
   const [description, setDescription] = useState('');
 
-  useEffect(() => {
-    if (user) {
-      fetchReturns();
-    }
-  }, [user]);
-
-  const fetchReturns = async () => {
+  const fetchReturns = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -51,7 +45,13 @@ export default function ReturnsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchReturns();
+    }
+  }, [user, fetchReturns]);
 
   const handleSubmitReturn = async (e: React.FormEvent) => {
     e.preventDefault();
