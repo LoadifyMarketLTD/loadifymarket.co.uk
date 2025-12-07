@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore, useAuthStore } from '../store';
-import { CreditCard, MapPin, Package } from 'lucide-react';
+import { CreditCard, MapPin, Package, Truck } from 'lucide-react';
 
 interface Address {
   line1: string;
@@ -11,12 +11,21 @@ interface Address {
   country: string;
 }
 
+type ShippingMethod = 'Standard' | 'Express' | 'Pallet';
+
+const SHIPPING_OPTIONS = [
+  { name: 'Standard' as ShippingMethod, cost: 5, description: '3-5 business days' },
+  { name: 'Express' as ShippingMethod, cost: 12, description: '1-2 business days' },
+  { name: 'Pallet' as ShippingMethod, cost: 50, description: 'For large/pallet orders' },
+];
+
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { items, total } = useCartStore();
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [sameAsShipping, setSameAsShipping] = useState(true);
+  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>('Standard');
 
   const [shippingAddress, setShippingAddress] = useState<Address>({
     line1: '',
@@ -46,13 +55,14 @@ export default function CheckoutPage() {
 
   const VAT_RATE = 0.20;
   const COMMISSION_RATE = 0.07;
-  const SHIPPING_FLAT_RATE = 5.99; // Flat shipping fee in GBP
+  const selectedShipping = SHIPPING_OPTIONS.find(opt => opt.name === shippingMethod) || SHIPPING_OPTIONS[0];
+  const shippingAmount = selectedShipping.cost;
 
   const subtotal = total / (1 + VAT_RATE);
-  const vatAmount = total - subtotal;
-  const shippingAmount = SHIPPING_FLAT_RATE;
+  const shippingVAT = shippingAmount * VAT_RATE;
+  const vatAmount = (total - subtotal) + shippingVAT;
   const commissionAmount = subtotal * COMMISSION_RATE;
-  const grandTotal = total + shippingAmount;
+  const grandTotal = total + shippingAmount + shippingVAT;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-GB', {
@@ -90,6 +100,7 @@ export default function CheckoutPage() {
           shippingAddress,
           billingAddress: sameAsShipping ? shippingAddress : billingAddress,
           shippingAmount,
+          shippingMethod,
         }),
       });
 
@@ -184,6 +195,43 @@ export default function CheckoutPage() {
                       <option value="IE">Ireland</option>
                     </select>
                   </div>
+                </div>
+              </div>
+
+              {/* Shipping Method */}
+              <div className="card mb-6">
+                <div className="flex items-center mb-4">
+                  <Truck className="h-6 w-6 text-navy-800 mr-2" aria-hidden="true" />
+                  <h2 className="text-xl font-bold">Shipping Method</h2>
+                </div>
+
+                <div className="space-y-3">
+                  {SHIPPING_OPTIONS.map((option) => (
+                    <label
+                      key={option.name}
+                      className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                        shippingMethod === option.name
+                          ? 'border-orange-500 bg-orange-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <input
+                          type="radio"
+                          name="shippingMethod"
+                          value={option.name}
+                          checked={shippingMethod === option.name}
+                          onChange={(e) => setShippingMethod(e.target.value as ShippingMethod)}
+                          className="mr-3"
+                        />
+                        <div>
+                          <p className="font-semibold">{option.name}</p>
+                          <p className="text-sm text-gray-600">{option.description}</p>
+                        </div>
+                      </div>
+                      <p className="font-bold text-navy-800">{formatPrice(option.cost)}</p>
+                    </label>
+                  ))}
                 </div>
               </div>
 
