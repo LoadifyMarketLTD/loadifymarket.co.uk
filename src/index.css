@@ -4,39 +4,79 @@
 
 @layer base {
   :root {
-    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-family: Inter, 'SF Pro Display', system-ui, Avenir, Helvetica, Arial, sans-serif;
   }
   
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-smoke text-gray-900;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold;
   }
 }
 
 @layer components {
+  /* Cinematic Buttons */
   .btn-primary {
-    @apply bg-navy-800 text-white px-4 py-2 rounded-lg hover:bg-navy-700 transition-colors font-medium;
+    @apply bg-jet text-white px-6 py-3 rounded-cinematic-md hover:bg-graphite transition-all duration-300 font-semibold shadow-cinematic hover:shadow-cinematic-lg;
   }
   
   .btn-secondary {
-    @apply bg-gold-500 text-white px-4 py-2 rounded-lg hover:bg-gold-600 transition-colors font-medium;
+    @apply bg-gold-400 text-jet px-6 py-3 rounded-cinematic-md hover:bg-gold-500 transition-all duration-300 font-semibold shadow-cinematic hover:shadow-cinematic-lg;
   }
   
   .btn-outline {
-    @apply border-2 border-navy-800 text-navy-800 px-4 py-2 rounded-lg hover:bg-navy-800 hover:text-white transition-colors font-medium;
+    @apply border-2 border-jet text-jet px-6 py-3 rounded-cinematic-md hover:bg-jet hover:text-white transition-all duration-300 font-semibold;
   }
   
+  .btn-glass {
+    @apply bg-white/10 backdrop-blur-cinematic border-2 border-white/30 text-white px-6 py-3 rounded-cinematic-md hover:bg-white/20 hover:border-white transition-all duration-300 font-semibold shadow-cinematic;
+  }
+  
+  /* Cinematic Cards */
   .card {
-    @apply bg-white rounded-lg shadow-md p-6;
+    @apply bg-white rounded-cinematic-md shadow-cinematic p-6 transition-all duration-300 hover:shadow-cinematic-lg;
   }
   
+  .card-cinematic {
+    @apply bg-white rounded-cinematic-lg shadow-cinematic overflow-hidden transition-all duration-500 hover:shadow-cinematic-lg hover:scale-105;
+  }
+  
+  .card-glass {
+    @apply bg-white/10 backdrop-blur-cinematic border border-white/20 rounded-cinematic-md shadow-cinematic p-6;
+  }
+  
+  /* Input Fields */
   .input-field {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-transparent;
+    @apply w-full px-4 py-3 border border-gray-300 rounded-cinematic-sm focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-transparent transition-all duration-200;
+  }
+  
+  .input-cinematic {
+    @apply w-full px-6 py-3 bg-white/5 border-0 rounded-cinematic-md text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:bg-white/10 transition-all duration-300;
+  }
+  
+  /* Overlay Gradients */
+  .overlay-gradient-dark {
+    @apply bg-gradient-to-t from-black/80 via-black/40 to-transparent;
+  }
+  
+  .overlay-gradient-gold {
+    @apply bg-gradient-to-t from-gold-400/30 via-transparent to-transparent;
   }
 }
 
 @layer utilities {
   .animate-fadeIn {
     animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .animate-slideUp {
+    animation: slideUp 0.6s ease-out;
+  }
+  
+  .animate-zoomIn {
+    animation: zoomIn 0.4s ease-out;
   }
   
   @keyframes fadeIn {
@@ -48,5 +88,40 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes zoomIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  /* Text shadows for cinematic depth */
+  .text-shadow-sm {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .text-shadow-md {
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .text-shadow-lg {
+    text-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
   }
 }
