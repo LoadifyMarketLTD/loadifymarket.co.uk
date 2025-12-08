@@ -98,6 +98,13 @@ export default function Header() {
                   </Link>
                 )}
                 <Link 
+                  to="/orders" 
+                  className="text-white hover:text-gold-400 transition-colors font-medium relative group"
+                >
+                  Orders
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gold-400 transition-all duration-300 group-hover:w-full"></span>
+                </Link>
+                <Link 
                   to="/dashboard" 
                   className="flex items-center space-x-2 text-white hover:text-gold-400 transition-colors font-medium group"
                 >
@@ -188,6 +195,13 @@ export default function Header() {
                     Admin
                   </Link>
                 )}
+                <Link
+                  to="/orders"
+                  className="block py-3 text-white hover:text-gold-400 transition-colors font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Orders
+                </Link>
                 <Link
                   to="/dashboard"
                   className="block py-3 text-white hover:text-gold-400 transition-colors font-medium"
