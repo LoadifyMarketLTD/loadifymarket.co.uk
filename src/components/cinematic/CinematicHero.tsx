@@ -1,156 +1,166 @@
 import { Link } from 'react-router-dom';
-import { Truck, Package, Sparkles, MapPin, Navigation } from 'lucide-react';
+import { Truck, Package, Sparkles, ArrowRight, Play } from 'lucide-react';
 
 export default function CinematicHero() {
   return (
-    <section className="relative bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800 overflow-hidden min-h-[600px]">
-      {/* Animated background grid */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'linear-gradient(rgba(245, 158, 11, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(245, 158, 11, 0.1) 1px, transparent 1px)',
-          backgroundSize: '50px 50px'
-        }}></div>
+    <section className="relative min-h-screen bg-jet overflow-hidden flex items-center">
+      {/* Cinematic Background Effects */}
+      <div className="absolute inset-0">
+        {/* Large gradient orbs for cinematic lighting */}
+        <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-gold/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-gold/5 rounded-full blur-[100px]" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-graphite/30 rounded-full blur-[150px]" />
+
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: 'linear-gradient(rgba(212, 175, 55, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(212, 175, 55, 0.5) 1px, transparent 1px)',
+          backgroundSize: '80px 80px'
+        }} />
+
+        {/* Vignette effect */}
+        <div className="absolute inset-0 vignette" />
+
+        {/* Light beam effect */}
+        <div className="light-beam" />
       </div>
 
-      {/* Glowing orbs */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-gold-500 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-navy-600 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-      </div>
-
-      <div className="container mx-auto px-4 py-16 lg:py-24 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Left side: Content */}
-          <div className="text-white space-y-8">
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                <span className="block">Loadify Market</span>
-                <span className="block text-gold-400 mt-2">Your Everything Marketplace</span>
-              </h1>
-              
-              <p className="text-xl md:text-2xl text-gray-300 leading-relaxed">
-                Marketplace for Logistics, Pallet Stock & Handmade Goods
-              </p>
-            </div>
-
-            {/* Bullet points */}
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <Truck className="w-6 h-6 text-gold-400 flex-shrink-0 mt-1" />
-                <p className="text-lg text-gray-200">Post loads & find drivers in seconds</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <Package className="w-6 h-6 text-gold-400 flex-shrink-0 mt-1" />
-                <p className="text-lg text-gray-200">Clear pallet stock to verified buyers</p>
-              </div>
-              <div className="flex items-start gap-3">
-                <Sparkles className="w-6 h-6 text-gold-400 flex-shrink-0 mt-1" />
-                <p className="text-lg text-gray-200">Sell unique handmade pieces, one by one</p>
-              </div>
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Link 
-                to="/catalog?type=logistics" 
-                className="inline-flex items-center justify-center px-8 py-4 bg-gold-500 hover:bg-gold-600 text-navy-900 font-semibold rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 text-lg"
-              >
-                <Truck className="w-5 h-5 mr-2" />
-                Post a Load
-              </Link>
-              <Link 
-                to="/register?type=seller" 
-                className="inline-flex items-center justify-center px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm border-2 border-white/30 hover:border-white text-white font-semibold rounded-lg shadow-xl hover:shadow-2xl transition-all duration-300 text-lg"
-              >
-                <Package className="w-5 h-5 mr-2" />
-                Start Selling Products
-              </Link>
-            </div>
+      {/* Hero Content */}
+      <div className="container-cinematic relative z-10 pt-32 pb-20">
+        <div className="max-w-5xl mx-auto text-center">
+          {/* Badge */}
+          <div className="inline-flex items-center px-4 py-2 rounded-full bg-gold/10 border border-gold/30 mb-8 animate-fadeInUp">
+            <span className="w-2 h-2 bg-gold rounded-full mr-3 animate-pulse" />
+            <span className="text-gold text-sm font-medium">UK's Premier B2B & B2C Marketplace</span>
           </div>
 
-          {/* Right side: Cinematic visual composition */}
-          <div className="relative hidden lg:block">
-            <div className="relative w-full h-[500px]">
-              {/* Main logistics visual - Van/Truck */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full">
-                <div className="relative">
-                  {/* Map/Grid background */}
-                  <div className="absolute inset-0 opacity-20">
-                    <div className="w-full h-full bg-gradient-to-br from-gold-500/20 to-transparent rounded-2xl" style={{
-                      backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(245, 158, 11, 0.2) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(245, 158, 11, 0.1) 0%, transparent 50%)'
-                    }}>
-                      {/* Route lines */}
-                      <svg className="w-full h-full" viewBox="0 0 400 400">
-                        <path d="M 50 200 Q 150 100, 250 200" stroke="rgba(245, 158, 11, 0.3)" strokeWidth="2" fill="none" strokeDasharray="5,5">
-                          <animate attributeName="stroke-dashoffset" from="0" to="10" dur="1s" repeatCount="indefinite"/>
-                        </path>
-                        <path d="M 250 200 Q 300 250, 350 200" stroke="rgba(245, 158, 11, 0.3)" strokeWidth="2" fill="none" strokeDasharray="5,5">
-                          <animate attributeName="stroke-dashoffset" from="0" to="10" dur="1s" repeatCount="indefinite"/>
-                        </path>
-                      </svg>
-                    </div>
-                  </div>
+          {/* Main Headline */}
+          <h1 className="heading-hero text-white mb-6 animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
+            Your Marketplace for{' '}
+            <span className="text-gradient-gold">Logistics</span>,{' '}
+            <span className="text-gradient-gold">Stock</span> &{' '}
+            <span className="text-gradient-gold">Handmade</span> Goods
+          </h1>
 
-                  {/* Central truck/van illustration */}
-                  <div className="relative z-10 flex items-center justify-center">
-                    <div className="bg-gradient-to-br from-gold-500 to-gold-600 rounded-3xl p-8 shadow-2xl transform hover:scale-105 transition-transform duration-500">
-                      <div className="relative">
-                        <Truck className="w-40 h-40 text-navy-900" strokeWidth={1.5} />
-                        {/* Animated route indicator */}
-                        <div className="absolute -top-6 -right-6 bg-green-500 text-white rounded-full p-3 shadow-lg animate-bounce">
-                          <Navigation className="w-6 h-6" />
-                        </div>
-                        {/* Map pin indicators */}
-                        <div className="absolute -bottom-4 -left-4 bg-navy-800 text-gold-400 rounded-full p-2 shadow-lg">
-                          <MapPin className="w-5 h-5" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+          {/* Subheadline */}
+          <p className="text-xl md:text-2xl text-white/60 max-w-3xl mx-auto mb-12 leading-relaxed animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
+            From pallets to unique handmade art — everything in one place.
+            Connect with verified buyers and sellers across the UK.
+          </p>
 
-                  {/* Handmade products collage card - bottom right */}
-                  <div className="absolute bottom-0 right-0 transform translate-x-8 translate-y-4">
-                    <div className="bg-white rounded-2xl shadow-2xl p-4 w-64 transform hover:scale-105 transition-transform duration-300">
-                      <div className="space-y-3">
-                        {/* Warm handmade item preview */}
-                        <div className="relative h-40 bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg overflow-hidden">
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <Sparkles className="w-16 h-16 text-amber-600 opacity-40" />
-                          </div>
-                          <div className="absolute top-2 right-2 bg-gold-500 text-navy-900 text-xs font-semibold px-2 py-1 rounded-full">
-                            1 of 1
-                          </div>
-                          {/* Warm light glow effect */}
-                          <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-amber-200/80 to-transparent"></div>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-sm font-semibold text-gray-800">Handmade Collection</p>
-                          <p className="text-xs text-gray-600">Unique artisan pieces</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20 animate-fadeInUp" style={{ animationDelay: '0.3s' }}>
+            <Link to="/catalog" className="btn-primary inline-flex items-center group">
+              Explore Marketplace
+              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+            </Link>
+            <Link to="/register?type=seller" className="btn-secondary inline-flex items-center">
+              <Play className="mr-2 h-5 w-5" />
+              Sell on Loadify Market
+            </Link>
+          </div>
 
-                  {/* Pallet/wholesale card - top left */}
-                  <div className="absolute top-0 left-0 transform -translate-x-8 -translate-y-4">
-                    <div className="bg-navy-800 rounded-xl shadow-2xl p-4 w-48 transform hover:scale-105 transition-transform duration-300">
-                      <div className="space-y-2">
-                        <Package className="w-10 h-10 text-gold-400" />
-                        <p className="text-sm font-semibold text-white">Pallet Stock</p>
-                        <p className="text-xs text-gray-400">Wholesale quantities</p>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-lg font-bold text-gold-400">£2,499</span>
-                          <span className="text-xs text-gray-400">/ pallet</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          {/* Category Panels */}
+          <div className="category-grid animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
+            {/* Logistics Loads Panel */}
+            <Link to="/catalog?type=logistics" className="group relative overflow-hidden rounded-premium-lg aspect-[4/3] cursor-pointer">
+              <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet">
+                <img
+                  src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&q=80"
+                  alt="Logistics and Freight"
+                  className="w-full h-full object-cover opacity-60 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
+                />
               </div>
+              <div className="absolute inset-0 bg-gradient-overlay" />
+              <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                <div className="flex items-center mb-3">
+                  <div className="p-2 rounded-premium-sm bg-gold/20 mr-3">
+                    <Truck className="h-6 w-6 text-gold" />
+                  </div>
+                  <span className="badge-gold">Logistics</span>
+                </div>
+                <h3 className="heading-card text-white mb-2">Logistics Loads</h3>
+                <p className="text-white/60 text-sm mb-4">Post loads & find verified drivers instantly</p>
+                <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+                  Browse Loads <ArrowRight className="ml-2 h-4 w-4" />
+                </span>
+              </div>
+            </Link>
+
+            {/* Pallets & Stock Panel */}
+            <Link to="/catalog?type=pallet" className="group relative overflow-hidden rounded-premium-lg aspect-[4/3] cursor-pointer">
+              <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet">
+                <img
+                  src="https://images.unsplash.com/photo-1553413077-190dd305871c?w=600&q=80"
+                  alt="Warehouse Pallets"
+                  className="w-full h-full object-cover opacity-60 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-overlay" />
+              <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                <div className="flex items-center mb-3">
+                  <div className="p-2 rounded-premium-sm bg-gold/20 mr-3">
+                    <Package className="h-6 w-6 text-gold" />
+                  </div>
+                  <span className="badge-gold">Wholesale</span>
+                </div>
+                <h3 className="heading-card text-white mb-2">Pallets & Wholesale Stock</h3>
+                <p className="text-white/60 text-sm mb-4">Clear stock to verified buyers worldwide</p>
+                <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+                  Browse Stock <ArrowRight className="ml-2 h-4 w-4" />
+                </span>
+              </div>
+            </Link>
+
+            {/* Handmade Panel */}
+            <Link to="/catalog?type=handmade" className="group relative overflow-hidden rounded-premium-lg aspect-[4/3] cursor-pointer">
+              <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet">
+                <img
+                  src="https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=600&q=80"
+                  alt="Handmade Crafts"
+                  className="w-full h-full object-cover opacity-60 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-overlay" />
+              <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                <div className="flex items-center mb-3">
+                  <div className="p-2 rounded-premium-sm bg-gold/20 mr-3">
+                    <Sparkles className="h-6 w-6 text-gold" />
+                  </div>
+                  <span className="badge-gold">Handmade</span>
+                </div>
+                <h3 className="heading-card text-white mb-2">Handmade & Unique Items</h3>
+                <p className="text-white/60 text-sm mb-4">Discover one-of-a-kind artisan pieces</p>
+                <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+                  Browse Handmade <ArrowRight className="ml-2 h-4 w-4" />
+                </span>
+              </div>
+            </Link>
+          </div>
+
+          {/* Trust Indicators */}
+          <div className="mt-16 flex flex-wrap items-center justify-center gap-8 text-white/40 text-sm animate-fadeInUp" style={{ animationDelay: '0.5s' }}>
+            <div className="flex items-center">
+              <span className="text-gold mr-2">✓</span>
+              Verified Sellers
+            </div>
+            <div className="flex items-center">
+              <span className="text-gold mr-2">✓</span>
+              Secure Payments
+            </div>
+            <div className="flex items-center">
+              <span className="text-gold mr-2">✓</span>
+              UK Based Support
+            </div>
+            <div className="flex items-center">
+              <span className="text-gold mr-2">✓</span>
+              Buyer Protection
             </div>
           </div>
         </div>
       </div>
+
+      {/* Bottom fade to content */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-jet to-transparent" />
     </section>
   );
 }

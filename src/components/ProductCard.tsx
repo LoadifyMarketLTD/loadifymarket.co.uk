@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Heart } from 'lucide-react';
+import { Heart, Package, Truck, Sparkles, ArrowRight } from 'lucide-react';
 import { useWishlist } from '../lib/useWishlist';
 import type { Product } from '../types';
 
@@ -20,71 +20,113 @@ export default function ProductCard({ product }: ProductCardProps) {
   const handleWishlistClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const added = await toggleWishlist(product.id);
-    if (added !== null) {
-      // Could show a toast notification here
+    await toggleWishlist(product.id);
+  };
+
+  // Get type icon and badge styling
+  const getTypeInfo = () => {
+    switch (product.type) {
+      case 'logistics':
+        return { icon: Truck, label: 'Logistics', className: 'badge-gold' };
+      case 'pallet':
+        return { icon: Package, label: 'Pallet', className: 'badge-gold' };
+      case 'handmade':
+        return { icon: Sparkles, label: 'Handmade', className: 'badge-premium' };
+      default:
+        return { icon: Package, label: 'Product', className: 'badge-gold' };
     }
   };
 
-  return (
-    <div className="card hover:shadow-lg transition-shadow relative">
-      {/* Wishlist Button */}
-      <button
-        onClick={handleWishlistClick}
-        className="absolute top-4 right-4 z-10 bg-white p-2 rounded-full shadow-md hover:bg-red-50 transition-colors"
-        title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
-      >
-        <Heart
-          className={`h-5 w-5 ${isInWishlist ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
-        />
-      </button>
+  const typeInfo = getTypeInfo();
+  const TypeIcon = typeInfo.icon;
 
-      <Link to={`/product/${product.id}`}>
+  // Get stock status badge
+  const getStockBadge = () => {
+    switch (product.stockStatus) {
+      case 'in_stock':
+        return { label: 'In Stock', className: 'badge-stock' };
+      case 'low_stock':
+        return { label: 'Low Stock', className: 'badge-low-stock' };
+      default:
+        return { label: 'Out of Stock', className: 'badge-out-stock' };
+    }
+  };
+
+  const stockBadge = getStockBadge();
+
+  return (
+    <div className="card-product group">
+      {/* Image Container */}
+      <div className="relative aspect-square bg-gradient-to-br from-graphite to-jet overflow-hidden">
         {/* Product Image */}
-        <div className="relative h-48 bg-gray-200 rounded-lg mb-4 overflow-hidden">
-          {product.images && product.images.length > 0 ? (
-            <img
-              src={product.images[0]}
-              alt={product.title}
-              className="w-full h-full object-cover hover:scale-105 transition-transform"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
-              No image
-            </div>
-          )}
-          {product.type !== 'product' && (
-            <span className="absolute top-2 left-2 bg-navy-800 text-white px-2 py-1 rounded text-xs font-medium">
-              {product.type.toUpperCase()}
-            </span>
-          )}
+        {product.images && product.images.length > 0 ? (
+          <img
+            src={product.images[0]}
+            alt={product.title}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <TypeIcon className="w-24 h-24 text-white/20 group-hover:scale-110 transition-transform duration-500" />
+          </div>
+        )}
+
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-overlay opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+
+        {/* Wishlist Button */}
+        <button
+          onClick={handleWishlistClick}
+          className="absolute top-4 right-4 z-10 p-3 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-gold hover:text-jet transition-all duration-300 shadow-lg"
+          title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+        >
+          <Heart
+            className={`h-5 w-5 ${isInWishlist ? 'fill-gold text-gold' : ''}`}
+          />
+        </button>
+
+        {/* Type Badge */}
+        {product.type !== 'product' && (
+          <div className={`absolute top-4 left-4 ${typeInfo.className} flex items-center gap-1`}>
+            <TypeIcon className="w-3 h-3" />
+            <span>{typeInfo.label}</span>
+          </div>
+        )}
+
+        {/* Quick View on Hover */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
+          <Link
+            to={`/product/${product.id}`}
+            className="btn-glass py-3 px-6 flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500"
+          >
+            View Item
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
 
-        {/* Product Info */}
-        <h3 className="font-bold text-lg mb-2 line-clamp-2 hover:text-navy-800 transition-colors">
+        {/* Warm glow for handmade items */}
+        {product.type === 'handmade' && (
+          <div className="absolute inset-0 bg-gradient-to-t from-gold/20 via-transparent to-transparent pointer-events-none" />
+        )}
+      </div>
+
+      {/* Product Info */}
+      <Link to={`/product/${product.id}`} className="block p-5">
+        {/* Title */}
+        <h3 className="font-bold text-lg text-white mb-2 line-clamp-2 group-hover:text-gold transition-colors duration-300">
           {product.title}
         </h3>
 
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-2xl font-bold text-navy-800">{formatPrice(product.price)}</p>
-          <span
-            className={`text-xs px-2 py-1 rounded ${
-              product.stockStatus === 'in_stock'
-                ? 'bg-green-100 text-green-800'
-                : product.stockStatus === 'low_stock'
-                ? 'bg-yellow-100 text-yellow-800'
-                : 'bg-red-100 text-red-800'
-            }`}
-          >
-            {product.stockStatus === 'in_stock'
-              ? 'In Stock'
-              : product.stockStatus === 'low_stock'
-              ? 'Low Stock'
-              : 'Out of Stock'}
+        {/* Price and Stock */}
+        <div className="flex items-center justify-between mb-3">
+          <p className="price-tag">{formatPrice(product.price)}</p>
+          <span className={stockBadge.className}>
+            {stockBadge.label}
           </span>
         </div>
 
-        <div className="flex items-center text-sm text-gray-600">
+        {/* Meta Info */}
+        <div className="flex items-center text-sm text-white/40">
           <span className="capitalize">{product.condition}</span>
           <span className="mx-2">•</span>
           <span>{product.stockQuantity} available</span>

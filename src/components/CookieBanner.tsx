@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Cookie, X } from 'lucide-react';
 
 export default function CookieBanner() {
   const [showBanner, setShowBanner] = useState(() => {
@@ -19,29 +21,43 @@ export default function CookieBanner() {
   if (!showBanner) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-navy-900 text-white p-4 shadow-lg z-50">
-      <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex-1">
-          <p className="text-sm">
-            We use cookies to enhance your browsing experience and analyze our traffic. 
-            By clicking "Accept", you consent to our use of cookies.{' '}
-            <a href="/cookies" className="text-gold-500 hover:underline">
-              Learn more
-            </a>
-          </p>
-        </div>
-        <div className="flex items-center space-x-4">
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-4">
+      <div className="container-cinematic">
+        <div className="card-glass flex flex-col md:flex-row items-center justify-between gap-4 animate-fadeInUp">
+          <div className="flex items-start gap-4 flex-1">
+            <div className="p-2 rounded-premium-sm bg-gold/20 flex-shrink-0">
+              <Cookie className="w-5 h-5 text-gold" />
+            </div>
+            <div>
+              <p className="text-sm text-white/80">
+                We use cookies to enhance your browsing experience and analyze our traffic.
+                By clicking "Accept", you consent to our use of cookies.{' '}
+                <Link to="/cookies" className="text-gold hover:underline">
+                  Learn more
+                </Link>
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <button
+              onClick={declineCookies}
+              className="btn-glass py-2 px-4 text-sm"
+            >
+              Decline
+            </button>
+            <button
+              onClick={acceptCookies}
+              className="btn-primary py-2 px-4 text-sm"
+            >
+              Accept All
+            </button>
+          </div>
           <button
             onClick={declineCookies}
-            className="px-4 py-2 text-sm border border-gray-400 rounded-lg hover:bg-gray-700 transition-colors"
+            className="absolute top-2 right-2 md:hidden p-2 text-white/40 hover:text-white"
+            aria-label="Close"
           >
-            Decline
-          </button>
-          <button
-            onClick={acceptCookies}
-            className="px-4 py-2 text-sm bg-gold-500 text-white rounded-lg hover:bg-gold-600 transition-colors"
-          >
-            Accept
+            <X className="w-4 h-4" />
           </button>
         </div>
       </div>
