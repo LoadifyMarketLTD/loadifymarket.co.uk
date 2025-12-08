@@ -26,6 +26,7 @@ const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const CategoryManagementPage = lazy(() => import('./pages/CategoryManagementPage'));
 const SellerApprovalsPage = lazy(() => import('./pages/SellerApprovalsPage'));
+const ReportedListingsPage = lazy(() => import('./pages/ReportedListingsPage'));
 const AdminShipmentsPage = lazy(() => import('./pages/AdminShipmentsPage'));
 const OrdersPage = lazy(() => import('./pages/OrdersPage'));
 const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage'));
@@ -173,6 +174,11 @@ function App() {
           <Route path="admin/sellers" element={
             <Suspense fallback={<PageLoader />}>
               <SellerApprovalsPage />
+            </Suspense>
+          } />
+          <Route path="admin/reported-listings" element={
+            <Suspense fallback={<PageLoader />}>
+              <ReportedListingsPage />
             </Suspense>
           } />
           <Route path="admin/shipments" element={

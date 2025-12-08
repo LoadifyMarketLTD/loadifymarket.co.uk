@@ -29,12 +29,18 @@ export default function SellerProfilePage() {
       accountNumber: '',
       bankName: '',
     },
+    // Store information
+    storeName: '',
+    storeDescription: '',
+    storeLogo: '',
+    storeBanner: '',
   });
 
   const fetchProfile = async () => {
     if (!user) return;
 
     try {
+      // Fetch seller profile
       const { data, error } = await supabase
         .from('seller_profiles')
         .select('*')
@@ -42,6 +48,13 @@ export default function SellerProfilePage() {
         .single();
 
       if (error) throw error;
+
+      // Fetch store information
+      const { data: storeData } = await supabase
+        .from('seller_stores')
+        .select('*')
+        .eq('userId', user.id)
+        .single();
 
       if (data) {
         setFormData({
@@ -62,6 +75,10 @@ export default function SellerProfilePage() {
             accountNumber: '',
             bankName: '',
           },
+          storeName: storeData?.storeName || '',
+          storeDescription: storeData?.storeDescription || '',
+          storeLogo: storeData?.storeLogo || '',
+          storeBanner: storeData?.storeBanner || '',
         });
       }
     } catch (error) {
@@ -80,7 +97,7 @@ export default function SellerProfilePage() {
 
   const calculateCompleteness = () => {
     let completed = 0;
-    const total = 8;
+    const total = 10; // Increased to include store fields
 
     if (formData.businessName) completed++;
     if (formData.vatNumber) completed++;
@@ -90,6 +107,8 @@ export default function SellerProfilePage() {
     if (formData.businessAddress.postcode) completed++;
     if (formData.payoutDetails.accountHolderName) completed++;
     if (formData.payoutDetails.accountNumber) completed++;
+    if (formData.storeName) completed++;
+    if (formData.storeDescription) completed++;
 
     return Math.round((completed / total) * 100);
   };
@@ -104,6 +123,7 @@ export default function SellerProfilePage() {
     try {
       const completeness = calculateCompleteness();
 
+      // Update seller profile
       const { error } = await supabase
         .from('seller_profiles')
         .upsert({
@@ -116,6 +136,27 @@ export default function SellerProfilePage() {
           payoutDetails: formData.payoutDetails,
           profileCompleteness: completeness,
         });
+
+      if (error) throw error;
+
+      // Update or create store information
+      const storeSlug = formData.storeName
+        ? formData.storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+        : null;
+
+      const { error: storeError } = await supabase
+        .from('seller_stores')
+        .upsert({
+          userId: user.id,
+          storeName: formData.storeName || null,
+          storeSlug: storeSlug,
+          storeDescription: formData.storeDescription || null,
+          storeLogo: formData.storeLogo || null,
+          storeBanner: formData.storeBanner || null,
+          isActive: true,
+        });
+
+      if (storeError) throw storeError;
 
       if (error) throw error;
 
@@ -417,6 +458,82 @@ export default function SellerProfilePage() {
                   }
                   className="input-field"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Store Information */}
+          <div className="card mb-6">
+            <h3 className="text-lg font-bold mb-4">Store Information</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Customize your store front that buyers will see
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Store Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.storeName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, storeName: e.target.value })
+                  }
+                  className="input-field"
+                  placeholder="e.g., Premium Wholesale Supplies"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Store Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={formData.storeDescription}
+                  onChange={(e) =>
+                    setFormData({ ...formData, storeDescription: e.target.value })
+                  }
+                  rows={4}
+                  className="input-field"
+                  placeholder="Describe your store, products, and what makes you unique..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Store Logo URL (Optional)
+                </label>
+                <input
+                  type="url"
+                  value={formData.storeLogo}
+                  onChange={(e) =>
+                    setFormData({ ...formData, storeLogo: e.target.value })
+                  }
+                  className="input-field"
+                  placeholder="https://example.com/logo.png"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Enter a URL to your logo image
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Store Banner URL (Optional)
+                </label>
+                <input
+                  type="url"
+                  value={formData.storeBanner}
+                  onChange={(e) =>
+                    setFormData({ ...formData, storeBanner: e.target.value })
+                  }
+                  className="input-field"
+                  placeholder="https://example.com/banner.jpg"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Enter a URL to your banner image (recommended: 1200x300px)
+                </p>
               </div>
             </div>
           </div>
