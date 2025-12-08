@@ -94,14 +94,15 @@ export default function ProductPage() {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-smoke min-h-screen">
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Product Images */}
-            <div>
+        {/* Cinematic Product Container */}
+        <div className="bg-white rounded-cinematic-lg shadow-cinematic overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+            {/* Product Images - Cinematic */}
+            <div className="bg-gradient-to-br from-gray-100 to-gray-200 p-8">
               {/* Main Image */}
-              <div className="mb-4 rounded-lg overflow-hidden bg-gray-100">
+              <div className="mb-6 rounded-cinematic-md overflow-hidden bg-white shadow-cinematic-lg">
                 {product.images && product.images.length > 0 ? (
                   <img
                     src={product.images[selectedImage]}
@@ -109,21 +110,21 @@ export default function ProductPage() {
                     className="w-full h-96 object-contain"
                   />
                 ) : (
-                  <div className="w-full h-96 flex items-center justify-center">
-                    <span className="text-gray-400 text-lg">No Image Available</span>
+                  <div className="w-full h-96 flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400">
+                    <span className="text-gray-500 text-lg font-medium">No Image Available</span>
                   </div>
                 )}
               </div>
 
               {/* Thumbnail Images */}
               {product.images && product.images.length > 1 && (
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-3">
                   {product.images.map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
-                      className={`rounded-lg overflow-hidden border-2 ${
-                        selectedImage === index ? 'border-navy-800' : 'border-gray-200'
+                      className={`rounded-cinematic-sm overflow-hidden border-2 transition-all duration-300 ${
+                        selectedImage === index ? 'border-gold-400 shadow-cinematic-glow scale-105' : 'border-gray-300 hover:border-gold-400'
                       }`}
                     >
                       <img src={image} alt={`${product.title} ${index + 1}`} className="w-full h-20 object-cover" />
@@ -133,41 +134,41 @@ export default function ProductPage() {
               )}
             </div>
 
-            {/* Product Info */}
-            <div>
+            {/* Product Info - Cinematic */}
+            <div className="p-8 lg:p-12">
               {/* Title and Type Badge */}
-              <div className="flex items-start justify-between mb-4">
-                <h1 className="text-3xl font-bold flex-1">{product.title}</h1>
+              <div className="flex items-start justify-between mb-6">
+                <h1 className="text-3xl lg:text-4xl font-display font-bold text-jet flex-1">{product.title}</h1>
                 {product.type !== 'product' && (
-                  <span className="bg-gold-500 text-white px-3 py-1 rounded-lg text-sm font-medium ml-4">
-                    {product.type.toUpperCase()}
+                  <span className="bg-gold-400 text-jet px-4 py-2 rounded-cinematic-sm text-sm font-bold uppercase tracking-wide ml-4 shadow-cinematic">
+                    {product.type}
                   </span>
                 )}
               </div>
 
               {/* Rating */}
               {product.rating > 0 && (
-                <div className="flex items-center mb-4">
-                  <div className="flex text-gold-500 text-xl">
+                <div className="flex items-center mb-6">
+                  <div className="flex text-gold-400 text-xl">
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`h-5 w-5 ${i < Math.round(product.rating) ? 'fill-current' : ''}`}
+                        className={`h-6 w-6 ${i < Math.round(product.rating) ? 'fill-current' : ''}`}
                       />
                     ))}
                   </div>
-                  <span className="text-gray-600 ml-2">({product.reviewCount} reviews)</span>
+                  <span className="text-gray-600 ml-3 font-medium">({product.reviewCount} reviews)</span>
                 </div>
               )}
 
-              {/* Price */}
-              <div className="mb-6">
-                <div className="flex items-baseline space-x-2">
-                  <span className="text-4xl font-bold text-navy-800">{formatPrice(product.price)}</span>
-                  <span className="text-gray-500">VAT included</span>
+              {/* Price - Cinematic Gold */}
+              <div className="mb-8">
+                <div className="flex items-baseline space-x-3">
+                  <span className="text-5xl font-display font-bold text-gold-400">{formatPrice(product.price)}</span>
+                  <span className="text-gray-500 text-sm">VAT included</span>
                 </div>
                 {product.priceExVat && (
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-sm text-gray-600 mt-2">
                     Ex VAT: {formatPrice(product.priceExVat)} | VAT ({product.vatRate * 100}%):{' '}
                     {formatPrice(product.price - product.priceExVat)}
                   </p>
@@ -175,54 +176,54 @@ export default function ProductPage() {
               </div>
 
               {/* Stock Status */}
-              <div className="mb-6">
+              <div className="mb-8">
                 {product.stockStatus === 'in_stock' ? (
-                  <span className="text-green-600 font-medium flex items-center">
-                    <span className="h-2 w-2 bg-green-600 rounded-full mr-2"></span>
+                  <span className="text-green-600 font-semibold flex items-center text-lg">
+                    <span className="h-3 w-3 bg-green-600 rounded-full mr-3 animate-pulse"></span>
                     In Stock ({product.stockQuantity} available)
                   </span>
                 ) : product.stockStatus === 'low_stock' ? (
-                  <span className="text-orange-600 font-medium flex items-center">
-                    <span className="h-2 w-2 bg-orange-600 rounded-full mr-2"></span>
+                  <span className="text-orange-600 font-semibold flex items-center text-lg">
+                    <span className="h-3 w-3 bg-orange-600 rounded-full mr-3 animate-pulse"></span>
                     Low Stock (Only {product.stockQuantity} left)
                   </span>
                 ) : (
-                  <span className="text-red-600 font-medium flex items-center">
-                    <span className="h-2 w-2 bg-red-600 rounded-full mr-2"></span>
+                  <span className="text-red-600 font-semibold flex items-center text-lg">
+                    <span className="h-3 w-3 bg-red-600 rounded-full mr-3"></span>
                     Out of Stock
                   </span>
                 )}
               </div>
 
               {/* Condition */}
-              <div className="mb-6">
-                <span className="text-sm text-gray-600">Condition: </span>
-                <span className="font-medium capitalize">{product.condition}</span>
+              <div className="mb-8 p-4 bg-smoke rounded-cinematic-md">
+                <span className="text-sm text-gray-600 font-medium">Condition: </span>
+                <span className="font-bold capitalize text-jet">{product.condition}</span>
               </div>
 
-              {/* Quantity Selector */}
+              {/* Quantity Selector - Cinematic */}
               {product.stockQuantity > 0 && (
-                <div className="mb-6">
-                  <label className="block text-sm font-medium mb-2">Quantity</label>
+                <div className="mb-8">
+                  <label className="block text-sm font-bold mb-3 text-jet uppercase tracking-wide">Quantity</label>
                   <input
                     type="number"
                     min="1"
                     max={product.stockQuantity}
                     value={quantity}
                     onChange={(e) => setQuantity(Math.max(1, Math.min(product.stockQuantity, parseInt(e.target.value) || 1)))}
-                    className="input-field w-24"
+                    className="input-field w-32 text-lg font-semibold"
                   />
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="flex gap-4 mb-6">
+              {/* Action Buttons - Cinematic */}
+              <div className="flex gap-4 mb-8">
                 <button
                   onClick={handleAddToCart}
                   disabled={product.stockQuantity === 0}
-                  className="btn-primary flex-1 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-secondary flex-1 flex items-center justify-center space-x-3 py-4 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <ShoppingCart className="h-5 w-5" />
+                  <ShoppingCart className="h-6 w-6" />
                   <span>{product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}</span>
                 </button>
                 <button
@@ -235,35 +236,35 @@ export default function ProductPage() {
                     }
                   }}
                   disabled={wishlistLoading}
-                  className={`btn-outline p-3 transition-colors ${
-                    isInWishlist ? 'bg-red-50 border-red-300' : ''
+                  className={`btn-outline p-4 transition-all duration-300 ${
+                    isInWishlist ? 'bg-red-50 border-red-400 hover:bg-red-100' : 'hover:border-gold-400'
                   }`}
                   title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
                 >
-                  <Heart className={`h-5 w-5 ${isInWishlist ? 'fill-red-500 text-red-500' : ''}`} />
+                  <Heart className={`h-6 w-6 ${isInWishlist ? 'fill-red-500 text-red-500' : ''}`} />
                 </button>
-                <button className="btn-outline p-3">
-                  <Share2 className="h-5 w-5" />
+                <button className="btn-outline p-4 hover:border-gold-400 transition-all duration-300">
+                  <Share2 className="h-6 w-6" />
                 </button>
               </div>
 
-              {/* Pallet Info */}
+              {/* Pallet Info - Glass Card */}
               {product.type === 'pallet' && product.palletInfo && (
-                <div className="card bg-blue-50 border border-blue-200 mb-6">
-                  <h3 className="font-semibold mb-2">Pallet Information</h3>
-                  <div className="space-y-1 text-sm">
-                    <p><span className="font-medium">Pallet Count:</span> {product.palletInfo.palletCount}</p>
-                    <p><span className="font-medium">Items per Pallet:</span> {product.palletInfo.itemsPerPallet}</p>
-                    <p><span className="font-medium">Pallet Type:</span> {product.palletInfo.palletType}</p>
+                <div className="card-glass border border-white/30 mb-8">
+                  <h3 className="font-display font-bold mb-4 text-lg text-jet">Pallet Information</h3>
+                  <div className="space-y-2 text-sm">
+                    <p className="flex justify-between"><span className="font-semibold text-gray-700">Pallet Count:</span> <span className="font-bold text-jet">{product.palletInfo.palletCount}</span></p>
+                    <p className="flex justify-between"><span className="font-semibold text-gray-700">Items per Pallet:</span> <span className="font-bold text-jet">{product.palletInfo.itemsPerPallet}</span></p>
+                    <p className="flex justify-between"><span className="font-semibold text-gray-700">Pallet Type:</span> <span className="font-bold text-jet">{product.palletInfo.palletType}</span></p>
                   </div>
                 </div>
               )}
 
               {/* Dimensions */}
               {product.dimensions && (
-                <div className="mb-6">
-                  <h3 className="font-semibold mb-2">Dimensions</h3>
-                  <p className="text-sm text-gray-600">
+                <div className="mb-8 p-4 bg-smoke rounded-cinematic-md">
+                  <h3 className="font-bold mb-3 text-jet">Dimensions</h3>
+                  <p className="text-sm text-gray-700 font-medium">
                     {product.dimensions.length} × {product.dimensions.width} × {product.dimensions.height} cm
                     {product.weight && ` | Weight: ${product.weight} kg`}
                   </p>
