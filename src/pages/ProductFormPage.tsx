@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import type { ProductType, ProductCondition } from '../types';
+import CategorySelector from '../components/CategorySelector';
+import ImageUpload from '../components/ImageUpload';
 
 export default function ProductFormPage() {
   const { id } = useParams();
@@ -19,6 +21,7 @@ export default function ProductFormPage() {
     price: '',
     stockQuantity: '',
     categoryId: '',
+    subcategoryId: '',
     images: [] as string[],
     specifications: {} as Record<string, string>,
     weight: '',
@@ -55,6 +58,7 @@ export default function ProductFormPage() {
           price: data.price?.toString() || '',
           stockQuantity: data.stockQuantity?.toString() || '',
           categoryId: data.categoryId || '',
+          subcategoryId: data.subcategoryId || '',
           images: data.images || [],
           specifications: data.specifications || {},
           weight: data.weight?.toString() || '',
@@ -99,6 +103,7 @@ export default function ProductFormPage() {
         stockStatus: parseInt(formData.stockQuantity) > 10 ? 'in_stock' : 
                     parseInt(formData.stockQuantity) > 0 ? 'low_stock' : 'out_of_stock',
         categoryId: formData.categoryId || null,
+        subcategoryId: formData.subcategoryId || null,
         images: formData.images,
         specifications: formData.specifications,
         weight: formData.weight ? parseFloat(formData.weight) : null,
@@ -259,6 +264,25 @@ export default function ProductFormPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Category Selection */}
+            <div className="mb-6">
+              <CategorySelector
+                selectedCategoryId={formData.categoryId}
+                selectedSubcategoryId={formData.subcategoryId}
+                onCategoryChange={(categoryId) => handleChange('categoryId', categoryId)}
+                onSubcategoryChange={(subcategoryId) => handleChange('subcategoryId', subcategoryId)}
+              />
+            </div>
+
+            {/* Product Images */}
+            <div className="mb-6">
+              <ImageUpload
+                images={formData.images}
+                onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
+                maxImages={10}
+              />
             </div>
 
             {/* Pallet Information */}

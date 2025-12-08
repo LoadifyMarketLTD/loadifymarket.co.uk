@@ -237,3 +237,72 @@ export interface NotificationSettings {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  receiverId: string;
+  productId?: string;
+  orderId?: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Conversation {
+  id: string;
+  user1Id: string;
+  user2Id: string;
+  productId?: string;
+  lastMessageAt: string;
+  createdAt: string;
+}
+
+export interface Cart {
+  id: string;
+  userId?: string;
+  sessionId?: string;
+  items: CartItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentSession {
+  id: string;
+  userId?: string;
+  stripeSessionId: string;
+  orderId?: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SellerStore {
+  userId: string;
+  storeName?: string;
+  storeSlug?: string;
+  storeLogo?: string;
+  storeDescription?: string;
+  storeBanner?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReportedListing {
+  id: string;
+  productId: string;
+  reportedBy: string;
+  reason: string;
+  description?: string;
+  status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
+  reviewedBy?: string;
+  reviewNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}

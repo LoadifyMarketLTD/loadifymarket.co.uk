@@ -19,19 +19,25 @@ const mockStorage = {
 
 // Initialize with sample data
 const initializeMockData = () => {
-  // Sample categories
-  mockStorage.categories.set('electronics', {
-    id: 'electronics',
-    name: 'Electronics',
-    slug: 'electronics',
-    parentId: null,
-  });
-  
-  mockStorage.categories.set('pallets', {
-    id: 'pallets',
-    name: 'Pallets',
-    slug: 'pallets',
-    parentId: null,
+  // Sample categories - Main categories
+  const mainCategories = [
+    { id: 'cat-mixed-lots', name: 'Mixed Job Lots', slug: 'mixed-job-lots' },
+    { id: 'cat-clothing', name: 'Clothing', slug: 'clothing' },
+    { id: 'cat-shoes', name: 'Shoes', slug: 'shoes' },
+    { id: 'cat-jewellery', name: 'Jewellery', slug: 'jewellery' },
+    { id: 'cat-electronics', name: 'Media & Electronics', slug: 'media-electronics' },
+    { id: 'cat-accessories', name: 'Accessories', slug: 'accessories' },
+    { id: 'cat-toys', name: 'Toys', slug: 'toys' },
+    { id: 'cat-health-beauty', name: 'Health & Beauty', slug: 'health-beauty' },
+    { id: 'cat-pets', name: 'Pets', slug: 'pets' },
+    { id: 'cat-memorabilia', name: 'Memorabilia', slug: 'memorabilia' },
+    { id: 'cat-adult', name: 'Adult', slug: 'adult' },
+    { id: 'cat-food-drink', name: 'Food & Drink', slug: 'food-drink' },
+    { id: 'cat-office', name: 'Office Supplies', slug: 'office-supplies' },
+  ];
+
+  mainCategories.forEach(cat => {
+    mockStorage.categories.set(cat.id, { ...cat, parentId: null });
   });
 
   // Sample products
@@ -42,12 +48,45 @@ const initializeMockData = () => {
     price: 1500.00,
     type: 'pallet',
     condition: 'new',
-    categoryId: 'electronics',
+    categoryId: 'cat-electronics',
     sellerId: 'seller-1',
-    stock: 10,
+    stockQuantity: 10,
+    isActive: true,
     isApproved: true,
-    palletCount: 1,
-    itemsPerPallet: 50,
+    palletInfo: { palletCount: 1, itemsPerPallet: 50 },
+    images: ['https://images.unsplash.com/photo-1498049794561-7780e7231661?w=800'],
+    createdAt: new Date().toISOString(),
+  });
+
+  mockStorage.products.set('product-2', {
+    id: 'product-2',
+    title: 'Men\'s Designer Clothing Mixed Lot',
+    description: 'Excellent mixed lot of branded men\'s clothing',
+    price: 850.00,
+    type: 'lot',
+    condition: 'new',
+    categoryId: 'cat-clothing',
+    sellerId: 'seller-1',
+    stockQuantity: 3,
+    isActive: true,
+    isApproved: true,
+    images: ['https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=800'],
+    createdAt: new Date().toISOString(),
+  });
+
+  mockStorage.products.set('product-3', {
+    id: 'product-3',
+    title: 'Refurbished iPhone 13 - 128GB',
+    description: 'Professionally refurbished iPhone in excellent condition',
+    price: 449.99,
+    type: 'product',
+    condition: 'refurbished',
+    categoryId: 'cat-electronics',
+    sellerId: 'seller-1',
+    stockQuantity: 12,
+    isActive: true,
+    isApproved: true,
+    images: ['https://images.unsplash.com/photo-1592286927505-2c7e370d2a3e?w=800'],
     createdAt: new Date().toISOString(),
   });
 };
