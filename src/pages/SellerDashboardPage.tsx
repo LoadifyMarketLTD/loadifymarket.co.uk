@@ -472,13 +472,15 @@ export default function SellerDashboardPage() {
               <div className="card">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold">My Products</h2>
-                  <Link to="/seller/products/new" className="btn-primary">
-                    Add New Product
+                  <Link to="/seller/products/new" className="btn-primary flex items-center space-x-2">
+                    <Plus className="h-4 w-4" />
+                    <span>Add New Product</span>
                   </Link>
                 </div>
 
                 {products.length === 0 ? (
                   <div className="text-center py-12">
+                    <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
                     <p className="text-gray-600 mb-4">You haven't added any products yet.</p>
                     <Link to="/seller/products/new" className="btn-primary">
                       Create Your First Product
@@ -487,7 +489,7 @@ export default function SellerDashboardPage() {
                 ) : (
                   <div className="space-y-3">
                     {products.map((product) => (
-                      <div key={product.id} className="flex items-center justify-between border-b pb-3">
+                      <div key={product.id} className="flex items-center justify-between border-b pb-3 hover:bg-gray-50 p-2 rounded transition-colors">
                         <div className="flex items-center space-x-4">
                           {product.images && product.images.length > 0 ? (
                             <img
@@ -497,28 +499,69 @@ export default function SellerDashboardPage() {
                             />
                           ) : (
                             <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                              <span className="text-gray-400 text-xs">No Image</span>
+                              <Package className="h-6 w-6 text-gray-400" />
                             </div>
                           )}
                           <div>
                             <p className="font-medium">{product.title}</p>
                             <p className="text-sm text-gray-600">
-                              {formatPrice(product.price)} | Stock: {product.stockQuantity}
+                              {formatPrice(product.price)} | Stock: {product.stockQuantity} | Views: {product.views}
                             </p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <span className={`text-xs px-2 py-0.5 rounded ${
+                                product.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {product.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                              <span className={`text-xs px-2 py-0.5 rounded ${
+                                product.isApproved ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {product.isApproved ? 'Approved' : 'Pending Approval'}
+                              </span>
+                              <span className="text-xs px-2 py-0.5 rounded bg-purple-100 text-purple-800">
+                                {product.type}
+                              </span>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span className={`text-xs px-2 py-1 rounded ${
-                            product.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {product.isActive ? 'Active' : 'Inactive'}
-                          </span>
+                          <Link
+                            to={`/product/${product.id}`}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                            title="View product"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Link>
                           <Link
                             to={`/seller/products/${product.id}/edit`}
-                            className="btn-outline text-sm py-1 px-3"
+                            className="p-2 text-green-600 hover:bg-green-50 rounded"
+                            title="Edit product"
                           >
                             <Edit className="h-4 w-4" />
                           </Link>
+                          <button
+                            onClick={async () => {
+                              if (!window.confirm('Are you sure you want to delete this product?')) return;
+                              
+                              try {
+                                const { error } = await supabase
+                                  .from('products')
+                                  .delete()
+                                  .eq('id', product.id);
+                                
+                                if (error) throw error;
+                                alert('Product deleted successfully!');
+                                fetchData();
+                              } catch (error) {
+                                console.error('Error deleting product:', error);
+                                alert('Failed to delete product');
+                              }
+                            }}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded"
+                            title="Delete product"
+                          >
+                            <Package className="h-4 w-4" />
+                          </button>
                         </div>
                       </div>
                     ))}

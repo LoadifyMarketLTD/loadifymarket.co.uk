@@ -24,6 +24,8 @@ const SellerReturnsPage = lazy(() => import('./pages/SellerReturnsPage'));
 const SellerShipmentsPage = lazy(() => import('./pages/SellerShipmentsPage'));
 const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+const CategoryManagementPage = lazy(() => import('./pages/CategoryManagementPage'));
+const SellerApprovalsPage = lazy(() => import('./pages/SellerApprovalsPage'));
 const AdminShipmentsPage = lazy(() => import('./pages/AdminShipmentsPage'));
 const OrdersPage = lazy(() => import('./pages/OrdersPage'));
 const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage'));
@@ -32,6 +34,7 @@ const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
 const ReturnsPage = lazy(() => import('./pages/ReturnsPage'));
 const DisputesPage = lazy(() => import('./pages/DisputesPage'));
 const WishlistPage = lazy(() => import('./pages/WishlistPage'));
+const MessagesPage = lazy(() => import('./pages/MessagesPage'));
 const NotificationSettingsPage = lazy(() => import('./pages/NotificationSettingsPage'));
 const HelpPage = lazy(() => import('./pages/HelpPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
@@ -162,6 +165,16 @@ function App() {
               <AdminDashboardPage />
             </Suspense>
           } />
+          <Route path="admin/categories" element={
+            <Suspense fallback={<PageLoader />}>
+              <CategoryManagementPage />
+            </Suspense>
+          } />
+          <Route path="admin/sellers" element={
+            <Suspense fallback={<PageLoader />}>
+              <SellerApprovalsPage />
+            </Suspense>
+          } />
           <Route path="admin/shipments" element={
             <Suspense fallback={<PageLoader />}>
               <AdminShipmentsPage />
@@ -200,6 +213,11 @@ function App() {
           <Route path="wishlist" element={
             <Suspense fallback={<PageLoader />}>
               <WishlistPage />
+            </Suspense>
+          } />
+          <Route path="messages" element={
+            <Suspense fallback={<PageLoader />}>
+              <MessagesPage />
             </Suspense>
           } />
           <Route path="notifications" element={
