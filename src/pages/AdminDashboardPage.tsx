@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import type { User, Product, Order, Dispute } from '../types';
@@ -300,7 +301,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="card">
                     <h2 className="text-xl font-bold mb-4">Pending Product Approvals</h2>
                     {products.filter(p => !p.isApproved).length === 0 ? (
@@ -347,6 +348,24 @@ export default function AdminDashboardPage() {
                         ))}
                       </div>
                     )}
+                  </div>
+
+                  <div className="card">
+                    <h2 className="text-xl font-bold mb-4">Quick Links</h2>
+                    <div className="space-y-2">
+                      <Link to="/admin/sellers" className="block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                        <p className="font-medium">Manage Sellers</p>
+                        <p className="text-sm text-gray-600">{stats.totalSellers} sellers registered</p>
+                      </Link>
+                      <Link to="/admin/categories" className="block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                        <p className="font-medium">Manage Categories</p>
+                        <p className="text-sm text-gray-600">Edit marketplace categories</p>
+                      </Link>
+                      <Link to="/admin/reported-listings" className="block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                        <p className="font-medium">Reported Listings</p>
+                        <p className="text-sm text-gray-600">Review reported products</p>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>

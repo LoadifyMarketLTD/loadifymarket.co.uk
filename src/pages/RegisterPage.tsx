@@ -46,6 +46,40 @@ export default function RegisterPage() {
         });
 
         if (profileError) throw profileError;
+
+        // Create seller profile if registering as seller
+        if (isSeller) {
+          const { error: sellerProfileError } = await supabase
+            .from('seller_profiles')
+            .insert({
+              userId: data.user.id,
+              isApproved: false, // Sellers need admin approval
+              rating: 0,
+              totalSales: 0,
+              commission: 7.0, // Default 7% commission
+            });
+
+          if (sellerProfileError) throw sellerProfileError;
+
+          // Create empty seller store
+          const { error: storeError } = await supabase
+            .from('seller_stores')
+            .insert({
+              userId: data.user.id,
+              isActive: false, // Activate after approval
+            });
+
+          if (storeError) throw storeError;
+        } else {
+          // Create buyer profile for buyers
+          const { error: buyerProfileError } = await supabase
+            .from('buyer_profiles')
+            .insert({
+              userId: data.user.id,
+            });
+
+          if (buyerProfileError) throw buyerProfileError;
+        }
       }
 
       navigate('/login');
