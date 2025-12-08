@@ -49,9 +49,12 @@ export interface Address {
   country: string;
 }
 
-export type ProductType = 'product' | 'pallet' | 'lot' | 'clearance';
+export type ProductType = 'product' | 'pallet' | 'lot' | 'clearance' | 'retail' | 'handmade' | 'wholesale' | 'logistics';
 export type ProductCondition = 'new' | 'used' | 'refurbished';
 export type StockStatus = 'in_stock' | 'low_stock' | 'out_of_stock' | 'clearance';
+
+// Listing type for filtering and display
+export type ListingType = 'pallet' | 'wholesale' | 'retail' | 'handmade' | 'logistics';
 
 export interface Product {
   id: string;
@@ -79,6 +82,18 @@ export interface Product {
     palletCount: number;
     itemsPerPallet: number;
     palletType: string;
+  };
+  // New fields for marketplace diversity
+  listingType?: ListingType; // Main classification for filtering
+  isHandmade?: boolean; // Flag for handmade items
+  isUnique?: boolean; // Flag for unique/one-of-a-kind items
+  artistName?: string; // For handmade items - creator/artist name
+  logisticsInfo?: {
+    // For logistics jobs
+    pickupLocation?: string;
+    deliveryLocation?: string;
+    vehicleType?: string;
+    pickupDate?: string;
   };
   isActive: boolean;
   isApproved: boolean;
