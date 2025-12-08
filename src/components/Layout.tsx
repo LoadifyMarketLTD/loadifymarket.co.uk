@@ -5,7 +5,7 @@ import CookieBanner from './CookieBanner';
 
 export default function Layout() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-jet">
       <Header />
       <main className="flex-grow">
         <Outlet />

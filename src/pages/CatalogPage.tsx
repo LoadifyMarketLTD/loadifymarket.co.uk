@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Product, Category } from '../types';
-import { Grid, List, SlidersHorizontal, Search, X } from 'lucide-react';
+import { Grid, List, Search, X, Package, Truck, Sparkles, ArrowRight, Filter } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 
 export default function CatalogPage() {
@@ -12,13 +12,13 @@ export default function CatalogPage() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Filter states
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [selectedCondition, setSelectedCondition] = useState<string>('');
-  const [selectedType, setSelectedType] = useState<string>('');
+  const [selectedType, setSelectedType] = useState<string>(searchParams.get('type') || '');
   const [selectedListingType, setSelectedListingType] = useState<string>(searchParams.get('listingType') || '');
   const [sortBy, setSortBy] = useState<string>('createdAt_desc');
 
@@ -78,7 +78,7 @@ export default function CatalogPage() {
       query = query.order(field, { ascending: direction === 'asc' });
 
       const { data, error } = await query.limit(50);
-      
+
       if (error) throw error;
       setProducts(data || []);
     } catch (error) {
@@ -93,79 +93,195 @@ export default function CatalogPage() {
     fetchProducts();
   }, [fetchProducts]);
 
+  // Get page title based on type filter
+  const getPageTitle = () => {
+    switch (selectedType) {
+      case 'logistics':
+        return 'Logistics Loads';
+      case 'pallet':
+        return 'Pallets & Wholesale';
+      case 'handmade':
+        return 'Handmade & Artisan';
+      default:
+        return 'Product Catalog';
+    }
+  };
+
+  // Get type icon
+  const getTypeIcon = () => {
+    switch (selectedType) {
+      case 'logistics':
+        return Truck;
+      case 'pallet':
+        return Package;
+      case 'handmade':
+        return Sparkles;
+      default:
+        return Package;
+    }
+  };
+
+  const TypeIcon = getTypeIcon();
+
   return (
-    <div className="bg-smoke min-h-screen">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header with Search - Cinematic */}
-        <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-display font-bold mb-6 text-jet">Product Catalog</h1>
-          
-          {/* Search Bar - Cinematic */}
-          <div className="relative max-w-3xl">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400" />
+    <div className="bg-jet min-h-screen pt-24">
+      {/* Hero Header */}
+      <section className="bg-gradient-to-b from-graphite/50 to-jet py-12">
+        <div className="container-cinematic">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 rounded-premium-sm bg-gold/20">
+              <TypeIcon className="w-8 h-8 text-gold" />
+            </div>
+            <div>
+              <h1 className="heading-section text-white">{getPageTitle()}</h1>
+              <p className="text-white/60 mt-1">
+                {products.length} {products.length === 1 ? 'item' : 'items'} available
+              </p>
+            </div>
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative max-w-2xl mt-8">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/40" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products, pallets, handmade items..."
-              className="w-full pl-14 pr-12 py-4 border-2 border-gray-300 rounded-cinematic-md focus:ring-2 focus:ring-gold-400 focus:border-gold-400 transition-all duration-300 shadow-cinematic text-lg"
+              placeholder="Search products, pallets, lots..."
+              className="input-search w-full pl-12 pr-12"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gold-400 transition-colors"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-gold transition-colors"
               >
-                <X className="h-6 w-6" />
+                <X className="h-5 w-5" />
               </button>
             )}
           </div>
-        </div>
 
-        {/* Toolbar - Cinematic */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <div className="text-gray-600 font-medium text-lg">
-            <span className="text-jet font-bold">{products.length}</span> {products.length === 1 ? 'product' : 'products'} found
+          {/* Quick Type Filters */}
+          <div className="flex flex-wrap gap-3 mt-6">
+            <button
+              onClick={() => setSelectedType('')}
+              className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 ${
+                !selectedType
+                  ? 'bg-gold text-jet'
+                  : 'bg-graphite text-white hover:bg-graphite/80'
+              }`}
+            >
+              All Items
+            </button>
+            <button
+              onClick={() => setSelectedType('logistics')}
+              className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                selectedType === 'logistics'
+                  ? 'bg-gold text-jet'
+                  : 'bg-graphite text-white hover:bg-graphite/80'
+              }`}
+            >
+              <Truck className="w-4 h-4" />
+              Logistics
+            </button>
+            <button
+              onClick={() => setSelectedType('pallet')}
+              className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                selectedType === 'pallet'
+                  ? 'bg-gold text-jet'
+                  : 'bg-graphite text-white hover:bg-graphite/80'
+              }`}
+            >
+              <Package className="w-4 h-4" />
+              Pallets
+            </button>
+            <button
+              onClick={() => setSelectedType('handmade')}
+              className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                selectedType === 'handmade'
+                  ? 'bg-gold text-jet'
+                  : 'bg-graphite text-white hover:bg-graphite/80'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              Handmade
+            </button>
           </div>
-          <div className="flex items-center space-x-4">
-            {/* View Toggle - Cinematic */}
-            <div className="flex bg-white rounded-cinematic-md border-2 border-gray-200 shadow-cinematic overflow-hidden">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-3 ${viewMode === 'grid' ? 'bg-jet text-gold-400' : 'text-gray-600 hover:bg-gray-50'} transition-all duration-300`}
-                aria-label="Grid view"
-              >
-                <Grid className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-3 ${viewMode === 'list' ? 'bg-jet text-gold-400' : 'text-gray-600 hover:bg-gray-50'} transition-all duration-300`}
-                aria-label="List view"
-              >
-                <List className="h-5 w-5" />
-              </button>
-            </div>
-            
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <div className="container-cinematic py-8">
+        {/* Toolbar */}
+        <div className="flex flex-wrap justify-between items-center mb-8 gap-4">
+          <div className="flex items-center gap-4">
             {/* Filter Toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="btn-secondary flex items-center space-x-2"
+              className={`btn-glass flex items-center gap-2 ${showFilters ? 'border-gold/50' : ''}`}
             >
-              <SlidersHorizontal className="h-5 w-5" />
+              <Filter className="h-5 w-5" />
               <span>Filters</span>
+            </button>
+
+            {/* Sort */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="input-field py-2 px-4 bg-graphite border-white/10"
+            >
+              <option value="createdAt_desc">Newest First</option>
+              <option value="createdAt_asc">Oldest First</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="rating_desc">Highest Rated</option>
+            </select>
+          </div>
+
+          {/* View Toggle */}
+          <div className="flex bg-graphite rounded-premium-sm overflow-hidden">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-3 transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-gold text-jet'
+                  : 'text-white/60 hover:text-white'
+              }`}
+              aria-label="Grid view"
+            >
+              <Grid className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-3 transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-gold text-jet'
+                  : 'text-white/60 hover:text-white'
+              }`}
+              aria-label="List view"
+            >
+              <List className="h-5 w-5" />
             </button>
           </div>
         </div>
 
         <div className="flex gap-8">
-          {/* Filters Sidebar - Cinematic */}
+          {/* Filters Sidebar */}
           {showFilters && (
             <div className="w-72 flex-shrink-0">
-              <div className="card-glass sticky top-24 border border-white/30">
-                <h2 className="text-xl font-display font-bold mb-6 text-jet">Filters</h2>
-                
+              <div className="card-glass sticky top-28">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-bold text-white">Filters</h2>
+                  <button
+                    onClick={() => setShowFilters(false)}
+                    className="text-white/40 hover:text-white transition-colors lg:hidden"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
                 {/* Category */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">Category</label>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-white/60 mb-2">Category</label>
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
@@ -180,29 +296,24 @@ export default function CatalogPage() {
                   </select>
                 </div>
 
-                {/* Product Type */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">Product Type</label>
+                {/* Condition */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-white/60 mb-2">Condition</label>
                   <select
-                    value={selectedType}
-                    onChange={(e) => setSelectedType(e.target.value)}
+                    value={selectedCondition}
+                    onChange={(e) => setSelectedCondition(e.target.value)}
                     className="input-field"
                   >
-                    <option value="">All Types</option>
-                    <option value="product">Regular Product</option>
-                    <option value="pallet">Pallet</option>
-                    <option value="lot">Lot</option>
-                    <option value="clearance">Clearance</option>
-                    <option value="retail">Retail</option>
-                    <option value="handmade">Handmade</option>
-                    <option value="wholesale">Wholesale</option>
-                    <option value="logistics">Logistics</option>
+                    <option value="">All Conditions</option>
+                    <option value="new">New</option>
+                    <option value="used">Used</option>
+                    <option value="refurbished">Refurbished</option>
                   </select>
                 </div>
 
-                {/* Listing Type - New filter for marketplace diversity */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">Marketplace</label>
+                {/* Listing Type */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-white/60 mb-2">Marketplace</label>
                   <select
                     value={selectedListingType}
                     onChange={(e) => setSelectedListingType(e.target.value)}
@@ -216,37 +327,10 @@ export default function CatalogPage() {
                   </select>
                 </div>
 
-                {/* Condition */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">Condition</label>
-                  <select
-                    value={selectedCondition}
-                    onChange={(e) => setSelectedCondition(e.target.value)}
-                    className="input-field"
-                  >
-                    <option value="">All Conditions</option>
-                    <option value="new">New</option>
-                    <option value="used">Used</option>
-                    <option value="refurbished">Refurbished</option>
-                  </select>
-                </div>
+                {/* Divider */}
+                <div className="divider-fade my-6" />
 
-                {/* Sort */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2">Sort By</label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="input-field"
-                  >
-                    <option value="createdAt_desc">Newest First</option>
-                    <option value="createdAt_asc">Oldest First</option>
-                    <option value="price_asc">Price: Low to High</option>
-                    <option value="price_desc">Price: High to Low</option>
-                    <option value="rating_desc">Highest Rated</option>
-                  </select>
-                </div>
-
+                {/* Clear Filters */}
                 <button
                   onClick={() => {
                     setSearchQuery('');
@@ -257,7 +341,7 @@ export default function CatalogPage() {
                     setPriceRange([0, 10000]);
                     setSortBy('createdAt_desc');
                   }}
-                  className="w-full text-sm text-navy-800 hover:underline"
+                  className="w-full btn-outline py-3 text-sm"
                 >
                   Clear All Filters
                 </button>
@@ -265,30 +349,110 @@ export default function CatalogPage() {
             </div>
           )}
 
-          {/* Products Grid/List - Cinematic */}
+          {/* Products Grid/List */}
           <div className="flex-1">
             {loading ? (
               <div className="flex justify-center items-center h-64">
-                <div className="text-gray-500 font-medium">Loading products...</div>
+                <div className="text-center">
+                  <div className="w-12 h-12 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                  <p className="text-white/60">Loading products...</p>
+                </div>
               </div>
             ) : products.length === 0 ? (
-              <div className="card text-center py-16">
-                <p className="text-gray-600 mb-6 text-lg">No products found matching your criteria.</p>
+              <div className="card-glass text-center py-16">
+                <Package className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-white mb-2">No products found</h3>
+                <p className="text-white/60 mb-6">Try adjusting your filters or search criteria.</p>
                 <button
                   onClick={() => {
                     setSelectedType('');
                     setSelectedCondition('');
+                    setSelectedListingType('');
+                    setSearchQuery('');
                     setPriceRange([0, 10000]);
                   }}
-                  className="btn-secondary"
+                  className="btn-primary"
                 >
                   Clear Filters
                 </button>
               </div>
-            ) : (
-              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8' : 'space-y-6'}>
+            ) : viewMode === 'grid' ? (
+              <div className="product-grid">
                 {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {products.map((product) => (
+                  <Link
+                    key={product.id}
+                    to={`/product/${product.id}`}
+                    className="card-glass flex gap-6 hover:scale-[1.01] transition-all duration-300 group"
+                  >
+                    {/* Product Image */}
+                    <div className="w-48 h-48 flex-shrink-0 rounded-premium-sm overflow-hidden bg-graphite">
+                      {product.images && product.images.length > 0 ? (
+                        <img
+                          src={product.images[0]}
+                          alt={product.title}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package className="w-12 h-12 text-white/20" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Product Info */}
+                    <div className="flex-1 py-2">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-bold text-lg text-white group-hover:text-gold transition-colors">
+                            {product.title}
+                          </h3>
+                          {product.type !== 'product' && (
+                            <span className="badge-gold mt-2 inline-block">
+                              {product.type.toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="price-tag">
+                            {new Intl.NumberFormat('en-GB', {
+                              style: 'currency',
+                              currency: 'GBP',
+                            }).format(product.price)}
+                          </p>
+                          <p className="text-xs text-white/40">VAT included</p>
+                        </div>
+                      </div>
+
+                      <p className="text-white/60 text-sm mb-4 line-clamp-2">
+                        {product.description}
+                      </p>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 text-sm text-white/40">
+                          <span className="capitalize">{product.condition}</span>
+                          <span>•</span>
+                          <span>{product.stockQuantity} available</span>
+                          {product.rating > 0 && (
+                            <>
+                              <span>•</span>
+                              <span className="text-gold">
+                                {'★'.repeat(Math.round(product.rating))} ({product.reviewCount})
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        <span className="text-gold font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          View Details <ArrowRight className="w-4 h-4" />
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
                 ))}
               </div>
             )}
