@@ -18,6 +18,7 @@ export default function CatalogPage() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [selectedCondition, setSelectedCondition] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('');
+  const [selectedListingType, setSelectedListingType] = useState<string>(searchParams.get('listingType') || '');
   const [sortBy, setSortBy] = useState<string>('createdAt_desc');
 
   // Fetch categories
@@ -65,6 +66,10 @@ export default function CatalogPage() {
       if (selectedType) {
         query = query.eq('type', selectedType);
       }
+      // Apply listing type filter
+      if (selectedListingType) {
+        query = query.eq('listingType', selectedListingType);
+      }
       query = query.gte('price', priceRange[0]).lte('price', priceRange[1]);
 
       // Apply sorting
@@ -81,7 +86,7 @@ export default function CatalogPage() {
     } finally {
       setLoading(false);
     }
-  }, [sortBy, selectedCondition, selectedType, priceRange, searchQuery, selectedCategory]);
+  }, [sortBy, selectedCondition, selectedType, selectedListingType, priceRange, searchQuery, selectedCategory]);
 
   useEffect(() => {
     fetchProducts();
@@ -194,6 +199,26 @@ export default function CatalogPage() {
                     <option value="pallet">Pallet</option>
                     <option value="lot">Lot</option>
                     <option value="clearance">Clearance</option>
+                    <option value="retail">Retail</option>
+                    <option value="handmade">Handmade</option>
+                    <option value="wholesale">Wholesale</option>
+                    <option value="logistics">Logistics</option>
+                  </select>
+                </div>
+
+                {/* Listing Type - New filter for marketplace diversity */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">Marketplace</label>
+                  <select
+                    value={selectedListingType}
+                    onChange={(e) => setSelectedListingType(e.target.value)}
+                    className="input-field"
+                  >
+                    <option value="">All Listings</option>
+                    <option value="pallet">Pallet & Wholesale</option>
+                    <option value="retail">Retail (Piece-by-Piece)</option>
+                    <option value="handmade">Handmade & Artisan</option>
+                    <option value="logistics">Logistics Jobs</option>
                   </select>
                 </div>
 
@@ -233,6 +258,7 @@ export default function CatalogPage() {
                     setSearchQuery('');
                     setSelectedCategory('');
                     setSelectedType('');
+                    setSelectedListingType('');
                     setSelectedCondition('');
                     setPriceRange([0, 10000]);
                     setSortBy('createdAt_desc');

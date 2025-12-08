@@ -1,11 +1,27 @@
 import { Link } from 'react-router-dom';
 import { Package, TrendingUp, Users, ShieldCheck } from 'lucide-react';
+import CinematicHero from '../components/cinematic/CinematicHero';
+import CinematicMarketplaceSwitch from '../components/cinematic/CinematicMarketplaceSwitch';
+import CinematicStoryStrip from '../components/cinematic/CinematicStoryStrip';
+import DailyTrendingHandmade from '../components/cinematic/DailyTrendingHandmade';
 
 export default function HomePage() {
   return (
     <div>
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-navy-900 via-navy-800 to-navy-900 overflow-hidden">
+      {/* New Cinematic Hero */}
+      <CinematicHero />
+
+      {/* Marketplace Mode Switch */}
+      <CinematicMarketplaceSwitch />
+
+      {/* Story Strip - How It Works */}
+      <CinematicStoryStrip />
+
+      {/* Daily Trending Handmade Section */}
+      <DailyTrendingHandmade />
+
+      {/* Original Hero Section - Keeping as backup */}
+      <section className="relative bg-gradient-to-br from-navy-900 via-navy-800 to-navy-900 overflow-hidden hidden">
         {/* Decorative background elements */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-gold-400 rounded-full blur-3xl"></div>
