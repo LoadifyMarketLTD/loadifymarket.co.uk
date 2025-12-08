@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Product, Category } from '../types';
 import { Grid, List, SlidersHorizontal, Search, X } from 'lucide-react';
+import ProductCard from '../components/ProductCard';
 
 export default function CatalogPage() {
   const [searchParams] = useSearchParams();
@@ -92,59 +93,52 @@ export default function CatalogPage() {
     fetchProducts();
   }, [fetchProducts]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-    }).format(price);
-  };
-
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-smoke min-h-screen">
       <div className="container mx-auto px-4 py-8">
-        {/* Header with Search */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold mb-4">Product Catalog</h1>
+        {/* Header with Search - Cinematic */}
+        <div className="mb-8">
+          <h1 className="text-4xl md:text-5xl font-display font-bold mb-6 text-jet">Product Catalog</h1>
           
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          {/* Search Bar - Cinematic */}
+          <div className="relative max-w-3xl">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products..."
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-navy-800 focus:border-transparent"
+              placeholder="Search products, pallets, handmade items..."
+              className="w-full pl-14 pr-12 py-4 border-2 border-gray-300 rounded-cinematic-md focus:ring-2 focus:ring-gold-400 focus:border-gold-400 transition-all duration-300 shadow-cinematic text-lg"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gold-400 transition-colors"
               >
-                <X className="h-5 w-5" />
+                <X className="h-6 w-6" />
               </button>
             )}
           </div>
         </div>
 
-        {/* Toolbar */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="text-gray-600">
-            {products.length} {products.length === 1 ? 'product' : 'products'} found
+        {/* Toolbar - Cinematic */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div className="text-gray-600 font-medium text-lg">
+            <span className="text-jet font-bold">{products.length}</span> {products.length === 1 ? 'product' : 'products'} found
           </div>
           <div className="flex items-center space-x-4">
-            {/* View Toggle */}
-            <div className="flex bg-white rounded-lg border border-gray-200">
+            {/* View Toggle - Cinematic */}
+            <div className="flex bg-white rounded-cinematic-md border-2 border-gray-200 shadow-cinematic overflow-hidden">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 ${viewMode === 'grid' ? 'bg-navy-800 text-white' : 'text-gray-600'} rounded-l-lg transition-colors`}
+                className={`p-3 ${viewMode === 'grid' ? 'bg-jet text-gold-400' : 'text-gray-600 hover:bg-gray-50'} transition-all duration-300`}
                 aria-label="Grid view"
               >
                 <Grid className="h-5 w-5" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 ${viewMode === 'list' ? 'bg-navy-800 text-white' : 'text-gray-600'} rounded-r-lg transition-colors`}
+                className={`p-3 ${viewMode === 'list' ? 'bg-jet text-gold-400' : 'text-gray-600 hover:bg-gray-50'} transition-all duration-300`}
                 aria-label="List view"
               >
                 <List className="h-5 w-5" />
@@ -154,7 +148,7 @@ export default function CatalogPage() {
             {/* Filter Toggle */}
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="btn-outline flex items-center space-x-2"
+              className="btn-secondary flex items-center space-x-2"
             >
               <SlidersHorizontal className="h-5 w-5" />
               <span>Filters</span>
@@ -162,12 +156,12 @@ export default function CatalogPage() {
           </div>
         </div>
 
-        <div className="flex gap-6">
-          {/* Filters Sidebar */}
+        <div className="flex gap-8">
+          {/* Filters Sidebar - Cinematic */}
           {showFilters && (
-            <div className="w-64 flex-shrink-0">
-              <div className="card sticky top-4">
-                <h2 className="text-lg font-semibold mb-4">Filters</h2>
+            <div className="w-72 flex-shrink-0">
+              <div className="card-glass sticky top-24 border border-white/30">
+                <h2 className="text-xl font-display font-bold mb-6 text-jet">Filters</h2>
                 
                 {/* Category */}
                 <div className="mb-4">
@@ -271,87 +265,30 @@ export default function CatalogPage() {
             </div>
           )}
 
-          {/* Products Grid/List */}
+          {/* Products Grid/List - Cinematic */}
           <div className="flex-1">
             {loading ? (
               <div className="flex justify-center items-center h-64">
-                <div className="text-gray-500">Loading products...</div>
+                <div className="text-gray-500 font-medium">Loading products...</div>
               </div>
             ) : products.length === 0 ? (
-              <div className="card text-center py-12">
-                <p className="text-gray-600 mb-4">No products found matching your criteria.</p>
+              <div className="card text-center py-16">
+                <p className="text-gray-600 mb-6 text-lg">No products found matching your criteria.</p>
                 <button
                   onClick={() => {
                     setSelectedType('');
                     setSelectedCondition('');
                     setPriceRange([0, 10000]);
                   }}
-                  className="btn-primary"
+                  className="btn-secondary"
                 >
                   Clear Filters
                 </button>
               </div>
             ) : (
-              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
+              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8' : 'space-y-6'}>
                 {products.map((product) => (
-                  <Link
-                    key={product.id}
-                    to={`/product/${product.id}`}
-                    className={`card hover:shadow-lg transition-shadow ${viewMode === 'list' ? 'flex gap-4' : ''}`}
-                  >
-                    {/* Product Image */}
-                    <div className={viewMode === 'list' ? 'w-48 flex-shrink-0' : 'w-full'}>
-                      {product.images && product.images.length > 0 ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.title}
-                          className={`w-full ${viewMode === 'grid' ? 'h-48' : 'h-full'} object-cover rounded-lg`}
-                        />
-                      ) : (
-                        <div className={`w-full ${viewMode === 'grid' ? 'h-48' : 'h-full'} bg-gray-200 rounded-lg flex items-center justify-center`}>
-                          <span className="text-gray-400">No Image</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Product Info */}
-                    <div className="mt-4 flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-semibold text-lg line-clamp-2">{product.title}</h3>
-                        {product.type !== 'product' && (
-                          <span className="bg-gold-500 text-white text-xs px-2 py-1 rounded ml-2 flex-shrink-0">
-                            {product.type.toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-                      
-                      <p className="text-gray-600 text-sm mb-2 line-clamp-2">{product.description}</p>
-                      
-                      <div className="flex items-center justify-between mt-4">
-                        <div>
-                          <p className="text-2xl font-bold text-navy-800">{formatPrice(product.price)}</p>
-                          <p className="text-xs text-gray-500">VAT included</p>
-                        </div>
-                        
-                        {product.stockStatus === 'in_stock' ? (
-                          <span className="text-green-600 text-sm font-medium">In Stock</span>
-                        ) : product.stockStatus === 'low_stock' ? (
-                          <span className="text-orange-600 text-sm font-medium">Low Stock</span>
-                        ) : (
-                          <span className="text-red-600 text-sm font-medium">Out of Stock</span>
-                        )}
-                      </div>
-
-                      {product.rating > 0 && (
-                        <div className="flex items-center mt-2">
-                          <div className="flex text-gold-500">
-                            {'★'.repeat(Math.round(product.rating))}{'☆'.repeat(5 - Math.round(product.rating))}
-                          </div>
-                          <span className="text-sm text-gray-600 ml-2">({product.reviewCount})</span>
-                        </div>
-                      )}
-                    </div>
-                  </Link>
+                  <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             )}
