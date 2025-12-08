@@ -207,7 +207,7 @@ const palletStock = [
   },
   {
     id: 2,
-    category: 'Clothing - Women\'s Fashion',
+    category: "Clothing - Women's Fashion",
     palletCount: 6,
     rrp: 18000,
     price: 6499,
