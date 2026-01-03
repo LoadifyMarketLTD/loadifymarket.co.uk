@@ -10,6 +10,12 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# Disable Netlify AI telemetry to prevent 400 errors
+[[redirects]]
+  from = "/.netlify/ai/*"
+  to = "/404"
+  status = 404
+
 # SPA redirect for React Router
 [[redirects]]
   from = "/*"
