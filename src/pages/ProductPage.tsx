@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { useCartStore } from '../store';
+import { useCartStore, useAuthStore } from '../store';
 import { useWishlist } from '../lib/useWishlist';
 import type { Product } from '../types';
 import RelatedProducts from '../components/RelatedProducts';
 import ProductQA from '../components/ProductQA';
+import FrequentlyBoughtTogether from '../components/FrequentlyBoughtTogether';
 import {
   ShoppingCart,
   Heart,
@@ -24,6 +25,7 @@ import {
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -45,17 +47,38 @@ export default function ProductPage() {
       if (error) throw error;
       setProduct(data);
 
-      // Increment view count
-      await supabase
-        .from('products')
-        .update({ views: (data.views || 0) + 1 })
-        .eq('id', id);
+      // Track product view using enhanced tracking
+      const sessionId = localStorage.getItem('sessionId') || 
+        `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      if (!localStorage.getItem('sessionId')) {
+        localStorage.setItem('sessionId', sessionId);
+      }
+
+      // Call the track_product_view function
+      const { error: trackError } = await supabase.rpc('track_product_view', {
+        p_product_id: id,
+        p_user_id: user?.id || null,
+        p_session_id: !user ? sessionId : null,
+      });
+
+      if (trackError) {
+        console.warn('Error tracking product view:', trackError);
+        // Fallback to simple increment if function doesn't exist
+        await supabase
+          .from('products')
+          .update({ 
+            views: (data.views || 0) + 1,
+            lastViewedAt: new Date().toISOString()
+          })
+          .eq('id', id);
+      }
     } catch (error) {
       console.error('Error fetching product:', error);
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, user]);
 
   useEffect(() => {
     if (id) {
@@ -64,7 +87,7 @@ export default function ProductPage() {
     }
   }, [id, fetchProduct, checkWishlist]);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
 
     addItem({
@@ -72,6 +95,26 @@ export default function ProductPage() {
       quantity,
       price: product.price,
     });
+
+    // Track add to cart
+    try {
+      const { error } = await supabase.rpc('track_add_to_cart', {
+        p_product_id: product.id
+      });
+
+      if (error) {
+        console.warn('Error tracking add to cart:', error);
+        // Fallback to simple increment
+        await supabase
+          .from('products')
+          .update({ 
+            addToCartCount: (product.addToCartCount || 0) + 1
+          })
+          .eq('id', product.id);
+      }
+    } catch (error) {
+      console.warn('Failed to track add to cart:', error);
+    }
 
     // Could add a toast notification here
     alert('Product added to cart!');
@@ -454,6 +497,9 @@ export default function ProductPage() {
             </div>
           </div>
         )}
+
+        {/* Frequently Bought Together */}
+        <FrequentlyBoughtTogether productId={product.id} currentProduct={product} />
 
         {/* Product Q&A Section */}
         <div className="mt-12">
