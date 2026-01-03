@@ -9,13 +9,13 @@ The following users have been configured in the system:
 ### Client 1: Angelica Toda
 - **Email**: angelicatoda@gmail.com
 - **Password**: Johnny2000$$
-- **Role**: Buyer
+- **Role**: Seller (can both buy and sell)
 - **User ID**: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
 
 ### Client 2: Daniel Preda
 - **Email**: dannyelbill@gmail.com
 - **Password**: Johnny2000$$
-- **Role**: Buyer
+- **Role**: Seller (can both buy and sell)
 - **User ID**: dddddddd-dddd-dddd-dddd-dddddddddddd
 
 ### Admin User
@@ -23,6 +23,8 @@ The following users have been configured in the system:
 - **Password**: Johnny2000$$
 - **Role**: Admin
 - **User ID**: 99999999-9999-9999-9999-999999999999
+
+**Note**: Both Angelica Toda and Daniel Preda are configured as sellers, which allows them to both buy products and sell their own products on the platform.
 
 ## Database Setup
 

@@ -23,12 +23,12 @@ Navigate to the login page and try logging in with the following credentials:
 #### Client 1: Angelica Toda
 - **Email**: angelicatoda@gmail.com
 - **Password**: Johnny2000$$
-- **Expected Result**: Successfully logs in as a buyer
+- **Expected Result**: Successfully logs in as a seller (can both buy and sell)
 
 #### Client 2: Daniel Preda
 - **Email**: dannyelbill@gmail.com
 - **Password**: Johnny2000$$
-- **Expected Result**: Successfully logs in as a buyer
+- **Expected Result**: Successfully logs in as a seller (can both buy and sell)
 
 #### Admin User
 - **Email**: loadifymarket.co.uk@gmail.com
@@ -60,8 +60,8 @@ The mock Supabase client includes:
 1. **Password Validation**: Only accepts "Johnny2000$$" as the password
 2. **User-Specific Data**: Returns the correct user object for each email
 3. **Role Assignment**: 
-   - Angelica Toda: buyer
-   - Daniel Preda: buyer
+   - Angelica Toda: seller (can both buy and sell)
+   - Daniel Preda: seller (can both buy and sell)
    - Admin: admin
 4. **User Storage**: All users are stored in the mock storage and can be queried
 

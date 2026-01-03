@@ -17,31 +17,39 @@ const mockStorage = {
   categories: new Map<string, Record<string, unknown>>(),
 };
 
+// User ID constants for mock data
+const USER_IDS = {
+  ANGELICA_TODA: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  DANIEL_PREDA: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+  ADMIN: '99999999-9999-9999-9999-999999999999',
+  TEST_USER: 'mock-user-id',
+} as const;
+
 // Initialize with sample data
 const initializeMockData = () => {
-  // Sample users
-  mockStorage.users.set('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', {
-    id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  // Sample users (both Angelica and Daniel are sellers, which allows them to buy and sell)
+  mockStorage.users.set(USER_IDS.ANGELICA_TODA, {
+    id: USER_IDS.ANGELICA_TODA,
     email: 'angelicatoda@gmail.com',
-    role: 'buyer',
+    role: 'seller',  // Sellers can both buy and sell
     firstName: 'Angelica',
     lastName: 'Toda',
     isEmailVerified: true,
     createdAt: new Date().toISOString(),
   });
 
-  mockStorage.users.set('dddddddd-dddd-dddd-dddd-dddddddddddd', {
-    id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+  mockStorage.users.set(USER_IDS.DANIEL_PREDA, {
+    id: USER_IDS.DANIEL_PREDA,
     email: 'dannyelbill@gmail.com',
-    role: 'buyer',
+    role: 'seller',  // Sellers can both buy and sell
     firstName: 'Daniel',
     lastName: 'Preda',
     isEmailVerified: true,
     createdAt: new Date().toISOString(),
   });
 
-  mockStorage.users.set('99999999-9999-9999-9999-999999999999', {
-    id: '99999999-9999-9999-9999-999999999999',
+  mockStorage.users.set(USER_IDS.ADMIN, {
+    id: USER_IDS.ADMIN,
     email: 'loadifymarket.co.uk@gmail.com',
     role: 'admin',
     firstName: 'Admin',
@@ -50,8 +58,8 @@ const initializeMockData = () => {
     createdAt: new Date().toISOString(),
   });
 
-  mockStorage.users.set('mock-user-id', {
-    id: 'mock-user-id',
+  mockStorage.users.set(USER_IDS.TEST_USER, {
+    id: USER_IDS.TEST_USER,
     email: 'test@loadifymarket.co.uk',
     role: 'buyer',
     firstName: 'Test',
@@ -137,25 +145,25 @@ initializeMockData();
 // Mock users for testing
 const mockUsers: Record<string, User> = {
   'angelicatoda@gmail.com': {
-    id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    id: USER_IDS.ANGELICA_TODA,
     email: 'angelicatoda@gmail.com',
     role: 'authenticated',
     app_metadata: {},
-    user_metadata: { role: 'buyer' },
+    user_metadata: { role: 'seller' },  // Seller role allows both buying and selling
     aud: 'authenticated',
     created_at: new Date().toISOString(),
   },
   'dannyelbill@gmail.com': {
-    id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+    id: USER_IDS.DANIEL_PREDA,
     email: 'dannyelbill@gmail.com',
     role: 'authenticated',
     app_metadata: {},
-    user_metadata: { role: 'buyer' },
+    user_metadata: { role: 'seller' },  // Seller role allows both buying and selling
     aud: 'authenticated',
     created_at: new Date().toISOString(),
   },
   'loadifymarket.co.uk@gmail.com': {
-    id: '99999999-9999-9999-9999-999999999999',
+    id: USER_IDS.ADMIN,
     email: 'loadifymarket.co.uk@gmail.com',
     role: 'authenticated',
     app_metadata: {},
@@ -165,7 +173,7 @@ const mockUsers: Record<string, User> = {
   },
   // Default test user
   'test@loadifymarket.co.uk': {
-    id: 'mock-user-id',
+    id: USER_IDS.TEST_USER,
     email: 'test@loadifymarket.co.uk',
     role: 'authenticated',
     app_metadata: {},
@@ -175,14 +183,22 @@ const mockUsers: Record<string, User> = {
   },
 };
 
+// SECURITY NOTE: This mock client is for DEVELOPMENT ONLY
+// In production, real Supabase authentication is used
+// The hardcoded password here is acceptable only because:
+// 1. It's never used in production (only when VITE_SUPABASE_URL is not set)
+// 2. It's clearly marked as a mock/test credential
+// 3. Real user passwords are managed securely by Supabase Auth
+const MOCK_PASSWORD = 'Johnny2000$$'; // Development-only test password
+
 export const createMockSupabaseClient = () => {
   return {
     auth: {
       signInWithPassword: async ({ email, password }: { email: string; password: string }) => {
         console.log('[MOCK] Signing in with:', email);
         
-        // Check if password is correct (Johnny2000$$)
-        if (password !== 'Johnny2000$$') {
+        // Validate password against mock password (development only)
+        if (password !== MOCK_PASSWORD) {
           return {
             data: { user: null, session: null },
             error: { message: 'Invalid login credentials' },
