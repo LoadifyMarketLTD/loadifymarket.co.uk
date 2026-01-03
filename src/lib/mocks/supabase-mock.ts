@@ -19,6 +19,47 @@ const mockStorage = {
 
 // Initialize with sample data
 const initializeMockData = () => {
+  // Sample users
+  mockStorage.users.set('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', {
+    id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    email: 'angelicatoda@gmail.com',
+    role: 'buyer',
+    firstName: 'Angelica',
+    lastName: 'Toda',
+    isEmailVerified: true,
+    createdAt: new Date().toISOString(),
+  });
+
+  mockStorage.users.set('dddddddd-dddd-dddd-dddd-dddddddddddd', {
+    id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+    email: 'dannyelbill@gmail.com',
+    role: 'buyer',
+    firstName: 'Daniel',
+    lastName: 'Preda',
+    isEmailVerified: true,
+    createdAt: new Date().toISOString(),
+  });
+
+  mockStorage.users.set('99999999-9999-9999-9999-999999999999', {
+    id: '99999999-9999-9999-9999-999999999999',
+    email: 'loadifymarket.co.uk@gmail.com',
+    role: 'admin',
+    firstName: 'Admin',
+    lastName: 'User',
+    isEmailVerified: true,
+    createdAt: new Date().toISOString(),
+  });
+
+  mockStorage.users.set('mock-user-id', {
+    id: 'mock-user-id',
+    email: 'test@loadifymarket.co.uk',
+    role: 'buyer',
+    firstName: 'Test',
+    lastName: 'User',
+    isEmailVerified: true,
+    createdAt: new Date().toISOString(),
+  });
+
   // Sample categories - Main categories
   const mainCategories = [
     { id: 'cat-mixed-lots', name: 'Mixed Job Lots', slug: 'mixed-job-lots' },
@@ -93,31 +134,74 @@ const initializeMockData = () => {
 
 initializeMockData();
 
-// Mock user for testing
-const mockUser: User = {
-  id: 'mock-user-id',
-  email: 'test@loadifymarket.co.uk',
-  role: 'authenticated',
-  app_metadata: {},
-  user_metadata: { role: 'buyer' },
-  aud: 'authenticated',
-  created_at: new Date().toISOString(),
+// Mock users for testing
+const mockUsers: Record<string, User> = {
+  'angelicatoda@gmail.com': {
+    id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    email: 'angelicatoda@gmail.com',
+    role: 'authenticated',
+    app_metadata: {},
+    user_metadata: { role: 'buyer' },
+    aud: 'authenticated',
+    created_at: new Date().toISOString(),
+  },
+  'dannyelbill@gmail.com': {
+    id: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+    email: 'dannyelbill@gmail.com',
+    role: 'authenticated',
+    app_metadata: {},
+    user_metadata: { role: 'buyer' },
+    aud: 'authenticated',
+    created_at: new Date().toISOString(),
+  },
+  'loadifymarket.co.uk@gmail.com': {
+    id: '99999999-9999-9999-9999-999999999999',
+    email: 'loadifymarket.co.uk@gmail.com',
+    role: 'authenticated',
+    app_metadata: {},
+    user_metadata: { role: 'admin' },
+    aud: 'authenticated',
+    created_at: new Date().toISOString(),
+  },
+  // Default test user
+  'test@loadifymarket.co.uk': {
+    id: 'mock-user-id',
+    email: 'test@loadifymarket.co.uk',
+    role: 'authenticated',
+    app_metadata: {},
+    user_metadata: { role: 'buyer' },
+    aud: 'authenticated',
+    created_at: new Date().toISOString(),
+  },
 };
 
 export const createMockSupabaseClient = () => {
   return {
     auth: {
-      signInWithPassword: async ({ email }: { email: string; password: string }) => {
+      signInWithPassword: async ({ email, password }: { email: string; password: string }) => {
         console.log('[MOCK] Signing in with:', email);
+        
+        // Check if password is correct (Johnny2000$$)
+        if (password !== 'Johnny2000$$') {
+          return {
+            data: { user: null, session: null },
+            error: { message: 'Invalid login credentials' },
+          };
+        }
+        
+        // Get the mock user for this email
+        const user = mockUsers[email] || mockUsers['test@loadifymarket.co.uk'];
+        
         return {
-          data: { user: mockUser, session: { access_token: 'mock-token' } },
+          data: { user, session: { access_token: 'mock-token' } },
           error: null,
         };
       },
       signUp: async ({ email }: { email: string; password: string }) => {
         console.log('[MOCK] Signing up:', email);
+        const user = mockUsers[email] || mockUsers['test@loadifymarket.co.uk'];
         return {
-          data: { user: mockUser, session: { access_token: 'mock-token' } },
+          data: { user, session: { access_token: 'mock-token' } },
           error: null,
         };
       },
@@ -127,8 +211,10 @@ export const createMockSupabaseClient = () => {
       },
       getSession: async () => {
         console.log('[MOCK] Getting session');
+        // Return default test user session
+        const user = mockUsers['test@loadifymarket.co.uk'];
         return {
-          data: { session: { access_token: 'mock-token', user: mockUser } },
+          data: { session: { access_token: 'mock-token', user } },
           error: null,
         };
       },
