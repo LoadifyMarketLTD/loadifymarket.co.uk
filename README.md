@@ -114,10 +114,15 @@ npm run build
 The project is configured for Netlify deployment:
 
 1. Connect your GitHub repository to Netlify
-2. Set environment variables in Netlify dashboard
-3. Deploy!
+2. **IMPORTANT:** Leave the "Build command" field **EMPTY** in Netlify UI (uses netlify.toml)
+3. Set environment variables in Netlify dashboard
+4. Deploy!
 
-The `netlify.toml` file is already configured.
+The `netlify.toml` file is already configured with the correct build command.
+
+**⚠️ Common Issue:** If you see "Prisma schema not found" errors, the Netlify UI has an incorrect build command override. See [NETLIFY_TROUBLESHOOTING.md](./NETLIFY_TROUBLESHOOTING.md) for the solution.
+
+For detailed deployment instructions, see [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md).
 
 ## 📦 Tech Stack
 
