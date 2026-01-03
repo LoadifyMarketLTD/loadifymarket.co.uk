@@ -18,6 +18,7 @@ import NotFoundPage from './pages/NotFoundPage';
 const CartPage = lazy(() => import('./pages/CartPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage'));
 const SellerDashboardPage = lazy(() => import('./pages/SellerDashboardPage'));
 const SellerProfilePage = lazy(() => import('./pages/SellerProfilePage'));
 const SellerReturnsPage = lazy(() => import('./pages/SellerReturnsPage'));
@@ -129,6 +130,11 @@ function App() {
           <Route path="dashboard" element={
             <Suspense fallback={<PageLoader />}>
               <DashboardPage />
+            </Suspense>
+          } />
+          <Route path="account/settings" element={
+            <Suspense fallback={<PageLoader />}>
+              <AccountSettingsPage />
             </Suspense>
           } />
           <Route path="seller" element={

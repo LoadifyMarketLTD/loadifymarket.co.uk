@@ -225,6 +225,15 @@ export const createMockSupabaseClient = () => {
         console.log('[MOCK] Signing out');
         return { error: null };
       },
+      updateUser: async (updates: { email?: string; password?: string }) => {
+        console.log('[MOCK] Updating user auth:', updates);
+        // In mock mode, just return success
+        // Email changes would normally require verification
+        return {
+          data: { user: mockUsers['test@loadifymarket.co.uk'] },
+          error: null,
+        };
+      },
       getSession: async () => {
         console.log('[MOCK] Getting session');
         // Return default test user session
