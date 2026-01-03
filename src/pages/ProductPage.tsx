@@ -7,6 +7,8 @@ import type { Product } from '../types';
 import RelatedProducts from '../components/RelatedProducts';
 import ProductQA from '../components/ProductQA';
 import FrequentlyBoughtTogether from '../components/FrequentlyBoughtTogether';
+import SellerPerformance from '../components/SellerPerformance';
+import ProductReviews from '../components/ProductReviews';
 import {
   ShoppingCart,
   Heart,
@@ -18,7 +20,6 @@ import {
   ChevronLeft,
   Shield,
   Zap,
-  User,
   MessageCircle,
 } from 'lucide-react';
 
@@ -376,22 +377,16 @@ export default function ProductPage() {
 
             {/* Seller Info Panel */}
             <div className="card-glass mb-8">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center">
-                  <User className="w-6 h-6 text-gold" />
-                </div>
-                <div>
-                  <p className="font-semibold text-white">Verified Seller</p>
-                  <p className="text-sm text-white/40">Member since 2024</p>
-                </div>
+              <SellerPerformance sellerId={product.sellerId} compact={false} />
+              <div className="mt-4 pt-4 border-t border-white/10">
+                <Link
+                  to="/contact"
+                  className="btn-glass w-full py-3 flex items-center justify-center gap-2"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  Contact Seller
+                </Link>
               </div>
-              <Link
-                to="/contact"
-                className="btn-glass w-full py-3 flex items-center justify-center gap-2"
-              >
-                <MessageCircle className="w-5 h-5" />
-                Contact Seller
-              </Link>
             </div>
 
             {/* Trust Badges */}
@@ -511,30 +506,11 @@ export default function ProductPage() {
         {/* Reviews Section */}
         <div className="mt-12">
           <div className="card-glass">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">Customer Reviews</h2>
-              {product.reviewCount > 0 && (
-                <div className="flex items-center gap-2">
-                  <div className="flex text-gold">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`h-5 w-5 ${i < Math.round(product.rating) ? 'fill-current' : ''}`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-white/60">({product.reviewCount})</span>
-                </div>
-              )}
-            </div>
-            {product.reviewCount === 0 ? (
-              <div className="text-center py-8">
-                <Star className="w-12 h-12 text-white/20 mx-auto mb-4" />
-                <p className="text-white/60">No reviews yet. Be the first to review this product!</p>
-              </div>
-            ) : (
-              <p className="text-white/60">Reviews will be displayed here.</p>
-            )}
+            <ProductReviews 
+              productId={product.id} 
+              averageRating={product.rating}
+              totalReviews={product.reviewCount}
+            />
           </div>
         </div>
 

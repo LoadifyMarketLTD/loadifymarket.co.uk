@@ -22,8 +22,6 @@ export default function RecentlyViewed({ currentProductId, maxProducts = 8 }: Re
   const fetchRecentlyViewed = async () => {
     setLoading(true);
     try {
-      let query;
-      
       if (user) {
         // Fetch for authenticated user
         const { data: viewedData, error: viewedError } = await supabase

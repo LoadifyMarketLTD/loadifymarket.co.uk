@@ -28,11 +28,11 @@ export default function FrequentlyBoughtTogether({ productId, currentProduct }: 
   const fetchFrequentlyBoughtTogether = async () => {
     setLoading(true);
     try {
-      // Try to find orders that contain this product using order_items table
+      // Check if order_items table exists by trying to query it
       let orderIds: string[] = [];
       
-      // Check if order_items table exists by trying to query it
-      const { data: orderItems, error: orderError } = await supabase
+      // Try to use order_items table first
+      const { error: orderError } = await supabase
         .from('order_items')
         .select('orderId')
         .eq('productId', productId)

@@ -6,7 +6,7 @@ import { Bell, BellOff, Trash2, Search, Plus } from 'lucide-react';
 interface SavedSearch {
   id: string;
   searchQuery: string;
-  filters: any;
+  filters: Record<string, unknown>;
   emailNotifications: boolean;
   notificationFrequency: 'instant' | 'daily' | 'weekly';
   createdAt: string;
@@ -177,7 +177,7 @@ export default function SavedSearches() {
               </label>
               <select
                 value={frequency}
-                onChange={(e) => setFrequency(e.target.value as any)}
+                onChange={(e) => setFrequency(e.target.value as 'instant' | 'daily' | 'weekly')}
                 className="input-field"
               >
                 <option value="instant">Instant (when new items match)</option>
