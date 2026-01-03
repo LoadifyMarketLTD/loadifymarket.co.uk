@@ -18,10 +18,24 @@ interface SellerStats {
   reviewCount: number;
 }
 
+interface SellerInfoData {
+  userId: string;
+  businessName?: string;
+  rating: number;
+  totalSales: number;
+  createdAt: string;
+  users: {
+    id: string;
+    createdAt: string;
+    firstName?: string;
+    lastName?: string;
+  };
+}
+
 export default function SellerPerformance({ sellerId, compact = false }: SellerPerformanceProps) {
   const [stats, setStats] = useState<SellerStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sellerInfo, setSellerInfo] = useState<any>(null);
+  const [sellerInfo, setSellerInfo] = useState<SellerInfoData | null>(null);
 
   useEffect(() => {
     fetchSellerPerformance();

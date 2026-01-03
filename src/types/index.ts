@@ -100,6 +100,8 @@ export interface Product {
   views: number;
   rating: number;
   reviewCount: number;
+  addToCartCount?: number;
+  lastViewedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

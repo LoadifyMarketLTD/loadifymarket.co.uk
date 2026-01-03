@@ -69,8 +69,10 @@ ON CONFLICT ("userId") DO NOTHING;
 -- Admin User
 INSERT INTO users (id, email, role, "firstName", "lastName", "isEmailVerified", "createdAt")
 VALUES 
-  ('99999999-9999-9999-9999-999999999999', 'admin@loadifymarket.co.uk', 'admin', 'Admin', 'User', true, NOW())
-ON CONFLICT (id) DO NOTHING;
+  ('99999999-9999-9999-9999-999999999999', 'loadifymarket.co.uk@gmail.com', 'admin', 'Admin', 'User', true, NOW())
+ON CONFLICT (id) DO UPDATE SET
+  email = EXCLUDED.email,
+  role = EXCLUDED.role;
 
 -- Sample Products
 
@@ -345,4 +347,4 @@ VALUES (
 )
 ON CONFLICT DO NOTHING;
 
-COMMENT ON TABLE users IS 'Test seed data created. Use these credentials: buyer@test.com, seller@test.com, admin@loadifymarket.co.uk (passwords set through Supabase Auth)';
+COMMENT ON TABLE users IS 'Test seed data created. Use these credentials: buyer@test.com, seller@test.com, loadifymarket.co.uk@gmail.com (passwords set through Supabase Auth)';

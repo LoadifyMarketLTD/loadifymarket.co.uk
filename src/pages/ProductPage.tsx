@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { useCartStore } from '../store';
+import { useCartStore, useAuthStore } from '../store';
 import { useWishlist } from '../lib/useWishlist';
 import type { Product } from '../types';
 import RelatedProducts from '../components/RelatedProducts';
 import ProductQA from '../components/ProductQA';
+import FrequentlyBoughtTogether from '../components/FrequentlyBoughtTogether';
+import SellerPerformance from '../components/SellerPerformance';
+import ProductReviews from '../components/ProductReviews';
 import {
   ShoppingCart,
   Heart,
@@ -17,13 +20,13 @@ import {
   ChevronLeft,
   Shield,
   Zap,
-  User,
   MessageCircle,
 } from 'lucide-react';
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -45,17 +48,38 @@ export default function ProductPage() {
       if (error) throw error;
       setProduct(data);
 
-      // Increment view count
-      await supabase
-        .from('products')
-        .update({ views: (data.views || 0) + 1 })
-        .eq('id', id);
+      // Track product view using enhanced tracking
+      const sessionId = localStorage.getItem('sessionId') || 
+        `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      if (!localStorage.getItem('sessionId')) {
+        localStorage.setItem('sessionId', sessionId);
+      }
+
+      // Call the track_product_view function
+      const { error: trackError } = await supabase.rpc('track_product_view', {
+        p_product_id: id,
+        p_user_id: user?.id || null,
+        p_session_id: !user ? sessionId : null,
+      });
+
+      if (trackError) {
+        console.warn('Error tracking product view:', trackError);
+        // Fallback to simple increment if function doesn't exist
+        await supabase
+          .from('products')
+          .update({ 
+            views: (data.views || 0) + 1,
+            lastViewedAt: new Date().toISOString()
+          })
+          .eq('id', id);
+      }
     } catch (error) {
       console.error('Error fetching product:', error);
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, user]);
 
   useEffect(() => {
     if (id) {
@@ -64,7 +88,7 @@ export default function ProductPage() {
     }
   }, [id, fetchProduct, checkWishlist]);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
 
     addItem({
@@ -72,6 +96,26 @@ export default function ProductPage() {
       quantity,
       price: product.price,
     });
+
+    // Track add to cart
+    try {
+      const { error } = await supabase.rpc('track_add_to_cart', {
+        p_product_id: product.id
+      });
+
+      if (error) {
+        console.warn('Error tracking add to cart:', error);
+        // Fallback to simple increment
+        await supabase
+          .from('products')
+          .update({ 
+            addToCartCount: (product.addToCartCount || 0) + 1
+          })
+          .eq('id', product.id);
+      }
+    } catch (error) {
+      console.warn('Failed to track add to cart:', error);
+    }
 
     // Could add a toast notification here
     alert('Product added to cart!');
@@ -333,22 +377,16 @@ export default function ProductPage() {
 
             {/* Seller Info Panel */}
             <div className="card-glass mb-8">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center">
-                  <User className="w-6 h-6 text-gold" />
-                </div>
-                <div>
-                  <p className="font-semibold text-white">Verified Seller</p>
-                  <p className="text-sm text-white/40">Member since 2024</p>
-                </div>
+              <SellerPerformance sellerId={product.sellerId} compact={false} />
+              <div className="mt-4 pt-4 border-t border-white/10">
+                <Link
+                  to="/contact"
+                  className="btn-glass w-full py-3 flex items-center justify-center gap-2"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  Contact Seller
+                </Link>
               </div>
-              <Link
-                to="/contact"
-                className="btn-glass w-full py-3 flex items-center justify-center gap-2"
-              >
-                <MessageCircle className="w-5 h-5" />
-                Contact Seller
-              </Link>
             </div>
 
             {/* Trust Badges */}
@@ -455,6 +493,9 @@ export default function ProductPage() {
           </div>
         )}
 
+        {/* Frequently Bought Together */}
+        <FrequentlyBoughtTogether productId={product.id} currentProduct={product} />
+
         {/* Product Q&A Section */}
         <div className="mt-12">
           <div className="card-glass">
@@ -465,30 +506,11 @@ export default function ProductPage() {
         {/* Reviews Section */}
         <div className="mt-12">
           <div className="card-glass">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">Customer Reviews</h2>
-              {product.reviewCount > 0 && (
-                <div className="flex items-center gap-2">
-                  <div className="flex text-gold">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`h-5 w-5 ${i < Math.round(product.rating) ? 'fill-current' : ''}`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-white/60">({product.reviewCount})</span>
-                </div>
-              )}
-            </div>
-            {product.reviewCount === 0 ? (
-              <div className="text-center py-8">
-                <Star className="w-12 h-12 text-white/20 mx-auto mb-4" />
-                <p className="text-white/60">No reviews yet. Be the first to review this product!</p>
-              </div>
-            ) : (
-              <p className="text-white/60">Reviews will be displayed here.</p>
-            )}
+            <ProductReviews 
+              productId={product.id} 
+              averageRating={product.rating}
+              totalReviews={product.reviewCount}
+            />
           </div>
         </div>
 
