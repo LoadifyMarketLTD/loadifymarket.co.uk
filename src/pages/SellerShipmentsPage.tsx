@@ -48,12 +48,6 @@ export default function SellerShipmentsPage() {
   const [filter, setFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user]); // loadData is stable, only depends on user
-
   const loadData = async () => {
     setLoading(true);
     setError('');
@@ -124,6 +118,13 @@ export default function SellerShipmentsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const handleManageShipment = (orderId: string, shipment?: Shipment) => {
     setSelectedOrder({ orderId, shipment });

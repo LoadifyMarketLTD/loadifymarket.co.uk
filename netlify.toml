@@ -1,14 +1,16 @@
 [build]
-  # Run Prisma client generation before the Next.js build
-  command = "npx prisma generate && npm run build"
+  # Build command for Vite
+  command = "npm run build"
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"
-  NEXT_TELEMETRY_DISABLED = "1"
 
-# Official Netlify plugin for Next.js
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+# SPA redirect for React Router
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
 
 # Security headers
 [[headers]]

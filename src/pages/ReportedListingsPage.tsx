@@ -17,12 +17,6 @@ export default function ReportedListingsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'pending' | 'reviewed' | 'all'>('pending');
 
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      fetchReports();
-    }
-  }, [user, filter]);
-
   const fetchReports = async () => {
     setLoading(true);
     try {
@@ -85,6 +79,13 @@ export default function ReportedListingsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      fetchReports();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, filter]);
 
   const updateReportStatus = async (
     reportId: string,
