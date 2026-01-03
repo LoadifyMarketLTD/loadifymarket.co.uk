@@ -175,9 +175,11 @@ npm run dev
 
 2. **Build Settings**
    ```
-   Build command: npm run build
+   Build command: (leave empty - uses netlify.toml)
    Publish directory: dist
    ```
+   
+   **⚠️ IMPORTANT:** Leave the "Build command" field **EMPTY** in the Netlify UI. The correct build command is defined in `netlify.toml`. Do NOT add `npx prisma generate` or any Prisma commands - this project uses Supabase, not Prisma.
 
 3. **Deploy**
    - Click "Deploy site"
@@ -356,6 +358,17 @@ VALUES
 - Monitor email delivery rates
 
 ## Troubleshooting
+
+### Prisma Schema Not Found Error
+
+**Error**: `Could not find Prisma Schema` or `npx prisma generate && npm run build` fails
+
+**Solution**: This project does NOT use Prisma. See [NETLIFY_TROUBLESHOOTING.md](./NETLIFY_TROUBLESHOOTING.md) for detailed steps to clear the incorrect build command from Netlify UI.
+
+**Quick fix:**
+1. Go to Netlify: Site settings → Build & deploy → Build settings
+2. Clear the "Build command" field (leave empty)
+3. Save and redeploy
 
 ### Build Fails
 
