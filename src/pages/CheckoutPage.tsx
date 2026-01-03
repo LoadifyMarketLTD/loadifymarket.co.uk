@@ -26,6 +26,8 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [sameAsShipping, setSameAsShipping] = useState(true);
   const [shippingMethod, setShippingMethod] = useState<ShippingMethod>('Standard');
+  const [guestEmail, setGuestEmail] = useState('');
+  const [createAccount, setCreateAccount] = useState(false);
 
   const [shippingAddress, setShippingAddress] = useState<Address>({
     line1: '',
@@ -42,11 +44,6 @@ export default function CheckoutPage() {
     postal_code: '',
     country: 'GB',
   });
-
-  if (!user) {
-    navigate('/login?redirect=/checkout');
-    return null;
-  }
 
   if (items.length === 0) {
     navigate('/cart');
@@ -74,6 +71,17 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate guest email if not logged in
+    if (!user && !guestEmail) {
+      alert('Please provide an email address');
+      return;
+    }
+
+    if (!user && guestEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) {
+      alert('Please provide a valid email address');
+      return;
+    }
+    
     if (!shippingAddress.line1 || !shippingAddress.city || !shippingAddress.postal_code) {
       alert('Please fill in all shipping address fields');
       return;
@@ -96,7 +104,9 @@ export default function CheckoutPage() {
             title: item.title || 'Product',
             sellerId: item.sellerId || 'unknown',
           })),
-          buyerId: user.id,
+          buyerId: user?.id || null,
+          guestEmail: !user ? guestEmail : null,
+          createAccount: !user ? createAccount : false,
           shippingAddress,
           billingAddress: sameAsShipping ? shippingAddress : billingAddress,
           shippingAmount,
@@ -128,6 +138,47 @@ export default function CheckoutPage() {
           {/* Main Form */}
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit}>
+              {/* Guest Email Section */}
+              {!user && (
+                <div className="card mb-6 bg-blue-50 border-blue-200">
+                  <h2 className="text-xl font-bold mb-4">Contact Information</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Email Address *</label>
+                      <input
+                        type="email"
+                        value={guestEmail}
+                        onChange={(e) => setGuestEmail(e.target.value)}
+                        required
+                        className="input-field"
+                        placeholder="your@email.com"
+                      />
+                      <p className="text-xs text-gray-600 mt-1">
+                        We'll send your order confirmation and tracking information to this email.
+                      </p>
+                    </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="createAccount"
+                        checked={createAccount}
+                        onChange={(e) => setCreateAccount(e.target.checked)}
+                        className="mr-2"
+                      />
+                      <label htmlFor="createAccount" className="text-sm">
+                        Create an account for faster checkout next time
+                      </label>
+                    </div>
+                    <div className="text-sm text-gray-600 bg-white p-3 rounded border">
+                      Already have an account?{' '}
+                      <a href="/login?redirect=/checkout" className="text-navy-800 font-medium hover:underline">
+                        Sign in
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Shipping Address */}
               <div className="card mb-6">
                 <div className="flex items-center mb-4">
