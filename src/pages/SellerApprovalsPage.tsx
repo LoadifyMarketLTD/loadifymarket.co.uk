@@ -15,12 +15,6 @@ export default function SellerApprovalsPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'pending' | 'approved' | 'all'>('pending');
 
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      fetchSellers();
-    }
-  }, [user, filter]);
-
   const fetchSellers = async () => {
     setLoading(true);
     try {
@@ -70,6 +64,13 @@ export default function SellerApprovalsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      fetchSellers();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, filter]);
 
   const approveSeller = async (userId: string) => {
     try {

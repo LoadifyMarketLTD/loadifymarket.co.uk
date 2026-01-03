@@ -38,14 +38,6 @@ export default function TrackOrderPage() {
   const [error, setError] = useState('');
   const [trackingData, setTrackingData] = useState<TrackingData | null>(null);
 
-  useEffect(() => {
-    const orderNumberParam = searchParams.get('orderNumber');
-    if (orderNumberParam) {
-      setOrderNumber(orderNumberParam);
-      handleTrack(orderNumberParam, '');
-    }
-  }, []); // Run only on mount
-
   const handleTrack = async (orderNum?: string, orderEmail?: string) => {
     const trackOrderNumber = orderNum || orderNumber;
     const trackEmail = orderEmail !== undefined ? orderEmail : email;
@@ -80,6 +72,15 @@ export default function TrackOrderPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const orderNumberParam = searchParams.get('orderNumber');
+    if (orderNumberParam) {
+      setOrderNumber(orderNumberParam);
+      handleTrack(orderNumberParam, '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only on mount
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

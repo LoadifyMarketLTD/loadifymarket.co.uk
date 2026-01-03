@@ -24,7 +24,11 @@ export default function Header() {
 
   // Close mobile menu on route change
   useEffect(() => {
-    setMobileMenuOpen(false);
+    // Use a conditional check to avoid unnecessary updates
+    if (mobileMenuOpen) {
+      setMobileMenuOpen(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
   const handleSearch = (e: React.FormEvent) => {
