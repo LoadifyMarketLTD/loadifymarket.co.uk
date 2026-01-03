@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabase';
 import { useCartStore } from '../store';
 import { useWishlist } from '../lib/useWishlist';
 import type { Product } from '../types';
+import RelatedProducts from '../components/RelatedProducts';
+import ProductQA from '../components/ProductQA';
 import {
   ShoppingCart,
   Heart,
@@ -453,6 +455,13 @@ export default function ProductPage() {
           </div>
         )}
 
+        {/* Product Q&A Section */}
+        <div className="mt-12">
+          <div className="card-glass">
+            <ProductQA productId={product.id} sellerId={product.sellerId} />
+          </div>
+        </div>
+
         {/* Reviews Section */}
         <div className="mt-12">
           <div className="card-glass">
@@ -482,6 +491,9 @@ export default function ProductPage() {
             )}
           </div>
         </div>
+
+        {/* Related Products */}
+        <RelatedProducts currentProduct={product} maxProducts={6} />
       </div>
     </div>
   );
