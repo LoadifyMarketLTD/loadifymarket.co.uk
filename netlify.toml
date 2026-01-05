@@ -1,32 +1,11 @@
 [build]
-  # Build command for Vite
-  # IMPORTANT: Do NOT override this command in the Netlify UI dashboard.
-  # This project does NOT use Prisma - it uses Supabase for the database.
-  # If build fails with "Prisma schema not found", clear the build command
-  # in Netlify UI: Site settings → Build & deploy → Build settings
-  command = "npm run build"
+  command = "npm ci && npm run build"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"
 
-# Disable Netlify AI telemetry to prevent 400 errors
-[[redirects]]
-  from = "/.netlify/ai/*"
-  to = "/404"
-  status = 404
-
-# SPA redirect for React Router
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-# Security headers
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "geolocation=(), microphone=(), camera=()"

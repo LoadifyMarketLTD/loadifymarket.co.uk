@@ -2,16 +2,33 @@ import Stripe from 'stripe';
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia',
-});
+// Fail gracefully if env vars not configured
+if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+  console.warn('Stripe webhook not configured - missing environment variables');
+}
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const stripe = process.env.STRIPE_SECRET_KEY 
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2024-11-20.acacia',
+    })
+  : null;
+
+const supabase = process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
+  ? createClient(
+      process.env.VITE_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
+  : null;
 
 export const handler: Handler = async (event) => {
+  // Return 501 if not configured
+  if (!stripe || !supabase || !process.env.STRIPE_WEBHOOK_SECRET) {
+    return { 
+      statusCode: 501, 
+      body: JSON.stringify({ error: 'Stripe webhook not configured' })
+    };
+  }
+
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
