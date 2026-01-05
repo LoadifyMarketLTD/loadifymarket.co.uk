@@ -78,9 +78,10 @@ self.addEventListener('fetch', (event) => {
           console.log('Fetch failed; returning offline page instead.', error);
           
           // For navigation requests, you could return a custom offline page here
-          // For now, just let the error propagate
+          // For now, return a generic error response
           return new Response('Network error occurred', {
-            status: 408,
+            status: 503,
+            statusText: 'Service Unavailable',
             headers: { 'Content-Type': 'text/plain' }
           });
         });
