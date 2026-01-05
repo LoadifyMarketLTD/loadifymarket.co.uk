@@ -1,31 +1,31 @@
 import { Link } from 'react-router-dom';
-import { Upload, MessageSquare, TrendingUp, DollarSign, ArrowRight } from 'lucide-react';
+import { Upload, MessageSquare, CheckSquare, TrendingUp, ArrowRight } from 'lucide-react';
 
 export default function CinematicStoryStrip() {
   const steps = [
     {
       id: 1,
       icon: Upload,
-      title: 'Post a load or product',
-      description: 'List your logistics job, pallet stock, or handmade item in minutes',
+      title: 'Post a listing',
+      description: 'Create your load, pallet, or product listing',
     },
     {
       id: 2,
       icon: MessageSquare,
-      title: 'Get offers from drivers or buyers',
-      description: 'Connect with verified drivers and buyers in our trusted network',
+      title: 'Review offers',
+      description: 'Check inquiries and interested parties',
     },
     {
       id: 3,
-      icon: TrendingUp,
-      title: 'Track jobs & orders live',
-      description: 'Real-time updates from pickup to delivery with full transparency',
+      icon: CheckSquare,
+      title: 'Agree terms',
+      description: 'Contact buyer/seller and confirm details',
     },
     {
       id: 4,
-      icon: DollarSign,
-      title: 'Get paid securely',
-      description: 'Safe, protected payments with automatic seller payouts',
+      icon: TrendingUp,
+      title: 'Complete transaction',
+      description: 'Finalize payment and delivery',
     },
   ];
 
@@ -38,7 +38,7 @@ export default function CinematicStoryStrip() {
             How It <span className="text-gradient-gold">Works</span>
           </h2>
           <p className="text-white/60 text-lg max-w-2xl mx-auto">
-            From listing to payment, we've streamlined every step of your marketplace journey
+            Simple steps for business transactions
           </p>
         </div>
 
