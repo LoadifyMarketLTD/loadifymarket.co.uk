@@ -3,7 +3,7 @@ import { Truck, Package, Sparkles, ArrowRight } from 'lucide-react';
 
 export default function CinematicHero() {
   return (
-    <section className="relative min-h-screen bg-jet overflow-hidden flex items-center">
+    <section className="relative min-h-[70vh] bg-jet overflow-hidden flex items-center">
       {/* Cinematic Background Effects */}
       <div className="absolute inset-0">
         {/* Large gradient orbs for cinematic lighting */}
@@ -25,15 +25,15 @@ export default function CinematicHero() {
       </div>
 
       {/* Hero Content */}
-      <div className="container-cinematic relative z-10 pt-32 pb-20">
-        <div className="max-w-5xl mx-auto text-center">
-          {/* Main Headline - Simplified to 2 lines max */}
-          <h1 className="heading-hero text-white mb-6 animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
+      <div className="container-cinematic relative z-10 pt-24 pb-16">
+        <div className="max-w-4xl mx-auto text-center">
+          {/* Main Headline - Reduced by ~20% */}
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 animate-fadeInUp leading-tight" style={{ animationDelay: '0.1s' }}>
             Find verified logistics loads and wholesale stock.
           </h1>
 
           {/* Subheadline - Single direct line */}
-          <p className="text-xl md:text-2xl text-white/60 max-w-3xl mx-auto mb-12 leading-relaxed animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
+          <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto mb-10 animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
             Connect with brokers, carriers, and sellers.
           </p>
 
@@ -60,8 +60,8 @@ export default function CinematicHero() {
             </Link>
           </div>
 
-          {/* Category Panels */}
-          <div className="category-grid animate-fadeInUp" style={{ animationDelay: '0.5s' }}>
+          {/* Category Panels - 2 main + 1 smaller */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 animate-fadeInUp" style={{ animationDelay: '0.5s' }}>
             {/* Logistics Loads Panel */}
             <Link to="/catalog?type=logistics" className="group relative overflow-hidden rounded-premium-lg aspect-[4/3] cursor-pointer">
               <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet">
@@ -111,50 +111,47 @@ export default function CinematicHero() {
                 </span>
               </div>
             </Link>
+          </div>
 
-            {/* Handmade Panel */}
-            <Link to="/catalog?type=handmade" className="group relative overflow-hidden rounded-premium-lg aspect-[4/3] cursor-pointer">
+          {/* Handmade Panel - Smaller, Secondary */}
+          <div className="max-w-md mx-auto mt-6 animate-fadeInUp" style={{ animationDelay: '0.6s' }}>
+            <Link to="/catalog?type=handmade" className="group relative overflow-hidden rounded-premium-lg aspect-[16/9] cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
               <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet">
                 <img
                   src="https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=600&q=80"
                   alt="Handmade Crafts"
-                  className="w-full h-full object-cover opacity-60 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
+                  className="w-full h-full object-cover opacity-50 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
                 />
               </div>
               <div className="absolute inset-0 bg-gradient-overlay" />
-              <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                <div className="flex items-center mb-3">
-                  <div className="p-2 rounded-premium-sm bg-gold/20 mr-3">
-                    <Sparkles className="h-6 w-6 text-gold" />
+              <div className="absolute inset-0 p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-premium-sm bg-gold/20">
+                    <Sparkles className="h-5 w-5 text-gold" />
                   </div>
-                  <span className="badge-gold">Handmade</span>
+                  <div>
+                    <h3 className="text-base font-bold text-white">Handmade & Retail</h3>
+                    <p className="text-white/50 text-xs">Browse unique items</p>
+                  </div>
                 </div>
-                <h3 className="heading-card text-white mb-2">Handmade & Unique Items</h3>
-                <p className="text-white/60 text-sm mb-4">Discover one-of-a-kind artisan pieces</p>
-                <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
-                  Browse Handmade <ArrowRight className="ml-2 h-4 w-4" />
-                </span>
+                <ArrowRight className="h-5 w-5 text-gold opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             </Link>
           </div>
 
           {/* Trust Indicators */}
-          <div className="mt-16 flex flex-wrap items-center justify-center gap-8 text-white/40 text-sm animate-fadeInUp" style={{ animationDelay: '0.6s' }}>
+          <div className="mt-16 flex flex-wrap items-center justify-center gap-8 text-white/40 text-sm animate-fadeInUp" style={{ animationDelay: '0.7s' }}>
             <div className="flex items-center">
               <span className="text-gold mr-2">✓</span>
-              Verified Sellers
+              Verified Business Roles
             </div>
             <div className="flex items-center">
               <span className="text-gold mr-2">✓</span>
-              Secure Payments
+              Broker, Carrier, Seller
             </div>
             <div className="flex items-center">
               <span className="text-gold mr-2">✓</span>
               UK Based Support
-            </div>
-            <div className="flex items-center">
-              <span className="text-gold mr-2">✓</span>
-              Buyer Protection
             </div>
           </div>
         </div>

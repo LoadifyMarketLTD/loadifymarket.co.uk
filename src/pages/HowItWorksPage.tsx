@@ -11,23 +11,23 @@ export default function HowItWorksPage() {
   const steps = [
     {
       icon: Search,
-      title: 'Find a listing',
-      description: 'Browse loads, pallets, or products.',
+      title: 'Post a listing',
+      description: 'Create your load, pallet, or product listing.',
     },
     {
       icon: UserPlus,
-      title: 'Review seller details',
-      description: 'Check verification and payment behaviour.',
+      title: 'Review offers',
+      description: 'Check inquiries and interested parties.',
     },
     {
       icon: CreditCard,
       title: 'Agree terms',
-      description: 'Contact seller and confirm transaction.',
+      description: 'Contact buyer/seller and confirm details.',
     },
     {
       icon: Package,
-      title: 'Complete transaction',
-      description: 'Secure checkout with tracking.',
+      title: 'Complete the transaction',
+      description: 'Finalize payment and delivery.',
     },
     {
       icon: CheckCircle,
@@ -45,7 +45,7 @@ export default function HowItWorksPage() {
             How It Works
           </h1>
           <p className="text-xl text-white/60 max-w-3xl mx-auto">
-            Simple steps to buy or sell on LoadifyMarket.
+            Simple steps for buying or selling on LoadifyMarket.
           </p>
         </div>
       </section>
@@ -95,7 +95,7 @@ export default function HowItWorksPage() {
                 Browse Catalog
               </Link>
               <Link to="/register?type=seller" className="btn-secondary">
-                Become a Seller
+                Create Business Account
               </Link>
             </div>
           </div>
