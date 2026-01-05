@@ -85,9 +85,9 @@ export default function CatalogPage() {
       if (selectedListingType) {
         query = query.eq('listingType', selectedListingType);
       }
-      // Apply role filter
+      // Apply role filter on the joined seller_profiles table
       if (selectedRole) {
-        query = query.eq('seller.marketplaceRole', selectedRole);
+        query = query.eq('seller_profiles.marketplaceRole', selectedRole);
       }
       query = query.gte('price', priceRange[0]).lte('price', priceRange[1]);
 

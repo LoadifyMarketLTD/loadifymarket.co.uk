@@ -227,11 +227,11 @@ export default function SellerPublicProfilePage() {
               {/* Stats */}
               <div className="flex flex-wrap gap-6 pt-4 border-t border-white/10">
                 <div>
-                  <p className="text-2xl font-bold text-gold">{seller.rating.toFixed(1)}</p>
+                  <p className="text-2xl font-bold text-gold">{(seller.rating || 0).toFixed(1)}</p>
                   <p className="text-xs text-white/60">Seller Rating</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gold">{seller.totalSales}</p>
+                  <p className="text-2xl font-bold text-gold">{seller.totalSales || 0}</p>
                   <p className="text-xs text-white/60">Total Sales</p>
                 </div>
                 <div>

@@ -46,6 +46,8 @@ export interface SellerProfile {
     bankName?: string;
   };
   profileCompleteness?: number;
+  // Note: marketplaceRole stored in both User and SellerProfile for flexibility
+  // User table = auth-level role, SellerProfile = marketplace-specific role
   marketplaceRole?: MarketplaceRole;
   paymentBehaviour?: PaymentBehaviour;
 }
