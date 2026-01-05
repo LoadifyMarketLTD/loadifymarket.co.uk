@@ -104,16 +104,10 @@ export default function DailyTrendingHandmade() {
 
                 {/* Quick action buttons - appear on hover */}
                 <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                  <button 
-                    className="p-3 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-gold hover:text-jet transition-all duration-300 shadow-lg"
-                    aria-label="Add to wishlist"
-                  >
+                  <button className="p-3 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-gold hover:text-jet transition-all duration-300 shadow-lg">
                     <Heart className="w-5 h-5" />
                   </button>
-                  <button 
-                    className="p-3 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-gold hover:text-jet transition-all duration-300 shadow-lg"
-                    aria-label="Add to cart"
-                  >
+                  <button className="p-3 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-gold hover:text-jet transition-all duration-300 shadow-lg">
                     <ShoppingBag className="w-5 h-5" />
                   </button>
                 </div>
@@ -128,7 +122,7 @@ export default function DailyTrendingHandmade() {
                   <h3 className="text-lg font-bold text-white mb-1 line-clamp-2 group-hover:text-gold transition-colors duration-300">
                     {item.title}
                   </h3>
-                  <p className="text-sm text-white/50 flex items-center gap-1">
+                  <p className="text-sm text-white/40 flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-gold" />
                     By {item.artist}
                   </p>
