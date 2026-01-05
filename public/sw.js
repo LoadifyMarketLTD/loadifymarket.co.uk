@@ -73,7 +73,17 @@ self.addEventListener('fetch', (event) => {
 
             return response;
           }
-        );
+        ).catch((error) => {
+          // Network request failed, return a fallback if available
+          console.log('Fetch failed; returning offline page instead.', error);
+          
+          // For navigation requests, you could return a custom offline page here
+          // For now, just let the error propagate
+          return new Response('Network error occurred', {
+            status: 408,
+            headers: { 'Content-Type': 'text/plain' }
+          });
+        });
       })
   );
 });
