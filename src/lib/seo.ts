@@ -209,13 +209,13 @@ export const updatePageMeta = (config: SEOConfig) => {
 // Pre-defined SEO configs for common pages
 export const pageSEO = {
   home: {
-    title: 'Loadify Market - B2B & B2C Marketplace for Products, Pallets & Bulk Lots',
-    description: 'Your trusted marketplace for buying and selling products, pallets, and bulk lots. Great deals on clearance items, wholesale products, and more. VAT registered, secure payments.',
+    title: 'Loadify Market - Marketplace for Logistics Loads, Pallets & Wholesale',
+    description: 'UK marketplace connecting buyers and sellers. Find logistics loads, wholesale pallets, and business stock. Multi-seller marketplace platform.',
     canonical: 'https://loadifymarket.co.uk',
   },
   catalog: {
-    title: 'Browse Products - Pallets, Lots & More | Loadify Market',
-    description: 'Explore our extensive catalog of products, pallets, and bulk lots. Filter by category, condition, and price. New items added daily.',
+    title: 'Browse Listings - Loads, Pallets & More | Loadify Market',
+    description: 'Explore our catalog of logistics loads, pallets, and wholesale lots. Filter by category, condition, and price. New listings added daily.',
     canonical: 'https://loadifymarket.co.uk/catalog',
   },
   about: {

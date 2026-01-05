@@ -429,9 +429,9 @@ export default function CheckoutPage() {
               </div>
 
               <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-gray-700">
-                <p className="font-medium mb-1">Secure Payment</p>
+                <p className="font-medium mb-1">Payment Processing</p>
                 <p className="text-xs">
-                  Your payment will be processed securely through Stripe. Payment details are never stored on our servers.
+                  Your payment is processed through Stripe. Payment details are never stored on our servers.
                 </p>
               </div>
             </div>
