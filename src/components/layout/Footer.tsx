@@ -170,10 +170,10 @@ export default function Footer() {
       <div className="border-t border-white/10 bg-graphite/30">
         <div className="container-cinematic py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-white/40 text-sm">
+            <p className="text-white/50 text-sm">
               © {currentYear} Danny Courier LTD. All rights reserved.
             </p>
-            <div className="flex items-center space-x-6 text-sm text-white/40">
+            <div className="flex items-center space-x-6 text-sm text-white/50">
               <span>VAT: GB375949535</span>
               <span className="hidden md:inline">|</span>
               <span>Company Reg: 12345678</span>

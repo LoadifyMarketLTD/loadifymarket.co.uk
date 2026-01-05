@@ -33,7 +33,7 @@ export default function CookieBanner() {
                 We use cookies to enhance your browsing experience and analyze our traffic.
                 By clicking "Accept", you consent to our use of cookies.{' '}
                 <Link to="/cookies" className="text-gold hover:underline">
-                  Learn more
+                  View our Cookie Policy
                 </Link>
               </p>
             </div>

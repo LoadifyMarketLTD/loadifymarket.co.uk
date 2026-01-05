@@ -75,6 +75,7 @@ export default function Header() {
               <button
                 type="submit"
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-gold transition-colors"
+                aria-label="Search products"
               >
                 <Search className="h-5 w-5" />
               </button>
@@ -147,6 +148,7 @@ export default function Header() {
             <Link
               to="/cart"
               className="relative"
+              aria-label={`Shopping cart${cartItemCount > 0 ? ` (${cartItemCount} items)` : ''}`}
             >
               <ShoppingCart className="h-6 w-6 text-white" />
               {cartItemCount > 0 && (
@@ -182,6 +184,7 @@ export default function Header() {
             <button
               type="submit"
               className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-gold transition-colors"
+              aria-label="Search products"
             >
               <Search className="h-5 w-5" />
             </button>
