@@ -75,6 +75,7 @@ export default function Header() {
               <button
                 type="submit"
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-gold transition-colors"
+                aria-label="Search"
               >
                 <Search className="h-5 w-5" />
               </button>
@@ -142,12 +143,13 @@ export default function Header() {
             <Link
               to="/cart"
               className="relative group"
+              aria-label={`Shopping cart${cartItemCount > 0 ? ` (${cartItemCount} items)` : ''}`}
             >
               <div className="p-2 rounded-full transition-all duration-300 group-hover:bg-white/10">
                 <ShoppingCart className="h-6 w-6 text-white group-hover:text-gold transition-colors" />
               </div>
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-gold text-jet text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-scaleIn">
+                <span className="absolute -top-1 -right-1 bg-gold text-jet text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-scaleIn" aria-hidden="true">
                   {cartItemCount > 99 ? '99+' : cartItemCount}
                 </span>
               )}
@@ -159,10 +161,11 @@ export default function Header() {
             <Link
               to="/cart"
               className="relative"
+              aria-label={`Shopping cart${cartItemCount > 0 ? ` (${cartItemCount} items)` : ''}`}
             >
               <ShoppingCart className="h-6 w-6 text-white" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-gold text-jet text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-gold text-jet text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center" aria-hidden="true">
                   {cartItemCount}
                 </span>
               )}
@@ -194,6 +197,7 @@ export default function Header() {
             <button
               type="submit"
               className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-gold transition-colors"
+              aria-label="Search"
             >
               <Search className="h-5 w-5" />
             </button>

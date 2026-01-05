@@ -66,10 +66,11 @@ export default function ProductCard({ product }: ProductCardProps) {
         <button
           onClick={handleWishlistClick}
           className="absolute top-4 right-4 z-10 p-3 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-gold hover:text-jet transition-all duration-300 shadow-lg"
-          title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+          aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <Heart
             className={`h-5 w-5 ${isInWishlist ? 'fill-gold text-gold' : ''}`}
+            aria-hidden="true"
           />
         </button>
 

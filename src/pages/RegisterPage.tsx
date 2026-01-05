@@ -110,8 +110,9 @@ export default function RegisterPage() {
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">First Name</label>
+                <label htmlFor="firstName" className="block text-sm font-medium mb-1">First Name</label>
                 <input
+                  id="firstName"
                   type="text"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
@@ -120,8 +121,9 @@ export default function RegisterPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Last Name</label>
+                <label htmlFor="lastName" className="block text-sm font-medium mb-1">Last Name</label>
                 <input
+                  id="lastName"
                   type="text"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
@@ -132,8 +134,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium mb-1">Email</label>
               <input
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -144,8 +147,9 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Password</label>
+              <label htmlFor="password" className="block text-sm font-medium mb-1">Password</label>
               <input
+                id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
