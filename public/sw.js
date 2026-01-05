@@ -4,7 +4,9 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/favicon.svg',
-  '/manifest.webmanifest'
+  '/manifest.webmanifest',
+  // Note: PNG icons should be generated from favicon.svg for full PWA support
+  // For now, using SVG as fallback
 ];
 
 // Install event - cache essential resources
@@ -12,7 +14,15 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        return cache.addAll(urlsToCache);
+        // Try to cache all URLs, but don't fail if some are missing
+        return Promise.all(
+          urlsToCache.map(url => 
+            cache.add(url).catch(err => {
+              console.log(`Failed to cache ${url}:`, err);
+              return Promise.resolve();
+            })
+          )
+        );
       })
   );
   self.skipWaiting();
