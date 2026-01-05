@@ -67,7 +67,7 @@ export default function Header() {
             <div className="relative w-full group">
               <input
                 type="text"
-                placeholder="Search products, pallets, handmade items..."
+                placeholder="Search logistics loads and wholesale pallets..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="input-search w-full pr-12 group-hover:bg-white/10"

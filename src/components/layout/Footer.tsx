@@ -62,7 +62,7 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-bold mb-6 text-gold">About</h3>
             <p className="text-white/60 text-sm leading-relaxed mb-6">
-              Your trusted marketplace for logistics loads, wholesale pallets, and unique handmade goods — all in one place.
+              B2B marketplace for logistics loads, wholesale pallets, and business stock.
             </p>
             <div className="space-y-3 text-sm">
               <div className="flex items-start space-x-3 text-white/60">
@@ -122,11 +122,11 @@ export default function Footer() {
 
           {/* Seller Info */}
           <div>
-            <h3 className="text-lg font-bold mb-6 text-gold">Sell on Loadify</h3>
+            <h3 className="text-lg font-bold mb-6 text-gold">For Businesses</h3>
             <ul className="space-y-3">
               <li>
                 <Link to="/register?type=seller" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  Become a Seller
+                  Create Business Account
                 </Link>
               </li>
               <li>

@@ -3,7 +3,6 @@ import { Package, TrendingUp, Users, ShieldCheck, ArrowRight, Sparkles } from 'l
 import CinematicHero from '../components/cinematic/CinematicHero';
 import CinematicMarketplaceSwitch from '../components/cinematic/CinematicMarketplaceSwitch';
 import CinematicStoryStrip from '../components/cinematic/CinematicStoryStrip';
-import DailyTrendingHandmade from '../components/cinematic/DailyTrendingHandmade';
 import TrendingProducts from '../components/TrendingProducts';
 import RecentlyViewed from '../components/RecentlyViewed';
 
@@ -18,9 +17,6 @@ export default function HomePage() {
 
       {/* Story Strip - How It Works */}
       <CinematicStoryStrip />
-
-      {/* Daily Trending Handmade Section */}
-      <DailyTrendingHandmade />
 
       {/* Trending Products Section */}
       <section className="py-12 bg-graphite/30">
@@ -50,9 +46,9 @@ export default function HomePage() {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gold/10 rounded-premium-sm mb-6">
                 <Package className="h-8 w-8 text-gold" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">Wide Selection</h3>
+              <h3 className="text-xl font-bold text-white mb-3">Clear Roles</h3>
               <p className="text-white/50">
-                Products to bulk pallets.
+                Broker, Carrier, or Seller - transparent business identities.
               </p>
             </div>
 
@@ -60,9 +56,9 @@ export default function HomePage() {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gold/10 rounded-premium-sm mb-6">
                 <ShieldCheck className="h-8 w-8 text-gold" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">Secure Payments</h3>
+              <h3 className="text-xl font-bold text-white mb-3">Verified Sellers</h3>
               <p className="text-white/50">
-                Protected transactions.
+                Business-focused listings with verified information.
               </p>
             </div>
 
@@ -70,9 +66,9 @@ export default function HomePage() {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gold/10 rounded-premium-sm mb-6">
                 <TrendingUp className="h-8 w-8 text-gold" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">Competitive Prices</h3>
+              <h3 className="text-xl font-bold text-white mb-3">Logistics-First</h3>
               <p className="text-white/50">
-                Quality from verified sellers.
+                Built for wholesale and logistics professionals.
               </p>
             </div>
 
@@ -80,9 +76,9 @@ export default function HomePage() {
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gold/10 rounded-premium-sm mb-6">
                 <Users className="h-8 w-8 text-gold" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-3">Trusted Community</h3>
+              <h3 className="text-xl font-bold text-white mb-3">Business Network</h3>
               <p className="text-white/50">
-                Verified buyers and sellers.
+                Connect with verified B2B buyers and sellers.
               </p>
             </div>
           </div>
@@ -99,7 +95,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {['Electronics', 'Home & Garden', 'Clothing', 'Pallets & Lots', 'Automotive', 'Sports', 'Books', 'Toys'].map((category) => (
+            {['Electronics', 'Home & Garden', 'Clothing', 'Pallets & Lots'].map((category) => (
               <Link
                 key={category}
                 to={`/catalog?category=${category.toLowerCase().replace(' ', '-')}`}
@@ -127,14 +123,14 @@ export default function HomePage() {
         <div className="container-cinematic relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="heading-section text-white mb-6">
-              Ready to Start <span className="text-gradient-gold">Selling</span>?
+              Ready to <span className="text-gradient-gold">Get Started</span>?
             </h2>
             <p className="text-xl text-white/60 mb-10">
-              Join our marketplace and reach thousands of potential customers across the UK. List your products, pallets, or services today.
+              Create a business account and start listing your loads, pallets, or wholesale stock.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/register?type=seller" className="btn-primary inline-flex items-center gap-2">
-                Register as Seller
+                Create a Business Account
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link to="/contact" className="btn-secondary inline-flex items-center gap-2">

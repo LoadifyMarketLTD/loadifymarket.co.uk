@@ -48,14 +48,14 @@ export default function CinematicMarketplaceSwitch() {
 
           <button
             onClick={() => setActiveMode('handmade')}
-            className={`flex items-center justify-center gap-3 px-8 py-4 rounded-premium-sm font-semibold transition-all duration-300 ${
+            className={`flex items-center justify-center gap-3 px-6 py-3 rounded-premium-sm font-medium transition-all duration-300 ${
               activeMode === 'handmade'
                 ? 'bg-gold text-jet shadow-cinematic-gold scale-105'
-                : 'bg-graphite text-white hover:bg-graphite/80 shadow-cinematic'
+                : 'bg-graphite/60 text-white/70 hover:bg-graphite/80 shadow-cinematic text-sm'
             }`}
           >
-            <Sparkles className="w-6 h-6" />
-            <span className="text-lg">Handmade & Retail</span>
+            <Sparkles className="w-5 h-5" />
+            <span className="text-base">Handmade & Retail</span>
           </button>
         </div>
 
@@ -255,7 +255,7 @@ const handmadeItems = [
     title: 'Handmade Book Art – Warm Lights',
     artist: 'Artisan Crafts',
     price: 45,
-    badge: '1 of 1',
+    badge: 'Unique',
   },
   {
     id: 2,
@@ -269,13 +269,13 @@ const handmadeItems = [
     title: 'Knitted Wool Blanket',
     artist: 'Cozy Creations',
     price: 85,
-    badge: '1 of 3',
+    badge: 'Unique',
   },
   {
     id: 4,
     title: 'Wooden Wall Art – Forest',
     artist: 'Nature & Wood',
     price: 120,
-    badge: '1 of 1',
+    badge: 'Unique',
   },
 ];
