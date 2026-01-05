@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Truck, Package, Sparkles, ArrowRight, Play } from 'lucide-react';
+import { Truck, Package, Sparkles, ArrowRight } from 'lucide-react';
 
 export default function CinematicHero() {
   return (
@@ -27,44 +27,35 @@ export default function CinematicHero() {
       {/* Hero Content */}
       <div className="container-cinematic relative z-10 pt-32 pb-20">
         <div className="max-w-5xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center px-4 py-2 rounded-full bg-gold/10 border border-gold/30 mb-8 animate-fadeInUp">
-            <span className="w-2 h-2 bg-gold rounded-full mr-3 animate-pulse" />
-            <span className="text-gold text-sm font-medium">UK's Premier B2B & B2C Marketplace</span>
-          </div>
-
-          {/* Main Headline */}
+          {/* Main Headline - Simplified to 2 lines max */}
           <h1 className="heading-hero text-white mb-6 animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
-            Your Marketplace for{' '}
-            <span className="text-gradient-gold">Logistics</span>,{' '}
-            <span className="text-gradient-gold">Stock</span> &{' '}
-            <span className="text-gradient-gold">Handmade</span> Goods
+            Find verified logistics loads and wholesale stock.
           </h1>
 
-          {/* Subheadline */}
+          {/* Subheadline - Single direct line */}
           <p className="text-xl md:text-2xl text-white/60 max-w-3xl mx-auto mb-12 leading-relaxed animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
-            From pallets to unique handmade art — everything in one place.
-            Connect with verified buyers and sellers across the UK.
+            Connect with brokers, carriers, and sellers.
           </p>
 
-          {/* CTA Buttons - Primary: Find Loads & Buy Pallets */}
+          {/* CTA Buttons - ONE Primary CTA */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6 animate-fadeInUp" style={{ animationDelay: '0.3s' }}>
-            <Link to="/catalog?type=logistics" className="btn-primary inline-flex items-center group">
-              <Truck className="mr-2 h-5 w-5" />
+            {/* PRIMARY CTA */}
+            <Link to="/catalog?type=logistics" className="btn-primary inline-flex items-center group text-lg px-8 py-4">
+              <Truck className="mr-2 h-6 w-6" />
               Find Loads
-              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="ml-2 h-6 w-6 transition-transform group-hover:translate-x-1" />
             </Link>
-            <Link to="/catalog?type=pallet" className="btn-primary inline-flex items-center group">
+            {/* SECONDARY CTA */}
+            <Link to="/catalog?type=pallet" className="btn-secondary inline-flex items-center group">
               <Package className="mr-2 h-5 w-5" />
               Buy Pallets / Job Lots
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
           
-          {/* Secondary CTA - Sell/Post Listing */}
+          {/* Tertiary CTA - Link style only */}
           <div className="flex items-center justify-center mb-20 animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
-            <Link to="/register?type=seller" className="btn-secondary inline-flex items-center text-sm">
-              <Play className="mr-2 h-4 w-4" />
+            <Link to="/register?type=seller" className="text-white/60 hover:text-gold transition-colors text-sm underline">
               Sell / Post a Listing
             </Link>
           </div>

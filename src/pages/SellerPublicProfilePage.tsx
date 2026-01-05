@@ -219,7 +219,7 @@ export default function SellerPublicProfilePage() {
                   <h3 className="text-sm font-medium text-white/60 mb-2">Payment Reliability</h3>
                   <PaymentBehaviourBadge behaviour={seller.paymentBehaviour} size="md" />
                   <p className="text-xs text-white/40 mt-2">
-                    This is an informational indicator only. Not a guarantee or promise.
+                    Information only. Not a payment guarantee.
                   </p>
                 </div>
               )}

@@ -36,16 +36,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features Section - Cinematic Redesign */}
+      {/* Features Section */}
       <section className="py-20 bg-jet">
         <div className="container-cinematic">
           <div className="text-center mb-16">
             <h2 className="heading-section text-white mb-4">
-              Why Choose <span className="text-gradient-gold">Loadify Market</span>?
+              Why LoadifyMarket
             </h2>
-            <p className="text-white/60 text-lg max-w-2xl mx-auto">
-              The UK's most trusted marketplace for logistics, wholesale, and handmade goods
-            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -55,7 +52,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Wide Selection</h3>
               <p className="text-white/50">
-                From individual products to bulk pallets, find everything you need.
+                Products to bulk pallets.
               </p>
             </div>
 
@@ -65,7 +62,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Secure Payments</h3>
               <p className="text-white/50">
-                Safe and secure transactions with buyer protection.
+                Protected transactions.
               </p>
             </div>
 
@@ -75,7 +72,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Competitive Prices</h3>
               <p className="text-white/50">
-                Best deals on quality products from verified sellers.
+                Quality from verified sellers.
               </p>
             </div>
 
@@ -85,7 +82,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Trusted Community</h3>
               <p className="text-white/50">
-                Join thousands of satisfied buyers and sellers.
+                Verified buyers and sellers.
               </p>
             </div>
           </div>

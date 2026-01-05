@@ -42,20 +42,6 @@ export default function ProductCard({ product }: ProductCardProps) {
   const typeInfo = getTypeInfo();
   const TypeIcon = typeInfo.icon;
 
-  // Get stock status badge
-  const getStockBadge = () => {
-    switch (product.stockStatus) {
-      case 'in_stock':
-        return { label: 'In Stock', className: 'badge-stock' };
-      case 'low_stock':
-        return { label: 'Low Stock', className: 'badge-low-stock' };
-      default:
-        return { label: 'Out of Stock', className: 'badge-out-stock' };
-    }
-  };
-
-  const stockBadge = getStockBadge();
-
   return (
     <div className="card-product group">
       {/* Image Container */}
@@ -114,21 +100,21 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       {/* Product Info */}
       <Link to={`/product/${product.id}`} className="block p-5">
-        {/* Seller Info with Verification Badge */}
+        {/* Seller Info - Smaller, secondary */}
         {product.seller && (
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
               {product.seller.storeSlug ? (
                 <Link
                   to={`/seller/${product.seller.storeSlug}`}
-                  className="text-sm text-white/50 hover:text-gold transition-colors"
+                  className="text-xs text-white/40 hover:text-gold transition-colors"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  by {product.seller.businessName || 'Seller'}
+                  {product.seller.businessName || 'Seller'}
                 </Link>
               ) : (
-                <span className="text-sm text-white/50">
-                  by {product.seller.businessName || 'Seller'}
+                <span className="text-xs text-white/40">
+                  {product.seller.businessName || 'Seller'}
                 </span>
               )}
               {product.seller.marketplaceRole && (
@@ -141,23 +127,17 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
         )}
         
-        {/* Title */}
-        <h3 className="font-bold text-lg text-white mb-2 line-clamp-2 group-hover:text-gold transition-colors duration-300">
+        {/* Title - VISUALLY DOMINANT */}
+        <h3 className="font-bold text-xl text-white mb-3 line-clamp-2 group-hover:text-gold transition-colors duration-300 leading-tight">
           {product.title}
         </h3>
 
-        {/* Price and Stock */}
-        <div className="flex items-center justify-between mb-3">
-          <p className="price-tag">{formatPrice(product.price)}</p>
-          <span className={stockBadge.className}>
-            {stockBadge.label}
-          </span>
-        </div>
+        {/* Price - Prominent */}
+        <p className="price-tag mb-3">{formatPrice(product.price)}</p>
 
-        {/* Meta Info */}
-        <div className="flex items-center text-sm text-white/40">
+        {/* Meta Info - Compact */}
+        <div className="flex items-center justify-between text-xs text-white/40">
           <span className="capitalize">{product.condition}</span>
-          <span className="mx-2">•</span>
           <span>{product.stockQuantity} available</span>
         </div>
       </Link>
