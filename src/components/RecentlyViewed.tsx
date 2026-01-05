@@ -31,21 +31,12 @@ export default function RecentlyViewed({ currentProductId, maxProducts = 8 }: Re
           .order('viewedAt', { ascending: false })
           .limit(maxProducts + 1); // +1 to account for current product
 
-        if (viewedError) {
-          console.error('Error fetching recently viewed products:', viewedError);
-          setRecentProducts([]);
-          return;
-        }
+        if (viewedError) throw viewedError;
 
         if (viewedData && viewedData.length > 0) {
           const productIds = viewedData
             .map(v => v.productId)
             .filter(id => id !== currentProductId);
-
-          if (productIds.length === 0) {
-            setRecentProducts([]);
-            return;
-          }
 
           const { data: products, error: productsError } = await supabase
             .from('products')
@@ -54,11 +45,7 @@ export default function RecentlyViewed({ currentProductId, maxProducts = 8 }: Re
             .eq('isApproved', true)
             .eq('isActive', true);
 
-          if (productsError) {
-            console.error('Error fetching product details:', productsError);
-            setRecentProducts([]);
-            return;
-          }
+          if (productsError) throw productsError;
 
           // Sort products by the order they were viewed
           const sortedProducts = productIds
@@ -78,21 +65,12 @@ export default function RecentlyViewed({ currentProductId, maxProducts = 8 }: Re
           .order('viewedAt', { ascending: false })
           .limit(maxProducts + 1);
 
-        if (viewedError) {
-          console.error('Error fetching recently viewed products:', viewedError);
-          setRecentProducts([]);
-          return;
-        }
+        if (viewedError) throw viewedError;
 
         if (viewedData && viewedData.length > 0) {
           const productIds = viewedData
             .map(v => v.productId)
             .filter(id => id !== currentProductId);
-
-          if (productIds.length === 0) {
-            setRecentProducts([]);
-            return;
-          }
 
           const { data: products, error: productsError } = await supabase
             .from('products')
@@ -101,11 +79,7 @@ export default function RecentlyViewed({ currentProductId, maxProducts = 8 }: Re
             .eq('isApproved', true)
             .eq('isActive', true);
 
-          if (productsError) {
-            console.error('Error fetching product details:', productsError);
-            setRecentProducts([]);
-            return;
-          }
+          if (productsError) throw productsError;
 
           const sortedProducts = productIds
             .slice(0, maxProducts)

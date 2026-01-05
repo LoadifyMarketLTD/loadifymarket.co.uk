@@ -78,7 +78,7 @@ export default function CinematicHero() {
                   </div>
                   <span className="badge-gold">Logistics</span>
                 </div>
-                <h2 className="heading-card text-white mb-2">Logistics Loads</h2>
+                <h3 className="heading-card text-white mb-2">Logistics Loads</h3>
                 <p className="text-white/60 text-sm mb-4">Post loads & find verified drivers instantly</p>
                 <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
                   Browse Loads <ArrowRight className="ml-2 h-4 w-4" />
@@ -103,7 +103,7 @@ export default function CinematicHero() {
                   </div>
                   <span className="badge-gold">Wholesale</span>
                 </div>
-                <h2 className="heading-card text-white mb-2">Pallets & Wholesale Stock</h2>
+                <h3 className="heading-card text-white mb-2">Pallets & Wholesale Stock</h3>
                 <p className="text-white/60 text-sm mb-4">Clear stock to verified buyers worldwide</p>
                 <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
                   Browse Stock <ArrowRight className="ml-2 h-4 w-4" />
@@ -128,7 +128,7 @@ export default function CinematicHero() {
                   </div>
                   <span className="badge-gold">Handmade</span>
                 </div>
-                <h2 className="heading-card text-white mb-2">Handmade & Unique Items</h2>
+                <h3 className="heading-card text-white mb-2">Handmade & Unique Items</h3>
                 <p className="text-white/60 text-sm mb-4">Discover one-of-a-kind artisan pieces</p>
                 <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
                   Browse Handmade <ArrowRight className="ml-2 h-4 w-4" />
@@ -138,7 +138,7 @@ export default function CinematicHero() {
           </div>
 
           {/* Trust Indicators */}
-          <div className="mt-16 flex flex-wrap items-center justify-center gap-8 text-white/50 text-sm animate-fadeInUp" style={{ animationDelay: '0.5s' }}>
+          <div className="mt-16 flex flex-wrap items-center justify-center gap-8 text-white/40 text-sm animate-fadeInUp" style={{ animationDelay: '0.5s' }}>
             <div className="flex items-center">
               <span className="text-gold mr-2">✓</span>
               Verified Sellers

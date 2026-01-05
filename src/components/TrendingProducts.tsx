@@ -25,31 +25,17 @@ export default function TrendingProducts({ maxProducts = 8, days = 7 }: Trending
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - days);
 
-      // First try to get products with recent activity
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .eq('isApproved', true)
         .eq('isActive', true)
         .gte('lastViewedAt', cutoffDate.toISOString())
+        .order('addToCartCount', { ascending: false })
         .order('views', { ascending: false })
         .limit(maxProducts * 2); // Get more to filter and sort
 
-      if (error) {
-        console.error('Error fetching trending products:', error);
-        // Fallback to most viewed products if query fails
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('products')
-          .select('*')
-          .eq('isApproved', true)
-          .eq('isActive', true)
-          .order('views', { ascending: false })
-          .limit(maxProducts);
-
-        if (fallbackError) throw fallbackError;
-        setTrendingProducts(fallbackData || []);
-        return;
-      }
+      if (error) throw error;
 
       if (data && data.length > 0) {
         // Calculate trending score for each product
