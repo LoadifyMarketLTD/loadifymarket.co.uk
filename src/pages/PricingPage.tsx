@@ -45,7 +45,7 @@ export default function PricingPage() {
       icon: Crown,
       features: [
         'Unlimited listings',
-        'From 2% commission',
+        'Negotiable from 2%',
         'Dedicated account manager',
         '24/7 premium support',
         'Custom integrations',
