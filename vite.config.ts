@@ -14,7 +14,6 @@ export default defineConfig({
           'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
           'vendor-ui': ['lucide-react', 'date-fns'],
           'vendor-payment': ['@stripe/stripe-js', '@stripe/react-stripe-js'],
-          'vendor-supabase': ['@supabase/supabase-js'],
           'vendor-utils': ['axios', 'zustand'],
         },
       },
