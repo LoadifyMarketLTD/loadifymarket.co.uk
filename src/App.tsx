@@ -20,6 +20,7 @@ const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const SellerDashboardPage = lazy(() => import('./pages/SellerDashboardPage'));
 const SellerProfilePage = lazy(() => import('./pages/SellerProfilePage'));
+const SellerPublicProfilePage = lazy(() => import('./pages/SellerPublicProfilePage'));
 const SellerReturnsPage = lazy(() => import('./pages/SellerReturnsPage'));
 const SellerShipmentsPage = lazy(() => import('./pages/SellerShipmentsPage'));
 const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
@@ -141,6 +142,11 @@ function App() {
           <Route path="seller/profile" element={
             <Suspense fallback={<PageLoader />}>
               <SellerProfilePage />
+            </Suspense>
+          } />
+          <Route path="seller/:slug" element={
+            <Suspense fallback={<PageLoader />}>
+              <SellerPublicProfilePage />
             </Suspense>
           } />
           <Route path="seller/returns" element={

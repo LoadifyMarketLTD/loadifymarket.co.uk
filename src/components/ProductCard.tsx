@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Heart, Package, Truck, Sparkles, ArrowRight } from 'lucide-react';
 import { useWishlist } from '../lib/useWishlist';
 import VerificationBadge from './VerificationBadge';
+import RoleBadge from './RoleBadge';
 import type { Product } from '../types';
 
 interface ProductCardProps {
@@ -116,9 +117,24 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Seller Info with Verification Badge */}
         {product.seller && (
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-white/50">
-              by {product.seller.businessName || 'Seller'}
-            </span>
+            <div className="flex items-center gap-2">
+              {product.seller.storeSlug ? (
+                <Link
+                  to={`/seller/${product.seller.storeSlug}`}
+                  className="text-sm text-white/50 hover:text-gold transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  by {product.seller.businessName || 'Seller'}
+                </Link>
+              ) : (
+                <span className="text-sm text-white/50">
+                  by {product.seller.businessName || 'Seller'}
+                </span>
+              )}
+              {product.seller.marketplaceRole && (
+                <RoleBadge role={product.seller.marketplaceRole} size="sm" />
+              )}
+            </div>
             {product.seller.isApproved !== undefined && (
               <VerificationBadge isVerified={product.seller.isApproved} size="sm" showLabel={false} />
             )}

@@ -20,6 +20,7 @@ export default function CatalogPage() {
   const [selectedCondition, setSelectedCondition] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>(searchParams.get('type') || '');
   const [selectedListingType, setSelectedListingType] = useState<string>(searchParams.get('listingType') || '');
+  const [selectedRole, setSelectedRole] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('createdAt_desc');
 
   // Fetch categories
@@ -46,7 +47,20 @@ export default function CatalogPage() {
     try {
       let query = supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          seller:seller_profiles!inner(
+            businessName,
+            isApproved,
+            rating,
+            marketplaceRole,
+            paymentBehaviour,
+            userId
+          ),
+          store:seller_stores(
+            storeSlug
+          )
+        `)
         .eq('isActive', true)
         .eq('isApproved', true);
 
@@ -71,6 +85,10 @@ export default function CatalogPage() {
       if (selectedListingType) {
         query = query.eq('listingType', selectedListingType);
       }
+      // Apply role filter
+      if (selectedRole) {
+        query = query.eq('seller.marketplaceRole', selectedRole);
+      }
       query = query.gte('price', priceRange[0]).lte('price', priceRange[1]);
 
       // Apply sorting
@@ -80,14 +98,24 @@ export default function CatalogPage() {
       const { data, error } = await query.limit(50);
 
       if (error) throw error;
-      setProducts(data || []);
+      
+      // Transform data to match Product type
+      const transformedData = data?.map((product: any) => ({
+        ...product,
+        seller: product.seller ? {
+          ...product.seller,
+          storeSlug: product.store?.storeSlug,
+        } : undefined,
+      })) || [];
+      
+      setProducts(transformedData);
     } catch (error) {
       console.error('Error fetching products:', error);
       setProducts([]);
     } finally {
       setLoading(false);
     }
-  }, [sortBy, selectedCondition, selectedType, selectedListingType, priceRange, searchQuery, selectedCategory]);
+  }, [sortBy, selectedCondition, selectedType, selectedListingType, selectedRole, priceRange, searchQuery, selectedCategory]);
 
   useEffect(() => {
     fetchProducts();
@@ -327,6 +355,21 @@ export default function CatalogPage() {
                   </select>
                 </div>
 
+                {/* Seller Role Filter */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-white/60 mb-2">Seller Type</label>
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    className="input-field"
+                  >
+                    <option value="">All Sellers</option>
+                    <option value="carrier">Carriers Only</option>
+                    <option value="broker">Brokers Only</option>
+                    <option value="seller">Sellers Only</option>
+                  </select>
+                </div>
+
                 {/* Divider */}
                 <div className="divider-fade my-6" />
 
@@ -338,6 +381,7 @@ export default function CatalogPage() {
                     setSelectedType('');
                     setSelectedListingType('');
                     setSelectedCondition('');
+                    setSelectedRole('');
                     setPriceRange([0, 10000]);
                     setSortBy('createdAt_desc');
                   }}
@@ -368,6 +412,7 @@ export default function CatalogPage() {
                     setSelectedType('');
                     setSelectedCondition('');
                     setSelectedListingType('');
+                    setSelectedRole('');
                     setSearchQuery('');
                     setPriceRange([0, 10000]);
                   }}

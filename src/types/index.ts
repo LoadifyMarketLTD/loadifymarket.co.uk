@@ -1,9 +1,16 @@
 export type UserRole = 'guest' | 'buyer' | 'seller' | 'admin';
 
+// Marketplace roles for sellers/users
+export type MarketplaceRole = 'carrier' | 'broker' | 'seller' | null;
+
+// Payment behaviour indicator
+export type PaymentBehaviour = 'pays_on_time' | 'sometimes_late' | 'repeated_delays' | null;
+
 export interface User {
   id: string;
   email: string;
   role: UserRole;
+  marketplaceRole?: MarketplaceRole;
   firstName?: string;
   lastName?: string;
   phone?: string;
@@ -39,6 +46,8 @@ export interface SellerProfile {
     bankName?: string;
   };
   profileCompleteness?: number;
+  marketplaceRole?: MarketplaceRole;
+  paymentBehaviour?: PaymentBehaviour;
 }
 
 export interface Address {
@@ -109,6 +118,10 @@ export interface Product {
     businessName?: string;
     isApproved?: boolean;
     rating?: number;
+    marketplaceRole?: MarketplaceRole;
+    paymentBehaviour?: PaymentBehaviour;
+    userId?: string;
+    storeSlug?: string;
   };
 }
 
