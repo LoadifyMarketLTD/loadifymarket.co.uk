@@ -88,6 +88,21 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/how-it-works" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  How It Works
+                </Link>
+              </li>
+              <li>
+                <Link to="/pricing" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Pricing
+                </Link>
+              </li>
+              <li>
+                <Link to="/about" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  About Us
+                </Link>
+              </li>
+              <li>
                 <Link to="/help" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
                   Help & FAQ
                 </Link>

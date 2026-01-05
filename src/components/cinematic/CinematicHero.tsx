@@ -47,20 +47,30 @@ export default function CinematicHero() {
             Connect with verified buyers and sellers across the UK.
           </p>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20 animate-fadeInUp" style={{ animationDelay: '0.3s' }}>
-            <Link to="/catalog" className="btn-primary inline-flex items-center group">
-              Explore Marketplace
+          {/* CTA Buttons - Primary: Find Loads & Buy Pallets */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6 animate-fadeInUp" style={{ animationDelay: '0.3s' }}>
+            <Link to="/catalog?type=logistics" className="btn-primary inline-flex items-center group">
+              <Truck className="mr-2 h-5 w-5" />
+              Find Loads
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Link>
-            <Link to="/register?type=seller" className="btn-secondary inline-flex items-center">
-              <Play className="mr-2 h-5 w-5" />
-              Sell on Loadify Market
+            <Link to="/catalog?type=pallet" className="btn-primary inline-flex items-center group">
+              <Package className="mr-2 h-5 w-5" />
+              Buy Pallets / Job Lots
+              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+            </Link>
+          </div>
+          
+          {/* Secondary CTA - Sell/Post Listing */}
+          <div className="flex items-center justify-center mb-20 animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
+            <Link to="/register?type=seller" className="btn-secondary inline-flex items-center text-sm">
+              <Play className="mr-2 h-4 w-4" />
+              Sell / Post a Listing
             </Link>
           </div>
 
           {/* Category Panels */}
-          <div className="category-grid animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
+          <div className="category-grid animate-fadeInUp" style={{ animationDelay: '0.5s' }}>
             {/* Logistics Loads Panel */}
             <Link to="/catalog?type=logistics" className="group relative overflow-hidden rounded-premium-lg aspect-[4/3] cursor-pointer">
               <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet">
@@ -138,7 +148,7 @@ export default function CinematicHero() {
           </div>
 
           {/* Trust Indicators */}
-          <div className="mt-16 flex flex-wrap items-center justify-center gap-8 text-white/40 text-sm animate-fadeInUp" style={{ animationDelay: '0.5s' }}>
+          <div className="mt-16 flex flex-wrap items-center justify-center gap-8 text-white/40 text-sm animate-fadeInUp" style={{ animationDelay: '0.6s' }}>
             <div className="flex items-center">
               <span className="text-gold mr-2">✓</span>
               Verified Sellers
