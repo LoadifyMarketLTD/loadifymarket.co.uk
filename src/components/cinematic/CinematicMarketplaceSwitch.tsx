@@ -93,7 +93,7 @@ export default function CinematicMarketplaceSwitch() {
                   <div className="flex items-center justify-between pt-4 border-t border-white/10">
                     <div>
                       <p className="price-tag">£{job.price}</p>
-                      <p className="text-xs text-white/40">Quoted price</p>
+                      <p className="text-xs text-white/50">Quoted price</p>
                     </div>
                     <Link to={`/catalog?type=logistics`} className="btn-glass py-2 px-4 text-sm">
                       View Details
@@ -120,10 +120,10 @@ export default function CinematicMarketplaceSwitch() {
                   </div>
                   <div className="p-5">
                     <h3 className="font-bold text-white mb-2 line-clamp-2">{item.category}</h3>
-                    <p className="text-sm text-white/40 mb-3">RRP: £{item.rrp.toLocaleString()}</p>
+                    <p className="text-sm text-white/50 mb-3">RRP: £{item.rrp.toLocaleString()}</p>
                     <div className="flex items-baseline gap-1 mb-4">
                       <span className="price-tag">£{item.price.toLocaleString()}</span>
-                      <span className="text-sm text-white/40">/ lot</span>
+                      <span className="text-sm text-white/50">/ lot</span>
                     </div>
                     <Link to={`/catalog?type=pallet`} className="w-full btn-glass py-3 text-sm flex items-center justify-center gap-2">
                       <span>View Stock</span>
@@ -158,7 +158,7 @@ export default function CinematicMarketplaceSwitch() {
                   </div>
                   <div className="p-5">
                     <h3 className="font-bold text-white mb-2 line-clamp-2">{item.title}</h3>
-                    <p className="text-sm text-white/40 mb-3 line-clamp-1">{item.artist}</p>
+                    <p className="text-sm text-white/50 mb-3 line-clamp-1">{item.artist}</p>
                     <div className="flex items-baseline gap-1 mb-4">
                       <span className="price-tag">£{item.price}</span>
                     </div>

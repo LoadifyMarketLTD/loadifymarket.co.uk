@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Icons</title>
+</head>
+<body>
+    <canvas id="canvas192" width="192" height="192"></canvas>
+    <canvas id="canvas512" width="512" height="512"></canvas>
+    <canvas id="canvas180" width="180" height="180"></canvas>
+    <script>
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            
+            // Background
+            ctx.fillStyle = '#0A0A0A';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Draw hexagon
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const radius = size * 0.35;
+            
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i - Math.PI / 6;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.closePath();
+            ctx.strokeStyle = '#D4AF37';
+            ctx.lineWidth = size * 0.03;
+            ctx.stroke();
+            
+            // Draw L letter
+            ctx.fillStyle = '#D4AF37';
+            ctx.font = `bold ${size * 0.4}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('L', centerX, centerY);
+        }
+        
+        drawIcon(document.getElementById('canvas192'), 192);
+        drawIcon(document.getElementById('canvas512'), 512);
+        drawIcon(document.getElementById('canvas180'), 180);
+        
+        console.log('Icons drawn. Right-click each canvas to save as PNG.');
+    </script>
+</body>
+</html>

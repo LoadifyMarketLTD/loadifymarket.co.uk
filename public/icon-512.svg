@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="#0A0A0A"/>
+  <polygon points="411.1917523581714,166.40000000000003 411.1917523581714,345.59999999999997 256,435.2 100.80824764182859,345.59999999999997 100.80824764182859,166.40000000000003 255.9999999999998,76.80000000000001" fill="none" stroke="#D4AF37" stroke-width="15.36"/>
+  <text x="256" y="256" font-family="sans-serif" font-size="204.8" font-weight="bold" fill="#D4AF37" text-anchor="middle" dominant-baseline="central">L</text>
+</svg>
