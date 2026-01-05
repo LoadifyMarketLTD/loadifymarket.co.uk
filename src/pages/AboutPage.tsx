@@ -17,7 +17,7 @@ export default function AboutPage() {
       icon: Shield,
       title: 'Trust & Security',
       description:
-        'We verify every seller and secure every transaction. Your safety is our top priority.',
+        'We verify sellers and provide a secure platform. Your safety is our priority.',
     },
     {
       icon: Users,
@@ -170,10 +170,10 @@ export default function AboutPage() {
             <div className="card-glass flex items-start gap-4">
               <CheckCircle className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
               <div>
-                <h3 className="text-lg font-bold text-white mb-2">Secure Payments</h3>
+                <h3 className="text-lg font-bold text-white mb-2">Payment Processing</h3>
                 <p className="text-white/60">
-                  All payments are processed through Stripe with full buyer protection. Your money
-                  is safe, and sellers get paid on time.
+                  Payments are processed through Stripe. Connect directly with buyers and sellers
+                  to finalize transactions.
                 </p>
               </div>
             </div>
@@ -192,10 +192,10 @@ export default function AboutPage() {
             <div className="card-glass flex items-start gap-4">
               <CheckCircle className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
               <div>
-                <h3 className="text-lg font-bold text-white mb-2">One Platform, Three Markets</h3>
+                <h3 className="text-lg font-bold text-white mb-2">Multi-Category Platform</h3>
                 <p className="text-white/60">
                   Whether you're moving freight, buying wholesale stock, or selling handmade
-                  goods—we've got you covered.
+                  goods—all in one marketplace.
                 </p>
               </div>
             </div>

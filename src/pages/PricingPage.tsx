@@ -169,7 +169,7 @@ export default function PricingPage() {
           {/* Additional Info */}
           <div className="text-center mt-12">
             <p className="text-white/50 text-sm">
-              All plans include secure payments, buyer protection, and access to our marketplace.
+              All plans include payment processing and full access to our marketplace.
             </p>
             <p className="text-white/50 text-sm mt-2">
               VAT will be added where applicable.
