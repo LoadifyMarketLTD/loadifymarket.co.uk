@@ -16,6 +16,7 @@ export default function SellerProfilePage() {
     vatNumber: '',
     companyRegistrationNumber: '',
     contactPhone: '',
+    marketplaceRole: '' as 'carrier' | 'broker' | 'seller' | '',
     businessAddress: {
       line1: '',
       line2: '',
@@ -62,6 +63,7 @@ export default function SellerProfilePage() {
           vatNumber: data.vatNumber || '',
           companyRegistrationNumber: data.companyRegistrationNumber || '',
           contactPhone: data.contactPhone || '',
+          marketplaceRole: data.marketplaceRole || '',
           businessAddress: data.businessAddress || {
             line1: '',
             line2: '',
@@ -132,6 +134,7 @@ export default function SellerProfilePage() {
           vatNumber: formData.vatNumber,
           companyRegistrationNumber: formData.companyRegistrationNumber,
           contactPhone: formData.contactPhone,
+          marketplaceRole: formData.marketplaceRole || null,
           businessAddress: formData.businessAddress,
           payoutDetails: formData.payoutDetails,
           profileCompleteness: completeness,
@@ -288,6 +291,25 @@ export default function SellerProfilePage() {
                   className="input-field"
                   placeholder="+44 20 1234 5678"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Marketplace Role
+                </label>
+                <select
+                  value={formData.marketplaceRole}
+                  onChange={(e) => setFormData({ ...formData, marketplaceRole: e.target.value as 'carrier' | 'broker' | 'seller' | '' })}
+                  className="input-field"
+                >
+                  <option value="">Select Role</option>
+                  <option value="carrier">Carrier / Driver</option>
+                  <option value="broker">Broker / Dispatcher</option>
+                  <option value="seller">Seller (Pallets / Job Lots)</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Choose the role that best describes your business
+                </p>
               </div>
             </div>
           </div>
