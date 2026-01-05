@@ -89,6 +89,18 @@ export default function Header() {
             >
               Catalog
             </Link>
+            <Link
+              to="/how-it-works"
+              className={`nav-link ${isActive('/how-it-works') ? 'nav-link-active' : ''}`}
+            >
+              How It Works
+            </Link>
+            <Link
+              to="/pricing"
+              className={`nav-link ${isActive('/pricing') ? 'nav-link-active' : ''}`}
+            >
+              Pricing
+            </Link>
 
             {user ? (
               <>
@@ -269,6 +281,24 @@ export default function Header() {
 
             {/* Quick Links */}
             <div className="grid grid-cols-2 gap-2 pt-2">
+              <Link
+                to="/how-it-works"
+                className="py-2 px-4 text-sm text-white/60 hover:text-gold transition-colors"
+              >
+                How It Works
+              </Link>
+              <Link
+                to="/pricing"
+                className="py-2 px-4 text-sm text-white/60 hover:text-gold transition-colors"
+              >
+                Pricing
+              </Link>
+              <Link
+                to="/about"
+                className="py-2 px-4 text-sm text-white/60 hover:text-gold transition-colors"
+              >
+                About Us
+              </Link>
               <Link
                 to="/help"
                 className="py-2 px-4 text-sm text-white/60 hover:text-gold transition-colors"

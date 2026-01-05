@@ -39,6 +39,9 @@ const MessagesPage = lazy(() => import('./pages/MessagesPage'));
 const NotificationSettingsPage = lazy(() => import('./pages/NotificationSettingsPage'));
 const HelpPage = lazy(() => import('./pages/HelpPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
+const PricingPage = lazy(() => import('./pages/PricingPage'));
+const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
 const TermsPage = lazy(() => import('./pages/legal/TermsPage'));
 const PrivacyPage = lazy(() => import('./pages/legal/PrivacyPage'));
 const CookiePage = lazy(() => import('./pages/legal/CookiePage'));
@@ -238,6 +241,23 @@ function App() {
           <Route path="contact" element={
             <Suspense fallback={<PageLoader />}>
               <ContactPage />
+            </Suspense>
+          } />
+          
+          {/* Info Pages */}
+          <Route path="pricing" element={
+            <Suspense fallback={<PageLoader />}>
+              <PricingPage />
+            </Suspense>
+          } />
+          <Route path="how-it-works" element={
+            <Suspense fallback={<PageLoader />}>
+              <HowItWorksPage />
+            </Suspense>
+          } />
+          <Route path="about" element={
+            <Suspense fallback={<PageLoader />}>
+              <AboutPage />
             </Suspense>
           } />
           

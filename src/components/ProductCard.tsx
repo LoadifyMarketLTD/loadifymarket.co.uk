@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Heart, Package, Truck, Sparkles, ArrowRight } from 'lucide-react';
 import { useWishlist } from '../lib/useWishlist';
+import VerificationBadge from './VerificationBadge';
 import type { Product } from '../types';
 
 interface ProductCardProps {
@@ -112,6 +113,18 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       {/* Product Info */}
       <Link to={`/product/${product.id}`} className="block p-5">
+        {/* Seller Info with Verification Badge */}
+        {product.seller && (
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-white/50">
+              by {product.seller.businessName || 'Seller'}
+            </span>
+            {product.seller.isApproved !== undefined && (
+              <VerificationBadge isVerified={product.seller.isApproved} size="sm" showLabel={false} />
+            )}
+          </div>
+        )}
+        
         {/* Title */}
         <h3 className="font-bold text-lg text-white mb-2 line-clamp-2 group-hover:text-gold transition-colors duration-300">
           {product.title}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Star, Package, Clock, TrendingUp, Award, MessageCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import VerificationBadge from './VerificationBadge';
 
 interface SellerPerformanceProps {
   sellerId: string;
@@ -23,6 +24,7 @@ interface SellerInfoData {
   businessName?: string;
   rating: number;
   totalSales: number;
+  isApproved?: boolean;
   createdAt: string;
   users: {
     id: string;
@@ -163,6 +165,20 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
 
   return (
     <div className="space-y-4">
+      {/* Seller Name with Verification Badge */}
+      {sellerInfo && (
+        <div className="flex items-center justify-between flex-wrap gap-3 pb-4 border-b border-white/10">
+          <h3 className="text-xl font-bold text-white">
+            {sellerInfo.businessName || 
+             `${sellerInfo.users.firstName || ''} ${sellerInfo.users.lastName || ''}`.trim() || 
+             'Seller'}
+          </h3>
+          {sellerInfo.isApproved !== undefined && (
+            <VerificationBadge isVerified={sellerInfo.isApproved} size="md" />
+          )}
+        </div>
+      )}
+      
       {/* Performance Badge */}
       <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-${performanceLevel.color}-50 border border-${performanceLevel.color}-200`}>
         <span className="text-xl">{performanceLevel.icon}</span>

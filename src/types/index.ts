@@ -104,6 +104,12 @@ export interface Product {
   lastViewedAt?: string;
   createdAt: string;
   updatedAt: string;
+  // Optional seller info for display (joined from users table)
+  seller?: {
+    businessName?: string;
+    isApproved?: boolean;
+    rating?: number;
+  };
 }
 
 export interface Category {
