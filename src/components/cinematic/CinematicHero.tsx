@@ -5,7 +5,7 @@ export default function CinematicHero() {
   return (
     <section className="relative min-h-[70vh] bg-jet overflow-hidden flex items-center">
       {/* Cinematic Background Effects */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 overflow-hidden">
         {/* Large gradient orbs for cinematic lighting */}
         <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-gold/10 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-gold/5 rounded-full blur-[100px]" style={{ animationDelay: '2s' }} />
