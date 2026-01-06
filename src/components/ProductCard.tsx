@@ -44,8 +44,8 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="card-product group">
-      {/* Image Container */}
-      <div className="relative aspect-square bg-gradient-to-br from-graphite to-jet overflow-hidden">
+      {/* Image Container - Reduced to 4:3 aspect ratio for more compact layout */}
+      <div className="relative aspect-[4/3] bg-gradient-to-br from-graphite to-jet overflow-hidden">
         {/* Product Image */}
         {product.images && product.images.length > 0 ? (
           <img
@@ -101,10 +101,10 @@ export default function ProductCard({ product }: ProductCardProps) {
       </div>
 
       {/* Product Info */}
-      <Link to={`/product/${product.id}`} className="block p-5">
+      <Link to={`/product/${product.id}`} className="block p-3">
         {/* Seller Info - Smaller, secondary */}
         {product.seller && (
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-1.5">
               {product.seller.storeSlug ? (
                 <Link
@@ -130,12 +130,12 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
         
         {/* Title - VISUALLY DOMINANT */}
-        <h3 className="font-bold text-xl text-white mb-3 line-clamp-2 group-hover:text-gold transition-colors duration-300 leading-tight">
+        <h3 className="font-bold text-base text-white mb-2 line-clamp-2 group-hover:text-gold transition-colors duration-300 leading-tight">
           {product.title}
         </h3>
 
         {/* Price - Prominent */}
-        <p className="price-tag mb-3">{formatPrice(product.price)}</p>
+        <p className="price-tag mb-2">{formatPrice(product.price)}</p>
 
         {/* Meta Info - Compact */}
         <div className="flex items-center justify-between text-xs text-white/40">

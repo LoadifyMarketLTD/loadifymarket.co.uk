@@ -91,6 +91,13 @@ export default function ProductPage() {
   const handleAddToCart = async () => {
     if (!product) return;
 
+    // Check if user is authenticated
+    if (!user) {
+      // Redirect to login with return URL
+      navigate(`/login?next=${encodeURIComponent(`/product/${product.id}`)}`);
+      return;
+    }
+
     addItem({
       productId: product.id,
       quantity,

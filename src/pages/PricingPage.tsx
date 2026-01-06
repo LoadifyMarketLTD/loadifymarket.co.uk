@@ -103,10 +103,10 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Pricing Cards */}
-      <section className="py-16">
+      {/* Pricing Cards - More compact layout */}
+      <section className="py-12">
         <div className="container-cinematic">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {plans.map((plan) => {
               const Icon = plan.icon;
               return (
@@ -117,19 +117,19 @@ export default function PricingPage() {
                   }`}
                 >
                   {plan.popular && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gold text-jet px-4 py-1 rounded-full text-sm font-bold">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gold text-jet px-3 py-1 rounded-full text-xs font-bold">
                       Most Popular
                     </div>
                   )}
 
-                  <div className="text-center mb-6">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gold/10 rounded-premium-sm mb-4">
-                      <Icon className="h-8 w-8 text-gold" />
+                  <div className="text-center mb-4">
+                    <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-3">
+                      <Icon className="h-7 w-7 text-gold" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
-                    <p className="text-white/50 text-sm mb-4">{plan.description}</p>
-                    <div className="mb-6">
-                      <span className="text-5xl font-bold text-white">
+                    <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
+                    <p className="text-white/50 text-sm mb-3">{plan.description}</p>
+                    <div className="mb-4">
+                      <span className="text-4xl font-bold text-white">
                         {plan.price === 'Custom' ? '' : '£'}
                         {plan.price}
                       </span>
@@ -137,15 +137,15 @@ export default function PricingPage() {
                         <span className="text-white/40 text-sm ml-2">/ {plan.period}</span>
                       )}
                       {plan.price === 'Custom' && (
-                        <span className="text-white/40 text-sm block mt-2">{plan.period}</span>
+                        <span className="text-white/40 text-sm block mt-1">{plan.period}</span>
                       )}
                     </div>
                   </div>
 
-                  <ul className="space-y-3 mb-8">
+                  <ul className="space-y-2 mb-6">
                     {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
+                      <li key={index} className="flex items-start gap-2">
+                        <Check className="w-4 h-4 text-gold flex-shrink-0 mt-0.5" />
                         <span className="text-white/70 text-sm">{feature}</span>
                       </li>
                     ))}
@@ -153,7 +153,7 @@ export default function PricingPage() {
 
                   <Link
                     to={plan.ctaLink}
-                    className={`w-full block text-center py-3 rounded-premium-sm font-semibold transition-all ${
+                    className={`w-full block text-center py-2.5 rounded-premium-sm font-semibold transition-all text-sm ${
                       plan.popular
                         ? 'bg-gold text-jet hover:bg-gold/90 shadow-cinematic-gold'
                         : 'bg-graphite text-white hover:bg-graphite/80'
@@ -167,11 +167,11 @@ export default function PricingPage() {
           </div>
 
           {/* Additional Info */}
-          <div className="text-center mt-12">
+          <div className="text-center mt-8">
             <p className="text-white/50 text-sm">
               All plans include payment processing and full access to our marketplace.
             </p>
-            <p className="text-white/50 text-sm mt-2">
+            <p className="text-white/50 text-sm mt-1">
               VAT will be added where applicable.
             </p>
           </div>

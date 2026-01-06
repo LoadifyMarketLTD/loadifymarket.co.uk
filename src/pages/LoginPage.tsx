@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 export default function LoginPage() {
@@ -8,6 +8,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +22,10 @@ export default function LoginPage() {
       });
 
       if (error) throw error;
-      navigate('/dashboard');
+      
+      // Redirect to the 'next' parameter if provided, otherwise go to home
+      const nextUrl = searchParams.get('next') || '/';
+      navigate(nextUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to login');
     } finally {

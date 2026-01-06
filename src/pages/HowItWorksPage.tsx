@@ -50,31 +50,29 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
-      {/* Steps Section */}
-      <section className="py-16">
+      {/* Steps Section - Compact 2-row grid layout on desktop */}
+      <section className="py-12">
         <div className="container-cinematic">
-          <div className="max-w-4xl mx-auto space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
             {steps.map((step, index) => {
               const Icon = step.icon;
               return (
                 <div
                   key={index}
-                  className="flex items-start gap-6 card-glass hover:scale-[1.01] transition-all duration-300"
+                  className="card-glass hover:scale-[1.02] transition-all duration-300"
                 >
-                  {/* Step Number */}
-                  <div className="flex-shrink-0">
-                    <div className="w-16 h-16 rounded-premium-sm bg-gold/10 flex items-center justify-center border-2 border-gold/30">
-                      <span className="text-2xl font-bold text-gold">{index + 1}</span>
+                  {/* Step Number and Icon */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-premium-sm bg-gold/10 flex items-center justify-center border-2 border-gold/30 flex-shrink-0">
+                      <span className="text-xl font-bold text-gold">{index + 1}</span>
                     </div>
+                    <Icon className="w-5 h-5 text-gold" />
                   </div>
 
                   {/* Step Content */}
-                  <div className="flex-1 pt-2">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Icon className="w-5 h-5 text-gold" />
-                      <h3 className="text-xl font-bold text-white">{step.title}</h3>
-                    </div>
-                    <p className="text-white/60">{step.description}</p>
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-2">{step.title}</h3>
+                    <p className="text-white/60 text-sm">{step.description}</p>
                   </div>
                 </div>
               );
