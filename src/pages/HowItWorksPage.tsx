@@ -13,26 +13,31 @@ export default function HowItWorksPage() {
       icon: Search,
       title: 'Post a listing',
       description: 'Create your load, pallet, or product listing.',
+      link: '/register?type=seller',
     },
     {
       icon: UserPlus,
       title: 'Review offers',
       description: 'Check inquiries and interested parties.',
+      link: '/catalog',
     },
     {
       icon: CreditCard,
       title: 'Agree terms',
       description: 'Contact buyer/seller and confirm details.',
+      link: '/contact',
     },
     {
       icon: Package,
       title: 'Complete the transaction',
       description: 'Finalize payment and delivery.',
+      link: '/help',
     },
     {
       icon: CheckCircle,
       title: 'Leave feedback',
       description: 'Rate your experience.',
+      link: '/help',
     },
   ];
 
@@ -57,9 +62,10 @@ export default function HowItWorksPage() {
             {steps.map((step, index) => {
               const Icon = step.icon;
               return (
-                <div
+                <Link
                   key={index}
-                  className="card-glass hover:scale-[1.02] transition-all duration-300"
+                  to={step.link}
+                  className="card-glass hover:scale-[1.02] transition-all duration-300 block"
                 >
                   {/* Step Number and Icon */}
                   <div className="flex items-center gap-3 mb-3">
@@ -74,7 +80,7 @@ export default function HowItWorksPage() {
                     <h3 className="text-lg font-bold text-white mb-2">{step.title}</h3>
                     <p className="text-white/60 text-sm">{step.description}</p>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

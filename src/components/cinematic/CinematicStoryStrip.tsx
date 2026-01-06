@@ -8,24 +8,28 @@ export default function CinematicStoryStrip() {
       icon: Upload,
       title: 'Post a listing',
       description: 'Create your load, pallet, or product listing',
+      link: '/register?type=seller',
     },
     {
       id: 2,
       icon: MessageSquare,
       title: 'Review offers',
       description: 'Check inquiries and interested parties',
+      link: '/catalog',
     },
     {
       id: 3,
       icon: CheckSquare,
       title: 'Agree terms',
       description: 'Contact buyer/seller and confirm details',
+      link: '/how-it-works',
     },
     {
       id: 4,
       icon: TrendingUp,
       title: 'Complete transaction',
       description: 'Finalize payment and delivery',
+      link: '/help',
     },
   ];
 
@@ -53,8 +57,8 @@ export default function CinematicStoryStrip() {
                   <div className="hidden lg:block absolute top-12 left-1/2 w-full h-px bg-gradient-to-r from-gold/50 to-gold/10 z-0" />
                 )}
 
-                {/* Card */}
-                <div className="relative card-glass hover:scale-[1.03] transition-all duration-500 z-10 text-center">
+                {/* Card as Link */}
+                <Link to={step.link} className="relative card-glass hover:scale-[1.03] transition-all duration-500 z-10 text-center block">
                   {/* Step number */}
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-gold text-jet rounded-full flex items-center justify-center font-bold text-sm shadow-cinematic-gold">
                     {step.id}
@@ -72,7 +76,7 @@ export default function CinematicStoryStrip() {
                   <p className="text-sm text-white/50 leading-relaxed">
                     {step.description}
                   </p>
-                </div>
+                </Link>
               </div>
             );
           })}
