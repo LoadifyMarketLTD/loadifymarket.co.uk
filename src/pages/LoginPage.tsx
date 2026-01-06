@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useAuthStore } from '../store';
+import { Mail, Lock } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -9,6 +11,15 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user } = useAuthStore();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      const nextUrl = searchParams.get('next') || '/';
+      navigate(nextUrl, { replace: true });
+    }
+  }, [user, searchParams, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,60 +45,100 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center bg-gray-50 py-12 px-4">
-      <div className="max-w-md w-full">
-        <div className="card">
-          <h2 className="text-3xl font-bold text-center mb-6">Sign In</h2>
+    <div className="min-h-screen bg-jet flex items-center justify-center py-12 px-4">
+      <div className="w-full max-w-md">
+        <div className="card-glass p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-white mb-2">Sign In</h2>
+            <p className="text-white/60 text-sm">Welcome back to Loadify Market</p>
+          </div>
           
+          {/* Error Message */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-premium-sm mb-6">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          {/* Login Form */}
+          <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1">Email</label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="input-field"
-                placeholder="your@email.com"
-              />
+              <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-white/40" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="input-field pl-10"
+                  placeholder="your@email.com"
+                  autoComplete="email"
+                />
+              </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-1">Password</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="input-field"
-                placeholder="••••••••"
-              />
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-white/80">
+                  Password
+                </label>
+                <Link to="/forgot-password" className="text-sm text-gold hover:text-gold/80 transition-colors">
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-white/40" />
+                </div>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="input-field pl-10"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                />
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full"
+              className="btn-primary w-full h-12 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-navy-800 font-medium hover:text-navy-700">
-                Register here
-              </Link>
-            </p>
+          {/* Divider */}
+          <div className="mt-8 mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/10"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-graphite text-white/60">New to Loadify Market?</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Create Account Link */}
+          <div className="text-center">
+            <Link
+              to="/register"
+              className="btn-secondary w-full h-12 flex items-center justify-center"
+            >
+              Create an Account
+            </Link>
           </div>
         </div>
       </div>
