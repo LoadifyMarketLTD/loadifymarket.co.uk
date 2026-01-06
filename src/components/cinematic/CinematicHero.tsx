@@ -63,8 +63,8 @@ export default function CinematicHero() {
           {/* Category Panels - 2 main + 1 smaller */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 animate-fadeInUp" style={{ animationDelay: '0.5s' }}>
             {/* Logistics Loads Panel */}
-            <Link to="/catalog?type=logistics" className="group relative overflow-hidden rounded-premium-lg aspect-[4/3] cursor-pointer">
-              <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet">
+            <Link to="/catalog?type=logistics" className="group relative overflow-hidden rounded-premium-lg aspect-[4/3] cursor-pointer hero-image-wrapper">
+              <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet hero-media">
                 <img
                   src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&q=80"
                   alt="Logistics and Freight"
@@ -88,8 +88,8 @@ export default function CinematicHero() {
             </Link>
 
             {/* Pallets & Stock Panel */}
-            <Link to="/catalog?type=pallet" className="group relative overflow-hidden rounded-premium-lg aspect-[4/3] cursor-pointer">
-              <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet">
+            <Link to="/catalog?type=pallet" className="group relative overflow-hidden rounded-premium-lg aspect-[4/3] cursor-pointer hero-image-wrapper">
+              <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet hero-media">
                 <img
                   src="https://images.unsplash.com/photo-1553413077-190dd305871c?w=600&q=80"
                   alt="Warehouse Pallets"
@@ -115,8 +115,8 @@ export default function CinematicHero() {
 
           {/* Handmade Panel - Smaller, Secondary */}
           <div className="max-w-md mx-auto mt-6 animate-fadeInUp" style={{ animationDelay: '0.6s' }}>
-            <Link to="/catalog?type=handmade" className="group relative overflow-hidden rounded-premium-lg aspect-[16/9] cursor-pointer opacity-80 hover:opacity-100 transition-opacity">
-              <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet">
+            <Link to="/catalog?type=handmade" className="group relative overflow-hidden rounded-premium-lg aspect-[16/9] cursor-pointer opacity-80 hover:opacity-100 transition-opacity hero-image-wrapper">
+              <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet hero-media">
                 <img
                   src="https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=600&q=80"
                   alt="Handmade Crafts"
