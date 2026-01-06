@@ -60,19 +60,19 @@ export default function CinematicHero() {
             </Link>
           </div>
 
-          {/* Category Panels - 2 main + 1 smaller */}
+          {/* Category Panels - 2 main + 1 smaller - Cinematic aspect ratios */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
             {/* Logistics Loads Panel */}
-            <Link to="/catalog?type=logistics" className="group relative overflow-hidden rounded-premium-lg aspect-[4/3] cursor-pointer hero-image-wrapper">
+            <Link to="/catalog?type=logistics" className="group relative overflow-hidden rounded-premium-lg aspect-[16/10] md:aspect-[16/10] lg:aspect-[16/9] cursor-pointer hero-image-wrapper">
               <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet hero-media">
                 <img
-                  src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&q=75&auto=format&fit=crop&fm=webp"
-                  srcSet="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=480&q=75&auto=format&fit=crop&fm=webp 480w,
-                          https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=768&q=75&auto=format&fit=crop&fm=webp 768w,
-                          https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1024&q=75&auto=format&fit=crop&fm=webp 1024w"
+                  src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&q=75&auto=format&fit=max&fm=webp"
+                  srcSet="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=480&q=75&auto=format&fit=max&fm=webp 480w,
+                          https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=768&q=75&auto=format&fit=max&fm=webp 768w,
+                          https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1024&q=75&auto=format&fit=max&fm=webp 1024w"
                   sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
                   alt="Logistics and Freight"
-                  className="w-full h-full object-cover opacity-60 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
+                  className="w-full h-full object-cover object-center opacity-60 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
                   loading="eager"
                   decoding="async"
                 />
@@ -94,16 +94,16 @@ export default function CinematicHero() {
             </Link>
 
             {/* Pallets & Stock Panel */}
-            <Link to="/catalog?type=pallet" className="group relative overflow-hidden rounded-premium-lg aspect-[4/3] cursor-pointer hero-image-wrapper">
+            <Link to="/catalog?type=pallet" className="group relative overflow-hidden rounded-premium-lg aspect-[16/10] md:aspect-[16/10] lg:aspect-[16/9] cursor-pointer hero-image-wrapper">
               <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet hero-media">
                 <img
-                  src="https://images.unsplash.com/photo-1553413077-190dd305871c?w=600&q=75&auto=format&fit=crop&fm=webp"
-                  srcSet="https://images.unsplash.com/photo-1553413077-190dd305871c?w=480&q=75&auto=format&fit=crop&fm=webp 480w,
-                          https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=75&auto=format&fit=crop&fm=webp 768w,
-                          https://images.unsplash.com/photo-1553413077-190dd305871c?w=1024&q=75&auto=format&fit=crop&fm=webp 1024w"
+                  src="https://images.unsplash.com/photo-1553413077-190dd305871c?w=600&q=75&auto=format&fit=max&fm=webp"
+                  srcSet="https://images.unsplash.com/photo-1553413077-190dd305871c?w=480&q=75&auto=format&fit=max&fm=webp 480w,
+                          https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=75&auto=format&fit=max&fm=webp 768w,
+                          https://images.unsplash.com/photo-1553413077-190dd305871c?w=1024&q=75&auto=format&fit=max&fm=webp 1024w"
                   sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
                   alt="Warehouse Pallets"
-                  className="w-full h-full object-cover opacity-60 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
+                  className="w-full h-full object-cover object-top opacity-60 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
                   loading="lazy"
                   decoding="async"
                 />
@@ -130,12 +130,12 @@ export default function CinematicHero() {
             <Link to="/catalog?type=handmade" className="group relative overflow-hidden rounded-premium-lg aspect-[16/9] cursor-pointer opacity-80 hover:opacity-100 transition-opacity hero-image-wrapper">
               <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet hero-media">
                 <img
-                  src="https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=600&q=75&auto=format&fit=crop&fm=webp"
-                  srcSet="https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=480&q=75&auto=format&fit=crop&fm=webp 480w,
-                          https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=768&q=75&auto=format&fit=crop&fm=webp 768w"
+                  src="https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=600&q=75&auto=format&fit=max&fm=webp"
+                  srcSet="https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=480&q=75&auto=format&fit=max&fm=webp 480w,
+                          https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=768&q=75&auto=format&fit=max&fm=webp 768w"
                   sizes="(max-width: 768px) 100vw, 500px"
                   alt="Handmade Crafts"
-                  className="w-full h-full object-cover opacity-50 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
+                  className="w-full h-full object-cover object-center opacity-50 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
                   loading="lazy"
                   decoding="async"
                 />
