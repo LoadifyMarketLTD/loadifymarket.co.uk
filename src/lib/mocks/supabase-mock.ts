@@ -104,6 +104,95 @@ const mockUser: User = {
   created_at: new Date().toISOString(),
 };
 
+// Helper to create a chainable query builder
+const createQueryBuilder = (table: string, _columns?: string) => {
+  let filters: Array<{ type: string; column: string; value: unknown; operator?: string }> = [];
+  let orderBy: { column: string; ascending: boolean } | null = null;
+  let limitCount: number | null = null;
+
+  const applyFilters = (data: Record<string, unknown>[]) => {
+    let filtered = [...data];
+    
+    for (const filter of filters) {
+      if (filter.type === 'eq') {
+        filtered = filtered.filter(item => item[filter.column] === filter.value);
+      } else if (filter.type === 'in') {
+        const values = filter.value as unknown[];
+        filtered = filtered.filter(item => values.includes(item[filter.column]));
+      } else if (filter.type === 'gte') {
+        filtered = filtered.filter(item => {
+          const itemValue = item[filter.column];
+          return itemValue !== null && itemValue !== undefined && (itemValue as number | string) >= (filter.value as number | string);
+        });
+      } else if (filter.type === 'lte') {
+        filtered = filtered.filter(item => {
+          const itemValue = item[filter.column];
+          return itemValue !== null && itemValue !== undefined && (itemValue as number | string) <= (filter.value as number | string);
+        });
+      }
+    }
+
+    if (orderBy) {
+      filtered.sort((a, b) => {
+        const aVal = a[orderBy!.column] as number | string;
+        const bVal = b[orderBy!.column] as number | string;
+        if (aVal === bVal) return 0;
+        const comparison = aVal < bVal ? -1 : 1;
+        return orderBy!.ascending ? comparison : -comparison;
+      });
+    }
+
+    if (limitCount !== null) {
+      filtered = filtered.slice(0, limitCount);
+    }
+
+    return filtered;
+  };
+
+  const builder: Record<string, unknown> = {
+    eq: (column: string, value: unknown) => {
+      filters.push({ type: 'eq', column, value });
+      return builder;
+    },
+    in: (column: string, values: unknown[]) => {
+      filters.push({ type: 'in', column, value: values });
+      return builder;
+    },
+    gte: (column: string, value: unknown) => {
+      filters.push({ type: 'gte', column, value });
+      return builder;
+    },
+    lte: (column: string, value: unknown) => {
+      filters.push({ type: 'lte', column, value });
+      return builder;
+    },
+    order: (column: string, options?: { ascending?: boolean }) => {
+      orderBy = { column, ascending: options?.ascending !== false };
+      return builder;
+    },
+    limit: (count: number) => {
+      limitCount = count;
+      return builder;
+    },
+    single: async () => {
+      const allData = Array.from(mockStorage[table as keyof typeof mockStorage]?.values() || []) as Record<string, unknown>[];
+      const filtered = applyFilters(allData);
+      console.log(`[MOCK] SELECT from ${table} - filters:`, filters, 'orderBy:', orderBy, 'limit:', limitCount);
+      return { data: filtered[0] || null, error: null };
+    },
+  };
+
+  // Add async data() method
+  (builder as Record<string, unknown>).data = async () => {
+    const allData = Array.from(mockStorage[table as keyof typeof mockStorage]?.values() || []) as Record<string, unknown>[];
+    const filtered = applyFilters(allData);
+    console.log(`[MOCK] SELECT from ${table} - filters:`, filters, 'orderBy:', orderBy, 'limit:', limitCount);
+    return { data: filtered, error: null };
+  };
+
+  return builder;
+};
+
 export const createMockSupabaseClient = () => {
   return {
     auth: {
@@ -138,42 +227,7 @@ export const createMockSupabaseClient = () => {
       },
     },
     from: (table: string) => ({
-      select: (columns?: string) => ({
-        eq: (column: string, value: unknown) => ({
-          single: async () => {
-            console.log(`[MOCK] SELECT from ${table} WHERE ${column} = ${value}`);
-            const data = Array.from(mockStorage[table as keyof typeof mockStorage]?.values() || [])
-              .find((item) => (item as Record<string, unknown>)[column] === value);
-            return { data, error: null };
-          },
-          data: async () => {
-            console.log(`[MOCK] SELECT from ${table} WHERE ${column} = ${value}`);
-            const data = Array.from(mockStorage[table as keyof typeof mockStorage]?.values() || [])
-              .filter((item) => (item as Record<string, unknown>)[column] === value);
-            return { data, error: null };
-          },
-        }),
-        order: (column: string) => ({
-          limit: (count: number) => ({
-            data: async () => {
-              console.log(`[MOCK] SELECT from ${table} ORDER BY ${column} LIMIT ${count}`);
-              const data = Array.from(mockStorage[table as keyof typeof mockStorage]?.values() || [])
-                .slice(0, count);
-              return { data, error: null };
-            },
-          }),
-          data: async () => {
-            console.log(`[MOCK] SELECT from ${table} ORDER BY ${column}`);
-            const data = Array.from(mockStorage[table as keyof typeof mockStorage]?.values() || []);
-            return { data, error: null };
-          },
-        }),
-        data: async () => {
-          console.log(`[MOCK] SELECT ${columns || '*'} from ${table}`);
-          const data = Array.from(mockStorage[table as keyof typeof mockStorage]?.values() || []);
-          return { data, error: null };
-        },
-      }),
+      select: (columns?: string) => createQueryBuilder(table, columns),
       insert: (values: Record<string, unknown>) => ({
         select: () => ({
           single: async () => {
