@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { Package, TrendingUp, Users, ShieldCheck, ArrowRight } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
-import CinematicMarketplaceSwitch from '../components/cinematic/CinematicMarketplaceSwitch';
-import CinematicStoryStrip from '../components/cinematic/CinematicStoryStrip';
-import TrendingProducts from '../components/TrendingProducts';
-import RecentlyViewed from '../components/RecentlyViewed';
+
+// Lazy load below-the-fold components
+const CinematicMarketplaceSwitch = lazy(() => import('../components/cinematic/CinematicMarketplaceSwitch'));
+const CinematicStoryStrip = lazy(() => import('../components/cinematic/CinematicStoryStrip'));
+const TrendingProducts = lazy(() => import('../components/TrendingProducts'));
+const RecentlyViewed = lazy(() => import('../components/RecentlyViewed'));
 
 export default function HomePage() {
   return (
@@ -12,23 +15,31 @@ export default function HomePage() {
       {/* Cinematic Hero */}
       <CinematicHero />
 
-      {/* Marketplace Mode Switch */}
-      <CinematicMarketplaceSwitch />
+      {/* Marketplace Mode Switch - Lazy Loaded */}
+      <Suspense fallback={<div className="py-12 bg-graphite/30 min-h-[400px]" />}>
+        <CinematicMarketplaceSwitch />
+      </Suspense>
 
-      {/* Story Strip - How It Works */}
-      <CinematicStoryStrip />
+      {/* Story Strip - How It Works - Lazy Loaded */}
+      <Suspense fallback={<div className="py-12 bg-jet min-h-[400px]" />}>
+        <CinematicStoryStrip />
+      </Suspense>
 
-      {/* Trending Products Section */}
+      {/* Trending Products Section - Lazy Loaded */}
       <section className="py-12 bg-graphite/30">
         <div className="container-cinematic">
-          <TrendingProducts maxProducts={8} days={7} />
+          <Suspense fallback={<div className="min-h-[300px]" />}>
+            <TrendingProducts maxProducts={8} days={7} />
+          </Suspense>
         </div>
       </section>
 
-      {/* Recently Viewed Section */}
+      {/* Recently Viewed Section - Lazy Loaded */}
       <section className="py-12 bg-jet">
         <div className="container-cinematic">
-          <RecentlyViewed maxProducts={8} />
+          <Suspense fallback={<div className="min-h-[300px]" />}>
+            <RecentlyViewed maxProducts={8} />
+          </Suspense>
         </div>
       </section>
 

@@ -21,41 +21,39 @@ export default function CookieBanner() {
   if (!showBanner) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-md z-[100] animate-fadeInUp">
-      <div className="card-glass p-4 shadow-cinematic-gold">
-        <div className="flex items-start gap-3">
-          <div className="p-1.5 rounded-lg bg-gold/20 flex-shrink-0">
-            <Cookie className="w-4 h-4 text-gold" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-white/80 leading-relaxed">
-              We use cookies to enhance your browsing experience and analyze our traffic. By clicking "Accept", you consent to our use of cookies.{' '}
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-graphite/95 backdrop-blur-md border-t border-gold/20 shadow-cinematic-gold">
+      <div className="container-cinematic py-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Cookie className="w-4 h-4 text-gold flex-shrink-0" />
+            <p className="text-xs sm:text-sm text-white/80">
+              We use cookies to enhance your browsing experience.{' '}
               <Link to="/cookies" className="text-gold hover:underline whitespace-nowrap">
-                Read our cookie policy
+                Cookie policy
               </Link>
             </p>
-            <div className="flex items-center gap-2 mt-3">
-              <button
-                onClick={declineCookies}
-                className="text-xs py-1.5 px-3 rounded-lg bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-all"
-              >
-                Decline
-              </button>
-              <button
-                onClick={acceptCookies}
-                className="text-xs py-1.5 px-4 rounded-lg bg-gold text-jet font-semibold hover:bg-gold/90 transition-all"
-              >
-                Accept All
-              </button>
-            </div>
           </div>
-          <button
-            onClick={declineCookies}
-            className="p-1 text-white/40 hover:text-white transition-colors flex-shrink-0"
-            aria-label="Close"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2 ml-auto">
+            <button
+              onClick={declineCookies}
+              className="text-xs py-1.5 px-3 rounded-lg bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-all whitespace-nowrap"
+            >
+              Decline
+            </button>
+            <button
+              onClick={acceptCookies}
+              className="text-xs py-1.5 px-4 rounded-lg bg-gold text-jet font-semibold hover:bg-gold/90 transition-all whitespace-nowrap"
+            >
+              Accept All
+            </button>
+            <button
+              onClick={declineCookies}
+              className="p-1.5 text-white/40 hover:text-white transition-colors flex-shrink-0 sm:hidden"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
