@@ -98,16 +98,27 @@ const mockUser: User = {
   id: 'mock-user-id',
   email: 'test@loadifymarket.co.uk',
   role: 'seller',
+  app_metadata: {},
+  user_metadata: { 
+    firstName: 'Test',
+    lastName: 'Seller',
+  },
+  aud: 'authenticated',
+  created_at: new Date().toISOString(),
+};
+
+// Add mock user to storage
+mockStorage.users.set(mockUser.id, {
+  id: mockUser.id,
+  email: mockUser.email,
+  role: 'seller',
   firstName: 'Test',
   lastName: 'Seller',
   isEmailVerified: true,
   isActive: true,
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-};
-
-// Add mock user to storage
-mockStorage.users.set(mockUser.id, mockUser as unknown as Record<string, unknown>);
+} as Record<string, unknown>);
 
 // Helper to create a chainable query builder
 const createQueryBuilder = (table: string, _columns?: string) => {
