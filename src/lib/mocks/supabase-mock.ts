@@ -122,22 +122,59 @@ const createQueryBuilder = (table: string, _columns?: string) => {
       } else if (filter.type === 'gte') {
         filtered = filtered.filter(item => {
           const itemValue = item[filter.column];
-          return itemValue !== null && itemValue !== undefined && (itemValue as number | string) >= (filter.value as number | string);
+          const filterValue = filter.value;
+          if (itemValue === null || itemValue === undefined) return false;
+          // Handle string and number comparisons safely
+          if (typeof itemValue === 'number' && typeof filterValue === 'number') {
+            return itemValue >= filterValue;
+          }
+          if (typeof itemValue === 'string' && typeof filterValue === 'string') {
+            return itemValue >= filterValue;
+          }
+          // Fallback: try comparison anyway (dates, etc.)
+          return (itemValue as number | string) >= (filterValue as number | string);
         });
       } else if (filter.type === 'lte') {
         filtered = filtered.filter(item => {
           const itemValue = item[filter.column];
-          return itemValue !== null && itemValue !== undefined && (itemValue as number | string) <= (filter.value as number | string);
+          const filterValue = filter.value;
+          if (itemValue === null || itemValue === undefined) return false;
+          // Handle string and number comparisons safely
+          if (typeof itemValue === 'number' && typeof filterValue === 'number') {
+            return itemValue <= filterValue;
+          }
+          if (typeof itemValue === 'string' && typeof filterValue === 'string') {
+            return itemValue <= filterValue;
+          }
+          // Fallback: try comparison anyway (dates, etc.)
+          return (itemValue as number | string) <= (filterValue as number | string);
         });
       }
     }
 
     if (orderBy) {
       filtered.sort((a, b) => {
-        const aVal = a[orderBy!.column] as number | string;
-        const bVal = b[orderBy!.column] as number | string;
-        if (aVal === bVal) return 0;
-        const comparison = aVal < bVal ? -1 : 1;
+        const aVal = a[orderBy!.column];
+        const bVal = b[orderBy!.column];
+        
+        // Handle null/undefined
+        if (aVal === null || aVal === undefined) return orderBy!.ascending ? 1 : -1;
+        if (bVal === null || bVal === undefined) return orderBy!.ascending ? -1 : 1;
+        
+        // Safe comparison for numbers and strings
+        if (typeof aVal === 'number' && typeof bVal === 'number') {
+          return orderBy!.ascending ? aVal - bVal : bVal - aVal;
+        }
+        if (typeof aVal === 'string' && typeof bVal === 'string') {
+          const comparison = aVal.localeCompare(bVal);
+          return orderBy!.ascending ? comparison : -comparison;
+        }
+        
+        // Fallback for mixed types
+        const aValComp = aVal as number | string;
+        const bValComp = bVal as number | string;
+        if (aValComp === bValComp) return 0;
+        const comparison = aValComp < bValComp ? -1 : 1;
         return orderBy!.ascending ? comparison : -comparison;
       });
     }
