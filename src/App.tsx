@@ -24,6 +24,9 @@ const SellerProfilePage = lazy(() => import('./pages/SellerProfilePage'));
 const SellerPublicProfilePage = lazy(() => import('./pages/SellerPublicProfilePage'));
 const SellerReturnsPage = lazy(() => import('./pages/SellerReturnsPage'));
 const SellerShipmentsPage = lazy(() => import('./pages/SellerShipmentsPage'));
+const SellerListingsPage = lazy(() => import('./pages/SellerListingsPage'));
+const CreateListingPage = lazy(() => import('./pages/CreateListingPage'));
+const EditListingPage = lazy(() => import('./pages/EditListingPage'));
 const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const CategoryManagementPage = lazy(() => import('./pages/CategoryManagementPage'));
@@ -179,6 +182,30 @@ function App() {
             <RequireAuth>
               <Suspense fallback={<PageLoader />}>
                 <SellerShipmentsPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Seller Listings */}
+          <Route path="seller/listings" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <SellerListingsPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Create Listing */}
+          <Route path="seller/listings/new" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <CreateListingPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Edit Listing */}
+          <Route path="seller/listings/:id/edit" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <EditListingPage />
               </Suspense>
             </RequireAuth>
           } />
