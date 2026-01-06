@@ -446,7 +446,7 @@ export default function ProductPage() {
         <div className="mt-12">
           <div className="card-glass">
             <h2 className="text-2xl font-bold text-white mb-6">Description</h2>
-            <div className="prose prose-invert max-w-none">
+            <div className="prose prose-invert max-w-full">
               <p className="text-white/70 whitespace-pre-line leading-relaxed">
                 {product.description}
               </p>
