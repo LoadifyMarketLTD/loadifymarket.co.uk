@@ -277,6 +277,11 @@
     position: absolute;
     width: min(100%, 1000px);
     height: min(100%, 1000px);
+    width: 100%;
+    height: 100%;
+    max-width: 1000px;
+    max-height: 1000px;
+    aspect-ratio: 1;
     background: radial-gradient(ellipse at center, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
     pointer-events: none;
     animation: light-beam-move 20s ease-in-out infinite;
