@@ -180,6 +180,12 @@ const createQueryBuilder = (table: string, _columns?: string) => {
       console.log(`[MOCK] SELECT from ${table} - filters:`, filters, 'orderBy:', orderBy, 'limit:', limitCount);
       return { data: filtered[0] || null, error: null };
     },
+    then: (resolve: (value: { data: Record<string, unknown>[] | null; error: unknown }) => void) => {
+      const allData = Array.from(mockStorage[table as keyof typeof mockStorage]?.values() || []) as Record<string, unknown>[];
+      const filtered = applyFilters(allData);
+      console.log(`[MOCK] SELECT from ${table} - filters:`, filters, 'orderBy:', orderBy, 'limit:', limitCount);
+      return Promise.resolve({ data: filtered, error: null }).then(resolve);
+    },
   };
 
   // Add async data() method
