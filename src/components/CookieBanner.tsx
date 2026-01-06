@@ -33,7 +33,7 @@ export default function CookieBanner() {
                 We use cookies to enhance your browsing experience and analyze our traffic.
                 By clicking "Accept", you consent to our use of cookies.{' '}
                 <Link to="/cookies" className="text-gold hover:underline">
-                  Learn more
+                  Read our cookie policy
                 </Link>
               </p>
             </div>
@@ -54,7 +54,7 @@ export default function CookieBanner() {
           </div>
           <button
             onClick={declineCookies}
-            className="absolute top-2 right-2 md:hidden p-2 text-white/40 hover:text-white"
+            className="absolute top-2 right-2 md:hidden p-2 text-white/70 hover:text-white"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
