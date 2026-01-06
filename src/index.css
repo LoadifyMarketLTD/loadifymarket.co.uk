@@ -124,7 +124,7 @@
     @apply relative overflow-hidden rounded-premium-md bg-graphite
            shadow-premium-card cursor-pointer
            transition-all duration-500 ease-out
-           hover:shadow-premium-hover hover:scale-[1.02];
+           hover:shadow-cinematic-gold hover:scale-[1.01];
   }
 
   .card-product-image {
