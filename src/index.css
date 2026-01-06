@@ -448,3 +448,25 @@
     @apply w-full;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   LAPTOP – FIX HERO IMAGES BEING CUT
+   ═══════════════════════════════════════════════════════════ */
+@media (min-width: 1280px) and (max-width: 1600px) {
+  .hero-images,
+  .hero-media,
+  .hero-image-wrapper {
+    height: auto !important;
+    max-height: 420px;
+    overflow: visible !important;
+  }
+
+  .hero-images img,
+  .hero-media img {
+    width: 100%;
+    height: auto !important;
+    max-height: 420px;
+    object-fit: contain !important;
+    object-position: center;
+  }
+}
