@@ -78,9 +78,9 @@ export default function TrendingProducts({ maxProducts = 8, days = 7 }: Trending
     return (
       <div className="my-12">
         <div className="flex items-center gap-2 mb-6">
-          <TrendingUp className="w-6 h-6 text-orange-500" />
+          <TrendingUp className="w-6 h-6 text-orange-700" />
           <h2 className="text-2xl font-bold">Trending Now</h2>
-          <Flame className="w-5 h-5 text-orange-500" />
+          <Flame className="w-5 h-5 text-orange-700" />
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
           {[...Array(maxProducts)].map((_, i) => (
@@ -102,9 +102,9 @@ export default function TrendingProducts({ maxProducts = 8, days = 7 }: Trending
   return (
     <div className="my-12">
       <div className="flex items-center gap-2 mb-6">
-        <TrendingUp className="w-6 h-6 text-orange-500" />
+        <TrendingUp className="w-6 h-6 text-orange-700" />
         <h2 className="text-2xl font-bold">Trending Now</h2>
-        <Flame className="w-5 h-5 text-orange-500 animate-pulse" />
+        <Flame className="w-5 h-5 text-orange-700 animate-pulse" />
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
         {trendingProducts.map((product, index) => (
@@ -115,7 +115,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7 }: Trending
           >
             {/* Trending Badge */}
             {index < 3 && (
-              <div className="absolute -top-2 -left-2 z-10 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+              <div className="absolute -top-2 -left-2 z-10 bg-orange-700 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                 #{index + 1}
               </div>
             )}
@@ -135,7 +135,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7 }: Trending
               )}
               
               {/* Trending Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-orange-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-orange-700/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
               
               {product.condition !== 'new' && (
                 <div className="absolute top-2 right-2 bg-white px-2 py-1 rounded text-xs font-medium">
