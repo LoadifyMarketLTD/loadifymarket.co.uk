@@ -91,144 +91,155 @@ export default function ListingForm({
   };
 
   return (
-    <form className="space-y-6">
-      {/* Title */}
-      <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-          Title <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          id="title"
-          value={formData.title}
-          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-800"
-          placeholder="Enter listing title"
-          disabled={loading}
-        />
-        {errors.title && <p className="text-xs text-red-600 mt-1">{errors.title}</p>}
-      </div>
-
-      {/* Category */}
-      <div>
-        <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-          Category <span className="text-red-500">*</span>
-        </label>
-        <select
-          id="category"
-          value={formData.category}
-          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-800"
-          disabled={loading}
-        >
-          <option value="">Select category</option>
-          {CATEGORIES.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
-        </select>
-        {errors.category && <p className="text-xs text-red-600 mt-1">{errors.category}</p>}
-      </div>
-
-      {/* Condition */}
-      <div>
-        <label htmlFor="condition" className="block text-sm font-medium text-gray-700 mb-1">
-          Condition <span className="text-red-500">*</span>
-        </label>
-        <select
-          id="condition"
-          value={formData.condition}
-          onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-800"
-          disabled={loading}
-        >
-          <option value="">Select condition</option>
-          {CONDITIONS.map((cond) => (
-            <option key={cond} value={cond}>
-              {cond}
-            </option>
-          ))}
-        </select>
-        {errors.condition && <p className="text-xs text-red-600 mt-1">{errors.condition}</p>}
-      </div>
-
-      {/* Price and Quantity */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <form className="space-y-8">
+      {/* Section 1: Basic Information */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Basic Information</h3>
+        
+        {/* Title */}
         <div>
-          <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-            Price (GBP) <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-2.5 text-gray-500">£</span>
-            <input
-              type="number"
-              id="price"
-              min="0.01"
-              step="0.01"
-              value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-              className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-800"
-              placeholder="0.00"
-              disabled={loading}
-            />
-          </div>
-          {errors.price && <p className="text-xs text-red-600 mt-1">{errors.price}</p>}
-        </div>
-
-        <div>
-          <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
-            Quantity <span className="text-red-500">*</span>
+          <label htmlFor="title" className="block text-sm font-medium text-gray-900 mb-2">
+            Title <span className="text-red-500">*</span>
           </label>
           <input
-            type="number"
-            id="quantity"
-            min="1"
-            value={formData.quantity}
-            onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-800"
-            placeholder="1"
+            type="text"
+            id="title"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-premium-md focus:outline-none focus:ring-2 focus:ring-navy-800 focus:border-transparent"
+            placeholder="Enter listing title"
             disabled={loading}
           />
-          {errors.quantity && <p className="text-xs text-red-600 mt-1">{errors.quantity}</p>}
+          {errors.title && <p className="text-xs text-red-600 mt-1.5">{errors.title}</p>}
+        </div>
+
+        {/* Category */}
+        <div>
+          <label htmlFor="category" className="block text-sm font-medium text-gray-900 mb-2">
+            Category <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="category"
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-premium-md focus:outline-none focus:ring-2 focus:ring-navy-800 focus:border-transparent"
+            disabled={loading}
+          >
+            <option value="">Select category</option>
+            {CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+          {errors.category && <p className="text-xs text-red-600 mt-1.5">{errors.category}</p>}
         </div>
       </div>
 
-      {/* Description */}
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-          Description (optional, max 800 characters)
-        </label>
-        <textarea
-          id="description"
-          rows={4}
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-800"
-          placeholder="Describe your listing..."
-          maxLength={800}
-          disabled={loading}
-        />
-        <div className="flex justify-between mt-1">
+      {/* Section 2: Pricing & Details */}
+      <div className="space-y-4 pt-4 border-t border-gray-200">
+        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Pricing & Details</h3>
+        
+        {/* Condition */}
+        <div>
+          <label htmlFor="condition" className="block text-sm font-medium text-gray-900 mb-2">
+            Condition <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="condition"
+            value={formData.condition}
+            onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-premium-md focus:outline-none focus:ring-2 focus:ring-navy-800 focus:border-transparent"
+            disabled={loading}
+          >
+            <option value="">Select condition</option>
+            {CONDITIONS.map((cond) => (
+              <option key={cond} value={cond}>
+                {cond}
+              </option>
+            ))}
+          </select>
+          {errors.condition && <p className="text-xs text-red-600 mt-1.5">{errors.condition}</p>}
+        </div>
+
+        {/* Price and Quantity */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            {errors.description && <p className="text-xs text-red-600">{errors.description}</p>}
+            <label htmlFor="price" className="block text-sm font-medium text-gray-900 mb-2">
+              Price (GBP) <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-2.5 text-gray-500 font-medium">£</span>
+              <input
+                type="number"
+                id="price"
+                min="0.01"
+                step="0.01"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                className="w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-premium-md focus:outline-none focus:ring-2 focus:ring-navy-800 focus:border-transparent"
+                placeholder="0.00"
+                disabled={loading}
+              />
+            </div>
+            {errors.price && <p className="text-xs text-red-600 mt-1.5">{errors.price}</p>}
           </div>
-          <span className="text-xs text-gray-500">{formData.description.length}/800</span>
+
+          <div>
+            <label htmlFor="quantity" className="block text-sm font-medium text-gray-900 mb-2">
+              Quantity <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="quantity"
+              min="1"
+              value={formData.quantity}
+              onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-premium-md focus:outline-none focus:ring-2 focus:ring-navy-800 focus:border-transparent"
+              placeholder="1"
+              disabled={loading}
+            />
+            {errors.quantity && <p className="text-xs text-red-600 mt-1.5">{errors.quantity}</p>}
+          </div>
+        </div>
+
+        {/* Description */}
+        <div>
+          <label htmlFor="description" className="block text-sm font-medium text-gray-900 mb-2">
+            Description <span className="text-gray-500 font-normal">(optional)</span>
+          </label>
+          <textarea
+            id="description"
+            rows={4}
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-premium-md focus:outline-none focus:ring-2 focus:ring-navy-800 focus:border-transparent resize-none"
+            placeholder="Describe your listing..."
+            maxLength={800}
+            disabled={loading}
+          />
+          <div className="flex justify-between mt-1.5">
+            <div>
+              {errors.description && <p className="text-xs text-red-600">{errors.description}</p>}
+            </div>
+            <span className="text-xs text-gray-500">{formData.description.length}/800</span>
+          </div>
         </div>
       </div>
 
-      {/* Images */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Images (up to 5 URLs)
+      {/* Section 3: Images */}
+      <div className="space-y-4 pt-4 border-t border-gray-200">
+        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Images</h3>
+        <label className="block text-sm text-gray-600 mb-2">
+          Add up to 5 image URLs
         </label>
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex space-x-2">
             <input
               type="url"
               value={imageInput}
               onChange={(e) => setImageInput(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-800"
+              className="flex-1 px-4 py-2.5 border border-gray-300 rounded-premium-md focus:outline-none focus:ring-2 focus:ring-navy-800 focus:border-transparent"
               placeholder="https://example.com/image.jpg"
               disabled={loading || formData.images.length >= 5}
             />
@@ -236,7 +247,7 @@ export default function ListingForm({
               type="button"
               onClick={handleAddImage}
               disabled={loading || !imageInput.trim() || formData.images.length >= 5}
-              className="px-4 py-2 bg-navy-800 text-white rounded-lg hover:bg-navy-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-5 py-2.5 bg-navy-800 text-white rounded-premium-md hover:bg-navy-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               Add
             </button>
@@ -264,12 +275,12 @@ export default function ListingForm({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-4 border-t">
+      <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
         <button
           type="button"
           onClick={() => handleSubmit('draft')}
           disabled={loading}
-          className="flex-1 px-6 py-3 bg-white text-navy-800 border border-navy-800 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 font-medium"
+          className="flex-1 px-6 py-3 bg-white text-navy-800 border-2 border-navy-800 rounded-premium-md hover:bg-gray-50 transition-colors disabled:opacity-50 font-semibold"
         >
           {loading ? 'Saving...' : 'Save Draft'}
         </button>
@@ -277,7 +288,7 @@ export default function ListingForm({
           type="button"
           onClick={() => handleSubmit('publish')}
           disabled={loading}
-          className="flex-1 px-6 py-3 bg-navy-800 text-white rounded-lg hover:bg-navy-900 transition-colors disabled:opacity-50 font-medium"
+          className="flex-1 px-6 py-3 bg-gold-500 text-navy-900 rounded-premium-md hover:bg-gold-600 transition-colors disabled:opacity-50 font-semibold shadow-sm"
         >
           {loading ? 'Publishing...' : 'Publish'}
         </button>
@@ -286,7 +297,7 @@ export default function ListingForm({
             type="button"
             onClick={onDelete}
             disabled={loading}
-            className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 font-medium"
+            className="px-6 py-3 bg-red-600 text-white rounded-premium-md hover:bg-red-700 transition-colors disabled:opacity-50 font-semibold"
           >
             Delete
           </button>
