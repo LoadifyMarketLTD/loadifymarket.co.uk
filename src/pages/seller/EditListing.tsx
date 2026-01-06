@@ -167,8 +167,8 @@ export default function EditListing() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-32">
-      <div className="container mx-auto px-4 py-6 md:py-8 max-w-3xl">
+    <div className="bg-gray-50 min-h-screen pb-48 md:pb-40">
+      <div className="container mx-auto px-4 py-6 md:py-8 max-w-3xl mb-20">
         {/* Header */}
         <div className="mb-6">
           <Link

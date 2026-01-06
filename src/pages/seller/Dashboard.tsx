@@ -154,8 +154,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-32">
-      <div className="container mx-auto px-4 py-6 md:py-8">
+    <div className="bg-gray-50 min-h-screen pb-48 md:pb-40">
+      <div className="container mx-auto px-4 py-6 md:py-8 mb-20">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-3 sm:space-y-0">
           <h1 className="text-2xl md:text-3xl font-bold">Seller Dashboard</h1>
@@ -170,19 +170,22 @@ export default function Dashboard() {
 
         {/* Loading State */}
         {loading && (
-          <div className="flex justify-center items-center h-64">
-            <div className="text-gray-500">Loading listings...</div>
+          <div className="flex justify-center items-center py-20">
+            <div className="text-center">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-300 border-t-navy-800 mb-4"></div>
+              <p className="text-gray-600 font-medium">Loading your listings...</p>
+            </div>
           </div>
         )}
 
         {/* Empty State */}
         {!loading && listings.length === 0 && (
-          <div className="flex justify-center">
-            <div className="card text-center py-10 px-6 max-w-md w-full">
-              <Package className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-              <h2 className="text-xl font-bold mb-2">No listings yet</h2>
-              <p className="text-gray-600 mb-5 text-sm">Create your first listing to start selling.</p>
-              <Link to="/seller/create" className="btn-primary inline-flex items-center space-x-2">
+          <div className="flex justify-center py-12">
+            <div className="card text-center py-12 px-8 max-w-md w-full shadow-lg">
+              <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+              <h2 className="text-2xl font-bold mb-3 text-gray-900">No listings yet</h2>
+              <p className="text-gray-600 mb-6">Create your first listing to start selling on the platform.</p>
+              <Link to="/seller/create" className="btn-primary inline-flex items-center space-x-2 px-6 py-3">
                 <Plus className="h-5 w-5" />
                 <span>Create New Listing</span>
               </Link>
