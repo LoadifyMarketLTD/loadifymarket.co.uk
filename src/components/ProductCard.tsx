@@ -44,8 +44,8 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="card-product group">
-      {/* Image Container - Reduced to 4:3 aspect ratio for more compact layout */}
-      <div className="relative aspect-[4/3] bg-gradient-to-br from-graphite to-jet overflow-hidden">
+      {/* Image Container - Compact 3:2 aspect ratio for denser layout */}
+      <div className="relative aspect-[3/2] bg-gradient-to-br from-graphite to-jet overflow-hidden">
         {/* Product Image */}
         {product.images && product.images.length > 0 ? (
           <img
@@ -55,29 +55,29 @@ export default function ProductCard({ product }: ProductCardProps) {
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <TypeIcon className="w-24 h-24 text-white/20 group-hover:scale-110 transition-transform duration-500" />
+            <TypeIcon className="w-20 h-20 text-white/20 group-hover:scale-110 transition-transform duration-500" />
           </div>
         )}
 
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-overlay opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
 
-        {/* Wishlist Button */}
+        {/* Wishlist Button - Compact */}
         <button
           onClick={handleWishlistClick}
-          className="absolute top-4 right-4 z-10 p-3 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-gold hover:text-jet transition-all duration-300 shadow-lg"
+          className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-gold hover:text-jet transition-all duration-300 shadow-lg"
           aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
           title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <Heart
-            className={`h-5 w-5 ${isInWishlist ? 'fill-gold text-gold' : ''}`}
+            className={`h-4 w-4 ${isInWishlist ? 'fill-gold text-gold' : ''}`}
             aria-hidden="true"
           />
         </button>
 
-        {/* Type Badge */}
+        {/* Type Badge - Compact */}
         {product.type !== 'product' && (
-          <div className={`absolute top-4 left-4 ${typeInfo.className} flex items-center gap-1`}>
+          <div className={`absolute top-2 left-2 ${typeInfo.className} flex items-center gap-1 text-xs px-2 py-1`}>
             <TypeIcon className="w-3 h-3" />
             <span>{typeInfo.label}</span>
           </div>
@@ -100,22 +100,22 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
       </div>
 
-      {/* Product Info */}
-      <Link to={`/product/${product.id}`} className="block p-3">
-        {/* Seller Info - Smaller, secondary */}
+      {/* Product Info - Very compact */}
+      <Link to={`/product/${product.id}`} className="block p-2.5">
+        {/* Seller Info - Compact */}
         {product.seller && (
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-1">
               {product.seller.storeSlug ? (
                 <Link
                   to={`/seller/${product.seller.storeSlug}`}
-                  className="text-xs text-white/40 hover:text-gold transition-colors"
+                  className="text-xs text-white/40 hover:text-gold transition-colors truncate"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {product.seller.businessName || 'Seller'}
                 </Link>
               ) : (
-                <span className="text-xs text-white/40">
+                <span className="text-xs text-white/40 truncate">
                   {product.seller.businessName || 'Seller'}
                 </span>
               )}
@@ -129,18 +129,18 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
         )}
         
-        {/* Title - VISUALLY DOMINANT */}
-        <h3 className="font-bold text-base text-white mb-2 line-clamp-2 group-hover:text-gold transition-colors duration-300 leading-tight">
+        {/* Title - Compact, max 2 lines */}
+        <h3 className="font-bold text-sm text-white mb-1.5 line-clamp-2 group-hover:text-gold transition-colors duration-300 leading-tight min-h-[2.5rem]">
           {product.title}
         </h3>
 
-        {/* Price - Prominent */}
-        <p className="price-tag mb-2">{formatPrice(product.price)}</p>
+        {/* Price - Compact */}
+        <p className="text-lg font-bold text-gold mb-1.5">{formatPrice(product.price)}</p>
 
-        {/* Meta Info - Compact */}
+        {/* Meta Info - Very compact */}
         <div className="flex items-center justify-between text-xs text-white/40">
-          <span className="capitalize">{product.condition}</span>
-          <span>{product.stockQuantity} available</span>
+          <span className="capitalize truncate">{product.condition}</span>
+          <span className="flex-shrink-0">{product.stockQuantity} available</span>
         </div>
       </Link>
     </div>
