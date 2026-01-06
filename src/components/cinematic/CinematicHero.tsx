@@ -140,7 +140,7 @@ export default function CinematicHero() {
           </div>
 
           {/* Trust Indicators */}
-          <div className="mt-16 flex flex-wrap items-center justify-center gap-8 text-white/40 text-sm animate-fadeInUp" style={{ animationDelay: '0.7s' }}>
+          <div className="mt-16 flex flex-wrap items-center justify-center gap-8 text-white/70 text-sm animate-fadeInUp" style={{ animationDelay: '0.7s' }}>
             <div className="flex items-center">
               <span className="text-gold mr-2">✓</span>
               Verified Business Roles

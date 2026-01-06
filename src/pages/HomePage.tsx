@@ -47,7 +47,7 @@ export default function HomePage() {
                 <Package className="h-8 w-8 text-gold" />
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Clear Roles</h3>
-              <p className="text-white/50">
+              <p className="text-white/70">
                 Broker, Carrier, or Seller - transparent business identities.
               </p>
             </div>
@@ -57,7 +57,7 @@ export default function HomePage() {
                 <ShieldCheck className="h-8 w-8 text-gold" />
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Verified Listings</h3>
-              <p className="text-white/50">
+              <p className="text-white/70">
                 Business-focused marketplace with verified information.
               </p>
             </div>
@@ -67,7 +67,7 @@ export default function HomePage() {
                 <TrendingUp className="h-8 w-8 text-gold" />
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Logistics-First</h3>
-              <p className="text-white/50">
+              <p className="text-white/70">
                 Built for logistics and wholesale professionals.
               </p>
             </div>
@@ -77,7 +77,7 @@ export default function HomePage() {
                 <Users className="h-8 w-8 text-gold" />
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Business Network</h3>
-              <p className="text-white/50">
+              <p className="text-white/70">
                 Connect with verified buyers and sellers.
               </p>
             </div>
