@@ -7,7 +7,7 @@ import { Plus, Edit, Eye, Play, Pause, Trash2, Package } from 'lucide-react';
 import StatusBadge from '../components/seller/StatusBadge';
 import DeleteConfirmModal from '../components/seller/DeleteConfirmModal';
 
-type ListingStatus = 'draft' | 'active' | 'paused' | 'sold';
+type ListingStatus = 'draft' | 'published' | 'paused';
 
 interface ListingWithStatus extends Product {
   listingStatus: ListingStatus;
@@ -46,10 +46,8 @@ export default function SellerListingsPage() {
         let listingStatus: ListingStatus = 'draft';
         
         // Determine status based on product properties
-        if (product.stockQuantity === 0) {
-          listingStatus = 'sold';
-        } else if (product.isActive && product.isApproved) {
-          listingStatus = 'active';
+        if (product.isActive && product.isApproved) {
+          listingStatus = 'published';
         } else if (!product.isActive && product.isApproved) {
           listingStatus = 'paused';
         } else {
@@ -260,7 +258,7 @@ export default function SellerListingsPage() {
                           >
                             <Edit className="h-4 w-4" />
                           </Link>
-                          {listing.listingStatus === 'active' ? (
+                          {listing.listingStatus === 'published' ? (
                             <button
                               onClick={() => handlePause(listing.id)}
                               className="p-2 text-yellow-600 hover:bg-yellow-50 rounded transition-colors"
@@ -268,7 +266,7 @@ export default function SellerListingsPage() {
                             >
                               <Pause className="h-4 w-4" />
                             </button>
-                          ) : listing.listingStatus !== 'sold' ? (
+                          ) : listing.listingStatus !== 'draft' ? (
                             <button
                               onClick={() => handlePublish(listing.id)}
                               className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
@@ -350,14 +348,14 @@ export default function SellerListingsPage() {
                     >
                       Edit
                     </Link>
-                    {listing.listingStatus === 'active' ? (
+                    {listing.listingStatus === 'published' ? (
                       <button
                         onClick={() => handlePause(listing.id)}
                         className="flex-1 py-2 px-3 text-center text-sm bg-yellow-50 text-yellow-600 rounded hover:bg-yellow-100 transition-colors"
                       >
                         Pause
                       </button>
-                    ) : listing.listingStatus !== 'sold' ? (
+                    ) : listing.listingStatus !== 'draft' ? (
                       <button
                         onClick={() => handlePublish(listing.id)}
                         className="flex-1 py-2 px-3 text-center text-sm bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors"

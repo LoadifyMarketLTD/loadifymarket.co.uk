@@ -27,6 +27,9 @@ const SellerShipmentsPage = lazy(() => import('./pages/SellerShipmentsPage'));
 const SellerListingsPage = lazy(() => import('./pages/SellerListingsPage'));
 const CreateListingPage = lazy(() => import('./pages/CreateListingPage'));
 const EditListingPage = lazy(() => import('./pages/EditListingPage'));
+const SellerDashboard = lazy(() => import('./pages/seller/Dashboard'));
+const SellerCreateListing = lazy(() => import('./pages/seller/CreateListing'));
+const SellerEditListing = lazy(() => import('./pages/seller/EditListing'));
 const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const CategoryManagementPage = lazy(() => import('./pages/CategoryManagementPage'));
@@ -185,7 +188,31 @@ function App() {
               </Suspense>
             </RequireAuth>
           } />
-          {/* Protected: Seller Listings */}
+          {/* Protected: Seller Dashboard (listings management) */}
+          <Route path="seller/dashboard" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <SellerDashboard />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Create Listing */}
+          <Route path="seller/create" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <SellerCreateListing />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Edit Listing */}
+          <Route path="seller/edit/:id" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <SellerEditListing />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Seller Listings (legacy route, kept for compatibility) */}
           <Route path="seller/listings" element={
             <RequireAuth>
               <Suspense fallback={<PageLoader />}>
@@ -193,7 +220,7 @@ function App() {
               </Suspense>
             </RequireAuth>
           } />
-          {/* Protected: Create Listing */}
+          {/* Protected: Create Listing (legacy route) */}
           <Route path="seller/listings/new" element={
             <RequireAuth>
               <Suspense fallback={<PageLoader />}>
@@ -201,7 +228,7 @@ function App() {
               </Suspense>
             </RequireAuth>
           } />
-          {/* Protected: Edit Listing */}
+          {/* Protected: Edit Listing (legacy route) */}
           <Route path="seller/listings/:id/edit" element={
             <RequireAuth>
               <Suspense fallback={<PageLoader />}>
