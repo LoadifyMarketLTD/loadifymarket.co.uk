@@ -3,7 +3,7 @@ import { Truck, Package, Sparkles, ArrowRight } from 'lucide-react';
 
 export default function CinematicHero() {
   return (
-    <section className="relative min-h-[70vh] bg-jet overflow-hidden flex items-center">
+    <section className="relative bg-jet overflow-hidden flex items-center min-h-[auto] md:min-h-[60vh] md:max-h-[70vh] lg:max-h-[720px]">
       {/* Cinematic Background Effects - Contained to prevent CLS */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Large gradient orbs for cinematic lighting - Fixed size, no animations on first paint */}
