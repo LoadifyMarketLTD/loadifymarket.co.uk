@@ -27,8 +27,10 @@ if (import.meta.env.DEV) {
           let selector = el.tagName.toLowerCase();
           if (el.id) selector += `#${el.id}`;
           if (el.className && typeof el.className === 'string') {
-            const classes = el.className.split(' ').slice(0, 3).join('.');
-            if (classes) selector += `.${classes}`;
+            const classes = el.className.split(' ').slice(0, 3).filter(c => c.trim());
+            if (classes.length > 0) {
+              selector += '.' + classes.join('.');
+            }
           }
           
           offenders.push({

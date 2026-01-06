@@ -275,13 +275,11 @@
 
   .light-beam {
     position: absolute;
-    width: 200%;
-    height: 200%;
+    width: 100vw;
+    height: 100vw;
     background: radial-gradient(ellipse at center, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
     pointer-events: none;
     animation: light-beam-move 20s ease-in-out infinite;
-    /* Prevent overflow beyond parent */
-    max-width: 100vw;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
