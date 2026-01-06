@@ -312,13 +312,11 @@ function App() {
               <HelpPage />
             </Suspense>
           } />
-          {/* Protected: Contact */}
+          {/* Public: Contact - Allow potential customers to reach out */}
           <Route path="contact" element={
-            <RequireAuth>
-              <Suspense fallback={<PageLoader />}>
-                <ContactPage />
-              </Suspense>
-            </RequireAuth>
+            <Suspense fallback={<PageLoader />}>
+              <ContactPage />
+            </Suspense>
           } />
           
           {/* Info Pages */}
