@@ -2,7 +2,7 @@ export default function ReturnsPolicyPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-4xl font-bold mb-6">Returns Policy</h1>
-      <div className="card prose max-w-none">
+      <div className="card prose max-w-full">
         <p className="text-sm text-gray-600 mb-4">Last updated: December 2025</p>
         
         <h2 className="text-2xl font-semibold mt-6 mb-3">1. Return Period</h2>
