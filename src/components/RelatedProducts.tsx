@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Product } from '../types';
 import { Link } from 'react-router-dom';
@@ -13,11 +13,7 @@ export default function RelatedProducts({ currentProduct, maxProducts = 6 }: Rel
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchRelatedProducts();
-  }, [currentProduct.id]);
-
-  const fetchRelatedProducts = async () => {
+  const fetchRelatedProducts = useCallback(async () => {
     setLoading(true);
     try {
       // Get products from same category, excluding current product
@@ -46,7 +42,11 @@ export default function RelatedProducts({ currentProduct, maxProducts = 6 }: Rel
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentProduct.id, currentProduct.categoryId, currentProduct.subcategoryId, maxProducts]);
+
+  useEffect(() => {
+    fetchRelatedProducts();
+  }, [fetchRelatedProducts]);
 
   if (loading) {
     return (

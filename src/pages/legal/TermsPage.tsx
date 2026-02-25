@@ -14,7 +14,7 @@ export default function TermsPage() {
 
         <h2 className="text-2xl font-semibold mt-6 mb-3">2. Company Information</h2>
         <p>
-          XDrive Logistics Ltd is operated by XDrive Logistics Ltd, a company registered in the United Kingdom.
+          XDrive Logistics Ltd is a company registered in the United Kingdom.
         </p>
         <ul className="list-disc pl-6 my-4">
           <li>Company Name: XDrive Logistics Ltd</li>

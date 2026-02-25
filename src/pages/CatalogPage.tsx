@@ -100,11 +100,11 @@ export default function CatalogPage() {
       if (error) throw error;
       
       // Transform data to match Product type
-      const transformedData = data?.map((product: any) => ({
+      const transformedData = data?.map((product) => ({
         ...product,
         seller: product.seller ? {
           ...product.seller,
-          storeSlug: product.store?.storeSlug,
+          storeSlug: (product.store as { storeSlug?: string } | null)?.storeSlug,
         } : undefined,
       })) || [];
       

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useCartStore } from '../store';
 import type { Product } from '../types';
@@ -21,11 +21,7 @@ export default function FrequentlyBoughtTogether({ productId, currentProduct }: 
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set([productId]));
   const { addItem } = useCartStore();
 
-  useEffect(() => {
-    fetchFrequentlyBoughtTogether();
-  }, [productId]);
-
-  const fetchFrequentlyBoughtTogether = async () => {
+  const fetchFrequentlyBoughtTogether = useCallback(async () => {
     setLoading(true);
     try {
       // Check if order_items table exists by trying to query it
@@ -142,7 +138,11 @@ export default function FrequentlyBoughtTogether({ productId, currentProduct }: 
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId]);
+
+  useEffect(() => {
+    fetchFrequentlyBoughtTogether();
+  }, [fetchFrequentlyBoughtTogether]);
 
   const toggleProductSelection = (id: string) => {
     const newSelected = new Set(selectedProducts);

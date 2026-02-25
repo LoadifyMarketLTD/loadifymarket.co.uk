@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Product } from '../types';
 import { Link } from 'react-router-dom';
@@ -13,11 +13,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7 }: Trending
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchTrendingProducts();
-  }, [days, maxProducts]);
-
-  const fetchTrendingProducts = async () => {
+  const fetchTrendingProducts = useCallback(async () => {
     setLoading(true);
     try {
       // Calculate trending score based on recent activity
@@ -72,7 +68,11 @@ export default function TrendingProducts({ maxProducts = 8, days = 7 }: Trending
     } finally {
       setLoading(false);
     }
-  };
+  }, [days, maxProducts]);
+
+  useEffect(() => {
+    fetchTrendingProducts();
+  }, [fetchTrendingProducts]);
 
   if (loading) {
     return (

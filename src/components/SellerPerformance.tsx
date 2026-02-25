@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Star, Package, Clock, TrendingUp, Award, MessageCircle } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -39,11 +39,7 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
   const [loading, setLoading] = useState(true);
   const [sellerInfo, setSellerInfo] = useState<SellerInfoData | null>(null);
 
-  useEffect(() => {
-    fetchSellerPerformance();
-  }, [sellerId]);
-
-  const fetchSellerPerformance = async () => {
+  const fetchSellerPerformance = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch seller profile
@@ -96,7 +92,7 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
         totalSales: orders?.length || 0,
         responseTime: avgResponseTime,
         onTimeShipment: onTimePercentage,
-        memberSince: sellerData.users.createdAt,
+        memberSince: sellerData?.users?.createdAt ?? new Date().toISOString(),
         totalProducts,
         reviewCount: totalReviews,
       });
@@ -105,7 +101,11 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
     } finally {
       setLoading(false);
     }
-  };
+  }, [sellerId]);
+
+  useEffect(() => {
+    fetchSellerPerformance();
+  }, [fetchSellerPerformance]);
 
   if (loading) {
     return (
