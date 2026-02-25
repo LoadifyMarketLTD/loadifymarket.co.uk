@@ -98,7 +98,7 @@ export default function RegisterPage() {
             {isSeller ? 'Seller Registration' : 'Create Account'}
           </h2>
           <p className="text-center text-gray-600 mb-6">
-            {isSeller ? 'Start selling on Loadify Market' : 'Join Loadify Market today'}
+            {isSeller ? 'Start selling on XDrive Logistics Ltd' : 'Join XDrive Logistics Ltd today'}
           </p>
           
           {error && (

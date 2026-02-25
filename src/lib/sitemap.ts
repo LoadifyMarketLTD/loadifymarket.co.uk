@@ -1,5 +1,5 @@
 /**
- * Dynamic Sitemap Generator for Loadify Market
+ * Dynamic Sitemap Generator for XDrive Logistics Ltd
  * Generates XML sitemap with all important pages
  */
 
@@ -144,7 +144,7 @@ export const downloadSitemap = async () => {
 
 // Helper to generate robots.txt content
 export const generateRobotsTxt = (): string => {
-  return `# Loadify Market - Robots.txt
+  return `# XDrive Logistics Ltd - Robots.txt
 User-agent: *
 Allow: /
 Disallow: /admin

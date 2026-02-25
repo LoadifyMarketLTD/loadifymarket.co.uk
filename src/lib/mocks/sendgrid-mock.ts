@@ -73,7 +73,7 @@ export const mockEmailTemplates = {
         <html>
           <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: #243b53; color: white; padding: 20px; text-align: center;">
-              <h1>Loadify Market</h1>
+              <h1>XDrive Logistics Ltd</h1>
             </div>
             <div style="padding: 20px;">
               <h2>Thank you for your order!</h2>
@@ -86,7 +86,7 @@ export const mockEmailTemplates = {
               <p>We'll send you another email when your order ships.</p>
             </div>
             <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 12px;">
-              <p>Danny Courier LTD | 101 Cornelian Street, Blackburn, BB1 9QL</p>
+              <p>XDrive Logistics Ltd | 101 Cornelian Street, Blackburn, BB1 9QL</p>
               <p>VAT: GB375949535</p>
             </div>
           </body>
@@ -103,7 +103,7 @@ export const mockEmailTemplates = {
         <html>
           <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: #243b53; color: white; padding: 20px; text-align: center;">
-              <h1>Loadify Market</h1>
+              <h1>XDrive Logistics Ltd</h1>
             </div>
             <div style="padding: 20px;">
               <h2>Your order is on the way!</h2>
@@ -113,7 +113,7 @@ export const mockEmailTemplates = {
               <p>You can track your shipment at any time from your order history.</p>
             </div>
             <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 12px;">
-              <p>Danny Courier LTD | 101 Cornelian Street, Blackburn, BB1 9QL</p>
+              <p>XDrive Logistics Ltd | 101 Cornelian Street, Blackburn, BB1 9QL</p>
             </div>
           </body>
         </html>
@@ -129,7 +129,7 @@ export const mockEmailTemplates = {
         <html>
           <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: #243b53; color: white; padding: 20px; text-align: center;">
-              <h1>Loadify Market</h1>
+              <h1>XDrive Logistics Ltd</h1>
             </div>
             <div style="padding: 20px;">
               <h2>Return Request Received</h2>
@@ -139,7 +139,7 @@ export const mockEmailTemplates = {
               <p>We're processing your return request. You'll receive an update within 24 hours.</p>
             </div>
             <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 12px;">
-              <p>Danny Courier LTD | 101 Cornelian Street, Blackburn, BB1 9QL</p>
+              <p>XDrive Logistics Ltd | 101 Cornelian Street, Blackburn, BB1 9QL</p>
             </div>
           </body>
         </html>

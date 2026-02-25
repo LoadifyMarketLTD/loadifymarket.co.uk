@@ -48,7 +48,7 @@ export default function HomePage() {
         <div className="container-cinematic">
           <div className="text-center mb-16">
             <h2 className="heading-section text-white mb-4">
-              Why LoadifyMarket
+              Why XDrive Logistics Ltd
             </h2>
           </div>
 

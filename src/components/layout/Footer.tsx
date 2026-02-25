@@ -17,8 +17,7 @@ export default function Footer() {
               <span className="absolute inset-0 flex items-center justify-center text-gold font-bold text-lg">L</span>
             </div>
             <div>
-              <span className="text-2xl font-bold text-white tracking-tight">Loadify</span>
-              <span className="text-2xl font-bold text-gold tracking-tight"> Market</span>
+              <span className="text-2xl font-bold text-white tracking-tight">XDrive Logistics Ltd</span>
             </div>
           </Link>
 
@@ -195,7 +194,7 @@ export default function Footer() {
         <div className="container-cinematic py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-white/70 text-sm">
-              © {currentYear} Danny Courier LTD. All rights reserved.
+              © {currentYear} XDrive Logistics Ltd. All rights reserved.
             </p>
             <div className="flex items-center space-x-6 text-sm text-white/70">
               <span>VAT: GB375949535</span>

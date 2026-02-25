@@ -51,7 +51,7 @@ export default function LoginPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-white mb-2">Sign In</h2>
-            <p className="text-white/60 text-sm">Welcome back to Loadify Market</p>
+            <p className="text-white/60 text-sm">Welcome back to XDrive Logistics Ltd</p>
           </div>
           
           {/* Error Message */}
@@ -126,7 +126,7 @@ export default function LoginPage() {
                 <div className="w-full border-t border-white/10"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-graphite text-white/60">New to Loadify Market?</span>
+                <span className="px-2 bg-graphite text-white/60">New to XDrive Logistics Ltd?</span>
               </div>
             </div>
           </div>

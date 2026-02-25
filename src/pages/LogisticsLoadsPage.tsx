@@ -17,7 +17,7 @@ export default function LogisticsLoadsPage() {
       icon: Shield,
       title: 'Verified Carriers & Brokers',
       description:
-        'Every carrier and broker on Loadify Market is manually reviewed. Post with confidence knowing your load reaches trusted professionals.',
+        'Every carrier and broker on XDrive Logistics Ltd is manually reviewed. Post with confidence knowing your load reaches trusted professionals.',
     },
     {
       icon: Clock,
@@ -160,7 +160,7 @@ export default function LogisticsLoadsPage() {
         <div className="container-cinematic">
           <div className="text-center mb-12">
             <h2 className="heading-section text-white mb-4">
-              Why Use <span className="text-gradient-gold">Loadify Market</span>
+              Why Use <span className="text-gradient-gold">XDrive Logistics Ltd</span>
             </h2>
             <p className="text-white/60 text-lg max-w-2xl mx-auto">
               Built specifically for UK logistics professionals — brokers, carriers, and shippers.
@@ -284,7 +284,7 @@ export default function LogisticsLoadsPage() {
             Ready to <span className="text-gradient-gold">Find Your Next Load</span>?
           </h2>
           <p className="text-xl text-white/60 max-w-2xl mx-auto mb-10">
-            Join thousands of UK logistics professionals on Loadify Market today.
+            Join thousands of UK logistics professionals on XDrive Logistics Ltd today.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
