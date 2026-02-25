@@ -52,7 +52,7 @@ export default function AboutPage() {
       <section className="py-12 bg-graphite/30">
         <div className="container-cinematic text-center">
           <h1 className="heading-hero text-white mb-6">
-            About <span className="text-gradient-gold">XDrive Logistics Ltd</span>
+            About <span className="text-gradient-gold">XDrive Logistics Market by XDrive Logistics Ltd</span>
           </h1>
           <p className="text-xl text-white/60 max-w-3xl mx-auto mb-8">
             The UK's premier marketplace for logistics, wholesale, and handmade goods
@@ -69,7 +69,7 @@ export default function AboutPage() {
             </h2>
             <div className="space-y-4 text-white/70 text-lg leading-relaxed">
               <p>
-                XDrive Logistics Ltd was born from a simple observation: the UK needed a better way to
+                XDrive Logistics Market by XDrive Logistics Ltd was born from a simple observation: the UK needed a better way to
                 connect buyers and sellers across diverse markets—from logistics and freight to
                 wholesale pallets and unique handmade goods.
               </p>
@@ -80,7 +80,7 @@ export default function AboutPage() {
                 transparent.
               </p>
               <p>
-                Today, XDrive Logistics Ltd serves thousands of businesses across the UK, from small
+                Today, XDrive Logistics Market by XDrive Logistics Ltd serves thousands of businesses across the UK, from small
                 artisans to large-scale wholesalers and logistics providers. Our mission remains the
                 same: to make B2B and B2C commerce simple, secure, and profitable for everyone.
               </p>
@@ -220,7 +220,7 @@ export default function AboutPage() {
           <div className="card-glass">
             <div className="text-center mb-8">
               <Award className="w-16 h-16 text-gold mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-white mb-2">XDrive Logistics Ltd</h2>
+              <h2 className="text-2xl font-bold text-white mb-2">XDrive Logistics Market by XDrive Logistics Ltd</h2>
               <p className="text-white/60">Registered UK Company</p>
             </div>
 
@@ -282,7 +282,7 @@ export default function AboutPage() {
           <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl font-bold text-white mb-4">Join Our Growing Community</h2>
             <p className="text-white/60 text-lg mb-8">
-              Whether you're buying or selling, XDrive Logistics Ltd is here to help you succeed.
+              Whether you're buying or selling, XDrive Logistics Market by XDrive Logistics Ltd is here to help you succeed.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/register?type=buyer" className="btn-primary inline-flex items-center">
