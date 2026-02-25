@@ -49,6 +49,7 @@ const PrivacyPage = lazy(() => import('./pages/legal/PrivacyPage'));
 const CookiePage = lazy(() => import('./pages/legal/CookiePage'));
 const ReturnsPolicy = lazy(() => import('./pages/legal/ReturnsPolicyPage'));
 const ShippingPolicy = lazy(() => import('./pages/legal/ShippingPolicyPage'));
+const LogisticsLoadsPage = lazy(() => import('./pages/LogisticsLoadsPage'));
 
 // Loading component
 function PageLoader() {
@@ -333,6 +334,13 @@ function App() {
           <Route path="about" element={
             <Suspense fallback={<PageLoader />}>
               <AboutPage />
+            </Suspense>
+          } />
+
+          {/* SEO: Logistics Loads UK */}
+          <Route path="logistics-loads" element={
+            <Suspense fallback={<PageLoader />}>
+              <LogisticsLoadsPage />
             </Suspense>
           } />
           
