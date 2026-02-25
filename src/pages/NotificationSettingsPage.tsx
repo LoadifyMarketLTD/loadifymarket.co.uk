@@ -109,7 +109,7 @@ export default function NotificationSettingsPage() {
                 <h2 className="text-xl font-bold">Email Notifications</h2>
               </div>
               <p className="text-gray-600 mb-6">
-                Choose which email notifications you'd like to receive from Loadify Market.
+                Choose which email notifications you'd like to receive from XDrive Market Logistics by XDrive Logistics Ltd.
               </p>
 
               <div className="space-y-4">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { MessageCircle, ThumbsUp, Send } from 'lucide-react';
@@ -31,11 +31,7 @@ export default function ProductQA({ productId, sellerId }: ProductQAProps) {
   const [newQuestion, setNewQuestion] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchQuestions();
-  }, [productId]);
-
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -53,7 +49,11 @@ export default function ProductQA({ productId, sellerId }: ProductQAProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId]);
+
+  useEffect(() => {
+    fetchQuestions();
+  }, [fetchQuestions]);
 
   const handleAskQuestion = async (e: React.FormEvent) => {
     e.preventDefault();

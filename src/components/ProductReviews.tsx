@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { Star, ThumbsUp, CheckCircle, MessageSquare } from 'lucide-react';
@@ -36,11 +36,7 @@ export default function ProductReviews({ productId, averageRating, totalReviews 
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchReviews();
-  }, [productId, filter]);
-
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase
@@ -64,7 +60,11 @@ export default function ProductReviews({ productId, averageRating, totalReviews 
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId, filter]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { Bell, BellOff, Trash2, Search, Plus } from 'lucide-react';
@@ -20,13 +20,7 @@ export default function SavedSearches() {
   const [newQuery, setNewQuery] = useState('');
   const [frequency, setFrequency] = useState<'instant' | 'daily' | 'weekly'>('daily');
 
-  useEffect(() => {
-    if (user) {
-      fetchSavedSearches();
-    }
-  }, [user]);
-
-  const fetchSavedSearches = async () => {
+  const fetchSavedSearches = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
@@ -44,7 +38,13 @@ export default function SavedSearches() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchSavedSearches();
+    }
+  }, [fetchSavedSearches, user]);
 
   const handleAddSearch = async (e: React.FormEvent) => {
     e.preventDefault();

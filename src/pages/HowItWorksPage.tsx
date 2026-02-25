@@ -50,7 +50,7 @@ export default function HowItWorksPage() {
             How It Works
           </h1>
           <p className="text-xl text-white/60 max-w-3xl mx-auto">
-            Simple steps for buying or selling on LoadifyMarket.
+            Simple steps for buying or selling on XDrive Market Logistics by XDrive Logistics Ltd.
           </p>
         </div>
       </section>

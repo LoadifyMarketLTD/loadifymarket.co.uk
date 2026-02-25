@@ -1,5 +1,5 @@
 /**
- * SEO Utilities for Loadify Market
+ * SEO Utilities for XDrive Market Logistics by XDrive Logistics Ltd
  * Provides functions for generating meta tags, structured data, and SEO optimization
  */
 
@@ -34,7 +34,7 @@ export const generateMetaTags = (config: SEOConfig): string => {
     <meta property="og:title" content="${title}">
     <meta property="og:description" content="${description}">
     <meta property="og:image" content="${image}">
-    <meta property="og:site_name" content="Loadify Market">
+    <meta property="og:site_name" content="XDrive Market Logistics by XDrive Logistics Ltd">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
@@ -52,8 +52,8 @@ export const generateOrganizationSchema = () => {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Loadify Market',
-    legalName: 'Danny Courier LTD',
+    name: 'XDrive Market Logistics by XDrive Logistics Ltd',
+    legalName: 'XDrive Logistics Ltd',
     url: 'https://loadifymarket.co.uk',
     logo: 'https://loadifymarket.co.uk/logo.png',
     foundingDate: '2025',
@@ -98,7 +98,7 @@ export const generateProductSchema = (product: {
     sku: product.id,
     brand: {
       '@type': 'Brand',
-      name: 'Loadify Market',
+      name: 'XDrive Market Logistics by XDrive Logistics Ltd',
     },
     offers: {
       '@type': 'Offer',
@@ -116,7 +116,7 @@ export const generateProductSchema = (product: {
         : 'https://schema.org/UsedCondition',
       seller: {
         '@type': 'Organization',
-        name: 'Loadify Market',
+        name: 'XDrive Market Logistics by XDrive Logistics Ltd',
       },
     },
     aggregateRating: product.averageRating ? {
@@ -144,7 +144,7 @@ export const generateWebsiteSchema = () => {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Loadify Market',
+    name: 'XDrive Market Logistics by XDrive Logistics Ltd',
     url: 'https://loadifymarket.co.uk',
     potentialAction: {
       '@type': 'SearchAction',
@@ -209,18 +209,18 @@ export const updatePageMeta = (config: SEOConfig) => {
 // Pre-defined SEO configs for common pages
 export const pageSEO = {
   home: {
-    title: 'Loadify Market - Marketplace for Logistics Loads, Pallets & Wholesale',
+    title: 'XDrive Market Logistics by XDrive Logistics Ltd - Marketplace for Logistics Loads, Pallets & Wholesale',
     description: 'UK marketplace connecting buyers and sellers. Find logistics loads, wholesale pallets, and business stock. Multi-seller marketplace platform.',
     canonical: 'https://loadifymarket.co.uk',
   },
   catalog: {
-    title: 'Browse Listings - Loads, Pallets & More | Loadify Market',
+    title: 'Browse Listings - Loads, Pallets & More | XDrive Market Logistics by XDrive Logistics Ltd',
     description: 'Explore our catalog of logistics loads, pallets, and wholesale lots. Filter by category, condition, and price. New listings added daily.',
     canonical: 'https://loadifymarket.co.uk/catalog',
   },
   about: {
-    title: 'About Loadify Market - Trusted B2B & B2C Marketplace',
-    description: 'Learn about Loadify Market, operated by Danny Courier LTD. Your reliable partner for B2B and B2C trading since 2025.',
+    title: 'About XDrive Market Logistics by XDrive Logistics Ltd - Trusted B2B & B2C Marketplace',
+    description: 'Learn about XDrive Market Logistics by XDrive Logistics Ltd, operated by XDrive Logistics Ltd. Your reliable partner for B2B and B2C trading since 2025.',
     canonical: 'https://loadifymarket.co.uk/about',
   },
 };

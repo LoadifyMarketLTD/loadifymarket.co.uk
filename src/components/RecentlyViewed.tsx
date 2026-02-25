@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import type { Product } from '../types';
@@ -15,11 +15,7 @@ export default function RecentlyViewed({ currentProductId, maxProducts = 8 }: Re
   const [recentProducts, setRecentProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchRecentlyViewed();
-  }, [user]);
-
-  const fetchRecentlyViewed = async () => {
+  const fetchRecentlyViewed = useCallback(async () => {
     setLoading(true);
     try {
       if (user) {
@@ -95,7 +91,11 @@ export default function RecentlyViewed({ currentProductId, maxProducts = 8 }: Re
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, currentProductId, maxProducts]);
+
+  useEffect(() => {
+    fetchRecentlyViewed();
+  }, [fetchRecentlyViewed]);
 
   const getOrCreateSessionId = (): string => {
     let sessionId = localStorage.getItem('sessionId');

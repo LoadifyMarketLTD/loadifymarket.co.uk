@@ -57,8 +57,7 @@ export default function Header() {
               <span className="absolute inset-0 flex items-center justify-center text-gold font-bold text-sm">L</span>
             </div>
             <div className="hidden sm:block">
-              <span className="text-xl font-bold text-white tracking-tight">Loadify</span>
-              <span className="text-xl font-bold text-gold tracking-tight"> Market</span>
+              <span className="text-xl font-bold text-white tracking-tight">XDrive Market Logistics by XDrive Logistics Ltd</span>
             </div>
           </Link>
 

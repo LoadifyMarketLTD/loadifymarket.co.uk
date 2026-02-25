@@ -88,11 +88,11 @@ export default function SellerPublicProfilePage() {
         if (productsError) throw productsError;
 
         // Transform data to include store slug in seller object
-        const transformedProducts = productsData?.map((product: any) => ({
+        const transformedProducts = productsData?.map((product) => ({
           ...product,
           seller: product.seller ? {
             ...product.seller,
-            storeSlug: product.store?.storeSlug,
+            storeSlug: (product.store as { storeSlug?: string } | null)?.storeSlug,
           } : undefined,
         })) || [];
 

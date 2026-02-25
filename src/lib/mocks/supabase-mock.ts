@@ -15,6 +15,17 @@ const mockStorage = {
   disputes: new Map<string, Record<string, unknown>>(),
   shipments: new Map<string, Record<string, unknown>>(),
   categories: new Map<string, Record<string, unknown>>(),
+  seller_profiles: new Map<string, Record<string, unknown>>(),
+  seller_stores: new Map<string, Record<string, unknown>>(),
+  recently_viewed: new Map<string, Record<string, unknown>>(),
+  saved_searches: new Map<string, Record<string, unknown>>(),
+  product_questions: new Map<string, Record<string, unknown>>(),
+  order_items: new Map<string, Record<string, unknown>>(),
+  conversations: new Map<string, Record<string, unknown>>(),
+  messages: new Map<string, Record<string, unknown>>(),
+  notifications: new Map<string, Record<string, unknown>>(),
+  wishlists: new Map<string, Record<string, unknown>>(),
+  carts: new Map<string, Record<string, unknown>>(),
 };
 
 // Initialize with sample data
@@ -89,6 +100,34 @@ const initializeMockData = () => {
     images: ['https://images.unsplash.com/photo-1592286927505-2c7e370d2a3e?w=800'],
     createdAt: new Date().toISOString(),
   });
+
+  // Mock seller profile
+  mockStorage.seller_profiles.set('seller-1', {
+    id: 'seller-1',
+    userId: 'seller-1',
+    businessName: 'XDrive Logistics Market Demo Store',
+    isApproved: true,
+    rating: 4.8,
+    totalSales: 156,
+    marketplaceRole: 'both',
+    paymentBehaviour: 'good',
+    createdAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString(),
+    users: {
+      id: 'seller-1',
+      createdAt: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString(),
+      firstName: 'Demo',
+      lastName: 'Seller',
+    },
+  });
+
+  // Mock seller store
+  mockStorage.seller_stores.set('seller-1', {
+    id: 'seller-1',
+    userId: 'seller-1',
+    storeSlug: 'demo-store',
+    storeName: 'XDrive Logistics Market Demo Store',
+    createdAt: new Date().toISOString(),
+  });
 };
 
 initializeMockData();
@@ -106,7 +145,7 @@ const mockUser: User = {
 
 // Helper to create a chainable query builder
 const createQueryBuilder = (table: string, _columns?: string) => {
-  let filters: Array<{ type: string; column: string; value: unknown; operator?: string }> = [];
+  const filters: Array<{ type: string; column: string; value: unknown; operator?: string }> = [];
   let orderBy: { column: string; ascending: boolean } | null = null;
   let limitCount: number | null = null;
 
@@ -149,25 +188,52 @@ const createQueryBuilder = (table: string, _columns?: string) => {
           // Fallback: try comparison anyway (dates, etc.)
           return (itemValue as number | string) <= (filterValue as number | string);
         });
+      } else if (filter.type === 'is') {
+        filtered = filtered.filter(item => item[filter.column] === filter.value);
+      } else if (filter.type === 'neq') {
+        filtered = filtered.filter(item => item[filter.column] !== filter.value);
+      } else if (filter.type === 'not') {
+        // NOT IN is complex; skip filtering in mock (pass all records through)
+        // Real Supabase `.not('col', 'in', '(val1,val2)')` would exclude matching rows
+      } else if (filter.type === 'or') {
+        // Simple OR: parse "col.eq.val,col2.eq.val2" style
+        const conditions = (filter.value as string).split(',');
+        filtered = filtered.filter(item =>
+          conditions.some(cond => {
+            const parts = cond.trim().split('.');
+            if (parts.length >= 3) {
+              const col = parts[0];
+              const op = parts[1];
+              const val = parts.slice(2).join('.').replace(/%/g, '');
+              if (op === 'eq') return String(item[col]) === val;
+              if (op === 'ilike') {
+                const itemVal = String(item[col] ?? '').toLowerCase();
+                return itemVal.includes(val.toLowerCase());
+              }
+            }
+            return false;
+          })
+        );
       }
     }
 
     if (orderBy) {
+      const currentOrderBy = orderBy;
       filtered.sort((a, b) => {
-        const aVal = a[orderBy!.column];
-        const bVal = b[orderBy!.column];
+        const aVal = a[currentOrderBy.column];
+        const bVal = b[currentOrderBy.column];
         
         // Handle null/undefined
-        if (aVal === null || aVal === undefined) return orderBy!.ascending ? 1 : -1;
-        if (bVal === null || bVal === undefined) return orderBy!.ascending ? -1 : 1;
+        if (aVal === null || aVal === undefined) return currentOrderBy.ascending ? 1 : -1;
+        if (bVal === null || bVal === undefined) return currentOrderBy.ascending ? -1 : 1;
         
         // Safe comparison for numbers and strings
         if (typeof aVal === 'number' && typeof bVal === 'number') {
-          return orderBy!.ascending ? aVal - bVal : bVal - aVal;
+          return currentOrderBy.ascending ? aVal - bVal : bVal - aVal;
         }
         if (typeof aVal === 'string' && typeof bVal === 'string') {
           const comparison = aVal.localeCompare(bVal);
-          return orderBy!.ascending ? comparison : -comparison;
+          return currentOrderBy.ascending ? comparison : -comparison;
         }
         
         // Fallback for mixed types
@@ -175,7 +241,7 @@ const createQueryBuilder = (table: string, _columns?: string) => {
         const bValComp = bVal as number | string;
         if (aValComp === bValComp) return 0;
         const comparison = aValComp < bValComp ? -1 : 1;
-        return orderBy!.ascending ? comparison : -comparison;
+        return currentOrderBy.ascending ? comparison : -comparison;
       });
     }
 
@@ -201,6 +267,22 @@ const createQueryBuilder = (table: string, _columns?: string) => {
     },
     lte: (column: string, value: unknown) => {
       filters.push({ type: 'lte', column, value });
+      return builder;
+    },
+    is: (column: string, value: unknown) => {
+      filters.push({ type: 'is', column, value });
+      return builder;
+    },
+    neq: (column: string, value: unknown) => {
+      filters.push({ type: 'neq', column, value });
+      return builder;
+    },
+    not: (column: string, _operator: string, _value: unknown) => {
+      filters.push({ type: 'not', column, value: null });
+      return builder;
+    },
+    or: (query: string) => {
+      filters.push({ type: 'or', column: '', value: query });
       return builder;
     },
     order: (column: string, options?: { ascending?: boolean }) => {
@@ -328,10 +410,14 @@ export const createMockSupabaseClient = () => {
         getPublicUrl: (path: string) => {
           console.log(`[MOCK] Get public URL for ${path}`);
           return {
-            data: { publicUrl: `https://mock-storage.loadifymarket.co.uk/${bucket}/${path}` },
+            data: { publicUrl: `https://mock-storage.localhost/${bucket}/${path}` },
           };
         },
       }),
+    },
+    rpc: async (fn: string, _params?: Record<string, unknown>) => {
+      console.log(`[MOCK] RPC call: ${fn}`);
+      return { data: null, error: null };
     },
   };
 };
