@@ -98,7 +98,7 @@ export default function RegisterPage() {
             {isSeller ? 'Seller Registration' : 'Create Account'}
           </h2>
           <p className="text-center text-gray-600 mb-6">
-            {isSeller ? 'Start selling on XDrive Logistics Market by XDrive Logistics Ltd' : 'Join XDrive Logistics Market by XDrive Logistics Ltd today'}
+            {isSeller ? 'Start selling on XDrive Market Logistics by XDrive Logistics Ltd' : 'Join XDrive Market Logistics by XDrive Logistics Ltd today'}
           </p>
           
           {error && (

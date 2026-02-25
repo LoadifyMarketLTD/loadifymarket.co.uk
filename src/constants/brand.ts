@@ -1,5 +1,5 @@
 export const BRAND = {
-  name: "XDrive Logistics Market by XDrive Logistics Ltd",
+  name: "XDrive Market Logistics by XDrive Logistics Ltd",
   supportEmail: import.meta.env.VITE_SUPPORT_EMAIL || "loadifymarket.co.uk@gmail.com",
   currency: import.meta.env.VITE_CURRENCY || "GBP",
   currencySymbol: import.meta.env.VITE_CURRENCY_SYMBOL || "£",

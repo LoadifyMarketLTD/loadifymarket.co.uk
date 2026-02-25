@@ -7,7 +7,7 @@ export default function TermsPage() {
         
         <h2 className="text-2xl font-semibold mt-6 mb-3">1. Introduction</h2>
         <p>
-          Welcome to XDrive Logistics Market by XDrive Logistics Ltd ("we", "our", "us"). These Terms and Conditions govern your use of our 
+          Welcome to XDrive Market Logistics by XDrive Logistics Ltd ("we", "our", "us"). These Terms and Conditions govern your use of our 
           marketplace platform located at loadifymarket.co.uk. By accessing or using our platform, you agree 
           to be bound by these Terms.
         </p>
@@ -15,7 +15,7 @@ export default function TermsPage() {
         <h2 className="text-2xl font-semibold mt-6 mb-3">2. Company Information</h2>
         <p>
           XDrive Logistics Ltd is a company registered in the United Kingdom, operating the
-          XDrive Logistics Market by XDrive Logistics Ltd marketplace platform.
+          XDrive Market Logistics by XDrive Logistics Ltd marketplace platform.
         </p>
         <ul className="list-disc pl-6 my-4">
           <li>Company Name: XDrive Logistics Ltd</li>
