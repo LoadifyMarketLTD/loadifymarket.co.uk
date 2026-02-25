@@ -29,6 +29,7 @@ export default function Footer() {
               href="#"
               className="p-2 rounded-full bg-white/5 text-gold hover:bg-gold hover:text-jet transition-all duration-300"
               aria-label="Facebook"
+              rel="noopener noreferrer"
             >
               <Facebook className="h-5 w-5" />
             </a>
@@ -36,6 +37,7 @@ export default function Footer() {
               href="#"
               className="p-2 rounded-full bg-white/5 text-gold hover:bg-gold hover:text-jet transition-all duration-300"
               aria-label="Twitter"
+              rel="noopener noreferrer"
             >
               <Twitter className="h-5 w-5" />
             </a>
@@ -43,6 +45,7 @@ export default function Footer() {
               href="#"
               className="p-2 rounded-full bg-white/5 text-gold hover:bg-gold hover:text-jet transition-all duration-300"
               aria-label="Instagram"
+              rel="noopener noreferrer"
             >
               <Instagram className="h-5 w-5" />
             </a>
@@ -50,6 +53,7 @@ export default function Footer() {
               href="#"
               className="p-2 rounded-full bg-white/5 text-gold hover:bg-gold hover:text-jet transition-all duration-300"
               aria-label="LinkedIn"
+              rel="noopener noreferrer"
             >
               <Linkedin className="h-5 w-5" />
             </a>
@@ -82,6 +86,11 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-bold mb-6 text-gold">Quick Links</h3>
             <ul className="space-y-3">
+              <li>
+                <Link to="/logistics-loads" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Logistics Loads UK
+                </Link>
+              </li>
               <li>
                 <Link to="/catalog" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
                   Browse Catalog
