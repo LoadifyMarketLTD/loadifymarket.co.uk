@@ -413,3 +413,17 @@ export interface ReportedListing {
   createdAt: string;
   updatedAt: string;
 }
+
+export type RFQStatus = 'pending' | 'replied';
+
+export interface RFQRequest {
+  id: string;
+  product_name: string;
+  quantity: string;
+  destination_country: string;
+  estimated_budget: string;
+  buyer_email: string;
+  message?: string;
+  status: RFQStatus;
+  created_at: string;
+}

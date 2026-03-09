@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { supabase } from '../lib/supabase';
 import {
   FileText,
   Package,
@@ -46,10 +47,18 @@ export default function RFQPage() {
   const onSubmit = async (data: RFQFormData) => {
     setSubmitState('loading');
     try {
-      // NOTE: Form submission is currently handled client-side only.
-      // A backend endpoint can be wired up when ready.
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.info('RFQ request submitted:', data);
+      const { error } = await supabase.from('rfq_requests').insert([
+        {
+          product_name: data.product_name,
+          quantity: data.quantity,
+          destination_country: data.destination_country,
+          estimated_budget: data.estimated_budget,
+          buyer_email: data.buyer_email,
+          message: data.message || null,
+          status: 'pending',
+        },
+      ]);
+      if (error) throw error;
       setSubmitState('success');
     } catch {
       setSubmitState('error');

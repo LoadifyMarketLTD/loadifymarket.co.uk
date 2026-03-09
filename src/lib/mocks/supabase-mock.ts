@@ -26,6 +26,7 @@ const mockStorage = {
   notifications: new Map<string, Record<string, unknown>>(),
   wishlists: new Map<string, Record<string, unknown>>(),
   carts: new Map<string, Record<string, unknown>>(),
+  rfq_requests: new Map<string, Record<string, unknown>>(),
 };
 
 // Initialize with sample data
@@ -127,6 +128,43 @@ const initializeMockData = () => {
     storeSlug: 'demo-store',
     storeName: 'XDrive Logistics Market Demo Store',
     createdAt: new Date().toISOString(),
+  });
+
+  // Sample RFQ requests for demo
+  mockStorage.rfq_requests.set('rfq-1', {
+    id: 'rfq-1',
+    product_name: 'Electronics Pallet - Grade A',
+    quantity: '5 pallets',
+    destination_country: 'United Kingdom',
+    estimated_budget: '£6,000 – £8,000',
+    buyer_email: 'buyer1@example.com',
+    message: 'Looking for regular supply of Grade A electronics pallets. Can you provide samples?',
+    status: 'pending',
+    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+  });
+
+  mockStorage.rfq_requests.set('rfq-2', {
+    id: 'rfq-2',
+    product_name: 'Men\'s Designer Clothing Mixed Lot',
+    quantity: '200 units',
+    destination_country: 'Germany',
+    estimated_budget: '£3,000 – £5,000',
+    buyer_email: 'wholesale@boutique.de',
+    message: '',
+    status: 'replied',
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+  });
+
+  mockStorage.rfq_requests.set('rfq-3', {
+    id: 'rfq-3',
+    product_name: 'Refurbished iPhone 13 - 128GB',
+    quantity: '50 units',
+    destination_country: 'France',
+    estimated_budget: '£20,000 – £25,000',
+    buyer_email: 'procurement@techretail.fr',
+    message: 'We need Grade B or better. Please confirm availability and lead time.',
+    status: 'pending',
+    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
   });
 };
 
@@ -353,17 +391,28 @@ export const createMockSupabaseClient = () => {
     },
     from: (table: string) => ({
       select: (columns?: string) => createQueryBuilder(table, columns),
-      insert: (values: Record<string, unknown>) => ({
-        select: () => ({
-          single: async () => {
-            console.log(`[MOCK] INSERT into ${table}`, values);
-            const id = values.id || `${table}-${Date.now()}`;
-            const newItem = { ...values, id };
-            mockStorage[table as keyof typeof mockStorage]?.set(id as string, newItem);
-            return { data: newItem, error: null };
-          },
-        }),
-      }),
+      insert: (values: Record<string, unknown> | Record<string, unknown>[]) => {
+        // Store immediately — supports both array and single-object inserts
+        const items = Array.isArray(values) ? values : [values];
+        const storedItems: Record<string, unknown>[] = [];
+        for (const item of items) {
+          const id = (item as Record<string, unknown>).id || `${table}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+          const newItem = { ...item, id };
+          mockStorage[table as keyof typeof mockStorage]?.set(id as string, newItem);
+          storedItems.push(newItem);
+          console.log(`[MOCK] INSERT into ${table}`, newItem);
+        }
+        const firstItem = storedItems[0] || null;
+        return {
+          select: () => ({
+            single: async () => ({ data: firstItem, error: null }),
+            then: (resolve: (value: { data: Record<string, unknown>[]; error: null }) => void) =>
+              Promise.resolve({ data: storedItems, error: null }).then(resolve),
+          }),
+          then: (resolve: (value: { data: Record<string, unknown> | null; error: null }) => void) =>
+            Promise.resolve({ data: firstItem, error: null }).then(resolve),
+        };
+      },
       update: (values: Record<string, unknown>) => ({
         eq: (column: string, value: unknown) => ({
           select: () => ({

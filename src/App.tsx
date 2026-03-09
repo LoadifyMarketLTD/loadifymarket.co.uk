@@ -25,6 +25,7 @@ const SellerPublicProfilePage = lazy(() => import('./pages/SellerPublicProfilePa
 const SellerReturnsPage = lazy(() => import('./pages/SellerReturnsPage'));
 const SellerShipmentsPage = lazy(() => import('./pages/SellerShipmentsPage'));
 const SellerReviewsPage = lazy(() => import('./pages/SellerReviewsPage'));
+const SellerRFQPage = lazy(() => import('./pages/SellerRFQPage'));
 const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const AdminReviewsPage = lazy(() => import('./pages/AdminReviewsPage'));
@@ -365,6 +366,15 @@ function App() {
             <RequireAuth>
               <Suspense fallback={<PageLoader />}>
                 <SellerReviewsPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+
+          {/* Protected: Seller RFQ Inbox */}
+          <Route path="seller/rfq" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <SellerRFQPage />
               </Suspense>
             </RequireAuth>
           } />
