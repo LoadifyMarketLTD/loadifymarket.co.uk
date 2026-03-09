@@ -6,7 +6,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 interface EmailRequest {
   to: string;
   subject: string;
-  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened';
+  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'transport_quote_request';
   data: Record<string, unknown>;
 }
 
@@ -144,6 +144,35 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         </div>
         <p>Our team will review this dispute and work to resolve it as quickly as possible.</p>
         <p>Expected response time: 2-3 business days.</p>
+      `;
+      break;
+
+    case 'transport_quote_request':
+      content = `
+        <h2 style="color: #243b53;">New Transport Quote Request</h2>
+        <p>A new delivery request has been submitted from <strong>Loadify Market</strong>.</p>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Reference:</strong> ${String(data.requestId || '')}</p>
+          <p style="margin: 8px 0 0 0;"><strong>Contact:</strong> ${String(data.fullName || '')} — ${String(data.email || '')} — ${String(data.phone || '')}</p>
+          ${data.companyName ? `<p style="margin: 8px 0 0 0;"><strong>Company:</strong> ${String(data.companyName)}</p>` : ''}
+        </div>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Item:</strong> ${String(data.itemType || '')}</p>
+          ${data.listingTitle ? `<p style="margin: 8px 0 0 0;"><strong>Listing:</strong> ${String(data.listingTitle)} (ID: ${String(data.listingId || '')})</p>` : ''}
+          ${data.sellerName ? `<p style="margin: 8px 0 0 0;"><strong>Seller:</strong> ${String(data.sellerName)} (ID: ${String(data.sellerId || '')})</p>` : ''}
+          <p style="margin: 8px 0 0 0;"><strong>Pallets / Items:</strong> ${String(data.palletCount || '')}</p>
+          ${data.weight ? `<p style="margin: 8px 0 0 0;"><strong>Weight:</strong> ${String(data.weight)}</p>` : ''}
+          ${data.dimensions ? `<p style="margin: 8px 0 0 0;"><strong>Dimensions:</strong> ${String(data.dimensions)}</p>` : ''}
+          ${data.quantity ? `<p style="margin: 8px 0 0 0;"><strong>Quantity:</strong> ${String(data.quantity)}</p>` : ''}
+        </div>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Pickup Postcode:</strong> ${String(data.pickupPostcode || '')}</p>
+          <p style="margin: 8px 0 0 0;"><strong>Dropoff Postcode:</strong> ${String(data.dropoffPostcode || '')}</p>
+          <p style="margin: 8px 0 0 0;"><strong>Collection Date:</strong> ${String(data.collectionDate || '')}</p>
+        </div>
+        ${data.deliveryNotes ? `<p><strong>Delivery Notes:</strong> ${String(data.deliveryNotes)}</p>` : ''}
+        ${data.listingReference ? `<p><strong>Listing Reference:</strong> ${String(data.listingReference)}</p>` : ''}
+        <p style="color: #888; font-size: 12px;">Source: ${String(data.source || 'loadify-market')}</p>
       `;
       break;
 
