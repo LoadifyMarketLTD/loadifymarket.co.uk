@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Cpu, Shirt, Home, Wrench, Car, Package, Layers, Sparkles,
@@ -162,6 +161,11 @@ export default function CinematicMarketplaceSwitch() {
                     </div>
                     <p className="text-sm text-white/50 mt-1">{seller.type}</p>
                   </div>
+                  {cat.badge && (
+                    <span className="absolute -top-2 -right-2 badge-gold text-[10px] px-1.5 py-0.5">
+                      {cat.badge}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center justify-between text-sm border-t border-white/10 pt-4">
                   <div className="flex items-center gap-1">

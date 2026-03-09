@@ -324,7 +324,7 @@ export default function HomePage() {
         <CinematicStoryStrip />
       </Suspense>
 
-      {/* 7 — Marketplace + XDrive Logistics: Trade & Deliver */}
+      {/* 7 — Marketplace + logistics support: Trade & Deliver */}
       <section className="py-20 bg-graphite/30 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gold/5 rounded-full blur-[120px]" />
@@ -344,7 +344,7 @@ export default function HomePage() {
             </h2>
             <p className="text-white/60 text-base max-w-xl mx-auto">
               Loadify Market handles buying and selling. Delivery coordination for UK collections
-              and deliveries can be arranged through XDrive Logistics.
+              and deliveries can be arranged through our logistics partners.
             </p>
           </div>
 
@@ -384,7 +384,7 @@ export default function HomePage() {
                   <Truck className="w-7 h-7 text-gold" />
                 </div>
                 <div className="text-gold text-xs font-bold uppercase tracking-wider mb-2">Step 2</div>
-                <h3 className="text-lg font-bold text-white mb-3">Arrange Delivery via XDrive</h3>
+                <h3 className="text-lg font-bold text-white mb-3">Arrange Delivery</h3>
                 <p className="text-white/50 text-sm leading-relaxed mb-5">
                   Request a transport quote for UK-wide collection and delivery of your purchased stock.
                 </p>
@@ -397,7 +397,7 @@ export default function HomePage() {
 
             {/* Note */}
             <p className="text-center text-white/30 text-xs mt-6">
-              Transport quotes are coordinated by XDrive Logistics Ltd — UK-wide pallet and bulk delivery specialists.
+              Transport quotes are provided by our UK-wide pallet and bulk delivery partners.
             </p>
           </div>
         </div>

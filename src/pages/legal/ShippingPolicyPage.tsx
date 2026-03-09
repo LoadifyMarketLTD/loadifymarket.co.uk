@@ -6,7 +6,7 @@ export default function ShippingPolicyPage() {
         <p className="text-sm text-gray-600 mb-4">Last updated: December 2025</p>
         
         <h2 className="text-2xl font-semibold mt-6 mb-3">1. Delivery Methods</h2>
-        <p>Loadify Market offers two delivery methods:</p>
+        <p>Loadify Market Ltd offers two delivery methods:</p>
         <ul className="list-disc pl-6 my-4">
           <li><strong>Local Pickup:</strong> Collect your order directly from the seller</li>
           <li><strong>Courier Delivery:</strong> Seller arranges delivery via courier service</li>
