@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, User, Search, Menu, X, Hexagon } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, X, Hexagon, Store } from 'lucide-react';
 import { useAuthStore, useCartStore } from '../../store';
 import { useState, useEffect } from 'react';
+import { BRAND } from '../../constants/brand';
 
 export default function Header() {
   const { user } = useAuthStore();
@@ -24,7 +25,6 @@ export default function Header() {
 
   // Close mobile menu on route change
   useEffect(() => {
-    // Use a conditional check to avoid unnecessary updates
     if (mobileMenuOpen) {
       setMobileMenuOpen(false);
     }
@@ -34,11 +34,12 @@ export default function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      window.location.href = `/catalog?search=${encodeURIComponent(searchQuery)}`;
+      window.location.href = `/shop?search=${encodeURIComponent(searchQuery)}`;
     }
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(path + '/');
 
   return (
     <header
@@ -57,7 +58,7 @@ export default function Header() {
               <span className="absolute inset-0 flex items-center justify-center text-gold font-bold text-sm">L</span>
             </div>
             <div className="hidden sm:block">
-              <span className="text-xl font-bold text-white tracking-tight">XDrive Market Logistics by XDrive Logistics Ltd</span>
+              <span className="text-xl font-bold text-white tracking-tight">{BRAND.name}</span>
             </div>
           </Link>
 
@@ -66,7 +67,7 @@ export default function Header() {
             <div className="relative w-full group">
               <input
                 type="text"
-                placeholder="Search logistics loads and wholesale pallets..."
+                placeholder="Search products, bulk lots, pallets..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="input-search w-full pr-12 group-hover:bg-white/10"
@@ -82,24 +83,25 @@ export default function Header() {
           </form>
 
           {/* Navigation - Desktop */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-6">
             <Link
-              to="/catalog"
-              className={`nav-link ${isActive('/catalog') ? 'nav-link-active' : ''}`}
+              to="/shop"
+              className={`nav-link ${isActive('/shop') ? 'nav-link-active' : ''}`}
             >
-              Catalog
+              Shop
             </Link>
             <Link
-              to="/how-it-works"
-              className={`nav-link ${isActive('/how-it-works') ? 'nav-link-active' : ''}`}
+              to="/bulk"
+              className={`nav-link ${isActive('/bulk') ? 'nav-link-active' : ''}`}
             >
-              How It Works
+              Bulk Deals
             </Link>
             <Link
-              to="/pricing"
-              className={`nav-link ${isActive('/pricing') ? 'nav-link-active' : ''}`}
+              to="/register?type=seller"
+              className="nav-link flex items-center gap-1"
             >
-              Pricing
+              <Store className="h-4 w-4" />
+              Sell
             </Link>
 
             {user ? (
@@ -188,7 +190,7 @@ export default function Header() {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search..."
+              placeholder="Search products, bulk lots, pallets..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="input-search w-full pr-12"
@@ -207,20 +209,36 @@ export default function Header() {
       {/* Mobile Menu */}
       <div
         className={`md:hidden overflow-hidden transition-all duration-500 ease-out ${
-          mobileMenuOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+          mobileMenuOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
         <div className="bg-graphite/95 backdrop-blur-glass border-t border-white/10">
           <nav className="container-cinematic py-6 space-y-2">
             <Link
-              to="/catalog"
+              to="/shop"
               className={`block py-3 px-4 rounded-premium-sm transition-all duration-300 ${
-                isActive('/catalog')
+                isActive('/shop')
                   ? 'bg-gold/10 text-gold'
                   : 'text-white/80 hover:bg-white/5 hover:text-gold'
               }`}
             >
-              Catalog
+              Shop Products
+            </Link>
+            <Link
+              to="/bulk"
+              className={`block py-3 px-4 rounded-premium-sm transition-all duration-300 ${
+                isActive('/bulk')
+                  ? 'bg-gold/10 text-gold'
+                  : 'text-white/80 hover:bg-white/5 hover:text-gold'
+              }`}
+            >
+              Bulk Deals
+            </Link>
+            <Link
+              to="/register?type=seller"
+              className="block py-3 px-4 rounded-premium-sm text-white/80 hover:bg-white/5 hover:text-gold transition-all duration-300"
+            >
+              Sell on Loadify
             </Link>
 
             {user ? (
@@ -313,6 +331,12 @@ export default function Header() {
                 className="py-2 px-4 text-sm text-white/60 hover:text-gold transition-colors"
               >
                 Contact
+              </Link>
+              <Link
+                to="/track-order"
+                className="py-2 px-4 text-sm text-white/60 hover:text-gold transition-colors"
+              >
+                Track Order
               </Link>
             </div>
           </nav>

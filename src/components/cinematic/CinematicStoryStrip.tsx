@@ -1,35 +1,49 @@
 import { Link } from 'react-router-dom';
-import { Upload, MessageSquare, CheckSquare, TrendingUp, ArrowRight } from 'lucide-react';
+import { Search, ShoppingCart, CreditCard, PackageCheck, Truck, Star, ArrowRight } from 'lucide-react';
 
 export default function CinematicStoryStrip() {
   const steps = [
     {
       id: 1,
-      icon: Upload,
-      title: 'Post a listing',
-      description: 'Create your load, pallet, or product listing',
-      link: '/register?type=seller',
+      icon: Search,
+      title: 'Browse & Discover',
+      description: 'Search products, bulk lots, and pallet deals across all categories',
+      link: '/shop',
     },
     {
       id: 2,
-      icon: MessageSquare,
-      title: 'Review offers',
-      description: 'Check inquiries and interested parties',
-      link: '/catalog',
+      icon: ShoppingCart,
+      title: 'Add to Cart',
+      description: 'Select items, compare sellers, and add to your secure cart',
+      link: '/shop',
     },
     {
       id: 3,
-      icon: CheckSquare,
-      title: 'Agree terms',
-      description: 'Contact buyer/seller and confirm details',
-      link: '/how-it-works',
+      icon: CreditCard,
+      title: 'Secure Checkout',
+      description: 'Pay safely with Stripe. Buyer protection on every order',
+      link: '/checkout',
     },
     {
       id: 4,
-      icon: TrendingUp,
-      title: 'Complete transaction',
-      description: 'Finalize payment and delivery',
-      link: '/help',
+      icon: PackageCheck,
+      title: 'Order Confirmed',
+      description: 'Receive instant confirmation and automated invoice',
+      link: '/orders',
+    },
+    {
+      id: 5,
+      icon: Truck,
+      title: 'Shipped & Tracked',
+      description: 'Full order tracking from dispatch to delivery',
+      link: '/track-order',
+    },
+    {
+      id: 6,
+      icon: Star,
+      title: 'Review & Rate',
+      description: 'Leave a review and help other buyers make informed decisions',
+      link: '/orders',
     },
   ];
 
@@ -42,42 +56,43 @@ export default function CinematicStoryStrip() {
             How It <span className="text-gradient-gold">Works</span>
           </h2>
           <p className="text-white/60 text-lg max-w-2xl mx-auto">
-            Simple steps for business transactions
+            From browsing to delivery – a simple, secure marketplace experience
           </p>
         </div>
 
         {/* Steps grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {steps.map((step, index) => {
             const Icon = step.icon;
             return (
-              <div key={step.id} className="relative group">
-                {/* Connector line (hidden on mobile, shown on desktop except for last item) */}
+              <Link key={step.id} to={step.link} className="relative card-glass hover:scale-[1.03] transition-all duration-500 group text-center block">
+                {/* Step number */}
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-gold text-jet rounded-full flex items-center justify-center font-bold text-sm shadow-cinematic-gold">
+                  {step.id}
+                </div>
+
+                {/* Icon */}
+                <div className="mt-4 mb-5 inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm group-hover:bg-gold/20 transition-colors duration-300">
+                  <Icon className="w-7 h-7 text-gold" strokeWidth={1.5} />
+                </div>
+
+                {/* Content */}
+                <h3 className="text-base font-bold text-white mb-2 leading-tight">
+                  {step.title}
+                </h3>
+                <p className="text-sm text-white/50 leading-relaxed">
+                  {step.description}
+                </p>
+
+                {/* Connector dot for sequence */}
                 {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-12 left-1/2 w-full h-px bg-gradient-to-r from-gold/50 to-gold/10 z-0" />
+                  <div className="hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 items-center z-10">
+                    <div className="w-6 h-6 rounded-full bg-gold/30 border border-gold/50 flex items-center justify-center">
+                      <ArrowRight className="w-3 h-3 text-gold" />
+                    </div>
+                  </div>
                 )}
-
-                {/* Card as Link */}
-                <Link to={step.link} className="relative card-glass hover:scale-[1.03] transition-all duration-500 z-10 text-center block">
-                  {/* Step number */}
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-gold text-jet rounded-full flex items-center justify-center font-bold text-sm shadow-cinematic-gold">
-                    {step.id}
-                  </div>
-
-                  {/* Icon */}
-                  <div className="mt-4 mb-6 inline-flex items-center justify-center w-16 h-16 bg-gold/10 rounded-premium-sm group-hover:bg-gold/20 transition-colors duration-300">
-                    <Icon className="w-8 h-8 text-gold" strokeWidth={1.5} />
-                  </div>
-
-                  {/* Content */}
-                  <h3 className="text-lg font-bold text-white mb-3 leading-tight">
-                    {step.title}
-                  </h3>
-                  <p className="text-sm text-white/50 leading-relaxed">
-                    {step.description}
-                  </p>
-                </Link>
-              </div>
+              </Link>
             );
           })}
         </div>
@@ -88,7 +103,7 @@ export default function CinematicStoryStrip() {
             to="/register"
             className="btn-primary inline-flex items-center gap-2"
           >
-            Get Started Today
+            Start Shopping Now
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>

@@ -116,6 +116,9 @@ function App() {
       <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="catalog" element={<CatalogPage />} />
+          {/* Marketplace routes: /shop = B2C products, /bulk = B2B wholesale/pallets */}
+          <Route path="shop" element={<CatalogPage />} />
+          <Route path="bulk" element={<CatalogPage />} />
           <Route path="product/:id" element={<ProductPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />

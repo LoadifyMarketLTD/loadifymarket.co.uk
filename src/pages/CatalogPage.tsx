@@ -1,27 +1,44 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Product, Category } from '../types';
-import { Grid, List, Search, X, Package, Truck, Sparkles, ArrowRight, Filter } from 'lucide-react';
+import { Grid, List, Search, X, Package, ShoppingBag, Sparkles, ArrowRight, Filter } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 
 export default function CatalogPage() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
 
+  // Detect route context: /shop = B2C, /bulk = B2B
+  const isBulkRoute = location.pathname === '/bulk';
+  const isShopRoute = location.pathname === '/shop';
+
+  // Derive default type from route
+  const defaultType = isBulkRoute ? 'pallet' : '';
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [selectedCondition, setSelectedCondition] = useState<string>('');
-  const [selectedType, setSelectedType] = useState<string>(searchParams.get('type') || '');
+  const [selectedType, setSelectedType] = useState<string>(searchParams.get('type') || defaultType);
   const [selectedListingType, setSelectedListingType] = useState<string>(searchParams.get('listingType') || '');
   const [selectedRole, setSelectedRole] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('createdAt_desc');
+
+  // Sync type filter when navigating between /shop and /bulk
+  useEffect(() => {
+    if (isBulkRoute && !searchParams.get('type')) {
+      setSelectedType('pallet');
+    } else if ((isShopRoute || location.pathname === '/catalog') && !searchParams.get('type')) {
+      setSelectedType('');
+    }
+  }, [location.pathname, isBulkRoute, isShopRoute, searchParams]);
 
   // Fetch categories
   useEffect(() => {
@@ -121,32 +138,27 @@ export default function CatalogPage() {
     fetchProducts();
   }, [fetchProducts]);
 
-  // Get page title based on type filter
+  // Get page title based on route and type filter
   const getPageTitle = () => {
+    if (isBulkRoute) return 'Bulk & Pallet Deals';
     switch (selectedType) {
-      case 'logistics':
-        return 'Logistics Loads';
       case 'pallet':
         return 'Pallets & Wholesale';
+      case 'lot':
+      case 'clearance':
+        return 'Clearance & Lots';
       case 'handmade':
         return 'Handmade & Artisan';
       default:
-        return 'Product Catalog';
+        return isShopRoute ? 'Shop Products' : 'Product Catalog';
     }
   };
 
   // Get type icon
   const getTypeIcon = () => {
-    switch (selectedType) {
-      case 'logistics':
-        return Truck;
-      case 'pallet':
-        return Package;
-      case 'handmade':
-        return Sparkles;
-      default:
-        return Package;
-    }
+    if (isBulkRoute || selectedType === 'pallet') return Package;
+    if (selectedType === 'handmade') return Sparkles;
+    return ShoppingBag;
   };
 
   const TypeIcon = getTypeIcon();
@@ -190,49 +202,79 @@ export default function CatalogPage() {
 
           {/* Quick Type Filters */}
           <div className="flex flex-wrap gap-3 mt-6">
-            <button
-              onClick={() => setSelectedType('')}
-              className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 ${
-                !selectedType
-                  ? 'bg-gold text-jet'
-                  : 'bg-graphite text-white hover:bg-graphite/80'
-              }`}
-            >
-              All Items
-            </button>
-            <button
-              onClick={() => setSelectedType('logistics')}
-              className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-                selectedType === 'logistics'
-                  ? 'bg-gold text-jet'
-                  : 'bg-graphite text-white hover:bg-graphite/80'
-              }`}
-            >
-              <Truck className="w-4 h-4" />
-              Logistics
-            </button>
-            <button
-              onClick={() => setSelectedType('pallet')}
-              className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-                selectedType === 'pallet'
-                  ? 'bg-gold text-jet'
-                  : 'bg-graphite text-white hover:bg-graphite/80'
-              }`}
-            >
-              <Package className="w-4 h-4" />
-              Pallets
-            </button>
-            <button
-              onClick={() => setSelectedType('handmade')}
-              className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-                selectedType === 'handmade'
-                  ? 'bg-gold text-jet'
-                  : 'bg-graphite text-white hover:bg-graphite/80'
-              }`}
-            >
-              <Sparkles className="w-4 h-4" />
-              Handmade
-            </button>
+            {!isBulkRoute && (
+              <>
+                <button
+                  onClick={() => setSelectedType('')}
+                  className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 ${
+                    !selectedType
+                      ? 'bg-gold text-jet'
+                      : 'bg-graphite text-white hover:bg-graphite/80'
+                  }`}
+                >
+                  All Products
+                </button>
+                <button
+                  onClick={() => setSelectedType('retail')}
+                  className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                    selectedType === 'retail'
+                      ? 'bg-gold text-jet'
+                      : 'bg-graphite text-white hover:bg-graphite/80'
+                  }`}
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  Retail
+                </button>
+                <button
+                  onClick={() => setSelectedType('handmade')}
+                  className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                    selectedType === 'handmade'
+                      ? 'bg-gold text-jet'
+                      : 'bg-graphite text-white hover:bg-graphite/80'
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Handmade
+                </button>
+              </>
+            )}
+            {isBulkRoute && (
+              <>
+                <button
+                  onClick={() => setSelectedType('pallet')}
+                  className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                    selectedType === 'pallet' || !selectedType
+                      ? 'bg-gold text-jet'
+                      : 'bg-graphite text-white hover:bg-graphite/80'
+                  }`}
+                >
+                  <Package className="w-4 h-4" />
+                  Pallets
+                </button>
+                <button
+                  onClick={() => setSelectedType('wholesale')}
+                  className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                    selectedType === 'wholesale'
+                      ? 'bg-gold text-jet'
+                      : 'bg-graphite text-white hover:bg-graphite/80'
+                  }`}
+                >
+                  <Package className="w-4 h-4" />
+                  Wholesale
+                </button>
+                <button
+                  onClick={() => setSelectedType('clearance')}
+                  className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                    selectedType === 'clearance'
+                      ? 'bg-gold text-jet'
+                      : 'bg-graphite text-white hover:bg-graphite/80'
+                  }`}
+                >
+                  <Package className="w-4 h-4" />
+                  Clearance
+                </button>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -348,10 +390,10 @@ export default function CatalogPage() {
                     className="input-field"
                   >
                     <option value="">All Listings</option>
-                    <option value="pallet">Pallet & Wholesale</option>
-                    <option value="retail">Retail (Piece-by-Piece)</option>
-                    <option value="handmade">Handmade & Artisan</option>
-                    <option value="logistics">Logistics Jobs</option>
+                    <option value="pallet">Pallet &amp; Wholesale</option>
+                    <option value="retail">Retail</option>
+                    <option value="handmade">Handmade &amp; Artisan</option>
+                    <option value="wholesale">Wholesale Lots</option>
                   </select>
                 </div>
 

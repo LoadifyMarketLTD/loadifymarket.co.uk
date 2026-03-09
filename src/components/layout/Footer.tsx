@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Mail, MapPin, Hexagon, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { BRAND } from '../../constants/brand';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -17,7 +18,8 @@ export default function Footer() {
               <span className="absolute inset-0 flex items-center justify-center text-gold font-bold text-lg">L</span>
             </div>
             <div>
-              <span className="text-2xl font-bold text-white tracking-tight">XDrive Market Logistics by XDrive Logistics Ltd</span>
+              <span className="text-2xl font-bold text-white tracking-tight">{BRAND.name}</span>
+              <p className="text-xs text-white/40 mt-0.5">UK's Multi-Category Marketplace</p>
             </div>
           </Link>
 
@@ -65,17 +67,17 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-bold mb-6 text-gold">About</h3>
             <p className="text-white/60 text-sm leading-relaxed mb-6">
-              B2B marketplace for logistics loads, wholesale pallets, and business stock.
+              {BRAND.name} is the UK's fastest-growing marketplace for B2C products, B2B bulk lots, pallet deals, and third-party sellers.
             </p>
             <div className="space-y-3 text-sm">
               <div className="flex items-start space-x-3 text-white/60">
                 <MapPin className="h-4 w-4 mt-1 flex-shrink-0 text-gold" />
-                <span>101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom</span>
+                <span>{BRAND.companyAddress}</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-4 w-4 flex-shrink-0 text-gold" />
-                <a href="mailto:loadifymarket.co.uk@gmail.com" className="text-white/60 hover:text-gold transition-colors">
-                  loadifymarket.co.uk@gmail.com
+                <a href={`mailto:${BRAND.supportEmail}`} className="text-white/60 hover:text-gold transition-colors">
+                  {BRAND.supportEmail}
                 </a>
               </div>
             </div>
@@ -83,46 +85,41 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-bold mb-6 text-gold">Quick Links</h3>
+            <h3 className="text-lg font-bold mb-6 text-gold">Marketplace</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/logistics-loads" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  Logistics Loads UK
+                <Link to="/shop" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Shop Products
                 </Link>
               </li>
               <li>
-                <Link to="/catalog" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  Browse Catalog
+                <Link to="/bulk" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Bulk &amp; Pallet Deals
                 </Link>
               </li>
               <li>
-                <Link to="/how-it-works" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  How It Works
+                <Link to="/shop?category=electronics" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Electronics
                 </Link>
               </li>
               <li>
-                <Link to="/pricing" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  Pricing
+                <Link to="/shop?category=fashion" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Fashion
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  About Us
+                <Link to="/shop?category=home-garden" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Home &amp; Garden
+                </Link>
+              </li>
+              <li>
+                <Link to="/track-order" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Track Order
                 </Link>
               </li>
               <li>
                 <Link to="/help" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  Help & FAQ
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/tracking/search" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  Track Order
+                  Help &amp; FAQ
                 </Link>
               </li>
             </ul>
@@ -130,11 +127,11 @@ export default function Footer() {
 
           {/* Seller Info */}
           <div>
-            <h3 className="text-lg font-bold mb-6 text-gold">For Businesses</h3>
+            <h3 className="text-lg font-bold mb-6 text-gold">For Sellers</h3>
             <ul className="space-y-3">
               <li>
                 <Link to="/register?type=seller" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  Create Business Account
+                  Start Selling
                 </Link>
               </li>
               <li>
@@ -143,8 +140,18 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/help#seller" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  Seller Guidelines
+                <Link to="/seller/products/new" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  List a Product
+                </Link>
+              </li>
+              <li>
+                <Link to="/pricing" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Seller Fees &amp; Pricing
+                </Link>
+              </li>
+              <li>
+                <Link to="/how-it-works" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  How It Works
                 </Link>
               </li>
               <li>
@@ -161,7 +168,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link to="/terms" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  Terms & Conditions
+                  Terms &amp; Conditions
                 </Link>
               </li>
               <li>
@@ -184,6 +191,11 @@ export default function Footer() {
                   Shipping Policy
                 </Link>
               </li>
+              <li>
+                <Link to="/about" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  About Us
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
@@ -194,12 +206,14 @@ export default function Footer() {
         <div className="container-cinematic py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-white/70 text-sm">
-              © {currentYear} XDrive Market Logistics by XDrive Logistics Ltd. All rights reserved.
+              © {currentYear} {BRAND.companyName}. All rights reserved.
             </p>
             <div className="flex items-center space-x-6 text-sm text-white/70">
-              <span>VAT: GB375949535</span>
+              <span>VAT: {BRAND.vatNumber}</span>
               <span className="hidden md:inline">|</span>
-              <span>Company Reg: 12345678</span>
+              <span>Platform fee: {BRAND.marketplaceFeePercent}%</span>
+              <span className="hidden md:inline">|</span>
+              <span>Returns: {BRAND.returnsDays} days</span>
             </div>
           </div>
         </div>

@@ -1,11 +1,38 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Truck, Package, Sparkles, MapPin, Clock, ArrowRight } from 'lucide-react';
+import {
+  Cpu, Shirt, Home, Wrench, Car, Package, Layers, Sparkles,
+  ArrowRight, TrendingUp, Star, Clock,
+} from 'lucide-react';
 
-type MarketplaceMode = 'logistics' | 'pallet' | 'handmade';
+type MarketplaceTab = 'products' | 'bulk' | 'featured';
+
+const CATEGORIES = [
+  { name: 'Electronics', icon: Cpu, slug: 'electronics', color: 'from-blue-900/50 to-jet', badge: 'Popular' },
+  { name: 'Fashion', icon: Shirt, slug: 'fashion', color: 'from-pink-900/50 to-jet', badge: null },
+  { name: 'Home & Garden', icon: Home, slug: 'home-garden', color: 'from-green-900/50 to-jet', badge: null },
+  { name: 'Tools', icon: Wrench, slug: 'tools', color: 'from-orange-900/50 to-jet', badge: null },
+  { name: 'Vehicles', icon: Car, slug: 'vehicles', color: 'from-gray-800/60 to-jet', badge: null },
+  { name: 'Bulk Lots', icon: Package, slug: 'bulk-lots', color: 'from-yellow-900/50 to-jet', badge: 'B2B' },
+  { name: 'Pallet Deals', icon: Layers, slug: 'pallet-deals', color: 'from-amber-900/50 to-jet', badge: 'Wholesale' },
+  { name: 'Handmade', icon: Sparkles, slug: 'handmade', color: 'from-purple-900/50 to-jet', badge: 'Unique' },
+];
+
+const FEATURED_DEALS = [
+  { id: 1, title: 'Electronics Mixed Lot', pallets: 4, rrp: 12500, price: 4999, type: 'pallet', tag: 'Top Deal' },
+  { id: 2, title: "Women's Fashion Bundle", pallets: 6, rrp: 18000, price: 6499, type: 'pallet', tag: 'Hot' },
+  { id: 3, title: 'Home & Kitchen Appliances', pallets: 3, rrp: 9500, price: 3299, type: 'pallet', tag: 'New' },
+  { id: 4, title: 'Toys & Games Clearance', pallets: 5, rrp: 15000, price: 4999, type: 'pallet', tag: 'Clearance' },
+];
+
+const FEATURED_SELLERS = [
+  { id: 1, name: 'TechPro Wholesale', rating: 4.9, sales: 1240, badge: 'Verified', type: 'Electronics & Tech' },
+  { id: 2, name: 'Fashion Forward UK', rating: 4.8, sales: 876, badge: 'Top Seller', type: 'Fashion & Apparel' },
+  { id: 3, name: 'Home Essentials Ltd', rating: 4.7, sales: 654, badge: 'Verified', type: 'Home & Garden' },
+];
 
 export default function CinematicMarketplaceSwitch() {
-  const [activeMode, setActiveMode] = useState<MarketplaceMode>('logistics');
+  const [activeTab, setActiveTab] = useState<MarketplaceTab>('products');
 
   return (
     <section className="py-20 bg-graphite/30">
@@ -13,173 +40,154 @@ export default function CinematicMarketplaceSwitch() {
         {/* Section Header */}
         <div className="text-center mb-12">
           <h2 className="heading-section text-white mb-4">
-            Browse by <span className="text-gradient-gold">Category</span>
+            Explore the <span className="text-gradient-gold">Marketplace</span>
           </h2>
           <p className="text-white/60 text-lg max-w-2xl mx-auto">
-            Explore our curated marketplace sections tailored to your needs
+            Browse products, bulk lots, and connect with top sellers
           </p>
         </div>
 
         {/* Tab buttons */}
         <div className="flex flex-col md:flex-row justify-center gap-4 mb-12">
           <button
-            onClick={() => setActiveMode('logistics')}
+            onClick={() => setActiveTab('products')}
             className={`flex items-center justify-center gap-3 px-8 py-4 rounded-premium-sm font-semibold transition-all duration-300 ${
-              activeMode === 'logistics'
+              activeTab === 'products'
                 ? 'bg-gold text-jet shadow-cinematic-gold scale-105'
                 : 'bg-graphite text-white hover:bg-graphite/80 shadow-cinematic'
             }`}
           >
-            <Truck className="w-6 h-6" />
-            <span className="text-lg">Logistics Jobs</span>
+            <TrendingUp className="w-5 h-5" />
+            <span>Categories</span>
           </button>
 
           <button
-            onClick={() => setActiveMode('pallet')}
+            onClick={() => setActiveTab('bulk')}
             className={`flex items-center justify-center gap-3 px-8 py-4 rounded-premium-sm font-semibold transition-all duration-300 ${
-              activeMode === 'pallet'
+              activeTab === 'bulk'
                 ? 'bg-gold text-jet shadow-cinematic-gold scale-105'
                 : 'bg-graphite text-white hover:bg-graphite/80 shadow-cinematic'
             }`}
           >
-            <Package className="w-6 h-6" />
-            <span className="text-lg">Pallet & Wholesale</span>
+            <Package className="w-5 h-5" />
+            <span>Bulk Deals</span>
           </button>
 
           <button
-            onClick={() => setActiveMode('handmade')}
-            className={`flex items-center justify-center gap-3 px-6 py-3 rounded-premium-sm font-medium transition-all duration-300 ${
-              activeMode === 'handmade'
+            onClick={() => setActiveTab('featured')}
+            className={`flex items-center justify-center gap-3 px-8 py-4 rounded-premium-sm font-semibold transition-all duration-300 ${
+              activeTab === 'featured'
                 ? 'bg-gold text-jet shadow-cinematic-gold scale-105'
-                : 'bg-graphite/60 text-white/70 hover:bg-graphite/80 shadow-cinematic text-sm'
+                : 'bg-graphite text-white hover:bg-graphite/80 shadow-cinematic'
             }`}
           >
-            <Sparkles className="w-5 h-5" />
-            <span className="text-base">Handmade & Retail</span>
+            <Star className="w-5 h-5" />
+            <span>Featured Sellers</span>
           </button>
         </div>
 
-        {/* Content area */}
-        <div className="mt-8">
-          {/* Logistics Jobs */}
-          {activeMode === 'logistics' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
-              {logisticsJobs.map((job) => (
-                <div key={job.id} className="card-glass hover:scale-[1.02] transition-all duration-500 group">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="p-3 rounded-premium-sm bg-gold/20">
-                      <Truck className="w-8 h-8 text-gold" />
-                    </div>
-                    <span className="badge-stock">Active</span>
+        {/* Category Grid */}
+        {activeTab === 'products' && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 animate-fadeIn">
+            {CATEGORIES.map((cat) => {
+              const Icon = cat.icon;
+              return (
+                <Link
+                  key={cat.slug}
+                  to={`/shop?category=${cat.slug}`}
+                  className={`group relative overflow-hidden rounded-premium-sm bg-gradient-to-br ${cat.color} border border-white/10 p-6 flex flex-col items-center justify-center text-center hover:border-gold/50 hover:scale-[1.03] transition-all duration-300 min-h-[140px]`}
+                >
+                  {cat.badge && (
+                    <span className="absolute top-3 right-3 text-xs font-semibold bg-gold/20 text-gold border border-gold/30 rounded-full px-2 py-0.5">
+                      {cat.badge}
+                    </span>
+                  )}
+                  <div className="w-12 h-12 rounded-premium-sm bg-gold/10 flex items-center justify-center mb-3 group-hover:bg-gold/20 transition-colors">
+                    <Icon className="w-6 h-6 text-gold" />
                   </div>
+                  <h3 className="font-semibold text-white text-sm">{cat.name}</h3>
+                </Link>
+              );
+            })}
+          </div>
+        )}
 
-                  <h3 className="text-lg font-bold text-white mb-3">{job.vehicle}</h3>
-
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-white/60">
-                      <MapPin className="w-4 h-4 text-gold" />
-                      <span>From: {job.from}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-white/60">
-                      <MapPin className="w-4 h-4 text-white/60" />
-                      <span>To: {job.to}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-white/60">
-                      <Clock className="w-4 h-4 text-white/60" />
-                      <span>{job.date}</span>
-                    </div>
+        {/* Bulk Deals Grid */}
+        {activeTab === 'bulk' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fadeIn">
+            {FEATURED_DEALS.map((item) => (
+              <div key={item.id} className="card-product group">
+                <div className="aspect-square bg-gradient-to-br from-graphite to-jet relative overflow-hidden">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Package className="w-20 h-20 text-white/20 group-hover:scale-110 transition-transform duration-500" />
                   </div>
+                  <div className="absolute top-3 right-3 badge-gold">{item.pallets} Pallets</div>
+                  <div className="absolute top-3 left-3 text-xs font-bold bg-gold text-jet px-2 py-1 rounded-full">
+                    {item.tag}
+                  </div>
+                  <div className="card-product-overlay" />
+                </div>
+                <div className="p-5">
+                  <h3 className="font-bold text-white mb-2 line-clamp-2">{item.title}</h3>
+                  <p className="text-sm text-white/50 mb-1">RRP: £{item.rrp.toLocaleString()}</p>
+                  <div className="flex items-baseline gap-1 mb-4">
+                    <span className="price-tag">£{item.price.toLocaleString()}</span>
+                    <span className="text-sm text-white/60">/ lot</span>
+                  </div>
+                  <Link to="/bulk" className="w-full btn-glass py-3 text-sm flex items-center justify-center gap-2">
+                    <span>View Lot</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
-                  <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                    <div>
-                      <p className="price-tag">£{job.price}</p>
-                      <p className="text-xs text-white/70">Quoted price</p>
+        {/* Featured Sellers */}
+        {activeTab === 'featured' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn">
+            {FEATURED_SELLERS.map((seller) => (
+              <div key={seller.id} className="card-glass hover:scale-[1.02] transition-all duration-300">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-14 h-14 rounded-premium-sm bg-gold/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-2xl font-bold text-gold">{seller.name.charAt(0)}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-white truncate">{seller.name}</h3>
+                      <span className="text-xs bg-gold/20 text-gold border border-gold/30 rounded-full px-2 py-0.5 flex-shrink-0">
+                        {seller.badge}
+                      </span>
                     </div>
-                    <Link to={`/catalog?type=logistics`} className="btn-glass py-2 px-4 text-sm">
-                      View Details
-                    </Link>
+                    <p className="text-sm text-white/50 mt-1">{seller.type}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-
-          {/* Pallet & Wholesale */}
-          {activeMode === 'pallet' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fadeIn">
-              {palletStock.map((item) => (
-                <div key={item.id} className="card-product group">
-                  <div className="aspect-square bg-gradient-to-br from-graphite to-jet relative overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Package className="w-24 h-24 text-white/20 group-hover:scale-110 transition-transform duration-500" />
-                    </div>
-                    <div className="absolute top-3 right-3 badge-gold">
-                      {item.palletCount} Pallets
-                    </div>
-                    <div className="card-product-overlay" />
+                <div className="flex items-center justify-between text-sm border-t border-white/10 pt-4">
+                  <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4 text-gold fill-gold" />
+                    <span className="text-white font-semibold">{seller.rating}</span>
                   </div>
-                  <div className="p-5">
-                    <h3 className="font-bold text-white mb-2 line-clamp-2">{item.category}</h3>
-                    <p className="text-sm text-white/60 mb-3">RRP: £{item.rrp.toLocaleString()}</p>
-                    <div className="flex items-baseline gap-1 mb-4">
-                      <span className="price-tag">£{item.price.toLocaleString()}</span>
-                      <span className="text-sm text-white/60">/ lot</span>
-                    </div>
-                    <Link to={`/catalog?type=pallet`} className="w-full btn-glass py-3 text-sm flex items-center justify-center gap-2">
-                      <span>View Stock</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </Link>
+                  <div className="flex items-center gap-1 text-white/50">
+                    <Clock className="w-4 h-4" />
+                    <span>{seller.sales.toLocaleString()} sales</span>
                   </div>
+                  <Link to="/catalog" className="text-gold text-xs font-semibold hover:underline flex items-center gap-1">
+                    View Store <ArrowRight className="w-3 h-3" />
+                  </Link>
                 </div>
-              ))}
-            </div>
-          )}
-
-          {/* Handmade & Retail */}
-          {activeMode === 'handmade' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-fadeIn">
-              {handmadeItems.map((item) => (
-                <div key={item.id} className="card-product group">
-                  <div className="aspect-square bg-gradient-to-br from-graphite to-jet relative overflow-hidden">
-                    {/* Warm lighting effect */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-gold/10 to-transparent"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Sparkles className="w-20 h-20 text-gold/30 group-hover:scale-110 group-hover:text-gold/50 transition-all duration-500" />
-                    </div>
-                    {/* Unique badge */}
-                    <div className="absolute top-3 right-3 badge-premium">
-                      {item.badge}
-                    </div>
-                    {/* Handmade tag */}
-                    <div className="absolute bottom-3 left-3 badge-gold">
-                      Handmade
-                    </div>
-                    <div className="card-product-overlay" />
-                  </div>
-                  <div className="p-5">
-                    <h3 className="font-bold text-white mb-2 line-clamp-2">{item.title}</h3>
-                    <p className="text-sm text-white/60 mb-3 line-clamp-1">{item.artist}</p>
-                    <div className="flex items-baseline gap-1 mb-4">
-                      <span className="price-tag">£{item.price}</span>
-                    </div>
-                    <Link to={`/catalog?type=handmade`} className="w-full btn-primary py-3 text-sm flex items-center justify-center gap-2">
-                      <span>View Item</span>
-                      <Sparkles className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* View All CTA */}
         <div className="text-center mt-12">
           <Link
-            to="/catalog"
+            to={activeTab === 'bulk' ? '/bulk' : activeTab === 'featured' ? '/catalog' : '/shop'}
             className="btn-outline inline-flex items-center gap-2"
           >
-            Browse All Products
+            {activeTab === 'bulk' ? 'Browse All Bulk Deals' : activeTab === 'featured' ? 'View All Sellers' : 'Browse All Products'}
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
@@ -187,95 +195,3 @@ export default function CinematicMarketplaceSwitch() {
     </section>
   );
 }
-
-// Sample data - Logistics Jobs
-const logisticsJobs = [
-  {
-    id: 1,
-    vehicle: 'Sprinter Van',
-    from: 'London',
-    to: 'Manchester',
-    date: 'Tomorrow, 8:00 AM',
-    price: 180,
-  },
-  {
-    id: 2,
-    vehicle: '7.5T Truck',
-    from: 'Birmingham',
-    to: 'Leeds',
-    date: 'Dec 10, 2:00 PM',
-    price: 320,
-  },
-  {
-    id: 3,
-    vehicle: 'Luton Van',
-    from: 'Bristol',
-    to: 'Liverpool',
-    date: 'Dec 11, 10:00 AM',
-    price: 220,
-  },
-];
-
-// Sample data - Pallet Stock
-const palletStock = [
-  {
-    id: 1,
-    category: 'Electronics Mixed Lot',
-    palletCount: 4,
-    rrp: 12500,
-    price: 4999,
-  },
-  {
-    id: 2,
-    category: "Clothing - Women's Fashion",
-    palletCount: 6,
-    rrp: 18000,
-    price: 6499,
-  },
-  {
-    id: 3,
-    category: 'Home & Kitchen Appliances',
-    palletCount: 3,
-    rrp: 9500,
-    price: 3299,
-  },
-  {
-    id: 4,
-    category: 'Toys & Games Clearance',
-    palletCount: 5,
-    rrp: 15000,
-    price: 4999,
-  },
-];
-
-// Sample data - Handmade Items
-const handmadeItems = [
-  {
-    id: 1,
-    title: 'Handmade Book Art – Warm Lights',
-    artist: 'Artisan Crafts',
-    price: 45,
-    badge: 'Unique',
-  },
-  {
-    id: 2,
-    title: 'Ceramic Vase – Ocean Blue',
-    artist: 'Studio Ceramics',
-    price: 68,
-    badge: 'Unique',
-  },
-  {
-    id: 3,
-    title: 'Knitted Wool Blanket',
-    artist: 'Cozy Creations',
-    price: 85,
-    badge: 'Unique',
-  },
-  {
-    id: 4,
-    title: 'Wooden Wall Art – Forest',
-    artist: 'Nature & Wood',
-    price: 120,
-    badge: 'Unique',
-  },
-];
