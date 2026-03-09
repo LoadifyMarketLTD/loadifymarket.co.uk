@@ -54,6 +54,7 @@ const CookiePage = lazy(() => import('./pages/legal/CookiePage'));
 const ReturnsPolicy = lazy(() => import('./pages/legal/ReturnsPolicyPage'));
 const ShippingPolicy = lazy(() => import('./pages/legal/ShippingPolicyPage'));
 const LogisticsLoadsPage = lazy(() => import('./pages/LogisticsLoadsPage'));
+const TransportQuotePage = lazy(() => import('./pages/TransportQuotePage'));
 
 // Loading component
 function PageLoader() {
@@ -380,6 +381,13 @@ function App() {
           <Route path="logistics-loads" element={
             <Suspense fallback={<PageLoader />}>
               <LogisticsLoadsPage />
+            </Suspense>
+          } />
+
+          {/* Public: Transport Quote — XDrive Logistics integration */}
+          <Route path="transport-quote" element={
+            <Suspense fallback={<PageLoader />}>
+              <TransportQuotePage />
             </Suspense>
           } />
           

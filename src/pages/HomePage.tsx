@@ -3,7 +3,7 @@ import { lazy, Suspense } from 'react';
 import {
   ShieldCheck, RotateCcw, MapPin, BadgeCheck, Lock,
   ArrowRight, Cpu, Shirt, Home, Wrench, Car, Package, Layers, Sparkles,
-  TrendingUp, Clock, Star,
+  TrendingUp, Clock, Star, Truck,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 
@@ -189,6 +189,86 @@ export default function HomePage() {
           <Suspense fallback={<div className="min-h-[300px]" />}>
             <RecentlyViewed maxProducts={8} />
           </Suspense>
+        </div>
+      </section>
+
+      {/* Marketplace + Logistics Support Section (XDrive Integration) */}
+      <section className="py-20 bg-graphite/30 relative overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-gold/5 rounded-full blur-[120px]" />
+        </div>
+        <div className="container-cinematic relative z-10">
+          <div className="max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+              {/* Text block */}
+              <div>
+                <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1.5 mb-6">
+                  <Truck className="w-4 h-4 text-gold" />
+                  <span className="text-gold text-xs font-medium">Marketplace + Logistics Support</span>
+                </div>
+                <h2 className="heading-section text-white mb-5">
+                  Trading Made Easy.{' '}
+                  <span className="text-gradient-gold">Delivery Sorted.</span>
+                </h2>
+                <p className="text-white/60 text-base leading-relaxed mb-8">
+                  Loadify Market helps buyers and sellers trade products, pallet deals, and wholesale
+                  stock. Transport support and delivery coordination can be arranged via{' '}
+                  <span className="text-white/80 font-medium">XDrive Logistics</span>.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Link to="/shop" className="btn-primary inline-flex items-center gap-2">
+                    <Package className="w-4 h-4" />
+                    Browse Marketplace
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link to="/transport-quote" className="btn-secondary inline-flex items-center gap-2">
+                    <Truck className="w-4 h-4" />
+                    Request Transport Quote
+                  </Link>
+                </div>
+              </div>
+
+              {/* Feature list */}
+              <div className="grid grid-cols-1 gap-4">
+                {[
+                  {
+                    icon: Package,
+                    title: 'Pallet & Bulk Orders',
+                    desc: 'Find wholesale and pallet deals from verified UK sellers.',
+                  },
+                  {
+                    icon: Truck,
+                    title: 'Delivery Coordination',
+                    desc: 'Collection and delivery support powered by XDrive Logistics.',
+                  },
+                  {
+                    icon: MapPin,
+                    title: 'UK-Wide Coverage',
+                    desc: 'Transport quotes for any UK postcode — fast turnaround.',
+                  },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.title}
+                      className="card-glass flex items-start gap-4 py-4 px-5"
+                    >
+                      <div className="p-2 rounded-premium-sm bg-gold/10 flex-shrink-0">
+                        <Icon className="w-5 h-5 text-gold" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-white mb-1">
+                        {item.title}
+                      </h4>
+                        <p className="text-white/50 text-xs leading-relaxed">{item.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -9,6 +9,7 @@ import ProductQA from '../components/ProductQA';
 import FrequentlyBoughtTogether from '../components/FrequentlyBoughtTogether';
 import SellerPerformance from '../components/SellerPerformance';
 import ProductReviews from '../components/ProductReviews';
+import { buildTransportQuoteUrl } from '../lib/transportQuote';
 import {
   ShoppingCart,
   Heart,
@@ -410,6 +411,45 @@ export default function ProductPage() {
                 <Truck className="w-6 h-6 text-gold mx-auto mb-2" />
                 <p className="text-xs text-white/60">Secure Shipping</p>
               </div>
+            </div>
+
+            {/* Delivery & Collection Block (XDrive Integration) */}
+            <div className="card-glass mt-6 border border-white/5">
+              <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+                <Truck className="w-5 h-5 text-gold" />
+                Delivery & Collection
+              </h3>
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-white/50">Collection available</span>
+                  <span className="text-white/80 font-medium">Enquire with seller</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-white/50">Delivery available</span>
+                  <span className="text-white/80 font-medium">Enquire with seller</span>
+                </div>
+                {product.type === 'pallet' && product.palletInfo && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-white/50">Pallet count</span>
+                    <span className="text-white/80 font-medium">{product.palletInfo.palletCount}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-white/50">Transport support</span>
+                  <span className="text-gold font-medium text-xs">via XDrive Logistics</span>
+                </div>
+              </div>
+              <p className="text-white/40 text-xs mb-4 leading-relaxed">
+                Delivery options can be arranged after enquiry. Transport support is available via
+                XDrive Logistics for pallet and bulk orders.
+              </p>
+              <Link
+                to={buildTransportQuoteUrl(product)}
+                className="btn-secondary w-full py-3 flex items-center justify-center gap-2 text-sm"
+              >
+                <Truck className="w-4 h-4" />
+                Request Transport Quote
+              </Link>
             </div>
           </div>
         </div>
