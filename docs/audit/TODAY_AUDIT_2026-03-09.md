@@ -269,7 +269,81 @@ Replace placeholder icons with real deal card images.
 
 ---
 
-## 4. VERIFY SYSTEM CONNECTIONS
+## 4. REQUIRED EXPLANATION FOR UNFINISHED TASKS
+
+Every task marked as PARTIALLY IMPLEMENTED below includes an explicit reason category as required.
+
+---
+
+### 4.1 "Real" XDrive Integration — No API Confirmation Round-Trip
+
+**Status:** PARTIALLY IMPLEMENTED
+
+**Reason category:** `technical limitation` + `missing dependency`
+
+**Explanation:**  
+A live bidirectional API integration between Loadify Market and `https://app.xdrivelogistics.co.uk/` requires XDrive to expose a public REST or webhook API. No such API is available to this codebase. The integration is currently limited to:
+- Outbound deep-links with encoded query params
+- A one-way email relay via SendGrid
+
+The `DeliveryRequest.xdriveRef` field was added in anticipation of a future inbound confirmation, but XDrive has not provided a callback endpoint. Until XDrive exposes an API (or a shared Supabase table is agreed between both platforms), a two-way integration cannot be built.
+
+**Specific missing pieces:**
+- XDrive does not expose a `POST /requests` endpoint for Loadify Market to call
+- XDrive does not send a webhook back when a request is received, quoted, or fulfilled
+- There is no shared authentication token or API key between the two systems
+
+---
+
+### 4.2 Delivery Requests — `localStorage` Only, No Database Persistence
+
+**Status:** PARTIALLY IMPLEMENTED
+
+**Reason category:** `not yet started` (database migration not created)
+
+**Explanation:**  
+The feature was implemented using `localStorage` as a fast, zero-dependency solution that works within the current sprint scope. A proper Supabase `delivery_requests` table was identified as the correct long-term solution but was not created in today's work because:
+
+1. A new database migration script would need to be written and run against the production Supabase instance
+2. Row-level security (RLS) policies would need to be defined for the new table (sellers see only their own rows, buyers see only their own rows, admins see all)
+3. The Seller Dashboard, Transport Quote Page, and Buyer Dashboard would all need to be updated to read from Supabase instead of `localStorage`
+
+This is scoped for a future sprint. The `localStorage` approach was a deliberate, documented interim solution.
+
+---
+
+### 4.3 Email Notification — Conditional on Environment Configuration
+
+**Status:** PARTIALLY IMPLEMENTED
+
+**Reason category:** `requires manual configuration` (Netlify environment variables)
+
+**Explanation:**  
+The `transport_quote_request` email template is fully implemented in `netlify/functions/send-email.ts`. The function is wired up and called correctly from `TransportQuotePage.tsx`. However, the email will only be delivered in production when the following Netlify environment variables are set:
+
+| Variable | Purpose | Required? |
+|----------|---------|-----------|
+| `SENDGRID_API_KEY` | Authenticates calls to the SendGrid API | Yes |
+| `VITE_SUPPORT_EMAIL` | Sets the `from` address and the `to` address for platform notifications | Yes |
+
+These are external service credentials that must be provisioned manually in the Netlify dashboard (or via Netlify CLI `netlify env:set`). They cannot be committed to source code. Until they are configured in the Netlify production environment, the email function will return a non-OK response and the UI will display the amber fallback warning.
+
+**Secondary gap:** The email is sent only to the platform support address. No copy is automatically forwarded to the seller whose listing triggered the request. Fixing this requires the seller's email address to be included in the request context, which in turn requires a Supabase lookup at submission time.
+
+---
+
+### 4.4 Deal Card Images — No CDN Fallback
+
+**Status:** PARTIALLY IMPLEMENTED
+
+**Reason category:** `unclear requirement` + `not yet started`
+
+**Explanation:**  
+The instruction was to "replace placeholder icons with real images." This was done by sourcing images from `images.unsplash.com`. No fallback image strategy was specified in the original instruction. Adding `onerror` handlers to fall back to a local placeholder was identified as a gap during this audit, but was not part of the explicit instruction scope. It is a low-risk improvement deferred to a future cleanup pass.
+
+---
+
+## 5. VERIFY SYSTEM CONNECTIONS
 
 ### Connection: Loadify Market ↔ `https://app.xdrivelogistics.co.uk/`
 
@@ -317,7 +391,7 @@ None. There is no incoming data flow. `DeliveryRequest.xdriveRef` exists as a fi
 
 ---
 
-## 5. FINAL SUMMARY
+## 6. FINAL SUMMARY
 
 ### Successfully Completed (FULLY IMPLEMENTED)
 
@@ -341,27 +415,42 @@ None. There is no incoming data flow. `DeliveryRequest.xdriveRef` exists as a fi
 
 ---
 
-### Partially Implemented
+### Partially Completed
 
-| # | Instruction | Gap |
-|---|-------------|-----|
-| 1 | "Real" XDrive integration | Deep-link + email only; no API, no confirmation round-trip, no `xdriveRef` populated |
-| 2 | Seller delivery request visibility | Works but only via `localStorage`; no database persistence, no cross-device support |
-| 3 | Email notification for transport quotes | Implemented but requires external `SENDGRID_API_KEY` env var to be active |
+| # | Instruction | Gap | Reason |
+|---|-------------|-----|--------|
+| 1 | "Real" XDrive integration | Deep-link + email only; no API, no confirmation round-trip, no `xdriveRef` populated | `technical limitation` — XDrive exposes no public API or webhook endpoint |
+| 2 | Seller delivery request visibility | Works but only via `localStorage`; no database persistence, no cross-device support | `not yet started` — Supabase migration not created; deferred to next sprint |
+| 3 | Email notification for transport quotes | Code fully implemented but depends on external credentials | `requires manual configuration` — `SENDGRID_API_KEY` + `VITE_SUPPORT_EMAIL` must be set in Netlify |
+| 4 | Deal card images | Images served from Unsplash CDN but no fallback on CDN failure | `unclear requirement` — fallback behaviour was not specified in the original instruction |
 
 ---
 
-### Not Implemented (from today's scope)
+### Not Completed
 
-No instructions from today's PR #54 scope are entirely absent. All requested items were either fully or partially delivered.
+No instruction from today's PR #54 scope is entirely absent. All items were at minimum partially delivered.
 
-Items identified as missing belong to **future phases** not yet scheduled:
+The following improvements were identified during the audit as desirable but were **not part of today's explicit instructions** and therefore were not implemented:
 
-- Supabase table for `delivery_requests` (would remove `localStorage` dependency)
-- XDrive API / webhook integration (would allow real-time status updates)
-- Buyer-side delivery request history in `/dashboard`
-- Admin visibility of transport requests
-- Image CDN fallback handling
+| Item | Reason not implemented |
+|------|----------------------|
+| Supabase `delivery_requests` table | `not yet started` — requires new migration, RLS policies, and multi-page refactor |
+| XDrive API / webhook round-trip | `missing dependency` — requires XDrive to expose an API that does not currently exist |
+| Buyer-side delivery request history | `not yet started` — requires database-backed requests first |
+| Admin visibility of transport requests | `not yet started` — requires database-backed requests first |
+| Image CDN fallback (`onerror` handler) | `unclear requirement` — not specified in the original instruction; low priority cleanup |
+
+---
+
+### Reasons Summary
+
+| Reason category | Tasks affected |
+|----------------|----------------|
+| `technical limitation` | XDrive API integration (XDrive has no public API) |
+| `missing dependency` | XDrive webhook round-trip (requires XDrive-side infrastructure) |
+| `requires manual configuration` | Email delivery (Netlify env vars: `SENDGRID_API_KEY`, `VITE_SUPPORT_EMAIL`) |
+| `not yet started` | Supabase delivery_requests table; buyer/admin dashboard integration |
+| `unclear requirement` | CDN image fallback (not specified in the instruction) |
 
 ---
 
