@@ -105,7 +105,7 @@ const initializeMockData = () => {
   mockStorage.seller_profiles.set('seller-1', {
     id: 'seller-1',
     userId: 'seller-1',
-    businessName: 'XDrive Logistics Market Demo Store',
+    businessName: 'Loadify Market Demo Store',
     isApproved: true,
     rating: 4.8,
     totalSales: 156,
@@ -125,7 +125,7 @@ const initializeMockData = () => {
     id: 'seller-1',
     userId: 'seller-1',
     storeSlug: 'demo-store',
-    storeName: 'XDrive Logistics Market Demo Store',
+    storeName: 'Loadify Market Demo Store',
     createdAt: new Date().toISOString(),
   });
 };

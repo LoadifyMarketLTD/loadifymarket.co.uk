@@ -17,7 +17,7 @@ export default function Footer() {
               <span className="absolute inset-0 flex items-center justify-center text-gold font-bold text-lg">L</span>
             </div>
             <div>
-              <span className="text-2xl font-bold text-white tracking-tight">XDrive Market Logistics by XDrive Logistics Ltd</span>
+              <span className="text-2xl font-bold text-white tracking-tight">Loadify Market</span>
             </div>
           </Link>
 
@@ -65,7 +65,7 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-bold mb-6 text-gold">About</h3>
             <p className="text-white/60 text-sm leading-relaxed mb-6">
-              B2B marketplace for logistics loads, wholesale pallets, and business stock.
+              UK multi-category marketplace for products, bulk lots, pallets, and B2B wholesale stock.
             </p>
             <div className="space-y-3 text-sm">
               <div className="flex items-start space-x-3 text-white/60">
@@ -86,13 +86,18 @@ export default function Footer() {
             <h3 className="text-lg font-bold mb-6 text-gold">Quick Links</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/logistics-loads" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  Logistics Loads UK
+                <Link to="/shop" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Shop Products
+                </Link>
+              </li>
+              <li>
+                <Link to="/bulk" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Bulk &amp; Pallets
                 </Link>
               </li>
               <li>
                 <Link to="/catalog" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  Browse Catalog
+                  All Listings
                 </Link>
               </li>
               <li>
@@ -112,7 +117,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link to="/help" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  Help & FAQ
+                  Help &amp; FAQ
                 </Link>
               </li>
               <li>
@@ -194,7 +199,7 @@ export default function Footer() {
         <div className="container-cinematic py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-white/70 text-sm">
-              © {currentYear} XDrive Market Logistics by XDrive Logistics Ltd. All rights reserved.
+              © {currentYear} Loadify Market Ltd. All rights reserved.
             </p>
             <div className="flex items-center space-x-6 text-sm text-white/70">
               <span>VAT: GB375949535</span>

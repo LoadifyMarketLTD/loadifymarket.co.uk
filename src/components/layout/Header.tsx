@@ -57,7 +57,7 @@ export default function Header() {
               <span className="absolute inset-0 flex items-center justify-center text-gold font-bold text-sm">L</span>
             </div>
             <div className="hidden sm:block">
-              <span className="text-xl font-bold text-white tracking-tight">XDrive Market Logistics by XDrive Logistics Ltd</span>
+            <span className="text-xl font-bold text-white tracking-tight">Loadify Market</span>
             </div>
           </Link>
 
@@ -66,7 +66,7 @@ export default function Header() {
             <div className="relative w-full group">
               <input
                 type="text"
-                placeholder="Search logistics loads and wholesale pallets..."
+                placeholder="Search products, bulk lots, pallets..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="input-search w-full pr-12 group-hover:bg-white/10"
@@ -84,22 +84,22 @@ export default function Header() {
           {/* Navigation - Desktop */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link
+              to="/shop"
+              className={`nav-link ${isActive('/shop') ? 'nav-link-active' : ''}`}
+            >
+              Shop
+            </Link>
+            <Link
+              to="/bulk"
+              className={`nav-link ${isActive('/bulk') ? 'nav-link-active' : ''}`}
+            >
+              Bulk &amp; Pallets
+            </Link>
+            <Link
               to="/catalog"
               className={`nav-link ${isActive('/catalog') ? 'nav-link-active' : ''}`}
             >
-              Catalog
-            </Link>
-            <Link
-              to="/how-it-works"
-              className={`nav-link ${isActive('/how-it-works') ? 'nav-link-active' : ''}`}
-            >
-              How It Works
-            </Link>
-            <Link
-              to="/pricing"
-              className={`nav-link ${isActive('/pricing') ? 'nav-link-active' : ''}`}
-            >
-              Pricing
+              All Listings
             </Link>
 
             {user ? (
@@ -213,6 +213,26 @@ export default function Header() {
         <div className="bg-graphite/95 backdrop-blur-glass border-t border-white/10">
           <nav className="container-cinematic py-6 space-y-2">
             <Link
+              to="/shop"
+              className={`block py-3 px-4 rounded-premium-sm transition-all duration-300 ${
+                isActive('/shop')
+                  ? 'bg-gold/10 text-gold'
+                  : 'text-white/80 hover:bg-white/5 hover:text-gold'
+              }`}
+            >
+              Shop Products
+            </Link>
+            <Link
+              to="/bulk"
+              className={`block py-3 px-4 rounded-premium-sm transition-all duration-300 ${
+                isActive('/bulk')
+                  ? 'bg-gold/10 text-gold'
+                  : 'text-white/80 hover:bg-white/5 hover:text-gold'
+              }`}
+            >
+              Bulk &amp; Pallets
+            </Link>
+            <Link
               to="/catalog"
               className={`block py-3 px-4 rounded-premium-sm transition-all duration-300 ${
                 isActive('/catalog')
@@ -220,7 +240,7 @@ export default function Header() {
                   : 'text-white/80 hover:bg-white/5 hover:text-gold'
               }`}
             >
-              Catalog
+              All Listings
             </Link>
 
             {user ? (
