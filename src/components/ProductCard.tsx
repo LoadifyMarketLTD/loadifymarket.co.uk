@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Heart, Package, Truck, Sparkles, ArrowRight, FileText } from 'lucide-react';
+import { Heart, Package, Truck, Sparkles, ArrowRight, FileText, Eye } from 'lucide-react';
 import { useWishlist } from '../lib/useWishlist';
 import { buildTransportQuoteUrl } from '../lib/transportQuote';
 import VerificationBadge from './VerificationBadge';
@@ -155,7 +155,15 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Meta Info - Very compact */}
         <div className="flex items-center justify-between text-xs text-white/40">
           <span className="capitalize truncate">{product.condition}</span>
-          <span className="flex-shrink-0">{product.stockQuantity} available</span>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {product.views > 0 && (
+              <span className="flex items-center gap-1">
+                <Eye className="w-3 h-3" />
+                {product.views}
+              </span>
+            )}
+            <span>{product.stockQuantity} available</span>
+          </div>
         </div>
 
         {/* Transport CTA for pallet / bulk items */}

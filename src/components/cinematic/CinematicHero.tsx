@@ -32,12 +32,13 @@ export default function CinematicHero() {
           {/* Main Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
             Loadify Market<br />
-            <span className="text-gradient-gold">UK Marketplace for Products, Bulk Lots, Pallets and Logistics Deals</span>
+            <span className="text-gradient-gold">UK Marketplace for Products, Pallets and Wholesale Stock</span>
           </h1>
 
           {/* Subheadline */}
           <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto mb-10">
-            Trade products, source wholesale pallet deals, and arrange delivery support in one place.
+            Buy liquidation pallets, bulk deals and retail products.<br />
+            Delivery coordination available via XDrive Logistics.
           </p>
 
           {/* Three CTA Buttons per spec */}
@@ -111,7 +112,7 @@ export default function CinematicHero() {
                   </div>
                   <span className="badge-gold">B2B</span>
                 </div>
-                <h2 className="heading-card text-white mb-1">Bulk Lots and Pallets</h2>
+                <h2 className="heading-card text-white mb-1">Bulk Lots &amp; Pallets</h2>
                 <p className="text-white/60 text-sm mb-3">Wholesale stock, pallet deals and liquidation inventory for business buyers.</p>
                 <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
                   Browse Lots <ArrowRight className="ml-2 h-4 w-4" />
@@ -142,7 +143,7 @@ export default function CinematicHero() {
                   <span className="badge-gold">Sellers</span>
                 </div>
                 <h2 className="heading-card text-white mb-1">Sell on Loadify</h2>
-                <p className="text-white/60 text-sm mb-3">List products, pallets or wholesale stock and reach thousands of UK buyers.</p>
+                <p className="text-white/60 text-sm mb-3">List products, pallets or wholesale stock and reach UK buyers.</p>
                 <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
                   Start Selling <ArrowRight className="ml-2 h-4 w-4" />
                 </span>
@@ -158,15 +159,15 @@ export default function CinematicHero() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-gold">✓</span>
-              Verified Sellers
+              Verified UK Sellers
             </div>
             <div className="flex items-center gap-2">
               <span className="text-gold">✓</span>
-              Buyer Protection
+              UK-Wide Delivery Support
             </div>
             <div className="flex items-center gap-2">
               <span className="text-gold">✓</span>
-              UK-Based Support
+              14-Day Buyer Protection
             </div>
           </div>
 

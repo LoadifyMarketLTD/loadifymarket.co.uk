@@ -3,7 +3,7 @@ import { lazy, Suspense } from 'react';
 import {
   ShieldCheck, RotateCcw, MapPin, BadgeCheck, Lock,
   ArrowRight, Cpu, Shirt, Home, Wrench, Car, Package, Layers, Sparkles,
-  TrendingUp, Clock, Star, Truck,
+  TrendingUp, Clock, Star, Truck, Tag,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 
@@ -17,6 +17,8 @@ const B2B_PILLARS = [
   { name: 'Products', icon: Package, slug: 'shop', count: '12,000+', href: '/shop' },
   { name: 'Bulk Lots', icon: Package, slug: 'bulk-lots', count: '640+', href: '/shop?category=bulk-lots' },
   { name: 'Pallet Deals', icon: Layers, slug: 'pallet-deals', count: '320+', href: '/bulk' },
+  { name: 'Wholesale', icon: Tag, slug: 'wholesale', count: '240+', href: '/shop?category=wholesale' },
+  { name: 'Clearance', icon: Sparkles, slug: 'clearance', count: '480+', href: '/shop?category=clearance' },
   { name: 'Logistics Loads', icon: Truck, slug: 'logistics', count: '180+', href: '/shop?category=logistics' },
 ];
 
@@ -86,7 +88,7 @@ export default function HomePage() {
                 All Categories <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
               {B2B_PILLARS.map((pillar) => {
                 const Icon = pillar.icon;
                 return (
@@ -244,7 +246,7 @@ export default function HomePage() {
                   <span className="text-gradient-gold">Arrange Delivery. In One Place.</span>
                 </h2>
                 <p className="text-white/60 text-base leading-relaxed mb-8">
-                  Loadify Market connects buyers and sellers while delivery coordination can be arranged via{' '}
+                  Loadify Market connects buyers and sellers while delivery coordination can be arranged through{' '}
                   <span className="text-white/80 font-medium">XDrive Logistics</span>.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
