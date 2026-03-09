@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Heart, Package, Truck, Sparkles, ArrowRight, FileText, Eye, MapPin } from 'lucide-react';
+import { Heart, Package, Truck, Sparkles, ArrowRight, FileText, Eye, MapPin, Star, CheckCircle2, Tag } from 'lucide-react';
 import { useWishlist } from '../lib/useWishlist';
 import { buildTransportQuoteUrl } from '../lib/transportQuote';
 import { getCategoryFallbackImage } from '../lib/categoryImages';
@@ -154,6 +154,37 @@ export default function ProductCard({ product }: ProductCardProps) {
             )}
           </div>
         )}
+
+        {/* Seller trust indicators: rating + verified label */}
+        {product.seller && (product.seller.isApproved || (typeof product.seller.rating === 'number' && product.seller.rating > 0)) && (
+          <div className="flex items-center flex-wrap gap-x-3 gap-y-0.5 mb-1.5 text-xs">
+            {typeof product.seller.rating === 'number' && product.seller.rating > 0 && (
+              <span className="flex items-center gap-1 text-gold/80">
+                <Star className="w-3 h-3" />
+                {product.seller.rating.toFixed(1)} rating
+              </span>
+            )}
+            {product.seller.isApproved && (
+              <span className="flex items-center gap-1 text-emerald-400/80">
+                <CheckCircle2 className="w-3 h-3" />
+                Verified Seller
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Discount badge */}
+        {(() => {
+          const discount = (product as unknown as { discount?: number }).discount;
+          return typeof discount === 'number' && discount > 0 ? (
+            <div className="mb-1.5">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold bg-red-500/20 text-red-300 px-2 py-0.5 rounded-full">
+                <Tag className="w-3 h-3" />
+                -{discount}% OFF
+              </span>
+            </div>
+          ) : null;
+        })()}
         
         {/* Title - Compact, max 2 lines */}
         <h3 className="font-bold text-sm text-white mb-1.5 line-clamp-2 group-hover:text-gold transition-colors duration-300 leading-tight min-h-[2.5rem]">

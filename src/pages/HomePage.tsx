@@ -3,7 +3,7 @@ import { lazy, Suspense } from 'react';
 import {
   ShieldCheck, RotateCcw, MapPin, BadgeCheck, Lock,
   ArrowRight, Cpu, Shirt, Home, Wrench, Car, Package, Layers, Sparkles,
-  TrendingUp, Star, Truck, Tag, CheckCircle2, ArrowRightCircle,
+  TrendingUp, Star, Truck, Tag, CheckCircle2, ArrowRightCircle, Users, Store,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 
@@ -29,13 +29,6 @@ const CATEGORIES = [
   { name: 'Bulk Lots', icon: Package, slug: 'bulk-lots' },
   { name: 'Pallet Deals', icon: Layers, slug: 'pallet-deals' },
   { name: 'Handmade', icon: Sparkles, slug: 'handmade' },
-];
-
-const TRUST_BAR = [
-  { icon: Lock, label: 'Secure Payments' },
-  { icon: BadgeCheck, label: 'Verified Sellers' },
-  { icon: Truck, label: 'UK-Wide Delivery Support' },
-  { icon: RotateCcw, label: '14-Day Buyer Protection' },
 ];
 
 const TRUST_ITEMS = [
@@ -147,23 +140,32 @@ export default function HomePage() {
       {/* 1 — Hero */}
       <CinematicHero />
 
-      {/* 2 — Trust Bar */}
+      {/* OPEN MARKETPLACE message */}
       <section className="bg-graphite/60 border-y border-white/5">
-        <div className="container-cinematic py-5">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-6">
-            {TRUST_BAR.map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-4 h-4 text-gold" />
-                </div>
-                <span className="text-white text-sm font-medium leading-tight">{label}</span>
-              </div>
-            ))}
+        <div className="container-cinematic py-8">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1 mb-3">
+              <Users className="w-3.5 h-3.5 text-gold" />
+              <span className="text-gold text-xs font-medium uppercase tracking-wider">Open Marketplace</span>
+            </div>
+            <p className="text-white/70 text-base leading-relaxed">
+              Anyone can create an account, list products, and sell directly to buyers across the UK.
+            </p>
+            <div className="mt-4 flex items-center justify-center gap-6 text-sm flex-wrap">
+              <Link to="/register?type=seller" className="flex items-center gap-1.5 text-gold hover:underline font-semibold">
+                <Store className="w-4 h-4" />
+                Start Selling Free
+              </Link>
+              <Link to="/catalog" className="flex items-center gap-1.5 text-white/60 hover:text-gold transition-colors">
+                <ArrowRight className="w-4 h-4" />
+                Browse All Listings
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 3 — Marketplace Pillars + Retail Categories */}
+      {/* 2 — Shop By Category */}
       <section className="py-16 bg-graphite/20">
         <div className="container-cinematic">
           {/* Pillars */}
@@ -174,7 +176,7 @@ export default function HomePage() {
                   <CheckCircle2 className="w-3.5 h-3.5 text-gold" />
                   <span className="text-gold text-xs font-medium">What We Trade</span>
                 </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-white">Marketplace Pillars</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-white">Shop by Category</h2>
                 <p className="text-white/50 text-sm mt-1">Core trading categories on Loadify Market</p>
               </div>
               <Link to="/shop" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
@@ -224,7 +226,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 4 — Featured / Top Deals */}
+      {/* 3 — Featured Deals */}
       <section className="py-16 bg-jet">
         <div className="container-cinematic">
           <div className="flex items-center justify-between mb-8">
@@ -296,21 +298,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 5 — Latest Products / Trending */}
+      {/* 4 — Trending Products */}
       <section className="py-16 bg-graphite/20">
         <div className="container-cinematic">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-premium-sm bg-gold/10">
-                <Star className="w-5 h-5 text-gold" />
+                <TrendingUp className="w-5 h-5 text-gold" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">Latest Products</h2>
-                <p className="text-white/50 text-sm">Fresh listings added by verified sellers</p>
+                <h2 className="text-2xl font-bold text-white">Trending Products</h2>
+                <p className="text-white/50 text-sm">Most popular listings right now</p>
               </div>
             </div>
-            <Link to="/shop" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
-              Browse All <ArrowRight className="w-4 h-4" />
+            <Link to="/catalog?sort=trending" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
+              View Trending <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
           <Suspense fallback={<div className="min-h-[300px]" />}>
@@ -319,12 +321,78 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 6 — How It Works */}
+      {/* 5 — New Listings */}
+      <section className="py-16 bg-jet">
+        <div className="container-cinematic">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-premium-sm bg-gold/10">
+                <Star className="w-5 h-5 text-gold" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">New Listings</h2>
+                <p className="text-white/50 text-sm">Fresh listings added by verified sellers</p>
+              </div>
+            </div>
+            <Link to="/catalog?sort=createdAt_desc" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
+              View Newest <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <Suspense fallback={<div className="min-h-[300px]" />}>
+            <TrendingProducts maxProducts={8} days={30} />
+          </Suspense>
+        </div>
+      </section>
+
+      {/* 6 — Bulk & Pallet Deals */}
+      <section className="py-16 bg-graphite/20">
+        <div className="container-cinematic">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-premium-sm bg-gold/10">
+                <Package className="w-5 h-5 text-gold" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">Bulk &amp; Pallet Deals</h2>
+                <p className="text-white/50 text-sm">Wholesale stock, pallet lots and clearance bundles</p>
+              </div>
+            </div>
+            <Link to="/bulk" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
+              All Bulk Deals <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {B2B_PILLARS.map((pillar) => {
+              const Icon = pillar.icon;
+              return (
+                <Link
+                  key={pillar.name}
+                  to={pillar.href}
+                  className="group flex flex-col items-center justify-center p-5 rounded-premium-md bg-graphite/60 border border-gold/20 hover:border-gold/60 hover:bg-graphite/80 transition-all duration-300 text-center"
+                >
+                  <div className="w-12 h-12 rounded-full bg-gold/15 flex items-center justify-center mb-3 group-hover:bg-gold/30 transition-colors">
+                    <Icon className="w-6 h-6 text-gold" />
+                  </div>
+                  <span className="text-sm font-bold text-white leading-tight">{pillar.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+          <div className="mt-8 text-center">
+            <Link to="/bulk" className="btn-primary inline-flex items-center gap-2">
+              <Package className="w-5 h-5" />
+              Browse All Bulk &amp; Pallet Deals
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 7 — How It Works + Arrange Delivery */}
       <Suspense fallback={<div className="py-12 bg-jet min-h-[400px]" />}>
         <CinematicStoryStrip />
       </Suspense>
 
-      {/* 7 — Marketplace + logistics support: Trade & Deliver */}
       <section className="py-20 bg-graphite/30 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gold/5 rounded-full blur-[120px]" />
@@ -403,7 +471,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 8 — Why Trust Loadify Market */}
+      {/* 8 — Trust Section */}
       <section className="py-20 bg-jet">
         <div className="container-cinematic">
           <div className="text-center mb-14">
@@ -466,3 +534,4 @@ export default function HomePage() {
     </div>
   );
 }
+

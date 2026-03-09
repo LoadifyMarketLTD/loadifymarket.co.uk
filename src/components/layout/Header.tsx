@@ -1,13 +1,69 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, User, Search, Menu, X, Hexagon } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, X, Hexagon, Cpu, Shirt, Home, Wrench, Car, Gamepad2, Heart, PawPrint, Briefcase, Sparkles, Package, Layers, Tag, BookOpen, LayoutGrid, TrendingUp, Star, MessageCircle, HelpCircle, Store, ChevronRight } from 'lucide-react';
 import { useAuthStore, useCartStore } from '../../store';
 import { useState, useEffect } from 'react';
 import { BRAND } from '../../constants/brand';
+
+const SIDEBAR_SECTIONS = [
+  {
+    label: 'Sell',
+    links: [
+      { label: 'Sell an Item', href: '/register?type=seller', icon: Store },
+    ],
+  },
+  {
+    label: 'Categories',
+    links: [
+      { label: 'Electronics', href: '/shop?category=electronics', icon: Cpu },
+      { label: 'Fashion', href: '/shop?category=fashion', icon: Shirt },
+      { label: 'Home & Garden', href: '/shop?category=home-garden', icon: Home },
+      { label: 'Tools', href: '/shop?category=tools', icon: Wrench },
+      { label: 'Vehicles', href: '/shop?category=vehicles', icon: Car },
+      { label: 'Toys', href: '/shop?category=toys', icon: Gamepad2 },
+      { label: 'Health & Beauty', href: '/shop?category=health-beauty', icon: Heart },
+      { label: 'Pets', href: '/shop?category=pets', icon: PawPrint },
+      { label: 'Office Supplies', href: '/shop?category=office-supplies', icon: Briefcase },
+      { label: 'Handmade', href: '/shop?category=handmade', icon: Sparkles },
+    ],
+  },
+  {
+    label: 'Wholesale',
+    links: [
+      { label: 'Bulk Lots', href: '/shop?category=bulk-lots', icon: Package },
+      { label: 'Pallet Deals', href: '/bulk', icon: Layers },
+      { label: 'Clearance Stock', href: '/shop?category=clearance', icon: Tag },
+    ],
+  },
+  {
+    label: 'Marketplace',
+    links: [
+      { label: 'All Listings', href: '/catalog', icon: LayoutGrid },
+      { label: 'Trending Listings', href: '/catalog?sort=trending', icon: TrendingUp },
+      { label: 'New Listings', href: '/catalog?sort=createdAt_desc', icon: Star },
+      { label: 'Featured Deals', href: '/bulk', icon: BookOpen },
+    ],
+  },
+  {
+    label: 'Account',
+    links: [
+      { label: 'Login', href: '/login', icon: User },
+      { label: 'Register', href: '/register', icon: Store },
+    ],
+  },
+  {
+    label: 'Support',
+    links: [
+      { label: 'Contact', href: '/contact', icon: MessageCircle },
+      { label: 'Help & FAQ', href: '/help', icon: HelpCircle },
+    ],
+  },
+];
 
 export default function Header() {
   const { user } = useAuthStore();
   const { getTotalItems } = useCartStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
@@ -23,13 +79,21 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu on route change
+  // Close mobile menu and sidebar on route change
   useEffect(() => {
-    if (mobileMenuOpen) {
-      setMobileMenuOpen(false);
-    }
+    if (mobileMenuOpen) setMobileMenuOpen(false);
+    if (sidebarOpen) setSidebarOpen(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
+
+  // ESC key closes sidebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && sidebarOpen) setSidebarOpen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [sidebarOpen]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +106,68 @@ export default function Header() {
     location.pathname === path || location.pathname.startsWith(path + '/');
 
   return (
+    <>
+      {/* Sidebar Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Off-canvas Left Sidebar */}
+      <div
+        className={`fixed top-0 left-0 h-full w-72 bg-jet z-50 transform transition-transform duration-300 ease-out overflow-y-auto border-r border-white/10 flex flex-col ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        aria-label="Marketplace Navigation"
+        aria-modal="true"
+        role="dialog"
+      >
+        {/* Sidebar Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-shrink-0">
+          <span className="text-white font-bold text-base tracking-tight">Browse Loadify</span>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="p-2 text-white/50 hover:text-white transition-colors"
+            aria-label="Close navigation"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Sidebar Navigation */}
+        <nav className="flex-1 px-4 py-5 space-y-5 overflow-y-auto">
+          {SIDEBAR_SECTIONS.map((section) => (
+            <div key={section.label}>
+              <p className="text-[10px] font-bold text-gold/50 uppercase tracking-widest mb-1.5 px-2">
+                {section.label}
+              </p>
+              <ul className="space-y-0.5">
+                {section.links.map(({ label, href, icon: Icon }) => (
+                  <li key={label}>
+                    <Link
+                      to={href}
+                      className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-all duration-200 group"
+                    >
+                      <Icon className="w-4 h-4 text-gold/60 group-hover:text-gold transition-colors flex-shrink-0" />
+                      <span className="flex-1">{label}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
+
+        {/* Sidebar Footer */}
+        <div className="px-5 py-4 border-t border-white/10 flex-shrink-0">
+          <p className="text-xs text-white/30 text-center">{BRAND.name} — Open Marketplace</p>
+        </div>
+      </div>
+
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled
@@ -51,6 +177,15 @@ export default function Header() {
     >
       <div className="container-cinematic">
         <div className="flex items-center justify-between h-20">
+          {/* Sidebar Hamburger — visible on all screen sizes */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 text-white/70 hover:text-gold transition-colors mr-3 flex-shrink-0"
+            aria-label="Open marketplace navigation"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
             <div className="relative">
@@ -346,5 +481,6 @@ export default function Header() {
         </div>
       </div>
     </header>
+    </>
   );
 }
