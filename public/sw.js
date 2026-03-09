@@ -1,4 +1,4 @@
-// Service Worker for XDrive Market Logistics by XDrive Logistics Ltd PWA
+// Service Worker for Loadify Market PWA
 const CACHE_NAME = 'loadify-market-v1';
 const urlsToCache = [
   '/',
