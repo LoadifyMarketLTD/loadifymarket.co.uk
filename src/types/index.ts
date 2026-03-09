@@ -209,16 +209,32 @@ export interface CartItem {
   sellerId?: string;
 }
 
+export type ReviewStatus = 'published' | 'hidden' | 'removed' | 'flagged';
+
+export interface ReviewSellerResponse {
+  text: string;
+  respondedAt: string;
+}
+
 export interface Review {
   id: string;
   productId: string;
   userId: string;
+  userName?: string;
   orderId: string;
   rating: number; // 1-5
+  title?: string;
   comment?: string;
   images?: string[];
+  videoUrl?: string;
   isVerifiedPurchase: boolean;
   sellerRating?: number;
+  sellerResponse?: ReviewSellerResponse;
+  helpfulCount: number;
+  helpfulVoters?: string[]; // user IDs who marked helpful
+  status: ReviewStatus;
+  isAbusive?: boolean;
+  adminNote?: string;
   createdAt: string;
   updatedAt: string;
 }

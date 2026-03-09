@@ -24,8 +24,10 @@ const SellerProfilePage = lazy(() => import('./pages/SellerProfilePage'));
 const SellerPublicProfilePage = lazy(() => import('./pages/SellerPublicProfilePage'));
 const SellerReturnsPage = lazy(() => import('./pages/SellerReturnsPage'));
 const SellerShipmentsPage = lazy(() => import('./pages/SellerShipmentsPage'));
+const SellerReviewsPage = lazy(() => import('./pages/SellerReviewsPage'));
 const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+const AdminReviewsPage = lazy(() => import('./pages/AdminReviewsPage'));
 const CategoryManagementPage = lazy(() => import('./pages/CategoryManagementPage'));
 const SellerApprovalsPage = lazy(() => import('./pages/SellerApprovalsPage'));
 const ReportedListingsPage = lazy(() => import('./pages/ReportedListingsPage'));
@@ -41,6 +43,8 @@ const MessagesPage = lazy(() => import('./pages/MessagesPage'));
 const NotificationSettingsPage = lazy(() => import('./pages/NotificationSettingsPage'));
 const HelpPage = lazy(() => import('./pages/HelpPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
+const BuyerProtectionPage = lazy(() => import('./pages/BuyerProtectionPage'));
+const SearchPage = lazy(() => import('./pages/SearchPage'));
 const PricingPage = lazy(() => import('./pages/PricingPage'));
 const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
@@ -338,6 +342,38 @@ function App() {
             <Suspense fallback={<PageLoader />}>
               <AboutPage />
             </Suspense>
+          } />
+
+          {/* Public: Search */}
+          <Route path="search" element={
+            <Suspense fallback={<PageLoader />}>
+              <SearchPage />
+            </Suspense>
+          } />
+
+          {/* Public: Buyer Protection */}
+          <Route path="buyer-protection" element={
+            <Suspense fallback={<PageLoader />}>
+              <BuyerProtectionPage />
+            </Suspense>
+          } />
+
+          {/* Protected: Seller Reviews */}
+          <Route path="seller/reviews" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <SellerReviewsPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+
+          {/* Protected: Admin Reviews Moderation */}
+          <Route path="admin/reviews" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <AdminReviewsPage />
+              </Suspense>
+            </RequireAuth>
           } />
 
           {/* SEO: Logistics Loads UK */}

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AlertTriangle, MessageCircle, CheckCircle, Clock, XCircle,
-  ShieldCheck, ChevronLeft, Send, Upload, Info, Package,
+  ShieldCheck, ChevronLeft, Send, Upload, Info,
   RefreshCcw, AlertCircle,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
