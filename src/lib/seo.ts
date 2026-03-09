@@ -1,5 +1,5 @@
 /**
- * SEO Utilities for XDrive Market Logistics by XDrive Logistics Ltd
+ * SEO Utilities for Loadify Market
  * Provides functions for generating meta tags, structured data, and SEO optimization
  */
 
@@ -34,7 +34,7 @@ export const generateMetaTags = (config: SEOConfig): string => {
     <meta property="og:title" content="${title}">
     <meta property="og:description" content="${description}">
     <meta property="og:image" content="${image}">
-    <meta property="og:site_name" content="XDrive Market Logistics by XDrive Logistics Ltd">
+    <meta property="og:site_name" content="Loadify Market">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
@@ -52,7 +52,7 @@ export const generateOrganizationSchema = () => {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'XDrive Market Logistics by XDrive Logistics Ltd',
+    name: 'Loadify Market',
     legalName: 'XDrive Logistics Ltd',
     url: 'https://loadifymarket.co.uk',
     logo: 'https://loadifymarket.co.uk/logo.png',
@@ -98,7 +98,7 @@ export const generateProductSchema = (product: {
     sku: product.id,
     brand: {
       '@type': 'Brand',
-      name: 'XDrive Market Logistics by XDrive Logistics Ltd',
+      name: 'Loadify Market',
     },
     offers: {
       '@type': 'Offer',
@@ -116,7 +116,7 @@ export const generateProductSchema = (product: {
         : 'https://schema.org/UsedCondition',
       seller: {
         '@type': 'Organization',
-        name: 'XDrive Market Logistics by XDrive Logistics Ltd',
+        name: 'Loadify Market',
       },
     },
     aggregateRating: product.averageRating ? {
@@ -144,7 +144,7 @@ export const generateWebsiteSchema = () => {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'XDrive Market Logistics by XDrive Logistics Ltd',
+    name: 'Loadify Market',
     url: 'https://loadifymarket.co.uk',
     potentialAction: {
       '@type': 'SearchAction',
@@ -209,18 +209,18 @@ export const updatePageMeta = (config: SEOConfig) => {
 // Pre-defined SEO configs for common pages
 export const pageSEO = {
   home: {
-    title: 'XDrive Market Logistics by XDrive Logistics Ltd - Marketplace for Logistics Loads, Pallets & Wholesale',
-    description: 'UK marketplace connecting buyers and sellers. Find logistics loads, wholesale pallets, and business stock. Multi-seller marketplace platform.',
+    title: 'Loadify Market | Logistics Loads, Pallets & Wholesale Marketplace UK',
+    description: 'Loadify Market is a B2B marketplace connecting brokers, carriers, and sellers. Find logistics loads, pallet deals, and wholesale stock across the UK.',
     canonical: 'https://loadifymarket.co.uk',
   },
   catalog: {
-    title: 'Browse Listings - Loads, Pallets & More | XDrive Market Logistics by XDrive Logistics Ltd',
+    title: 'Browse Listings - Loads, Pallets & More | Loadify Market',
     description: 'Explore our catalog of logistics loads, pallets, and wholesale lots. Filter by category, condition, and price. New listings added daily.',
     canonical: 'https://loadifymarket.co.uk/catalog',
   },
   about: {
-    title: 'About XDrive Market Logistics by XDrive Logistics Ltd - Trusted B2B & B2C Marketplace',
-    description: 'Learn about XDrive Market Logistics by XDrive Logistics Ltd, operated by XDrive Logistics Ltd. Your reliable partner for B2B and B2C trading since 2025.',
+    title: 'About Loadify Market - Trusted B2B Logistics & Wholesale Marketplace',
+    description: 'Learn about Loadify Market, operated by XDrive Logistics Ltd. Your reliable partner for B2B logistics loads, pallet deals, and wholesale stock across the UK.',
     canonical: 'https://loadifymarket.co.uk/about',
   },
 };

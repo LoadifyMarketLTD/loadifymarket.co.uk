@@ -206,7 +206,7 @@ export default function PricingPage() {
               Ready to Start Selling?
             </h2>
             <p className="text-white/60 mb-8">
-              Join thousands of sellers on XDrive Market Logistics by XDrive Logistics Ltd and start reaching buyers across the UK.
+              Join thousands of sellers on Loadify Market and start reaching buyers across the UK.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/register?type=seller" className="btn-primary inline-flex items-center">
