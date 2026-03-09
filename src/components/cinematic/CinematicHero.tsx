@@ -50,12 +50,12 @@ export default function CinematicHero() {
 
           {/* Main Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight" style={{ willChange: 'opacity' }}>
-            Buy and Sell Products, Bulk Lots and Pallets
+            Buy &amp; Sell Anything – Products, Pallets and Bulk Deals
           </h1>
 
           {/* Subheadline */}
           <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto mb-10">
-            All in one UK marketplace.
+            Open marketplace where anyone can buy or sell products across the UK.
           </p>
 
           {/* CTA Buttons */}
@@ -63,19 +63,19 @@ export default function CinematicHero() {
             {/* PRIMARY CTA */}
             <Link to="/shop" className="btn-primary inline-flex items-center group text-lg px-8 py-4">
               <ShoppingBag className="mr-2 h-6 w-6" />
-              Shop Products
+              Browse Products
               <ArrowRight className="ml-2 h-6 w-6 transition-transform group-hover:translate-x-1" />
             </Link>
             {/* SECONDARY CTA */}
-            <Link to="/bulk" className="btn-secondary inline-flex items-center group">
-              <Package className="mr-2 h-5 w-5" />
-              Shop Bulk &amp; Pallets
-              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-            </Link>
-            {/* TERTIARY CTA */}
             <Link to="/register?type=seller" className="btn-glass inline-flex items-center group">
               <Store className="mr-2 h-5 w-5" />
               Sell on Loadify
+            </Link>
+            {/* TERTIARY CTA */}
+            <Link to="/bulk" className="btn-secondary inline-flex items-center group">
+              <Package className="mr-2 h-5 w-5" />
+              Bulk &amp; Pallet Deals
+              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
 
