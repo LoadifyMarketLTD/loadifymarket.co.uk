@@ -150,6 +150,7 @@ export interface Product {
     paymentBehaviour?: PaymentBehaviour;
     userId?: string;
     storeSlug?: string;
+    location?: string;
   };
 }
 
