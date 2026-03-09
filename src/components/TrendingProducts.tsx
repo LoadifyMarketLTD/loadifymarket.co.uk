@@ -160,10 +160,12 @@ export default function TrendingProducts({ maxProducts = 8, days = 7 }: Trending
             </div>
             
             {/* Trending indicator */}
-            <div className="flex items-center gap-1 mt-1 text-xs text-orange-600">
-              <TrendingUp className="w-3 h-3" />
-              <span>{product.views || 0} views</span>
-            </div>
+            {(product.views || 0) > 0 && (
+              <div className="flex items-center gap-1 mt-1 text-xs text-orange-600">
+                <TrendingUp className="w-3 h-3" />
+                <span>{product.views} views</span>
+              </div>
+            )}
           </Link>
         ))}
       </div>
