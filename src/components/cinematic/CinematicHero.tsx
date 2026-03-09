@@ -40,26 +40,26 @@ export default function CinematicHero() {
       </div>
 
       {/* Hero Content */}
-      <div className="container-cinematic relative z-10 pt-28 pb-20">
+      <div className="container-cinematic relative z-10 pt-16 pb-8 md:pt-28 md:pb-20">
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/30 rounded-full px-4 py-2 mb-8">
+          <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/30 rounded-full px-4 py-2 mb-5 md:mb-8">
             <span className="w-2 h-2 rounded-full bg-gold animate-pulse"></span>
             <span className="text-gold text-sm font-medium">UK's Premier Multi-Category Marketplace</span>
           </div>
 
           {/* Main Headline */}
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight" style={{ willChange: 'opacity' }}>
+          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-4 leading-tight" style={{ willChange: 'opacity' }}>
             Buy &amp; Sell Anything – Products, Pallets and Bulk Deals
           </h1>
 
           {/* Subheadline */}
-          <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto mb-10">
+          <p className="text-base md:text-xl text-white/60 max-w-2xl mx-auto mb-6 md:mb-10">
             Open marketplace where anyone can buy or sell products across the UK.
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 mb-6 md:mb-14">
             {/* PRIMARY CTA */}
             <Link to="/shop" className="btn-primary inline-flex items-center group text-lg px-8 py-4">
               <ShoppingBag className="mr-2 h-6 w-6" />
@@ -79,8 +79,8 @@ export default function CinematicHero() {
             </Link>
           </div>
 
-          {/* Category Panels - 3 main categories */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+          {/* Category Panels - 3 main categories — hidden on mobile to get to products faster */}
+          <div className="hidden md:grid grid-cols-3 gap-6 lg:gap-8">
             {/* B2C Products Panel */}
             <Link to="/shop" className="group relative overflow-hidden rounded-premium-lg aspect-[16/10] cursor-pointer hero-image-wrapper">
               <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet hero-media">
@@ -173,7 +173,7 @@ export default function CinematicHero() {
           </div>
 
           {/* Trust Indicators */}
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-white/70 text-sm">
+          <div className="mt-5 md:mt-10 flex flex-wrap items-center justify-center gap-4 md:gap-8 text-white/70 text-sm">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-gold" />
               Secure Payments
