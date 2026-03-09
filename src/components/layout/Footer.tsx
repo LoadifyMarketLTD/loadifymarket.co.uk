@@ -93,7 +93,7 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-bold mb-6 text-gold">Marketplace</h3>
+            <h3 className="text-lg font-bold mb-6 text-gold">For Buyers</h3>
             <ul className="space-y-3">
               <li>
                 <Link to="/shop" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
@@ -172,7 +172,7 @@ export default function Footer() {
 
           {/* Legal */}
           <div>
-            <h3 className="text-lg font-bold mb-6 text-gold">Policies</h3>
+            <h3 className="text-lg font-bold mb-6 text-gold">Legal</h3>
             <ul className="space-y-3">
               <li>
                 <Link to="/terms" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">

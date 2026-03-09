@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Heart, Package, Truck, Sparkles, ArrowRight, FileText, Eye } from 'lucide-react';
+import { Heart, Package, Truck, Sparkles, ArrowRight, FileText, Eye, MapPin } from 'lucide-react';
 import { useWishlist } from '../lib/useWishlist';
 import { buildTransportQuoteUrl } from '../lib/transportQuote';
 import VerificationBadge from './VerificationBadge';
@@ -120,7 +120,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Seller Info - Compact */}
         {product.seller && (
           <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 min-w-0">
               {product.seller.storeSlug ? (
                 <Link
                   to={`/seller/${product.seller.storeSlug}`}
@@ -132,6 +132,12 @@ export default function ProductCard({ product }: ProductCardProps) {
               ) : (
                 <span className="text-xs text-white/40 truncate">
                   {product.seller.businessName || 'Seller'}
+                </span>
+              )}
+              {product.seller.location && (
+                <span className="text-xs text-white/30 flex items-center gap-0.5 flex-shrink-0">
+                  <MapPin className="w-2.5 h-2.5" />
+                  {product.seller.location}
                 </span>
               )}
               {product.seller.marketplaceRole && (

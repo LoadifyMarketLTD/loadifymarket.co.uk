@@ -62,10 +62,12 @@ const TRUST_ITEMS = [
 ];
 
 const TOP_DEALS = [
-  { id: 1, title: 'Electronics Mixed Pallet', discount: 60, price: 4999, rrp: 12500, tag: 'Top Deal', category: 'Electronics' },
-  { id: 2, title: "Women's Fashion Bundle", discount: 64, price: 6499, rrp: 18000, tag: 'Hot', category: 'Fashion' },
-  { id: 3, title: 'Home & Kitchen Appliances Lot', discount: 65, price: 3299, rrp: 9500, tag: 'New', category: 'Home & Garden' },
-  { id: 4, title: 'Tools Wholesale Clearance', discount: 55, price: 1899, rrp: 4200, tag: 'Clearance', category: 'Tools' },
+  { id: 1, title: 'Electronics Mixed Pallet', discount: 60, price: 4999, rrp: 12500, tag: 'Top Deal', category: 'Electronics', location: 'Manchester' },
+  { id: 2, title: "Women's Fashion Bundle", discount: 64, price: 6499, rrp: 18000, tag: 'Hot', category: 'Fashion', location: 'London' },
+  { id: 3, title: 'Home & Kitchen Appliances Lot', discount: 65, price: 3299, rrp: 9500, tag: 'New', category: 'Home & Garden', location: 'Birmingham' },
+  { id: 4, title: 'Tools Wholesale Clearance', discount: 55, price: 1899, rrp: 4200, tag: 'Clearance', category: 'Tools', location: 'Leeds' },
+  { id: 5, title: 'Vehicles Spare Parts Bulk Lot', discount: 50, price: 2499, rrp: 4999, tag: 'Bulk', category: 'Vehicles', location: 'Sheffield' },
+  { id: 6, title: 'Handmade Crafts Wholesale Box', discount: 45, price: 1299, rrp: 2349, tag: 'Wholesale', category: 'Handmade', location: 'Bristol' },
 ];
 
 export default function HomePage() {
@@ -156,7 +158,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
             {TOP_DEALS.map((deal) => (
               <Link key={deal.id} to="/bulk" className="card-product group block">
                 <div className="aspect-square bg-gradient-to-br from-graphite to-jet relative overflow-hidden">
@@ -174,9 +176,19 @@ export default function HomePage() {
                 <div className="p-4">
                   <p className="text-xs text-gold/80 mb-1">{deal.category}</p>
                   <h3 className="font-bold text-white text-sm mb-2 line-clamp-2">{deal.title}</h3>
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-2 mb-2">
                     <span className="text-lg font-bold text-gold">£{deal.price.toLocaleString()}</span>
                     <span className="text-xs text-white/40 line-through">£{deal.rrp.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-white/40">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {deal.location}
+                    </span>
+                    <span className="flex items-center gap-1 text-gold/60">
+                      <BadgeCheck className="w-3 h-3" />
+                      Verified Seller
+                    </span>
                   </div>
                 </div>
               </Link>
@@ -344,18 +356,18 @@ export default function HomePage() {
         <div className="container-cinematic relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="heading-section text-white mb-6">
-              Ready to <span className="text-gradient-gold">Get Started</span>?
+              Ready to Start <span className="text-gradient-gold">Trading</span>?
             </h2>
             <p className="text-xl text-white/60 mb-10">
               Join thousands of buyers and sellers on the UK's fastest-growing marketplace.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/shop" className="btn-primary inline-flex items-center gap-2">
-                Start Shopping
+              <Link to="/bulk" className="btn-primary inline-flex items-center gap-2">
+                Browse Deals
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link to="/register?type=seller" className="btn-secondary inline-flex items-center gap-2">
-                Become a Seller
+                Start Selling
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link to="/contact" className="btn-outline inline-flex items-center gap-2">
