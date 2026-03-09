@@ -27,17 +27,45 @@ export interface BuyerProfile {
   billingAddress?: Address;
 }
 
+export type SellerVerificationStatus = 'pending' | 'verified' | 'rejected' | 'suspended';
+
+export interface VerificationDocument {
+  type: 'identity' | 'business_registration' | 'vat_certificate' | 'proof_of_address';
+  url: string;
+  uploadedAt: string;
+  verifiedAt?: string;
+  rejectedReason?: string;
+}
+
 export interface SellerProfile {
   userId: string;
+  // Core identity
+  fullName?: string;
+  storeName?: string;
+  phone?: string;
+  country?: string;
+  // Business details (optional)
   businessName?: string;
   vatNumber?: string;
-  stripeAccountId?: string;
-  isApproved: boolean;
-  rating: number;
-  totalSales: number;
-  commission: number; // percentage
   companyRegistrationNumber?: string;
   businessAddress?: Address;
+  // Verification
+  verificationStatus?: SellerVerificationStatus;
+  verificationDocuments?: VerificationDocument[];
+  verifiedAt?: string;
+  suspensionReason?: string;
+  // Legacy / Stripe
+  stripeAccountId?: string;
+  isApproved: boolean;
+  // Reputation metrics
+  rating: number;
+  totalSales: number;
+  salesCount?: number;
+  disputeRate?: number;        // 0.0 – 1.0
+  deliverySuccessRate?: number; // 0.0 – 1.0
+  commission: number; // percentage
+  // Listing limit: 5 for unverified, unlimited for verified
+  listingLimit?: number;
   contactPhone?: string;
   payoutDetails?: {
     accountHolderName?: string;
@@ -46,8 +74,6 @@ export interface SellerProfile {
     bankName?: string;
   };
   profileCompleteness?: number;
-  // Note: marketplaceRole stored in both User and SellerProfile for flexibility
-  // User table = auth-level role, SellerProfile = marketplace-specific role
   marketplaceRole?: MarketplaceRole;
   paymentBehaviour?: PaymentBehaviour;
 }
@@ -183,16 +209,32 @@ export interface CartItem {
   sellerId?: string;
 }
 
+export type ReviewStatus = 'published' | 'hidden' | 'removed' | 'flagged';
+
+export interface ReviewSellerResponse {
+  text: string;
+  respondedAt: string;
+}
+
 export interface Review {
   id: string;
   productId: string;
   userId: string;
+  userName?: string;
   orderId: string;
   rating: number; // 1-5
+  title?: string;
   comment?: string;
   images?: string[];
+  videoUrl?: string;
   isVerifiedPurchase: boolean;
   sellerRating?: number;
+  sellerResponse?: ReviewSellerResponse;
+  helpfulCount: number;
+  helpfulVoters?: string[]; // user IDs who marked helpful
+  status: ReviewStatus;
+  isAbusive?: boolean;
+  adminNote?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -224,6 +266,27 @@ export interface Return {
 
 export type DisputeStatus = 'open' | 'in_review' | 'resolved' | 'closed';
 
+export type BuyerProtectionReason =
+  | 'item_not_received'
+  | 'not_as_described'
+  | 'item_damaged'
+  | 'defective_product'
+  | 'seller_not_responding'
+  | 'other';
+
+export type DisputeResolutionType =
+  | 'full_refund'
+  | 'partial_refund'
+  | 'replacement'
+  | 'rejected'
+  | 'withdrawn';
+
+export type EscrowStatus =
+  | 'held'          // payment captured, not yet released
+  | 'released'      // released to seller after delivery confirmation
+  | 'refunded'      // returned to buyer
+  | 'partial_refund'; // partial amount returned
+
 export interface Dispute {
   id: string;
   orderId: string;
@@ -231,11 +294,17 @@ export interface Dispute {
   sellerId: string;
   subject: string;
   description: string;
+  protectionReason?: BuyerProtectionReason;
   images?: string[];
   status: DisputeStatus;
   resolution?: string;
+  resolutionType?: DisputeResolutionType;
   refundAmount?: number;
   resolvedBy?: string;
+  sellerResponseDeadline?: string;  // 48 hrs from open
+  adminReviewDeadline?: string;     // 5 days from open
+  escrowStatus?: EscrowStatus;
+  buyerAbuseFlagged?: boolean;
   createdAt: string;
   updatedAt: string;
 }

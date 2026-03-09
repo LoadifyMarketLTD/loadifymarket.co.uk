@@ -1,17 +1,34 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, MessageCircle, CheckCircle, Clock, XCircle, FileText } from 'lucide-react';
+import {
+  AlertTriangle, MessageCircle, CheckCircle, Clock, XCircle,
+  ShieldCheck, ChevronLeft, Send, Upload, Info,
+  RefreshCcw, AlertCircle,
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
+import type { BuyerProtectionReason, DisputeResolutionType, EscrowStatus } from '../types';
+import {
+  PROTECTION_REASONS, RESOLUTION_TYPES, getDisputeTimeline,
+  getSellerDeadline, hoursUntil, getEscrowInfo, isAbuseRisk, PROTECTION_CONFIG,
+} from '../lib/buyerProtection';
 
-interface Dispute {
+// ─── Local interfaces ────────────────────────────────────────────────────────
+
+interface DisputeRow {
   id: string;
   orderId: string;
   orderNumber: string;
   subject: string;
   description: string;
-  status: string;
-  resolution: string | null;
+  protectionReason?: BuyerProtectionReason;
+  images?: string[];
+  status: 'open' | 'in_review' | 'resolved' | 'closed';
+  resolution?: string;
+  resolutionType?: DisputeResolutionType;
+  refundAmount?: number;
+  escrowStatus?: EscrowStatus;
+  buyerAbuseFlagged?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,277 +37,351 @@ interface DisputeMessage {
   id: string;
   disputeId: string;
   userId: string;
+  userRole?: 'buyer' | 'seller' | 'admin';
   message: string;
   createdAt: string;
 }
 
+// ─── Status helpers ──────────────────────────────────────────────────────────
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: typeof AlertTriangle }> = {
+  open:      { label: 'Open',        color: 'text-yellow-400', bg: 'bg-yellow-400/10 border-yellow-400/30', icon: AlertTriangle },
+  in_review: { label: 'In Review',   color: 'text-blue-400',   bg: 'bg-blue-400/10 border-blue-400/30',    icon: Clock },
+  resolved:  { label: 'Resolved',    color: 'text-green-400',  bg: 'bg-green-400/10 border-green-400/30',  icon: CheckCircle },
+  closed:    { label: 'Closed',      color: 'text-white/40',   bg: 'bg-white/5 border-white/10',           icon: XCircle },
+};
+
+// ─── Component ───────────────────────────────────────────────────────────────
+
 export default function DisputesPage() {
   const { user } = useAuthStore();
-  const [disputes, setDisputes] = useState<Dispute[]>([]);
-  const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
-  const [messages, setMessages] = useState<DisputeMessage[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [disputes, setDisputes] = useState<DisputeRow[]>([]);
+  const [selected, setSelected]   = useState<DisputeRow | null>(null);
+  const [messages, setMessages]   = useState<DisputeMessage[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [showForm, setShowForm]   = useState(false);
   const [newMessage, setNewMessage] = useState('');
-  
-  // Form state
-  const [orderId, setOrderId] = useState('');
-  const [subject, setSubject] = useState('');
-  const [description, setDescription] = useState('');
+  const [sending, setSending]     = useState(false);
+
+  // Create form state
+  const [form, setForm] = useState({
+    orderId: '',
+    subject: '',
+    protectionReason: '' as BuyerProtectionReason | '',
+    description: '',
+    images: [] as File[],
+  });
+  const [formError, setFormError]     = useState('');
+  const [formSuccess, setFormSuccess] = useState(false);
+  const [submitting, setSubmitting]   = useState(false);
+
+  // ── Fetchers ──────────────────────────────────────────────────────────────
 
   const fetchDisputes = useCallback(async () => {
     if (!user) return;
-
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('disputes')
-        .select(`
-          *,
-          orders!inner(orderNumber)
-        `)
+        .select('*, orders!inner(orderNumber)')
         .eq('buyerId', user.id)
         .order('createdAt', { ascending: false });
-
       if (error) throw error;
-
-      setDisputes(data || []);
-    } catch (error) {
-      console.error('Error fetching disputes:', error);
+      setDisputes((data || []).map((d: Record<string, unknown>) => ({
+        ...d,
+        orderNumber: (d.orders as { orderNumber: string } | null)?.orderNumber ?? d.orderId,
+      } as DisputeRow)));
+    } catch (e) {
+      console.error('Error fetching disputes:', e);
     } finally {
       setLoading(false);
     }
   }, [user]);
 
-  useEffect(() => {
-    if (user) {
-      fetchDisputes();
-    }
-  }, [user, fetchDisputes]);
-
-  useEffect(() => {
-    if (selectedDispute) {
-      fetchMessages(selectedDispute.id);
-    }
-  }, [selectedDispute]);
-
-  const fetchMessages = async (disputeId: string) => {
+  const fetchMessages = useCallback(async (disputeId: string) => {
     try {
       const { data, error } = await supabase
         .from('dispute_messages')
         .select('*')
         .eq('disputeId', disputeId)
         .order('createdAt', { ascending: true });
-
       if (error) throw error;
-
       setMessages(data || []);
-    } catch (error) {
-      console.error('Error fetching messages:', error);
+    } catch (e) {
+      console.error('Error fetching messages:', e);
     }
+  }, []);
+
+  useEffect(() => { if (user) fetchDisputes(); }, [user, fetchDisputes]);
+  useEffect(() => { if (selected) fetchMessages(selected.id); }, [selected, fetchMessages]);
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+
+  const handleProtectionReasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const key = e.target.value as BuyerProtectionReason;
+    const label = PROTECTION_REASONS.find(r => r.key === key)?.label ?? '';
+    setForm(prev => ({ ...prev, protectionReason: key, subject: label }));
   };
 
-  const handleCreateDispute = async (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!user || !orderId || !subject || !description) {
-      alert('Please fill in all required fields');
+    setFormError('');
+    if (!user) return;
+    if (!form.orderId || !form.protectionReason || !form.description) {
+      setFormError('Please fill in all required fields.');
+      return;
+    }
+    // Abuse check
+    if (isAbuseRisk(disputes.map(d => d.createdAt))) {
+      setFormError(`You have opened ${PROTECTION_CONFIG.maxDisputesPerMonth} or more disputes this month. Please contact support.`);
       return;
     }
 
+    const reasonDef = PROTECTION_REASONS.find(r => r.key === form.protectionReason);
+    setSubmitting(true);
     try {
-      const { error } = await supabase
-        .from('disputes')
-        .insert({
-          orderId,
-          buyerId: user.id,
-          subject,
-          description,
-          status: 'open',
-        });
-
+      const { error } = await supabase.from('disputes').insert({
+        orderId: form.orderId,
+        buyerId: user.id,
+        subject: form.subject || reasonDef?.label || 'Buyer Protection Dispute',
+        description: form.description,
+        protectionReason: form.protectionReason,
+        status: 'open',
+        escrowStatus: 'held',
+      });
       if (error) throw error;
-
-      alert('Dispute opened successfully!');
-      setShowCreateForm(false);
-      setOrderId('');
-      setSubject('');
-      setDescription('');
+      setFormSuccess(true);
+      setForm({ orderId: '', subject: '', protectionReason: '', description: '', images: [] });
       fetchDisputes();
-    } catch (error) {
-      console.error('Error creating dispute:', error);
-      alert('Failed to open dispute');
+    } catch (e) {
+      console.error(e);
+      setFormError('Failed to open dispute. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!user || !selectedDispute || !newMessage.trim()) {
-      return;
-    }
-
+    if (!user || !selected || !newMessage.trim()) return;
+    setSending(true);
     try {
-      const { error } = await supabase
-        .from('dispute_messages')
-        .insert({
-          disputeId: selectedDispute.id,
-          userId: user.id,
-          message: newMessage,
-        });
-
+      const { error } = await supabase.from('dispute_messages').insert({
+        disputeId: selected.id,
+        userId: user.id,
+        userRole: user.role,
+        message: newMessage.trim(),
+      });
       if (error) throw error;
-
       setNewMessage('');
-      fetchMessages(selectedDispute.id);
-    } catch (error) {
-      console.error('Error sending message:', error);
-      alert('Failed to send message');
+      fetchMessages(selected.id);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSending(false);
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'open':
-        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
-      case 'under_review':
-        return <Clock className="h-5 w-5 text-blue-500" />;
-      case 'resolved':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'rejected':
-        return <XCircle className="h-5 w-5 text-red-500" />;
-      default:
-        return <FileText className="h-5 w-5 text-gray-500" />;
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-      open: 'Open',
-      under_review: 'Under Review',
-      resolved: 'Resolved',
-      rejected: 'Rejected',
-    };
-    return labels[status] || status;
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      open: 'bg-yellow-100 text-yellow-800',
-      under_review: 'bg-blue-100 text-blue-800',
-      resolved: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800',
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
-  };
+  // ── Auth guard ────────────────────────────────────────────────────────────
 
   if (!user) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="card text-center py-12">
-          <AlertTriangle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-4">Sign In Required</h2>
-          <p className="text-gray-600 mb-6">
-            You need to be signed in to view your disputes.
-          </p>
-          <Link to="/login" className="btn-primary">
-            Sign In
-          </Link>
+      <div className="bg-jet min-h-screen pt-24 flex items-center justify-center">
+        <div className="card-glass text-center py-16 px-8 max-w-md">
+          <ShieldCheck className="w-16 h-16 text-gold mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-3">Sign In Required</h2>
+          <p className="text-white/60 mb-6">Sign in to manage your disputes and buyer protection cases.</p>
+          <Link to="/login" className="btn-primary">Sign In</Link>
         </div>
       </div>
     );
   }
 
-  if (selectedDispute) {
+  // ── Detail view ───────────────────────────────────────────────────────────
+
+  if (selected) {
+    const cfg = STATUS_CONFIG[selected.status] ?? STATUS_CONFIG.open;
+    const Icon = cfg.icon;
+    const timeline = getDisputeTimeline(selected.createdAt);
+    const sellerDeadline = getSellerDeadline(selected.createdAt);
+    const hoursLeft = hoursUntil(sellerDeadline);
+    const escrow = getEscrowInfo(selected.escrowStatus);
+    const reasonDef = PROTECTION_REASONS.find(r => r.key === selected.protectionReason);
+    const resDef = RESOLUTION_TYPES.find(r => r.key === selected.resolutionType);
+    const isActive = selected.status === 'open' || selected.status === 'in_review';
+
     return (
-      <div className="container mx-auto px-4 py-8">
-        <button
-          onClick={() => setSelectedDispute(null)}
-          className="mb-6 text-gold-600 hover:text-gold-700 flex items-center gap-2"
-        >
-          ← Back to Disputes
-        </button>
+      <div className="bg-jet min-h-screen pt-24">
+        <div className="container-cinematic py-10 max-w-5xl">
+          {/* Back */}
+          <button onClick={() => setSelected(null)} className="flex items-center gap-2 text-white/50 hover:text-gold transition-colors mb-8 text-sm">
+            <ChevronLeft className="w-4 h-4" /> Back to Disputes
+          </button>
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Dispute Details */}
-          <div className="lg:col-span-1">
-            <div className="card">
-              <div className="flex items-center gap-2 mb-4">
-                {getStatusIcon(selectedDispute.status)}
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedDispute.status)}`}>
-                  {getStatusLabel(selectedDispute.status)}
-                </span>
-              </div>
-
-              <h2 className="text-xl font-bold mb-2">{selectedDispute.subject}</h2>
-              <p className="text-gray-600 text-sm mb-4">
-                Order: {selectedDispute.orderNumber}
-              </p>
-              <p className="text-gray-600 text-sm mb-4">
-                Opened: {new Date(selectedDispute.createdAt).toLocaleDateString()}
-              </p>
-
-              <div className="border-t pt-4 mt-4">
-                <h3 className="font-semibold mb-2">Description</h3>
-                <p className="text-gray-600 text-sm">{selectedDispute.description}</p>
-              </div>
-
-              {selectedDispute.resolution && (
-                <div className="border-t pt-4 mt-4">
-                  <h3 className="font-semibold mb-2">Resolution</h3>
-                  <p className="text-gray-600 text-sm">{selectedDispute.resolution}</p>
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* ── Left panel: details ──────────────────────────────── */}
+            <div className="space-y-5">
+              {/* Status card */}
+              <div className={`card-glass border ${cfg.bg}`}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Icon className={`w-5 h-5 ${cfg.color}`} />
+                  <span className={`text-sm font-bold ${cfg.color}`}>{cfg.label}</span>
                 </div>
-              )}
-            </div>
-          </div>
+                <h2 className="text-lg font-bold text-white mb-1">{selected.subject}</h2>
+                <p className="text-white/50 text-xs">Order: {selected.orderNumber}</p>
+                <p className="text-white/40 text-xs mt-1">
+                  Opened {new Date(selected.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </p>
 
-          {/* Messages */}
-          <div className="lg:col-span-2">
-            <div className="card h-[600px] flex flex-col">
-              <h3 className="text-xl font-bold mb-4">Messages</h3>
+                {/* Protection reason */}
+                {reasonDef && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <p className="text-xs font-semibold text-white/50 mb-1 uppercase tracking-wide">Reason</p>
+                    <p className="text-white text-sm font-medium">{reasonDef.label}</p>
+                    <p className="text-white/50 text-xs mt-1">{reasonDef.description}</p>
+                  </div>
+                )}
 
-              {/* Messages List */}
-              <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-                {messages.length === 0 ? (
-                  <p className="text-gray-600 text-center py-8">No messages yet</p>
-                ) : (
-                  messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`p-4 rounded-lg ${
-                        msg.userId === user.id
-                          ? 'bg-gold-50 ml-8'
-                          : 'bg-gray-100 mr-8'
-                      }`}
-                    >
-                      <p className="text-sm text-gray-600 mb-1">
-                        {msg.userId === user.id ? 'You' : 'Support Team'} •{' '}
-                        {new Date(msg.createdAt).toLocaleString()}
-                      </p>
-                      <p className="text-gray-900">{msg.message}</p>
-                    </div>
-                  ))
+                {/* Description */}
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  <p className="text-xs font-semibold text-white/50 mb-1 uppercase tracking-wide">Description</p>
+                  <p className="text-white/70 text-sm leading-relaxed">{selected.description}</p>
+                </div>
+
+                {/* Resolution */}
+                {selected.resolution && (
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <p className="text-xs font-semibold text-white/50 mb-1 uppercase tracking-wide">Resolution</p>
+                    {resDef && <p className="text-green-400 text-sm font-semibold mb-1">{resDef.label}</p>}
+                    <p className="text-white/70 text-sm">{selected.resolution}</p>
+                    {selected.refundAmount != null && (
+                      <p className="text-gold font-bold mt-2">Refund: £{selected.refundAmount.toFixed(2)}</p>
+                    )}
+                  </div>
                 )}
               </div>
 
-              {/* Message Input */}
-              {selectedDispute.status !== 'resolved' && selectedDispute.status !== 'rejected' && (
-                <form onSubmit={handleSendMessage} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!newMessage.trim()}
-                    className="btn-primary whitespace-nowrap"
-                  >
-                    <MessageCircle className="h-5 w-5" />
-                  </button>
-                </form>
+              {/* Escrow status */}
+              <div className="card-glass">
+                <div className="flex items-center gap-2 mb-2">
+                  <ShieldCheck className="w-4 h-4 text-gold" />
+                  <p className="text-sm font-bold text-white">Payment Escrow</p>
+                </div>
+                <p className={`text-sm font-semibold ${escrow.color}`}>{escrow.label}</p>
+                <p className="text-white/50 text-xs mt-1">{escrow.description}</p>
+              </div>
+
+              {/* Seller response countdown (only when open) */}
+              {selected.status === 'open' && hoursLeft > 0 && (
+                <div className="card-glass border border-yellow-400/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock className="w-4 h-4 text-yellow-400" />
+                    <p className="text-sm font-bold text-white">Seller Response</p>
+                  </div>
+                  <p className="text-yellow-400 font-bold">{hoursLeft}h remaining</p>
+                  <p className="text-white/50 text-xs mt-1">Seller must respond within 48 hours or the case escalates to admin.</p>
+                </div>
               )}
+              {selected.status === 'open' && hoursLeft <= 0 && (
+                <div className="card-glass border border-red-400/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertCircle className="w-4 h-4 text-red-400" />
+                    <p className="text-sm font-bold text-red-400">Escalated to Admin</p>
+                  </div>
+                  <p className="text-white/50 text-xs">Seller missed the 48h deadline. Our team is reviewing your case.</p>
+                </div>
+              )}
+
+              {/* Dispute timeline */}
+              <div className="card-glass">
+                <p className="text-sm font-bold text-white mb-4">Case Timeline</p>
+                <div className="space-y-3">
+                  {timeline.map((t, i) => (
+                    <div key={i} className="flex gap-3 items-start">
+                      <div className={`w-3 h-3 rounded-full flex-shrink-0 mt-0.5 ${t.isPast ? 'bg-gold' : 'bg-white/15'}`} />
+                      <div>
+                        <p className={`text-xs font-semibold ${t.isPast ? 'text-white' : 'text-white/40'}`}>
+                          Day {t.day} — {t.label}
+                          {t.isDeadline && <span className="ml-1 text-gold/70">⚑</span>}
+                        </p>
+                        <p className="text-white/40 text-xs">{t.description}</p>
+                        <p className="text-white/25 text-xs">{t.date.toLocaleDateString('en-GB')}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Buyer protection link */}
+              <Link to="/buyer-protection" className="flex items-center gap-2 text-gold text-xs hover:underline">
+                <Info className="w-3 h-3" /> Learn about Buyer Protection
+              </Link>
+            </div>
+
+            {/* ── Right panel: messages ────────────────────────────── */}
+            <div className="lg:col-span-2">
+              <div className="card-glass flex flex-col" style={{ minHeight: '520px' }}>
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5 text-gold" />
+                  Dispute Messages
+                </h3>
+
+                <div className="flex-1 overflow-y-auto space-y-3 mb-4 min-h-[300px]">
+                  {messages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-40 text-center">
+                      <MessageCircle className="w-10 h-10 text-white/20 mb-3" />
+                      <p className="text-white/40 text-sm">No messages yet. Send the first message to the seller or support team.</p>
+                    </div>
+                  ) : (
+                    messages.map(msg => {
+                      const isMe = msg.userId === user.id;
+                      const isAdmin = msg.userRole === 'admin';
+                      return (
+                        <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[80%] rounded-premium-sm px-4 py-3 ${
+                            isAdmin
+                              ? 'bg-gold/20 border border-gold/30'
+                              : isMe
+                              ? 'bg-graphite'
+                              : 'bg-graphite/50'
+                          }`}>
+                            <p className="text-xs text-white/40 mb-1">
+                              {isAdmin ? '🛡 Admin' : isMe ? 'You' : 'Seller'} ·{' '}
+                              {new Date(msg.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            <p className="text-white text-sm leading-relaxed">{msg.message}</p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Message input */}
+                {isActive && (
+                  <form onSubmit={handleSendMessage} className="flex gap-2 border-t border-white/10 pt-4">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={e => setNewMessage(e.target.value)}
+                      placeholder="Type your message to the seller or support..."
+                      className="input-field flex-1 py-3"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newMessage.trim() || sending}
+                      className="btn-primary px-4 py-3 flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </form>
+                )}
+                {!isActive && (
+                  <p className="text-white/40 text-xs text-center pt-4 border-t border-white/10">
+                    This dispute is {selected.status}. Messaging is closed.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -298,142 +389,227 @@ export default function DisputesPage() {
     );
   }
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Dispute Center</h1>
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="btn-primary"
-        >
-          Open Dispute
-        </button>
-      </div>
+  // ── List view ─────────────────────────────────────────────────────────────
 
-      {/* Create Dispute Form */}
-      {showCreateForm && (
-        <div className="card mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold">Open a Dispute</h2>
+  const abuseWarning = isAbuseRisk(disputes.map(d => d.createdAt));
+
+  return (
+    <div className="bg-jet min-h-screen pt-24">
+      <div className="container-cinematic py-10 max-w-4xl">
+        {/* Header */}
+        <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gold/10 rounded-premium-sm">
+              <ShieldCheck className="w-7 h-7 text-gold" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white">My Disputes</h1>
+              <p className="text-white/50 text-sm mt-1">Manage buyer protection cases</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Link to="/buyer-protection" className="btn-glass flex items-center gap-2 text-sm">
+              <Info className="w-4 h-4" />
+              How it works
+            </Link>
             <button
-              onClick={() => setShowCreateForm(false)}
-              className="text-gray-500 hover:text-gray-700"
+              onClick={() => { setShowForm(true); setFormSuccess(false); }}
+              className="btn-primary flex items-center gap-2 text-sm"
             >
-              <XCircle className="h-6 w-6" />
+              <AlertTriangle className="w-4 h-4" />
+              Open Dispute
             </button>
           </div>
+        </div>
 
-          <form onSubmit={handleCreateDispute} className="space-y-4">
+        {/* Abuse warning */}
+        {abuseWarning && (
+          <div className="card-glass border border-red-400/30 mb-6 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Order Number *
-              </label>
-              <input
-                type="text"
-                value={orderId}
-                onChange={(e) => setOrderId(e.target.value)}
-                placeholder="Enter order number"
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Subject *
-              </label>
-              <input
-                type="text"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="Brief description of the issue"
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description *
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={6}
-                placeholder="Please provide detailed information about your dispute..."
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold-500 focus:border-transparent"
-              />
-            </div>
-
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-sm text-yellow-800">
-                <strong>Note:</strong> Disputes are reviewed by our team within 24-48 hours. 
-                We may request additional information or evidence.
+              <p className="text-white font-semibold text-sm">Account Notice</p>
+              <p className="text-white/60 text-xs mt-1">
+                You have opened {PROTECTION_CONFIG.maxDisputesPerMonth}+ disputes this month. Repeated misuse may result in account suspension. Contact{' '}
+                <a href="mailto:loadifymarket.co.uk@gmail.com" className="text-gold hover:underline">support</a> if you need help.
               </p>
             </div>
+          </div>
+        )}
 
-            <div className="flex gap-4">
-              <button type="submit" className="btn-primary">
-                Submit Dispute
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowCreateForm(false)}
-                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
+        {/* Create form */}
+        {showForm && (
+          <div className="card-glass mb-8 border border-gold/20">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-gold" />
+                Open a Buyer Protection Dispute
+              </h2>
+              <button onClick={() => setShowForm(false)} className="text-white/40 hover:text-white text-xl leading-none">×</button>
             </div>
-          </form>
-        </div>
-      )}
 
-      {/* Disputes List */}
-      {loading ? (
-        <div className="card text-center py-12">
-          <p className="text-gray-600">Loading disputes...</p>
-        </div>
-      ) : disputes.length === 0 ? (
-        <div className="card text-center py-12">
-          <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-2">No Disputes</h2>
-          <p className="text-gray-600 mb-6">
-            You haven't opened any disputes.
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {disputes.map((dispute) => (
-            <div
-              key={dispute.id}
-              onClick={() => setSelectedDispute(dispute)}
-              className="card hover:shadow-lg transition-shadow cursor-pointer"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    {getStatusIcon(dispute.status)}
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(dispute.status)}`}>
-                      {getStatusLabel(dispute.status)}
-                    </span>
+            {formSuccess ? (
+              <div className="text-center py-8">
+                <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
+                <h3 className="text-white font-bold text-lg mb-2">Dispute Opened</h3>
+                <p className="text-white/60 text-sm mb-4">
+                  Your case is now open. The seller has 48 hours to respond. Payment is held in escrow until resolution.
+                </p>
+                <button onClick={() => { setShowForm(false); setFormSuccess(false); }} className="btn-outline text-sm">Close</button>
+              </div>
+            ) : (
+              <form onSubmit={handleCreate} className="space-y-5">
+                {formError && (
+                  <div className="flex items-start gap-2 bg-red-500/10 border border-red-400/30 rounded-premium-sm p-3">
+                    <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-red-400 text-sm">{formError}</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-sm font-medium text-white/60 mb-2">Order Number <span className="text-red-400">*</span></label>
+                    <input
+                      type="text"
+                      required
+                      value={form.orderId}
+                      onChange={e => setForm({ ...form, orderId: e.target.value })}
+                      placeholder="e.g. ORD-1234567890-ABC"
+                      className="input-field w-full"
+                    />
                   </div>
 
-                  <h3 className="font-bold text-lg mb-1">{dispute.subject}</h3>
-                  <p className="text-gray-600 text-sm mb-2">
-                    Order: {dispute.orderNumber}
-                  </p>
-                  <p className="text-gray-500 text-sm">
-                    Opened: {new Date(dispute.createdAt).toLocaleDateString()}
-                  </p>
+                  <div>
+                    <label className="block text-sm font-medium text-white/60 mb-2">Protection Reason <span className="text-red-400">*</span></label>
+                    <select
+                      required
+                      value={form.protectionReason}
+                      onChange={handleProtectionReasonChange}
+                      className="input-field w-full"
+                    >
+                      <option value="">Select a reason...</option>
+                      {PROTECTION_REASONS.map(r => (
+                        <option key={r.key} value={r.key}>{r.label}</option>
+                      ))}
+                    </select>
+                    {form.protectionReason && (
+                      <p className="text-white/40 text-xs mt-1">
+                        {PROTECTION_REASONS.find(r => r.key === form.protectionReason)?.description}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
-                <MessageCircle className="h-6 w-6 text-gray-400" />
-              </div>
-            </div>
-          ))}
+                <div>
+                  <label className="block text-sm font-medium text-white/60 mb-2">Describe the Issue <span className="text-red-400">*</span></label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={form.description}
+                    onChange={e => setForm({ ...form, description: e.target.value })}
+                    placeholder="Please provide as much detail as possible including dates, amounts, and what happened..."
+                    className="input-field w-full resize-none"
+                  />
+                </div>
+
+                {/* Evidence upload hint */}
+                {form.protectionReason && PROTECTION_REASONS.find(r => r.key === form.protectionReason)?.requiresEvidence && (
+                  <div className="flex items-start gap-3 bg-gold/5 border border-gold/20 rounded-premium-sm p-3">
+                    <Upload className="w-4 h-4 text-gold flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-white text-sm font-medium">Evidence Required</p>
+                      <p className="text-white/50 text-xs mt-0.5">
+                        This reason requires photo evidence. After submitting, upload images via the dispute messaging thread.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Escrow notice */}
+                <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-400/20 rounded-premium-sm p-3">
+                  <ShieldCheck className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-white text-sm font-medium">Payment Protection Active</p>
+                    <p className="text-white/50 text-xs mt-0.5">
+                      Opening a dispute will freeze the escrow funds for this order. Your payment is protected until resolution.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 justify-end pt-2">
+                  <button type="button" onClick={() => setShowForm(false)} className="btn-outline text-sm">Cancel</button>
+                  <button type="submit" disabled={submitting} className="btn-primary flex items-center gap-2 text-sm disabled:opacity-60">
+                    {submitting ? <div className="w-4 h-4 border-2 border-jet border-t-transparent rounded-full animate-spin" /> : <AlertTriangle className="w-4 h-4" />}
+                    Open Dispute
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
+
+        {/* Disputes list */}
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="w-10 h-10 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : disputes.length === 0 ? (
+          <div className="card-glass text-center py-20">
+            <ShieldCheck className="w-16 h-16 text-gold mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-white mb-2">No disputes</h3>
+            <p className="text-white/50 mb-4">You have no active or past disputes.</p>
+            <Link to="/buyer-protection" className="text-gold text-sm hover:underline">
+              Learn about Buyer Protection →
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {disputes.map(dispute => {
+              const cfg = STATUS_CONFIG[dispute.status] ?? STATUS_CONFIG.open;
+              const Ico = cfg.icon;
+              const reasonDef = PROTECTION_REASONS.find(r => r.key === dispute.protectionReason);
+              const escrow = getEscrowInfo(dispute.escrowStatus);
+              return (
+                <button
+                  key={dispute.id}
+                  onClick={() => setSelected(dispute)}
+                  className="card-glass w-full text-left flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:border-gold/30 transition-all duration-200 group"
+                >
+                  <div className={`p-3 rounded-premium-sm border ${cfg.bg} flex-shrink-0`}>
+                    <Ico className={`w-6 h-6 ${cfg.color}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 flex-wrap mb-1">
+                      <span className="font-bold text-white text-sm truncate">{dispute.subject}</span>
+                      <span className={`text-xs font-semibold ${cfg.color}`}>{cfg.label}</span>
+                      {dispute.buyerAbuseFlagged && (
+                        <span className="text-xs text-red-400 border border-red-400/30 px-2 py-0.5 rounded-full">Flagged</span>
+                      )}
+                    </div>
+                    <p className="text-white/40 text-xs">Order: {dispute.orderNumber}</p>
+                    {reasonDef && <p className="text-white/40 text-xs">{reasonDef.label}</p>}
+                  </div>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <span className={`text-xs font-medium ${escrow.color}`}>{escrow.label}</span>
+                    {dispute.refundAmount != null && (
+                      <span className="text-gold text-sm font-bold">£{dispute.refundAmount.toFixed(2)}</span>
+                    )}
+                    <span className="text-white/30 text-xs">
+                      {new Date(dispute.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Refresh */}
+        <div className="flex justify-center mt-8">
+          <button onClick={fetchDisputes} className="btn-glass flex items-center gap-2 text-sm">
+            <RefreshCcw className="w-4 h-4" /> Refresh
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }

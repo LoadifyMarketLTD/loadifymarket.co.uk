@@ -187,6 +187,31 @@ CREATE TABLE banners (
   "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Conversations (buyer ↔ seller, optionally linked to a product)
+CREATE TABLE conversations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "user1Id" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "user2Id" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "productId" UUID REFERENCES products(id) ON DELETE SET NULL,
+  "lastMessageAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE("user1Id", "user2Id", "productId")
+);
+
+-- Messages (individual messages within a conversation)
+CREATE TABLE messages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "conversationId" UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  "senderId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "receiverId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "productId" UUID REFERENCES products(id) ON DELETE SET NULL,
+  "orderId" UUID REFERENCES orders(id) ON DELETE SET NULL,
+  message TEXT NOT NULL,
+  "isRead" BOOLEAN DEFAULT FALSE,
+  "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_products_seller ON products("sellerId");
 CREATE INDEX idx_products_category ON products("categoryId");
@@ -197,6 +222,11 @@ CREATE INDEX idx_orders_status ON orders(status);
 CREATE INDEX idx_reviews_product ON reviews("productId");
 CREATE INDEX idx_returns_order ON returns("orderId");
 CREATE INDEX idx_disputes_order ON disputes("orderId");
+CREATE INDEX idx_messages_conversation ON messages("conversationId");
+CREATE INDEX idx_messages_sender ON messages("senderId");
+CREATE INDEX idx_messages_receiver ON messages("receiverId");
+CREATE INDEX idx_conversations_user1 ON conversations("user1Id");
+CREATE INDEX idx_conversations_user2 ON conversations("user2Id");
 
 -- Row Level Security (RLS) Policies
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -209,6 +239,8 @@ ALTER TABLE returns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE disputes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payouts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wishlists ENABLE ROW LEVEL SECURITY;
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 
 -- Users can read their own data
 CREATE POLICY "Users can view own profile" ON users
@@ -254,6 +286,23 @@ CREATE POLICY "Buyers can create disputes" ON disputes
 -- Wishlists
 CREATE POLICY "Users can manage own wishlist" ON wishlists
   FOR ALL USING (auth.uid() = "userId");
+
+-- Conversations: participants can view their own conversations
+CREATE POLICY "Users can view own conversations" ON conversations
+  FOR SELECT USING (auth.uid() = "user1Id" OR auth.uid() = "user2Id");
+
+CREATE POLICY "Users can create conversations" ON conversations
+  FOR INSERT WITH CHECK (auth.uid() = "user1Id" OR auth.uid() = "user2Id");
+
+-- Messages: participants can view messages in their conversations
+CREATE POLICY "Users can view own messages" ON messages
+  FOR SELECT USING (auth.uid() = "senderId" OR auth.uid() = "receiverId");
+
+CREATE POLICY "Users can send messages" ON messages
+  FOR INSERT WITH CHECK (auth.uid() = "senderId");
+
+CREATE POLICY "Users can mark messages as read" ON messages
+  FOR UPDATE USING (auth.uid() = "receiverId");
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()

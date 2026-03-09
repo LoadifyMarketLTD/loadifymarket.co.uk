@@ -54,8 +54,6 @@ if (import.meta.env.DEV) {
           // Add visual indicator
           (offender.element as HTMLElement).style.outline = '2px solid red';
         });
-      } else {
-        console.log('✅ No horizontal overflow detected');
       }
     }, 1000); // Wait for page to fully render
   });
@@ -65,11 +63,11 @@ if (import.meta.env.DEV) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then(
-      (registration) => {
-        console.log('ServiceWorker registration successful:', registration.scope);
+      () => {
+        // ServiceWorker registered successfully — silent in production
       },
       (err) => {
-        console.log('ServiceWorker registration failed:', err);
+        console.error('ServiceWorker registration failed:', err);
       }
     );
   });
