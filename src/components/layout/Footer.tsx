@@ -67,7 +67,7 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-bold mb-6 text-gold">About</h3>
             <p className="text-white/60 text-sm leading-relaxed mb-4">
-              {BRAND.name} is a B2B marketplace for logistics loads, wholesale pallets, and business stock.
+              {BRAND.name} is a UK marketplace for products, pallet deals, wholesale stock and logistics support.
             </p>
             <p className="text-white/50 text-xs leading-relaxed mb-6">
               Operated by {BRAND.companyName}.

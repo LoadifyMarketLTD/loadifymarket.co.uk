@@ -13,6 +13,13 @@ const CinematicStoryStrip = lazy(() => import('../components/cinematic/Cinematic
 const TrendingProducts = lazy(() => import('../components/TrendingProducts'));
 const RecentlyViewed = lazy(() => import('../components/RecentlyViewed'));
 
+const B2B_PILLARS = [
+  { name: 'Products', icon: Package, slug: 'shop', count: '12,000+', href: '/shop' },
+  { name: 'Bulk Lots', icon: Package, slug: 'bulk-lots', count: '640+', href: '/shop?category=bulk-lots' },
+  { name: 'Pallet Deals', icon: Layers, slug: 'pallet-deals', count: '320+', href: '/bulk' },
+  { name: 'Logistics Loads', icon: Truck, slug: 'logistics', count: '180+', href: '/shop?category=logistics' },
+];
+
 const CATEGORIES = [
   { name: 'Electronics', icon: Cpu, slug: 'electronics', count: '2,400+' },
   { name: 'Fashion', icon: Shirt, slug: 'fashion', count: '5,100+' },
@@ -27,7 +34,7 @@ const CATEGORIES = [
 const TRUST_ITEMS = [
   {
     icon: Lock,
-    title: 'Secure Payments',
+    title: 'Secure Stripe Payments',
     description: 'Stripe-powered checkout with full encryption and fraud protection on every transaction.',
   },
   {
@@ -68,33 +75,58 @@ export default function HomePage() {
       {/* Category Navigation Grid */}
       <section className="py-16 bg-graphite/20">
         <div className="container-cinematic">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl font-bold text-white">Shop by Category</h2>
-              <p className="text-white/50 text-sm mt-1">Explore thousands of products across all categories</p>
+          {/* B2B Marketplace Pillars */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-white">Marketplace Pillars</h2>
+                <p className="text-white/50 text-sm mt-1">Core trading categories on Loadify Market</p>
+              </div>
+              <Link to="/shop" className="text-gold text-sm font-semibold hover:underline flex items-center gap-1">
+                All Categories <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
-            <Link to="/shop" className="text-gold text-sm font-semibold hover:underline flex items-center gap-1">
-              All Categories <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {B2B_PILLARS.map((pillar) => {
+                const Icon = pillar.icon;
+                return (
+                  <Link
+                    key={pillar.slug}
+                    to={pillar.href}
+                    className="group flex flex-col items-center justify-center p-5 rounded-premium-md bg-graphite/60 border border-gold/20 hover:border-gold/60 hover:bg-graphite/80 transition-all duration-300 text-center"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-gold/15 flex items-center justify-center mb-3 group-hover:bg-gold/30 transition-colors">
+                      <Icon className="w-6 h-6 text-gold" />
+                    </div>
+                    <span className="text-sm font-bold text-white leading-tight">{pillar.name}</span>
+                    <span className="text-xs text-gold/60 mt-1">{pillar.count} listings</span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-            {CATEGORIES.map((cat) => {
-              const Icon = cat.icon;
-              return (
-                <Link
-                  key={cat.slug}
-                  to={`/shop?category=${cat.slug}`}
-                  className="group flex flex-col items-center justify-center p-4 rounded-premium-sm bg-graphite/40 border border-white/5 hover:border-gold/40 hover:bg-graphite/70 transition-all duration-300 text-center"
-                >
-                  <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center mb-2 group-hover:bg-gold/20 transition-colors">
-                    <Icon className="w-5 h-5 text-gold" />
-                  </div>
-                  <span className="text-xs font-semibold text-white leading-tight">{cat.name}</span>
-                  <span className="text-[10px] text-white/40 mt-0.5">{cat.count}</span>
-                </Link>
-              );
-            })}
+          {/* Retail Categories */}
+          <div>
+            <p className="text-white/40 text-xs font-semibold uppercase tracking-widest mb-3">Retail Categories</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+              {CATEGORIES.map((cat) => {
+                const Icon = cat.icon;
+                return (
+                  <Link
+                    key={cat.slug}
+                    to={`/shop?category=${cat.slug}`}
+                    className="group flex flex-col items-center justify-center p-4 rounded-premium-sm bg-graphite/40 border border-white/5 hover:border-gold/40 hover:bg-graphite/70 transition-all duration-300 text-center"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center mb-2 group-hover:bg-gold/20 transition-colors">
+                      <Icon className="w-5 h-5 text-gold" />
+                    </div>
+                    <span className="text-xs font-semibold text-white leading-tight">{cat.name}</span>
+                    <span className="text-[10px] text-white/40 mt-0.5">{cat.count}</span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
@@ -208,12 +240,11 @@ export default function HomePage() {
                   <span className="text-gold text-xs font-medium">Marketplace + Logistics Support</span>
                 </div>
                 <h2 className="heading-section text-white mb-5">
-                  Trading Made Easy.{' '}
-                  <span className="text-gradient-gold">Delivery Sorted.</span>
+                  Trade Stock.{' '}
+                  <span className="text-gradient-gold">Arrange Delivery. In One Place.</span>
                 </h2>
                 <p className="text-white/60 text-base leading-relaxed mb-8">
-                  Loadify Market helps buyers and sellers trade products, pallet deals, and wholesale
-                  stock. Transport support and delivery coordination can be arranged via{' '}
+                  Loadify Market connects buyers and sellers while delivery coordination can be arranged via{' '}
                   <span className="text-white/80 font-medium">XDrive Logistics</span>.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
@@ -277,7 +308,7 @@ export default function HomePage() {
         <div className="container-cinematic">
           <div className="text-center mb-14">
             <h2 className="heading-section text-white mb-4">
-              Why Shop on <span className="text-gradient-gold">Loadify Market</span>
+              Why Buyers and Sellers Trust <span className="text-gradient-gold">Loadify Market</span>
             </h2>
             <p className="text-white/60 text-lg max-w-2xl mx-auto">
               We've built every layer of the platform with buyer and seller protection in mind

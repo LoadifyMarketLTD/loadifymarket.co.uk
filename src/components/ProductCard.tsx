@@ -32,6 +32,12 @@ export default function ProductCard({ product }: ProductCardProps) {
         return { icon: Truck, label: 'Logistics', className: 'badge-gold' };
       case 'pallet':
         return { icon: Package, label: 'Pallet', className: 'badge-gold' };
+      case 'lot':
+        return { icon: Package, label: 'Bulk', className: 'badge-gold' };
+      case 'wholesale':
+        return { icon: Package, label: 'Wholesale', className: 'badge-gold' };
+      case 'clearance':
+        return { icon: Package, label: 'Clearance', className: 'badge-gold' };
       case 'handmade':
         return { icon: Sparkles, label: 'Handmade', className: 'badge-premium' };
       default:
@@ -78,12 +84,19 @@ export default function ProductCard({ product }: ProductCardProps) {
         </button>
 
         {/* Type Badge - Compact */}
-        {product.type !== 'product' && (
-          <div className={`absolute top-2 left-2 ${typeInfo.className} flex items-center gap-1 text-xs px-2 py-1`}>
-            <TypeIcon className="w-3 h-3" />
-            <span>{typeInfo.label}</span>
-          </div>
-        )}
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
+          {!['product', 'retail'].includes(product.type) && (
+            <div className={`${typeInfo.className} flex items-center gap-1 text-xs px-2 py-1`}>
+              <TypeIcon className="w-3 h-3" />
+              <span>{typeInfo.label}</span>
+            </div>
+          )}
+          {product.condition === 'refurbished' && (
+            <div className="badge-gold flex items-center gap-1 text-xs px-2 py-1">
+              <span>Refurbished</span>
+            </div>
+          )}
+        </div>
 
         {/* Quick View on Hover */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
