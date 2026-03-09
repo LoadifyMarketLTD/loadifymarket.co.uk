@@ -9,7 +9,7 @@
  *  - spam/abuse-safe input sanitisation
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from './supabase';
 import type { Product, Category } from '../types';
 
@@ -78,7 +78,9 @@ export function getRelatedSearches(query: string): string[] {
 /** Strips dangerous characters and limits length. Safe for Supabase text search. */
 export function sanitiseSearchQuery(raw: string): string {
   return raw
-    .replace(/<[^>]*>/g, '')       // strip HTML tags
+    // Replace every '<' and '>' individually — prevents incomplete-tag bypass
+    .replace(/</g, '')
+    .replace(/>/g, '')
     .replace(/['"`;\\]/g, '')      // strip SQL/XSS characters
     .trim()
     .slice(0, 200);                 // limit length
@@ -222,22 +224,35 @@ export function useSearch(filters: SearchFilters, page = 1, debounceMs = 300) {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
 
-  const run = useCallback(async () => {
+  // Stable serialisation used only as a cache key — not passed as a dep directly
+  const filtersKey = [
+    filters.query,
+    filters.category ?? '',
+    filters.minPrice ?? '',
+    filters.maxPrice ?? '',
+    filters.condition ?? '',
+    filters.listingType ?? '',
+    filters.sortBy ?? '',
+    page,
+  ].join('|');
+
+  useEffect(() => {
     if (!filters.query && !filters.category && !filters.listingType) {
       setResults([]); setTotal(0); return;
     }
-    setLoading(true);
-    const { data, count, error: err } = await searchProducts(filters, page);
-    setResults(data);
-    setTotal(count);
-    setError(err);
-    setLoading(false);
-  }, [JSON.stringify(filters), page]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    const t = setTimeout(run, debounceMs);
-    return () => clearTimeout(t);
-  }, [run, debounceMs]);
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setLoading(true);
+      const { data, count, error: err } = await searchProducts(filters, page);
+      if (!cancelled) {
+        setResults(data);
+        setTotal(count);
+        setError(err);
+        setLoading(false);
+      }
+    }, debounceMs);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [filtersKey, debounceMs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { results, total, loading, error };
 }

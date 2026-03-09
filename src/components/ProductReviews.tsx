@@ -428,14 +428,28 @@ export default function ProductReviews({
                     multiple
                     className="hidden"
                     onChange={e => {
-                      const files = Array.from(e.target.files || []);
-                      files.slice(0, 6 - formImages.length).forEach(f => {
-                        const reader = new FileReader();
-                        reader.onload = ev => {
-                          if (ev.target?.result) setFormImages(prev => [...prev, ev.target!.result as string]);
-                        };
-                        reader.readAsDataURL(f);
-                      });
+                      const MAX_SIZE_MB = 5;
+                      const files = Array.from(e.target.files || [])
+                        .filter(f => {
+                          if (f.size > MAX_SIZE_MB * 1024 * 1024) {
+                            alert(`"${f.name}" exceeds ${MAX_SIZE_MB}MB and was skipped.`);
+                            return false;
+                          }
+                          return true;
+                        })
+                        .slice(0, 6 - formImages.length);
+
+                      Promise.all(
+                        files.map(f => new Promise<string>((resolve, reject) => {
+                          const reader = new FileReader();
+                          reader.onload = ev => resolve(ev.target?.result as string);
+                          reader.onerror = reject;
+                          reader.readAsDataURL(f);
+                        }))
+                      ).then(dataUrls => {
+                        setFormImages(prev => [...prev, ...dataUrls]);
+                      }).catch(err => console.error('Image read error:', err));
+
                       e.target.value = '';
                     }}
                   />

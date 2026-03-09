@@ -6,7 +6,6 @@ import { useSearch, getRelatedSearches, sanitiseSearchQuery, fetchCategories } f
 import { rankProducts } from '../lib/ranking';
 import type { SearchFilters, SearchSortOption } from '../lib/search';
 import type { Category } from '../types';
-
 const CONDITIONS = ['new', 'used', 'refurbished'];
 const LISTING_TYPES = [
   { key: 'retail',    label: 'Retail Product' },

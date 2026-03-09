@@ -117,6 +117,12 @@ export default function DisputesPage() {
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
+  const handleProtectionReasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const key = e.target.value as BuyerProtectionReason;
+    const label = PROTECTION_REASONS.find(r => r.key === key)?.label ?? '';
+    setForm(prev => ({ ...prev, protectionReason: key, subject: label }));
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
@@ -477,7 +483,7 @@ export default function DisputesPage() {
                     <select
                       required
                       value={form.protectionReason}
-                      onChange={e => setForm({ ...form, protectionReason: e.target.value as BuyerProtectionReason, subject: PROTECTION_REASONS.find(r => r.key === e.target.value)?.label ?? '' })}
+                      onChange={handleProtectionReasonChange}
                       className="input-field w-full"
                     >
                       <option value="">Select a reason...</option>

@@ -13,6 +13,19 @@
 
 import type { Product } from '../types';
 
+// ─── Extended product type for ranking ───────────────────────────────────────
+
+/**
+ * Products in the database may carry extra ranking-relevant fields that are not
+ * part of the base Product type (stored as DB columns or computed aggregates).
+ * We extend Product here rather than polluting the shared type definition.
+ */
+export interface RankableProduct extends Product {
+  salesCount?: number;
+  isFeatured?: boolean;
+  disputeRate?: number;
+}
+
 // ─── Configuration ────────────────────────────────────────────────────────────
 
 export const RANKING_CONFIG = {
@@ -34,7 +47,7 @@ export const RANKING_CONFIG = {
  * Scores a single product against a search query.
  * Returns 0–100.
  */
-export function computeRelevanceScore(product: Product, query: string): number {
+export function computeRelevanceScore(product: RankableProduct, query: string): number {
   if (!query.trim()) return 50; // neutral score when no query
 
   const q = query.toLowerCase().trim();
@@ -136,21 +149,17 @@ export interface RankingScore {
 /**
  * Computes the full composite ranking score for a product.
  */
-export function computeRankingScore(product: Product, query = ''): RankingScore {
+export function computeRankingScore(product: RankableProduct, query = ''): RankingScore {
   const relevance     = computeRelevanceScore(product, query);
   const rating        = computeRatingScore(product.rating);
-  const sales         = computeSalesScore(
-    (product as Product & { salesCount?: number }).salesCount ?? product.addToCartCount ?? 0,
-  );
+  const sales         = computeSalesScore(product.salesCount ?? product.addToCartCount ?? 0);
   const seller        = computeSellerScore(product.seller?.rating);
   const newBoost      = computeNewProductBoost(product.createdAt);
-  const featuredBoost = computeFeaturedBoost(
-    (product as Product & { isFeatured?: boolean }).isFeatured,
-  );
+  const featuredBoost = computeFeaturedBoost(product.isFeatured);
   const penalty       = computePenaltyScore(
     product.seller?.rating,
     product.seller?.paymentBehaviour,
-    (product as Product & { disputeRate?: number }).disputeRate,
+    product.disputeRate,
   );
 
   const total = relevance + rating + sales + seller + newBoost + featuredBoost - penalty;
@@ -163,7 +172,7 @@ export function computeRankingScore(product: Product, query = ''): RankingScore 
 /**
  * Sorts an array of products by their composite ranking score (highest first).
  */
-export function rankProducts(products: Product[], query = ''): Product[] {
+export function rankProducts(products: RankableProduct[], query = ''): RankableProduct[] {
   return [...products].sort((a, b) => {
     const sa = computeRankingScore(a, query).total;
     const sb = computeRankingScore(b, query).total;
