@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  HelpCircle, ShoppingBag, Package, Truck, RotateCcw, AlertTriangle,
+  HelpCircle, ShoppingBag, Truck, RotateCcw, AlertTriangle,
   CreditCard, Store, Shield, ChevronDown, ChevronUp, ArrowRight,
 } from 'lucide-react';
 import { BRAND } from '../constants/brand';

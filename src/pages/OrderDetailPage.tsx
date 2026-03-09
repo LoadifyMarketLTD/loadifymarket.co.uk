@@ -99,7 +99,7 @@ function generateInvoicePDF(order: Order & { productTitle?: string }) {
     </tbody>
     <tfoot>
       <tr><td colspan="3" style="text-align:right; padding-top:8px; color:#666; font-size:12px;">Subtotal</td><td style="text-align:right; padding-top:8px;">£${order.subtotal.toFixed(2)}</td></tr>
-      <tr><td colspan="3" style="text-align:right; color:#666; font-size:12px;">VAT (${(order.vatRate * 100).toFixed(0)}%)</td><td style="text-align:right;">£${order.vatAmount.toFixed(2)}</td></tr>
+      <tr><td colspan="3" style="text-align:right; color:#666; font-size:12px;">VAT</td><td style="text-align:right;">£${order.vatAmount.toFixed(2)}</td></tr>
       ${order.shippingAmount ? `<tr><td colspan="3" style="text-align:right; color:#666; font-size:12px;">Shipping</td><td style="text-align:right;">£${order.shippingAmount.toFixed(2)}</td></tr>` : ''}
       <tr class="total-row"><td colspan="3" style="text-align:right; padding-top:12px;">TOTAL</td><td style="text-align:right; padding-top:12px; color:#D4AF37;">£${order.total.toFixed(2)}</td></tr>
     </tfoot>
