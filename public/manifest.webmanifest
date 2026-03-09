@@ -1,7 +1,7 @@
 {
-  "name": "Loadify Market | Logistics Loads & Wholesale Marketplace UK",
+  "name": "Loadify Market - UK Marketplace",
   "short_name": "Loadify Market",
-  "description": "Your trusted UK marketplace for logistics loads, wholesale pallets, and unique handmade goods",
+  "description": "UK marketplace for products, bulk lots, pallets and B2B wholesale.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0A0A0A",
@@ -33,5 +33,8 @@
       "purpose": "any"
     }
   ],
-  "categories": ["shopping", "business"]
+  "categories": [
+    "shopping",
+    "business"
+  ]
 }

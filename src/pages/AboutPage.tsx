@@ -52,7 +52,7 @@ export default function AboutPage() {
       <section className="py-12 bg-graphite/30">
         <div className="container-cinematic text-center">
           <h1 className="heading-hero text-white mb-6">
-            About <span className="text-gradient-gold">Loadify Market</span>
+            About <span className="text-gradient-gold">Loadify Market Ltd</span>
           </h1>
           <p className="text-xl text-white/60 max-w-3xl mx-auto mb-8">
             The UK's premier marketplace for logistics, wholesale, and handmade goods
@@ -69,20 +69,20 @@ export default function AboutPage() {
             </h2>
             <div className="space-y-4 text-white/70 text-lg leading-relaxed">
               <p>
-                Loadify Market was born from a simple observation: the UK needed a better way to
+                Loadify Market Ltd was born from a simple observation: the UK needed a better way to
                 connect buyers and sellers across diverse markets—from logistics and freight to
                 wholesale pallets and business stock.
               </p>
               <p>
-                Operated by XDrive Logistics Ltd in Blackburn, we set out to build more than just
+                Founded by Loadify Market Ltd in Blackburn, we set out to build more than just
                 another marketplace. We wanted to create a trusted platform where businesses could
                 grow, buyers could find quality products, and every transaction would be secure and
                 transparent.
               </p>
               <p>
-                Today, Loadify Market serves thousands of businesses across the UK, from carriers
-                and brokers to large-scale wholesalers and logistics providers. Our mission remains the
-                same: to make B2B logistics and wholesale commerce simple, secure, and profitable for everyone.
+                Today, Loadify Market Ltd serves thousands of businesses across the UK, from small
+                artisans to large-scale wholesalers and logistics providers. Our mission remains the
+                same: to make B2B and B2C commerce simple, secure, and profitable for everyone.
               </p>
             </div>
           </div>
@@ -220,8 +220,8 @@ export default function AboutPage() {
           <div className="card-glass">
             <div className="text-center mb-8">
               <Award className="w-16 h-16 text-gold mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-white mb-2">XDrive Logistics Ltd</h2>
-              <p className="text-white/60">Legal operating company of Loadify Market</p>
+              <h2 className="text-2xl font-bold text-white mb-2">Loadify Market Ltd</h2>
+              <p className="text-white/60">Registered UK Company</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -284,7 +284,7 @@ export default function AboutPage() {
           <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl font-bold text-white mb-4">Join Our Growing Community</h2>
             <p className="text-white/60 text-lg mb-8">
-              Whether you're buying or selling, Loadify Market is here to help you succeed.
+              Whether you're buying or selling, Loadify Market Ltd is here to help you succeed.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/register?type=buyer" className="btn-primary inline-flex items-center">

@@ -162,6 +162,11 @@ export default function CinematicMarketplaceSwitch() {
                     </div>
                     <p className="text-sm text-white/50 mt-1">{seller.type}</p>
                   </div>
+                  {seller.badge && (
+                    <span className="absolute -top-2 -right-2 badge-gold text-[10px] px-1.5 py-0.5">
+                      {seller.badge}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center justify-between text-sm border-t border-white/10 pt-4">
                   <div className="flex items-center gap-1">

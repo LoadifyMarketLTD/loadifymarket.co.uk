@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Package, Store, ArrowRight, Truck } from 'lucide-react';
+import { ShoppingBag, Package, Store, ArrowRight, ShieldCheck, Star, RefreshCw, MapPin } from 'lucide-react';
 
 export default function CinematicHero() {
   return (
@@ -49,44 +49,46 @@ export default function CinematicHero() {
           </div>
 
           {/* Main Headline */}
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-            Loadify Market<br />
-            <span className="text-gradient-gold">UK Marketplace for Products, Pallets and Wholesale Stock</span>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight" style={{ willChange: 'opacity' }}>
+            Buy and Sell Products, Bulk Lots and Pallets
           </h1>
 
           {/* Subheadline */}
           <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto mb-10">
-            Buy liquidation pallets, bulk deals and retail products.<br />
-            Delivery coordination available via XDrive Logistics.
+            All in one UK marketplace.
           </p>
 
-          {/* Three CTA Buttons per spec */}
+          {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <Link to="/shop" className="btn-primary inline-flex items-center gap-2 text-lg px-8 py-4">
-              <ShoppingBag className="h-5 w-5" />
+            {/* PRIMARY CTA */}
+            <Link to="/shop" className="btn-primary inline-flex items-center group text-lg px-8 py-4">
+              <ShoppingBag className="mr-2 h-6 w-6" />
               Shop Products
-              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="ml-2 h-6 w-6 transition-transform group-hover:translate-x-1" />
             </Link>
-            <Link to="/bulk" className="btn-secondary inline-flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              Shop Bulk Deals
+            {/* SECONDARY CTA */}
+            <Link to="/bulk" className="btn-secondary inline-flex items-center group">
+              <Package className="mr-2 h-5 w-5" />
+              Shop Bulk &amp; Pallets
+              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Link>
-            <Link to="/register?type=seller" className="btn-outline inline-flex items-center gap-2">
-              <Store className="h-5 w-5" />
+            {/* TERTIARY CTA */}
+            <Link to="/register?type=seller" className="btn-glass inline-flex items-center group">
+              <Store className="mr-2 h-5 w-5" />
               Sell on Loadify
             </Link>
           </div>
 
-          {/* Category Panels */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
+          {/* Category Panels - 3 main categories */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
             {/* B2C Products Panel */}
-            <Link to="/shop" className="group relative overflow-hidden rounded-premium-lg aspect-[4/3] cursor-pointer hero-image-wrapper">
+            <Link to="/shop" className="group relative overflow-hidden rounded-premium-lg aspect-[16/10] cursor-pointer hero-image-wrapper">
               <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet hero-media">
                 <img
                   src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=600&q=75&auto=format&fit=max&fm=webp"
                   srcSet="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=480&q=75&auto=format&fit=max&fm=webp 480w,
                           https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=768&q=75&auto=format&fit=max&fm=webp 768w"
-                  sizes="(max-width: 768px) 100vw, 400px"
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   alt="Shop Products"
                   className="w-full h-full object-cover object-center opacity-60 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
                   loading="eager"
@@ -97,29 +99,29 @@ export default function CinematicHero() {
               <div className="absolute inset-0 p-6 flex flex-col justify-end">
                 <div className="flex items-center mb-3">
                   <div className="p-2 rounded-premium-sm bg-gold/20 mr-3">
-                    <ShoppingBag className="h-5 w-5 text-gold" />
+                    <ShoppingBag className="h-6 w-6 text-gold" />
                   </div>
                   <span className="badge-gold">B2C</span>
                 </div>
-                <h2 className="heading-card text-white mb-1">Shop Products</h2>
-                <p className="text-white/60 text-sm mb-3">Retail products and everyday items from verified UK sellers.</p>
-                <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
-                  Browse Now <ArrowRight className="ml-2 h-4 w-4" />
+                <h2 className="heading-card text-white mb-2">Shop Products</h2>
+                <p className="text-white/60 text-sm mb-4">Electronics, fashion, tools, bikes &amp; more</p>
+                <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+                  Browse Products <ArrowRight className="ml-2 h-4 w-4" />
                 </span>
               </div>
             </Link>
 
-            {/* B2B Bulk Panel */}
-            <Link to="/bulk" className="group relative overflow-hidden rounded-premium-lg aspect-[4/3] cursor-pointer hero-image-wrapper">
+            {/* Bulk / Pallets Panel */}
+            <Link to="/bulk" className="group relative overflow-hidden rounded-premium-lg aspect-[16/10] cursor-pointer hero-image-wrapper">
               <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet hero-media">
                 <img
                   src="https://images.unsplash.com/photo-1553413077-190dd305871c?w=600&q=75&auto=format&fit=max&fm=webp"
                   srcSet="https://images.unsplash.com/photo-1553413077-190dd305871c?w=480&q=75&auto=format&fit=max&fm=webp 480w,
                           https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=75&auto=format&fit=max&fm=webp 768w"
-                  sizes="(max-width: 768px) 100vw, 400px"
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   alt="Bulk Lots and Pallets"
-                  className="w-full h-full object-cover object-center opacity-60 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
-                  loading="eager"
+                  className="w-full h-full object-cover object-top opacity-60 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
+                  loading="lazy"
                   decoding="async"
                 />
               </div>
@@ -127,26 +129,26 @@ export default function CinematicHero() {
               <div className="absolute inset-0 p-6 flex flex-col justify-end">
                 <div className="flex items-center mb-3">
                   <div className="p-2 rounded-premium-sm bg-gold/20 mr-3">
-                    <Package className="h-5 w-5 text-gold" />
+                    <Package className="h-6 w-6 text-gold" />
                   </div>
                   <span className="badge-gold">B2B</span>
                 </div>
-                <h2 className="heading-card text-white mb-1">Bulk Lots &amp; Pallets</h2>
-                <p className="text-white/60 text-sm mb-3">Wholesale stock, pallet deals and liquidation inventory for business buyers.</p>
-                <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
-                  Browse Lots <ArrowRight className="ml-2 h-4 w-4" />
+                <h2 className="heading-card text-white mb-2">Bulk &amp; Pallets</h2>
+                <p className="text-white/60 text-sm mb-4">Pallet lots, liquidation stock &amp; wholesale bundles</p>
+                <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+                  Browse Bulk Lots <ArrowRight className="ml-2 h-4 w-4" />
                 </span>
               </div>
             </Link>
 
-            {/* Seller Panel */}
-            <Link to="/register?type=seller" className="group relative overflow-hidden rounded-premium-lg aspect-[4/3] cursor-pointer hero-image-wrapper">
+            {/* Sell on Loadify Panel */}
+            <Link to="/register?type=seller" className="group relative overflow-hidden rounded-premium-lg aspect-[16/10] cursor-pointer hero-image-wrapper">
               <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet hero-media">
                 <img
                   src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=75&auto=format&fit=max&fm=webp"
                   srcSet="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=480&q=75&auto=format&fit=max&fm=webp 480w,
                           https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=768&q=75&auto=format&fit=max&fm=webp 768w"
-                  sizes="(max-width: 768px) 100vw, 400px"
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   alt="Sell on Loadify"
                   className="w-full h-full object-cover object-center opacity-50 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
                   loading="lazy"
@@ -157,13 +159,13 @@ export default function CinematicHero() {
               <div className="absolute inset-0 p-6 flex flex-col justify-end">
                 <div className="flex items-center mb-3">
                   <div className="p-2 rounded-premium-sm bg-gold/20 mr-3">
-                    <Store className="h-5 w-5 text-gold" />
+                    <Store className="h-6 w-6 text-gold" />
                   </div>
                   <span className="badge-gold">Sellers</span>
                 </div>
-                <h2 className="heading-card text-white mb-1">Sell on Loadify</h2>
-                <p className="text-white/60 text-sm mb-3">List products, pallets or wholesale stock and reach UK buyers.</p>
-                <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+                <h2 className="heading-card text-white mb-2">Sell on Loadify</h2>
+                <p className="text-white/60 text-sm mb-4">Register, list products &amp; start selling today</p>
+                <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
                   Start Selling <ArrowRight className="ml-2 h-4 w-4" />
                 </span>
               </div>
@@ -171,37 +173,23 @@ export default function CinematicHero() {
           </div>
 
           {/* Trust Indicators */}
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-white/60 text-sm">
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-white/70 text-sm">
             <div className="flex items-center gap-2">
-              <span className="text-gold">✓</span>
-              Secure Stripe Payments
+              <ShieldCheck className="h-4 w-4 text-gold" />
+              Secure Payments
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-gold">✓</span>
-              Verified UK Sellers
+              <Star className="h-4 w-4 text-gold" />
+              Verified Sellers
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-gold">✓</span>
-              UK-Wide Delivery Support
+              <RefreshCw className="h-4 w-4 text-gold" />
+              Buyer Protection
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-gold">✓</span>
-              14-Day Buyer Protection
+              <MapPin className="h-4 w-4 text-gold" />
+              UK Based Support
             </div>
-          </div>
-
-          {/* XDrive Transport Support Line */}
-          <div className="mt-6 flex items-center justify-center gap-2 text-white/40 text-sm">
-            <Truck className="w-4 h-4 text-gold/60 flex-shrink-0" />
-            <span>
-              Transport support available via{' '}
-              <Link
-                to="/transport-quote"
-                className="text-gold/80 hover:text-gold transition-colors font-medium"
-              >
-                XDrive Logistics
-              </Link>
-            </span>
           </div>
         </div>
       </div>

@@ -14,6 +14,8 @@ import ProductPage from './pages/ProductPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
+import ShopPage from './pages/ShopPage';
+import BulkPage from './pages/BulkPage';
 
 // Lazy load heavy/secondary pages
 const CartPage = lazy(() => import('./pages/CartPage'));
@@ -122,10 +124,9 @@ function App() {
     <Routes>
       <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
+          <Route path="shop" element={<ShopPage />} />
+          <Route path="bulk" element={<BulkPage />} />
           <Route path="catalog" element={<CatalogPage />} />
-          {/* Marketplace routes: /shop = B2C products, /bulk = B2B wholesale/pallets */}
-          <Route path="shop" element={<CatalogPage />} />
-          <Route path="bulk" element={<CatalogPage />} />
           <Route path="product/:id" element={<ProductPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />

@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingCart, User, Search, Menu, X, Hexagon, Store } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, X, Hexagon } from 'lucide-react';
 import { useAuthStore, useCartStore } from '../../store';
 import { useState, useEffect } from 'react';
 import { BRAND } from '../../constants/brand';
@@ -94,14 +94,13 @@ export default function Header() {
               to="/bulk"
               className={`nav-link ${isActive('/bulk') ? 'nav-link-active' : ''}`}
             >
-              Bulk Deals
+              Bulk &amp; Pallets
             </Link>
             <Link
-              to="/register?type=seller"
-              className="nav-link flex items-center gap-1"
+              to="/catalog"
+              className={`nav-link ${isActive('/catalog') ? 'nav-link-active' : ''}`}
             >
-              <Store className="h-4 w-4" />
-              Sell
+              All Listings
             </Link>
 
             {user ? (
@@ -232,13 +231,17 @@ export default function Header() {
                   : 'text-white/80 hover:bg-white/5 hover:text-gold'
               }`}
             >
-              Bulk Deals
+              Bulk &amp; Pallets
             </Link>
             <Link
-              to="/register?type=seller"
-              className="block py-3 px-4 rounded-premium-sm text-white/80 hover:bg-white/5 hover:text-gold transition-all duration-300"
+              to="/catalog"
+              className={`block py-3 px-4 rounded-premium-sm transition-all duration-300 ${
+                isActive('/catalog')
+                  ? 'bg-gold/10 text-gold'
+                  : 'text-white/80 hover:bg-white/5 hover:text-gold'
+              }`}
             >
-              Sell on Loadify
+              All Listings
             </Link>
 
             {user ? (

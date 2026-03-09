@@ -66,11 +66,8 @@ export default function Footer() {
           {/* Company Info */}
           <div>
             <h3 className="text-lg font-bold mb-6 text-gold">About</h3>
-            <p className="text-white/60 text-sm leading-relaxed mb-4">
-              {BRAND.name} is a UK marketplace for products, pallet deals, wholesale stock and logistics support.
-            </p>
-            <p className="text-white/50 text-xs leading-relaxed mb-6">
-              Operated by {BRAND.companyName}.
+            <p className="text-white/60 text-sm leading-relaxed mb-6">
+              UK multi-category marketplace for products, bulk lots, pallets, and B2B wholesale stock.
             </p>
             <div className="space-y-3 text-sm">
               <div className="text-white/50 text-xs space-y-1">
@@ -102,7 +99,12 @@ export default function Footer() {
               </li>
               <li>
                 <Link to="/bulk" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  Bulk &amp; Pallet Deals
+                  Bulk &amp; Pallets
+                </Link>
+              </li>
+              <li>
+                <Link to="/catalog" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  All Listings
                 </Link>
               </li>
               <li>
@@ -128,6 +130,16 @@ export default function Footer() {
               <li>
                 <Link to="/help" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
                   Help &amp; FAQ
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Contact Us
+                </Link>
+              </li>
+              <li>
+                <Link to="/tracking/search" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Track Order
                 </Link>
               </li>
             </ul>

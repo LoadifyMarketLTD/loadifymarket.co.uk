@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Heart, Package, Truck, Sparkles, ArrowRight, FileText, Eye, MapPin } from 'lucide-react';
 import { useWishlist } from '../lib/useWishlist';
 import { buildTransportQuoteUrl } from '../lib/transportQuote';
+import { getCategoryFallbackImage } from '../lib/categoryImages';
 import VerificationBadge from './VerificationBadge';
 import RoleBadge from './RoleBadge';
 import type { Product } from '../types';
@@ -62,9 +63,13 @@ export default function ProductCard({ product }: ProductCardProps) {
             decoding="async"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <TypeIcon className="w-20 h-20 text-white/20 group-hover:scale-110 transition-transform duration-500" />
-          </div>
+          <img
+            src={getCategoryFallbackImage(product)}
+            alt={product.title}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            loading="lazy"
+            decoding="async"
+          />
         )}
 
         {/* Gradient Overlay */}
