@@ -55,6 +55,7 @@ const ReturnsPolicy = lazy(() => import('./pages/legal/ReturnsPolicyPage'));
 const ShippingPolicy = lazy(() => import('./pages/legal/ShippingPolicyPage'));
 const LogisticsLoadsPage = lazy(() => import('./pages/LogisticsLoadsPage'));
 const TransportQuotePage = lazy(() => import('./pages/TransportQuotePage'));
+const RFQPage = lazy(() => import('./pages/RFQPage'));
 
 // Loading component
 function PageLoader() {
@@ -388,6 +389,13 @@ function App() {
           <Route path="transport-quote" element={
             <Suspense fallback={<PageLoader />}>
               <TransportQuotePage />
+            </Suspense>
+          } />
+
+          {/* Public: RFQ — B2B wholesale quote requests */}
+          <Route path="rfq" element={
+            <Suspense fallback={<PageLoader />}>
+              <RFQPage />
             </Suspense>
           } />
           

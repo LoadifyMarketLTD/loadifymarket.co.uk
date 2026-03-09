@@ -22,6 +22,7 @@ import {
   Shield,
   Zap,
   MessageCircle,
+  FileText,
 } from 'lucide-react';
 
 export default function ProductPage() {
@@ -352,7 +353,7 @@ export default function ProductPage() {
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-4 mb-8">
+            <div className="flex gap-4 mb-4">
               <button
                 onClick={handleAddToCart}
                 disabled={product.stockQuantity === 0}
@@ -382,6 +383,15 @@ export default function ProductPage() {
                 <Share2 className="h-6 w-6" />
               </button>
             </div>
+
+            {/* RFQ Button — Wholesale buyers */}
+            <Link
+              to={`/rfq?product=${encodeURIComponent(product.title)}`}
+              className="btn-secondary w-full mb-8 flex items-center justify-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              Request Wholesale Quote
+            </Link>
 
             {/* Seller Info Panel */}
             <div className="card-glass mb-8">
