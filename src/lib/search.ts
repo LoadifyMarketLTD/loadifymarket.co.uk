@@ -237,12 +237,14 @@ export function useSearch(filters: SearchFilters, page = 1, debounceMs = 300) {
   ].join('|');
 
   useEffect(() => {
-    if (!filters.query && !filters.category && !filters.listingType) {
-      setResults([]); setTotal(0); return;
-    }
     let cancelled = false;
+    const hasFilters = !!(filters.query || filters.category || filters.listingType);
     const t = setTimeout(async () => {
-      setLoading(true);
+      if (!hasFilters) {
+        if (!cancelled) { setResults([]); setTotal(0); }
+        return;
+      }
+      if (!cancelled) setLoading(true);
       const { data, count, error: err } = await searchProducts(filters, page);
       if (!cancelled) {
         setResults(data);
@@ -265,14 +267,20 @@ export function useAutocomplete(query: string, debounceMs = 200) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!query || query.length < 2) { setSuggestions([]); return; }
+    let cancelled = false;
     const t = setTimeout(async () => {
-      setLoading(true);
+      if (!query || query.length < 2) {
+        if (!cancelled) setSuggestions([]);
+        return;
+      }
+      if (!cancelled) setLoading(true);
       const sug = await getAutocompleteSuggestions(query);
-      setSuggestions(sug);
-      setLoading(false);
+      if (!cancelled) {
+        setSuggestions(sug);
+        setLoading(false);
+      }
     }, debounceMs);
-    return () => clearTimeout(t);
+    return () => { cancelled = true; clearTimeout(t); };
   }, [query, debounceMs]);
 
   return { suggestions, loading };
