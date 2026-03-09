@@ -108,7 +108,7 @@ export default function SellerDashboardPage() {
         // Show requests where sellerId matches OR where the listing belongs to
         // this seller's products (identified by listingId in products list).
         // For now, filter by sellerId since it's embedded in the request.
-        const mine = all.filter((r) => !r.sellerId || r.sellerId === user.id);
+        const mine = all.filter((r) => r.sellerId === user.id);
         setDeliveryRequests(mine);
       } catch {
         setDeliveryRequests([]);

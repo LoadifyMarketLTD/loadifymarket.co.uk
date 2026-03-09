@@ -60,6 +60,7 @@ export default function TransportQuotePage() {
   const [searchParams] = useSearchParams();
   const [submitState, setSubmitState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [savedRequest, setSavedRequest] = useState<DeliveryRequest | null>(null);
+  const [emailSent, setEmailSent] = useState(true);
 
   // Pre-fill data from query params
   const listingId = searchParams.get('listing') || '';
@@ -159,9 +160,10 @@ export default function TransportQuotePage() {
       });
 
       if (!resp.ok) {
-        // If the function returns a non-OK status, still mark success for the
-        // user (the request is persisted locally) but log the issue.
+        // Non-OK response: request is persisted locally, but notify the user
+        // in the success screen that the email notification may not have arrived.
         console.warn('Transport email function responded with', resp.status);
+        setEmailSent(false);
       }
 
       // Persist to localStorage so the seller dashboard can read it
@@ -297,9 +299,19 @@ export default function TransportQuotePage() {
               <p className="text-white/60 mb-2">
                 Your delivery request has been submitted to XDrive Logistics.
               </p>
-              <p className="text-white/60 mb-6">
-                A member of the XDrive Logistics team will be in touch within 1 business day.
-              </p>
+              {emailSent ? (
+                <p className="text-white/60 mb-6">
+                  A member of the XDrive Logistics team will be in touch within 1 business day.
+                </p>
+              ) : (
+                <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 mb-6 text-left">
+                  <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-amber-300/90 text-sm">
+                    Your request has been saved locally. The email notification could not be
+                    delivered right now — please contact us directly to confirm your request.
+                  </p>
+                </div>
+              )}
               {savedRequest && (
                 <div className="bg-white/5 border border-white/10 rounded-xl py-4 px-5 text-left mb-8">
                   <p className="text-white/40 text-xs mb-2 uppercase tracking-wider">Request summary</p>
