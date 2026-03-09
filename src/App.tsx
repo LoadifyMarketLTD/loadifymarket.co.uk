@@ -25,6 +25,7 @@ const SellerPublicProfilePage = lazy(() => import('./pages/SellerPublicProfilePa
 const SellerReturnsPage = lazy(() => import('./pages/SellerReturnsPage'));
 const SellerShipmentsPage = lazy(() => import('./pages/SellerShipmentsPage'));
 const SellerReviewsPage = lazy(() => import('./pages/SellerReviewsPage'));
+const SellerRFQPage = lazy(() => import('./pages/SellerRFQPage'));
 const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const AdminReviewsPage = lazy(() => import('./pages/AdminReviewsPage'));
@@ -55,6 +56,7 @@ const ReturnsPolicy = lazy(() => import('./pages/legal/ReturnsPolicyPage'));
 const ShippingPolicy = lazy(() => import('./pages/legal/ShippingPolicyPage'));
 const LogisticsLoadsPage = lazy(() => import('./pages/LogisticsLoadsPage'));
 const TransportQuotePage = lazy(() => import('./pages/TransportQuotePage'));
+const RFQPage = lazy(() => import('./pages/RFQPage'));
 
 // Loading component
 function PageLoader() {
@@ -368,6 +370,15 @@ function App() {
             </RequireAuth>
           } />
 
+          {/* Protected: Seller RFQ Inbox */}
+          <Route path="seller/rfq" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <SellerRFQPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+
           {/* Protected: Admin Reviews Moderation */}
           <Route path="admin/reviews" element={
             <RequireAuth>
@@ -388,6 +399,13 @@ function App() {
           <Route path="transport-quote" element={
             <Suspense fallback={<PageLoader />}>
               <TransportQuotePage />
+            </Suspense>
+          } />
+
+          {/* Public: RFQ — B2B wholesale quote requests */}
+          <Route path="rfq" element={
+            <Suspense fallback={<PageLoader />}>
+              <RFQPage />
             </Suspense>
           } />
           

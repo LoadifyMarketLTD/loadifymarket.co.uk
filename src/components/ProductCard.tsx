@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Heart, Package, Truck, Sparkles, ArrowRight } from 'lucide-react';
+import { Heart, Package, Truck, Sparkles, ArrowRight, FileText } from 'lucide-react';
 import { useWishlist } from '../lib/useWishlist';
 import { buildTransportQuoteUrl } from '../lib/transportQuote';
 import VerificationBadge from './VerificationBadge';
@@ -156,6 +156,16 @@ export default function ProductCard({ product }: ProductCardProps) {
             Request Transport Quote
           </Link>
         )}
+
+        {/* RFQ CTA for wholesale buyers */}
+        <Link
+          to={`/rfq?product=${encodeURIComponent(product.title)}`}
+          onClick={(e) => e.stopPropagation()}
+          className="mt-2 flex items-center gap-1.5 text-xs text-white/40 hover:text-gold transition-colors"
+        >
+          <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+          Request Wholesale Quote
+        </Link>
       </Link>
     </div>
   );
