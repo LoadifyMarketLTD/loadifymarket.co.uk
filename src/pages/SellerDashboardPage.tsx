@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import type { Product, Order, SellerProfile } from '../types';
-import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3 } from 'lucide-react';
+import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3, Truck } from 'lucide-react';
 
 export default function SellerDashboardPage() {
   const { user } = useAuthStore();
@@ -262,6 +262,31 @@ export default function SellerDashboardPage() {
                       ))}
                     </div>
                   )}
+                </div>
+
+                {/* XDrive Transport Support Note */}
+                <div className="card mt-6 border-l-4 border-l-gold/50 bg-gold/5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <Truck className="h-5 w-5 text-gold mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-semibold text-sm mb-1">
+                          Need help moving sold stock or pallet deals?
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Transport support is available via XDrive Logistics for collection and
+                          delivery of pallet deals, wholesale orders, and bulk stock.
+                        </p>
+                      </div>
+                    </div>
+                    <Link
+                      to="/transport-quote"
+                      className="btn-outline text-xs px-3 py-2 flex-shrink-0 flex items-center gap-1"
+                    >
+                      <Truck className="h-3.5 w-3.5" />
+                      Request Delivery Support
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}

@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Heart, Package, Truck, Sparkles, ArrowRight } from 'lucide-react';
 import { useWishlist } from '../lib/useWishlist';
+import { buildTransportQuoteUrl } from '../lib/transportQuote';
 import VerificationBadge from './VerificationBadge';
 import RoleBadge from './RoleBadge';
 import type { Product } from '../types';
-
 interface ProductCardProps {
   product: Product;
 }
@@ -144,6 +144,18 @@ export default function ProductCard({ product }: ProductCardProps) {
           <span className="capitalize truncate">{product.condition}</span>
           <span className="flex-shrink-0">{product.stockQuantity} available</span>
         </div>
+
+        {/* Transport CTA for pallet / bulk items */}
+        {(product.type === 'pallet' || product.type === 'logistics') && (
+          <Link
+            to={buildTransportQuoteUrl(product)}
+            onClick={(e) => e.stopPropagation()}
+            className="mt-2.5 flex items-center gap-1.5 text-xs text-gold/70 hover:text-gold transition-colors"
+          >
+            <Truck className="w-3.5 h-3.5 flex-shrink-0" />
+            Request Transport Quote
+          </Link>
+        )}
       </Link>
     </div>
   );

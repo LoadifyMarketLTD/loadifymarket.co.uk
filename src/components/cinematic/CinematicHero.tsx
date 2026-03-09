@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Package, Store, ArrowRight } from 'lucide-react';
+import { ShoppingBag, Package, Store, ArrowRight, Truck } from 'lucide-react';
 
 export default function CinematicHero() {
   return (
@@ -168,6 +168,20 @@ export default function CinematicHero() {
               <span className="text-gold">✓</span>
               UK Based Support
             </div>
+          </div>
+
+          {/* XDrive Transport Support Line */}
+          <div className="mt-6 flex items-center justify-center gap-2 text-white/40 text-sm">
+            <Truck className="w-4 h-4 text-gold/60 flex-shrink-0" />
+            <span>
+              Transport support available via{' '}
+              <Link
+                to="/transport-quote"
+                className="text-gold/80 hover:text-gold transition-colors font-medium"
+              >
+                XDrive Logistics
+              </Link>
+            </span>
           </div>
         </div>
       </div>
