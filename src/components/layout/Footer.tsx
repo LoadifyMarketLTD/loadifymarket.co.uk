@@ -19,7 +19,7 @@ export default function Footer() {
             </div>
             <div>
               <span className="text-2xl font-bold text-white tracking-tight">{BRAND.name}</span>
-              <p className="text-xs text-white/40 mt-0.5">UK's Multi-Category Marketplace</p>
+              <p className="text-xs text-white/40 mt-0.5">{BRAND.tagline}</p>
             </div>
           </Link>
 
@@ -66,10 +66,18 @@ export default function Footer() {
           {/* Company Info */}
           <div>
             <h3 className="text-lg font-bold mb-6 text-gold">About</h3>
-            <p className="text-white/60 text-sm leading-relaxed mb-6">
-              {BRAND.name} is the UK's fastest-growing marketplace for B2C products, B2B bulk lots, pallet deals, and third-party sellers.
+            <p className="text-white/60 text-sm leading-relaxed mb-4">
+              {BRAND.name} is a B2B marketplace for logistics loads, wholesale pallets, and business stock.
+            </p>
+            <p className="text-white/50 text-xs leading-relaxed mb-6">
+              Operated by {BRAND.companyName}.
             </p>
             <div className="space-y-3 text-sm">
+              <div className="text-white/50 text-xs space-y-1">
+                <p className="font-semibold text-white/70">{BRAND.companyName}</p>
+                <p>Company Number: {BRAND.companyNumber}</p>
+                <p>Registered in England and Wales</p>
+              </div>
               <div className="flex items-start space-x-3 text-white/60">
                 <MapPin className="h-4 w-4 mt-1 flex-shrink-0 text-gold" />
                 <span>{BRAND.companyAddress}</span>
@@ -206,7 +214,7 @@ export default function Footer() {
         <div className="container-cinematic py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-white/70 text-sm">
-              © {currentYear} {BRAND.companyName}. All rights reserved.
+              © {currentYear} {BRAND.name}. Operated by {BRAND.companyName} (CRN: {BRAND.companyNumber}). All rights reserved.
             </p>
             <div className="flex items-center space-x-6 text-sm text-white/70">
               <span>VAT: {BRAND.vatNumber}</span>

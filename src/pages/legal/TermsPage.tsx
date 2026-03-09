@@ -7,18 +7,19 @@ export default function TermsPage() {
         
         <h2 className="text-2xl font-semibold mt-6 mb-3">1. Introduction</h2>
         <p>
-          Welcome to XDrive Market Logistics by XDrive Logistics Ltd ("we", "our", "us"). These Terms and Conditions govern your use of our 
+          Welcome to Loadify Market ("we", "our", "us"). These Terms and Conditions govern your use of our 
           marketplace platform located at loadifymarket.co.uk. By accessing or using our platform, you agree 
           to be bound by these Terms.
         </p>
 
         <h2 className="text-2xl font-semibold mt-6 mb-3">2. Company Information</h2>
         <p>
-          XDrive Logistics Ltd is a company registered in the United Kingdom, operating the
-          XDrive Market Logistics by XDrive Logistics Ltd marketplace platform.
+          Loadify Market is operated by XDrive Logistics Ltd, a company registered in the United Kingdom.
         </p>
         <ul className="list-disc pl-6 my-4">
           <li>Company Name: XDrive Logistics Ltd</li>
+          <li>Company Number (CRN): 13171804</li>
+          <li>Registered in England and Wales</li>
           <li>Address: 101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom</li>
           <li>VAT Number: GB375949535</li>
           <li>Email: loadifymarket.co.uk@gmail.com</li>

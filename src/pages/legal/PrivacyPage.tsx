@@ -7,8 +7,8 @@ export default function PrivacyPage() {
         
         <h2 className="text-2xl font-semibold mt-6 mb-3">1. Introduction</h2>
         <p>
-          XDrive Market Logistics by XDrive Logistics Ltd ("we", "our", "us") is committed to protecting your privacy. This Privacy Policy 
-          explains how we collect, use, and protect your personal information when you use XDrive Market Logistics by XDrive Logistics Ltd.
+          Loadify Market ("we", "our", "us") is committed to protecting your privacy. This Privacy Policy 
+          explains how we collect, use, and protect your personal information when you use Loadify Market.
         </p>
 
         <h2 className="text-2xl font-semibold mt-6 mb-3">2. Information We Collect</h2>
