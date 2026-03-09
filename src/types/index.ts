@@ -428,3 +428,40 @@ export interface RFQRequest {
   status: RFQStatus;
   created_at: string;
 }
+
+// ─── Delivery Request (Loadify ↔ XDrive) ────────────────────────────────────
+
+export type DeliveryRequestStatus =
+  | 'draft'
+  | 'submitted'
+  | 'in_review'
+  | 'quoted'
+  | 'accepted'
+  | 'in_transit'
+  | 'delivered'
+  | 'cancelled';
+
+export interface DeliveryRequest {
+  /** Locally-generated UUID used as a stable key */
+  id: string;
+  listingId: string;
+  listingTitle: string;
+  sellerId: string;
+  sellerName?: string;
+  buyerName: string;
+  buyerEmail: string;
+  pickupPostcode: string;
+  dropoffPostcode: string;
+  palletCount?: string;
+  weight?: string;
+  itemType?: string;
+  category?: string;
+  quantity?: string;
+  status: DeliveryRequestStatus;
+  /** Always 'loadify-market' for requests originating here */
+  source: string;
+  /** ISO timestamp */
+  createdAt: string;
+  /** Optional reference returned by XDrive */
+  xdriveRef?: string;
+}

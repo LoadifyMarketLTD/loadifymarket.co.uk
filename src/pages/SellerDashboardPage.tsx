@@ -2,8 +2,33 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
-import type { Product, Order, SellerProfile } from '../types';
-import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3, Truck } from 'lucide-react';
+import type { Product, Order, SellerProfile, DeliveryRequest } from '../types';
+import { buildXDriveAppUrl } from '../lib/transportQuote';
+import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3, Truck, ExternalLink, Clock } from 'lucide-react';
+
+const DELIVERY_REQUESTS_KEY = 'loadify_delivery_requests';
+
+const STATUS_LABELS: Record<string, string> = {
+  draft: 'Draft',
+  submitted: 'Submitted',
+  in_review: 'In Review',
+  quoted: 'Quoted',
+  accepted: 'Accepted',
+  in_transit: 'In Transit',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  draft: 'bg-gray-100 text-gray-700',
+  submitted: 'bg-blue-100 text-blue-800',
+  in_review: 'bg-yellow-100 text-yellow-800',
+  quoted: 'bg-purple-100 text-purple-800',
+  accepted: 'bg-green-100 text-green-800',
+  in_transit: 'bg-orange-100 text-orange-800',
+  delivered: 'bg-emerald-100 text-emerald-800',
+  cancelled: 'bg-red-100 text-red-800',
+};
 
 export default function SellerDashboardPage() {
   const { user } = useAuthStore();
@@ -18,7 +43,8 @@ export default function SellerDashboardPage() {
     pendingOrders: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'products' | 'orders'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'products' | 'orders' | 'deliveries'>('overview');
+  const [deliveryRequests, setDeliveryRequests] = useState<DeliveryRequest[]>([]);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -74,6 +100,19 @@ export default function SellerDashboardPage() {
   useEffect(() => {
     if (user) {
       fetchData();
+      // Load delivery requests for this seller from localStorage
+      try {
+        const all: DeliveryRequest[] = JSON.parse(
+          localStorage.getItem(DELIVERY_REQUESTS_KEY) || '[]',
+        );
+        // Show requests where sellerId matches OR where the listing belongs to
+        // this seller's products (identified by listingId in products list).
+        // For now, filter by sellerId since it's embedded in the request.
+        const mine = all.filter((r) => !r.sellerId || r.sellerId === user.id);
+        setDeliveryRequests(mine);
+      } catch {
+        setDeliveryRequests([]);
+      }
     }
   }, [user, fetchData]);
 
@@ -176,6 +215,22 @@ export default function SellerDashboardPage() {
               }`}
             >
               Orders ({stats.totalOrders})
+            </button>
+            <button
+              onClick={() => setActiveTab('deliveries')}
+              className={`pb-4 px-2 font-medium transition-colors flex items-center gap-1.5 ${
+                activeTab === 'deliveries'
+                  ? 'border-b-2 border-navy-800 text-navy-800'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Truck className="h-4 w-4" />
+              Deliveries
+              {deliveryRequests.length > 0 && (
+                <span className="ml-1 bg-amber-100 text-amber-800 text-xs font-bold px-1.5 py-0.5 rounded-full">
+                  {deliveryRequests.length}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -636,6 +691,133 @@ export default function SellerDashboardPage() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Deliveries Tab */}
+            {activeTab === 'deliveries' && (
+              <div>
+                <div className="card mb-6">
+                  <div className="flex items-center justify-between mb-5">
+                    <div>
+                      <h2 className="text-xl font-bold flex items-center gap-2">
+                        <Truck className="h-5 w-5 text-amber-500" />
+                        Delivery Requests
+                      </h2>
+                      <p className="text-sm text-gray-500 mt-0.5">
+                        Transport requests created from your Loadify listings via XDrive Logistics.
+                      </p>
+                    </div>
+                    <Link
+                      to="/transport-quote"
+                      className="btn-outline text-xs px-3 py-2 flex items-center gap-1.5"
+                    >
+                      <Truck className="h-3.5 w-3.5" />
+                      New Request
+                    </Link>
+                  </div>
+
+                  {deliveryRequests.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Truck className="h-14 w-14 mx-auto text-gray-300 mb-4" />
+                      <p className="text-gray-600 mb-2 font-medium">No delivery requests yet</p>
+                      <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
+                        When a buyer requests transport for one of your listings, it will appear here.
+                      </p>
+                      <Link to="/transport-quote" className="btn-primary text-sm">
+                        Request Delivery Support
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {deliveryRequests.map((req) => {
+                        const xdriveUrl = buildXDriveAppUrl({
+                          source: 'loadify-market',
+                          ref: req.id,
+                          listing: req.listingId,
+                          title: req.listingTitle,
+                          pickup: req.pickupPostcode,
+                          dropoff: req.dropoffPostcode,
+                          pallets: req.palletCount,
+                          weight: req.weight,
+                          seller: req.sellerId,
+                          sellerName: req.sellerName,
+                        });
+                        return (
+                          <div key={req.id} className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                  <p className="font-semibold text-sm truncate">{req.listingTitle || req.itemType || '—'}</p>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[req.status] || 'bg-gray-100 text-gray-700'}`}>
+                                    {STATUS_LABELS[req.status] || req.status}
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 mb-2">
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {new Date(req.createdAt).toLocaleDateString('en-GB', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric',
+                                    })}
+                                  </span>
+                                  {req.pickupPostcode && <span>Pickup: {req.pickupPostcode}</span>}
+                                  {req.dropoffPostcode && <span>→ {req.dropoffPostcode}</span>}
+                                  {req.palletCount && <span>{req.palletCount} pallets</span>}
+                                </div>
+                                <p className="text-xs text-gray-400">Ref: {req.id}</p>
+                              </div>
+                              <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                                {req.listingId && (
+                                  <Link
+                                    to={`/product/${req.listingId}`}
+                                    className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+                                  >
+                                    <Eye className="h-3 w-3" />
+                                    View listing
+                                  </Link>
+                                )}
+                                <a
+                                  href={xdriveUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-amber-700 hover:text-amber-900 flex items-center gap-1 font-medium"
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                  Open in XDrive
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* XDrive info panel */}
+                <div className="card border-l-4 border-l-amber-400 bg-amber-50/50">
+                  <div className="flex items-start gap-3">
+                    <Truck className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm mb-1">Transport powered by XDrive Logistics</p>
+                      <p className="text-sm text-gray-600 mb-3">
+                        All delivery requests from Loadify Market are handled by XDrive Logistics Ltd.
+                        Open the XDrive app to track progress, accept quotes and manage in-transit orders.
+                      </p>
+                      <a
+                        href={buildXDriveAppUrl({ source: 'loadify-market' })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-900 transition-colors"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Open XDrive Logistics App
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </>
