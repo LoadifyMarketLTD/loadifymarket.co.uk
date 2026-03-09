@@ -3,7 +3,7 @@ import { lazy, Suspense } from 'react';
 import {
   ShieldCheck, RotateCcw, MapPin, BadgeCheck, Lock,
   ArrowRight, Cpu, Shirt, Home, Wrench, Car, Package, Layers, Sparkles,
-  TrendingUp, Clock, Star, Truck, Tag,
+  TrendingUp, Clock, Star, Truck, Tag, Globe, CheckCircle2,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 
@@ -70,11 +70,111 @@ const TOP_DEALS = [
   { id: 6, title: 'Handmade Crafts Wholesale Box', discount: 45, price: 1299, rrp: 2349, tag: 'Wholesale', category: 'Handmade', location: 'Bristol' },
 ];
 
+const CREDIBILITY_CARDS = [
+  {
+    icon: ShieldCheck,
+    title: 'Secure Marketplace Platform',
+    description: 'End-to-end encrypted transactions with Stripe-powered payments and full fraud protection on every order.',
+  },
+  {
+    icon: BadgeCheck,
+    title: 'Verified Sellers',
+    description: 'Every seller is identity-verified before going live. Authentic ratings and reviews you can trust.',
+  },
+  {
+    icon: Truck,
+    title: 'Nationwide Delivery Support',
+    description: 'UK-wide collection and delivery coordination for bulk orders, pallets and wholesale stock.',
+  },
+  {
+    icon: Globe,
+    title: 'Growing Product Marketplace',
+    description: 'Thousands of products across retail, wholesale, clearance and pallet categories — all in one place.',
+  },
+];
+
+const TRENDING_CATEGORIES = [
+  {
+    title: 'Mixed Retail Pallets',
+    subtitle: 'Wholesale mixed stock from warehouses',
+    href: '/shop?category=pallet-deals',
+    image: 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=600&q=75&auto=format&fit=max&fm=webp',
+    imageSrcSet: 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=480&q=75&auto=format&fit=max&fm=webp 480w, https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=75&auto=format&fit=max&fm=webp 768w',
+  },
+  {
+    title: 'Electronics Wholesale Lots',
+    subtitle: 'Bulk electronics at clearance prices',
+    href: '/shop?category=electronics',
+    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=75&auto=format&fit=max&fm=webp',
+    imageSrcSet: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=480&q=75&auto=format&fit=max&fm=webp 480w, https://images.unsplash.com/photo-1518770660439-4636190af475?w=768&q=75&auto=format&fit=max&fm=webp 768w',
+  },
+  {
+    title: 'Clothing Bulk Deals',
+    subtitle: 'Fashion bundles and clearance lines',
+    href: '/shop?category=fashion',
+    image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=75&auto=format&fit=max&fm=webp',
+    imageSrcSet: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=480&q=75&auto=format&fit=max&fm=webp 480w, https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=768&q=75&auto=format&fit=max&fm=webp 768w',
+  },
+  {
+    title: 'Tools Clearance Stock',
+    subtitle: 'Trade-grade tools at wholesale cost',
+    href: '/shop?category=tools',
+    image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=75&auto=format&fit=max&fm=webp',
+    imageSrcSet: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=480&q=75&auto=format&fit=max&fm=webp 480w, https://images.unsplash.com/photo-1504148455328-c376907d081c?w=768&q=75&auto=format&fit=max&fm=webp 768w',
+  },
+  {
+    title: 'Home & Garden Overstock',
+    subtitle: 'Surplus home goods and garden stock',
+    href: '/shop?category=home-garden',
+    image: 'https://images.unsplash.com/photo-1416339306562-f3d12fefd36f?w=600&q=75&auto=format&fit=max&fm=webp',
+    imageSrcSet: 'https://images.unsplash.com/photo-1416339306562-f3d12fefd36f?w=480&q=75&auto=format&fit=max&fm=webp 480w, https://images.unsplash.com/photo-1416339306562-f3d12fefd36f?w=768&q=75&auto=format&fit=max&fm=webp 768w',
+  },
+  {
+    title: 'Mixed Warehouse Pallets',
+    subtitle: 'Unsorted wholesale pallets ready to move',
+    href: '/bulk',
+    image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&q=75&auto=format&fit=max&fm=webp',
+    imageSrcSet: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=480&q=75&auto=format&fit=max&fm=webp 480w, https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=768&q=75&auto=format&fit=max&fm=webp 768w',
+  },
+];
+
 export default function HomePage() {
   return (
     <div className="bg-jet">
       {/* Hero Section */}
       <CinematicHero />
+
+      {/* Marketplace Credibility Section */}
+      <section className="py-16 bg-jet">
+        <div className="container-cinematic">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1.5 mb-4">
+              <CheckCircle2 className="w-4 h-4 text-gold" />
+              <span className="text-gold text-xs font-medium">Why Choose Loadify Market</span>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-white">
+              Trusted UK <span className="text-gradient-gold">Marketplace</span>
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {CREDIBILITY_CARDS.map((card) => {
+              const Icon = card.icon;
+              return (
+                <div
+                  key={card.title}
+                  className="card-glass text-center hover:scale-[1.03] transition-all duration-300 group"
+                >
+                  <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-5 group-hover:bg-gold/20 transition-colors">
+                    <Icon className="h-7 w-7 text-gold" />
+                  </div>
+                  <h3 className="text-base font-bold text-white mb-3">{card.title}</h3>
+                  <p className="text-white/60 text-xs leading-relaxed">{card.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
       {/* Category Navigation Grid */}
       <section className="py-16 bg-graphite/20">
@@ -131,6 +231,58 @@ export default function HomePage() {
                 );
               })}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trending Stock Categories */}
+      <section className="py-16 bg-jet">
+        <div className="container-cinematic">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-premium-sm bg-gold/10">
+                <TrendingUp className="w-5 h-5 text-gold" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">Trending Stock Categories</h2>
+                <p className="text-white/50 text-sm">Popular buying categories right now</p>
+              </div>
+            </div>
+            <Link to="/shop" className="text-gold text-sm font-semibold hover:underline flex items-center gap-1">
+              Browse All <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {TRENDING_CATEGORIES.map((cat) => (
+              <Link
+                key={cat.title}
+                to={cat.href}
+                className="group relative overflow-hidden rounded-premium-md aspect-[16/9] cursor-pointer"
+              >
+                <img
+                  src={cat.image}
+                  srcSet={cat.imageSrcSet}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  alt={cat.title}
+                  className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-110"
+                  loading="lazy"
+                  decoding="async"
+                />
+                {/* Dark overlay — gradient bottom-up plus solid tint, combined */}
+                <div
+                  className="absolute inset-0 transition-opacity duration-300"
+                  style={{ background: 'linear-gradient(to top, rgba(10,10,10,0.92) 0%, rgba(10,10,10,0.45) 50%, rgba(0,0,0,0.35) 100%)' }}
+                />
+                {/* Card content */}
+                <div className="absolute inset-0 p-5 flex flex-col justify-end">
+                  <h3 className="text-base font-bold text-white mb-1 leading-tight">{cat.title}</h3>
+                  <p className="text-white/60 text-xs mb-2">{cat.subtitle}</p>
+                  <span className="text-gold text-xs font-semibold flex items-center gap-1 opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+                    Browse Category <ArrowRight className="w-3 h-3" />
+                  </span>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>

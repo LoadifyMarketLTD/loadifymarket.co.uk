@@ -4,6 +4,25 @@ import { ShoppingBag, Package, Store, ArrowRight, Truck } from 'lucide-react';
 export default function CinematicHero() {
   return (
     <section className="relative bg-jet overflow-hidden flex items-center min-h-[auto] md:min-h-[65vh]">
+      {/* Hero Background Image — warehouse / pallet / logistics theme */}
+      <div className="absolute inset-0 pointer-events-none">
+        <img
+          src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1600&q=70&auto=format&fit=max&fm=webp"
+          srcSet="
+            https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=768&q=70&auto=format&fit=max&fm=webp 768w,
+            https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1280&q=70&auto=format&fit=max&fm=webp 1280w,
+            https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1600&q=70&auto=format&fit=max&fm=webp 1600w"
+          sizes="100vw"
+          alt=""
+          aria-hidden="true"
+          className="w-full h-full object-cover object-center"
+          loading="eager"
+          decoding="async"
+        />
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.65)' }} />
+      </div>
+
       {/* Cinematic Background Effects */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-gold/10 rounded-full blur-[120px]" style={{ willChange: 'opacity' }} />
