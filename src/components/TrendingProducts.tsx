@@ -8,9 +8,10 @@ interface TrendingProductsProps {
   maxProducts?: number;
   days?: number;
   mode?: 'trending' | 'newest';
+  skip?: number;
 }
 
-export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'trending' }: TrendingProductsProps) {
+export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'trending', skip = 0 }: TrendingProductsProps) {
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,17 +19,31 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
     setLoading(true);
     try {
       if (mode === 'newest') {
-        // Newest listings — order by creation date descending
+        // Newest listings — order by creation date descending, with offset for deduplication
         const { data, error } = await supabase
           .from('products')
           .select('*')
           .eq('isApproved', true)
           .eq('isActive', true)
           .order('created_at', { ascending: false })
-          .limit(maxProducts);
+          .range(skip, skip + maxProducts - 1);
 
         if (error) throw error;
-        setTrendingProducts(data || []);
+
+        // Fallback: if skip returns nothing, fetch from start (small dataset)
+        if (!data || data.length === 0) {
+          const { data: fallbackData, error: fallbackErr } = await supabase
+            .from('products')
+            .select('*')
+            .eq('isApproved', true)
+            .eq('isActive', true)
+            .order('created_at', { ascending: false })
+            .limit(maxProducts);
+          if (fallbackErr) throw fallbackErr;
+          setTrendingProducts(fallbackData || []);
+        } else {
+          setTrendingProducts(data);
+        }
         return;
       }
 
@@ -83,7 +98,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
     } finally {
       setLoading(false);
     }
-  }, [days, maxProducts, mode]);
+  }, [days, maxProducts, mode, skip]);
 
   useEffect(() => {
     fetchTrendingProducts();
@@ -91,8 +106,8 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 gap-4">
-        {[...Array(Math.min(maxProducts, 4))].map((_, i) => (
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {[...Array(maxProducts)].map((_, i) => (
           <div key={i} className="animate-pulse">
             <div className="bg-graphite aspect-[4/3] rounded-premium-sm mb-2"></div>
             <div className="bg-graphite h-4 rounded mb-1"></div>
@@ -108,7 +123,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
       {trendingProducts.map((product, index) => (
         <Link
           key={product.id}

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import {
   ShieldCheck, RotateCcw, MapPin, BadgeCheck, Lock,
-  ArrowRight, Cpu, Shirt, Home, Wrench, Car, Package, Layers, Sparkles,
+  ArrowRight, Package, Layers, Sparkles,
   Flame, Clock, Truck, Tag, CheckCircle2, ArrowRightCircle, Users, Store,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
@@ -18,17 +18,6 @@ const B2B_PILLARS = [
   { name: 'Wholesale', icon: Tag, href: '/shop?category=wholesale' },
   { name: 'Clearance', icon: Sparkles, href: '/shop?category=clearance' },
   { name: 'Logistics Loads', icon: Truck, href: '/shop?category=logistics' },
-];
-
-const CATEGORIES = [
-  { name: 'Electronics', icon: Cpu, slug: 'electronics' },
-  { name: 'Fashion', icon: Shirt, slug: 'fashion' },
-  { name: 'Home & Garden', icon: Home, slug: 'home-garden' },
-  { name: 'Tools', icon: Wrench, slug: 'tools' },
-  { name: 'Vehicles', icon: Car, slug: 'vehicles' },
-  { name: 'Bulk Lots', icon: Package, slug: 'bulk-lots' },
-  { name: 'Pallet Deals', icon: Layers, slug: 'pallet-deals' },
-  { name: 'Handmade', icon: Sparkles, slug: 'handmade' },
 ];
 
 const TRUST_ITEMS = [
@@ -213,7 +202,7 @@ export default function HomePage() {
       </section>
 
       {/* 2 — Shop By Category */}
-      <section className="py-8 md:py-12 bg-graphite/20">
+      <section className="py-8 md:py-10 bg-graphite/20">
         <div className="container-cinematic">
           <div className="flex items-center justify-between mb-5">
             <div>
@@ -228,37 +217,20 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Product categories — primary browse entry */}
-          <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-5">
-            {CATEGORIES.map((cat) => {
-              const Icon = cat.icon;
-              return (
-                <Link
-                  key={cat.slug}
-                  to={`/shop?category=${cat.slug}`}
-                  className="group flex flex-col items-center justify-center p-3 md:p-4 rounded-premium-sm bg-graphite/60 border border-white/8 hover:border-gold/50 hover:bg-graphite/80 transition-all duration-300 text-center"
-                >
-                  <div className="w-9 h-9 rounded-full bg-gold/10 flex items-center justify-center mb-2 group-hover:bg-gold/25 transition-colors">
-                    <Icon className="w-4 h-4 text-gold" />
-                  </div>
-                  <span className="text-xs font-semibold text-white leading-tight">{cat.name}</span>
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Trade type strip */}
-          <div className="flex flex-wrap gap-2">
+          {/* B2B trade categories — 2-col mobile, 3-col tablet/desktop */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {B2B_PILLARS.map((pillar) => {
               const Icon = pillar.icon;
               return (
                 <Link
                   key={pillar.name}
                   to={pillar.href}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-graphite/50 border border-gold/15 hover:border-gold/50 hover:bg-graphite/80 transition-all duration-200 text-xs font-semibold text-white/80 hover:text-gold"
+                  className="group flex flex-col items-center justify-center p-4 md:p-5 rounded-premium-md bg-graphite/60 border border-gold/20 hover:border-gold/60 hover:bg-graphite/80 transition-all duration-300 text-center"
                 >
-                  <Icon className="w-3.5 h-3.5 text-gold" />
-                  {pillar.name}
+                  <div className="w-11 h-11 rounded-full bg-gold/15 flex items-center justify-center mb-3 group-hover:bg-gold/30 transition-colors">
+                    <Icon className="w-5 h-5 text-gold" />
+                  </div>
+                  <span className="text-sm font-bold text-white leading-tight">{pillar.name}</span>
                 </Link>
               );
             })}
@@ -292,14 +264,14 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            {TOP_DEALS.slice(0, 4).map((deal) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {TOP_DEALS.map((deal) => (
               <Link key={deal.id} to="/bulk" className="card-product group block">
                 <div className="relative aspect-[4/3] overflow-hidden bg-graphite">
                   <img
                     src={deal.image}
                     srcSet={deal.imageSrcSet}
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 25vw"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 33vw"
                     alt={deal.title}
                     className="absolute inset-0 w-full h-full object-cover object-center opacity-80 group-hover:scale-105 group-hover:opacity-70 transition-all duration-500"
                     loading="lazy"
@@ -360,8 +332,8 @@ export default function HomePage() {
               View Trending <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          <Suspense fallback={<div className="grid grid-cols-2 md:grid-cols-4 gap-4 min-h-[220px]" />}>
-            <TrendingProducts maxProducts={4} days={7} mode="trending" />
+          <Suspense fallback={<div className="grid grid-cols-2 md:grid-cols-3 gap-4 min-h-[220px]" />}>
+            <TrendingProducts maxProducts={6} days={7} mode="trending" />
           </Suspense>
         </div>
       </section>
@@ -383,8 +355,8 @@ export default function HomePage() {
               View Newest <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          <Suspense fallback={<div className="grid grid-cols-2 md:grid-cols-4 gap-4 min-h-[220px]" />}>
-            <TrendingProducts maxProducts={4} days={30} mode="newest" />
+          <Suspense fallback={<div className="grid grid-cols-2 md:grid-cols-3 gap-4 min-h-[220px]" />}>
+            <TrendingProducts maxProducts={6} days={30} mode="newest" skip={6} />
           </Suspense>
         </div>
       </section>
@@ -407,7 +379,7 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {BULK_DEALS.map((lot) => (
               <Link key={lot.id} to="/bulk" className="group block bg-graphite/70 rounded-premium-md overflow-hidden border border-gold/10 hover:border-gold/40 hover:shadow-cinematic-gold transition-all duration-300">
                 <div className="relative aspect-[16/9] overflow-hidden bg-graphite">
@@ -469,7 +441,37 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 7 — How It Works + Arrange Delivery */}
+      {/* 7 — Trust Section (products first, info after) */}
+      <section className="py-12 md:py-16 bg-jet border-t border-white/5">
+        <div className="container-cinematic">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4">
+              Why Buyers and Sellers Trust{' '}
+              <span className="text-gradient-gold">Loadify Market</span>
+            </h2>
+            <p className="text-white/60 text-base max-w-2xl mx-auto">
+              Every layer of the platform is built with buyer and seller protection in mind.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            {TRUST_ITEMS.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.title} className="card-glass text-center hover:scale-[1.03] transition-all duration-500 group">
+                  <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-5 group-hover:bg-gold/20 transition-colors">
+                    <Icon className="h-7 w-7 text-gold" />
+                  </div>
+                  <h3 className="text-base font-bold text-white mb-3">{item.title}</h3>
+                  <p className="text-white/60 text-xs leading-relaxed">{item.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* 8 — How It Works */}
       <Suspense fallback={<div className="py-12 bg-jet min-h-[400px]" />}>
         <CinematicStoryStrip />
       </Suspense>
@@ -548,36 +550,6 @@ export default function HomePage() {
             <p className="text-center text-white/30 text-xs mt-6">
               Transport quotes are provided by our UK-wide pallet and bulk delivery partners.
             </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 8 — Trust Section */}
-      <section className="py-12 md:py-16 bg-jet">
-        <div className="container-cinematic">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4">
-              Why Buyers and Sellers Trust{' '}
-              <span className="text-gradient-gold">Loadify Market</span>
-            </h2>
-            <p className="text-white/60 text-base max-w-2xl mx-auto">
-              Every layer of the platform is built with buyer and seller protection in mind.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            {TRUST_ITEMS.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.title} className="card-glass text-center hover:scale-[1.03] transition-all duration-500 group">
-                  <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-5 group-hover:bg-gold/20 transition-colors">
-                    <Icon className="h-7 w-7 text-gold" />
-                  </div>
-                  <h3 className="text-base font-bold text-white mb-3">{item.title}</h3>
-                  <p className="text-white/60 text-xs leading-relaxed">{item.description}</p>
-                </div>
-              );
-            })}
           </div>
         </div>
       </section>

@@ -3,7 +3,7 @@ import { ShoppingBag, Package, Store, ArrowRight, ShieldCheck, Star, RefreshCw, 
 
 export default function CinematicHero() {
   return (
-    <section className="relative bg-jet overflow-hidden flex items-center min-h-[auto] md:min-h-[65vh]">
+    <section className="relative bg-jet overflow-hidden flex items-center min-h-[45vh] md:min-h-[55vh]">
       {/* Hero Background Image — warehouse / pallet / logistics theme */}
       <div className="absolute inset-0 pointer-events-none">
         <img
@@ -40,10 +40,10 @@ export default function CinematicHero() {
       </div>
 
       {/* Hero Content */}
-      <div className="container-cinematic relative z-10 pt-16 pb-8 md:pt-28 md:pb-20">
+      <div className="container-cinematic relative z-10 pt-10 pb-6 md:pt-14 md:pb-10">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/30 rounded-full px-4 py-2 mb-5 md:mb-8">
+          {/* Badge — hidden on mobile to save vertical space */}
+          <div className="hidden sm:inline-flex items-center gap-2 bg-gold/10 border border-gold/30 rounded-full px-4 py-2 mb-4 md:mb-6">
             <span className="w-2 h-2 rounded-full bg-gold animate-pulse"></span>
             <span className="text-gold text-sm font-medium">UK's Premier Multi-Category Marketplace</span>
           </div>
@@ -53,13 +53,13 @@ export default function CinematicHero() {
             Buy &amp; Sell Anything – Products, Pallets and Bulk Deals
           </h1>
 
-          {/* Subheadline */}
-          <p className="text-base md:text-xl text-white/60 max-w-2xl mx-auto mb-6 md:mb-10">
+          {/* Subheadline — hidden on mobile to keep hero compact */}
+          <p className="hidden sm:block text-base md:text-xl text-white/60 max-w-2xl mx-auto mb-6 md:mb-8">
             Open marketplace where anyone can buy or sell products across the UK.
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 mb-6 md:mb-14">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 mb-5 md:mb-8">
             {/* PRIMARY CTA */}
             <Link to="/shop" className="btn-primary inline-flex items-center group text-lg px-8 py-4">
               <ShoppingBag className="mr-2 h-6 w-6" />
@@ -79,101 +79,8 @@ export default function CinematicHero() {
             </Link>
           </div>
 
-          {/* Category Panels - 3 main categories — hidden on mobile to get to products faster */}
-          <div className="hidden md:grid grid-cols-3 gap-6 lg:gap-8">
-            {/* B2C Products Panel */}
-            <Link to="/shop" className="group relative overflow-hidden rounded-premium-lg aspect-[16/10] cursor-pointer hero-image-wrapper">
-              <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet hero-media">
-                <img
-                  src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=600&q=75&auto=format&fit=max&fm=webp"
-                  srcSet="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=480&q=75&auto=format&fit=max&fm=webp 480w,
-                          https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=768&q=75&auto=format&fit=max&fm=webp 768w"
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  alt="Shop Products"
-                  className="w-full h-full object-cover object-center opacity-60 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
-                  loading="eager"
-                  decoding="async"
-                />
-              </div>
-              <div className="absolute inset-0 bg-gradient-overlay" />
-              <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                <div className="flex items-center mb-3">
-                  <div className="p-2 rounded-premium-sm bg-gold/20 mr-3">
-                    <ShoppingBag className="h-6 w-6 text-gold" />
-                  </div>
-                  <span className="badge-gold">B2C</span>
-                </div>
-                <h2 className="heading-card text-white mb-2">Shop Products</h2>
-                <p className="text-white/60 text-sm mb-4">Electronics, fashion, tools, bikes &amp; more</p>
-                <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
-                  Browse Products <ArrowRight className="ml-2 h-4 w-4" />
-                </span>
-              </div>
-            </Link>
-
-            {/* Bulk / Pallets Panel */}
-            <Link to="/bulk" className="group relative overflow-hidden rounded-premium-lg aspect-[16/10] cursor-pointer hero-image-wrapper">
-              <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet hero-media">
-                <img
-                  src="https://images.unsplash.com/photo-1553413077-190dd305871c?w=600&q=75&auto=format&fit=max&fm=webp"
-                  srcSet="https://images.unsplash.com/photo-1553413077-190dd305871c?w=480&q=75&auto=format&fit=max&fm=webp 480w,
-                          https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=75&auto=format&fit=max&fm=webp 768w"
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  alt="Bulk Lots and Pallets"
-                  className="w-full h-full object-cover object-top opacity-60 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <div className="absolute inset-0 bg-gradient-overlay" />
-              <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                <div className="flex items-center mb-3">
-                  <div className="p-2 rounded-premium-sm bg-gold/20 mr-3">
-                    <Package className="h-6 w-6 text-gold" />
-                  </div>
-                  <span className="badge-gold">B2B</span>
-                </div>
-                <h2 className="heading-card text-white mb-2">Bulk &amp; Pallets</h2>
-                <p className="text-white/60 text-sm mb-4">Pallet lots, liquidation stock &amp; wholesale bundles</p>
-                <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
-                  Browse Bulk Lots <ArrowRight className="ml-2 h-4 w-4" />
-                </span>
-              </div>
-            </Link>
-
-            {/* Sell on Loadify Panel */}
-            <Link to="/register?type=seller" className="group relative overflow-hidden rounded-premium-lg aspect-[16/10] cursor-pointer hero-image-wrapper">
-              <div className="absolute inset-0 bg-gradient-to-br from-graphite to-jet hero-media">
-                <img
-                  src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=75&auto=format&fit=max&fm=webp"
-                  srcSet="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=480&q=75&auto=format&fit=max&fm=webp 480w,
-                          https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=768&q=75&auto=format&fit=max&fm=webp 768w"
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  alt="Sell on Loadify"
-                  className="w-full h-full object-cover object-center opacity-50 transition-all duration-700 group-hover:scale-110 group-hover:opacity-40"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-              <div className="absolute inset-0 bg-gradient-overlay" />
-              <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                <div className="flex items-center mb-3">
-                  <div className="p-2 rounded-premium-sm bg-gold/20 mr-3">
-                    <Store className="h-6 w-6 text-gold" />
-                  </div>
-                  <span className="badge-gold">Sellers</span>
-                </div>
-                <h2 className="heading-card text-white mb-2">Sell on Loadify</h2>
-                <p className="text-white/60 text-sm mb-4">Register, list products &amp; start selling today</p>
-                <span className="text-gold text-sm font-semibold flex items-center opacity-0 translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
-                  Start Selling <ArrowRight className="ml-2 h-4 w-4" />
-                </span>
-              </div>
-            </Link>
-          </div>
-
           {/* Trust Indicators */}
-          <div className="mt-5 md:mt-10 flex flex-wrap items-center justify-center gap-4 md:gap-8 text-white/70 text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 text-white/70 text-sm">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-gold" />
               Secure Payments
