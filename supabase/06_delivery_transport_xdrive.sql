@@ -1,157 +1,115 @@
--- ============================================================
+-- ================================================================
 -- 06_delivery_transport_xdrive.sql
--- Loadify Market — Delivery Requests, Transport Quotes & Shipments
--- ============================================================
--- Covers: delivery_requests, transport_quotes,
---         shipments, shipment_events
--- ============================================================
--- Depends on: 01_users_profiles.sql, 02_categories_products.sql,
---             03_cart_orders_checkout.sql
--- ============================================================
+-- Loadify Market — Logistics, Transport & RFQ
+-- ================================================================
+-- IMPORTANT: shipments & shipment_events use snake_case columns
+-- because they are written by Netlify serverless functions:
+--   - netlify/functions/create-shipment.ts
+--   - netlify/functions/update-shipment-status.ts
+--   - netlify/functions/upload-proof-of-delivery.ts
+-- All other tables in this file use camelCase.
+-- Depends on: 01, 02, 03
+-- ================================================================
 
--- ──────────────────────────────────────────────────────────────
--- DELIVERY REQUESTS
--- Created when a buyer or seller initiates a transport/logistics
--- request via the XDrive integration flow.
--- ──────────────────────────────────────────────────────────────
+-- ── DELIVERY REQUESTS ───────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS delivery_requests (
-  id                  UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
-  -- Context
-  listing_id          UUID        REFERENCES products(id) ON DELETE SET NULL,
-  listing_title       TEXT,
-  order_id            UUID        REFERENCES orders(id) ON DELETE SET NULL,
-  seller_id           UUID        REFERENCES users(id) ON DELETE SET NULL,
-  seller_name         TEXT,
-  -- Requester (may be guest)
-  buyer_id            UUID        REFERENCES users(id) ON DELETE SET NULL,
-  buyer_name          TEXT        NOT NULL,
-  buyer_email         TEXT        NOT NULL,
-  -- Route
-  pickup_postcode     TEXT        NOT NULL,
-  dropoff_postcode    TEXT        NOT NULL,
-  pickup_address      JSONB,      -- full address snapshot
-  dropoff_address     JSONB,
-  -- Load details
-  pallet_count        INTEGER,
-  weight_kg           DECIMAL(10,2),
-  item_type           TEXT,
-  category            TEXT,
-  quantity            INTEGER,
-  special_instructions TEXT,
-  -- Status tracking
-  status              TEXT        NOT NULL DEFAULT 'draft'
-                        CHECK (status IN (
-                          'draft','submitted','in_review','quoted',
-                          'accepted','in_transit','delivered','cancelled'
-                        )),
-  -- XDrive reference (returned by external API)
-  xdrive_ref          TEXT,
-  -- Attribution
-  source              TEXT        NOT NULL DEFAULT 'loadify-market',
-  -- Timestamps
-  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id                    UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "listingId"           UUID        REFERENCES products(id) ON DELETE SET NULL,
+  "listingTitle"        TEXT,
+  "orderId"             UUID        REFERENCES orders(id) ON DELETE SET NULL,
+  "sellerId"            UUID        REFERENCES users(id) ON DELETE SET NULL,
+  "sellerName"          TEXT,
+  "buyerId"             UUID        REFERENCES users(id) ON DELETE SET NULL,
+  "buyerName"           TEXT        NOT NULL,
+  "buyerEmail"          TEXT        NOT NULL,
+  "pickupPostcode"      TEXT        NOT NULL,
+  "dropoffPostcode"     TEXT        NOT NULL,
+  "pickupAddress"       JSONB,
+  "dropoffAddress"      JSONB,
+  "palletCount"         INTEGER,
+  "weightKg"            DECIMAL(10,2),
+  "itemType"            TEXT,
+  category              TEXT,
+  quantity              INTEGER,
+  "specialInstructions" TEXT,
+  status                TEXT        NOT NULL DEFAULT 'draft'
+                          CHECK (status IN ('draft','submitted','in_review','quoted','accepted','in_transit','delivered','cancelled')),
+  "xdriveRef"           TEXT,
+  source                TEXT        NOT NULL DEFAULT 'loadify-market',
+  "createdAt"           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  "updatedAt"           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-CREATE INDEX IF NOT EXISTS idx_delivery_requests_seller    ON delivery_requests (seller_id);
-CREATE INDEX IF NOT EXISTS idx_delivery_requests_buyer     ON delivery_requests (buyer_id);
-CREATE INDEX IF NOT EXISTS idx_delivery_requests_order     ON delivery_requests (order_id);
-CREATE INDEX IF NOT EXISTS idx_delivery_requests_listing   ON delivery_requests (listing_id);
-CREATE INDEX IF NOT EXISTS idx_delivery_requests_status    ON delivery_requests (status);
-CREATE INDEX IF NOT EXISTS idx_delivery_requests_created   ON delivery_requests (created_at DESC);
-
-CREATE TRIGGER trg_delivery_requests_updated_at
-  BEFORE UPDATE ON delivery_requests
+CREATE INDEX IF NOT EXISTS idx_delivery_requests_seller ON delivery_requests ("sellerId");
+CREATE INDEX IF NOT EXISTS idx_delivery_requests_buyer  ON delivery_requests ("buyerId");
+CREATE INDEX IF NOT EXISTS idx_delivery_requests_status ON delivery_requests (status);
+CREATE TRIGGER trg_delivery_requests_updatedAt BEFORE UPDATE ON delivery_requests
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- ──────────────────────────────────────────────────────────────
--- TRANSPORT QUOTES
--- Quotes returned by XDrive or entered manually by logistics
--- carriers in response to a delivery request.
--- ──────────────────────────────────────────────────────────────
+-- ── TRANSPORT QUOTES ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS transport_quotes (
-  id                      UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
-  delivery_request_id     UUID        NOT NULL REFERENCES delivery_requests(id) ON DELETE CASCADE,
-  -- Quote provider
-  carrier_id              UUID        REFERENCES users(id) ON DELETE SET NULL,
-  carrier_name            TEXT        NOT NULL DEFAULT 'XDrive Logistics',
-  -- Quote details
-  quoted_price            DECIMAL(12,2) NOT NULL,
-  currency                TEXT        NOT NULL DEFAULT 'GBP',
-  vat_rate                DECIMAL(5,4) NOT NULL DEFAULT 0.2000,
-  estimated_transit_days  INTEGER,
-  vehicle_type            TEXT,
-  service_level           TEXT        CHECK (service_level IN ('economy','standard','express','same_day')),
-  notes                   TEXT,
-  -- Status
-  status                  TEXT        NOT NULL DEFAULT 'pending'
-                            CHECK (status IN ('pending','accepted','rejected','expired','superseded')),
-  valid_until             TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '7 days'),
-  accepted_at             TIMESTAMPTZ,
-  -- XDrive reference
-  xdrive_quote_id         TEXT,
-  created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id                     UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "deliveryRequestId"    UUID         NOT NULL REFERENCES delivery_requests(id) ON DELETE CASCADE,
+  "carrierId"            UUID         REFERENCES users(id) ON DELETE SET NULL,
+  "carrierName"          TEXT         NOT NULL DEFAULT 'XDrive Logistics',
+  "quotedPrice"          DECIMAL(12,2) NOT NULL,
+  currency               TEXT         NOT NULL DEFAULT 'GBP',
+  "vatRate"              DECIMAL(5,4) NOT NULL DEFAULT 0.2000,
+  "estimatedTransitDays" INTEGER,
+  "vehicleType"          TEXT,
+  "serviceLevel"         TEXT         CHECK ("serviceLevel" IN ('economy','standard','express','same_day')),
+  notes                  TEXT,
+  status                 TEXT         NOT NULL DEFAULT 'pending'
+                           CHECK (status IN ('pending','accepted','rejected','expired','superseded')),
+  "validUntil"           TIMESTAMPTZ  DEFAULT (NOW() + INTERVAL '7 days'),
+  "acceptedAt"           TIMESTAMPTZ,
+  "xdriveQuoteId"        TEXT,
+  "createdAt"            TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  "updatedAt"            TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
-
-CREATE INDEX IF NOT EXISTS idx_transport_quotes_request  ON transport_quotes (delivery_request_id);
-CREATE INDEX IF NOT EXISTS idx_transport_quotes_carrier  ON transport_quotes (carrier_id);
-CREATE INDEX IF NOT EXISTS idx_transport_quotes_status   ON transport_quotes (status);
-
-CREATE TRIGGER trg_transport_quotes_updated_at
-  BEFORE UPDATE ON transport_quotes
+CREATE INDEX IF NOT EXISTS idx_transport_quotes_request ON transport_quotes ("deliveryRequestId");
+CREATE INDEX IF NOT EXISTS idx_transport_quotes_status  ON transport_quotes (status);
+CREATE TRIGGER trg_transport_quotes_updatedAt BEFORE UPDATE ON transport_quotes
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- ──────────────────────────────────────────────────────────────
--- SHIPMENTS
--- Tracks the physical movement of goods for a given order.
--- One order → one or more shipments (split shipments).
--- ──────────────────────────────────────────────────────────────
+-- ── SHIPMENTS — snake_case columns ───────────────────────────────
+-- NOTE: This table intentionally uses snake_case (not camelCase) because
+-- it is written by Netlify serverless functions (create-shipment.ts,
+-- update-shipment-status.ts, upload-proof-of-delivery.ts).
+-- The foreign key to orders.id is still valid even though orders uses
+-- camelCase for its own columns — FK references the primary key only.
 CREATE TABLE IF NOT EXISTS shipments (
   id                      UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
   order_id                UUID        NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   delivery_request_id     UUID        REFERENCES delivery_requests(id) ON DELETE SET NULL,
   seller_id               UUID        NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   buyer_id                UUID        NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-  -- Carrier
   courier_name            TEXT,
   courier_service         TEXT,
-  -- Tracking
   tracking_number         TEXT,
   tracking_url            TEXT,
-  -- Status
   status                  TEXT        NOT NULL DEFAULT 'Pending'
                             CHECK (status IN (
                               'Pending','Processing','Dispatched','In Transit',
                               'Out for Delivery','Delivered','Returned','Delivery Failed'
                             )),
-  -- Proof of delivery
   proof_of_delivery_url   TEXT,
-  proof_of_delivery_data  JSONB,      -- {images, signature, deliveredBy, receivedBy}
-  -- Dates
+  proof_of_delivery_data  JSONB,
   estimated_delivery_date DATE,
   dispatched_at           TIMESTAMPTZ,
   delivered_at            TIMESTAMPTZ,
-  -- Admin notes
   admin_notes             TEXT,
   created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE INDEX IF NOT EXISTS idx_shipments_order    ON shipments (order_id);
+CREATE INDEX IF NOT EXISTS idx_shipments_seller   ON shipments (seller_id);
+CREATE INDEX IF NOT EXISTS idx_shipments_buyer    ON shipments (buyer_id);
+CREATE INDEX IF NOT EXISTS idx_shipments_tracking ON shipments (tracking_number);
+CREATE INDEX IF NOT EXISTS idx_shipments_status   ON shipments (status);
+CREATE TRIGGER trg_shipments_updated_at BEFORE UPDATE ON shipments
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column_snake();
 
-CREATE INDEX IF NOT EXISTS idx_shipments_order     ON shipments (order_id);
-CREATE INDEX IF NOT EXISTS idx_shipments_seller    ON shipments (seller_id);
-CREATE INDEX IF NOT EXISTS idx_shipments_buyer     ON shipments (buyer_id);
-CREATE INDEX IF NOT EXISTS idx_shipments_tracking  ON shipments (tracking_number);
-CREATE INDEX IF NOT EXISTS idx_shipments_status    ON shipments (status);
-
-CREATE TRIGGER trg_shipments_updated_at
-  BEFORE UPDATE ON shipments
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- ──────────────────────────────────────────────────────────────
--- SHIPMENT EVENTS
--- Full audit trail / tracking timeline for each shipment.
--- ──────────────────────────────────────────────────────────────
+-- ── SHIPMENT EVENTS — snake_case columns ─────────────────────────
 CREATE TABLE IF NOT EXISTS shipment_events (
   id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
   shipment_id UUID        NOT NULL REFERENCES shipments(id) ON DELETE CASCADE,
@@ -163,50 +121,55 @@ CREATE TABLE IF NOT EXISTS shipment_events (
                 CHECK (source IN ('manual','xdrive_webhook','system','courier_api')),
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
 CREATE INDEX IF NOT EXISTS idx_shipment_events_shipment ON shipment_events (shipment_id);
 CREATE INDEX IF NOT EXISTS idx_shipment_events_created  ON shipment_events (created_at DESC);
 
--- ──────────────────────────────────────────────────────────────
--- FUNCTION: auto-create shipment event when shipment status changes
--- ──────────────────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION record_shipment_status_change()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF OLD.status IS DISTINCT FROM NEW.status THEN
-    INSERT INTO shipment_events (shipment_id, status, message, source)
-    VALUES (NEW.id, NEW.status, 'Status updated to ' || NEW.status, 'system');
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+-- ── RFQ REQUESTS ─────────────────────────────────────────────────
+-- FK/meta fields: camelCase; form payload fields: snake_case
+-- (RFQPage.tsx inserts buyer_email, product_name, etc. with these exact keys)
+CREATE TABLE IF NOT EXISTS rfq_requests (
+  id                  UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "buyerId"           UUID        REFERENCES users(id) ON DELETE SET NULL,
+  buyer_email         TEXT        NOT NULL,
+  product_name        TEXT        NOT NULL,
+  quantity            TEXT        NOT NULL,
+  unit                TEXT,
+  destination_country TEXT        NOT NULL,
+  estimated_budget    TEXT        NOT NULL,
+  currency            TEXT        NOT NULL DEFAULT 'GBP',
+  message             TEXT,
+  "categoryId"        UUID        REFERENCES categories(id) ON DELETE SET NULL,
+  "attachmentUrls"    TEXT[]      NOT NULL DEFAULT '{}',
+  status              TEXT        NOT NULL DEFAULT 'pending'
+                        CHECK (status IN ('pending','replied','closed','expired')),
+  "expiresAt"         TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '30 days'),
+  "createdAt"         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  "updatedAt"         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_rfq_requests_buyer   ON rfq_requests ("buyerId");
+CREATE INDEX IF NOT EXISTS idx_rfq_requests_status  ON rfq_requests (status);
+CREATE INDEX IF NOT EXISTS idx_rfq_requests_created ON rfq_requests ("createdAt" DESC);
+CREATE TRIGGER trg_rfq_requests_updatedAt BEFORE UPDATE ON rfq_requests
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER trg_shipments_record_status_change
-  AFTER UPDATE OF status ON shipments
-  FOR EACH ROW EXECUTE FUNCTION record_shipment_status_change();
-
--- ──────────────────────────────────────────────────────────────
--- FUNCTION: sync shipment status back to order status
--- ──────────────────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION sync_order_status_from_shipment()
-RETURNS TRIGGER AS $$
-BEGIN
-  IF NEW.status = 'Delivered' THEN
-    UPDATE orders
-    SET status        = 'delivered',
-        delivered_at  = NOW(),
-        updated_at    = NOW()
-    WHERE id = NEW.order_id AND status NOT IN ('delivered','cancelled','refunded');
-  ELSIF NEW.status = 'In Transit' OR NEW.status = 'Dispatched' THEN
-    UPDATE orders
-    SET status      = 'shipped',
-        updated_at  = NOW()
-    WHERE id = NEW.order_id AND status = 'packed';
-  END IF;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_shipments_sync_order_status
-  AFTER UPDATE OF status ON shipments
-  FOR EACH ROW EXECUTE FUNCTION sync_order_status_from_shipment();
+-- ── RFQ RESPONSES ────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS rfq_responses (
+  id               UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "rfqId"          UUID         NOT NULL REFERENCES rfq_requests(id) ON DELETE CASCADE,
+  "sellerId"       UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "quotedPrice"    DECIMAL(12,2) NOT NULL,
+  currency         TEXT         NOT NULL DEFAULT 'GBP',
+  "leadTimeDays"   INTEGER,
+  message          TEXT         NOT NULL,
+  "attachmentUrls" TEXT[]       NOT NULL DEFAULT '{}',
+  status           TEXT         NOT NULL DEFAULT 'submitted'
+                     CHECK (status IN ('submitted','accepted','rejected','withdrawn')),
+  "acceptedAt"     TIMESTAMPTZ,
+  "createdAt"      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  "updatedAt"      TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  UNIQUE ("rfqId", "sellerId")
+);
+CREATE INDEX IF NOT EXISTS idx_rfq_responses_rfq    ON rfq_responses ("rfqId");
+CREATE INDEX IF NOT EXISTS idx_rfq_responses_seller ON rfq_responses ("sellerId");
+CREATE TRIGGER trg_rfq_responses_updatedAt BEFORE UPDATE ON rfq_responses
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
