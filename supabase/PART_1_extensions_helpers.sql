@@ -2,14 +2,11 @@
 -- PART 1 — Extensions + Helper Functions
 -- Loadify Market — Complete Supabase Schema
 -- ================================================================
--- FIXED VERSION — use this instead of the original PART 1
---
--- KEY FIX: is_admin_or_owner(), is_owner(), is_seller() now use
--- LANGUAGE plpgsql instead of LANGUAGE sql.
--- This prevents "relation users does not exist" errors when the
--- function is DEFINED before the users table is CREATED.
--- With plpgsql, table references are validated at CALL TIME.
--- With sql, table references are validated at CREATION TIME.
+-- Run this FIRST, before any other SQL file.
+-- All functions use LANGUAGE plpgsql so that references to the
+-- "users" table are resolved at CALL TIME, not at creation time.
+-- This means you can safely create these functions before the
+-- users table exists.
 -- ================================================================
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

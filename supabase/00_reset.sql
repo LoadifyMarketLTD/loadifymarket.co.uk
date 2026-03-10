@@ -6,9 +6,13 @@
 -- Run this ONLY when you need a clean slate before re-running the
 -- full schema. Safe to run on an empty database too.
 --
+-- Also drops old table names from the legacy snake_case schema
+-- (listings, profiles) so upgrades start clean.
+--
 -- CASCADE handles any leftover foreign-key dependencies.
 -- ================================================================
 
+-- Current schema tables (camelCase-column, new names)
 DROP TABLE IF EXISTS coupon_usage             CASCADE;
 DROP TABLE IF EXISTS shipment_events          CASCADE;
 DROP TABLE IF EXISTS shipments                CASCADE;
@@ -53,6 +57,10 @@ DROP TABLE IF EXISTS categories               CASCADE;
 DROP TABLE IF EXISTS banners                  CASCADE;
 DROP TABLE IF EXISTS platform_settings        CASCADE;
 DROP TABLE IF EXISTS users                    CASCADE;
+
+-- Legacy table names from old snake_case schema (safe no-ops if absent)
+DROP TABLE IF EXISTS listings                 CASCADE;
+DROP TABLE IF EXISTS profiles                 CASCADE;
 
 DROP SEQUENCE IF EXISTS order_number_seq;
 

@@ -1,128 +1,127 @@
-# SQL Debug Notes — All Errors Explained & Fixed
+# SQL Run Guide — Loadify Market
 
-All errors have been fixed in the individual SQL files (01–10) and in
-`00_consolidated_schema.sql`. Below is a summary of every error and fix.
-
----
-
-## ERROR 1 — PART 1: `42P01: relation "users" does not exist`
-
-**File:** Part 1 / `10_rls_policies.sql` helper functions block
-
-**Root cause:**
-`is_admin_or_owner()`, `is_owner()`, `is_seller()` used `LANGUAGE sql`.
-Postgres validates table references in `LANGUAGE sql` functions **at creation
-time**, so they fail if `users` does not exist yet.
-
-**Fix:** Changed to `LANGUAGE plpgsql` — table references are validated at
-**call time**, not creation time. This is correct because the helpers must
-be created in Part 1 (before any tables exist) and called in Part 9 (RLS).
-
-```sql
--- BEFORE (broken):
-$$ LANGUAGE sql STABLE SECURITY DEFINER;
-
--- AFTER (fixed):
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
-```
-
----
-
-## ERROR 2 — PART 2: `42883: function update_updated_at_column() does not exist`
-
-**File:** Part 2 / `01_users_profiles.sql`
-
-**Root cause:** Part 2 was run without running Part 1 first.
-The `update_updated_at_column()` function is defined in Part 1.
-
-**Fix:** Always run PART 1 before PART 2. The function is defined in:
-- `00_consolidated_schema.sql` (single-file run)
-- Or in `10_rls_policies.sql` preamble (individual run)
-
-If running individual files, run `10_rls_policies.sql` helper section first,
-OR run the helper block from the top of `10_rls_policies.sql` manually.
-
----
-
-## ERROR 3 — PART 3: `42703: column "parentId" does not exist`
-
-**File:** Part 3 / `02_categories_products.sql` — categories table
-
-**Root cause:** The `categories` table in the OLD schema used `parent_id`
-(snake_case). The `idx_categories_parent` index and any queries using
-`"parentId"` (camelCase quoted) failed.
-
-**Fix:** All column names in `categories` now consistently use camelCase
-with quoted identifiers:
-```sql
-"parentId"  UUID  REFERENCES categories(id) ON DELETE SET NULL
-```
-The index is now:
-```sql
-CREATE INDEX IF NOT EXISTS idx_categories_parent ON categories ("parentId");
-```
-
----
-
-## ERROR 4 — PART 4 (wishlists), PART 5 (rfq), PART 6 (logistics):
-## `42P01: relation "users" does not exist`
-
-**Root cause:** These parts were run before PART 2 (users table).
-
-**Fix:** Always run in order. See RUN ORDER below.
-
----
-
-## ERROR 5 — PART 7: `42P01: relation "products" does not exist`
-
-**Root cause:** PART 7 (reviews, disputes, conversations) references
-`products(id)`. It was run before PART 3 (products table).
-
-**Fix:** Run in order. PART 3 must precede PART 7.
-
----
-
-## ERROR 6 — PART 8: `42P01: relation "products" does not exist`
-
-Same as ERROR 5. PART 8 (admin/moderation) references `products(id)`.
-
-**Fix:** Run in order.
-
----
-
-## ERROR 7 — PART 9: `42P01: relation "users" does not exist`
-
-**Root cause:** PART 9 (RLS policies) calls `is_admin_or_owner()` which
-queries `users`. It was run before users table was created.
-
-**Fix:** Run in order. Also ensure helpers use `LANGUAGE plpgsql` (see ERROR 1).
-
----
-
-## ERROR 8 — PART 10 seed: `42703: column "description" does not exist`
-
-**Root cause:** The OLD `categories` table in Supabase (created with the
-old schema) had a different column set — it did not have a `description`
-column, or the column was named differently.
-
-**Fix:** The new `categories` table definition includes `description TEXT`.
-If the table already exists from the old schema, either:
-1. Run `00_reset.sql` first to drop all tables, then re-run from PART 1
-2. Or manually `ALTER TABLE categories ADD COLUMN IF NOT EXISTS description TEXT;`
+All SQL errors that occurred during schema setup, their root causes, and their fixes.
 
 ---
 
 ## CORRECT RUN ORDER
 
 ```
-PART 1 — Extensions + helper functions     (MANDATORY — run first)
-PART 2 — Core identity tables              (MANDATORY — depends on PART 1)
-PART 3 — Categories & products             (MANDATORY — depends on PART 2)
-PART 4 — Wishlists, notifications          (depends on PART 2)
-PART 5 — Cart, orders, payments            (depends on PART 2 + 3)
-PART 6 — Reviews, disputes, messaging      (depends on PART 2 + 3 + 5)
-PART 7 — Logistics, transport, RFQ         (depends on PART 2 + 3 + 5)
-PART 8 — Admin, moderation, support        (depends on PART 2 + 3 + 5)
-PART 9 — RLS policies                      (MANDATORY — run LAST)
-PART 10 — Seed data + owner setup          (OPTIONAL — after PART 3)
+STEP 1  →  PART_1_extensions_helpers.sql   (MANDATORY — run FIRST)
+STEP 2  →  01_users_profiles.sql           (MANDATORY — depends on STEP 1)
+STEP 3  →  02_categories_products.sql      (MANDATORY — depends on STEP 2)
+STEP 4  →  03_cart_orders_checkout.sql     (depends on STEP 2 + 3)
+STEP 5  →  04_sellers_reviews_ratings.sql  (depends on STEP 2 + 3 + 4)
+STEP 6  →  05_rfq_messages.sql             (depends on STEP 2 + 3)
+STEP 7  →  06_delivery_transport_xdrive.sql(depends on STEP 2 + 3 + 4)
+STEP 8  →  07_admin_moderation.sql         (depends on STEP 2 + 3 + 4)
+STEP 9  →  10_rls_policies.sql             (MANDATORY — run LAST)
 ```
+
+Alternatively, run `00_consolidated_schema.sql` as a single file.
+
+For a **fresh install**, run `00_reset.sql` first to clear any old tables.
+
+---
+
+## KNOWN ERRORS & FIXES
+
+### ERROR A — `42601: syntax error at or near "$$ LANGUAGE sql STABLE SECURITY DEFINER"`
+
+**What happened:** An older version of the Part 1 SQL used `LANGUAGE sql`
+(instead of `LANGUAGE plpgsql`) in the helper functions. With `LANGUAGE sql`,
+PostgreSQL validates table references at **function creation time**, so
+creating `is_admin_or_owner()` before the `users` table exists fails.
+
+**Root cause:** Do NOT run old SQL snippets saved from previous attempts.
+Always run the SQL files from this repository directly.
+
+**Fix in repo:** All helper functions in `PART_1_extensions_helpers.sql`,
+`10_rls_policies.sql`, and `00_consolidated_schema.sql` use `LANGUAGE plpgsql`,
+which defers table resolution to call time.
+
+**Do NOT manually copy-paste function fragments** — run the full file.
+
+---
+
+### ERROR B — `42601: syntax error at or near ""parentId""` / `LINE 1: "parentId" UUID REFERENCES categories(id)`
+
+**What happened:** The `categories` table was seeded from an older schema
+that did not include the `"parentId"` (camelCase) column. When Part 3 ran,
+`CREATE TABLE IF NOT EXISTS categories` was silently skipped (table exists),
+leaving the column absent.
+
+**Do NOT** run a bare column definition like:
+```
+"parentId" UUID REFERENCES categories(id) ON DELETE SET NULL
+```
+That is a column definition inside a `CREATE TABLE` body — it is NOT a
+standalone SQL statement. Running it alone produces a syntax error.
+
+**Fix in repo:** `02_categories_products.sql` and `00_consolidated_schema.sql`
+now include `ALTER TABLE categories ADD COLUMN IF NOT EXISTS` statements
+immediately after the `CREATE TABLE IF NOT EXISTS categories` block.
+These are safe no-ops if the column already exists.
+
+If the `categories` table already exists from the old schema, run `PART_1_extensions_helpers.sql`
+first (for the helper function), then run:
+
+```sql
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS "parentId"  UUID REFERENCES categories(id) ON DELETE SET NULL;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS "imageUrl"  TEXT;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS icon        TEXT;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS "order"     INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS "isActive"  BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+```
+
+---
+
+### ERROR C — `42P01: relation "users" does not exist` (in helper functions)
+
+Covered by ERROR A above. Use `LANGUAGE plpgsql` and run STEP 1 first.
+
+---
+
+### ERROR D — `42883: function update_updated_at_column() does not exist`
+
+**Cause:** Part 2 (`01_users_profiles.sql`) was run without running Part 1
+(`PART_1_extensions_helpers.sql`) first.
+
+**Fix:** Always run PART 1 / STEP 1 before any other file.
+
+---
+
+### ERROR E — `42P01: relation "products" does not exist` (in Parts 7/8)
+
+**Cause:** Parts 7 or 8 were run before Part 3 (products table).
+
+**Fix:** Follow the CORRECT RUN ORDER above.
+
+---
+
+### ERROR F — `42703: column "description" of relation "categories"` (in seed)
+
+**Cause:** Old seeded `categories` table lacked the `description` column.
+
+**Fix:** Same as ERROR B above — run the `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` block.
+
+---
+
+## FRESH INSTALL vs UPGRADE
+
+### Fresh install (recommended)
+
+1. Run `00_reset.sql`  ← drops all old tables
+2. Run `00_consolidated_schema.sql`  ← creates everything from scratch
+
+### Upgrade from old schema
+
+1. Run `PART_1_extensions_helpers.sql`
+2. Run `01_users_profiles.sql` through `07_admin_moderation.sql` in order
+3. Run `10_rls_policies.sql`
+
+The `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` blocks in each file handle
+missing columns from the old schema automatically.

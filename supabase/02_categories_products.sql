@@ -7,6 +7,9 @@
 -- ================================================================
 
 -- ── CATEGORIES ──────────────────────────────────────────────────
+-- CREATE creates the table on a fresh install.
+-- The ALTER TABLE block below safely adds any columns that may be
+-- missing when upgrading from an older snake_case schema.
 CREATE TABLE IF NOT EXISTS categories (
   id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
   name        TEXT        NOT NULL,
@@ -20,9 +23,23 @@ CREATE TABLE IF NOT EXISTS categories (
   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- ── MIGRATE EXISTING CATEGORIES TABLE ───────────────────────────
+-- Safe to run even when upgrading from the old seeded schema.
+-- Each statement is a no-op if the column already exists.
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS "parentId"  UUID        REFERENCES categories(id) ON DELETE SET NULL;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS "imageUrl"  TEXT;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS icon        TEXT;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS "order"     INTEGER     NOT NULL DEFAULT 0;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS "isActive"  BOOLEAN     NOT NULL DEFAULT TRUE;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
 CREATE INDEX IF NOT EXISTS idx_categories_slug   ON categories (slug);
 CREATE INDEX IF NOT EXISTS idx_categories_parent ON categories ("parentId");
 CREATE INDEX IF NOT EXISTS idx_categories_active ON categories ("isActive");
+DROP TRIGGER IF EXISTS trg_categories_updatedAt ON categories; -- idempotent: recreate if already exists
 CREATE TRIGGER trg_categories_updatedAt BEFORE UPDATE ON categories
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
