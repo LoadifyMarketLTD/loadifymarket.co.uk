@@ -4,6 +4,7 @@ import {
   ShieldCheck, RotateCcw, MapPin, BadgeCheck, Lock,
   ArrowRight, Package, Layers, Sparkles,
   Flame, Clock, Truck, Tag, CheckCircle2, ArrowRightCircle, Users, Store,
+  Zap, Home, Wrench, Car, Gamepad2, Heart, Briefcase, Leaf,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 
@@ -11,13 +12,20 @@ import CinematicHero from '../components/cinematic/CinematicHero';
 const CinematicStoryStrip = lazy(() => import('../components/cinematic/CinematicStoryStrip'));
 const TrendingProducts = lazy(() => import('../components/TrendingProducts'));
 
-const B2B_PILLARS = [
-  { name: 'Products', icon: Package, href: '/shop' },
-  { name: 'Bulk Lots', icon: Package, href: '/shop?category=bulk-lots' },
-  { name: 'Pallet Deals', icon: Layers, href: '/bulk' },
-  { name: 'Wholesale', icon: Tag, href: '/shop?category=wholesale' },
-  { name: 'Clearance', icon: Sparkles, href: '/shop?category=clearance' },
-  { name: 'Logistics Loads', icon: Truck, href: '/shop?category=logistics' },
+const CATEGORIES = [
+  { name: 'Electronics', icon: Zap, href: '/shop?type=product&category=electronics' },
+  { name: 'Fashion', icon: Store, href: '/shop?type=product&category=fashion' },
+  { name: 'Home & Garden', icon: Home, href: '/shop?type=product&category=home-garden' },
+  { name: 'Tools', icon: Wrench, href: '/shop?type=product&category=tools' },
+  { name: 'Vehicles', icon: Car, href: '/shop?type=product&category=vehicles' },
+  { name: 'Toys', icon: Gamepad2, href: '/shop?type=product&category=toys' },
+  { name: 'Health & Beauty', icon: Heart, href: '/shop?type=product&category=health-beauty' },
+  { name: 'Pets', icon: Leaf, href: '/shop?type=product&category=pets' },
+  { name: 'Office Supplies', icon: Briefcase, href: '/shop?type=product&category=office' },
+  { name: 'Handmade', icon: Sparkles, href: '/shop?type=handmade' },
+  { name: 'Bulk Lots', icon: Package, href: '/bulk?type=lot' },
+  { name: 'Pallet Deals', icon: Layers, href: '/bulk?type=pallet' },
+  { name: 'Clearance Stock', icon: Tag, href: '/bulk?type=clearance' },
 ];
 
 const TRUST_ITEMS = [
@@ -126,47 +134,47 @@ const TOP_DEALS = [
 const BULK_DEALS = [
   {
     id: 'b1',
-    title: 'Electronics Mixed Pallet — 80+ Units',
+    title: 'Mixed Clothing & Footwear Pallet — 200+ Items',
     lotType: 'Pallet Lot',
-    units: '80+ units',
-    weight: '~400kg',
-    price: 4999,
-    rrp: 12500,
-    location: 'Manchester',
-    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=70&auto=format&fit=crop&fm=webp',
+    units: '200+ items',
+    weight: '~320kg',
+    price: 5499,
+    rrp: 14000,
+    location: 'Leicester',
+    image: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=600&q=70&auto=format&fit=crop&fm=webp',
   },
   {
     id: 'b2',
-    title: "Women's Fashion Clearance — 150 Garments",
-    lotType: 'Clearance Lot',
-    units: '150 garments',
-    weight: '~180kg',
-    price: 6499,
-    rrp: 18000,
-    location: 'London',
-    image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=70&auto=format&fit=crop&fm=webp',
+    title: 'Sports & Outdoor Equipment Wholesale Lot',
+    lotType: 'Wholesale',
+    units: '120 items',
+    weight: '~280kg',
+    price: 3799,
+    rrp: 9800,
+    location: 'Bristol',
+    image: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&q=70&auto=format&fit=crop&fm=webp',
   },
   {
     id: 'b3',
-    title: 'Home & Kitchen Appliances Bulk Lot',
-    lotType: 'Bulk Lot',
-    units: '35 items',
-    weight: '~250kg',
-    price: 3299,
-    rrp: 9500,
-    location: 'Birmingham',
-    image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=70&auto=format&fit=crop&fm=webp',
+    title: 'Health & Beauty Clearance Stock — 500 Units',
+    lotType: 'Clearance Lot',
+    units: '500 units',
+    weight: '~150kg',
+    price: 2199,
+    rrp: 7500,
+    location: 'Glasgow',
+    image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&q=70&auto=format&fit=crop&fm=webp',
   },
   {
     id: 'b4',
-    title: 'Tools & Hardware Wholesale Clearance',
-    lotType: 'Wholesale',
-    units: '200+ pieces',
-    weight: '~500kg',
-    price: 1899,
-    rrp: 4200,
-    location: 'Leeds',
-    image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=70&auto=format&fit=crop&fm=webp',
+    title: 'Office Furniture & Supplies Bulk Lot',
+    lotType: 'Bulk Lot',
+    units: '60+ items',
+    weight: '~600kg',
+    price: 4299,
+    rrp: 11000,
+    location: 'Nottingham',
+    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=70&auto=format&fit=crop&fm=webp',
   },
 ];
 
@@ -217,20 +225,20 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* B2B trade categories — 2-col mobile, 3-col tablet/desktop */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {B2B_PILLARS.map((pillar) => {
-              const Icon = pillar.icon;
+          {/* 13 categories — 2-col mobile, 4-col tablet, 5-col desktop */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+            {CATEGORIES.map((cat) => {
+              const Icon = cat.icon;
               return (
                 <Link
-                  key={pillar.name}
-                  to={pillar.href}
-                  className="group flex flex-col items-center justify-center p-4 md:p-5 rounded-premium-md bg-graphite/60 border border-gold/20 hover:border-gold/60 hover:bg-graphite/80 transition-all duration-300 text-center"
+                  key={cat.name}
+                  to={cat.href}
+                  className="group flex flex-col items-center justify-center p-3 md:p-4 rounded-premium-md bg-graphite/60 border border-gold/20 hover:border-gold/60 hover:bg-graphite/80 transition-all duration-300 text-center"
                 >
-                  <div className="w-11 h-11 rounded-full bg-gold/15 flex items-center justify-center mb-3 group-hover:bg-gold/30 transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-gold/15 flex items-center justify-center mb-2 group-hover:bg-gold/30 transition-colors">
                     <Icon className="w-5 h-5 text-gold" />
                   </div>
-                  <span className="text-sm font-bold text-white leading-tight">{pillar.name}</span>
+                  <span className="text-xs font-bold text-white leading-tight">{cat.name}</span>
                 </Link>
               );
             })}

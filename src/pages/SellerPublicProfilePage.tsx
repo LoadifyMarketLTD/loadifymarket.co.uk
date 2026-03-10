@@ -2,15 +2,17 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Product, SellerProfile, SellerStore } from '../types';
-import { Store, Package, MapPin, Mail, Phone, ArrowLeft } from 'lucide-react';
+import { Store, Package, MapPin, Mail, Phone, ArrowLeft, MessageCircle, ArrowRight, Calendar } from 'lucide-react';
 import VerificationBadge from '../components/VerificationBadge';
 import RoleBadge from '../components/RoleBadge';
 import PaymentBehaviourBadge from '../components/PaymentBehaviourBadge';
 import ProductCard from '../components/ProductCard';
+import { formatDistanceToNow } from 'date-fns';
 
 interface SellerData extends SellerProfile {
   user?: {
     email: string;
+    createdAt?: string;
   };
   store?: SellerStore;
 }
@@ -47,7 +49,7 @@ export default function SellerPublicProfilePage() {
           .from('seller_profiles')
           .select(`
             *,
-            user:users!inner(email)
+            user:users!inner(email, createdAt)
           `)
           .eq('userId', storeData.userId)
           .single();
@@ -225,7 +227,7 @@ export default function SellerPublicProfilePage() {
               )}
 
               {/* Stats */}
-              <div className="flex flex-wrap gap-6 pt-4 border-t border-white/10">
+              <div className="flex flex-wrap gap-6 pt-4 border-t border-white/10 mb-5">
                 <div>
                   <p className="text-2xl font-bold text-gold">{(seller.rating || 0).toFixed(1)}</p>
                   <p className="text-xs text-white/60">Seller Rating</p>
@@ -238,6 +240,33 @@ export default function SellerPublicProfilePage() {
                   <p className="text-2xl font-bold text-gold">{products.length}</p>
                   <p className="text-xs text-white/60">Active Listings</p>
                 </div>
+                {seller.user?.createdAt && (
+                  <div>
+                    <p className="text-sm font-medium text-white/80 flex items-center gap-1">
+                      <Calendar className="w-4 h-4 text-gold" />
+                      Member {formatDistanceToNow(new Date(seller.user.createdAt), { addSuffix: true })}
+                    </p>
+                    <p className="text-xs text-white/60">Joined</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Seller CTAs */}
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  to="/messages"
+                  className="btn-primary inline-flex items-center gap-2 text-sm"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Contact Seller
+                </Link>
+                <Link
+                  to={`/catalog?seller=${seller.userId}`}
+                  className="btn-glass inline-flex items-center gap-2 text-sm"
+                >
+                  <ArrowRight className="w-4 h-4" />
+                  Browse All Listings
+                </Link>
               </div>
             </div>
           </div>

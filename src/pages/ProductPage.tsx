@@ -23,6 +23,7 @@ import {
   Zap,
   MessageCircle,
   FileText,
+  Store,
 } from 'lucide-react';
 
 export default function ProductPage() {
@@ -43,12 +44,21 @@ export default function ProductPage() {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          store:seller_stores(storeSlug)
+        `)
         .eq('id', id)
         .single();
 
       if (error) throw error;
-      setProduct(data);
+
+      // Attach storeSlug to product for "View Seller Store" link
+      const productWithStore = {
+        ...data,
+        storeSlug: (data.store as { storeSlug?: string } | null)?.storeSlug,
+      };
+      setProduct(productWithStore);
 
       // Track product view using enhanced tracking
       const sessionId = localStorage.getItem('sessionId') || 
@@ -396,7 +406,16 @@ export default function ProductPage() {
             {/* Seller Info Panel */}
             <div className="card-glass mb-8">
               <SellerPerformance sellerId={product.sellerId} compact={false} />
-              <div className="mt-4 pt-4 border-t border-white/10">
+              <div className="mt-4 pt-4 border-t border-white/10 flex flex-col gap-2">
+                {(product as Product & { storeSlug?: string }).storeSlug && (
+                  <Link
+                    to={`/seller/${(product as Product & { storeSlug?: string }).storeSlug}`}
+                    className="btn-glass w-full py-3 flex items-center justify-center gap-2"
+                  >
+                    <Store className="w-5 h-5" />
+                    View Seller Store
+                  </Link>
+                )}
                 <Link
                   to="/contact"
                   className="btn-glass w-full py-3 flex items-center justify-center gap-2"
