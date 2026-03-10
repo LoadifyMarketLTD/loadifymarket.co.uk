@@ -1,9 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Product, Category } from '../types';
-import { Grid, List, Search, X, Package, ShoppingBag, Sparkles, ArrowRight, Filter } from 'lucide-react';
+import { Grid, List, Search, X, Package, ShoppingBag, Sparkles, ArrowRight, Filter, ChevronDown } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
+
+const PAGE_SIZE = 24;
 
 export default function CatalogPage() {
   const [searchParams] = useSearchParams();
@@ -11,6 +13,9 @@ export default function CatalogPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [page, setPage] = useState(0);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -24,12 +29,27 @@ export default function CatalogPage() {
   // Filter states
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  const [priceMin, setPriceMin] = useState<string>('');
+  const [priceMax, setPriceMax] = useState<string>('');
+  // Debounced price values applied to actual queries
+  const [debouncedPriceMin, setDebouncedPriceMin] = useState<string>('');
+  const [debouncedPriceMax, setDebouncedPriceMax] = useState<string>('');
+  const priceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedCondition, setSelectedCondition] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>(searchParams.get('type') || defaultType);
   const [selectedListingType, setSelectedListingType] = useState<string>(searchParams.get('listingType') || '');
   const [selectedRole, setSelectedRole] = useState<string>('');
+  const [minSellerRating, setMinSellerRating] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('createdAt_desc');
+
+  // Debounce price inputs to avoid excessive resets while typing
+  const handlePriceChange = (setter: (v: string) => void, debouncedSetter: (v: string) => void, value: string) => {
+    setter(value);
+    if (priceDebounceRef.current) clearTimeout(priceDebounceRef.current);
+    priceDebounceRef.current = setTimeout(() => {
+      debouncedSetter(value);
+    }, 500);
+  };
 
   // Sync type filter when navigating between /shop and /bulk
   useEffect(() => {
@@ -39,6 +59,12 @@ export default function CatalogPage() {
       setSelectedType('');
     }
   }, [location.pathname, isBulkRoute, isShopRoute, searchParams]);
+
+  // Reset page when filters change (uses debounced price values)
+  useEffect(() => {
+    setPage(0);
+    setProducts([]);
+  }, [sortBy, selectedCondition, selectedType, selectedListingType, selectedRole, debouncedPriceMin, debouncedPriceMax, searchQuery, selectedCategory, minSellerRating]);
 
   // Fetch categories
   useEffect(() => {
@@ -59,8 +85,12 @@ export default function CatalogPage() {
     fetchCategories();
   }, []);
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
+  const fetchProducts = useCallback(async (pageIndex: number, append = false) => {
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
     try {
       let query = supabase
         .from('products')
@@ -106,13 +136,27 @@ export default function CatalogPage() {
       if (selectedRole) {
         query = query.eq('seller_profiles.marketplaceRole', selectedRole);
       }
-      query = query.gte('price', priceRange[0]).lte('price', priceRange[1]);
+      // Apply price range filter (use debounced values; validate positive finite numbers)
+      const minPrice = debouncedPriceMin !== '' ? parseFloat(debouncedPriceMin) : null;
+      const maxPrice = debouncedPriceMax !== '' ? parseFloat(debouncedPriceMax) : null;
+      if (minPrice !== null && isFinite(minPrice) && minPrice >= 0) {
+        query = query.gte('price', minPrice);
+      }
+      if (maxPrice !== null && isFinite(maxPrice) && maxPrice >= 0) {
+        query = query.lte('price', maxPrice);
+      }
+      // Apply seller rating filter
+      if (minSellerRating) {
+        query = query.gte('seller_profiles.rating', parseFloat(minSellerRating));
+      }
 
       // Apply sorting
       const [field, direction] = sortBy.split('_');
       query = query.order(field, { ascending: direction === 'asc' });
 
-      const { data, error } = await query.limit(50);
+      const from = pageIndex * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const { data, error } = await query.range(from, to);
 
       if (error) throw error;
       
@@ -124,19 +168,32 @@ export default function CatalogPage() {
           storeSlug: (product.store as { storeSlug?: string } | null)?.storeSlug,
         } : undefined,
       })) || [];
-      
-      setProducts(transformedData);
+
+      setHasMore(transformedData.length === PAGE_SIZE);
+
+      if (append) {
+        setProducts(prev => [...prev, ...transformedData]);
+      } else {
+        setProducts(transformedData);
+      }
     } catch (error) {
       console.error('Error fetching products:', error);
-      setProducts([]);
+      if (!append) setProducts([]);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  }, [sortBy, selectedCondition, selectedType, selectedListingType, selectedRole, priceRange, searchQuery, selectedCategory]);
+  }, [sortBy, selectedCondition, selectedType, selectedListingType, selectedRole, debouncedPriceMin, debouncedPriceMax, searchQuery, selectedCategory, minSellerRating]);
 
   useEffect(() => {
-    fetchProducts();
+    fetchProducts(0, false);
   }, [fetchProducts]);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchProducts(nextPage, true);
+  };
 
   // Get page title based on route and type filter
   const getPageTitle = () => {
@@ -303,6 +360,7 @@ export default function CatalogPage() {
               <option value="createdAt_asc">Oldest First</option>
               <option value="price_asc">Price: Low to High</option>
               <option value="price_desc">Price: High to Low</option>
+              <option value="views_desc">Most Viewed</option>
               <option value="rating_desc">Highest Rated</option>
             </select>
           </div>
@@ -366,6 +424,30 @@ export default function CatalogPage() {
                   </select>
                 </div>
 
+                {/* Price Range */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-white/60 mb-2">Price Range (£)</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      value={priceMin}
+                      onChange={(e) => handlePriceChange(setPriceMin, setDebouncedPriceMin, e.target.value)}
+                      placeholder="Min"
+                      className="input-field flex-1 py-2 px-3 text-sm"
+                    />
+                    <span className="text-white/40 flex-shrink-0">—</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={priceMax}
+                      onChange={(e) => handlePriceChange(setPriceMax, setDebouncedPriceMax, e.target.value)}
+                      placeholder="Max"
+                      className="input-field flex-1 py-2 px-3 text-sm"
+                    />
+                  </div>
+                </div>
+
                 {/* Condition */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-white/60 mb-2">Condition</label>
@@ -397,6 +479,22 @@ export default function CatalogPage() {
                   </select>
                 </div>
 
+                {/* Seller Rating Filter */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-white/60 mb-2">Min. Seller Rating</label>
+                  <select
+                    value={minSellerRating}
+                    onChange={(e) => setMinSellerRating(e.target.value)}
+                    className="input-field"
+                  >
+                    <option value="">Any Rating</option>
+                    <option value="4.5">4.5+ Stars</option>
+                    <option value="4">4+ Stars</option>
+                    <option value="3.5">3.5+ Stars</option>
+                    <option value="3">3+ Stars</option>
+                  </select>
+                </div>
+
                 {/* Seller Role Filter */}
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-white/60 mb-2">Seller Type</label>
@@ -424,7 +522,11 @@ export default function CatalogPage() {
                     setSelectedListingType('');
                     setSelectedCondition('');
                     setSelectedRole('');
-                    setPriceRange([0, 10000]);
+                    setPriceMin('');
+                    setPriceMax('');
+                    setDebouncedPriceMin('');
+                    setDebouncedPriceMax('');
+                    setMinSellerRating('');
                     setSortBy('createdAt_desc');
                   }}
                   className="w-full btn-outline py-3 text-sm"
@@ -456,7 +558,11 @@ export default function CatalogPage() {
                     setSelectedListingType('');
                     setSelectedRole('');
                     setSearchQuery('');
-                    setPriceRange([0, 10000]);
+                    setPriceMin('');
+                    setPriceMax('');
+                    setDebouncedPriceMin('');
+                    setDebouncedPriceMax('');
+                    setMinSellerRating('');
                   }}
                   className="btn-primary"
                 >
@@ -464,84 +570,130 @@ export default function CatalogPage() {
                 </button>
               </div>
             ) : viewMode === 'grid' ? (
-              <div className="product-grid">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {products.map((product) => (
-                  <Link
-                    key={product.id}
-                    to={`/product/${product.id}`}
-                    className="card-glass flex gap-6 hover:scale-[1.01] transition-all duration-300 group"
-                  >
-                    {/* Product Image */}
-                    <div className="w-48 h-48 flex-shrink-0 rounded-premium-sm overflow-hidden bg-graphite">
-                      {product.images && product.images.length > 0 ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
+              <>
+                <div className="product-grid">
+                  {products.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+                {hasMore && (
+                  <div className="mt-8 text-center">
+                    <button
+                      onClick={handleLoadMore}
+                      disabled={loadingMore}
+                      className="btn-secondary inline-flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {loadingMore ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          Loading...
+                        </>
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package className="w-12 h-12 text-white/20" />
-                        </div>
+                        <>
+                          <ChevronDown className="w-4 h-4" />
+                          Load More Listings
+                        </>
                       )}
-                    </div>
-
-                    {/* Product Info */}
-                    <div className="flex-1 py-2">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="font-bold text-lg text-white group-hover:text-gold transition-colors">
-                            {product.title}
-                          </h3>
-                          {product.type !== 'product' && (
-                            <span className="badge-gold mt-2 inline-block">
-                              {product.type.toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <p className="price-tag">
-                            {new Intl.NumberFormat('en-GB', {
-                              style: 'currency',
-                              currency: 'GBP',
-                            }).format(product.price)}
-                          </p>
-                          <p className="text-xs text-white/40">VAT included</p>
-                        </div>
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  {products.map((product) => (
+                    <Link
+                      key={product.id}
+                      to={`/product/${product.id}`}
+                      className="card-glass flex gap-6 hover:scale-[1.01] transition-all duration-300 group"
+                    >
+                      {/* Product Image */}
+                      <div className="w-48 h-48 flex-shrink-0 rounded-premium-sm overflow-hidden bg-graphite">
+                        {product.images && product.images.length > 0 ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Package className="w-12 h-12 text-white/20" />
+                          </div>
+                        )}
                       </div>
 
-                      <p className="text-white/60 text-sm mb-4 line-clamp-2">
-                        {product.description}
-                      </p>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 text-sm text-white/40">
-                          <span className="capitalize">{product.condition}</span>
-                          <span>•</span>
-                          <span>{product.stockQuantity} available</span>
-                          {product.rating > 0 && (
-                            <>
-                              <span>•</span>
-                              <span className="text-gold">
-                                {'★'.repeat(Math.round(product.rating))} ({product.reviewCount})
+                      {/* Product Info */}
+                      <div className="flex-1 py-2">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h3 className="font-bold text-lg text-white group-hover:text-gold transition-colors">
+                              {product.title}
+                            </h3>
+                            {product.type !== 'product' && (
+                              <span className="badge-gold mt-2 inline-block">
+                                {product.type.toUpperCase()}
                               </span>
-                            </>
-                          )}
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="price-tag">
+                              {new Intl.NumberFormat('en-GB', {
+                                style: 'currency',
+                                currency: 'GBP',
+                              }).format(product.price)}
+                            </p>
+                            <p className="text-xs text-white/40">VAT included</p>
+                          </div>
                         </div>
-                        <span className="text-gold font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          View Details <ArrowRight className="w-4 h-4" />
-                        </span>
+
+                        <p className="text-white/60 text-sm mb-4 line-clamp-2">
+                          {product.description}
+                        </p>
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4 text-sm text-white/40">
+                            <span className="capitalize">{product.condition}</span>
+                            <span>•</span>
+                            <span>{product.stockQuantity} available</span>
+                            {product.rating > 0 && (
+                              <>
+                                <span>•</span>
+                                <span className="text-gold">
+                                  {'★'.repeat(Math.round(product.rating))} ({product.reviewCount})
+                                </span>
+                              </>
+                            )}
+                          </div>
+                          <span className="text-gold font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            View Details <ArrowRight className="w-4 h-4" />
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+                    </Link>
+                  ))}
+                </div>
+                {hasMore && (
+                  <div className="mt-8 text-center">
+                    <button
+                      onClick={handleLoadMore}
+                      disabled={loadingMore}
+                      className="btn-secondary inline-flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {loadingMore ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-4 h-4" />
+                          Load More Listings
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
