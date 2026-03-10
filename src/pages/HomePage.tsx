@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import {
   ShieldCheck, RotateCcw, MapPin, BadgeCheck, Lock,
-  ArrowRight, Cpu, Shirt, Home, Wrench, Car, Package, Layers, Sparkles,
-  TrendingUp, Star, Truck, Tag, CheckCircle2, ArrowRightCircle, Users, Store,
+  ArrowRight, Package, Layers, Sparkles,
+  Flame, Clock, Truck, Tag, CheckCircle2, ArrowRightCircle, Users, Store,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 
@@ -18,17 +18,6 @@ const B2B_PILLARS = [
   { name: 'Wholesale', icon: Tag, href: '/shop?category=wholesale' },
   { name: 'Clearance', icon: Sparkles, href: '/shop?category=clearance' },
   { name: 'Logistics Loads', icon: Truck, href: '/shop?category=logistics' },
-];
-
-const CATEGORIES = [
-  { name: 'Electronics', icon: Cpu, slug: 'electronics' },
-  { name: 'Fashion', icon: Shirt, slug: 'fashion' },
-  { name: 'Home & Garden', icon: Home, slug: 'home-garden' },
-  { name: 'Tools', icon: Wrench, slug: 'tools' },
-  { name: 'Vehicles', icon: Car, slug: 'vehicles' },
-  { name: 'Bulk Lots', icon: Package, slug: 'bulk-lots' },
-  { name: 'Pallet Deals', icon: Layers, slug: 'pallet-deals' },
-  { name: 'Handmade', icon: Sparkles, slug: 'handmade' },
 ];
 
 const TRUST_ITEMS = [
@@ -134,6 +123,53 @@ const TOP_DEALS = [
   },
 ];
 
+const BULK_DEALS = [
+  {
+    id: 'b1',
+    title: 'Electronics Mixed Pallet — 80+ Units',
+    lotType: 'Pallet Lot',
+    units: '80+ units',
+    weight: '~400kg',
+    price: 4999,
+    rrp: 12500,
+    location: 'Manchester',
+    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=70&auto=format&fit=crop&fm=webp',
+  },
+  {
+    id: 'b2',
+    title: "Women's Fashion Clearance — 150 Garments",
+    lotType: 'Clearance Lot',
+    units: '150 garments',
+    weight: '~180kg',
+    price: 6499,
+    rrp: 18000,
+    location: 'London',
+    image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=70&auto=format&fit=crop&fm=webp',
+  },
+  {
+    id: 'b3',
+    title: 'Home & Kitchen Appliances Bulk Lot',
+    lotType: 'Bulk Lot',
+    units: '35 items',
+    weight: '~250kg',
+    price: 3299,
+    rrp: 9500,
+    location: 'Birmingham',
+    image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=70&auto=format&fit=crop&fm=webp',
+  },
+  {
+    id: 'b4',
+    title: 'Tools & Hardware Wholesale Clearance',
+    lotType: 'Wholesale',
+    units: '200+ pieces',
+    weight: '~500kg',
+    price: 1899,
+    rrp: 4200,
+    location: 'Leeds',
+    image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=70&auto=format&fit=crop&fm=webp',
+  },
+];
+
 export default function HomePage() {
   return (
     <div className="bg-jet">
@@ -142,7 +178,7 @@ export default function HomePage() {
 
       {/* OPEN MARKETPLACE message */}
       <section className="bg-graphite/60 border-y border-white/5">
-        <div className="container-cinematic py-8">
+        <div className="container-cinematic py-5">
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1 mb-3">
               <Users className="w-3.5 h-3.5 text-gold" />
@@ -166,114 +202,95 @@ export default function HomePage() {
       </section>
 
       {/* 2 — Shop By Category */}
-      <section className="py-16 bg-graphite/20">
+      <section className="py-8 md:py-10 bg-graphite/20">
         <div className="container-cinematic">
-          {/* Pillars */}
-          <div className="mb-10">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1 mb-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-gold" />
-                  <span className="text-gold text-xs font-medium">What We Trade</span>
-                </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-white">Shop by Category</h2>
-                <p className="text-white/50 text-sm mt-1">Core trading categories on Loadify Market</p>
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1 mb-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-gold" />
+                <span className="text-gold text-xs font-medium">Browse by Category</span>
               </div>
-              <Link to="/shop" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
-                All Categories <ArrowRight className="w-4 h-4" />
-              </Link>
+              <h2 className="text-xl md:text-2xl font-bold text-white">What are you looking for?</h2>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-              {B2B_PILLARS.map((pillar) => {
-                const Icon = pillar.icon;
-                return (
-                  <Link
-                    key={pillar.name}
-                    to={pillar.href}
-                    className="group flex flex-col items-center justify-center p-5 rounded-premium-md bg-graphite/60 border border-gold/20 hover:border-gold/60 hover:bg-graphite/80 transition-all duration-300 text-center"
-                  >
-                    <div className="w-12 h-12 rounded-full bg-gold/15 flex items-center justify-center mb-3 group-hover:bg-gold/30 transition-colors">
-                      <Icon className="w-6 h-6 text-gold" />
-                    </div>
-                    <span className="text-sm font-bold text-white leading-tight">{pillar.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
+            <Link to="/shop" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
+              All Categories <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
 
-          {/* Retail Categories */}
-          <div>
-            <p className="text-white/40 text-xs font-semibold uppercase tracking-widest mb-3">Retail Categories</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-              {CATEGORIES.map((cat) => {
-                const Icon = cat.icon;
-                return (
-                  <Link
-                    key={cat.slug}
-                    to={`/shop?category=${cat.slug}`}
-                    className="group flex flex-col items-center justify-center p-4 rounded-premium-sm bg-graphite/40 border border-white/5 hover:border-gold/40 hover:bg-graphite/70 transition-all duration-300 text-center"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center mb-2 group-hover:bg-gold/20 transition-colors">
-                      <Icon className="w-5 h-5 text-gold" />
-                    </div>
-                    <span className="text-xs font-semibold text-white leading-tight">{cat.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
+          {/* B2B trade categories — 2-col mobile, 3-col tablet/desktop */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {B2B_PILLARS.map((pillar) => {
+              const Icon = pillar.icon;
+              return (
+                <Link
+                  key={pillar.name}
+                  to={pillar.href}
+                  className="group flex flex-col items-center justify-center p-4 md:p-5 rounded-premium-md bg-graphite/60 border border-gold/20 hover:border-gold/60 hover:bg-graphite/80 transition-all duration-300 text-center"
+                >
+                  <div className="w-11 h-11 rounded-full bg-gold/15 flex items-center justify-center mb-3 group-hover:bg-gold/30 transition-colors">
+                    <Icon className="w-5 h-5 text-gold" />
+                  </div>
+                  <span className="text-sm font-bold text-white leading-tight">{pillar.name}</span>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* 3 — Featured Deals */}
-      <section className="py-16 bg-jet">
+      <section className="py-10 md:py-14 bg-jet border-t border-white/5">
         <div className="container-cinematic">
-          <div className="flex items-center justify-between mb-8">
+          {/* Deal accent bar */}
+          <div className="flex items-center gap-3 mb-1">
+            <div className="flex-1 h-px bg-red-500/30" />
+            <span className="text-red-400 text-xs font-bold uppercase tracking-widest flex items-center gap-1">
+              <Tag className="w-3 h-3" /> Flash Deals — Up to 65% Off
+            </span>
+            <div className="flex-1 h-px bg-red-500/30" />
+          </div>
+          <div className="flex items-center justify-between mb-6 mt-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-premium-sm bg-gold/10">
-                <TrendingUp className="w-5 h-5 text-gold" />
+              <div className="p-2 rounded-premium-sm bg-red-500/15 border border-red-500/20">
+                <Tag className="w-5 h-5 text-red-400" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">Featured Deals</h2>
-                <p className="text-white/50 text-sm">Bulk and pallet offers across UK categories</p>
+                <h2 className="text-xl md:text-2xl font-bold text-white">Featured Deals</h2>
+                <p className="text-white/50 text-sm">Discounted bulk &amp; pallet offers — limited time</p>
               </div>
             </div>
-            <Link to="/bulk" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
+            <Link to="/bulk" className="text-red-400 text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
               View All Deals <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {TOP_DEALS.map((deal) => (
               <Link key={deal.id} to="/bulk" className="card-product group block">
-                {/* Image area */}
                 <div className="relative aspect-[4/3] overflow-hidden bg-graphite">
                   <img
                     src={deal.image}
                     srcSet={deal.imageSrcSet}
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 33vw"
                     alt={deal.title}
                     className="absolute inset-0 w-full h-full object-cover object-center opacity-80 group-hover:scale-105 group-hover:opacity-70 transition-all duration-500"
                     loading="lazy"
                     decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-jet/80 via-transparent to-transparent" />
-                  {/* Badges */}
-                  <div className="absolute top-3 left-3">
-                    <span className="text-xs font-bold bg-gold text-jet px-2 py-1 rounded-full">{deal.tag}</span>
+                  <div className="absolute top-2 left-2">
+                    <span className="text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded-full">-{deal.discount}%</span>
                   </div>
-                  <div className="absolute top-3 right-3">
-                    <span className="text-xs font-bold bg-red-500/90 text-white px-2 py-1 rounded-full">-{deal.discount}%</span>
+                  <div className="absolute top-2 right-2">
+                    <span className="text-xs font-bold bg-gold text-jet px-2 py-0.5 rounded-full">{deal.tag}</span>
                   </div>
                 </div>
-                {/* Info */}
-                <div className="p-4">
-                  <p className="text-xs text-gold/80 mb-1 font-medium">{deal.category}</p>
-                  <h3 className="font-bold text-white text-sm mb-3 line-clamp-2 leading-snug">{deal.title}</h3>
-                  <div className="flex items-baseline gap-2 mb-3">
-                    <span className="text-xl font-bold text-gold">£{deal.price.toLocaleString()}</span>
-                    <span className="text-xs text-white/40 line-through">RRP £{deal.rrp.toLocaleString()}</span>
+                <div className="p-3">
+                  <p className="text-xs text-gold/70 mb-0.5 font-medium">{deal.category}</p>
+                  <h3 className="font-bold text-white text-sm mb-2 line-clamp-2 leading-snug">{deal.title}</h3>
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <span className="text-lg font-bold text-gold">£{deal.price.toLocaleString()}</span>
+                    <span className="text-xs text-white/40 line-through">£{deal.rrp.toLocaleString()}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs text-white/40">
                     <span className="flex items-center gap-1">
@@ -282,7 +299,7 @@ export default function HomePage() {
                     </span>
                     <span className="flex items-center gap-1 text-gold/60">
                       <BadgeCheck className="w-3 h-3" />
-                      Verified Seller
+                      Verified
                     </span>
                   </div>
                 </div>
@@ -290,8 +307,8 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div className="mt-8 text-center sm:hidden">
-            <Link to="/bulk" className="btn-secondary inline-flex items-center gap-2">
+          <div className="mt-6 text-center sm:hidden">
+            <Link to="/bulk" className="btn-secondary inline-flex items-center gap-2 text-sm">
               View All Deals <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -299,86 +316,122 @@ export default function HomePage() {
       </section>
 
       {/* 4 — Trending Products */}
-      <section className="py-16 bg-graphite/20">
+      <section className="py-10 md:py-14 bg-graphite/25 border-t border-white/5">
         <div className="container-cinematic">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-premium-sm bg-gold/10">
-                <TrendingUp className="w-5 h-5 text-gold" />
+              <div className="p-2 rounded-premium-sm bg-orange-500/15 border border-orange-500/20">
+                <Flame className="w-5 h-5 text-orange-400" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">Trending Products</h2>
-                <p className="text-white/50 text-sm">Most popular listings right now</p>
+                <h2 className="text-xl md:text-2xl font-bold text-white">Trending Products</h2>
+                <p className="text-white/50 text-sm">Most viewed &amp; added to cart this week</p>
               </div>
             </div>
-            <Link to="/catalog?sort=trending" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
+            <Link to="/catalog?sort=trending" className="text-orange-400 text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
               View Trending <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          <Suspense fallback={<div className="min-h-[300px]" />}>
-            <TrendingProducts maxProducts={8} days={7} />
+          <Suspense fallback={<div className="grid grid-cols-2 md:grid-cols-3 gap-4 min-h-[220px]" />}>
+            <TrendingProducts maxProducts={6} days={7} mode="trending" />
           </Suspense>
         </div>
       </section>
 
       {/* 5 — New Listings */}
-      <section className="py-16 bg-jet">
+      <section className="py-10 md:py-14 bg-jet border-t border-white/5">
         <div className="container-cinematic">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-premium-sm bg-gold/10">
-                <Star className="w-5 h-5 text-gold" />
+              <div className="p-2 rounded-premium-sm bg-emerald-500/15 border border-emerald-500/20">
+                <Clock className="w-5 h-5 text-emerald-400" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">New Listings</h2>
-                <p className="text-white/50 text-sm">Fresh listings added by verified sellers</p>
+                <h2 className="text-xl md:text-2xl font-bold text-white">New Listings</h2>
+                <p className="text-white/50 text-sm">Latest uploads from verified sellers</p>
               </div>
             </div>
-            <Link to="/catalog?sort=createdAt_desc" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
+            <Link to="/catalog?sort=createdAt_desc" className="text-emerald-400 text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
               View Newest <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          <Suspense fallback={<div className="min-h-[300px]" />}>
-            <TrendingProducts maxProducts={8} days={30} />
+          <Suspense fallback={<div className="grid grid-cols-2 md:grid-cols-3 gap-4 min-h-[220px]" />}>
+            <TrendingProducts maxProducts={6} days={30} mode="newest" skip={6} />
           </Suspense>
         </div>
       </section>
 
       {/* 6 — Bulk & Pallet Deals */}
-      <section className="py-16 bg-graphite/20">
+      <section className="py-10 md:py-14 bg-graphite/25 border-t border-white/5">
         <div className="container-cinematic">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-premium-sm bg-gold/10">
+              <div className="p-2 rounded-premium-sm bg-gold/10 border border-gold/20">
                 <Package className="w-5 h-5 text-gold" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">Bulk &amp; Pallet Deals</h2>
-                <p className="text-white/50 text-sm">Wholesale stock, pallet lots and clearance bundles</p>
+                <h2 className="text-xl md:text-2xl font-bold text-white">Bulk &amp; Pallet Lots</h2>
+                <p className="text-white/50 text-sm">Wholesale inventory — pallets, lots &amp; clearance bundles</p>
               </div>
             </div>
             <Link to="/bulk" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
               All Bulk Deals <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {B2B_PILLARS.map((pillar) => {
-              const Icon = pillar.icon;
-              return (
-                <Link
-                  key={pillar.name}
-                  to={pillar.href}
-                  className="group flex flex-col items-center justify-center p-5 rounded-premium-md bg-graphite/60 border border-gold/20 hover:border-gold/60 hover:bg-graphite/80 transition-all duration-300 text-center"
-                >
-                  <div className="w-12 h-12 rounded-full bg-gold/15 flex items-center justify-center mb-3 group-hover:bg-gold/30 transition-colors">
-                    <Icon className="w-6 h-6 text-gold" />
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {BULK_DEALS.map((lot) => (
+              <Link key={lot.id} to="/bulk" className="group block bg-graphite/70 rounded-premium-md overflow-hidden border border-gold/10 hover:border-gold/40 hover:shadow-cinematic-gold transition-all duration-300">
+                <div className="relative aspect-[16/9] overflow-hidden bg-graphite">
+                  <img
+                    src={lot.image}
+                    alt={lot.title}
+                    className="w-full h-full object-cover opacity-70 group-hover:scale-105 group-hover:opacity-60 transition-all duration-500"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-graphite/90 via-graphite/30 to-transparent" />
+                  <div className="absolute top-2 left-2">
+                    <span className="text-xs font-bold bg-gold text-jet px-2 py-0.5 rounded-sm">{lot.lotType}</span>
                   </div>
-                  <span className="text-sm font-bold text-white leading-tight">{pillar.name}</span>
-                </Link>
-              );
-            })}
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-white text-sm line-clamp-2 mb-3 leading-snug">{lot.title}</h3>
+                  <div className="flex items-center gap-3 mb-3 text-xs text-white/50">
+                    <span className="flex items-center gap-1">
+                      <Layers className="w-3.5 h-3.5 text-gold/60" />
+                      {lot.units}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Truck className="w-3.5 h-3.5 text-gold/60" />
+                      {lot.weight}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <div>
+                      <span className="text-xl font-bold text-gold">£{lot.price.toLocaleString()}</span>
+                      <span className="text-xs text-white/30 line-through ml-2">RRP £{lot.rrp.toLocaleString()}</span>
+                    </div>
+                    <span className="text-xs text-white/40 flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {lot.location}
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-white/8 flex items-center justify-between">
+                    <span className="text-xs text-gold/60 flex items-center gap-1">
+                      <BadgeCheck className="w-3.5 h-3.5" />
+                      Verified Seller
+                    </span>
+                    <span className="text-xs text-gold font-semibold group-hover:underline flex items-center gap-1">
+                      View Lot <ArrowRight className="w-3 h-3" />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
-          <div className="mt-8 text-center">
+
+          <div className="mt-6 text-center">
             <Link to="/bulk" className="btn-primary inline-flex items-center gap-2">
               <Package className="w-5 h-5" />
               Browse All Bulk &amp; Pallet Deals
@@ -388,12 +441,42 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 7 — How It Works + Arrange Delivery */}
+      {/* 7 — Trust Section (products first, info after) */}
+      <section className="py-12 md:py-16 bg-jet border-t border-white/5">
+        <div className="container-cinematic">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4">
+              Why Buyers and Sellers Trust{' '}
+              <span className="text-gradient-gold">Loadify Market</span>
+            </h2>
+            <p className="text-white/60 text-base max-w-2xl mx-auto">
+              Every layer of the platform is built with buyer and seller protection in mind.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            {TRUST_ITEMS.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.title} className="card-glass text-center hover:scale-[1.03] transition-all duration-500 group">
+                  <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-5 group-hover:bg-gold/20 transition-colors">
+                    <Icon className="h-7 w-7 text-gold" />
+                  </div>
+                  <h3 className="text-base font-bold text-white mb-3">{item.title}</h3>
+                  <p className="text-white/60 text-xs leading-relaxed">{item.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* 8 — How It Works */}
       <Suspense fallback={<div className="py-12 bg-jet min-h-[400px]" />}>
         <CinematicStoryStrip />
       </Suspense>
 
-      <section className="py-20 bg-graphite/30 relative overflow-hidden">
+      <section className="py-12 md:py-16 bg-graphite/30 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gold/5 rounded-full blur-[120px]" />
           <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-gold/3 rounded-full blur-[100px]" />
@@ -401,7 +484,7 @@ export default function HomePage() {
 
         <div className="container-cinematic relative z-10">
           {/* Header */}
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1.5 mb-5">
               <Truck className="w-4 h-4 text-gold" />
               <span className="text-gold text-xs font-medium">Marketplace + Logistics Support</span>
@@ -471,38 +554,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 8 — Trust Section */}
-      <section className="py-20 bg-jet">
-        <div className="container-cinematic">
-          <div className="text-center mb-14">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4">
-              Why Buyers and Sellers Trust{' '}
-              <span className="text-gradient-gold">Loadify Market</span>
-            </h2>
-            <p className="text-white/60 text-base max-w-2xl mx-auto">
-              Every layer of the platform is built with buyer and seller protection in mind.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            {TRUST_ITEMS.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.title} className="card-glass text-center hover:scale-[1.03] transition-all duration-500 group">
-                  <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-5 group-hover:bg-gold/20 transition-colors">
-                    <Icon className="h-7 w-7 text-gold" />
-                  </div>
-                  <h3 className="text-base font-bold text-white mb-3">{item.title}</h3>
-                  <p className="text-white/60 text-xs leading-relaxed">{item.description}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* 9 — Final CTA */}
-      <section className="py-20 bg-jet relative overflow-hidden">
+      <section className="py-12 md:py-16 bg-jet relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gold/5 rounded-full blur-[120px]" />
         </div>
@@ -512,7 +565,7 @@ export default function HomePage() {
             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-5">
               Ready to Start <span className="text-gradient-gold">Trading?</span>
             </h2>
-            <p className="text-white/60 text-lg mb-10">
+            <p className="text-white/60 text-base mb-8">
               Buy stock. Sell products. Arrange delivery. All on Loadify Market.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
