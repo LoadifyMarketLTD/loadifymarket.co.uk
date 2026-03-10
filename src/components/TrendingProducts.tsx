@@ -204,7 +204,7 @@ function transformProducts(data: (Product & { store?: { storeSlug?: string } | n
     ...product,
     seller: product.seller ? {
       ...product.seller,
-      storeSlug: (product.store as { storeSlug?: string } | null)?.storeSlug,
+      storeSlug: product.store?.storeSlug,
     } : undefined,
   }));
 }

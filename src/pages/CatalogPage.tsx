@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Product, Category } from '../types';
@@ -31,12 +31,25 @@ export default function CatalogPage() {
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [priceMin, setPriceMin] = useState<string>('');
   const [priceMax, setPriceMax] = useState<string>('');
+  // Debounced price values applied to actual queries
+  const [debouncedPriceMin, setDebouncedPriceMin] = useState<string>('');
+  const [debouncedPriceMax, setDebouncedPriceMax] = useState<string>('');
+  const priceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedCondition, setSelectedCondition] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>(searchParams.get('type') || defaultType);
   const [selectedListingType, setSelectedListingType] = useState<string>(searchParams.get('listingType') || '');
   const [selectedRole, setSelectedRole] = useState<string>('');
   const [minSellerRating, setMinSellerRating] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('createdAt_desc');
+
+  // Debounce price inputs to avoid excessive resets while typing
+  const handlePriceChange = (setter: (v: string) => void, debouncedSetter: (v: string) => void, value: string) => {
+    setter(value);
+    if (priceDebounceRef.current) clearTimeout(priceDebounceRef.current);
+    priceDebounceRef.current = setTimeout(() => {
+      debouncedSetter(value);
+    }, 500);
+  };
 
   // Sync type filter when navigating between /shop and /bulk
   useEffect(() => {
@@ -47,11 +60,11 @@ export default function CatalogPage() {
     }
   }, [location.pathname, isBulkRoute, isShopRoute, searchParams]);
 
-  // Reset page when filters change
+  // Reset page when filters change (uses debounced price values)
   useEffect(() => {
     setPage(0);
     setProducts([]);
-  }, [sortBy, selectedCondition, selectedType, selectedListingType, selectedRole, priceMin, priceMax, searchQuery, selectedCategory, minSellerRating]);
+  }, [sortBy, selectedCondition, selectedType, selectedListingType, selectedRole, debouncedPriceMin, debouncedPriceMax, searchQuery, selectedCategory, minSellerRating]);
 
   // Fetch categories
   useEffect(() => {
@@ -123,13 +136,13 @@ export default function CatalogPage() {
       if (selectedRole) {
         query = query.eq('seller_profiles.marketplaceRole', selectedRole);
       }
-      // Apply price range filter
-      const minPrice = priceMin !== '' ? parseFloat(priceMin) : null;
-      const maxPrice = priceMax !== '' ? parseFloat(priceMax) : null;
-      if (minPrice !== null && !isNaN(minPrice)) {
+      // Apply price range filter (use debounced values; validate positive finite numbers)
+      const minPrice = debouncedPriceMin !== '' ? parseFloat(debouncedPriceMin) : null;
+      const maxPrice = debouncedPriceMax !== '' ? parseFloat(debouncedPriceMax) : null;
+      if (minPrice !== null && isFinite(minPrice) && minPrice >= 0) {
         query = query.gte('price', minPrice);
       }
-      if (maxPrice !== null && !isNaN(maxPrice)) {
+      if (maxPrice !== null && isFinite(maxPrice) && maxPrice >= 0) {
         query = query.lte('price', maxPrice);
       }
       // Apply seller rating filter
@@ -170,7 +183,7 @@ export default function CatalogPage() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [sortBy, selectedCondition, selectedType, selectedListingType, selectedRole, priceMin, priceMax, searchQuery, selectedCategory, minSellerRating]);
+  }, [sortBy, selectedCondition, selectedType, selectedListingType, selectedRole, debouncedPriceMin, debouncedPriceMax, searchQuery, selectedCategory, minSellerRating]);
 
   useEffect(() => {
     fetchProducts(0, false);
@@ -419,7 +432,7 @@ export default function CatalogPage() {
                       type="number"
                       min="0"
                       value={priceMin}
-                      onChange={(e) => setPriceMin(e.target.value)}
+                      onChange={(e) => handlePriceChange(setPriceMin, setDebouncedPriceMin, e.target.value)}
                       placeholder="Min"
                       className="input-field flex-1 py-2 px-3 text-sm"
                     />
@@ -428,7 +441,7 @@ export default function CatalogPage() {
                       type="number"
                       min="0"
                       value={priceMax}
-                      onChange={(e) => setPriceMax(e.target.value)}
+                      onChange={(e) => handlePriceChange(setPriceMax, setDebouncedPriceMax, e.target.value)}
                       placeholder="Max"
                       className="input-field flex-1 py-2 px-3 text-sm"
                     />
@@ -511,6 +524,8 @@ export default function CatalogPage() {
                     setSelectedRole('');
                     setPriceMin('');
                     setPriceMax('');
+                    setDebouncedPriceMin('');
+                    setDebouncedPriceMax('');
                     setMinSellerRating('');
                     setSortBy('createdAt_desc');
                   }}
@@ -545,6 +560,8 @@ export default function CatalogPage() {
                     setSearchQuery('');
                     setPriceMin('');
                     setPriceMax('');
+                    setDebouncedPriceMin('');
+                    setDebouncedPriceMax('');
                     setMinSellerRating('');
                   }}
                   className="btn-primary"

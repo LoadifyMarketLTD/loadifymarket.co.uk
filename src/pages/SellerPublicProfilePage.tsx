@@ -244,7 +244,7 @@ export default function SellerPublicProfilePage() {
                   <div>
                     <p className="text-sm font-medium text-white/80 flex items-center gap-1">
                       <Calendar className="w-4 h-4 text-gold" />
-                      Member {formatDistanceToNow(new Date(seller.user.createdAt), { addSuffix: true })}
+                      Member since {formatDistanceToNow(new Date(seller.user.createdAt), { addSuffix: false })}
                     </p>
                     <p className="text-xs text-white/60">Joined</p>
                   </div>
