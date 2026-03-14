@@ -24,6 +24,7 @@ export default function ShippingMethodSelector({
           .from('shipping_methods')
           .select('*, shipping_rates(*)')
           .eq('active', true)
+          .eq('courier', 'Royal Mail')
           .order('name', { ascending: true });
 
         if (error) throw error;

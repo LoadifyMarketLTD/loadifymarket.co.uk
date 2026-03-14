@@ -467,29 +467,39 @@ export default function ProductFormPage() {
               </div>
             </div>
 
-            {/* Shipping Methods */}
-            <div className="mb-6">
-              <h3 className="font-semibold mb-3">Shipping Methods</h3>
-              <p className="text-sm text-gray-500 mb-3">
-                Select the shipping options you offer for this product.
-              </p>
-              <ShippingMethodSelector
-                selectedMethodIds={selectedShippingMethodIds}
-                onChange={setSelectedShippingMethodIds}
-              />
-              {selectedShippingMethodIds.length > 0 && (
-                <div className="mt-3">
-                  <label className="block text-sm font-medium mb-1">Estimated Dispatch Time</label>
-                  <input
-                    type="text"
-                    value={dispatchTime}
-                    onChange={(e) => setDispatchTime(e.target.value)}
-                    className="input-field"
-                    placeholder="e.g. 1–2 working days"
-                  />
-                </div>
-              )}
-            </div>
+            {/* Shipping Methods — retail products only (pallet/bulk uses XDrive Logistics) */}
+            {formData.type !== 'pallet' ? (
+              <div className="mb-6">
+                <h3 className="font-semibold mb-3">Shipping Methods</h3>
+                <p className="text-sm text-gray-500 mb-3">
+                  Select the shipping options you offer for this product.
+                </p>
+                <ShippingMethodSelector
+                  selectedMethodIds={selectedShippingMethodIds}
+                  onChange={setSelectedShippingMethodIds}
+                />
+                {selectedShippingMethodIds.length > 0 && (
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium mb-1">Estimated Dispatch Time</label>
+                    <input
+                      type="text"
+                      value={dispatchTime}
+                      onChange={(e) => setDispatchTime(e.target.value)}
+                      className="input-field"
+                      placeholder="e.g. 1–2 working days"
+                    />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                <h3 className="font-semibold mb-2">Delivery</h3>
+                <p className="text-sm text-gray-600">
+                  Pallet and bulk products use <strong>XDrive Logistics</strong> for transport.
+                  Buyers will request a transport quote directly through the XDrive platform.
+                </p>
+              </div>
+            )}
 
             {/* Submit Buttons */}
             <div className="flex justify-end space-x-4 pt-4 border-t">

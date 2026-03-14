@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCartStore, useAuthStore } from '../store';
 import { supabase } from '../lib/supabase';
 import type { ShippingMethod } from '../types/shipping';
-import { CreditCard, MapPin, Package, Truck, Home } from 'lucide-react';
+import { CreditCard, MapPin, Package, Truck } from 'lucide-react';
 
 interface Address {
   line1: string;
@@ -15,9 +15,8 @@ interface Address {
 
 // Hardcoded fallback used when no shipping methods are configured in the DB
 const FALLBACK_SHIPPING = [
-  { id: 'standard', name: 'Standard', price: 5,  description: '3–5 business days' },
-  { id: 'express',  name: 'Express',  price: 12, description: '1–2 business days' },
-  { id: 'pallet',   name: 'Pallet',   price: 50, description: 'For large/pallet orders' },
+  { id: 'royal-mail-48', name: 'Royal Mail Tracked 48', price: 3.99, description: '2–3 business days', courier: 'Royal Mail' },
+  { id: 'royal-mail-24', name: 'Royal Mail Tracked 24', price: 4.99, description: 'Next business day',  courier: 'Royal Mail' },
 ];
 
 type ShippingOption = {
@@ -337,11 +336,6 @@ export default function CheckoutPage() {
                 ) : (
                   <div className="space-y-3">
                     {shippingOptions.map((option) => {
-                      const isCollection =
-                        option.courier?.toLowerCase().includes('collection') ||
-                        option.courier?.toLowerCase().includes('local');
-                      const isEvri = option.courier?.toLowerCase().includes('evri');
-                      const Icon = isCollection ? Home : isEvri ? Truck : Package;
                       return (
                         <label
                           key={option.id}
@@ -360,7 +354,7 @@ export default function CheckoutPage() {
                               onChange={() => setSelectedShippingId(option.id)}
                               className="flex-shrink-0"
                             />
-                            <Icon className="h-5 w-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
+                            <Truck className="h-5 w-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
                             <div>
                               <p className="font-semibold">{option.name}</p>
                               {option.description && (

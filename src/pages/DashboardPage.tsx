@@ -35,9 +35,6 @@ export default function DashboardPage() {
     navigate('/');
   };
 
-  const displayName = user
-    ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
-    : '';
 
   return (
     <div className="bg-jet min-h-screen pt-24">
@@ -53,8 +50,8 @@ export default function DashboardPage() {
             )}
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-white">Welcome back{displayName ? `, ${displayName.split(' ')[0]}` : ''}!</h1>
-            <p className="text-white/50 text-sm mt-1">{user?.email}</p>
+            <h1 className="text-2xl font-bold text-white">Welcome back</h1>
+            <p className="text-white/50 text-sm mt-1">Loadify Market Dashboard</p>
             <div className="flex items-center gap-4 mt-2 text-xs text-white/40">
               <span className="flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
