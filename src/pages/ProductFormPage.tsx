@@ -15,6 +15,7 @@ export default function ProductFormPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedShippingMethodIds, setSelectedShippingMethodIds] = useState<string[]>([]);
+  const [dispatchTime, setDispatchTime] = useState('');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -80,10 +81,14 @@ export default function ProductFormPage() {
         // Load the shipping methods already linked to this product
         const { data: psData } = await supabase
           .from('product_shipping')
-          .select('method_id')
+          .select('method_id, dispatch_time')
           .eq('product_id', id);
         if (psData) {
           setSelectedShippingMethodIds(psData.map((r: { method_id: string }) => r.method_id));
+          // Use the first row's dispatch_time as the shared dispatch time
+          if (psData.length > 0 && psData[0].dispatch_time) {
+            setDispatchTime(psData[0].dispatch_time);
+          }
         }
       }
     } catch (error) {
@@ -154,7 +159,11 @@ export default function ProductFormPage() {
         if (deleteError) throw deleteError;
 
         if (selectedShippingMethodIds.length > 0) {
-          const rows = selectedShippingMethodIds.map((method_id) => ({ product_id: id, method_id }));
+          const rows = selectedShippingMethodIds.map((method_id) => ({
+            product_id: id,
+            method_id,
+            dispatch_time: dispatchTime || null,
+          }));
           const { error: shippingError } = await supabase.from('product_shipping').insert(rows);
           if (shippingError) throw shippingError;
         }
@@ -175,6 +184,7 @@ export default function ProductFormPage() {
           const rows = selectedShippingMethodIds.map((method_id) => ({
             product_id: inserted.id,
             method_id,
+            dispatch_time: dispatchTime || null,
           }));
           const { error: shippingError } = await supabase.from('product_shipping').insert(rows);
           if (shippingError) throw shippingError;
@@ -457,6 +467,18 @@ export default function ProductFormPage() {
                 selectedMethodIds={selectedShippingMethodIds}
                 onChange={setSelectedShippingMethodIds}
               />
+              {selectedShippingMethodIds.length > 0 && (
+                <div className="mt-3">
+                  <label className="block text-sm font-medium mb-1">Estimated Dispatch Time</label>
+                  <input
+                    type="text"
+                    value={dispatchTime}
+                    onChange={(e) => setDispatchTime(e.target.value)}
+                    className="input-field"
+                    placeholder="e.g. 1–2 working days"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Submit Buttons */}

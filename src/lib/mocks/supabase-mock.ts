@@ -204,6 +204,26 @@ const initializeMockData = () => {
     });
     mockStorage.shipping_rates.set(rateId, rateRecord);
   });
+
+  // Seed product_shipping associations for mock products (product-1..3 get all 4 methods)
+  const mockProductIds = ['product-1', 'product-2', 'product-3'];
+  const mockShippingMethodIds = ['sm-rm48', 'sm-rm24', 'sm-evri', 'sm-coll'];
+
+  mockProductIds.forEach((productId) => {
+    mockShippingMethodIds.forEach((methodId) => {
+      const psId = `ps-${productId}-${methodId}`;
+      const method = mockStorage.shipping_methods.get(methodId);
+      mockStorage.product_shipping.set(psId, {
+        id: psId,
+        product_id: productId,
+        method_id: methodId,
+        dispatch_time: '1–2 working days',
+        created_at: new Date().toISOString(),
+        // Embed method data for mock join support
+        shipping_methods: method,
+      });
+    });
+  });
 };
 
 initializeMockData();
@@ -471,6 +491,9 @@ export const createMockSupabaseClient = () => {
           }),
         }),
       }),
+      // The delete().eq() result is a promise-like object that supports both
+      // `await supabase.from(t).delete().eq(col, val)` (uses then/catch/finally)
+      // and the legacy `.data()` callback pattern used elsewhere in the codebase.
       delete: () => ({
         eq: (column: string, value: unknown) => {
           const doDelete = () => {

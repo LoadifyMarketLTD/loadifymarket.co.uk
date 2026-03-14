@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useCartStore, useAuthStore } from '../store';
 import { useWishlist } from '../lib/useWishlist';
 import type { Product } from '../types';
+import type { ProductShipping } from '../types/shipping';
 import RelatedProducts from '../components/RelatedProducts';
 import ProductQA from '../components/ProductQA';
 import FrequentlyBoughtTogether from '../components/FrequentlyBoughtTogether';
@@ -24,6 +25,7 @@ import {
   MessageCircle,
   FileText,
   Store,
+  Home,
 } from 'lucide-react';
 
 export default function ProductPage() {
@@ -34,6 +36,7 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [shippingOptions, setShippingOptions] = useState<ProductShipping[]>([]);
   const { addItem } = useCartStore();
   const { isInWishlist, loading: wishlistLoading, checkWishlist, toggleWishlist } = useWishlist();
 
@@ -59,6 +62,13 @@ export default function ProductPage() {
         storeSlug: (data.store as { storeSlug?: string } | null)?.storeSlug,
       };
       setProduct(productWithStore);
+
+      // Fetch shipping options linked to this product
+      const { data: shippingData } = await supabase
+        .from('product_shipping')
+        .select('*, shipping_methods(*, shipping_rates(*))')
+        .eq('product_id', id);
+      setShippingOptions(shippingData || []);
 
       // Track product view using enhanced tracking
       const sessionId = localStorage.getItem('sessionId') || 
@@ -148,6 +158,15 @@ export default function ProductPage() {
       style: 'currency',
       currency: 'GBP',
     }).format(price);
+  };
+
+  // Map courier name to a lucide icon component
+  const getCourierIcon = (courier?: string | null) => {
+    if (!courier) return Package;
+    const c = courier.toLowerCase();
+    if (c.includes('evri')) return Truck;
+    if (c.includes('collection') || c.includes('local')) return Home;
+    return Package; // Royal Mail and fallback
   };
 
   // Get type icon
@@ -445,43 +464,85 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* Delivery & Collection Block (XDrive Integration) */}
+            {/* Delivery Options */}
             <div className="card-glass mt-6 border border-white/5">
               <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
                 <Truck className="w-5 h-5 text-gold" />
-                Delivery & Collection
+                Delivery Options
               </h3>
-              <div className="space-y-3 mb-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-white/50">Collection available</span>
-                  <span className="text-white/80 font-medium">Enquire with seller</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-white/50">Delivery available</span>
-                  <span className="text-white/80 font-medium">Enquire with seller</span>
-                </div>
-                {product.type === 'pallet' && product.palletInfo && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-white/50">Pallet count</span>
-                    <span className="text-white/80 font-medium">{product.palletInfo.palletCount}</span>
+
+              {shippingOptions.length > 0 ? (
+                <>
+                  <div className="space-y-2 mb-4">
+                    {shippingOptions.map((opt) => {
+                      const method = opt.shipping_methods;
+                      if (!method) return null;
+                      const rate = method.shipping_rates?.[0];
+                      const price = rate && rate.price > 0
+                        ? formatPrice(Number(rate.price))
+                        : 'Free';
+                      const CourierIcon = getCourierIcon(method.courier);
+                      return (
+                        <div
+                          key={opt.id}
+                          className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+                        >
+                          <div className="flex items-center gap-2">
+                            <CourierIcon className="w-4 h-4 text-gold flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-medium text-white">{method.name}</p>
+                              {method.courier && (
+                                <p className="text-xs text-white/40">{method.courier}</p>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-sm font-semibold text-gold">{price}</span>
+                        </div>
+                      );
+                    })}
                   </div>
-                )}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-white/50">Transport support</span>
-                  <span className="text-gold font-medium text-xs">via XDrive Logistics</span>
+
+                  {/* Dispatch time — use first option's value */}
+                  {shippingOptions[0]?.dispatch_time && (
+                    <p className="text-xs text-white/40 mb-4">
+                      Dispatch time: {shippingOptions[0].dispatch_time}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-white/50">Collection available</span>
+                    <span className="text-white/80 font-medium">Enquire with seller</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-white/50">Delivery available</span>
+                    <span className="text-white/80 font-medium">Enquire with seller</span>
+                  </div>
                 </div>
-              </div>
-              <p className="text-white/40 text-xs mb-4 leading-relaxed">
-                Delivery options can be arranged after enquiry. Transport support is available via
-                XDrive Logistics for pallet and bulk orders.
-              </p>
-              <Link
-                to={buildTransportQuoteUrl(product)}
-                className="btn-secondary w-full py-3 flex items-center justify-center gap-2 text-sm"
-              >
-                <Truck className="w-4 h-4" />
-                Request Transport Quote
-              </Link>
+              )}
+
+              {/* XDrive Transport Quote link */}
+              {(product.type === 'pallet' || shippingOptions.length === 0) && (
+                <>
+                  {product.type === 'pallet' && product.palletInfo && (
+                    <div className="flex items-center justify-between text-sm mb-3">
+                      <span className="text-white/50">Pallet count</span>
+                      <span className="text-white/80 font-medium">{product.palletInfo.palletCount}</span>
+                    </div>
+                  )}
+                  <p className="text-white/40 text-xs mb-4 leading-relaxed">
+                    Transport support is available via XDrive Logistics for pallet and bulk orders.
+                  </p>
+                  <Link
+                    to={buildTransportQuoteUrl(product)}
+                    className="btn-secondary w-full py-3 flex items-center justify-center gap-2 text-sm"
+                  >
+                    <Truck className="w-4 h-4" />
+                    Request Transport Quote
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
