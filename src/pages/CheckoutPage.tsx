@@ -456,6 +456,20 @@ export default function CheckoutPage() {
                 )}
               </div>
 
+              {/* Marketplace Notice */}
+              <div className="mb-6 p-4 border border-blue-200 bg-blue-50 rounded-lg text-sm text-gray-700">
+                <p className="font-semibold mb-2">Marketplace Notice</p>
+                <p className="mb-2">
+                  You are purchasing this product from an independent seller using the Loadify Market
+                  platform.
+                </p>
+                <p className="mb-2">
+                  Loadify Market facilitates the transaction but is not the seller of the product and
+                  does not handle product fulfilment or shipping.
+                </p>
+                <p>All products are shipped directly by the seller who listed the product.</p>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}

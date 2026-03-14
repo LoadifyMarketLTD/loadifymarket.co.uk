@@ -49,17 +49,18 @@ export default function ProductPage() {
         .from('products')
         .select(`
           *,
-          store:seller_stores(storeSlug)
+          store:seller_stores(storeSlug, storeName)
         `)
         .eq('id', id)
         .single();
 
       if (error) throw error;
 
-      // Attach storeSlug to product for "View Seller Store" link
+      // Attach storeSlug and storeName to product for seller links
       const productWithStore = {
         ...data,
-        storeSlug: (data.store as { storeSlug?: string } | null)?.storeSlug,
+        storeSlug: (data.store as { storeSlug?: string; storeName?: string } | null)?.storeSlug,
+        storeName: (data.store as { storeSlug?: string; storeName?: string } | null)?.storeName,
       };
       setProduct(productWithStore);
 
@@ -478,6 +479,40 @@ export default function ProductPage() {
                 </Link>
               </div>
             </div>
+
+            {/* Seller Information — Legal Notice */}
+            {(() => {
+              const productWithStore = product as Product & { storeSlug?: string; storeName?: string };
+              return (
+                <div className="card-glass mb-8 border border-white/10">
+                  <h3 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+                    <Store className="w-4 h-4 text-gold" />
+                    Seller Information
+                  </h3>
+                  <p className="text-sm text-white/60 mb-3">
+                    This product is sold and shipped directly by the seller listed above.
+                  </p>
+                  <p className="text-xs text-white/40 mb-4 leading-relaxed">
+                    Loadify Market operates as an online marketplace platform connecting buyers with
+                    independent sellers. The seller is responsible for product availability, packaging,
+                    shipping, delivery, returns, and customer service related to this product.
+                  </p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-white/50">Sold by:</span>
+                    {productWithStore.storeSlug ? (
+                      <Link
+                        to={`/seller/${productWithStore.storeSlug}`}
+                        className="text-gold hover:text-gold/80 font-medium transition-colors"
+                      >
+                        {productWithStore.storeName || 'View Seller Store'}
+                      </Link>
+                    ) : (
+                      <span className="text-white/70 font-medium">Independent Seller</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Trust Badges */}
             <div className="grid grid-cols-3 gap-4">
