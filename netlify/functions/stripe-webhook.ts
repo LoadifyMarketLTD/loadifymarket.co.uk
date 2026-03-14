@@ -254,10 +254,48 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const confirmedOrderNumber: string =
       (order as { orderNumber?: string }).orderNumber ?? order.id;
     console.log(`Seller order ${confirmedOrderNumber} created for seller ${sellerId}`);
+
+    // Credit seller balance (net of commission) using the DB RPC.
+    const { error: balanceError } = await supabase!.rpc('credit_seller_balance', {
+      p_seller_id: sellerId,
+      p_order_id: order.id,
+    });
+    if (balanceError) {
+      console.warn('credit_seller_balance RPC failed:', balanceError.message);
+    }
+
+    // Send seller new-order notification email (async, don't wait).
+    const { data: sellerUser } = await supabase!
+      .from('users')
+      .select('email')
+      .eq('id', sellerId)
+      .single<{ email: string }>();
+
+    if (sellerUser?.email) {
+      fetch(`${process.env.URL}/.netlify/functions/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: sellerUser.email,
+          subject: `New Order Received — ${confirmedOrderNumber}`,
+          template: 'seller_new_order',
+          data: {
+            orderNumber: confirmedOrderNumber,
+            orderDate: new Date().toLocaleDateString('en-GB'),
+            items: sellerItems.map((i) => ({
+              title: i.title,
+              quantity: i.quantity,
+              price: i.price,
+            })),
+            sellerTotal: sellerGrandTotal,
+          },
+        }),
+      }).catch(err => console.error('Seller email send failed:', err));
+    }
   }
 
   // Record ONE payment session (stripeSessionId is UNIQUE) linked to the first order.
-  await supabase.from('payment_sessions').insert([
+  await supabase!.from('payment_sessions').insert([
     {
       orderId: firstOrderId,
       userId: metadata.buyerId || null,
@@ -270,7 +308,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     },
   ]);
 
-  // Send confirmation email (async, don't wait)
+  // Send buyer confirmation email (async, don't wait)
   const sellerCount = sellerGroups.size;
   const subjectSuffix = sellerCount > 1 ? ` (${sellerCount} sellers)` : '';
   fetch(`${process.env.URL}/.netlify/functions/send-email`, {
@@ -310,14 +348,14 @@ interface PaymentSessionWithOrder {
 }
 
 async function handleRefund(charge: Stripe.Charge) {
-  const { data: payment } = await supabase
+  const { data: payment } = await supabase!
     .from('payment_sessions')
     .select('orderId, orders(orderNumber)')
     .eq('stripePaymentIntent', charge.payment_intent)
     .single<PaymentSessionWithOrder>();
 
   if (payment?.orderId) {
-    await supabase
+    await supabase!
       .from('orders')
       .update({ status: 'refunded' })
       .eq('id', payment.orderId);

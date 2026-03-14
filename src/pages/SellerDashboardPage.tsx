@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { hasSellerAccess } from '../lib/roleUtils';
-import type { Product, Order, SellerProfile, DeliveryRequest } from '../types';
+import type { Product, Order, SellerProfile, DeliveryRequest, SellerBalance, PayoutRequest } from '../types';
 import { buildXDriveAppUrl } from '../lib/transportQuote';
-import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3, Truck, ExternalLink, Clock } from 'lucide-react';
+import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3, Truck, ExternalLink, Clock, CreditCard } from 'lucide-react';
 
 const DELIVERY_REQUESTS_KEY = 'loadify_delivery_requests';
 
@@ -44,8 +44,14 @@ export default function SellerDashboardPage() {
     pendingOrders: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'products' | 'orders' | 'deliveries'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'products' | 'orders' | 'deliveries' | 'payouts'>('overview');
   const [deliveryRequests, setDeliveryRequests] = useState<DeliveryRequest[]>([]);
+  const [sellerBalance, setSellerBalance] = useState<SellerBalance | null>(null);
+  const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
+  const [payoutAmount, setPayoutAmount] = useState('');
+  const [payoutSubmitting, setPayoutSubmitting] = useState(false);
+  const [payoutError, setPayoutError] = useState('');
+  const [payoutSuccess, setPayoutSuccess] = useState('');
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -91,6 +97,22 @@ export default function SellerDashboardPage() {
         totalRevenue: totalRev,
         pendingOrders: pending,
       });
+
+      // Fetch seller balance
+      const { data: balanceData } = await supabase
+        .from('seller_balance')
+        .select('*')
+        .eq('sellerId', user.id)
+        .maybeSingle();
+      setSellerBalance(balanceData || null);
+
+      // Fetch payout requests
+      const { data: payoutData } = await supabase
+        .from('payout_requests')
+        .select('*')
+        .eq('sellerId', user.id)
+        .order('createdAt', { ascending: false });
+      setPayoutRequests(payoutData || []);
     } catch (error) {
       console.error('Error fetching seller data:', error);
     } finally {
@@ -122,6 +144,32 @@ export default function SellerDashboardPage() {
       style: 'currency',
       currency: 'GBP',
     }).format(price);
+  };
+
+  const handleRequestPayout = async () => {
+    setPayoutError('');
+    setPayoutSuccess('');
+    const amount = parseFloat(payoutAmount);
+    if (!amount || amount <= 0) {
+      setPayoutError('Please enter a valid amount.');
+      return;
+    }
+    if (!sellerBalance || amount > sellerBalance.availableAmount) {
+      setPayoutError('Requested amount exceeds available balance.');
+      return;
+    }
+    setPayoutSubmitting(true);
+    try {
+      const { error } = await supabase.rpc('request_payout', { p_amount: amount });
+      if (error) throw error;
+      setPayoutSuccess('Payout request submitted. An admin will review it shortly.');
+      setPayoutAmount('');
+      await fetchData();
+    } catch (err) {
+      setPayoutError(err instanceof Error ? err.message : 'Failed to submit payout request.');
+    } finally {
+      setPayoutSubmitting(false);
+    }
   };
 
   if (!user || !hasSellerAccess(user)) {
@@ -232,6 +280,17 @@ export default function SellerDashboardPage() {
                   {deliveryRequests.length}
                 </span>
               )}
+            </button>
+            <button
+              onClick={() => setActiveTab('payouts')}
+              className={`pb-4 px-2 font-medium transition-colors flex items-center gap-1.5 ${
+                activeTab === 'payouts'
+                  ? 'border-b-2 border-navy-800 text-navy-800'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <CreditCard className="h-4 w-4" />
+              Payouts
             </button>
           </div>
         </div>
@@ -818,6 +877,133 @@ export default function SellerDashboardPage() {
                       </a>
                     </div>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Payouts Tab */}
+            {activeTab === 'payouts' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-1">Payouts</h2>
+                  <p className="text-gray-600">Track your earnings and request withdrawals.</p>
+                </div>
+
+                {/* Balance cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="card">
+                    <p className="text-sm text-gray-500 mb-1">Total Sales</p>
+                    <p className="text-2xl font-bold">{formatPrice(stats.totalRevenue)}</p>
+                    <p className="text-xs text-gray-400 mt-1">Gross revenue (excl. VAT)</p>
+                  </div>
+                  <div className="card">
+                    <p className="text-sm text-gray-500 mb-1">Platform Fee (7%)</p>
+                    <p className="text-2xl font-bold text-red-600">
+                      {formatPrice(orders.reduce((s, o) => s + (o.commission ?? 0), 0))}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">Deducted automatically</p>
+                  </div>
+                  <div className="card">
+                    <p className="text-sm text-gray-500 mb-1">Available Balance</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {formatPrice(sellerBalance?.availableAmount ?? 0)}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">Ready to withdraw</p>
+                  </div>
+                  <div className="card">
+                    <p className="text-sm text-gray-500 mb-1">Pending Payouts</p>
+                    <p className="text-2xl font-bold text-amber-600">
+                      {formatPrice(sellerBalance?.pendingAmount ?? 0)}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">Awaiting admin approval</p>
+                  </div>
+                </div>
+
+                {/* Request payout form */}
+                <div className="card">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-navy-800" />
+                    Request Payout
+                  </h3>
+                  {payoutError && (
+                    <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                      {payoutError}
+                    </div>
+                  )}
+                  {payoutSuccess && (
+                    <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">
+                      {payoutSuccess}
+                    </div>
+                  )}
+                  <div className="flex gap-3 items-end">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Amount (GBP)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        step="0.01"
+                        value={payoutAmount}
+                        onChange={(e) => setPayoutAmount(e.target.value)}
+                        placeholder="0.00"
+                        className="input-field w-full"
+                      />
+                    </div>
+                    <button
+                      onClick={handleRequestPayout}
+                      disabled={payoutSubmitting || !payoutAmount}
+                      className="btn-primary whitespace-nowrap"
+                    >
+                      {payoutSubmitting ? 'Submitting…' : 'Request Payout'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Maximum: {formatPrice(sellerBalance?.availableAmount ?? 0)}. Payouts are reviewed within 2 business days.
+                  </p>
+                </div>
+
+                {/* Payout request history */}
+                <div className="card">
+                  <h3 className="text-lg font-semibold mb-4">Payout History</h3>
+                  {payoutRequests.length === 0 ? (
+                    <p className="text-gray-500 text-center py-6">No payout requests yet.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b text-left text-gray-500">
+                            <th className="pb-2 pr-4">Date</th>
+                            <th className="pb-2 pr-4">Amount</th>
+                            <th className="pb-2 pr-4">Status</th>
+                            <th className="pb-2">Notes</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {payoutRequests.map((pr) => (
+                            <tr key={pr.id} className="border-b last:border-0">
+                              <td className="py-2 pr-4 text-gray-600">
+                                {new Date(pr.createdAt).toLocaleDateString('en-GB')}
+                              </td>
+                              <td className="py-2 pr-4 font-medium">{formatPrice(pr.amount)}</td>
+                              <td className="py-2 pr-4">
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                  pr.status === 'paid'      ? 'bg-green-100 text-green-800' :
+                                  pr.status === 'approved'  ? 'bg-blue-100 text-blue-800' :
+                                  pr.status === 'rejected'  ? 'bg-red-100 text-red-800' :
+                                  pr.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+                                  'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                  {pr.status.charAt(0).toUpperCase() + pr.status.slice(1)}
+                                </span>
+                              </td>
+                              <td className="py-2 text-gray-500">{pr.notes ?? '—'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

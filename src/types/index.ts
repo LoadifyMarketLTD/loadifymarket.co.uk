@@ -326,6 +326,31 @@ export interface Payout {
   paidAt?: string;
 }
 
+export interface SellerBalance {
+  sellerId: string;
+  availableAmount: number;
+  pendingAmount: number;
+  totalEarned: number;
+  currency: string;
+  updatedAt: string;
+}
+
+export type PayoutRequestStatus = 'requested' | 'approved' | 'rejected' | 'paid' | 'cancelled';
+
+export interface PayoutRequest {
+  id: string;
+  sellerId: string;
+  amount: number;
+  currency: string;
+  status: PayoutRequestStatus;
+  notes?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  paidAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Wishlist {
   userId: string;
   productIds: string[];

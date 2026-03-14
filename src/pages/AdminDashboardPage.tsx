@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { hasAdminAccess } from '../lib/roleUtils';
-import type { User, Product, Order, Dispute } from '../types';
-import { Users, Package, ShoppingBag, AlertCircle, CheckCircle, XCircle, DollarSign, Download, Settings, TrendingUp } from 'lucide-react';
+import type { User, Product, Order, Dispute, PayoutRequest } from '../types';
+import { Users, Package, ShoppingBag, AlertCircle, CheckCircle, XCircle, DollarSign, Download, Settings, TrendingUp, CreditCard } from 'lucide-react';
 import { 
   exportToCSV, 
   prepareOrdersExport, 
@@ -17,7 +17,7 @@ import {
 
 export default function AdminDashboardPage() {
   const { user, isLoading } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'users' | 'products' | 'orders' | 'disputes' | 'exports'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'users' | 'products' | 'orders' | 'disputes' | 'payouts' | 'exports'>('overview');
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<'7days' | '30days' | 'all'>('30days');
 
@@ -25,6 +25,10 @@ export default function AdminDashboardPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [disputes, setDisputes] = useState<Dispute[]>([]);
+  const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
+  // Inline rejection form state: maps request ID → rejection note text
+  const [rejectNotes, setRejectNotes] = useState<Record<string, string>>({});
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
 
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -82,6 +86,14 @@ export default function AdminDashboardPage() {
 
       setDisputes(disputesData || []);
 
+      // Fetch payout requests
+      const { data: payoutData } = await supabase
+        .from('payout_requests')
+        .select('*')
+        .order('createdAt', { ascending: false });
+
+      setPayoutRequests(payoutData || []);
+
       // Calculate stats
       const sellers = (usersData || []).filter((u: User) => u.role === 'seller').length;
       const pending = (productsData || []).filter((p: Product) => !p.isApproved).length;
@@ -111,6 +123,14 @@ export default function AdminDashboardPage() {
         .eq('id', productId);
 
       if (error) throw error;
+
+      await supabase.rpc('log_admin_action', {
+        p_action: 'approve_product',
+        p_table_name: 'products',
+        p_record_id: productId,
+        p_new_data: { isApproved: true },
+      });
+
       alert('Product approved!');
       fetchData();
     } catch (error) {
@@ -127,11 +147,86 @@ export default function AdminDashboardPage() {
         .eq('id', productId);
 
       if (error) throw error;
+
+      await supabase.rpc('log_admin_action', {
+        p_action: 'reject_product',
+        p_table_name: 'products',
+        p_record_id: productId,
+        p_new_data: { isApproved: false, isActive: false },
+      });
+
       alert('Product rejected!');
       fetchData();
     } catch (error) {
       console.error('Error rejecting product:', error);
       alert('Failed to reject product');
+    }
+  };
+
+  const deactivateProduct = async (productId: string) => {
+    if (!confirm('Deactivate this listing?')) return;
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ isActive: false })
+        .eq('id', productId);
+      if (error) throw error;
+      await supabase.rpc('log_admin_action', {
+        p_action: 'deactivate_product',
+        p_table_name: 'products',
+        p_record_id: productId,
+        p_new_data: { isActive: false },
+      });
+      alert('Listing deactivated.');
+      fetchData();
+    } catch (err) {
+      console.error('Error deactivating product:', err);
+      alert('Failed to deactivate listing.');
+    }
+  };
+
+  const handleApprovePayout = async (requestId: string) => {
+    if (!confirm('Approve this payout request?')) return;
+    try {
+      const { error } = await supabase.rpc('approve_payout', { p_request_id: requestId });
+      if (error) throw error;
+      alert('Payout approved.');
+      fetchData();
+    } catch (err) {
+      console.error('Error approving payout:', err);
+      alert(err instanceof Error ? err.message : 'Failed to approve payout.');
+    }
+  };
+
+  const handleCompletePayout = async (requestId: string) => {
+    if (!confirm('Mark this payout as completed (funds sent)?')) return;
+    try {
+      const { error } = await supabase.rpc('complete_payout', { p_request_id: requestId });
+      if (error) throw error;
+      alert('Payout marked as completed.');
+      fetchData();
+    } catch (err) {
+      console.error('Error completing payout:', err);
+      alert(err instanceof Error ? err.message : 'Failed to complete payout.');
+    }
+  };
+
+  const handleRejectPayout = async (requestId: string) => {
+    const notes = rejectNotes[requestId] || undefined;
+    if (!confirm('Reject this payout request? The amount will be returned to the seller\'s available balance.')) return;
+    try {
+      const { error } = await supabase.rpc('reject_payout', {
+        p_request_id: requestId,
+        p_notes: notes ?? null,
+      });
+      if (error) throw error;
+      setRejectingId(null);
+      setRejectNotes((prev) => { const n = { ...prev }; delete n[requestId]; return n; });
+      alert('Payout rejected and balance restored.');
+      fetchData();
+    } catch (err) {
+      console.error('Error rejecting payout:', err);
+      alert(err instanceof Error ? err.message : 'Failed to reject payout.');
     }
   };
 
@@ -183,6 +278,14 @@ export default function AdminDashboardPage() {
         .eq('id', userId);
 
       if (error) throw error;
+
+      await supabase.rpc('log_admin_action', {
+        p_action: 'suspend_user',
+        p_table_name: 'users',
+        p_record_id: userId,
+        p_new_data: { isActive: false },
+      });
+
       alert('User suspended successfully');
       fetchData();
     } catch (error) {
@@ -199,6 +302,14 @@ export default function AdminDashboardPage() {
         .eq('id', userId);
 
       if (error) throw error;
+
+      await supabase.rpc('log_admin_action', {
+        p_action: 'activate_user',
+        p_table_name: 'users',
+        p_record_id: userId,
+        p_new_data: { isActive: true },
+      });
+
       alert('User activated successfully');
       fetchData();
     } catch (error) {
@@ -227,7 +338,7 @@ export default function AdminDashboardPage() {
         {/* Tabs */}
         <div className="mb-6 border-b border-gray-200">
           <div className="flex space-x-8">
-            {['overview', 'analytics', 'users', 'products', 'orders', 'disputes', 'exports'].map((tab) => (
+            {['overview', 'analytics', 'users', 'products', 'orders', 'disputes', 'payouts', 'exports'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as typeof activeTab)}
@@ -730,16 +841,27 @@ export default function AdminDashboardPage() {
                             <button
                               onClick={() => approveProduct(product.id)}
                               className="text-green-600 hover:text-green-700"
+                              title="Approve"
                             >
                               <CheckCircle className="h-6 w-6" />
                             </button>
                             <button
                               onClick={() => rejectProduct(product.id)}
                               className="text-red-600 hover:text-red-700"
+                              title="Reject"
                             >
                               <XCircle className="h-6 w-6" />
                             </button>
                           </>
+                        )}
+                        {product.isApproved && product.isActive && (
+                          <button
+                            onClick={() => deactivateProduct(product.id)}
+                            className="text-orange-500 hover:text-orange-700 text-xs px-2 py-1 border border-orange-300 rounded"
+                            title="Deactivate listing"
+                          >
+                            Deactivate
+                          </button>
                         )}
                       </div>
                     </div>
@@ -810,6 +932,111 @@ export default function AdminDashboardPage() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Payouts Tab */}
+            {activeTab === 'payouts' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold mb-1">Payout Requests</h2>
+                  <p className="text-gray-600">Review, approve, and complete seller payout requests.</p>
+                </div>
+                <div className="card">
+                  {payoutRequests.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">No payout requests.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b text-left text-gray-500">
+                            <th className="pb-2 pr-4">Date</th>
+                            <th className="pb-2 pr-4">Seller ID</th>
+                            <th className="pb-2 pr-4">Amount</th>
+                            <th className="pb-2 pr-4">Status</th>
+                            <th className="pb-2">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {payoutRequests.map((pr) => (
+                            <tr key={pr.id} className="border-b last:border-0">
+                              <td className="py-2 pr-4 text-gray-600">
+                                {new Date(pr.createdAt).toLocaleDateString('en-GB')}
+                              </td>
+                              <td className="py-2 pr-4 font-mono text-xs text-gray-500">
+                                {pr.sellerId.slice(0, 8)}…
+                              </td>
+                              <td className="py-2 pr-4 font-medium">{formatPrice(pr.amount)}</td>
+                              <td className="py-2 pr-4">
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                  pr.status === 'paid'      ? 'bg-green-100 text-green-800' :
+                                  pr.status === 'approved'  ? 'bg-blue-100 text-blue-800' :
+                                  pr.status === 'rejected'  ? 'bg-red-100 text-red-800' :
+                                  pr.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+                                  'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                  {pr.status.charAt(0).toUpperCase() + pr.status.slice(1)}
+                                </span>
+                              </td>
+                              <td className="py-2">
+                                <div className="flex flex-col gap-1.5">
+                                  {pr.status === 'requested' && (
+                                    <>
+                                      <div className="flex gap-2">
+                                        <button
+                                          onClick={() => handleApprovePayout(pr.id)}
+                                          className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded hover:bg-blue-200"
+                                        >
+                                          <CheckCircle className="h-3 w-3 inline mr-1" />
+                                          Approve
+                                        </button>
+                                        <button
+                                          onClick={() => setRejectingId(rejectingId === pr.id ? null : pr.id)}
+                                          className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded hover:bg-red-200"
+                                        >
+                                          <XCircle className="h-3 w-3 inline mr-1" />
+                                          Reject
+                                        </button>
+                                      </div>
+                                      {rejectingId === pr.id && (
+                                        <div className="flex gap-2 mt-1">
+                                          <input
+                                            type="text"
+                                            placeholder="Rejection reason (optional)"
+                                            value={rejectNotes[pr.id] ?? ''}
+                                            onChange={(e) =>
+                                              setRejectNotes((prev) => ({ ...prev, [pr.id]: e.target.value }))
+                                            }
+                                            className="text-xs border border-red-300 rounded px-2 py-1 flex-1"
+                                          />
+                                          <button
+                                            onClick={() => handleRejectPayout(pr.id)}
+                                            className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                                          >
+                                            Confirm Reject
+                                          </button>
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
+                                  {pr.status === 'approved' && (
+                                    <button
+                                      onClick={() => handleCompletePayout(pr.id)}
+                                      className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200"
+                                    >
+                                      <CreditCard className="h-3 w-3 inline mr-1" />
+                                      Mark Paid
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
