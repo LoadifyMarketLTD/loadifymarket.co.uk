@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore, useAuthStore } from '../store';
 import { supabase } from '../lib/supabase';
 import type { ShippingMethod } from '../types/shipping';
-import { CreditCard, MapPin, Package, Truck } from 'lucide-react';
+import { CreditCard, Info, MapPin, Package, Truck } from 'lucide-react';
 
 interface Address {
   line1: string;
@@ -15,8 +15,8 @@ interface Address {
 
 // Hardcoded fallback used when no shipping methods are configured in the DB
 const FALLBACK_SHIPPING = [
-  { id: 'royal-mail-48', name: 'Royal Mail Tracked 48', price: 3.99, description: '2–3 business days', courier: 'Royal Mail' },
-  { id: 'royal-mail-24', name: 'Royal Mail Tracked 24', price: 4.99, description: 'Next business day',  courier: 'Royal Mail' },
+  { id: 'royal-mail-standard', name: 'Royal Mail Standard', price: 3.99, description: '2–3 business days', courier: 'Royal Mail' },
+  { id: 'royal-mail-24', name: 'Royal Mail Tracked 24', price: 4.99, description: 'Next business day', courier: 'Royal Mail' },
 ];
 
 type ShippingOption = {
@@ -60,6 +60,11 @@ export default function CheckoutPage() {
   // Use a stable string key derived from product IDs so the effect only
   // re-runs when the set of products in the cart actually changes.
   const productIdsKey = [...new Set(items.map((i) => i.productId))].sort().join(',');
+
+  const hasMultipleSellers = useMemo(
+    () => new Set(items.map((i) => i.sellerId).filter(Boolean)).size > 1,
+    [items],
+  );
 
   useEffect(() => {
     const productIds = productIdsKey ? productIdsKey.split(',') : [];
@@ -374,6 +379,21 @@ export default function CheckoutPage() {
                   </div>
                 )}
               </div>
+
+              {/* Multi-Seller Shipping Notice */}
+              {hasMultipleSellers && (
+                <div className="flex gap-3 p-4 mb-6 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+                  <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                  <div>
+                    <p className="font-semibold mb-1">Marketplace Shipping Notice</p>
+                    <p className="text-blue-700 leading-relaxed">
+                      Items in your order may be shipped separately by different sellers.
+                      Each seller is responsible for packaging and dispatching their products.
+                      Delivery times may vary depending on the seller.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Billing Address */}
               <div className="card mb-6">
