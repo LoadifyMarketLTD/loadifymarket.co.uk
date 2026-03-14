@@ -129,18 +129,18 @@ export default function ProductCard({ product }: ProductCardProps) {
               {product.seller.storeSlug ? (
                 <Link
                   to={`/seller/${product.seller.storeSlug}`}
-                  className="text-xs text-white/40 hover:text-gold transition-colors truncate"
+                  className="text-xs text-white/60 hover:text-gold transition-colors truncate"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {product.seller.businessName || 'Marketplace Seller'}
                 </Link>
               ) : (
-                <span className="text-xs text-white/40 truncate">
+                <span className="text-xs text-white/60 truncate">
                   {product.seller.businessName || 'Marketplace Seller'}
                 </span>
               )}
               {product.seller.location && (
-                <span className="text-xs text-white/30 flex items-center gap-0.5 flex-shrink-0">
+                <span className="text-xs text-white/50 flex items-center gap-0.5 flex-shrink-0">
                   <MapPin className="w-2.5 h-2.5" />
                   {product.seller.location}
                 </span>
@@ -195,7 +195,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <p className="text-lg font-bold text-gold mb-1.5">{formatPrice(product.price)}</p>
 
         {/* Meta Info - Very compact */}
-        <div className="flex items-center justify-between text-xs text-white/40">
+        <div className="flex items-center justify-between text-xs text-white/60">
           <span className="capitalize truncate">{product.condition}</span>
           <div className="flex items-center gap-2 flex-shrink-0">
             {product.views > 0 && (
@@ -224,7 +224,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <Link
           to={`/rfq?product=${encodeURIComponent(product.title)}`}
           onClick={(e) => e.stopPropagation()}
-          className="mt-2 flex items-center gap-1.5 text-xs text-white/40 hover:text-gold transition-colors"
+          className="mt-2 flex items-center gap-1.5 text-xs text-white/60 hover:text-gold transition-colors"
         >
           <FileText className="w-3.5 h-3.5 flex-shrink-0" />
           Request Wholesale Quote

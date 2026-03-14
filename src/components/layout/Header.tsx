@@ -261,7 +261,7 @@ export default function Header() {
 
         {/* Sidebar Footer */}
         <div className="px-5 py-4 border-t border-white/10 flex-shrink-0">
-          <p className="text-xs text-white/30 text-center">{BRAND.name} — Open Marketplace</p>
+          <p className="text-xs text-white/50 text-center">{BRAND.name} — Open Marketplace</p>
         </div>
       </div>
 

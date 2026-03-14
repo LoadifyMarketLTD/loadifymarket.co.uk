@@ -32,5 +32,9 @@ dist-ssr
 build/
 coverage/
 
+# Lighthouse report artifacts (regenerate with: npx lighthouse ... --output-path docs/lighthouse/latest.report)
+docs/lighthouse/latest.report.html
+docs/lighthouse/latest.report.json
+
 # Netlify
 .netlify/

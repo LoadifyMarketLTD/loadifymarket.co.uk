@@ -462,7 +462,7 @@ export default function HomePage() {
             </div>
 
             {/* Note */}
-            <p className="text-center text-white/30 text-xs mt-6">
+            <p className="text-center text-white/50 text-xs mt-6">
               Transport quotes are provided by our UK-wide pallet and bulk delivery partners.
             </p>
           </div>

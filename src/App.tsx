@@ -9,15 +9,15 @@ import RequireAuth from './components/auth/RequireAuth';
 import RequireAdmin from './components/auth/RequireAdmin';
 import RequireSeller from './components/auth/RequireSeller';
 
-// Critical pages loaded immediately
-import HomePage from './pages/HomePage';
-import CatalogPage from './pages/CatalogPage';
-import ProductPage from './pages/ProductPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import NotFoundPage from './pages/NotFoundPage';
-import ShopPage from './pages/ShopPage';
-import BulkPage from './pages/BulkPage';
+// Public pages — lazy-loaded to keep the initial JS bundle small
+const HomePage = lazy(() => import('./pages/HomePage'));
+const CatalogPage = lazy(() => import('./pages/CatalogPage'));
+const ProductPage = lazy(() => import('./pages/ProductPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const ShopPage = lazy(() => import('./pages/ShopPage'));
+const BulkPage = lazy(() => import('./pages/BulkPage'));
 
 // Lazy load heavy/secondary pages
 const CartPage = lazy(() => import('./pages/CartPage'));
@@ -168,13 +168,13 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-          <Route index element={<HomePage />} />
-          <Route path="shop" element={<ShopPage />} />
-          <Route path="bulk" element={<BulkPage />} />
-          <Route path="catalog" element={<CatalogPage />} />
-          <Route path="product/:id" element={<ProductPage />} />
-          <Route path="login" element={<LoginPage />} />
-          <Route path="register" element={<RegisterPage />} />
+          <Route index element={<Suspense fallback={<PageLoader />}><HomePage /></Suspense>} />
+          <Route path="shop" element={<Suspense fallback={<PageLoader />}><ShopPage /></Suspense>} />
+          <Route path="bulk" element={<Suspense fallback={<PageLoader />}><BulkPage /></Suspense>} />
+          <Route path="catalog" element={<Suspense fallback={<PageLoader />}><CatalogPage /></Suspense>} />
+          <Route path="product/:id" element={<Suspense fallback={<PageLoader />}><ProductPage /></Suspense>} />
+          <Route path="login" element={<Suspense fallback={<PageLoader />}><LoginPage /></Suspense>} />
+          <Route path="register" element={<Suspense fallback={<PageLoader />}><RegisterPage /></Suspense>} />
           
           {/* Forgot Password */}
           <Route path="forgot-password" element={
@@ -517,7 +517,7 @@ function App() {
           {/* Public: Category pages — redirect to Shop filtered by category slug */}
           <Route path="categories/:slug" element={<CategoryRedirect />} />
 
-          <Route path="*" element={<NotFoundPage />} />
+          <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFoundPage /></Suspense>} />
         </Route>
       </Routes>
   );

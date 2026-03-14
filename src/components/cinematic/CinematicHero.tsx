@@ -18,17 +18,21 @@ export default function CinematicHero() {
           className="w-full h-full object-cover object-center"
           loading="eager"
           decoding="async"
+          fetchPriority="high"
         />
         {/* Dark overlay for text readability */}
         <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.65)' }} />
       </div>
 
-      {/* Cinematic Background Effects */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-gold/10 rounded-full blur-[120px]" style={{ willChange: 'opacity' }} />
-        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-gold/5 rounded-full blur-[100px]" />
-        <div className="absolute top-1/2 left-1/2 w-[1000px] h-[1000px] bg-graphite/30 rounded-full blur-[150px]" style={{ transform: 'translate(-50%, -50%) translateZ(0)' }} />
-
+      {/* Cinematic Background Effects — merged into a single element to minimise DOM */}
+      <div
+        className="absolute inset-0 pointer-events-none overflow-hidden"
+        style={{
+          background:
+            'radial-gradient(ellipse at 25% 20%, rgba(212,175,55,0.10) 0%, transparent 50%), ' +
+            'radial-gradient(ellipse at 75% 80%, rgba(212,175,55,0.05) 0%, transparent 50%)',
+        }}
+      >
         {/* Subtle grid pattern */}
         <div className="absolute inset-0 opacity-[0.03]" style={{
           backgroundImage: 'linear-gradient(rgba(212, 175, 55, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(212, 175, 55, 0.5) 1px, transparent 1px)',
@@ -54,7 +58,7 @@ export default function CinematicHero() {
           </h1>
 
           {/* Subheadline — hidden on mobile to keep hero compact */}
-          <p className="hidden sm:block text-base md:text-xl text-white/60 max-w-2xl mx-auto mb-6 md:mb-8">
+          <p className="hidden sm:block text-base md:text-xl text-white/80 max-w-2xl mx-auto mb-6 md:mb-8">
             Open marketplace where anyone can buy or sell products across the UK.
           </p>
 
@@ -80,7 +84,7 @@ export default function CinematicHero() {
           </div>
 
           {/* Trust Indicators */}
-          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 text-white/70 text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 text-white/80 text-sm">
             <div className="flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-gold" />
               Secure Payments
