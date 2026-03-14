@@ -16,6 +16,7 @@ export interface Shipment {
   courier_name?: string | null;
   tracking_number?: string | null;
   status: ShipmentStatus;
+  dispatched_at?: string | null;
   proof_of_delivery_url?: string | null;
   created_at: string;
   updated_at: string;

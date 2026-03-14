@@ -82,6 +82,29 @@ export default function TermsPage() {
         <p>
           For questions about these Terms, please contact us at loadifymarket.co.uk@gmail.com.
         </p>
+
+        <h2 className="text-2xl font-semibold mt-6 mb-3">12. Marketplace Role</h2>
+        <p>
+          Loadify Market operates as an online marketplace platform that allows independent sellers
+          to list and sell their products directly to buyers.
+        </p>
+        <p className="mt-3">
+          The contract of sale is formed directly between the buyer and the seller. Loadify Market
+          is not the seller of the products listed on the platform.
+        </p>
+        <p className="mt-3">Each seller is solely responsible for:</p>
+        <ul className="list-disc pl-6 my-4">
+          <li>Product listings and descriptions</li>
+          <li>Product availability and stock</li>
+          <li>Packaging and shipping</li>
+          <li>Delivery times</li>
+          <li>Returns and refunds</li>
+          <li>Customer service related to their products</li>
+        </ul>
+        <p>
+          Loadify Market acts only as an intermediary platform facilitating the transaction between
+          buyers and sellers.
+        </p>
       </div>
     </div>
   );

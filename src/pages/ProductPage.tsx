@@ -28,6 +28,9 @@ import {
   Store,
 } from 'lucide-react';
 
+/** Product types that use the XDrive logistics / transport quote flow instead of normal checkout. */
+const BULK_PRODUCT_TYPES: string[] = ['pallet', 'lot', 'wholesale', 'logistics'];
+
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -49,17 +52,18 @@ export default function ProductPage() {
         .from('products')
         .select(`
           *,
-          store:seller_stores(storeSlug)
+          store:seller_stores(storeSlug, storeName)
         `)
         .eq('id', id)
         .single();
 
       if (error) throw error;
 
-      // Attach storeSlug to product for "View Seller Store" link
+      // Attach storeSlug and storeName to product for seller links
       const productWithStore = {
         ...data,
-        storeSlug: (data.store as { storeSlug?: string } | null)?.storeSlug,
+        storeSlug: (data.store as { storeSlug?: string; storeName?: string } | null)?.storeSlug,
+        storeName: (data.store as { storeSlug?: string; storeName?: string } | null)?.storeName,
       };
       setProduct(productWithStore);
 
@@ -199,7 +203,11 @@ export default function ProductPage() {
     }).format(price);
   };
 
-  // Map courier name to a lucide icon component
+  // Bulk/pallet/wholesale products use XDrive transport, not normal checkout
+  const isBulkProduct = product
+    ? BULK_PRODUCT_TYPES.includes(product.type)
+    : false;
+
   // Get type icon
   const getTypeIcon = () => {
     if (!product) return Package;
@@ -382,8 +390,8 @@ export default function ProductPage() {
               <span className="font-medium text-white capitalize">{product.condition}</span>
             </div>
 
-            {/* Quantity Selector */}
-            {product.stockQuantity > 0 && (
+            {/* Quantity Selector — retail products only */}
+            {product.stockQuantity > 0 && !isBulkProduct && (
               <div className="mb-8">
                 <label className="block text-sm font-medium text-white/60 mb-2">Quantity</label>
                 <div className="flex items-center gap-3">
@@ -417,14 +425,26 @@ export default function ProductPage() {
 
             {/* Action Buttons */}
             <div className="flex gap-4 mb-4">
-              <button
-                onClick={handleAddToCart}
-                disabled={product.stockQuantity === 0}
-                className="btn-primary flex-1 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ShoppingCart className="h-5 w-5" />
-                <span>{product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}</span>
-              </button>
+              {isBulkProduct ? (
+                /* Bulk / pallet / wholesale — no normal checkout, go straight to transport quote */
+                <Link
+                  to={buildTransportQuoteUrl(product)}
+                  className="btn-primary flex-1 flex items-center justify-center gap-3"
+                >
+                  <Truck className="h-5 w-5" />
+                  Request Transport Quote
+                </Link>
+              ) : (
+                /* Retail — normal Add to Cart flow */
+                <button
+                  onClick={handleAddToCart}
+                  disabled={product.stockQuantity === 0}
+                  className="btn-primary flex-1 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  <span>{product.stockQuantity > 0 ? 'Add to Cart' : 'Out of Stock'}</span>
+                </button>
+              )}
               <button
                 onClick={async () => {
                   if (product) {
@@ -447,14 +467,16 @@ export default function ProductPage() {
               </button>
             </div>
 
-            {/* RFQ Button — Wholesale buyers */}
-            <Link
-              to={`/rfq?product=${encodeURIComponent(product.title)}`}
-              className="btn-secondary w-full mb-8 flex items-center justify-center gap-2"
-            >
-              <FileText className="w-4 h-4" />
-              Request Wholesale Quote
-            </Link>
+            {/* RFQ Button — retail / wholesale buyers only */}
+            {!isBulkProduct && (
+              <Link
+                to={`/rfq?product=${encodeURIComponent(product.title)}`}
+                className="btn-secondary w-full mb-8 flex items-center justify-center gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                Request Wholesale Quote
+              </Link>
+            )}
 
             {/* Seller Info Panel */}
             <div className="card-glass mb-8">
@@ -478,6 +500,40 @@ export default function ProductPage() {
                 </Link>
               </div>
             </div>
+
+            {/* Seller Information — Legal Notice */}
+            {(() => {
+              const productWithStore = product as Product & { storeSlug?: string; storeName?: string };
+              return (
+                <div className="card-glass mb-8 border border-white/10">
+                  <h3 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+                    <Store className="w-4 h-4 text-gold" />
+                    Seller Information
+                  </h3>
+                  <p className="text-sm text-white/60 mb-3">
+                    This product is sold and shipped directly by the seller listed above.
+                  </p>
+                  <p className="text-xs text-white/40 mb-4 leading-relaxed">
+                    Loadify Market operates as an online marketplace platform connecting buyers with
+                    independent sellers. The seller is responsible for product availability, packaging,
+                    shipping, delivery, returns, and customer service related to this product.
+                  </p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-white/50">Sold by:</span>
+                    {productWithStore.storeSlug ? (
+                      <Link
+                        to={`/seller/${productWithStore.storeSlug}`}
+                        className="text-gold hover:text-gold/80 font-medium transition-colors"
+                      >
+                        {productWithStore.storeName || 'View Seller Store'}
+                      </Link>
+                    ) : (
+                      <span className="text-white/70 font-medium">Independent Seller</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Trust Badges */}
             <div className="grid grid-cols-3 gap-4">
@@ -548,10 +604,10 @@ export default function ProductPage() {
                 </div>
               )}
 
-              {/* XDrive Transport Quote link — pallet/bulk orders only */}
-              {product.type === 'pallet' && (
+              {/* XDrive Transport Quote link — bulk / pallet / wholesale / logistics only */}
+              {isBulkProduct && (
                 <>
-                  {product.type === 'pallet' && product.palletInfo && (
+                  {product.palletInfo && (
                     <div className="flex items-center justify-between text-sm mb-3">
                       <span className="text-white/50">Pallet count</span>
                       <span className="text-white/80 font-medium">{product.palletInfo.palletCount}</span>
