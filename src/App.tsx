@@ -35,6 +35,7 @@ const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const AdminReviewsPage = lazy(() => import('./pages/AdminReviewsPage'));
 const CategoryManagementPage = lazy(() => import('./pages/CategoryManagementPage'));
 const SellerApprovalsPage = lazy(() => import('./pages/SellerApprovalsPage'));
+const AdminSellerDetailPage = lazy(() => import('./pages/AdminSellerDetailPage'));
 const ReportedListingsPage = lazy(() => import('./pages/ReportedListingsPage'));
 const AdminShipmentsPage = lazy(() => import('./pages/AdminShipmentsPage'));
 const OrdersPage = lazy(() => import('./pages/OrdersPage'));
@@ -294,6 +295,14 @@ function App() {
             <RequireAdmin>
               <Suspense fallback={<PageLoader />}>
                 <SellerApprovalsPage />
+              </Suspense>
+            </RequireAdmin>
+          } />
+          {/* Protected: Admin Seller Detail */}
+          <Route path="admin/sellers/:id" element={
+            <RequireAdmin>
+              <Suspense fallback={<PageLoader />}>
+                <AdminSellerDetailPage />
               </Suspense>
             </RequireAdmin>
           } />
