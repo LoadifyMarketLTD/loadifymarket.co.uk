@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, lazy, Suspense } from 'react';
 import { supabase } from './lib/supabase';
 import { useAuthStore } from './store';
@@ -459,6 +459,11 @@ function App() {
             </Suspense>
           } />
           
+          {/* Route aliases for expected URLs */}
+          <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />
+          <Route path="seller-dashboard" element={<Navigate to="/seller" replace />} />
+          <Route path="admin-dashboard" element={<Navigate to="/admin" replace />} />
+
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
