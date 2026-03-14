@@ -269,13 +269,25 @@ CREATE POLICY "order_items_select" ON order_items FOR SELECT
               AND (o."buyerId" = auth.uid() OR o."sellerId" = auth.uid()))
     OR is_admin_or_owner()
   );
-CREATE POLICY "order_items_insert" ON order_items FOR INSERT WITH CHECK (TRUE);
+-- Only the buyer/seller of the parent order (or admin/owner) may insert items.
+-- The stripe-webhook uses the service role key which bypasses RLS.
+CREATE POLICY "order_items_insert" ON order_items FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM orders o
+      WHERE o.id = "orderId"
+        AND (o."buyerId" = auth.uid() OR o."sellerId" = auth.uid())
+    )
+    OR is_admin_or_owner()
+  );
 
 -- ── PAYMENT SESSIONS ─────────────────────────────────────────────
 CREATE POLICY "payment_sessions_select" ON payment_sessions FOR SELECT
   USING (auth.uid() = "userId" OR is_admin_or_owner());
-CREATE POLICY "payment_sessions_write"  ON payment_sessions FOR ALL
-  USING (TRUE) WITH CHECK (TRUE);
+-- Write operations are handled by the service role (webhook) or admin only.
+-- Allowing any authenticated user to write payment sessions is a security risk.
+CREATE POLICY "payment_sessions_admin_write" ON payment_sessions FOR ALL
+  USING (is_admin_or_owner()) WITH CHECK (is_admin_or_owner());
 
 -- ── PAYOUTS ──────────────────────────────────────────────────────
 CREATE POLICY "payouts_seller_select" ON payouts FOR SELECT
