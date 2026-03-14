@@ -9,9 +9,10 @@ interface TrendingProductsProps {
   days?: number;
   mode?: 'trending' | 'newest';
   skip?: number;
+  onDataLoaded?: (count: number) => void;
 }
 
-export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'trending', skip = 0 }: TrendingProductsProps) {
+export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'trending', skip = 0, onDataLoaded }: TrendingProductsProps) {
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -155,6 +156,13 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
   useEffect(() => {
     fetchTrendingProducts();
   }, [fetchTrendingProducts]);
+
+  // Notify parent when loading is done
+  useEffect(() => {
+    if (!loading) {
+      onDataLoaded?.(trendingProducts.length);
+    }
+  }, [loading, trendingProducts.length, onDataLoaded]);
 
   if (loading) {
     return (
