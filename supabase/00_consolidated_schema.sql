@@ -582,6 +582,27 @@ CREATE INDEX IF NOT EXISTS idx_reviews_status  ON reviews (status);
 CREATE TRIGGER trg_reviews_updatedAt BEFORE UPDATE ON reviews
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+-- ──────────────────────────────────────────────────────────────
+-- Atomic stock decrement helper — called by the order webhook to
+-- reduce stockQuantity and update stockStatus in one statement.
+-- Using GREATEST prevents the quantity from going below zero.
+-- ──────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION decrement_product_stock(p_product_id UUID, p_qty INTEGER)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE products
+  SET
+    "stockQuantity" = GREATEST("stockQuantity" - p_qty, 0),
+    "stockStatus"   = CASE
+                        WHEN GREATEST("stockQuantity" - p_qty, 0) <= 0  THEN 'out_of_stock'
+                        WHEN GREATEST("stockQuantity" - p_qty, 0) <= 10 THEN 'low_stock'
+                        ELSE 'in_stock'
+                      END,
+    "updatedAt"     = NOW()
+  WHERE id = p_product_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 CREATE OR REPLACE FUNCTION refresh_product_rating()
 RETURNS TRIGGER AS $$
 DECLARE v_pid UUID;

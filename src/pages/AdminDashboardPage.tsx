@@ -16,7 +16,7 @@ import {
 } from '../lib/exportUtils';
 
 export default function AdminDashboardPage() {
-  const { user } = useAuthStore();
+  const { user, isLoading } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'users' | 'products' | 'orders' | 'disputes' | 'exports'>('overview');
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<'7days' | '30days' | 'all'>('30days');
@@ -36,10 +36,16 @@ export default function AdminDashboardPage() {
   });
 
   useEffect(() => {
+    // Wait for auth state to settle before acting
+    if (isLoading) return;
+
     if (hasAdminAccess(user)) {
       fetchData();
+    } else {
+      // Not an admin — stop the loading spinner so the access-denied UI shows immediately
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, isLoading]);
 
   const fetchData = async () => {
     setLoading(true);

@@ -12,6 +12,15 @@ interface ConversationWithDetails extends Conversation {
   unreadCount?: number;
 }
 
+// Shape of each message row returned by the joined conversations query
+interface ConvMessageRow {
+  message: string;
+  createdAt: string;
+  receiverId: string;
+  isRead: boolean;
+  senderId: string;
+}
+
 export default function MessagesPage() {
   const { user } = useAuthStore();
   const [conversations, setConversations] = useState<ConversationWithDetails[]>([]);
@@ -25,63 +34,54 @@ export default function MessagesPage() {
     if (!user) return;
 
     try {
+      // Single query: join both participants, the product title, and the latest messages.
+      // PostgREST can resolve FK relationships in one round-trip which eliminates the N+1
+      // pattern of fetching per-conversation user names and product titles separately.
       const { data, error } = await supabase
         .from('conversations')
-        .select('*, messages(*)')
+        .select(`
+          *,
+          user1:users!conversations_user1Id_fkey(firstName, lastName),
+          user2:users!conversations_user2Id_fkey(firstName, lastName),
+          product:products(title),
+          messages(message, createdAt, receiverId, isRead, senderId)
+        `)
         .or(`user1Id.eq.${user.id},user2Id.eq.${user.id}`)
         .order('lastMessageAt', { ascending: false });
 
       if (error) throw error;
 
-      // Fetch additional details for each conversation
-      const conversationsWithDetails = await Promise.all(
-        (data || []).map(async (conv) => {
-          const otherUserId = conv.user1Id === user.id ? conv.user2Id : conv.user1Id;
-          
-          // Fetch other user's name
-          const { data: userData } = await supabase
-            .from('users')
-            .select('firstName, lastName')
-            .eq('id', otherUserId)
-            .single();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const conversationsWithDetails = (data || []).map((conv: any) => {
+        const isUser1 = conv.user1Id === user.id;
+        const otherUser: { firstName?: string; lastName?: string } | null = isUser1
+          ? conv.user2
+          : conv.user1;
+        const otherUserName = otherUser
+          ? `${otherUser.firstName || ''} ${otherUser.lastName || ''}`.trim() || 'Unknown User'
+          : 'Unknown User';
 
-          // Fetch product title if applicable
-          let productTitle = '';
-          if (conv.productId) {
-            const { data: productData } = await supabase
-              .from('products')
-              .select('title')
-              .eq('id', conv.productId)
-              .single();
-            productTitle = productData?.title || '';
-          }
+        const productTitle: string = conv.product?.title ?? '';
 
-          // Get last message
-          const { data: lastMessageData } = await supabase
-            .from('messages')
-            .select('message')
-            .eq('conversationId', conv.id)
-            .order('createdAt', { ascending: false })
-            .limit(1)
-            .single();
+        const msgs: ConvMessageRow[] = conv.messages ?? [];
 
-          // Count unread messages
-          const { count: unreadCount } = await supabase
-            .from('messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('conversationId', conv.id)
-            .eq('receiverId', user.id)
-            .eq('isRead', false);
+        // Sort descending to get the latest message text
+        const sorted = [...msgs].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+        const lastMessage = sorted[0]?.message ?? '';
+        const unreadCount = msgs.filter(
+          (m) => m.receiverId === user.id && !m.isRead,
+        ).length;
 
-          return {
-            ...conv,
-            otherUserName: userData ? `${userData.firstName} ${userData.lastName}` : 'Unknown User',
-            productTitle,
-            lastMessage: lastMessageData?.message || '',
-            unreadCount: unreadCount || 0,
-          };
-        })
-      );
+        return {
+          ...conv,
+          otherUserName,
+          productTitle,
+          lastMessage,
+          unreadCount,
+        };
+      });
 
       setConversations(conversationsWithDetails);
     } catch (error) {

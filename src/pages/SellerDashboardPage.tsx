@@ -81,7 +81,7 @@ export default function SellerDashboardPage() {
 
       // Calculate stats
       const activeProds = (productsData || []).filter((p: Product) => p.isActive).length;
-      const totalRev = (ordersData || []).reduce((sum: number, o: Order) => sum + (o.total - o.commission), 0);
+      const totalRev = (ordersData || []).reduce((sum: number, o: Order) => sum + (o.total - (o.commission ?? 0)), 0);
       const pending = (ordersData || []).filter((o: Order) => o.status === 'pending' || o.status === 'paid').length;
 
       setStats({
