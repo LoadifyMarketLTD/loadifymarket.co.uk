@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Package, Truck, CheckCircle, Clock, MapPin, Download,
-  ChevronLeft, FileText, XCircle, RotateCcw,
+  ChevronLeft, FileText, XCircle, RotateCcw, Store,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
@@ -19,7 +19,7 @@ const STATUS_STEPS = [
 
 const STATUS_ORDER = ['pending', 'paid', 'packed', 'shipped', 'delivered'];
 
-function generateInvoicePDF(order: Order & { productTitle?: string }) {
+function generateInvoicePDF(order: Order & { productTitle?: string; storeName?: string }) {
   // Build a printable HTML invoice and trigger browser print/save
   const invoiceHTML = `
 <!DOCTYPE html>
@@ -76,7 +76,8 @@ function generateInvoicePDF(order: Order & { productTitle?: string }) {
       <div style="font-weight:bold; margin-bottom:6px; font-size:12px; text-transform:uppercase; color:#888;">Payment</div>
       <div style="font-size:13px; line-height:1.7; color:#444;">
         Method: Card (Stripe)<br/>
-        Delivery: ${order.deliveryMethod || 'delivery'}
+        Delivery: ${order.deliveryMethod || 'delivery'}<br/>
+        ${order.storeName ? `Sold by: ${order.storeName}` : ''}
       </div>
     </div>
   </div>
@@ -106,8 +107,8 @@ function generateInvoicePDF(order: Order & { productTitle?: string }) {
   </table>
   <hr class="divider"/>
   <div class="footer">
-    <p>Thank you for your order. ${BRAND.name} is operated by ${BRAND.companyName}.</p>
-    <p>Returns accepted within ${BRAND.returnsDays} days of delivery. Contact: ${BRAND.supportEmail}</p>
+    <p>Thank you for your order. ${BRAND.name} operates as a marketplace platform facilitating transactions between buyers and independent sellers.</p>
+    <p>This product is sold and fulfilled by the seller. For returns or enquiries, please contact the seller directly or raise a dispute via your orders page within ${BRAND.returnsDays} days of delivery.</p>
     <p>This invoice was generated automatically. Platform fee: ${BRAND.marketplaceFeePercent}%.</p>
   </div>
 </body>
@@ -127,7 +128,7 @@ function generateInvoicePDF(order: Order & { productTitle?: string }) {
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuthStore();
-  const [order, setOrder] = useState<(Order & { productTitle?: string }) | null>(null);
+  const [order, setOrder] = useState<(Order & { productTitle?: string; storeName?: string }) | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -137,12 +138,16 @@ export default function OrderDetailPage() {
       try {
         const { data, error } = await supabase
           .from('orders')
-          .select(`*, product:products(title)`)
+          .select(`*, product:products(title), store:seller_stores(storeName)`)
           .eq('id', id)
           .eq('buyerId', user.id)
           .single();
         if (error) throw error;
-        setOrder({ ...data, productTitle: (data?.product as { title?: string } | null)?.title });
+        setOrder({
+          ...data,
+          productTitle: (data?.product as { title?: string } | null)?.title,
+          storeName: (data?.store as { storeName?: string } | null)?.storeName,
+        });
       } catch (e) {
         console.error('Error fetching order:', e);
       } finally {
@@ -254,6 +259,14 @@ export default function OrderDetailPage() {
                 <span className="text-white/50">Product</span>
                 <span className="text-white font-medium">{order.productTitle || '–'}</span>
               </div>
+              {order.storeName && (
+                <div className="flex justify-between items-center">
+                  <span className="text-white/50 flex items-center gap-1">
+                    <Store className="w-3 h-3" /> Sold by
+                  </span>
+                  <span className="text-gold font-medium">{order.storeName}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-white/50">Quantity</span>
                 <span className="text-white">{order.quantity}</span>
