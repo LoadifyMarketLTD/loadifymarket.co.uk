@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCartStore, useAuthStore } from '../store';
 import { supabase } from '../lib/supabase';
 import type { ShippingMethod } from '../types/shipping';
-import { CreditCard, Info, MapPin, Package, Truck } from 'lucide-react';
+import { CreditCard, Info, MapPin, Package, Shield, Star, Truck } from 'lucide-react';
 
 interface Address {
   line1: string;
@@ -131,14 +131,12 @@ export default function CheckoutPage() {
   }
 
   const VAT_RATE = 0.20;
-  const COMMISSION_RATE = 0.07;
   const selectedShipping = shippingOptions.find((o) => o.id === selectedShippingId) ?? shippingOptions[0];
   const shippingAmount = selectedShipping?.price ?? 0;
 
   const subtotal = total / (1 + VAT_RATE);
   const shippingVAT = shippingAmount * VAT_RATE;
   const vatAmount = (total - subtotal) + shippingVAT;
-  const commissionAmount = subtotal * COMMISSION_RATE;
   const grandTotal = total + shippingAmount + shippingVAT;
 
   const formatPrice = (price: number) => {
@@ -518,8 +516,8 @@ export default function CheckoutPage() {
               <div className="space-y-3 mb-4">
                 {items.map((item) => (
                   <div key={item.productId} className="flex justify-between text-sm">
-                    <span>{item.quantity}x Product</span>
-                    <span>{formatPrice(item.price * item.quantity)}</span>
+                    <span className="truncate max-w-[60%]">{item.quantity}× {item.title}</span>
+                    <span className="flex-shrink-0">{formatPrice(item.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>
@@ -540,21 +538,28 @@ export default function CheckoutPage() {
                   <span>{shippingAmount === 0 ? 'Free' : formatPrice(shippingAmount)}</span>
                 </div>
 
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>Marketplace Commission (7%)</span>
-                  <span>{formatPrice(commissionAmount)}</span>
-                </div>
-
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Grand Total</span>
                   <span>{formatPrice(grandTotal)}</span>
                 </div>
               </div>
 
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-gray-700">
-                <p className="font-medium mb-1">Payment Processing</p>
-                <p className="text-xs">
-                  Your payment is processed through Stripe. Payment details are never stored on our servers.
+              {/* Marketplace Trust Badges */}
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-gray-700 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <span className="font-medium">Secure Marketplace Checkout</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Truck className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <span className="font-medium">Seller Fulfilled Shipping</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Star className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <span className="font-medium">Verified Marketplace Sellers</span>
+                </div>
+                <p className="text-xs text-gray-500 pt-1">
+                  Payment is processed securely through Stripe. Payment details are never stored on our servers.
                 </p>
               </div>
             </div>

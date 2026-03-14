@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { CheckCircle, ShoppingBag, ArrowRight, Package } from 'lucide-react';
+import { CheckCircle, ShoppingBag, ArrowRight, Package, Shield, Truck, Star } from 'lucide-react';
 import { useCartStore } from '../store';
 import { BRAND } from '../constants/brand';
 
@@ -63,11 +63,26 @@ export default function OrderSuccessPage() {
             </div>
           </div>
 
-          {/* Buyer Protection Note */}
-          <div className="bg-gold/5 border border-gold/20 rounded-xl p-4 mb-8 text-left">
-            <p className="text-gold text-sm font-semibold mb-1">🛡️ {BRAND.name} Buyer Protection</p>
-            <p className="text-white/60 text-xs leading-relaxed">
-              Your purchase is protected. If anything goes wrong, you can open a dispute from your orders page within {BRAND.returnsDays} days.
+          {/* Marketplace Trust Badges */}
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-8 text-left">
+            <p className="text-white text-sm font-semibold mb-3">Marketplace Checkout Complete</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-gold flex-shrink-0" />
+                <span className="text-white/70 text-xs">Secure Marketplace Checkout</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Truck className="w-4 h-4 text-gold flex-shrink-0" />
+                <span className="text-white/70 text-xs">Seller Fulfilled Shipping</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Star className="w-4 h-4 text-gold flex-shrink-0" />
+                <span className="text-white/70 text-xs">Verified Marketplace Sellers</span>
+              </div>
+            </div>
+            <p className="text-white/40 text-xs mt-3 leading-relaxed">
+              Your item will be packaged and shipped directly by the seller.
+              If there is an issue with your order, you can raise a dispute from your orders page within {BRAND.returnsDays} days of delivery.
             </p>
           </div>
 
