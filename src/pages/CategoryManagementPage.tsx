@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
+import { hasAdminAccess } from '../lib/roleUtils';
 import type { Category } from '../types';
 import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
 
@@ -19,7 +20,7 @@ export default function CategoryManagementPage() {
   });
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (hasAdminAccess(user)) {
       fetchCategories();
     }
   }, [user]);
@@ -110,7 +111,7 @@ export default function CategoryManagementPage() {
     setShowAddForm(false);
   };
 
-  if (user?.role !== 'admin') {
+  if (!hasAdminAccess(user)) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="card text-center py-12">

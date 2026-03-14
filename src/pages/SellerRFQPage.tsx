@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
+import { hasSellerAccess } from '../lib/roleUtils';
 import type { RFQRequest } from '../types';
 import {
   FileText,
@@ -51,7 +52,7 @@ export default function SellerRFQPage() {
     });
   };
 
-  if (!user || user.role !== 'seller') {
+  if (!user || !hasSellerAccess(user)) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="card text-center py-12">

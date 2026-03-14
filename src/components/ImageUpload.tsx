@@ -1,10 +1,31 @@
 import { useState } from 'react';
-import { Upload, X, ImageIcon } from 'lucide-react';
+import { Upload, X, ImageIcon, Link as LinkIcon } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface ImageUploadProps {
   images: string[];
   onImagesChange: (images: string[]) => void;
   maxImages?: number;
+}
+
+const STORAGE_BUCKET = 'product-images';
+
+async function uploadImageToStorage(file: File, sellerId?: string): Promise<string> {
+  // Generate a unique file path
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).slice(2, 9);
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+  const folder = sellerId ? `sellers/${sellerId}` : 'uploads';
+  const filePath = `${folder}/${timestamp}-${random}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(STORAGE_BUCKET)
+    .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+  if (uploadError) throw uploadError;
+
+  const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
+  return data.publicUrl;
 }
 
 export default function ImageUpload({ 
@@ -13,31 +34,30 @@ export default function ImageUpload({
   maxImages = 10 
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageAdd = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     setUploading(true);
+    setUploadError(null);
 
-    // Convert files to base64 or URLs
-    // In a real implementation, you would upload to Supabase Storage or a CDN
-    const newImages: string[] = [];
-    
-    Array.from(files).forEach((file, index) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        newImages.push(reader.result as string);
-        
-        // When all files are processed
-        if (index === files.length - 1) {
-          const updatedImages = [...images, ...newImages].slice(0, maxImages);
-          onImagesChange(updatedImages);
-          setUploading(false);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    try {
+      const uploadPromises = Array.from(files).map(file => uploadImageToStorage(file));
+      const uploadedUrls = await Promise.all(uploadPromises);
+      const updatedImages = [...images, ...uploadedUrls].slice(0, maxImages);
+      onImagesChange(updatedImages);
+    } catch (err) {
+      console.error('Image upload error:', err);
+      setUploadError(
+        'Failed to upload image(s). The storage bucket may not be configured yet. You can use "Add URL" instead.'
+      );
+    } finally {
+      setUploading(false);
+      // Reset file input so the same file can be re-selected
+      e.target.value = '';
+    }
   };
 
   const handleImageRemove = (index: number) => {
@@ -63,13 +83,21 @@ export default function ImageUpload({
           <button
             type="button"
             onClick={handleUrlAdd}
-            className="text-sm text-navy-800 hover:text-navy-600"
+            className="text-sm text-navy-800 hover:text-navy-600 flex items-center gap-1"
             disabled={images.length >= maxImages}
           >
+            <LinkIcon className="h-4 w-4" />
             Add URL
           </button>
         </div>
       </div>
+
+      {/* Upload Error */}
+      {uploadError && (
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-3 py-2 rounded text-sm">
+          {uploadError}
+        </div>
+      )}
 
       {/* Image Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

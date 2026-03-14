@@ -177,6 +177,9 @@ export default function FrequentlyBoughtTogether({ productId, currentProduct }: 
         productId: currentProduct.id,
         quantity: 1,
         price: currentProduct.price,
+        title: currentProduct.title,
+        image: currentProduct.images?.[0],
+        sellerId: currentProduct.sellerId,
       });
     }
 
@@ -187,6 +190,9 @@ export default function FrequentlyBoughtTogether({ productId, currentProduct }: 
           productId: product.id,
           quantity: 1,
           price: product.price,
+          title: product.title,
+          image: product.images?.[0],
+          sellerId: product.sellerId,
         });
       }
     });

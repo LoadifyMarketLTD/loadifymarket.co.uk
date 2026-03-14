@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store';
+import { hasAdminAccess } from '../lib/roleUtils';
 import type { Shipment } from '../types/shipping';
 import { Package, ExternalLink, Filter, Search } from 'lucide-react';
 
@@ -34,7 +35,7 @@ export default function AdminShipmentsPage() {
   const [updating, setUpdating] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (hasAdminAccess(user)) {
       loadShipments();
     }
   }, [user]);
@@ -136,7 +137,7 @@ export default function AdminShipmentsPage() {
     return true;
   });
 
-  if (!user || user.role !== 'admin') {
+  if (!user || !hasAdminAccess(user)) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">

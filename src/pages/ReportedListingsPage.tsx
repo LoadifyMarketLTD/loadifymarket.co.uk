@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
+import { hasAdminAccess } from '../lib/roleUtils';
 import type { ReportedListing, Product, User } from '../types';
 import { AlertCircle, CheckCircle, XCircle, Eye } from 'lucide-react';
 
@@ -81,7 +82,7 @@ export default function ReportedListingsPage() {
   };
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (hasAdminAccess(user)) {
       fetchReports();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -134,7 +135,7 @@ export default function ReportedListingsPage() {
     }
   };
 
-  if (user?.role !== 'admin') {
+  if (!hasAdminAccess(user)) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="card text-center py-12">

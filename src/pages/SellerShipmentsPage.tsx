@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store';
+import { hasSellerAccess } from '../lib/roleUtils';
 import type { Shipment } from '../types/shipping';
 import SellerShipmentForm from '../components/SellerShipmentForm';
 import { Package, Truck, Search, Filter } from 'lucide-react';
@@ -158,7 +159,7 @@ export default function SellerShipmentsPage() {
     return true;
   });
 
-  if (!user || user.role !== 'seller') {
+  if (!user || !hasSellerAccess(user)) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">

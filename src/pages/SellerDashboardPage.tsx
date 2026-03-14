@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
+import { hasSellerAccess } from '../lib/roleUtils';
 import type { Product, Order, SellerProfile, DeliveryRequest } from '../types';
 import { buildXDriveAppUrl } from '../lib/transportQuote';
 import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3, Truck, ExternalLink, Clock } from 'lucide-react';
@@ -123,7 +124,7 @@ export default function SellerDashboardPage() {
     }).format(price);
   };
 
-  if (!user || user.role !== 'seller') {
+  if (!user || !hasSellerAccess(user)) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="card text-center py-12">

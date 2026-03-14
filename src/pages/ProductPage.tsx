@@ -114,6 +114,9 @@ export default function ProductPage() {
       productId: product.id,
       quantity,
       price: product.price,
+      title: product.title,
+      image: product.images?.[0],
+      sellerId: product.sellerId,
     });
 
     // Track add to cart

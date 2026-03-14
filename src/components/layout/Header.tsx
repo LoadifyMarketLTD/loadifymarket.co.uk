@@ -240,7 +240,7 @@ export default function Header() {
 
             {user ? (
               <>
-                {user.role === 'seller' && (
+                {(user.role === 'seller' || user.role === 'owner') && (
                   <Link
                     to="/seller"
                     className={`nav-link ${isActive('/seller') ? 'nav-link-active' : ''}`}
@@ -248,7 +248,7 @@ export default function Header() {
                     Dashboard
                   </Link>
                 )}
-                {user.role === 'admin' && (
+                {(user.role === 'admin' || user.role === 'owner') && (
                   <Link
                     to="/admin"
                     className={`nav-link ${isActive('/admin') ? 'nav-link-active' : ''}`}
@@ -381,7 +381,7 @@ export default function Header() {
 
             {user ? (
               <>
-                {user.role === 'seller' && (
+                {(user.role === 'seller' || user.role === 'owner') && (
                   <Link
                     to="/seller"
                     className={`block py-3 px-4 rounded-premium-sm transition-all duration-300 ${
@@ -393,7 +393,7 @@ export default function Header() {
                     Seller Dashboard
                   </Link>
                 )}
-                {user.role === 'admin' && (
+                {(user.role === 'admin' || user.role === 'owner') && (
                   <Link
                     to="/admin"
                     className={`block py-3 px-4 rounded-premium-sm transition-all duration-300 ${

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
+import { hasAdminAccess } from '../lib/roleUtils';
 import type { User, Product, Order, Dispute } from '../types';
 import { Users, Package, ShoppingBag, AlertCircle, CheckCircle, XCircle, DollarSign, Download, Settings, TrendingUp } from 'lucide-react';
 import { 
@@ -35,7 +36,7 @@ export default function AdminDashboardPage() {
   });
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (hasAdminAccess(user)) {
       fetchData();
     }
   }, [user]);
@@ -200,7 +201,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  if (!user || user.role !== 'admin') {
+  if (!user || !hasAdminAccess(user)) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="card text-center py-12">
