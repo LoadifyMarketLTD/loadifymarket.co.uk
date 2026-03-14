@@ -93,6 +93,8 @@ export default function HomePage() {
   const [bulkDeals, setBulkDeals] = useState<Product[]>([]);
   const [dealsLoading, setDealsLoading] = useState(true);
   const [bulkLoading, setBulkLoading] = useState(true);
+  const [trendingCount, setTrendingCount] = useState<number | null>(null);
+  const [newestCount, setNewestCount] = useState<number | null>(null);
 
   useEffect(() => {
     // Fetch featured deals: most-viewed active products
@@ -202,8 +204,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3 — Featured Deals */}
-      <section className="py-10 md:py-14 bg-jet border-t border-white/5">
+      {/* 3 — Featured Deals — hidden when no data */}
+      {(dealsLoading || featuredDeals.length > 0) && (
+      <section className="py-8 md:py-10 bg-jet border-t border-white/5">
         <div className="container-cinematic">
           {/* Deal accent bar */}
           <div className="flex items-center gap-3 mb-1">
@@ -213,7 +216,7 @@ export default function HomePage() {
             </span>
             <div className="flex-1 h-px bg-red-500/30" />
           </div>
-          <div className="flex items-center justify-between mb-6 mt-4">
+          <div className="flex items-center justify-between mb-5 mt-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-premium-sm bg-red-500/15 border border-red-500/20">
                 <Tag className="w-5 h-5 text-red-400" />
@@ -238,34 +241,28 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
-          ) : featuredDeals.length > 0 ? (
+          ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {featuredDeals.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
-          ) : (
-            <div className="text-center py-12 text-white/40">
-              <Tag className="w-10 h-10 mx-auto mb-3 opacity-40" />
-              <p className="text-sm">No featured listings yet — check back soon.</p>
-              <Link to="/catalog" className="mt-4 inline-flex items-center gap-1 text-gold text-sm hover:underline">
-                Browse All Listings <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
           )}
 
-          <div className="mt-6 text-center sm:hidden">
+          <div className="mt-5 text-center sm:hidden">
             <Link to="/bulk" className="btn-secondary inline-flex items-center gap-2 text-sm">
               View All Deals <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
       </section>
+      )}
 
-      {/* 4 — Trending Products */}
-      <section className="py-10 md:py-14 bg-graphite/25 border-t border-white/5">
+      {/* 4 — Trending Products — hidden when no data */}
+      {(trendingCount === null || trendingCount > 0) && (
+      <section className="py-8 md:py-10 bg-graphite/25 border-t border-white/5">
         <div className="container-cinematic">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-premium-sm bg-orange-500/15 border border-orange-500/20">
                 <Flame className="w-5 h-5 text-orange-400" />
@@ -280,15 +277,17 @@ export default function HomePage() {
             </Link>
           </div>
           <Suspense fallback={<div className="grid grid-cols-2 md:grid-cols-3 gap-4 min-h-[220px]" />}>
-            <TrendingProducts maxProducts={6} days={7} mode="trending" />
+            <TrendingProducts maxProducts={6} days={7} mode="trending" onDataLoaded={setTrendingCount} />
           </Suspense>
         </div>
       </section>
+      )}
 
-      {/* 5 — New Listings */}
-      <section className="py-10 md:py-14 bg-jet border-t border-white/5">
+      {/* 5 — New Listings — hidden when no data */}
+      {(newestCount === null || newestCount > 0) && (
+      <section className="py-8 md:py-10 bg-jet border-t border-white/5">
         <div className="container-cinematic">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-premium-sm bg-emerald-500/15 border border-emerald-500/20">
                 <Clock className="w-5 h-5 text-emerald-400" />
@@ -303,15 +302,17 @@ export default function HomePage() {
             </Link>
           </div>
           <Suspense fallback={<div className="grid grid-cols-2 md:grid-cols-3 gap-4 min-h-[220px]" />}>
-            <TrendingProducts maxProducts={6} days={30} mode="newest" skip={6} />
+            <TrendingProducts maxProducts={6} days={30} mode="newest" skip={6} onDataLoaded={setNewestCount} />
           </Suspense>
         </div>
       </section>
+      )}
 
-      {/* 6 — Bulk & Pallet Deals */}
-      <section className="py-10 md:py-14 bg-graphite/25 border-t border-white/5">
+      {/* 6 — Bulk & Pallet Deals — hidden when no data */}
+      {(bulkLoading || bulkDeals.length > 0) && (
+      <section className="py-8 md:py-10 bg-graphite/25 border-t border-white/5">
         <div className="container-cinematic">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-premium-sm bg-gold/10 border border-gold/20">
                 <Package className="w-5 h-5 text-gold" />
@@ -336,23 +337,15 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
-          ) : bulkDeals.length > 0 ? (
+          ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {bulkDeals.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
-          ) : (
-            <div className="text-center py-12 text-white/40">
-              <Package className="w-10 h-10 mx-auto mb-3 opacity-40" />
-              <p className="text-sm">No bulk listings yet — check back soon.</p>
-              <Link to="/bulk" className="mt-4 inline-flex items-center gap-1 text-gold text-sm hover:underline">
-                Browse Bulk &amp; Pallets <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
           )}
 
-          <div className="mt-6 text-center">
+          <div className="mt-5 text-center">
             <Link to="/bulk" className="btn-primary inline-flex items-center gap-2">
               <Package className="w-5 h-5" />
               Browse All Bulk &amp; Pallet Deals
@@ -361,12 +354,13 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* 7 — Trust Section (products first, info after) */}
-      <section className="py-12 md:py-16 bg-jet border-t border-white/5">
+      <section className="py-10 md:py-12 bg-jet border-t border-white/5">
         <div className="container-cinematic">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3">
               Why Buyers and Sellers Trust{' '}
               <span className="text-gradient-gold">Loadify Market</span>
             </h2>
@@ -375,15 +369,15 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {TRUST_ITEMS.map((item) => {
               const Icon = item.icon;
               return (
                 <div key={item.title} className="card-glass text-center hover:scale-[1.03] transition-all duration-500 group">
-                  <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-5 group-hover:bg-gold/20 transition-colors">
-                    <Icon className="h-7 w-7 text-gold" />
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-gold/10 rounded-premium-sm mb-4 group-hover:bg-gold/20 transition-colors">
+                    <Icon className="h-6 w-6 text-gold" />
                   </div>
-                  <h3 className="text-base font-bold text-white mb-3">{item.title}</h3>
+                  <h3 className="text-base font-bold text-white mb-2">{item.title}</h3>
                   <p className="text-white/60 text-xs leading-relaxed">{item.description}</p>
                 </div>
               );
@@ -397,7 +391,7 @@ export default function HomePage() {
         <CinematicStoryStrip />
       </Suspense>
 
-      <section className="py-12 md:py-16 bg-graphite/30 relative overflow-hidden">
+      <section className="py-10 md:py-12 bg-graphite/30 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gold/5 rounded-full blur-[120px]" />
           <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-gold/3 rounded-full blur-[100px]" />
@@ -476,7 +470,7 @@ export default function HomePage() {
       </section>
 
       {/* 9 — Final CTA */}
-      <section className="py-12 md:py-16 bg-jet relative overflow-hidden">
+      <section className="py-10 md:py-12 bg-jet relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gold/5 rounded-full blur-[120px]" />
         </div>

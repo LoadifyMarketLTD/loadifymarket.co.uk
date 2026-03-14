@@ -1,66 +1,13 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Search, Menu, X, Hexagon, Cpu, Shirt, Home, Wrench, Car, Gamepad2, Heart, PawPrint, Briefcase, Sparkles, Package, Layers, Tag, BookOpen, LayoutGrid, TrendingUp, Star, MessageCircle, HelpCircle, Store, ChevronRight } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, X, Hexagon, Cpu, Shirt, Home, Wrench, Car, Gamepad2, Heart, PawPrint, Briefcase, Sparkles, Package, Layers, Tag, BookOpen, LayoutGrid, TrendingUp, Star, MessageCircle, HelpCircle, Store, ChevronRight, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuthStore, useCartStore } from '../../store';
 import { useState, useEffect } from 'react';
 import { BRAND } from '../../constants/brand';
+import { supabase } from '../../lib/supabase';
 
-const SIDEBAR_SECTIONS = [
-  {
-    label: 'Sell',
-    links: [
-      { label: 'Sell an Item', href: '/register?type=seller', icon: Store },
-    ],
-  },
-  {
-    label: 'Categories',
-    links: [
-      { label: 'Electronics', href: '/shop?category=electronics', icon: Cpu },
-      { label: 'Fashion', href: '/shop?category=fashion', icon: Shirt },
-      { label: 'Home & Garden', href: '/shop?category=home-garden', icon: Home },
-      { label: 'Tools', href: '/shop?category=tools', icon: Wrench },
-      { label: 'Vehicles', href: '/shop?category=vehicles', icon: Car },
-      { label: 'Toys', href: '/shop?category=toys', icon: Gamepad2 },
-      { label: 'Health & Beauty', href: '/shop?category=health-beauty', icon: Heart },
-      { label: 'Pets', href: '/shop?category=pets', icon: PawPrint },
-      { label: 'Office Supplies', href: '/shop?category=office-supplies', icon: Briefcase },
-      { label: 'Handmade', href: '/shop?category=handmade', icon: Sparkles },
-    ],
-  },
-  {
-    label: 'Wholesale',
-    links: [
-      { label: 'Bulk Lots', href: '/shop?category=bulk-lots', icon: Package },
-      { label: 'Pallet Deals', href: '/bulk', icon: Layers },
-      { label: 'Clearance Stock', href: '/shop?category=clearance', icon: Tag },
-    ],
-  },
-  {
-    label: 'Marketplace',
-    links: [
-      { label: 'All Listings', href: '/catalog', icon: LayoutGrid },
-      { label: 'Trending Listings', href: '/catalog?sort=trending', icon: TrendingUp },
-      { label: 'New Listings', href: '/catalog?sort=createdAt_desc', icon: Star },
-      { label: 'Featured Deals', href: '/bulk', icon: BookOpen },
-    ],
-  },
-  {
-    label: 'Account',
-    links: [
-      { label: 'Login', href: '/login', icon: User },
-      { label: 'Register', href: '/register', icon: Store },
-    ],
-  },
-  {
-    label: 'Support',
-    links: [
-      { label: 'Contact', href: '/contact', icon: MessageCircle },
-      { label: 'Help & FAQ', href: '/help', icon: HelpCircle },
-    ],
-  },
-];
 
 export default function Header() {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { getTotalItems } = useCartStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -68,6 +15,12 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    logout();
+    navigate('/');
+  };
 
   const cartItemCount = getTotalItems();
 
@@ -140,27 +93,170 @@ export default function Header() {
 
         {/* Sidebar Navigation */}
         <nav className="flex-1 px-4 py-5 space-y-5 overflow-y-auto">
-          {SIDEBAR_SECTIONS.map((section) => (
-            <div key={section.label}>
-              <p className="text-[10px] font-bold text-gold/50 uppercase tracking-widest mb-1.5 px-2">
-                {section.label}
-              </p>
-              <ul className="space-y-0.5">
-                {section.links.map(({ label, href, icon: Icon }) => (
-                  <li key={label}>
-                    <Link
-                      to={href}
-                      className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-all duration-200 group"
-                    >
-                      <Icon className="w-4 h-4 text-gold/60 group-hover:text-gold transition-colors flex-shrink-0" />
-                      <span className="flex-1">{label}</span>
+          {/* Sell CTA — always first, always prominent */}
+          <div>
+            <p className="text-[10px] font-bold text-gold/50 uppercase tracking-widest mb-1.5 px-2">
+              Start Selling
+            </p>
+            <Link
+              to="/register?type=seller"
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-jet bg-gold hover:bg-gold/90 transition-all duration-200 group"
+            >
+              <Store className="w-4 h-4 flex-shrink-0" />
+              <span className="flex-1">Sell an Item</span>
+              <ChevronRight className="w-3.5 h-3.5 transition-colors" />
+            </Link>
+          </div>
+
+          {/* Categories */}
+          <div>
+            <p className="text-[10px] font-bold text-gold/50 uppercase tracking-widest mb-1.5 px-2">
+              Categories
+            </p>
+            <ul className="space-y-0.5">
+              {[
+                { label: 'Electronics', href: '/shop?category=electronics', icon: Cpu },
+                { label: 'Fashion', href: '/shop?category=fashion', icon: Shirt },
+                { label: 'Home & Garden', href: '/shop?category=home-garden', icon: Home },
+                { label: 'Tools', href: '/shop?category=tools', icon: Wrench },
+                { label: 'Vehicles', href: '/shop?category=vehicles', icon: Car },
+                { label: 'Toys', href: '/shop?category=toys', icon: Gamepad2 },
+                { label: 'Health & Beauty', href: '/shop?category=health-beauty', icon: Heart },
+                { label: 'Pets', href: '/shop?category=pets', icon: PawPrint },
+                { label: 'Office Supplies', href: '/shop?category=office-supplies', icon: Briefcase },
+                { label: 'Handmade', href: '/shop?category=handmade', icon: Sparkles },
+              ].map(({ label, href, icon: Icon }) => (
+                <li key={label}>
+                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-all duration-200 group">
+                    <Icon className="w-4 h-4 text-gold/60 group-hover:text-gold transition-colors flex-shrink-0" />
+                    <span className="flex-1">{label}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Wholesale */}
+          <div>
+            <p className="text-[10px] font-bold text-gold/50 uppercase tracking-widest mb-1.5 px-2">
+              Wholesale
+            </p>
+            <ul className="space-y-0.5">
+              {[
+                { label: 'Bulk Lots', href: '/shop?category=bulk-lots', icon: Package },
+                { label: 'Pallet Deals', href: '/bulk', icon: Layers },
+                { label: 'Clearance Stock', href: '/shop?category=clearance', icon: Tag },
+              ].map(({ label, href, icon: Icon }) => (
+                <li key={label}>
+                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-all duration-200 group">
+                    <Icon className="w-4 h-4 text-gold/60 group-hover:text-gold transition-colors flex-shrink-0" />
+                    <span className="flex-1">{label}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Marketplace */}
+          <div>
+            <p className="text-[10px] font-bold text-gold/50 uppercase tracking-widest mb-1.5 px-2">
+              Marketplace
+            </p>
+            <ul className="space-y-0.5">
+              {[
+                { label: 'All Listings', href: '/catalog', icon: LayoutGrid },
+                { label: 'Trending Listings', href: '/catalog?sort=trending', icon: TrendingUp },
+                { label: 'New Listings', href: '/catalog?sort=createdAt_desc', icon: Star },
+                { label: 'Featured Deals', href: '/bulk', icon: BookOpen },
+              ].map(({ label, href, icon: Icon }) => (
+                <li key={label}>
+                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-all duration-200 group">
+                    <Icon className="w-4 h-4 text-gold/60 group-hover:text-gold transition-colors flex-shrink-0" />
+                    <span className="flex-1">{label}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Account section — dynamic based on auth state */}
+          <div>
+            <p className="text-[10px] font-bold text-gold/50 uppercase tracking-widest mb-1.5 px-2">
+              Account
+            </p>
+            <ul className="space-y-0.5">
+              {user ? (
+                <>
+                  <li>
+                    <Link to="/dashboard" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-all duration-200 group">
+                      <User className="w-4 h-4 text-gold/60 group-hover:text-gold transition-colors flex-shrink-0" />
+                      <span className="flex-1">My Account</span>
                       <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
                     </Link>
                   </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+                  {(user.role === 'seller' || user.role === 'owner') && (
+                    <li>
+                      <Link to="/seller" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-all duration-200 group">
+                        <LayoutDashboard className="w-4 h-4 text-gold/60 group-hover:text-gold transition-colors flex-shrink-0" />
+                        <span className="flex-1">Seller Dashboard</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                      </Link>
+                    </li>
+                  )}
+                  <li>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-red-400/80 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 group"
+                    >
+                      <LogOut className="w-4 h-4 flex-shrink-0" />
+                      <span className="flex-1 text-left">Log Out</span>
+                    </button>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li>
+                    <Link to="/login" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-all duration-200 group">
+                      <User className="w-4 h-4 text-gold/60 group-hover:text-gold transition-colors flex-shrink-0" />
+                      <span className="flex-1">Login</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/register" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-all duration-200 group">
+                      <Store className="w-4 h-4 text-gold/60 group-hover:text-gold transition-colors flex-shrink-0" />
+                      <span className="flex-1">Register</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                    </Link>
+                  </li>
+                </>
+              )}
+            </ul>
+          </div>
+
+          {/* Support */}
+          <div>
+            <p className="text-[10px] font-bold text-gold/50 uppercase tracking-widest mb-1.5 px-2">
+              Support
+            </p>
+            <ul className="space-y-0.5">
+              {[
+                { label: 'Contact', href: '/contact', icon: MessageCircle },
+                { label: 'Help & FAQ', href: '/help', icon: HelpCircle },
+              ].map(({ label, href, icon: Icon }) => (
+                <li key={label}>
+                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/5 transition-all duration-200 group">
+                    <Icon className="w-4 h-4 text-gold/60 group-hover:text-gold transition-colors flex-shrink-0" />
+                    <span className="flex-1">{label}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </nav>
 
         {/* Sidebar Footer */}
@@ -264,6 +360,14 @@ export default function Header() {
                   <User className="h-5 w-5" />
                   <span>Account</span>
                 </Link>
+                <button
+                  onClick={handleLogout}
+                  className="nav-link flex items-center space-x-1.5 text-white/60 hover:text-red-400 transition-colors"
+                  aria-label="Log out"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Log Out</span>
+                </button>
               </>
             ) : (
               <Link
@@ -426,6 +530,12 @@ export default function Header() {
                 >
                   Account
                 </Link>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left block py-3 px-4 rounded-premium-sm text-red-400/80 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300"
+                >
+                  Log Out
+                </button>
               </>
             ) : (
               <Link

@@ -1,11 +1,12 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   User, ShoppingBag, Heart, RotateCcw, AlertTriangle,
   Bell, MessageSquare, Settings, MapPin, ChevronRight,
-  Shield, Package, Truck,
+  Shield, Package, Truck, LogOut,
 } from 'lucide-react';
 import { useAuthStore } from '../store';
 import { BRAND } from '../constants/brand';
+import { supabase } from '../lib/supabase';
 
 const QUICK_LINKS = [
   { label: 'My Orders',         icon: ShoppingBag,   to: '/orders',        desc: 'View and track your orders' },
@@ -25,7 +26,14 @@ const TRUST_FEATURES = [
 ];
 
 export default function DashboardPage() {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    logout();
+    navigate('/');
+  };
 
   const displayName = user
     ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
@@ -67,6 +75,13 @@ export default function DashboardPage() {
               Seller Dashboard <ChevronRight className="w-4 h-4" />
             </Link>
           )}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 py-2 px-4 text-sm text-red-400/80 hover:text-red-400 border border-red-500/20 hover:border-red-500/40 rounded-lg transition-all duration-200 flex-shrink-0"
+          >
+            <LogOut className="w-4 h-4" />
+            Log Out
+          </button>
         </div>
 
         {/* Quick Links Grid */}
