@@ -25,6 +25,11 @@ export default function SellerShipmentForm({ orderId, existingShipment, onClose,
   const [error, setError] = useState('');
   const [courierName, setCourierName] = useState(existingShipment?.courier_name || '');
   const [trackingNumber, setTrackingNumber] = useState(existingShipment?.tracking_number || '');
+  const [dispatchDate, setDispatchDate] = useState(
+    existingShipment?.dispatched_at
+      ? existingShipment.dispatched_at.slice(0, 10)
+      : ''
+  );
   const [status, setStatus] = useState<ShipmentStatus>(existingShipment?.status || 'Pending');
   const [statusMessage, setStatusMessage] = useState('');
   const [uploadingProof, setUploadingProof] = useState(false);
@@ -52,6 +57,7 @@ export default function SellerShipmentForm({ orderId, existingShipment, onClose,
           order_id: orderId,
           courier_name: courierName || null,
           tracking_number: trackingNumber || null,
+          dispatched_at: dispatchDate ? new Date(dispatchDate).toISOString() : null,
         }),
       });
 
@@ -232,6 +238,20 @@ export default function SellerShipmentForm({ orderId, existingShipment, onClose,
                 value={trackingNumber}
                 onChange={(e) => setTrackingNumber(e.target.value)}
                 placeholder="Enter AWB/tracking number"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="dispatchDate" className="block text-sm font-medium text-gray-700 mb-1">
+                Dispatch Date
+              </label>
+              <input
+                id="dispatchDate"
+                type="date"
+                value={dispatchDate}
+                onChange={(e) => setDispatchDate(e.target.value)}
+                max={new Date().toISOString().slice(0, 10)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
             </div>

@@ -10,6 +10,7 @@ interface CreateShipmentRequest {
   order_id: string;
   courier_name?: string;
   tracking_number?: string;
+  dispatched_at?: string | null;
   shipping_method?: string;
   shipping_cost?: number;
 }
@@ -65,7 +66,7 @@ export const handler: Handler = async (event) => {
     }
 
     const body: CreateShipmentRequest = JSON.parse(event.body || '{}');
-    const { order_id, courier_name, tracking_number, shipping_method, shipping_cost } = body;
+    const { order_id, courier_name, tracking_number, dispatched_at, shipping_method, shipping_cost } = body;
 
     if (!order_id) {
       return {
@@ -113,6 +114,7 @@ export const handler: Handler = async (event) => {
         .update({
           courier_name,
           tracking_number,
+          ...(dispatched_at !== undefined ? { dispatched_at } : {}),
           updated_at: new Date().toISOString(),
         })
         .eq('id', existingShipment.id)
@@ -133,7 +135,8 @@ export const handler: Handler = async (event) => {
           buyer_id: order.buyerId,
           courier_name,
           tracking_number,
-          status: 'Pending',
+          dispatched_at: dispatched_at || null,
+          status: dispatched_at ? 'Dispatched' : 'Pending',
         })
         .select()
         .single();
@@ -149,8 +152,8 @@ export const handler: Handler = async (event) => {
         .from('shipment_events')
         .insert({
           shipment_id: shipment.id,
-          status: 'Pending',
-          message: 'Shipment created',
+          status: dispatched_at ? 'Dispatched' : 'Pending',
+          message: dispatched_at ? `Shipment dispatched on ${new Date(dispatched_at).toLocaleDateString('en-GB')}` : 'Shipment created',
           changed_by: user.id,
         });
     }
