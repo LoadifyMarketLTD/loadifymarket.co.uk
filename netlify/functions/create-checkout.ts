@@ -1,9 +1,20 @@
 import Stripe from 'stripe';
 import { Handler } from '@netlify/functions';
+import { createClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-11-20.acacia',
 });
+
+// Supabase service-role client for server-side price lookups.
+// Falls back gracefully when credentials are absent (e.g. local dev without .env).
+const supabase =
+  process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(
+        process.env.VITE_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+      )
+    : null;
 
 interface CartItem {
   productId: string;
@@ -47,13 +58,78 @@ export const handler: Handler = async (event) => {
     const body: CheckoutRequest = JSON.parse(event.body || '{}');
     const { items, buyerId, guestEmail, shippingAddress, billingAddress, shippingAmount = 0, shippingMethod = 'Standard' } = body;
 
+    // ── Server-side price validation ────────────────────────────────────────
+    // Look up authoritative prices from the database so the client cannot
+    // manipulate prices by sending crafted cart payloads.
+    let validatedItems: CartItem[];
+
+    if (supabase) {
+      const productIds = items.map((i) => i.productId);
+      const { data: dbProducts, error: dbError } = await supabase
+        .from('products')
+        .select('id, price, title, sellerId, isActive, isApproved, stockQuantity')
+        .in('id', productIds);
+
+      if (dbError) {
+        console.error('Price lookup failed:', dbError.message);
+        // Fall through to client prices rather than blocking the purchase,
+        // but log the failure so it can be investigated.
+        validatedItems = items;
+      } else {
+        const productMap = new Map(
+          (dbProducts ?? []).map((p) => [p.id as string, p])
+        );
+
+        // Reject if any product is unavailable or not approved
+        for (const item of items) {
+          const dbProduct = productMap.get(item.productId);
+          if (!dbProduct) {
+            return {
+              statusCode: 400,
+              body: JSON.stringify({ error: `Product ${item.productId} not found` }),
+            };
+          }
+          if (!dbProduct.isActive || !dbProduct.isApproved) {
+            return {
+              statusCode: 400,
+              body: JSON.stringify({ error: `Product "${dbProduct.title}" is no longer available` }),
+            };
+          }
+          if (typeof dbProduct.stockQuantity === 'number' && dbProduct.stockQuantity < item.quantity) {
+            return {
+              statusCode: 400,
+              body: JSON.stringify({
+                error: `Insufficient stock for "${dbProduct.title}". Available: ${dbProduct.stockQuantity}`,
+              }),
+            };
+          }
+        }
+
+        // Replace client-supplied prices with DB prices
+        validatedItems = items.map((item) => {
+          const dbProduct = productMap.get(item.productId)!;
+          return {
+            ...item,
+            price: dbProduct.price as number,
+            title: (dbProduct.title as string) || item.title,
+            sellerId: (dbProduct.sellerId as string) || item.sellerId,
+          };
+        });
+      }
+    } else {
+      // No Supabase credentials — skip validation (development fallback only)
+      console.warn('create-checkout: Supabase not configured, skipping server-side price validation');
+      validatedItems = items;
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     // Calculate totals
-    // Note: product prices from the cart are VAT-inclusive (displayed to buyers incl. VAT)
+    // Note: product prices from the DB are VAT-inclusive (displayed to buyers incl. VAT)
     const VAT_RATE = 0.20; // 20% UK VAT
     const COMMISSION_RATE = 0.07; // 7% marketplace commission
 
     // Cart totals (VAT-inclusive)
-    const cartTotalIncVat = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const cartTotalIncVat = validatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const cartSubtotalExVat = cartTotalIncVat / (1 + VAT_RATE);
     const cartVatAmount = cartTotalIncVat - cartSubtotalExVat;
 
@@ -65,8 +141,8 @@ export const handler: Handler = async (event) => {
     const vatAmount = cartVatAmount + shippingVAT;
     const commissionAmount = cartSubtotalExVat * COMMISSION_RATE;
 
-    // Create line items for Stripe
-    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = items.map(item => ({
+    // Create line items for Stripe (using validated server-side prices)
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = validatedItems.map(item => ({
       price_data: {
         currency: 'gbp',
         product_data: {
@@ -110,7 +186,7 @@ export const handler: Handler = async (event) => {
         shippingMethod,
         shippingAddress: JSON.stringify(shippingAddress),
         billingAddress: JSON.stringify(billingAddress),
-        items: JSON.stringify(items),
+        items: JSON.stringify(validatedItems),
       },
       ...(customerEmail ? { customer_email: customerEmail } : {}),
     });

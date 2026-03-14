@@ -190,17 +190,50 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     },
   ]);
 
+  // Atomically decrement stock for each purchased product.
+  // Uses the decrement_product_stock() DB function to avoid race conditions.
+  // Falls back to a two-step read-update if the RPC is not yet available.
+  for (const item of items) {
+    const { error: rpcError } = await supabase.rpc('decrement_product_stock', {
+      p_product_id: item.productId,
+      p_qty: item.quantity,
+    });
+
+    if (rpcError) {
+      // RPC not yet deployed — fall back to two-step update
+      console.warn('decrement_product_stock RPC failed, using fallback:', rpcError.message);
+      const { data: productRow } = await supabase
+        .from('products')
+        .select('stockQuantity')
+        .eq('id', item.productId)
+        .single<{ stockQuantity: number }>();
+
+      if (productRow !== null) {
+        const currentQty = productRow?.stockQuantity ?? 0;
+        const newQty = Math.max(0, currentQty - item.quantity);
+        const newStatus =
+          newQty <= 0 ? 'out_of_stock' : newQty <= 10 ? 'low_stock' : 'in_stock';
+
+        await supabase
+          .from('products')
+          .update({ stockQuantity: newQty, stockStatus: newStatus })
+          .eq('id', item.productId);
+      }
+    }
+  }
+
   // Send confirmation email (async, don't wait)
+  const confirmedOrderNumber: string = (order as { orderNumber?: string }).orderNumber ?? order.id;
   fetch(`${process.env.URL}/.netlify/functions/send-email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       to: session.customer_email,
-      subject: `Order Confirmation - ${orderNumber}`,
+      subject: `Order Confirmation - ${confirmedOrderNumber}`,
       template: 'order_confirmation',
       data: {
         customerName: 'Customer',
-        orderNumber,
+        orderNumber: confirmedOrderNumber,
         orderDate: new Date().toLocaleDateString('en-GB'),
         total: parseFloat(metadata.total),
         items: (items as CartItem[]).map((item) => ({
@@ -219,7 +252,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     body: JSON.stringify({ orderId: order.id }),
   }).catch(err => console.error('Invoice generation failed:', err));
 
-  console.log(`Order created successfully for session ${session.id}`);
+  console.log(`Order ${confirmedOrderNumber} created successfully for session ${session.id}`);
 }
 
 interface PaymentSessionWithOrder {

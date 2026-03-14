@@ -36,13 +36,16 @@ export default function AdminDashboardPage() {
   });
 
   useEffect(() => {
+    // Wait for auth state to settle before acting
+    if (isLoading) return;
+
     if (hasAdminAccess(user)) {
       fetchData();
-    } else if (!isLoading) {
+    } else {
       // Not an admin — stop the loading spinner so the access-denied UI shows immediately
       setLoading(false);
     }
-  }, [user]);
+  }, [user, isLoading]);
 
   const fetchData = async () => {
     setLoading(true);
