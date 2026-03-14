@@ -18,6 +18,14 @@ const BULK_CATEGORIES = [
 // B2B product types
 const B2B_TYPES = ['pallet', 'lot', 'wholesale', 'clearance'];
 
+// Map quick-nav category slugs to product type values in the DB
+const SLUG_TO_TYPE: Record<string, string> = {
+  pallet: 'pallet',
+  liquidation: 'lot',
+  wholesale: 'wholesale',
+  clearance: 'clearance',
+};
+
 export default function BulkPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
@@ -26,6 +34,9 @@ export default function BulkPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || searchParams.get('search') || '');
+  // selectedBulkType: filters products by the `type` field using quick-nav buttons or the `type` URL param
+  const [selectedBulkType, setSelectedBulkType] = useState(searchParams.get('type') || '');
+  // selectedCategory: filters products by `categoryId` using the DB-backed dropdown
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
   const [sortBy, setSortBy] = useState<string>('createdAt_desc');
@@ -66,13 +77,22 @@ export default function BulkPage() {
           )
         `)
         .eq('isActive', true)
-        .eq('isApproved', true)
-        .in('type', B2B_TYPES);
+        .eq('isApproved', true);
+
+      // Apply type filter: if a specific bulk type is selected (via quick-nav or URL `type` param)
+      // resolve the slug to the correct DB type value; otherwise show all B2B types.
+      if (selectedBulkType) {
+        const dbType = SLUG_TO_TYPE[selectedBulkType] ?? selectedBulkType;
+        query = query.eq('type', dbType);
+      } else {
+        query = query.in('type', B2B_TYPES);
+      }
 
       if (searchQuery) {
         query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
       }
 
+      // Apply DB-category filter (from the dropdown, uses real UUIDs)
       if (selectedCategory) {
         query = query.eq('categoryId', selectedCategory);
       }
@@ -98,16 +118,16 @@ export default function BulkPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, selectedCategory, priceRange, sortBy]);
+  }, [searchQuery, selectedBulkType, selectedCategory, priceRange, sortBy]);
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
 
   const handleBulkCategoryClick = (slug: string) => {
-    setSelectedCategory(slug);
+    setSelectedBulkType(slug);
     if (slug) {
-      setSearchParams({ category: slug });
+      setSearchParams({ type: slug });
     } else {
       setSearchParams({});
     }
@@ -115,13 +135,14 @@ export default function BulkPage() {
 
   const clearFilters = () => {
     setSearchQuery('');
+    setSelectedBulkType('');
     setSelectedCategory('');
     setPriceRange([0, 100000]);
     setSortBy('createdAt_desc');
     setSearchParams({});
   };
 
-  const hasActiveFilters = searchQuery || selectedCategory || sortBy !== 'createdAt_desc';
+  const hasActiveFilters = searchQuery || selectedBulkType || selectedCategory || sortBy !== 'createdAt_desc';
 
   return (
     <div className="min-h-screen bg-jet">
@@ -169,7 +190,7 @@ export default function BulkPage() {
                 key={cat.slug}
                 onClick={() => handleBulkCategoryClick(cat.slug)}
                 className={`px-4 py-2 rounded-premium-sm text-sm font-medium transition-all duration-200 ${
-                  selectedCategory === cat.slug
+                  selectedBulkType === cat.slug
                     ? 'bg-gold text-jet'
                     : 'bg-graphite text-white/70 hover:bg-graphite/80 hover:text-white'
                 }`}

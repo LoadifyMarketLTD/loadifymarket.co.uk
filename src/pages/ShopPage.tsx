@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Product, Category } from '../types';
@@ -17,6 +17,9 @@ const B2C_CATEGORIES = [
 // B2C product types (excludes bulk/pallet/wholesale/logistics)
 const B2C_TYPES = ['product', 'retail', 'handmade', 'clearance'];
 
+// UUID v4 pattern for detecting already-resolved IDs
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
@@ -25,10 +28,16 @@ export default function ShopPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || searchParams.get('search') || '');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
+  // Start with an empty category — resolved from URL param after categories load
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [selectedCondition, setSelectedCondition] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('createdAt_desc');
+
+  // Track whether the initial URL category param has been resolved to a UUID
+  const categoryResolved = useRef(false);
+  // Capture category URL param once on mount for the resolution effect below
+  const initialCatParam = useRef(searchParams.get('category'));
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -38,7 +47,24 @@ export default function ShopPage() {
           .select('*')
           .is('parentId', null)
           .order('order', { ascending: true });
-        setCategories(data || []);
+        const cats = data || [];
+        setCategories(cats);
+
+        // Resolve initial category URL param (may be a slug or UUID) to a UUID — runs once
+        if (!categoryResolved.current) {
+          categoryResolved.current = true;
+          const catParam = initialCatParam.current;
+          if (catParam) {
+            if (UUID_PATTERN.test(catParam)) {
+              // Already a UUID — use directly
+              setSelectedCategory(catParam);
+            } else {
+              // Treat as a slug — find the matching category
+              const match = cats.find((c) => c.slug === catParam);
+              setSelectedCategory(match?.id ?? '');
+            }
+          }
+        }
       } catch (err) {
         console.error('Error fetching categories:', err);
       }
