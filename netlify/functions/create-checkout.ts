@@ -2,10 +2,6 @@ import Stripe from 'stripe';
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia',
-});
-
 // Supabase service-role client for server-side price lookups.
 // Falls back gracefully when credentials are absent (e.g. local dev without .env).
 const supabase =
@@ -53,6 +49,26 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Method not allowed' }),
     };
   }
+
+  // ── Stripe key validation ──────────────────────────────────────────────────
+  // Trim to remove accidental whitespace / newlines that are a common source of
+  // "Invalid API Key" errors when the value is copy-pasted into Netlify's UI.
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY?.trim();
+  if (!stripeSecretKey || !stripeSecretKey.startsWith('sk_')) {
+    console.error(
+      'create-checkout: STRIPE_SECRET_KEY is missing or malformed. ' +
+      'Set a valid key (starting with sk_live_ or sk_test_) in Netlify environment variables.'
+    );
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Payment provider is not configured. Please contact support.' }),
+    };
+  }
+
+  const stripe = new Stripe(stripeSecretKey, {
+    apiVersion: '2025-08-27.basil',
+  });
+  // ────────────────────────────────────────────────────────────────────────────
 
   try {
     const body: CheckoutRequest = JSON.parse(event.body || '{}');
