@@ -64,7 +64,7 @@ export default function BulkPage() {
         .from('products')
         .select(`
           *,
-          seller:seller_profiles(
+          seller:seller_profiles!left(
             businessName,
             isApproved,
             rating,
@@ -72,7 +72,7 @@ export default function BulkPage() {
             paymentBehaviour,
             userId
           ),
-          store:seller_stores(
+          store:seller_stores!left(
             storeSlug
           )
         `)

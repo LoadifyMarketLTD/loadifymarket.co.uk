@@ -79,7 +79,7 @@ export default function ShopPage() {
         .from('products')
         .select(`
           *,
-          seller:seller_profiles(
+          seller:seller_profiles!left(
             businessName,
             isApproved,
             rating,
@@ -87,7 +87,7 @@ export default function ShopPage() {
             paymentBehaviour,
             userId
           ),
-          store:seller_stores(
+          store:seller_stores!left(
             storeSlug
           )
         `)
