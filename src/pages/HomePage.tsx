@@ -75,7 +75,7 @@ function transformProductRows(data: ProductRow[]) {
 
 const PRODUCT_QUERY_FIELDS = `
   *,
-  seller:seller_profiles(
+  seller:seller_profiles!left(
     businessName,
     isApproved,
     rating,
@@ -83,7 +83,7 @@ const PRODUCT_QUERY_FIELDS = `
     paymentBehaviour,
     userId
   ),
-  store:seller_stores(
+  store:seller_stores!left(
     storeSlug
   )
 `;

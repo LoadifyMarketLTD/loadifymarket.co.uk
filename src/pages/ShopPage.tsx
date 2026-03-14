@@ -14,11 +14,11 @@ const B2C_CATEGORIES = [
   { icon: Sparkles, label: 'Handmade', slug: 'handmade' },
 ];
 
-// B2C product types (excludes bulk/pallet/wholesale/logistics)
-const B2C_TYPES = ['product', 'retail', 'handmade', 'clearance'];
-
 // UUID v4 pattern for detecting already-resolved IDs
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Product types that are NOT consumer-facing (logistics jobs have their own dedicated section)
+const NON_SHOP_TYPES = ['logistics'];
 
 export default function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -93,7 +93,7 @@ export default function ShopPage() {
         `)
         .eq('isActive', true)
         .eq('isApproved', true)
-        .in('type', B2C_TYPES);
+        .not('type', 'in', `(${NON_SHOP_TYPES.join(',')})`);
 
       if (searchQuery) {
         query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
