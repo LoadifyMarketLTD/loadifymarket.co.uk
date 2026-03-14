@@ -6,7 +6,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 interface EmailRequest {
   to: string;
   subject: string;
-  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'transport_quote_request';
+  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'transport_quote_request' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification';
   data: Record<string, unknown>;
 }
 
@@ -173,6 +173,56 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         ${data.deliveryNotes ? `<p><strong>Delivery Notes:</strong> ${String(data.deliveryNotes)}</p>` : ''}
         ${data.listingReference ? `<p><strong>Listing Reference:</strong> ${String(data.listingReference)}</p>` : ''}
         <p style="color: #888; font-size: 12px;">Source: ${String(data.source || 'loadify-market')}</p>
+      `;
+      break;
+
+    case 'seller_new_order':
+      content = `
+        <h2 style="color: #243b53;">New Order Received</h2>
+        <p>You have a new order on Loadify Market!</p>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Order Number:</strong> ${String(data.orderNumber || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Order Date:</strong> ${String(data.orderDate || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Order Total:</strong> £${typeof data.sellerTotal === 'number' ? data.sellerTotal.toFixed(2) : '0.00'}</p>
+        </div>
+        <h3 style="color: #243b53;">Items Ordered:</h3>
+        ${Array.isArray(data.items) ? data.items.map((item: Record<string, unknown>) => `
+          <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
+            <p style="margin: 0;"><strong>${String(item.title || '')}</strong></p>
+            <p style="margin: 5px 0 0 0; color: #666;">Quantity: ${String(item.quantity || 0)} | Price: £${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}</p>
+          </div>
+        `).join('') : ''}
+        <p style="margin-top: 20px;">Please process this order promptly. Log in to your seller dashboard to view full order details and arrange shipping.</p>
+        <a href="${process.env.URL}/seller" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Seller Dashboard</a>
+        <p style="margin-top: 20px; color: #888; font-size: 13px;">Reminder: Please ship within your stated dispatch time to maintain your seller rating.</p>
+      `;
+      break;
+
+    case 'seller_shipping_reminder':
+      content = `
+        <h2 style="color: #243b53;">Shipping Reminder</h2>
+        <p>You have an order that is awaiting shipment.</p>
+        <div style="background-color: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #ffc107;">
+          <p style="margin: 0;"><strong>Order Number:</strong> ${String(data.orderNumber || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Ordered On:</strong> ${String(data.orderDate || '')}</p>
+        </div>
+        <p>Please arrange shipment as soon as possible to keep your seller rating high and your customers happy.</p>
+        <a href="${process.env.URL}/seller" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Ship Now</a>
+      `;
+      break;
+
+    case 'admin_seller_verification':
+      content = `
+        <h2 style="color: #243b53;">New Seller Verification Request</h2>
+        <p>A seller has submitted a verification request and requires review.</p>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Seller:</strong> ${String(data.sellerName || 'Unknown')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Email:</strong> ${String(data.sellerEmail || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Business:</strong> ${String(data.businessName || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Submitted:</strong> ${String(data.submittedAt || new Date().toLocaleDateString('en-GB'))}</p>
+        </div>
+        <p>Please log in to the admin dashboard to review the submitted documents and approve or reject the verification.</p>
+        <a href="${process.env.URL}/admin/sellers" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Review Verification</a>
       `;
       break;
 

@@ -58,6 +58,61 @@ export const handler: Handler = async (event) => {
     const body: CheckoutRequest = JSON.parse(event.body || '{}');
     const { items, buyerId, guestEmail, shippingAddress, billingAddress, shippingAmount = 0, shippingMethod = 'Standard' } = body;
 
+    // ── Fraud / Rate-limiting ────────────────────────────────────────────────
+    // Allow at most 10 checkout attempts per IP (or userId) within a 15-minute
+    // window. Limits are tracked in the checkout_rate_limits table (service role).
+    // Authenticated buyers are keyed by userId; guests by the forwarded IP.
+    // If neither is available the check is skipped — "unknown" callers are not
+    // bucketed together because a single key would incorrectly aggregate all
+    // unidentified traffic.
+    if (supabase) {
+      const RATE_LIMIT_MAX    = 10;
+      const RATE_LIMIT_WINDOW = 15; // minutes
+      const rawIp = event.headers['x-forwarded-for']?.split(',')[0]?.trim()
+                 || event.headers['client-ip'];
+      const identifier = buyerId || rawIp;  // prefer userId; fall back to IP
+
+      if (identifier) {
+        const windowEnd = new Date(
+          Math.ceil(Date.now() / (RATE_LIMIT_WINDOW * 60 * 1000)) * (RATE_LIMIT_WINDOW * 60 * 1000)
+        ).toISOString();
+
+        const { data: rl, error: rlSelectError } = await supabase
+          .from('checkout_rate_limits')
+          .select('id, attempts')
+          .eq('identifier', identifier)
+          .eq('windowEnd', windowEnd)
+          .maybeSingle<{ id: string; attempts: number }>();
+
+        if (!rlSelectError) {
+          if (rl && rl.attempts >= RATE_LIMIT_MAX) {
+            // Log suspicious activity via service-role client (bypasses RLS)
+            await supabase.from('audit_logs').insert({
+              action: 'rate_limit_exceeded',
+              tableName: 'checkout_rate_limits',
+              newData: { identifier, attempts: rl.attempts, windowEnd },
+            });
+            return {
+              statusCode: 429,
+              body: JSON.stringify({ error: 'Too many checkout attempts. Please try again later.' }),
+            };
+          }
+
+          if (rl) {
+            await supabase
+              .from('checkout_rate_limits')
+              .update({ attempts: rl.attempts + 1 })
+              .eq('id', rl.id);
+          } else {
+            await supabase
+              .from('checkout_rate_limits')
+              .insert({ identifier, windowEnd, attempts: 1 });
+          }
+        }
+      }
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     // ── Server-side price validation ────────────────────────────────────────
     // Look up authoritative prices from the database so the client cannot
     // manipulate prices by sending crafted cart payloads.
