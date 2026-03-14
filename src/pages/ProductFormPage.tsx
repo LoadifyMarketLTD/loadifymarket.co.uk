@@ -50,6 +50,14 @@ export default function ProductFormPage() {
         .single();
 
       if (error) throw error;
+
+      // Ownership check — only the seller who created the product (or admin/owner) may edit it.
+      if (data.sellerId !== user?.id && user?.role !== 'admin' && user?.role !== 'owner') {
+        alert('You do not have permission to edit this product.');
+        navigate('/seller');
+        return;
+      }
+
       if (data) {
         setFormData({
           title: data.title || '',
@@ -73,7 +81,7 @@ export default function ProductFormPage() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, user, navigate]);
 
   useEffect(() => {
     if (id) {

@@ -67,7 +67,10 @@ export default function CartPage() {
                         type="number"
                         min="1"
                         value={item.quantity}
-                        onChange={(e) => updateQuantity(item.productId, parseInt(e.target.value) || 1)}
+                        onChange={(e) => {
+                            const val = parseInt(e.target.value);
+                            if (!isNaN(val) && val >= 1) updateQuantity(item.productId, val);
+                          }}
                         className="input-field w-20"
                       />
                     </div>

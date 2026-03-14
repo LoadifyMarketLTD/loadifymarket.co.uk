@@ -6,6 +6,8 @@ import { useAuthStore } from './store';
 // Layout
 import Layout from './components/Layout';
 import RequireAuth from './components/auth/RequireAuth';
+import RequireAdmin from './components/auth/RequireAdmin';
+import RequireSeller from './components/auth/RequireSeller';
 
 // Critical pages loaded immediately
 import HomePage from './pages/HomePage';
@@ -213,19 +215,19 @@ function App() {
           } />
           {/* Protected: Seller Dashboard */}
           <Route path="seller" element={
-            <RequireAuth>
+            <RequireSeller>
               <Suspense fallback={<PageLoader />}>
                 <SellerDashboardPage />
               </Suspense>
-            </RequireAuth>
+            </RequireSeller>
           } />
           {/* Protected: Seller Profile */}
           <Route path="seller/profile" element={
-            <RequireAuth>
+            <RequireSeller>
               <Suspense fallback={<PageLoader />}>
                 <SellerProfilePage />
               </Suspense>
-            </RequireAuth>
+            </RequireSeller>
           } />
           {/* Public: Seller Public Profile */}
           <Route path="seller/:slug" element={
@@ -235,75 +237,75 @@ function App() {
           } />
           {/* Protected: Seller Returns */}
           <Route path="seller/returns" element={
-            <RequireAuth>
+            <RequireSeller>
               <Suspense fallback={<PageLoader />}>
                 <SellerReturnsPage />
               </Suspense>
-            </RequireAuth>
+            </RequireSeller>
           } />
           {/* Protected: Seller Shipments */}
           <Route path="seller/shipments" element={
-            <RequireAuth>
+            <RequireSeller>
               <Suspense fallback={<PageLoader />}>
                 <SellerShipmentsPage />
               </Suspense>
-            </RequireAuth>
+            </RequireSeller>
           } />
           {/* Protected: Create Product */}
           <Route path="seller/products/new" element={
-            <RequireAuth>
+            <RequireSeller>
               <Suspense fallback={<PageLoader />}>
                 <ProductFormPage />
               </Suspense>
-            </RequireAuth>
+            </RequireSeller>
           } />
           {/* Protected: Edit Product */}
           <Route path="seller/products/:id/edit" element={
-            <RequireAuth>
+            <RequireSeller>
               <Suspense fallback={<PageLoader />}>
                 <ProductFormPage />
               </Suspense>
-            </RequireAuth>
+            </RequireSeller>
           } />
           {/* Protected: Admin Dashboard */}
           <Route path="admin" element={
-            <RequireAuth>
+            <RequireAdmin>
               <Suspense fallback={<PageLoader />}>
                 <AdminDashboardPage />
               </Suspense>
-            </RequireAuth>
+            </RequireAdmin>
           } />
           {/* Protected: Admin Categories */}
           <Route path="admin/categories" element={
-            <RequireAuth>
+            <RequireAdmin>
               <Suspense fallback={<PageLoader />}>
                 <CategoryManagementPage />
               </Suspense>
-            </RequireAuth>
+            </RequireAdmin>
           } />
           {/* Protected: Admin Sellers */}
           <Route path="admin/sellers" element={
-            <RequireAuth>
+            <RequireAdmin>
               <Suspense fallback={<PageLoader />}>
                 <SellerApprovalsPage />
               </Suspense>
-            </RequireAuth>
+            </RequireAdmin>
           } />
           {/* Protected: Admin Reported Listings */}
           <Route path="admin/reported-listings" element={
-            <RequireAuth>
+            <RequireAdmin>
               <Suspense fallback={<PageLoader />}>
                 <ReportedListingsPage />
               </Suspense>
-            </RequireAuth>
+            </RequireAdmin>
           } />
           {/* Protected: Admin Shipments */}
           <Route path="admin/shipments" element={
-            <RequireAuth>
+            <RequireAdmin>
               <Suspense fallback={<PageLoader />}>
                 <AdminShipmentsPage />
               </Suspense>
-            </RequireAuth>
+            </RequireAdmin>
           } />
           {/* Protected: Orders */}
           <Route path="orders" element={
@@ -419,29 +421,29 @@ function App() {
 
           {/* Protected: Seller Reviews */}
           <Route path="seller/reviews" element={
-            <RequireAuth>
+            <RequireSeller>
               <Suspense fallback={<PageLoader />}>
                 <SellerReviewsPage />
               </Suspense>
-            </RequireAuth>
+            </RequireSeller>
           } />
 
           {/* Protected: Seller RFQ Inbox */}
           <Route path="seller/rfq" element={
-            <RequireAuth>
+            <RequireSeller>
               <Suspense fallback={<PageLoader />}>
                 <SellerRFQPage />
               </Suspense>
-            </RequireAuth>
+            </RequireSeller>
           } />
 
           {/* Protected: Admin Reviews Moderation */}
           <Route path="admin/reviews" element={
-            <RequireAuth>
+            <RequireAdmin>
               <Suspense fallback={<PageLoader />}>
                 <AdminReviewsPage />
               </Suspense>
-            </RequireAuth>
+            </RequireAdmin>
           } />
 
           {/* SEO: Logistics Loads UK */}

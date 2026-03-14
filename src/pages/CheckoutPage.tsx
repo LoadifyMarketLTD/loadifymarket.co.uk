@@ -7,7 +7,7 @@ interface Address {
   line1: string;
   line2?: string;
   city: string;
-  postal_code: string;
+  postcode: string;
   country: string;
 }
 
@@ -33,7 +33,7 @@ export default function CheckoutPage() {
     line1: '',
     line2: '',
     city: '',
-    postal_code: '',
+    postcode: '',
     country: 'GB',
   });
 
@@ -41,7 +41,7 @@ export default function CheckoutPage() {
     line1: '',
     line2: '',
     city: '',
-    postal_code: '',
+    postcode: '',
     country: 'GB',
   });
 
@@ -82,7 +82,7 @@ export default function CheckoutPage() {
       return;
     }
     
-    if (!shippingAddress.line1 || !shippingAddress.city || !shippingAddress.postal_code) {
+    if (!shippingAddress.line1 || !shippingAddress.city || !shippingAddress.postcode) {
       alert('Please fill in all shipping address fields');
       return;
     }
@@ -226,8 +226,8 @@ export default function CheckoutPage() {
                       <label className="block text-sm font-medium mb-1">Postal Code *</label>
                       <input
                         type="text"
-                        value={shippingAddress.postal_code}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, postal_code: e.target.value })}
+                        value={shippingAddress.postcode}
+                        onChange={(e) => setShippingAddress({ ...shippingAddress, postcode: e.target.value })}
                         required
                         className="input-field"
                       />
@@ -343,8 +343,8 @@ export default function CheckoutPage() {
                         <label className="block text-sm font-medium mb-1">Postal Code *</label>
                         <input
                           type="text"
-                          value={billingAddress.postal_code}
-                          onChange={(e) => setBillingAddress({ ...billingAddress, postal_code: e.target.value })}
+                          value={billingAddress.postcode}
+                          onChange={(e) => setBillingAddress({ ...billingAddress, postcode: e.target.value })}
                           required={!sameAsShipping}
                           className="input-field"
                         />

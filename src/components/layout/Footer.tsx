@@ -27,7 +27,8 @@ export default function Footer() {
           <div className="flex items-center space-x-4">
             <span className="text-white/50 text-sm mr-4">Follow us</span>
             <a
-              href="#"
+              href="https://www.facebook.com/loadifymarket"
+              target="_blank"
               className="p-2 rounded-full bg-white/5 text-gold hover:bg-gold hover:text-jet transition-all duration-300"
               aria-label="Facebook"
               rel="noopener noreferrer"
@@ -35,7 +36,8 @@ export default function Footer() {
               <Facebook className="h-5 w-5" />
             </a>
             <a
-              href="#"
+              href="https://twitter.com/loadifymarket"
+              target="_blank"
               className="p-2 rounded-full bg-white/5 text-gold hover:bg-gold hover:text-jet transition-all duration-300"
               aria-label="Twitter"
               rel="noopener noreferrer"
@@ -43,7 +45,8 @@ export default function Footer() {
               <Twitter className="h-5 w-5" />
             </a>
             <a
-              href="#"
+              href="https://www.instagram.com/loadifymarket"
+              target="_blank"
               className="p-2 rounded-full bg-white/5 text-gold hover:bg-gold hover:text-jet transition-all duration-300"
               aria-label="Instagram"
               rel="noopener noreferrer"
@@ -51,7 +54,8 @@ export default function Footer() {
               <Instagram className="h-5 w-5" />
             </a>
             <a
-              href="#"
+              href="https://www.linkedin.com/company/loadifymarket"
+              target="_blank"
               className="p-2 rounded-full bg-white/5 text-gold hover:bg-gold hover:text-jet transition-all duration-300"
               aria-label="LinkedIn"
               rel="noopener noreferrer"
@@ -135,11 +139,6 @@ export default function Footer() {
               <li>
                 <Link to="/contact" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
                   Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/tracking/search" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
-                  Track Order
                 </Link>
               </li>
             </ul>

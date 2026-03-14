@@ -162,8 +162,6 @@ export default function SellerProfilePage() {
 
       if (storeError) throw storeError;
 
-      if (error) throw error;
-
       alert('Profile updated successfully!');
       navigate('/seller');
     } catch (error) {
