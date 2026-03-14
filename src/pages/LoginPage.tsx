@@ -59,7 +59,14 @@ export default function LoginPage() {
           .single();
 
         if (profileError) {
-          console.warn('Could not fetch user role, defaulting to /dashboard:', profileError.message);
+          // Table missing or row absent — fall back to auth metadata role
+          const metaRole = data.user.user_metadata?.role as string | undefined;
+          if (metaRole === 'seller') {
+            redirectTo = '/seller';
+          } else if (metaRole === 'admin' || metaRole === 'owner') {
+            redirectTo = '/admin';
+          }
+          console.warn('Could not fetch user role, using auth metadata fallback:', profileError.message);
         } else if (profile?.role === 'seller') {
           redirectTo = '/seller';
         } else if (profile?.role === 'admin' || profile?.role === 'owner') {
@@ -69,7 +76,8 @@ export default function LoginPage() {
 
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to login');
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || 'Failed to sign in. Please try again.');
     } finally {
       setLoading(false);
     }

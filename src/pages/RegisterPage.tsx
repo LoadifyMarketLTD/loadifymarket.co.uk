@@ -37,7 +37,10 @@ export default function RegisterPage() {
 
       if (signUpError) throw signUpError;
 
-      // Insert user profile
+      // Insert user profile into public.users
+      // The DB trigger trg_new_user_profile automatically creates the matching
+      // seller_profiles + seller_stores (or buyer_profiles) row — do NOT insert
+      // those manually here, or the trigger's insert will cause a PK conflict.
       if (data.user) {
         const { error: profileError } = await supabase.from('users').insert({
           id: data.user.id,
@@ -50,47 +53,37 @@ export default function RegisterPage() {
 
         if (profileError) throw profileError;
 
-        // Create seller profile if registering as seller
+        // For sellers, populate the additional fields in the auto-created records.
+        // Use upsert so this is idempotent whether the trigger ran first or not.
+        // These are best-effort: failure does NOT abort signup (seller can fill
+        // in profile details from their dashboard after email confirmation).
         if (isSeller) {
-          const { error: sellerProfileError } = await supabase
-            .from('seller_profiles')
-            .insert({
+          const effectiveStoreName = storeName || `${firstName}'s Store`;
+          const { error: spErr } = await supabase.from('seller_profiles').upsert(
+            {
               userId: data.user.id,
               fullName: `${firstName} ${lastName}`,
-              storeName: storeName || `${firstName}'s Store`,
-              isApproved: false, // Sellers need admin approval
-              rating: 0,
-              totalSales: 0,
-              commission: 7.0, // Default 7% commission
-            });
+              storeName: effectiveStoreName,
+            },
+            { onConflict: 'userId' }
+          );
+          if (spErr) console.warn('seller_profiles upsert failed (non-fatal):', spErr.message);
 
-          if (sellerProfileError) throw sellerProfileError;
-
-          // Create empty seller store
-          const { error: storeError } = await supabase
-            .from('seller_stores')
-            .insert({
+          const { error: ssErr } = await supabase.from('seller_stores').upsert(
+            {
               userId: data.user.id,
-              storeName: storeName || `${firstName}'s Store`,
-              isActive: false, // Activate after approval
-            });
-
-          if (storeError) throw storeError;
-        } else {
-          // Create buyer profile for buyers
-          const { error: buyerProfileError } = await supabase
-            .from('buyer_profiles')
-            .insert({
-              userId: data.user.id,
-            });
-
-          if (buyerProfileError) throw buyerProfileError;
+              storeName: effectiveStoreName,
+            },
+            { onConflict: 'userId' }
+          );
+          if (ssErr) console.warn('seller_stores upsert failed (non-fatal):', ssErr.message);
         }
       }
 
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to register');
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || 'Failed to register. Please try again.');
     } finally {
       setLoading(false);
     }
