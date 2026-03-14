@@ -61,7 +61,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
       </div>
       <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
         <p>Loadify Market - B2B &amp; B2C Marketplace</p>
-        <p>Danny Courier LTD | 101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom</p>
+        <p>XDrive Logistics Ltd | 101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom</p>
         <p>VAT: GB375949535 | Email: loadifymarket.co.uk@gmail.com</p>
       </div>
     </div>
