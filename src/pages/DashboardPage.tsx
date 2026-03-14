@@ -1,8 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import {
   User, ShoppingBag, Heart, RotateCcw, AlertTriangle,
   Bell, MessageSquare, Settings, MapPin, ChevronRight,
-  Shield, Package, Truck, LogOut,
+  Shield, Truck, LogOut, ClipboardList,
 } from 'lucide-react';
 import { useAuthStore } from '../store';
 import { BRAND } from '../constants/brand';
@@ -19,15 +20,39 @@ const QUICK_LINKS = [
   { label: 'Account Settings',  icon: Settings,       to: '/dashboard',     desc: 'Profile and security' },
 ];
 
-const TRUST_FEATURES = [
-  { icon: Shield,  label: 'Buyer Protection',  desc: `Every purchase is protected by ${BRAND.name}` },
-  { icon: RotateCcw, label: `${BRAND.returnsDays}-Day Returns`, desc: 'Easy returns within 14 days' },
-  { icon: Package, label: 'Secure Payments',   desc: 'Stripe-encrypted checkout' },
-];
+interface OrderCounts {
+  pending: number;
+  shipped: number;
+  delivered: number;
+  returns: number;
+}
 
 export default function DashboardPage() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const [orderCounts, setOrderCounts] = useState<OrderCounts>({ pending: 0, shipped: 0, delivered: 0, returns: 0 });
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('orders')
+          .select('status')
+          .eq('buyer_id', user.id);
+        if (data) {
+          setOrderCounts({
+            pending:   data.filter(o => o.status === 'pending' || o.status === 'paid').length,
+            shipped:   data.filter(o => o.status === 'shipped').length,
+            delivered: data.filter(o => o.status === 'delivered').length,
+            returns:   data.filter(o => o.status === 'return_requested' || o.status === 'returned').length,
+          });
+        }
+      } catch {
+        // silently fail — dashboard is non-critical
+      }
+    })();
+  }, [user]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -81,6 +106,27 @@ export default function DashboardPage() {
           </button>
         </div>
 
+        {/* Orders Summary */}
+        <div className="card-glass mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <ClipboardList className="w-5 h-5 text-gold" />
+            <h2 className="text-lg font-bold text-white">Orders Summary</h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { label: 'Pending Orders', count: orderCounts.pending },
+              { label: 'Shipped',        count: orderCounts.shipped },
+              { label: 'Delivered',      count: orderCounts.delivered },
+              { label: 'Returns',        count: orderCounts.returns },
+            ].map(item => (
+              <div key={item.label} className="flex flex-col items-center text-center p-3 bg-white/5 rounded-lg border border-white/10">
+                <span className="text-2xl font-bold text-gold">{item.count}</span>
+                <span className="text-xs text-white/50 mt-1">{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Quick Links Grid */}
         <h2 className="text-lg font-bold text-white mb-4">Quick Access</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-10">
@@ -98,24 +144,6 @@ export default function DashboardPage() {
                 <span className="font-semibold text-white text-sm">{link.label}</span>
                 <span className="text-white/40 text-xs mt-1 leading-tight">{link.desc}</span>
               </Link>
-            );
-          })}
-        </div>
-
-        {/* Trust Features */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          {TRUST_FEATURES.map(f => {
-            const Icon = f.icon;
-            return (
-              <div key={f.label} className="card-glass flex items-start gap-3">
-                <div className="p-2 bg-gold/10 rounded-premium-sm flex-shrink-0">
-                  <Icon className="w-5 h-5 text-gold" />
-                </div>
-                <div>
-                  <p className="font-semibold text-white text-sm">{f.label}</p>
-                  <p className="text-white/40 text-xs mt-0.5">{f.desc}</p>
-                </div>
-              </div>
             );
           })}
         </div>
