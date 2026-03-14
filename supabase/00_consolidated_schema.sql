@@ -1550,7 +1550,8 @@ INSERT INTO categories (id, name, slug, description, "order", "isActive") VALUES
   (uuid_generate_v4(), 'Office Supplies',     'office-supplies',    'Stationery and office equipment',           12, TRUE),
   (uuid_generate_v4(), 'Home & Garden',       'home-garden',        'Furniture, decor and garden',               13, TRUE),
   (uuid_generate_v4(), 'Wholesale Pallets',   'wholesale-pallets',  'Full and part pallets for resale',          14, TRUE),
-  (uuid_generate_v4(), 'Logistics Jobs',      'logistics-jobs',     'Transport and haulage listings',            15, TRUE)
+  (uuid_generate_v4(), 'Logistics Jobs',      'logistics-jobs',     'Transport and haulage listings',            15, TRUE),
+  (uuid_generate_v4(), 'Handmade',            'handmade',           'Handcrafted and artisan goods',             16, TRUE)
 ON CONFLICT (slug) DO NOTHING;
 
 -- ──────────────────────────────────────────────────────────────
