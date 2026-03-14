@@ -152,6 +152,9 @@ export interface Product {
     storeSlug?: string;
     location?: string;
   };
+  // Flattened seller store fields (joined from seller_stores)
+  storeSlug?: string;
+  storeName?: string;
 }
 
 export interface Category {
@@ -209,6 +212,7 @@ export interface CartItem {
   title: string;
   image?: string;
   sellerId?: string;
+  storeName?: string;
 }
 
 export type ReviewStatus = 'published' | 'hidden' | 'removed' | 'flagged';

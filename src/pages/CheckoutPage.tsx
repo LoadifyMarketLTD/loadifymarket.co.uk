@@ -513,14 +513,51 @@ export default function CheckoutPage() {
                 <h2 className="text-xl font-bold">Order Summary</h2>
               </div>
 
-              <div className="space-y-3 mb-4">
-                {items.map((item) => (
-                  <div key={item.productId} className="flex justify-between text-sm">
-                    <span className="truncate max-w-[60%]">{item.quantity}× {item.title}</span>
-                    <span className="flex-shrink-0">{formatPrice(item.price * item.quantity)}</span>
+              {/* Items grouped by seller */}
+              {(() => {
+                // Group items by sellerId for display
+                const groups: { sellerId: string; storeName: string; items: typeof items }[] = [];
+                for (const item of items) {
+                  const sid = item.sellerId || item.productId;
+                  const existing = groups.find((g) => g.sellerId === sid);
+                  if (existing) {
+                    existing.items.push(item);
+                  } else {
+                    groups.push({
+                      sellerId: sid,
+                      storeName: item.storeName || 'Marketplace Seller',
+                      items: [item],
+                    });
+                  }
+                }
+
+                return (
+                  <div className="space-y-4 mb-4">
+                    {groups.map((group) => {
+                      const groupTotal = group.items.reduce((s, i) => s + i.price * i.quantity, 0);
+                      return (
+                        <div key={group.sellerId} className="border border-gray-100 rounded-lg p-3">
+                          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                            Seller: {group.storeName}
+                          </p>
+                          <div className="space-y-2">
+                            {group.items.map((item) => (
+                              <div key={item.productId} className="flex justify-between text-sm">
+                                <span className="truncate max-w-[60%]">{item.quantity}× {item.title}</span>
+                                <span className="flex-shrink-0">{formatPrice(item.price * item.quantity)}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-500 mt-2 pt-2 border-t">
+                            <span>Seller subtotal</span>
+                            <span>{formatPrice(groupTotal)}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
 
               <div className="border-t pt-4 space-y-2">
                 <div className="flex justify-between text-sm">
@@ -534,7 +571,12 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="flex justify-between text-sm">
-                  <span>Shipping ({selectedShipping?.name ?? '—'})</span>
+                  <span>
+                    Shipping ({selectedShipping?.name ?? '—'})
+                    {selectedShipping?.description && (
+                      <span className="block text-xs text-gray-500">{selectedShipping.description}</span>
+                    )}
+                  </span>
                   <span>{shippingAmount === 0 ? 'Free' : formatPrice(shippingAmount)}</span>
                 </div>
 
@@ -543,6 +585,12 @@ export default function CheckoutPage() {
                   <span>{formatPrice(grandTotal)}</span>
                 </div>
               </div>
+
+              {/* Shipping clarity note */}
+              <p className="text-xs text-gray-500 mt-3 flex items-center gap-1">
+                <Truck className="h-3 w-3 flex-shrink-0" aria-hidden="true" />
+                Shipped directly by the seller.
+              </p>
 
               {/* Marketplace Trust Badges */}
               <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-gray-700 space-y-2">

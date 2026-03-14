@@ -170,6 +170,7 @@ export default function ProductPage() {
       title: product.title,
       image: product.images?.[0],
       sellerId: product.sellerId,
+      storeName: product.storeName,
     });
 
     // Track add to cart

@@ -256,7 +256,7 @@ export default function Footer() {
               <span className="hidden md:inline">|</span>
               <span>Platform fee: {BRAND.marketplaceFeePercent}%</span>
               <span className="hidden md:inline">|</span>
-              <span>Returns: {BRAND.returnsDays} days</span>
+              <span>Returns: Seller policy</span>
             </div>
           </div>
         </div>
