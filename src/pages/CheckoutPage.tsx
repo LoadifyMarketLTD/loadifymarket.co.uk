@@ -15,8 +15,8 @@ interface Address {
 
 // Hardcoded fallback used when no shipping methods are configured in the DB
 const FALLBACK_SHIPPING = [
-  { id: 'royal-mail-48', name: 'Royal Mail Tracked 48', price: 3.99, description: '2–3 business days', courier: 'Royal Mail' },
-  { id: 'royal-mail-24', name: 'Royal Mail Tracked 24', price: 4.99, description: 'Next business day',  courier: 'Royal Mail' },
+  { id: 'royal-mail-standard', name: 'Royal Mail Standard', price: 3.99, description: '2–3 business days', courier: 'Royal Mail' },
+  { id: 'royal-mail-24', name: 'Royal Mail Tracked 24', price: 4.99, description: 'Next business day', courier: 'Royal Mail' },
 ];
 
 type ShippingOption = {

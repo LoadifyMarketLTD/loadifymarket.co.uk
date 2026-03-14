@@ -528,7 +528,7 @@ export default function ProductPage() {
                         {productWithStore.storeName || 'View Seller Store'}
                       </Link>
                     ) : (
-                      <span className="text-white/70 font-medium">Independent Seller</span>
+                      <span className="text-white/70 font-medium">{productWithStore.storeName || 'Marketplace Seller'}</span>
                     )}
                   </div>
                 </div>
@@ -539,15 +539,15 @@ export default function ProductPage() {
             <div className="grid grid-cols-3 gap-4">
               <div className="card-glass text-center py-4">
                 <Shield className="w-6 h-6 text-gold mx-auto mb-2" />
-                <p className="text-xs text-white/60">Buyer Protection</p>
+                <p className="text-xs text-white/60">Secure Marketplace Checkout</p>
               </div>
               <div className="card-glass text-center py-4">
                 <Zap className="w-6 h-6 text-gold mx-auto mb-2" />
-                <p className="text-xs text-white/60">Fast Delivery</p>
+                <p className="text-xs text-white/60">Seller Fulfilled Shipping</p>
               </div>
               <div className="card-glass text-center py-4">
                 <Truck className="w-6 h-6 text-gold mx-auto mb-2" />
-                <p className="text-xs text-white/60">Secure Shipping</p>
+                <p className="text-xs text-white/60">Verified Marketplace Sellers</p>
               </div>
             </div>
 
@@ -599,7 +599,7 @@ export default function ProductPage() {
                 <div className="space-y-3 mb-4">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-white/50">Delivery</span>
-                    <span className="text-white/80 font-medium">Royal Mail</span>
+                    <span className="text-white/80 font-medium">Royal Mail Tracked Delivery</span>
                   </div>
                 </div>
               )}
