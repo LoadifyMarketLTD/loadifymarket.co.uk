@@ -79,6 +79,25 @@ function App() {
   const { setUser, setLoading } = useAuthStore();
 
   useEffect(() => {
+    // Build a minimal User object from Supabase auth session metadata when the
+    // public.users table query fails or returns no row (e.g. the live database
+    // hasn't had the 20_fix_users_table.sql migration applied yet).
+    function userFromSession(authUser: { id: string; email?: string | null; user_metadata?: Record<string, unknown> }): import('./types').User {
+      const meta = authUser.user_metadata || {};
+      const strVal = (key: string) => (typeof meta[key] === 'string' ? (meta[key] as string) : undefined);
+      return {
+        id: authUser.id,
+        email: authUser.email ?? '',
+        role: (strVal('role') as import('./types').UserRole) || 'buyer',
+        firstName: strVal('first_name'),
+        lastName: strVal('last_name'),
+        isEmailVerified: false,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
     // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -88,11 +107,18 @@ function App() {
           .select('*')
           .eq('id', session.user.id)
           .single()
-          .then(({ data }) => {
+          .then(({ data, error }) => {
             if (data) {
               setUser(data);
             } else {
-              setLoading(false);
+              if (error) {
+                // Table missing or row not found — still treat as logged in
+                // using auth session metadata so the user isn't stuck logged-out.
+                console.warn('users table query failed, falling back to auth session:', error.message);
+                setUser(userFromSession(session.user));
+              } else {
+                setLoading(false);
+              }
             }
           });
       } else {
@@ -110,9 +136,16 @@ function App() {
           .select('*')
           .eq('id', session.user.id)
           .single()
-          .then(({ data }) => {
+          .then(({ data, error }) => {
             if (data) {
               setUser(data);
+            } else {
+              if (error) {
+                console.warn('users table query failed, falling back to auth session:', error.message);
+                setUser(userFromSession(session.user));
+              } else {
+                setUser(null);
+              }
             }
           });
       } else {
