@@ -119,7 +119,7 @@ export default function CatalogPage() {
         .from('products')
         .select(`
           *,
-          seller:seller_profiles(
+          seller:seller_profiles!left(
             businessName,
             isApproved,
             rating,
@@ -127,7 +127,7 @@ export default function CatalogPage() {
             paymentBehaviour,
             userId
           ),
-          store:seller_stores(
+          store:seller_stores!left(
             storeSlug
           )
         `)
