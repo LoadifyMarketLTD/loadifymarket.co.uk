@@ -12,11 +12,16 @@ This guide explains how to use the mock services when real API keys are not avai
 
 ## How It Works
 
-The application automatically detects missing API keys and switches to mock mode:
+> **⚠️ Development only:** Mock mode is available **only in development builds** (`import.meta.env.DEV`).
+> In **production**, if `VITE_SUPABASE_URL` or `VITE_SUPABASE_ANON_KEY` are missing (or blank), the
+> application will **throw an error at startup** and will not fall back to the mock client.
+> This is intentional — it prevents silent misconfiguration in live environments.
+
+The application automatically detects missing API keys and switches to mock mode in development:
 
 ```
-⚠️  Supabase credentials not found - using MOCK client for development
-📝 To use real Supabase, add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env
+⚠️  Supabase credentials not found - using MOCK client (DEV only)
+📝 Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env to use real Supabase
 ```
 
 ## Mock Supabase Features

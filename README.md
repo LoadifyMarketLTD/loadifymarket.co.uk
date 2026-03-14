@@ -101,7 +101,7 @@ npm run dev
 
 Visit [http://localhost:5173](http://localhost:5173)
 
-**Note:** App works with mock services if Supabase credentials are not configured.
+**Note:** In **development**, the app falls back to a mock Supabase client when credentials are not configured. In **production**, `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are required — the app will throw an error at startup if they are missing (no mock fallback).
 
 ## 🏗️ Build
 
