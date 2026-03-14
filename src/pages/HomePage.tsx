@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import {
   ShieldCheck, RotateCcw, MapPin, BadgeCheck, Lock,
   ArrowRight, Package, Layers, Sparkles,
@@ -7,6 +7,9 @@ import {
   Zap, Home, Wrench, Car, Gamepad2, Heart, Briefcase, Leaf,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
+import { supabase } from '../lib/supabase';
+import type { Product } from '../types';
+import ProductCard from '../components/ProductCard';
 
 // Lazy load below-the-fold components
 const CinematicStoryStrip = lazy(() => import('../components/cinematic/CinematicStoryStrip'));
@@ -56,129 +59,82 @@ const TRUST_ITEMS = [
   },
 ];
 
-const TOP_DEALS = [
-  {
-    id: 1,
-    title: 'Electronics Mixed Pallet',
-    discount: 60,
-    price: 4999,
-    rrp: 12500,
-    tag: 'Top Deal',
-    category: 'Electronics',
-    location: 'Manchester',
-    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=70&auto=format&fit=crop&fm=webp',
-    imageSrcSet: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=480&q=70&auto=format&fit=crop&fm=webp 480w, https://images.unsplash.com/photo-1518770660439-4636190af475?w=768&q=70&auto=format&fit=crop&fm=webp 768w',
-  },
-  {
-    id: 2,
-    title: "Women's Fashion Bundle",
-    discount: 64,
-    price: 6499,
-    rrp: 18000,
-    tag: 'Hot',
-    category: 'Fashion',
-    location: 'London',
-    image: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=70&auto=format&fit=crop&fm=webp',
-    imageSrcSet: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=480&q=70&auto=format&fit=crop&fm=webp 480w, https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=768&q=70&auto=format&fit=crop&fm=webp 768w',
-  },
-  {
-    id: 3,
-    title: 'Home & Kitchen Appliances Lot',
-    discount: 65,
-    price: 3299,
-    rrp: 9500,
-    tag: 'New',
-    category: 'Home & Garden',
-    location: 'Birmingham',
-    image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=70&auto=format&fit=crop&fm=webp',
-    imageSrcSet: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=480&q=70&auto=format&fit=crop&fm=webp 480w, https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=768&q=70&auto=format&fit=crop&fm=webp 768w',
-  },
-  {
-    id: 4,
-    title: 'Tools Wholesale Clearance',
-    discount: 55,
-    price: 1899,
-    rrp: 4200,
-    tag: 'Clearance',
-    category: 'Tools',
-    location: 'Leeds',
-    image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&q=70&auto=format&fit=crop&fm=webp',
-    imageSrcSet: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=480&q=70&auto=format&fit=crop&fm=webp 480w, https://images.unsplash.com/photo-1504148455328-c376907d081c?w=768&q=70&auto=format&fit=crop&fm=webp 768w',
-  },
-  {
-    id: 5,
-    title: 'Vehicles Spare Parts Bulk Lot',
-    discount: 50,
-    price: 2499,
-    rrp: 4999,
-    tag: 'Bulk',
-    category: 'Vehicles',
-    location: 'Sheffield',
-    image: 'https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=600&q=70&auto=format&fit=crop&fm=webp',
-    imageSrcSet: 'https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=480&q=70&auto=format&fit=crop&fm=webp 480w, https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=768&q=70&auto=format&fit=crop&fm=webp 768w',
-  },
-  {
-    id: 6,
-    title: 'Handmade Crafts Wholesale Box',
-    discount: 45,
-    price: 1299,
-    rrp: 2349,
-    tag: 'Wholesale',
-    category: 'Handmade',
-    location: 'Bristol',
-    image: 'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=600&q=70&auto=format&fit=crop&fm=webp',
-    imageSrcSet: 'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=480&q=70&auto=format&fit=crop&fm=webp 480w, https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=768&q=70&auto=format&fit=crop&fm=webp 768w',
-  },
-];
+// Type alias for joined product rows from Supabase (before transforming storeSlug into seller)
+type ProductRow = Product & { store?: { storeSlug?: string } | null };
 
-const BULK_DEALS = [
-  {
-    id: 'b1',
-    title: 'Mixed Clothing & Footwear Pallet — 200+ Items',
-    lotType: 'Pallet Lot',
-    units: '200+ items',
-    weight: '~320kg',
-    price: 5499,
-    rrp: 14000,
-    location: 'Leicester',
-    image: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=600&q=70&auto=format&fit=crop&fm=webp',
-  },
-  {
-    id: 'b2',
-    title: 'Sports & Outdoor Equipment Wholesale Lot',
-    lotType: 'Wholesale',
-    units: '120 items',
-    weight: '~280kg',
-    price: 3799,
-    rrp: 9800,
-    location: 'Bristol',
-    image: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&q=70&auto=format&fit=crop&fm=webp',
-  },
-  {
-    id: 'b3',
-    title: 'Health & Beauty Clearance Stock — 500 Units',
-    lotType: 'Clearance Lot',
-    units: '500 units',
-    weight: '~150kg',
-    price: 2199,
-    rrp: 7500,
-    location: 'Glasgow',
-    image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&q=70&auto=format&fit=crop&fm=webp',
-  },
-  {
-    id: 'b4',
-    title: 'Office Furniture & Supplies Bulk Lot',
-    lotType: 'Bulk Lot',
-    units: '60+ items',
-    weight: '~600kg',
-    price: 4299,
-    rrp: 11000,
-    location: 'Nottingham',
-    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=70&auto=format&fit=crop&fm=webp',
-  },
-];
+// Helper to transform joined Supabase product rows into Product objects
+function transformProductRows(data: ProductRow[]) {
+  return data.map((product) => ({
+    ...product,
+    seller: product.seller ? {
+      ...product.seller,
+      storeSlug: product.store?.storeSlug,
+    } : undefined,
+  }));
+}
+
+const PRODUCT_QUERY_FIELDS = `
+  *,
+  seller:seller_profiles(
+    businessName,
+    isApproved,
+    rating,
+    marketplaceRole,
+    paymentBehaviour,
+    userId
+  ),
+  store:seller_stores(
+    storeSlug
+  )
+`;
 
 export default function HomePage() {
+  const [featuredDeals, setFeaturedDeals] = useState<Product[]>([]);
+  const [bulkDeals, setBulkDeals] = useState<Product[]>([]);
+  const [dealsLoading, setDealsLoading] = useState(true);
+  const [bulkLoading, setBulkLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch featured deals: most-viewed active products
+    const fetchDeals = async () => {
+      try {
+        const { data } = await supabase
+          .from('products')
+          .select(PRODUCT_QUERY_FIELDS)
+          .eq('isActive', true)
+          .eq('isApproved', true)
+          .order('views', { ascending: false })
+          .limit(6);
+        if (data) setFeaturedDeals(transformProductRows(data as ProductRow[]));
+      } catch {
+        // silently swallow — section will stay empty / hidden
+      } finally {
+        setDealsLoading(false);
+      }
+    };
+
+    // Fetch bulk deals: newest B2B listings
+    const fetchBulk = async () => {
+      try {
+        const { data } = await supabase
+          .from('products')
+          .select(PRODUCT_QUERY_FIELDS)
+          .eq('isActive', true)
+          .eq('isApproved', true)
+          .in('type', ['pallet', 'lot', 'wholesale', 'clearance'])
+          .order('createdAt', { ascending: false })
+          .limit(6);
+        if (data) setBulkDeals(transformProductRows(data as ProductRow[]));
+      } catch {
+        // silently swallow
+      } finally {
+        setBulkLoading(false);
+      }
+    };
+
+    fetchDeals();
+    fetchBulk();
+  }, []);
   return (
     <div className="bg-jet">
       {/* 1 — Hero */}
@@ -272,48 +228,31 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {TOP_DEALS.map((deal) => (
-              <Link key={deal.id} to="/bulk" className="card-product group block">
-                <div className="relative aspect-[4/3] overflow-hidden bg-graphite">
-                  <img
-                    src={deal.image}
-                    srcSet={deal.imageSrcSet}
-                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 33vw"
-                    alt={deal.title}
-                    className="absolute inset-0 w-full h-full object-cover object-center opacity-80 group-hover:scale-105 group-hover:opacity-70 transition-all duration-500"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-jet/80 via-transparent to-transparent" />
-                  <div className="absolute top-2 left-2">
-                    <span className="text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded-full">-{deal.discount}%</span>
-                  </div>
-                  <div className="absolute top-2 right-2">
-                    <span className="text-xs font-bold bg-gold text-jet px-2 py-0.5 rounded-full">{deal.tag}</span>
-                  </div>
+          {dealsLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-graphite aspect-[4/3] rounded-premium-sm mb-2" />
+                  <div className="bg-graphite h-4 rounded mb-1" />
+                  <div className="bg-graphite h-4 rounded w-2/3" />
                 </div>
-                <div className="p-3">
-                  <p className="text-xs text-gold/70 mb-0.5 font-medium">{deal.category}</p>
-                  <h3 className="font-bold text-white text-sm mb-2 line-clamp-2 leading-snug">{deal.title}</h3>
-                  <div className="flex items-baseline gap-2 mb-2">
-                    <span className="text-lg font-bold text-gold">£{deal.price.toLocaleString()}</span>
-                    <span className="text-xs text-white/40 line-through">£{deal.rrp.toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-white/40">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      {deal.location}
-                    </span>
-                    <span className="flex items-center gap-1 text-gold/60">
-                      <BadgeCheck className="w-3 h-3" />
-                      Verified
-                    </span>
-                  </div>
-                </div>
+              ))}
+            </div>
+          ) : featuredDeals.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {featuredDeals.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-white/40">
+              <Tag className="w-10 h-10 mx-auto mb-3 opacity-40" />
+              <p className="text-sm">No featured listings yet — check back soon.</p>
+              <Link to="/catalog" className="mt-4 inline-flex items-center gap-1 text-gold text-sm hover:underline">
+                Browse All Listings <ArrowRight className="w-4 h-4" />
               </Link>
-            ))}
-          </div>
+            </div>
+          )}
 
           <div className="mt-6 text-center sm:hidden">
             <Link to="/bulk" className="btn-secondary inline-flex items-center gap-2 text-sm">
@@ -387,57 +326,31 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {BULK_DEALS.map((lot) => (
-              <Link key={lot.id} to="/bulk" className="group block bg-graphite/70 rounded-premium-md overflow-hidden border border-gold/10 hover:border-gold/40 hover:shadow-cinematic-gold transition-all duration-300">
-                <div className="relative aspect-[16/9] overflow-hidden bg-graphite">
-                  <img
-                    src={lot.image}
-                    alt={lot.title}
-                    className="w-full h-full object-cover opacity-70 group-hover:scale-105 group-hover:opacity-60 transition-all duration-500"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-graphite/90 via-graphite/30 to-transparent" />
-                  <div className="absolute top-2 left-2">
-                    <span className="text-xs font-bold bg-gold text-jet px-2 py-0.5 rounded-sm">{lot.lotType}</span>
-                  </div>
+          {bulkLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-graphite aspect-[16/9] rounded-premium-sm mb-2" />
+                  <div className="bg-graphite h-4 rounded mb-1" />
+                  <div className="bg-graphite h-4 rounded w-2/3" />
                 </div>
-                <div className="p-4">
-                  <h3 className="font-bold text-white text-sm line-clamp-2 mb-3 leading-snug">{lot.title}</h3>
-                  <div className="flex items-center gap-3 mb-3 text-xs text-white/50">
-                    <span className="flex items-center gap-1">
-                      <Layers className="w-3.5 h-3.5 text-gold/60" />
-                      {lot.units}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Truck className="w-3.5 h-3.5 text-gold/60" />
-                      {lot.weight}
-                    </span>
-                  </div>
-                  <div className="flex items-baseline justify-between">
-                    <div>
-                      <span className="text-xl font-bold text-gold">£{lot.price.toLocaleString()}</span>
-                      <span className="text-xs text-white/30 line-through ml-2">RRP £{lot.rrp.toLocaleString()}</span>
-                    </div>
-                    <span className="text-xs text-white/40 flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      {lot.location}
-                    </span>
-                  </div>
-                  <div className="mt-3 pt-3 border-t border-white/8 flex items-center justify-between">
-                    <span className="text-xs text-gold/60 flex items-center gap-1">
-                      <BadgeCheck className="w-3.5 h-3.5" />
-                      Verified Seller
-                    </span>
-                    <span className="text-xs text-gold font-semibold group-hover:underline flex items-center gap-1">
-                      View Lot <ArrowRight className="w-3 h-3" />
-                    </span>
-                  </div>
-                </div>
+              ))}
+            </div>
+          ) : bulkDeals.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {bulkDeals.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-white/40">
+              <Package className="w-10 h-10 mx-auto mb-3 opacity-40" />
+              <p className="text-sm">No bulk listings yet — check back soon.</p>
+              <Link to="/bulk" className="mt-4 inline-flex items-center gap-1 text-gold text-sm hover:underline">
+                Browse Bulk &amp; Pallets <ArrowRight className="w-4 h-4" />
               </Link>
-            ))}
-          </div>
+            </div>
+          )}
 
           <div className="mt-6 text-center">
             <Link to="/bulk" className="btn-primary inline-flex items-center gap-2">

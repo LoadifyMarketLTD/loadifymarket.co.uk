@@ -7,6 +7,9 @@ import ProductCard from '../components/ProductCard';
 
 const PAGE_SIZE = 24;
 
+// UUID v4 pattern for detecting already-resolved category IDs
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default function CatalogPage() {
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -66,6 +69,11 @@ export default function CatalogPage() {
     setProducts([]);
   }, [sortBy, selectedCondition, selectedType, selectedListingType, selectedRole, debouncedPriceMin, debouncedPriceMax, searchQuery, selectedCategory, minSellerRating]);
 
+  // Flag so we only do the initial slug→UUID resolution once
+  const categoryResolved = useRef(false);
+  // Capture category URL param once on mount for the resolution effect below
+  const initialCatParam = useRef(searchParams.get('category'));
+
   // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
@@ -77,7 +85,22 @@ export default function CatalogPage() {
           .order('order', { ascending: true });
 
         if (error) throw error;
-        setCategories(data || []);
+        const cats = data || [];
+        setCategories(cats);
+
+        // Resolve initial category URL param (slug or UUID) to a UUID — runs once
+        if (!categoryResolved.current) {
+          categoryResolved.current = true;
+          const catParam = initialCatParam.current;
+          if (catParam) {
+            if (UUID_PATTERN.test(catParam)) {
+              setSelectedCategory(catParam);
+            } else {
+              const match = cats.find((c) => c.slug === catParam);
+              setSelectedCategory(match?.id ?? '');
+            }
+          }
+        }
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
