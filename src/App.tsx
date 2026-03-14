@@ -60,6 +60,8 @@ const LogisticsLoadsPage = lazy(() => import('./pages/LogisticsLoadsPage'));
 const TransportQuotePage = lazy(() => import('./pages/TransportQuotePage'));
 const RFQPage = lazy(() => import('./pages/RFQPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
 
 // Loading component
 function PageLoader() {
@@ -136,6 +138,18 @@ function App() {
           <Route path="forgot-password" element={
             <Suspense fallback={<PageLoader />}>
               <ForgotPasswordPage />
+            </Suspense>
+          } />
+          {/* Reset Password — Supabase redirects here after email link */}
+          <Route path="reset-password" element={
+            <Suspense fallback={<PageLoader />}>
+              <ResetPasswordPage />
+            </Suspense>
+          } />
+          {/* Order Success — Stripe redirects here after payment */}
+          <Route path="orders/success" element={
+            <Suspense fallback={<PageLoader />}>
+              <OrderSuccessPage />
             </Suspense>
           } />
           

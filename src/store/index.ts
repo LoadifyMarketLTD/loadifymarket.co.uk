@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User, CartItem } from '../types';
 
 interface AuthState {
@@ -32,7 +33,9 @@ interface CartState {
   getTotalPrice: () => number;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
   items: [],
   savedForLater: [],
   total: 0,
@@ -113,4 +116,15 @@ export const useCartStore = create<CartState>((set, get) => ({
     const { items } = get();
     return items.reduce((total, item) => total + item.price * item.quantity, 0);
   },
-}));
+    }),
+    {
+      name: 'loadify-cart',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        items: state.items,
+        savedForLater: state.savedForLater,
+        total: state.total,
+      }),
+    }
+  )
+);
