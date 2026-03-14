@@ -132,9 +132,10 @@ export default function CheckoutPage() {
   const shippingAmount = selectedShipping?.price ?? 0;
 
   const subtotal = total / (1 + VAT_RATE);
-  const vatAmount = total - subtotal;
+  const shippingVAT = shippingAmount * VAT_RATE;
+  const vatAmount = (total - subtotal) + shippingVAT;
   const commissionAmount = subtotal * COMMISSION_RATE;
-  const grandTotal = total + shippingAmount;
+  const grandTotal = total + shippingAmount + shippingVAT;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-GB', {

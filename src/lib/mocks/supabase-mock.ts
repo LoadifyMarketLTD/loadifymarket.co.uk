@@ -34,28 +34,34 @@ const mockStorage = {
 
 // Initialize with sample data
 const initializeMockData = () => {
-  // Sample categories - Main categories
+  // Sample categories - Main categories (bulk/wholesale B2B)
   const mainCategories = [
-    { id: 'cat-mixed-lots', name: 'Mixed Job Lots', slug: 'mixed-job-lots' },
-    { id: 'cat-clothing', name: 'Clothing', slug: 'clothing' },
-    { id: 'cat-shoes', name: 'Shoes', slug: 'shoes' },
-    { id: 'cat-jewellery', name: 'Jewellery', slug: 'jewellery' },
-    { id: 'cat-electronics', name: 'Media & Electronics', slug: 'media-electronics' },
-    { id: 'cat-accessories', name: 'Accessories', slug: 'accessories' },
-    { id: 'cat-toys', name: 'Toys', slug: 'toys' },
-    { id: 'cat-health-beauty', name: 'Health & Beauty', slug: 'health-beauty' },
-    { id: 'cat-pets', name: 'Pets', slug: 'pets' },
-    { id: 'cat-memorabilia', name: 'Memorabilia', slug: 'memorabilia' },
-    { id: 'cat-adult', name: 'Adult', slug: 'adult' },
-    { id: 'cat-food-drink', name: 'Food & Drink', slug: 'food-drink' },
-    { id: 'cat-office', name: 'Office Supplies', slug: 'office-supplies' },
+    { id: 'cat-mixed-lots',    name: 'Mixed Job Lots',    slug: 'mixed-job-lots' },
+    { id: 'cat-clothing',      name: 'Clothing',          slug: 'clothing' },
+    { id: 'cat-shoes',         name: 'Shoes',             slug: 'shoes' },
+    { id: 'cat-jewellery',     name: 'Jewellery',         slug: 'jewellery' },
+    { id: 'cat-accessories',   name: 'Accessories',       slug: 'accessories' },
+    { id: 'cat-toys',          name: 'Toys',              slug: 'toys' },
+    { id: 'cat-health-beauty', name: 'Health & Beauty',   slug: 'health-beauty' },
+    { id: 'cat-pets',          name: 'Pets',              slug: 'pets' },
+    { id: 'cat-memorabilia',   name: 'Memorabilia',       slug: 'memorabilia' },
+    { id: 'cat-adult',         name: 'Adult',             slug: 'adult' },
+    { id: 'cat-food-drink',    name: 'Food & Drink',      slug: 'food-drink' },
+    { id: 'cat-office',        name: 'Office Supplies',   slug: 'office-supplies' },
+    // B2C categories that match ShopPage's B2C_CATEGORIES
+    { id: 'cat-electronics',   name: 'Electronics',       slug: 'electronics' },
+    { id: 'cat-fashion',       name: 'Fashion',           slug: 'fashion' },
+    { id: 'cat-home-garden',   name: 'Home & Garden',     slug: 'home-garden' },
+    { id: 'cat-tools',         name: 'Tools',             slug: 'tools' },
+    { id: 'cat-vehicles',      name: 'Vehicles',          slug: 'vehicles' },
+    { id: 'cat-handmade',      name: 'Handmade',          slug: 'handmade' },
   ];
 
   mainCategories.forEach(cat => {
     mockStorage.categories.set(cat.id, { ...cat, parentId: null });
   });
 
-  // Sample products
+  // B2B / bulk products (type: pallet, lot)
   mockStorage.products.set('product-1', {
     id: 'product-1',
     title: 'Electronics Pallet - Grade A',
@@ -66,11 +72,16 @@ const initializeMockData = () => {
     categoryId: 'cat-electronics',
     sellerId: 'seller-1',
     stockQuantity: 10,
+    stockStatus: 'in_stock',
+    rating: 4.5,
+    reviewCount: 3,
+    views: 50,
     isActive: true,
     isApproved: true,
     palletInfo: { palletCount: 1, itemsPerPallet: 50 },
     images: ['https://images.unsplash.com/photo-1498049794561-7780e7231661?w=800'],
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   });
 
   mockStorage.products.set('product-2', {
@@ -83,12 +94,18 @@ const initializeMockData = () => {
     categoryId: 'cat-clothing',
     sellerId: 'seller-1',
     stockQuantity: 3,
+    stockStatus: 'low_stock',
+    rating: 4.2,
+    reviewCount: 1,
+    views: 22,
     isActive: true,
     isApproved: true,
     images: ['https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=800'],
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   });
 
+  // B2C products (type: product / retail / handmade) — visible on /shop
   mockStorage.products.set('product-3', {
     id: 'product-3',
     title: 'Refurbished iPhone 13 - 128GB',
@@ -99,10 +116,57 @@ const initializeMockData = () => {
     categoryId: 'cat-electronics',
     sellerId: 'seller-1',
     stockQuantity: 12,
+    stockStatus: 'in_stock',
+    rating: 4.8,
+    reviewCount: 14,
+    views: 120,
     isActive: true,
     isApproved: true,
     images: ['https://images.unsplash.com/photo-1592286927505-2c7e370d2a3e?w=800'],
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+
+  mockStorage.products.set('product-4', {
+    id: 'product-4',
+    title: 'Handmade Ceramic Mug',
+    description: 'Beautiful handmade ceramic mug, each one unique',
+    price: 24.99,
+    type: 'handmade',
+    condition: 'new',
+    categoryId: 'cat-handmade',
+    sellerId: 'seller-1',
+    stockQuantity: 8,
+    stockStatus: 'in_stock',
+    rating: 5.0,
+    reviewCount: 7,
+    views: 45,
+    isActive: true,
+    isApproved: true,
+    images: ['https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=800'],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+
+  mockStorage.products.set('product-5', {
+    id: 'product-5',
+    title: 'Fashion Summer Dress',
+    description: 'Lightweight summer dress, available in multiple sizes',
+    price: 39.99,
+    type: 'retail',
+    condition: 'new',
+    categoryId: 'cat-fashion',
+    sellerId: 'seller-1',
+    stockQuantity: 20,
+    stockStatus: 'in_stock',
+    rating: 4.3,
+    reviewCount: 5,
+    views: 63,
+    isActive: true,
+    isApproved: true,
+    images: ['https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=800'],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   });
 
   // Mock seller profile
@@ -205,8 +269,8 @@ const initializeMockData = () => {
     mockStorage.shipping_rates.set(rateId, rateRecord);
   });
 
-  // Seed product_shipping associations for mock products (product-1..3 get all 4 methods)
-  const mockProductIds = ['product-1', 'product-2', 'product-3'];
+  // Seed product_shipping associations for mock products (all products get all 4 methods)
+  const mockProductIds = ['product-1', 'product-2', 'product-3', 'product-4', 'product-5'];
   const mockShippingMethodIds = ['sm-rm48', 'sm-rm24', 'sm-evri', 'sm-coll'];
 
   mockProductIds.forEach((productId) => {

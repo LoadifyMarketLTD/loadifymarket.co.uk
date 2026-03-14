@@ -109,6 +109,12 @@ export default function ProductFormPage() {
     e.preventDefault();
     if (!user) return;
 
+    // Category is required — the DB enforces NOT NULL on categoryId
+    if (!formData.categoryId) {
+      alert('Please select a category for this product.');
+      return;
+    }
+
     setSaving(true);
     try {
       const price = parseFloat(formData.price);
