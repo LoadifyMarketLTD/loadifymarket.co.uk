@@ -277,9 +277,13 @@ export default function ProductFormPage() {
                     required
                   >
                     <option value="product">Regular Product</option>
+                    <option value="retail">Retail</option>
+                    <option value="handmade">Handmade / Artisan</option>
+                    <option value="clearance">Clearance</option>
                     <option value="pallet">Pallet</option>
                     <option value="lot">Lot</option>
-                    <option value="clearance">Clearance</option>
+                    <option value="wholesale">Wholesale</option>
+                    <option value="logistics">Logistics</option>
                   </select>
                 </div>
 

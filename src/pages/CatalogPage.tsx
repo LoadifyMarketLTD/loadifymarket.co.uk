@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import type { Product, Category } from '../types';
+import type { Product, Category, ListingType } from '../types';
 import { Grid, List, Search, X, Package, ShoppingBag, Sparkles, ArrowRight, Filter, ChevronDown } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 
@@ -9,6 +9,9 @@ const PAGE_SIZE = 24;
 
 // UUID v4 pattern for detecting already-resolved category IDs
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Allowed listing type values — validated before use in query to prevent injection
+const ALLOWED_LISTING_TYPES: ReadonlyArray<ListingType> = ['pallet', 'wholesale', 'retail', 'handmade', 'logistics'];
 
 export default function CatalogPage() {
   const [searchParams] = useSearchParams();
@@ -151,9 +154,12 @@ export default function CatalogPage() {
       if (selectedType) {
         query = query.eq('type', selectedType);
       }
-      // Apply listing type filter
-      if (selectedListingType) {
-        query = query.eq('listingType', selectedListingType);
+      // Apply listing type filter — match on listingType OR the product's type field
+      // so that products classified by type (e.g. type='handmade') are not excluded
+      // simply because the optional listingType field is null.
+      // Validate against allowed values before interpolation to prevent query injection.
+      if (selectedListingType && (ALLOWED_LISTING_TYPES as readonly string[]).includes(selectedListingType)) {
+        query = query.or(`listingType.eq.${selectedListingType},type.eq.${selectedListingType}`);
       }
       // Apply role filter on the joined seller_profiles table
       if (selectedRole) {
