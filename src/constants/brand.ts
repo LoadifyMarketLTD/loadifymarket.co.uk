@@ -1,6 +1,6 @@
 export const BRAND = {
   name: "Loadify Market",
-  supportEmail: import.meta.env.VITE_SUPPORT_EMAIL || "loadifymarket.co.uk@gmail.com",
+  supportEmail: import.meta.env.VITE_SUPPORT_EMAIL || "support@loadifymarket.co.uk",
   currency: import.meta.env.VITE_CURRENCY || "GBP",
   currencySymbol: import.meta.env.VITE_CURRENCY_SYMBOL || "£",
   marketplaceFeePercent: Number(import.meta.env.VITE_MARKETPLACE_FEE_PERCENT) || 7,
