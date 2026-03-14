@@ -132,11 +132,11 @@ export default function ProductCard({ product }: ProductCardProps) {
                   className="text-xs text-white/40 hover:text-gold transition-colors truncate"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {product.seller.businessName || 'Seller'}
+                  {product.seller.businessName || 'Marketplace Seller'}
                 </Link>
               ) : (
                 <span className="text-xs text-white/40 truncate">
-                  {product.seller.businessName || 'Seller'}
+                  {product.seller.businessName || 'Marketplace Seller'}
                 </span>
               )}
               {product.seller.location && (

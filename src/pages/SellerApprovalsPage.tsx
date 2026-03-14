@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { hasAdminAccess } from '../lib/roleUtils';
@@ -12,6 +13,7 @@ interface SellerWithProfile {
 
 export default function SellerApprovalsPage() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [sellers, setSellers] = useState<SellerWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'pending' | 'approved' | 'all'>('pending');
@@ -272,6 +274,7 @@ export default function SellerApprovalsPage() {
                     )}
 
                     <button
+                      onClick={() => navigate(`/admin/sellers/${seller.user.id}`)}
                       className="btn-outline flex items-center space-x-2"
                     >
                       <Eye className="h-4 w-4" />

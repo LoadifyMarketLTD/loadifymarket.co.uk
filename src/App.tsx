@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useEffect, lazy, Suspense } from 'react';
 import { supabase } from './lib/supabase';
 import { useAuthStore } from './store';
@@ -35,6 +35,7 @@ const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const AdminReviewsPage = lazy(() => import('./pages/AdminReviewsPage'));
 const CategoryManagementPage = lazy(() => import('./pages/CategoryManagementPage'));
 const SellerApprovalsPage = lazy(() => import('./pages/SellerApprovalsPage'));
+const AdminSellerDetailPage = lazy(() => import('./pages/AdminSellerDetailPage'));
 const ReportedListingsPage = lazy(() => import('./pages/ReportedListingsPage'));
 const AdminShipmentsPage = lazy(() => import('./pages/AdminShipmentsPage'));
 const OrdersPage = lazy(() => import('./pages/OrdersPage'));
@@ -75,6 +76,12 @@ function PageLoader() {
       </div>
     </div>
   );
+}
+
+/** Redirects /categories/:slug → /shop?category=:slug */
+function CategoryRedirect() {
+  const { slug } = useParams<{ slug: string }>();
+  return <Navigate to={`/shop?category=${slug ?? ''}`} replace />;
 }
 
 function App() {
@@ -291,6 +298,14 @@ function App() {
               </Suspense>
             </RequireAdmin>
           } />
+          {/* Protected: Admin Seller Detail */}
+          <Route path="admin/sellers/:id" element={
+            <RequireAdmin>
+              <Suspense fallback={<PageLoader />}>
+                <AdminSellerDetailPage />
+              </Suspense>
+            </RequireAdmin>
+          } />
           {/* Protected: Admin Reported Listings */}
           <Route path="admin/reported-listings" element={
             <RequireAdmin>
@@ -498,6 +513,9 @@ function App() {
           <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />
           <Route path="seller-dashboard" element={<Navigate to="/seller" replace />} />
           <Route path="admin-dashboard" element={<Navigate to="/admin" replace />} />
+
+          {/* Public: Category pages — redirect to Shop filtered by category slug */}
+          <Route path="categories/:slug" element={<CategoryRedirect />} />
 
           <Route path="*" element={<NotFoundPage />} />
         </Route>

@@ -98,7 +98,7 @@ export async function searchProducts(
 
   let q = supabase
     .from('products')
-    .select('*, seller:seller_profiles(rating, businessName, isApproved, paymentBehaviour)', { count: 'exact' })
+    .select('*, seller:seller_profiles!left(rating, businessName, isApproved, paymentBehaviour)', { count: 'exact' })
     .eq('isActive', true)
     .eq('isApproved', true);
 
