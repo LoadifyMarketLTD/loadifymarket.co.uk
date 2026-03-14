@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore, useAuthStore } from '../store';
-import { CreditCard, MapPin, Package, Truck } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import type { ShippingMethod } from '../types/shipping';
+import { CreditCard, MapPin, Package, Truck, Home } from 'lucide-react';
 
 interface Address {
   line1: string;
@@ -11,13 +13,21 @@ interface Address {
   country: string;
 }
 
-type ShippingMethod = 'Standard' | 'Express' | 'Pallet';
-
-const SHIPPING_OPTIONS = [
-  { name: 'Standard' as ShippingMethod, cost: 5, description: '3-5 business days' },
-  { name: 'Express' as ShippingMethod, cost: 12, description: '1-2 business days' },
-  { name: 'Pallet' as ShippingMethod, cost: 50, description: 'For large/pallet orders' },
+// Hardcoded fallback used when no shipping methods are configured in the DB
+const FALLBACK_SHIPPING = [
+  { id: 'standard', name: 'Standard', price: 5,  description: '3–5 business days' },
+  { id: 'express',  name: 'Express',  price: 12, description: '1–2 business days' },
+  { id: 'pallet',   name: 'Pallet',   price: 50, description: 'For large/pallet orders' },
 ];
+
+type ShippingOption = {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+  courier?: string | null;
+  tracking?: boolean;
+};
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -25,7 +35,9 @@ export default function CheckoutPage() {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [sameAsShipping, setSameAsShipping] = useState(true);
-  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>('Standard');
+  const [selectedShippingId, setSelectedShippingId] = useState('');
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
+  const [shippingLoading, setShippingLoading] = useState(true);
   const [guestEmail, setGuestEmail] = useState('');
   const [createAccount, setCreateAccount] = useState(false);
 
@@ -45,6 +57,70 @@ export default function CheckoutPage() {
     country: 'GB',
   });
 
+  // Fetch shipping methods from DB for the products in the cart.
+  // Use a stable string key derived from product IDs so the effect only
+  // re-runs when the set of products in the cart actually changes.
+  const productIdsKey = [...new Set(items.map((i) => i.productId))].sort().join(',');
+
+  useEffect(() => {
+    const productIds = productIdsKey ? productIdsKey.split(',') : [];
+    if (productIds.length === 0) {
+      setShippingOptions(FALLBACK_SHIPPING);
+      setSelectedShippingId(FALLBACK_SHIPPING[0].id);
+      setShippingLoading(false);
+      return;
+    }
+
+    setShippingLoading(true);
+
+    const fetchShipping = async () => {
+      try {
+        const { data } = await supabase
+          .from('product_shipping')
+          .select('method_id, shipping_methods(*, shipping_rates(*))')
+          .in('product_id', productIds);
+
+        // Deduplicate by method_id and build ShippingOption list
+        const seen = new Set<string>();
+        const opts: ShippingOption[] = [];
+
+        for (const row of data || []) {
+          const method = (row as unknown as { method_id: string; shipping_methods: ShippingMethod | null })
+            .shipping_methods;
+          if (!method || seen.has(method.id) || !method.active) continue;
+          seen.add(method.id);
+          const rate = method.shipping_rates?.[0];
+          opts.push({
+            id: method.id,
+            name: method.name,
+            price: rate ? Number(rate.price) : 0,
+            courier: method.courier,
+            tracking: method.tracking,
+          });
+        }
+
+        if (opts.length > 0) {
+          setShippingOptions(opts);
+          setSelectedShippingId((prev) => {
+            // Keep previous selection if still available, otherwise default to first
+            return opts.some((o) => o.id === prev) ? prev : opts[0].id;
+          });
+        } else {
+          // No DB methods configured — use hardcoded fallback
+          setShippingOptions(FALLBACK_SHIPPING);
+          setSelectedShippingId(FALLBACK_SHIPPING[0].id);
+        }
+      } catch {
+        setShippingOptions(FALLBACK_SHIPPING);
+        setSelectedShippingId(FALLBACK_SHIPPING[0].id);
+      } finally {
+        setShippingLoading(false);
+      }
+    };
+
+    fetchShipping();
+  }, [productIdsKey]); // re-run when the set of cart products changes
+
   if (items.length === 0) {
     navigate('/cart');
     return null;
@@ -52,8 +128,8 @@ export default function CheckoutPage() {
 
   const VAT_RATE = 0.20;
   const COMMISSION_RATE = 0.07;
-  const selectedShipping = SHIPPING_OPTIONS.find(opt => opt.name === shippingMethod) || SHIPPING_OPTIONS[0];
-  const shippingAmount = selectedShipping.cost;
+  const selectedShipping = shippingOptions.find((o) => o.id === selectedShippingId) ?? shippingOptions[0];
+  const shippingAmount = selectedShipping?.price ?? 0;
 
   const subtotal = total / (1 + VAT_RATE);
   const shippingVAT = shippingAmount * VAT_RATE;
@@ -110,7 +186,7 @@ export default function CheckoutPage() {
           shippingAddress,
           billingAddress: sameAsShipping ? shippingAddress : billingAddress,
           shippingAmount,
-          shippingMethod,
+          shippingMethod: selectedShipping?.name ?? '',
         }),
       });
 
@@ -256,34 +332,53 @@ export default function CheckoutPage() {
                   <h2 className="text-xl font-bold">Shipping Method</h2>
                 </div>
 
-                <div className="space-y-3">
-                  {SHIPPING_OPTIONS.map((option) => (
-                    <label
-                      key={option.name}
-                      className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                        shippingMethod === option.name
-                          ? 'border-orange-500 bg-orange-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <input
-                          type="radio"
-                          name="shippingMethod"
-                          value={option.name}
-                          checked={shippingMethod === option.name}
-                          onChange={(e) => setShippingMethod(e.target.value as ShippingMethod)}
-                          className="mr-3"
-                        />
-                        <div>
-                          <p className="font-semibold">{option.name}</p>
-                          <p className="text-sm text-gray-600">{option.description}</p>
-                        </div>
-                      </div>
-                      <p className="font-bold text-navy-800">{formatPrice(option.cost)}</p>
-                    </label>
-                  ))}
-                </div>
+                {shippingLoading ? (
+                  <p className="text-gray-500 text-sm">Loading shipping options…</p>
+                ) : (
+                  <div className="space-y-3">
+                    {shippingOptions.map((option) => {
+                      const isCollection =
+                        option.courier?.toLowerCase().includes('collection') ||
+                        option.courier?.toLowerCase().includes('local');
+                      const isEvri = option.courier?.toLowerCase().includes('evri');
+                      const Icon = isCollection ? Home : isEvri ? Truck : Package;
+                      return (
+                        <label
+                          key={option.id}
+                          className={`flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                            selectedShippingId === option.id
+                              ? 'border-orange-500 bg-orange-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="radio"
+                              name="shippingMethod"
+                              value={option.id}
+                              checked={selectedShippingId === option.id}
+                              onChange={() => setSelectedShippingId(option.id)}
+                              className="flex-shrink-0"
+                            />
+                            <Icon className="h-5 w-5 text-gray-500 flex-shrink-0" aria-hidden="true" />
+                            <div>
+                              <p className="font-semibold">{option.name}</p>
+                              {option.description && (
+                                <p className="text-sm text-gray-600">{option.description}</p>
+                              )}
+                              {option.courier && !option.description && (
+                                <p className="text-sm text-gray-500">{option.courier}</p>
+                              )}
+                            </div>
+                          </div>
+                          <p className="font-bold text-navy-800">
+                            {option.price === 0 ? 'Free' : formatPrice(option.price)}
+                          </p>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Billing Address */}
@@ -413,8 +508,8 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="flex justify-between text-sm">
-                  <span>Shipping</span>
-                  <span>{formatPrice(shippingAmount)}</span>
+                  <span>Shipping ({selectedShipping?.name ?? '—'})</span>
+                  <span>{shippingAmount === 0 ? 'Free' : formatPrice(shippingAmount)}</span>
                 </div>
 
                 <div className="flex justify-between text-sm text-gray-600">

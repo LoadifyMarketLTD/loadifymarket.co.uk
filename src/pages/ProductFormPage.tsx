@@ -6,6 +6,7 @@ import { hasSellerAccess } from '../lib/roleUtils';
 import type { ProductType, ProductCondition } from '../types';
 import CategorySelector from '../components/CategorySelector';
 import ImageUpload from '../components/ImageUpload';
+import ShippingMethodSelector from '../components/ShippingMethodSelector';
 
 export default function ProductFormPage() {
   const { id } = useParams();
@@ -13,6 +14,8 @@ export default function ProductFormPage() {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [selectedShippingMethodIds, setSelectedShippingMethodIds] = useState<string[]>([]);
+  const [dispatchTime, setDispatchTime] = useState('');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -74,6 +77,19 @@ export default function ProductFormPage() {
           dimensions: data.dimensions || { length: '', width: '', height: '' },
           palletInfo: data.palletInfo || { palletCount: '', itemsPerPallet: '', palletType: '' },
         });
+
+        // Load the shipping methods already linked to this product
+        const { data: psData } = await supabase
+          .from('product_shipping')
+          .select('method_id, dispatch_time')
+          .eq('product_id', id);
+        if (psData) {
+          setSelectedShippingMethodIds(psData.map((r: { method_id: string }) => r.method_id));
+          // Use the first row's dispatch_time as the shared dispatch time
+          if (psData.length > 0 && psData[0].dispatch_time) {
+            setDispatchTime(psData[0].dispatch_time);
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching product:', error);
@@ -92,6 +108,12 @@ export default function ProductFormPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    // Category is required — the DB enforces NOT NULL on categoryId
+    if (!formData.categoryId) {
+      alert('Please select a category for this product.');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -134,14 +156,46 @@ export default function ProductFormPage() {
           .eq('id', id);
 
         if (error) throw error;
+
+        // Replace shipping methods: delete old rows then re-insert selected ones.
+        const { error: deleteError } = await supabase
+          .from('product_shipping')
+          .delete()
+          .eq('product_id', id);
+        if (deleteError) throw deleteError;
+
+        if (selectedShippingMethodIds.length > 0) {
+          const rows = selectedShippingMethodIds.map((method_id) => ({
+            product_id: id,
+            method_id,
+            dispatch_time: dispatchTime || null,
+          }));
+          const { error: shippingError } = await supabase.from('product_shipping').insert(rows);
+          if (shippingError) throw shippingError;
+        }
+
         alert('Product updated successfully!');
       } else {
         // Create new product
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('products')
-          .insert([productData]);
+          .insert([productData])
+          .select('id')
+          .single();
 
         if (error) throw error;
+
+        // Link selected shipping methods to the new product
+        if (inserted && selectedShippingMethodIds.length > 0) {
+          const rows = selectedShippingMethodIds.map((method_id) => ({
+            product_id: inserted.id,
+            method_id,
+            dispatch_time: dispatchTime || null,
+          }));
+          const { error: shippingError } = await supabase.from('product_shipping').insert(rows);
+          if (shippingError) throw shippingError;
+        }
+
         alert('Product created successfully! It will be visible after admin approval.');
       }
 
@@ -407,6 +461,30 @@ export default function ProductFormPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Shipping Methods */}
+            <div className="mb-6">
+              <h3 className="font-semibold mb-3">Shipping Methods</h3>
+              <p className="text-sm text-gray-500 mb-3">
+                Select the shipping options you offer for this product.
+              </p>
+              <ShippingMethodSelector
+                selectedMethodIds={selectedShippingMethodIds}
+                onChange={setSelectedShippingMethodIds}
+              />
+              {selectedShippingMethodIds.length > 0 && (
+                <div className="mt-3">
+                  <label className="block text-sm font-medium mb-1">Estimated Dispatch Time</label>
+                  <input
+                    type="text"
+                    value={dispatchTime}
+                    onChange={(e) => setDispatchTime(e.target.value)}
+                    className="input-field"
+                    placeholder="e.g. 1–2 working days"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Submit Buttons */}

@@ -69,7 +69,7 @@ export default function SellerPublicProfilePage() {
           .from('products')
           .select(`
             *,
-            seller:seller_profiles!inner(
+            seller:seller_profiles(
               businessName,
               isApproved,
               rating,

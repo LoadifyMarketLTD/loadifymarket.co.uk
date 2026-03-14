@@ -48,7 +48,7 @@ export default function BulkPage() {
           .from('categories')
           .select('*')
           .is('parentId', null)
-          .order('order', { ascending: true });
+          .order('name', { ascending: true });
         setCategories(data || []);
       } catch (err) {
         console.error('Error fetching categories:', err);
@@ -64,7 +64,7 @@ export default function BulkPage() {
         .from('products')
         .select(`
           *,
-          seller:seller_profiles!inner(
+          seller:seller_profiles(
             businessName,
             isApproved,
             rating,

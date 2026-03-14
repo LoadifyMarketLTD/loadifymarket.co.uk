@@ -39,7 +39,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
           `)
           .eq('isApproved', true)
           .eq('isActive', true)
-          .order('created_at', { ascending: false })
+          .order('createdAt', { ascending: false })
           .range(skip, skip + maxProducts - 1);
 
         if (error) throw error;
@@ -64,7 +64,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
             `)
             .eq('isApproved', true)
             .eq('isActive', true)
-            .order('created_at', { ascending: false })
+            .order('createdAt', { ascending: false })
             .limit(maxProducts);
           if (fallbackErr) throw fallbackErr;
           setTrendingProducts(transformProducts(fallbackData || []));

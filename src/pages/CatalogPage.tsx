@@ -82,7 +82,7 @@ export default function CatalogPage() {
           .from('categories')
           .select('*')
           .is('parentId', null)
-          .order('order', { ascending: true });
+          .order('name', { ascending: true });
 
         if (error) throw error;
         const cats = data || [];
@@ -119,7 +119,7 @@ export default function CatalogPage() {
         .from('products')
         .select(`
           *,
-          seller:seller_profiles!inner(
+          seller:seller_profiles(
             businessName,
             isApproved,
             rating,

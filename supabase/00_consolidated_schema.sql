@@ -1550,8 +1550,92 @@ INSERT INTO categories (id, name, slug, description, "order", "isActive") VALUES
   (uuid_generate_v4(), 'Office Supplies',     'office-supplies',    'Stationery and office equipment',           12, TRUE),
   (uuid_generate_v4(), 'Home & Garden',       'home-garden',        'Furniture, decor and garden',               13, TRUE),
   (uuid_generate_v4(), 'Wholesale Pallets',   'wholesale-pallets',  'Full and part pallets for resale',          14, TRUE),
-  (uuid_generate_v4(), 'Logistics Jobs',      'logistics-jobs',     'Transport and haulage listings',            15, TRUE)
+  (uuid_generate_v4(), 'Logistics Jobs',      'logistics-jobs',     'Transport and haulage listings',            15, TRUE),
+  (uuid_generate_v4(), 'Handmade',            'handmade',           'Handcrafted and artisan goods',             16, TRUE)
 ON CONFLICT (slug) DO NOTHING;
+
+-- ──────────────────────────────────────────────────────────────
+-- SHIPPING METHODS, RATES & PRODUCT SHIPPING
+-- ──────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS shipping_methods (
+  id         UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name       TEXT        NOT NULL UNIQUE,
+  courier    TEXT,
+  tracking   BOOLEAN     NOT NULL DEFAULT TRUE,
+  active     BOOLEAN     NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS shipping_rates (
+  id         UUID          PRIMARY KEY DEFAULT uuid_generate_v4(),
+  method_id  UUID          NOT NULL REFERENCES shipping_methods(id) ON DELETE CASCADE,
+  price      NUMERIC(10,2) NOT NULL DEFAULT 0,
+  currency   TEXT          NOT NULL DEFAULT 'GBP',
+  min_weight NUMERIC(10,2),
+  max_weight NUMERIC(10,2),
+  created_at TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS product_shipping (
+  id            UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+  product_id    UUID        NOT NULL REFERENCES products(id)         ON DELETE CASCADE,
+  method_id     UUID        NOT NULL REFERENCES shipping_methods(id) ON DELETE CASCADE,
+  dispatch_time TEXT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (product_id, method_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_shipping_rates_method_id    ON shipping_rates   (method_id);
+CREATE INDEX IF NOT EXISTS idx_product_shipping_product_id ON product_shipping (product_id);
+CREATE INDEX IF NOT EXISTS idx_product_shipping_method_id  ON product_shipping (method_id);
+
+ALTER TABLE shipping_methods  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE shipping_rates    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_shipping  ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS shipping_methods_public_read  ON shipping_methods;
+CREATE POLICY shipping_methods_public_read  ON shipping_methods  FOR SELECT USING (TRUE);
+
+DROP POLICY IF EXISTS shipping_rates_public_read    ON shipping_rates;
+CREATE POLICY shipping_rates_public_read    ON shipping_rates    FOR SELECT USING (TRUE);
+
+DROP POLICY IF EXISTS product_shipping_auth_read    ON product_shipping;
+CREATE POLICY product_shipping_auth_read    ON product_shipping  FOR SELECT TO authenticated USING (TRUE);
+
+DROP POLICY IF EXISTS product_shipping_auth_insert  ON product_shipping;
+CREATE POLICY product_shipping_auth_insert  ON product_shipping  FOR INSERT TO authenticated WITH CHECK (TRUE);
+
+DROP POLICY IF EXISTS product_shipping_auth_update  ON product_shipping;
+CREATE POLICY product_shipping_auth_update  ON product_shipping  FOR UPDATE TO authenticated USING (TRUE) WITH CHECK (TRUE);
+
+DROP POLICY IF EXISTS product_shipping_auth_delete  ON product_shipping;
+CREATE POLICY product_shipping_auth_delete  ON product_shipping  FOR DELETE TO authenticated USING (TRUE);
+
+-- Seed shipping methods
+INSERT INTO shipping_methods (name, courier, tracking, active) VALUES
+  ('Royal Mail Tracked 48', 'Royal Mail',       TRUE,  TRUE),
+  ('Royal Mail Tracked 24', 'Royal Mail',       TRUE,  TRUE),
+  ('Evri Standard Delivery','Evri',             TRUE,  TRUE),
+  ('Collection in Person',  'Local Collection', FALSE, TRUE)
+ON CONFLICT (name) DO NOTHING;
+
+-- Seed shipping rates (idempotent)
+INSERT INTO shipping_rates (method_id, price, currency, min_weight, max_weight)
+SELECT id, 3.99, 'GBP', 0, 2 FROM shipping_methods WHERE name = 'Royal Mail Tracked 48'
+  AND NOT EXISTS (SELECT 1 FROM shipping_rates sr WHERE sr.method_id = shipping_methods.id);
+
+INSERT INTO shipping_rates (method_id, price, currency, min_weight, max_weight)
+SELECT id, 4.99, 'GBP', 0, 2 FROM shipping_methods WHERE name = 'Royal Mail Tracked 24'
+  AND NOT EXISTS (SELECT 1 FROM shipping_rates sr WHERE sr.method_id = shipping_methods.id);
+
+INSERT INTO shipping_rates (method_id, price, currency, min_weight, max_weight)
+SELECT id, 2.99, 'GBP', 0, 2 FROM shipping_methods WHERE name = 'Evri Standard Delivery'
+  AND NOT EXISTS (SELECT 1 FROM shipping_rates sr WHERE sr.method_id = shipping_methods.id);
+
+INSERT INTO shipping_rates (method_id, price, currency, min_weight, max_weight)
+SELECT id, 0.00, 'GBP', NULL, NULL FROM shipping_methods WHERE name = 'Collection in Person'
+  AND NOT EXISTS (SELECT 1 FROM shipping_rates sr WHERE sr.method_id = shipping_methods.id);
 
 -- ──────────────────────────────────────────────────────────────
 -- OWNER SETUP

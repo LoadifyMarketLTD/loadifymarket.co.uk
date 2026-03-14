@@ -46,7 +46,7 @@ export default function ShopPage() {
           .from('categories')
           .select('*')
           .is('parentId', null)
-          .order('order', { ascending: true });
+          .order('name', { ascending: true });
         const cats = data || [];
         setCategories(cats);
 
@@ -79,7 +79,7 @@ export default function ShopPage() {
         .from('products')
         .select(`
           *,
-          seller:seller_profiles!inner(
+          seller:seller_profiles(
             businessName,
             isApproved,
             rating,
