@@ -52,7 +52,7 @@ export const handler: Handler = async (event) => {
 
     pdf.setFontSize(10);
     pdf.setTextColor(100);
-    pdf.text('Danny Courier LTD', 20, 28);
+    pdf.text('XDrive Logistics Ltd', 20, 28);
     pdf.text('101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom', 20, 33);
     pdf.text('VAT: GB375949535', 20, 38);
     pdf.text('Email: loadifymarket.co.uk@gmail.com', 20, 43);

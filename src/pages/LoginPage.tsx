@@ -77,7 +77,11 @@ export default function LoginPage() {
       navigate(redirectTo, { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      setError(message || 'Failed to sign in. Please try again.');
+      if (message.toLowerCase().includes('failed to fetch')) {
+        setError('Unable to connect to the server. Please check your internet connection and try again.');
+      } else {
+        setError(message || 'Failed to sign in. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
