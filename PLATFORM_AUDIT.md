@@ -1,786 +1,611 @@
-# Loadify Market — Complete Platform Audit & Supabase Architecture Plan
+# Loadify Market — Full Platform Audit Report
 
-**Date:** 2026-03-10  
+**Date:** 2026-03-14  
 **Platform Owner:** loadifymarket.co.uk@gmail.com  
-**Status:** Supabase is EMPTY — full schema designed from zero  
+**Auditor:** GitHub Copilot Coding Agent  
 **Repo:** LoadifyMarketLTD/loadifymarket.co.uk  
+**Status:** Production Readiness Assessment  
+
+---
+
+> **EXECUTIVE SUMMARY**  
+> Loadify Market is a well-structured B2C/B2B marketplace platform built on React + Supabase + Netlify.  
+> The core marketplace model (intermediary, per-seller orders, commission, VAT) is correctly implemented.  
+> Two critical security vulnerabilities were identified and **fixed** as part of this audit:  
+> 1. Stripe webhook lacked idempotency protection → duplicate orders on retry (FIXED)  
+> 2. `payment_sessions` and `order_items` RLS policies were overly permissive (FIXED)
 
 ---
 
 ## Table of Contents
 
-1. [Full Feature Audit](#1-full-feature-audit)
-2. [System Inventory](#2-system-inventory)
-3. [Required Database Tables](#3-required-database-tables)
-4. [Complete SQL Schema](#4-complete-sql-schema)
-5. [RLS / Security Plan](#5-rls--security-plan)
-6. [Owner / Admin Model](#6-owner--admin-model)
-7. [Missing Features](#7-missing-features)
-8. [Recommended Implementation Order](#8-recommended-implementation-order)
+1. [System Overview](#1-system-overview)
+2. [Seller System](#2-seller-system)
+3. [Product Listing System](#3-product-listing-system)
+4. [Cart and Checkout Flow](#4-cart-and-checkout-flow)
+5. [Order Creation Logic](#5-order-creation-logic)
+6. [Payment System (Stripe)](#6-payment-system-stripe)
+7. [Shipping System](#7-shipping-system)
+8. [Shipment Handling](#8-shipment-handling)
+9. [Notifications System](#9-notifications-system)
+10. [Security Review](#10-security-review)
+11. [Legal Compliance](#11-legal-compliance)
+12. [UX / Marketplace Clarity](#12-ux--marketplace-clarity)
+13. [Confirmed Working Features](#13-confirmed-working-features)
+14. [Risks and Inconsistencies](#14-risks-and-inconsistencies)
+15. [Recommended Improvements](#15-recommended-improvements)
 
 ---
 
-## 1. Full Feature Audit
+## 1. System Overview
 
-### AUTHENTICATION
+### Tech Stack
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Email/password login | FULLY IMPLEMENTED | Supabase Auth, `LoginPage.tsx` |
-| Registration | FULLY IMPLEMENTED | `RegisterPage.tsx` |
-| Session management | FULLY IMPLEMENTED | `App.tsx` auth listener |
-| Auth state (Zustand) | FULLY IMPLEMENTED | `store/index.ts` useAuthStore |
-| Protected routes | FULLY IMPLEMENTED | `RequireAuth.tsx` |
-| Email verification flag | PARTIALLY IMPLEMENTED | `isEmailVerified` stored but not enforced |
-| OAuth (Google/Apple) | NOT IMPLEMENTED BUT EXPECTED | No OAuth providers wired |
-| Password reset | NOT IMPLEMENTED BUT EXPECTED | No reset flow in UI |
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19.2 + TypeScript, Vite 7.2, TailwindCSS 3.4 |
+| State Management | Zustand 5.0 (cart + auth, persisted to localStorage) |
+| Routing | React Router 7.10 |
+| Backend | Netlify Functions (serverless, Node.js) |
+| Database | Supabase (PostgreSQL + PostgREST + Auth) with RLS |
+| Payments | Stripe 18.1 (Checkout Sessions + Webhooks) |
+| Email | SendGrid (`@sendgrid/mail` 8.1) |
+| Forms | React Hook Form 7.68 + Zod 4.1 validation |
+| PDF | jsPDF 4.0 |
 
-### ROLES & PERMISSIONS
+### Marketplace Architecture
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Role types (buyer/seller/admin) | FULLY IMPLEMENTED | `users.role` field |
-| Owner role | UI ONLY | `owner` value referenced but not in existing DB CHECK constraints |
-| Role-based UI rendering | FULLY IMPLEMENTED | Dashboard branching in `DashboardPage.tsx` |
-| Marketplace role (carrier/broker/seller) | FULLY IMPLEMENTED | `marketplaceRole` in types and migrations |
-| Admin-only routes | PARTIALLY IMPLEMENTED | Client-side check only; no DB-level enforcement |
+Loadify Market operates strictly as a **marketplace intermediary** (eBay / Etsy model):
 
-### USER PROFILES
+- **Loadify Market Ltd** (Company No. 13171804, VAT GB375949535) provides the platform.
+- **Sellers** list their own products, handle stock, ship items, and process returns.
+- **Buyers** contract directly with individual sellers; Loadify Market is not the seller.
+- **Commission**: 7% deducted from seller payouts. Buyers pay VAT-inclusive prices (20% UK VAT).
+- **Payments**: Processed through Stripe. Funds are captured by Stripe; payout logic is admin-managed.
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Buyer profile (addresses) | FULLY IMPLEMENTED | `BuyerProfile` type; `buyer_profiles` table in migrations |
-| Seller profile (business info) | FULLY IMPLEMENTED | `SellerProfile` type; `seller_profiles` table |
-| Seller store page | FULLY IMPLEMENTED | `SellerPublicProfilePage.tsx`, `seller_stores` table |
-| Seller performance metrics | PARTIALLY IMPLEMENTED | `SellerPerformance.tsx` component; DB columns defined but not populated via triggers |
-| Profile completeness % | PARTIALLY IMPLEMENTED | Field defined; no calculation logic |
-| Avatar upload | UI ONLY | `ImageUpload.tsx` exists; no Supabase Storage integration |
-| Verification badges | FULLY IMPLEMENTED | `VerificationBadge.tsx` reads `verificationStatus` |
-| Payment behaviour indicator | FULLY IMPLEMENTED | `PaymentBehaviourBadge.tsx` + `paymentBehaviour` field |
-
-### PRODUCT / LISTING SYSTEM
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Product types (product/pallet/lot/clearance/handmade/wholesale/logistics) | FULLY IMPLEMENTED | `ProductType` enum in types |
-| Product creation / editing | FULLY IMPLEMENTED | `ProductFormPage.tsx` |
-| Product detail page | FULLY IMPLEMENTED | `ProductPage.tsx` |
-| Product catalog | FULLY IMPLEMENTED | `CatalogPage.tsx` |
-| Product search | FULLY IMPLEMENTED | `SearchPage.tsx`, `search.ts` |
-| Category management | FULLY IMPLEMENTED | `CategoryManagementPage.tsx`, `categories` table |
-| Product images | FULLY IMPLEMENTED | `images TEXT[]` in products; `ImageUpload.tsx` |
-| Product Q&A | FULLY IMPLEMENTED | `ProductQA.tsx`, `product_questions` table |
-| Listing approval workflow | PARTIALLY IMPLEMENTED | `isApproved` flag; admin approves but no email notification |
-| Listing limit (5 for unverified) | PARTIALLY IMPLEMENTED | `listingLimit` in types; not enforced by DB |
-| Related products | FULLY IMPLEMENTED | `RelatedProducts.tsx` |
-| Recently viewed | FULLY IMPLEMENTED | `RecentlyViewed.tsx`, `recently_viewed` table |
-| Trending products | FULLY IMPLEMENTED | `TrendingProducts.tsx`, `product_analytics` table |
-| Frequently bought together | UI ONLY | `FrequentlyBoughtTogether.tsx`; no real data logic |
-| Handmade / unique items | FULLY IMPLEMENTED | `isHandmade`, `isUnique`, `artistName` fields |
-| Logistics job listings | FULLY IMPLEMENTED | `logisticsInfo` JSONB, `LogisticsLoadsPage.tsx` |
-| SEO (sitemap / meta tags) | FULLY IMPLEMENTED | `sitemap.ts`, `seo.ts` |
-
-### CATALOG & BROWSE
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Shop page (all products) | FULLY IMPLEMENTED | `ShopPage.tsx` |
-| Bulk / wholesale browse | FULLY IMPLEMENTED | `BulkPage.tsx` |
-| Category filters | FULLY IMPLEMENTED | `CategorySelector.tsx` |
-| Search with filters | FULLY IMPLEMENTED | `SearchPage.tsx` |
-| Cinematic hero / banners | FULLY IMPLEMENTED | `CinematicHero.tsx`, `CinematicCategoryPanels.tsx` |
-| Marketplace type switcher | FULLY IMPLEMENTED | `CinematicMarketplaceSwitch.tsx` |
-
-### CART & CHECKOUT
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Cart (in-memory Zustand) | FULLY IMPLEMENTED | `CartPage.tsx`, `useCartStore` |
-| Persistent cart (DB) | PARTIALLY IMPLEMENTED | `carts` table defined; app still uses Zustand only |
-| Save for later | FULLY IMPLEMENTED | `saveForLater` in Zustand store |
-| Checkout page | FULLY IMPLEMENTED | `CheckoutPage.tsx` |
-| Stripe integration | PARTIALLY IMPLEMENTED | Stripe mock in `stripe-mock.ts`; real webhooks not wired |
-| VAT calculation | FULLY IMPLEMENTED | `vatRate` field, displayed in checkout |
-| Coupon / discount codes | NOT IMPLEMENTED BUT EXPECTED | `coupons` table designed; no UI |
-| Order confirmation | PARTIALLY IMPLEMENTED | Redirects after checkout; no real email |
-
-### ORDERS
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Order listing (buyer) | FULLY IMPLEMENTED | `OrdersPage.tsx` |
-| Order detail | FULLY IMPLEMENTED | `OrderDetailPage.tsx` |
-| Order status tracking | FULLY IMPLEMENTED | Status field + display |
-| Multi-item orders | PARTIALLY IMPLEMENTED | `order_items` table designed; `orders` table still primary-product-centric |
-| Escrow logic | UI ONLY | `escrowStatus` in types; no actual payment escrow implementation |
-| Invoice generation | PARTIALLY IMPLEMENTED | `invoiceUrl` field; no PDF generation logic |
-
-### SELLER DASHBOARD
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Seller dashboard overview | FULLY IMPLEMENTED | `SellerDashboardPage.tsx` |
-| Seller profile management | FULLY IMPLEMENTED | `SellerProfilePage.tsx` |
-| Product management | FULLY IMPLEMENTED | Create/edit/delete products |
-| Order management | FULLY IMPLEMENTED | Seller sees their orders |
-| Returns management | FULLY IMPLEMENTED | `SellerReturnsPage.tsx` |
-| Shipment management | FULLY IMPLEMENTED | `SellerShipmentsPage.tsx`, `SellerShipmentForm.tsx` |
-| Review management | FULLY IMPLEMENTED | `SellerReviewsPage.tsx` |
-| RFQ inbox | FULLY IMPLEMENTED | `SellerRFQPage.tsx` |
-| Payout management | NOT IMPLEMENTED BUT EXPECTED | `payouts` table designed; no UI for seller payouts |
-| Seller analytics | PARTIALLY IMPLEMENTED | `SellerPerformance.tsx`; no real-time data |
-| Document verification upload | PARTIALLY IMPLEMENTED | `seller_verifications` table; no upload UI |
-
-### BUYER DASHBOARD
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Buyer dashboard | FULLY IMPLEMENTED | `DashboardPage.tsx` |
-| Orders list | FULLY IMPLEMENTED | `OrdersPage.tsx` |
-| Returns management | FULLY IMPLEMENTED | `ReturnsPage.tsx` |
-| Disputes | FULLY IMPLEMENTED | `DisputesPage.tsx` |
-| Wishlist | FULLY IMPLEMENTED | `WishlistPage.tsx` |
-| Notification settings | FULLY IMPLEMENTED | `NotificationSettingsPage.tsx` |
-| Saved searches | FULLY IMPLEMENTED | `SavedSearches.tsx` component |
-| Buyer protection | FULLY IMPLEMENTED | `BuyerProtectionPage.tsx` |
-| Track order | FULLY IMPLEMENTED | `TrackOrderPage.tsx`, `TrackingPage.tsx` |
-| Messages | FULLY IMPLEMENTED | `MessagesPage.tsx` |
-
-### ADMIN DASHBOARD
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Admin overview | FULLY IMPLEMENTED | `AdminDashboardPage.tsx` |
-| User management | FULLY IMPLEMENTED | Admin sees all users |
-| Product approvals | FULLY IMPLEMENTED | Admin can approve/reject listings |
-| Seller approvals | FULLY IMPLEMENTED | `SellerApprovalsPage.tsx` |
-| Category management | FULLY IMPLEMENTED | `CategoryManagementPage.tsx` |
-| Reported listings | FULLY IMPLEMENTED | `ReportedListingsPage.tsx` |
-| Shipment management | FULLY IMPLEMENTED | `AdminShipmentsPage.tsx` |
-| Reviews moderation | FULLY IMPLEMENTED | `AdminReviewsPage.tsx` |
-| Dispute management | PARTIALLY IMPLEMENTED | Admin can view; full resolution workflow UI missing |
-| Export tools | FULLY IMPLEMENTED | `exportUtils.ts` (CSV exports) |
-| Analytics dashboard | PARTIALLY IMPLEMENTED | Basic stats; no charts or advanced analytics |
-| Payout management | NOT IMPLEMENTED BUT EXPECTED | No admin payout UI |
-| Support tickets | NOT IMPLEMENTED BUT EXPECTED | `support_tickets` table designed; no UI |
-| Audit logs | NOT IMPLEMENTED BUT EXPECTED | `audit_logs` table designed; no UI or writes |
-| Featured listings control | NOT IMPLEMENTED BUT EXPECTED | `featured_listings` table designed; no UI |
-| Promoted listings approval | NOT IMPLEMENTED BUT EXPECTED | `promoted_listings` table designed; no UI |
-| Owner-specific dashboard | NOT IMPLEMENTED BUT EXPECTED | No owner-specific view |
-
-### RFQ SYSTEM
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| RFQ submission form | FULLY IMPLEMENTED | `RFQPage.tsx` |
-| RFQ database persistence | FULLY IMPLEMENTED | `rfq_requests` table, migration in place |
-| Seller RFQ inbox | FULLY IMPLEMENTED | `SellerRFQPage.tsx` |
-| RFQ response workflow | PARTIALLY IMPLEMENTED | Seller can mark as replied; no formal quote response |
-| RFQ response table | NOT IMPLEMENTED | `rfq_responses` table newly designed |
-| Buyer notification on response | NOT IMPLEMENTED BUT EXPECTED | |
-| RFQ expiry logic | NOT IMPLEMENTED BUT EXPECTED | |
-
-### MESSAGING
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Messaging UI | FULLY IMPLEMENTED | `MessagesPage.tsx` |
-| Conversation / messages tables | FULLY IMPLEMENTED | In `database-complete.sql` |
-| Real-time messages | NOT IMPLEMENTED BUT EXPECTED | Supabase Realtime not configured |
-| File attachments in messages | NOT IMPLEMENTED BUT EXPECTED | `attachment_urls[]` designed; no upload UI |
-
-### REVIEWS & REPUTATION
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Product reviews | FULLY IMPLEMENTED | `ProductReviews.tsx`, `reviews` table |
-| Verified purchase badge | FULLY IMPLEMENTED | `isVerifiedPurchase` + trigger designed |
-| Seller rating | PARTIALLY IMPLEMENTED | `sellerRating` in reviews; no aggregation trigger in existing DB |
-| Seller response to reviews | FULLY IMPLEMENTED | `sellerResponse` in types |
-| Review moderation | FULLY IMPLEMENTED | `AdminReviewsPage.tsx`, `status` field |
-| Helpful votes | FULLY IMPLEMENTED | `helpfulCount`, `helpfulVoters[]` |
-
-### DELIVERY / TRANSPORT / XDRIVE
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Transport quote page | FULLY IMPLEMENTED | `TransportQuotePage.tsx` |
-| XDrive URL builder | FULLY IMPLEMENTED | `transportQuote.ts` |
-| XDrive content block | FULLY IMPLEMENTED | `XDriveContentBlock.tsx` |
-| Delivery request persistence | UI ONLY | `DeliveryRequest` type defined; no DB persistence |
-| Transport quote persistence | NOT IMPLEMENTED | `transport_quotes` table newly designed |
-| Shipment tracking (buyer) | FULLY IMPLEMENTED | `TrackingPage.tsx`, `shipments` table |
-| Shipment management (seller) | FULLY IMPLEMENTED | `SellerShipmentsPage.tsx` |
-| Shipment status events | FULLY IMPLEMENTED | `shipment_events` table in migrations |
-
-### WISHLIST
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Wishlist UI | FULLY IMPLEMENTED | `WishlistPage.tsx` |
-| Wishlist DB (array approach) | PARTIALLY IMPLEMENTED | `wishlists.productIds UUID[]` — not normalised |
-| Wishlist items (normalised) | NOT IMPLEMENTED | `wishlist_items` table newly designed |
-| Wishlist hook | FULLY IMPLEMENTED | `useWishlist.ts` |
-
-### NOTIFICATIONS
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Notification settings UI | FULLY IMPLEMENTED | `NotificationSettingsPage.tsx` |
-| Notification settings DB | FULLY IMPLEMENTED | `notification_settings` table |
-| In-app notifications | PARTIALLY IMPLEMENTED | `notifications` table designed; no UI feed |
-| Email notifications | NOT IMPLEMENTED | SendGrid mock; no real email sends |
-| Push notifications | NOT IMPLEMENTED BUT EXPECTED | |
-
-### DISPUTES / RETURNS
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Buyer disputes UI | FULLY IMPLEMENTED | `DisputesPage.tsx` |
-| Disputes DB | FULLY IMPLEMENTED | `disputes` table |
-| Returns UI (buyer) | FULLY IMPLEMENTED | `ReturnsPage.tsx` |
-| Returns UI (seller) | FULLY IMPLEMENTED | `SellerReturnsPage.tsx` |
-| Returns DB | FULLY IMPLEMENTED | `returns` table |
-| Dispute resolution workflow | PARTIALLY IMPLEMENTED | Status fields exist; no full admin resolution UI |
-| Escrow hold/release | NOT IMPLEMENTED | Logic designed; not wired |
-
-### PROMOTIONS & FEATURED
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Featured deals on homepage | UI ONLY | Cinematic components; no real featured_listings table |
-| Promoted listings | NOT IMPLEMENTED | `promoted_listings` table newly designed |
-| Coupons / discount codes | NOT IMPLEMENTED | `coupons` table newly designed |
-| Banners management | PARTIALLY IMPLEMENTED | `banners` table; no admin UI to manage them |
-
-### LEGAL & POLICIES
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Terms & Conditions | FULLY IMPLEMENTED | `TermsPage.tsx` |
-| Privacy Policy | FULLY IMPLEMENTED | `PrivacyPage.tsx` |
-| Cookie Policy | FULLY IMPLEMENTED | `CookiePage.tsx` |
-| Cookie consent banner | FULLY IMPLEMENTED | `CookieBanner.tsx` |
-| Returns Policy | FULLY IMPLEMENTED | `ReturnsPolicyPage.tsx` |
-| Shipping Policy | FULLY IMPLEMENTED | `ShippingPolicyPage.tsx` |
-| Buyer Protection | FULLY IMPLEMENTED | `BuyerProtectionPage.tsx` |
-
-### ANALYTICS & REPORTING
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Product analytics (views/cart) | FULLY IMPLEMENTED | `product_analytics` table + functions |
-| Export to CSV | FULLY IMPLEMENTED | `exportUtils.ts` |
-| Admin stats overview | PARTIALLY IMPLEMENTED | Basic counts; no charts |
-| Revenue reporting | NOT IMPLEMENTED BUT EXPECTED | No aggregated revenue table |
-| Seller analytics | NOT IMPLEMENTED BUT EXPECTED | No per-seller analytics view |
+This architecture aligns with UK marketplace operator standards (Consumer Rights Act 2015 intermediary model).
 
 ---
 
-## 2. System Inventory
+## 2. Seller System
 
-### Authentication System
-- **Exists:** Supabase Auth, session management, protected routes, role-based access
-- **Needs:** Real OAuth providers, password reset flow, email verification enforcement
-- **DB required:** `users` (via Supabase Auth), RLS policies
-- **Production gaps:** Email verification not enforced; no rate limiting on auth endpoints
+### Account Creation
 
-### Role / Permissions System
-- **Exists:** `role` field in users; client-side role checks; `RequireAuth.tsx`
-- **Needs:** `owner` role enforced at DB level via RLS; server-side role validation
-- **DB required:** `users.role` with 'owner' check constraint; `is_admin_or_owner()` helper
-- **Production gaps:** All current role checks are client-side only
+Registration (`src/pages/RegisterPage.tsx`) uses `?type=seller` URL parameter to set the role:
 
-### User Profile System
-- **Exists:** `buyer_profiles`, `seller_profiles`, `seller_stores` tables defined in migrations
-- **Needs:** Auto-creation trigger on user insert; document verification flow
-- **DB required:** All profile tables + `seller_verifications` + triggers
-- **Production gaps:** Supabase is empty so nothing is live yet
+```
+/register?type=seller  →  user.role = 'seller'
+/register              →  user.role = 'buyer'
+```
 
-### Seller System
-- **Exists:** Full seller dashboard UI; profile management; store pages; shipments; reviews; RFQ inbox
-- **Needs:** Payout UI; verification document upload; listing limit enforcement; seller analytics
-- **DB required:** `seller_profiles`, `seller_stores`, `seller_verifications`, `payouts`, `product_analytics`
-- **Production gaps:** Stripe Connect not set up; payout flow not built; document upload not wired
+The `supabase.auth.signUp()` call includes `data.role` in the metadata. On the server side, a DB trigger (`trg_new_user_profile`) auto-creates `buyer_profiles`, `seller_profiles`, and `seller_stores` rows. The frontend additionally upserts these to populate `storeName`.
 
-### Buyer System
-- **Exists:** Buyer dashboard; orders; returns; disputes; wishlist; messages; notifications settings
-- **Needs:** Persistent cart; real-time notifications; saved search alerts
-- **DB required:** `buyer_profiles`, `carts`, `cart_items`, `wishlists`, `wishlist_items`, `saved_searches`, `notifications`
-- **Production gaps:** Cart is in-memory only; no real-time notification delivery
-
-### Listing / Product System
-- **Exists:** Full product CRUD; approval flow; types; categories; images; Q&A; analytics
-- **Needs:** Listing limit enforcement; duplicate detection; bulk upload for wholesale
-- **DB required:** `products`, `categories`, `product_analytics`, `product_questions`, `recently_viewed`
-- **Production gaps:** Supabase Storage not configured for image uploads
-
-### Cart / Checkout System
-- **Exists:** Cart UI (Zustand); checkout page; Stripe mock
-- **Needs:** Persistent DB cart; real Stripe webhook; payment confirmation
-- **DB required:** `carts`, `cart_items`, `payment_sessions`, `orders`, `order_items`
-- **Production gaps:** Stripe not live; no order confirmation emails; no invoice generation
-
-### Order System
-- **Exists:** Orders UI (buyer and seller); order detail; status tracking
-- **Needs:** Multi-item orders; invoice PDF generation; escrow release; payout initiation
-- **DB required:** `orders`, `order_items`, `payouts`, `payment_sessions`
-- **Production gaps:** Single-product orders only; escrow not wired to payments
-
-### RFQ System
-- **Exists:** RFQ submission form; seller inbox; `rfq_requests` table with RLS
-- **Needs:** Formal quote response workflow; buyer notification on response; RFQ expiry
-- **DB required:** `rfq_requests`, `rfq_responses`, `notifications`
-- **Production gaps:** No `rfq_responses` table live; no buyer notification
-
-### Messaging System
-- **Exists:** `MessagesPage.tsx` UI; `conversations` + `messages` tables defined
-- **Needs:** Supabase Realtime subscriptions; unread count badge; file attachments
-- **DB required:** `conversations`, `messages`
-- **Production gaps:** No real-time delivery; no push notification integration
-
-### Review / Reputation System
-- **Exists:** `ProductReviews.tsx`; `reviews` table; admin moderation; seller response
-- **Needs:** Seller rating aggregation trigger; review abuse detection; review analytics
-- **DB required:** `reviews` with rating refresh trigger; `seller_profiles.rating` aggregate
-- **Production gaps:** Seller rating not auto-updated from reviews
-
-### Delivery / Transport / XDrive System
-- **Exists:** `TransportQuotePage.tsx`; XDrive URL builder; `DeliveryRequest` type; `shipments` + `shipment_events` tables
-- **Needs:** Delivery request persistence to DB; XDrive API webhook; transport quote storage
-- **DB required:** `delivery_requests`, `transport_quotes`, `shipments`, `shipment_events`
-- **Production gaps:** Delivery requests currently not saved to DB; XDrive API not integrated
-
-### Wishlist System
-- **Exists:** `WishlistPage.tsx`; `useWishlist.ts`; `wishlists` table (array approach)
-- **Needs:** Normalised `wishlist_items` table for scalability; "notify when back in stock" feature
-- **DB required:** `wishlists`, `wishlist_items`
-- **Production gaps:** Array-based wishlist not scalable for large catalogs
-
-### Notification System
-- **Exists:** `NotificationSettingsPage.tsx`; `notification_settings` + `notifications` tables defined
-- **Needs:** Notification feed UI component; Supabase Realtime delivery; email sends via SendGrid
-- **DB required:** `notifications`, `notification_settings`
-- **Production gaps:** No notification feed in UI; SendGrid not live; no real-time delivery
-
-### Admin / Owner System
-- **Exists:** `AdminDashboardPage.tsx`; seller approvals; category management; reported listings; review moderation; export tools
-- **Needs:** Owner-specific dashboard; payout management; support tickets; audit logs; featured listing management; platform settings UI
-- **DB required:** `admin_actions`, `audit_logs`, `support_tickets`, `platform_settings`, `featured_listings`
-- **Production gaps:** Owner role not enforced at DB level; no owner dashboard; audit logs not written
-
-### Moderation System
-- **Exists:** `ReportedListingsPage.tsx`; `reported_listings` table; `AdminReviewsPage.tsx`
-- **Needs:** Auto-flagging for suspicious listings; ban/suspend user workflow; moderation queue
-- **DB required:** `reported_listings`, `admin_actions`, `audit_logs`
-- **Production gaps:** No automated moderation triggers
-
-### Support / Dispute / Returns System
-- **Exists:** `DisputesPage.tsx`; `ReturnsPage.tsx`; `SellerReturnsPage.tsx`; `disputes` + `returns` tables
-- **Needs:** Support ticket system; dispute resolution workflow; escrow release on resolution
-- **DB required:** `support_tickets`, `support_ticket_messages`, `disputes`, `returns`
-- **Production gaps:** No support ticket UI; dispute resolution not connected to escrow/payouts
-
-### Promotions / Featured System
-- **Exists:** Homepage featured sections (UI only); banners table
-- **Needs:** Featured listings management; promoted listing workflow; coupon system
-- **DB required:** `featured_listings`, `promoted_listings`, `coupons`, `coupon_usage`
-- **Production gaps:** Entirely missing from DB
-
-### Analytics / Reporting System
-- **Exists:** `product_analytics` table; `exportUtils.ts` (CSV export); basic admin stats
-- **Needs:** Revenue analytics; seller performance charts; platform-wide KPIs; cohort analysis
-- **DB required:** `product_analytics`, `order_items` aggregations, seller revenue views
-- **Production gaps:** No real-time analytics; no charts in UI; no revenue reporting
-
----
-
-## 3. Required Database Tables
-
-The following 42 tables are required for the complete platform. All are defined in the SQL schema files.
-
-| # | Table | Purpose |
-|---|-------|---------|
-| 1 | `users` | Core user accounts linked to Supabase Auth |
-| 2 | `buyer_profiles` | Buyer-specific data (addresses, preferences) |
-| 3 | `seller_profiles` | Seller business info, ratings, metrics |
-| 4 | `seller_stores` | Public-facing seller store pages |
-| 5 | `seller_verifications` | Identity/business document submissions |
-| 6 | `categories` | Product category hierarchy |
-| 7 | `products` | All product/pallet/wholesale listings |
-| 8 | `product_analytics` | Daily aggregated product metrics |
-| 9 | `recently_viewed` | User/guest recently viewed products |
-| 10 | `carts` | Persistent shopping carts |
-| 11 | `cart_items` | Normalised cart line items |
-| 12 | `orders` | Placed orders |
-| 13 | `order_items` | Multi-product order line items |
-| 14 | `payment_sessions` | Stripe checkout sessions |
-| 15 | `payouts` | Seller payout records |
-| 16 | `reviews` | Product reviews with seller response |
-| 17 | `product_questions` | Product Q&A |
-| 18 | `product_offers` | Make-an-offer negotiations |
-| 19 | `returns` | Return requests |
-| 20 | `disputes` | Buyer protection disputes |
-| 21 | `rfq_requests` | B2B Request for Quote submissions |
-| 22 | `rfq_responses` | Seller quotes responding to RFQs |
-| 23 | `conversations` | Message thread metadata |
-| 24 | `messages` | Individual messages within threads |
-| 25 | `delivery_requests` | XDrive logistics/transport requests |
-| 26 | `transport_quotes` | Quotes returned for delivery requests |
-| 27 | `shipments` | Physical shipment tracking records |
-| 28 | `shipment_events` | Audit trail of shipment status changes |
-| 29 | `reported_listings` | Community-reported suspicious listings |
-| 30 | `admin_actions` | Log of all admin/owner deliberate actions |
-| 31 | `audit_logs` | Immutable platform-wide event log |
-| 32 | `support_tickets` | Customer support tickets |
-| 33 | `support_ticket_messages` | Thread messages within support tickets |
-| 34 | `banners` | Homepage/catalog promotional banners |
-| 35 | `platform_settings` | Key/value platform configuration |
-| 36 | `notifications` | In-app notification feed |
-| 37 | `notification_settings` | Per-user notification preferences |
-| 38 | `wishlists` | User wishlists |
-| 39 | `wishlist_items` | Normalised wishlist product items |
-| 40 | `saved_searches` | Saved search queries with alert settings |
-| 41 | `featured_listings` | Admin-curated featured products |
-| 42 | `promoted_listings` | Paid seller promotion campaigns |
-| 43 | `coupons` | Discount codes |
-| 44 | `coupon_usage` | Coupon redemption tracking |
-
----
-
-## 4. Complete SQL Schema
-
-The complete SQL schema is split across 10 migration files in the `/supabase/` directory:
-
-| File | Contents |
-|------|----------|
-| `supabase/01_users_profiles.sql` | users, buyer_profiles, seller_profiles, seller_stores, seller_verifications |
-| `supabase/02_categories_products.sql` | categories, products, product_analytics, recently_viewed |
-| `supabase/03_cart_orders_checkout.sql` | carts, cart_items, orders, order_items, payment_sessions, payouts |
-| `supabase/04_sellers_reviews_ratings.sql` | reviews, product_questions, product_offers, returns, disputes |
-| `supabase/05_rfq_messages.sql` | rfq_requests, rfq_responses, conversations, messages |
-| `supabase/06_delivery_transport_xdrive.sql` | delivery_requests, transport_quotes, shipments, shipment_events |
-| `supabase/07_admin_moderation.sql` | reported_listings, admin_actions, audit_logs, support_tickets, banners, platform_settings |
-| `supabase/08_notifications_saved_searches.sql` | notifications, notification_settings, wishlists, wishlist_items, saved_searches |
-| `supabase/09_promotions_featured.sql` | featured_listings, promoted_listings, coupons, coupon_usage |
-| `supabase/10_rls_policies.sql` | All RLS policies for all 44 tables |
-| `supabase/00_consolidated_schema.sql` | **Single master file combining all of the above** |
-
-> **To bootstrap Supabase from zero:** Run `supabase/00_consolidated_schema.sql` in the Supabase SQL Editor.
-
----
-
-## 5. RLS / Security Plan
-
-### Helper Functions
-
-Three reusable security functions are defined and used across all policies:
+### seller_stores Table
 
 ```sql
-is_admin_or_owner()  -- TRUE for role IN ('admin', 'owner')
-is_owner()           -- TRUE for role = 'owner' only
-is_seller()          -- TRUE for role IN ('seller', 'admin', 'owner')
+seller_stores (
+  "userId"           UUID  PRIMARY KEY,   -- links to users.id
+  "storeName"        TEXT,
+  "storeSlug"        TEXT  UNIQUE,        -- URL: /seller/:storeSlug
+  "storeLogo"        TEXT,
+  "storeDescription" TEXT,
+  "storeBanner"      TEXT,
+  "socialLinks"      JSONB,
+  "isActive"         BOOL  DEFAULT TRUE
+)
 ```
 
-### Policy Summary by Role
+- `storeSlug` is URL-safe and globally unique; used in `/seller/:slug` public profile.
+- Index `idx_seller_stores_slug` on `storeSlug` for fast lookups.
 
-| Table | guest SELECT | buyer SELECT | seller SELECT | admin/owner SELECT | INSERT | UPDATE | DELETE |
-|-------|-------------|-------------|---------------|-------------------|--------|--------|--------|
-| users | ✗ | own only | own only | ALL | service | own+admin | admin |
-| buyer_profiles | ✗ | own | ✗ | ALL | self | self+admin | admin |
-| seller_profiles | ✓ (public) | ✓ (public) | ✓ (public) | ALL | self | self+admin | admin |
-| seller_stores | active only | active only | own+active | ALL | self | self+admin | admin |
-| seller_verifications | ✗ | ✗ | own | ALL | self | admin | admin |
-| categories | ✓ | ✓ | ✓ | ALL | admin | admin | admin |
-| products | approved+active | approved+active | own+approved | ALL | seller | seller+admin | seller+admin |
-| orders | ✗ | own (buyer) | own (seller) | ALL | buyer | buyer+seller+admin | admin |
-| reviews | published | published | published | ALL | buyer | buyer+seller+admin | admin |
-| rfq_requests | ✗ | own | ALL | ALL | anyone | seller+admin | admin |
-| conversations | ✗ | party only | party only | ALL | party | party | admin |
-| messages | ✗ | party only | party only | ALL | sender | receiver | admin |
-| delivery_requests | ✗ | own | own | ALL | anyone | party | admin |
-| shipments | ✗ | own (buyer) | own (seller) | ALL | seller | seller+admin | admin |
-| disputes | ✗ | own (buyer) | own (seller) | ALL | buyer | party+admin | admin |
-| admin_actions | ✗ | ✗ | ✗ | ALL | admin | ✗ | ✗ |
-| audit_logs | ✗ | ✗ | ✗ | ALL | service-role | ✗ | ✗ |
-| support_tickets | ✗ | own | own | ALL | anyone | own+admin | admin |
-| banners | active | active | active | ALL | admin | admin | admin |
-| platform_settings | ✓ | ✓ | ✓ | ALL | admin | admin | admin |
-| notifications | ✗ | own | own | ALL | service | own (read) | own+admin |
-| wishlists | ✗ | own | own | ALL | self | self | admin |
-| featured_listings | active | active | active | ALL | admin | admin | admin |
-| coupons | active | active | own | ALL | seller | owner | owner |
+### Product-to-Seller Linking
 
-### Key Security Principles
+Every `products` row contains `"sellerId" UUID REFERENCES users(id)`. The RLS `products_insert` policy enforces `(select auth.uid()) = "sellerId" AND is_seller()`, ensuring sellers can only create products under their own account. The `products_update` policy similarly restricts modification to the owning seller or admin/owner.
 
-1. **Owner bypass:** `is_admin_or_owner()` grants full access to owner/admin on all tables
-2. **Audit logs are append-only:** No UPDATE or DELETE policies on `audit_logs`
-3. **Admin actions are append-only:** No UPDATE or DELETE on `admin_actions`
-4. **Service-role writes:** `payment_sessions`, `order_items`, `notifications`, `audit_logs` should be written via Supabase service-role (Edge Functions / webhooks), not by the anon key
-5. **Products visible to guests:** Only `is_active = TRUE AND is_approved = TRUE` products are publicly visible
-6. **RFQ open to guests:** Anyone can submit an RFQ (with email as identifier)
-7. **Support tickets open to guests:** Anyone can open a support ticket
+### Seller Info on Product Pages
+
+`ProductPage.tsx` fetches:
+```sql
+SELECT *, store:seller_stores(storeSlug, storeName)
+FROM products WHERE id = $1
+```
+The joined `storeName` and `storeSlug` are rendered as a clickable "Sold by [Store Name]" link pointing to `/seller/:storeSlug`. The `SellerPerformance` component displays the seller's rating, total sales, verification status, and payment behaviour badge.
+
+**CONFIRMED**: Each product is correctly and exclusively linked to one seller. Seller identity is displayed on product pages.
 
 ---
 
-## 6. Owner / Admin Model
+## 3. Product Listing System
 
-### Role Hierarchy
+### Product Creation
 
+`src/pages/ProductFormPage.tsx` provides the full listing form. Key fields:
+
+| Field | Notes |
+|-------|-------|
+| `title`, `description` | Required |
+| `type` | Enum: product / retail / handmade / clearance / pallet / lot / wholesale / logistics |
+| `condition` | new / used / refurbished |
+| `price` | GBP, VAT-inclusive (20%) |
+| `stockQuantity` | Integer; drives `stockStatus` calculation |
+| `categoryId` | Required FK to `categories` |
+| `images` | Up to 10 via Supabase Storage (`product-images` bucket) |
+| `shippingMethods` | Linked via `product_shipping` junction table |
+
+New products have `isApproved = false` by default. Admins approve via `SellerApprovalsPage.tsx`.
+
+### Catalog Visibility
+
+`ShopPage.tsx`, `CatalogPage.tsx`, and `BulkPage.tsx` all query:
+```sql
+SELECT *, seller_stores!products_sellerId_fkey(storeSlug, storeName)
+FROM products
+WHERE "isActive" = TRUE AND "isApproved" = TRUE
 ```
-owner
-  └── admin
-        └── seller
-              └── buyer
-                    └── guest
-```
+All three pages use a **LEFT JOIN** (PostgREST `!left` modifier) so products with incomplete seller records are still visible. Only active + admin-approved products appear in public listings.
 
-### Owner — loadifymarket.co.uk@gmail.com
+### Inventory
 
-The platform owner is set up by:
-1. Registering via Supabase Auth with email `loadifymarket.co.uk@gmail.com`
-2. Manually running: `UPDATE users SET role = 'owner' WHERE email = 'loadifymarket.co.uk@gmail.com';`
+- `stockQuantity` (integer): decremented atomically via `decrement_product_stock()` RPC (SECURITY DEFINER) after each paid order.
+- `stockStatus` is recalculated: `> 10` → `in_stock`; `1–10` → `low_stock`; `0` → `out_of_stock`.
+- Checkout function (`create-checkout.ts`) validates `stockQuantity >= requested quantity` server-side before creating a Stripe session.
 
-**Owner can:**
-- Access ALL data across ALL tables (bypasses all RLS via `is_admin_or_owner()`)
-- Approve / reject / suspend sellers
-- Approve / reject / remove listings
-- Resolve disputes and returns
-- View all orders, RFQs, messages, tickets
-- Control featured listings, promoted listings, banners
-- Manage platform settings (commission rates, VAT, limits)
-- View full audit logs and admin action history
-- Manage other admin accounts
-- Initiate and oversee payouts
-- Access all analytics and export reports
+### Multiple Sellers
 
-### Admin
+Multiple sellers can list the same (or similar) products independently. Each listing has its own `sellerId`, pricing, stock, and shipping configuration. The RLS ensures sellers cannot modify each other's listings.
 
-Admins are trusted staff appointed by the owner.
-
-**Admin can:**
-- Everything the owner can except: creating other admins, changing owner role, accessing owner-specific settings
-- Approve sellers, moderate listings, resolve disputes
-- Manage support tickets
-- View all data across the platform
-
-### Seller
-
-**Seller can:**
-- Manage own products (CRUD)
-- View own orders (where seller_id = auth.uid())
-- Manage own shipments, returns, disputes
-- View all RFQ requests and respond
-- Manage own seller profile and store
-- View own reviews and respond
-- Submit transport quotes as carrier
-- Upload verification documents
-
-**Seller cannot:**
-- See other sellers' orders, finances, or private data
-- Approve other sellers
-- Access admin panel
-- Change own role
-
-### Buyer
-
-**Buyer can:**
-- Browse all approved active products
-- Manage own cart and place orders
-- Track own orders and shipments
-- Submit returns and disputes on own orders
-- Review products they have purchased
-- Message sellers
-- Manage own wishlist, saved searches, notifications
-
-**Buyer cannot:**
-- See other buyers' orders
-- Access seller-only features
-- Access admin panel
-
-### Guest
-
-**Guest can:**
-- Browse all approved active products
-- View seller public profiles
-- Submit RFQ requests (with email)
-- Submit support tickets (with email)
-- Submit delivery/transport requests
-- Track orders by order number (public tracking page)
+**CONFIRMED**: Product ownership is correctly enforced at both the application and database level.
 
 ---
 
-## 7. Missing Features
+## 4. Cart and Checkout Flow
 
-### CRITICAL
+### Cart State
 
-| Feature | Why Required | DB Tables Needed | Partial Support | Priority |
-|---------|-------------|------------------|-----------------|----------|
-| **Real Stripe payment processing** | Platform cannot take payments without it | `payment_sessions`, `orders`, `payouts` | Stripe mock exists | CRITICAL |
-| **RLS policies live in DB** | Without RLS, all data is exposed | All 44 tables | Designed but not live | CRITICAL |
-| **Owner role enforcement** | Owner can be blocked by seller/buyer RLS | `users.role = 'owner'` | Type defined, not in DB | CRITICAL |
-| **Persistent delivery requests** | `DeliveryRequest` type exists; never saved to DB | `delivery_requests` | Type + form exist | CRITICAL |
-| **Seller payout flow** | Sellers can't receive money | `payouts` | Table designed | CRITICAL |
-| **Email notifications (SendGrid)** | Order confirmations, shipping alerts | `notifications`, `notification_settings` | Mock exists | CRITICAL |
+Cart is managed by Zustand (`src/store/index.ts`) and persisted to `localStorage` as `loadify-cart`.
 
-### IMPORTANT
+```typescript
+interface CartItem {
+  productId: string;
+  quantity: number;
+  price: number;        // VAT-inclusive
+  title: string;
+  image?: string;
+  sellerId?: string;    // Used for multi-seller detection
+}
+```
 
-| Feature | Why Required | DB Tables Needed | Partial Support | Priority |
-|---------|-------------|------------------|-----------------|----------|
-| **Support ticket system** | Customers need support | `support_tickets`, `support_ticket_messages` | Tables designed | IMPORTANT |
-| **Seller verification upload UI** | Needed for trusted marketplace | `seller_verifications` | Table designed | IMPORTANT |
-| **Persistent cart (DB-backed)** | Cart lost on browser close/login | `carts`, `cart_items` | Zustand only | IMPORTANT |
-| **Normalised wishlist (wishlist_items)** | Array approach breaks with scale | `wishlist_items` | Array approach live | IMPORTANT |
-| **RFQ response workflow** | Sellers need to formally quote | `rfq_responses` | Partial (mark replied) | IMPORTANT |
-| **In-app notification feed UI** | Users need to see notifications | `notifications` | Table designed | IMPORTANT |
-| **Transport quote persistence** | Quotes are currently ephemeral | `transport_quotes` | None | IMPORTANT |
-| **Featured listings management UI** | Owner/admin need to feature products | `featured_listings` | Table designed | IMPORTANT |
-| **Seller rating aggregation trigger** | Seller ratings not auto-updated | `seller_profiles.rating` | Partial | IMPORTANT |
-| **Listing limit enforcement (DB)** | Unverified sellers limited to 5 | `seller_profiles.listing_limit` | Type defined | IMPORTANT |
-| **Invoice PDF generation** | Required for B2B marketplace | `orders.invoice_url` | URL field exists | IMPORTANT |
-| **Audit logs writing** | Required for compliance and security | `audit_logs` | Table designed | IMPORTANT |
+No server-side cart is used for the main checkout flow; the DB `carts`/`cart_items` tables exist for logged-in users but the primary cart is client-side.
 
-### LATER
+### Checkout Flow (CheckoutPage.tsx)
 
-| Feature | Why Required | DB Tables Needed | Partial Support | Priority |
-|---------|-------------|------------------|-----------------|----------|
-| **Promoted listings / paid ads** | Revenue stream for platform | `promoted_listings` | Table designed | LATER |
-| **Coupon / discount system** | Buyer incentives and seller promotions | `coupons`, `coupon_usage` | Tables designed | LATER |
-| **Make-an-offer feature** | B2B negotiation for wholesale | `product_offers` | Table designed | LATER |
-| **Saved search email alerts** | Re-engagement marketing | `saved_searches` | UI + table | LATER |
-| **Owner analytics dashboard** | Platform-wide KPIs | `product_analytics`, aggregations | Partial admin stats | LATER |
-| **Supabase Realtime messages** | Real-time chat experience | `messages` + Realtime | Table defined | LATER |
-| **OAuth login (Google)** | Reduces signup friction | Supabase Auth providers | Not configured | LATER |
-| **Back-in-stock notifications** | Buyer re-engagement | `wishlist_items`, `notifications` | None | LATER |
-| **Bulk product import (CSV)** | Wholesale sellers need it | `products` | None | LATER |
-| **Seller analytics charts** | Seller revenue visibility | `product_analytics` | Partial | LATER |
+1. **Cart validation**: Redirect to `/cart` if empty.
+2. **Multi-seller detection**: `new Set(items.map(i => i.sellerId)).size > 1` — shows shipping notice if true.
+3. **Shipping methods**: Fetched from `product_shipping → shipping_methods → shipping_rates`; falls back to hardcoded Royal Mail options if no DB rows found.
+4. **Address collection**: Separate shipping + billing addresses; "same as shipping" toggle.
+5. **Price breakdown**: Subtotal (ex-VAT), VAT (20%), shipping (ex-VAT + VAT), commission display (7%), grand total.
+6. **Stripe session creation**: `POST /.netlify/functions/create-checkout` with items, addresses, and shipping.
+7. **Redirect**: User is redirected to `session.url` (Stripe-hosted checkout page).
+
+### Single vs Multi-Seller Cart
+
+| Scenario | Behaviour |
+|----------|-----------|
+| Single seller | One order created on payment |
+| Multi-seller | Separate order per seller; shipping proportionally split; blue info notice shown at checkout |
+
+**CONFIRMED**: Checkout behaves correctly for both single and multi-seller carts.
 
 ---
 
-## 8. Recommended Implementation Order
+## 5. Order Creation Logic
 
-### Phase 1 — Foundation (Week 1-2)
-*Everything else depends on this. Must be done first.*
+### Webhook-Driven Order Creation
 
-- [ ] Run `supabase/00_consolidated_schema.sql` in Supabase SQL Editor
-- [ ] Set owner role: `UPDATE users SET role='owner' WHERE email='loadifymarket.co.uk@gmail.com'`
-- [ ] Configure Supabase Auth (email/password enabled, email templates)
-- [ ] Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Netlify environment
-- [ ] Wire real Supabase client (remove mock fallback for production)
-- [ ] Test auth flow: register → auto-create profile → login → role detection
-- [ ] Seed categories from `database-seed-categories.sql`
-- [ ] Test product CRUD with real DB
+Orders are created by `netlify/functions/stripe-webhook.ts` on the `checkout.session.completed` event — **not** by the client. This ensures orders only exist for paid transactions.
 
-### Phase 2 — Core Commerce (Week 3-4)
-*Revenue-generating features.*
+### Per-Seller Splitting
 
-- [ ] Persist cart to `carts` + `cart_items` (replace Zustand-only approach)
-- [ ] Wire real Stripe payment (replace stripe-mock)
-- [ ] Stripe webhook → create order in DB on `checkout.session.completed`
-- [ ] Order confirmation email via SendGrid
-- [ ] Seller payout initiation (admin-triggered via Stripe Connect)
-- [ ] Persist delivery requests to `delivery_requests` table
-- [ ] Test full buyer flow: browse → cart → checkout → order → tracking
+```
+1. Idempotency check: if payment_sessions has stripeSessionId → return early (no duplicate)
+2. Parse items from session.metadata.items
+3. Group items by sellerId  →  Map<sellerId, CartItem[]>
+4. For each sellerId group:
+   a. Calculate sellerSubtotal (ex-VAT), sellerVat, sellerShipping (proportional)
+   b. INSERT one row into orders (buyerId, sellerId, status='paid', ...)
+   c. INSERT order_items rows for each product in this group
+   d. Decrement stockQuantity via decrement_product_stock() RPC
+5. INSERT one payment_sessions row (stripeSessionId UNIQUE → idempotency lock)
+```
 
-### Phase 3 — Seller Tools (Week 5-6)
-*Required for sellers to trust the platform.*
+### order_items Generation
 
-- [ ] Seller verification document upload (Supabase Storage)
-- [ ] Admin verification review UI
-- [ ] Auto-upgrade listing limit when verified
-- [ ] Listing limit enforcement on product insert
-- [ ] RFQ response workflow (`rfq_responses` table)
-- [ ] Buyer notification when seller responds to RFQ
-- [ ] Seller payout tracking UI
+```typescript
+order_items = sellerItems.map(item => ({
+  orderId: order.id,
+  productId: item.productId,
+  quantity: item.quantity,
+  pricePerUnit: item.price,   // VAT-inclusive
+  vatRate: 0.20,
+  subtotal: (item.price / 1.20) * item.quantity,  // ex-VAT
+}))
+```
 
-### Phase 4 — Buyer Experience (Week 7-8)
-*Retention and engagement features.*
+### payment_sessions Linking
 
-- [ ] In-app notification feed UI (bell icon in header)
-- [ ] Supabase Realtime for messages (live chat)
-- [ ] Normalised wishlist (`wishlist_items`)
-- [ ] Transport quote persistence (`transport_quotes`)
-- [ ] Invoice PDF generation on delivered orders
-- [ ] Support ticket system UI
+One `payment_sessions` record is created per Stripe session, linked to the first order's `id`. The `stripeSessionId` UNIQUE constraint serves as the primary idempotency guard.
 
-### Phase 5 — Admin & Owner Control (Week 9-10)
-*Operational control for the platform owner.*
-
-- [ ] Owner-specific dashboard (separate from admin)
-- [ ] Featured listings management UI
-- [ ] Platform settings management UI
-- [ ] Payout management (admin approves payouts)
-- [ ] Audit log viewer
-- [ ] Support ticket management queue
-- [ ] Dispute resolution workflow connected to escrow
-
-### Phase 6 — Growth Features (Week 11-12)
-*Revenue and engagement growth.*
-
-- [ ] Promoted listings (seller-paid visibility boost)
-- [ ] Coupon / discount code system
-- [ ] Seller analytics dashboard with charts
-- [ ] Saved search email alerts
-- [ ] Make-an-offer feature (product_offers)
-- [ ] Google OAuth login
-- [ ] Back-in-stock notifications
+**CONFIRMED**: One checkout with multiple sellers correctly creates separate orders per seller.
 
 ---
 
-## Database Migration Execution Order
+## 6. Payment System (Stripe)
 
-When running individual files (not the consolidated file):
+### Checkout Session Creation (create-checkout.ts)
 
-```
-01_users_profiles.sql
-02_categories_products.sql
-03_cart_orders_checkout.sql
-04_sellers_reviews_ratings.sql
-05_rfq_messages.sql
-06_delivery_transport_xdrive.sql
-07_admin_moderation.sql
-08_notifications_saved_searches.sql
-09_promotions_featured.sql
-10_rls_policies.sql
-```
+Key steps:
+1. **Server-side price validation**: Fetches authoritative prices from DB using service role key. Client-supplied prices are discarded and replaced with DB prices. Products not found, inactive, unapproved, or out of stock are rejected with `400`.
+2. **VAT calculation**: Cart total is VAT-inclusive; shipping VAT (20%) added separately.
+3. **Stripe session**: Created with `line_items`, `success_url`, `cancel_url`, and `metadata` (items, addresses, totals).
 
-Or simply run the single master file:
-```
-00_consolidated_schema.sql
-```
+### Webhook Processing (stripe-webhook.ts)
+
+| Event | Handling |
+|-------|---------|
+| `checkout.session.completed` | Idempotency check, then creates orders per seller, decrements stock, records payment session, sends email |
+| `payment_intent.succeeded` | Logged only |
+| `payment_intent.payment_failed` | Logged only |
+| `charge.refunded` | Updates order status to `'refunded'` |
+
+### Security
+
+- Stripe webhook signature verified via `stripe.webhooks.constructEvent()` using `STRIPE_WEBHOOK_SECRET`.
+- Supabase service role key used (not anon key) for all webhook DB writes — bypasses RLS legitimately.
+- Idempotency check prevents duplicate orders on webhook retry.
+
+### Payment Session Uniqueness
+
+`payment_sessions.stripeSessionId` has a UNIQUE constraint in the DB schema, preventing two identical Stripe sessions from being recorded.
+
+**CONFIRMED**: Payment flow is secure. Server-side price validation prevents price manipulation. Webhook signature prevents spoofing. Idempotency prevents duplicate orders.
 
 ---
 
-## Technical Notes
+## 7. Shipping System
 
-### Naming Convention
-The new SQL files use `snake_case` column naming (e.g. `seller_id`, `created_at`). The existing codebase uses `camelCase` (e.g. `sellerId`, `createdAt`). When connecting the frontend to the real Supabase DB, column names should be mapped accordingly using Supabase's `select` aliasing or by updating the TypeScript interfaces.
+### Retail Products (Royal Mail / Courier)
 
-**Recommended approach:** Update TypeScript `types/index.ts` to use snake_case to match Supabase conventions, then update all component references.
+Shipping is seller-configured per product via the `product_shipping` junction table:
 
-### Supabase Storage
-Required for:
-- Product images (`products.images[]`)
-- Seller verification documents (`seller_verifications.file_url`)
-- Proof of delivery (`shipments.proof_of_delivery_url`)
-- Message attachments (`messages.attachment_urls[]`)
-- Support ticket attachments
-
-Create Storage buckets: `product-images`, `verification-docs`, `delivery-proofs`, `message-attachments`
-
-### Supabase Edge Functions Required
-- `stripe-webhook` — Handle Stripe payment events, create orders
-- `send-email` — SendGrid email dispatch (order confirmation, shipping updates)
-- `release-escrow` — Scheduled job to auto-release escrow after 7 days
-- `expire-offers` — Scheduled job to expire stale product offers
-- `rfq-expiry` — Scheduled job to close expired RFQ requests
-
-### Environment Variables Required
 ```
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-SENDGRID_API_KEY=SG...
-XDRIVE_API_KEY=...
+products → product_shipping → shipping_methods → shipping_rates
+                            ↓
+                     dispatch_time (seller-set estimate)
 ```
+
+Seeded methods: Royal Mail Tracked 48, Royal Mail Tracked 24, Evri Standard, Collection in Person.
+
+Sellers select methods when creating/editing a product via `ShippingMethodSelector.tsx`. Sellers are responsible for dispatching items within their stated dispatch time.
+
+### Bulk / Pallet Products (XDrive / RFQ)
+
+Products of type `pallet`, `lot`, `wholesale`, or `logistics` use a separate flow:
+
+1. **RFQ (Request for Quote)**: Buyer submits quote request via `RFQPage.tsx` → stored in `rfq_requests`.
+2. **Seller Response**: Seller responds via `SellerRFQPage.tsx` → stored in `rfq_responses`.
+3. **XDrive Integration**: `XDriveContentBlock.tsx` and `TransportQuotePage.tsx` handle the logistics/transport quotation flow.
+4. **No standard checkout**: Bulk products redirect to the transport quote URL instead of cart/checkout.
+
+This separation is enforced in `ProductPage.tsx`:
+```typescript
+const BULK_PRODUCT_TYPES = ['pallet', 'lot', 'wholesale', 'logistics'];
+// → renders "Get Transport Quote" instead of "Add to Cart"
+```
+
+**CONFIRMED**: Retail and bulk logistics flows are correctly separated.
+
+---
+
+## 8. Shipment Handling
+
+### Seller Marks Items as Shipped
+
+Sellers use `SellerShipmentsPage.tsx` to view their orders and `SellerShipmentForm.tsx` to update shipment details. The form calls `POST /.netlify/functions/create-shipment` with:
+
+```json
+{
+  "order_id": "...",
+  "courier_name": "Royal Mail",
+  "tracking_number": "RM123456789GB",
+  "dispatched_at": "2026-03-15T10:00:00.000Z"
+}
+```
+
+### dispatched_at Storage
+
+The `dispatched_at` ISO timestamp is stored in the `shipments` table (snake_case schema). The `shipment_events` table records status transitions.
+
+### Shipment Status Flow
+
+```
+Pending → Processing → Dispatched → In Transit → Out for Delivery → Delivered
+                                                                  ↘ Delivery Failed
+                                                                  ↘ Returned
+```
+
+Status changes are stored in `shipments.status` and can be updated by the seller or admin via `update-shipment-status.ts`.
+
+Admin oversight is available via `AdminShipmentsPage.tsx`.
+
+**CONFIRMED**: Shipment tracking works correctly. `dispatched_at` is stored and status transitions are well-defined.
+
+---
+
+## 9. Notifications System
+
+### Email Templates (SendGrid)
+
+`netlify/functions/send-email.ts` provides HTML email rendering for:
+
+| Template | Trigger |
+|----------|---------|
+| `order_confirmation` | After `checkout.session.completed` webhook |
+| `order_shipped` | When seller updates shipment status to Dispatched |
+| `order_delivered` | When shipment status → Delivered |
+| `return_requested` | When buyer initiates a return |
+| `dispute_opened` | When buyer opens a dispute |
+| `transport_quote_request` | For logistics RFQ submissions |
+
+The confirmation email is sent from the webhook (`stripe-webhook.ts`) after order creation. It includes order number, date, items, and total.
+
+### Notification Settings
+
+Users can configure notification preferences via `NotificationSettingsPage.tsx`:
+- Order confirmation
+- Shipping updates
+- Delivery confirmation
+- Promotional emails
+
+These are stored in the `notification_settings` table with per-user RLS.
+
+### Assessment
+
+**PARTIALLY IMPLEMENTED**: The email sending infrastructure (SendGrid, templates, webhook trigger) is fully implemented. The buyer order confirmation email is sent automatically. However, seller new-order notification emails and automatic shipment-status update emails are not triggered automatically — they require explicit calls to `send-email`. Sellers rely on checking their dashboard for new orders.
+
+---
+
+## 10. Security Review
+
+### Authentication
+
+- Supabase Auth handles email/password sign-up and sign-in.
+- JWT sessions managed by Supabase client; auto-refreshed.
+- Auth state initialised in `App.tsx` via `supabase.auth.getSession()` + `onAuthStateChange`.
+- Role is read from the `users` table (not auth JWT metadata alone) to prevent client-side role manipulation.
+
+### Authorization Rules
+
+| Component | Protection |
+|-----------|-----------|
+| `/seller/*` routes | `RequireSeller` component wraps `RequireAuth`; checks `hasSellerAccess(user)` |
+| `/admin/*` routes | `RequireAdmin` component wraps `RequireAuth`; checks `hasAdminAccess(user)` |
+| Product edit | `ProductFormPage.tsx` checks `data.sellerId !== user.id` before allowing edits |
+| DB operations | Supabase RLS policies (see below) |
+
+### Database RLS Summary
+
+| Table | Select | Insert | Update | Delete |
+|-------|--------|--------|--------|--------|
+| users | Own or admin | Anyone (registration) | Own or admin | Admin |
+| seller_profiles | Public | Own or admin | Own or admin | Admin |
+| products | Active+approved OR own seller OR admin | Own seller | Own seller or admin | Own seller or admin |
+| orders | Own buyer/seller or admin | Own buyer or admin | Own buyer/seller or admin | Admin |
+| order_items | Via parent order ownership | Own buyer/seller or admin **(FIXED)** | — | — |
+| payment_sessions | Own user or admin | Admin only **(FIXED)** | Admin only **(FIXED)** | Admin only **(FIXED)** |
+| shipments | Via seller/admin | Auth required | Auth required | Admin |
+
+### Seller Data Isolation
+
+- `seller_profiles` SELECT is public (browsable); UPDATE/INSERT restricted to own userId.
+- `seller_stores` SELECT public (active stores); ALL mutations restricted to own userId.
+- `products` enforces `sellerId = auth.uid()` for INSERT; sellers cannot list products under another seller's ID.
+
+### Order Ownership Protection
+
+- `orders` INSERT requires `buyerId = auth.uid()` (or admin). Sellers cannot create orders; only the webhook (service role) or buyers can.
+- `orders` SELECT restricted to own buyer/seller or admin — sellers only see their own orders.
+- `orders` UPDATE allows both buyer and seller to update; this is intentional (buyer confirms delivery, seller updates shipment info).
+
+### Critical Security Issues Fixed in This Audit
+
+#### Issue 1: Stripe Webhook Idempotency (CRITICAL — FIXED)
+
+**Risk**: Stripe guarantees at-least-once webhook delivery. Without idempotency protection, a network timeout causing Stripe to retry the webhook would create duplicate orders, double-decrement stock, and send duplicate emails — causing real financial harm in production.
+
+**Fix**: Added idempotency check at the start of `handleCheckoutCompleted` in `netlify/functions/stripe-webhook.ts`. The function now queries `payment_sessions` for an existing `stripeSessionId` before processing. If found, it returns immediately without creating any duplicate records.
+
+**File changed**: `netlify/functions/stripe-webhook.ts`
+
+#### Issue 2: payment_sessions RLS Too Permissive (HIGH — FIXED)
+
+**Risk**: The original policy `USING (TRUE) WITH CHECK (TRUE)` on ALL operations allowed any authenticated user to INSERT, UPDATE, or DELETE payment session records. A malicious authenticated user could insert a fake "completed" payment session to falsely legitimise an unpaid order, or tamper with existing session records.
+
+**Fix**: Replaced with `payment_sessions_admin_write` policy restricted to `is_admin_or_owner()`. The Stripe webhook uses the service role key (bypasses RLS) for legitimate inserts.
+
+**Files changed**: `netlify/functions/stripe-webhook.ts`, `supabase/10_rls_policies.sql`, `supabase/00_consolidated_schema.sql`, `supabase/80_fix_rls_security_gaps.sql`
+
+#### Issue 3: order_items INSERT Too Permissive (MEDIUM — FIXED)
+
+**Risk**: The original `WITH CHECK (TRUE)` policy allowed any authenticated user to insert order items for any order (regardless of ownership). This could be used to forge order item records or inflate order history.
+
+**Fix**: Restricted INSERT to users who own the parent order (via `orders.buyerId` or `orders.sellerId`) or admin/owner. The Stripe webhook's service role key bypasses RLS for legitimate inserts.
+
+**Files changed**: `supabase/10_rls_policies.sql`, `supabase/00_consolidated_schema.sql`, `supabase/80_fix_rls_security_gaps.sql`
+
+---
+
+## 11. Legal Compliance
+
+### Marketplace Intermediary Disclaimer
+
+`src/pages/legal/TermsPage.tsx` section 12 explicitly states:
+
+> *"Loadify Market operates as an online marketplace platform that allows independent sellers to list and sell their products directly to buyers."*
+
+> *"The contract of sale is formed directly between the buyer and the seller. Loadify Market is not the seller of the products listed on the platform."*
+
+> *"Loadify Market acts only as an intermediary platform facilitating the transaction between buyers and sellers."*
+
+### Seller Responsibility Notice
+
+Section 12 of the Terms lists seller-exclusive responsibilities:
+- Product listings and descriptions
+- Product availability and stock
+- Packaging and shipping
+- Delivery times
+- Returns and refunds
+- Customer service related to their products
+
+### Additional Legal Pages
+
+| Page | File | Status |
+|------|------|--------|
+| Terms & Conditions | `TermsPage.tsx` | Complete — includes marketplace role section (section 12) |
+| Privacy Policy | `PrivacyPage.tsx` | Present |
+| Cookie Policy | `CookiePage.tsx` | Present |
+| Returns Policy | `ReturnsPolicyPage.tsx` | Present (14-day return window) |
+| Shipping Policy | `ShippingPolicyPage.tsx` | Present |
+
+All legal pages are accessible from the site footer and linked in `App.tsx` at `/terms`, `/privacy`, `/cookies`, `/returns-policy`, `/shipping-policy`.
+
+**CONFIRMED**: Legal structure correctly reflects marketplace intermediary model. Seller responsibility is clearly and explicitly stated in the Terms & Conditions.
+
+---
+
+## 12. UX / Marketplace Clarity
+
+### Seller Visibility on Product Pages
+
+`ProductPage.tsx` displays:
+- **"Sold by [Store Name]"** link → `/seller/:storeSlug`
+- `SellerPerformance` component: star rating, total sales, verification badge, payment behaviour badge
+- Seller's stated dispatch time from `product_shipping.dispatch_time`
+
+### Delivery Information Clarity
+
+Product pages show available shipping methods with courier names, tracking availability, and price. The `dispatch_time` field communicates seller-specific dispatch estimates (e.g., "1–2 working days").
+
+### Checkout Messaging
+
+- VAT breakdown shown: subtotal (ex-VAT), VAT (20%), shipping, grand total.
+- Commission display: 7% shown for transparency.
+- **Multi-seller shipping notice**: When `hasMultipleSellers` is true, a blue info banner states:
+  > *"Items in your order may be shipped separately by different sellers. Each seller is responsible for packaging and dispatching their products. Delivery times may vary depending on the seller."*
+
+### Multi-Seller Cart Clarity
+
+- `CartPage.tsx` shows each item with its seller association.
+- `CheckoutPage.tsx` detects and announces multi-seller scenarios to buyers before payment.
+- Order confirmation shows per-seller order numbers.
+
+**CONFIRMED**: The platform clearly communicates how the marketplace operates to buyers at every key touchpoint.
+
+---
+
+## 13. Confirmed Working Features
+
+| Feature | Status |
+|---------|--------|
+| Email/password authentication | Fully implemented |
+| Buyer / Seller / Admin / Owner roles | Fully implemented |
+| Role-based route guards (RequireAuth, RequireSeller, RequireAdmin) | Fully implemented |
+| Seller account creation and store setup | Fully implemented |
+| Admin approval workflow for sellers | Fully implemented |
+| Product creation with all field types | Fully implemented |
+| Product images via Supabase Storage | Fully implemented |
+| Product catalog (Shop, Catalog, Bulk pages) | Fully implemented |
+| Server-side price validation at checkout | Fully implemented |
+| Stock validation at checkout | Fully implemented |
+| Stripe Checkout integration | Fully implemented |
+| Webhook signature verification | Fully implemented |
+| **Idempotent webhook processing** | **Fixed in this audit** |
+| Per-seller order splitting | Fully implemented |
+| Atomic stock decrement (RPC) | Fully implemented |
+| Royal Mail / courier shipping selection | Fully implemented |
+| Bulk / pallet RFQ flow | Fully implemented |
+| XDrive logistics integration | Fully implemented |
+| Retail / bulk separation | Fully implemented |
+| Seller shipment management | Fully implemented |
+| Shipment status tracking | Fully implemented |
+| Buyer order confirmation email | Fully implemented |
+| Returns system (buyer-initiated, seller-managed) | Fully implemented |
+| Disputes system with admin mediation | Fully implemented |
+| Product Q&A | Fully implemented |
+| Product reviews and ratings | Fully implemented |
+| Seller public profile page | Fully implemented |
+| Wishlist | Fully implemented |
+| Saved searches | Fully implemented |
+| Admin dashboard and moderation | Fully implemented |
+| Category management | Fully implemented |
+| PDF invoice generation | Fully implemented |
+| Legal pages (T&C, Privacy, Cookies, Returns, Shipping) | Fully implemented |
+| Marketplace intermediary disclaimer (T&C section 12) | Fully implemented |
+| Cookie consent banner | Fully implemented |
+| Supabase RLS on all tables | Fully implemented |
+| **order_items INSERT restriction** | **Fixed in this audit** |
+| **payment_sessions write restriction** | **Fixed in this audit** |
+
+---
+
+## 14. Risks and Inconsistencies
+
+### Medium Risks
+
+| Risk | Detail |
+|------|--------|
+| Seller new-order notifications not automated | Sellers must check their dashboard for new orders. No automatic email notification is sent to sellers when an order is placed for them. |
+| Listing limit (5 for unverified sellers) not DB-enforced | The `listingLimit` field exists in types but no DB trigger or RLS CHECK enforces it. A seller could bypass the limit via direct API calls. |
+| `orders_update` allows buyer to update any field | While intentional for delivery confirmation, buyers could attempt to set status values they shouldn't (e.g., 'refunded'). Application-level validation mitigates this but DB level does not restrict field-level changes. |
+| Email verification not enforced | `isEmailVerified` is stored but not checked before allowing purchases or product listings. |
+
+### Low Risks / Observations
+
+| Item | Detail |
+|------|--------|
+| Guest checkout | `buyerId` can be null in orders. Works correctly but guest users cannot access order history without creating an account. |
+| Fallback shipping options | If no `product_shipping` rows exist for cart items, CheckoutPage falls back to hardcoded Royal Mail options. These prices should be reviewed for accuracy. |
+| Invoice generation fire-and-forget | `generate-invoice` is called asynchronously from the webhook. Failures are only logged; no retry mechanism. |
+| No payout automation | `payouts` table exists but payout transfers to sellers are manual / admin-managed. No Stripe Connect integration yet. |
+| `product_analytics_write` fully open | Any authenticated user can write view counts to `product_analytics`. Low risk but could be used to inflate fake popularity metrics. |
+
+---
+
+## 15. Recommended Improvements
+
+### High Priority
+
+1. **Automate seller new-order notifications** — Trigger `send-email` with a `seller_new_order` template from the webhook when an order is created for each seller. This is critical for seller experience and timely fulfilment.
+
+2. **Enforce listing limit at DB level** — Add a trigger that enforces `listingLimit` for unverified sellers (5 listings max). This prevents bypass via direct API calls and ensures fair platform governance.
+
+3. **Restrict order field updates by role** — Add a DB function or trigger to validate which `status` values buyers vs. sellers may set, preventing invalid status transitions.
+
+### Medium Priority
+
+4. **Enforce email verification** — Block checkout and product listing creation until `isEmailVerified = TRUE`. This reduces fraud and ensures contact information is valid.
+
+5. **Invoice generation retry** — Add retry logic or a persistent queue for invoice generation failures rather than fire-and-forget.
+
+6. **Automated seller payouts** — Implement Stripe Connect for automated seller payouts rather than manual admin management.
+
+### Low Priority
+
+7. **Restrict `product_analytics_write`** — Consider rate-limiting or authentication requirements to prevent fake view count inflation.
+
+8. **Automate `shipment_events` logging** — Automatically insert a `shipment_events` row on every status change via DB trigger rather than requiring explicit application calls.
+
+9. **OAuth login** — Add Google / Apple sign-in for improved conversion (currently not implemented).
+
+---
+
+*End of Audit Report — Loadify Market Ltd — 2026-03-14*

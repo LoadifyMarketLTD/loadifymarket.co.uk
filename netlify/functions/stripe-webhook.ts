@@ -104,6 +104,22 @@ export const handler: Handler = async (event) => {
 };
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  // ── Idempotency guard ──────────────────────────────────────────────────────
+  // Stripe guarantees at-least-once webhook delivery. Check whether this
+  // session has already been processed to prevent duplicate orders and
+  // double stock-decrements if the webhook is retried.
+  const { data: existingSession } = await supabase!
+    .from('payment_sessions')
+    .select('id')
+    .eq('stripeSessionId', session.id)
+    .maybeSingle();
+
+  if (existingSession) {
+    console.log(`Idempotency: checkout session ${session.id} already processed — skipping`);
+    return;
+  }
+  // ──────────────────────────────────────────────────────────────────────────
+
   const metadata = session.metadata!;
 
   // CartItem interface — matches what create-checkout serialises into metadata
