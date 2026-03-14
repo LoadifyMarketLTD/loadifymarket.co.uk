@@ -11,6 +11,7 @@ import FrequentlyBoughtTogether from '../components/FrequentlyBoughtTogether';
 import SellerPerformance from '../components/SellerPerformance';
 import ProductReviews from '../components/ProductReviews';
 import { buildTransportQuoteUrl } from '../lib/transportQuote';
+import { updatePageMeta, injectStructuredData, generateProductSchema, pageSEO } from '../lib/seo';
 import {
   ShoppingCart,
   Heart,
@@ -109,6 +110,45 @@ export default function ProductPage() {
       checkWishlist(id);
     }
   }, [id, fetchProduct, checkWishlist]);
+
+  // Update page metadata for SEO when product loads
+  useEffect(() => {
+    if (!product) return;
+
+    const BASE_URL = 'https://loadifymarket.co.uk';
+    const canonical = `${BASE_URL}/product/${product.id}`;
+    const description = product.description
+      ? product.description.slice(0, 160)
+      : `Buy ${product.title} on Loadify Market. ${product.condition} condition. From £${product.price.toFixed(2)}.`;
+
+    updatePageMeta({
+      title: `${product.title} | Loadify Market Ltd`,
+      description,
+      canonical,
+      image: product.images?.[0],
+      type: 'product',
+      price: product.price,
+      currency: 'GBP',
+    });
+
+    injectStructuredData(
+      generateProductSchema({
+        id: product.id,
+        title: product.title,
+        description: product.description || description,
+        images: product.images,
+        price: product.price,
+        stock: product.stockQuantity,
+        condition: product.condition,
+        averageRating: product.rating > 0 ? product.rating : undefined,
+      })
+    );
+
+    return () => {
+      // Restore the default site title when navigating away
+      document.title = pageSEO.home.title;
+    };
+  }, [product]);
 
   const handleAddToCart = async () => {
     if (!product) return;

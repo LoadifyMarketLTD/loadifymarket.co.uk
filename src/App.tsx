@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useEffect, lazy, Suspense } from 'react';
 import { supabase } from './lib/supabase';
 import { useAuthStore } from './store';
@@ -75,6 +75,12 @@ function PageLoader() {
       </div>
     </div>
   );
+}
+
+/** Redirects /categories/:slug → /shop?category=:slug */
+function CategoryRedirect() {
+  const { slug } = useParams<{ slug: string }>();
+  return <Navigate to={`/shop?category=${slug ?? ''}`} replace />;
 }
 
 function App() {
@@ -498,6 +504,9 @@ function App() {
           <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />
           <Route path="seller-dashboard" element={<Navigate to="/seller" replace />} />
           <Route path="admin-dashboard" element={<Navigate to="/admin" replace />} />
+
+          {/* Public: Category pages — redirect to Shop filtered by category slug */}
+          <Route path="categories/:slug" element={<CategoryRedirect />} />
 
           <Route path="*" element={<NotFoundPage />} />
         </Route>
