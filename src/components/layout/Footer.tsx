@@ -1,9 +1,33 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Mail, MapPin, Hexagon, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { BRAND } from '../../constants/brand';
 
+const DASHBOARD_PATHS = ['/dashboard', '/seller', '/admin'];
+
+function isDashboardRoute(pathname: string) {
+  return DASHBOARD_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'));
+}
+
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const location = useLocation();
+
+  if (isDashboardRoute(location.pathname)) {
+    return (
+      <footer className="bg-jet text-white mt-auto border-t border-white/10">
+        <div className="container-cinematic py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-white/50">
+            <p>© {currentYear} {BRAND.name}. Operated by {BRAND.companyName} (CRN: {BRAND.companyNumber}).</p>
+            <div className="flex items-center gap-4">
+              <Link to="/terms" className="hover:text-gold transition-colors">Terms</Link>
+              <Link to="/privacy" className="hover:text-gold transition-colors">Privacy</Link>
+              <Link to="/contact" className="hover:text-gold transition-colors">Contact</Link>
+            </div>
+          </div>
+        </div>
+      </footer>
+    );
+  }
 
   return (
     <footer className="bg-jet text-white mt-auto">
