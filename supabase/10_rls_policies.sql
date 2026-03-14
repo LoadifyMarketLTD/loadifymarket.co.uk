@@ -155,14 +155,20 @@ CREATE POLICY "categories_manage" ON categories FOR ALL
   USING (is_admin_or_owner()) WITH CHECK (is_admin_or_owner());
 
 -- ── PRODUCTS ─────────────────────────────────────────────────────
+-- (select auth.uid()) is used instead of bare auth.uid() so the planner
+-- treats it as a stable InitPlan — evaluated once per query, not per row.
 CREATE POLICY "products_select" ON products FOR SELECT
-  USING (("isActive" = TRUE AND "isApproved" = TRUE) OR auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING (
+    ("isActive" = TRUE AND "isApproved" = TRUE)
+    OR (select auth.uid()) = "sellerId"
+    OR is_admin_or_owner()
+  );
 CREATE POLICY "products_insert" ON products FOR INSERT
-  WITH CHECK (auth.uid() = "sellerId" AND is_seller());
+  WITH CHECK ((select auth.uid()) = "sellerId" AND is_seller());
 CREATE POLICY "products_update" ON products FOR UPDATE
-  USING (auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING ((select auth.uid()) = "sellerId" OR is_admin_or_owner());
 CREATE POLICY "products_delete" ON products FOR DELETE
-  USING (auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING ((select auth.uid()) = "sellerId" OR is_admin_or_owner());
 
 -- ── PRODUCT ANALYTICS ────────────────────────────────────────────
 CREATE POLICY "product_analytics_select" ON product_analytics FOR SELECT USING (TRUE);
