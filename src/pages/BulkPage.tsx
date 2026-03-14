@@ -48,7 +48,7 @@ export default function BulkPage() {
           .from('categories')
           .select('*')
           .is('parentId', null)
-          .order('order', { ascending: true });
+          .order('name', { ascending: true });
         setCategories(data || []);
       } catch (err) {
         console.error('Error fetching categories:', err);
