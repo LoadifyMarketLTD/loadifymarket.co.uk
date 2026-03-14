@@ -26,7 +26,6 @@ import {
   MessageCircle,
   FileText,
   Store,
-  Home,
 } from 'lucide-react';
 
 export default function ProductPage() {
@@ -201,14 +200,6 @@ export default function ProductPage() {
   };
 
   // Map courier name to a lucide icon component
-  const getCourierIcon = (courier?: string | null) => {
-    if (!courier) return Package;
-    const c = courier.toLowerCase();
-    if (c.includes('evri')) return Truck;
-    if (c.includes('collection') || c.includes('local')) return Home;
-    return Package; // Royal Mail and fallback
-  };
-
   // Get type icon
   const getTypeIcon = () => {
     if (!product) return Package;
@@ -521,14 +512,13 @@ export default function ProductPage() {
                       const price = rate && rate.price > 0
                         ? formatPrice(Number(rate.price))
                         : 'Free';
-                      const CourierIcon = getCourierIcon(method.courier);
                       return (
                         <div
                           key={opt.id}
                           className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
                         >
                           <div className="flex items-center gap-2">
-                            <CourierIcon className="w-4 h-4 text-gold flex-shrink-0" />
+                            <Package className="w-4 h-4 text-gold flex-shrink-0" />
                             <div>
                               <p className="text-sm font-medium text-white">{method.name}</p>
                               {method.courier && (
@@ -552,18 +542,14 @@ export default function ProductPage() {
               ) : (
                 <div className="space-y-3 mb-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-white/50">Collection available</span>
-                    <span className="text-white/80 font-medium">Enquire with seller</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-white/50">Delivery available</span>
-                    <span className="text-white/80 font-medium">Enquire with seller</span>
+                    <span className="text-white/50">Delivery</span>
+                    <span className="text-white/80 font-medium">Royal Mail</span>
                   </div>
                 </div>
               )}
 
-              {/* XDrive Transport Quote link */}
-              {(product.type === 'pallet' || shippingOptions.length === 0) && (
+              {/* XDrive Transport Quote link — pallet/bulk orders only */}
+              {product.type === 'pallet' && (
                 <>
                   {product.type === 'pallet' && product.palletInfo && (
                     <div className="flex items-center justify-between text-sm mb-3">
