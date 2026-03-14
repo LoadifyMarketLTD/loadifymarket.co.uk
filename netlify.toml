@@ -8,19 +8,38 @@
 [functions]
   node_bundler = "esbuild"
 
-# Cache static assets for 1 year (immutable)
+# ─── Security Headers (applied to all responses) ─────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Prevent clickjacking
+    X-Frame-Options = "DENY"
+    # Prevent MIME-type sniffing
+    X-Content-Type-Options = "nosniff"
+    # Control referrer information
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # Restrict browser feature access
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(self)"
+    # CSP in report-only mode: observe violations without breaking functionality.
+    # NOTE: 'unsafe-inline' is included because the app uses inline JSON-LD <script>
+    # blocks and Tailwind-generated inline styles. Before promoting this to an enforced
+    # Content-Security-Policy header, replace inline scripts with nonces or hashes and
+    # audit inline style usage to remove 'unsafe-inline' from both script-src and style-src.
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com wss://*.supabase.co; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+
+# ─── Cache: static assets (immutable hashed filenames from Vite) ──────────────
 [[headers]]
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Cache HTML with short duration for revalidation
+# ─── Cache: HTML — short duration, must revalidate ───────────────────────────
 [[headers]]
   for = "/*.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# Cache images with reasonable duration
+# ─── Cache: images ────────────────────────────────────────────────────────────
 [[headers]]
   for = "/*.jpg"
   [headers.values]

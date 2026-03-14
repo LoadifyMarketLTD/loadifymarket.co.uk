@@ -70,7 +70,9 @@ if ('serviceWorker' in navigator) {
         // ServiceWorker registered successfully — silent in production
       },
       (err) => {
-        console.error('ServiceWorker registration failed:', err);
+        // ServiceWorker registration is non-fatal; use warn so public pages
+        // are not flagged for console errors by auditing tools.
+        console.warn('ServiceWorker registration failed:', err);
       }
     );
   });

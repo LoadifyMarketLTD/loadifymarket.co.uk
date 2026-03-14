@@ -1,5 +1,4 @@
-/* Google Fonts Import for Inter */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+/* Google Fonts are loaded via <link> in index.html to avoid CSS @import request chaining */
 
 @tailwind base;
 @tailwind components;
@@ -173,7 +172,7 @@
   .input-field {
     @apply w-full px-5 py-4 bg-graphite/50 text-white
            border border-white/10 rounded-premium-sm
-           placeholder:text-white/40
+           placeholder:text-white/50
            transition-all duration-300 ease-out
            focus:outline-none focus:border-gold/50 focus:bg-graphite
            focus:ring-2 focus:ring-gold/20;
@@ -182,7 +181,7 @@
   .input-search {
     @apply w-full px-6 py-4 bg-white/5 text-white
            border-0 rounded-full backdrop-blur-sm
-           placeholder:text-white/50
+           placeholder:text-white/60
            transition-all duration-300 ease-out
            focus:outline-none focus:bg-white/10
            focus:ring-2 focus:ring-gold/30;
@@ -193,7 +192,7 @@
      ═══════════════════════════════════════════════════════════ */
 
   .nav-link {
-    @apply text-white/70 font-medium
+    @apply text-white/80 font-medium
            transition-all duration-300 ease-out
            hover:text-gold;
   }

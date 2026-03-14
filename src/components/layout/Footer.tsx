@@ -19,7 +19,7 @@ export default function Footer() {
             </div>
             <div>
               <span className="text-2xl font-bold text-white tracking-tight">{BRAND.name}</span>
-              <p className="text-xs text-white/40 mt-0.5">{BRAND.tagline}</p>
+              <p className="text-xs text-white/60 mt-0.5">{BRAND.tagline}</p>
             </div>
           </Link>
 
