@@ -16,8 +16,16 @@ export default function LoginPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      const nextUrl = searchParams.get('next') || '/';
-      navigate(nextUrl, { replace: true });
+      const nextUrl = searchParams.get('next');
+      if (nextUrl) {
+        navigate(nextUrl, { replace: true });
+      } else if (user.role === 'seller') {
+        navigate('/seller', { replace: true });
+      } else if (user.role === 'admin' || user.role === 'owner') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/dashboard', { replace: true });
+      }
     }
   }, [user, searchParams, navigate]);
 
@@ -27,16 +35,39 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
-      
-      // Redirect to the 'next' parameter if provided, otherwise go to home
-      const nextUrl = searchParams.get('next') || '/';
-      navigate(nextUrl);
+
+      // If a specific return URL was requested, honour it
+      const nextUrl = searchParams.get('next');
+      if (nextUrl) {
+        navigate(nextUrl, { replace: true });
+        return;
+      }
+
+      // Fetch user profile to determine role-based redirect destination
+      let redirectTo = '/dashboard';
+      if (data.user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError) {
+          console.warn('Could not fetch user role, defaulting to /dashboard:', profileError.message);
+        } else if (profile?.role === 'seller') {
+          redirectTo = '/seller';
+        } else if (profile?.role === 'admin' || profile?.role === 'owner') {
+          redirectTo = '/admin';
+        }
+      }
+
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to login');
     } finally {

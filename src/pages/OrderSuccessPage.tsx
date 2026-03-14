@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle, ShoppingBag, ArrowRight, Package } from 'lucide-react';
 import { useCartStore } from '../store';
@@ -8,15 +8,12 @@ export default function OrderSuccessPage() {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
   const { clearCart } = useCartStore();
-  const [cleared, setCleared] = useState(false);
 
   useEffect(() => {
-    // Clear cart after successful payment
-    if (!cleared) {
-      clearCart();
-      setCleared(true);
-    }
-  }, [clearCart, cleared]);
+    // Clear cart after successful payment — run once on mount
+    clearCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen bg-jet flex items-center justify-center py-12 px-4">
