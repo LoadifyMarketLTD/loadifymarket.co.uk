@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
+import { hasSellerAccess } from '../lib/roleUtils';
 import { Package, Truck, CheckCircle, Clock, XCircle } from 'lucide-react';
 
 interface Return {
@@ -59,7 +60,7 @@ export default function SellerReturnsPage() {
   }, [user]);
 
   useEffect(() => {
-    if (user?.role === 'seller') {
+    if (hasSellerAccess(user)) {
       fetchReturns();
     }
   }, [user, fetchReturns]);
@@ -130,7 +131,7 @@ export default function SellerReturnsPage() {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
-  if (!user || user.role !== 'seller') {
+  if (!user || !hasSellerAccess(user)) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="card text-center py-12">

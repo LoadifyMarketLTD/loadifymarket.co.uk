@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
+import { hasAdminAccess } from '../lib/roleUtils';
 import type { User, SellerProfile } from '../types';
 import { CheckCircle, XCircle, Ban, Eye } from 'lucide-react';
 
@@ -66,7 +67,7 @@ export default function SellerApprovalsPage() {
   };
 
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (hasAdminAccess(user)) {
       fetchSellers();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -140,7 +141,7 @@ export default function SellerApprovalsPage() {
     }
   };
 
-  if (user?.role !== 'admin') {
+  if (!hasAdminAccess(user)) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="card text-center py-12">

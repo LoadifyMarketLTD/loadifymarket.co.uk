@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
+import { hasSellerAccess } from '../lib/roleUtils';
 import type { ProductType, ProductCondition } from '../types';
 import CategorySelector from '../components/CategorySelector';
 import ImageUpload from '../components/ImageUpload';
@@ -149,7 +150,7 @@ export default function ProductFormPage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  if (!user || user.role !== 'seller') {
+  if (!user || !hasSellerAccess(user)) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="card text-center py-12">

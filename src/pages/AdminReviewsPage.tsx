@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
+import { hasAdminAccess } from '../lib/roleUtils';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -109,7 +110,7 @@ export default function AdminReviewsPage() {
   const published = reviews.filter(r => r.status === 'published').length;
   const removed   = reviews.filter(r => r.status === 'removed').length;
 
-  if (!user || user.role !== 'admin') {
+  if (!user || !hasAdminAccess(user)) {
     return (
       <div className="bg-jet min-h-screen pt-24 flex items-center justify-center">
         <div className="card-glass text-center py-16 px-8">

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
+import { hasSellerAccess } from '../lib/roleUtils';
 import type { Address } from '../types';
 import { Building2, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -91,7 +92,7 @@ export default function SellerProfilePage() {
   };
 
   useEffect(() => {
-    if (user?.role === 'seller') {
+    if (hasSellerAccess(user)) {
       fetchProfile();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -173,7 +174,7 @@ export default function SellerProfilePage() {
     }
   };
 
-  if (!user || user.role !== 'seller') {
+  if (!user || !hasSellerAccess(user)) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="card text-center py-12">

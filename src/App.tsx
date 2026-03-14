@@ -59,6 +59,7 @@ const ShippingPolicy = lazy(() => import('./pages/legal/ShippingPolicyPage'));
 const LogisticsLoadsPage = lazy(() => import('./pages/LogisticsLoadsPage'));
 const TransportQuotePage = lazy(() => import('./pages/TransportQuotePage'));
 const RFQPage = lazy(() => import('./pages/RFQPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 
 // Loading component
 function PageLoader() {
@@ -130,6 +131,13 @@ function App() {
           <Route path="product/:id" element={<ProductPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
+          
+          {/* Forgot Password */}
+          <Route path="forgot-password" element={
+            <Suspense fallback={<PageLoader />}>
+              <ForgotPasswordPage />
+            </Suspense>
+          } />
           
           {/* Lazy loaded routes with Suspense */}
           {/* Protected: Cart */}
