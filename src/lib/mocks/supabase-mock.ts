@@ -27,6 +27,9 @@ const mockStorage = {
   wishlists: new Map<string, Record<string, unknown>>(),
   carts: new Map<string, Record<string, unknown>>(),
   rfq_requests: new Map<string, Record<string, unknown>>(),
+  shipping_methods: new Map<string, Record<string, unknown>>(),
+  shipping_rates: new Map<string, Record<string, unknown>>(),
+  product_shipping: new Map<string, Record<string, unknown>>(),
 };
 
 // Initialize with sample data
@@ -165,6 +168,41 @@ const initializeMockData = () => {
     message: 'We need Grade B or better. Please confirm availability and lead time.',
     status: 'pending',
     created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+  });
+
+  // Sample shipping methods & rates
+  const shippingMethods = [
+    { id: 'sm-rm48', name: 'Royal Mail Tracked 48', courier: 'Royal Mail',       tracking: true,  active: true },
+    { id: 'sm-rm24', name: 'Royal Mail Tracked 24', courier: 'Royal Mail',       tracking: true,  active: true },
+    { id: 'sm-evri', name: 'Evri Standard Delivery', courier: 'Evri',            tracking: true,  active: true },
+    { id: 'sm-coll', name: 'Collection in Person',  courier: 'Local Collection', tracking: false, active: true },
+  ];
+
+  const shippingRates: Record<string, { price: number; min_weight: number | null; max_weight: number | null }> = {
+    'sm-rm48': { price: 3.99, min_weight: 0, max_weight: 2 },
+    'sm-rm24': { price: 4.99, min_weight: 0, max_weight: 2 },
+    'sm-evri': { price: 2.99, min_weight: 0, max_weight: 2 },
+    'sm-coll': { price: 0.00, min_weight: null, max_weight: null },
+  };
+
+  shippingMethods.forEach((method) => {
+    const now = new Date().toISOString();
+    const rateId = `sr-${method.id}`;
+    const rate = shippingRates[method.id];
+    const rateRecord = {
+      id: rateId,
+      method_id: method.id,
+      currency: 'GBP',
+      created_at: now,
+      ...rate,
+    };
+    // Embed the rate directly so the mock doesn't need to handle nested joins
+    mockStorage.shipping_methods.set(method.id, {
+      ...method,
+      created_at: now,
+      shipping_rates: [rateRecord],
+    });
+    mockStorage.shipping_rates.set(rateId, rateRecord);
   });
 };
 
@@ -434,8 +472,8 @@ export const createMockSupabaseClient = () => {
         }),
       }),
       delete: () => ({
-        eq: (column: string, value: unknown) => ({
-          data: async () => {
+        eq: (column: string, value: unknown) => {
+          const doDelete = () => {
             console.log(`[MOCK] DELETE from ${table} WHERE ${column} = ${value}`);
             const storage = mockStorage[table as keyof typeof mockStorage];
             if (storage) {
@@ -445,9 +483,17 @@ export const createMockSupabaseClient = () => {
                 }
               }
             }
-            return { data: null, error: null };
-          },
-        }),
+            return { data: null as null, error: null as null };
+          };
+          const result = doDelete();
+          const promise = Promise.resolve(result);
+          return {
+            data: async () => result,
+            then: promise.then.bind(promise),
+            catch: promise.catch.bind(promise),
+            finally: promise.finally.bind(promise),
+          };
+        },
       }),
     }),
     storage: {
