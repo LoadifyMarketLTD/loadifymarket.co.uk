@@ -729,7 +729,7 @@ export default function AdminDashboardPage() {
                                   {ordersByStatus.refunded}
                                 </p>
                               </div>
-                              <AlertCircle className="h-8 w-8 text-red-400" />
+                              <AlertCircle className="h-7 w-7 text-red-400/60" />
                             </div>
                           </div>
                         </div>

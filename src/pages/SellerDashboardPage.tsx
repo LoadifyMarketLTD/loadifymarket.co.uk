@@ -730,14 +730,14 @@ export default function SellerDashboardPage() {
                         <div className="flex items-center space-x-2">
                           <Link
                             to={`/product/${product.id}`}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                            className="p-2 text-blue-400 hover:bg-blue-500/10 rounded"
                             title="View product"
                           >
                             <Eye className="h-4 w-4" />
                           </Link>
                           <Link
                             to={`/seller/products/${product.id}/edit`}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded"
+                            className="p-2 text-green-400 hover:bg-green-500/10 rounded"
                             title="Edit product"
                           >
                             <Edit className="h-4 w-4" />
@@ -760,7 +760,7 @@ export default function SellerDashboardPage() {
                                 alert('Failed to delete product');
                               }
                             }}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded"
+                            className="p-2 text-red-400 hover:bg-red-500/10 rounded"
                             title="Delete product"
                           >
                             <Package className="h-4 w-4" />
@@ -998,11 +998,11 @@ export default function SellerDashboardPage() {
                   {/* Platform temporarily unavailable: show dismissable notice with retry */}
                   {platformNotConfigured && (
                     <div className="space-y-4">
-                      <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex items-start gap-3 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                        <AlertCircle className="h-5 w-5 text-yellow-400 flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
-                          <p className="font-medium text-yellow-400">Stripe Connect Temporarily Unavailable</p>
-                          <p className="text-sm text-yellow-400/80 mt-0.5">
+                          <p className="font-medium text-yellow-300">Stripe Connect Temporarily Unavailable</p>
+                          <p className="text-sm text-yellow-300/70 mt-0.5">
                             Payouts are being configured. If this persists after a few minutes, please contact support.
                           </p>
                         </div>
