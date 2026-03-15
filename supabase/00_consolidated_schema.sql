@@ -1673,6 +1673,9 @@ GRANT USAGE  ON ALL SEQUENCES IN SCHEMA public TO anon;
 -- supabase.auth.signUp(), so the profile INSERT runs as the anon role.
 -- The RLS policy "users_insert" (WITH CHECK (TRUE)) already permits
 -- this row — the GRANT below provides the required object-level access.
+-- NOTE: Registration now uses the server-side Admin API (register.ts)
+-- which runs under the service role and bypasses this requirement.
+-- This GRANT is retained for any future client-side anon-role flows.
 GRANT INSERT ON public.users             TO anon;
 
 -- Other public-facing write operations that do not require a session
