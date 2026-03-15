@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
 import { Mail, Lock, User, Building2, CheckCircle } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -23,72 +22,42 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            role: isSeller ? 'seller' : 'buyer',
-          },
-        },
-      });
-
-      if (signUpError) throw signUpError;
-
-      // Insert user profile into public.users
-      // The DB trigger trg_new_user_profile automatically creates the matching
-      // seller_profiles + seller_stores (or buyer_profiles) row — do NOT insert
-      // those manually here, or the trigger's insert will cause a PK conflict.
-      if (data.user) {
-        const { error: profileError } = await supabase.from('users').insert({
-          id: data.user.id,
+      // Registration is handled server-side via a Netlify function that uses
+      // the Supabase Admin API (supabase.auth.admin.createUser with
+      // email_confirm: true).  This bypasses Supabase's built-in mailer and
+      // its associated rate limit ("email rate limit exceeded"), allowing
+      // unlimited account creation during testing and production onboarding.
+      const res = await fetch('/.netlify/functions/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           email,
+          password,
           firstName,
           lastName,
           role: isSeller ? 'seller' : 'buyer',
-          isEmailVerified: false,
-        });
+          storeName: storeName || undefined,
+        }),
+      });
 
-        if (profileError) throw profileError;
+      const json: { error?: unknown; success?: boolean } = await res.json();
 
-        // For sellers, populate the additional fields in the auto-created records.
-        // Use upsert so this is idempotent whether the trigger ran first or not.
-        // These are best-effort: failure does NOT abort signup (seller can fill
-        // in profile details from their dashboard after email confirmation).
-        if (isSeller) {
-          const effectiveStoreName = storeName || `${firstName}'s Store`;
-          const { error: spErr } = await supabase.from('seller_profiles').upsert(
-            {
-              userId: data.user.id,
-              fullName: `${firstName} ${lastName}`,
-              storeName: effectiveStoreName,
-            },
-            { onConflict: 'userId' }
-          );
-          if (spErr) console.warn('seller_profiles upsert failed (non-fatal):', spErr.message);
-
-          const { error: ssErr } = await supabase.from('seller_stores').upsert(
-            {
-              userId: data.user.id,
-              storeName: effectiveStoreName,
-            },
-            { onConflict: 'userId' }
-          );
-          if (ssErr) console.warn('seller_stores upsert failed (non-fatal):', ssErr.message);
-        }
+      if (!res.ok) {
+        // Guard: ensure the error value is always a plain string so the UI
+        // can never render "[object Object]" when json.error is non-string.
+        const errMsg =
+          typeof json.error === 'string' && json.error
+            ? json.error
+            : 'Failed to register. Please try again.';
+        throw new Error(errMsg);
       }
 
       setSuccess(true);
     } catch (err) {
-      let message = 'Failed to register. Please try again.';
-      if (err instanceof Error) {
-        message = err.message || message;
-      } else if (typeof err === 'object' && err !== null && 'message' in err) {
-        const raw = (err as { message: unknown }).message;
-        message = (typeof raw === 'string' && raw) ? raw : message;
-      }
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Failed to register. Please try again.';
       setError(message);
     } finally {
       setLoading(false);
@@ -105,7 +74,7 @@ export default function RegisterPage() {
             <p className="text-white/60 mb-6">
               {isSeller
                 ? 'Your seller account is pending admin approval. You will be notified once approved.'
-                : 'Please check your email to verify your account before signing in.'}
+                : 'Your account is ready. You can sign in now.'}
             </p>
             <button
               onClick={() => navigate('/login')}
