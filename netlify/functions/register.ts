@@ -98,6 +98,27 @@ export const handler: Handler = async (event) => {
   // ────────────────────────────────────────────────────────────────────────────
 
   if (authError) {
+    // ── Rate-limit detection ──────────────────────────────────────────────────
+    // Supabase can return HTTP 429 or an error message containing "rate limit"
+    // even via the Admin API (e.g. when the project-level request quota is hit).
+    // Detect this early and return a clear, user-facing message so the UI never
+    // shows raw technical text like "email rate limit exceeded".
+    const isRateLimit =
+      authError.status === 429 ||
+      authError.message.toLowerCase().includes('rate limit') ||
+      authError.message.toLowerCase().includes('too many requests') ||
+      authError.message.toLowerCase().includes('too many');
+
+    if (isRateLimit) {
+      return {
+        statusCode: 429,
+        body: JSON.stringify({
+          error: 'Too many sign-up attempts. Please wait a few minutes and try again.',
+        }),
+      };
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     // Supabase returns "User already registered" when the email exists.
     // Map this to a clean message so the UI can show something useful.
     const isDuplicate =
@@ -122,8 +143,11 @@ export const handler: Handler = async (event) => {
   const userId = authData.user.id;
 
   // ── Insert public.users profile row ────────────────────────────────────────
+  // ORDER IS INTENTIONAL: the auth user is created above first (step 1), then
+  // the public profile row is inserted here (step 2).  Reversing this order
+  // would violate the FK constraint users.id → auth.users.id.
   // The service-role client bypasses RLS so this succeeds regardless of the
-  // missing GRANT issue on the anon role.
+  // current RLS INSERT policy on the users table.
   const { error: profileError } = await supabase.from('users').insert({
     id: userId,
     email,
@@ -134,11 +158,12 @@ export const handler: Handler = async (event) => {
   });
 
   if (profileError) {
-    // 23505 = unique_violation — row was already created (e.g. by a race with
-    // the DB trigger or a duplicate request).  Safe to continue.
+    // 23505 = unique_violation — row already exists (race with DB trigger or
+    // duplicate request).  Safe to continue; the profile is already there.
     if (profileError.code !== '23505') {
       console.error('register: users insert failed:', profileError.message);
-      // Non-fatal: the auth user exists; the profile can be backfilled later.
+      // Non-fatal: the auth user exists and can sign in; the profile row can
+      // be backfilled by the 20_fix_users_table.sql backfill query if needed.
     }
   }
   // ────────────────────────────────────────────────────────────────────────────

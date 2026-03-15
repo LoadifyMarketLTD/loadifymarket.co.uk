@@ -40,10 +40,16 @@ export default function RegisterPage() {
         }),
       });
 
-      const json: { error?: string; success?: boolean } = await res.json();
+      const json: { error?: unknown; success?: boolean } = await res.json();
 
       if (!res.ok) {
-        throw new Error(json.error || 'Failed to register. Please try again.');
+        // Guard: ensure the error value is always a plain string so the UI
+        // can never render "[object Object]" when json.error is non-string.
+        const errMsg =
+          typeof json.error === 'string' && json.error
+            ? json.error
+            : 'Failed to register. Please try again.';
+        throw new Error(errMsg);
       }
 
       setSuccess(true);
