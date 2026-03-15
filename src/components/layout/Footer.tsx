@@ -14,8 +14,8 @@ export default function Footer() {
 
   if (isDashboardRoute(location.pathname)) {
     return (
-      <footer className="bg-jet text-white mt-auto border-t border-white/10">
-        <div className="container-cinematic py-4">
+    <footer className="bg-[#1E3A5F] text-white mt-auto border-t border-white/10">
+      <div className="container-cinematic py-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-white/50">
             <p>© {currentYear} {BRAND.name}. Operated by {BRAND.companyName} (CRN: {BRAND.companyNumber}).</p>
             <div className="flex items-center gap-4">
@@ -25,12 +25,12 @@ export default function Footer() {
             </div>
           </div>
         </div>
-      </footer>
-    );
+    </footer>
+  );
   }
 
   return (
-    <footer className="bg-jet text-white mt-auto">
+    <footer className="bg-[#1E3A5F] text-white mt-auto">
       {/* Main Footer Content */}
       <div className="container-cinematic py-16">
         {/* Top Section with Logo and Social */}
@@ -245,7 +245,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-white/10 bg-graphite/30">
+      <div className="border-t border-white/10 bg-[#152D4A]">
         <div className="container-cinematic py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-white/70 text-sm">
