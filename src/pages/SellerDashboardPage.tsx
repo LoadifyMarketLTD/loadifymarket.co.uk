@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { hasSellerAccess } from '../lib/roleUtils';
-import type { Product, Order, SellerProfile, DeliveryRequest, SellerBalance, PayoutRequest } from '../types';
+import type { Product, Order, SellerProfile, DeliveryRequest, SellerBalance, Payout } from '../types';
 import { buildXDriveAppUrl } from '../lib/transportQuote';
-import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3, Truck, ExternalLink, Clock, CreditCard } from 'lucide-react';
+import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3, Truck, ExternalLink, Clock, CreditCard, CheckCircle } from 'lucide-react';
 
 const DELIVERY_REQUESTS_KEY = 'loadify_delivery_requests';
 
@@ -47,11 +47,11 @@ export default function SellerDashboardPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'products' | 'orders' | 'deliveries' | 'payouts'>('overview');
   const [deliveryRequests, setDeliveryRequests] = useState<DeliveryRequest[]>([]);
   const [sellerBalance, setSellerBalance] = useState<SellerBalance | null>(null);
-  const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
-  const [payoutAmount, setPayoutAmount] = useState('');
-  const [payoutSubmitting, setPayoutSubmitting] = useState(false);
-  const [payoutError, setPayoutError] = useState('');
-  const [payoutSuccess, setPayoutSuccess] = useState('');
+  const [sellerPayouts, setSellerPayouts] = useState<Payout[]>([]);
+  const [connectLoading, setConnectLoading] = useState(false);
+  const [connectError, setConnectError] = useState('');
+
+  const [searchParams] = useSearchParams();
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -106,13 +106,13 @@ export default function SellerDashboardPage() {
         .maybeSingle();
       setSellerBalance(balanceData || null);
 
-      // Fetch payout requests
-      const { data: payoutData } = await supabase
-        .from('payout_requests')
+      // Fetch Stripe Connect payout records (automatic transfers via Connect)
+      const { data: payoutsData } = await supabase
+        .from('payouts')
         .select('*')
         .eq('sellerId', user.id)
         .order('createdAt', { ascending: false });
-      setPayoutRequests(payoutData || []);
+      setSellerPayouts(payoutsData || []);
     } catch (error) {
       console.error('Error fetching seller data:', error);
     } finally {
@@ -139,6 +139,36 @@ export default function SellerDashboardPage() {
     }
   }, [user, fetchData]);
 
+  // ── Stripe Connect URL-param handling ──────────────────────────────────────
+  // When Stripe redirects the seller back after onboarding (?connect=success
+  // or ?connect=refresh) auto-switch to the Payouts tab and sync the fresh
+  // account status from Stripe into the DB.
+  const syncConnectStatus = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      await fetch('/.netlify/functions/connect-status', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      await fetchData();
+    } catch {
+      // Silent — status will be re-synced next time the tab is opened.
+    }
+  }, [fetchData]);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    const connectParam = searchParams.get('connect');
+    if (tabParam === 'payouts' || connectParam === 'success' || connectParam === 'refresh') {
+      setActiveTab('payouts');
+      if (connectParam === 'success' || connectParam === 'refresh') {
+        syncConnectStatus();
+      }
+    }
+  }, [searchParams, syncConnectStatus]);
+  // ───────────────────────────────────────────────────────────────────────────
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-GB', {
       style: 'currency',
@@ -146,31 +176,46 @@ export default function SellerDashboardPage() {
     }).format(price);
   };
 
-  const handleRequestPayout = async () => {
-    setPayoutError('');
-    setPayoutSuccess('');
-    const amount = parseFloat(payoutAmount);
-    if (!amount || amount <= 0) {
-      setPayoutError('Please enter a valid amount.');
-      return;
-    }
-    if (!sellerBalance || amount > sellerBalance.availableAmount) {
-      setPayoutError('Requested amount exceeds available balance.');
-      return;
-    }
-    setPayoutSubmitting(true);
+  // ── Stripe Connect action handlers ─────────────────────────────────────────
+  const handleConnectStripe = async () => {
+    setConnectError('');
+    setConnectLoading(true);
     try {
-      const { error } = await supabase.rpc('request_payout', { p_amount: amount });
-      if (error) throw error;
-      setPayoutSuccess('Payout request submitted. An admin will review it shortly.');
-      setPayoutAmount('');
-      await fetchData();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+      const response = await fetch('/.netlify/functions/connect-onboard', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to start onboarding');
+      window.location.href = data.url;
     } catch (err) {
-      setPayoutError(err instanceof Error ? err.message : 'Failed to submit payout request.');
-    } finally {
-      setPayoutSubmitting(false);
+      setConnectError(err instanceof Error ? err.message : 'Failed to connect Stripe account');
+      setConnectLoading(false);
     }
   };
+
+  const handleViewStripeDashboard = async () => {
+    setConnectError('');
+    setConnectLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+      const response = await fetch('/.netlify/functions/connect-dashboard', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to open dashboard');
+      window.open(data.url, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      setConnectError(err instanceof Error ? err.message : 'Failed to open Stripe dashboard');
+    } finally {
+      setConnectLoading(false);
+    }
+  };
+  // ───────────────────────────────────────────────────────────────────────────
 
   if (!user || !hasSellerAccess(user)) {
     return (
@@ -886,7 +931,7 @@ export default function SellerDashboardPage() {
               <div className="space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold mb-1">Payouts</h2>
-                  <p className="text-gray-600">Track your earnings and request withdrawals.</p>
+                  <p className="text-gray-600">Track your earnings and manage your Stripe payout account.</p>
                 </div>
 
                 {/* Balance cards */}
@@ -915,59 +960,132 @@ export default function SellerDashboardPage() {
                     <p className="text-2xl font-bold text-amber-600">
                       {formatPrice(sellerBalance?.pendingAmount ?? 0)}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">Awaiting admin approval</p>
+                    <p className="text-xs text-gray-400 mt-1">In transit to your bank</p>
                   </div>
                 </div>
 
-                {/* Request payout form */}
+                {/* ── Stripe Connect Panel ──────────────────────────────── */}
                 <div className="card">
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-navy-800" />
-                    Request Payout
+                    Stripe Connect
                   </h3>
-                  {payoutError && (
-                    <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-                      {payoutError}
-                    </div>
-                  )}
-                  {payoutSuccess && (
-                    <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">
-                      {payoutSuccess}
-                    </div>
-                  )}
-                  <div className="flex gap-3 items-end">
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Amount (GBP)
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        step="0.01"
-                        value={payoutAmount}
-                        onChange={(e) => setPayoutAmount(e.target.value)}
-                        placeholder="0.00"
-                        className="input-field w-full"
-                      />
-                    </div>
-                    <button
-                      onClick={handleRequestPayout}
-                      disabled={payoutSubmitting || !payoutAmount}
-                      className="btn-primary whitespace-nowrap"
-                    >
-                      {payoutSubmitting ? 'Submitting…' : 'Request Payout'}
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-2">
-                    Maximum: {formatPrice(sellerBalance?.availableAmount ?? 0)}. Payouts are reviewed within 2 business days.
-                  </p>
-                </div>
 
-                {/* Payout request history */}
+                  {connectError && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                      {connectError}
+                    </div>
+                  )}
+
+                  {/* State A: Not connected */}
+                  {!profile?.stripeAccountId && (
+                    <div className="text-center py-8">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                        <CreditCard className="h-8 w-8 text-gray-400" />
+                      </div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2">Connect Your Stripe Account</h4>
+                      <p className="text-gray-600 mb-6 max-w-md mx-auto text-sm">
+                        Connect a Stripe account to receive automatic payouts after every sale.
+                        The platform commission (7%) is deducted automatically — no admin approval needed.
+                      </p>
+                      <button
+                        onClick={handleConnectStripe}
+                        disabled={connectLoading}
+                        className="btn-primary flex items-center gap-2 mx-auto"
+                      >
+                        <CreditCard className="h-4 w-4" />
+                        {connectLoading ? 'Connecting…' : 'Connect Stripe Account'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* State B: Pending / Incomplete */}
+                  {profile?.stripeAccountId && profile?.stripeConnectStatus === 'pending' && (
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-yellow-800">Setup Incomplete</p>
+                          <p className="text-sm text-yellow-700 mt-0.5">
+                            Your Stripe account setup is not complete. Finish onboarding to start receiving automatic payouts.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleConnectStripe}
+                        disabled={connectLoading}
+                        className="btn-primary flex items-center gap-2"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        {connectLoading ? 'Loading…' : 'Continue Stripe Setup'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* State C: Restricted */}
+                  {profile?.stripeAccountId && profile?.stripeConnectStatus === 'restricted' && (
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                        <AlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-orange-800">Action Required</p>
+                          <p className="text-sm text-orange-700 mt-0.5">
+                            Your Stripe account has restrictions. Complete verification to ensure uninterrupted payouts.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3 flex-wrap">
+                        <button
+                          onClick={handleConnectStripe}
+                          disabled={connectLoading}
+                          className="btn-primary flex items-center gap-2"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          {connectLoading ? 'Loading…' : 'Complete Verification'}
+                        </button>
+                        <button
+                          onClick={handleViewStripeDashboard}
+                          disabled={connectLoading}
+                          className="btn-outline flex items-center gap-2"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          View Stripe Dashboard
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* State D: Active */}
+                  {profile?.stripeAccountId && profile?.stripeConnectStatus === 'active' && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                        <div>
+                          <p className="font-medium text-green-800">Stripe Connect Active</p>
+                          <p className="text-sm text-green-700 mt-0.5">
+                            Your account is fully connected. Payouts are sent automatically every Friday.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleViewStripeDashboard}
+                        disabled={connectLoading}
+                        className="btn-primary flex items-center gap-2"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        {connectLoading ? 'Loading…' : 'View Stripe Dashboard'}
+                      </button>
+                      <p className="text-xs text-gray-400 font-mono">{profile.stripeAccountId}</p>
+                    </div>
+                  )}
+                </div>
+                {/* ──────────────────────────────────────────────────────── */}
+
+                {/* Payout History */}
                 <div className="card">
                   <h3 className="text-lg font-semibold mb-4">Payout History</h3>
-                  {payoutRequests.length === 0 ? (
-                    <p className="text-gray-500 text-center py-6">No payout requests yet.</p>
+                  {sellerPayouts.length === 0 ? (
+                    <p className="text-gray-500 text-center py-6">No payout records yet. Payouts will appear here once Stripe Connect transfers begin.</p>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
@@ -976,28 +1094,29 @@ export default function SellerDashboardPage() {
                             <th className="pb-2 pr-4">Date</th>
                             <th className="pb-2 pr-4">Amount</th>
                             <th className="pb-2 pr-4">Status</th>
-                            <th className="pb-2">Notes</th>
+                            <th className="pb-2">Transfer ID</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {payoutRequests.map((pr) => (
-                            <tr key={pr.id} className="border-b last:border-0">
+                          {sellerPayouts.map((p) => (
+                            <tr key={p.id} className="border-b last:border-0">
                               <td className="py-2 pr-4 text-gray-600">
-                                {new Date(pr.createdAt).toLocaleDateString('en-GB')}
+                                {new Date(p.createdAt).toLocaleDateString('en-GB')}
                               </td>
-                              <td className="py-2 pr-4 font-medium">{formatPrice(pr.amount)}</td>
+                              <td className="py-2 pr-4 font-medium">{formatPrice(p.amount)}</td>
                               <td className="py-2 pr-4">
                                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                  pr.status === 'paid'      ? 'bg-green-100 text-green-800' :
-                                  pr.status === 'approved'  ? 'bg-blue-100 text-blue-800' :
-                                  pr.status === 'rejected'  ? 'bg-red-100 text-red-800' :
-                                  pr.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+                                  p.status === 'paid'       ? 'bg-green-100 text-green-800' :
+                                  p.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                                  p.status === 'failed'     ? 'bg-red-100 text-red-800' :
                                   'bg-yellow-100 text-yellow-800'
                                 }`}>
-                                  {pr.status.charAt(0).toUpperCase() + pr.status.slice(1)}
+                                  {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
                                 </span>
                               </td>
-                              <td className="py-2 text-gray-500">{pr.notes ?? '—'}</td>
+                              <td className="py-2 text-gray-400 font-mono text-xs truncate max-w-[140px]">
+                                {p.stripeTransferId ?? p.stripePayoutId ?? '—'}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
