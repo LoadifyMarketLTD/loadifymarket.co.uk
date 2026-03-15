@@ -9,9 +9,7 @@ import { useAuthStore } from '../store';
 import { BRAND } from '../constants/brand';
 import { supabase } from '../lib/supabase';
 import { getDisplayName } from '../lib/displayName';
-import type { SellerProfile } from '../types';
-
-type SellerIdentity = Pick<SellerProfile, 'storeName' | 'businessName'>;
+import type { SellerIdentity } from '../lib/displayName';
 
 const QUICK_LINKS = [
   { label: 'My Orders',         icon: ShoppingBag,   to: '/orders',        desc: 'View and track your orders' },
@@ -60,12 +58,12 @@ export default function DashboardPage() {
       // Fetch seller profile to resolve storeName / businessName for sellers
       if (user.role === 'seller' || user.role === 'owner') {
         try {
-          const { data: profileData } = await supabase
+          const { data: profile } = await supabase
             .from('seller_profiles')
             .select('storeName, businessName')
             .eq('userId', user.id)
             .single();
-          if (profileData) setSellerProfile(profileData);
+          if (profile) setSellerProfile(profile);
         } catch {
           // silently fail
         }
