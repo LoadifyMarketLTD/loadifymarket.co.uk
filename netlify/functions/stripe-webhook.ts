@@ -2,8 +2,17 @@ import Stripe from 'stripe';
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 
-// Fail gracefully if env vars not configured
-if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+// Collect all available webhook signing secrets.
+// STRIPE_WEBHOOK_SECRET       — standard account webhook (checkout events)
+// STRIPE_CONNECT_WEBHOOK_SECRET — Connect platform webhook (account.updated events)
+// At least one must be set; both can be set simultaneously when you register
+// two separate webhook endpoints in the Stripe Dashboard.
+const WEBHOOK_SECRETS = [
+  process.env.STRIPE_WEBHOOK_SECRET?.trim(),
+  process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.trim(),
+].filter((s): s is string => s !== undefined && s.length > 0);
+
+if (!process.env.STRIPE_SECRET_KEY || WEBHOOK_SECRETS.length === 0) {
   console.warn('Stripe webhook not configured - missing environment variables');
 }
 
@@ -21,8 +30,8 @@ const supabase = process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_R
   : null;
 
 export const handler: Handler = async (event) => {
-  // Return 501 if not configured
-  if (!stripe || !supabase || !process.env.STRIPE_WEBHOOK_SECRET) {
+  // Return 501 if not configured — require at least one webhook signing secret.
+  if (!stripe || !supabase || WEBHOOK_SECRETS.length === 0) {
     return { 
       statusCode: 501, 
       body: JSON.stringify({ error: 'Stripe webhook not configured' })
@@ -44,19 +53,26 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  let stripeEvent: Stripe.Event;
+  let stripeEvent: Stripe.Event | null = null;
 
-  try {
-    stripeEvent = stripe.webhooks.constructEvent(
-      event.body!,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    );
-  } catch (err) {
-    console.error('Webhook signature verification failed:', err instanceof Error ? err.message : 'Unknown error');
+  // Try each available signing secret in order. This allows one endpoint to
+  // serve both the standard account webhook (STRIPE_WEBHOOK_SECRET) and the
+  // Stripe Connect webhook (STRIPE_CONNECT_WEBHOOK_SECRET) simultaneously,
+  // which is the recommended setup for Connect platforms.
+  for (const secret of WEBHOOK_SECRETS) {
+    try {
+      stripeEvent = stripe.webhooks.constructEvent(event.body!, sig, secret);
+      break; // verified successfully
+    } catch {
+      // try next secret
+    }
+  }
+
+  if (!stripeEvent) {
+    console.error('Webhook signature verification failed with all available secrets');
     return {
       statusCode: 400,
-      body: JSON.stringify({ error: `Webhook Error: ${err instanceof Error ? err.message : 'Unknown error'}` }),
+      body: JSON.stringify({ error: 'Webhook signature verification failed' }),
     };
   }
 
@@ -85,6 +101,17 @@ export const handler: Handler = async (event) => {
         await handleRefund(charge);
         break;
       }
+
+      // ── Stripe Connect account status updates ──────────────────────────────
+      // Triggered by Stripe when a connected Express account's verification
+      // state changes (e.g. seller completes onboarding, payouts are enabled,
+      // or restrictions are added). Keeps our DB in sync automatically.
+      case 'account.updated': {
+        const account = stripeEvent.data.object as Stripe.Account;
+        await handleConnectAccountUpdated(account);
+        break;
+      }
+      // ──────────────────────────────────────────────────────────────────────
 
       default:
         console.log(`Unhandled event type: ${stripeEvent.type}`);
@@ -409,5 +436,43 @@ async function handleRefund(charge: Stripe.Charge) {
 
     const orderNumber = payment.orders?.orderNumber ?? payment.orderId;
     console.log(`Order ${orderNumber} refunded`);
+  }
+}
+
+/**
+ * Handles Stripe Connect `account.updated` webhook events.
+ *
+ * Stripe sends this event whenever a connected Express account's state
+ * changes — e.g. the seller completes onboarding, payouts become enabled,
+ * or Stripe adds a restriction. We map the live account flags to our
+ * three-state stripeConnectStatus and persist it so the seller dashboard
+ * reflects the current state without needing a separate status-sync call.
+ */
+async function handleConnectAccountUpdated(account: Stripe.Account) {
+  let stripeConnectStatus: 'pending' | 'restricted' | 'active';
+
+  if (account.charges_enabled && account.payouts_enabled) {
+    stripeConnectStatus = 'active';
+  } else if (account.details_submitted) {
+    stripeConnectStatus = 'restricted';
+  } else {
+    stripeConnectStatus = 'pending';
+  }
+
+  const { data: updated, error } = await supabase!
+    .from('seller_profiles')
+    .update({ stripeConnectStatus })
+    .eq('stripeAccountId', account.id)
+    .select('userId');
+
+  if (error) {
+    console.error(`account.updated: failed to update seller_profiles for ${account.id}:`, error.message);
+  } else if (!updated || updated.length === 0) {
+    // No row matched — the account ID is not in our DB. This can happen if
+    // the webhook is received before the seller has been persisted, or for
+    // Connect accounts that belong to a different platform environment.
+    console.warn(`account.updated: no seller_profiles row found for stripeAccountId=${account.id} — skipping`);
+  } else {
+    console.log(`account.updated: ${account.id} → stripeConnectStatus=${stripeConnectStatus}`);
   }
 }

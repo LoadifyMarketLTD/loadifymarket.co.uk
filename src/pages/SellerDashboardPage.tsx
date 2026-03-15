@@ -188,7 +188,14 @@ export default function SellerDashboardPage() {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to start onboarding');
+      if (!response.ok) {
+        if (response.status === 503 || data.platformNotConfigured) {
+          throw new Error(
+            'Stripe Connect is not yet active on this marketplace. Please contact support — the platform owner needs to enable Connect in their Stripe Dashboard.'
+          );
+        }
+        throw new Error(data.error || 'Failed to start onboarding');
+      }
       window.location.href = data.url;
     } catch (err) {
       setConnectError(err instanceof Error ? err.message : 'Failed to connect Stripe account');
@@ -207,7 +214,14 @@ export default function SellerDashboardPage() {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to open dashboard');
+      if (!response.ok) {
+        if (response.status === 503 || data.platformNotConfigured) {
+          throw new Error(
+            'Stripe Connect is not yet active on this marketplace. Please contact support.'
+          );
+        }
+        throw new Error(data.error || 'Failed to open dashboard');
+      }
       window.open(data.url, '_blank', 'noopener,noreferrer');
     } catch (err) {
       setConnectError(err instanceof Error ? err.message : 'Failed to open Stripe dashboard');
