@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Package, Store, ArrowRight, ShieldCheck, Star, RefreshCw, MapPin } from 'lucide-react';
+import { Store, ArrowRight, ShieldCheck, BadgeCheck, Truck } from 'lucide-react';
 
 export default function CinematicHero() {
   return (
@@ -24,7 +24,7 @@ export default function CinematicHero() {
         <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.65)' }} />
       </div>
 
-      {/* Cinematic Background Effects — merged into a single element to minimise DOM */}
+      {/* Cinematic Background Effects */}
       <div
         className="absolute inset-0 pointer-events-none overflow-hidden"
         style={{
@@ -33,12 +33,10 @@ export default function CinematicHero() {
             'radial-gradient(ellipse at 75% 80%, rgba(212,175,55,0.05) 0%, transparent 50%)',
         }}
       >
-        {/* Subtle grid pattern */}
         <div className="absolute inset-0 opacity-[0.03]" style={{
           backgroundImage: 'linear-gradient(rgba(212, 175, 55, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(212, 175, 55, 0.5) 1px, transparent 1px)',
           backgroundSize: '80px 80px'
         }} />
-
         <div className="absolute inset-0 vignette" />
         <div className="light-beam" />
       </div>
@@ -46,40 +44,31 @@ export default function CinematicHero() {
       {/* Hero Content */}
       <div className="container-cinematic relative z-10 pt-10 pb-6 md:pt-14 md:pb-10">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Badge — hidden on mobile to save vertical space */}
+          {/* Badge */}
           <div className="hidden sm:inline-flex items-center gap-2 bg-gold/10 border border-gold/30 rounded-full px-4 py-2 mb-4 md:mb-6">
             <span className="w-2 h-2 rounded-full bg-gold animate-pulse"></span>
-            <span className="text-gold text-sm font-medium">UK's Premier Multi-Category Marketplace</span>
+            <span className="text-gold text-sm font-medium">UK Wholesale Marketplace</span>
           </div>
 
           {/* Main Headline */}
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-4 leading-tight" style={{ willChange: 'opacity' }}>
-            Buy &amp; Sell Anything – Products, Pallets and Bulk Deals
+            Buy &amp; Sell Wholesale Stock Across the UK
           </h1>
 
-          {/* Subheadline — hidden on mobile to keep hero compact */}
+          {/* Subheadline */}
           <p className="hidden sm:block text-base md:text-xl text-white/80 max-w-2xl mx-auto mb-6 md:mb-8">
-            Open marketplace where anyone can buy or sell products across the UK.
+            Find pallets, clearance stock and bulk deals from verified UK sellers.
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 mb-5 md:mb-8">
-            {/* PRIMARY CTA */}
-            <Link to="/shop" className="btn-primary inline-flex items-center group text-lg px-8 py-4">
-              <ShoppingBag className="mr-2 h-6 w-6" />
-              Browse Products
+            <Link to="/bulk" className="btn-primary inline-flex items-center group text-lg px-8 py-4">
+              Browse Stock
               <ArrowRight className="ml-2 h-6 w-6 transition-transform group-hover:translate-x-1" />
             </Link>
-            {/* SECONDARY CTA */}
-            <Link to="/register?type=seller" className="btn-glass inline-flex items-center group">
+            <Link to="/register?type=seller" className="btn-secondary inline-flex items-center group">
               <Store className="mr-2 h-5 w-5" />
-              Sell on Loadify
-            </Link>
-            {/* TERTIARY CTA */}
-            <Link to="/bulk" className="btn-secondary inline-flex items-center group">
-              <Package className="mr-2 h-5 w-5" />
-              Bulk &amp; Pallet Deals
-              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              Start Selling
             </Link>
           </div>
 
@@ -90,16 +79,12 @@ export default function CinematicHero() {
               Secure Payments
             </div>
             <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-gold" />
+              <BadgeCheck className="h-4 w-4 text-gold" />
               Verified Sellers
             </div>
             <div className="flex items-center gap-2">
-              <RefreshCw className="h-4 w-4 text-gold" />
-              Buyer Protection
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-gold" />
-              UK Based Support
+              <Truck className="h-4 w-4 text-gold" />
+              UK Delivery
             </div>
           </div>
         </div>
