@@ -299,7 +299,7 @@ export default function Header() {
             <div className="relative w-full group">
               <input
                 type="text"
-                placeholder="Search products, bulk lots, pallets..."
+                placeholder="Search products, electronics, automotive, wholesale..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="input-search w-full pr-12 group-hover:bg-white/10"
@@ -326,7 +326,7 @@ export default function Header() {
               to="/bulk"
               className={`nav-link ${isActive('/bulk') ? 'nav-link-active' : ''}`}
             >
-              Bulk &amp; Pallets
+              Wholesale &amp; Bulk
             </Link>
             <Link
               to="/catalog"
@@ -338,7 +338,7 @@ export default function Header() {
               to="/register?type=seller"
               className={`nav-link ${isActive('/register') ? 'nav-link-active' : ''}`}
             >
-              Sell Stock
+              Start Selling
             </Link>
             <Link
               to="/transport-quote"
@@ -441,7 +441,7 @@ export default function Header() {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search products, bulk lots, pallets..."
+              placeholder="Search products, electronics, automotive, wholesale..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="input-search w-full pr-12"
@@ -483,7 +483,7 @@ export default function Header() {
                   : 'text-white/80 hover:bg-white/5 hover:text-gold'
               }`}
             >
-              Bulk &amp; Pallets
+              Wholesale &amp; Bulk
             </Link>
             <Link
               to="/catalog"
@@ -503,7 +503,7 @@ export default function Header() {
                   : 'text-white/80 hover:bg-white/5 hover:text-gold'
               }`}
             >
-              Sell Stock
+              Start Selling
             </Link>
             <Link
               to="/transport-quote"

@@ -95,7 +95,7 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-bold mb-6 text-gold">About</h3>
             <p className="text-white/60 text-sm leading-relaxed mb-6">
-              UK multi-category marketplace for products, bulk lots, pallets, and B2B wholesale stock.
+              UK multi-category marketplace for retail products, wholesale lots, clearance stock, automotive parts, industrial equipment and more.
             </p>
             <div className="space-y-3 text-sm">
               <div className="text-white/50 text-xs space-y-1">

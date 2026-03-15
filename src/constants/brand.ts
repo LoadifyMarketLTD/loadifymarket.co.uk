@@ -9,6 +9,6 @@ export const BRAND = {
   companyName: import.meta.env.VITE_COMPANY_NAME || "XDrive Logistics Ltd",
   companyNumber: "13171804",
   companyAddress: import.meta.env.VITE_COMPANY_ADDRESS || "101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom",
-  tagline: "B2B Marketplace for Logistics Loads, Pallets and Wholesale Stock",
+  tagline: "UK Multi-Category Marketplace — Buy & Sell Anything",
   domain: "https://loadifymarket.co.uk",
 } as const;
