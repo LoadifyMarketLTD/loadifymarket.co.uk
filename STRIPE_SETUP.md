@@ -1,122 +1,159 @@
-# CE AI NEVOIE DE LA STRIPE — GHID COMPLET
+# Stripe Configuration Guide
 
-> Fără aceste 3 chei Stripe, platforma **nu poate procesa plăți** și **comenzile nu se salvează în baza de date**.
+This guide covers all Stripe environment variables required by Loadify Market, including Stripe Connect for automatic seller payouts.
 
 ---
 
-## REZUMAT — 3 chei de care ai nevoie
+## Required Environment Variables
 
-| Variabilă | De unde o iei | Exemplu |
+| Variable | Source | Example |
 |---|---|---|
-| `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe Dashboard → API Keys | `pk_live_51...` |
-| `STRIPE_SECRET_KEY` | Stripe Dashboard → API Keys | `sk_live_51...` |
-| `STRIPE_WEBHOOK_SECRET` | Stripe Dashboard → Webhooks | `whsec_...` |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe Dashboard → API Keys | `pk_live_51…` |
+| `STRIPE_SECRET_KEY` | Stripe Dashboard → API Keys | `sk_live_51…` |
+| `STRIPE_WEBHOOK_SECRET` | Stripe Dashboard → Webhooks (standard endpoint) | `whsec_…` |
+| `STRIPE_CONNECT_WEBHOOK_SECRET` | Stripe Dashboard → Connect → Webhooks | `whsec_…` |
+
+> ⚠️ **Always use Live keys** (`pk_live_` / `sk_live_`) in production. Test keys begin with `pk_test_` / `sk_test_`.
 
 ---
 
-## PAS 1 — Ia cheile API din Stripe Dashboard
+## Step 1 — Get API Keys
 
-1. Mergi la **https://dashboard.stripe.com/apikeys**
-2. Dacă nu ești în **Live mode**, apasă butonul **"View live keys"** (comută din Test în Live)
-3. Copiază:
-   - **Publishable key** → aceasta este `VITE_STRIPE_PUBLISHABLE_KEY`
-   - **Secret key** → apasă **"Reveal live key"** → aceasta este `STRIPE_SECRET_KEY`
-
-> ⚠️ **IMPORTANT:** Cheile care încep cu `pk_test_` / `sk_test_` sunt doar pentru testare — plățile reale cer `pk_live_` / `sk_live_`.
+1. Go to **https://dashboard.stripe.com/apikeys**
+2. Make sure you are in **Live mode** (toggle in the top-left)
+3. Copy:
+   - **Publishable key** → `VITE_STRIPE_PUBLISHABLE_KEY`
+   - **Secret key** (click "Reveal live key") → `STRIPE_SECRET_KEY`
 
 ---
 
-## PAS 2 — Creează un Webhook în Stripe
+## Step 2 — Standard Checkout Webhook
 
-Webhook-ul este **obligatoriu** — fără el, comenzile NU se salvează în baza de date după plată.
+Required so that orders are saved to the database after payment.
 
-1. Mergi la **https://dashboard.stripe.com/webhooks**
-2. Apasă **"Add endpoint"**
-3. Completează câmpurile:
-
-   - **Endpoint URL:**
-     ```
-     https://loadifymarket.co.uk/.netlify/functions/stripe-webhook
-     ```
-
-   - **Listen to events** — adaugă exact aceste 4 events:
-     - `checkout.session.completed` ← **CEL MAI IMPORTANT** (creează comanda în DB)
-     - `payment_intent.succeeded`
-     - `payment_intent.payment_failed`
-     - `charge.refunded`
-
-4. Apasă **"Add endpoint"**
-
-5. Pe pagina webhook-ului, apasă **"Reveal signing secret"**
-   - Copiază valoarea care începe cu `whsec_...` → aceasta este `STRIPE_WEBHOOK_SECRET`
+1. Go to **https://dashboard.stripe.com/webhooks**
+2. Click **"Add endpoint"**
+3. Set the endpoint URL:
+   ```
+   https://loadifymarket.co.uk/.netlify/functions/stripe-webhook
+   ```
+4. Select **exactly** these events:
+   - `checkout.session.completed`
+   - `payment_intent.succeeded`
+   - `payment_intent.payment_failed`
+   - `charge.refunded`
+5. Click **"Add endpoint"**
+6. On the webhook page, click **"Reveal signing secret"** → copy the `whsec_…` value → `STRIPE_WEBHOOK_SECRET`
 
 ---
 
-## PAS 3 — Pune cheile în Netlify
+## Step 3 — Stripe Connect Webhook
 
-1. Mergi la **https://app.netlify.com** → proiectul tău `loadifymarket.co.uk`
+Required for seller onboarding status updates (`account.updated` events).
+
+1. Go to **https://dashboard.stripe.com/connect/webhooks** (Connect → Webhooks, *not* the standard Webhooks page)
+2. Click **"Add endpoint"**
+3. Set the endpoint URL (same URL as above):
+   ```
+   https://loadifymarket.co.uk/.netlify/functions/stripe-webhook
+   ```
+4. Select this event:
+   - `account.updated`
+5. Click **"Add endpoint"**
+6. Click **"Reveal signing secret"** → copy the `whsec_…` value → `STRIPE_CONNECT_WEBHOOK_SECRET`
+
+> **Note:** One endpoint URL handles both webhooks. The handler automatically tries both signing secrets.
+
+---
+
+## Step 4 — Set Variables in Netlify
+
+1. Go to **https://app.netlify.com** → your `loadifymarket.co.uk` site
 2. **Site configuration → Environment variables → Add variable**
-3. Adaugă **toate cele 3 variabile** de mai jos:
+3. Add all four variables:
 
 ```
-VITE_STRIPE_PUBLISHABLE_KEY   = pk_live_51...
-STRIPE_SECRET_KEY             = sk_live_51...
-STRIPE_WEBHOOK_SECRET         = whsec_...
+VITE_STRIPE_PUBLISHABLE_KEY      = pk_live_51…
+STRIPE_SECRET_KEY                = sk_live_51…
+STRIPE_WEBHOOK_SECRET            = whsec_…   (standard webhook)
+STRIPE_CONNECT_WEBHOOK_SECRET    = whsec_…   (Connect webhook)
 ```
 
-4. Apasă **"Save"**
-5. Mergi la **Deploys → Trigger deploy → Deploy site** (pentru ca modificările să fie active)
+4. Click **"Save"**
+5. Go to **Deploys → Trigger deploy → Deploy site** — environment variable changes only take effect after a redeploy
 
 ---
 
-## CE SE ÎNTÂMPLĂ DACĂ LIPSESC CHEILE
+## Step 5 — Verify
 
-| Cheie lipsă | Efect |
+### Health check:
+Visit `https://loadifymarket.co.uk/.netlify/functions/health` → should return `{ "status": "ok" }`
+
+### Admin Connect status:
+Log in as admin → Admin Dashboard → **Payouts tab** → a green "Stripe Connect: Active" banner confirms the platform account is correctly configured.
+
+### Test webhook:
+1. Go to Stripe Dashboard → **Developers → Webhooks** → your endpoint
+2. Click **"Send test event"** → select `checkout.session.completed`
+3. Response should be `200 OK`
+
+---
+
+## How the Payment Flow Works
+
+```
+Buyer adds items to cart
+        ↓
+Buyer clicks "Proceed to Payment"
+        ↓
+[NETLIFY] create-checkout
+  → Creates Stripe Checkout Session
+  → Assigns transfer_group for Connect compliance
+        ↓
+Stripe Hosted Checkout Page (buyer enters card details)
+        ↓
+Buyer completes payment
+        ↓
+Stripe sends webhook → [NETLIFY] stripe-webhook
+  → Creates order(s) in database (one per seller)
+  → Decrements stock
+  → For each seller with active Connect account:
+      Creates Transfer(seller amount - 7% commission) → seller's Stripe account
+  → Sends confirmation emails
+        ↓
+Buyer redirected to /orders/success
+```
+
+---
+
+## Stripe Connect — Seller Onboarding
+
+Sellers connect their Stripe accounts via **Seller Dashboard → Payouts tab**:
+
+1. Seller clicks "Connect Stripe Account"
+2. Platform creates a Stripe Express account for the seller
+3. Seller completes Stripe's hosted onboarding form
+4. Stripe redirects seller back to the dashboard
+5. Once `charges_enabled` and `payouts_enabled` are both `true`, the seller's status becomes **Active** and automatic transfers begin
+
+**Payout schedule:** Weekly, every Friday (configured at account creation time).
+
+---
+
+## What Happens If a Key Is Missing
+
+| Missing variable | Effect |
 |---|---|
-| `VITE_STRIPE_PUBLISHABLE_KEY` | Butonul "Proceed to Payment" nu face nimic (eroare de consolă) |
-| `STRIPE_SECRET_KEY` | Funcția `create-checkout` crapă cu eroare 500 — utilizatorul vede "Failed to proceed to checkout" |
-| `STRIPE_WEBHOOK_SECRET` | Funcția `stripe-webhook` returnează 501 — comanda **NU se salvează** în baza de date după plată; cumpărătorul plătește dar comanda nu apare în sistem |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe.js fails to initialise — checkout button does nothing |
+| `STRIPE_SECRET_KEY` | `create-checkout` returns 500 — buyer sees "Failed to proceed to checkout" |
+| `STRIPE_WEBHOOK_SECRET` | Webhook returns 501 — orders are NOT saved after payment |
+| `STRIPE_CONNECT_WEBHOOK_SECRET` | `account.updated` events fail signature check — seller onboarding status is not auto-updated |
 
 ---
 
-## VERIFICARE DUPĂ CONFIGURARE
+## Security Notes
 
-### Test rapid (din browser):
-1. Accesează: `https://loadifymarket.co.uk/.netlify/functions/health`
-   - Trebuie să returneze `{ "status": "ok" }`
+- **Never commit `STRIPE_SECRET_KEY` to source code.** It must remain in Netlify environment variables only.
+- `VITE_STRIPE_PUBLISHABLE_KEY` is safe to expose publicly — it only creates payment sessions on the client side.
+- All Stripe API calls are made from Netlify Functions (server side), never from the browser.
 
-### Test Stripe webhook (din Stripe Dashboard):
-1. Mergi la **Dashboard → Webhooks → webhook-ul tău**
-2. Apasă **"Send test event"**
-3. Selectează `checkout.session.completed`
-4. Verifică că răspunsul este `200 OK`
-
----
-
-## REZUMAT VIZUAL
-
-```
-Cumpărător adaugă în coș
-         ↓
-Apasă "Proceed to Payment"
-         ↓
-[NETLIFY] create-checkout (nevoie de STRIPE_SECRET_KEY)
-         ↓
-Stripe Checkout Page (nevoie de VITE_STRIPE_PUBLISHABLE_KEY)
-         ↓
-Cumpărătorul plătește
-         ↓
-Stripe trimite event → [NETLIFY] stripe-webhook (nevoie de STRIPE_WEBHOOK_SECRET)
-         ↓
-Comanda se salvează în Supabase ← FĂRĂ WEBHOOK, ACEASTA NU SE ÎNTÂMPLĂ
-         ↓
-Cumpărătorul ajunge la /orders/success
-```
-
----
-
-## NOTE IMPORTANTE
-
-- **Nu pune niciodată `STRIPE_SECRET_KEY` în codul frontend** (nu în fișiere `.tsx` / `.ts` din `src/`). Aceasta rămâne strict în Netlify Environment Variables.
-- `VITE_STRIPE_PUBLISHABLE_KEY` este publică (sigur de pus în frontend) — dar în cod nu este folosită direct momentan; Stripe Checkout gestionează tot pe server-side.
-- Dacă folosești **Stripe Connect** în viitor (pentru ca vânzătorii să primească bani direct), vei mai avea nevoie de chei suplimentare. Momentan platforma folosește un cont Stripe central.

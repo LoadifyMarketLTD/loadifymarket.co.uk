@@ -992,16 +992,26 @@ export default function SellerDashboardPage() {
                     </div>
                   )}
 
-                  {/* Platform not configured: show informational notice instead of a Connect button */}
+                  {/* Platform temporarily unavailable: show dismissable notice with retry */}
                   {platformNotConfigured && (
-                    <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-blue-800">Payouts Coming Soon</p>
-                        <p className="text-sm text-blue-700 mt-0.5">
-                          Automatic Stripe payouts are being configured for this marketplace. Please check back soon or contact support for assistance.
-                        </p>
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="font-medium text-yellow-800">Stripe Connect Temporarily Unavailable</p>
+                          <p className="text-sm text-yellow-700 mt-0.5">
+                            Payouts are being configured. If this persists after a few minutes, please contact support.
+                          </p>
+                        </div>
                       </div>
+                      <button
+                        onClick={() => { setPlatformNotConfigured(false); handleConnectStripe(); }}
+                        disabled={connectLoading}
+                        className="btn-primary flex items-center gap-2"
+                      >
+                        <CreditCard className="h-4 w-4" />
+                        {connectLoading ? 'Connecting…' : 'Try Again'}
+                      </button>
                     </div>
                   )}
 
