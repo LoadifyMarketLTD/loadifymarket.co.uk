@@ -18,10 +18,12 @@
   }
 
   :root {
-    /* Cinematic Premium Design Tokens */
-    --color-jet: #0D1117;
-    --color-graphite: #1E2530;
-    --color-gold: #D4AF37;
+    /* Vibrant Professional Blue Design Tokens */
+    --color-jet: #0F2D52;
+    --color-graphite: #1A4080;
+    --color-primary: #38BDF8;
+    --color-primary-rgb: 56, 189, 248;
+    --color-gold: #F59E0B;
     --color-white: #FFFFFF;
     --color-smoke: #F2F2F2;
 
@@ -56,7 +58,7 @@
 
   /* Selection styling */
   ::selection {
-    background-color: rgba(212, 175, 55, 0.3);
+    background-color: rgba(var(--color-primary-rgb), 0.35);
     color: white;
   }
 
@@ -76,7 +78,7 @@
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-gold);
+    background: var(--color-primary);
   }
 }
 
@@ -89,6 +91,13 @@
     @apply bg-gold text-jet px-8 py-4 rounded-premium-sm font-semibold
            transition-all duration-300 ease-out
            hover:bg-gold-400 hover:shadow-cinematic-gold hover:scale-[1.02]
+           active:scale-[0.98];
+  }
+
+  .btn-blue {
+    @apply bg-primary text-white px-8 py-4 rounded-premium-sm font-semibold
+           transition-all duration-300 ease-out
+           hover:bg-primary-400 hover:shadow-cinematic-blue hover:scale-[1.02]
            active:scale-[0.98];
   }
 
@@ -285,9 +294,10 @@
 
   .bg-hero {
     background:
-      radial-gradient(ellipse at 30% 20%, rgba(212, 175, 55, 0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 70% 80%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
-      linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 50%, #0A0A0A 100%);
+      radial-gradient(ellipse at 15% 15%, rgba(56, 189, 248, 0.25) 0%, transparent 45%),
+      radial-gradient(ellipse at 85% 85%, rgba(245, 158, 11, 0.15) 0%, transparent 45%),
+      radial-gradient(ellipse at 60% 30%, rgba(74, 126, 192, 0.2) 0%, transparent 50%),
+      linear-gradient(135deg, #071425 0%, #0F2D52 40%, #1A4080 70%, #0F2D52 100%);
   }
 
   .bg-section-alt {
@@ -299,11 +309,19 @@
      ═══════════════════════════════════════════════════════════ */
 
   .glow-gold {
-    box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 0 30px rgba(245, 158, 11, 0.35);
   }
 
   .glow-gold-intense {
-    box-shadow: 0 0 50px rgba(212, 175, 55, 0.5);
+    box-shadow: 0 0 50px rgba(245, 158, 11, 0.55);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 30px rgba(var(--color-primary-rgb), 0.4);
+  }
+
+  .glow-primary-intense {
+    box-shadow: 0 0 50px rgba(var(--color-primary-rgb), 0.65);
   }
 
   .light-beam {
@@ -320,7 +338,7 @@
     overflow: hidden;
     pointer-events: none;
     transform: translateZ(0);
-    background: radial-gradient(ellipse at center, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+    background: radial-gradient(ellipse at center, rgba(var(--color-primary-rgb), 0.18) 0%, rgba(245, 158, 11, 0.06) 45%, transparent 70%);
   }
 
   /* Desktop safety kill switch - disable on laptops where overflow occurs */
@@ -465,6 +483,13 @@
   /* Text gradient */
   .text-gradient-gold {
     @apply bg-gradient-gold bg-clip-text text-transparent;
+  }
+
+  .text-gradient-primary {
+    background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 50%, #F59E0B 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   /* Premium underline effect */
