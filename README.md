@@ -216,14 +216,14 @@ The platform includes a comprehensive DHL-like shipping and tracking system. For
 
 ## 📧 Contact
 
-**Company**: Danny Courier LTD  
+**Company**: XDrive Logistics LTD  
 **Email**: loadifymarket.co.uk@gmail.com  
 **Address**: 101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom  
 **VAT**: GB375949535
 
 ## 📄 License
 
-Copyright © 2025 Danny Courier LTD. All rights reserved.
+Copyright © 2021 XDrive Logistics LTD. All rights reserved.
 
 ## 🤝 Contributing
 
