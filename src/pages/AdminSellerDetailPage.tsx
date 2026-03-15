@@ -22,6 +22,7 @@ import {
   ExternalLink,
   Edit2,
   RefreshCcw,
+  Send,
 } from 'lucide-react';import { formatDistanceToNow } from 'date-fns';
 import VerificationBadge from '../components/VerificationBadge';
 import RoleBadge from '../components/RoleBadge';
@@ -45,6 +46,8 @@ export default function AdminSellerDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [editingCommission, setEditingCommission] = useState(false);
   const [commissionValue, setCommissionValue] = useState('');
+  const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [resendMessage, setResendMessage] = useState('');
 
   const fetchSeller = useCallback(async () => {
     if (!id) return;
@@ -198,6 +201,28 @@ export default function AdminSellerDetailPage() {
     }
   };
 
+  const resendVerificationEmail = async () => {
+    if (!id || !adminUser?.id) return;
+    setResendStatus('sending');
+    setResendMessage('');
+    try {
+      const res = await fetch('/.netlify/functions/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: id, adminId: adminUser.id }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to send');
+      setResendStatus('success');
+      setResendMessage(json.message || 'Verification email sent');
+    } catch (err) {
+      setResendStatus('error');
+      setResendMessage(err instanceof Error ? err.message : 'Failed to send verification email');
+    } finally {
+      setTimeout(() => setResendStatus('idle'), 5000);
+    }
+  };
+
   if (!hasAdminAccess(adminUser)) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -334,7 +359,27 @@ export default function AdminSellerDetailPage() {
             >
               <RefreshCcw className="w-4 h-4" />
             </button>
+
+            <button
+              onClick={resendVerificationEmail}
+              disabled={resendStatus === 'sending'}
+              className="btn-outline flex items-center gap-2"
+              title="Resend Verification Email"
+            >
+              <Send className="w-4 h-4" />
+              {resendStatus === 'sending' ? 'Sending…' : 'Resend Verification Email'}
+            </button>
           </div>
+
+          {/* Resend status toast */}
+          {resendStatus !== 'idle' && resendStatus !== 'sending' && (
+            <div className={`mt-2 text-sm px-3 py-2 rounded flex items-center gap-2 ${
+              resendStatus === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}>
+              {resendStatus === 'success' ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+              {resendMessage}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

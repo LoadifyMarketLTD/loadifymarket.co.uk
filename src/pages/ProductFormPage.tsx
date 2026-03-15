@@ -16,6 +16,8 @@ export default function ProductFormPage() {
   const [saving, setSaving] = useState(false);
   const [selectedShippingMethodIds, setSelectedShippingMethodIds] = useState<string[]>([]);
   const [dispatchTime, setDispatchTime] = useState('');
+  // True when the product has active or completed orders — critical fields are locked for sellers
+  const [hasActiveOrders, setHasActiveOrders] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -90,6 +92,17 @@ export default function ProductFormPage() {
             setDispatchTime(psData[0].dispatch_time);
           }
         }
+
+        // Check for active or completed orders — sellers cannot edit critical fields once ordered.
+        // Admins/owners bypass this restriction.
+        if (data.sellerId === user?.id) {
+          const { count } = await supabase
+            .from('orders')
+            .select('id', { count: 'exact', head: true })
+            .eq('productId', id)
+            .in('status', ['paid', 'packed', 'shipped', 'delivered', 'pending']);
+          setHasActiveOrders((count ?? 0) > 0);
+        }
       }
     } catch (error) {
       console.error('Error fetching product:', error);
@@ -121,6 +134,10 @@ export default function ProductFormPage() {
       const vatRate = 0.20; // 20% VAT
       const priceExVat = price / (1 + vatRate);
 
+      // When critical fields are locked (orders exist) and the user is a seller,
+      // only allow non-critical fields to be updated.
+      const isAdmin = user.role === 'admin' || user.role === 'owner';
+
       const productData = {
         sellerId: user.id,
         title: formData.title,
@@ -148,8 +165,27 @@ export default function ProductFormPage() {
         isApproved: false, // Requires admin approval
       };
 
-      if (id) {
-        // Update existing product
+      // When the product has active/completed orders and the current user is
+      // a seller (not admin), strip the critical locked fields from the update
+      // to prevent price/stock/title/condition manipulation after sale.
+      if (id && hasActiveOrders && !isAdmin) {
+        const { title: _t, price: _p, priceExVat: _pe, stockQuantity: _sq, stockStatus: _ss, condition: _c, ...allowedData } = productData;
+        void _t; void _p; void _pe; void _sq; void _ss; void _c;
+        const { error } = await supabase.from('products').update(allowedData).eq('id', id);
+        if (error) throw error;
+
+        // Shipping methods can always be updated by sellers
+        const { error: deleteError } = await supabase.from('product_shipping').delete().eq('product_id', id);
+        if (deleteError) throw deleteError;
+        if (selectedShippingMethodIds.length > 0) {
+          const rows = selectedShippingMethodIds.map((method_id) => ({ product_id: id, method_id, dispatch_time: dispatchTime || null }));
+          const { error: shippingError } = await supabase.from('product_shipping').insert(rows);
+          if (shippingError) throw shippingError;
+        }
+
+        alert('Product updated successfully! (Critical fields were not changed as orders exist)');
+      } else if (id) {
+        // Update existing product (full update — admin or no active orders)
         const { error } = await supabase
           .from('products')
           .update(productData)
@@ -239,6 +275,17 @@ export default function ProductFormPage() {
           <h1 className="text-3xl font-bold mb-6">{id ? 'Edit Product' : 'Add New Product'}</h1>
 
           <form onSubmit={handleSubmit} className="card">
+            {/* Banner warning when critical fields are locked due to existing orders */}
+            {hasActiveOrders && (
+              <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-lg flex items-start gap-3">
+                <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                <div>
+                  <p className="text-amber-800 font-semibold text-sm">Some fields are locked</p>
+                  <p className="text-amber-700 text-xs mt-0.5">This product has active or completed orders. Title, price, stock quantity, and condition cannot be changed. You can still edit the description, images, and shipping notes.</p>
+                </div>
+              </div>
+            )}
+
             {/* Basic Information */}
             <div className="mb-6">
               <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
@@ -250,7 +297,8 @@ export default function ProductFormPage() {
                   value={formData.title}
                   onChange={(e) => handleChange('title', e.target.value)}
                   required
-                  className="input-field"
+                  disabled={hasActiveOrders}
+                  className={`input-field ${hasActiveOrders ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''}`}
                   placeholder="Enter product title"
                 />
               </div>
@@ -292,7 +340,8 @@ export default function ProductFormPage() {
                   <select
                     value={formData.condition}
                     onChange={(e) => handleChange('condition', e.target.value)}
-                    className="input-field"
+                    disabled={hasActiveOrders}
+                    className={`input-field ${hasActiveOrders ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''}`}
                     required
                   >
                     <option value="new">New</option>
@@ -312,7 +361,8 @@ export default function ProductFormPage() {
                     value={formData.price}
                     onChange={(e) => handleChange('price', e.target.value)}
                     required
-                    className="input-field"
+                    disabled={hasActiveOrders}
+                    className={`input-field ${hasActiveOrders ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''}`}
                     placeholder="0.00"
                   />
                   <p className="text-xs text-gray-500 mt-1">Price includes VAT (20%)</p>
@@ -326,7 +376,8 @@ export default function ProductFormPage() {
                     value={formData.stockQuantity}
                     onChange={(e) => handleChange('stockQuantity', e.target.value)}
                     required
-                    className="input-field"
+                    disabled={hasActiveOrders}
+                    className={`input-field ${hasActiveOrders ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''}`}
                     placeholder="0"
                   />
                 </div>

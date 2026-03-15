@@ -5,7 +5,7 @@ import { useAuthStore } from '../store';
 import { hasAdminAccess } from '../lib/roleUtils';
 import { getDisplayName } from '../lib/displayName';
 import type { User, Product, Order, Dispute, PayoutRequest } from '../types';
-import { Users, Package, ShoppingBag, AlertCircle, CheckCircle, XCircle, DollarSign, Download, Settings, TrendingUp, CreditCard } from 'lucide-react';
+import { Users, Package, ShoppingBag, AlertCircle, CheckCircle, XCircle, DollarSign, Download, Settings, TrendingUp, CreditCard, Send } from 'lucide-react';
 import { 
   exportToCSV, 
   prepareOrdersExport, 
@@ -30,6 +30,10 @@ export default function AdminDashboardPage() {
   // Inline rejection form state: maps request ID → rejection note text
   const [rejectNotes, setRejectNotes] = useState<Record<string, string>>({});
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+
+  // Resend verification email state
+  const [resendingVerification, setResendingVerification] = useState<string | null>(null);
+  const [resendToast, setResendToast] = useState<{ userId: string; message: string; ok: boolean } | null>(null);
 
   // Stripe Connect platform status — checked when the payouts tab is opened.
   const [connectPlatformStatus, setConnectPlatformStatus] = useState<{
@@ -357,6 +361,30 @@ export default function AdminDashboardPage() {
     } catch (error) {
       console.error('Error activating user:', error);
       alert('Failed to activate user');
+    }
+  };
+
+  const handleResendVerification = async (targetUserId: string) => {
+    if (!user?.id) return;
+    setResendingVerification(targetUserId);
+    setResendToast(null);
+    try {
+      const res = await fetch('/.netlify/functions/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: targetUserId, adminId: user.id }),
+      });
+      const json = await res.json();
+      setResendToast({
+        userId: targetUserId,
+        message: res.ok ? (json.message || 'Verification email sent') : (json.error || 'Failed to send'),
+        ok: res.ok,
+      });
+    } catch (err) {
+      setResendToast({ userId: targetUserId, message: 'Network error', ok: false });
+    } finally {
+      setResendingVerification(null);
+      setTimeout(() => setResendToast(null), 5000);
     }
   };
 
@@ -844,6 +872,20 @@ export default function AdminDashboardPage() {
                           >
                             {u.isActive ? 'Suspend' : 'Activate'}
                           </button>
+                        )}
+                        <button
+                          onClick={() => handleResendVerification(u.id)}
+                          disabled={resendingVerification === u.id}
+                          className="text-sm px-3 py-1 rounded border border-blue-500/30 text-blue-400 hover:bg-blue-500/10 flex items-center gap-1"
+                          title="Resend Verification Email"
+                        >
+                          <Send className="w-3 h-3" />
+                          {resendingVerification === u.id ? '…' : 'Resend'}
+                        </button>
+                        {resendToast?.userId === u.id && (
+                          <span className={`text-xs px-2 py-1 rounded ${resendToast.ok ? 'text-green-400' : 'text-red-400'}`}>
+                            {resendToast.message}
+                          </span>
                         )}
                       </div>
                     </div>
