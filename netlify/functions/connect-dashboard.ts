@@ -64,6 +64,24 @@ export const handler: Handler = async (event) => {
     };
   } catch (error) {
     console.error('connect-dashboard error:', error);
+
+    // Detect when the platform Stripe account has not enrolled in Connect.
+    if (
+      error instanceof Stripe.errors.StripeInvalidRequestError &&
+      /signed up for connect/i.test(error.message)
+    ) {
+      return {
+        statusCode: 503,
+        body: JSON.stringify({
+          error:
+            'Stripe Connect is not yet enabled on this platform. ' +
+            'The marketplace owner must activate Stripe Connect at ' +
+            'https://dashboard.stripe.com/connect/accounts/overview.',
+          platformNotConfigured: true,
+        }),
+      };
+    }
+
     return {
       statusCode: 500,
       body: JSON.stringify({

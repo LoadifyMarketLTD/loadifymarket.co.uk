@@ -86,6 +86,17 @@ export const handler: Handler = async (event) => {
         break;
       }
 
+      // ── Stripe Connect account status updates ──────────────────────────────
+      // Triggered by Stripe when a connected Express account's verification
+      // state changes (e.g. seller completes onboarding, payouts are enabled,
+      // or restrictions are added). Keeps our DB in sync automatically.
+      case 'account.updated': {
+        const account = stripeEvent.data.object as Stripe.Account;
+        await handleConnectAccountUpdated(account);
+        break;
+      }
+      // ──────────────────────────────────────────────────────────────────────
+
       default:
         console.log(`Unhandled event type: ${stripeEvent.type}`);
     }
@@ -409,5 +420,37 @@ async function handleRefund(charge: Stripe.Charge) {
 
     const orderNumber = payment.orders?.orderNumber ?? payment.orderId;
     console.log(`Order ${orderNumber} refunded`);
+  }
+}
+
+/**
+ * Handles Stripe Connect `account.updated` webhook events.
+ *
+ * Stripe sends this event whenever a connected Express account's state
+ * changes — e.g. the seller completes onboarding, payouts become enabled,
+ * or Stripe adds a restriction. We map the live account flags to our
+ * three-state stripeConnectStatus and persist it so the seller dashboard
+ * reflects the current state without needing a separate status-sync call.
+ */
+async function handleConnectAccountUpdated(account: Stripe.Account) {
+  let stripeConnectStatus: 'pending' | 'restricted' | 'active';
+
+  if (account.charges_enabled && account.payouts_enabled) {
+    stripeConnectStatus = 'active';
+  } else if (account.details_submitted) {
+    stripeConnectStatus = 'restricted';
+  } else {
+    stripeConnectStatus = 'pending';
+  }
+
+  const { error } = await supabase!
+    .from('seller_profiles')
+    .update({ stripeConnectStatus })
+    .eq('stripeAccountId', account.id);
+
+  if (error) {
+    console.error(`account.updated: failed to update seller_profiles for ${account.id}:`, error.message);
+  } else {
+    console.log(`account.updated: ${account.id} → stripeConnectStatus=${stripeConnectStatus}`);
   }
 }
