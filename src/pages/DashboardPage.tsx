@@ -19,7 +19,7 @@ const QUICK_LINKS = [
   { label: 'Messages',          icon: MessageSquare,  to: '/messages',      desc: 'Inbox & conversations' },
   { label: 'Notifications',     icon: Bell,           to: '/notifications', desc: 'Email & push preferences' },
   { label: 'Track Order',       icon: Truck,          to: '/track-order',   desc: 'Track a shipment' },
-  { label: 'Account Settings',  icon: Settings,       to: '/dashboard',     desc: 'Profile and security' },
+  { label: 'Account Settings',  icon: Settings,       to: '/account-settings', desc: 'Profile and security' },
 ];
 
 interface OrderCounts {

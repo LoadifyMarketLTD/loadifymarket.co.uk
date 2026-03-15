@@ -65,6 +65,7 @@ const RFQPage = lazy(() => import('./pages/RFQPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
+const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage'));
 
 // Loading component
 function PageLoader() {
@@ -217,6 +218,14 @@ function App() {
             <RequireAuth>
               <Suspense fallback={<PageLoader />}>
                 <DashboardPage />
+              </Suspense>
+            </RequireAuth>
+          } />
+          {/* Protected: Account Settings */}
+          <Route path="account-settings" element={
+            <RequireAuth>
+              <Suspense fallback={<PageLoader />}>
+                <AccountSettingsPage />
               </Suspense>
             </RequireAuth>
           } />
