@@ -443,13 +443,19 @@ async function handleConnectAccountUpdated(account: Stripe.Account) {
     stripeConnectStatus = 'pending';
   }
 
-  const { error } = await supabase!
+  const { data: updated, error } = await supabase!
     .from('seller_profiles')
     .update({ stripeConnectStatus })
-    .eq('stripeAccountId', account.id);
+    .eq('stripeAccountId', account.id)
+    .select('userId');
 
   if (error) {
     console.error(`account.updated: failed to update seller_profiles for ${account.id}:`, error.message);
+  } else if (!updated || updated.length === 0) {
+    // No row matched — the account ID is not in our DB. This can happen if
+    // the webhook is received before the seller has been persisted, or for
+    // Connect accounts that belong to a different platform environment.
+    console.warn(`account.updated: no seller_profiles row found for stripeAccountId=${account.id} — skipping`);
   } else {
     console.log(`account.updated: ${account.id} → stripeConnectStatus=${stripeConnectStatus}`);
   }
