@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { hasSellerAccess } from '../lib/roleUtils';
+import { getDisplayName } from '../lib/displayName';
 import type { Address } from '../types';
 import { Building2, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -199,7 +200,9 @@ export default function SellerProfilePage() {
   return (
     <div className="bg-gray-50 min-h-screen py-8">
       <div className="container mx-auto px-4 max-w-4xl">
-        <h1 className="text-3xl font-bold mb-6">Seller Profile</h1>
+        <h1 className="text-3xl font-bold mb-6">
+          {getDisplayName(user, { storeName: formData.storeName, businessName: formData.businessName })} — Profile
+        </h1>
 
         {/* Completeness Indicator */}
         <div className="card mb-6">
