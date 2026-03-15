@@ -189,15 +189,17 @@ const PRODUCT_QUERY_FIELDS = `
 
 export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [bulkDeals, setBulkDeals] = useState<Product[]>([]);
+  const [latestDeals, setLatestDeals] = useState<Product[]>([]);
   const [dealsLoading, setDealsLoading] = useState(true);
-  const [bulkLoading, setBulkLoading] = useState(true);
+  const [latestLoading, setLatestLoading] = useState(true);
   const [trendingCount, setTrendingCount] = useState<number | null>(null);
   const bulkSliderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Fetch featured products: most-viewed active products
-    const fetchFeatured = async () => {
+    // Fetch featured products (top-viewed) then fetch latest deals excluding those IDs
+    const fetchAll = async () => {
+      // Step 1: Featured — top 5 by views
+      let featuredIds: string[] = [];
       try {
         const { data } = await supabase
           .from('products')
@@ -205,35 +207,39 @@ export default function HomePage() {
           .eq('isActive', true)
           .eq('isApproved', true)
           .order('views', { ascending: false })
-          .limit(4);
-        if (data) setFeaturedProducts(transformProductRows(data as ProductRow[]));
+          .limit(5);
+        if (data) {
+          const transformed = transformProductRows(data as ProductRow[]);
+          setFeaturedProducts(transformed);
+          featuredIds = transformed.map((p) => p.id);
+        }
       } catch {
         // silently swallow — section will stay empty / hidden
       } finally {
         setDealsLoading(false);
       }
-    };
 
-    // Fetch latest deals: newest active listings across all types
-    const fetchBulk = async () => {
+      // Step 2: Latest Deals — newest listings NOT already shown in Featured
       try {
-        const { data } = await supabase
+        const query = supabase
           .from('products')
           .select(PRODUCT_QUERY_FIELDS)
           .eq('isActive', true)
           .eq('isApproved', true)
           .order('createdAt', { ascending: false })
-          .limit(8);
-        if (data) setBulkDeals(transformProductRows(data as ProductRow[]));
+          .limit(10);
+        const { data } = featuredIds.length > 0
+          ? await query.not('id', 'in', `(${featuredIds.join(',')})`)
+          : await query;
+        if (data) setLatestDeals(transformProductRows(data as ProductRow[]));
       } catch {
         // silently swallow
       } finally {
-        setBulkLoading(false);
+        setLatestLoading(false);
       }
     };
 
-    fetchFeatured();
-    fetchBulk();
+    fetchAll();
   }, []);
 
   return (
@@ -310,9 +316,9 @@ export default function HomePage() {
 
       {/* ── Section 4: Featured Products ──────────────────────────────────── */}
       {(dealsLoading || featuredProducts.length > 0) && (
-        <section className="py-10 md:py-14 bg-graphite/20 border-t border-white/5">
+        <section className="py-10 md:py-12 bg-graphite/20 border-t border-white/5">
           <div className="container-cinematic">
-            <div className="flex items-center justify-between mb-7">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-premium-sm bg-gold/10 border border-gold/20">
                   <Flame className="w-5 h-5 text-gold" />
@@ -328,8 +334,8 @@ export default function HomePage() {
             </div>
 
             {dealsLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {Array.from({ length: 4 }).map((_, i) => (
+              <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4">
+                {Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="animate-pulse">
                     <div className="bg-graphite aspect-[3/2] rounded-premium-sm mb-2" />
                     <div className="bg-graphite h-4 rounded mb-1" />
@@ -337,15 +343,21 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
+            ) : featuredProducts.length === 1 ? (
+              <div className="flex justify-center">
+                <div className="w-full max-w-xs">
+                  <ProductCard product={featuredProducts[0]} />
+                </div>
+              </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4">
                 {featuredProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             )}
 
-            <div className="mt-6 text-center sm:hidden">
+            <div className="mt-5 text-center sm:hidden">
               <Link to="/catalog" className="btn-secondary inline-flex items-center gap-2 text-sm px-6 py-3">
                 View All Listings <ArrowRight className="w-4 h-4" />
               </Link>
@@ -354,11 +366,11 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ── Section 5: Latest Deals (horizontal slider) ───────────────────── */}
-      {(bulkLoading || bulkDeals.length > 0) && (
-        <section className="py-10 md:py-14 bg-jet border-t border-white/5">
+      {/* ── Section 5: Latest Deals (grid) ───────────────────────────────── */}
+      {(latestLoading || latestDeals.length > 0) && (
+        <section className="py-10 md:py-12 bg-jet border-t border-white/5">
           <div className="container-cinematic">
-            <div className="flex items-center justify-between mb-7">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-premium-sm bg-gold/10 border border-gold/20">
                   <Package className="w-5 h-5 text-gold" />
@@ -373,27 +385,32 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Horizontal slider */}
-            <div
-              ref={bulkSliderRef}
-              className="flex gap-4 overflow-x-auto pb-3 scroll-smooth snap-x snap-mandatory"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-            >
-              {bulkLoading
-                ? Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="animate-pulse flex-shrink-0 w-64 snap-start">
-                      <div className="bg-graphite aspect-[3/2] rounded-premium-sm mb-2" />
-                      <div className="bg-graphite h-4 rounded mb-1" />
-                      <div className="bg-graphite h-4 rounded w-2/3" />
-                    </div>
-                  ))
-                : bulkDeals.map((product) => (
-                    <div key={product.id} className="flex-shrink-0 w-64 snap-start">
-                      <ProductCard product={product} />
-                    </div>
-                  ))
-              }
-            </div>
+            {latestLoading ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-graphite aspect-[3/2] rounded-premium-sm mb-2" />
+                    <div className="bg-graphite h-4 rounded mb-1" />
+                    <div className="bg-graphite h-4 rounded w-2/3" />
+                  </div>
+                ))}
+              </div>
+            ) : latestDeals.length === 1 ? (
+              <div className="flex justify-center">
+                <div className="w-full max-w-xs">
+                  <ProductCard product={latestDeals[0]} />
+                </div>
+              </div>
+            ) : (
+              <div
+                ref={bulkSliderRef}
+                className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4"
+              >
+                {latestDeals.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            )}
 
             <div className="mt-6 text-center">
               <Link to="/catalog" className="btn-primary inline-flex items-center gap-2">
@@ -408,9 +425,9 @@ export default function HomePage() {
 
       {/* ── Trending Products ──────────────────────────────────────────────── */}
       {(trendingCount === null || trendingCount > 0) && (
-        <section className="py-10 md:py-14 bg-graphite/20 border-t border-white/5">
+        <section className="py-10 md:py-12 bg-graphite/20 border-t border-white/5">
           <div className="container-cinematic">
-            <div className="flex items-center justify-between mb-7">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-premium-sm bg-orange-500/15 border border-orange-500/20">
                   <Flame className="w-5 h-5 text-orange-400" />
@@ -424,8 +441,14 @@ export default function HomePage() {
                 View Trending <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-            <Suspense fallback={<div className="grid grid-cols-2 md:grid-cols-4 gap-4 min-h-[220px]" />}>
-              <TrendingProducts maxProducts={4} days={7} mode="trending" onDataLoaded={setTrendingCount} />
+            <Suspense fallback={<div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4 min-h-[220px]" />}>
+              <TrendingProducts
+                maxProducts={5}
+                days={7}
+                mode="trending"
+                onDataLoaded={setTrendingCount}
+                excludeIds={[...featuredProducts.map((p) => p.id), ...latestDeals.map((p) => p.id)]}
+              />
             </Suspense>
           </div>
         </section>

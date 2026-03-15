@@ -10,9 +10,10 @@ interface TrendingProductsProps {
   mode?: 'trending' | 'newest';
   skip?: number;
   onDataLoaded?: (count: number) => void;
+  excludeIds?: string[];
 }
 
-export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'trending', skip = 0, onDataLoaded }: TrendingProductsProps) {
+export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'trending', skip = 0, onDataLoaded, excludeIds = [] }: TrendingProductsProps) {
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +22,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
     try {
       if (mode === 'newest') {
         // Newest listings — order by creation date descending, with offset for deduplication
-        const { data, error } = await supabase
+        const baseQuery = supabase
           .from('products')
           .select(`
             *,
@@ -39,14 +40,19 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
           `)
           .eq('isApproved', true)
           .eq('isActive', true)
-          .order('createdAt', { ascending: false })
-          .range(skip, skip + maxProducts - 1);
+          .order('createdAt', { ascending: false });
+
+        const filteredQuery = excludeIds.length > 0
+          ? baseQuery.not('id', 'in', `(${excludeIds.join(',')})`)
+          : baseQuery;
+
+        const { data, error } = await filteredQuery.range(skip, skip + maxProducts - 1);
 
         if (error) throw error;
 
         // Fallback: if skip returns nothing, fetch from start (small dataset)
         if (!data || data.length === 0) {
-          const { data: fallbackData, error: fallbackErr } = await supabase
+          const fallbackQuery = supabase
             .from('products')
             .select(`
               *,
@@ -66,6 +72,9 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
             .eq('isActive', true)
             .order('createdAt', { ascending: false })
             .limit(maxProducts);
+          const { data: fallbackData, error: fallbackErr } = excludeIds.length > 0
+            ? await fallbackQuery.not('id', 'in', `(${excludeIds.join(',')})`)
+            : await fallbackQuery;
           if (fallbackErr) throw fallbackErr;
           setTrendingProducts(transformProducts(fallbackData || []));
         } else {
@@ -78,7 +87,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - days);
 
-      const { data, error } = await supabase
+      const trendQuery = supabase
         .from('products')
         .select(`
           *,
@@ -99,7 +108,11 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
         .gte('lastViewedAt', cutoffDate.toISOString())
         .order('addToCartCount', { ascending: false })
         .order('views', { ascending: false })
-        .limit(maxProducts * 2); // Get more to filter and sort
+        .limit(maxProducts * 3); // Get more to filter, sort and exclude
+
+      const { data, error } = excludeIds.length > 0
+        ? await trendQuery.not('id', 'in', `(${excludeIds.join(',')})`)
+        : await trendQuery;
 
       if (error) throw error;
 
@@ -121,7 +134,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
         setTrendingProducts(transformProducts(sorted));
       } else {
         // Fallback to most viewed products if no recent activity
-        const { data: fallbackData, error: fallbackError } = await supabase
+        const fallbackTrendQuery = supabase
           .from('products')
           .select(`
             *,
@@ -142,6 +155,10 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
           .order('views', { ascending: false })
           .limit(maxProducts);
 
+        const { data: fallbackData, error: fallbackError } = excludeIds.length > 0
+          ? await fallbackTrendQuery.not('id', 'in', `(${excludeIds.join(',')})`)
+          : await fallbackTrendQuery;
+
         if (fallbackError) throw fallbackError;
         setTrendingProducts(transformProducts(fallbackData || []));
       }
@@ -151,7 +168,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
     } finally {
       setLoading(false);
     }
-  }, [days, maxProducts, mode, skip]);
+  }, [days, maxProducts, mode, skip, excludeIds]);
 
   useEffect(() => {
     fetchTrendingProducts();
@@ -166,7 +183,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4">
         {[...Array(maxProducts)].map((_, i) => (
           <div key={i} className="animate-pulse">
             <div className="bg-graphite aspect-[4/3] rounded-premium-sm mb-2"></div>
@@ -182,8 +199,32 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
     return null;
   }
 
+  if (trendingProducts.length === 1) {
+    return (
+      <div className="flex justify-center">
+        <div className="w-full max-w-xs">
+          <div className="relative">
+            {mode === 'trending' && (
+              <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-orange-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg pointer-events-none">
+                <Flame className="w-3 h-3" />
+                #1
+              </div>
+            )}
+            {mode === 'newest' && (
+              <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-emerald-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg pointer-events-none">
+                <Clock className="w-3 h-3" />
+                New
+              </div>
+            )}
+            <ProductCard product={trendingProducts[0]} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4">
       {trendingProducts.map((product, index) => (
         <div key={product.id} className="relative">
           {/* Mode badge overlay */}
