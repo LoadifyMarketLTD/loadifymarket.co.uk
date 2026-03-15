@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { hasSellerAccess } from '../lib/roleUtils';
+import { getDisplayName } from '../lib/displayName';
 import type { Product, Order, SellerProfile, DeliveryRequest, SellerBalance, Payout } from '../types';
 import { buildXDriveAppUrl } from '../lib/transportQuote';
 import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3, Truck, ExternalLink, Clock, CreditCard, CheckCircle } from 'lucide-react';
@@ -251,7 +252,9 @@ export default function SellerDashboardPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Seller Dashboard</h1>
+          <h1 className="text-3xl font-bold">
+            Welcome back, {getDisplayName(user, profile)}
+          </h1>
           <div className="flex space-x-3">
             <Link to="/seller/profile" className="btn-outline flex items-center space-x-2">
               <User className="h-5 w-5" />

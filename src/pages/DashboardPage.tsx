@@ -8,6 +8,10 @@ import {
 import { useAuthStore } from '../store';
 import { BRAND } from '../constants/brand';
 import { supabase } from '../lib/supabase';
+import { getDisplayName } from '../lib/displayName';
+import type { SellerProfile } from '../types';
+
+type SellerIdentity = Pick<SellerProfile, 'storeName' | 'businessName'>;
 
 const QUICK_LINKS = [
   { label: 'My Orders',         icon: ShoppingBag,   to: '/orders',        desc: 'View and track your orders' },
@@ -31,6 +35,7 @@ export default function DashboardPage() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const [orderCounts, setOrderCounts] = useState<OrderCounts>({ pending: 0, shipped: 0, delivered: 0, returns: 0 });
+  const [sellerProfile, setSellerProfile] = useState<SellerIdentity | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -50,6 +55,20 @@ export default function DashboardPage() {
         }
       } catch {
         // silently fail — dashboard is non-critical
+      }
+
+      // Fetch seller profile to resolve storeName / businessName for sellers
+      if (user.role === 'seller' || user.role === 'owner') {
+        try {
+          const { data: profileData } = await supabase
+            .from('seller_profiles')
+            .select('storeName, businessName')
+            .eq('userId', user.id)
+            .single();
+          if (profileData) setSellerProfile(profileData);
+        } catch {
+          // silently fail
+        }
       }
     })();
   }, [user]);
@@ -75,8 +94,10 @@ export default function DashboardPage() {
             )}
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-white">Welcome back</h1>
-            <p className="text-white/50 text-sm mt-1">Loadify Market Dashboard</p>
+            <h1 className="text-2xl font-bold text-white">
+              Welcome back, {getDisplayName(user, sellerProfile)}
+            </h1>
+            <p className="text-white/50 text-sm mt-1">{BRAND.name} Dashboard</p>
             <div className="flex items-center gap-4 mt-2 text-xs text-white/40">
               <span className="flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
