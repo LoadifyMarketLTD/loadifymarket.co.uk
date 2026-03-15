@@ -5,6 +5,7 @@ import {
   Flame, Truck, CheckCircle2, Store, Home, Wrench,
   Shirt, LayoutGrid, UserPlus, ListPlus, Wallet,
   Cpu, Car, Wheat, Factory, Briefcase, Tag,
+  ShoppingBag, TrendingUp, Globe,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 import { supabase } from '../lib/supabase';
@@ -16,16 +17,104 @@ const TrendingProducts = lazy(() => import('../components/TrendingProducts'));
 
 // ── Section 3: 10 marketplace categories ───────────────────────────────────
 const CATEGORIES = [
-  { name: 'Electronics & Tech',    icon: Cpu,      href: '/shop?category=electronics' },
-  { name: 'Home & Garden',         icon: Home,     href: '/shop?category=home-garden' },
-  { name: 'Clothing & Fashion',    icon: Shirt,    href: '/shop?category=fashion' },
-  { name: 'Tools & DIY',           icon: Wrench,   href: '/shop?category=tools' },
-  { name: 'Automotive & Parts',    icon: Car,      href: '/shop?category=vehicles' },
-  { name: 'Agriculture & Farming', icon: Wheat,    href: '/shop?category=agriculture' },
-  { name: 'Industrial Equipment',  icon: Factory,  href: '/shop?category=industrial' },
-  { name: 'Business Supplies',     icon: Briefcase, href: '/shop?category=business' },
-  { name: 'Wholesale & Bulk',      icon: Layers,   href: '/bulk' },
-  { name: 'Clearance & Offers',    icon: Tag,      href: '/catalog?type=clearance' },
+  {
+    name: 'Electronics & Tech',
+    icon: Cpu,
+    href: '/shop?category=electronics',
+    bg: 'bg-blue-500/10 group-hover:bg-blue-500/20',
+    iconColor: 'text-blue-400',
+    hoverText: 'group-hover:text-blue-400',
+    border: 'border-blue-500/20 hover:border-blue-400/50',
+  },
+  {
+    name: 'Home & Garden',
+    icon: Home,
+    href: '/shop?category=home-garden',
+    bg: 'bg-emerald-500/10 group-hover:bg-emerald-500/20',
+    iconColor: 'text-emerald-400',
+    hoverText: 'group-hover:text-emerald-400',
+    border: 'border-emerald-500/20 hover:border-emerald-400/50',
+  },
+  {
+    name: 'Clothing & Fashion',
+    icon: Shirt,
+    href: '/shop?category=fashion',
+    bg: 'bg-pink-500/10 group-hover:bg-pink-500/20',
+    iconColor: 'text-pink-400',
+    hoverText: 'group-hover:text-pink-400',
+    border: 'border-pink-500/20 hover:border-pink-400/50',
+  },
+  {
+    name: 'Tools & DIY',
+    icon: Wrench,
+    href: '/shop?category=tools',
+    bg: 'bg-orange-500/10 group-hover:bg-orange-500/20',
+    iconColor: 'text-orange-400',
+    hoverText: 'group-hover:text-orange-400',
+    border: 'border-orange-500/20 hover:border-orange-400/50',
+  },
+  {
+    name: 'Automotive & Parts',
+    icon: Car,
+    href: '/shop?category=vehicles',
+    bg: 'bg-red-500/10 group-hover:bg-red-500/20',
+    iconColor: 'text-red-400',
+    hoverText: 'group-hover:text-red-400',
+    border: 'border-red-500/20 hover:border-red-400/50',
+  },
+  {
+    name: 'Agriculture & Farming',
+    icon: Wheat,
+    href: '/shop?category=agriculture',
+    bg: 'bg-lime-500/10 group-hover:bg-lime-500/20',
+    iconColor: 'text-lime-400',
+    hoverText: 'group-hover:text-lime-400',
+    border: 'border-lime-500/20 hover:border-lime-400/50',
+  },
+  {
+    name: 'Industrial Equipment',
+    icon: Factory,
+    href: '/shop?category=industrial',
+    bg: 'bg-slate-500/10 group-hover:bg-slate-500/20',
+    iconColor: 'text-slate-300',
+    hoverText: 'group-hover:text-slate-300',
+    border: 'border-slate-500/20 hover:border-slate-400/50',
+  },
+  {
+    name: 'Business Supplies',
+    icon: Briefcase,
+    href: '/shop?category=business',
+    bg: 'bg-indigo-500/10 group-hover:bg-indigo-500/20',
+    iconColor: 'text-indigo-400',
+    hoverText: 'group-hover:text-indigo-400',
+    border: 'border-indigo-500/20 hover:border-indigo-400/50',
+  },
+  {
+    name: 'Wholesale & Bulk',
+    icon: Layers,
+    href: '/bulk',
+    bg: 'bg-gold/10 group-hover:bg-gold/20',
+    iconColor: 'text-gold',
+    hoverText: 'group-hover:text-gold',
+    border: 'border-gold/20 hover:border-gold/50',
+  },
+  {
+    name: 'Clearance & Offers',
+    icon: Tag,
+    href: '/catalog?type=clearance',
+    bg: 'bg-yellow-500/10 group-hover:bg-yellow-500/20',
+    iconColor: 'text-yellow-400',
+    hoverText: 'group-hover:text-yellow-400',
+    border: 'border-yellow-500/20 hover:border-yellow-400/50',
+  },
+];
+
+// ── Marketplace stats strip ─────────────────────────────────────────────────
+const STATS = [
+  { icon: ShoppingBag, label: 'Multiple Categories', sub: 'Electronics to Agriculture' },
+  { icon: BadgeCheck,  label: 'Verified Sellers',    sub: 'Vetted UK businesses' },
+  { icon: Globe,       label: 'Nationwide Delivery', sub: 'Collections & drop-offs' },
+  { icon: TrendingUp,  label: 'New Listings Daily',  sub: 'Fresh stock every day' },
 ];
 
 // ── Section 6: 3 trust cards ────────────────────────────────────────────────
@@ -33,25 +122,40 @@ const TRUST_ITEMS = [
   {
     icon: Lock,
     title: 'Secure Payments',
-    description: 'Powered by Stripe. Every transaction is encrypted and protected.',
+    description: 'Powered by Stripe. Every transaction is encrypted and fully protected — buy and sell with confidence.',
   },
   {
     icon: BadgeCheck,
     title: 'Verified Sellers',
-    description: 'All sellers are verified before listing stock on the platform.',
+    description: 'All sellers are vetted and verified before listing on the platform, across every category.',
   },
   {
     icon: Truck,
-    title: 'UK Delivery',
-    description: 'Transport options available for pallets and bulk collections across the UK.',
+    title: 'UK Wide Delivery',
+    description: 'Flexible delivery and collection options available for orders of any size, anywhere in the UK.',
   },
 ];
 
 // ── Section 8: Seller 3-step flow ───────────────────────────────────────────
 const SELLER_STEPS = [
-  { icon: UserPlus, step: '1', title: 'Create seller account', description: 'Sign up free and complete your seller profile in minutes.' },
-  { icon: ListPlus, step: '2', title: 'List your stock',       description: 'Upload products, pallets and bulk lots with photos and pricing.' },
-  { icon: Wallet,   step: '3', title: 'Get paid automatically', description: 'Stripe handles payments. Funds are transferred to your account after each sale.' },
+  {
+    icon: UserPlus,
+    step: '1',
+    title: 'Create seller account',
+    description: 'Sign up free and complete your seller profile in minutes. Open to all UK businesses and individuals.',
+  },
+  {
+    icon: ListPlus,
+    step: '2',
+    title: 'List your products',
+    description: 'List anything — single products, clearance stock, wholesale lots, equipment, parts or machinery.',
+  },
+  {
+    icon: Wallet,
+    step: '3',
+    title: 'Get paid automatically',
+    description: 'Stripe handles payments. Funds are transferred directly to your account after each sale.',
+  },
 ];
 
 // Type alias for joined product rows from Supabase (before transforming storeSlug into seller)
@@ -110,7 +214,7 @@ export default function HomePage() {
       }
     };
 
-    // Fetch bulk deals: newest B2B listings
+    // Fetch latest deals: newest active listings across all types
     const fetchBulk = async () => {
       try {
         const { data } = await supabase
@@ -118,7 +222,6 @@ export default function HomePage() {
           .select(PRODUCT_QUERY_FIELDS)
           .eq('isActive', true)
           .eq('isApproved', true)
-          .in('type', ['pallet', 'lot', 'wholesale', 'clearance'])
           .order('createdAt', { ascending: false })
           .limit(8);
         if (data) setBulkDeals(transformProductRows(data as ProductRow[]));
@@ -139,18 +242,41 @@ export default function HomePage() {
       {/* ── Section 2: Hero Banner ─────────────────────────────────────────── */}
       <CinematicHero />
 
-      {/* ── Section 3: Categories ─────────────────────────────────────────── */}
-      <section className="py-10 md:py-12 bg-graphite/20 border-t border-white/5">
+      {/* ── Marketplace Stats Strip ───────────────────────────────────────── */}
+      <section className="bg-graphite/40 border-y border-white/8 py-5">
         <div className="container-cinematic">
-          <div className="flex items-center justify-between mb-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {STATS.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div key={stat.label} className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-premium-sm bg-gold/10 border border-gold/20 flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-4 h-4 text-gold" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-white leading-tight">{stat.label}</p>
+                    <p className="text-xs text-white/50 truncate">{stat.sub}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Section 3: Categories ─────────────────────────────────────────── */}
+      <section className="py-10 md:py-14 bg-jet border-t border-white/5">
+        <div className="container-cinematic">
+          <div className="flex items-center justify-between mb-7">
             <div>
               <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1 mb-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-gold" />
                 <span className="text-gold text-xs font-medium">Browse by Category</span>
               </div>
-              <h2 className="text-xl md:text-2xl font-bold text-white">What are you looking for?</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-white">What are you looking for?</h2>
+              <p className="text-white/50 text-sm mt-1">10 categories · Electronics to Agriculture</p>
             </div>
-            <Link to="/shop" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
+            <Link to="/shop" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1 flex-shrink-0">
               All Categories <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -163,34 +289,40 @@ export default function HomePage() {
                 <Link
                   key={cat.name}
                   to={cat.href}
-                  className="group flex flex-col items-center gap-3 p-4 md:p-5 rounded-premium-md bg-graphite/60 border border-gold/20 hover:border-gold/60 hover:bg-graphite/80 hover:-translate-y-1 transition-all duration-300 text-center"
+                  className={`group flex flex-col items-center gap-3 p-4 md:p-5 rounded-premium-md border transition-all duration-300 text-center bg-graphite/50 hover:bg-graphite/80 hover:-translate-y-1 ${cat.border}`}
                 >
-                  <div className="w-12 h-12 rounded-premium-sm bg-gold/15 flex items-center justify-center flex-shrink-0 group-hover:bg-gold/30 transition-colors">
-                    <Icon className="w-6 h-6 text-gold" />
+                  <div className={`w-12 h-12 rounded-premium-sm flex items-center justify-center flex-shrink-0 transition-colors ${cat.bg}`}>
+                    <Icon className={`w-6 h-6 ${cat.iconColor}`} />
                   </div>
-                  <span className="text-sm font-bold text-white group-hover:text-gold transition-colors leading-tight">{cat.name}</span>
+                  <span className={`text-sm font-bold text-white transition-colors duration-200 ${cat.hoverText} leading-tight`}>{cat.name}</span>
                 </Link>
               );
             })}
+          </div>
+
+          <div className="mt-6 text-center sm:hidden">
+            <Link to="/shop" className="btn-secondary inline-flex items-center gap-2 text-sm px-6 py-3">
+              View All Categories <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>
 
       {/* ── Section 4: Featured Products ──────────────────────────────────── */}
       {(dealsLoading || featuredProducts.length > 0) && (
-        <section className="py-10 md:py-12 bg-jet border-t border-white/5">
+        <section className="py-10 md:py-14 bg-graphite/20 border-t border-white/5">
           <div className="container-cinematic">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-7">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-premium-sm bg-gold/10 border border-gold/20">
+                <div className="p-2.5 rounded-premium-sm bg-gold/10 border border-gold/20">
                   <Flame className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <h2 className="text-xl md:text-2xl font-bold text-white">Featured Products</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold text-white">Featured Products</h2>
                   <p className="text-white/50 text-sm">Top picks from verified UK sellers</p>
                 </div>
               </div>
-              <Link to="/catalog" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
+              <Link to="/catalog" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1 flex-shrink-0">
                 View All <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -199,7 +331,7 @@ export default function HomePage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="animate-pulse">
-                    <div className="bg-graphite aspect-square rounded-premium-sm mb-2" />
+                    <div className="bg-graphite aspect-[3/2] rounded-premium-sm mb-2" />
                     <div className="bg-graphite h-4 rounded mb-1" />
                     <div className="bg-graphite h-4 rounded w-2/3" />
                   </div>
@@ -214,7 +346,7 @@ export default function HomePage() {
             )}
 
             <div className="mt-6 text-center sm:hidden">
-              <Link to="/catalog" className="btn-secondary inline-flex items-center gap-2 text-sm">
+              <Link to="/catalog" className="btn-secondary inline-flex items-center gap-2 text-sm px-6 py-3">
                 View All Listings <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -222,22 +354,22 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ── Section 5: Bulk / Pallet Deals (horizontal slider) ────────────── */}
+      {/* ── Section 5: Latest Deals (horizontal slider) ───────────────────── */}
       {(bulkLoading || bulkDeals.length > 0) && (
-        <section className="py-10 md:py-12 bg-graphite/25 border-t border-white/5">
+        <section className="py-10 md:py-14 bg-jet border-t border-white/5">
           <div className="container-cinematic">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-7">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-premium-sm bg-gold/10 border border-gold/20">
+                <div className="p-2.5 rounded-premium-sm bg-gold/10 border border-gold/20">
                   <Package className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <h2 className="text-xl md:text-2xl font-bold text-white">Bulk &amp; Pallet Deals</h2>
-                  <p className="text-white/50 text-sm">Wholesale pallets, lots &amp; clearance bundles</p>
+                  <h2 className="text-2xl md:text-3xl font-bold text-white">Latest Deals &amp; Offers</h2>
+                  <p className="text-white/50 text-sm">Fresh stock added daily — all categories</p>
                 </div>
               </div>
-              <Link to="/bulk" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
-                All Bulk Deals <ArrowRight className="w-4 h-4" />
+              <Link to="/catalog" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1 flex-shrink-0">
+                View All Deals <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
 
@@ -250,7 +382,7 @@ export default function HomePage() {
               {bulkLoading
                 ? Array.from({ length: 4 }).map((_, i) => (
                     <div key={i} className="animate-pulse flex-shrink-0 w-64 snap-start">
-                      <div className="bg-graphite aspect-[4/3] rounded-premium-sm mb-2" />
+                      <div className="bg-graphite aspect-[3/2] rounded-premium-sm mb-2" />
                       <div className="bg-graphite h-4 rounded mb-1" />
                       <div className="bg-graphite h-4 rounded w-2/3" />
                     </div>
@@ -264,9 +396,9 @@ export default function HomePage() {
             </div>
 
             <div className="mt-6 text-center">
-              <Link to="/bulk" className="btn-primary inline-flex items-center gap-2">
-                <Package className="w-5 h-5" />
-                Browse All Bulk &amp; Pallet Deals
+              <Link to="/catalog" className="btn-primary inline-flex items-center gap-2">
+                <LayoutGrid className="w-5 h-5" />
+                Browse All Listings
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -276,19 +408,19 @@ export default function HomePage() {
 
       {/* ── Trending Products ──────────────────────────────────────────────── */}
       {(trendingCount === null || trendingCount > 0) && (
-        <section className="py-10 md:py-12 bg-jet border-t border-white/5">
+        <section className="py-10 md:py-14 bg-graphite/20 border-t border-white/5">
           <div className="container-cinematic">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-7">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-premium-sm bg-orange-500/15 border border-orange-500/20">
+                <div className="p-2.5 rounded-premium-sm bg-orange-500/15 border border-orange-500/20">
                   <Flame className="w-5 h-5 text-orange-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl md:text-2xl font-bold text-white">Trending Stock</h2>
-                  <p className="text-white/50 text-sm">Most viewed this week</p>
+                  <h2 className="text-2xl md:text-3xl font-bold text-white">Trending Now</h2>
+                  <p className="text-white/50 text-sm">Most viewed listings this week</p>
                 </div>
               </div>
-              <Link to="/catalog?sort=trending" className="text-orange-400 text-sm font-semibold hover:underline hidden sm:flex items-center gap-1">
+              <Link to="/catalog?sort=trending" className="text-orange-400 text-sm font-semibold hover:underline hidden sm:flex items-center gap-1 flex-shrink-0">
                 View Trending <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -300,15 +432,19 @@ export default function HomePage() {
       )}
 
       {/* ── Section 6: Trust / Security ───────────────────────────────────── */}
-      <section className="py-10 md:py-12 bg-graphite/20 border-t border-white/5">
+      <section className="py-10 md:py-14 bg-jet border-t border-white/5">
         <div className="container-cinematic">
-          <div className="text-center mb-8">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1.5 mb-4">
+              <BadgeCheck className="w-4 h-4 text-gold" />
+              <span className="text-gold text-xs font-medium">Why Loadify Market</span>
+            </div>
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
               Trade with Confidence on{' '}
               <span className="text-gradient-gold">Loadify Market</span>
             </h2>
             <p className="text-white/60 text-base max-w-xl mx-auto">
-              Built for serious UK wholesale buyers and sellers.
+              Built for buyers and sellers across every product category — from retail to industrial.
             </p>
           </div>
 
@@ -316,11 +452,11 @@ export default function HomePage() {
             {TRUST_ITEMS.map((item) => {
               const Icon = item.icon;
               return (
-                <div key={item.title} className="card-glass text-center hover:scale-[1.03] transition-all duration-500 group">
-                  <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-4 group-hover:bg-gold/20 transition-colors">
+                <div key={item.title} className="card-glass text-center hover:scale-[1.02] transition-all duration-500 group">
+                  <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-5 group-hover:bg-gold/20 transition-colors">
                     <Icon className="h-7 w-7 text-gold" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                  <h3 className="text-lg font-bold text-white mb-3">{item.title}</h3>
                   <p className="text-white/60 text-sm leading-relaxed">{item.description}</p>
                 </div>
               );
@@ -330,7 +466,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Section 7: Transport / Logistics ──────────────────────────────── */}
-      <section className="py-10 md:py-12 bg-jet border-t border-white/5">
+      <section className="py-10 md:py-14 bg-graphite/25 border-t border-white/5">
         <div className="container-cinematic">
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1.5 mb-5">
@@ -338,11 +474,11 @@ export default function HomePage() {
               <span className="text-gold text-xs font-medium">UK Logistics Network</span>
             </div>
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-              Need transport for your stock?
+              Need delivery or transport support?
             </h2>
-            <p className="text-white/60 text-base mb-8">
-              Arrange delivery across the UK. We connect you with trusted pallet and bulk delivery
-              partners for collections and deliveries nationwide.
+            <p className="text-white/60 text-base mb-8 max-w-xl mx-auto">
+              Arrange logistics across the UK for products, stock, equipment or bulk items.
+              We connect you with trusted delivery and freight partners for collections and deliveries nationwide.
             </p>
             <Link to="/transport-quote" className="btn-primary inline-flex items-center gap-2">
               <Truck className="w-5 h-5" />
@@ -353,7 +489,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Section 8: Sell on Loadify — 3-step flow ──────────────────────── */}
-      <section className="py-10 md:py-12 bg-graphite/30 border-t border-white/5">
+      <section className="py-10 md:py-14 bg-jet border-t border-white/5">
         <div className="container-cinematic">
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1.5 mb-4">
@@ -364,7 +500,7 @@ export default function HomePage() {
               Start selling in three simple steps
             </h2>
             <p className="text-white/60 text-base max-w-xl mx-auto">
-              Join UK sellers listing anything from single products to pallets, automotive parts to farm equipment.
+              Join UK sellers listing anything from single retail products and clearance stock to wholesale lots, automotive parts and farm equipment.
             </p>
           </div>
 
@@ -397,17 +533,17 @@ export default function HomePage() {
       </section>
 
       {/* ── Section 9: Final CTA ───────────────────────────────────────────── */}
-      <section className="py-10 md:py-14 bg-jet border-t border-white/5 relative overflow-hidden">
+      <section className="py-10 md:py-16 bg-graphite/30 border-t border-white/5 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gold/5 rounded-full blur-[120px]" />
         </div>
         <div className="container-cinematic relative z-10">
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-2xl md:text-4xl font-bold text-white mb-5">
-              Start trading wholesale today
+              Buy &amp; sell anything on Loadify Market
             </h2>
             <p className="text-white/60 text-base mb-8">
-              Buy stock. Sell anything. Arrange delivery. All on Loadify Market.
+              Browse products, list your inventory and arrange delivery — all in one place.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/catalog" className="btn-primary inline-flex items-center gap-2">
