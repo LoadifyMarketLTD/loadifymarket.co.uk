@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
-import { lazy, Suspense, useState, useEffect, useRef } from 'react';
+import { lazy, Suspense, useState, useEffect, useMemo } from 'react';
 import {
   BadgeCheck, Lock, ArrowRight, Package, Layers,
   Flame, Truck, CheckCircle2, Store, Home, Wrench,
   Shirt, LayoutGrid, UserPlus, ListPlus, Wallet,
   Cpu, Car, Wheat, Factory, Briefcase, Tag,
-  ShoppingBag, TrendingUp, Globe,
+  ShieldCheck, Star,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 import { supabase } from '../lib/supabase';
@@ -110,14 +110,9 @@ const CATEGORIES = [
 ];
 
 // ── Marketplace stats strip ─────────────────────────────────────────────────
-const STATS = [
-  { icon: ShoppingBag, label: 'Multiple Categories', sub: 'Electronics to Agriculture' },
-  { icon: BadgeCheck,  label: 'Verified Sellers',    sub: 'Vetted UK businesses' },
-  { icon: Globe,       label: 'Nationwide Delivery', sub: 'Collections & drop-offs' },
-  { icon: TrendingUp,  label: 'New Listings Daily',  sub: 'Fresh stock every day' },
-];
+// (Removed — covered by Trust/Benefits section)
 
-// ── Section 6: 3 trust cards ────────────────────────────────────────────────
+// ── Platform trust benefits ─────────────────────────────────────────────────
 const TRUST_ITEMS = [
   {
     icon: Lock,
@@ -133,6 +128,11 @@ const TRUST_ITEMS = [
     icon: Truck,
     title: 'UK Wide Delivery',
     description: 'Flexible delivery and collection options available for orders of any size, anywhere in the UK.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Buyer Protection',
+    description: 'Every order is covered by our buyer protection policy. Shop with total confidence.',
   },
 ];
 
@@ -158,8 +158,25 @@ const SELLER_STEPS = [
   },
 ];
 
-// Type alias for joined product rows from Supabase (before transforming storeSlug into seller)
+// ── Representative images for empty state ────────────────────────────────────
+const WAREHOUSE_IMG  = 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=1200&q=70&auto=format&fit=crop&fm=webp';
+const PALLET_IMG     = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=70&auto=format&fit=crop&fm=webp';
+const LOGISTICS_IMG  = 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=1400&q=70&auto=format&fit=crop&fm=webp';
+
+// Placeholder cards shown in the product grid when no real listings exist yet
+const PLACEHOLDER_LISTINGS = [
+  { id: 'ph-1', title: 'Electronics Pallet — Mixed Stock',    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ph-2', title: 'Clearance Clothing — Wholesale Lot',  image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ph-3', title: 'Tools & DIY — Trade Bundle',           image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ph-4', title: 'Industrial Equipment — End of Line',   image: 'https://images.unsplash.com/photo-1565043589221-1a6fd9ae45c7?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ph-5', title: 'Automotive Parts — Trade Lot',         image: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&q=65&auto=format&fit=crop' },
+];
+
+// ── Supabase query helpers ──────────────────────────────────────────────────
 type ProductRow = Product & { store?: { storeSlug?: string } | null };
+
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(price);
 
 // Helper to transform joined Supabase product rows into Product objects
 function transformProductRows(data: ProductRow[]) {
@@ -188,75 +205,79 @@ const PRODUCT_QUERY_FIELDS = `
 `;
 
 export default function HomePage() {
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [bulkDeals, setBulkDeals] = useState<Product[]>([]);
-  const [dealsLoading, setDealsLoading] = useState(true);
-  const [bulkLoading, setBulkLoading] = useState(true);
+  const [featuredProduct, setFeaturedProduct] = useState<Product | null>(null);
+  const [gridProducts, setGridProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [trendingCount, setTrendingCount] = useState<number | null>(null);
-  const bulkSliderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Fetch featured products: most-viewed active products
-    const fetchFeatured = async () => {
+    const fetchAll = async () => {
       try {
+        // Fetch top 6 active/approved products by views
         const { data } = await supabase
           .from('products')
           .select(PRODUCT_QUERY_FIELDS)
           .eq('isActive', true)
           .eq('isApproved', true)
           .order('views', { ascending: false })
-          .limit(4);
-        if (data) setFeaturedProducts(transformProductRows(data as ProductRow[]));
+          .limit(6);
+
+        if (data && data.length > 0) {
+          const transformed = transformProductRows(data as ProductRow[]);
+          // First product → Featured Deal banner; rest → product grid
+          setFeaturedProduct(transformed[0]);
+          setGridProducts(transformed.slice(1));
+        }
       } catch {
-        // silently swallow — section will stay empty / hidden
+        // silently swallow — sections will show placeholder content
       } finally {
-        setDealsLoading(false);
+        setLoading(false);
       }
     };
-
-    // Fetch latest deals: newest active listings across all types
-    const fetchBulk = async () => {
-      try {
-        const { data } = await supabase
-          .from('products')
-          .select(PRODUCT_QUERY_FIELDS)
-          .eq('isActive', true)
-          .eq('isApproved', true)
-          .order('createdAt', { ascending: false })
-          .limit(8);
-        if (data) setBulkDeals(transformProductRows(data as ProductRow[]));
-      } catch {
-        // silently swallow
-      } finally {
-        setBulkLoading(false);
-      }
-    };
-
-    fetchFeatured();
-    fetchBulk();
+    fetchAll();
   }, []);
+
+  // Memoize so the array reference is stable — avoids re-triggering TrendingProducts' useEffect
+  const allShownIds = useMemo(
+    () => [
+      ...(featuredProduct ? [featuredProduct.id] : []),
+      ...gridProducts.map((p) => p.id),
+    ],
+    [featuredProduct, gridProducts],
+  );
 
   return (
     <div className="bg-jet">
 
-      {/* ── Section 2: Hero Banner ─────────────────────────────────────────── */}
+      {/* ═══ SECTION 1 · HERO ══════════════════════════════════════════════ */}
       <CinematicHero />
 
-      {/* ── Marketplace Stats Strip ───────────────────────────────────────── */}
-      <section className="bg-graphite/40 border-y border-white/8 py-5">
+      {/* ═══ SECTION 2 · TRUST / PLATFORM BENEFITS ════════════════════════ */}
+      <section className="py-10 md:py-12 bg-graphite/30 border-t border-white/5">
         <div className="container-cinematic">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            {STATS.map((stat) => {
-              const Icon = stat.icon;
+          <div className="text-center mb-7">
+            <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1.5 mb-3">
+              <BadgeCheck className="w-4 h-4 text-gold" />
+              <span className="text-gold text-xs font-medium">Why Loadify Market</span>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+              Trade with Confidence on{' '}
+              <span className="text-gradient-gold">Loadify Market</span>
+            </h2>
+            <p className="text-white/55 text-sm max-w-xl mx-auto">
+              Built for buyers and sellers across every product category — from retail to industrial.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {TRUST_ITEMS.map((item) => {
+              const Icon = item.icon;
               return (
-                <div key={stat.label} className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-premium-sm bg-gold/10 border border-gold/20 flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-4 h-4 text-gold" />
+                <div key={item.title} className="card-glass text-center p-5 hover:scale-[1.02] transition-all duration-300 group">
+                  <div className="inline-flex items-center justify-center w-12 h-12 bg-gold/10 rounded-premium-sm mb-3 group-hover:bg-gold/20 transition-colors">
+                    <Icon className="h-6 w-6 text-gold" />
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-white leading-tight">{stat.label}</p>
-                    <p className="text-xs text-white/50 truncate">{stat.sub}</p>
-                  </div>
+                  <h3 className="text-sm font-bold text-white mb-1">{item.title}</h3>
+                  <p className="text-white/50 text-xs leading-relaxed hidden md:block">{item.description}</p>
                 </div>
               );
             })}
@@ -264,153 +285,189 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Section 3: Categories ─────────────────────────────────────────── */}
-      <section className="py-10 md:py-14 bg-jet border-t border-white/5">
+      {/* ═══ SECTION 3 · FEATURED DEAL ════════════════════════════════════ */}
+      <section className="py-10 md:py-12 bg-jet border-t border-white/5">
         <div className="container-cinematic">
-          <div className="flex items-center justify-between mb-7">
-            <div>
-              <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1 mb-2">
-                <CheckCircle2 className="w-3.5 h-3.5 text-gold" />
-                <span className="text-gold text-xs font-medium">Browse by Category</span>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-premium-sm bg-gold/10 border border-gold/20">
+                <Star className="w-5 h-5 text-gold" />
               </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-white">What are you looking for?</h2>
-              <p className="text-white/50 text-sm mt-1">10 categories · Electronics to Agriculture</p>
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-white">Featured Deal</h2>
+                <p className="text-white/50 text-sm">Handpicked by our team</p>
+              </div>
             </div>
-            <Link to="/shop" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1 flex-shrink-0">
-              All Categories <ArrowRight className="w-4 h-4" />
+            <Link to="/catalog" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1 flex-shrink-0">
+              View All <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 
-          {/* 10 categories — 2-col mobile, 3-col tablet, 5-col desktop */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-            {CATEGORIES.map((cat) => {
-              const Icon = cat.icon;
-              return (
-                <Link
-                  key={cat.name}
-                  to={cat.href}
-                  className={`group flex flex-col items-center gap-3 p-4 md:p-5 rounded-premium-md border transition-all duration-300 text-center bg-graphite/50 hover:bg-graphite/80 hover:-translate-y-1 ${cat.border}`}
-                >
-                  <div className={`w-12 h-12 rounded-premium-sm flex items-center justify-center flex-shrink-0 transition-colors ${cat.bg}`}>
-                    <Icon className={`w-6 h-6 ${cat.iconColor}`} />
-                  </div>
-                  <span className={`text-sm font-bold text-white transition-colors duration-200 ${cat.hoverText} leading-tight`}>{cat.name}</span>
-                </Link>
-              );
-            })}
-          </div>
-
-          <div className="mt-6 text-center sm:hidden">
-            <Link to="/shop" className="btn-secondary inline-flex items-center gap-2 text-sm px-6 py-3">
-              View All Categories <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Section 4: Featured Products ──────────────────────────────────── */}
-      {(dealsLoading || featuredProducts.length > 0) && (
-        <section className="py-10 md:py-14 bg-graphite/20 border-t border-white/5">
-          <div className="container-cinematic">
-            <div className="flex items-center justify-between mb-7">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-premium-sm bg-gold/10 border border-gold/20">
-                  <Flame className="w-5 h-5 text-gold" />
-                </div>
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-white">Featured Products</h2>
-                  <p className="text-white/50 text-sm">Top picks from verified UK sellers</p>
-                </div>
-              </div>
-              <Link to="/catalog" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1 flex-shrink-0">
-                View All <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-            {dealsLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="bg-graphite aspect-[3/2] rounded-premium-sm mb-2" />
-                    <div className="bg-graphite h-4 rounded mb-1" />
-                    <div className="bg-graphite h-4 rounded w-2/3" />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {featuredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            )}
-
-            <div className="mt-6 text-center sm:hidden">
-              <Link to="/catalog" className="btn-secondary inline-flex items-center gap-2 text-sm px-6 py-3">
-                View All Listings <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Section 5: Latest Deals (horizontal slider) ───────────────────── */}
-      {(bulkLoading || bulkDeals.length > 0) && (
-        <section className="py-10 md:py-14 bg-jet border-t border-white/5">
-          <div className="container-cinematic">
-            <div className="flex items-center justify-between mb-7">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-premium-sm bg-gold/10 border border-gold/20">
-                  <Package className="w-5 h-5 text-gold" />
-                </div>
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-white">Latest Deals &amp; Offers</h2>
-                  <p className="text-white/50 text-sm">Fresh stock added daily — all categories</p>
-                </div>
-              </div>
-              <Link to="/catalog" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1 flex-shrink-0">
-                View All Deals <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-            {/* Horizontal slider */}
-            <div
-              ref={bulkSliderRef}
-              className="flex gap-4 overflow-x-auto pb-3 scroll-smooth snap-x snap-mandatory"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          {loading ? (
+            <div className="animate-pulse rounded-premium-md overflow-hidden bg-graphite/50 w-full h-72 md:h-80" />
+          ) : featuredProduct ? (
+            /* Real product — wide featured card */
+            <Link
+              to={`/product/${featuredProduct.id}`}
+              className="group block rounded-premium-md overflow-hidden border border-white/10 hover:border-gold/30 transition-all duration-300 hover:shadow-cinematic-gold"
             >
-              {bulkLoading
-                ? Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="animate-pulse flex-shrink-0 w-64 snap-start">
-                      <div className="bg-graphite aspect-[3/2] rounded-premium-sm mb-2" />
-                      <div className="bg-graphite h-4 rounded mb-1" />
-                      <div className="bg-graphite h-4 rounded w-2/3" />
-                    </div>
-                  ))
-                : bulkDeals.map((product) => (
-                    <div key={product.id} className="flex-shrink-0 w-64 snap-start">
-                      <ProductCard product={product} />
-                    </div>
-                  ))
-              }
+              <div className="relative flex flex-col md:flex-row min-h-[280px] md:min-h-[340px]">
+                <div className="md:w-1/2 relative overflow-hidden bg-graphite/50 min-h-[200px] md:min-h-0">
+                  {featuredProduct.images?.[0] ? (
+                    <img
+                      src={featuredProduct.images[0]}
+                      alt={featuredProduct.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <img
+                      src={WAREHOUSE_IMG}
+                      alt="Featured listing"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-jet/80 hidden md:block" />
+                </div>
+                <div className="md:w-1/2 flex flex-col justify-center p-6 md:p-10 bg-graphite/30 md:bg-transparent">
+                  <div className="inline-flex items-center gap-2 bg-gold/15 border border-gold/30 rounded-full px-3 py-1 mb-4 w-fit">
+                    <Star className="w-3.5 h-3.5 text-gold" />
+                    <span className="text-gold text-xs font-semibold">Featured Listing</span>
+                  </div>
+                  <h3 className="text-xl md:text-2xl font-bold text-white mb-3 leading-tight line-clamp-3">
+                    {featuredProduct.title}
+                  </h3>
+                  {featuredProduct.description && (
+                    <p className="text-white/60 text-sm mb-4 line-clamp-2 hidden sm:block">
+                      {featuredProduct.description}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-4 mb-6">
+                    <span className="text-2xl md:text-3xl font-bold text-gold">
+                      {formatPrice(featuredProduct.price)}
+                    </span>
+                    {featuredProduct.stockQuantity != null && featuredProduct.stockQuantity > 0 && (
+                      <span className="text-xs text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-1 rounded-full">
+                        In Stock
+                      </span>
+                    )}
+                  </div>
+                  <div className="inline-flex items-center gap-2 bg-gold text-jet font-bold text-sm px-6 py-3 rounded-premium-sm w-fit group-hover:bg-gold/90 transition-colors">
+                    View Deal <ArrowRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ) : (
+            /* Placeholder — no live listings yet */
+            <div className="relative rounded-premium-md overflow-hidden border border-white/10 min-h-[280px] md:min-h-[340px] flex flex-col md:flex-row">
+              <div className="md:w-1/2 relative overflow-hidden min-h-[200px] md:min-h-0">
+                <img src={PALLET_IMG} alt="Pallet warehouse stock" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent to-jet/90 hidden md:block" />
+                <div className="absolute inset-0 bg-gradient-to-t from-jet/80 to-transparent md:hidden" />
+              </div>
+              <div className="md:w-1/2 flex flex-col justify-center p-6 md:p-10 bg-graphite/30">
+                <div className="inline-flex items-center gap-2 bg-gold/15 border border-gold/30 rounded-full px-3 py-1 mb-4 w-fit">
+                  <Star className="w-3.5 h-3.5 text-gold" />
+                  <span className="text-gold text-xs font-semibold">Be the First</span>
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold text-white mb-3">
+                  Premium Deals Coming Soon
+                </h3>
+                <p className="text-white/60 text-sm mb-6 max-w-sm">
+                  We are onboarding our first verified UK sellers. Premium wholesale lots, clearance pallets and trade stock will appear here.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Link to="/catalog" className="btn-primary inline-flex items-center gap-2 text-sm">
+                    <LayoutGrid className="w-4 h-4" /> Browse Listings
+                  </Link>
+                  <Link to="/register?type=seller" className="btn-secondary inline-flex items-center gap-2 text-sm">
+                    <Store className="w-4 h-4" /> List Your Stock
+                  </Link>
+                </div>
+              </div>
             </div>
+          )}
+        </div>
+      </section>
 
-            <div className="mt-6 text-center">
-              <Link to="/catalog" className="btn-primary inline-flex items-center gap-2">
-                <LayoutGrid className="w-5 h-5" />
-                Browse All Listings
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+      {/* ═══ SECTION 4 · FEATURED PRODUCTS ════════════════════════════════ */}
+      <section className="py-10 md:py-12 bg-graphite/20 border-t border-white/5">
+        <div className="container-cinematic">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-premium-sm bg-gold/10 border border-gold/20">
+                <Flame className="w-5 h-5 text-gold" />
+              </div>
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-white">Featured Products</h2>
+                <p className="text-white/50 text-sm">Top picks from verified UK sellers</p>
+              </div>
             </div>
+            <Link to="/catalog" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1 flex-shrink-0">
+              View All <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
-        </section>
-      )}
 
-      {/* ── Trending Products ──────────────────────────────────────────────── */}
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-graphite aspect-[3/2] rounded-premium-sm mb-2" />
+                  <div className="bg-graphite h-4 rounded mb-1" />
+                  <div className="bg-graphite h-4 rounded w-2/3" />
+                </div>
+              ))}
+            </div>
+          ) : gridProducts.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4">
+              {gridProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            /* Placeholder grid when no live products yet */
+            <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4">
+              {PLACEHOLDER_LISTINGS.map((item) => (
+                <Link
+                  key={item.id}
+                  to="/catalog"
+                  className="group block rounded-premium-md overflow-hidden border border-white/10 hover:border-gold/30 transition-all duration-300 bg-graphite/40"
+                >
+                  <div className="aspect-[4/3] overflow-hidden relative">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-jet/70 to-transparent" />
+                    <div className="absolute bottom-2 left-2 text-xs font-semibold text-gold bg-jet/80 px-2 py-0.5 rounded-full border border-gold/20">
+                      Coming Soon
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-white text-xs font-medium leading-tight line-clamp-2">{item.title}</p>
+                    <p className="text-white/40 text-xs mt-1">Register to see pricing</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-6 text-center">
+            <Link to="/catalog" className="btn-primary inline-flex items-center gap-2">
+              <LayoutGrid className="w-5 h-5" />
+              Browse All Listings
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Trending — only shown when distinct trending products exist */}
       {(trendingCount === null || trendingCount > 0) && (
-        <section className="py-10 md:py-14 bg-graphite/20 border-t border-white/5">
+        <section className="py-10 md:py-12 bg-jet border-t border-white/5">
           <div className="container-cinematic">
-            <div className="flex items-center justify-between mb-7">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-premium-sm bg-orange-500/15 border border-orange-500/20">
                   <Flame className="w-5 h-5 text-orange-400" />
@@ -424,87 +481,116 @@ export default function HomePage() {
                 View Trending <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
-            <Suspense fallback={<div className="grid grid-cols-2 md:grid-cols-4 gap-4 min-h-[220px]" />}>
-              <TrendingProducts maxProducts={4} days={7} mode="trending" onDataLoaded={setTrendingCount} />
+            <Suspense fallback={<div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4 min-h-[200px]" />}>
+              <TrendingProducts
+                maxProducts={5}
+                days={7}
+                mode="trending"
+                onDataLoaded={setTrendingCount}
+                excludeIds={allShownIds}
+              />
             </Suspense>
           </div>
         </section>
       )}
 
-      {/* ── Section 6: Trust / Security ───────────────────────────────────── */}
-      <section className="py-10 md:py-14 bg-jet border-t border-white/5">
-        <div className="container-cinematic">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1.5 mb-4">
-              <BadgeCheck className="w-4 h-4 text-gold" />
-              <span className="text-gold text-xs font-medium">Why Loadify Market</span>
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-              Trade with Confidence on{' '}
-              <span className="text-gradient-gold">Loadify Market</span>
-            </h2>
-            <p className="text-white/60 text-base max-w-xl mx-auto">
-              Built for buyers and sellers across every product category — from retail to industrial.
-            </p>
+      {/* ═══ SECTION 5 · TRANSPORT SUPPORT ════════════════════════════════ */}
+      <section className="border-t border-white/5 overflow-hidden">
+        <div className="relative min-h-[280px] md:min-h-[320px] flex items-center">
+          <div className="absolute inset-0">
+            <img
+              src={LOGISTICS_IMG}
+              alt="UK logistics and delivery"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(13,17,23,0.93) 0%, rgba(13,17,23,0.75) 60%, rgba(13,17,23,0.88) 100%)' }} />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TRUST_ITEMS.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.title} className="card-glass text-center hover:scale-[1.02] transition-all duration-500 group">
-                  <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-5 group-hover:bg-gold/20 transition-colors">
-                    <Icon className="h-7 w-7 text-gold" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white mb-3">{item.title}</h3>
-                  <p className="text-white/60 text-sm leading-relaxed">{item.description}</p>
-                </div>
-              );
-            })}
+          <div className="container-cinematic relative z-10 py-12 md:py-16">
+            <div className="max-w-xl">
+              <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1.5 mb-4">
+                <Truck className="w-4 h-4 text-gold" />
+                <span className="text-gold text-xs font-medium">UK Logistics Network</span>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+                Need delivery or transport support?
+              </h2>
+              <p className="text-white/65 text-sm md:text-base mb-6 max-w-lg">
+                Arrange logistics across the UK for products, stock, equipment or bulk items.
+                We connect you with trusted freight partners for collections and deliveries nationwide.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link to="/transport-quote" className="btn-primary inline-flex items-center gap-2">
+                  <Truck className="w-5 h-5" />
+                  Request Transport Quote
+                </Link>
+                <Link to="/bulk" className="btn-secondary inline-flex items-center gap-2">
+                  <Package className="w-5 h-5" />
+                  Wholesale &amp; Bulk
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── Section 7: Transport / Logistics ──────────────────────────────── */}
-      <section className="py-10 md:py-14 bg-graphite/25 border-t border-white/5">
+      {/* ═══ SECTION 6 · CATEGORIES ════════════════════════════════════════ */}
+      <section className="py-10 md:py-14 bg-jet border-t border-white/5">
         <div className="container-cinematic">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1.5 mb-5">
-              <Truck className="w-4 h-4 text-gold" />
-              <span className="text-gold text-xs font-medium">UK Logistics Network</span>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1 mb-2">
+                <CheckCircle2 className="w-3.5 h-3.5 text-gold" />
+                <span className="text-gold text-xs font-medium">Browse by Category</span>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-white">What are you looking for?</h2>
+              <p className="text-white/50 text-sm mt-1">10 categories · Electronics to Agriculture</p>
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-              Need delivery or transport support?
-            </h2>
-            <p className="text-white/60 text-base mb-8 max-w-xl mx-auto">
-              Arrange logistics across the UK for products, stock, equipment or bulk items.
-              We connect you with trusted delivery and freight partners for collections and deliveries nationwide.
-            </p>
-            <Link to="/transport-quote" className="btn-primary inline-flex items-center gap-2">
-              <Truck className="w-5 h-5" />
-              Request Transport Quote
+            <Link to="/shop" className="text-gold text-sm font-semibold hover:underline hidden sm:flex items-center gap-1 flex-shrink-0">
+              All Categories <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          {/* 2-col mobile · 3-col tablet · 5-col desktop */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+            {CATEGORIES.map((cat) => {
+              const Icon = cat.icon;
+              return (
+                <Link
+                  key={cat.name}
+                  to={cat.href}
+                  className={`group flex flex-col items-center gap-3 p-4 md:p-5 rounded-premium-md border transition-all duration-300 text-center bg-graphite/50 hover:bg-graphite/80 hover:-translate-y-1 ${cat.border}`}
+                >
+                  <div className={`w-12 h-12 rounded-premium-sm flex items-center justify-center flex-shrink-0 transition-colors ${cat.bg}`}>
+                    <Icon className={`w-6 h-6 ${cat.iconColor}`} />
+                  </div>
+                  <span className="text-sm font-bold text-white leading-tight">{cat.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+          <div className="mt-5 text-center sm:hidden">
+            <Link to="/shop" className="btn-secondary inline-flex items-center gap-2 text-sm px-6 py-3">
+              View All Categories <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── Section 8: Sell on Loadify — 3-step flow ──────────────────────── */}
-      <section className="py-10 md:py-14 bg-jet border-t border-white/5">
+      {/* ═══ SECTION 7 · START SELLING ══════════════════════════════════════ */}
+      <section className="py-10 md:py-14 bg-graphite/20 border-t border-white/5">
         <div className="container-cinematic">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1.5 mb-4">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/20 rounded-full px-3 py-1.5 mb-3">
               <Store className="w-4 h-4 text-gold" />
               <span className="text-gold text-xs font-medium">Sell on Loadify Market</span>
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
               Start selling in three simple steps
             </h2>
-            <p className="text-white/60 text-base max-w-xl mx-auto">
+            <p className="text-white/55 text-sm max-w-xl mx-auto">
               Join UK sellers listing anything from single retail products and clearance stock to wholesale lots, automotive parts and farm equipment.
             </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
             {SELLER_STEPS.map((item) => {
               const Icon = item.icon;
               return (
@@ -515,13 +601,12 @@ export default function HomePage() {
                   <div className="absolute top-4 right-4 w-7 h-7 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center">
                     <span className="text-gold text-xs font-bold">{item.step}</span>
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
-                  <p className="text-white/60 text-sm leading-relaxed">{item.description}</p>
+                  <h3 className="text-base font-bold text-white mb-2">{item.title}</h3>
+                  <p className="text-white/55 text-sm leading-relaxed">{item.description}</p>
                 </div>
               );
             })}
           </div>
-
           <div className="text-center">
             <Link to="/register?type=seller" className="btn-primary inline-flex items-center gap-2">
               <Store className="w-5 h-5" />
@@ -532,17 +617,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Section 9: Final CTA ───────────────────────────────────────────── */}
-      <section className="py-10 md:py-16 bg-graphite/30 border-t border-white/5 relative overflow-hidden">
+      {/* ═══ SECTION 8 · FINAL CTA (pre-footer) ═══════════════════════════ */}
+      <section className="py-10 md:py-14 bg-jet border-t border-white/5 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gold/5 rounded-full blur-[120px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gold/4 rounded-full blur-[100px]" />
         </div>
         <div className="container-cinematic relative z-10">
           <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-2xl md:text-4xl font-bold text-white mb-5">
+            <h2 className="text-2xl md:text-4xl font-bold text-white mb-4">
               Buy &amp; sell anything on Loadify Market
             </h2>
-            <p className="text-white/60 text-base mb-8">
+            <p className="text-white/55 text-base mb-7">
               Browse products, list your inventory and arrange delivery — all in one place.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

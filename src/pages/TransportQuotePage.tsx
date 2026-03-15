@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, type UseFormRegisterReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -20,24 +20,53 @@ import {
   Mail,
   User,
   ExternalLink,
+  Clock,
+  Shield,
+  Upload,
+  Settings2,
 } from 'lucide-react';
 import { buildXDriveAppUrl } from '../lib/transportQuote';
 import type { DeliveryRequest, DeliveryRequestStatus } from '../types';
 
+const YES_NO = ['', 'Yes', 'No'] as const;
+
 const transportQuoteSchema = z.object({
+  // Section 1 — Contact
   fullName: z.string().min(2, 'Full name is required'),
   email: z.string().email('Enter a valid email address'),
   phone: z.string().min(7, 'Enter a valid phone number'),
   companyName: z.string().optional(),
+
+  // Section 2 — Collection & Delivery
   pickupPostcode: z.string().min(5, 'Enter a valid pickup postcode'),
   dropoffPostcode: z.string().min(5, 'Enter a valid dropoff postcode'),
+  collectionDate: z.string().min(1, 'Select a collection date'),
+  preferredCollectionTime: z.string().optional(),
+  preferredDeliveryTime: z.string().optional(),
+
+  // Section 3 — Cargo Details
   itemType: z.string().min(2, 'Describe the item type'),
   palletCount: z.string().min(1, 'Enter number of pallets or items'),
   weight: z.string().optional(),
   dimensions: z.string().optional(),
-  collectionDate: z.string().min(1, 'Select a collection date'),
+  vehicleType: z.string().optional(),
+
+  // Section 4 — Operational / Handling
+  tailLift: z.string().optional(),
+  forkliftPickup: z.string().optional(),
+  forkliftDropoff: z.string().optional(),
+  fragile: z.string().optional(),
+  stackable: z.string().optional(),
+  goodsReadyNow: z.string().optional(),
+  accessRestrictions: z.string().optional(),
+
+  // Section 5 — Additional
   deliveryNotes: z.string().optional(),
   listingReference: z.string().optional(),
+
+  // Section 6 — Consent
+  gdprConsent: z.boolean().refine((v) => v === true, 'You must agree to the privacy policy'),
+  quoteTerms: z.boolean().refine((v) => v === true, 'You must acknowledge the quote terms'),
 });
 
 type TransportQuoteFormData = z.infer<typeof transportQuoteSchema>;
@@ -56,11 +85,69 @@ function saveDeliveryRequest(req: DeliveryRequest): void {
   }
 }
 
+const TIME_WINDOWS = [
+  '',
+  'AM (07:00–12:00)',
+  'PM (12:00–17:00)',
+  'Early Morning (07:00–09:00)',
+  'Morning (09:00–12:00)',
+  'Afternoon (12:00–15:00)',
+  'Late Afternoon (15:00–18:00)',
+  'Evening (18:00–21:00)',
+  'Flexible / Any Time',
+];
+
+const VEHICLE_TYPES = [
+  '',
+  'Small Van (up to 1.5t)',
+  'Luton Van (up to 3.5t)',
+  '7.5t Rigid',
+  '18t Rigid',
+  'Artic / 44t',
+  'Flatbed',
+  'Temperature Controlled',
+  'Not Sure — Please Advise',
+];
+
+function YesNoSelect({
+  id,
+  label,
+  registration,
+  optional = true,
+}: {
+  id: string;
+  label: string;
+  registration: UseFormRegisterReturn;
+  optional?: boolean;
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="block text-xs font-medium text-white/60 mb-1">
+        {label}{' '}
+        {optional && <span className="text-white/30 font-normal">(optional)</span>}
+      </label>
+      <select
+        id={id}
+        {...registration}
+        className="input-field-sm w-full"
+      >
+        {YES_NO.map((v) => (
+          <option key={v} value={v} className="bg-graphite text-white">
+            {v === '' ? '— Select —' : v}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export default function TransportQuotePage() {
   const [searchParams] = useSearchParams();
   const [submitState, setSubmitState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [savedRequest, setSavedRequest] = useState<DeliveryRequest | null>(null);
   const [emailSent, setEmailSent] = useState(true);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Pre-fill data from query params
   const listingId = searchParams.get('listing') || '';
@@ -92,16 +179,16 @@ export default function TransportQuotePage() {
       listingReference: listingId
         ? `${listingId}${listingTitle ? ` — ${listingTitle}` : ''}`
         : '',
+      gdprConsent: false,
+      quoteTerms: false,
     },
   });
 
-  // Today's date for min date on collection date input
   const today = new Date().toISOString().split('T')[0];
 
   const onSubmit = async (data: TransportQuoteFormData) => {
     setSubmitState('loading');
     try {
-      // Build the delivery request record
       const requestId = `dr-${crypto.randomUUID()}`;
       const newRequest: DeliveryRequest = {
         id: requestId,
@@ -123,9 +210,10 @@ export default function TransportQuotePage() {
         createdAt: new Date().toISOString(),
       };
 
-      // Send via Netlify email function
       const emailPayload = {
-        to: (import.meta.env.VITE_SUPPORT_EMAIL as string | undefined) || 'loadifymarket.co.uk@gmail.com',
+        to:
+          (import.meta.env.VITE_SUPPORT_EMAIL as string | undefined) ||
+          'loadifymarket.co.uk@gmail.com',
         subject: `Transport Quote Request — ${newRequest.listingTitle || 'Loadify Market'}`,
         template: 'transport_quote_request',
         data: {
@@ -136,11 +224,21 @@ export default function TransportQuotePage() {
           companyName: data.companyName || '',
           pickupPostcode: data.pickupPostcode,
           dropoffPostcode: data.dropoffPostcode,
+          collectionDate: data.collectionDate,
+          preferredCollectionTime: data.preferredCollectionTime || '',
+          preferredDeliveryTime: data.preferredDeliveryTime || '',
           itemType: data.itemType,
           palletCount: data.palletCount,
           weight: data.weight || '',
           dimensions: data.dimensions || '',
-          collectionDate: data.collectionDate,
+          vehicleType: data.vehicleType || '',
+          tailLift: data.tailLift || '',
+          forkliftPickup: data.forkliftPickup || '',
+          forkliftDropoff: data.forkliftDropoff || '',
+          fragile: data.fragile || '',
+          stackable: data.stackable || '',
+          goodsReadyNow: data.goodsReadyNow || '',
+          accessRestrictions: data.accessRestrictions || '',
           deliveryNotes: data.deliveryNotes || '',
           listingReference: data.listingReference || '',
           listingId,
@@ -160,13 +258,10 @@ export default function TransportQuotePage() {
       });
 
       if (!resp.ok) {
-        // Non-OK response: request is persisted locally, but notify the user
-        // in the success screen that the email notification may not have arrived.
         console.warn('Transport email function responded with', resp.status);
         setEmailSent(false);
       }
 
-      // Persist to localStorage so the seller dashboard can read it
       saveDeliveryRequest(newRequest);
       setSavedRequest(newRequest);
       setSubmitState('success');
@@ -176,12 +271,10 @@ export default function TransportQuotePage() {
     }
   };
 
-  // Scroll to top on mount
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Build XDrive app deep-link (used in success state)
   const xdriveDeepLink = savedRequest
     ? buildXDriveAppUrl({
         source: 'loadify-market',
@@ -198,13 +291,13 @@ export default function TransportQuotePage() {
     : buildXDriveAppUrl({ source: 'loadify-market' });
 
   return (
-    <div className="bg-jet min-h-screen pt-24">
+    <div className="bg-jet min-h-screen pt-20">
       {/* Breadcrumb */}
       <div className="bg-graphite/30">
-        <div className="container-cinematic py-4">
+        <div className="container-cinematic py-3">
           <Link
             to="/"
-            className="text-white/60 hover:text-gold transition-colors flex items-center gap-2 text-sm"
+            className="text-white/60 hover:text-gold transition-colors flex items-center gap-1.5 text-sm"
           >
             <ChevronLeft className="w-4 h-4" />
             Back to Marketplace
@@ -212,38 +305,37 @@ export default function TransportQuotePage() {
         </div>
       </div>
 
-      <div className="container-cinematic py-12">
-        {/* Page Header */}
-        <div className="max-w-3xl mx-auto mb-10 text-center">
-          <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/30 rounded-full px-4 py-2 mb-6">
-            <Truck className="w-4 h-4 text-gold" />
-            <span className="text-gold text-sm font-medium">
+      <div className="container-cinematic py-6">
+        {/* Page Header — compact */}
+        <div className="max-w-4xl mx-auto mb-5 text-center">
+          <div className="inline-flex items-center gap-2 bg-gold/10 border border-gold/30 rounded-full px-3 py-1.5 mb-3">
+            <Truck className="w-3.5 h-3.5 text-gold" />
+            <span className="text-gold text-xs font-medium">
               Transport support provided by XDrive Logistics
             </span>
           </div>
-          <h1 className="heading-section text-white mb-4">
+          <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">
             Request a <span className="text-gradient-gold">Transport Quote</span>
           </h1>
-          <p className="text-white/60 text-lg">
-            We help coordinate collection and delivery for marketplace orders, pallet deals, and
-            wholesale stock.
+          <p className="text-white/50 text-sm">
+            Collection & delivery for marketplace orders, pallet deals, and wholesale stock.
           </p>
         </div>
 
-        {/* Listing context block — shown when opened from a product */}
+        {/* Listing context block */}
         {hasListingContext && (
-          <div className="max-w-3xl mx-auto mb-6">
-            <div className="card-glass border border-gold/20 py-4 px-5">
+          <div className="max-w-4xl mx-auto mb-4">
+            <div className="bg-white/5 border border-gold/20 rounded-xl py-3 px-4">
               <div className="flex items-start gap-3">
-                <Package className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
+                <Package className="w-4 h-4 text-gold flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-semibold mb-1">
+                  <p className="text-white text-xs font-semibold mb-0.5">
                     Delivery request for a Loadify Market listing
                   </p>
                   {listingTitle && (
-                    <p className="text-white/80 text-sm font-medium truncate">{listingTitle}</p>
+                    <p className="text-white/80 text-xs font-medium truncate">{listingTitle}</p>
                   )}
-                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/50">
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-white/40">
                     {sellerName && (
                       <span className="flex items-center gap-1">
                         <Building2 className="w-3 h-3" />
@@ -268,11 +360,7 @@ export default function TransportQuotePage() {
                         {weight} kg
                       </span>
                     )}
-                    {qty && (
-                      <span className="flex items-center gap-1">
-                        Qty: {qty}
-                      </span>
-                    )}
+                    {qty && <span>Qty: {qty}</span>}
                   </div>
                 </div>
                 {listingId && (
@@ -291,20 +379,20 @@ export default function TransportQuotePage() {
         {/* Success State */}
         {submitState === 'success' ? (
           <div className="max-w-2xl mx-auto">
-            <div className="card-glass text-center py-16 px-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-500/10 rounded-full mb-6">
-                <CheckCircle className="w-10 h-10 text-emerald-400" />
+            <div className="card-glass text-center py-12 px-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-500/10 rounded-full mb-4">
+                <CheckCircle className="w-8 h-8 text-emerald-400" />
               </div>
-              <h2 className="text-2xl font-bold text-white mb-4">Quote Request Submitted</h2>
-              <p className="text-white/60 mb-2">
+              <h2 className="text-xl font-bold text-white mb-3">Quote Request Submitted</h2>
+              <p className="text-white/60 text-sm mb-1">
                 Your delivery request has been submitted to XDrive Logistics.
               </p>
               {emailSent ? (
-                <p className="text-white/60 mb-6">
+                <p className="text-white/60 text-sm mb-5">
                   A member of the XDrive Logistics team will be in touch within 1 business day.
                 </p>
               ) : (
-                <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 mb-6 text-left">
+                <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 mb-5 text-left">
                   <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
                   <p className="text-amber-300/90 text-sm">
                     Your request has been saved locally. The email notification could not be
@@ -313,9 +401,13 @@ export default function TransportQuotePage() {
                 </div>
               )}
               {savedRequest && (
-                <div className="bg-white/5 border border-white/10 rounded-xl py-4 px-5 text-left mb-8">
-                  <p className="text-white/40 text-xs mb-2 uppercase tracking-wider">Request summary</p>
-                  <p className="text-white text-sm font-semibold mb-1 truncate">{savedRequest.listingTitle || savedRequest.itemType}</p>
+                <div className="bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-left mb-6">
+                  <p className="text-white/40 text-xs mb-1.5 uppercase tracking-wider">
+                    Request summary
+                  </p>
+                  <p className="text-white text-sm font-semibold mb-1 truncate">
+                    {savedRequest.listingTitle || savedRequest.itemType}
+                  </p>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/50">
                     <span>Pickup: {savedRequest.pickupPostcode || '—'}</span>
                     <span>Dropoff: {savedRequest.dropoffPostcode || '—'}</span>
@@ -325,8 +417,7 @@ export default function TransportQuotePage() {
                   <p className="text-white/30 text-xs mt-2">Ref: {savedRequest.id}</p>
                 </div>
               )}
-              {/* XDrive app deep-link */}
-              <div className="mb-8">
+              <div className="mb-6">
                 <a
                   href={xdriveDeepLink}
                   target="_blank"
@@ -337,11 +428,11 @@ export default function TransportQuotePage() {
                   Open in XDrive Logistics App
                   <ExternalLink className="w-4 h-4" />
                 </a>
-                <p className="text-white/30 text-xs mt-2">
+                <p className="text-white/30 text-xs mt-1.5">
                   Opens app.xdrivelogistics.co.uk with your request pre-loaded
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link to="/shop" className="btn-secondary inline-flex items-center gap-2">
                   Browse Marketplace
                   <ArrowRight className="w-4 h-4" />
@@ -354,83 +445,84 @@ export default function TransportQuotePage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <div className="max-w-3xl mx-auto space-y-8">
-              {/* Contact Details */}
-              <div className="card-glass">
-                <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                  <User className="w-5 h-5 text-gold" />
+            <div className="max-w-4xl mx-auto space-y-4">
+
+              {/* SECTION 1 — Contact Details */}
+              <div className="card-glass-compact">
+                <h2 className="section-heading-sm">
+                  <User className="w-4 h-4 text-gold" />
                   Contact Details
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="field-label">
                       Full Name <span className="text-gold">*</span>
                     </label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <User className="field-icon" />
                       <input
                         {...register('fullName')}
                         type="text"
                         placeholder="Your full name"
-                        className="input-field pl-10 w-full"
+                        className="input-field-sm pl-9 w-full"
                         autoComplete="name"
                       />
                     </div>
                     {errors.fullName && (
-                      <p className="text-red-400 text-xs mt-1">{errors.fullName.message}</p>
+                      <p className="field-error">{errors.fullName.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="field-label">
                       Email Address <span className="text-gold">*</span>
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <Mail className="field-icon" />
                       <input
                         {...register('email')}
                         type="email"
                         placeholder="you@example.com"
-                        className="input-field pl-10 w-full"
+                        className="input-field-sm pl-9 w-full"
                         autoComplete="email"
                       />
                     </div>
                     {errors.email && (
-                      <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>
+                      <p className="field-error">{errors.email.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="field-label">
                       Phone Number <span className="text-gold">*</span>
                     </label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <Phone className="field-icon" />
                       <input
                         {...register('phone')}
                         type="tel"
                         placeholder="+44 7700 000000"
-                        className="input-field pl-10 w-full"
+                        className="input-field-sm pl-9 w-full"
                         autoComplete="tel"
                       />
                     </div>
                     {errors.phone && (
-                      <p className="text-red-400 text-xs mt-1">{errors.phone.message}</p>
+                      <p className="field-error">{errors.phone.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="field-label">
                       Company Name{' '}
-                      <span className="text-white/30 text-xs font-normal">(optional)</span>
+                      <span className="text-white/30 font-normal">(optional)</span>
                     </label>
                     <div className="relative">
-                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <Building2 className="field-icon" />
                       <input
                         {...register('companyName')}
                         type="text"
                         placeholder="Your company"
-                        className="input-field pl-10 w-full"
+                        className="input-field-sm pl-9 w-full"
                         autoComplete="organization"
                       />
                     </div>
@@ -438,233 +530,417 @@ export default function TransportQuotePage() {
                 </div>
               </div>
 
-              {/* Collection & Delivery */}
-              <div className="card-glass">
-                <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-gold" />
-                  Collection & Delivery
+              {/* SECTION 2 — Collection & Delivery */}
+              <div className="card-glass-compact">
+                <h2 className="section-heading-sm">
+                  <MapPin className="w-4 h-4 text-gold" />
+                  Collection &amp; Delivery
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="field-label">
                       Pickup Postcode <span className="text-gold">*</span>
                     </label>
                     <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <MapPin className="field-icon" />
                       <input
                         {...register('pickupPostcode')}
                         type="text"
                         placeholder="e.g. BB1 9QL"
-                        className="input-field pl-10 w-full uppercase"
+                        className="input-field-sm pl-9 w-full uppercase"
                         autoComplete="postal-code"
                       />
                     </div>
                     {errors.pickupPostcode && (
-                      <p className="text-red-400 text-xs mt-1">{errors.pickupPostcode.message}</p>
+                      <p className="field-error">{errors.pickupPostcode.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="field-label">
                       Dropoff Postcode <span className="text-gold">*</span>
                     </label>
                     <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <MapPin className="field-icon" />
                       <input
                         {...register('dropoffPostcode')}
                         type="text"
                         placeholder="e.g. M1 1AE"
-                        className="input-field pl-10 w-full uppercase"
+                        className="input-field-sm pl-9 w-full uppercase"
                         autoComplete="postal-code"
                       />
                     </div>
                     {errors.dropoffPostcode && (
-                      <p className="text-red-400 text-xs mt-1">{errors.dropoffPostcode.message}</p>
+                      <p className="field-error">{errors.dropoffPostcode.message}</p>
                     )}
                   </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                  <div>
+                    <label className="field-label">
                       Collection Date <span className="text-gold">*</span>
                     </label>
                     <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <Calendar className="field-icon" />
                       <input
                         {...register('collectionDate')}
                         type="date"
                         min={today}
-                        className="input-field pl-10 w-full"
+                        className="input-field-sm pl-9 w-full"
                       />
                     </div>
                     {errors.collectionDate && (
-                      <p className="text-red-400 text-xs mt-1">{errors.collectionDate.message}</p>
+                      <p className="field-error">{errors.collectionDate.message}</p>
                     )}
+                  </div>
+
+                  <div>
+                    <label className="field-label">
+                      Preferred Collection Time{' '}
+                      <span className="text-white/30 font-normal">(optional)</span>
+                    </label>
+                    <div className="relative">
+                      <Clock className="field-icon" />
+                      <select
+                        {...register('preferredCollectionTime')}
+                        className="input-field-sm pl-9 w-full"
+                      >
+                        {TIME_WINDOWS.map((t) => (
+                          <option key={t} value={t} className="bg-graphite text-white">
+                            {t === '' ? '— Any Time —' : t}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="field-label">
+                      Preferred Delivery Time Window{' '}
+                      <span className="text-white/30 font-normal">(optional)</span>
+                    </label>
+                    <div className="relative">
+                      <Clock className="field-icon" />
+                      <select
+                        {...register('preferredDeliveryTime')}
+                        className="input-field-sm pl-9 w-full"
+                      >
+                        {TIME_WINDOWS.map((t) => (
+                          <option key={t} value={t} className="bg-graphite text-white">
+                            {t === '' ? '— Any Time —' : t}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Cargo Details */}
-              <div className="card-glass">
-                <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                  <Package className="w-5 h-5 text-gold" />
+              {/* SECTION 3 — Cargo Details */}
+              <div className="card-glass-compact">
+                <h2 className="section-heading-sm">
+                  <Package className="w-4 h-4 text-gold" />
                   Cargo Details
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="field-label">
                       Item Type <span className="text-gold">*</span>
                     </label>
                     <input
                       {...register('itemType')}
                       type="text"
                       placeholder="e.g. Electronics pallet, mixed wholesale stock, furniture"
-                      className="input-field w-full"
+                      className="input-field-sm w-full"
                     />
                     {errors.itemType && (
-                      <p className="text-red-400 text-xs mt-1">{errors.itemType.message}</p>
+                      <p className="field-error">{errors.itemType.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="field-label">
                       Number of Pallets / Items <span className="text-gold">*</span>
                     </label>
                     <div className="relative">
-                      <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <Package className="field-icon" />
                       <input
                         {...register('palletCount')}
                         type="text"
                         placeholder="e.g. 2 pallets, 5 boxes"
-                        className="input-field pl-10 w-full"
+                        className="input-field-sm pl-9 w-full"
                       />
                     </div>
                     {errors.palletCount && (
-                      <p className="text-red-400 text-xs mt-1">{errors.palletCount.message}</p>
+                      <p className="field-error">{errors.palletCount.message}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="field-label">
                       Total Weight{' '}
-                      <span className="text-white/30 text-xs font-normal">(optional)</span>
+                      <span className="text-white/30 font-normal">(optional)</span>
                     </label>
                     <div className="relative">
-                      <Weight className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <Weight className="field-icon" />
                       <input
                         {...register('weight')}
                         type="text"
                         placeholder="e.g. 500 kg"
-                        className="input-field pl-10 w-full"
+                        className="input-field-sm pl-9 w-full"
                       />
                     </div>
                   </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                  <div>
+                    <label className="field-label">
                       Dimensions{' '}
-                      <span className="text-white/30 text-xs font-normal">(optional)</span>
+                      <span className="text-white/30 font-normal">(optional)</span>
                     </label>
                     <div className="relative">
-                      <Ruler className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <Ruler className="field-icon" />
                       <input
                         {...register('dimensions')}
                         type="text"
-                        placeholder="e.g. 120 × 100 × 150 cm per pallet"
-                        className="input-field pl-10 w-full"
+                        placeholder="e.g. 120×100×150 cm"
+                        className="input-field-sm pl-9 w-full"
                       />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="field-label">
+                      Vehicle Type Needed{' '}
+                      <span className="text-white/30 font-normal">(optional)</span>
+                    </label>
+                    <div className="relative">
+                      <Truck className="field-icon" />
+                      <select
+                        {...register('vehicleType')}
+                        className="input-field-sm pl-9 w-full"
+                      >
+                        {VEHICLE_TYPES.map((v) => (
+                          <option key={v} value={v} className="bg-graphite text-white">
+                            {v === '' ? '— Select —' : v}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Additional Info */}
-              <div className="card-glass">
-                <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-gold" />
+              {/* SECTION 4 — Operational / Handling Details */}
+              <div className="card-glass-compact">
+                <h2 className="section-heading-sm">
+                  <Settings2 className="w-4 h-4 text-gold" />
+                  Operational / Handling Details
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <YesNoSelect
+                    id="tailLift"
+                    label="Tail Lift Required?"
+                    registration={register('tailLift')}
+                  />
+                  <YesNoSelect
+                    id="forkliftPickup"
+                    label="Forklift at Pickup?"
+                    registration={register('forkliftPickup')}
+                  />
+                  <YesNoSelect
+                    id="forkliftDropoff"
+                    label="Forklift at Dropoff?"
+                    registration={register('forkliftDropoff')}
+                  />
+                  <YesNoSelect
+                    id="fragile"
+                    label="Fragile Goods?"
+                    registration={register('fragile')}
+                  />
+                  <YesNoSelect
+                    id="stackable"
+                    label="Stackable?"
+                    registration={register('stackable')}
+                  />
+                  <YesNoSelect
+                    id="goodsReadyNow"
+                    label="Goods Ready Now?"
+                    registration={register('goodsReadyNow')}
+                  />
+                  <div className="col-span-2 sm:col-span-3">
+                    <label className="field-label">
+                      Access Restrictions{' '}
+                      <span className="text-white/30 font-normal">(optional)</span>
+                    </label>
+                    <input
+                      {...register('accessRestrictions')}
+                      type="text"
+                      placeholder="e.g. Height restriction 3m, no HGV access, key-code gate"
+                      className="input-field-sm w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 5 — Additional Information */}
+              <div className="card-glass-compact">
+                <h2 className="section-heading-sm">
+                  <FileText className="w-4 h-4 text-gold" />
                   Additional Information
                 </h2>
-                <div className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="field-label">
                       Delivery Notes{' '}
-                      <span className="text-white/30 text-xs font-normal">(optional)</span>
+                      <span className="text-white/30 font-normal">(optional)</span>
                     </label>
                     <textarea
                       {...register('deliveryNotes')}
-                      rows={4}
-                      placeholder="Any special requirements, access restrictions, handling instructions..."
-                      className="input-field w-full resize-none"
+                      rows={3}
+                      placeholder="Special requirements, handling instructions, or anything else we should know..."
+                      className="input-field-sm w-full resize-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="field-label">
                       Listing / Product Reference{' '}
-                      <span className="text-white/30 text-xs font-normal">(if applicable)</span>
+                      <span className="text-white/30 font-normal">(optional)</span>
                     </label>
                     <div className="relative">
-                      <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <FileText className="field-icon" />
                       <input
                         {...register('listingReference')}
                         type="text"
-                        placeholder="e.g. Listing #123 — Electronics Pallet"
-                        className="input-field pl-10 w-full"
+                        placeholder="e.g. Listing #123"
+                        className="input-field-sm pl-9 w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="field-label">
+                      Upload Photos / Documents{' '}
+                      <span className="text-white/30 font-normal">(optional)</span>
+                    </label>
+                    <div
+                      className="border border-dashed border-white/20 rounded-lg px-3 py-2.5 flex items-center gap-2 cursor-pointer hover:border-gold/40 transition-colors bg-white/3"
+                      onClick={() => fileInputRef.current?.click()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          fileInputRef.current?.click();
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <Upload className="w-4 h-4 text-white/40 flex-shrink-0" />
+                      <span className="text-white/40 text-xs">
+                        {uploadedFiles.length > 0
+                          ? `${uploadedFiles.length} file${uploadedFiles.length > 1 ? 's' : ''} selected`
+                          : 'Click to upload (images, PDF)'}
+                      </span>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept="image/*,.pdf,.doc,.docx"
+                        className="hidden"
+                        onChange={(e) =>
+                          setUploadedFiles(Array.from(e.target.files || []))
+                        }
                       />
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Error State */}
-              {submitState === 'error' && (
-                <div className="card-glass border border-red-500/30 flex items-start gap-3 py-4 px-5">
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-white text-sm font-semibold">Something went wrong</p>
-                    <p className="text-white/60 text-xs mt-0.5">
-                      Please try again or contact us directly at{' '}
-                      <Link
-                        to="/contact"
-                        className="text-gold hover:underline"
-                      >
-                        our contact page
-                      </Link>
-                      .
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Submit */}
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <button
-                  type="submit"
-                  disabled={submitState === 'loading'}
-                  className="btn-primary w-full sm:w-auto flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {submitState === 'loading' ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-jet border-t-transparent rounded-full animate-spin" />
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <Truck className="w-5 h-5" />
-                      Request Quote
-                      <ArrowRight className="w-4 h-4" />
-                    </>
+              {/* SECTION 6 — Consent + CTA */}
+              <div className="card-glass-compact">
+                <h2 className="section-heading-sm">
+                  <Shield className="w-4 h-4 text-gold" />
+                  Consent &amp; Submit
+                </h2>
+                <div className="space-y-3">
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      {...register('gdprConsent')}
+                      type="checkbox"
+                      className="mt-0.5 w-4 h-4 rounded border-white/20 bg-graphite/50 text-gold focus:ring-gold/30 flex-shrink-0 cursor-pointer"
+                    />
+                    <span className="text-white/60 text-sm group-hover:text-white/80 transition-colors">
+                      I agree to the{' '}
+                      <Link to="/privacy" className="text-gold hover:underline">
+                        Privacy Policy
+                      </Link>{' '}
+                      and consent to Loadify Market / XDrive Logistics processing my data to provide
+                      a transport quote.{' '}
+                      <span className="text-gold text-xs">*</span>
+                    </span>
+                  </label>
+                  {errors.gdprConsent && (
+                    <p className="field-error ml-7">{errors.gdprConsent.message}</p>
                   )}
-                </button>
-                <p className="text-white/40 text-sm">
-                  We'll respond within 1 business day.
+
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                      {...register('quoteTerms')}
+                      type="checkbox"
+                      className="mt-0.5 w-4 h-4 rounded border-white/20 bg-graphite/50 text-gold focus:ring-gold/30 flex-shrink-0 cursor-pointer"
+                    />
+                    <span className="text-white/60 text-sm group-hover:text-white/80 transition-colors">
+                      I understand this is a quote request only. No charges will be made until I
+                      accept a quote in writing. <span className="text-gold text-xs">*</span>
+                    </span>
+                  </label>
+                  {errors.quoteTerms && (
+                    <p className="field-error ml-7">{errors.quoteTerms.message}</p>
+                  )}
+                </div>
+
+                {/* Error State */}
+                {submitState === 'error' && (
+                  <div className="mt-3 border border-red-500/30 bg-red-500/5 rounded-lg flex items-start gap-3 py-3 px-4">
+                    <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-white text-sm font-semibold">Something went wrong</p>
+                      <p className="text-white/60 text-xs mt-0.5">
+                        Please try again or{' '}
+                        <Link to="/contact" className="text-gold hover:underline">
+                          contact us directly
+                        </Link>
+                        .
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 flex flex-col sm:flex-row items-center gap-3">
+                  <button
+                    type="submit"
+                    disabled={submitState === 'loading'}
+                    className="btn-primary w-full sm:w-auto flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {submitState === 'loading' ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-jet border-t-transparent rounded-full animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <Truck className="w-4 h-4" />
+                        Request Quote
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                  <p className="text-white/40 text-xs">We'll respond within 1 business day.</p>
+                </div>
+
+                <p className="text-white/25 text-xs mt-3">
+                  Transport quotes coordinated by XDrive Logistics Ltd — VAT: GB375949535
                 </p>
               </div>
-
-              {/* Operator note */}
-              <p className="text-white/30 text-xs text-center pb-6">
-                Transport quotes are coordinated by XDrive Logistics Ltd — Operated by XDrive
-                Logistics Ltd, VAT: GB375949535
-              </p>
             </div>
           </form>
         )}

@@ -19,8 +19,8 @@
 
   :root {
     /* Cinematic Premium Design Tokens */
-    --color-jet: #0A0A0A;
-    --color-graphite: #2E2E2E;
+    --color-jet: #0D1117;
+    --color-graphite: #1E2530;
     --color-gold: #D4AF37;
     --color-white: #FFFFFF;
     --color-smoke: #F2F2F2;
@@ -141,6 +141,13 @@
            hover:bg-white/10 hover:border-gold/30;
   }
 
+  /* Compact variant for dense forms (Transport Quote page) */
+  .card-glass-compact {
+    @apply bg-white/5 backdrop-blur-glass rounded-xl p-4
+           border border-white/10
+           shadow-glass;
+  }
+
   .card-product {
     @apply relative overflow-hidden rounded-premium-md bg-graphite
            shadow-premium-card cursor-pointer
@@ -176,6 +183,33 @@
            transition-all duration-300 ease-out
            focus:outline-none focus:border-gold/50 focus:bg-graphite
            focus:ring-2 focus:ring-gold/20;
+  }
+
+  /* Compact input for dense forms (Transport Quote page) */
+  .input-field-sm {
+    @apply w-full px-3 py-2 bg-graphite/50 text-white text-sm
+           border border-white/10 rounded-lg
+           placeholder:text-white/40
+           transition-all duration-200 ease-out
+           focus:outline-none focus:border-gold/50 focus:bg-graphite
+           focus:ring-1 focus:ring-gold/20;
+  }
+
+  /* Compact form helpers */
+  .field-label {
+    @apply block text-xs font-medium text-white/60 mb-1;
+  }
+
+  .field-icon {
+    @apply absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30 pointer-events-none;
+  }
+
+  .field-error {
+    @apply text-red-400 text-xs mt-0.5;
+  }
+
+  .section-heading-sm {
+    @apply flex items-center gap-2 text-sm font-bold text-white mb-3;
   }
 
   .input-search {
