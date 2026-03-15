@@ -334,6 +334,18 @@ export default function Header() {
             >
               All Listings
             </Link>
+            <Link
+              to="/register?type=seller"
+              className={`nav-link ${isActive('/register') ? 'nav-link-active' : ''}`}
+            >
+              Sell Stock
+            </Link>
+            <Link
+              to="/transport-quote"
+              className={`nav-link ${isActive('/transport-quote') ? 'nav-link-active' : ''}`}
+            >
+              Transport
+            </Link>
 
             {user ? (
               <>
@@ -375,7 +387,7 @@ export default function Header() {
                 className="nav-link flex items-center space-x-2"
               >
                 <User className="h-5 w-5" />
-                <span>Sign In</span>
+                <span>Account</span>
               </Link>
             )}
 
@@ -461,7 +473,7 @@ export default function Header() {
                   : 'text-white/80 hover:bg-white/5 hover:text-gold'
               }`}
             >
-              Shop Products
+              Shop
             </Link>
             <Link
               to="/bulk"
@@ -482,6 +494,26 @@ export default function Header() {
               }`}
             >
               All Listings
+            </Link>
+            <Link
+              to="/register?type=seller"
+              className={`block py-3 px-4 rounded-premium-sm transition-all duration-300 ${
+                isActive('/register')
+                  ? 'bg-gold/10 text-gold'
+                  : 'text-white/80 hover:bg-white/5 hover:text-gold'
+              }`}
+            >
+              Sell Stock
+            </Link>
+            <Link
+              to="/transport-quote"
+              className={`block py-3 px-4 rounded-premium-sm transition-all duration-300 ${
+                isActive('/transport-quote')
+                  ? 'bg-gold/10 text-gold'
+                  : 'text-white/80 hover:bg-white/5 hover:text-gold'
+              }`}
+            >
+              Transport
             </Link>
 
             {user ? (
