@@ -433,11 +433,13 @@ export default function HomePage() {
                   to="/catalog"
                   className="group block rounded-premium-md overflow-hidden border border-white/10 hover:border-gold/30 transition-all duration-300 bg-graphite/40"
                 >
-                  <div className="aspect-[4/3] overflow-hidden relative">
+                  <div className="aspect-[3/2] overflow-hidden relative">
                     <img
                       src={item.image}
                       alt={item.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-jet/70 to-transparent" />
                     <div className="absolute bottom-2 left-2 text-xs font-semibold text-gold bg-jet/80 px-2 py-0.5 rounded-full border border-gold/20">

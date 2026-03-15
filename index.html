@@ -58,17 +58,37 @@
     <!-- Preconnect to Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Google Fonts — loaded via <link> (not CSS @import) to avoid request chaining -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" />
+    <!-- Google Fonts — loaded asynchronously to avoid blocking first render.
+         The media="print" trick defers execution; onload switches it to "all".
+         The <noscript> fallback covers JS-disabled environments. -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" />
+    </noscript>
 
-    <!-- Preload the LCP hero image (displayed above the fold on the homepage).
-         A single default URL is used here because <link rel="preload"> with
-         imagesrcset/imagesizes has limited browser support; the srcset on the
-         <img> element inside CinematicHero still allows responsive loading. -->
+    <!-- Preload the LCP hero image (CinematicHero background – above the fold).
+         The URL matches the src/srcSet used in CinematicHero.tsx exactly so the
+         browser can reuse the preloaded response.  imagesrcset/imagesizes let
+         the preloader pick the right resolution for the viewport width. -->
     <link
       rel="preload"
       as="image"
-      href="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1280&q=70&auto=format&fit=max&fm=webp"
+      href="https://images.unsplash.com/photo-1553413077-190dd305871c?w=1280&q=65&auto=format&fit=max&fm=webp"
+      imagesrcset="
+        https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=65&auto=format&fit=max&fm=webp 768w,
+        https://images.unsplash.com/photo-1553413077-190dd305871c?w=1280&q=65&auto=format&fit=max&fm=webp 1280w,
+        https://images.unsplash.com/photo-1553413077-190dd305871c?w=1920&q=65&auto=format&fit=max&fm=webp 1920w"
+      imagesizes="100vw"
       crossorigin
     />
 
