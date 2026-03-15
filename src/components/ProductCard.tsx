@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
-import { Heart, Package, Truck, Sparkles, ArrowRight, FileText, Eye, MapPin, Star, CheckCircle2, Tag } from 'lucide-react';
+import { Heart, Package, Truck, Sparkles, FileText, Eye, MapPin, Star, CheckCircle2, Tag } from 'lucide-react';
 import { useWishlist } from '../lib/useWishlist';
 import { buildTransportQuoteUrl } from '../lib/transportQuote';
 import { getCategoryFallbackImage } from '../lib/categoryImages';
 import VerificationBadge from './VerificationBadge';
 import RoleBadge from './RoleBadge';
 import type { Product } from '../types';
+
 interface ProductCardProps {
   product: Product;
 }
@@ -13,12 +14,8 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { isInWishlist, toggleWishlist } = useWishlist();
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-    }).format(price);
-  };
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(price);
 
   const handleWishlistClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -26,210 +23,181 @@ export default function ProductCard({ product }: ProductCardProps) {
     await toggleWishlist(product.id);
   };
 
-  // Get type icon and badge styling
   const getTypeInfo = () => {
     switch (product.type) {
-      case 'logistics':
-        return { icon: Truck, label: 'Logistics', className: 'badge-gold' };
-      case 'pallet':
-        return { icon: Package, label: 'Pallet', className: 'badge-gold' };
-      case 'lot':
-        return { icon: Package, label: 'Bulk', className: 'badge-gold' };
-      case 'wholesale':
-        return { icon: Package, label: 'Wholesale', className: 'badge-gold' };
-      case 'clearance':
-        return { icon: Package, label: 'Clearance', className: 'badge-gold' };
-      case 'handmade':
-        return { icon: Sparkles, label: 'Handmade', className: 'badge-premium' };
-      default:
-        return { icon: Package, label: 'Product', className: 'badge-gold' };
+      case 'logistics': return { icon: Truck, label: 'Logistics' };
+      case 'pallet':    return { icon: Package, label: 'Pallet' };
+      case 'lot':       return { icon: Package, label: 'Bulk' };
+      case 'wholesale': return { icon: Package, label: 'Wholesale' };
+      case 'clearance': return { icon: Package, label: 'Clearance' };
+      case 'handmade':  return { icon: Sparkles, label: 'Handmade' };
+      default:          return { icon: Package, label: 'Product' };
     }
   };
 
   const typeInfo = getTypeInfo();
   const TypeIcon = typeInfo.icon;
+  const discount = (product as unknown as { discount?: number }).discount;
 
   return (
-    <div className="card-product group">
-      {/* Image Container - Compact 3:2 aspect ratio for denser layout */}
-      <div className="relative aspect-[3/2] bg-gradient-to-br from-graphite to-jet overflow-hidden">
-        {/* Product Image */}
-        {product.images && product.images.length > 0 ? (
-          <img
-            src={product.images[0]}
-            alt={product.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-            loading="lazy"
-            decoding="async"
-          />
-        ) : (
-          <img
-            src={getCategoryFallbackImage(product)}
-            alt={product.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-            loading="lazy"
-            decoding="async"
-          />
-        )}
+    <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200 group flex flex-col">
+      {/* Image */}
+      <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
+        <img
+          src={
+            product.images && product.images.length > 0
+              ? product.images[0]
+              : getCategoryFallbackImage(product)
+          }
+          alt={product.title}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          loading="lazy"
+          decoding="async"
+        />
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-overlay opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
-
-        {/* Wishlist Button - Compact */}
+        {/* Wishlist button */}
         <button
+          type="button"
           onClick={handleWishlistClick}
-          className="absolute top-2 right-2 z-10 p-2 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-gold hover:text-jet transition-all duration-300 shadow-lg"
+          className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/90 hover:bg-white shadow-sm transition-all"
           aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
-          title={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <Heart
-            className={`h-4 w-4 ${isInWishlist ? 'fill-gold text-gold' : ''}`}
-            aria-hidden="true"
+            className={`h-3.5 w-3.5 ${isInWishlist ? 'fill-red-500 text-red-500' : 'text-gray-500'}`}
           />
         </button>
 
-        {/* Type Badge - Compact */}
-        <div className="absolute top-2 left-2 flex flex-col gap-1">
-          {!['product', 'retail'].includes(product.type) && (
-            <div className={`${typeInfo.className} flex items-center gap-1 text-xs px-2 py-1`}>
+        {/* Type badge */}
+        {!['product', 'retail'].includes(product.type) && (
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
+            <span className="inline-flex items-center gap-1 bg-[#1E3A5F] text-white text-[10px] font-semibold px-2 py-0.5 rounded">
               <TypeIcon className="w-3 h-3" />
-              <span>{typeInfo.label}</span>
-            </div>
-          )}
-          {product.condition === 'refurbished' && (
-            <div className="badge-gold flex items-center gap-1 text-xs px-2 py-1">
-              <span>Refurbished</span>
-            </div>
-          )}
-        </div>
+              {typeInfo.label}
+            </span>
+          </div>
+        )}
 
-        {/* Quick View on Hover */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
-          <Link
-            to={`/product/${product.id}`}
-            className="btn-glass py-3 px-6 flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500"
-          >
-            View Item
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        {/* Warm glow for handmade items */}
-        {product.type === 'handmade' && (
-          <div className="absolute inset-0 bg-gradient-to-t from-gold/20 via-transparent to-transparent pointer-events-none" />
+        {/* Discount badge */}
+        {typeof discount === 'number' && discount > 0 && (
+          <div className="absolute bottom-2 left-2">
+            <span className="inline-flex items-center gap-1 bg-[#C2410C] text-white text-[10px] font-bold px-2 py-0.5 rounded">
+              <Tag className="w-2.5 h-2.5" />
+              -{discount}%
+            </span>
+          </div>
         )}
       </div>
 
-      {/* Product Info - Very compact */}
-      <Link to={`/product/${product.id}`} className="block p-2.5">
-        {/* Seller Info - Compact */}
+      {/* Content */}
+      <div className="p-3 flex flex-col flex-1">
+        {/* Seller name */}
         {product.seller && (
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center gap-1 min-w-0">
               {product.seller.storeSlug ? (
                 <Link
                   to={`/seller/${product.seller.storeSlug}`}
-                  className="text-xs text-white/60 hover:text-gold transition-colors truncate"
+                  className="text-xs text-gray-400 hover:text-[#1E3A5F] transition-colors truncate"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {product.seller.businessName || 'Marketplace Seller'}
                 </Link>
               ) : (
-                <span className="text-xs text-white/60 truncate">
+                <span className="text-xs text-gray-400 truncate">
                   {product.seller.businessName || 'Marketplace Seller'}
                 </span>
               )}
               {product.seller.location && (
-                <span className="text-xs text-white/50 flex items-center gap-0.5 flex-shrink-0">
+                <span className="text-[10px] text-gray-400 flex items-center gap-0.5 flex-shrink-0">
                   <MapPin className="w-2.5 h-2.5" />
                   {product.seller.location}
                 </span>
               )}
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
               {product.seller.marketplaceRole && (
                 <RoleBadge role={product.seller.marketplaceRole} size="sm" />
               )}
+              {product.seller.isApproved !== undefined && (
+                <VerificationBadge isVerified={product.seller.isApproved} size="sm" showLabel={false} />
+              )}
             </div>
-            {product.seller.isApproved !== undefined && (
-              <VerificationBadge isVerified={product.seller.isApproved} size="sm" showLabel={false} />
-            )}
           </div>
         )}
 
-        {/* Seller trust indicators: rating + verified label */}
+        {/* Trust indicators */}
         {product.seller && (product.seller.isApproved || (typeof product.seller.rating === 'number' && product.seller.rating > 0)) && (
-          <div className="flex items-center flex-wrap gap-x-3 gap-y-0.5 mb-1.5 text-xs">
+          <div className="flex items-center gap-2 mb-1.5 text-xs">
             {typeof product.seller.rating === 'number' && product.seller.rating > 0 && (
-              <span className="flex items-center gap-1 text-gold/80">
+              <span className="flex items-center gap-0.5 text-yellow-500">
                 <Star className="w-3 h-3" />
-                {product.seller.rating.toFixed(1)} rating
+                {product.seller.rating.toFixed(1)}
               </span>
             )}
             {product.seller.isApproved && (
-              <span className="flex items-center gap-1 text-emerald-400/80">
+              <span className="flex items-center gap-0.5 text-green-600">
                 <CheckCircle2 className="w-3 h-3" />
-                Verified Seller
+                Verified
               </span>
             )}
           </div>
         )}
 
-        {/* Discount badge */}
-        {(() => {
-          const discount = (product as unknown as { discount?: number }).discount;
-          return typeof discount === 'number' && discount > 0 ? (
-            <div className="mb-1.5">
-              <span className="inline-flex items-center gap-1 text-xs font-semibold bg-red-500/20 text-red-300 px-2 py-0.5 rounded-full">
-                <Tag className="w-3 h-3" />
-                -{discount}% OFF
-              </span>
-            </div>
-          ) : null;
-        })()}
-        
-        {/* Title - Compact, max 2 lines */}
-        <h3 className="font-bold text-sm text-white mb-1.5 line-clamp-2 group-hover:text-gold transition-colors duration-300 leading-tight min-h-[2.5rem]">
+        {/* Title */}
+        <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-2 leading-tight min-h-[2.5rem]">
           {product.title}
         </h3>
 
-        {/* Price - Compact */}
-        <p className="text-lg font-bold text-gold mb-1.5">{formatPrice(product.price)}</p>
+        {/* Price */}
+        <p className="text-lg font-bold text-[#1E3A5F] mb-2">{formatPrice(product.price)}</p>
 
-        {/* Meta Info - Very compact */}
-        <div className="flex items-center justify-between text-xs text-white/60">
-          <span className="capitalize truncate">{product.condition}</span>
-          <div className="flex items-center gap-2 flex-shrink-0">
+        {/* Stock / condition */}
+        <div className="flex items-center justify-between text-xs text-gray-400 mb-2.5">
+          <span className="capitalize">{product.condition}</span>
+          <div className="flex items-center gap-2">
             {product.views > 0 && (
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-0.5">
                 <Eye className="w-3 h-3" />
                 {product.views}
               </span>
             )}
-            <span>{product.stockQuantity} available</span>
+            <span>{product.stockQuantity} in stock</span>
           </div>
         </div>
 
-        {/* Transport CTA for pallet / bulk items */}
+        {/* Transport CTA */}
         {(product.type === 'pallet' || product.type === 'logistics') && (
           <Link
             to={buildTransportQuoteUrl(product)}
             onClick={(e) => e.stopPropagation()}
-            className="mt-2.5 flex items-center gap-1.5 text-xs text-gold/70 hover:text-gold transition-colors"
+            className="mb-1.5 flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#1E3A5F] transition-colors"
           >
             <Truck className="w-3.5 h-3.5 flex-shrink-0" />
             Request Transport Quote
           </Link>
         )}
 
-        {/* RFQ CTA for wholesale buyers */}
+        {/* RFQ CTA */}
         <Link
           to={`/rfq?product=${encodeURIComponent(product.title)}`}
           onClick={(e) => e.stopPropagation()}
-          className="mt-2 flex items-center gap-1.5 text-xs text-white/60 hover:text-gold transition-colors"
+          className="mb-2 flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#1E3A5F] transition-colors"
         >
           <FileText className="w-3.5 h-3.5 flex-shrink-0" />
           Request Wholesale Quote
         </Link>
-      </Link>
+
+        {/* CTA button */}
+        <div className="mt-auto">
+          <Link
+            to={`/product/${product.id}`}
+            className="block w-full text-center bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold text-sm py-2 rounded transition-colors"
+            aria-label={`View details for ${product.title}`}
+          >
+            View Product
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

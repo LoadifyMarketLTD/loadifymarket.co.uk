@@ -23,9 +23,12 @@
     --color-graphite: #1A4080;
     --color-primary: #38BDF8;
     --color-primary-rgb: 56, 189, 248;
-    --color-gold: #F59E0B;
+    --color-gold: #F4C400;
     --color-white: #FFFFFF;
     --color-smoke: #F2F2F2;
+    /* Marketplace theme tokens */
+    --color-navy: #1E3A5F;
+    --color-cta: #F4C400;
 
     /* Typography */
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -418,6 +421,58 @@
 
   .product-grid {
     @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-4;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     MARKETPLACE LIGHT THEME COMPONENTS
+     ═══════════════════════════════════════════════════════════ */
+
+  .marketplace-body {
+    @apply bg-white text-gray-900;
+  }
+
+  .btn-cta {
+    @apply bg-[#F4C400] text-gray-900 px-6 py-3 rounded font-semibold transition-all hover:bg-yellow-500 hover:shadow-md active:scale-[0.98];
+  }
+
+  .btn-cta-outline {
+    @apply border-2 border-[#F4C400] text-gray-900 px-6 py-3 rounded font-semibold transition-all hover:bg-[#F4C400];
+  }
+
+  .btn-navy {
+    @apply bg-[#1E3A5F] text-white px-6 py-3 rounded font-semibold transition-all hover:bg-[#2C4E73];
+  }
+
+  .card-market {
+    @apply bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200;
+  }
+
+  .section-marketplace {
+    @apply bg-white;
+  }
+
+  .section-marketplace-alt {
+    @apply bg-[#F5F6F7];
+  }
+
+  .section-marketplace-light {
+    @apply bg-[#F8F9FA];
+  }
+
+  .container-market {
+    @apply max-w-[1360px] mx-auto px-6 lg:px-8;
+  }
+
+  .product-grid-market {
+    @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4;
+  }
+
+  .input-market {
+    @apply w-full px-4 py-2.5 bg-white text-gray-900 border border-gray-300 rounded placeholder:text-gray-400 focus:outline-none focus:border-[#F4C400] focus:ring-2 focus:ring-[#F4C400]/20;
+  }
+
+  .badge-deal {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-[#C2410C] text-white;
   }
 }
 

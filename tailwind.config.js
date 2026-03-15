@@ -35,7 +35,7 @@ export default {
           900: '#071425',
         },
         gold: {
-          DEFAULT: '#F59E0B',
+          DEFAULT: '#F4C400',
           50: '#FFFBEB',
           100: '#FEF3C7',
           200: '#FDE68A',
@@ -73,8 +73,11 @@ export default {
           800: '#B8B8B8',
           900: '#A8A8A8',
         },
-        // Legacy colors for compatibility
+        // Marketplace navy (header/footer)
         navy: {
+          DEFAULT: '#1E3A5F',
+          light: '#2C4E73',
+          dark: '#152D4A',
           50: '#f0f4f8',
           100: '#d9e2ec',
           200: '#bcccdc',
@@ -86,6 +89,13 @@ export default {
           800: '#243b53',
           900: '#102a43',
         },
+        // Marketplace section backgrounds
+        marketplace: '#F5F6F7',
+        'section-light': '#F8F9FA',
+        // CTA yellow
+        'cta-yellow': '#F4C400',
+        // Deal badge orange
+        'deal-orange': '#C2410C',
       },
       fontFamily: {
         display: ['Inter', 'SF Pro Display', 'system-ui', 'sans-serif'],
