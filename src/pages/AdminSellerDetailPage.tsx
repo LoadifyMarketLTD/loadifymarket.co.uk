@@ -22,8 +22,7 @@ import {
   ExternalLink,
   Edit2,
   RefreshCcw,
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+} from 'lucide-react';import { formatDistanceToNow } from 'date-fns';
 import VerificationBadge from '../components/VerificationBadge';
 import RoleBadge from '../components/RoleBadge';
 
@@ -689,32 +688,46 @@ export default function AdminSellerDetailPage() {
               )}
             </div>
 
-            {/* Stripe / Payout */}
-            {(profile.stripeAccountId || profile.payoutDetails) && (
-              <div className="card">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Payout Details</h2>
+            {/* Stripe Connect / Payout */}
+            <div className="card">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Stripe Connect</h2>
+              {profile.stripeAccountId ? (
                 <div className="space-y-2 text-sm">
-                  {profile.stripeAccountId && (
-                    <div>
-                      <dt className="text-gray-500 text-xs">Stripe Account ID</dt>
-                      <dd className="font-mono text-xs text-gray-700 break-all">{profile.stripeAccountId}</dd>
-                    </div>
-                  )}
+                  <div>
+                    <dt className="text-gray-500 text-xs">Account ID</dt>
+                    <dd className="font-mono text-xs text-gray-700 break-all mt-0.5">{profile.stripeAccountId}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-gray-500 text-xs">Connect Status</dt>
+                    <dd className="mt-0.5">
+                      {profile.stripeConnectStatus === 'active' && (
+                        <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">
+                          <CheckCircle className="w-3 h-3" /> Active
+                        </span>
+                      )}
+                      {profile.stripeConnectStatus === 'restricted' && (
+                        <span className="inline-flex items-center gap-1 bg-orange-100 text-orange-800 text-xs px-2 py-0.5 rounded">
+                          <ShieldAlert className="w-3 h-3" /> Restricted
+                        </span>
+                      )}
+                      {(profile.stripeConnectStatus === 'pending' || !profile.stripeConnectStatus) && (
+                        <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">
+                          <ShieldAlert className="w-3 h-3" /> Pending Setup
+                        </span>
+                      )}
+                    </dd>
+                  </div>
                   {profile.payoutDetails?.bankName && (
                     <div>
                       <dt className="text-gray-500 text-xs">Bank</dt>
-                      <dd className="text-gray-900">{profile.payoutDetails.bankName}</dd>
-                    </div>
-                  )}
-                  {profile.payoutDetails?.accountHolderName && (
-                    <div>
-                      <dt className="text-gray-500 text-xs">Account Holder</dt>
-                      <dd className="text-gray-900">{profile.payoutDetails.accountHolderName}</dd>
+                      <dd className="text-gray-900 mt-0.5">{profile.payoutDetails.bankName}</dd>
                     </div>
                   )}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="text-sm text-gray-500">Not connected — seller has not set up Stripe Connect.</p>
+              )}
+            </div>
 
           </div>
         </div>

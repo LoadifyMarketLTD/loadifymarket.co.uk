@@ -264,6 +264,53 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       console.warn('credit_seller_balance RPC failed:', balanceError.message);
     }
 
+    // ── Stripe Connect automatic Transfer ────────────────────────────────────
+    // If the seller has a fully-active Stripe Connect Express account, create
+    // an automatic Transfer for their net payout (order total minus commission).
+    // This is the "separate charges and transfers" model: the platform collects
+    // the full payment and then pushes funds to each connected seller account.
+    // Falls back gracefully: sellers without Connect continue to use the manual
+    // payout / credit_seller_balance flow above.
+    const { data: sellerConnectProfile } = await supabase!
+      .from('seller_profiles')
+      .select('stripeAccountId, stripeConnectStatus')
+      .eq('userId', sellerId)
+      .single<{ stripeAccountId: string | null; stripeConnectStatus: string | null }>();
+
+    if (
+      sellerConnectProfile?.stripeAccountId &&
+      sellerConnectProfile.stripeConnectStatus === 'active'
+    ) {
+      const netSellerAmount = sellerGrandTotal - sellerCommission;
+      try {
+        const transfer = await stripe!.transfers.create({
+          amount: Math.round(netSellerAmount * 100), // convert to pence
+          currency: 'gbp',
+          destination: sellerConnectProfile.stripeAccountId,
+          metadata: { orderId: order.id, sellerId },
+        });
+
+        await supabase!.from('payouts').insert({
+          sellerId,
+          orderId: order.id,
+          amount: netSellerAmount,
+          currency: 'GBP',
+          status: 'paid',
+          stripeTransferId: transfer.id,
+          paidAt: new Date().toISOString(),
+        });
+
+        console.log(
+          `Stripe transfer ${transfer.id} created for seller ${sellerId}: £${netSellerAmount.toFixed(2)}`
+        );
+      } catch (transferError) {
+        // Log but do not throw — the order is already recorded. Admin can
+        // investigate and retry the transfer from the Stripe Dashboard.
+        console.error(`Stripe Connect transfer failed for seller ${sellerId}:`, transferError);
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     // Send seller new-order notification email (async, don't wait).
     const { data: sellerUser } = await supabase!
       .from('users')

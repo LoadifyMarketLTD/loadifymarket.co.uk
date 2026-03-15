@@ -54,8 +54,9 @@ export interface SellerProfile {
   verificationDocuments?: VerificationDocument[];
   verifiedAt?: string;
   suspensionReason?: string;
-  // Legacy / Stripe
+  // Stripe Connect Express
   stripeAccountId?: string;
+  stripeConnectStatus?: 'pending' | 'restricted' | 'active' | null;
   isApproved: boolean;
   // Reputation metrics
   rating: number;
@@ -321,7 +322,8 @@ export interface Payout {
   amount: number;
   currency: string;
   status: 'pending' | 'processing' | 'paid' | 'failed';
-  stripePayoutId?: string;
+  stripePayoutId?: string;    // Stripe automatic payout to bank (set by Stripe)
+  stripeTransferId?: string;  // Stripe Connect Transfer ID (set by platform after sale)
   createdAt: string;
   paidAt?: string;
 }
