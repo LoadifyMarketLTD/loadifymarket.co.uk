@@ -30,6 +30,16 @@ export default function AdminDashboardPage() {
   const [rejectNotes, setRejectNotes] = useState<Record<string, string>>({});
   const [rejectingId, setRejectingId] = useState<string | null>(null);
 
+  // Stripe Connect platform status — checked when the payouts tab is opened.
+  const [connectPlatformStatus, setConnectPlatformStatus] = useState<{
+    checked: boolean;
+    platformConfigured: boolean | null;
+    keyPrefix?: string;
+    platformAccountId?: string | null;
+    setupUrl?: string;
+    error?: string;
+  }>({ checked: false, platformConfigured: null });
+
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalSellers: 0,
@@ -50,6 +60,37 @@ export default function AdminDashboardPage() {
       setLoading(false);
     }
   }, [user, isLoading]);
+
+  // Check the Stripe Connect platform status whenever the payouts tab is opened.
+  useEffect(() => {
+    if (activeTab !== 'payouts' || connectPlatformStatus.checked) return;
+    if (!hasAdminAccess(user)) return;
+
+    const checkConnectStatus = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const response = await fetch('/.netlify/functions/connect-platform-check', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          setConnectPlatformStatus({
+            checked: true,
+            platformConfigured: null,
+            error: data.error || 'Failed to check Connect status',
+          });
+        } else {
+          setConnectPlatformStatus({ checked: true, ...data });
+        }
+      } catch {
+        setConnectPlatformStatus({ checked: true, platformConfigured: null, error: 'Failed to reach Connect check endpoint' });
+      }
+    };
+
+    checkConnectStatus();
+  }, [activeTab, connectPlatformStatus.checked, user]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -942,6 +983,75 @@ export default function AdminDashboardPage() {
                   <h2 className="text-2xl font-bold mb-1">Payout Requests</h2>
                   <p className="text-gray-600">Review, approve, and complete seller payout requests.</p>
                 </div>
+
+                {/* ── Stripe Connect Platform Status Banner ─────────────────────── */}
+                {connectPlatformStatus.checked && (
+                  <div className={`card border-l-4 ${
+                    connectPlatformStatus.platformConfigured === true
+                      ? 'border-l-green-500 bg-green-50'
+                      : connectPlatformStatus.platformConfigured === false
+                      ? 'border-l-red-500 bg-red-50'
+                      : 'border-l-yellow-500 bg-yellow-50'
+                  }`}>
+                    <div className="flex items-start gap-3">
+                      {connectPlatformStatus.platformConfigured === true ? (
+                        <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <AlertCircle className={`h-5 w-5 flex-shrink-0 mt-0.5 ${
+                          connectPlatformStatus.platformConfigured === false ? 'text-red-600' : 'text-yellow-600'
+                        }`} />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-semibold text-sm ${
+                          connectPlatformStatus.platformConfigured === true ? 'text-green-800' :
+                          connectPlatformStatus.platformConfigured === false ? 'text-red-800' : 'text-yellow-800'
+                        }`}>
+                          {connectPlatformStatus.platformConfigured === true
+                            ? 'Stripe Connect: Active'
+                            : connectPlatformStatus.platformConfigured === false
+                            ? 'Stripe Connect: NOT configured on this account'
+                            : 'Stripe Connect: Status unknown'}
+                        </p>
+                        {connectPlatformStatus.keyPrefix && (
+                          <p className="text-xs mt-1 text-gray-600">
+                            Active key: <code className="bg-white px-1 py-0.5 rounded border border-gray-200">{connectPlatformStatus.keyPrefix}</code>
+                            {connectPlatformStatus.platformAccountId && (
+                              <> · Account: <code className="bg-white px-1 py-0.5 rounded border border-gray-200">{connectPlatformStatus.platformAccountId}</code></>
+                            )}
+                          </p>
+                        )}
+                        {connectPlatformStatus.platformConfigured === false && (
+                          <div className="mt-2 text-xs text-red-700 space-y-1">
+                            <p>The <code className="bg-white px-1 py-0.5 rounded border border-red-200">STRIPE_SECRET_KEY</code> currently set in Netlify does <strong>not</strong> belong to a Connect-enabled platform account.</p>
+                            <p>
+                              <strong>Fix:</strong>{' '}
+                              1. Update <code>STRIPE_SECRET_KEY</code> in Netlify → Site configuration → Environment variables to the new platform account's secret key.{' '}
+                              2. Trigger a new deploy (Deploys → Trigger deploy) so the function picks up the updated key.{' '}
+                              3. Confirm Connect is enabled:{' '}
+                              <a href={connectPlatformStatus.setupUrl} target="_blank" rel="noopener noreferrer" className="underline">Stripe Connect Dashboard</a>.
+                            </p>
+                          </div>
+                        )}
+                        {connectPlatformStatus.platformConfigured === true && (
+                          <p className="mt-1 text-xs text-green-700">
+                            Platform account is enrolled in Stripe Connect. Sellers can connect their accounts and receive automatic payouts.
+                          </p>
+                        )}
+                        {connectPlatformStatus.error && (
+                          <p className="mt-1 text-xs text-yellow-700">{connectPlatformStatus.error}</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setConnectPlatformStatus({ checked: false, platformConfigured: null })}
+                        className="text-xs text-gray-400 hover:text-gray-600 flex-shrink-0"
+                        title="Re-check status"
+                      >
+                        ↺
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {/* ──────────────────────────────────────────────────────────────── */}
                 <div className="card">
                   {payoutRequests.length === 0 ? (
                     <p className="text-gray-500 text-center py-8">No payout requests.</p>

@@ -240,6 +240,16 @@ export const handler: Handler = async (event) => {
 
     const customerEmail = guestEmail || event.headers['user-email'] || undefined;
 
+    // Generate a cryptographically unique transfer group ID for this checkout.
+    // Stripe Connect "separate charges and transfers" requires all transfers
+    // originating from one payment to share the same transfer_group so Stripe
+    // can link payouts back to the originating charge in the Dashboard and
+    // financial reports. The ID must be unique per checkout attempt.
+    const randomHex = Array.from(crypto.getRandomValues(new Uint8Array(8)))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    const transferGroup = `order-${buyerId || 'guest'}-${Date.now()}-${randomHex}`;
+
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -247,6 +257,11 @@ export const handler: Handler = async (event) => {
       mode: 'payment',
       success_url: `${process.env.URL || process.env.VITE_APP_URL}/orders/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.URL || process.env.VITE_APP_URL}/cart`,
+      // Link all seller payouts for this checkout to the same payment via
+      // transfer_group — required for Stripe Connect compliance.
+      payment_intent_data: {
+        transfer_group: transferGroup,
+      },
       metadata: {
         buyerId: buyerId || '',
         subtotal: cartTotalIncVat.toFixed(2),
@@ -258,6 +273,7 @@ export const handler: Handler = async (event) => {
         shippingAddress: JSON.stringify(shippingAddress),
         billingAddress: JSON.stringify(billingAddress),
         items: JSON.stringify(validatedItems),
+        transferGroup,
       },
       ...(customerEmail ? { customer_email: customerEmail } : {}),
     });

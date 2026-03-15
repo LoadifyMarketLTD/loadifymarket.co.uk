@@ -37,6 +37,9 @@ export const handler: Handler = async (event) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
   const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-08-27.basil' });
 
+  // Log which Stripe account is active (key prefix only — never log the full secret).
+  console.log(`connect-dashboard: using Stripe key ${stripeSecretKey.slice(0, 12)}…`);
+
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Invalid or expired token' }) };
@@ -56,6 +59,33 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    // ── Stale-account guard ─────────────────────────────────────────────────
+    // If the platform migrated to a new Stripe account, the seller's saved
+    // account ID won't exist on the new platform. Detect this early so the
+    // caller receives a 404 instead of an opaque Stripe error.
+    try {
+      await stripe.accounts.retrieve(profile.stripeAccountId);
+    } catch (retrieveError) {
+      if (
+        retrieveError instanceof Stripe.errors.StripeInvalidRequestError &&
+        /no such account/i.test(retrieveError.message)
+      ) {
+        console.warn(
+          `connect-dashboard: stripeAccountId ${profile.stripeAccountId} not found on current platform — clearing stale record for user ${user.id}`
+        );
+        await supabase
+          .from('seller_profiles')
+          .update({ stripeAccountId: null, stripeConnectStatus: null })
+          .eq('userId', user.id);
+        return {
+          statusCode: 404,
+          body: JSON.stringify({ error: 'No Stripe account connected. Please complete onboarding first.' }),
+        };
+      }
+      throw retrieveError;
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     const loginLink = await stripe.accounts.createLoginLink(profile.stripeAccountId);
 
     return {
@@ -68,7 +98,9 @@ export const handler: Handler = async (event) => {
     // Detect when the platform Stripe account has not enrolled in Connect.
     if (
       error instanceof Stripe.errors.StripeInvalidRequestError &&
-      /signed up for connect/i.test(error.message)
+      (/signed up for connect/i.test(error.message) ||
+        /not.*connect platform/i.test(error.message) ||
+        /connect.*not.*enabled/i.test(error.message))
     ) {
       return {
         statusCode: 503,

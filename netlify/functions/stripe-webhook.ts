@@ -296,6 +296,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     // an automatic Transfer for their net payout (order total minus commission).
     // This is the "separate charges and transfers" model: the platform collects
     // the full payment and then pushes funds to each connected seller account.
+    // transfer_group links all transfers for this checkout back to the same
+    // originating payment, satisfying Stripe Connect compliance requirements.
     // Falls back gracefully: sellers without Connect continue to use the manual
     // payout / credit_seller_balance flow above.
     const { data: sellerConnectProfile } = await supabase!
@@ -310,10 +312,23 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     ) {
       const netSellerAmount = sellerGrandTotal - sellerCommission;
       try {
+        if (!metadata.transferGroup) {
+          // transferGroup is set by create-checkout.ts for all sessions created
+          // after the Connect activation. Missing means the order was placed
+          // before the code was deployed — proceed without it but log for audit.
+          console.warn(
+            `stripe-webhook: transferGroup missing from session ${session.id} metadata — ` +
+            'transfer will proceed without transfer_group (legacy order before Connect activation)'
+          );
+        }
+
         const transfer = await stripe!.transfers.create({
           amount: Math.round(netSellerAmount * 100), // convert to pence
           currency: 'gbp',
           destination: sellerConnectProfile.stripeAccountId,
+          // Link this transfer to the originating payment so Stripe can
+          // properly associate payouts with the charge in its Dashboard.
+          ...(metadata.transferGroup ? { transfer_group: metadata.transferGroup } : {}),
           metadata: { orderId: order.id, sellerId },
         });
 
