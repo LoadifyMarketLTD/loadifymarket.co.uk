@@ -82,8 +82,14 @@ export default function RegisterPage() {
 
       setSuccess(true);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message || 'Failed to register. Please try again.');
+      let message = 'Failed to register. Please try again.';
+      if (err instanceof Error) {
+        message = err.message || message;
+      } else if (typeof err === 'object' && err !== null && 'message' in err) {
+        const raw = (err as { message: unknown }).message;
+        message = (typeof raw === 'string' && raw) ? raw : message;
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }
