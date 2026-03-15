@@ -50,6 +50,7 @@ export default function SellerDashboardPage() {
   const [sellerPayouts, setSellerPayouts] = useState<Payout[]>([]);
   const [connectLoading, setConnectLoading] = useState(false);
   const [connectError, setConnectError] = useState('');
+  const [platformNotConfigured, setPlatformNotConfigured] = useState(false);
 
   const [searchParams] = useSearchParams();
 
@@ -190,9 +191,9 @@ export default function SellerDashboardPage() {
       const data = await response.json();
       if (!response.ok) {
         if (response.status === 503 || data.platformNotConfigured) {
-          throw new Error(
-            'Stripe Connect is not yet active on this marketplace. Please contact support — the platform owner needs to enable Connect in their Stripe Dashboard.'
-          );
+          setPlatformNotConfigured(true);
+          setConnectLoading(false);
+          return;
         }
         throw new Error(data.error || 'Failed to start onboarding');
       }
