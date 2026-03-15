@@ -268,3 +268,34 @@ SELECT
 FROM auth.users a
 WHERE NOT EXISTS (SELECT 1 FROM users u WHERE u.id = a.id)
 ON CONFLICT DO NOTHING;
+
+-- ──────────────────────────────────────────────────────────────
+-- Object-level permissions
+--
+-- Without these GRANTs, PostgreSQL rejects every API request with
+-- "permission denied for table …" before RLS policies are evaluated.
+-- The "authenticated" and "anon" roles are used by PostgREST for
+-- logged-in and anonymous API requests respectively.
+-- ──────────────────────────────────────────────────────────────
+
+-- Authenticated users: full table access (RLS restricts rows)
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES    IN SCHEMA public TO authenticated;
+GRANT USAGE, SELECT                  ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+
+-- Anonymous users: read access everywhere (RLS hides private rows)
+GRANT SELECT ON ALL TABLES    IN SCHEMA public TO anon;
+GRANT USAGE  ON ALL SEQUENCES IN SCHEMA public TO anon;
+
+-- Signup: INSERT into users before email confirmation.
+-- When email confirmation is required, the session is null right after
+-- supabase.auth.signUp(), so the profile INSERT runs as the anon role.
+-- The RLS policy "users_insert" (WITH CHECK (TRUE)) already permits
+-- this row — the GRANT below provides the required object-level access.
+GRANT INSERT ON public.users             TO anon;
+
+-- Other public-facing write operations that do not require a session
+GRANT INSERT ON public.recently_viewed   TO anon;
+GRANT INSERT ON public.rfq_requests      TO anon;
+GRANT INSERT ON public.delivery_requests TO anon;
+GRANT INSERT ON public.coupon_usage      TO anon;
+GRANT INSERT ON public.product_analytics TO anon;
