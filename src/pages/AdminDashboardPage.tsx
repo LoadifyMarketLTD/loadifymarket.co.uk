@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { hasAdminAccess } from '../lib/roleUtils';
+import { getDisplayName } from '../lib/displayName';
 import type { User, Product, Order, Dispute, PayoutRequest } from '../types';
 import { Users, Package, ShoppingBag, AlertCircle, CheckCircle, XCircle, DollarSign, Download, Settings, TrendingUp, CreditCard } from 'lucide-react';
 import { 
@@ -374,7 +375,9 @@ export default function AdminDashboardPage() {
     <div className="bg-gray-50 min-h-screen">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-6">
+          Welcome back, {getDisplayName(user)}
+        </h1>
 
         {/* Tabs */}
         <div className="mb-6 border-b border-gray-200">
