@@ -2,8 +2,9 @@ import { Link } from 'react-router-dom';
 import { lazy, Suspense, useState, useEffect, useRef } from 'react';
 import {
   BadgeCheck, Lock, ArrowRight, Package, Layers,
-  Flame, Truck, CheckCircle2, Store, Zap, Home, Wrench,
+  Flame, Truck, CheckCircle2, Store, Home, Wrench,
   Shirt, LayoutGrid, UserPlus, ListPlus, Wallet,
+  Cpu, Car, Wheat, Factory, Briefcase, Tag,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 import { supabase } from '../lib/supabase';
@@ -13,14 +14,18 @@ import ProductCard from '../components/ProductCard';
 // Lazy load below-the-fold components
 const TrendingProducts = lazy(() => import('../components/TrendingProducts'));
 
-// ── Section 3: 6 wholesale-focused categories ──────────────────────────────
+// ── Section 3: 10 marketplace categories ───────────────────────────────────
 const CATEGORIES = [
-  { name: 'Pallet Deals',    icon: Layers,   href: '/bulk?type=pallet' },
-  { name: 'Electronics',     icon: Zap,      href: '/shop?category=electronics' },
-  { name: 'Clothing',        icon: Shirt,    href: '/shop?category=fashion' },
-  { name: 'Home & Garden',   icon: Home,     href: '/shop?category=home-garden' },
-  { name: 'Tools & DIY',     icon: Wrench,   href: '/shop?category=tools' },
-  { name: 'Mixed Job Lots',  icon: Package,  href: '/bulk?type=lot' },
+  { name: 'Electronics & Tech',    icon: Cpu,      href: '/shop?category=electronics' },
+  { name: 'Home & Garden',         icon: Home,     href: '/shop?category=home-garden' },
+  { name: 'Clothing & Fashion',    icon: Shirt,    href: '/shop?category=fashion' },
+  { name: 'Tools & DIY',           icon: Wrench,   href: '/shop?category=tools' },
+  { name: 'Automotive & Parts',    icon: Car,      href: '/shop?category=vehicles' },
+  { name: 'Agriculture & Farming', icon: Wheat,    href: '/shop?category=agriculture' },
+  { name: 'Industrial Equipment',  icon: Factory,  href: '/shop?category=industrial' },
+  { name: 'Business Supplies',     icon: Briefcase, href: '/shop?category=business' },
+  { name: 'Wholesale & Bulk',      icon: Layers,   href: '/bulk' },
+  { name: 'Clearance & Offers',    icon: Tag,      href: '/catalog?type=clearance' },
 ];
 
 // ── Section 6: 3 trust cards ────────────────────────────────────────────────
@@ -150,21 +155,20 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* 6 categories — 1-col mobile, 2-col tablet, 3-col desktop */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* 10 categories — 2-col mobile, 3-col tablet, 5-col desktop */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
             {CATEGORIES.map((cat) => {
               const Icon = cat.icon;
               return (
                 <Link
                   key={cat.name}
                   to={cat.href}
-                  className="group flex items-center gap-4 p-4 md:p-5 rounded-premium-md bg-graphite/60 border border-gold/20 hover:border-gold/60 hover:bg-graphite/80 transition-all duration-300"
+                  className="group flex flex-col items-center gap-3 p-4 md:p-5 rounded-premium-md bg-graphite/60 border border-gold/20 hover:border-gold/60 hover:bg-graphite/80 hover:-translate-y-1 transition-all duration-300 text-center"
                 >
                   <div className="w-12 h-12 rounded-premium-sm bg-gold/15 flex items-center justify-center flex-shrink-0 group-hover:bg-gold/30 transition-colors">
                     <Icon className="w-6 h-6 text-gold" />
                   </div>
-                  <span className="text-base font-bold text-white group-hover:text-gold transition-colors">{cat.name}</span>
-                  <ArrowRight className="w-4 h-4 text-white/30 group-hover:text-gold ml-auto transition-all group-hover:translate-x-1" />
+                  <span className="text-sm font-bold text-white group-hover:text-gold transition-colors leading-tight">{cat.name}</span>
                 </Link>
               );
             })}
@@ -360,7 +364,7 @@ export default function HomePage() {
               Start selling in three simple steps
             </h2>
             <p className="text-white/60 text-base max-w-xl mx-auto">
-              Join thousands of UK sellers listing pallets, clearance stock and wholesale inventory.
+              Join UK sellers listing anything from single products to pallets, automotive parts to farm equipment.
             </p>
           </div>
 
@@ -403,7 +407,7 @@ export default function HomePage() {
               Start trading wholesale today
             </h2>
             <p className="text-white/60 text-base mb-8">
-              Buy stock. Sell products. Arrange delivery. All on Loadify Market.
+              Buy stock. Sell anything. Arrange delivery. All on Loadify Market.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to="/catalog" className="btn-primary inline-flex items-center gap-2">

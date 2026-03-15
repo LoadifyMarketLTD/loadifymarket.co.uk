@@ -47,17 +47,17 @@ export default function CinematicHero() {
           {/* Badge */}
           <div className="hidden sm:inline-flex items-center gap-2 bg-gold/10 border border-gold/30 rounded-full px-4 py-2 mb-4 md:mb-6">
             <span className="w-2 h-2 rounded-full bg-gold animate-pulse"></span>
-            <span className="text-gold text-sm font-medium">UK Wholesale Marketplace</span>
+            <span className="text-gold text-sm font-medium">UK Multi-Category Marketplace</span>
           </div>
 
           {/* Main Headline */}
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-3 md:mb-4 leading-tight" style={{ willChange: 'opacity' }}>
-            Buy &amp; Sell Wholesale Stock Across the UK
+            Buy &amp; Sell Anything Across the UK
           </h1>
 
           {/* Subheadline */}
           <p className="hidden sm:block text-base md:text-xl text-white/80 max-w-2xl mx-auto mb-6 md:mb-8">
-            Find pallets, clearance stock and bulk deals from verified UK sellers.
+            From electronics and automotive parts to wholesale pallets and farm machinery — trade anything with verified UK sellers.
           </p>
 
           {/* CTA Buttons */}
