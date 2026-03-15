@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   AlertTriangle, MessageCircle, CheckCircle, Clock, XCircle,
   ShieldCheck, ChevronLeft, Send, Upload, Info,
@@ -55,6 +55,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 
 export default function DisputesPage() {
   const { user } = useAuthStore();
+  const [searchParams] = useSearchParams();
   const [disputes, setDisputes] = useState<DisputeRow[]>([]);
   const [selected, setSelected]   = useState<DisputeRow | null>(null);
   const [messages, setMessages]   = useState<DisputeMessage[]>([]);
@@ -65,7 +66,7 @@ export default function DisputesPage() {
 
   // Create form state
   const [form, setForm] = useState({
-    orderId: '',
+    orderId: searchParams.get('orderId') || '',
     subject: '',
     protectionReason: '' as BuyerProtectionReason | '',
     description: '',
@@ -74,6 +75,13 @@ export default function DisputesPage() {
   const [formError, setFormError]     = useState('');
   const [formSuccess, setFormSuccess] = useState(false);
   const [submitting, setSubmitting]   = useState(false);
+
+  // If orderId is pre-filled from URL, open the create form immediately
+  useEffect(() => {
+    if (searchParams.get('orderId')) {
+      setShowForm(true);
+    }
+  }, [searchParams]);
 
   // ── Fetchers ──────────────────────────────────────────────────────────────
 

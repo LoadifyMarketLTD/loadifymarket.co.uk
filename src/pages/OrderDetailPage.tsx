@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Package, Truck, CheckCircle, Clock, MapPin, Download,
-  ChevronLeft, FileText, XCircle, RotateCcw, Store,
+  ChevronLeft, FileText, XCircle, RotateCcw, Store, AlertTriangle,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
@@ -207,6 +207,15 @@ export default function OrderDetailPage() {
               <Link to="/returns" className="btn-outline flex items-center gap-2 text-sm">
                 <RotateCcw className="w-4 h-4" />
                 Request Return
+              </Link>
+            )}
+            {['paid', 'packed', 'shipped', 'delivered'].includes(order.status) && (
+              <Link
+                to={`/disputes?orderId=${order.id}`}
+                className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-colors"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                Open Dispute
               </Link>
             )}
           </div>

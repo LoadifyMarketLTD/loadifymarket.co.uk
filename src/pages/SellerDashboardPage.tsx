@@ -6,7 +6,7 @@ import { hasSellerAccess } from '../lib/roleUtils';
 import { getDisplayName } from '../lib/displayName';
 import type { Product, Order, SellerProfile, DeliveryRequest, SellerBalance, Payout } from '../types';
 import { buildXDriveAppUrl } from '../lib/transportQuote';
-import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3, Truck, ExternalLink, Clock, CreditCard, CheckCircle } from 'lucide-react';
+import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3, Truck, ExternalLink, Clock, CreditCard, CheckCircle, Store, ShoppingBag } from 'lucide-react';
 
 const DELIVERY_REQUESTS_KEY = 'loadify_delivery_requests';
 
@@ -37,6 +37,7 @@ export default function SellerDashboardPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [profile, setProfile] = useState<SellerProfile | null>(null);
+  const [storeSlug, setStoreSlug] = useState<string | null>(null);
   const [stats, setStats] = useState({
     totalProducts: 0,
     activeProducts: 0,
@@ -68,6 +69,14 @@ export default function SellerDashboardPage() {
         .single();
 
       setProfile(profileData);
+
+      // Fetch store slug for public store link
+      const { data: storeData } = await supabase
+        .from('seller_stores')
+        .select('storeSlug')
+        .eq('userId', user.id)
+        .maybeSingle();
+      setStoreSlug(storeData?.storeSlug || null);
 
       // Fetch products
       const { data: productsData } = await supabase
@@ -407,6 +416,58 @@ export default function SellerDashboardPage() {
                       </div>
                       <DollarSign className="h-12 w-12 text-gold/40" />
                     </div>
+                  </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="card-glass mb-8">
+                  <h2 className="text-xl font-bold text-white mb-4">Quick Actions</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                    <Link
+                      to="/seller/products/new"
+                      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 hover:bg-gold/10 border border-white/10 hover:border-gold/40 transition-all text-center group"
+                    >
+                      <Plus className="h-7 w-7 text-gold group-hover:scale-110 transition-transform" />
+                      <span className="text-sm text-white/80 group-hover:text-white font-medium">Add Product</span>
+                    </Link>
+                    <button
+                      onClick={() => setActiveTab('orders')}
+                      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 hover:bg-blue-500/10 border border-white/10 hover:border-blue-400/40 transition-all text-center group"
+                    >
+                      <ShoppingBag className="h-7 w-7 text-blue-400 group-hover:scale-110 transition-transform" />
+                      <span className="text-sm text-white/80 group-hover:text-white font-medium">View Orders</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('payouts')}
+                      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 hover:bg-green-500/10 border border-white/10 hover:border-green-400/40 transition-all text-center group"
+                    >
+                      <DollarSign className="h-7 w-7 text-green-400 group-hover:scale-110 transition-transform" />
+                      <span className="text-sm text-white/80 group-hover:text-white font-medium">View Payouts</span>
+                    </button>
+                    <Link
+                      to="/transport-quote"
+                      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 hover:bg-purple-500/10 border border-white/10 hover:border-purple-400/40 transition-all text-center group"
+                    >
+                      <Truck className="h-7 w-7 text-purple-400 group-hover:scale-110 transition-transform" />
+                      <span className="text-sm text-white/80 group-hover:text-white font-medium">Request Transport</span>
+                    </Link>
+                    {storeSlug ? (
+                      <Link
+                        to={`/seller/${storeSlug}`}
+                        className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 hover:bg-amber-500/10 border border-white/10 hover:border-amber-400/40 transition-all text-center group"
+                      >
+                        <Store className="h-7 w-7 text-amber-400 group-hover:scale-110 transition-transform" />
+                        <span className="text-sm text-white/80 group-hover:text-white font-medium">View Public Store</span>
+                      </Link>
+                    ) : (
+                      <Link
+                        to="/seller/profile"
+                        className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 hover:bg-amber-500/10 border border-white/10 hover:border-amber-400/40 transition-all text-center group"
+                      >
+                        <Store className="h-7 w-7 text-amber-400/50 group-hover:scale-110 transition-transform" />
+                        <span className="text-sm text-white/50 group-hover:text-white font-medium">Set Up Store</span>
+                      </Link>
+                    )}
                   </div>
                 </div>
 
