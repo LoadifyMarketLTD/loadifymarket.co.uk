@@ -169,8 +169,15 @@ export default function ProductFormPage() {
       // a seller (not admin), strip the critical locked fields from the update
       // to prevent price/stock/title/condition manipulation after sale.
       if (id && hasActiveOrders && !isAdmin) {
-        const { title: _t, price: _p, priceExVat: _pe, stockQuantity: _sq, stockStatus: _ss, condition: _c, ...allowedData } = productData;
-        void _t; void _p; void _pe; void _sq; void _ss; void _c;
+        // Build an allowed-only subset by explicitly picking non-locked fields
+        const allowedData: Partial<typeof productData> = {
+          description: productData.description,
+          images: productData.images,
+          specifications: productData.specifications,
+          weight: productData.weight,
+          dimensions: productData.dimensions,
+          palletInfo: productData.palletInfo,
+        };
         const { error } = await supabase.from('products').update(allowedData).eq('id', id);
         if (error) throw error;
 
