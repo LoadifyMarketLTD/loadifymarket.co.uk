@@ -56,26 +56,42 @@ export const handler: Handler = async (event) => {
 
   const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-08-27.basil' });
 
+  // Safe key prefix: first 12 characters (e.g. "sk_live_XXXX") — never the full secret.
+  const keyPrefix = stripeSecretKey.slice(0, 12) + '…';
+
   try {
     // stripe.accounts.list() is only available to Connect platforms.
     // A successful response (even with an empty list) confirms the platform
     // account has enrolled in Stripe Connect.
     await stripe.accounts.list({ limit: 1 });
 
+    // Also retrieve the platform account ID so the admin can confirm which
+    // Stripe account is active without needing to see the secret key.
+    let platformAccountId: string | null = null;
+    try {
+      const platformAccount = await stripe.account.retrieve();
+      platformAccountId = platformAccount.id;
+    } catch {
+      // Non-fatal — account ID is diagnostic only.
+    }
+
     return {
       statusCode: 200,
-      body: JSON.stringify({ platformConfigured: true }),
+      body: JSON.stringify({ platformConfigured: true, keyPrefix, platformAccountId }),
     };
   } catch (error) {
     // Detect the specific "not signed up for Connect" error from Stripe.
     if (
       error instanceof Stripe.errors.StripeInvalidRequestError &&
-      /signed up for connect/i.test(error.message)
+      (/signed up for connect/i.test(error.message) ||
+        /not.*connect platform/i.test(error.message) ||
+        /connect.*not.*enabled/i.test(error.message))
     ) {
       return {
         statusCode: 200,
         body: JSON.stringify({
           platformConfigured: false,
+          keyPrefix,
           setupUrl: 'https://dashboard.stripe.com/connect/accounts/overview',
         }),
       };

@@ -217,9 +217,9 @@ export default function SellerDashboardPage() {
       const data = await response.json();
       if (!response.ok) {
         if (response.status === 503 || data.platformNotConfigured) {
-          throw new Error(
-            'Stripe Connect is not yet active on this marketplace. Please contact support.'
-          );
+          setPlatformNotConfigured(true);
+          setConnectLoading(false);
+          return;
         }
         throw new Error(data.error || 'Failed to open dashboard');
       }
@@ -992,8 +992,21 @@ export default function SellerDashboardPage() {
                     </div>
                   )}
 
+                  {/* Platform not configured: show informational notice instead of a Connect button */}
+                  {platformNotConfigured && (
+                    <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-blue-800">Payouts Coming Soon</p>
+                        <p className="text-sm text-blue-700 mt-0.5">
+                          Automatic Stripe payouts are being configured for this marketplace. Please check back soon or contact support for assistance.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* State A: Not connected */}
-                  {!profile?.stripeAccountId && (
+                  {!platformNotConfigured && !profile?.stripeAccountId && (
                     <div className="text-center py-8">
                       <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
                         <CreditCard className="h-8 w-8 text-gray-400" />

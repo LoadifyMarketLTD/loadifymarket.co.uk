@@ -40,6 +40,9 @@ export const handler: Handler = async (event) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
   const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-08-27.basil' });
 
+  // Log which Stripe account is active (key prefix only — never log the full secret).
+  console.log(`connect-status: using Stripe key ${stripeSecretKey.slice(0, 12)}…`);
+
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Invalid or expired token' }) };
@@ -60,7 +63,31 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const account = await stripe.accounts.retrieve(profile.stripeAccountId);
+    let account: Stripe.Account;
+    try {
+      account = await stripe.accounts.retrieve(profile.stripeAccountId);
+    } catch (retrieveError) {
+      // If the account doesn't exist on THIS platform (e.g. after a platform
+      // migration to a new Stripe account), clear the stale record so the
+      // seller can re-onboard from scratch.
+      if (
+        retrieveError instanceof Stripe.errors.StripeInvalidRequestError &&
+        /no such account/i.test(retrieveError.message)
+      ) {
+        console.warn(
+          `connect-status: stripeAccountId ${profile.stripeAccountId} not found on current platform — clearing stale record for user ${user.id}`
+        );
+        await supabase
+          .from('seller_profiles')
+          .update({ stripeAccountId: null, stripeConnectStatus: null })
+          .eq('userId', user.id);
+        return {
+          statusCode: 200,
+          body: JSON.stringify({ stripeConnectStatus: null }),
+        };
+      }
+      throw retrieveError;
+    }
 
     let stripeConnectStatus: 'pending' | 'restricted' | 'active';
     if (account.charges_enabled && account.payouts_enabled) {
@@ -92,7 +119,9 @@ export const handler: Handler = async (event) => {
     // Detect when the platform Stripe account has not enrolled in Connect.
     if (
       error instanceof Stripe.errors.StripeInvalidRequestError &&
-      /signed up for connect/i.test(error.message)
+      (/signed up for connect/i.test(error.message) ||
+        /not.*connect platform/i.test(error.message) ||
+        /connect.*not.*enabled/i.test(error.message))
     ) {
       return {
         statusCode: 503,

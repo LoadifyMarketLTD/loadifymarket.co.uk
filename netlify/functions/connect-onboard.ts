@@ -40,6 +40,9 @@ export const handler: Handler = async (event) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
   const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-08-27.basil' });
 
+  // Log which Stripe account is active (key prefix only — never log the full secret).
+  console.log(`connect-onboard: using Stripe key ${stripeSecretKey.slice(0, 12)}…`);
+
   // Verify the JWT and derive the seller's user ID from it.
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
@@ -62,6 +65,34 @@ export const handler: Handler = async (event) => {
     }
 
     let stripeAccountId = profile?.stripeAccountId ?? null;
+
+    // ── Stale-account guard ─────────────────────────────────────────────────
+    // If the platform migrated to a new Stripe account, any Express accounts
+    // created on the old platform will return "No such account" on the new
+    // API key. Detect this and clear the stale ID so the seller can re-onboard
+    // from scratch on the current platform.
+    if (stripeAccountId) {
+      try {
+        await stripe.accounts.retrieve(stripeAccountId);
+      } catch (retrieveError) {
+        if (
+          retrieveError instanceof Stripe.errors.StripeInvalidRequestError &&
+          /no such account/i.test(retrieveError.message)
+        ) {
+          console.warn(
+            `connect-onboard: stripeAccountId ${stripeAccountId} not found on current platform — clearing stale record for seller ${sellerId}`
+          );
+          stripeAccountId = null;
+          await supabase
+            .from('seller_profiles')
+            .update({ stripeAccountId: null, stripeConnectStatus: null })
+            .eq('userId', sellerId);
+        } else {
+          throw retrieveError;
+        }
+      }
+    }
+    // ────────────────────────────────────────────────────────────────────────
 
     if (!stripeAccountId) {
       // Fetch the seller's email to pre-fill the Express account.
@@ -116,10 +147,15 @@ export const handler: Handler = async (event) => {
 
     // Detect when the platform Stripe account has not enrolled in Connect.
     // Stripe returns an InvalidRequestError with a message containing
-    // "signed up for Connect" in this case.
+    // "signed up for Connect" or similar variants in this case.
+    // This fires when either accounts.create() or accountLinks.create() is
+    // rejected because the STRIPE_SECRET_KEY belongs to an account that is
+    // not a Connect platform.
     if (
       error instanceof Stripe.errors.StripeInvalidRequestError &&
-      /signed up for connect/i.test(error.message)
+      (/signed up for connect/i.test(error.message) ||
+        /not.*connect platform/i.test(error.message) ||
+        /connect.*not.*enabled/i.test(error.message))
     ) {
       return {
         statusCode: 503,
