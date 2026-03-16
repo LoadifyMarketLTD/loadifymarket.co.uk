@@ -9,7 +9,7 @@ function isDashboardRoute(pathname: string) {
 }
 
 const footerLinkClass =
-  'text-[#E5E7EB] hover:text-[#F4B400] transition-colors duration-200 text-[14px] font-normal leading-[28px]';
+  'text-[#E5E7EB] hover:text-[#F4B400] transition-colors duration-200 text-[14px] font-normal block py-3';
 
 const footerTitleStyle: React.CSSProperties = {
   fontSize: '16px',

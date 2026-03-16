@@ -43,7 +43,7 @@ const PLACEHOLDER_AMAZON = [
   { id: 'az-1', title: 'Amazon Returns Pallet — Warehouse Stock', image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&q=65&auto=format&fit=crop' },
   { id: 'az-2', title: 'Mixed Returns Lot — Household Goods',    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=65&auto=format&fit=crop' },
   { id: 'az-3', title: 'Amazon Returns — Clothing & Apparel',    image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&q=65&auto=format&fit=crop' },
-  { id: 'az-4', title: 'Returns Pallet — Small Appliances',      image: 'https://images.unsplash.com/photo-1556909114-44e3e9e0f46f?w=400&q=65&auto=format&fit=crop' },
+  { id: 'az-4', title: 'Returns Pallet — Small Appliances',      image: 'https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?w=400&q=65&auto=format&fit=crop' },
 ];
 
 const PLACEHOLDER_CLEARANCE = [
@@ -54,7 +54,7 @@ const PLACEHOLDER_CLEARANCE = [
 ];
 
 const PLACEHOLDER_WHOLESALE = [
-  { id: 'ws-1', title: 'Wholesale — Artisan & Craft Goods',      image: 'https://images.unsplash.com/photo-1513519245088-0e12902e35a8?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ws-1', title: 'Wholesale — Artisan & Craft Goods',      image: 'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=400&q=65&auto=format&fit=crop' },
   { id: 'ws-2', title: 'Food & Beverage — Wholesale Case',       image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=65&auto=format&fit=crop' },
   { id: 'ws-3', title: 'Office & Business Supplies — Bulk',      image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=65&auto=format&fit=crop' },
   { id: 'ws-4', title: 'Wholesale Logistics & Shipping',         image: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&q=65&auto=format&fit=crop' },
@@ -111,7 +111,7 @@ function PlaceholderGrid({
           <div className="aspect-[4/3] overflow-hidden bg-gray-100">
             <img
               src={item.image}
-              srcSet={buildSrcSet(item.image, [200, 400]) || undefined}
+              srcSet={buildSrcSet(item.image, [200, 300, 400]) || undefined}
               sizes="(max-width: 767px) calc(50vw - 1.5rem), (max-width: 1023px) calc(33vw - 1.5rem), 300px"
               alt={item.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
