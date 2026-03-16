@@ -8,11 +8,6 @@
 [functions]
   node_bundler = "esbuild"
 
-[edge_functions]
-  # Edge functions run at Netlify's globally distributed CDN edge nodes,
-  # providing sub-millisecond latency for header injection and middleware.
-  # Source: netlify/edge-functions/
-
 # ─── Security Headers (applied to all responses) ─────────────────────────────
 [[headers]]
   for = "/*"
