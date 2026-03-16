@@ -9,7 +9,6 @@ function isDashboardRoute(pathname: string) {
 }
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
   const location = useLocation();
 
   if (isDashboardRoute(location.pathname)) {
@@ -17,7 +16,7 @@ export default function Footer() {
     <footer className="bg-[#1E3A5F] text-white mt-auto border-t border-white/10">
       <div className="container-cinematic py-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-white/70">
-            <p>© {currentYear} {BRAND.name}. Operated by {BRAND.companyName} (CRN: {BRAND.companyNumber}).</p>
+            <p>© 2025 {BRAND.name}. All rights reserved.</p>
             <div className="flex items-center gap-4">
               <Link to="/terms" className="hover:text-gold transition-colors">Terms</Link>
               <Link to="/privacy" className="hover:text-gold transition-colors">Privacy</Link>
@@ -90,28 +89,32 @@ export default function Footer() {
         </div>
 
         {/* Links Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-8">
           {/* Company Info */}
           <div>
-            <h3 className="text-lg font-bold mb-6 text-gold">About</h3>
-            <p className="text-white/80 text-sm leading-relaxed mb-6">
-              UK multi-category marketplace for retail products, wholesale lots, clearance stock, automotive parts, industrial equipment and more.
+            <h3 className="text-lg font-bold mb-6 text-gold">About Loadify Market</h3>
+            <p className="text-white/80 text-sm leading-relaxed mb-4">
+              Loadify Market is a UK multi-category marketplace connecting buyers and sellers of pallets, wholesale lots, clearance stock, retail products, automotive parts and industrial equipment.
             </p>
             <div className="space-y-3 text-sm">
               <div className="text-white/70 text-xs space-y-1">
-                <p className="font-semibold text-white/70">{BRAND.companyName}</p>
+                <p>Operated by <span className="font-semibold text-white/90">{BRAND.companyName}</span></p>
                 <p>Company Number: {BRAND.companyNumber}</p>
+                <p>VAT Number: {BRAND.vatNumber}</p>
                 <p>Registered in England and Wales</p>
               </div>
               <div className="flex items-start space-x-3 text-white/80">
                 <MapPin className="h-4 w-4 mt-1 flex-shrink-0 text-gold" />
-                <span>{BRAND.companyAddress}</span>
+                <span className="text-xs">{BRAND.companyAddress}</span>
               </div>
-              <div className="flex items-center space-x-3">
-                <Mail className="h-4 w-4 flex-shrink-0 text-gold" />
-                <a href={`mailto:${BRAND.supportEmail}`} className="text-white/80 hover:text-gold transition-colors">
-                  {BRAND.supportEmail}
-                </a>
+              <div className="text-white/70 text-xs mt-2">
+                <p className="font-semibold text-white/80 mb-1">Customer Support</p>
+                <div className="flex items-center space-x-2">
+                  <Mail className="h-4 w-4 flex-shrink-0 text-gold" />
+                  <a href={`mailto:${BRAND.supportEmail}`} className="text-white/80 hover:text-gold transition-colors">
+                    {BRAND.supportEmail}
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -122,17 +125,17 @@ export default function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link to="/shop" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Shop Products
+                  Browse Marketplace
                 </Link>
               </li>
               <li>
                 <Link to="/bulk" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Bulk &amp; Pallets
+                  Bulk &amp; Pallet Deals
                 </Link>
               </li>
               <li>
-                <Link to="/catalog" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  All Listings
+                <Link to="/bulk?type=wholesale" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
+                  Wholesale Lots
                 </Link>
               </li>
               <li>
@@ -151,6 +154,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/shop?category=automotive-parts" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
+                  Automotive Parts
+                </Link>
+              </li>
+              <li>
                 <Link to="/track-order" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
                   Track Order
                 </Link>
@@ -158,11 +166,6 @@ export default function Footer() {
               <li>
                 <Link to="/help" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
                   Help &amp; FAQ
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Contact Us
                 </Link>
               </li>
             </ul>
@@ -193,13 +196,87 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/seller-guidelines" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
+                  Seller Guidelines
+                </Link>
+              </li>
+              <li>
                 <Link to="/how-it-works" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
                   How It Works
                 </Link>
               </li>
               <li>
                 <Link to="/contact" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Partner with Us
+                  Partner With Us
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Marketplace Services */}
+          <div>
+            <h3 className="text-lg font-bold mb-6 text-gold">Marketplace Services</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link to="/buyer-protection" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
+                  Buyer Protection
+                </Link>
+              </li>
+              <li>
+                <Link to="/transport-quote" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
+                  Transport Quote
+                </Link>
+              </li>
+              <li>
+                <Link to="/rfq" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
+                  Request a Shipping Quote
+                </Link>
+              </li>
+              <li>
+                <Link to="/verified-sellers" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
+                  Verified Sellers
+                </Link>
+              </li>
+              <li>
+                <Link to="/bulk" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
+                  Bulk Orders
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
+                  Business Accounts
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Company */}
+          <div>
+            <h3 className="text-lg font-bold mb-6 text-gold">Company</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link to="/about" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
+                  Contact Us
+                </Link>
+              </li>
+              <li>
+                <Link to="/help" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
+                  Help Centre
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
+                  Support
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
+                  Business Enquiries
                 </Link>
               </li>
             </ul>
@@ -235,40 +312,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  About Us
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h3 className="text-lg font-bold mb-6 text-gold">Contact</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link to="/contact" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/help" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Help & FAQ
-                </Link>
-              </li>
-              <li>
-                <Link to="/transport-quote" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Transport Quote
-                </Link>
-              </li>
-              <li>
-                <Link to="/buyer-protection" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Buyer Protection
-                </Link>
-              </li>
-              <li>
-                <Link to="/rfq" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Request a Quote
+                <Link to="/acceptable-use-policy" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
+                  Acceptable Use Policy
                 </Link>
               </li>
             </ul>
@@ -278,19 +323,10 @@ export default function Footer() {
 
       {/* Bottom Bar */}
       <div className="border-t border-white/10 bg-[#152D4A]">
-        <div className="container-cinematic py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-white/70 text-sm">
-              © {currentYear} {BRAND.name}. Operated by {BRAND.companyName} (CRN: {BRAND.companyNumber}). All rights reserved.
-            </p>
-            <div className="flex items-center space-x-6 text-sm text-white/70">
-              <span>VAT: {BRAND.vatNumber}</span>
-              <span className="hidden md:inline">|</span>
-              <span>Platform fee: {BRAND.marketplaceFeePercent}%</span>
-              <span className="hidden md:inline">|</span>
-              <span>Returns: Seller policy</span>
-            </div>
-          </div>
+        <div className="container-cinematic py-4">
+          <p className="text-white/70 text-sm text-center">
+            © 2025 {BRAND.name}. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
