@@ -14,6 +14,9 @@ export default function Header() {
   const { user, logout } = useAuthStore();
   const { getTotalItems } = useCartStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  // Lazy-mount: sidebar DOM is not created until the user first opens it,
+  // reducing initial page DOM size by ~130 elements.
+  const [sidebarMounted, setSidebarMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
@@ -60,8 +63,8 @@ export default function Header() {
         />
       )}
 
-      {/* Off-canvas Left Sidebar */}
-      <div
+      {/* Off-canvas Left Sidebar — only mounted after first open to keep initial DOM lean */}
+      {sidebarMounted && <div
         id="marketplace-sidebar"
         className={`fixed top-0 left-0 h-full w-72 bg-[#1E3A5F] z-50 transform transition-transform duration-300 ease-out overflow-y-auto border-r border-white/10 flex flex-col ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -254,7 +257,7 @@ export default function Header() {
         <div className="px-5 py-4 border-t border-white/10 flex-shrink-0">
           <p className="text-xs text-white/50 text-center">{BRAND.name} — Open Marketplace</p>
         </div>
-      </div>
+      </div>}
 
       <header className="fixed top-0 left-0 right-0 z-30 bg-white shadow-sm">
         {/* Top Utility Bar */}
@@ -275,11 +278,12 @@ export default function Header() {
             <div className="flex items-center gap-4 h-16">
               {/* Hamburger */}
               <button
-                onClick={() => setSidebarOpen(true)}
+                onClick={() => { setSidebarMounted(true); setSidebarOpen(true); }}
                 className="p-2 text-gray-600 hover:text-[#1E3A5F] transition-colors flex-shrink-0"
                 aria-label="Open marketplace navigation"
-                aria-expanded={sidebarOpen}
-                aria-controls="marketplace-sidebar"
+                aria-haspopup="dialog"
+                aria-expanded={sidebarMounted ? sidebarOpen : undefined}
+                aria-controls={sidebarMounted ? 'marketplace-sidebar' : undefined}
               >
                 <Menu className="h-6 w-6" />
               </button>

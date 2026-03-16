@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Heart, Package, Truck, Sparkles, FileText, Eye, MapPin, Star, CheckCircle2, Tag } from 'lucide-react';
+import { Heart, Package, Truck, Sparkles, Eye, MapPin, Star, CheckCircle2, Tag } from 'lucide-react';
 import { useWishlist } from '../lib/useWishlist';
-import { buildTransportQuoteUrl } from '../lib/transportQuote';
 import { getCategoryFallbackImage } from '../lib/categoryImages';
 import VerificationBadge from './VerificationBadge';
 import RoleBadge from './RoleBadge';
@@ -171,28 +170,6 @@ export default function ProductCard({ product }: ProductCardProps) {
             <span>{product.stockQuantity} in stock</span>
           </div>
         </div>
-
-        {/* Transport CTA */}
-        {(product.type === 'pallet' || product.type === 'logistics') && (
-          <Link
-            to={buildTransportQuoteUrl(product)}
-            onClick={(e) => e.stopPropagation()}
-            className="mb-1.5 flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#1E3A5F] transition-colors"
-          >
-            <Truck className="w-3.5 h-3.5 flex-shrink-0" />
-            Request Transport Quote
-          </Link>
-        )}
-
-        {/* RFQ CTA */}
-        <Link
-          to={`/rfq?product=${encodeURIComponent(product.title)}`}
-          onClick={(e) => e.stopPropagation()}
-          className="mb-2 flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#1E3A5F] transition-colors"
-        >
-          <FileText className="w-3.5 h-3.5 flex-shrink-0" />
-          Request Wholesale Quote
-        </Link>
 
         {/* CTA button */}
         <div className="mt-auto">
