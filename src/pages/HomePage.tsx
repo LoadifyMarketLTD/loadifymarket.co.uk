@@ -87,6 +87,18 @@ const PRODUCT_QUERY_FIELDS = `
 `;
 
 // ── Shared placeholder grid ───────────────────────────────────────────────────
+function buildSrcSet(url: string, widths: number[]): string {
+  try {
+    return widths.map(w => {
+      const u = new URL(url);
+      u.searchParams.set('w', String(w));
+      return `${u.toString()} ${w}w`;
+    }).join(', ');
+  } catch {
+    return '';
+  }
+}
+
 function PlaceholderGrid({
   items,
   href,
@@ -109,6 +121,8 @@ function PlaceholderGrid({
           <div className="aspect-[4/3] overflow-hidden bg-gray-100">
             <img
               src={item.image}
+              srcSet={buildSrcSet(item.image, [200, 400]) || undefined}
+              sizes="(max-width: 767px) calc(50vw - 1.5rem), (max-width: 1023px) calc(33vw - 1.5rem), 300px"
               alt={item.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
@@ -363,7 +377,7 @@ export default function HomePage() {
               items={PLACEHOLDER_CLEARANCE}
               href="/catalog?type=clearance"
               badge="Clearance"
-              badgeColor="bg-[#C2410C]/10 text-[#C2410C] font-bold"
+              badgeColor="bg-red-100 text-red-800 font-semibold"
             />
           )}
         </div>
