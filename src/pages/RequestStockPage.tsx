@@ -199,7 +199,7 @@ export default function RequestStockPage() {
                   value={form.budget}
                   onChange={handleChange('budget')}
                   className="input-field w-full"
-                  placeholder="e.g. £500–£2,000 or open to offers"
+                  placeholder="e.g. £500-£2,000 or open to offers"
                 />
               </div>
 
