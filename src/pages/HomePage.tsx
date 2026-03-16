@@ -212,6 +212,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchAll = async () => {
       try {
+        // Fetch more than needed to allow for deduplication
         const [featuredRes, amazonRes, clearanceRes, wholesaleRes] = await Promise.all([
           supabase
             .from('products').select(PRODUCT_QUERY_FIELDS)
@@ -221,23 +222,46 @@ export default function HomePage() {
             .from('products').select(PRODUCT_QUERY_FIELDS)
             .eq('isActive', true).eq('isApproved', true)
             .eq('type', 'lot')
-            .order('createdAt', { ascending: false }).limit(5),
+            .order('createdAt', { ascending: false }).limit(8),
           supabase
             .from('products').select(PRODUCT_QUERY_FIELDS)
             .eq('isActive', true).eq('isApproved', true)
             .eq('type', 'clearance')
-            .order('createdAt', { ascending: false }).limit(5),
+            .order('createdAt', { ascending: false }).limit(8),
           supabase
             .from('products').select(PRODUCT_QUERY_FIELDS)
             .eq('isActive', true).eq('isApproved', true)
             .in('type', ['pallet', 'wholesale'])
-            .order('createdAt', { ascending: false }).limit(5),
+            .order('createdAt', { ascending: false }).limit(8),
         ]);
 
-        if (featuredRes.data)  setFeaturedProducts (transformProductRows(featuredRes.data  as ProductRow[]));
-        if (amazonRes.data)    setAmazonProducts   (transformProductRows(amazonRes.data    as ProductRow[]));
-        if (clearanceRes.data) setClearanceProducts(transformProductRows(clearanceRes.data as ProductRow[]));
-        if (wholesaleRes.data) setWholesaleProducts(transformProductRows(wholesaleRes.data as ProductRow[]));
+        const featured = featuredRes.data
+          ? transformProductRows(featuredRes.data as ProductRow[])
+          : [];
+
+        // Deduplicate: pick the first `maxCount` items not already in usedIds
+        const usedIds = new Set(featured.map((p) => p.id));
+        const takeUnique = (rows: ProductRow[] | null, maxCount: number) => {
+          if (!rows) return [];
+          const unique: ReturnType<typeof transformProductRows> = [];
+          for (const p of transformProductRows(rows)) {
+            if (!usedIds.has(p.id)) {
+              usedIds.add(p.id);
+              unique.push(p);
+              if (unique.length >= maxCount) break;
+            }
+          }
+          return unique;
+        };
+
+        const amazon    = takeUnique(amazonRes.data    as ProductRow[] | null, 5);
+        const clearance = takeUnique(clearanceRes.data as ProductRow[] | null, 5);
+        const wholesale = takeUnique(wholesaleRes.data as ProductRow[] | null, 5);
+
+        setFeaturedProducts(featured);
+        setAmazonProducts(amazon);
+        setClearanceProducts(clearance);
+        setWholesaleProducts(wholesale);
       } catch {
         // silently swallow — sections will show placeholder content
       } finally {

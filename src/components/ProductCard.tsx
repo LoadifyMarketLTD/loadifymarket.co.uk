@@ -144,9 +144,16 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
 
         {/* Title */}
-        <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-2 leading-tight min-h-[2.5rem]">
+        <h3 className="text-sm font-medium text-gray-900 line-clamp-2 mb-1 leading-tight min-h-[2.5rem]">
           {product.title}
         </h3>
+
+        {/* Short description */}
+        {product.description && (
+          <p className="text-xs text-gray-500 line-clamp-1 mb-2 leading-snug">
+            {product.description}
+          </p>
+        )}
 
         {/* Price */}
         <p className="text-lg font-bold text-[#1E3A5F] mb-2">{formatPrice(product.price)}</p>
