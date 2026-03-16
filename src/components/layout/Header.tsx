@@ -289,7 +289,7 @@ export default function Header() {
               </button>
 
               {/* Logo */}
-              <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+              <Link to="/" className="flex items-center gap-2 flex-shrink-0" aria-label="Loadify Market homepage">
                 <Hexagon className="h-8 w-8 text-[#F4C400]" strokeWidth={1.5} />
                 <span className="hidden sm:block text-lg font-bold text-[#1E3A5F]">{BRAND.name}</span>
               </Link>
@@ -307,7 +307,7 @@ export default function Header() {
                   <button
                     type="submit"
                     className="px-4 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 rounded-r-md transition-colors"
-                    aria-label="Search"
+                    aria-label="Search marketplace"
                   >
                     <Search className="h-5 w-5" />
                   </button>
@@ -378,7 +378,7 @@ export default function Header() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="flex-1 px-3 py-2 border border-gray-300 border-r-0 rounded-l-md text-sm focus:outline-none focus:border-[#F4C400]"
                 />
-                <button type="submit" className="px-3 bg-[#F4C400] hover:bg-[#EAB308] rounded-r-md transition-colors">
+                <button type="submit" className="px-3 bg-[#F4C400] hover:bg-[#EAB308] rounded-r-md transition-colors" aria-label="Search marketplace">
                   <Search className="h-4 w-4 text-gray-900" />
                 </button>
               </div>

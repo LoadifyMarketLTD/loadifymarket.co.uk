@@ -149,7 +149,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Short description */}
         {product.description && (
-          <p className="text-xs text-gray-500 line-clamp-1 mb-2 leading-snug">
+          <p className="text-xs text-gray-600 line-clamp-1 mb-2 leading-snug">
             {product.description}
           </p>
         )}
