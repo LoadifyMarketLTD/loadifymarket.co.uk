@@ -218,17 +218,17 @@ export default function HomePage() {
             .from('products').select(PRODUCT_QUERY_FIELDS)
             .eq('isActive', true).eq('isApproved', true)
             .eq('type', 'lot')
-            .order('createdAt', { ascending: false }).limit(6),
+            .order('createdAt', { ascending: false }).limit(4),
           supabase
             .from('products').select(PRODUCT_QUERY_FIELDS)
             .eq('isActive', true).eq('isApproved', true)
             .eq('type', 'clearance')
-            .order('createdAt', { ascending: false }).limit(6),
+            .order('createdAt', { ascending: false }).limit(4),
           supabase
             .from('products').select(PRODUCT_QUERY_FIELDS)
             .eq('isActive', true).eq('isApproved', true)
             .in('type', ['pallet', 'wholesale'])
-            .order('createdAt', { ascending: false }).limit(6),
+            .order('createdAt', { ascending: false }).limit(4),
         ]);
 
         const featured = featuredRes.data
