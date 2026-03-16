@@ -207,7 +207,7 @@ const initializeMockData = () => {
     views: 29,
     isActive: true,
     isApproved: true,
-    images: ['https://images.unsplash.com/photo-1556909114-44e3e9e0f46f?w=800'],
+    images: ['https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?w=800'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
@@ -272,7 +272,7 @@ const initializeMockData = () => {
     views: 55,
     isActive: true,
     isApproved: true,
-    images: ['https://images.unsplash.com/photo-1556909114-44e3e9e0f46f?w=800'],
+    images: ['https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?w=800'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });

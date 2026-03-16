@@ -58,7 +58,7 @@ const CATEGORY_IMAGES: Record<string, string> = {
  */
 const TYPE_IMAGES: Record<string, string> = {
   handmade:
-    'https://images.unsplash.com/photo-1513519245088-0e12902e35a8?w=600&q=80&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=600&q=80&auto=format&fit=crop',
   logistics:
     'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80&auto=format&fit=crop',
   pallet: WAREHOUSE_IMAGE,
