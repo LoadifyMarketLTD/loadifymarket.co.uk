@@ -1,7 +1,18 @@
 import sgMail from '@sendgrid/mail';
 import { Handler } from '@netlify/functions';
+import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit } from './_shared/rateLimiter';
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
+
+const supabase =
+  process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(
+        process.env.VITE_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        { auth: { autoRefreshToken: false, persistSession: false } },
+      )
+    : null;
 
 interface EmailRequest {
   to: string;
@@ -17,6 +28,30 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Method not allowed' }),
     };
   }
+
+  // ── Rate limiting: 20 emails per IP per 15 minutes ───────────────────────
+  if (supabase) {
+    const ip =
+      event.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+      event.headers['client-ip'];
+
+    if (ip) {
+      const rl = await checkRateLimit({
+        supabase,
+        tableName: 'email_rate_limits',
+        identifier: ip,
+        windowMinutes: 15,
+        maxAttempts: 20,
+      });
+      if (rl.exceeded) {
+        return {
+          statusCode: 429,
+          body: JSON.stringify({ error: 'Too many email requests. Please try again later.' }),
+        };
+      }
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   try {
     const body: EmailRequest = JSON.parse(event.body || '{}');

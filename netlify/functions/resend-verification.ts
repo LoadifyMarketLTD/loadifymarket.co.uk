@@ -1,5 +1,6 @@
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit } from './_shared/rateLimiter';
 
 /**
  * POST /.netlify/functions/resend-verification
@@ -38,6 +39,27 @@ export const handler: Handler = async (event) => {
   const adminClient = createClient(supabaseUrl, serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
+
+  // ── Rate limiting: 10 verification resend requests per IP per hour ────────
+  const ip =
+    event.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+    event.headers['client-ip'];
+  if (ip) {
+    const rl = await checkRateLimit({
+      supabase: adminClient,
+      tableName: 'resend_verification_rate_limits',
+      identifier: ip,
+      windowMinutes: 60,
+      maxAttempts: 10,
+    });
+    if (rl.exceeded) {
+      return {
+        statusCode: 429,
+        body: JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+      };
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   let body: { userId?: string; adminId?: string };
   try {

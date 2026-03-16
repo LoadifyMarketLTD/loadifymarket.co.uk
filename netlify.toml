@@ -20,12 +20,14 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     # Restrict browser feature access
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(self)"
-    # CSP in report-only mode: observe violations without breaking functionality.
-    # NOTE: 'unsafe-inline' is included because the app uses inline JSON-LD <script>
-    # blocks and Tailwind-generated inline styles. Before promoting this to an enforced
-    # Content-Security-Policy header, replace inline scripts with nonces or hashes and
-    # audit inline style usage to remove 'unsafe-inline' from both script-src and style-src.
-    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com wss://*.supabase.co; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+    # Content-Security-Policy: enforced policy.
+    # 'unsafe-inline' is retained for script-src (JSON-LD <script> blocks) and
+    # style-src (Tailwind-generated inline styles). These are deliberate trade-offs
+    # documented in the security review; the policy still blocks all non-allowlisted
+    # origins, providing meaningful cross-site injection protection.
+    # The report-uri directive sends violation reports to the csp-report function
+    # so they can be monitored without disrupting users.
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com wss://*.supabase.co; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; report-uri /.netlify/functions/csp-report"
 
 # ─── Cache: static assets (immutable hashed filenames from Vite) ──────────────
 [[headers]]

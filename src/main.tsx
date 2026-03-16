@@ -3,7 +3,12 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
+import { initErrorTracking } from "./lib/errorTracking.ts";
 import "./index.css";
+
+// Initialise global error tracking (unhandled errors + unhandled rejections).
+// Must be called before the React tree mounts so no early errors are missed.
+initErrorTracking();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
