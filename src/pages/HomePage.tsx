@@ -63,7 +63,6 @@ const PLACEHOLDER_FEATURED = [
   { id: 'pf-2', title: 'Clearance Clothing — Wholesale Lot',     image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&q=65&auto=format&fit=crop' },
   { id: 'pf-3', title: 'Tools & DIY — Trade Bundle',             image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=65&auto=format&fit=crop' },
   { id: 'pf-4', title: 'Industrial Equipment — End of Line',     image: 'https://images.unsplash.com/photo-1565043589221-1a6fd9ae45c7?w=400&q=65&auto=format&fit=crop' },
-  { id: 'pf-5', title: 'Automotive Parts — Trade Lot',           image: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&q=65&auto=format&fit=crop' },
 ];
 
 const PLACEHOLDER_AMAZON = [
@@ -71,7 +70,6 @@ const PLACEHOLDER_AMAZON = [
   { id: 'az-2', title: 'Mixed Returns Lot — Household',          image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=65&auto=format&fit=crop' },
   { id: 'az-3', title: 'Amazon Customer Returns — Clothing',     image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&q=65&auto=format&fit=crop' },
   { id: 'az-4', title: 'Returns Pallet — Small Appliances',      image: 'https://images.unsplash.com/photo-1556909114-44e3e9e0f46f?w=400&q=65&auto=format&fit=crop' },
-  { id: 'az-5', title: 'Trade Returns — Tools & Garden',         image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=65&auto=format&fit=crop' },
 ];
 
 const PLACEHOLDER_CLEARANCE = [
@@ -79,7 +77,6 @@ const PLACEHOLDER_CLEARANCE = [
   { id: 'cl-2', title: 'Clearance Furniture — Flat Pack',        image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=65&auto=format&fit=crop' },
   { id: 'cl-3', title: 'Clothing Clearance — Mixed Sizes',       image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&q=65&auto=format&fit=crop' },
   { id: 'cl-4', title: 'Clearance Electronics — Accessories',    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=65&auto=format&fit=crop' },
-  { id: 'cl-5', title: 'Garden Clearance — Seasonal Stock',      image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&q=65&auto=format&fit=crop' },
 ];
 
 const PLACEHOLDER_WHOLESALE = [
@@ -87,7 +84,6 @@ const PLACEHOLDER_WHOLESALE = [
   { id: 'ws-2', title: 'Electronics Bulk Lot — 100 Units',       image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=65&auto=format&fit=crop' },
   { id: 'ws-3', title: 'Wholesale Homeware — Trade Pallet',      image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=65&auto=format&fit=crop' },
   { id: 'ws-4', title: 'Food & Beverage — Wholesale Case',       image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=65&auto=format&fit=crop' },
-  { id: 'ws-5', title: 'Industrial Tools — Bulk Buy',            image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=65&auto=format&fit=crop' },
 ];
 
 const LOGISTICS_IMG = 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=1400&q=70&auto=format&fit=crop&fm=webp';
@@ -132,7 +128,7 @@ function PlaceholderGrid({
   badgeColor?: string;
 }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {items.map((item) => (
         <Link
           key={item.id}
@@ -159,9 +155,9 @@ function PlaceholderGrid({
 }
 
 // ── Loading skeleton ──────────────────────────────────────────────────────────
-function ProductGridSkeleton({ count = 5 }: { count?: number }) {
+function ProductGridSkeleton({ count = 4 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="animate-pulse bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="bg-gray-200 aspect-[4/3]" />
@@ -217,22 +213,22 @@ export default function HomePage() {
           supabase
             .from('products').select(PRODUCT_QUERY_FIELDS)
             .eq('isActive', true).eq('isApproved', true)
-            .order('views', { ascending: false }).limit(5),
+            .order('views', { ascending: false }).limit(4),
           supabase
             .from('products').select(PRODUCT_QUERY_FIELDS)
             .eq('isActive', true).eq('isApproved', true)
             .eq('type', 'lot')
-            .order('createdAt', { ascending: false }).limit(8),
+            .order('createdAt', { ascending: false }).limit(6),
           supabase
             .from('products').select(PRODUCT_QUERY_FIELDS)
             .eq('isActive', true).eq('isApproved', true)
             .eq('type', 'clearance')
-            .order('createdAt', { ascending: false }).limit(8),
+            .order('createdAt', { ascending: false }).limit(6),
           supabase
             .from('products').select(PRODUCT_QUERY_FIELDS)
             .eq('isActive', true).eq('isApproved', true)
             .in('type', ['pallet', 'wholesale'])
-            .order('createdAt', { ascending: false }).limit(8),
+            .order('createdAt', { ascending: false }).limit(6),
         ]);
 
         const featured = featuredRes.data
@@ -254,9 +250,9 @@ export default function HomePage() {
           return unique;
         };
 
-        const amazon    = takeUnique(amazonRes.data    as ProductRow[] | null, 5);
-        const clearance = takeUnique(clearanceRes.data as ProductRow[] | null, 5);
-        const wholesale = takeUnique(wholesaleRes.data as ProductRow[] | null, 5);
+        const amazon    = takeUnique(amazonRes.data    as ProductRow[] | null, 4);
+        const clearance = takeUnique(clearanceRes.data as ProductRow[] | null, 4);
+        const wholesale = takeUnique(wholesaleRes.data as ProductRow[] | null, 4);
 
         setFeaturedProducts(featured);
         setAmazonProducts(amazon);
@@ -311,7 +307,7 @@ export default function HomePage() {
           {loading ? (
             <ProductGridSkeleton />
           ) : featuredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {featuredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -350,7 +346,7 @@ export default function HomePage() {
           {loading ? (
             <ProductGridSkeleton />
           ) : amazonProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {amazonProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -378,7 +374,7 @@ export default function HomePage() {
           {loading ? (
             <ProductGridSkeleton />
           ) : clearanceProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {clearanceProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -411,7 +407,7 @@ export default function HomePage() {
           {loading ? (
             <ProductGridSkeleton />
           ) : wholesaleProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {wholesaleProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -465,6 +461,7 @@ export default function HomePage() {
                 alt="UK logistics and delivery trucks"
                 className="w-full h-full object-cover"
                 loading="lazy"
+                decoding="async"
               />
             </div>
           </div>
