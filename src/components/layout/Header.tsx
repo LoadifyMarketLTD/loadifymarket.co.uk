@@ -281,7 +281,8 @@ export default function Header() {
                 onClick={() => { setSidebarMounted(true); setSidebarOpen(true); }}
                 className="p-2 text-gray-600 hover:text-[#1E3A5F] transition-colors flex-shrink-0"
                 aria-label="Open marketplace navigation"
-                aria-expanded={sidebarOpen}
+                aria-haspopup="dialog"
+                aria-expanded={sidebarMounted ? sidebarOpen : undefined}
                 aria-controls={sidebarMounted ? 'marketplace-sidebar' : undefined}
               >
                 <Menu className="h-6 w-6" />

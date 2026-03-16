@@ -54,7 +54,12 @@ export default function CinematicHero() {
           <div className="relative">
             <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[4/3]">
               <img
-                src="https://images.unsplash.com/photo-1553413077-190dd305871c?w=800&q=75&auto=format&fit=crop&fm=webp"
+                src="https://images.unsplash.com/photo-1553413077-190dd305871c?w=1280&q=65&auto=format&fit=max&fm=webp"
+                srcSet="
+                  https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=65&auto=format&fit=max&fm=webp 768w,
+                  https://images.unsplash.com/photo-1553413077-190dd305871c?w=1280&q=65&auto=format&fit=max&fm=webp 1280w,
+                  https://images.unsplash.com/photo-1553413077-190dd305871c?w=1920&q=65&auto=format&fit=max&fm=webp 1920w"
+                sizes="(max-width: 1023px) 100vw, 50vw"
                 alt="UK warehouse with pallets and stock"
                 className="w-full h-full object-cover"
                 loading="eager"
