@@ -565,6 +565,42 @@
 /* ═══════════════════════════════════════════════════════════
    FOOTER RESPONSIVE GRID
    ═══════════════════════════════════════════════════════════ */
+
+/* Footer: About column paragraph width */
+.footer-about p {
+  max-width: 260px;
+}
+
+/* Footer: icon + text rows alignment */
+.footer-about .info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* Footer: consistent heading spacing */
+.footer-grid h3 {
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+/* Footer: subtle divider */
+.footer-divider {
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+
+/* Footer: social icons */
+.footer-social {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: #E5E7EB;
+}
+
+.footer-social a {
+  transition: opacity 0.2s ease;
+}
+
 @media (max-width: 1023px) {
   .footer-grid {
     grid-template-columns: 1fr 1fr 1fr !important;

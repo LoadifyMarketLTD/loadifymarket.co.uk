@@ -48,21 +48,62 @@ export default function Footer() {
           margin: 'auto',
           padding: '70px 40px',
           display: 'grid',
-          gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr',
-          gap: '60px',
+          gridTemplateColumns: '1.3fr 1fr 1fr 1fr 1fr 1fr',
+          gap: '40px',
         }}
         className="footer-grid"
       >
         {/* Column 1: About */}
-        <div>
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 mb-5 group" aria-label="Loadify Market homepage">
-            <div className="relative flex-shrink-0">
-              <Hexagon className="h-10 w-10 text-[#F4B400] transition-all duration-300 group-hover:scale-110" strokeWidth={1.5} />
-              <span className="absolute inset-0 flex items-center justify-center text-[#F4B400] font-bold text-base">L</span>
+        <div className="footer-about">
+          {/* Logo + Social Icons row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <Link to="/" className="flex items-center space-x-3 group" aria-label="Loadify Market homepage">
+              <div className="relative flex-shrink-0">
+                <Hexagon className="h-10 w-10 text-[#F4B400] transition-all duration-300 group-hover:scale-110" strokeWidth={1.5} />
+                <span className="absolute inset-0 flex items-center justify-center text-[#F4B400] font-bold text-base">L</span>
+              </div>
+              <span className="text-xl font-bold text-white tracking-tight">{BRAND.name}</span>
+            </Link>
+            {/* Social Icons */}
+            <div className="footer-social">
+              <a
+                href="https://www.facebook.com/loadifymarket"
+                target="_blank"
+                className="hover:text-[#F4B400] transition-opacity duration-200"
+                aria-label="Facebook"
+                rel="noopener noreferrer"
+              >
+                <Facebook className="h-[20px] w-[20px]" />
+              </a>
+              <a
+                href="https://twitter.com/loadifymarket"
+                target="_blank"
+                className="hover:text-[#F4B400] transition-opacity duration-200"
+                aria-label="Twitter"
+                rel="noopener noreferrer"
+              >
+                <Twitter className="h-[20px] w-[20px]" />
+              </a>
+              <a
+                href="https://www.instagram.com/loadifymarket"
+                target="_blank"
+                className="hover:text-[#F4B400] transition-opacity duration-200"
+                aria-label="Instagram"
+                rel="noopener noreferrer"
+              >
+                <Instagram className="h-[20px] w-[20px]" />
+              </a>
+              <a
+                href="https://www.linkedin.com/company/loadifymarket"
+                target="_blank"
+                className="hover:text-[#F4B400] transition-opacity duration-200"
+                aria-label="LinkedIn"
+                rel="noopener noreferrer"
+              >
+                <Linkedin className="h-[20px] w-[20px]" />
+              </a>
             </div>
-            <span className="text-xl font-bold text-white tracking-tight">{BRAND.name}</span>
-          </Link>
+          </div>
 
           <h3 style={footerTitleStyle}>About Loadify Market</h3>
           <p className="text-[#E5E7EB] text-[13px] leading-relaxed">
@@ -76,14 +117,14 @@ export default function Footer() {
             <p>VAT: {BRAND.vatNumber}</p>
           </div>
 
-          <div style={{ marginTop: '14px' }} className="flex items-start gap-2 text-[13px] text-[#9CA3AF]">
+          <div style={{ marginTop: '14px' }} className="info-row text-[13px] text-[#9CA3AF]">
             <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-[#F4B400]" />
             <address className="not-italic">101 Cornelian Street<br />Blackburn BB1 9QL<br />United Kingdom</address>
           </div>
 
           <div style={{ marginTop: '14px' }} className="text-[13px] text-[#9CA3AF]">
             <p className="text-[#E5E7EB] font-medium mb-1">Support:</p>
-            <div className="flex items-center gap-2">
+            <div className="info-row">
               <Mail className="h-3.5 w-3.5 flex-shrink-0 text-[#F4B400]" />
               <a
                 href={`mailto:${BRAND.supportEmail}`}
@@ -166,56 +207,16 @@ export default function Footer() {
 
       {/* Bottom Bar */}
       <div
+        className="footer-divider"
         style={{
-          borderTop: '1px solid rgba(255,255,255,0.08)',
           maxWidth: '1400px',
           margin: '0 auto',
           padding: '20px 40px',
         }}
-        className="flex flex-col sm:flex-row justify-between items-center gap-3"
       >
         <p style={{ fontSize: '13px', color: '#9CA3AF' }}>
-          © 2025 {BRAND.name} — Operated by {BRAND.companyName}. All rights reserved.
+          © 2025 {BRAND.name}. All rights reserved.
         </p>
-        {/* Social Icons */}
-        <div className="flex items-center" style={{ gap: '14px', fontSize: '18px', color: '#E5E7EB' }}>
-          <a
-            href="https://www.facebook.com/loadifymarket"
-            target="_blank"
-            className="hover:text-[#F4B400] transition-colors duration-200"
-            aria-label="Facebook"
-            rel="noopener noreferrer"
-          >
-            <Facebook className="h-[18px] w-[18px]" />
-          </a>
-          <a
-            href="https://twitter.com/loadifymarket"
-            target="_blank"
-            className="hover:text-[#F4B400] transition-colors duration-200"
-            aria-label="Twitter"
-            rel="noopener noreferrer"
-          >
-            <Twitter className="h-[18px] w-[18px]" />
-          </a>
-          <a
-            href="https://www.instagram.com/loadifymarket"
-            target="_blank"
-            className="hover:text-[#F4B400] transition-colors duration-200"
-            aria-label="Instagram"
-            rel="noopener noreferrer"
-          >
-            <Instagram className="h-[18px] w-[18px]" />
-          </a>
-          <a
-            href="https://www.linkedin.com/company/loadifymarket"
-            target="_blank"
-            className="hover:text-[#F4B400] transition-colors duration-200"
-            aria-label="LinkedIn"
-            rel="noopener noreferrer"
-          >
-            <Linkedin className="h-[18px] w-[18px]" />
-          </a>
-        </div>
       </div>
     </footer>
   );
