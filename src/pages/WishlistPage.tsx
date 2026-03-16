@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Heart, Trash2, ShoppingCart } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore, useCartStore } from '../store';
+import { formatPrice } from '../lib/formatPrice';
 import type { Product } from '../types';
 
 export default function WishlistPage() {
@@ -101,13 +102,6 @@ export default function WishlistPage() {
       sellerId: product.sellerId,
     });
     alert('Added to cart!');
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-    }).format(price);
   };
 
   if (!user) {

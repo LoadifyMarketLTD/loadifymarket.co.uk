@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { hasSellerAccess } from '../lib/roleUtils';
 import { getDisplayName } from '../lib/displayName';
+import { formatPrice } from '../lib/formatPrice';
 import type { Product, Order, SellerProfile, DeliveryRequest, SellerBalance, Payout } from '../types';
 import { buildXDriveAppUrl } from '../lib/transportQuote';
 import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3, Truck, ExternalLink, Clock, CreditCard, CheckCircle, Store, ShoppingBag } from 'lucide-react';
@@ -179,13 +180,6 @@ export default function SellerDashboardPage() {
     }
   }, [searchParams, syncConnectStatus]);
   // ───────────────────────────────────────────────────────────────────────────
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-    }).format(price);
-  };
 
   // ── Stripe Connect action handlers ─────────────────────────────────────────
   const handleConnectStripe = async () => {

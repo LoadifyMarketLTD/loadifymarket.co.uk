@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { hasAdminAccess } from '../lib/roleUtils';
 import { getDisplayName } from '../lib/displayName';
+import { formatPrice } from '../lib/formatPrice';
 import type { User, Product, Order, Dispute, PayoutRequest } from '../types';
 import { Users, Package, ShoppingBag, AlertCircle, CheckCircle, XCircle, DollarSign, Download, Settings, TrendingUp, CreditCard, Send } from 'lucide-react';
 import { 
@@ -274,13 +275,6 @@ export default function AdminDashboardPage() {
       console.error('Error rejecting payout:', err);
       alert(err instanceof Error ? err.message : 'Failed to reject payout.');
     }
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-    }).format(price);
   };
 
   // Export functions
