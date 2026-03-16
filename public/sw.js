@@ -46,39 +46,57 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - serve from cache when possible, fallback to network
 self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Only handle http/https requests — skip chrome-extension://, data:, etc.
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
+  // Only handle same-origin requests.
+  // Cross-origin requests (Google Fonts, Unsplash images, Stripe, Supabase …)
+  // must be handled directly by the browser so the correct CSP directives
+  // (style-src, img-src, connect-src) are applied rather than going through
+  // the service-worker's fetch() which is evaluated against connect-src.
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request)
+    caches.match(request)
       .then((response) => {
         // Cache hit - return response
         if (response) {
           return response;
         }
         // Clone the request
-        const fetchRequest = event.request.clone();
+        const fetchRequest = request.clone();
 
         return fetch(fetchRequest).then(
-          (response) => {
-            // Check if valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
+          (networkResponse) => {
+            // Only cache valid, same-origin, basic responses
+            if (
+              !networkResponse ||
+              networkResponse.status !== 200 ||
+              networkResponse.type !== 'basic'
+            ) {
+              return networkResponse;
             }
 
-            // Clone the response
-            const responseToCache = response.clone();
+            // Clone the response before consuming it
+            const responseToCache = networkResponse.clone();
 
             caches.open(CACHE_NAME)
               .then((cache) => {
-                cache.put(event.request, responseToCache);
+                cache.put(request, responseToCache);
               });
 
-            return response;
+            return networkResponse;
           }
         ).catch((error) => {
-          // Network request failed, return a fallback if available
+          // Network request failed, return a generic error response
           console.log('Fetch failed; returning offline page instead.', error);
-          
-          // For navigation requests, you could return a custom offline page here
-          // For now, return a generic error response
           return new Response('Network error occurred', {
             status: 503,
             statusText: 'Service Unavailable',

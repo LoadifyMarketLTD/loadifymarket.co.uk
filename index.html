@@ -59,18 +59,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Google Fonts — loaded asynchronously to avoid blocking first render.
-         The media="print" trick defers execution; onload switches it to "all".
+         The preload link converts itself to a stylesheet once the resource is
+         fetched, which avoids the "preloaded but not used" browser warning that
+         the separate preload + media="print" two-link pattern can trigger.
          The <noscript> fallback covers JS-disabled environments. -->
     <link
       rel="preload"
       as="style"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-    />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      media="print"
-      onload="this.media='all'"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
     <noscript>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
