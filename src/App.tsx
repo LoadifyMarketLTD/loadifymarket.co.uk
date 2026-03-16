@@ -62,6 +62,7 @@ const ShippingPolicy = lazy(() => import('./pages/legal/ShippingPolicyPage'));
 const LogisticsLoadsPage = lazy(() => import('./pages/LogisticsLoadsPage'));
 const TransportQuotePage = lazy(() => import('./pages/TransportQuotePage'));
 const RFQPage = lazy(() => import('./pages/RFQPage'));
+const RequestStockPage = lazy(() => import('./pages/RequestStockPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
@@ -488,6 +489,13 @@ function App() {
           <Route path="rfq" element={
             <Suspense fallback={<PageLoader />}>
               <RFQPage />
+            </Suspense>
+          } />
+
+          {/* Public: Request Stock — buyer demand / RFQ-style stock requests */}
+          <Route path="request-stock" element={
+            <Suspense fallback={<PageLoader />}>
+              <RequestStockPage />
             </Suspense>
           } />
           

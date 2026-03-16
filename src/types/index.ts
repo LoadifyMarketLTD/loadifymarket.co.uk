@@ -497,3 +497,17 @@ export interface DeliveryRequest {
   /** Optional reference returned by XDrive */
   xdriveRef?: string;
 }
+
+
+// ─── Stock Request (Buyer demand / Request Stock feature) ────────────────────
+
+export interface StockRequest {
+  id: string;
+  product_type: string;
+  quantity: string;
+  location: string;
+  budget: string;
+  notes: string;
+  buyer_id: string | null;
+  created_at: string;
+}

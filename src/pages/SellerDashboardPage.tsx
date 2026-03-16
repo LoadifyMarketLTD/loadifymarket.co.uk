@@ -4,9 +4,9 @@ import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { hasSellerAccess } from '../lib/roleUtils';
 import { getDisplayName } from '../lib/displayName';
-import type { Product, Order, SellerProfile, DeliveryRequest, SellerBalance, Payout } from '../types';
+import type { Product, Order, SellerProfile, DeliveryRequest, SellerBalance, Payout, StockRequest } from '../types';
 import { buildXDriveAppUrl } from '../lib/transportQuote';
-import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3, Truck, ExternalLink, Clock, CreditCard, CheckCircle, Store, ShoppingBag } from 'lucide-react';
+import { Package, Plus, Edit, Eye, TrendingUp, DollarSign, User, AlertCircle, BarChart3, Truck, ExternalLink, Clock, CreditCard, CheckCircle, Store, ShoppingBag, PackageSearch, MapPin, Banknote, Mail } from 'lucide-react';
 
 const DELIVERY_REQUESTS_KEY = 'loadify_delivery_requests';
 
@@ -46,13 +46,15 @@ export default function SellerDashboardPage() {
     pendingOrders: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'products' | 'orders' | 'deliveries' | 'payouts'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'products' | 'orders' | 'deliveries' | 'payouts' | 'buyer-requests'>('overview');
   const [deliveryRequests, setDeliveryRequests] = useState<DeliveryRequest[]>([]);
   const [sellerBalance, setSellerBalance] = useState<SellerBalance | null>(null);
   const [sellerPayouts, setSellerPayouts] = useState<Payout[]>([]);
   const [connectLoading, setConnectLoading] = useState(false);
   const [connectError, setConnectError] = useState('');
   const [platformNotConfigured, setPlatformNotConfigured] = useState(false);
+  const [stockRequests, setStockRequests] = useState<StockRequest[]>([]);
+  const [stockRequestsLoading, setStockRequestsLoading] = useState(false);
 
   const [searchParams] = useSearchParams();
 
@@ -178,6 +180,28 @@ export default function SellerDashboardPage() {
       }
     }
   }, [searchParams, syncConnectStatus]);
+
+  const fetchStockRequests = useCallback(async () => {
+    setStockRequestsLoading(true);
+    try {
+      const { data } = await supabase
+        .from('stock_requests')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      setStockRequests(data || []);
+    } catch {
+      // Non-critical — fail silently
+    } finally {
+      setStockRequestsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'buyer-requests') {
+      fetchStockRequests();
+    }
+  }, [activeTab, fetchStockRequests]);
   // ───────────────────────────────────────────────────────────────────────────
 
   const formatPrice = (price: number) => {
@@ -363,6 +387,17 @@ export default function SellerDashboardPage() {
             >
               <CreditCard className="h-4 w-4" />
               Payouts
+            </button>
+            <button
+              onClick={() => setActiveTab('buyer-requests')}
+              className={`pb-4 px-2 font-medium transition-colors flex items-center gap-1.5 ${
+                activeTab === 'buyer-requests'
+                  ? 'border-b-2 border-gold text-gold'
+                  : 'text-white/60 hover:text-white'
+              }`}
+            >
+              <PackageSearch className="h-4 w-4" />
+              Buyer Requests
             </button>
           </div>
         </div>
@@ -1226,6 +1261,84 @@ export default function SellerDashboardPage() {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Buyer Requests Tab */}
+            {activeTab === 'buyer-requests' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Buyer Requests</h2>
+                    <p className="text-white/50 text-sm mt-1">
+                      Stock requests submitted by buyers. Contact them if you can fulfil their order.
+                    </p>
+                  </div>
+                </div>
+
+                {stockRequestsLoading ? (
+                  <div className="flex justify-center items-center h-40">
+                    <div className="w-6 h-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : stockRequests.length === 0 ? (
+                  <div className="card-glass text-center py-14">
+                    <PackageSearch className="w-10 h-10 text-white/20 mx-auto mb-4" />
+                    <p className="text-white/50 text-sm">No buyer requests yet. Check back soon.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {stockRequests.map((req) => (
+                      <div key={req.id} className="card-glass flex flex-col gap-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <PackageSearch className="w-4 h-4 text-gold flex-shrink-0" />
+                            <span className="font-semibold text-white text-sm leading-tight">
+                              {req.product_type}
+                            </span>
+                          </div>
+                          <span className="text-white/30 text-xs whitespace-nowrap">
+                            {new Date(req.created_at).toLocaleDateString('en-GB')}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div className="flex items-center gap-1.5 text-white/60">
+                            <Package className="w-3.5 h-3.5 text-white/30" />
+                            <span>{req.quantity}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-white/60">
+                            <MapPin className="w-3.5 h-3.5 text-white/30" />
+                            <span>{req.location}</span>
+                          </div>
+                          {req.budget && (
+                            <div className="flex items-center gap-1.5 text-white/60 col-span-2">
+                              <Banknote className="w-3.5 h-3.5 text-white/30" />
+                              <span>{req.budget}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {req.notes && (
+                          <p className="text-white/50 text-xs border-t border-white/10 pt-2 line-clamp-3">
+                            {req.notes}
+                          </p>
+                        )}
+
+                        <div className="mt-auto pt-2 border-t border-white/10">
+                          <a
+                            href={`mailto:?subject=Re: ${encodeURIComponent(req.product_type)} Request on Loadify Market&body=${encodeURIComponent(
+                              `Hi,\n\nI saw your request for "${req.product_type}" (${req.quantity}) on Loadify Market and may be able to help.\n\nPlease get in touch to discuss further.\n\nKind regards`
+                            )}`}
+                            className="inline-flex items-center gap-1.5 text-sm font-medium text-gold hover:text-gold/80 transition-colors"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            Contact Buyer
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </>

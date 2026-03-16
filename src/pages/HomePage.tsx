@@ -5,7 +5,7 @@ import {
   Home, Wrench,
   Shirt, LayoutGrid,
   Cpu, Car, Briefcase, Tag,
-  RotateCcw,
+  RotateCcw, PackageSearch,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 import { supabase } from '../lib/supabase';
@@ -399,6 +399,29 @@ export default function HomePage() {
               badgeColor="bg-[#1E3A5F]/10 text-[#1E3A5F]"
             />
           )}
+        </div>
+      </section>
+
+      {/* ── Request Stock CTA ────────────────────────────────────────────── */}
+      <section className="bg-[#1E3A5F] py-14">
+        <div className="container-market text-center">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-full mb-5">
+            <PackageSearch className="w-7 h-7 text-gold" />
+          </div>
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+            Can't find the stock you need?
+          </h2>
+          <p className="text-white/60 text-base md:text-lg max-w-xl mx-auto mb-7">
+            Request pallets or wholesale stock and let sellers contact you with
+            available offers.
+          </p>
+          <Link
+            to="/request-stock"
+            className="inline-flex items-center gap-2 bg-gold hover:bg-gold/90 text-jet font-semibold px-7 py-3 rounded-lg transition-colors duration-200"
+          >
+            <PackageSearch className="w-4 h-4" />
+            Request Stock
+          </Link>
         </div>
       </section>
 
