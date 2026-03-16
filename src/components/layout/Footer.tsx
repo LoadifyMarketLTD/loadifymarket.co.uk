@@ -8,325 +8,213 @@ function isDashboardRoute(pathname: string) {
   return DASHBOARD_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'));
 }
 
+const footerLinkClass =
+  'text-[#E5E7EB] hover:text-[#F4B400] transition-colors duration-200 text-[14px] font-normal leading-[28px]';
+
+const footerTitleStyle: React.CSSProperties = {
+  fontSize: '16px',
+  fontWeight: 600,
+  letterSpacing: '0.5px',
+  color: '#F4B400',
+  marginBottom: '14px',
+};
+
 export default function Footer() {
   const location = useLocation();
 
   if (isDashboardRoute(location.pathname)) {
     return (
-    <footer className="bg-[#1E3A5F] text-white mt-auto border-t border-white/10">
-      <div className="container-cinematic py-4">
+      <footer style={{ background: 'linear-gradient(180deg,#0A2239,#081A2C)' }} className="text-white mt-auto border-t border-white/10">
+        <div className="container-cinematic py-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-white/70">
             <p>© 2025 {BRAND.name}. All rights reserved.</p>
             <div className="flex items-center gap-4">
-              <Link to="/terms" className="hover:text-gold transition-colors">Terms</Link>
-              <Link to="/privacy" className="hover:text-gold transition-colors">Privacy</Link>
-              <Link to="/contact" className="hover:text-gold transition-colors">Contact</Link>
+              <Link to="/terms" className="hover:text-[#F4B400] transition-colors">Terms</Link>
+              <Link to="/privacy" className="hover:text-[#F4B400] transition-colors">Privacy</Link>
+              <Link to="/contact" className="hover:text-[#F4B400] transition-colors">Contact</Link>
             </div>
           </div>
         </div>
-    </footer>
-  );
+      </footer>
+    );
   }
 
   return (
-    <footer className="bg-[#1E3A5F] text-white mt-auto">
+    <footer style={{ background: 'linear-gradient(180deg,#0A2239,#081A2C)' }} className="text-white mt-auto">
       {/* Main Footer Content */}
-      <div className="container-cinematic py-8">
-        {/* Top Section with Logo and Social */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 pb-8 border-b border-white/10">
+      <div
+        style={{
+          maxWidth: '1400px',
+          margin: 'auto',
+          padding: '70px 40px',
+          display: 'grid',
+          gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr',
+          gap: '60px',
+        }}
+        className="footer-grid"
+      >
+        {/* Column 1: About */}
+        <div>
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 mb-6 lg:mb-0 group" aria-label="Loadify Market homepage">
-            <div className="relative">
-              <Hexagon className="h-12 w-12 text-gold transition-all duration-300 group-hover:scale-110" strokeWidth={1.5} />
-              <span className="absolute inset-0 flex items-center justify-center text-gold font-bold text-lg">L</span>
+          <Link to="/" className="flex items-center space-x-3 mb-5 group" aria-label="Loadify Market homepage">
+            <div className="relative flex-shrink-0">
+              <Hexagon className="h-10 w-10 text-[#F4B400] transition-all duration-300 group-hover:scale-110" strokeWidth={1.5} />
+              <span className="absolute inset-0 flex items-center justify-center text-[#F4B400] font-bold text-base">L</span>
             </div>
-            <div>
-              <span className="text-2xl font-bold text-white tracking-tight">{BRAND.name}</span>
-              <p className="text-xs text-white/80 mt-0.5">{BRAND.tagline}</p>
-            </div>
+            <span className="text-xl font-bold text-white tracking-tight">{BRAND.name}</span>
           </Link>
 
-          {/* Social Icons */}
-          <div className="flex items-center space-x-4">
-            <span className="text-white/70 text-sm mr-4">Follow us</span>
-            <a
-              href="https://www.facebook.com/loadifymarket"
-              target="_blank"
-              className="p-2 rounded-full bg-white/5 text-gold hover:bg-gold hover:text-jet transition-all duration-300"
-              aria-label="Facebook"
-              rel="noopener noreferrer"
-            >
-              <Facebook className="h-5 w-5" />
-            </a>
-            <a
-              href="https://twitter.com/loadifymarket"
-              target="_blank"
-              className="p-2 rounded-full bg-white/5 text-gold hover:bg-gold hover:text-jet transition-all duration-300"
-              aria-label="Twitter"
-              rel="noopener noreferrer"
-            >
-              <Twitter className="h-5 w-5" />
-            </a>
-            <a
-              href="https://www.instagram.com/loadifymarket"
-              target="_blank"
-              className="p-2 rounded-full bg-white/5 text-gold hover:bg-gold hover:text-jet transition-all duration-300"
-              aria-label="Instagram"
-              rel="noopener noreferrer"
-            >
-              <Instagram className="h-5 w-5" />
-            </a>
-            <a
-              href="https://www.linkedin.com/company/loadifymarket"
-              target="_blank"
-              className="p-2 rounded-full bg-white/5 text-gold hover:bg-gold hover:text-jet transition-all duration-300"
-              aria-label="LinkedIn"
-              rel="noopener noreferrer"
-            >
-              <Linkedin className="h-5 w-5" />
-            </a>
+          <h3 style={footerTitleStyle}>About Loadify Market</h3>
+          <p className="text-[#E5E7EB] text-[13px] leading-relaxed">
+            Loadify Market is a UK multi-category marketplace connecting buyers and sellers of pallets,
+            wholesale lots, clearance stock, electronics, retail products, and industrial equipment.
+          </p>
+
+          <div style={{ marginTop: '14px' }} className="text-[13px] text-[#9CA3AF] space-y-0.5">
+            <p>Operated by <span className="text-[#E5E7EB] font-medium">{BRAND.companyName}</span></p>
+            <p>Company No: {BRAND.companyNumber}</p>
+            <p>VAT: {BRAND.vatNumber}</p>
+          </div>
+
+          <div style={{ marginTop: '14px' }} className="flex items-start gap-2 text-[13px] text-[#9CA3AF]">
+            <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-[#F4B400]" />
+            <address className="not-italic">101 Cornelian Street<br />Blackburn BB1 9QL<br />United Kingdom</address>
+          </div>
+
+          <div style={{ marginTop: '14px' }} className="text-[13px] text-[#9CA3AF]">
+            <p className="text-[#E5E7EB] font-medium mb-1">Support:</p>
+            <div className="flex items-center gap-2">
+              <Mail className="h-3.5 w-3.5 flex-shrink-0 text-[#F4B400]" />
+              <a
+                href={`mailto:${BRAND.supportEmail}`}
+                className="text-[#E5E7EB] hover:text-[#F4B400] transition-colors duration-200"
+              >
+                {BRAND.supportEmail}
+              </a>
+            </div>
           </div>
         </div>
 
-        {/* Links Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-8">
-          {/* Company Info */}
-          <div>
-            <h3 className="text-lg font-bold mb-6 text-gold">About Loadify Market</h3>
-            <p className="text-white/80 text-sm leading-relaxed mb-4">
-              Loadify Market is a UK multi-category marketplace connecting buyers and sellers of pallets, wholesale lots, clearance stock, retail products, automotive parts and industrial equipment.
-            </p>
-            <div className="space-y-3 text-sm">
-              <div className="text-white/70 text-xs space-y-1">
-                <p>Operated by <span className="font-semibold text-white/90">{BRAND.companyName}</span></p>
-                <p>Company Number: {BRAND.companyNumber}</p>
-                <p>VAT Number: {BRAND.vatNumber}</p>
-                <p>Registered in England and Wales</p>
-              </div>
-              <div className="flex items-start space-x-3 text-white/80">
-                <MapPin className="h-4 w-4 mt-1 flex-shrink-0 text-gold" />
-                <span className="text-xs">{BRAND.companyAddress}</span>
-              </div>
-              <div className="text-white/70 text-xs mt-2">
-                <p className="font-semibold text-white/80 mb-1">Customer Support</p>
-                <div className="flex items-center space-x-2">
-                  <Mail className="h-4 w-4 flex-shrink-0 text-gold" />
-                  <a href={`mailto:${BRAND.supportEmail}`} className="text-white/80 hover:text-gold transition-colors">
-                    {BRAND.supportEmail}
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Column 2: For Buyers */}
+        <div>
+          <h3 style={footerTitleStyle}>For Buyers</h3>
+          <ul>
+            <li><Link to="/shop" className={footerLinkClass}>Browse Marketplace</Link></li>
+            <li><Link to="/bulk" className={footerLinkClass}>Bulk &amp; Pallet Deals</Link></li>
+            <li><Link to="/bulk?type=wholesale" className={footerLinkClass}>Wholesale Lots</Link></li>
+            <li><Link to="/shop?category=electronics" className={footerLinkClass}>Electronics</Link></li>
+            <li><Link to="/shop?category=fashion" className={footerLinkClass}>Fashion</Link></li>
+            <li><Link to="/shop?category=home-garden" className={footerLinkClass}>Home &amp; Garden</Link></li>
+            <li><Link to="/shop?category=automotive-parts" className={footerLinkClass}>Automotive Parts</Link></li>
+            <li><Link to="/track-order" className={footerLinkClass}>Track Order</Link></li>
+            <li><Link to="/help" className={footerLinkClass}>Help &amp; FAQ</Link></li>
+          </ul>
+        </div>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-lg font-bold mb-6 text-gold">For Buyers</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link to="/shop" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Browse Marketplace
-                </Link>
-              </li>
-              <li>
-                <Link to="/bulk" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Bulk &amp; Pallet Deals
-                </Link>
-              </li>
-              <li>
-                <Link to="/bulk?type=wholesale" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Wholesale Lots
-                </Link>
-              </li>
-              <li>
-                <Link to="/shop?category=electronics" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Electronics
-                </Link>
-              </li>
-              <li>
-                <Link to="/shop?category=fashion" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Fashion
-                </Link>
-              </li>
-              <li>
-                <Link to="/shop?category=home-garden" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Home &amp; Garden
-                </Link>
-              </li>
-              <li>
-                <Link to="/shop?category=automotive-parts" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Automotive Parts
-                </Link>
-              </li>
-              <li>
-                <Link to="/track-order" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Track Order
-                </Link>
-              </li>
-              <li>
-                <Link to="/help" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Help &amp; FAQ
-                </Link>
-              </li>
-            </ul>
-          </div>
+        {/* Column 3: For Sellers */}
+        <div>
+          <h3 style={footerTitleStyle}>For Sellers</h3>
+          <ul>
+            <li><Link to="/register?type=seller" className={footerLinkClass}>Start Selling</Link></li>
+            <li><Link to="/seller" className={footerLinkClass}>Seller Dashboard</Link></li>
+            <li><Link to="/seller/products/new" className={footerLinkClass}>List a Product</Link></li>
+            <li><Link to="/pricing" className={footerLinkClass}>Seller Fees &amp; Pricing</Link></li>
+            <li><Link to="/seller-guidelines" className={footerLinkClass}>Seller Guidelines</Link></li>
+            <li><Link to="/how-it-works" className={footerLinkClass}>How It Works</Link></li>
+            <li><Link to="/contact" className={footerLinkClass}>Partner With Us</Link></li>
+          </ul>
+        </div>
 
-          {/* Seller Info */}
-          <div>
-            <h3 className="text-lg font-bold mb-6 text-gold">For Sellers</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link to="/register?type=seller" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Start Selling
-                </Link>
-              </li>
-              <li>
-                <Link to="/seller" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Seller Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link to="/seller/products/new" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  List a Product
-                </Link>
-              </li>
-              <li>
-                <Link to="/pricing" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Seller Fees &amp; Pricing
-                </Link>
-              </li>
-              <li>
-                <Link to="/seller-guidelines" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Seller Guidelines
-                </Link>
-              </li>
-              <li>
-                <Link to="/how-it-works" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  How It Works
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Partner With Us
-                </Link>
-              </li>
-            </ul>
-          </div>
+        {/* Column 4: Marketplace Services */}
+        <div>
+          <h3 style={footerTitleStyle}>Marketplace</h3>
+          <ul>
+            <li><Link to="/buyer-protection" className={footerLinkClass}>Buyer Protection</Link></li>
+            <li><Link to="/transport-quote" className={footerLinkClass}>Transport Quote</Link></li>
+            <li><Link to="/rfq" className={footerLinkClass}>Request Shipping Quote</Link></li>
+            <li><Link to="/verified-sellers" className={footerLinkClass}>Verified Sellers</Link></li>
+            <li><Link to="/bulk" className={footerLinkClass}>Bulk Orders</Link></li>
+            <li><Link to="/contact" className={footerLinkClass}>Business Accounts</Link></li>
+          </ul>
+        </div>
 
-          {/* Marketplace Services */}
-          <div>
-            <h3 className="text-lg font-bold mb-6 text-gold">Marketplace Services</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link to="/buyer-protection" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Buyer Protection
-                </Link>
-              </li>
-              <li>
-                <Link to="/transport-quote" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Transport Quote
-                </Link>
-              </li>
-              <li>
-                <Link to="/rfq" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Request a Shipping Quote
-                </Link>
-              </li>
-              <li>
-                <Link to="/verified-sellers" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Verified Sellers
-                </Link>
-              </li>
-              <li>
-                <Link to="/bulk" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Bulk Orders
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Business Accounts
-                </Link>
-              </li>
-            </ul>
-          </div>
+        {/* Column 5: Company */}
+        <div>
+          <h3 style={footerTitleStyle}>Company</h3>
+          <ul>
+            <li><Link to="/about" className={footerLinkClass}>About Us</Link></li>
+            <li><Link to="/contact" className={footerLinkClass}>Contact Us</Link></li>
+            <li><Link to="/help" className={footerLinkClass}>Help Centre</Link></li>
+            <li><Link to="/contact" className={footerLinkClass}>Support</Link></li>
+            <li><Link to="/contact" className={footerLinkClass}>Business Enquiries</Link></li>
+          </ul>
+        </div>
 
-          {/* Company */}
-          <div>
-            <h3 className="text-lg font-bold mb-6 text-gold">Company</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link to="/about" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/help" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Help Centre
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Support
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Business Enquiries
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div>
-            <h3 className="text-lg font-bold mb-6 text-gold">Legal</h3>
-            <ul className="space-y-3">
-              <li>
-                <Link to="/terms" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Terms &amp; Conditions
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/cookies" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Cookie Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/returns-policy" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Returns Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/shipping-policy" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Shipping Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/acceptable-use-policy" className="text-white/80 hover:text-gold transition-colors text-sm underline-gold">
-                  Acceptable Use Policy
-                </Link>
-              </li>
-            </ul>
-          </div>
+        {/* Column 6: Legal */}
+        <div>
+          <h3 style={footerTitleStyle}>Legal</h3>
+          <ul>
+            <li><Link to="/terms" className={footerLinkClass}>Terms &amp; Conditions</Link></li>
+            <li><Link to="/privacy" className={footerLinkClass}>Privacy Policy</Link></li>
+            <li><Link to="/cookies" className={footerLinkClass}>Cookie Policy</Link></li>
+            <li><Link to="/returns-policy" className={footerLinkClass}>Returns Policy</Link></li>
+            <li><Link to="/shipping-policy" className={footerLinkClass}>Shipping Policy</Link></li>
+            <li><Link to="/acceptable-use-policy" className={footerLinkClass}>Acceptable Use Policy</Link></li>
+          </ul>
         </div>
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-white/10 bg-[#152D4A]">
-        <div className="container-cinematic py-4">
-          <p className="text-white/70 text-sm text-center">
-            © 2025 {BRAND.name}. All rights reserved.
-          </p>
+      <div
+        style={{
+          borderTop: '1px solid rgba(255,255,255,0.08)',
+          maxWidth: '1400px',
+          margin: '0 auto',
+          padding: '20px 40px',
+        }}
+        className="flex flex-col sm:flex-row justify-between items-center gap-3"
+      >
+        <p style={{ fontSize: '13px', color: '#9CA3AF' }}>
+          © 2025 {BRAND.name} — Operated by {BRAND.companyName}. All rights reserved.
+        </p>
+        {/* Social Icons */}
+        <div className="flex items-center" style={{ gap: '14px', fontSize: '18px', color: '#E5E7EB' }}>
+          <a
+            href="https://www.facebook.com/loadifymarket"
+            target="_blank"
+            className="hover:text-[#F4B400] transition-colors duration-200"
+            aria-label="Facebook"
+            rel="noopener noreferrer"
+          >
+            <Facebook className="h-[18px] w-[18px]" />
+          </a>
+          <a
+            href="https://twitter.com/loadifymarket"
+            target="_blank"
+            className="hover:text-[#F4B400] transition-colors duration-200"
+            aria-label="Twitter"
+            rel="noopener noreferrer"
+          >
+            <Twitter className="h-[18px] w-[18px]" />
+          </a>
+          <a
+            href="https://www.instagram.com/loadifymarket"
+            target="_blank"
+            className="hover:text-[#F4B400] transition-colors duration-200"
+            aria-label="Instagram"
+            rel="noopener noreferrer"
+          >
+            <Instagram className="h-[18px] w-[18px]" />
+          </a>
+          <a
+            href="https://www.linkedin.com/company/loadifymarket"
+            target="_blank"
+            className="hover:text-[#F4B400] transition-colors duration-200"
+            aria-label="LinkedIn"
+            rel="noopener noreferrer"
+          >
+            <Linkedin className="h-[18px] w-[18px]" />
+          </a>
         </div>
       </div>
     </footer>
