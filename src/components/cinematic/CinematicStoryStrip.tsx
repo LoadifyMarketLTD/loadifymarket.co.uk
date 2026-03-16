@@ -80,7 +80,7 @@ export default function CinematicStoryStrip() {
                 <h3 className="text-base font-bold text-white mb-2 leading-tight">
                   {step.title}
                 </h3>
-                <p className="text-sm text-white/50 leading-relaxed">
+                <p className="text-sm text-white/80 leading-relaxed">
                   {step.description}
                 </p>
 

@@ -192,7 +192,7 @@ export default function BulkPage() {
                 className={`px-4 py-2 rounded-premium-sm text-sm font-medium transition-all duration-200 ${
                   selectedBulkType === cat.slug
                     ? 'bg-gold text-jet'
-                    : 'bg-graphite text-white/70 hover:bg-graphite/80 hover:text-white'
+                    : 'bg-graphite text-white/90 hover:bg-graphite/80 hover:text-white'
                 }`}
               >
                 {cat.label}
@@ -256,7 +256,7 @@ export default function BulkPage() {
         {showFilters && (
           <div className="card-glass p-6 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div>
-              <label className="block text-white/70 text-sm mb-2">Max Price: £{priceRange[1].toLocaleString()}</label>
+              <label className="block text-white/90 text-sm mb-2">Max Price: £{priceRange[1].toLocaleString()}</label>
               <input
                 type="range"
                 min={0}
@@ -268,7 +268,7 @@ export default function BulkPage() {
               />
             </div>
             <div>
-              <label className="block text-white/70 text-sm mb-2">Category</label>
+              <label className="block text-white/90 text-sm mb-2">Category</label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}

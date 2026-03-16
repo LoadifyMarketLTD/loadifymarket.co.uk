@@ -148,7 +148,7 @@ export default function HelpPage() {
       <div className="container-cinematic py-16 max-w-4xl">
         {filteredSections.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-white/50">No results found for "{search}"</p>
+            <p className="text-white/80">No results found for "{search}"</p>
             <button onClick={() => setSearch('')} className="text-gold text-sm underline mt-2">Clear search</button>
           </div>
         ) : (

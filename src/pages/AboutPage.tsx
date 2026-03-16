@@ -67,7 +67,7 @@ export default function AboutPage() {
             <h2 className="heading-section text-white mb-6 text-center">
               Our <span className="text-gradient-gold">Story</span>
             </h2>
-            <div className="space-y-4 text-white/70 text-lg leading-relaxed">
+            <div className="space-y-4 text-white/90 text-lg leading-relaxed">
               <p>
                 Loadify Market Ltd was born from a simple observation: the UK needed a better way to
                 connect buyers and sellers across diverse markets—from logistics and freight to

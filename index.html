@@ -8,9 +8,8 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.webmanifest" />
     
-    <!-- Apple Touch Icons -->
+    <!-- Apple Touch Icon -->
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <!-- Primary Meta Tags -->
     <title>Loadify Market Ltd - Buy and Sell Products, Bulk Lots & Pallets | UK Marketplace</title>
@@ -50,14 +49,25 @@
     <meta name="company" content="Loadify Market Ltd" />
     <meta name="vat" content="GB375949535" />
 
-    <!-- Theme Color - Cinematic Jet Black -->
-    <meta name="theme-color" content="#0A0A0A" />
-    <meta name="msapplication-TileColor" content="#0A0A0A" />
+    <!-- Theme Color — matches the header/nav bar -->
+    <meta name="theme-color" content="#1E3A5F" />
+    <meta name="msapplication-TileColor" content="#1E3A5F" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-    <!-- Preconnect to Google Fonts -->
+    <!-- Preconnect to external origins for faster loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+
+    <!-- Critical CSS — inlined to prevent FOUC for above-the-fold content.
+         Covers the fixed header, hero section, and initial layout. -->
+    <style>
+      *,*::before,*::after{box-sizing:border-box}
+      html{width:100%;overflow-x:hidden}
+      body{margin:0;font-family:'Inter',system-ui,-apple-system,sans-serif;background:#fff;color:#111827;-webkit-font-smoothing:antialiased}
+      #root{min-height:100vh;display:flex;flex-direction:column}
+      #root>div{min-height:100vh;display:flex;flex-direction:column}
+    </style>
     <!-- Google Fonts — loaded asynchronously to avoid blocking first render.
          The media="print" trick defers execution; onload switches it to "all".
          The <noscript> fallback covers JS-disabled environments. -->
@@ -88,7 +98,7 @@
         https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=65&auto=format&fit=max&fm=webp 768w,
         https://images.unsplash.com/photo-1553413077-190dd305871c?w=1280&q=65&auto=format&fit=max&fm=webp 1280w,
         https://images.unsplash.com/photo-1553413077-190dd305871c?w=1920&q=65&auto=format&fit=max&fm=webp 1920w"
-      imagesizes="(max-width: 1023px) 100vw, 50vw"
+      imagesizes="50vw"
     />
 
     <!-- Structured Data - Organization -->

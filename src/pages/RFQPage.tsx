@@ -148,7 +148,7 @@ export default function RFQPage() {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="block text-sm font-medium text-white/90 mb-2">
                       Product Name <span className="text-gold">*</span>
                     </label>
                     <div className="relative">
@@ -166,7 +166,7 @@ export default function RFQPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="block text-sm font-medium text-white/90 mb-2">
                       Quantity <span className="text-gold">*</span>
                     </label>
                     <input
@@ -181,7 +181,7 @@ export default function RFQPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="block text-sm font-medium text-white/90 mb-2">
                       Estimated Budget <span className="text-gold">*</span>
                     </label>
                     <div className="relative">
@@ -208,7 +208,7 @@ export default function RFQPage() {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="block text-sm font-medium text-white/90 mb-2">
                       Destination Country <span className="text-gold">*</span>
                     </label>
                     <div className="relative">
@@ -228,7 +228,7 @@ export default function RFQPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="block text-sm font-medium text-white/90 mb-2">
                       Your Email <span className="text-gold">*</span>
                     </label>
                     <div className="relative">
@@ -247,7 +247,7 @@ export default function RFQPage() {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="block text-sm font-medium text-white/90 mb-2">
                       Additional Message{' '}
                       <span className="text-white/30 text-xs font-normal">(optional)</span>
                     </label>

@@ -122,7 +122,7 @@ export default function SearchPage() {
 
               {/* Category */}
               <div className="card-glass">
-                <p className="text-xs font-bold text-white/50 uppercase tracking-wide mb-3 flex items-center gap-2">
+                <p className="text-xs font-bold text-white/80 uppercase tracking-wide mb-3 flex items-center gap-2">
                   <Tag className="w-3.5 h-3.5" /> Category
                 </p>
                 <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
@@ -146,7 +146,7 @@ export default function SearchPage() {
 
               {/* Price range */}
               <div className="card-glass">
-                <p className="text-xs font-bold text-white/50 uppercase tracking-wide mb-3">Price Range (£)</p>
+                <p className="text-xs font-bold text-white/80 uppercase tracking-wide mb-3">Price Range (£)</p>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -170,7 +170,7 @@ export default function SearchPage() {
 
               {/* Condition */}
               <div className="card-glass">
-                <p className="text-xs font-bold text-white/50 uppercase tracking-wide mb-3">Condition</p>
+                <p className="text-xs font-bold text-white/80 uppercase tracking-wide mb-3">Condition</p>
                 <div className="space-y-1.5">
                   {CONDITIONS.map(c => (
                     <button
@@ -186,7 +186,7 @@ export default function SearchPage() {
 
               {/* Listing type */}
               <div className="card-glass">
-                <p className="text-xs font-bold text-white/50 uppercase tracking-wide mb-3 flex items-center gap-2">
+                <p className="text-xs font-bold text-white/80 uppercase tracking-wide mb-3 flex items-center gap-2">
                   <Layers className="w-3.5 h-3.5" /> Listing Type
                 </p>
                 <div className="space-y-1.5">
@@ -310,7 +310,7 @@ export default function SearchPage() {
                         <Link
                           key={s}
                           to={`/search?q=${encodeURIComponent(s)}`}
-                          className="bg-graphite/60 hover:bg-graphite text-white/70 hover:text-gold text-sm px-4 py-2 rounded-full transition-colors border border-white/10 hover:border-gold/30"
+                          className="bg-graphite/60 hover:bg-graphite text-white/90 hover:text-gold text-sm px-4 py-2 rounded-full transition-colors border border-white/10 hover:border-gold/30"
                         >
                           {s}
                         </Link>
@@ -341,7 +341,7 @@ export default function SearchPage() {
                         <Link
                           key={s}
                           to={`/search?q=${encodeURIComponent(s)}`}
-                          className="bg-graphite/60 hover:bg-graphite text-white/70 hover:text-gold text-sm px-4 py-2 rounded-full transition-colors border border-white/10 hover:border-gold/30"
+                          className="bg-graphite/60 hover:bg-graphite text-white/90 hover:text-gold text-sm px-4 py-2 rounded-full transition-colors border border-white/10 hover:border-gold/30"
                         >
                           {s}
                         </Link>

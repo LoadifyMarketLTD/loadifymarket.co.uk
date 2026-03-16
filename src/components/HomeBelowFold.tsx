@@ -44,9 +44,9 @@ export default function HomeBelowFold() {
         <div className="container-market">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-semibold px-3 py-1.5 rounded-full mb-3">
+              <span className="inline-flex items-center gap-2 bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-semibold px-3 py-1.5 rounded-full mb-3">
                 UK Logistics Network
-              </div>
+              </span>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
                 Need delivery or transport support?
               </h2>
@@ -71,15 +71,13 @@ export default function HomeBelowFold() {
                 </Link>
               </div>
             </div>
-            <div className="relative rounded-xl overflow-hidden shadow-md aspect-[16/9]">
-              <img
-                src={LOGISTICS_IMG}
-                alt="UK logistics and delivery trucks"
-                className="w-full h-full object-cover"
-                loading="lazy"
-                decoding="async"
-              />
-            </div>
+            <img
+              src={LOGISTICS_IMG}
+              alt="UK logistics and delivery trucks"
+              className="w-full rounded-xl shadow-md aspect-[16/9] object-cover"
+              loading="lazy"
+              decoding="async"
+            />
           </div>
         </div>
       </section>
@@ -87,12 +85,10 @@ export default function HomeBelowFold() {
       {/* ── How It Works ────────────────────────────────────────────────── */}
       <section className="bg-white py-8 border-b border-gray-200">
         <div className="container-market">
-          <div className="text-center mb-5">
-            <h2 className="text-2xl font-bold text-gray-900 mb-1.5">How It Works</h2>
-            <p className="text-gray-700 text-sm max-w-xl mx-auto">
-              Join thousands of UK buyers and sellers on Loadify Market — browse, list, and arrange delivery all in one place.
-            </p>
-          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-1.5 text-center">How It Works</h2>
+          <p className="text-gray-700 text-sm max-w-xl mx-auto text-center mb-5">
+            Join thousands of UK buyers and sellers on Loadify Market — browse, list, and arrange delivery all in one place.
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
             {HOW_IT_WORKS.map((item) => {
               const Icon = item.icon;
@@ -125,31 +121,29 @@ export default function HomeBelowFold() {
 
       {/* ── Seller CTA (navy) ───────────────────────────────────────────── */}
       <section className="bg-[#1E3A5F] py-10">
-        <div className="container-market">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-              Have pallets or clearance stock to sell?
-            </h2>
-            <p className="text-white/80 text-base mb-5">
-              Reach thousands of UK buyers through Loadify Market.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link
-                to="/register?type=seller"
-                className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-6 py-3 rounded transition-colors"
-              >
-                <Store className="w-4 h-4" />
-                Start Selling
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                to="/catalog"
-                className="inline-flex items-center gap-2 border-2 border-white text-white hover:bg-white hover:text-[#1E3A5F] font-semibold px-6 py-3 rounded transition-colors"
-              >
-                <LayoutGrid className="w-4 h-4" />
-                Browse Marketplace
-              </Link>
-            </div>
+        <div className="container-market max-w-2xl text-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+            Have pallets or clearance stock to sell?
+          </h2>
+          <p className="text-white/80 text-base mb-5">
+            Reach thousands of UK buyers through Loadify Market.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              to="/register?type=seller"
+              className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-6 py-3 rounded transition-colors"
+            >
+              <Store className="w-4 h-4" />
+              Start Selling
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              to="/catalog"
+              className="inline-flex items-center gap-2 border-2 border-white text-white hover:bg-white hover:text-[#1E3A5F] font-semibold px-6 py-3 rounded transition-colors"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              Browse Marketplace
+            </Link>
           </div>
         </div>
       </section>

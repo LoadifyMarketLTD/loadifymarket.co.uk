@@ -80,7 +80,7 @@ export default function BuyerProtectionPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-white text-sm mb-1">{c.title}</p>
-                    <p className="text-white/50 text-xs leading-relaxed">{c.desc}</p>
+                    <p className="text-white/80 text-xs leading-relaxed">{c.desc}</p>
                   </div>
                 </div>
               );
@@ -159,19 +159,19 @@ export default function BuyerProtectionPage() {
           <div className="card-glass space-y-4 text-sm">
             <div className="flex items-start gap-3">
               <ChevronRight className="w-4 h-4 text-gold shrink-0 mt-0.5" />
-              <p className="text-white/70">Refunds are issued within <strong className="text-white">3–5 business days</strong> of an approved resolution, returned to your original payment method.</p>
+              <p className="text-white/90">Refunds are issued within <strong className="text-white">3–5 business days</strong> of an approved resolution, returned to your original payment method.</p>
             </div>
             <div className="flex items-start gap-3">
               <ChevronRight className="w-4 h-4 text-gold shrink-0 mt-0.5" />
-              <p className="text-white/70">Returns must be submitted within <strong className="text-white">{BRAND.returnsDays} days</strong> of delivery. Items must be in original condition where possible.</p>
+              <p className="text-white/90">Returns must be submitted within <strong className="text-white">{BRAND.returnsDays} days</strong> of delivery. Items must be in original condition where possible.</p>
             </div>
             <div className="flex items-start gap-3">
               <ChevronRight className="w-4 h-4 text-gold shrink-0 mt-0.5" />
-              <p className="text-white/70">Payments are held in <strong className="text-white">escrow</strong> until delivery is confirmed. Funds are never released to the seller during an open dispute.</p>
+              <p className="text-white/90">Payments are held in <strong className="text-white">escrow</strong> until delivery is confirmed. Funds are never released to the seller during an open dispute.</p>
             </div>
             <div className="flex items-start gap-3">
               <ChevronRight className="w-4 h-4 text-gold shrink-0 mt-0.5" />
-              <p className="text-white/70">Handmade, custom, and digital items may have different return conditions as specified on the product listing.</p>
+              <p className="text-white/90">Handmade, custom, and digital items may have different return conditions as specified on the product listing.</p>
             </div>
           </div>
         </section>

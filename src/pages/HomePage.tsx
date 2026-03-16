@@ -319,10 +319,8 @@ export default function HomePage() {
       {/* ── Popular Categories (Discovery) ────────────────────────────── */}
       <section className="bg-white py-6 border-b border-gray-200">
         <div className="container-market">
-          <div className="mb-3">
-            <h2 className="text-xl font-bold text-gray-900">Popular Categories</h2>
-            <p className="text-sm text-gray-700">Explore top marketplace categories</p>
-          </div>
+          <h2 className="text-xl font-bold text-gray-900">Popular Categories</h2>
+          <p className="text-sm text-gray-700 mb-3">Explore top marketplace categories</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {POPULAR_CATEGORIES.map((cat) => {
               const Icon = cat.icon;

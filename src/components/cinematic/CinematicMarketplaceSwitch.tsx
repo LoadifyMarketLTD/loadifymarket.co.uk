@@ -129,7 +129,7 @@ export default function CinematicMarketplaceSwitch() {
                 </div>
                 <div className="p-5">
                   <h3 className="font-bold text-white mb-2 line-clamp-2">{item.title}</h3>
-                  <p className="text-sm text-white/50 mb-1">RRP: £{item.rrp.toLocaleString()}</p>
+                  <p className="text-sm text-white/80 mb-1">RRP: £{item.rrp.toLocaleString()}</p>
                   <div className="flex items-baseline gap-1 mb-4">
                     <span className="price-tag">£{item.price.toLocaleString()}</span>
                     <span className="text-sm text-white/60">/ lot</span>
@@ -160,7 +160,7 @@ export default function CinematicMarketplaceSwitch() {
                         {seller.badge}
                       </span>
                     </div>
-                    <p className="text-sm text-white/50 mt-1">{seller.type}</p>
+                    <p className="text-sm text-white/80 mt-1">{seller.type}</p>
                   </div>
                   {seller.badge && (
                     <span className="absolute -top-2 -right-2 badge-gold text-[10px] px-1.5 py-0.5">
@@ -173,7 +173,7 @@ export default function CinematicMarketplaceSwitch() {
                     <Star className="w-4 h-4 text-gold fill-gold" />
                     <span className="text-white font-semibold">{seller.rating}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-white/50">
+                  <div className="flex items-center gap-1 text-white/80">
                     <Clock className="w-4 h-4" />
                     <span>{seller.sales.toLocaleString()} sales</span>
                   </div>

@@ -69,15 +69,15 @@ export default function OrderSuccessPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-gold flex-shrink-0" />
-                <span className="text-white/70 text-xs">Secure Marketplace Checkout</span>
+                <span className="text-white/90 text-xs">Secure Marketplace Checkout</span>
               </div>
               <div className="flex items-center gap-2">
                 <Truck className="w-4 h-4 text-gold flex-shrink-0" />
-                <span className="text-white/70 text-xs">Seller Fulfilled Shipping</span>
+                <span className="text-white/90 text-xs">Seller Fulfilled Shipping</span>
               </div>
               <div className="flex items-center gap-2">
                 <Star className="w-4 h-4 text-gold flex-shrink-0" />
-                <span className="text-white/70 text-xs">Verified Marketplace Sellers</span>
+                <span className="text-white/90 text-xs">Verified Marketplace Sellers</span>
               </div>
             </div>
             <p className="text-white/40 text-xs mt-3 leading-relaxed">

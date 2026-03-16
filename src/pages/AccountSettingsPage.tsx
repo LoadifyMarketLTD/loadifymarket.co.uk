@@ -198,7 +198,7 @@ function ProfileTab() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">First Name</label>
+            <label className="block text-sm font-medium text-white/90 mb-1">First Name</label>
             <input
               name="firstName"
               value={form.firstName}
@@ -208,7 +208,7 @@ function ProfileTab() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">Last Name</label>
+            <label className="block text-sm font-medium text-white/90 mb-1">Last Name</label>
             <input
               name="lastName"
               value={form.lastName}
@@ -219,7 +219,7 @@ function ProfileTab() {
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-white/70 mb-1">Email Address</label>
+          <label className="block text-sm font-medium text-white/90 mb-1">Email Address</label>
           <input
             name="email"
             value={form.email}
@@ -232,7 +232,7 @@ function ProfileTab() {
           </p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-white/70 mb-1">Phone Number</label>
+          <label className="block text-sm font-medium text-white/90 mb-1">Phone Number</label>
           <input
             name="phone"
             value={form.phone}
@@ -317,7 +317,7 @@ function PasswordTab() {
       <SectionHeader title="Change Password" subtitle="Keep your account secure with a strong password" />
       <div className="space-y-4 max-w-md">
         <div>
-          <label className="block text-sm font-medium text-white/70 mb-1">New Password</label>
+          <label className="block text-sm font-medium text-white/90 mb-1">New Password</label>
           <div className="relative">
             <input
               name="newPassword"
@@ -330,7 +330,7 @@ function PasswordTab() {
             <button
               type="button"
               onClick={() => setShowNew(v => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/90"
             >
               {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -358,7 +358,7 @@ function PasswordTab() {
           })()}
         </div>
         <div>
-          <label className="block text-sm font-medium text-white/70 mb-1">Confirm New Password</label>
+          <label className="block text-sm font-medium text-white/90 mb-1">Confirm New Password</label>
           <div className="relative">
             <input
               name="confirmPassword"
@@ -371,7 +371,7 @@ function PasswordTab() {
             <button
               type="button"
               onClick={() => setShowConfirm(v => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/90"
             >
               {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -433,7 +433,7 @@ function EmailTab() {
       <SectionHeader title="Email Settings" subtitle="Manage your email address and preferences" />
       <div className="space-y-4">
         <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-          <p className="text-sm font-medium text-white/70 mb-1">Current email address</p>
+          <p className="text-sm font-medium text-white/90 mb-1">Current email address</p>
           <p className="text-white font-semibold">{user?.email}</p>
           {user?.isEmailVerified ? (
             <span className="inline-flex items-center gap-1 text-green-400 text-xs mt-2">

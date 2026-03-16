@@ -191,7 +191,7 @@
   .input-field {
     @apply w-full px-5 py-4 bg-graphite/50 text-white
            border border-white/10 rounded-premium-sm
-           placeholder:text-white/50
+           placeholder:text-white/70
            transition-all duration-300 ease-out
            focus:outline-none focus:border-gold/50 focus:bg-graphite
            focus:ring-2 focus:ring-gold/20;
@@ -201,7 +201,7 @@
   .input-field-sm {
     @apply w-full px-3 py-2 bg-graphite/50 text-white text-sm
            border border-white/10 rounded-lg
-           placeholder:text-white/40
+           placeholder:text-white/60
            transition-all duration-200 ease-out
            focus:outline-none focus:border-gold/50 focus:bg-graphite
            focus:ring-1 focus:ring-gold/20;
@@ -209,11 +209,11 @@
 
   /* Compact form helpers */
   .field-label {
-    @apply block text-xs font-medium text-white/60 mb-1;
+    @apply block text-xs font-medium text-white/80 mb-1;
   }
 
   .field-icon {
-    @apply absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30 pointer-events-none;
+    @apply absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/50 pointer-events-none;
   }
 
   .field-error {
@@ -227,7 +227,7 @@
   .input-search {
     @apply w-full px-6 py-4 bg-white/5 text-white
            border-0 rounded-full backdrop-blur-sm
-           placeholder:text-white/60
+           placeholder:text-white/70
            transition-all duration-300 ease-out
            focus:outline-none focus:bg-white/10
            focus:ring-2 focus:ring-gold/30;
@@ -334,12 +334,6 @@
     height: 100%;
     pointer-events: none;
     overflow: hidden;
-    max-width: 100%;
-    max-height: 100%;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    pointer-events: none;
     transform: translateZ(0);
     background: radial-gradient(ellipse at center, rgba(var(--color-primary-rgb), 0.18) 0%, rgba(245, 158, 11, 0.06) 45%, transparent 70%);
   }

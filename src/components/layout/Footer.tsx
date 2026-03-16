@@ -125,7 +125,7 @@ export default function Footer() {
 
           {/* Marketplace Services */}
           <div>
-            <h3 className="text-lg font-bold mb-4 text-gold">Services</h3>
+            <h3 className="text-lg font-bold mb-4 text-gold">Marketplace Services</h3>
             <ul className="space-y-2">
               <li><Link to="/buyer-protection" className="text-white/80 hover:text-gold transition-colors text-sm">Buyer Protection</Link></li>
               <li><Link to="/transport-quote" className="text-white/80 hover:text-gold transition-colors text-sm">Transport Quote</Link></li>

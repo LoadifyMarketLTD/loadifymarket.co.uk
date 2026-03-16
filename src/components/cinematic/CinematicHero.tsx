@@ -8,9 +8,9 @@ export default function CinematicHero() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-10 lg:py-12 items-center">
           {/* Left: Text Content */}
           <div className="min-h-[280px] lg:min-h-[320px] flex flex-col justify-center">
-            <div className="inline-flex items-center gap-2 bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-semibold px-3 py-1.5 rounded-full mb-3 w-fit">
+            <span className="inline-flex items-center gap-2 bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-semibold px-3 py-1.5 rounded-full mb-3">
               UK Multi-Category Marketplace
-            </div>
+            </span>
             <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-3">
               Buy &amp; Sell Pallets<br />Across the UK
             </h1>
@@ -35,50 +35,48 @@ export default function CinematicHero() {
             </div>
             {/* Trust badges */}
             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-700">
-              <div className="flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1.5">
                 <BadgeCheck className="h-4 w-4 text-green-600" />
                 Verified UK Sellers
-              </div>
-              <div className="flex items-center gap-1.5">
+              </span>
+              <span className="inline-flex items-center gap-1.5">
                 <ShieldCheck className="h-4 w-4 text-green-600" />
                 Secure Payments
-              </div>
-              <div className="flex items-center gap-1.5">
+              </span>
+              <span className="inline-flex items-center gap-1.5">
                 <ShieldCheck className="h-4 w-4 text-green-600" />
                 Buyer Protection
-              </div>
-              <div className="flex items-center gap-1.5">
+              </span>
+              <span className="inline-flex items-center gap-1.5">
                 <Truck className="h-4 w-4 text-green-600" />
                 UK Wide Delivery
-              </div>
+              </span>
             </div>
           </div>
 
-          {/* Right: Hero Image */}
-          <div className="relative p-3">
-            <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[4/3]">
-              <img
-                src="https://images.unsplash.com/photo-1553413077-190dd305871c?w=1280&q=65&auto=format&fit=max&fm=webp"
-                srcSet="
-                  https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=65&auto=format&fit=max&fm=webp 768w,
-                  https://images.unsplash.com/photo-1553413077-190dd305871c?w=1280&q=65&auto=format&fit=max&fm=webp 1280w,
-                  https://images.unsplash.com/photo-1553413077-190dd305871c?w=1920&q=65&auto=format&fit=max&fm=webp 1920w"
-                sizes="(max-width: 1023px) 100vw, 50vw"
-                alt="UK warehouse with pallets and stock"
-                className="w-full h-full object-cover"
-                width={1280}
-                height={960}
-                loading="eager"
-                decoding="async"
-                fetchPriority="high"
-              />
-            </div>
-            {/* Floating stat badges */}
-            <div className="absolute bottom-0 left-0 bg-white border border-gray-200 rounded-lg shadow-md px-4 py-2.5">
+          {/* Right: Hero Image — hidden on mobile to reduce DOM and avoid LCP waste */}
+          <div className="relative hidden lg:block">
+            <img
+              src="https://images.unsplash.com/photo-1553413077-190dd305871c?w=1280&q=65&auto=format&fit=max&fm=webp"
+              srcSet="
+                https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=65&auto=format&fit=max&fm=webp 768w,
+                https://images.unsplash.com/photo-1553413077-190dd305871c?w=1280&q=65&auto=format&fit=max&fm=webp 1280w,
+                https://images.unsplash.com/photo-1553413077-190dd305871c?w=1920&q=65&auto=format&fit=max&fm=webp 1920w"
+              sizes="50vw"
+              alt="UK warehouse with pallets and stock"
+              className="w-full rounded-xl shadow-lg aspect-[4/3] object-cover"
+              width={1280}
+              height={960}
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+            />
+            {/* Floating stat badges — inside padded container to prevent CLS */}
+            <div className="absolute bottom-3 left-3 bg-white border border-gray-200 rounded-lg shadow-md px-4 py-2.5">
               <p className="text-xs text-gray-700">Verified Sellers</p>
               <p className="text-xl font-bold text-[#1E3A5F]">100+</p>
             </div>
-            <div className="absolute top-0 right-0 bg-[#F4C400] rounded-lg shadow-md px-4 py-2.5">
+            <div className="absolute top-3 right-3 bg-[#F4C400] rounded-lg shadow-md px-4 py-2.5">
               <p className="text-xs text-gray-800">Active Listings</p>
               <p className="text-xl font-bold text-gray-900">1000+</p>
             </div>

@@ -317,7 +317,7 @@ export default function TransportQuotePage() {
           <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">
             Request a <span className="text-gradient-gold">Transport Quote</span>
           </h1>
-          <p className="text-white/50 text-sm">
+          <p className="text-white/80 text-sm">
             Collection & delivery for marketplace orders, pallet deals, and wholesale stock.
           </p>
         </div>
@@ -408,7 +408,7 @@ export default function TransportQuotePage() {
                   <p className="text-white text-sm font-semibold mb-1 truncate">
                     {savedRequest.listingTitle || savedRequest.itemType}
                   </p>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/50">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/80">
                     <span>Pickup: {savedRequest.pickupPostcode || '—'}</span>
                     <span>Dropoff: {savedRequest.dropoffPostcode || '—'}</span>
                     {savedRequest.palletCount && <span>Pallets: {savedRequest.palletCount}</span>}

@@ -128,7 +128,7 @@ export default function DailyTrendingHandmade() {
                   </p>
                 </div>
 
-                <p className="text-sm text-white/50 mb-4 line-clamp-2">
+                <p className="text-sm text-white/80 mb-4 line-clamp-2">
                   {item.description}
                 </p>
 

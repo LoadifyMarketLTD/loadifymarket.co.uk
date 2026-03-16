@@ -270,7 +270,7 @@ export default function ProductReviews({
                   {averageRating.toFixed(1)}
                 </p>
                 <Stars value={Math.round(averageRating)} size="md" />
-                <p className="text-white/50 text-sm mt-2">{totalReviews} review{totalReviews !== 1 ? 's' : ''}</p>
+                <p className="text-white/80 text-sm mt-2">{totalReviews} review{totalReviews !== 1 ? 's' : ''}</p>
               </div>
               {/* Distribution bars */}
               <div className="space-y-1.5 flex-1 min-w-[180px]">
@@ -280,11 +280,11 @@ export default function ProductReviews({
                     onClick={() => setFilterRating(filterRating === stars ? 'all' : stars)}
                     className={`flex items-center gap-2 w-full rounded px-1.5 py-0.5 transition-colors ${filterRating === stars ? 'bg-gold/10' : 'hover:bg-white/5'}`}
                   >
-                    <span className="text-xs text-white/50 w-10 shrink-0">{stars} star</span>
+                    <span className="text-xs text-white/80 w-10 shrink-0">{stars} star</span>
                     <div className="flex-1 bg-white/10 rounded-full h-1.5 overflow-hidden">
                       <div className="bg-gold h-full transition-all duration-500" style={{ width: `${pct}%` }} />
                     </div>
-                    <span className="text-xs text-white/50 w-5 text-right shrink-0">{count}</span>
+                    <span className="text-xs text-white/80 w-5 text-right shrink-0">{count}</span>
                   </button>
                 ))}
               </div>
@@ -326,7 +326,7 @@ export default function ProductReviews({
             <div className="text-center py-8">
               <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
               <p className="text-white font-bold text-lg">Review submitted!</p>
-              <p className="text-white/50 text-sm mt-1">Thank you for your feedback.</p>
+              <p className="text-white/80 text-sm mt-1">Thank you for your feedback.</p>
               <button onClick={() => { setShowForm(false); setFormSuccess(false); }} className="btn-outline text-sm mt-4">Close</button>
             </div>
           ) : (
@@ -529,7 +529,7 @@ export default function ProductReviews({
       ) : reviews.length === 0 ? (
         <div className="card-glass text-center py-14">
           <MessageSquare className="w-12 h-12 text-white/15 mx-auto mb-3" />
-          <p className="text-white/50">
+          <p className="text-white/80">
             {filterRating === 'all'
               ? 'No reviews yet. Be the first to review this product!'
               : 'No reviews match this filter.'}
@@ -620,7 +620,7 @@ function ReviewCard({
 
       {/* Title + body */}
       {review.title && <h4 className="font-semibold text-white mb-1">{review.title}</h4>}
-      <p className="text-white/70 text-sm leading-relaxed mb-3 whitespace-pre-line">{review.comment}</p>
+      <p className="text-white/90 text-sm leading-relaxed mb-3 whitespace-pre-line">{review.comment}</p>
 
       {/* Images */}
       {review.images && review.images.length > 0 && (
@@ -656,7 +656,7 @@ function ReviewCard({
           <p className="text-xs font-bold text-gold mb-1 flex items-center gap-1">
             <Reply className="w-3.5 h-3.5" /> Seller Response
           </p>
-          <p className="text-white/70 text-sm leading-relaxed">{review.sellerResponse.text}</p>
+          <p className="text-white/90 text-sm leading-relaxed">{review.sellerResponse.text}</p>
           <p className="text-white/30 text-xs mt-1">
             {formatDistanceToNow(new Date(review.sellerResponse.respondedAt), { addSuffix: true })}
           </p>
