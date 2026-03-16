@@ -186,9 +186,9 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
       <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4">
         {[...Array(maxProducts)].map((_, i) => (
           <div key={i} className="animate-pulse">
-            <div className="bg-graphite aspect-[4/3] rounded-premium-sm mb-2"></div>
-            <div className="bg-graphite h-4 rounded mb-1"></div>
-            <div className="bg-graphite h-4 rounded w-2/3"></div>
+            <div className="bg-gray-200 aspect-[4/3] rounded mb-2"></div>
+            <div className="bg-gray-200 h-3 rounded mb-1"></div>
+            <div className="bg-gray-200 h-3 rounded w-2/3"></div>
           </div>
         ))}
       </div>

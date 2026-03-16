@@ -39,8 +39,8 @@
   }
 
   body {
-    @apply bg-jet text-white;
-    background-color: var(--color-jet);
+    @apply bg-white text-gray-900;
+    background-color: #FFFFFF;
     width: 100%;
     overflow-x: hidden;
   }
@@ -72,16 +72,16 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--color-jet);
+    background: #F5F6F7;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--color-graphite);
+    background: #CBD5E1;
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-primary);
+    background: #94A3B8;
   }
 }
 
