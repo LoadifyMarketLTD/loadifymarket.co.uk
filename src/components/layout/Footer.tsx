@@ -41,70 +41,83 @@ export default function Footer() {
 
   return (
     <footer style={{ background: 'linear-gradient(180deg,#0A2239,#081A2C)' }} className="text-white mt-auto">
-      {/* Main Footer Content */}
+      {/* ROW 1: Footer Top Bar — Logo + Social Icons */}
+      <div
+        className="footer-top"
+        style={{
+          maxWidth: '1400px',
+          margin: '0 auto',
+          padding: '32px 40px 28px',
+        }}
+      >
+        <Link to="/" className="flex items-center space-x-3 group" aria-label="Loadify Market homepage">
+          <div className="relative flex-shrink-0">
+            <Hexagon className="h-10 w-10 text-[#F4B400] transition-all duration-300 group-hover:scale-110" strokeWidth={1.5} />
+            <span className="absolute inset-0 flex items-center justify-center text-[#F4B400] font-bold text-base">L</span>
+          </div>
+          <span className="text-xl font-bold text-white tracking-tight">{BRAND.name}</span>
+        </Link>
+        {/* Social Icons */}
+        <div className="footer-social">
+          <a
+            href="https://www.facebook.com/loadifymarket"
+            target="_blank"
+            className="hover:text-[#F4B400] transition-opacity duration-200"
+            aria-label="Facebook"
+            rel="noopener noreferrer"
+          >
+            <Facebook className="h-[20px] w-[20px]" />
+          </a>
+          <a
+            href="https://twitter.com/loadifymarket"
+            target="_blank"
+            className="hover:text-[#F4B400] transition-opacity duration-200"
+            aria-label="Twitter"
+            rel="noopener noreferrer"
+          >
+            <Twitter className="h-[20px] w-[20px]" />
+          </a>
+          <a
+            href="https://www.instagram.com/loadifymarket"
+            target="_blank"
+            className="hover:text-[#F4B400] transition-opacity duration-200"
+            aria-label="Instagram"
+            rel="noopener noreferrer"
+          >
+            <Instagram className="h-[20px] w-[20px]" />
+          </a>
+          <a
+            href="https://www.linkedin.com/company/loadifymarket"
+            target="_blank"
+            className="hover:text-[#F4B400] transition-opacity duration-200"
+            aria-label="LinkedIn"
+            rel="noopener noreferrer"
+          >
+            <Linkedin className="h-[20px] w-[20px]" />
+          </a>
+        </div>
+      </div>
+
+      {/* Divider between top bar and main grid */}
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 40px' }}>
+        <div className="footer-divider" />
+      </div>
+
+      {/* ROW 2: Footer Main Grid — All 6 columns */}
       <div
         style={{
           maxWidth: '1400px',
           margin: 'auto',
-          padding: '70px 40px',
+          padding: '50px 40px 60px',
           display: 'grid',
           gridTemplateColumns: '1.3fr 1fr 1fr 1fr 1fr 1fr',
           gap: '40px',
+          alignItems: 'start',
         }}
         className="footer-grid"
       >
         {/* Column 1: About */}
         <div className="footer-about">
-          {/* Logo + Social Icons row */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <Link to="/" className="flex items-center space-x-3 group" aria-label="Loadify Market homepage">
-              <div className="relative flex-shrink-0">
-                <Hexagon className="h-10 w-10 text-[#F4B400] transition-all duration-300 group-hover:scale-110" strokeWidth={1.5} />
-                <span className="absolute inset-0 flex items-center justify-center text-[#F4B400] font-bold text-base">L</span>
-              </div>
-              <span className="text-xl font-bold text-white tracking-tight">{BRAND.name}</span>
-            </Link>
-            {/* Social Icons */}
-            <div className="footer-social">
-              <a
-                href="https://www.facebook.com/loadifymarket"
-                target="_blank"
-                className="hover:text-[#F4B400] transition-opacity duration-200"
-                aria-label="Facebook"
-                rel="noopener noreferrer"
-              >
-                <Facebook className="h-[20px] w-[20px]" />
-              </a>
-              <a
-                href="https://twitter.com/loadifymarket"
-                target="_blank"
-                className="hover:text-[#F4B400] transition-opacity duration-200"
-                aria-label="Twitter"
-                rel="noopener noreferrer"
-              >
-                <Twitter className="h-[20px] w-[20px]" />
-              </a>
-              <a
-                href="https://www.instagram.com/loadifymarket"
-                target="_blank"
-                className="hover:text-[#F4B400] transition-opacity duration-200"
-                aria-label="Instagram"
-                rel="noopener noreferrer"
-              >
-                <Instagram className="h-[20px] w-[20px]" />
-              </a>
-              <a
-                href="https://www.linkedin.com/company/loadifymarket"
-                target="_blank"
-                className="hover:text-[#F4B400] transition-opacity duration-200"
-                aria-label="LinkedIn"
-                rel="noopener noreferrer"
-              >
-                <Linkedin className="h-[20px] w-[20px]" />
-              </a>
-            </div>
-          </div>
-
           <h3 style={footerTitleStyle}>About Loadify Market</h3>
           <p className="text-[#E5E7EB] text-[13px] leading-relaxed">
             Loadify Market is a UK multi-category marketplace connecting buyers and sellers of pallets,
