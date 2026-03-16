@@ -462,10 +462,10 @@ function EmailTab() {
         </div>
         <div className="p-4 bg-white/5 rounded-lg border border-white/10">
           <h3 className="font-medium text-white mb-1">Change Email Address</h3>
-          <p className="text-white/50 text-sm">
+          <p className="text-white/80 text-sm">
             To change your email address, please contact our support team at{' '}
-            <a href="mailto:support@loadifymarket.co.uk" className="text-gold hover:underline">
-              support@loadifymarket.co.uk
+            <a href="mailto:loadifymarket.co.uk@gmail.com" className="text-gold hover:underline">
+              loadifymarket.co.uk@gmail.com
             </a>
             . Email changes require identity verification for your security.
           </p>

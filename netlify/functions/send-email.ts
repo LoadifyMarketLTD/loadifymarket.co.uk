@@ -61,7 +61,7 @@ export const handler: Handler = async (event) => {
 
     const msg = {
       to,
-      from: process.env.VITE_SUPPORT_EMAIL || 'support@loadifymarket.co.uk',
+      from: process.env.VITE_SUPPORT_EMAIL || 'loadifymarket.co.uk@gmail.com',
       subject,
       html: htmlContent,
     };
@@ -97,7 +97,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
       <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
         <p>Loadify Market - B2B &amp; B2C Marketplace</p>
         <p>XDrive Logistics Ltd | 101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom</p>
-        <p>VAT: GB375949535 | Email: support@loadifymarket.co.uk</p>
+        <p>VAT: GB375949535 | Email: loadifymarket.co.uk@gmail.com</p>
       </div>
     </div>
   `;
@@ -123,7 +123,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
           </div>
         `).join('') : ''}
         <p style="margin-top: 20px;">We'll send you another email when your order has been shipped.</p>
-        <p>If you have any questions, please contact us at support@loadifymarket.co.uk</p>
+        <p>If you have any questions, please contact us at loadifymarket.co.uk@gmail.com</p>
       `;
       break;
 

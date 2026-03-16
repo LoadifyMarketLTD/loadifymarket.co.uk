@@ -62,7 +62,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <Heart
-            className={`h-3.5 w-3.5 ${isInWishlist ? 'fill-red-500 text-red-500' : 'text-gray-500'}`}
+            className={`h-3.5 w-3.5 ${isInWishlist ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
           />
         </button>
 
@@ -107,7 +107,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 </span>
               )}
               {product.seller.location && (
-                <span className="text-[10px] text-gray-500 flex items-center gap-0.5 flex-shrink-0">
+                <span className="text-[10px] text-gray-600 flex items-center gap-0.5 flex-shrink-0">
                   <MapPin className="w-2.5 h-2.5" />
                   {product.seller.location}
                 </span>

@@ -5,7 +5,7 @@ import {
   Home, Wrench,
   Shirt, LayoutGrid,
   Cpu, Car, Briefcase, Tag,
-  RotateCcw,
+  RotateCcw, Settings, Leaf,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 import { supabase } from '../lib/supabase';
@@ -27,6 +27,58 @@ const CATEGORIES = [
   { name: 'Fashion',           icon: Shirt,      href: '/shop?category=fashion',      iconColor: 'text-pink-500'   },
   { name: 'Automotive Parts',  icon: Car,        href: '/shop?category=vehicles',     iconColor: 'text-red-500'    },
   { name: 'Mixed Job Lots',    icon: Package,    href: '/catalog?type=lot',           iconColor: 'text-slate-500'  },
+];
+
+// ── Popular Categories (discovery section) ────────────────────────────────────
+const POPULAR_CATEGORIES = [
+  {
+    name: 'Amazon Returns Pallets',
+    description: 'Unclaimed and customer return pallets from major retailers at wholesale prices.',
+    icon: RotateCcw,
+    href: '/catalog?type=lot',
+    iconColor: 'text-orange-500',
+    bgColor: 'bg-orange-50',
+  },
+  {
+    name: 'Electronics Clearance',
+    description: 'End-of-line electronics, refurbished tech and surplus stock at clearance prices.',
+    icon: Cpu,
+    href: '/shop?category=electronics',
+    iconColor: 'text-blue-500',
+    bgColor: 'bg-blue-50',
+  },
+  {
+    name: 'Fashion Wholesale',
+    description: 'Branded and unbranded clothing, footwear and accessories in bulk quantities.',
+    icon: Shirt,
+    href: '/shop?category=fashion',
+    iconColor: 'text-pink-500',
+    bgColor: 'bg-pink-50',
+  },
+  {
+    name: 'Home & Garden Stock',
+    description: 'Furniture, homeware, garden tools and décor from verified UK wholesalers.',
+    icon: Leaf,
+    href: '/shop?category=home-garden',
+    iconColor: 'text-emerald-500',
+    bgColor: 'bg-emerald-50',
+  },
+  {
+    name: 'Industrial Equipment',
+    description: 'Machinery, tools and industrial supplies for trade and commercial buyers.',
+    icon: Settings,
+    href: '/shop?category=tools',
+    iconColor: 'text-amber-600',
+    bgColor: 'bg-amber-50',
+  },
+  {
+    name: 'Automotive Parts',
+    description: 'Vehicle parts, accessories and automotive wholesale from trusted suppliers.',
+    icon: Car,
+    href: '/shop?category=vehicles',
+    iconColor: 'text-red-500',
+    bgColor: 'bg-red-50',
+  },
 ];
 
 // ── Placeholder images (shown when sections have no live products) ─────────────
@@ -257,6 +309,36 @@ export default function HomePage() {
                 >
                   <Icon className={`w-6 h-6 ${cat.iconColor}`} />
                   <span className="text-sm font-medium text-gray-700 group-hover:text-[#1E3A5F] leading-tight">{cat.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Popular Categories (Discovery) ────────────────────────────── */}
+      <section className="bg-white py-6 border-b border-gray-200">
+        <div className="container-market">
+          <div className="mb-3">
+            <h2 className="text-xl font-bold text-gray-900">Popular Categories</h2>
+            <p className="text-sm text-gray-700">Explore top marketplace categories</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {POPULAR_CATEGORIES.map((cat) => {
+              const Icon = cat.icon;
+              return (
+                <Link
+                  key={cat.name}
+                  to={cat.href}
+                  className="group flex items-start gap-3 p-4 bg-[#F8F9FA] border border-gray-200 rounded-lg hover:border-[#F4C400] hover:shadow-sm transition-all duration-200"
+                >
+                  <div className={`w-10 h-10 ${cat.bgColor} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={`w-5 h-5 ${cat.iconColor}`} />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-gray-900 group-hover:text-[#1E3A5F] mb-0.5">{cat.name}</h3>
+                    <p className="text-xs text-gray-600 leading-relaxed">{cat.description}</p>
+                  </div>
                 </Link>
               );
             })}

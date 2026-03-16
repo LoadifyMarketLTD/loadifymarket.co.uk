@@ -34,16 +34,20 @@ export default function CinematicHero() {
               </Link>
             </div>
             {/* Trust badges */}
-            <div className="flex flex-wrap items-center gap-6 text-sm text-gray-700">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-700">
+              <div className="flex items-center gap-1.5">
+                <BadgeCheck className="h-4 w-4 text-green-600" />
+                Verified UK Sellers
+              </div>
+              <div className="flex items-center gap-1.5">
                 <ShieldCheck className="h-4 w-4 text-green-600" />
                 Secure Payments
               </div>
-              <div className="flex items-center gap-2">
-                <BadgeCheck className="h-4 w-4 text-green-600" />
-                Verified Sellers
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4 text-green-600" />
+                Buyer Protection
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <Truck className="h-4 w-4 text-green-600" />
                 UK Wide Delivery
               </div>

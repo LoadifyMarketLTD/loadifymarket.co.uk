@@ -121,7 +121,7 @@ export default function Header() {
                 { label: 'Handmade', href: '/shop?category=handmade', icon: Sparkles },
               ].map(({ label, href, icon: Icon }) => (
                 <li key={label}>
-                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
+                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 group">
                     <Icon className="w-4 h-4 text-[#F4C400]/60 group-hover:text-[#F4C400] transition-colors flex-shrink-0" />
                     <span className="flex-1">{label}</span>
                     <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
@@ -143,7 +143,7 @@ export default function Header() {
                 { label: 'Clearance Stock', href: '/shop?category=clearance', icon: Tag },
               ].map(({ label, href, icon: Icon }) => (
                 <li key={label}>
-                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
+                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 group">
                     <Icon className="w-4 h-4 text-[#F4C400]/60 group-hover:text-[#F4C400] transition-colors flex-shrink-0" />
                     <span className="flex-1">{label}</span>
                     <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
@@ -166,7 +166,7 @@ export default function Header() {
                 { label: 'Featured Deals', href: '/bulk', icon: BookOpen },
               ].map(({ label, href, icon: Icon }) => (
                 <li key={label}>
-                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
+                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 group">
                     <Icon className="w-4 h-4 text-[#F4C400]/60 group-hover:text-[#F4C400] transition-colors flex-shrink-0" />
                     <span className="flex-1">{label}</span>
                     <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
@@ -185,7 +185,7 @@ export default function Header() {
               {user ? (
                 <>
                   <li>
-                    <Link to="/dashboard" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
+                    <Link to="/dashboard" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 group">
                       <User className="w-4 h-4 text-[#F4C400]/60 group-hover:text-[#F4C400] transition-colors flex-shrink-0" />
                       <span className="flex-1">My Account</span>
                       <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
@@ -193,7 +193,7 @@ export default function Header() {
                   </li>
                   {(user.role === 'seller' || user.role === 'owner') && (
                     <li>
-                      <Link to="/seller" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
+                      <Link to="/seller" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 group">
                         <LayoutDashboard className="w-4 h-4 text-[#F4C400]/60 group-hover:text-[#F4C400] transition-colors flex-shrink-0" />
                         <span className="flex-1">Seller Dashboard</span>
                         <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
@@ -213,14 +213,14 @@ export default function Header() {
               ) : (
                 <>
                   <li>
-                    <Link to="/login" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
+                    <Link to="/login" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 group">
                       <User className="w-4 h-4 text-[#F4C400]/60 group-hover:text-[#F4C400] transition-colors flex-shrink-0" />
                       <span className="flex-1">Login</span>
                       <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
                     </Link>
                   </li>
                   <li>
-                    <Link to="/register" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
+                    <Link to="/register" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 group">
                       <Store className="w-4 h-4 text-[#F4C400]/60 group-hover:text-[#F4C400] transition-colors flex-shrink-0" />
                       <span className="flex-1">Register</span>
                       <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
@@ -242,7 +242,7 @@ export default function Header() {
                 { label: 'Help & FAQ', href: '/help', icon: HelpCircle },
               ].map(({ label, href, icon: Icon }) => (
                 <li key={label}>
-                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
+                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/80 hover:text-white hover:bg-white/10 transition-all duration-200 group">
                     <Icon className="w-4 h-4 text-[#F4C400]/60 group-hover:text-[#F4C400] transition-colors flex-shrink-0" />
                     <span className="flex-1">{label}</span>
                     <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
@@ -329,7 +329,7 @@ export default function Header() {
                     )}
                     <button
                       onClick={handleLogout}
-                      className="flex items-center gap-1 text-sm text-gray-500 hover:text-red-500 transition-colors"
+                      className="flex items-center gap-1 text-sm text-gray-700 hover:text-red-500 transition-colors"
                       aria-label="Log out"
                     >
                       <LogOut className="h-4 w-4" />
