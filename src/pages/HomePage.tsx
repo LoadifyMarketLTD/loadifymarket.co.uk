@@ -1,17 +1,19 @@
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import {
   ArrowRight, Package, Layers,
-  Truck, Store, Home, Wrench,
-  Shirt, LayoutGrid, UserPlus, ShoppingCart,
+  Home, Wrench,
+  Shirt, LayoutGrid,
   Cpu, Car, Briefcase, Tag,
-  ShieldCheck, BadgeCheck, Lock,
   RotateCcw,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 import { supabase } from '../lib/supabase';
 import type { Product } from '../types';
 import ProductCard from '../components/ProductCard';
+
+// Lazy load below-the-fold sections to reduce initial bundle
+const HomeBelowFold = lazy(() => import('../components/HomeBelowFold'));
 
 // ── Categories ────────────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -25,36 +27,6 @@ const CATEGORIES = [
   { name: 'Fashion',           icon: Shirt,      href: '/shop?category=fashion',      iconColor: 'text-pink-500'   },
   { name: 'Automotive Parts',  icon: Car,        href: '/shop?category=vehicles',     iconColor: 'text-red-500'    },
   { name: 'Mixed Job Lots',    icon: Package,    href: '/catalog?type=lot',           iconColor: 'text-slate-500'  },
-];
-
-// ── How It Works steps ────────────────────────────────────────────────────────
-const HOW_IT_WORKS = [
-  {
-    icon: UserPlus,
-    step: '1',
-    title: 'Create account',
-    description: 'Sign up free and complete your profile in minutes. Open to all UK buyers and sellers.',
-  },
-  {
-    icon: ShoppingCart,
-    step: '2',
-    title: 'Buy or list products',
-    description: 'Browse thousands of listings or list your own stock — single items, pallets, or wholesale lots.',
-  },
-  {
-    icon: Truck,
-    step: '3',
-    title: 'Arrange delivery',
-    description: 'Arrange collection and delivery across the UK through our trusted logistics network.',
-  },
-];
-
-// ── Trust items ───────────────────────────────────────────────────────────────
-const TRUST_ITEMS = [
-  { icon: Lock,        title: 'Secure Payments',     description: 'Powered by Stripe. Every transaction is encrypted and fully protected.'  },
-  { icon: BadgeCheck,  title: 'Verified Sellers',    description: 'All sellers are vetted and verified before listing on the platform.'     },
-  { icon: ShieldCheck, title: 'Buyer Protection',    description: 'Every order is covered by our buyer protection policy.'                  },
-  { icon: Truck,       title: 'UK Delivery Support', description: 'Flexible delivery and collection options for orders of any size.'        },
 ];
 
 // ── Placeholder images (shown when sections have no live products) ─────────────
@@ -85,8 +57,6 @@ const PLACEHOLDER_WHOLESALE = [
   { id: 'ws-3', title: 'Wholesale Homeware — Trade Pallet',      image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=65&auto=format&fit=crop' },
   { id: 'ws-4', title: 'Food & Beverage — Wholesale Case',       image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=65&auto=format&fit=crop' },
 ];
-
-const LOGISTICS_IMG = 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=1400&q=70&auto=format&fit=crop&fm=webp';
 
 // ── Supabase helpers ──────────────────────────────────────────────────────────
 type ProductRow = Product & { store?: { storeSlug?: string } | null };
@@ -128,7 +98,7 @@ function PlaceholderGrid({
   badgeColor?: string;
 }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
       {items.map((item) => (
         <Link
           key={item.id}
@@ -144,7 +114,7 @@ function PlaceholderGrid({
               decoding="async"
             />
           </div>
-          <div className="p-3">
+          <div className="p-2.5">
             <p className="text-sm font-medium text-gray-800 line-clamp-2 leading-tight mb-1">{item.title}</p>
             <span className={`inline-block text-xs px-2 py-0.5 rounded font-medium ${badgeColor}`}>{badge}</span>
           </div>
@@ -157,11 +127,11 @@ function PlaceholderGrid({
 // ── Loading skeleton ──────────────────────────────────────────────────────────
 function ProductGridSkeleton({ count = 4 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="animate-pulse bg-white border border-gray-200 rounded-lg overflow-hidden">
           <div className="bg-gray-200 aspect-[4/3]" />
-          <div className="p-3 space-y-2">
+          <div className="p-2.5 space-y-2">
             <div className="bg-gray-200 h-3 rounded w-full" />
             <div className="bg-gray-200 h-3 rounded w-2/3" />
             <div className="bg-gray-200 h-5 rounded w-1/2" />
@@ -185,10 +155,10 @@ function SectionHeader({
   viewAllLabel?: string;
 }) {
   return (
-    <div className="flex items-center justify-between mb-4">
+    <div className="flex items-center justify-between mb-3">
       <div>
         <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-        {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+        {subtitle && <p className="text-sm text-gray-700">{subtitle}</p>}
       </div>
       <Link to={viewAllHref} className="text-sm text-[#1E3A5F] hover:underline font-medium whitespace-nowrap">
         {viewAllLabel}
@@ -204,38 +174,22 @@ export default function HomePage() {
   const [clearanceProducts,setClearanceProducts] = useState<Product[]>([]);
   const [wholesaleProducts,setWholesaleProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [secondaryLoading, setSecondaryLoading] = useState(true);
 
+  // Phase 1: Fetch above-the-fold featured products immediately
   useEffect(() => {
-    const fetchAll = async () => {
+    const fetchProducts = async () => {
       try {
-        // Fetch more than needed to allow for deduplication
-        const [featuredRes, amazonRes, clearanceRes, wholesaleRes] = await Promise.all([
-          supabase
-            .from('products').select(PRODUCT_QUERY_FIELDS)
-            .eq('isActive', true).eq('isApproved', true)
-            .order('views', { ascending: false }).limit(4),
-          supabase
-            .from('products').select(PRODUCT_QUERY_FIELDS)
-            .eq('isActive', true).eq('isApproved', true)
-            .eq('type', 'lot')
-            .order('createdAt', { ascending: false }).limit(4),
-          supabase
-            .from('products').select(PRODUCT_QUERY_FIELDS)
-            .eq('isActive', true).eq('isApproved', true)
-            .eq('type', 'clearance')
-            .order('createdAt', { ascending: false }).limit(4),
-          supabase
-            .from('products').select(PRODUCT_QUERY_FIELDS)
-            .eq('isActive', true).eq('isApproved', true)
-            .in('type', ['pallet', 'wholesale'])
-            .order('createdAt', { ascending: false }).limit(4),
-        ]);
+        const { data } = await supabase
+          .from('products').select(PRODUCT_QUERY_FIELDS)
+          .eq('isActive', true).eq('isApproved', true)
+          .order('views', { ascending: false }).limit(4);
 
-        const featured = featuredRes.data
-          ? transformProductRows(featuredRes.data as ProductRow[])
-          : [];
+        const featured = data ? transformProductRows(data as ProductRow[]) : [];
+        setFeaturedProducts(featured);
+        setLoading(false);
 
-        // Deduplicate: pick the first `maxCount` items not already in usedIds
+        // Phase 2: Defer below-fold product fetches
         const usedIds = new Set(featured.map((p) => p.id));
         const takeUnique = (rows: ProductRow[] | null, maxCount: number) => {
           if (!rows) return [];
@@ -250,21 +204,36 @@ export default function HomePage() {
           return unique;
         };
 
-        const amazon    = takeUnique(amazonRes.data    as ProductRow[] | null, 4);
-        const clearance = takeUnique(clearanceRes.data as ProductRow[] | null, 4);
-        const wholesale = takeUnique(wholesaleRes.data as ProductRow[] | null, 4);
-
-        setFeaturedProducts(featured);
-        setAmazonProducts(amazon);
-        setClearanceProducts(clearance);
-        setWholesaleProducts(wholesale);
+        try {
+          const [amazonRes, clearanceRes, wholesaleRes] = await Promise.all([
+            supabase
+              .from('products').select(PRODUCT_QUERY_FIELDS)
+              .eq('isActive', true).eq('isApproved', true)
+              .eq('type', 'lot')
+              .order('createdAt', { ascending: false }).limit(4),
+            supabase
+              .from('products').select(PRODUCT_QUERY_FIELDS)
+              .eq('isActive', true).eq('isApproved', true)
+              .eq('type', 'clearance')
+              .order('createdAt', { ascending: false }).limit(4),
+            supabase
+              .from('products').select(PRODUCT_QUERY_FIELDS)
+              .eq('isActive', true).eq('isApproved', true)
+              .in('type', ['pallet', 'wholesale'])
+              .order('createdAt', { ascending: false }).limit(4),
+          ]);
+          setAmazonProducts(takeUnique(amazonRes.data as ProductRow[] | null, 4));
+          setClearanceProducts(takeUnique(clearanceRes.data as ProductRow[] | null, 4));
+          setWholesaleProducts(takeUnique(wholesaleRes.data as ProductRow[] | null, 4));
+        } finally {
+          setSecondaryLoading(false);
+        }
       } catch {
-        // silently swallow — sections will show placeholder content
-      } finally {
         setLoading(false);
+        setSecondaryLoading(false);
       }
     };
-    fetchAll();
+    fetchProducts();
   }, []);
 
   return (
@@ -274,19 +243,19 @@ export default function HomePage() {
       <CinematicHero />
 
       {/* ── Category Cards ──────────────────────────────────────────────── */}
-      <section className="bg-[#F8F9FA] py-8 border-b border-gray-200">
+      <section className="bg-[#F8F9FA] py-6 border-b border-gray-200">
         <div className="container-market">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Browse by Category</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <h2 className="text-xl font-bold text-gray-900 mb-3">Browse by Category</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
             {CATEGORIES.map((cat) => {
               const Icon = cat.icon;
               return (
                 <Link
                   key={cat.name}
                   to={cat.href}
-                  className="group flex flex-col items-center gap-2 p-4 bg-white border border-gray-200 rounded-lg hover:border-[#F4C400] hover:shadow-sm transition-all duration-200 text-center"
+                  className="group flex flex-col items-center gap-1.5 p-3 bg-white border border-gray-200 rounded-lg hover:border-[#F4C400] hover:shadow-sm transition-all duration-200 text-center"
                 >
-                  <Icon className={`w-7 h-7 ${cat.iconColor}`} />
+                  <Icon className={`w-6 h-6 ${cat.iconColor}`} />
                   <span className="text-sm font-medium text-gray-700 group-hover:text-[#1E3A5F] leading-tight">{cat.name}</span>
                 </Link>
               );
@@ -296,7 +265,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Featured Products ───────────────────────────────────────────── */}
-      <section className="bg-white py-8 border-b border-gray-200">
+      <section className="bg-white py-6 border-b border-gray-200">
         <div className="container-market">
           <SectionHeader
             title="Featured Products"
@@ -307,7 +276,7 @@ export default function HomePage() {
           {loading ? (
             <ProductGridSkeleton />
           ) : featuredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {featuredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -316,7 +285,7 @@ export default function HomePage() {
             <PlaceholderGrid items={PLACEHOLDER_FEATURED} href="/catalog" badge="Coming Soon" />
           )}
 
-          <div className="mt-6 text-center">
+          <div className="mt-4 text-center">
             <Link
               to="/catalog"
               className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-6 py-3 rounded transition-colors"
@@ -330,7 +299,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Amazon Returns Pallets ──────────────────────────────────────── */}
-      <section className="bg-[#F5F6F7] py-8 border-b border-gray-200">
+      <section className="bg-[#F5F6F7] py-6 border-b border-gray-200">
         <div className="container-market">
           <SectionHeader
             title={
@@ -343,10 +312,10 @@ export default function HomePage() {
             viewAllHref="/catalog?type=lot"
           />
 
-          {loading ? (
+          {secondaryLoading ? (
             <ProductGridSkeleton />
           ) : amazonProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {amazonProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -363,7 +332,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Clearance Deals ─────────────────────────────────────────────── */}
-      <section className="bg-white py-8 border-b border-gray-200">
+      <section className="bg-white py-6 border-b border-gray-200">
         <div className="container-market">
           <SectionHeader
             title="Clearance Deals"
@@ -371,10 +340,10 @@ export default function HomePage() {
             viewAllHref="/catalog?type=clearance"
           />
 
-          {loading ? (
+          {secondaryLoading ? (
             <ProductGridSkeleton />
           ) : clearanceProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {clearanceProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -391,7 +360,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Wholesale & Bulk Lots ───────────────────────────────────────── */}
-      <section className="bg-[#F5F6F7] py-8 border-b border-gray-200">
+      <section className="bg-[#F5F6F7] py-6 border-b border-gray-200">
         <div className="container-market">
           <SectionHeader
             title={
@@ -404,10 +373,10 @@ export default function HomePage() {
             viewAllHref="/bulk"
           />
 
-          {loading ? (
+          {secondaryLoading ? (
             <ProductGridSkeleton />
           ) : wholesaleProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {wholesaleProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -423,140 +392,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Transport Support ───────────────────────────────────────────── */}
-      <section className="bg-[#F5F6F7] py-8 border-b border-gray-200">
-        <div className="container-market">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
-                UK Logistics Network
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
-                Need delivery or transport support?
-              </h2>
-              <p className="text-gray-600 text-sm md:text-base mb-6">
-                Arrange collection and delivery for pallets, wholesale stock and marketplace orders across the UK.
-                We connect you with trusted freight partners for nationwide collections and deliveries.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  to="/transport-quote"
-                  className="inline-flex items-center gap-2 bg-[#1E3A5F] hover:bg-[#2C4E73] text-white font-semibold px-6 py-3 rounded transition-colors"
-                >
-                  <Truck className="w-4 h-4" />
-                  Request Transport Quote
-                </Link>
-                <Link
-                  to="/bulk"
-                  className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-6 py-3 rounded transition-colors"
-                >
-                  <Package className="w-4 h-4" />
-                  Wholesale & Bulk
-                </Link>
-              </div>
-            </div>
-            <div className="relative rounded-xl overflow-hidden shadow-md aspect-[16/9]">
-              <img
-                src={LOGISTICS_IMG}
-                alt="UK logistics and delivery trucks"
-                className="w-full h-full object-cover"
-                loading="lazy"
-                decoding="async"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── How It Works ────────────────────────────────────────────────── */}
-      <section className="bg-white py-10 border-b border-gray-200">
-        <div className="container-market">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">How It Works</h2>
-            <p className="text-gray-500 text-sm max-w-xl mx-auto">
-              Join thousands of UK buyers and sellers on Loadify Market — browse, list, and arrange delivery all in one place.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {HOW_IT_WORKS.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.step} className="relative bg-[#F8F9FA] border border-gray-200 rounded-lg p-6 text-center">
-                  <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-[#F4C400] text-gray-900 text-xs font-bold flex items-center justify-center">
-                    {item.step}
-                  </div>
-                  <div className="inline-flex items-center justify-center w-12 h-12 bg-[#1E3A5F]/10 rounded-full mb-4">
-                    <Icon className="w-6 h-6 text-[#1E3A5F]" />
-                  </div>
-                  <h3 className="text-base font-bold text-gray-900 mb-2">{item.title}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed">{item.description}</p>
-                </div>
-              );
-            })}
-          </div>
-          <div className="text-center">
-            <Link
-              to="/register?type=seller"
-              className="inline-flex items-center gap-2 bg-[#1E3A5F] hover:bg-[#2C4E73] text-white font-semibold px-6 py-3 rounded transition-colors"
-            >
-              <Store className="w-4 h-4" />
-              Start Selling
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Seller CTA (navy) ───────────────────────────────────────────── */}
-      <section className="bg-[#1E3A5F] py-12">
-        <div className="container-market">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-              Have pallets or clearance stock to sell?
-            </h2>
-            <p className="text-white/70 text-base mb-7">
-              Reach thousands of UK buyers through Loadify Market.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                to="/register?type=seller"
-                className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-6 py-3 rounded transition-colors"
-              >
-                <Store className="w-4 h-4" />
-                Start Selling
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                to="/catalog"
-                className="inline-flex items-center gap-2 border-2 border-white text-white hover:bg-white hover:text-[#1E3A5F] font-semibold px-6 py-3 rounded transition-colors"
-              >
-                <LayoutGrid className="w-4 h-4" />
-                Browse Marketplace
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Trust Features ──────────────────────────────────────────────── */}
-      <section className="bg-[#F8F9FA] py-8 border-t border-gray-200">
-        <div className="container-market">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {TRUST_ITEMS.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.title} className="flex flex-col items-center text-center p-4 bg-white border border-gray-200 rounded-lg">
-                  <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mb-3">
-                    <Icon className="h-5 w-5 text-green-600" />
-                  </div>
-                  <h3 className="text-sm font-bold text-gray-900 mb-1">{item.title}</h3>
-                  <p className="text-gray-500 text-xs leading-relaxed hidden md:block">{item.description}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      {/* ── Below-the-fold sections (lazy loaded) ─────────────────────── */}
+      <Suspense fallback={null}>
+        <HomeBelowFold />
+      </Suspense>
 
     </div>
   );

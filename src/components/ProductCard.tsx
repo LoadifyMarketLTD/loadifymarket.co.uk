@@ -88,7 +88,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       </div>
 
       {/* Content */}
-      <div className="p-3 flex flex-col flex-1">
+      <div className="p-2.5 flex flex-col flex-1">
         {/* Seller name */}
         {product.seller && (
           <div className="flex items-center justify-between mb-1">
@@ -96,18 +96,18 @@ export default function ProductCard({ product }: ProductCardProps) {
               {product.seller.storeSlug ? (
                 <Link
                   to={`/seller/${product.seller.storeSlug}`}
-                  className="text-xs text-gray-400 hover:text-[#1E3A5F] transition-colors truncate"
+                  className="text-xs text-gray-600 hover:text-[#1E3A5F] transition-colors truncate"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {product.seller.businessName || 'Marketplace Seller'}
                 </Link>
               ) : (
-                <span className="text-xs text-gray-400 truncate">
+                <span className="text-xs text-gray-600 truncate">
                   {product.seller.businessName || 'Marketplace Seller'}
                 </span>
               )}
               {product.seller.location && (
-                <span className="text-[10px] text-gray-400 flex items-center gap-0.5 flex-shrink-0">
+                <span className="text-[10px] text-gray-500 flex items-center gap-0.5 flex-shrink-0">
                   <MapPin className="w-2.5 h-2.5" />
                   {product.seller.location}
                 </span>
@@ -149,7 +149,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Short description */}
         {product.description && (
-          <p className="text-xs text-gray-500 line-clamp-1 mb-2 leading-snug">
+          <p className="text-xs text-gray-600 line-clamp-1 mb-2 leading-snug">
             {product.description}
           </p>
         )}
@@ -158,7 +158,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <p className="text-lg font-bold text-[#1E3A5F] mb-2">{formatPrice(product.price)}</p>
 
         {/* Stock / condition */}
-        <div className="flex items-center justify-between text-xs text-gray-400 mb-2.5">
+        <div className="flex items-center justify-between text-xs text-gray-600 mb-2.5">
           <span className="capitalize">{product.condition}</span>
           <div className="flex items-center gap-2">
             {product.views > 0 && (

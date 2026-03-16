@@ -5,19 +5,19 @@ export default function CinematicHero() {
   return (
     <section className="bg-white border-b border-gray-200">
       <div className="container-market">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-12 lg:py-16 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-10 lg:py-12 items-center">
           {/* Left: Text Content */}
-          <div>
-            <div className="inline-flex items-center gap-2 bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+          <div className="min-h-[280px] lg:min-h-[320px] flex flex-col justify-center">
+            <div className="inline-flex items-center gap-2 bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-semibold px-3 py-1.5 rounded-full mb-3 w-fit">
               UK Multi-Category Marketplace
             </div>
-            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
+            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-3">
               Buy &amp; Sell Pallets<br />Across the UK
             </h1>
-            <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+            <p className="text-lg text-gray-700 mb-5 leading-relaxed">
               Amazon returns, clearance stock, wholesale lots and mixed pallets from verified UK sellers.
             </p>
-            <div className="flex flex-wrap gap-3 mb-8">
+            <div className="flex flex-wrap gap-3 mb-6">
               <Link
                 to="/catalog"
                 className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-6 py-3 rounded transition-colors"
@@ -34,7 +34,7 @@ export default function CinematicHero() {
               </Link>
             </div>
             {/* Trust badges */}
-            <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600">
+            <div className="flex flex-wrap items-center gap-6 text-sm text-gray-700">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-green-600" />
                 Secure Payments
@@ -51,7 +51,7 @@ export default function CinematicHero() {
           </div>
 
           {/* Right: Hero Image */}
-          <div className="relative">
+          <div className="relative p-3">
             <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[4/3]">
               <img
                 src="https://images.unsplash.com/photo-1553413077-190dd305871c?w=1280&q=65&auto=format&fit=max&fm=webp"
@@ -62,19 +62,20 @@ export default function CinematicHero() {
                 sizes="(max-width: 1023px) 100vw, 50vw"
                 alt="UK warehouse with pallets and stock"
                 className="w-full h-full object-cover"
+                width={1280}
+                height={960}
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
               />
-
             </div>
             {/* Floating stat badges */}
-            <div className="absolute -bottom-3 -left-3 bg-white border border-gray-200 rounded-lg shadow-md px-4 py-2.5">
-              <p className="text-xs text-gray-500">Verified Sellers</p>
+            <div className="absolute bottom-0 left-0 bg-white border border-gray-200 rounded-lg shadow-md px-4 py-2.5">
+              <p className="text-xs text-gray-700">Verified Sellers</p>
               <p className="text-xl font-bold text-[#1E3A5F]">100+</p>
             </div>
-            <div className="absolute -top-3 -right-3 bg-[#F4C400] rounded-lg shadow-md px-4 py-2.5">
-              <p className="text-xs text-gray-700">Active Listings</p>
+            <div className="absolute top-0 right-0 bg-[#F4C400] rounded-lg shadow-md px-4 py-2.5">
+              <p className="text-xs text-gray-800">Active Listings</p>
               <p className="text-xl font-bold text-gray-900">1000+</p>
             </div>
           </div>
