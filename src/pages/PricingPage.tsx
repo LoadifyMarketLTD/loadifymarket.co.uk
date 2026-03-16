@@ -172,7 +172,7 @@ export default function PricingPage() {
               All plans include payment processing and full access to our marketplace.
             </p>
             <p className="text-white/50 text-sm mt-1">
-              VAT will be added where applicable.
+              Standard marketplace commission: 7% per completed sale. VAT will be added where applicable.
             </p>
           </div>
         </div>

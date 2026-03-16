@@ -11,7 +11,6 @@ function isDashboardRoute(pathname: string) {
 const SUPPORT_EMAIL = 'loadifymarket.co.uk@gmail.com';
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
   const location = useLocation();
 
   if (isDashboardRoute(location.pathname)) {
@@ -19,7 +18,7 @@ export default function Footer() {
     <footer className="bg-[#1E3A5F] text-white mt-auto border-t border-white/10">
       <div className="container-cinematic py-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-white/80">
-            <p>&copy; {currentYear} {BRAND.name}. Operated by {BRAND.companyName} (CRN: {BRAND.companyNumber}).</p>
+            <p>&copy; 2025 {BRAND.name}. All rights reserved.</p>
             <div className="flex items-center gap-4">
               <Link to="/terms" className="hover:text-gold transition-colors">Terms</Link>
               <Link to="/privacy" className="hover:text-gold transition-colors">Privacy</Link>
@@ -77,6 +76,7 @@ export default function Footer() {
               <div className="text-white/80 text-xs space-y-1">
                 <p className="font-semibold text-white/90">Operated by {BRAND.companyName}</p>
                 <p>Company Number: {BRAND.companyNumber}</p>
+                <p>VAT Number: {BRAND.vatNumber}</p>
                 <p>Registered in England and Wales</p>
               </div>
               <div className="flex items-start space-x-2 text-white/80 text-xs">
@@ -163,18 +163,9 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div className="border-t border-white/10 bg-[#152D4A]">
         <div className="container-cinematic py-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-2">
-            <p className="text-white/90 text-sm">
-              &copy; {currentYear} {BRAND.name}. Operated by {BRAND.companyName} (CRN: {BRAND.companyNumber}).
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-white/90">
-              <span>VAT: {BRAND.vatNumber}</span>
-              <span className="hidden md:inline">|</span>
-              <span>Marketplace commission: {BRAND.marketplaceFeePercent}% per completed sale</span>
-              <span className="hidden md:inline">|</span>
-              <span>Returns handled according to individual seller policies.</span>
-            </div>
-          </div>
+          <p className="text-white/90 text-sm text-center">
+            &copy; 2025 {BRAND.name}. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>

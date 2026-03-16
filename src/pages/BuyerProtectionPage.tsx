@@ -88,6 +88,7 @@ export default function BuyerProtectionPage() {
           </div>
           <p className="text-white/40 text-xs mt-4">
             Protection is valid for 90 days from the date of purchase. Items must be purchased through {BRAND.name} checkout.
+            Returns are handled according to individual seller policies — please check the product listing for seller-specific return terms.
           </p>
         </section>
 
