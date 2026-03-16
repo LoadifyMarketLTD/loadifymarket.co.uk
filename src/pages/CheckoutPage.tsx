@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCartStore, useAuthStore } from '../store';
 import { supabase } from '../lib/supabase';
+import { formatPrice } from '../lib/formatPrice';
 import type { ShippingMethod } from '../types/shipping';
 import { CreditCard, Info, MapPin, Package, Shield, Star, Truck } from 'lucide-react';
 
@@ -138,13 +139,6 @@ export default function CheckoutPage() {
   const shippingVAT = shippingAmount * VAT_RATE;
   const vatAmount = (total - subtotal) + shippingVAT;
   const grandTotal = total + shippingAmount + shippingVAT;
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-    }).format(price);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

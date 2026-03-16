@@ -1,6 +1,7 @@
 import { useCartStore } from '../store';
 import { Link } from 'react-router-dom';
 import { Bookmark, ShoppingBag, Trash2, Package } from 'lucide-react';
+import { formatPrice } from '../lib/formatPrice';
 
 const VAT_RATE = 0.20;
 
@@ -11,9 +12,6 @@ export default function CartPage() {
   const totalIncVat = getTotalPrice();
   const subtotalExVat = totalIncVat / (1 + VAT_RATE);
   const vatAmount = totalIncVat - subtotalExVat;
-
-  const formatPrice = (p: number) =>
-    new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(p);
 
   if (items.length === 0) {
     return (

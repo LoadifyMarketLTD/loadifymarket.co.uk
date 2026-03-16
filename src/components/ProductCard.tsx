@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Heart, Package, Truck, Sparkles, Eye, MapPin, Star, CheckCircle2, Tag } from 'lucide-react';
 import { useWishlist } from '../lib/useWishlist';
 import { getCategoryFallbackImage } from '../lib/categoryImages';
+import { formatPrice } from '../lib/formatPrice';
 import VerificationBadge from './VerificationBadge';
 import RoleBadge from './RoleBadge';
 import type { Product } from '../types';
@@ -12,9 +13,6 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const { isInWishlist, toggleWishlist } = useWishlist();
-
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(price);
 
   const handleWishlistClick = async (e: React.MouseEvent) => {
     e.preventDefault();

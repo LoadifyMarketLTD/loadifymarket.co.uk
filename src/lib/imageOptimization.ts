@@ -85,3 +85,26 @@ export function productHero(src: string | null | undefined): string {
 export function sellerAvatar(src: string | null | undefined): string {
   return optimizeImage(src, { width: 64, height: 64, format: 'webp', fit: 'cover', quality: 80 });
 }
+
+/**
+ * Builds a `srcset` string for a URL that accepts a `w` query parameter
+ * (e.g. Unsplash image CDN).  Returns an empty string when the URL cannot
+ * be parsed so callers can safely pass the result as `srcSet={… || undefined}`.
+ *
+ * @example
+ *   buildSrcSet('https://images.unsplash.com/photo-xxx?q=65', [200, 400])
+ *   // → 'https://…?q=65&w=200 200w, https://…?q=65&w=400 400w'
+ */
+export function buildSrcSet(url: string, widths: number[]): string {
+  try {
+    return widths
+      .map((w) => {
+        const u = new URL(url);
+        u.searchParams.set('w', String(w));
+        return `${u.toString()} ${w}w`;
+      })
+      .join(', ');
+  } catch {
+    return '';
+  }
+}

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 import { supabase } from '../lib/supabase';
+import { buildSrcSet } from '../lib/imageOptimization';
 import type { Product } from '../types';
 import ProductCard from '../components/ProductCard';
 
@@ -30,32 +31,33 @@ const CATEGORIES = [
 
 
 // ── Placeholder images (shown when sections have no live products) ─────────────
+// Each section uses 4 completely distinct images — no cross-section repeats.
 const PLACEHOLDER_FEATURED = [
   { id: 'pf-1', title: 'Electronics Pallet — Mixed Stock',       image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=65&auto=format&fit=crop' },
-  { id: 'pf-2', title: 'Clearance Clothing — Wholesale Lot',     image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&q=65&auto=format&fit=crop' },
+  { id: 'pf-2', title: 'Fashion & Clothing — Wholesale Lot',     image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=65&auto=format&fit=crop' },
   { id: 'pf-3', title: 'Tools & DIY — Trade Bundle',             image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=65&auto=format&fit=crop' },
   { id: 'pf-4', title: 'Industrial Equipment — End of Line',     image: 'https://images.unsplash.com/photo-1565043589221-1a6fd9ae45c7?w=400&q=65&auto=format&fit=crop' },
 ];
 
 const PLACEHOLDER_AMAZON = [
-  { id: 'az-1', title: 'Amazon Returns Pallet — Electronics',    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=65&auto=format&fit=crop' },
-  { id: 'az-2', title: 'Mixed Returns Lot — Household',          image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=65&auto=format&fit=crop' },
-  { id: 'az-3', title: 'Amazon Customer Returns — Clothing',     image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&q=65&auto=format&fit=crop' },
+  { id: 'az-1', title: 'Amazon Returns Pallet — Warehouse Stock', image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&q=65&auto=format&fit=crop' },
+  { id: 'az-2', title: 'Mixed Returns Lot — Household Goods',    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=65&auto=format&fit=crop' },
+  { id: 'az-3', title: 'Amazon Returns — Clothing & Apparel',    image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&q=65&auto=format&fit=crop' },
   { id: 'az-4', title: 'Returns Pallet — Small Appliances',      image: 'https://images.unsplash.com/photo-1556909114-44e3e9e0f46f?w=400&q=65&auto=format&fit=crop' },
 ];
 
 const PLACEHOLDER_CLEARANCE = [
-  { id: 'cl-1', title: 'End of Line — Kitchen Appliances',       image: 'https://images.unsplash.com/photo-1556909114-44e3e9e0f46f?w=400&q=65&auto=format&fit=crop' },
-  { id: 'cl-2', title: 'Clearance Furniture — Flat Pack',        image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=65&auto=format&fit=crop' },
-  { id: 'cl-3', title: 'Clothing Clearance — Mixed Sizes',       image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&q=65&auto=format&fit=crop' },
-  { id: 'cl-4', title: 'Clearance Electronics — Accessories',    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=65&auto=format&fit=crop' },
+  { id: 'cl-1', title: 'Clearance — Toys & Games',               image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&q=65&auto=format&fit=crop' },
+  { id: 'cl-2', title: 'Clearance — Sports & Fitness',           image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&q=65&auto=format&fit=crop' },
+  { id: 'cl-3', title: 'Clearance — Health & Beauty',            image: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400&q=65&auto=format&fit=crop' },
+  { id: 'cl-4', title: 'Clearance — Accessories & Fashion',      image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&q=65&auto=format&fit=crop' },
 ];
 
 const PLACEHOLDER_WHOLESALE = [
-  { id: 'ws-1', title: 'Wholesale Clothing — 500 Mixed Units',   image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&q=65&auto=format&fit=crop' },
-  { id: 'ws-2', title: 'Electronics Bulk Lot — 100 Units',       image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=65&auto=format&fit=crop' },
-  { id: 'ws-3', title: 'Wholesale Homeware — Trade Pallet',      image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=65&auto=format&fit=crop' },
-  { id: 'ws-4', title: 'Food & Beverage — Wholesale Case',       image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ws-1', title: 'Wholesale — Artisan & Craft Goods',      image: 'https://images.unsplash.com/photo-1513519245088-0e12902e35a8?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ws-2', title: 'Food & Beverage — Wholesale Case',       image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ws-3', title: 'Office & Business Supplies — Bulk',      image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ws-4', title: 'Wholesale Logistics & Shipping',         image: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&q=65&auto=format&fit=crop' },
 ];
 
 
@@ -109,6 +111,8 @@ function PlaceholderGrid({
           <div className="aspect-[4/3] overflow-hidden bg-gray-100">
             <img
               src={item.image}
+              srcSet={buildSrcSet(item.image, [200, 400]) || undefined}
+              sizes="(max-width: 767px) calc(50vw - 1.5rem), (max-width: 1023px) calc(33vw - 1.5rem), 300px"
               alt={item.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
@@ -363,7 +367,7 @@ export default function HomePage() {
               items={PLACEHOLDER_CLEARANCE}
               href="/catalog?type=clearance"
               badge="Clearance"
-              badgeColor="bg-[#C2410C]/10 text-[#C2410C] font-bold"
+              badgeColor="bg-red-100 text-red-800 font-semibold"
             />
           )}
         </div>

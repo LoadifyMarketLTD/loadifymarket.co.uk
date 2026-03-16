@@ -12,6 +12,7 @@ import SellerPerformance from '../components/SellerPerformance';
 import ProductReviews from '../components/ProductReviews';
 import { buildTransportQuoteUrl } from '../lib/transportQuote';
 import { updatePageMeta, injectStructuredData, generateProductSchema, pageSEO } from '../lib/seo';
+import { formatPrice } from '../lib/formatPrice';
 import {
   ShoppingCart,
   Heart,
@@ -195,13 +196,6 @@ export default function ProductPage() {
 
     // Could add a toast notification here
     alert('Product added to cart!');
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-    }).format(price);
   };
 
   // Bulk/pallet/wholesale products use XDrive transport, not normal checkout
