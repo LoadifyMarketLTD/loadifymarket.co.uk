@@ -1325,15 +1325,19 @@ export default function SellerDashboardPage() {
                         )}
 
                         <div className="mt-auto pt-2 border-t border-white/10">
-                          <a
-                            href={`mailto:?subject=Re: ${encodeURIComponent(req.product_type)} Request on Loadify Market&body=${encodeURIComponent(
-                              `Hi,\n\nI saw your request for "${req.product_type}" (${req.quantity}) on Loadify Market and may be able to help.\n\nPlease get in touch to discuss further.\n\nKind regards`
-                            )}`}
-                            className="inline-flex items-center gap-1.5 text-sm font-medium text-gold hover:text-gold/80 transition-colors"
-                          >
-                            <Mail className="w-3.5 h-3.5" />
-                            Contact Buyer
-                          </a>
+                          {req.buyer_email ? (
+                            <a
+                              href={`mailto:${req.buyer_email}?subject=${encodeURIComponent(`Re: ${req.product_type} Request on Loadify Market`)}&body=${encodeURIComponent(
+                                `Hi,\n\nI saw your request for "${req.product_type}" (${req.quantity}) on Loadify Market and may be able to help.\n\nPlease reply to discuss further.\n\nKind regards`
+                              )}`}
+                              className="inline-flex items-center gap-1.5 text-sm font-medium text-gold hover:text-gold/80 transition-colors"
+                            >
+                              <Mail className="w-3.5 h-3.5" />
+                              Contact Buyer
+                            </a>
+                          ) : (
+                            <span className="text-white/30 text-xs italic">No contact email provided</span>
+                          )}
                         </div>
                       </div>
                     ))}

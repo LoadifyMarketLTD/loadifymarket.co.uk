@@ -21,6 +21,7 @@ interface RequestForm {
   location: string;
   budget: string;
   notes: string;
+  buyer_email: string;
 }
 
 const EMPTY_FORM: RequestForm = {
@@ -29,6 +30,7 @@ const EMPTY_FORM: RequestForm = {
   location: '',
   budget: '',
   notes: '',
+  buyer_email: '',
 };
 
 export default function RequestStockPage() {
@@ -50,6 +52,7 @@ export default function RequestStockPage() {
         location: form.location,
         budget: form.budget,
         notes: form.notes,
+        buyer_email: form.buyer_email,
         buyer_id: user?.id ?? null,
       });
 
@@ -166,6 +169,24 @@ export default function RequestStockPage() {
                   className="input-field w-full"
                   placeholder="e.g. Birmingham, UK"
                 />
+              </div>
+
+              {/* Contact Email */}
+              <div>
+                <label className="block text-sm font-medium text-white/60 mb-2">
+                  Contact Email *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={form.buyer_email}
+                  onChange={handleChange('buyer_email')}
+                  className="input-field w-full"
+                  placeholder="your@email.com"
+                />
+                <p className="text-white/30 text-xs mt-1">
+                  Shared with verified sellers so they can contact you with offers.
+                </p>
               </div>
 
               {/* Budget */}

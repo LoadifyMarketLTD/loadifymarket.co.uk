@@ -508,6 +508,7 @@ export interface StockRequest {
   location: string;
   budget: string;
   notes: string;
+  buyer_email: string;
   buyer_id: string | null;
   created_at: string;
 }
