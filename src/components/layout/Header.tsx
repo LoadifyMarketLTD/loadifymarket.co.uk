@@ -282,7 +282,7 @@ export default function Header() {
                 className="p-2 text-gray-600 hover:text-[#1E3A5F] transition-colors flex-shrink-0"
                 aria-label="Open marketplace navigation"
                 aria-expanded={sidebarOpen}
-                aria-controls="marketplace-sidebar"
+                aria-controls={sidebarMounted ? 'marketplace-sidebar' : undefined}
               >
                 <Menu className="h-6 w-6" />
               </button>
