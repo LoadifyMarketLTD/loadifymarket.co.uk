@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
   User, Lock, Mail, Bell, MapPin, CreditCard, Building2,
   CheckCircle, AlertCircle, Eye, EyeOff, Plus, Trash2,
-  ChevronLeft, Save,
+  ChevronLeft, Save, Camera, RefreshCw,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
@@ -55,12 +55,30 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
   );
 }
 
+// ─── Avatar Upload helper ─────────────────────────────────────────────────────
+const ALLOWED_AVATAR_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5 MB
+
+async function uploadAvatar(file: File, userId: string): Promise<{ url: string; filePath: string }> {
+  const mimeToExt: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+  const ext = mimeToExt[file.type] ?? 'jpg';
+  const filePath = `avatars/${userId}-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage
+    .from('product-images')
+    .upload(filePath, file, { cacheControl: '3600', upsert: true });
+  if (error) throw error;
+  const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
+  return { url: data.publicUrl, filePath };
+}
+
 // ─── Profile Tab ────────────────────────────────────────────────────────────
 function ProfileTab() {
   const { user, setUser } = useAuthStore();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     firstName: user?.firstName ?? '',
     lastName: user?.lastName ?? '',
@@ -70,6 +88,43 @@ function ProfileTab() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+      setError('Please upload a JPG, PNG or WebP image.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > MAX_AVATAR_SIZE) {
+      setError('Image must be 5 MB or smaller.');
+      e.target.value = '';
+      return;
+    }
+    setAvatarUploading(true);
+    setError('');
+    let filePath: string | undefined;
+    try {
+      const result = await uploadAvatar(file, user.id);
+      filePath = result.filePath;
+      const { error: dbError } = await supabase
+        .from('users')
+        .update({ avatarUrl: result.url })
+        .eq('id', user.id);
+      if (dbError) {
+        // Roll back the storage upload to avoid orphaned files
+        await supabase.storage.from('product-images').remove([filePath]);
+        throw dbError;
+      }
+      setUser({ ...user, avatarUrl: result.url });
+    } catch {
+      setError('Failed to upload avatar. Please try again.');
+    } finally {
+      setAvatarUploading(false);
+      e.target.value = '';
+    }
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -91,10 +146,56 @@ function ProfileTab() {
     }
   };
 
+  const initials = [user?.firstName, user?.lastName]
+    .filter(Boolean)
+    .map(s => s![0].toUpperCase())
+    .join('') || user?.email?.[0]?.toUpperCase() || '?';
+
   return (
     <div>
       <SectionHeader title="Profile Information" subtitle="Update your personal details" />
       <div className="space-y-4">
+        {/* Avatar */}
+        <div className="flex items-center gap-4">
+          <div className="relative flex-shrink-0">
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt="Profile"
+                className="w-20 h-20 rounded-full object-cover border-2 border-gold/40"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-gold/20 border-2 border-gold/40 flex items-center justify-center text-gold text-2xl font-bold select-none">
+                {initials}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={avatarUploading}
+              className="absolute bottom-0 right-0 bg-gold text-jet w-7 h-7 rounded-full flex items-center justify-center shadow-lg hover:bg-gold-400 transition-colors"
+              aria-label="Change profile picture"
+            >
+              {avatarUploading ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Camera className="w-3.5 h-3.5" />
+              )}
+            </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+          </div>
+          <div>
+            <p className="text-white text-sm font-medium">Profile Picture</p>
+            <p className="text-white/40 text-xs mt-0.5">JPG, PNG or WebP. Max 5 MB.</p>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-white/70 mb-1">First Name</label>
@@ -159,6 +260,22 @@ function ProfileTab() {
   );
 }
 
+// ─── Password Strength helper ─────────────────────────────────────────────────
+function getPasswordStrength(password: string): { score: number; label: string; color: string } {
+  if (!password) return { score: 0, label: '', color: '' };
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  if (score <= 1) return { score, label: 'Weak',   color: 'bg-red-500'    };
+  if (score <= 2) return { score, label: 'Fair',   color: 'bg-orange-400' };
+  if (score <= 3) return { score, label: 'Good',   color: 'bg-yellow-400' };
+  if (score <= 4) return { score, label: 'Strong', color: 'bg-lime-400'   };
+  return { score, label: 'Very strong', color: 'bg-green-500' };
+}
+
 // ─── Password Tab ────────────────────────────────────────────────────────────
 function PasswordTab() {
   const [saving, setSaving] = useState(false);
@@ -218,6 +335,27 @@ function PasswordTab() {
               {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
+          {/* Password strength indicator */}
+          {form.newPassword && (() => {
+            const strength = getPasswordStrength(form.newPassword);
+            return (
+              <div className="mt-2">
+                <div className="flex gap-1 mb-1">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div
+                      key={i}
+                      className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
+                        i <= strength.score ? strength.color : 'bg-white/10'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <p className="text-xs text-white/50">
+                  Strength: <span className="font-medium text-white/80">{strength.label}</span>
+                </p>
+              </div>
+            );
+          })()}
         </div>
         <div>
           <label className="block text-sm font-medium text-white/70 mb-1">Confirm New Password</label>
@@ -238,6 +376,9 @@ function PasswordTab() {
               {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
+          {form.confirmPassword && form.newPassword !== form.confirmPassword && (
+            <p className="text-red-400 text-xs mt-1">Passwords do not match.</p>
+          )}
         </div>
         {error && (
           <div className="flex items-center gap-2 text-red-400 text-sm">
@@ -267,6 +408,25 @@ function PasswordTab() {
 // ─── Email Settings Tab ──────────────────────────────────────────────────────
 function EmailTab() {
   const { user } = useAuthStore();
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+  const [resendError, setResendError] = useState('');
+
+  const handleResendVerification = async () => {
+    if (!user?.email) return;
+    setResending(true);
+    setResendError('');
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email: user.email });
+      if (error) throw error;
+      setResent(true);
+      setTimeout(() => setResent(false), 5000);
+    } catch (err: unknown) {
+      setResendError(err instanceof Error ? err.message : 'Failed to resend. Try again later.');
+    } finally {
+      setResending(false);
+    }
+  };
 
   return (
     <div>
@@ -280,9 +440,24 @@ function EmailTab() {
               <CheckCircle className="w-3 h-3" /> Verified
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 text-yellow-400 text-xs mt-2">
-              <AlertCircle className="w-3 h-3" /> Not verified
-            </span>
+            <div className="mt-2 space-y-2">
+              <span className="inline-flex items-center gap-1 text-yellow-400 text-xs">
+                <AlertCircle className="w-3 h-3" /> Not verified
+              </span>
+              <div>
+                <button
+                  onClick={handleResendVerification}
+                  disabled={resending || resent}
+                  className="flex items-center gap-1.5 text-xs text-gold hover:text-gold/80 underline transition-colors disabled:opacity-60"
+                >
+                  <RefreshCw className={`w-3 h-3 ${resending ? 'animate-spin' : ''}`} />
+                  {resending ? 'Sending…' : resent ? 'Verification email sent!' : 'Resend verification email'}
+                </button>
+                {resendError && (
+                  <p className="text-red-400 text-xs mt-1">{resendError}</p>
+                )}
+              </div>
+            </div>
           )}
         </div>
         <div className="p-4 bg-white/5 rounded-lg border border-white/10">
@@ -630,10 +805,19 @@ function BusinessTab() {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
+const VALID_TABS = new Set<Tab>(['profile', 'password', 'email', 'notifications', 'addresses', 'payment', 'business']);
+
 export default function AccountSettingsPage() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<Tab>('profile');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const tabParam = searchParams.get('tab') as Tab | null;
+  const activeTab: Tab = tabParam && VALID_TABS.has(tabParam) ? tabParam : 'profile';
+
+  const setActiveTab = (tab: Tab) => {
+    setSearchParams({ tab }, { replace: true });
+  };
 
   useEffect(() => {
     if (!user) navigate('/login?redirect=/account-settings');
