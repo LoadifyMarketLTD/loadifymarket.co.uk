@@ -563,6 +563,25 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
+   FOOTER RESPONSIVE GRID
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 1023px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 40px !important;
+    padding: 50px 24px !important;
+  }
+}
+
+@media (max-width: 639px) {
+  .footer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 30px !important;
+    padding: 50px 24px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
    LAPTOP – FIX HERO IMAGES BEING CUT
    ═══════════════════════════════════════════════════════════ */
 @media (min-width: 1280px) and (max-width: 1600px) {
