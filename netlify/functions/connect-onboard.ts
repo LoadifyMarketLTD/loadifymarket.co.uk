@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit } from './_shared/rateLimiter';
 
 /**
  * POST /.netlify/functions/connect-onboard
@@ -50,6 +51,22 @@ export const handler: Handler = async (event) => {
   }
 
   const sellerId = user.id;
+
+  // ── Rate limiting: 5 onboarding link requests per seller per hour ─────────
+  const rl = await checkRateLimit({
+    supabase,
+    tableName: 'connect_onboard_rate_limits',
+    identifier: sellerId,
+    windowMinutes: 60,
+    maxAttempts: 5,
+  });
+  if (rl.exceeded) {
+    return {
+      statusCode: 429,
+      body: JSON.stringify({ error: 'Too many onboarding requests. Please try again later.' }),
+    };
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   try {
     // Look up any existing Stripe account stored for this seller.

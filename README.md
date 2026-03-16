@@ -7,6 +7,7 @@ A comprehensive B2B & B2C marketplace platform for products, pallets, and bulk l
 **New to the project?** Start here:
 - 📘 **[Complete Setup Guide](./COMPLETE_SETUP_GUIDE.md)** - Step-by-step installation and configuration
 - 🗄️ **[Database Setup Guide](./DATABASE_SETUP_COMPLETE.md)** - Complete database initialization
+- 📚 **[Documentation Index (DOCS.md)](./DOCS.md)** - Navigate all project docs in one place
 
 ## ✨ Core Marketplace Features
 
