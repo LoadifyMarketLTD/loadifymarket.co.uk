@@ -32,7 +32,7 @@ export default function Footer() {
   return (
     <footer className="bg-[#1E3A5F] text-white mt-auto">
       {/* Main Footer Content */}
-      <div className="container-cinematic py-16">
+      <div className="container-cinematic py-10">
         {/* Top Section with Logo and Social */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-12 pb-12 border-b border-white/10">
           {/* Logo */}
@@ -90,7 +90,7 @@ export default function Footer() {
         </div>
 
         {/* Links Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Company Info */}
           <div>
             <h3 className="text-lg font-bold mb-6 text-gold">About</h3>
@@ -237,6 +237,38 @@ export default function Footer() {
               <li>
                 <Link to="/about" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
                   About Us
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <h3 className="text-lg font-bold mb-6 text-gold">Contact</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link to="/contact" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Contact Us
+                </Link>
+              </li>
+              <li>
+                <Link to="/help" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Help & FAQ
+                </Link>
+              </li>
+              <li>
+                <Link to="/transport-quote" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Transport Quote
+                </Link>
+              </li>
+              <li>
+                <Link to="/buyer-protection" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Buyer Protection
+                </Link>
+              </li>
+              <li>
+                <Link to="/rfq" className="text-white/60 hover:text-gold transition-colors text-sm underline-gold">
+                  Request a Quote
                 </Link>
               </li>
             </ul>

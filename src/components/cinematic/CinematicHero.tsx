@@ -61,7 +61,7 @@ export default function CinematicHero() {
                 decoding="async"
                 fetchPriority="high"
               />
-              <div className="absolute inset-0 bg-gradient-to-br from-[#1E3A5F]/20 to-transparent" />
+
             </div>
             {/* Floating stat badges */}
             <div className="absolute -bottom-3 -left-3 bg-white border border-gray-200 rounded-lg shadow-md px-4 py-2.5">
