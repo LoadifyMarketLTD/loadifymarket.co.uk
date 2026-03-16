@@ -67,6 +67,31 @@ const PLACEHOLDER_LISTINGS = [
   { id: 'ph-5', title: 'Automotive Parts — Trade Lot', image: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&q=65&auto=format&fit=crop' },
 ];
 
+// ── Featured deal promo cards (shown when no live featured product) ────────────
+const DEAL_PROMOS = [
+  {
+    label: 'Amazon Returns',
+    sublabel: 'Mixed pallet lots',
+    href: '/catalog?type=lot',
+    bg: 'from-blue-600 to-blue-800',
+    img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=65&auto=format&fit=crop',
+  },
+  {
+    label: 'Clearance Stock',
+    sublabel: 'End-of-line bargains',
+    href: '/catalog?type=clearance',
+    bg: 'from-orange-600 to-orange-800',
+    img: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=600&q=65&auto=format&fit=crop',
+  },
+  {
+    label: 'Wholesale Lots',
+    sublabel: 'Bulk trade pricing',
+    href: '/bulk',
+    bg: 'from-emerald-600 to-emerald-800',
+    img: 'https://images.unsplash.com/photo-1565043589221-1a6fd9ae45c7?w=600&q=65&auto=format&fit=crop',
+  },
+];
+
 const LOGISTICS_IMG = 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=1400&q=70&auto=format&fit=crop&fm=webp';
 
 // ── Supabase helpers ─────────────────────────────────────────────────────────
@@ -231,75 +256,109 @@ export default function HomePage() {
       </section>
 
       {/* ── Featured Deal ──────────────────────────────────────────────── */}
-      {(loading || featuredProduct) && (
-        <section className="bg-[#F5F6F7] py-8 border-b border-gray-200">
-          <div className="container-market">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Featured Deal</h2>
-                <p className="text-sm text-gray-500">Handpicked by our team</p>
-              </div>
-              <Link to="/catalog" className="text-sm text-[#1E3A5F] hover:underline font-medium">View All →</Link>
+      <section className="bg-[#F5F6F7] py-8 border-b border-gray-200">
+        <div className="container-market">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Featured Deal</h2>
+              <p className="text-sm text-gray-500">Handpicked by our team</p>
             </div>
+            <Link to="/catalog" className="text-sm text-[#1E3A5F] hover:underline font-medium">View All →</Link>
+          </div>
 
-            {loading ? (
-              <div className="animate-pulse bg-white border border-gray-200 rounded-lg h-64" />
-            ) : featuredProduct ? (
-              <Link
-                to={`/product/${featuredProduct.id}`}
-                className="group block bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all duration-300"
-              >
-                <div className="flex flex-col md:flex-row min-h-[200px]">
-                  <div className="md:w-2/5 relative overflow-hidden bg-gray-100">
-                    {featuredProduct.images?.[0] ? (
-                      <img
-                        src={featuredProduct.images[0]}
-                        alt={featuredProduct.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 min-h-[180px]"
-                      />
-                    ) : (
-                      <div className="w-full h-full min-h-[180px] bg-gray-200 flex items-center justify-center">
-                        <Package className="w-12 h-12 text-gray-400" />
-                      </div>
+          {loading ? (
+            <div className="animate-pulse bg-white border border-gray-200 rounded-lg min-h-[200px]" />
+          ) : featuredProduct ? (
+            <Link
+              to={`/product/${featuredProduct.id}`}
+              className="group block bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all duration-300"
+            >
+              <div className="flex flex-col md:flex-row min-h-[200px]">
+                <div className="md:w-2/5 relative overflow-hidden bg-gray-100">
+                  {featuredProduct.images?.[0] ? (
+                    <img
+                      src={featuredProduct.images[0]}
+                      alt={featuredProduct.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 min-h-[180px]"
+                    />
+                  ) : (
+                    <div className="w-full h-full min-h-[180px] bg-gray-200 flex items-center justify-center">
+                      <Package className="w-12 h-12 text-gray-400" />
+                    </div>
+                  )}
+                  <span className="absolute top-3 left-3 bg-[#F4C400] text-gray-900 text-xs font-bold px-2 py-1 rounded">Featured</span>
+                </div>
+                <div className="md:w-3/5 flex flex-col justify-center p-6 md:p-8">
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 line-clamp-2">{featuredProduct.title}</h3>
+                  {featuredProduct.description && (
+                    <p className="text-gray-500 text-sm mb-4 line-clamp-2">{featuredProduct.description}</p>
+                  )}
+                  <div className="flex items-center gap-4 mb-4">
+                    <span className="text-2xl font-bold text-[#1E3A5F]">{formatPrice(featuredProduct.price)}</span>
+                    {featuredProduct.stockQuantity != null && featuredProduct.stockQuantity > 0 && (
+                      <span className="text-xs text-green-600 bg-green-50 border border-green-200 px-2 py-1 rounded-full">In Stock</span>
                     )}
-                    <span className="absolute top-3 left-3 bg-[#F4C400] text-gray-900 text-xs font-bold px-2 py-1 rounded">Featured</span>
                   </div>
-                  <div className="md:w-3/5 flex flex-col justify-center p-6 md:p-8">
-                    <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2 line-clamp-2">{featuredProduct.title}</h3>
-                    {featuredProduct.description && (
-                      <p className="text-gray-500 text-sm mb-4 line-clamp-2">{featuredProduct.description}</p>
-                    )}
-                    <div className="flex items-center gap-4 mb-4">
-                      <span className="text-2xl font-bold text-[#1E3A5F]">{formatPrice(featuredProduct.price)}</span>
-                      {featuredProduct.stockQuantity != null && featuredProduct.stockQuantity > 0 && (
-                        <span className="text-xs text-green-600 bg-green-50 border border-green-200 px-2 py-1 rounded-full">In Stock</span>
-                      )}
-                    </div>
-                    <div className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-bold text-sm px-5 py-2.5 rounded w-fit group-hover:bg-[#EAB308] transition-colors">
-                      View Deal <ArrowRight className="w-4 h-4" />
-                    </div>
+                  <div className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-bold text-sm px-5 py-2.5 rounded w-fit group-hover:bg-[#EAB308] transition-colors">
+                    View Deal <ArrowRight className="w-4 h-4" />
                   </div>
                 </div>
-              </Link>
-            ) : null}
-          </div>
-        </section>
-      )}
+              </div>
+            </Link>
+          ) : (
+            /* Fallback: promo deal category grid */
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {DEAL_PROMOS.map((deal) => (
+                <Link
+                  key={deal.label}
+                  to={deal.href}
+                  className="group relative overflow-hidden rounded-lg aspect-[16/9] block"
+                >
+                  <img src={deal.img} alt="" role="presentation" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                  <div className={`absolute inset-0 bg-gradient-to-br ${deal.bg} opacity-60`} />
+                  <div className="absolute inset-0 flex flex-col justify-end p-4">
+                    <span className="inline-block text-xs font-bold bg-[#F4C400] text-gray-900 px-2 py-0.5 rounded mb-1 w-fit">Deal</span>
+                    <p className="text-white font-bold text-base leading-tight">{deal.label}</p>
+                    <p className="text-white/80 text-xs">{deal.sublabel}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* ── Trending Now ───────────────────────────────────────────────── */}
-      {(trendingCount === null || trendingCount > 0) && (
-        <section className="bg-white py-8 border-b border-gray-200">
-          <div className="container-market">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <Flame className="w-5 h-5 text-orange-500" />
-                  Trending Now
-                </h2>
-                <p className="text-sm text-gray-500">Most viewed listings this week</p>
-              </div>
-              <Link to="/catalog?sort=trending" className="text-sm text-[#1E3A5F] hover:underline font-medium">View Trending →</Link>
+      <section className="bg-white py-8 border-b border-gray-200">
+        <div className="container-market">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <Flame className="w-5 h-5 text-orange-500" />
+                Trending Now
+              </h2>
+              <p className="text-sm text-gray-500">Most viewed listings this week</p>
             </div>
+            <Link to="/catalog?sort=trending" className="text-sm text-[#1E3A5F] hover:underline font-medium">View Trending →</Link>
+          </div>
+          {trendingCount === 0 ? (
+            /* Fallback category cards when no trending products */
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {CATEGORIES.slice(0, 5).map((cat) => {
+                const Icon = cat.icon;
+                return (
+                  <Link
+                    key={cat.name}
+                    to={cat.href}
+                    className="group flex flex-col items-center gap-2 p-4 bg-[#F8F9FA] border border-gray-200 rounded-lg hover:border-[#F4C400] hover:shadow-sm transition-all duration-200 text-center"
+                  >
+                    <Icon className={`w-8 h-8 ${cat.iconColor}`} />
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-[#1E3A5F] leading-tight">{cat.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
             <Suspense fallback={<div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4 min-h-[200px]" />}>
               <TrendingProducts
                 maxProducts={5}
@@ -309,9 +368,9 @@ export default function HomePage() {
                 excludeIds={allShownIds}
               />
             </Suspense>
-          </div>
-        </section>
-      )}
+          )}
+        </div>
+      </section>
 
       {/* ── Transport Support ──────────────────────────────────────────── */}
       <section className="bg-[#F5F6F7] py-8 border-b border-gray-200">
