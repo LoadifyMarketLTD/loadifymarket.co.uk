@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Search, Menu, X, Hexagon, Cpu, Shirt, Home, Wrench, Car, Gamepad2, Heart, PawPrint, Briefcase, Sparkles, Package, Layers, Tag, BookOpen, LayoutGrid, TrendingUp, Star, MessageCircle, HelpCircle, Store, ChevronRight, LogOut, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, X, Hexagon, Cpu, Shirt, Home, Wrench, Car, Gamepad2, PawPrint, Briefcase, Sparkles, Layers, Tag, RotateCcw, BookOpen, LayoutGrid, TrendingUp, Star, MessageCircle, HelpCircle, Store, ChevronRight, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuthStore, useCartStore } from '../../store';
 import { useState, useEffect } from 'react';
 import { BRAND } from '../../constants/brand';
@@ -109,38 +109,18 @@ export default function Header() {
             </p>
             <ul className="space-y-0.5">
               {[
-                { label: 'Electronics', href: '/shop?category=electronics', icon: Cpu },
-                { label: 'Fashion', href: '/shop?category=fashion', icon: Shirt },
-                { label: 'Home & Garden', href: '/shop?category=home-garden', icon: Home },
-                { label: 'Tools', href: '/shop?category=tools', icon: Wrench },
-                { label: 'Vehicles', href: '/shop?category=vehicles', icon: Car },
-                { label: 'Toys', href: '/shop?category=toys', icon: Gamepad2 },
-                { label: 'Health & Beauty', href: '/shop?category=health-beauty', icon: Heart },
-                { label: 'Pets', href: '/shop?category=pets', icon: PawPrint },
-                { label: 'Office Supplies', href: '/shop?category=office-supplies', icon: Briefcase },
-                { label: 'Handmade', href: '/shop?category=handmade', icon: Sparkles },
-              ].map(({ label, href, icon: Icon }) => (
-                <li key={label}>
-                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
-                    <Icon className="w-4 h-4 text-[#F4C400]/60 group-hover:text-[#F4C400] transition-colors flex-shrink-0" />
-                    <span className="flex-1">{label}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Wholesale */}
-          <div>
-            <p className="text-[10px] font-bold text-[#F4C400]/60 uppercase tracking-widest mb-1.5 px-2">
-              Wholesale
-            </p>
-            <ul className="space-y-0.5">
-              {[
-                { label: 'Bulk Lots', href: '/shop?category=bulk-lots', icon: Package },
-                { label: 'Pallet Deals', href: '/bulk', icon: Layers },
-                { label: 'Clearance Stock', href: '/shop?category=clearance', icon: Tag },
+                { label: 'Amazon Returns',    href: '/category/amazon-returns',    icon: RotateCcw },
+                { label: 'Clearance',         href: '/category/clearance',         icon: Tag },
+                { label: 'Wholesale',         href: '/category/wholesale',         icon: Layers },
+                { label: 'Electronics',       href: '/category/electronics',       icon: Cpu },
+                { label: 'Home & Garden',     href: '/category/home-garden',       icon: Home },
+                { label: 'Tools & DIY',       href: '/category/tools-diy',         icon: Wrench },
+                { label: 'Business Supplies', href: '/category/business-supplies', icon: Briefcase },
+                { label: 'Fashion',           href: '/category/fashion',           icon: Shirt },
+                { label: 'Automotive',        href: '/category/automotive',        icon: Car },
+                { label: 'Toys',              href: '/category/toys',              icon: Gamepad2 },
+                { label: 'Pets',              href: '/category/pets',              icon: PawPrint },
+                { label: 'Handmade',          href: '/category/handmade',          icon: Sparkles },
               ].map(({ label, href, icon: Icon }) => (
                 <li key={label}>
                   <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
@@ -163,7 +143,7 @@ export default function Header() {
                 { label: 'All Listings', href: '/catalog', icon: LayoutGrid },
                 { label: 'Trending Listings', href: '/catalog?sort=trending', icon: TrendingUp },
                 { label: 'New Listings', href: '/catalog?sort=createdAt_desc', icon: Star },
-                { label: 'Featured Deals', href: '/bulk', icon: BookOpen },
+                { label: 'Featured Deals', href: '/category/wholesale', icon: BookOpen },
               ].map(({ label, href, icon: Icon }) => (
                 <li key={label}>
                   <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
@@ -395,19 +375,20 @@ export default function Header() {
                   { label: 'All Categories',    to: '/catalog' },
                   { label: 'Amazon Returns',    to: '/category/amazon-returns' },
                   { label: 'Clearance',         to: '/category/clearance' },
-                  { label: 'Wholesale',         to: '/bulk' },
+                  { label: 'Wholesale',         to: '/category/wholesale' },
                   { label: 'Electronics',       to: '/category/electronics' },
                   { label: 'Home & Garden',     to: '/category/home-garden' },
                   { label: 'Tools & DIY',       to: '/category/tools-diy' },
                   { label: 'Business Supplies', to: '/category/business-supplies' },
                   { label: 'Fashion',           to: '/category/fashion' },
                   { label: 'Automotive',        to: '/category/automotive' },
+                  { label: 'Toys',              to: '/category/toys' },
+                  { label: 'Pets',              to: '/category/pets' },
+                  { label: 'Handmade',          to: '/category/handmade' },
                 ].map(({ label, to }) => {
                   const isActive =
                     to === '/catalog'
                       ? location.pathname === '/catalog'
-                      : to === '/bulk'
-                      ? location.pathname === '/bulk'
                       : location.pathname === to;
                   return (
                     <Link

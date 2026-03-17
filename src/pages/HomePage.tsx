@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect, lazy, Suspense } from 'react';
 import {
-  ArrowRight, Package, Layers,
+  ArrowRight, Layers,
   Home, Wrench,
   Shirt, LayoutGrid,
   Cpu, Car, Briefcase, Tag,
-  RotateCcw,
+  RotateCcw, Gamepad2, PawPrint, Sparkles,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 import { supabase } from '../lib/supabase';
@@ -18,15 +18,17 @@ const HomeBelowFold = lazy(() => import('../components/HomeBelowFold'));
 // ── Categories ────────────────────────────────────────────────────────────────
 const CATEGORIES = [
   { name: 'Amazon Returns',    icon: RotateCcw,  href: '/category/amazon-returns',    iconColor: 'text-orange-500' },
-  { name: 'Wholesale & Bulk',  icon: Layers,     href: '/bulk',                       iconColor: 'text-[#F4C400]'  },
-  { name: 'Clearance Stock',   icon: Tag,        href: '/category/clearance',         iconColor: 'text-red-500'    },
+  { name: 'Clearance',         icon: Tag,        href: '/category/clearance',         iconColor: 'text-red-500'    },
+  { name: 'Wholesale',         icon: Layers,     href: '/category/wholesale',         iconColor: 'text-yellow-500' },
   { name: 'Electronics',       icon: Cpu,        href: '/category/electronics',       iconColor: 'text-blue-500'   },
   { name: 'Home & Garden',     icon: Home,       href: '/category/home-garden',       iconColor: 'text-emerald-500'},
   { name: 'Tools & DIY',       icon: Wrench,     href: '/category/tools-diy',         iconColor: 'text-amber-600'  },
   { name: 'Business Supplies', icon: Briefcase,  href: '/category/business-supplies', iconColor: 'text-indigo-500' },
   { name: 'Fashion',           icon: Shirt,      href: '/category/fashion',           iconColor: 'text-pink-500'   },
-  { name: 'Automotive Parts',  icon: Car,        href: '/category/automotive',        iconColor: 'text-red-500'    },
-  { name: 'Mixed Job Lots',    icon: Package,    href: '/catalog?type=lot',           iconColor: 'text-slate-500'  },
+  { name: 'Automotive',        icon: Car,        href: '/category/automotive',        iconColor: 'text-rose-600'   },
+  { name: 'Toys',              icon: Gamepad2,   href: '/category/toys',              iconColor: 'text-purple-500' },
+  { name: 'Pets',              icon: PawPrint,   href: '/category/pets',              iconColor: 'text-teal-500'   },
+  { name: 'Handmade',          icon: Sparkles,   href: '/category/handmade',          iconColor: 'text-fuchsia-500'},
 ];
 
 
@@ -373,18 +375,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Wholesale & Bulk Lots ───────────────────────────────────────── */}
+      {/* ── Wholesale ────────────────────────────────────────────────────── */}
       <section className="bg-[#F5F6F7] py-8 border-b border-gray-200">
         <div className="container-market">
           <SectionHeader
             title={
               <span className="flex items-center gap-2">
                 <Layers className="w-5 h-5 text-[#1E3A5F]" />
-                Wholesale & Bulk Lots
+                Wholesale
               </span>
             }
             subtitle="Bulk pallet listings from verified UK wholesalers"
-            viewAllHref="/bulk"
+            viewAllHref="/category/wholesale"
           />
 
           {secondaryLoading ? (
@@ -398,7 +400,7 @@ export default function HomePage() {
           ) : (
             <PlaceholderGrid
               items={PLACEHOLDER_WHOLESALE}
-              href="/bulk"
+              href="/category/wholesale"
               badge="Wholesale"
               badgeColor="bg-[#1E3A5F]/10 text-[#1E3A5F]"
             />

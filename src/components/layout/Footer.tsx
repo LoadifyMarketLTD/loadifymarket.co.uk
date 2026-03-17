@@ -154,12 +154,12 @@ export default function Footer() {
           <h3 style={footerTitleStyle}>For Buyers</h3>
           <ul>
             <li><Link to="/shop" className={footerLinkClass}>Browse Marketplace</Link></li>
-            <li><Link to="/bulk" className={footerLinkClass}>Bulk &amp; Pallet Deals</Link></li>
-            <li><Link to="/bulk?type=wholesale" className={footerLinkClass}>Wholesale Lots</Link></li>
-            <li><Link to="/shop?category=electronics" className={footerLinkClass}>Electronics</Link></li>
-            <li><Link to="/shop?category=fashion" className={footerLinkClass}>Fashion</Link></li>
-            <li><Link to="/shop?category=home-garden" className={footerLinkClass}>Home &amp; Garden</Link></li>
-            <li><Link to="/shop?category=automotive-parts" className={footerLinkClass}>Automotive Parts</Link></li>
+            <li><Link to="/category/wholesale" className={footerLinkClass}>Bulk &amp; Pallet Deals</Link></li>
+            <li><Link to="/category/wholesale" className={footerLinkClass}>Wholesale Lots</Link></li>
+            <li><Link to="/category/electronics" className={footerLinkClass}>Electronics</Link></li>
+            <li><Link to="/category/fashion" className={footerLinkClass}>Fashion</Link></li>
+            <li><Link to="/category/home-garden" className={footerLinkClass}>Home &amp; Garden</Link></li>
+            <li><Link to="/category/automotive" className={footerLinkClass}>Automotive</Link></li>
             <li><Link to="/track-order" className={footerLinkClass}>Track Order</Link></li>
             <li><Link to="/help" className={footerLinkClass}>Help &amp; FAQ</Link></li>
           </ul>
@@ -187,7 +187,7 @@ export default function Footer() {
             <li><Link to="/transport-quote" className={footerLinkClass}>Transport Quote</Link></li>
             <li><Link to="/rfq" className={footerLinkClass}>Request Shipping Quote</Link></li>
             <li><Link to="/verified-sellers" className={footerLinkClass}>Verified Sellers</Link></li>
-            <li><Link to="/bulk" className={footerLinkClass}>Bulk Orders</Link></li>
+            <li><Link to="/category/wholesale" className={footerLinkClass}>Bulk Orders</Link></li>
             <li><Link to="/contact" className={footerLinkClass}>Business Accounts</Link></li>
           </ul>
         </div>
