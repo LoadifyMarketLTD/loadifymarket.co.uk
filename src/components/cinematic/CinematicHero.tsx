@@ -1,5 +1,11 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Store } from 'lucide-react';
+import { ArrowRight, BadgeCheck, ShieldCheck, Store, Truck } from 'lucide-react';
+
+const HERO_TRUST = [
+  { Icon: BadgeCheck, label: 'Verified sellers' },
+  { Icon: ShieldCheck, label: 'Secure payments' },
+  { Icon: Truck, label: 'UK delivery support' },
+];
 
 export default function CinematicHero() {
   return (
@@ -11,12 +17,15 @@ export default function CinematicHero() {
             <div className="inline-flex items-center gap-2 bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
               UK Multi-Category Marketplace
             </div>
+
             <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
-              Buy &amp; Sell Wholesale,<br />Clearance &amp; Pallet Deals<br className="hidden lg:block" /> Across the UK
+              Marketplace for Pallets, Wholesale &amp; Clearance Stock<br className="hidden lg:block" /> Across the UK
             </h1>
+
             <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-              Loadify Market connects buyers and sellers across the UK. We do not own or sell products — we provide the platform.
+              Loadify Market connects independent buyers and sellers. We do not own or sell products — we provide the platform.
             </p>
+
             <div className="flex flex-wrap gap-3">
               <Link
                 to="/catalog"
@@ -33,11 +42,20 @@ export default function CinematicHero() {
                 Start Selling
               </Link>
             </div>
+
+            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-600">
+              {HERO_TRUST.map(({ Icon, label }) => (
+                <div key={label} className="inline-flex items-center gap-2">
+                  <Icon className="h-4 w-4 text-[#1E3A5F]" />
+                  <span className="font-medium">{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Right: Hero Image */}
           <div className="relative">
-            <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[16/10]">
+            <div className="relative rounded-xl overflow-hidden border border-gray-200 shadow-md aspect-[16/10] max-h-[360px] lg:max-h-none">
               <img
                 src="https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=65&auto=format&fit=max&fm=webp"
                 srcSet="
@@ -52,16 +70,6 @@ export default function CinematicHero() {
                 decoding="async"
                 fetchPriority="high"
               />
-
-            </div>
-            {/* Floating stat badges */}
-            <div className="absolute -bottom-3 -left-3 bg-white border border-gray-200 rounded-lg shadow-md px-4 py-2.5">
-              <p className="text-xs text-gray-500">Verified Sellers</p>
-              <p className="text-xl font-bold text-[#1E3A5F]">100+</p>
-            </div>
-            <div className="absolute -top-3 -right-3 bg-[#F4C400] rounded-lg shadow-md px-4 py-2.5">
-              <p className="text-xs text-gray-700">Active Listings</p>
-              <p className="text-xl font-bold text-gray-900">1000+</p>
             </div>
           </div>
         </div>
