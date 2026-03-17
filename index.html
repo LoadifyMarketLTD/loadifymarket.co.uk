@@ -60,8 +60,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
     <!-- Preconnect / DNS prefetch for above-the-fold external resources -->
-    <!-- Unsplash is used for the LCP hero image and category thumbnails -->
-    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <!-- Unsplash is used for the LCP hero image and category thumbnails.
+         No `crossorigin` here: the <img> element does not set crossorigin,
+         so img fetches use "no-cors" mode.  A CORS preconnect creates a
+         separate connection that cannot be reused for no-cors requests. -->
+    <link rel="preconnect" href="https://images.unsplash.com" />
     <link rel="dns-prefetch" href="https://images.unsplash.com" />
     <!-- Google Fonts — loaded asynchronously to avoid blocking first render.
          The preload link converts itself to a stylesheet once the resource is
@@ -79,20 +82,22 @@
     </noscript>
 
     <!-- Preload the LCP hero image (CinematicHero background – above the fold).
-         The URL matches the src/srcSet used in CinematicHero.tsx exactly so the
-         browser can reuse the preloaded response.  imagesrcset/imagesizes let
-         the preloader pick the right resolution for the viewport width. -->
+         IMPORTANT: imagesrcset, imagesizes, and href must match CinematicHero.tsx
+         exactly, and crossorigin must NOT be set here because the <img> element
+         has no crossorigin attribute.  A crossorigin mismatch means the browser
+         uses a different cache key for the preload vs the actual request and
+         ends up downloading the image twice, severely hurting LCP.
+         Matching values taken directly from CinematicHero.tsx. -->
     <link
       rel="preload"
       as="image"
-      href="https://images.unsplash.com/photo-1553413077-190dd305871c?w=1280&q=65&auto=format&fit=max&fm=webp"
+      href="https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=65&auto=format&fit=max&fm=webp"
       imagesrcset="
         https://images.unsplash.com/photo-1553413077-190dd305871c?w=480&q=65&auto=format&fit=max&fm=webp 480w,
+        https://images.unsplash.com/photo-1553413077-190dd305871c?w=640&q=65&auto=format&fit=max&fm=webp 640w,
         https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=65&auto=format&fit=max&fm=webp 768w,
-        https://images.unsplash.com/photo-1553413077-190dd305871c?w=1280&q=65&auto=format&fit=max&fm=webp 1280w,
-        https://images.unsplash.com/photo-1553413077-190dd305871c?w=1920&q=65&auto=format&fit=max&fm=webp 1920w"
-      imagesizes="(max-width: 480px) 100vw, (max-width: 1023px) 100vw, 50vw"
-      crossorigin
+        https://images.unsplash.com/photo-1553413077-190dd305871c?w=1280&q=65&auto=format&fit=max&fm=webp 1280w"
+      imagesizes="(max-width: 480px) 100vw, (max-width: 1023px) 100vw, 640px"
     />
 
     <!-- Structured Data - Organization -->
