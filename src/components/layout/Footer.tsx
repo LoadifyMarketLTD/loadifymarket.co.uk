@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
-  Mail, MapPin, Hexagon,
+  Mail, MapPin, Hexagon, ArrowRight,
   Facebook, Twitter, Instagram, Linkedin,
   ShieldCheck, Truck, BadgeCheck,
 } from 'lucide-react';
@@ -116,6 +116,28 @@ export default function Footer() {
   return (
     <footer className="lm-footer text-white mt-auto">
 
+      {/* ── ZONE 0 — CTA strip ──────────────────────────────────── */}
+      <div className="lm-footer-cta-strip">
+        <div className="lm-footer-inner lm-footer-cta-inner">
+          <div className="lm-footer-cta-text">
+            <p className="lm-footer-cta-headline">
+              Stay ahead of the best wholesale &amp; clearance deals
+            </p>
+            <p className="lm-footer-cta-sub">
+              Discover pallet drops, verified sellers and bulk offers across the UK — all in one place.
+            </p>
+          </div>
+          <Link
+            to="/shop"
+            className="lm-footer-cta-btn"
+            aria-label="Browse the Loadify Market marketplace"
+          >
+            Browse Marketplace
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+
       {/* ── ZONE A — Top brand bar ───────────────────────────────────── */}
       <div className="lm-footer-zone-a">
         <div className="lm-footer-inner lm-footer-topbar">
@@ -216,13 +238,30 @@ export default function Footer() {
       <div className="lm-footer-zone-c">
         <div className="lm-footer-inner lm-footer-bottom">
           <p className="lm-footer-copyright">
-            © 2025 {BRAND.name}. All rights reserved.
+            © 2026 {BRAND.name}. All rights reserved.
           </p>
           <div className="lm-footer-bottom-links">
             <Link to="/terms"   className="lm-footer-bottom-link">Terms</Link>
+            <span className="lm-footer-bottom-sep" aria-hidden="true">|</span>
             <Link to="/privacy" className="lm-footer-bottom-link">Privacy</Link>
+            <span className="lm-footer-bottom-sep" aria-hidden="true">|</span>
             <Link to="/cookies" className="lm-footer-bottom-link">Cookies</Link>
+            <span className="lm-footer-bottom-sep" aria-hidden="true">|</span>
             <Link to="/contact" className="lm-footer-bottom-link">Contact</Link>
+          </div>
+          <div className="lm-footer-bottom-social" aria-label="Social media links">
+            {SOCIAL_LINKS.map(({ href, Icon, label }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                className="lm-footer-bottom-social-link"
+              >
+                <Icon className="h-4 w-4" />
+              </a>
+            ))}
           </div>
         </div>
       </div>
