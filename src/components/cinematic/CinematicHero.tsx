@@ -19,7 +19,7 @@ export default function CinematicHero() {
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
-                to="/catalog"
+                to="/shop"
                 className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-7 py-3.5 rounded text-base transition-colors shadow-sm"
               >
                 Browse Marketplace
