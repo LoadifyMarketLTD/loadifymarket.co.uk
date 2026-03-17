@@ -56,3 +56,29 @@
   for = "/*.webp"
   [headers.values]
     Cache-Control = "public, max-age=86400"
+
+# ─── Cache: SVG icons / branding assets ──────────────────────────────────────
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+# ─── Cache: PWA manifest ─────────────────────────────────────────────────────
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+    Content-Type = "application/manifest+json"
+
+# ─── Cache: Service worker — no cache so updates are picked up immediately ───
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+# ─── Cache: branding directory ───────────────────────────────────────────────
+[[headers]]
+  for = "/branding/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
