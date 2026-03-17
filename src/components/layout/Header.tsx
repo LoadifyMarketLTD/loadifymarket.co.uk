@@ -391,16 +391,38 @@ export default function Header() {
           <div className="bg-[#F8F9FA] border-b border-gray-200 hidden md:block">
             <div className="container-market">
               <nav className="flex items-center gap-1 overflow-x-auto py-1.5 text-sm scrollbar-hide" aria-label="Category navigation">
-                <Link to="/catalog" className="px-3 py-1.5 text-gray-700 hover:text-[#1E3A5F] hover:bg-[#F4C400]/10 rounded whitespace-nowrap font-medium">All Categories</Link>
-                <Link to="/catalog?type=lot" className="px-3 py-1.5 text-gray-700 hover:text-[#1E3A5F] hover:bg-[#F4C400]/10 rounded whitespace-nowrap">Amazon Returns</Link>
-                <Link to="/catalog?type=clearance" className="px-3 py-1.5 text-gray-700 hover:text-[#1E3A5F] hover:bg-[#F4C400]/10 rounded whitespace-nowrap">Clearance</Link>
-                <Link to="/bulk" className="px-3 py-1.5 text-gray-700 hover:text-[#1E3A5F] hover:bg-[#F4C400]/10 rounded whitespace-nowrap">Wholesale</Link>
-                <Link to="/shop?category=electronics" className="px-3 py-1.5 text-gray-700 hover:text-[#1E3A5F] hover:bg-[#F4C400]/10 rounded whitespace-nowrap">Electronics</Link>
-                <Link to="/shop?category=home-garden" className="px-3 py-1.5 text-gray-700 hover:text-[#1E3A5F] hover:bg-[#F4C400]/10 rounded whitespace-nowrap">Home &amp; Garden</Link>
-                <Link to="/shop?category=tools" className="px-3 py-1.5 text-gray-700 hover:text-[#1E3A5F] hover:bg-[#F4C400]/10 rounded whitespace-nowrap">Tools &amp; DIY</Link>
-                <Link to="/shop?category=business" className="px-3 py-1.5 text-gray-700 hover:text-[#1E3A5F] hover:bg-[#F4C400]/10 rounded whitespace-nowrap">Business Supplies</Link>
-                <Link to="/shop?category=fashion" className="px-3 py-1.5 text-gray-700 hover:text-[#1E3A5F] hover:bg-[#F4C400]/10 rounded whitespace-nowrap">Fashion</Link>
-                <Link to="/shop?category=vehicles" className="px-3 py-1.5 text-gray-700 hover:text-[#1E3A5F] hover:bg-[#F4C400]/10 rounded whitespace-nowrap">Automotive</Link>
+                {[
+                  { label: 'All Categories',    to: '/catalog' },
+                  { label: 'Amazon Returns',    to: '/category/amazon-returns' },
+                  { label: 'Clearance',         to: '/category/clearance' },
+                  { label: 'Wholesale',         to: '/bulk' },
+                  { label: 'Electronics',       to: '/category/electronics' },
+                  { label: 'Home & Garden',     to: '/category/home-garden' },
+                  { label: 'Tools & DIY',       to: '/category/tools-diy' },
+                  { label: 'Business Supplies', to: '/category/business-supplies' },
+                  { label: 'Fashion',           to: '/category/fashion' },
+                  { label: 'Automotive',        to: '/category/automotive' },
+                ].map(({ label, to }) => {
+                  const isActive =
+                    to === '/catalog'
+                      ? location.pathname === '/catalog'
+                      : to === '/bulk'
+                      ? location.pathname === '/bulk'
+                      : location.pathname === to;
+                  return (
+                    <Link
+                      key={to}
+                      to={to}
+                      className={`px-3 py-1.5 rounded whitespace-nowrap transition-colors ${
+                        isActive
+                          ? 'text-[#1E3A5F] bg-[#F4C400]/20 font-semibold'
+                          : 'text-gray-700 hover:text-[#1E3A5F] hover:bg-[#F4C400]/10 font-medium'
+                      } ${label === 'All Categories' ? 'font-semibold' : ''}`}
+                    >
+                      {label}
+                    </Link>
+                  );
+                })}
               </nav>
             </div>
           </div>

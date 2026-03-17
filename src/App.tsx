@@ -18,6 +18,7 @@ const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const ShopPage = lazy(() => import('./pages/ShopPage'));
 const BulkPage = lazy(() => import('./pages/BulkPage'));
+const CategoryPage = lazy(() => import('./pages/CategoryPage'));
 
 // Lazy load heavy/secondary pages
 const CartPage = lazy(() => import('./pages/CartPage'));
@@ -176,6 +177,7 @@ function App() {
           <Route path="shop" element={<Suspense fallback={<PageLoader />}><ShopPage /></Suspense>} />
           <Route path="bulk" element={<Suspense fallback={<PageLoader />}><BulkPage /></Suspense>} />
           <Route path="catalog" element={<Suspense fallback={<PageLoader />}><CatalogPage /></Suspense>} />
+          <Route path="category/:slug" element={<Suspense fallback={<PageLoader />}><CategoryPage /></Suspense>} />
           <Route path="product/:id" element={<Suspense fallback={<PageLoader />}><ProductPage /></Suspense>} />
           <Route path="login" element={<Suspense fallback={<PageLoader />}><LoginPage /></Suspense>} />
           <Route path="register" element={<Suspense fallback={<PageLoader />}><RegisterPage /></Suspense>} />
