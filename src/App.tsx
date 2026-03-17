@@ -59,6 +59,9 @@ const PrivacyPage = lazy(() => import('./pages/legal/PrivacyPage'));
 const CookiePage = lazy(() => import('./pages/legal/CookiePage'));
 const ReturnsPolicy = lazy(() => import('./pages/legal/ReturnsPolicyPage'));
 const ShippingPolicy = lazy(() => import('./pages/legal/ShippingPolicyPage'));
+const AcceptableUsePolicyPage = lazy(() => import('./pages/legal/AcceptableUsePolicyPage'));
+const SellerGuidelinesPage = lazy(() => import('./pages/SellerGuidelinesPage'));
+const VerifiedSellersPage = lazy(() => import('./pages/VerifiedSellersPage'));
 const LogisticsLoadsPage = lazy(() => import('./pages/LogisticsLoadsPage'));
 const TransportQuotePage = lazy(() => import('./pages/TransportQuotePage'));
 const RFQPage = lazy(() => import('./pages/RFQPage'));
@@ -515,6 +518,21 @@ function App() {
           <Route path="shipping-policy" element={
             <Suspense fallback={<PageLoader />}>
               <ShippingPolicy />
+            </Suspense>
+          } />
+          <Route path="acceptable-use-policy" element={
+            <Suspense fallback={<PageLoader />}>
+              <AcceptableUsePolicyPage />
+            </Suspense>
+          } />
+          <Route path="seller-guidelines" element={
+            <Suspense fallback={<PageLoader />}>
+              <SellerGuidelinesPage />
+            </Suspense>
+          } />
+          <Route path="verified-sellers" element={
+            <Suspense fallback={<PageLoader />}>
+              <VerifiedSellersPage />
             </Suspense>
           } />
           
