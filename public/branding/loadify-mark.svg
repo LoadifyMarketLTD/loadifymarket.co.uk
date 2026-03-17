@@ -1,1 +1,6 @@
-<svg><!-- Add your SVG asset content here --></svg>
+<svg width="96" height="96" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Loadify Mark">
+  <g transform="translate(48,16)">
+    <polygon points="0,0 26,26 0,52 -26,26" fill="none" stroke="#1E3A5F" stroke-width="6" stroke-linejoin="round"/>
+    <polygon points="0,10 16,26 0,42 -16,26" fill="none" stroke="#F4C400" stroke-width="4" stroke-linejoin="round"/>
+  </g>
+</svg>

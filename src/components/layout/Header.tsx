@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Search, Menu, X, Hexagon, LayoutGrid, TrendingUp, Star, MessageCircle, HelpCircle, Store, ChevronRight, LogOut, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, X, LayoutGrid, TrendingUp, Star, MessageCircle, HelpCircle, Store, ChevronRight, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuthStore, useCartStore } from '../../store';
 import { useState, useEffect } from 'react';
 import { BRAND } from '../../constants/brand';
@@ -69,7 +69,13 @@ export default function Header() {
       >
         {/* Sidebar Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-shrink-0">
-          <span className="text-white font-bold text-base tracking-tight">Browse Loadify</span>
+          <img
+              src="/branding/loadify-logo-on-navy.svg"
+              alt="Loadify Market"
+              className="h-8 w-auto"
+              loading="eager"
+              decoding="async"
+            />
           <button
             onClick={() => setSidebarOpen(false)}
             className="p-2 text-white/50 hover:text-white transition-colors"
@@ -255,9 +261,23 @@ export default function Header() {
               </button>
 
               {/* Logo */}
-              <Link to="/" className="flex items-center gap-2 flex-shrink-0" aria-label="Loadify Market homepage">
-                <Hexagon className="h-8 w-8 text-[#F4C400]" strokeWidth={1.5} />
-                <span className="hidden sm:block text-lg font-bold text-[#1E3A5F]">{BRAND.name}</span>
+              <Link to="/" className="flex items-center gap-3 flex-shrink-0" aria-label="Loadify Market homepage">
+                {/* Mobile: icon only */}
+                <img
+                  src="/branding/loadify-mark.svg"
+                  alt="Loadify"
+                  className="h-8 w-8 sm:hidden"
+                  loading="eager"
+                  decoding="async"
+                />
+                {/* Desktop: full logo */}
+                <img
+                  src="/branding/loadify-logo-transparent.svg"
+                  alt="Loadify Market"
+                  className="hidden sm:block h-9 w-auto"
+                  loading="eager"
+                  decoding="async"
+                />
               </Link>
 
               {/* Search — grows to fill space, hidden on mobile (shown below) */}

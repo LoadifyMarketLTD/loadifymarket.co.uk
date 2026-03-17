@@ -1,1 +1,14 @@
-<svg><!-- Add your SVG asset content here --></svg>
+<svg width="320" height="140" viewBox="0 0 320 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Loadify Market">
+  <g transform="translate(160,18)">
+    <g transform="translate(-40,0)">
+      <polygon points="40,0 70,30 40,60 10,30" fill="none" stroke="#1E3A5F" stroke-width="4" stroke-linejoin="round"/>
+      <polygon points="40,10 60,30 40,50 20,30" fill="none" stroke="#F4C400" stroke-width="2" stroke-linejoin="round"/>
+    </g>
+    <text x="0" y="92" text-anchor="middle"
+      font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
+      font-size="28" font-weight="800" fill="#152D4A" letter-spacing="3">LOADIFY</text>
+    <text x="0" y="116" text-anchor="middle"
+      font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
+      font-size="12" font-weight="700" fill="#F4C400" letter-spacing="8">MARKET</text>
+  </g>
+</svg>
