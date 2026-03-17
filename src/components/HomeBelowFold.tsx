@@ -66,7 +66,7 @@ export default function HomeBelowFold() {
   return (
     <>
       {/* ── Transport Support ───────────────────────────────────────────── */}
-      <section className="bg-[#F5F6F7] py-12 border-b border-gray-200">
+      <section className="bg-[#F5F6F7] py-8 border-b border-gray-200">
         <div className="container-market">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
@@ -112,16 +112,16 @@ export default function HomeBelowFold() {
       </section>
 
       {/* ── How It Works ────────────────────────────────────────────────── */}
-      <section className="bg-white py-14 border-b border-gray-200">
+      <section className="bg-white py-8 border-b border-gray-200">
         <div className="container-market">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">How It Works</h2>
             <p className="text-gray-600 text-sm max-w-xl mx-auto">
               Join thousands of UK buyers and sellers on Loadify Market — browse, list, and arrange
               delivery all in one place.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
             {HOW_IT_WORKS.map((item) => {
               const Icon = item.icon;
               return (
@@ -155,13 +155,13 @@ export default function HomeBelowFold() {
       </section>
 
       {/* ── Seller CTA (navy) ───────────────────────────────────────────── */}
-      <section className="bg-[#1E3A5F] py-16">
+      <section className="bg-[#1E3A5F] py-10">
         <div className="container-market">
           <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
               Have pallets or clearance stock to sell?
             </h2>
-            <p className="text-white/80 text-base mb-7">
+            <p className="text-white/80 text-base mb-6">
               Reach thousands of UK buyers through Loadify Market.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -186,7 +186,7 @@ export default function HomeBelowFold() {
       </section>
 
       {/* ── Trust Features ──────────────────────────────────────────────── */}
-      <section className="bg-[#F8F9FA] py-12 border-t border-gray-200">
+      <section className="bg-[#F8F9FA] py-8 border-t border-gray-200">
         <div className="container-market">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {TRUST_ITEMS.map((item) => {

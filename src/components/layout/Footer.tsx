@@ -108,9 +108,9 @@ export default function Footer() {
         style={{
           maxWidth: '1400px',
           margin: 'auto',
-          padding: '50px 40px 60px',
+          padding: '36px 40px 48px',
           display: 'grid',
-          gridTemplateColumns: '1.3fr 1fr 1fr 1fr 1fr 1fr',
+          gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr',
           gap: '40px',
           alignItems: 'start',
         }}
@@ -121,32 +121,27 @@ export default function Footer() {
           <h3 style={footerTitleStyle}>About Loadify Market</h3>
           <p className="text-[#E5E7EB] text-[13px] leading-relaxed">
             UK multi-category marketplace connecting buyers and sellers of pallets,
-            wholesale &amp; clearance stock, electronics and retail goods.
+            wholesale &amp; clearance stock and retail goods.
           </p>
 
-          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }} className="text-[13px] text-[#9CA3AF] space-y-1">
-            <p className="text-[#E5E7EB] font-semibold text-[12px] uppercase tracking-wide mb-2">Company</p>
+          <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.08)' }} className="text-[12px] text-[#9CA3AF] space-y-1">
             <p>Operated by <span className="text-[#E5E7EB] font-medium">{BRAND.companyName}</span></p>
-            <p>Company No: {BRAND.companyNumber}</p>
-            <p>VAT: {BRAND.vatNumber}</p>
+            <p>Co. No: {BRAND.companyNumber} · VAT: {BRAND.vatNumber}</p>
           </div>
 
-          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }} className="info-row text-[13px] text-[#9CA3AF]">
-            <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-[#F4B400]" />
-            <address className="not-italic">101 Cornelian Street<br />Blackburn BB1 9QL<br />United Kingdom</address>
+          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.08)' }} className="info-row text-[12px] text-[#9CA3AF]">
+            <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0 text-[#F4B400]" />
+            <address className="not-italic">101 Cornelian Street, Blackburn BB1 9QL, UK</address>
           </div>
 
-          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }} className="text-[13px] text-[#9CA3AF]">
-            <p className="text-[#E5E7EB] font-semibold text-[12px] uppercase tracking-wide mb-2">Support</p>
-            <div className="info-row">
-              <Mail className="h-3.5 w-3.5 flex-shrink-0 text-[#F4B400]" />
-              <a
-                href={`mailto:${BRAND.supportEmail}`}
-                className="text-[#E5E7EB] hover:text-[#F4B400] transition-colors duration-200"
-              >
-                {BRAND.supportEmail}
-              </a>
-            </div>
+          <div style={{ marginTop: '12px' }} className="info-row text-[12px] text-[#9CA3AF]">
+            <Mail className="h-3 w-3 flex-shrink-0 text-[#F4B400]" />
+            <a
+              href={`mailto:${BRAND.supportEmail}`}
+              className="text-[#E5E7EB] hover:text-[#F4B400] transition-colors duration-200"
+            >
+              {BRAND.supportEmail}
+            </a>
           </div>
         </div>
 
