@@ -336,19 +336,25 @@ export default function CategoryPage() {
             ))}
           </div>
         ) : (
-          <div className="card-glass text-center py-20">
+          <div className="card-glass text-center py-16">
             <Icon className={`h-16 w-16 mx-auto mb-4 opacity-20 ${config.iconColor}`} />
             <h3 className="text-xl font-bold text-white mb-2">{config.emptyState.title}</h3>
             <p className="text-white/50 mb-6 max-w-md mx-auto">{config.emptyState.description}</p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
               {hasActiveFilters && (
                 <button onClick={clearAllFilters} className="btn-primary">
                   Clear Filters
                 </button>
               )}
               <Link to="/catalog" className="btn-glass flex items-center gap-2 justify-center">
-                Browse All Categories
+                Browse All Listings
                 <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link to="/category/amazon-returns" className="btn-glass flex items-center gap-2 justify-center">
+                Amazon Returns
+              </Link>
+              <Link to="/category/clearance" className="btn-glass flex items-center gap-2 justify-center">
+                Clearance Deals
               </Link>
             </div>
           </div>

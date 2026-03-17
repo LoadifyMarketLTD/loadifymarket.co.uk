@@ -120,23 +120,24 @@ export default function Footer() {
         <div className="footer-about">
           <h3 style={footerTitleStyle}>About Loadify Market</h3>
           <p className="text-[#E5E7EB] text-[13px] leading-relaxed">
-            Loadify Market is a UK multi-category marketplace connecting buyers and sellers of pallets,
-            wholesale lots, clearance stock, electronics, retail products, and industrial equipment.
+            UK multi-category marketplace connecting buyers and sellers of pallets,
+            wholesale &amp; clearance stock, electronics and retail goods.
           </p>
 
-          <div style={{ marginTop: '14px' }} className="text-[13px] text-[#9CA3AF] space-y-0.5">
+          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }} className="text-[13px] text-[#9CA3AF] space-y-1">
+            <p className="text-[#E5E7EB] font-semibold text-[12px] uppercase tracking-wide mb-2">Company</p>
             <p>Operated by <span className="text-[#E5E7EB] font-medium">{BRAND.companyName}</span></p>
             <p>Company No: {BRAND.companyNumber}</p>
             <p>VAT: {BRAND.vatNumber}</p>
           </div>
 
-          <div style={{ marginTop: '14px' }} className="info-row text-[13px] text-[#9CA3AF]">
+          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }} className="info-row text-[13px] text-[#9CA3AF]">
             <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-[#F4B400]" />
             <address className="not-italic">101 Cornelian Street<br />Blackburn BB1 9QL<br />United Kingdom</address>
           </div>
 
-          <div style={{ marginTop: '14px' }} className="text-[13px] text-[#9CA3AF]">
-            <p className="text-[#E5E7EB] font-medium mb-1">Support:</p>
+          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }} className="text-[13px] text-[#9CA3AF]">
+            <p className="text-[#E5E7EB] font-semibold text-[12px] uppercase tracking-wide mb-2">Support</p>
             <div className="info-row">
               <Mail className="h-3.5 w-3.5 flex-shrink-0 text-[#F4B400]" />
               <a
@@ -154,8 +155,8 @@ export default function Footer() {
           <h3 style={footerTitleStyle}>For Buyers</h3>
           <ul>
             <li><Link to="/shop" className={footerLinkClass}>Browse Marketplace</Link></li>
-            <li><Link to="/category/wholesale" className={footerLinkClass}>Bulk &amp; Pallet Deals</Link></li>
-            <li><Link to="/category/wholesale" className={footerLinkClass}>Wholesale Lots</Link></li>
+            <li><Link to="/category/wholesale" className={footerLinkClass}>Wholesale &amp; Pallets</Link></li>
+            <li><Link to="/category/amazon-returns" className={footerLinkClass}>Amazon Returns</Link></li>
             <li><Link to="/category/electronics" className={footerLinkClass}>Electronics</Link></li>
             <li><Link to="/category/fashion" className={footerLinkClass}>Fashion</Link></li>
             <li><Link to="/category/home-garden" className={footerLinkClass}>Home &amp; Garden</Link></li>
@@ -187,7 +188,7 @@ export default function Footer() {
             <li><Link to="/transport-quote" className={footerLinkClass}>Transport Quote</Link></li>
             <li><Link to="/rfq" className={footerLinkClass}>Request Shipping Quote</Link></li>
             <li><Link to="/verified-sellers" className={footerLinkClass}>Verified Sellers</Link></li>
-            <li><Link to="/category/wholesale" className={footerLinkClass}>Bulk Orders</Link></li>
+            <li><Link to="/category/wholesale" className={footerLinkClass}>Wholesale Orders</Link></li>
             <li><Link to="/contact" className={footerLinkClass}>Business Accounts</Link></li>
           </ul>
         </div>
