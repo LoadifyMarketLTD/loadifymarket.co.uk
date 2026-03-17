@@ -346,16 +346,27 @@ export default function CategoryPage() {
                   Clear Filters
                 </button>
               )}
+              {activeChip && (
+                <button
+                  onClick={() => setActiveChip(null)}
+                  className="btn-glass flex items-center gap-2 justify-center"
+                >
+                  View all {config.label}
+                </button>
+              )}
               <Link to="/catalog" className="btn-glass flex items-center gap-2 justify-center">
                 Browse All Listings
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link to="/category/amazon-returns" className="btn-glass flex items-center gap-2 justify-center">
-                Amazon Returns
-              </Link>
-              <Link to="/category/clearance" className="btn-glass flex items-center gap-2 justify-center">
-                Clearance Deals
-              </Link>
+              {CATEGORY_CONFIG.filter((c) => c.slug !== slug).slice(0, 2).map((c) => (
+                <Link
+                  key={c.slug}
+                  to={`/category/${c.slug}`}
+                  className="btn-glass flex items-center gap-2 justify-center"
+                >
+                  {c.label}
+                </Link>
+              ))}
             </div>
           </div>
         )}
