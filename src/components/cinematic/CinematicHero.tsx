@@ -12,10 +12,10 @@ export default function CinematicHero() {
               UK Multi-Category Marketplace
             </div>
             <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
-              Buy &amp; Sell Pallets<br />Across the UK
+              UK Marketplace for Pallets,<br />Clearance &amp; Wholesale Stock
             </h1>
             <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-              Amazon returns, clearance stock, wholesale lots and mixed pallets from verified UK sellers.
+              Browse bulk deals, returns stock and wholesale inventory from verified UK sellers.
             </p>
             <div className="flex flex-wrap gap-3 mb-8">
               <Link

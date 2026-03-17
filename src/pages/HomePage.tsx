@@ -249,11 +249,11 @@ export default function HomePage() {
     fetchAll();
   }, []);
 
-  // Derive adaptive column count for featured products to avoid empty grid cells
-  const featuredCols =
-    featuredProducts.length <= 1 ? 1 :
-    featuredProducts.length === 2 ? 2 :
-    featuredProducts.length === 3 ? 3 : 4;
+  // Always display exactly 4 cards in Featured — pad with placeholders if fewer real products
+  const paddedFeatured = loading ? [] : [
+    ...featuredProducts.slice(0, 4),
+    ...PLACEHOLDER_FEATURED.slice(0, 4 - featuredProducts.slice(0, 4).length),
+  ];
 
   // Tab config for the merged product section
   const TABS: TabConfig[] = [
@@ -315,17 +315,36 @@ export default function HomePage() {
 
           {loading ? (
             <ProductGridSkeleton />
-          ) : featuredProducts.length > 0 ? (
-            <div
-              className="grid gap-4"
-              style={{ gridTemplateColumns: `repeat(${featuredCols}, minmax(0, 1fr))` }}
-            >
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
           ) : (
-            <PlaceholderGrid items={PLACEHOLDER_FEATURED} href="/catalog" badge="Coming Soon" />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {paddedFeatured.map((item) =>
+                'sellerId' in item ? (
+                  <ProductCard key={item.id} product={item as Product} />
+                ) : (
+                  <Link
+                    key={item.id}
+                    to="/catalog"
+                    className="group block bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md hover:border-[#F4C400] transition-all duration-200"
+                  >
+                    <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+                      <img
+                        src={item.image}
+                        srcSet={buildSrcSet(item.image, [200, 300, 400]) || undefined}
+                        sizes="(max-width: 767px) calc(50vw - 1.5rem), (max-width: 1023px) calc(33vw - 1.5rem), 300px"
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                    <div className="p-3">
+                      <p className="text-sm font-medium text-gray-800 line-clamp-2 leading-tight mb-1">{item.title}</p>
+                      <span className="inline-block text-xs px-2 py-0.5 rounded font-medium bg-[#F4C400]/20 text-gray-700">Coming Soon</span>
+                    </div>
+                  </Link>
+                )
+              )}
+            </div>
           )}
 
           <div className="mt-5 text-center">

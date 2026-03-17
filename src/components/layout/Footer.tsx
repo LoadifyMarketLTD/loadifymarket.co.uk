@@ -103,19 +103,8 @@ export default function Footer() {
         <div className="footer-divider" />
       </div>
 
-      {/* ROW 2: Footer Main Grid — All 6 columns */}
-      <div
-        style={{
-          maxWidth: '1400px',
-          margin: 'auto',
-          padding: '36px 40px 48px',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr',
-          gap: '40px',
-          alignItems: 'start',
-        }}
-        className="footer-grid"
-      >
+      {/* ROW 2: Footer Main Grid — responsive columns */}
+      <div className="footer-grid grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-8 xl:gap-10 max-w-[1400px] mx-auto px-6 md:px-10 py-9 xl:py-12 items-start">
         {/* Column 1: About */}
         <div className="footer-about">
           <h3 style={footerTitleStyle}>About Loadify Market</h3>

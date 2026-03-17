@@ -6,7 +6,8 @@ import {
   Store,
   UserPlus,
   ShoppingCart,
-  LayoutGrid,
+  Lock,
+  BadgeCheck,
 } from 'lucide-react';
 
 const LOGISTICS_IMG =
@@ -51,9 +52,7 @@ export default function HomeBelowFold() {
                 Need delivery or transport support?
               </h2>
               <p className="text-gray-600 text-sm md:text-base mb-6">
-                Arrange collection and delivery for pallets, wholesale stock and marketplace orders
-                across the UK. We connect you with trusted freight partners for nationwide
-                collections and deliveries.
+                Connect with trusted freight partners for pallet, wholesale and marketplace order collections and deliveries across the UK.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link
@@ -118,17 +117,19 @@ export default function HomeBelowFold() {
         </div>
       </section>
 
-      {/* ── Seller CTA (navy) ───────────────────────────────────────────── */}
+      {/* ── Seller CTA + Trust (merged) ─────────────────────────────────── */}
       <section className="bg-[#1E3A5F] py-10">
         <div className="container-market">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-              Have pallets or clearance stock to sell?
-            </h2>
-            <p className="text-white/80 text-base mb-6">
-              Reach thousands of UK buyers through Loadify Market.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+
+            {/* Left: Seller CTA */}
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+                Have stock to sell?
+              </h2>
+              <p className="text-white/80 text-base mb-6">
+                List pallets, clearance and wholesale stock and reach thousands of UK buyers through Loadify Market.
+              </p>
               <Link
                 to="/register?type=seller"
                 className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-6 py-3 rounded transition-colors"
@@ -137,14 +138,27 @@ export default function HomeBelowFold() {
                 Start Selling
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link
-                to="/catalog"
-                className="inline-flex items-center gap-2 border-2 border-white text-white hover:bg-white hover:text-[#1E3A5F] font-semibold px-6 py-3 rounded transition-colors"
-              >
-                <LayoutGrid className="w-4 h-4" />
-                Browse Marketplace
-              </Link>
             </div>
+
+            {/* Right: Trust items */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="flex flex-col items-center text-center p-4 bg-white/10 rounded-lg">
+                <Lock className="w-6 h-6 text-[#F4C400] mb-2" />
+                <h3 className="text-sm font-bold text-white mb-1">Secure Payments</h3>
+                <p className="text-white/70 text-xs leading-relaxed">Powered by Stripe — every transaction is encrypted.</p>
+              </div>
+              <div className="flex flex-col items-center text-center p-4 bg-white/10 rounded-lg">
+                <BadgeCheck className="w-6 h-6 text-[#F4C400] mb-2" />
+                <h3 className="text-sm font-bold text-white mb-1">Verified Sellers</h3>
+                <p className="text-white/70 text-xs leading-relaxed">All sellers are vetted before listing on the platform.</p>
+              </div>
+              <div className="flex flex-col items-center text-center p-4 bg-white/10 rounded-lg">
+                <Truck className="w-6 h-6 text-[#F4C400] mb-2" />
+                <h3 className="text-sm font-bold text-white mb-1">UK Delivery Support</h3>
+                <p className="text-white/70 text-xs leading-relaxed">Flexible delivery and collection options nationwide.</p>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
