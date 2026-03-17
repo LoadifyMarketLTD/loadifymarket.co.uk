@@ -1,9 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Search, Menu, X, Hexagon, BookOpen, LayoutGrid, TrendingUp, Star, MessageCircle, HelpCircle, Store, ChevronRight, LogOut, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, X, Hexagon, LayoutGrid, TrendingUp, Star, MessageCircle, HelpCircle, Store, ChevronRight, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuthStore, useCartStore } from '../../store';
 import { useState, useEffect } from 'react';
 import { BRAND } from '../../constants/brand';
 import { supabase } from '../../lib/supabase';
+import CATEGORY_CONFIG from '../../lib/category-config';
 
 export default function Header() {
   const { user, logout } = useAuthStore();
@@ -105,7 +106,6 @@ export default function Header() {
                 { label: 'All Listings', href: '/catalog', icon: LayoutGrid },
                 { label: 'Trending Listings', href: '/catalog?sort=trending', icon: TrendingUp },
                 { label: 'New Listings', href: '/catalog?sort=createdAt_desc', icon: Star },
-                { label: 'Featured Deals', href: '/category/wholesale', icon: BookOpen },
               ].map(({ label, href, icon: Icon }) => (
                 <li key={label}>
                   <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
@@ -115,6 +115,30 @@ export default function Header() {
                   </Link>
                 </li>
               ))}
+            </ul>
+          </div>
+
+          {/* Categories */}
+          <div>
+            <p className="text-[10px] font-bold text-[#F4C400]/60 uppercase tracking-widest mb-1.5 px-2">
+              Categories
+            </p>
+            <ul className="space-y-0.5">
+              {CATEGORY_CONFIG.map((cat) => {
+                const CatIcon = cat.icon;
+                return (
+                  <li key={cat.slug}>
+                    <Link
+                      to={`/category/${cat.slug}`}
+                      className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group"
+                    >
+                      <CatIcon className={`w-4 h-4 flex-shrink-0 ${cat.iconColor} opacity-70 group-hover:opacity-100 transition-opacity`} />
+                      <span className="flex-1">{cat.label}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
@@ -328,6 +352,45 @@ export default function Header() {
           </div>
         </div>
 
+        {/* Category navigation bar — visible on all pages */}
+        <div className="hidden md:block bg-[#1E3A5F] border-t border-white/10">
+          <div className="container-market">
+            <nav
+              className="flex items-center gap-0.5 overflow-x-auto scrollbar-none"
+              aria-label="Category navigation"
+            >
+              <Link
+                to="/catalog"
+                className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0 border-b-2 ${
+                  location.pathname === '/catalog'
+                    ? 'border-[#F4C400] text-[#F4C400]'
+                    : 'border-transparent text-white/70 hover:text-white hover:border-white/30'
+                }`}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+                All Categories
+              </Link>
+              {CATEGORY_CONFIG.map((cat) => {
+                const CatIcon = cat.icon;
+                const isActive = location.pathname === `/category/${cat.slug}`;
+                return (
+                  <Link
+                    key={cat.slug}
+                    to={`/category/${cat.slug}`}
+                    className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0 border-b-2 ${
+                      isActive
+                        ? 'border-[#F4C400] text-[#F4C400]'
+                        : 'border-transparent text-white/70 hover:text-white hover:border-white/30'
+                    }`}
+                  >
+                    <CatIcon className="h-3.5 w-3.5" />
+                    {cat.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
 
       </header>
     </>
