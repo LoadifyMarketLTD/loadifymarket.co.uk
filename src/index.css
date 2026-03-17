@@ -614,11 +614,6 @@
     padding-left: 24px !important;
     padding-right: 24px !important;
   }
-  .footer-grid {
-    grid-template-columns: 1fr 1fr 1fr !important;
-    gap: 40px !important;
-    padding: 50px 24px !important;
-  }
 }
 
 @media (max-width: 639px) {
@@ -626,11 +621,6 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
-  }
-  .footer-grid {
-    grid-template-columns: 1fr !important;
-    gap: 30px !important;
-    padding: 40px 24px !important;
   }
 }
 
