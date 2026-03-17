@@ -6,9 +6,6 @@ import {
   Store,
   UserPlus,
   ShoppingCart,
-  Lock,
-  ShieldCheck,
-  BadgeCheck,
   LayoutGrid,
 } from 'lucide-react';
 
@@ -36,29 +33,6 @@ const HOW_IT_WORKS = [
     title: 'Arrange delivery',
     description:
       'Arrange collection and delivery across the UK through our trusted logistics network.',
-  },
-];
-
-const TRUST_ITEMS = [
-  {
-    icon: Lock,
-    title: 'Secure Payments',
-    description: 'Powered by Stripe. Every transaction is encrypted and fully protected.',
-  },
-  {
-    icon: BadgeCheck,
-    title: 'Verified Sellers',
-    description: 'All sellers are vetted and verified before listing on the platform.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Buyer Protection',
-    description: 'Every order is covered by our buyer protection policy.',
-  },
-  {
-    icon: Truck,
-    title: 'UK Delivery Support',
-    description: 'Flexible delivery and collection options for orders of any size.',
   },
 ];
 
@@ -121,7 +95,7 @@ export default function HomeBelowFold() {
               delivery all in one place.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {HOW_IT_WORKS.map((item) => {
               const Icon = item.icon;
               return (
@@ -140,16 +114,6 @@ export default function HomeBelowFold() {
                 </div>
               );
             })}
-          </div>
-          <div className="text-center">
-            <Link
-              to="/register?type=seller"
-              className="inline-flex items-center gap-2 bg-[#1E3A5F] hover:bg-[#2C4E73] text-white font-semibold px-6 py-3 rounded transition-colors"
-            >
-              <Store className="w-4 h-4" />
-              Start Selling
-              <ArrowRight className="w-4 h-4" />
-            </Link>
           </div>
         </div>
       </section>
@@ -181,31 +145,6 @@ export default function HomeBelowFold() {
                 Browse Marketplace
               </Link>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Trust Features ──────────────────────────────────────────────── */}
-      <section className="bg-[#F8F9FA] py-8 border-t border-gray-200">
-        <div className="container-market">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {TRUST_ITEMS.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.title}
-                  className="flex flex-col items-center text-center p-4 bg-white border border-gray-200 rounded-lg"
-                >
-                  <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center mb-3">
-                    <Icon className="h-5 w-5 text-green-600" />
-                  </div>
-                  <h3 className="text-sm font-bold text-gray-900 mb-1">{item.title}</h3>
-                  <p className="text-gray-600 text-xs leading-relaxed hidden md:block">
-                    {item.description}
-                  </p>
-                </div>
-              );
-            })}
           </div>
         </div>
       </section>

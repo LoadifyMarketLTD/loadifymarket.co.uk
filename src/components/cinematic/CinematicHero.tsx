@@ -52,7 +52,7 @@ export default function CinematicHero() {
 
           {/* Right: Hero Image */}
           <div className="relative">
-            <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[4/3]">
+            <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[16/10]">
               <img
                 src="https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=65&auto=format&fit=max&fm=webp"
                 srcSet="

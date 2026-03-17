@@ -38,10 +38,10 @@ const PLACEHOLDER_CLEARANCE = [
 ];
 
 const PLACEHOLDER_WHOLESALE = [
-  { id: 'ws-1', title: 'Mixed Electronics Pallet — Wholesale Lot',   image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=65&auto=format&fit=crop' },
-  { id: 'ws-2', title: 'Clothing & Fashion — Trade Bundle',          image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&q=65&auto=format&fit=crop' },
-  { id: 'ws-3', title: 'Home & Garden — Wholesale Clearance Lot',    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=65&auto=format&fit=crop' },
-  { id: 'ws-4', title: 'Tools & Hardware — Business Pallet',         image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ws-1', title: 'Mixed Electronics Pallet — Wholesale Lot',   image: 'https://images.unsplash.com/photo-1570983939025-4caff7c43d36?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ws-2', title: 'Clothing & Fashion — Trade Bundle',          image: 'https://images.unsplash.com/photo-1532635241-17e820acc59f?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ws-3', title: 'Home & Garden — Wholesale Clearance Lot',    image: 'https://images.unsplash.com/photo-1580674684081-7617fbf3d745?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ws-4', title: 'Tools & Hardware — Business Pallet',         image: 'https://images.unsplash.com/photo-1598970605070-a38a6ccd3a2d?w=400&q=65&auto=format&fit=crop' },
 ];
 
 
