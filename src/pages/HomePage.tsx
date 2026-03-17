@@ -2,10 +2,8 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect, lazy, Suspense } from 'react';
 import {
   ArrowRight, Layers,
-  Home, Wrench,
-  Shirt, LayoutGrid,
-  Cpu, Car, Briefcase, Tag,
-  RotateCcw, Gamepad2, PawPrint, Sparkles,
+  LayoutGrid,
+  RotateCcw, Tag,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 import { supabase } from '../lib/supabase';
@@ -14,22 +12,6 @@ import type { Product } from '../types';
 import ProductCard from '../components/ProductCard';
 
 const HomeBelowFold = lazy(() => import('../components/HomeBelowFold'));
-
-// ── Categories ────────────────────────────────────────────────────────────────
-const CATEGORIES = [
-  { name: 'Amazon Returns',    icon: RotateCcw,  href: '/category/amazon-returns',    iconColor: 'text-orange-500' },
-  { name: 'Clearance',         icon: Tag,        href: '/category/clearance',         iconColor: 'text-red-500'    },
-  { name: 'Wholesale',         icon: Layers,     href: '/category/wholesale',         iconColor: 'text-yellow-500' },
-  { name: 'Electronics',       icon: Cpu,        href: '/category/electronics',       iconColor: 'text-blue-500'   },
-  { name: 'Home & Garden',     icon: Home,       href: '/category/home-garden',       iconColor: 'text-emerald-500'},
-  { name: 'Tools & DIY',       icon: Wrench,     href: '/category/tools-diy',         iconColor: 'text-amber-600'  },
-  { name: 'Business Supplies', icon: Briefcase,  href: '/category/business-supplies', iconColor: 'text-indigo-500' },
-  { name: 'Fashion',           icon: Shirt,      href: '/category/fashion',           iconColor: 'text-pink-500'   },
-  { name: 'Automotive',        icon: Car,        href: '/category/automotive',        iconColor: 'text-rose-600'   },
-  { name: 'Toys',              icon: Gamepad2,   href: '/category/toys',              iconColor: 'text-purple-500' },
-  { name: 'Pets',              icon: PawPrint,   href: '/category/pets',              iconColor: 'text-teal-500'   },
-  { name: 'Handmade',          icon: Sparkles,   href: '/category/handmade',          iconColor: 'text-fuchsia-500'},
-];
 
 
 // ── Placeholder images (shown when sections have no live products) ─────────────
@@ -174,6 +156,20 @@ function SectionHeader({
   );
 }
 
+type TabKey = 'amazon' | 'clearance' | 'wholesale';
+
+interface TabConfig {
+  key: TabKey;
+  label: string;
+  icon: React.ElementType;
+  iconClass: string;
+  href: string;
+  badge: string;
+  badgeColor: string;
+  products: Product[];
+  placeholders: { id: string; title: string; image: string }[];
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -182,6 +178,7 @@ export default function HomePage() {
   const [wholesaleProducts,setWholesaleProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [secondaryLoading, setSecondaryLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<TabKey>('amazon');
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -252,36 +249,63 @@ export default function HomePage() {
     fetchAll();
   }, []);
 
+  // Derive adaptive column count for featured products to avoid empty grid cells
+  const featuredCols =
+    featuredProducts.length <= 1 ? 1 :
+    featuredProducts.length === 2 ? 2 :
+    featuredProducts.length === 3 ? 3 : 4;
+
+  // Tab config for the merged product section
+  const TABS: TabConfig[] = [
+    {
+      key: 'amazon',
+      label: 'Amazon Returns',
+      icon: RotateCcw,
+      iconClass: 'text-orange-500',
+      href: '/category/amazon-returns',
+      badge: 'Returns Pallet',
+      badgeColor: 'bg-orange-100 text-orange-700',
+      products: amazonProducts,
+      placeholders: PLACEHOLDER_AMAZON,
+    },
+    {
+      key: 'clearance',
+      label: 'Clearance',
+      icon: Tag,
+      iconClass: 'text-red-500',
+      href: '/category/clearance',
+      badge: 'Clearance',
+      badgeColor: 'bg-red-100 text-red-800 font-semibold',
+      products: clearanceProducts,
+      placeholders: PLACEHOLDER_CLEARANCE,
+    },
+    {
+      key: 'wholesale',
+      label: 'Wholesale',
+      icon: Layers,
+      iconClass: 'text-[#1E3A5F]',
+      href: '/category/wholesale',
+      badge: 'Wholesale',
+      badgeColor: 'bg-[#1E3A5F]/10 text-[#1E3A5F]',
+      products: wholesaleProducts,
+      placeholders: PLACEHOLDER_WHOLESALE,
+    },
+  ];
+
+  const activeTabData = TABS.find((t) => t.key === activeTab) ?? TABS[0];
+  const activeTabCols =
+    activeTabData.products.length <= 1 ? 1 :
+    activeTabData.products.length === 2 ? 2 :
+    activeTabData.products.length === 3 ? 3 : 4;
+
   return (
     <div className="bg-white">
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <CinematicHero />
 
-      {/* ── Category Cards ──────────────────────────────────────────────── */}
-      <section className="bg-[#F8F9FA] py-10 border-b border-gray-200">
-        <div className="container-market">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Browse by Category</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {CATEGORIES.map((cat) => {
-              const Icon = cat.icon;
-              return (
-                <Link
-                  key={cat.name}
-                  to={cat.href}
-                  className="group flex flex-col items-center gap-2 p-4 bg-white border border-gray-200 rounded-lg hover:border-[#F4C400] hover:shadow-sm transition-all duration-200 text-center"
-                >
-                  <Icon className={`w-7 h-7 ${cat.iconColor}`} />
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-[#1E3A5F] leading-tight">{cat.name}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* ── Featured Products ───────────────────────────────────────────── */}
-      <section className="bg-white py-10 border-b border-gray-200">
+      <section className="bg-white py-8 border-b border-gray-200">
         <div className="container-market">
           <SectionHeader
             title="Featured Products"
@@ -292,7 +316,10 @@ export default function HomePage() {
           {loading ? (
             <ProductGridSkeleton />
           ) : featuredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div
+              className="grid gap-4"
+              style={{ gridTemplateColumns: `repeat(${featuredCols}, minmax(0, 1fr))` }}
+            >
               {featuredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -301,10 +328,10 @@ export default function HomePage() {
             <PlaceholderGrid items={PLACEHOLDER_FEATURED} href="/catalog" badge="Coming Soon" />
           )}
 
-          <div className="mt-6 text-center">
+          <div className="mt-5 text-center">
             <Link
               to="/catalog"
-              className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-6 py-3 rounded transition-colors"
+              className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-6 py-2.5 rounded transition-colors"
             >
               <LayoutGrid className="w-4 h-4" />
               Browse All Listings
@@ -314,95 +341,57 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Amazon Returns Pallets ──────────────────────────────────────── */}
-      <section className="bg-[#F5F6F7] py-10 border-b border-gray-200">
+      {/* ── Merged Product Sections (tabbed) ────────────────────────────── */}
+      <section className="bg-[#F5F6F7] py-8 border-b border-gray-200">
         <div className="container-market">
-          <SectionHeader
-            title={
-              <span className="flex items-center gap-2">
-                <RotateCcw className="w-5 h-5 text-orange-500" />
-                Amazon Returns Pallets
-              </span>
-            }
-            subtitle="Popular return stock and mixed retail pallets"
-            viewAllHref="/category/amazon-returns"
-          />
+          {/* Tab bar */}
+          <div className="flex items-center gap-1 mb-5 border-b border-gray-200">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-t border-b-2 transition-colors whitespace-nowrap ${
+                    isActive
+                      ? 'border-[#1E3A5F] text-[#1E3A5F] bg-white'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-white/60'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isActive ? tab.iconClass : 'text-gray-400'}`} />
+                  {tab.label}
+                </button>
+              );
+            })}
+            <div className="ml-auto pb-1">
+              <Link
+                to={activeTabData.href}
+                className="text-sm text-[#1E3A5F] hover:underline font-medium whitespace-nowrap"
+              >
+                View All →
+              </Link>
+            </div>
+          </div>
 
+          {/* Tab content */}
           {secondaryLoading ? (
             <ProductGridSkeleton />
-          ) : amazonProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {amazonProducts.map((product) => (
+          ) : activeTabData.products.length > 0 ? (
+            <div
+              className="grid gap-4"
+              style={{ gridTemplateColumns: `repeat(${activeTabCols}, minmax(0, 1fr))` }}
+            >
+              {activeTabData.products.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
           ) : (
             <PlaceholderGrid
-              items={PLACEHOLDER_AMAZON}
-              href="/category/amazon-returns"
-              badge="Returns Pallet"
-              badgeColor="bg-orange-100 text-orange-700"
-            />
-          )}
-        </div>
-      </section>
-
-      {/* ── Clearance Deals ─────────────────────────────────────────────── */}
-      <section className="bg-white py-10 border-b border-gray-200">
-        <div className="container-market">
-          <SectionHeader
-            title="Clearance Deals"
-            subtitle="End-of-line stock and discounted listings"
-            viewAllHref="/category/clearance"
-          />
-
-          {secondaryLoading ? (
-            <ProductGridSkeleton />
-          ) : clearanceProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {clearanceProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <PlaceholderGrid
-              items={PLACEHOLDER_CLEARANCE}
-              href="/category/clearance"
-              badge="Clearance"
-              badgeColor="bg-red-100 text-red-800 font-semibold"
-            />
-          )}
-        </div>
-      </section>
-
-      {/* ── Wholesale ────────────────────────────────────────────────────── */}
-      <section className="bg-[#F5F6F7] py-10 border-b border-gray-200">
-        <div className="container-market">
-          <SectionHeader
-            title={
-              <span className="flex items-center gap-2">
-                <Layers className="w-5 h-5 text-[#1E3A5F]" />
-                Wholesale
-              </span>
-            }
-            subtitle="Bulk pallet listings from verified UK wholesalers"
-            viewAllHref="/category/wholesale"
-          />
-
-          {secondaryLoading ? (
-            <ProductGridSkeleton />
-          ) : wholesaleProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {wholesaleProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <PlaceholderGrid
-              items={PLACEHOLDER_WHOLESALE}
-              href="/category/wholesale"
-              badge="Wholesale"
-              badgeColor="bg-[#1E3A5F]/10 text-[#1E3A5F]"
+              items={activeTabData.placeholders}
+              href={activeTabData.href}
+              badge={activeTabData.badge}
+              badgeColor={activeTabData.badgeColor}
             />
           )}
         </div>

@@ -5,7 +5,7 @@ export default function CinematicHero() {
   return (
     <section className="bg-white border-b border-gray-200">
       <div className="container-market">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-12 lg:py-16 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-8 lg:py-12 items-center">
           {/* Left: Text Content */}
           <div>
             <div className="inline-flex items-center gap-2 bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
