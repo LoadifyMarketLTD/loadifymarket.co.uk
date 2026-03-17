@@ -332,7 +332,7 @@ export default function ShopPage() {
             <h3 className="text-xl font-bold text-white mb-2">Looking for bulk stock or pallet deals?</h3>
             <p className="text-white/60">Browse our B2B marketplace for wholesale lots, liquidation stock and pallet deals.</p>
           </div>
-          <Link to="/bulk" className="btn-primary flex items-center gap-2 whitespace-nowrap">
+          <Link to="/category/wholesale" className="btn-primary flex items-center gap-2 whitespace-nowrap">
             Shop Bulk &amp; Pallets
             <ArrowRight className="h-5 w-5" />
           </Link>

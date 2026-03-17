@@ -143,7 +143,7 @@ export default function Header() {
                 { label: 'All Listings', href: '/catalog', icon: LayoutGrid },
                 { label: 'Trending Listings', href: '/catalog?sort=trending', icon: TrendingUp },
                 { label: 'New Listings', href: '/catalog?sort=createdAt_desc', icon: Star },
-                { label: 'Featured Deals', href: '/bulk', icon: BookOpen },
+                { label: 'Featured Deals', href: '/category/wholesale', icon: BookOpen },
               ].map(({ label, href, icon: Icon }) => (
                 <li key={label}>
                   <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">

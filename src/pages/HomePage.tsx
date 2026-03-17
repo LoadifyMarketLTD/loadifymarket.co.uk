@@ -375,18 +375,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Wholesale & Bulk Lots ───────────────────────────────────────── */}
+      {/* ── Wholesale ────────────────────────────────────────────────────── */}
       <section className="bg-[#F5F6F7] py-8 border-b border-gray-200">
         <div className="container-market">
           <SectionHeader
             title={
               <span className="flex items-center gap-2">
                 <Layers className="w-5 h-5 text-[#1E3A5F]" />
-                Wholesale & Bulk Lots
+                Wholesale
               </span>
             }
             subtitle="Bulk pallet listings from verified UK wholesalers"
-            viewAllHref="/bulk"
+            viewAllHref="/category/wholesale"
           />
 
           {secondaryLoading ? (
@@ -400,7 +400,7 @@ export default function HomePage() {
           ) : (
             <PlaceholderGrid
               items={PLACEHOLDER_WHOLESALE}
-              href="/bulk"
+              href="/category/wholesale"
               badge="Wholesale"
               badgeColor="bg-[#1E3A5F]/10 text-[#1E3A5F]"
             />

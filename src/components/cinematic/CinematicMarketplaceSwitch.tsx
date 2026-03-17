@@ -134,7 +134,7 @@ export default function CinematicMarketplaceSwitch() {
                     <span className="price-tag">£{item.price.toLocaleString()}</span>
                     <span className="text-sm text-white/60">/ lot</span>
                   </div>
-                  <Link to="/bulk" className="w-full btn-glass py-3 text-sm flex items-center justify-center gap-2">
+                  <Link to="/category/wholesale" className="w-full btn-glass py-3 text-sm flex items-center justify-center gap-2">
                     <span>View Lot</span>
                     <ArrowRight className="w-4 h-4" />
                   </Link>
@@ -189,7 +189,7 @@ export default function CinematicMarketplaceSwitch() {
         {/* View All CTA */}
         <div className="text-center mt-12">
           <Link
-            to={activeTab === 'bulk' ? '/bulk' : activeTab === 'featured' ? '/catalog' : '/shop'}
+            to={activeTab === 'bulk' ? '/category/wholesale' : activeTab === 'featured' ? '/catalog' : '/shop'}
             className="btn-outline inline-flex items-center gap-2"
           >
             {activeTab === 'bulk' ? 'Browse All Bulk Deals' : activeTab === 'featured' ? 'View All Sellers' : 'Browse All Products'}

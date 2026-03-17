@@ -1,12 +1,12 @@
 /**
  * category-config.ts
  *
- * Single source of truth for the 8 main product category pages served by
+ * Single source of truth for the 12 main product category pages served by
  * /category/:slug.  Each entry drives the CategoryPage's title, subtitle,
  * icon, subcategory chips, empty-state copy, and the Supabase product filter.
  *
- * "All Categories" (/catalog) and "Wholesale" (/bulk) are handled by their
- * own dedicated pages and are therefore NOT in this list.
+ * "All Categories" is served by /catalog.
+ * All 12 main categories are served exclusively by /category/:slug.
  */
 
 import {
@@ -101,7 +101,7 @@ const CATEGORY_CONFIG: readonly CategoryConfig[] = [
   {
     slug: 'clearance',
     label: 'Clearance',
-    title: 'Clearance Stock',
+    title: 'Clearance',
     subtitle: 'End of line, overstock and liquidation — everything heavily discounted',
     icon: Tag,
     iconColor: 'text-red-500',
@@ -127,7 +127,7 @@ const CATEGORY_CONFIG: readonly CategoryConfig[] = [
   {
     slug: 'wholesale',
     label: 'Wholesale',
-    title: 'Wholesale & Bulk Lots',
+    title: 'Wholesale',
     subtitle: 'Bulk pallet listings, job lots and trade bundles from verified UK wholesalers',
     icon: Layers,
     iconColor: 'text-yellow-500',
