@@ -66,7 +66,7 @@ export default function HomeBelowFold() {
   return (
     <>
       {/* ── Transport Support ───────────────────────────────────────────── */}
-      <section className="bg-[#F5F6F7] py-8 border-b border-gray-200">
+      <section className="bg-[#F5F6F7] py-12 border-b border-gray-200">
         <div className="container-market">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
@@ -94,7 +94,7 @@ export default function HomeBelowFold() {
                   className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-6 py-3 rounded transition-colors"
                 >
                   <Package className="w-4 h-4" />
-                  Wholesale &amp; Bulk
+                  Wholesale &amp; Pallets
                 </Link>
               </div>
             </div>
@@ -112,7 +112,7 @@ export default function HomeBelowFold() {
       </section>
 
       {/* ── How It Works ────────────────────────────────────────────────── */}
-      <section className="bg-white py-10 border-b border-gray-200">
+      <section className="bg-white py-14 border-b border-gray-200">
         <div className="container-market">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">How It Works</h2>
@@ -155,7 +155,7 @@ export default function HomeBelowFold() {
       </section>
 
       {/* ── Seller CTA (navy) ───────────────────────────────────────────── */}
-      <section className="bg-[#1E3A5F] py-12">
+      <section className="bg-[#1E3A5F] py-16">
         <div className="container-market">
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
@@ -186,7 +186,7 @@ export default function HomeBelowFold() {
       </section>
 
       {/* ── Trust Features ──────────────────────────────────────────────── */}
-      <section className="bg-[#F8F9FA] py-8 border-t border-gray-200">
+      <section className="bg-[#F8F9FA] py-12 border-t border-gray-200">
         <div className="container-market">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {TRUST_ITEMS.map((item) => {

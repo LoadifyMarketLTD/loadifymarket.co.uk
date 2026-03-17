@@ -56,10 +56,10 @@ const PLACEHOLDER_CLEARANCE = [
 ];
 
 const PLACEHOLDER_WHOLESALE = [
-  { id: 'ws-1', title: 'Wholesale — Artisan & Craft Goods',      image: 'https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=400&q=65&auto=format&fit=crop' },
-  { id: 'ws-2', title: 'Food & Beverage — Wholesale Case',       image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=65&auto=format&fit=crop' },
-  { id: 'ws-3', title: 'Office & Business Supplies — Bulk',      image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=65&auto=format&fit=crop' },
-  { id: 'ws-4', title: 'Wholesale Logistics & Shipping',         image: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ws-1', title: 'Mixed Electronics Pallet — Wholesale Lot',   image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ws-2', title: 'Clothing & Fashion — Trade Bundle',          image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ws-3', title: 'Home & Garden — Wholesale Clearance Lot',    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=65&auto=format&fit=crop' },
+  { id: 'ws-4', title: 'Tools & Hardware — Business Pallet',         image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=65&auto=format&fit=crop' },
 ];
 
 
@@ -259,7 +259,7 @@ export default function HomePage() {
       <CinematicHero />
 
       {/* ── Category Cards ──────────────────────────────────────────────── */}
-      <section className="bg-[#F8F9FA] py-8 border-b border-gray-200">
+      <section className="bg-[#F8F9FA] py-10 border-b border-gray-200">
         <div className="container-market">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Browse by Category</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -281,7 +281,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Featured Products ───────────────────────────────────────────── */}
-      <section className="bg-white py-8 border-b border-gray-200">
+      <section className="bg-white py-10 border-b border-gray-200">
         <div className="container-market">
           <SectionHeader
             title="Featured Products"
@@ -315,7 +315,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Amazon Returns Pallets ──────────────────────────────────────── */}
-      <section className="bg-[#F5F6F7] py-8 border-b border-gray-200">
+      <section className="bg-[#F5F6F7] py-10 border-b border-gray-200">
         <div className="container-market">
           <SectionHeader
             title={
@@ -348,7 +348,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Clearance Deals ─────────────────────────────────────────────── */}
-      <section className="bg-white py-8 border-b border-gray-200">
+      <section className="bg-white py-10 border-b border-gray-200">
         <div className="container-market">
           <SectionHeader
             title="Clearance Deals"
@@ -376,7 +376,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Wholesale ────────────────────────────────────────────────────── */}
-      <section className="bg-[#F5F6F7] py-8 border-b border-gray-200">
+      <section className="bg-[#F5F6F7] py-10 border-b border-gray-200">
         <div className="container-market">
           <SectionHeader
             title={

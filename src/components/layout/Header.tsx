@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Search, Menu, X, Hexagon, Cpu, Shirt, Home, Wrench, Car, Gamepad2, PawPrint, Briefcase, Sparkles, Layers, Tag, RotateCcw, BookOpen, LayoutGrid, TrendingUp, Star, MessageCircle, HelpCircle, Store, ChevronRight, LogOut, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, X, Hexagon, Cpu, Shirt, Home, Wrench, Car, Gamepad2, PawPrint, Briefcase, Sparkles, Layers, Tag, RotateCcw, BookOpen, LayoutGrid, TrendingUp, Star, MessageCircle, HelpCircle, Store, ChevronRight, ChevronDown, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuthStore, useCartStore } from '../../store';
 import { useState, useEffect } from 'react';
 import { BRAND } from '../../constants/brand';
@@ -17,6 +17,7 @@ export default function Header() {
   // Lazy-mount: sidebar DOM is not created until the user first opens it,
   // reducing initial page DOM size by ~130 elements.
   const [sidebarMounted, setSidebarMounted] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
@@ -29,9 +30,10 @@ export default function Header() {
 
   const cartItemCount = getTotalItems();
 
-  // Close sidebar on route change
+  // Close sidebar and More dropdown on route change
   useEffect(() => {
     setSidebarOpen(false);
+    setMoreOpen(false);
   }, [location]);
 
   // ESC key closes sidebar
@@ -370,7 +372,7 @@ export default function Header() {
         {!onDashboard && (
           <div className="bg-[#F8F9FA] border-b border-gray-200 hidden md:block">
             <div className="container-market">
-              <nav className="flex items-center gap-1 overflow-x-auto py-1.5 text-sm scrollbar-hide" aria-label="Category navigation">
+              <nav className="flex items-center gap-0.5 py-1.5 text-sm" aria-label="Category navigation">
                 {[
                   { label: 'All Categories',    to: '/catalog' },
                   { label: 'Amazon Returns',    to: '/category/amazon-returns' },
@@ -379,12 +381,8 @@ export default function Header() {
                   { label: 'Electronics',       to: '/category/electronics' },
                   { label: 'Home & Garden',     to: '/category/home-garden' },
                   { label: 'Tools & DIY',       to: '/category/tools-diy' },
-                  { label: 'Business Supplies', to: '/category/business-supplies' },
                   { label: 'Fashion',           to: '/category/fashion' },
                   { label: 'Automotive',        to: '/category/automotive' },
-                  { label: 'Toys',              to: '/category/toys' },
-                  { label: 'Pets',              to: '/category/pets' },
-                  { label: 'Handmade',          to: '/category/handmade' },
                 ].map(({ label, to }) => {
                   const isActive =
                     to === '/catalog'
@@ -394,7 +392,7 @@ export default function Header() {
                     <Link
                       key={to}
                       to={to}
-                      className={`px-3 py-1.5 rounded whitespace-nowrap transition-colors ${
+                      className={`px-2.5 py-1.5 rounded whitespace-nowrap transition-colors ${
                         isActive
                           ? 'text-[#1E3A5F] bg-[#F4C400]/20 font-semibold'
                           : 'text-gray-700 hover:text-[#1E3A5F] hover:bg-[#F4C400]/10 font-medium'
@@ -404,6 +402,64 @@ export default function Header() {
                     </Link>
                   );
                 })}
+
+                {/* More dropdown */}
+                <div className="relative ml-0.5" onMouseLeave={() => setMoreOpen(false)}>
+                  <button
+                    onMouseEnter={() => setMoreOpen(true)}
+                    onClick={() => setMoreOpen((o) => !o)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMoreOpen((o) => !o); }
+                      if (e.key === 'Escape') setMoreOpen(false);
+                    }}
+                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded whitespace-nowrap transition-colors font-medium ${
+                      ['/category/business-supplies', '/category/toys', '/category/pets', '/category/handmade'].includes(location.pathname)
+                        ? 'text-[#1E3A5F] bg-[#F4C400]/20 font-semibold'
+                        : 'text-gray-700 hover:text-[#1E3A5F] hover:bg-[#F4C400]/10'
+                    }`}
+                    aria-haspopup="listbox"
+                    aria-expanded={moreOpen}
+                    aria-label="More categories"
+                  >
+                    More
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {moreOpen && (
+                    <div
+                      role="listbox"
+                      aria-label="Additional categories"
+                      className="absolute top-full left-0 mt-0.5 w-44 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50"
+                      onMouseEnter={() => setMoreOpen(true)}
+                    >
+                      {[
+                        { label: 'Business Supplies', to: '/category/business-supplies', icon: Briefcase },
+                        { label: 'Toys',              to: '/category/toys',              icon: Gamepad2 },
+                        { label: 'Pets',              to: '/category/pets',              icon: PawPrint },
+                        { label: 'Handmade',          to: '/category/handmade',          icon: Sparkles },
+                      ].map(({ label, to, icon: Icon }) => {
+                        const isActive = location.pathname === to;
+                        return (
+                          <Link
+                            key={to}
+                            to={to}
+                            role="option"
+                            aria-selected={isActive}
+                            onKeyDown={(e) => { if (e.key === 'Escape') setMoreOpen(false); }}
+                            className={`flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
+                              isActive
+                                ? 'text-[#1E3A5F] bg-[#F4C400]/15 font-semibold'
+                                : 'text-gray-700 hover:text-[#1E3A5F] hover:bg-[#F4C400]/10 font-medium'
+                            }`}
+                          >
+                            <Icon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            {label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </nav>
             </div>
           </div>
