@@ -1,5 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Mail, MapPin, Hexagon, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import {
+  Mail, MapPin, Hexagon,
+  Facebook, Twitter, Instagram, Linkedin,
+  ShieldCheck, Truck, BadgeCheck,
+} from 'lucide-react';
 import { BRAND } from '../../constants/brand';
 
 const DASHBOARD_PATHS = ['/dashboard', '/seller', '/admin'];
@@ -8,215 +12,221 @@ function isDashboardRoute(pathname: string) {
   return DASHBOARD_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'));
 }
 
-const footerLinkClass =
-  'text-[#9CA3AF] hover:text-[#F4B400] transition-colors duration-200 text-[13px] font-normal block py-2.5';
+// ── Social links ──────────────────────────────────────────────────────────────
+const SOCIAL_LINKS = [
+  { href: 'https://www.facebook.com/loadifymarket',       Icon: Facebook,  label: 'Facebook'  },
+  { href: 'https://twitter.com/loadifymarket',            Icon: Twitter,   label: 'Twitter'   },
+  { href: 'https://www.instagram.com/loadifymarket',      Icon: Instagram, label: 'Instagram' },
+  { href: 'https://www.linkedin.com/company/loadifymarket', Icon: Linkedin, label: 'LinkedIn' },
+];
 
-const footerTitleStyle: React.CSSProperties = {
-  fontSize: '13px',
-  fontWeight: 700,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  color: '#F4B400',
-  marginBottom: '16px',
-};
+// ── Trust items ───────────────────────────────────────────────────────────────
+const FOOTER_TRUST = [
+  { Icon: BadgeCheck, label: 'Verified Sellers'     },
+  { Icon: ShieldCheck, label: 'Secure Platform'     },
+  { Icon: Truck,       label: 'UK Delivery Support' },
+];
 
+// ── Nav columns ───────────────────────────────────────────────────────────────
+const NAV_COLUMNS = [
+  {
+    heading: 'For Buyers',
+    links: [
+      { label: 'Browse Marketplace',   to: '/shop'                      },
+      { label: 'Wholesale & Pallets',  to: '/category/wholesale'        },
+      { label: 'Amazon Returns',       to: '/category/amazon-returns'   },
+      { label: 'Electronics',          to: '/category/electronics'      },
+      { label: 'Fashion',              to: '/category/fashion'          },
+      { label: 'Home & Garden',        to: '/category/home-garden'      },
+      { label: 'Automotive',           to: '/category/automotive'       },
+      { label: 'Track Order',          to: '/track-order'               },
+      { label: 'Help & FAQ',           to: '/help'                      },
+    ],
+  },
+  {
+    heading: 'For Sellers',
+    links: [
+      { label: 'Start Selling',        to: '/register?type=seller'      },
+      { label: 'Seller Dashboard',     to: '/seller'                    },
+      { label: 'List a Product',       to: '/seller/products/new'       },
+      { label: 'Seller Fees & Pricing', to: '/pricing'                  },
+      { label: 'Seller Guidelines',    to: '/seller-guidelines'         },
+      { label: 'How It Works',         to: '/how-it-works'              },
+      { label: 'Partner With Us',      to: '/contact'                   },
+    ],
+  },
+  {
+    heading: 'Marketplace',
+    links: [
+      { label: 'Buyer Protection',     to: '/buyer-protection'          },
+      { label: 'Transport Quote',      to: '/transport-quote'           },
+      { label: 'Request Shipping Quote', to: '/rfq'                     },
+      { label: 'Verified Sellers',     to: '/verified-sellers'          },
+      { label: 'Wholesale Orders',     to: '/category/wholesale'        },
+      { label: 'Business Accounts',    to: '/contact'                   },
+    ],
+  },
+  {
+    heading: 'Company',
+    links: [
+      { label: 'About Us',             to: '/about'                     },
+      { label: 'Contact Us',           to: '/contact'                   },
+      { label: 'Help Centre',          to: '/help'                      },
+      { label: 'Support',              to: '/contact'                   },
+      { label: 'Business Enquiries',   to: '/contact'                   },
+    ],
+  },
+  {
+    heading: 'Legal',
+    links: [
+      { label: 'Terms & Conditions',   to: '/terms'                     },
+      { label: 'Privacy Policy',       to: '/privacy'                   },
+      { label: 'Cookie Policy',        to: '/cookies'                   },
+      { label: 'Returns Policy',       to: '/returns-policy'            },
+      { label: 'Shipping Policy',      to: '/shipping-policy'           },
+      { label: 'Acceptable Use',       to: '/acceptable-use-policy'     },
+    ],
+  },
+];
+
+// ── Dashboard mini-footer ─────────────────────────────────────────────────────
+function DashboardFooter() {
+  return (
+    <footer className="lm-footer-dash text-white mt-auto border-t border-white/10">
+      <div className="lm-footer-inner-sm">
+        <p className="text-xs text-white/60">© 2025 {BRAND.name}. All rights reserved.</p>
+        <div className="flex items-center gap-5">
+          <Link to="/terms"   className="text-xs text-white/60 hover:text-[#F4B400] transition-colors">Terms</Link>
+          <Link to="/privacy" className="text-xs text-white/60 hover:text-[#F4B400] transition-colors">Privacy</Link>
+          <Link to="/contact" className="text-xs text-white/60 hover:text-[#F4B400] transition-colors">Contact</Link>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// ── Main footer ───────────────────────────────────────────────────────────────
 export default function Footer() {
   const location = useLocation();
 
   if (isDashboardRoute(location.pathname)) {
-    return (
-      <footer style={{ background: 'linear-gradient(180deg,#0A2239,#081A2C)' }} className="text-white mt-auto border-t border-white/10">
-        <div className="container-cinematic py-4">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-white/70">
-            <p>© 2025 {BRAND.name}. All rights reserved.</p>
-            <div className="flex items-center gap-4">
-              <Link to="/terms" className="hover:text-[#F4B400] transition-colors">Terms</Link>
-              <Link to="/privacy" className="hover:text-[#F4B400] transition-colors">Privacy</Link>
-              <Link to="/contact" className="hover:text-[#F4B400] transition-colors">Contact</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
-    );
+    return <DashboardFooter />;
   }
 
   return (
-    <footer style={{ background: 'linear-gradient(180deg,#0A2239,#081A2C)' }} className="text-white mt-auto">
-      {/* ROW 1: Footer Top Bar — Logo + Social Icons */}
-      <div
-        className="footer-top"
-        style={{
-          maxWidth: '1400px',
-          margin: '0 auto',
-          padding: '32px 40px 28px',
-        }}
-      >
-        <Link to="/" className="flex items-center space-x-3 group" aria-label="Loadify Market homepage">
-          <div className="relative flex-shrink-0">
-            <Hexagon className="h-10 w-10 text-[#F4B400] transition-all duration-300 group-hover:scale-110" strokeWidth={1.5} />
-            <span className="absolute inset-0 flex items-center justify-center text-[#F4B400] font-bold text-base">L</span>
+    <footer className="lm-footer text-white mt-auto">
+
+      {/* ── ZONE A — Top brand bar ───────────────────────────────────── */}
+      <div className="lm-footer-zone-a">
+        <div className="lm-footer-inner lm-footer-topbar">
+          {/* Brand */}
+          <Link to="/" className="lm-footer-brand group" aria-label="Loadify Market homepage">
+            <div className="lm-footer-brand-icon">
+              <Hexagon className="h-10 w-10 text-[#F4B400] group-hover:scale-105 transition-transform" strokeWidth={1.5} />
+              <span className="absolute inset-0 flex items-center justify-center text-[#F4B400] font-bold text-base select-none">L</span>
+            </div>
+            <span className="text-xl font-bold text-white tracking-tight">{BRAND.name}</span>
+          </Link>
+
+          {/* Trust pills */}
+          <div className="lm-footer-trust-pills">
+            {FOOTER_TRUST.map(({ Icon, label }) => (
+              <div key={label} className="lm-footer-trust-pill">
+                <Icon className="h-4 w-4 text-[#F4B400] flex-shrink-0" />
+                <span>{label}</span>
+              </div>
+            ))}
           </div>
-          <span className="text-xl font-bold text-white tracking-tight">{BRAND.name}</span>
-        </Link>
-        {/* Social Icons */}
-        <div className="footer-social">
-          <a
-            href="https://www.facebook.com/loadifymarket"
-            target="_blank"
-            className="hover:text-[#F4B400] transition-opacity duration-200"
-            aria-label="Facebook"
-            rel="noopener noreferrer"
-          >
-            <Facebook className="h-[20px] w-[20px]" />
-          </a>
-          <a
-            href="https://twitter.com/loadifymarket"
-            target="_blank"
-            className="hover:text-[#F4B400] transition-opacity duration-200"
-            aria-label="Twitter"
-            rel="noopener noreferrer"
-          >
-            <Twitter className="h-[20px] w-[20px]" />
-          </a>
-          <a
-            href="https://www.instagram.com/loadifymarket"
-            target="_blank"
-            className="hover:text-[#F4B400] transition-opacity duration-200"
-            aria-label="Instagram"
-            rel="noopener noreferrer"
-          >
-            <Instagram className="h-[20px] w-[20px]" />
-          </a>
-          <a
-            href="https://www.linkedin.com/company/loadifymarket"
-            target="_blank"
-            className="hover:text-[#F4B400] transition-opacity duration-200"
-            aria-label="LinkedIn"
-            rel="noopener noreferrer"
-          >
-            <Linkedin className="h-[20px] w-[20px]" />
-          </a>
+
+          {/* Social */}
+          <div className="lm-footer-social">
+            {SOCIAL_LINKS.map(({ href, Icon, label }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                className="lm-footer-social-link"
+              >
+                <Icon className="h-5 w-5" />
+              </a>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Divider between top bar and main grid */}
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 40px' }}>
-        <div className="footer-divider" />
+      {/* ── ZONE B — Main link grid ──────────────────────────────────── */}
+      <div className="lm-footer-zone-b">
+        <div className="lm-footer-inner lm-footer-grid">
+
+          {/* About column */}
+          <div className="lm-footer-about-col">
+            <h3 className="lm-footer-heading">About Loadify Market</h3>
+            <p className="lm-footer-about-desc">
+              UK multi-category marketplace connecting buyers and sellers of pallets, wholesale &amp; clearance stock.
+            </p>
+
+            <div className="lm-footer-about-info-group">
+              <p className="lm-footer-about-label">Operated by</p>
+              <p className="lm-footer-about-value">{BRAND.companyName}</p>
+              <p className="lm-footer-about-meta">Co. No: {BRAND.companyNumber}</p>
+              <p className="lm-footer-about-meta">VAT: {BRAND.vatNumber}</p>
+            </div>
+
+            <div className="lm-footer-about-info-group">
+              <div className="lm-footer-about-row">
+                <MapPin className="h-3.5 w-3.5 text-[#F4B400] flex-shrink-0 mt-0.5" />
+                <address className="not-italic lm-footer-about-meta">
+                  101 Cornelian Street<br />Blackburn BB1 9QL, UK
+                </address>
+              </div>
+              <div className="lm-footer-about-row" style={{ marginTop: '8px' }}>
+                <Mail className="h-3.5 w-3.5 text-[#F4B400] flex-shrink-0 mt-0.5" />
+                <a
+                  href={`mailto:${BRAND.supportEmail}`}
+                  className="lm-footer-about-meta hover:text-[#F4B400] transition-colors"
+                >
+                  {BRAND.supportEmail}
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Nav columns */}
+          {NAV_COLUMNS.map((col) => (
+            <div key={col.heading} className="lm-footer-nav-col">
+              <h3 className="lm-footer-heading">{col.heading}</h3>
+              <ul className="lm-footer-nav-list">
+                {col.links.map((link) => (
+                  <li key={`${col.heading}-${link.to}-${link.label}`}>
+                    <Link to={link.to} className="lm-footer-link">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+
+        </div>
       </div>
 
-      {/* ROW 2: Footer Main Grid — responsive columns */}
-      <div className="footer-grid grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-8 xl:gap-10 max-w-[1400px] mx-auto px-6 md:px-10 py-9 xl:py-12 items-start">
-        {/* Column 1: About */}
-        <div className="footer-about">
-          <h3 style={footerTitleStyle}>About Loadify Market</h3>
-          <p className="text-[#E5E7EB] text-[13px] leading-relaxed">
-            UK multi-category marketplace connecting buyers and sellers of pallets,
-            wholesale &amp; clearance stock and retail goods.
+      {/* ── ZONE C — Bottom legal strip ──────────────────────────────── */}
+      <div className="lm-footer-zone-c">
+        <div className="lm-footer-inner lm-footer-bottom">
+          <p className="lm-footer-copyright">
+            © 2025 {BRAND.name}. All rights reserved.
           </p>
-
-          <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.08)' }} className="text-[12px] text-[#9CA3AF] space-y-1">
-            <p>Operated by <span className="text-[#E5E7EB] font-medium">{BRAND.companyName}</span></p>
-            <p>Co. No: {BRAND.companyNumber} · VAT: {BRAND.vatNumber}</p>
+          <div className="lm-footer-bottom-links">
+            <Link to="/terms"   className="lm-footer-bottom-link">Terms</Link>
+            <Link to="/privacy" className="lm-footer-bottom-link">Privacy</Link>
+            <Link to="/cookies" className="lm-footer-bottom-link">Cookies</Link>
+            <Link to="/contact" className="lm-footer-bottom-link">Contact</Link>
           </div>
-
-          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.08)' }} className="info-row text-[12px] text-[#9CA3AF]">
-            <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0 text-[#F4B400]" />
-            <address className="not-italic">101 Cornelian Street, Blackburn BB1 9QL, UK</address>
-          </div>
-
-          <div style={{ marginTop: '12px' }} className="info-row text-[12px] text-[#9CA3AF]">
-            <Mail className="h-3 w-3 flex-shrink-0 text-[#F4B400]" />
-            <a
-              href={`mailto:${BRAND.supportEmail}`}
-              className="text-[#E5E7EB] hover:text-[#F4B400] transition-colors duration-200"
-            >
-              {BRAND.supportEmail}
-            </a>
-          </div>
-        </div>
-
-        {/* Column 2: For Buyers */}
-        <div>
-          <h3 style={footerTitleStyle}>For Buyers</h3>
-          <ul>
-            <li><Link to="/shop" className={footerLinkClass}>Browse Marketplace</Link></li>
-            <li><Link to="/category/wholesale" className={footerLinkClass}>Wholesale &amp; Pallets</Link></li>
-            <li><Link to="/category/amazon-returns" className={footerLinkClass}>Amazon Returns</Link></li>
-            <li><Link to="/category/electronics" className={footerLinkClass}>Electronics</Link></li>
-            <li><Link to="/category/fashion" className={footerLinkClass}>Fashion</Link></li>
-            <li><Link to="/category/home-garden" className={footerLinkClass}>Home &amp; Garden</Link></li>
-            <li><Link to="/category/automotive" className={footerLinkClass}>Automotive</Link></li>
-            <li><Link to="/track-order" className={footerLinkClass}>Track Order</Link></li>
-            <li><Link to="/help" className={footerLinkClass}>Help &amp; FAQ</Link></li>
-          </ul>
-        </div>
-
-        {/* Column 3: For Sellers */}
-        <div>
-          <h3 style={footerTitleStyle}>For Sellers</h3>
-          <ul>
-            <li><Link to="/register?type=seller" className={footerLinkClass}>Start Selling</Link></li>
-            <li><Link to="/seller" className={footerLinkClass}>Seller Dashboard</Link></li>
-            <li><Link to="/seller/products/new" className={footerLinkClass}>List a Product</Link></li>
-            <li><Link to="/pricing" className={footerLinkClass}>Seller Fees &amp; Pricing</Link></li>
-            <li><Link to="/seller-guidelines" className={footerLinkClass}>Seller Guidelines</Link></li>
-            <li><Link to="/how-it-works" className={footerLinkClass}>How It Works</Link></li>
-            <li><Link to="/contact" className={footerLinkClass}>Partner With Us</Link></li>
-          </ul>
-        </div>
-
-        {/* Column 4: Marketplace Services */}
-        <div>
-          <h3 style={footerTitleStyle}>Marketplace</h3>
-          <ul>
-            <li><Link to="/buyer-protection" className={footerLinkClass}>Buyer Protection</Link></li>
-            <li><Link to="/transport-quote" className={footerLinkClass}>Transport Quote</Link></li>
-            <li><Link to="/rfq" className={footerLinkClass}>Request Shipping Quote</Link></li>
-            <li><Link to="/verified-sellers" className={footerLinkClass}>Verified Sellers</Link></li>
-            <li><Link to="/category/wholesale" className={footerLinkClass}>Wholesale Orders</Link></li>
-            <li><Link to="/contact" className={footerLinkClass}>Business Accounts</Link></li>
-          </ul>
-        </div>
-
-        {/* Column 5: Company */}
-        <div>
-          <h3 style={footerTitleStyle}>Company</h3>
-          <ul>
-            <li><Link to="/about" className={footerLinkClass}>About Us</Link></li>
-            <li><Link to="/contact" className={footerLinkClass}>Contact Us</Link></li>
-            <li><Link to="/help" className={footerLinkClass}>Help Centre</Link></li>
-            <li><Link to="/contact" className={footerLinkClass}>Support</Link></li>
-            <li><Link to="/contact" className={footerLinkClass}>Business Enquiries</Link></li>
-          </ul>
-        </div>
-
-        {/* Column 6: Legal */}
-        <div>
-          <h3 style={footerTitleStyle}>Legal</h3>
-          <ul>
-            <li><Link to="/terms" className={footerLinkClass}>Terms &amp; Conditions</Link></li>
-            <li><Link to="/privacy" className={footerLinkClass}>Privacy Policy</Link></li>
-            <li><Link to="/cookies" className={footerLinkClass}>Cookie Policy</Link></li>
-            <li><Link to="/returns-policy" className={footerLinkClass}>Returns Policy</Link></li>
-            <li><Link to="/shipping-policy" className={footerLinkClass}>Shipping Policy</Link></li>
-            <li><Link to="/acceptable-use-policy" className={footerLinkClass}>Acceptable Use Policy</Link></li>
-          </ul>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div
-        className="footer-divider"
-        style={{
-          maxWidth: '1400px',
-          margin: '0 auto',
-          padding: '20px 40px',
-        }}
-      >
-        <p style={{ fontSize: '13px', color: '#9CA3AF' }}>
-          © 2025 {BRAND.name}. All rights reserved.
-        </p>
-      </div>
     </footer>
   );
 }
