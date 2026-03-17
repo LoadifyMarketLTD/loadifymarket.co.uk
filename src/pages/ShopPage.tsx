@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Product, Category } from '../types';
@@ -34,10 +34,8 @@ export default function ShopPage() {
   const [selectedCondition, setSelectedCondition] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('createdAt_desc');
 
-  // Track whether the initial URL category param has been resolved to a UUID
-  const categoryResolved = useRef(false);
-  // Capture category URL param once on mount for the resolution effect below
-  const initialCatParam = useRef(searchParams.get('category'));
+  // Reactive URL category param — re-resolved whenever navigation changes the URL
+  const catParam = searchParams.get('category');
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -47,30 +45,31 @@ export default function ShopPage() {
           .select('*')
           .is('parentId', null)
           .order('name', { ascending: true });
-        const cats = data || [];
-        setCategories(cats);
-
-        // Resolve initial category URL param (may be a slug or UUID) to a UUID — runs once
-        if (!categoryResolved.current) {
-          categoryResolved.current = true;
-          const catParam = initialCatParam.current;
-          if (catParam) {
-            if (UUID_PATTERN.test(catParam)) {
-              // Already a UUID — use directly
-              setSelectedCategory(catParam);
-            } else {
-              // Treat as a slug — find the matching category
-              const match = cats.find((c) => c.slug === catParam);
-              setSelectedCategory(match?.id ?? '');
-            }
-          }
-        }
+        setCategories(data || []);
       } catch (err) {
         console.error('Error fetching categories:', err);
       }
     };
     fetchCategories();
   }, []);
+
+  // Resolve category URL param (slug or UUID) to a UUID whenever the param or
+  // categories list changes. This keeps the filter in sync when the user navigates
+  // between category links without unmounting the component.
+  useEffect(() => {
+    if (!catParam) {
+      setSelectedCategory('');
+      return;
+    }
+    if (UUID_PATTERN.test(catParam)) {
+      setSelectedCategory(catParam);
+      return;
+    }
+    // Slug resolution — wait until categories have loaded
+    if (categories.length === 0) return;
+    const match = categories.find((c) => c.slug === catParam);
+    setSelectedCategory(match?.id ?? '');
+  }, [catParam, categories]);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);

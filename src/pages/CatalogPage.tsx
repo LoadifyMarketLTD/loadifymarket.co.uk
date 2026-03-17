@@ -34,7 +34,7 @@ export default function CatalogPage() {
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || searchParams.get('search') || '');
-  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [priceMin, setPriceMin] = useState<string>('');
   const [priceMax, setPriceMax] = useState<string>('');
   // Debounced price values applied to actual queries
@@ -57,12 +57,16 @@ export default function CatalogPage() {
     }, 500);
   };
 
-  // Sync type filter when navigating between /shop and /bulk
+  // Sync type filter when navigating between /shop, /bulk, and /catalog
   useEffect(() => {
-    if (isBulkRoute && !searchParams.get('type')) {
+    const typeParam = searchParams.get('type');
+    if (isBulkRoute && !typeParam) {
       setSelectedType('pallet');
-    } else if ((isShopRoute || location.pathname === '/catalog') && !searchParams.get('type')) {
+    } else if ((isShopRoute || location.pathname === '/catalog') && !typeParam) {
       setSelectedType('');
+    } else if (typeParam) {
+      // Sync from URL when the type param is set or changes
+      setSelectedType(typeParam);
     }
   }, [location.pathname, isBulkRoute, isShopRoute, searchParams]);
 
@@ -72,10 +76,8 @@ export default function CatalogPage() {
     setProducts([]);
   }, [sortBy, selectedCondition, selectedType, selectedListingType, selectedRole, debouncedPriceMin, debouncedPriceMax, searchQuery, selectedCategory, minSellerRating]);
 
-  // Flag so we only do the initial slug→UUID resolution once
-  const categoryResolved = useRef(false);
-  // Capture category URL param once on mount for the resolution effect below
-  const initialCatParam = useRef(searchParams.get('category'));
+  // Reactive URL category param — re-resolved whenever navigation changes the URL
+  const catParam = searchParams.get('category');
 
   // Fetch categories
   useEffect(() => {
@@ -88,28 +90,31 @@ export default function CatalogPage() {
           .order('name', { ascending: true });
 
         if (error) throw error;
-        const cats = data || [];
-        setCategories(cats);
-
-        // Resolve initial category URL param (slug or UUID) to a UUID — runs once
-        if (!categoryResolved.current) {
-          categoryResolved.current = true;
-          const catParam = initialCatParam.current;
-          if (catParam) {
-            if (UUID_PATTERN.test(catParam)) {
-              setSelectedCategory(catParam);
-            } else {
-              const match = cats.find((c) => c.slug === catParam);
-              setSelectedCategory(match?.id ?? '');
-            }
-          }
-        }
+        setCategories(data || []);
       } catch (error) {
         console.error('Error fetching categories:', error);
       }
     };
     fetchCategories();
   }, []);
+
+  // Resolve category URL param (slug or UUID) to a UUID whenever the param or
+  // categories list changes. This keeps the filter in sync when the user navigates
+  // between category links without unmounting the component.
+  useEffect(() => {
+    if (!catParam) {
+      setSelectedCategory('');
+      return;
+    }
+    if (UUID_PATTERN.test(catParam)) {
+      setSelectedCategory(catParam);
+      return;
+    }
+    // Slug resolution — wait until categories have loaded
+    if (categories.length === 0) return;
+    const match = categories.find((c) => c.slug === catParam);
+    setSelectedCategory(match?.id ?? '');
+  }, [catParam, categories]);
 
   const fetchProducts = useCallback(async (pageIndex: number, append = false) => {
     if (append) {
