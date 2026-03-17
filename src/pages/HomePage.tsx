@@ -4,6 +4,7 @@ import {
   ArrowRight, Layers,
   LayoutGrid,
   RotateCcw, Tag,
+  BadgeCheck, ShieldCheck, Truck,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 import { supabase } from '../lib/supabase';
@@ -14,7 +15,30 @@ import ProductCard from '../components/ProductCard';
 const HomeBelowFold = lazy(() => import('../components/HomeBelowFold'));
 
 
-// ── Placeholder images (shown when sections have no live products) ─────────────
+// ── Trust bar items ───────────────────────────────────────────────────────────
+const TRUST_ITEMS = [
+  { icon: BadgeCheck, label: 'Verified Sellers',   desc: 'All sellers are vetted before listing' },
+  { icon: ShieldCheck, label: 'Secure Platform',   desc: 'Payments powered by Stripe' },
+  { icon: Truck,       label: 'UK Delivery Support', desc: 'Nationwide delivery & collection' },
+];
+
+// ── Category visual grid data ─────────────────────────────────────────────────
+const CATEGORY_GRID = [
+  { slug: 'amazon-returns', label: 'Amazon Returns',    image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'clearance',      label: 'Clearance',         image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'wholesale',      label: 'Wholesale',         image: 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'electronics',    label: 'Electronics',       image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'home-garden',    label: 'Home & Garden',     image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'tools-diy',      label: 'Tools & DIY',       image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'business-supplies', label: 'Business Supplies', image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'fashion',        label: 'Fashion',           image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'automotive',     label: 'Automotive',        image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'toys',           label: 'Toys',              image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'pets',           label: 'Pets',              image: 'https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'handmade',       label: 'Handmade',          image: 'https://images.unsplash.com/photo-1547895749-888a559fc2af?w=400&q=65&auto=format&fit=crop' },
+];
+
+
 // Each section uses 4 completely distinct images — no cross-section repeats.
 const PLACEHOLDER_FEATURED = [
   { id: 'pf-1', title: 'Electronics Pallet — Mixed Stock',       image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=65&auto=format&fit=crop' },
@@ -303,6 +327,62 @@ export default function HomePage() {
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <CinematicHero />
+
+      {/* ── Trust Bar ───────────────────────────────────────────────────── */}
+      <section className="bg-[#F8F9FA] border-b border-gray-200 py-5">
+        <div className="container-market">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-0 sm:divide-x sm:divide-gray-200">
+            {TRUST_ITEMS.map(({ icon: Icon, label, desc }) => (
+              <div key={label} className="flex items-center justify-center gap-3 px-4 py-1">
+                <div className="flex-shrink-0 w-9 h-9 rounded-full bg-[#1E3A5F]/10 flex items-center justify-center">
+                  <Icon className="w-5 h-5 text-[#1E3A5F]" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{label}</p>
+                  <p className="text-xs text-gray-500">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Shop by Category ────────────────────────────────────────────── */}
+      <section className="bg-white py-8 border-b border-gray-200">
+        <div className="container-market">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Shop by Category</h2>
+              <p className="text-sm text-gray-500">Browse all product categories</p>
+            </div>
+            <Link to="/catalog" className="text-sm text-[#1E3A5F] hover:underline font-medium whitespace-nowrap">
+              All Categories →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            {CATEGORY_GRID.map((cat) => (
+              <Link
+                key={cat.slug}
+                to={`/category/${cat.slug}`}
+                className="group block rounded-lg overflow-hidden border border-gray-200 hover:border-[#F4C400] hover:shadow-md transition-all duration-200"
+              >
+                <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+                  <img
+                    src={cat.image}
+                    alt={cat.label}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div className="p-2 text-center bg-white">
+                  <p className="text-xs font-semibold text-gray-800 truncate">{cat.label}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ── Featured Products ───────────────────────────────────────────── */}
       <section className="bg-white py-8 border-b border-gray-200">

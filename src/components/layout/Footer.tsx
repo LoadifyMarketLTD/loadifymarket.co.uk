@@ -9,14 +9,15 @@ function isDashboardRoute(pathname: string) {
 }
 
 const footerLinkClass =
-  'text-[#E5E7EB] hover:text-[#F4B400] transition-colors duration-200 text-[14px] font-normal block py-3';
+  'text-[#9CA3AF] hover:text-[#F4B400] transition-colors duration-200 text-[13px] font-normal block py-2.5';
 
 const footerTitleStyle: React.CSSProperties = {
-  fontSize: '16px',
-  fontWeight: 600,
-  letterSpacing: '0.5px',
+  fontSize: '13px',
+  fontWeight: 700,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
   color: '#F4B400',
-  marginBottom: '14px',
+  marginBottom: '16px',
 };
 
 export default function Footer() {
