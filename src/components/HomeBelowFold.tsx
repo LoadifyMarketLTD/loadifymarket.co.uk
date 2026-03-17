@@ -4,10 +4,10 @@ import {
   Package,
   Truck,
   Store,
-  UserPlus,
-  ShoppingCart,
   Lock,
   BadgeCheck,
+  Search,
+  ShoppingCart,
 } from 'lucide-react';
 
 const LOGISTICS_IMG =
@@ -15,25 +15,22 @@ const LOGISTICS_IMG =
 
 const HOW_IT_WORKS = [
   {
-    icon: UserPlus,
+    icon: Search,
     step: '1',
-    title: 'Create account',
-    description:
-      'Sign up free and complete your profile in minutes. Open to all UK buyers and sellers.',
+    title: 'Browse Products',
+    description: 'Explore thousands of wholesale, clearance and pallet listings from verified UK sellers.',
   },
   {
     icon: ShoppingCart,
     step: '2',
-    title: 'Buy or list products',
-    description:
-      'Browse thousands of listings or list your own stock — single items, pallets, or wholesale lots.',
+    title: 'Contact Seller / Buy',
+    description: 'Purchase directly or contact the seller to discuss bulk orders and delivery options.',
   },
   {
-    icon: Truck,
+    icon: Package,
     step: '3',
-    title: 'Arrange delivery',
-    description:
-      'Arrange collection and delivery across the UK through our trusted logistics network.',
+    title: 'Receive Goods',
+    description: 'Arrange collection or delivery across the UK — fast, flexible and hassle-free.',
   },
 ];
 
@@ -125,18 +122,18 @@ export default function HomeBelowFold() {
             {/* Left: Seller CTA */}
             <div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                Have stock to sell?
+                Start selling your stock on Loadify Market today
               </h2>
               <p className="text-white/80 text-base mb-6">
-                List pallets, clearance and wholesale stock and reach thousands of UK buyers through Loadify Market.
+                List pallets, clearance and wholesale stock and reach thousands of UK buyers instantly.
               </p>
               <Link
                 to="/register?type=seller"
-                className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-6 py-3 rounded transition-colors"
+                className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-bold px-8 py-4 rounded text-base transition-colors shadow-lg"
               >
-                <Store className="w-4 h-4" />
-                Start Selling
-                <ArrowRight className="w-4 h-4" />
+                <Store className="w-5 h-5" />
+                Start Selling Free
+                <ArrowRight className="w-5 h-5" />
               </Link>
             </div>
 

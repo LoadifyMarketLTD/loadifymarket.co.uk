@@ -563,64 +563,293 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   FOOTER RESPONSIVE GRID
+   FOOTER — PREMIUM REDESIGN
+   Three zones: A (brand bar) · B (link grid) · C (legal strip)
    ═══════════════════════════════════════════════════════════ */
 
-/* Footer: top bar — logo + social icons */
-.footer-top {
+/* ── Shared inner wrapper ──────────────────────────────────────────────────── */
+.lm-footer {
+  background: linear-gradient(180deg, #0A2239 0%, #061627 100%);
+}
+
+.lm-footer-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-left: clamp(1.5rem, 5vw, 4rem);
+  padding-right: clamp(1.5rem, 5vw, 4rem);
+}
+
+/* ── ZONE A — Brand top bar ────────────────────────────────────────────────── */
+.lm-footer-zone-a {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+  padding: 28px 0;
+}
+
+.lm-footer-topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
 }
 
-/* Footer: About column paragraph width */
-.footer-about p {
-  max-width: 260px;
-  line-height: 1.6;
+/* Brand logo */
+.lm-footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  flex-shrink: 0;
 }
 
-/* Footer: icon + text rows alignment */
-.footer-about .info-row {
+.lm-footer-brand-icon {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+/* Trust pills row */
+.lm-footer-trust-pills {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.lm-footer-trust-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #CBD5E1;
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Social row */
+.lm-footer-social {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.lm-footer-social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #CBD5E1;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.lm-footer-social-link:hover {
+  background: rgba(244, 180, 0, 0.15);
+  color: #F4B400;
+}
+
+/* ── ZONE B — Main link grid ───────────────────────────────────────────────── */
+.lm-footer-zone-b {
+  padding: 56px 0 52px;
+}
+
+.lm-footer-grid {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(5, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+
+/* Column headings */
+.lm-footer-heading {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: #F4B400;
+  margin-bottom: 20px;
+  line-height: 1;
+}
+
+/* About column */
+
+.lm-footer-about-desc {
+  font-size: 13px;
+  line-height: 1.65;
+  color: #CBD5E1;
+  max-width: 240px;
+  margin-bottom: 20px;
+}
+
+.lm-footer-about-info-group {
+  padding: 14px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lm-footer-about-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748B;
+  margin-bottom: 4px;
+}
+
+.lm-footer-about-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #E2E8F0;
+  margin-bottom: 3px;
+}
+
+.lm-footer-about-meta {
+  font-size: 12px;
+  color: #94A3B8;
+  line-height: 1.55;
+}
+
+.lm-footer-about-row {
   display: flex;
   align-items: flex-start;
   gap: 8px;
 }
 
-/* Footer: consistent heading spacing */
-.footer-grid h3 {
-  font-weight: 600;
-  margin-bottom: 14px;
+/* Nav columns */
+
+.lm-footer-nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
-/* Footer: subtle divider */
-.footer-divider {
-  border-top: 1px solid rgba(255,255,255,0.12);
+.lm-footer-link {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  color: #94A3B8;
+  line-height: 1;
+  padding: 7px 0;
+  text-decoration: none;
+  transition: color 0.18s ease, padding-left 0.18s ease;
+  border-bottom: none;
 }
 
-/* Footer: social icons */
-.footer-social {
+.lm-footer-link:hover {
+  color: #F4B400;
+  padding-left: 4px;
+}
+
+/* ── ZONE C — Bottom legal strip ───────────────────────────────────────────── */
+.lm-footer-zone-c {
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  padding: 20px 0;
+}
+
+.lm-footer-bottom {
   display: flex;
-  gap: 12px;
   align-items: center;
-  color: #E5E7EB;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.footer-social a {
-  transition: opacity 0.2s ease;
+.lm-footer-copyright {
+  font-size: 12.5px;
+  color: #475569;
+  margin: 0;
 }
 
-@media (max-width: 1023px) {
-  .footer-top {
-    padding-left: 24px !important;
-    padding-right: 24px !important;
+.lm-footer-bottom-links {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.lm-footer-bottom-link {
+  font-size: 12px;
+  color: #475569;
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.lm-footer-bottom-link:hover {
+  color: #F4B400;
+}
+
+/* ── Dashboard mini-footer ─────────────────────────────────────────────────── */
+.lm-footer-dash {
+  background: linear-gradient(180deg, #0A2239, #081A2C);
+}
+
+.lm-footer-inner-sm {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px clamp(1.5rem, 5vw, 4rem);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── Responsive: Tablet (768–1199px) ──────────────────────────────────────── */
+@media (max-width: 1199px) {
+  .lm-footer-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px 36px;
+  }
+
+  .lm-footer-about-desc {
+    max-width: 100%;
+  }
+
+  .lm-footer-trust-pills {
+    display: none;
   }
 }
 
+/* ── Responsive: Mobile (< 640px) ────────────────────────────────────────── */
 @media (max-width: 639px) {
-  .footer-top {
+  .lm-footer-zone-b {
+    padding: 40px 0 36px;
+  }
+
+  .lm-footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 28px 20px;
+  }
+
+  .lm-footer-about-col {
+    grid-column: 1 / -1;
+  }
+
+  .lm-footer-topbar {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+
+  .lm-footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .lm-footer-bottom-links {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
+/* ── Responsive: Very small (< 400px) ────────────────────────────────────── */
+@media (max-width: 399px) {
+  .lm-footer-grid {
+    grid-template-columns: 1fr;
   }
 }
 

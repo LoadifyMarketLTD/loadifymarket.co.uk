@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, ShieldCheck, BadgeCheck, Truck, Store } from 'lucide-react';
+import { ArrowRight, Store } from 'lucide-react';
 
 export default function CinematicHero() {
   return (
@@ -12,41 +12,26 @@ export default function CinematicHero() {
               UK Multi-Category Marketplace
             </div>
             <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
-              UK Marketplace for Pallets,<br />Clearance &amp; Wholesale Stock
+              Buy &amp; Sell Wholesale,<br />Clearance &amp; Pallet Deals<br className="hidden lg:block" /> Across the UK
             </h1>
-            <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-              Browse bulk deals, returns stock and wholesale inventory from verified UK sellers.
+            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+              Loadify Market connects buyers and sellers across the UK. We do not own or sell products — we provide the platform.
             </p>
-            <div className="flex flex-wrap gap-3 mb-8">
+            <div className="flex flex-wrap gap-3">
               <Link
                 to="/catalog"
-                className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-6 py-3 rounded transition-colors"
+                className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-7 py-3.5 rounded text-base transition-colors shadow-sm"
               >
                 Browse Marketplace
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-5 w-5" />
               </Link>
               <Link
                 to="/register?type=seller"
-                className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-6 py-3 rounded transition-colors"
+                className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-7 py-3.5 rounded text-base transition-colors"
               >
-                <Store className="h-4 w-4" />
+                <Store className="h-5 w-5" />
                 Start Selling
               </Link>
-            </div>
-            {/* Trust badges */}
-            <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-green-600" />
-                Secure Payments
-              </div>
-              <div className="flex items-center gap-2">
-                <BadgeCheck className="h-4 w-4 text-green-600" />
-                Verified Sellers
-              </div>
-              <div className="flex items-center gap-2">
-                <Truck className="h-4 w-4 text-green-600" />
-                UK Wide Delivery
-              </div>
             </div>
           </div>
 
