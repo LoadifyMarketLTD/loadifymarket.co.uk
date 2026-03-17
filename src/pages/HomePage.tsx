@@ -17,15 +17,15 @@ const HomeBelowFold = lazy(() => import('../components/HomeBelowFold'));
 
 // ── Categories ────────────────────────────────────────────────────────────────
 const CATEGORIES = [
-  { name: 'Amazon Returns',    icon: RotateCcw,  href: '/catalog?type=lot',           iconColor: 'text-orange-500' },
+  { name: 'Amazon Returns',    icon: RotateCcw,  href: '/category/amazon-returns',    iconColor: 'text-orange-500' },
   { name: 'Wholesale & Bulk',  icon: Layers,     href: '/bulk',                       iconColor: 'text-[#F4C400]'  },
-  { name: 'Clearance Stock',   icon: Tag,        href: '/catalog?type=clearance',     iconColor: 'text-red-500'    },
-  { name: 'Electronics',       icon: Cpu,        href: '/shop?category=electronics',  iconColor: 'text-blue-500'   },
-  { name: 'Home & Garden',     icon: Home,       href: '/shop?category=home-garden',  iconColor: 'text-emerald-500'},
-  { name: 'Tools & DIY',       icon: Wrench,     href: '/shop?category=tools',        iconColor: 'text-amber-600'  },
-  { name: 'Business Supplies', icon: Briefcase,  href: '/shop?category=business',     iconColor: 'text-indigo-500' },
-  { name: 'Fashion',           icon: Shirt,      href: '/shop?category=fashion',      iconColor: 'text-pink-500'   },
-  { name: 'Automotive Parts',  icon: Car,        href: '/shop?category=vehicles',     iconColor: 'text-red-500'    },
+  { name: 'Clearance Stock',   icon: Tag,        href: '/category/clearance',         iconColor: 'text-red-500'    },
+  { name: 'Electronics',       icon: Cpu,        href: '/category/electronics',       iconColor: 'text-blue-500'   },
+  { name: 'Home & Garden',     icon: Home,       href: '/category/home-garden',       iconColor: 'text-emerald-500'},
+  { name: 'Tools & DIY',       icon: Wrench,     href: '/category/tools-diy',         iconColor: 'text-amber-600'  },
+  { name: 'Business Supplies', icon: Briefcase,  href: '/category/business-supplies', iconColor: 'text-indigo-500' },
+  { name: 'Fashion',           icon: Shirt,      href: '/category/fashion',           iconColor: 'text-pink-500'   },
+  { name: 'Automotive Parts',  icon: Car,        href: '/category/automotive',        iconColor: 'text-red-500'    },
   { name: 'Mixed Job Lots',    icon: Package,    href: '/catalog?type=lot',           iconColor: 'text-slate-500'  },
 ];
 
@@ -323,7 +323,7 @@ export default function HomePage() {
               </span>
             }
             subtitle="Popular return stock and mixed retail pallets"
-            viewAllHref="/catalog?type=lot"
+            viewAllHref="/category/amazon-returns"
           />
 
           {secondaryLoading ? (
@@ -337,7 +337,7 @@ export default function HomePage() {
           ) : (
             <PlaceholderGrid
               items={PLACEHOLDER_AMAZON}
-              href="/catalog?type=lot"
+              href="/category/amazon-returns"
               badge="Returns Pallet"
               badgeColor="bg-orange-100 text-orange-700"
             />
@@ -351,7 +351,7 @@ export default function HomePage() {
           <SectionHeader
             title="Clearance Deals"
             subtitle="End-of-line stock and discounted listings"
-            viewAllHref="/catalog?type=clearance"
+            viewAllHref="/category/clearance"
           />
 
           {secondaryLoading ? (
@@ -365,7 +365,7 @@ export default function HomePage() {
           ) : (
             <PlaceholderGrid
               items={PLACEHOLDER_CLEARANCE}
-              href="/catalog?type=clearance"
+              href="/category/clearance"
               badge="Clearance"
               badgeColor="bg-red-100 text-red-800 font-semibold"
             />
