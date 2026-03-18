@@ -82,7 +82,7 @@ export default function CategoryPage() {
         .from('products')
         .select(`
           *,
-          seller:seller_profiles!left(
+          seller:seller_profiles_public!left(
             businessName,
             isApproved,
             rating,

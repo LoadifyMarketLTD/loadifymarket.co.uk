@@ -77,6 +77,32 @@ export const handler: Handler = async (event) => {
   }
 
   try {
+    // ── Event-level idempotency via stripe_events table ────────────────────
+    // Insert the event ID before processing. If the ID already exists
+    // (UNIQUE constraint), the insert fails and we skip processing to
+    // avoid duplicate orders / double stock decrements on Stripe retries.
+    if (supabase) {
+      const { error: dedupError } = await supabase
+        .from('stripe_events')
+        .insert({
+          event_id:   stripeEvent.id,
+          event_type: stripeEvent.type,
+          livemode:   stripeEvent.livemode,
+          status:     'processed',
+        });
+
+      if (dedupError) {
+        if (dedupError.code === '23505') {
+          // Unique violation — already processed
+          console.log(`stripe_events: duplicate event ${stripeEvent.id} (${stripeEvent.type}) — skipping`);
+          return { statusCode: 200, body: JSON.stringify({ received: true, skipped: true }) };
+        }
+        // Non-duplicate DB error — log but proceed (don't block order creation)
+        console.warn(`stripe_events insert failed for ${stripeEvent.id}:`, dedupError.message);
+      }
+    }
+    // ──────────────────────────────────────────────────────────────────────
+
     switch (stripeEvent.type) {
       case 'checkout.session.completed': {
         const session = stripeEvent.data.object as Stripe.Checkout.Session;
@@ -123,6 +149,17 @@ export const handler: Handler = async (event) => {
     };
   } catch (error) {
     console.error('Webhook handler error:', error);
+    // Mark the event as failed in stripe_events so admin can see it
+    if (supabase) {
+      await supabase
+        .from('stripe_events')
+        .update({
+          status:        'failed',
+          error_message: error instanceof Error ? error.message : String(error),
+        })
+        .eq('event_id', stripeEvent.id)
+        .catch((e: unknown) => console.error('Failed to update stripe_events status:', e));
+    }
     return {
       statusCode: 500,
       body: JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),

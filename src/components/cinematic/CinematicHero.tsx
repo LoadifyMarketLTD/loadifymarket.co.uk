@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Store } from 'lucide-react';
+import { ArrowRight, Store, ShoppingBag } from 'lucide-react';
 
 export default function CinematicHero() {
   return (
@@ -9,28 +9,32 @@ export default function CinematicHero() {
           {/* Left: Text Content */}
           <div>
             <div className="inline-flex items-center gap-2 bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
-              UK Multi-Category Marketplace
+              UK Multi-Category Marketplace Intermediary
             </div>
             <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
               Buy &amp; Sell Wholesale,<br />Clearance &amp; Pallet Deals<br className="hidden lg:block" /> Across the UK
             </h1>
-            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-              Loadify Market connects buyers and sellers across the UK. We do not own or sell products — we provide the platform.
+            <p className="text-lg text-gray-600 mb-2 leading-relaxed">
+              Loadify Market is an intermediary marketplace connecting independent buyers and sellers across the UK.
+            </p>
+            <p className="text-sm text-gray-500 mb-8">
+              We provide the platform only. Each seller is solely responsible for their listings, fulfilment, and product quality.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
                 to="/shop"
                 className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-7 py-3.5 rounded text-base transition-colors shadow-sm"
               >
-                Browse Marketplace
-                <ArrowRight className="h-5 w-5" />
+                <ShoppingBag className="h-5 w-5" />
+                Buy Stock
               </Link>
               <Link
                 to="/register?type=seller"
-                className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-[#1E3A5F] font-semibold px-7 py-3.5 rounded text-base transition-colors"
+                className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-7 py-3.5 rounded text-base transition-colors"
               >
                 <Store className="h-5 w-5" />
-                Start Selling
+                Sell Stock
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>

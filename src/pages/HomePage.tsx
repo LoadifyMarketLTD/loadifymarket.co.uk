@@ -91,7 +91,7 @@ function transformProductRows(data: ProductRow[]) {
 
 const PRODUCT_QUERY_FIELDS = `
   *,
-  seller:seller_profiles!left(
+  seller:seller_profiles_public!left(
     businessName,
     isApproved,
     rating,
