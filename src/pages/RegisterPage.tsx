@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [storeName, setStoreName] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -221,9 +222,41 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            {isSeller && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-sm font-semibold text-amber-800 mb-1">Seller Responsibility Notice</p>
+                <p className="text-sm text-amber-700">
+                  You are fully responsible for your products, listings, and transactions.
+                  Loadify Market acts only as a marketplace platform and accepts no liability
+                  for your sales, product quality, or fulfilment.
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-start gap-3">
+              <input
+                id="agreedToTerms"
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                required
+                className="mt-1 h-4 w-4 rounded border-gray-300 text-gold accent-[#F4B400] cursor-pointer flex-shrink-0"
+              />
+              <label htmlFor="agreedToTerms" className="text-sm text-gray-600 cursor-pointer">
+                I agree to the{' '}
+                <Link to="/terms" target="_blank" rel="noopener noreferrer" className="text-gold hover:text-gold/80 transition-colors font-medium underline">
+                  Terms &amp; Conditions
+                </Link>
+                {' '}and{' '}
+                <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="text-gold hover:text-gold/80 transition-colors font-medium underline">
+                  Privacy Policy
+                </Link>
+              </label>
+            </div>
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !agreedToTerms}
               className="btn-primary w-full h-12 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {loading ? 'Creating account...' : isSeller ? 'Register as Seller' : 'Create Account'}

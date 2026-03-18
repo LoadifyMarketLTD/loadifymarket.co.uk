@@ -82,6 +82,7 @@ const NAV_COLUMNS = [
       { label: 'Terms & Conditions',   to: '/terms'                     },
       { label: 'Privacy Policy',       to: '/privacy'                   },
       { label: 'Cookie Policy',        to: '/cookies'                   },
+      { label: 'Disclaimer',           to: '/disclaimer'                },
       { label: 'Returns Policy',       to: '/returns-policy'            },
       { label: 'Shipping Policy',      to: '/shipping-policy'           },
       { label: 'Buyer Terms',          to: '/buyer-terms'               },
@@ -242,13 +243,15 @@ export default function Footer() {
             © 2026 {BRAND.name}. All rights reserved.
           </p>
           <div className="lm-footer-bottom-links">
-            <Link to="/terms"   className="lm-footer-bottom-link">Terms</Link>
+            <Link to="/terms"       className="lm-footer-bottom-link">Terms</Link>
             <span className="lm-footer-bottom-sep" aria-hidden="true">|</span>
-            <Link to="/privacy" className="lm-footer-bottom-link">Privacy</Link>
+            <Link to="/privacy"     className="lm-footer-bottom-link">Privacy</Link>
             <span className="lm-footer-bottom-sep" aria-hidden="true">|</span>
-            <Link to="/cookies" className="lm-footer-bottom-link">Cookies</Link>
+            <Link to="/cookies"     className="lm-footer-bottom-link">Cookies</Link>
             <span className="lm-footer-bottom-sep" aria-hidden="true">|</span>
-            <Link to="/contact" className="lm-footer-bottom-link">Contact</Link>
+            <Link to="/disclaimer"  className="lm-footer-bottom-link">Disclaimer</Link>
+            <span className="lm-footer-bottom-sep" aria-hidden="true">|</span>
+            <Link to="/contact"     className="lm-footer-bottom-link">Contact</Link>
           </div>
           <div className="lm-footer-bottom-social" aria-label="Social media links">
             {SOCIAL_LINKS.map(({ href, Icon, label }) => (
