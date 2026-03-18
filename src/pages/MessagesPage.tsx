@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { MessageCircle, Send, User } from 'lucide-react';
@@ -23,12 +23,17 @@ interface ConvMessageRow {
 
 export default function MessagesPage() {
   const { user } = useAuthStore();
+  const [searchParams] = useSearchParams();
   const [conversations, setConversations] = useState<ConversationWithDetails[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+
+  // URL params for "Contact Seller" deep-link from ProductPage
+  const initSellerId = searchParams.get('sellerId');
+  const initProductId = searchParams.get('productId');
 
   const fetchConversations = useCallback(async () => {
     if (!user) return;
@@ -120,6 +125,51 @@ export default function MessagesPage() {
       fetchConversations();
     }
   }, [user, fetchConversations]);
+
+  // Auto-open or create conversation when coming from "Contact Seller" on ProductPage
+  useEffect(() => {
+    if (!user || !initSellerId || loading) return;
+    // Don't try to message yourself
+    if (initSellerId === user.id) return;
+
+    const openOrCreateConversation = async () => {
+      const u1 = user.id < initSellerId ? user.id : initSellerId;
+      const u2 = user.id < initSellerId ? initSellerId : user.id;
+
+      // Try to find existing conversation (with or without product context)
+      const { data: existing } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('user1Id', u1)
+        .eq('user2Id', u2)
+        .eq('productId', initProductId ?? null)
+        .maybeSingle();
+
+      if (existing) {
+        setSelectedConversation(existing.id);
+        return;
+      }
+
+      // Create a new conversation
+      const { data: created, error } = await supabase
+        .from('conversations')
+        .insert({
+          user1Id: u1,
+          user2Id: u2,
+          productId: initProductId || null,
+          lastMessageAt: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+
+      if (!error && created) {
+        setSelectedConversation(created.id);
+        fetchConversations();
+      }
+    };
+
+    openOrCreateConversation();
+  }, [user, initSellerId, initProductId, loading, fetchConversations]);
 
   useEffect(() => {
     if (selectedConversation) {

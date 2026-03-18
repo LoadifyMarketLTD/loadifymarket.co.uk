@@ -22,13 +22,15 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const getTypeInfo = () => {
     switch (product.type) {
-      case 'logistics': return { icon: Truck, label: 'Logistics' };
-      case 'pallet':    return { icon: Package, label: 'Pallet' };
-      case 'lot':       return { icon: Package, label: 'Bulk' };
-      case 'wholesale': return { icon: Package, label: 'Wholesale' };
-      case 'clearance': return { icon: Package, label: 'Clearance' };
-      case 'handmade':  return { icon: Sparkles, label: 'Handmade' };
-      default:          return { icon: Package, label: 'Product' };
+      case 'logistics': return { icon: Truck, label: 'Logistics', color: 'bg-slate-600' };
+      case 'pallet':    return { icon: Package, label: 'Pallet Deal', color: 'bg-[#1E3A5F]' };
+      case 'lot':       return { icon: Package, label: 'Bulk Lot', color: 'bg-[#1E3A5F]' };
+      case 'wholesale': return { icon: Package, label: 'Wholesale', color: 'bg-[#1E3A5F]' };
+      case 'clearance': return { icon: Tag, label: 'Clearance', color: 'bg-red-600' };
+      case 'handmade':  return { icon: Sparkles, label: 'Handmade', color: 'bg-fuchsia-600' };
+      case 'retail':    return { icon: Package, label: 'Single Item', color: 'bg-emerald-600' };
+      case 'product':   return { icon: Package, label: 'Single Item', color: 'bg-emerald-600' };
+      default:          return { icon: Package, label: 'Product', color: 'bg-gray-500' };
     }
   };
 
@@ -64,15 +66,13 @@ export default function ProductCard({ product }: ProductCardProps) {
           />
         </button>
 
-        {/* Type badge */}
-        {!['product', 'retail'].includes(product.type) && (
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
-            <span className="inline-flex items-center gap-1 bg-[#1E3A5F] text-white text-[10px] font-semibold px-2 py-0.5 rounded">
-              <TypeIcon className="w-3 h-3" />
-              {typeInfo.label}
-            </span>
-          </div>
-        )}
+        {/* Type badge — always shown for non-ambiguous types */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
+          <span className={`inline-flex items-center gap-1 ${typeInfo.color} text-white text-[10px] font-semibold px-2 py-0.5 rounded`}>
+            <TypeIcon className="w-3 h-3" />
+            {typeInfo.label}
+          </span>
+        </div>
 
         {/* Discount badge */}
         {typeof discount === 'number' && discount > 0 && (

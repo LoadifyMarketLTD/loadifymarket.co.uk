@@ -385,6 +385,71 @@ export default function ProductPage() {
               <span className="font-medium text-white capitalize">{product.condition}</span>
             </div>
 
+            {/* Wholesale / Bulk structured details */}
+            {(product.type === 'wholesale' || product.type === 'lot') && product.specifications && (
+              <div className="mb-6 p-4 bg-white/5 border border-white/10 rounded-lg">
+                <h3 className="text-sm font-semibold text-white/70 mb-3 uppercase tracking-wide">
+                  {product.type === 'wholesale' ? 'Wholesale Details' : 'Bulk Lot Details'}
+                </h3>
+                <dl className="grid grid-cols-2 gap-3 text-sm">
+                  {product.specifications.moq && (
+                    <>
+                      <dt className="text-white/40">Min. Order Qty</dt>
+                      <dd className="text-white font-semibold">{product.specifications.moq} units</dd>
+                    </>
+                  )}
+                  {product.specifications.lotQuantity && (
+                    <>
+                      <dt className="text-white/40">
+                        {product.type === 'wholesale' ? 'Units in Lot' : 'Items in Lot'}
+                      </dt>
+                      <dd className="text-white font-semibold">{product.specifications.lotQuantity}</dd>
+                    </>
+                  )}
+                  {product.specifications.moq && (
+                    <>
+                      <dt className="text-white/40">Price per Unit</dt>
+                      <dd className="text-white font-semibold">
+                        {(() => {
+                          const moqNum = parseInt(product.specifications.moq, 10);
+                          return moqNum > 0
+                            ? `£${(product.price / moqNum).toFixed(2)}`
+                            : '—';
+                        })()}
+                      </dd>
+                    </>
+                  )}
+                </dl>
+              </div>
+            )}
+
+            {/* Pallet details */}
+            {product.type === 'pallet' && product.palletInfo && (
+              <div className="mb-6 p-4 bg-white/5 border border-white/10 rounded-lg">
+                <h3 className="text-sm font-semibold text-white/70 mb-3 uppercase tracking-wide">Pallet Details</h3>
+                <dl className="grid grid-cols-2 gap-3 text-sm">
+                  {product.palletInfo.palletCount > 0 && (
+                    <>
+                      <dt className="text-white/40">Number of Pallets</dt>
+                      <dd className="text-white font-semibold">{product.palletInfo.palletCount}</dd>
+                    </>
+                  )}
+                  {product.palletInfo.itemsPerPallet > 0 && (
+                    <>
+                      <dt className="text-white/40">Items per Pallet</dt>
+                      <dd className="text-white font-semibold">{product.palletInfo.itemsPerPallet}</dd>
+                    </>
+                  )}
+                  {product.palletInfo.palletType && (
+                    <>
+                      <dt className="text-white/40">Pallet Type</dt>
+                      <dd className="text-white font-semibold capitalize">{product.palletInfo.palletType}</dd>
+                    </>
+                  )}
+                </dl>
+              </div>
+            )}
+
             {/* Quantity Selector — retail products only */}
             {product.stockQuantity > 0 && !isBulkProduct && (
               <div className="mb-8">
@@ -487,7 +552,9 @@ export default function ProductPage() {
                   </Link>
                 )}
                 <Link
-                  to="/contact"
+                  to={user
+                    ? `/messages?sellerId=${product.sellerId}&productId=${product.id}`
+                    : `/login?redirect=${encodeURIComponent(`/messages?sellerId=${product.sellerId}&productId=${product.id}`)}`}
                   className="btn-glass w-full py-3 flex items-center justify-center gap-2"
                 >
                   <MessageCircle className="w-5 h-5" />

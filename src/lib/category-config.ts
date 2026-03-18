@@ -12,6 +12,7 @@
 import {
   Cpu, Shirt, Home, Wrench, Car, Briefcase, RotateCcw, Tag,
   Gamepad2, PawPrint, Sparkles, Layers,
+  Trophy, Heart, Baby, UtensilsCrossed,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -403,6 +404,120 @@ const CATEGORY_CONFIG: readonly CategoryConfig[] = [
         'Try adjusting your search or filters, or select another subcategory. New handmade items are listed regularly.',
     },
     productFilter: { categorySlug: 'handmade' },
+  },
+
+  // ── Sports & Outdoors ──────────────────────────────────────────────────────
+  {
+    slug: 'sports-outdoors',
+    label: 'Sports & Outdoors',
+    title: 'Sports & Outdoors',
+    subtitle: 'Fitness equipment, outdoor gear, cycling, camping and team sports',
+    icon: Trophy,
+    iconColor: 'text-green-600',
+    accentBg: 'bg-green-600/15',
+    chips: [
+      { label: 'All Sports & Outdoors' },
+      { label: 'Gym & Fitness', searchTerm: 'gym fitness dumbbell weights treadmill' },
+      { label: 'Cycling', searchTerm: 'bike bicycle cycling helmet pump' },
+      { label: 'Football & Team Sports', searchTerm: 'football rugby cricket bat ball goal' },
+      { label: 'Running', searchTerm: 'running trainers jogging shoes' },
+      { label: 'Camping & Hiking', searchTerm: 'camping hiking tent sleeping bag rucksack' },
+      { label: 'Outdoor Clothing', searchTerm: 'outdoor jacket waterproof fleece hiking' },
+      { label: 'Water Sports', searchTerm: 'water sports kayak surf paddle board' },
+      { label: 'Golf', searchTerm: 'golf club driver iron bag trolley' },
+      { label: 'Racket Sports', searchTerm: 'tennis badminton squash racket' },
+    ],
+    emptyState: {
+      title: 'No Sports & Outdoors products found',
+      description:
+        'Try adjusting your search or filters. New sports and outdoor equipment is listed regularly.',
+    },
+    productFilter: { categorySlug: 'sports-outdoors' },
+  },
+
+  // ── Health & Beauty ────────────────────────────────────────────────────────
+  {
+    slug: 'health-beauty',
+    label: 'Health & Beauty',
+    title: 'Health & Beauty',
+    subtitle: 'Skincare, haircare, vitamins, fragrances, personal care and wellness',
+    icon: Heart,
+    iconColor: 'text-rose-500',
+    accentBg: 'bg-rose-500/15',
+    chips: [
+      { label: 'All Health & Beauty' },
+      { label: 'Skincare', searchTerm: 'skincare moisturiser serum face cream' },
+      { label: 'Haircare', searchTerm: 'haircare shampoo conditioner hair mask' },
+      { label: 'Fragrances', searchTerm: 'fragrance perfume aftershave cologne' },
+      { label: 'Make-up & Cosmetics', searchTerm: 'makeup cosmetics foundation lipstick' },
+      { label: 'Vitamins & Supplements', searchTerm: 'vitamins supplements health protein' },
+      { label: 'Personal Care', searchTerm: 'personal care hygiene deodorant body' },
+      { label: 'Hair Tools', searchTerm: 'hair dryer straightener curler tools' },
+      { label: 'Oral Care', searchTerm: 'oral care toothbrush toothpaste whitening' },
+      { label: 'Wellness', searchTerm: 'wellness massage relaxation aromatherapy' },
+    ],
+    emptyState: {
+      title: 'No Health & Beauty products found',
+      description:
+        'Try adjusting your search or filters. New beauty and health products are added regularly.',
+    },
+    productFilter: { categorySlug: 'health-beauty' },
+  },
+
+  // ── Baby & Kids ────────────────────────────────────────────────────────────
+  {
+    slug: 'baby-kids',
+    label: 'Baby & Kids',
+    title: 'Baby & Kids',
+    subtitle: 'Everything for babies and children — clothing, nursery, feeding, toys and more',
+    icon: Baby,
+    iconColor: 'text-sky-500',
+    accentBg: 'bg-sky-500/15',
+    chips: [
+      { label: 'All Baby & Kids' },
+      { label: 'Baby Clothing', searchTerm: 'baby clothing babygrow sleepsuit vest' },
+      { label: 'Nursery', searchTerm: 'nursery cot moses basket bedding changing' },
+      { label: 'Feeding', searchTerm: 'feeding bottle breast pump highchair weaning' },
+      { label: 'Pushchairs & Prams', searchTerm: 'pushchair pram buggy stroller car seat' },
+      { label: "Children's Clothing", searchTerm: 'kids boys girls clothing school uniform' },
+      { label: 'Baby Toys', searchTerm: 'baby toy rattle teether playmat activity' },
+      { label: 'Safety & Health', searchTerm: 'baby safety monitor gate stair barrier' },
+      { label: 'Baby Bathing', searchTerm: 'baby bath tub wash towel care' },
+    ],
+    emptyState: {
+      title: 'No Baby & Kids products found',
+      description:
+        'Try adjusting your search or filters. New baby and children items are added regularly.',
+    },
+    productFilter: { categorySlug: 'baby-kids' },
+  },
+
+  // ── Food & Drink ───────────────────────────────────────────────────────────
+  {
+    slug: 'food-drink',
+    label: 'Food & Drink',
+    title: 'Food & Drink',
+    subtitle: 'Grocery essentials, beverages, snacks, wholesale food and catering supplies',
+    icon: UtensilsCrossed,
+    iconColor: 'text-lime-600',
+    accentBg: 'bg-lime-600/15',
+    chips: [
+      { label: 'All Food & Drink' },
+      { label: 'Snacks & Confectionery', searchTerm: 'snack chocolate sweets confectionery' },
+      { label: 'Beverages', searchTerm: 'drink beverage coffee tea juice energy' },
+      { label: 'Grocery', searchTerm: 'grocery food tinned pasta rice cereal' },
+      { label: 'Health Foods', searchTerm: 'health food protein bar organic vegan' },
+      { label: 'Alcohol', searchTerm: 'alcohol wine beer spirits whisky' },
+      { label: 'Wholesale Food', searchTerm: 'wholesale food catering bulk supply' },
+      { label: 'Bakery', searchTerm: 'bakery bread cake biscuit pastry' },
+      { label: 'Condiments & Sauces', searchTerm: 'sauce condiment spice seasoning' },
+    ],
+    emptyState: {
+      title: 'No Food & Drink products found',
+      description:
+        'Try adjusting your search or filters. New food and drink listings are added regularly.',
+    },
+    productFilter: { categorySlug: 'food-drink' },
   },
 ];
 
