@@ -69,13 +69,13 @@ export default function SellerRFQPage() {
   }
 
   return (
-    <div className="bg-jet min-h-screen pt-24">
+    <div className="bg-[#F8F9FA] min-h-screen pt-24">
       {/* Breadcrumb */}
-      <div className="bg-graphite/30">
+      <div className="bg-white/30">
         <div className="container-cinematic py-4">
           <Link
             to="/seller"
-            className="text-white/60 hover:text-gold transition-colors flex items-center gap-2 text-sm"
+            className="text-gray-500 hover:text-gold transition-colors flex items-center gap-2 text-sm"
           >
             <ChevronLeft className="w-4 h-4" />
             Back to Dashboard
@@ -91,9 +91,9 @@ export default function SellerRFQPage() {
               <div className="w-10 h-10 bg-gold/10 border border-gold/30 rounded-premium-sm flex items-center justify-center">
                 <FileText className="w-5 h-5 text-gold" />
               </div>
-              <h1 className="heading-section text-white">RFQ Inbox</h1>
+              <h1 className="heading-section text-gray-900">RFQ Inbox</h1>
             </div>
-            <p className="text-white/50 text-sm ml-13">
+            <p className="text-gray-400 text-sm ml-13">
               Wholesale quote requests from buyers
             </p>
           </div>
@@ -110,7 +110,7 @@ export default function SellerRFQPage() {
           <div className="flex justify-center items-center h-48">
             <div className="text-center">
               <div className="w-10 h-10 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-white/50 text-sm">Loading requests...</p>
+              <p className="text-gray-400 text-sm">Loading requests...</p>
             </div>
           </div>
         )}
@@ -118,11 +118,11 @@ export default function SellerRFQPage() {
         {/* Empty State */}
         {!loading && rfqRequests.length === 0 && (
           <div className="card-glass text-center py-16 px-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/5 rounded-full mb-6">
-              <Inbox className="w-8 h-8 text-white/20" />
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-50 rounded-full mb-6">
+              <Inbox className="w-8 h-8 text-gray-300" />
             </div>
-            <h2 className="text-xl font-bold text-white mb-3">No RFQ requests yet</h2>
-            <p className="text-white/50 text-sm max-w-md mx-auto">
+            <h2 className="text-xl font-bold text-gray-900 mb-3">No RFQ requests yet</h2>
+            <p className="text-gray-400 text-sm max-w-md mx-auto">
               When buyers submit wholesale quote requests for your products, they will appear here.
             </p>
           </div>
@@ -153,7 +153,7 @@ export default function SellerRFQPage() {
                         >
                           {rfq.status === 'replied' ? 'Replied' : 'Pending'}
                         </span>
-                        <span className="flex items-center gap-1 text-xs text-white/40">
+                        <span className="flex items-center gap-1 text-xs text-gray-400">
                           <Calendar className="w-3 h-3" />
                           {formatDate(rfq.created_at)}
                         </span>
@@ -165,30 +165,30 @@ export default function SellerRFQPage() {
                 {/* Details Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                   <div className="flex items-start gap-2">
-                    <Package className="w-4 h-4 text-white/30 flex-shrink-0 mt-0.5" />
+                    <Package className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-white/40 text-xs mb-0.5">Quantity</p>
+                      <p className="text-gray-400 text-xs mb-0.5">Quantity</p>
                       <p className="text-white text-sm font-medium">{rfq.quantity}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
-                    <Globe className="w-4 h-4 text-white/30 flex-shrink-0 mt-0.5" />
+                    <Globe className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-white/40 text-xs mb-0.5">Destination</p>
+                      <p className="text-gray-400 text-xs mb-0.5">Destination</p>
                       <p className="text-white text-sm font-medium">{rfq.destination_country}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
-                    <DollarSign className="w-4 h-4 text-white/30 flex-shrink-0 mt-0.5" />
+                    <DollarSign className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-white/40 text-xs mb-0.5">Budget</p>
+                      <p className="text-gray-400 text-xs mb-0.5">Budget</p>
                       <p className="text-white text-sm font-medium">{rfq.estimated_budget}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
-                    <Mail className="w-4 h-4 text-white/30 flex-shrink-0 mt-0.5" />
+                    <Mail className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-white/40 text-xs mb-0.5">Buyer Email</p>
+                      <p className="text-gray-400 text-xs mb-0.5">Buyer Email</p>
                       <a
                         href={`mailto:${rfq.buyer_email}`}
                         className="text-gold text-sm font-medium hover:underline"
@@ -201,17 +201,17 @@ export default function SellerRFQPage() {
 
                 {/* Message */}
                 {rfq.message && (
-                  <div className="border-t border-white/10 pt-4 flex items-start gap-2">
-                    <MessageSquare className="w-4 h-4 text-white/30 flex-shrink-0 mt-0.5" />
+                  <div className="border-t border-gray-200 pt-4 flex items-start gap-2">
+                    <MessageSquare className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-white/40 text-xs mb-1">Message</p>
-                      <p className="text-white/70 text-sm leading-relaxed">{rfq.message}</p>
+                      <p className="text-gray-400 text-xs mb-1">Message</p>
+                      <p className="text-gray-600 text-sm leading-relaxed">{rfq.message}</p>
                     </div>
                   </div>
                 )}
 
                 {/* Action */}
-                <div className="border-t border-white/10 pt-4 mt-4 flex justify-end">
+                <div className="border-t border-gray-200 pt-4 mt-4 flex justify-end">
                   <a
                     href={`mailto:${rfq.buyer_email}?subject=Re: Wholesale Quote Request – ${encodeURIComponent(rfq.product_name)}`}
                     className="btn-secondary text-sm flex items-center gap-2"

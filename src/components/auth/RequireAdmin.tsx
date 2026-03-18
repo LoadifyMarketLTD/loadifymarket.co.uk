@@ -23,7 +23,7 @@ export default function RequireAdmin({ children }: Props) {
           <div className="card-glass max-w-md w-full text-center p-10">
             <p className="text-5xl mb-4">🚫</p>
             <h2 className="text-2xl font-bold text-white mb-2">Access Denied</h2>
-            <p className="text-white/60 mb-6">
+            <p className="text-gray-500 mb-6">
               You need admin privileges to view this page.
             </p>
             <Link to="/dashboard" className="btn-primary">

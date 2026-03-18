@@ -47,14 +47,14 @@ export default function AboutPage() {
   ];
 
   return (
-    <div className="bg-jet min-h-screen py-12">
+    <div className="bg-[#F8F9FA] min-h-screen py-12">
       {/* Header Section */}
-      <section className="py-12 bg-graphite/30">
+      <section className="py-12 bg-white/30">
         <div className="container-cinematic text-center">
           <h1 className="heading-hero text-white mb-6">
             About <span className="text-gradient-gold">Loadify Market Ltd</span>
           </h1>
-          <p className="text-xl text-white/60 max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-gray-500 max-w-3xl mx-auto mb-8">
             The UK's premier marketplace for logistics, wholesale, and handmade goods
           </p>
         </div>
@@ -64,10 +64,10 @@ export default function AboutPage() {
       <section className="py-16">
         <div className="container-cinematic max-w-4xl">
           <div className="card-glass">
-            <h2 className="heading-section text-white mb-6 text-center">
+            <h2 className="heading-section text-gray-900 mb-6 text-center">
               Our <span className="text-gradient-gold">Story</span>
             </h2>
-            <div className="space-y-4 text-white/70 text-lg leading-relaxed">
+            <div className="space-y-4 text-gray-600 text-lg leading-relaxed">
               <p>
                 Loadify Market Ltd was born from a simple observation: the UK needed a better way to
                 connect buyers and sellers across diverse markets—from logistics and freight to
@@ -90,13 +90,13 @@ export default function AboutPage() {
       </section>
 
       {/* Mission Section */}
-      <section className="py-16 bg-graphite/30">
+      <section className="py-16 bg-white/30">
         <div className="container-cinematic">
           <div className="text-center mb-12">
-            <h2 className="heading-section text-white mb-6">
+            <h2 className="heading-section text-gray-900 mb-6">
               Our <span className="text-gradient-gold">Mission</span>
             </h2>
-            <p className="text-xl text-white/60 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-500 max-w-3xl mx-auto">
               To empower UK businesses by providing a trusted, secure, and innovative marketplace
               that connects buyers and sellers across logistics, wholesale, and handmade sectors.
             </p>
@@ -107,7 +107,7 @@ export default function AboutPage() {
             {stats.map((stat, index) => (
               <div key={index} className="card-glass text-center">
                 <div className="text-4xl font-bold text-gradient-gold mb-2">{stat.value}</div>
-                <div className="text-white/60">{stat.label}</div>
+                <div className="text-gray-500">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -118,10 +118,10 @@ export default function AboutPage() {
       <section className="py-16">
         <div className="container-cinematic">
           <div className="text-center mb-12">
-            <h2 className="heading-section text-white mb-4">
+            <h2 className="heading-section text-gray-900 mb-4">
               Our <span className="text-gradient-gold">Values</span>
             </h2>
-            <p className="text-white/60 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
               The principles that guide everything we do
             </p>
           </div>
@@ -137,8 +137,8 @@ export default function AboutPage() {
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-gold/10 rounded-premium-sm mb-6">
                     <Icon className="h-8 w-8 text-gold" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-3">{value.title}</h3>
-                  <p className="text-white/60">{value.description}</p>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">{value.title}</h3>
+                  <p className="text-gray-500">{value.description}</p>
                 </div>
               );
             })}
@@ -147,10 +147,10 @@ export default function AboutPage() {
       </section>
 
       {/* What Makes Us Different */}
-      <section className="py-16 bg-graphite/30">
+      <section className="py-16 bg-white/30">
         <div className="container-cinematic max-w-4xl">
           <div className="text-center mb-12">
-            <h2 className="heading-section text-white mb-4">
+            <h2 className="heading-section text-gray-900 mb-4">
               What Makes Us <span className="text-gradient-gold">Different</span>
             </h2>
           </div>
@@ -160,7 +160,7 @@ export default function AboutPage() {
               <CheckCircle className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
               <div>
                 <h3 className="text-lg font-bold text-white mb-2">Verified Sellers Only</h3>
-                <p className="text-white/60">
+                <p className="text-gray-500">
                   Every seller is manually reviewed and approved by our team before they can list
                   products. No fake accounts, no scams.
                 </p>
@@ -171,7 +171,7 @@ export default function AboutPage() {
               <CheckCircle className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
               <div>
                 <h3 className="text-lg font-bold text-white mb-2">Payment Processing</h3>
-                <p className="text-white/60">
+                <p className="text-gray-500">
                   Payments are processed through Stripe. Connect directly with buyers and sellers
                   to finalize transactions.
                 </p>
@@ -182,7 +182,7 @@ export default function AboutPage() {
               <CheckCircle className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
               <div>
                 <h3 className="text-lg font-bold text-white mb-2">UK Based & Supported</h3>
-                <p className="text-white/60">
+                <p className="text-gray-500">
                   We're a UK company serving UK businesses. Get support from a local team that
                   understands your market.
                 </p>
@@ -193,7 +193,7 @@ export default function AboutPage() {
               <CheckCircle className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
               <div>
                 <h3 className="text-lg font-bold text-white mb-2">Multi-Category Platform</h3>
-                <p className="text-white/60">
+                <p className="text-gray-500">
                   Whether you're moving freight, buying wholesale stock, or selling handmade
                   goods—all in one marketplace.
                 </p>
@@ -204,7 +204,7 @@ export default function AboutPage() {
               <CheckCircle className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
               <div>
                 <h3 className="text-lg font-bold text-white mb-2">Transparent Pricing</h3>
-                <p className="text-white/60">
+                <p className="text-gray-500">
                   No hidden fees. No surprises. You know exactly what you'll pay before you list or
                   buy.
                 </p>
@@ -221,7 +221,7 @@ export default function AboutPage() {
             <div className="text-center mb-8">
               <Award className="w-16 h-16 text-gold mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">Loadify Market Ltd</h2>
-              <p className="text-white/60">Registered UK Company</p>
+              <p className="text-gray-500">Registered UK Company</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -229,7 +229,7 @@ export default function AboutPage() {
                 <MapPin className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
                 <div>
                   <h3 className="font-semibold text-white mb-1">Address</h3>
-                  <p className="text-white/60">
+                  <p className="text-gray-500">
                     101 Cornelian Street
                     <br />
                     Blackburn, BB1 9QL
@@ -256,9 +256,9 @@ export default function AboutPage() {
                 <Shield className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
                 <div>
                   <h3 className="font-semibold text-white mb-1">Company Number (CRN)</h3>
-                  <p className="text-white/60">13171804</p>
-                  <p className="text-white/40 text-xs mt-1">Registered in England and Wales</p>
-                  <p className="text-white/60 mt-2">VAT: GB375949535</p>
+                  <p className="text-gray-500">13171804</p>
+                  <p className="text-gray-400 text-xs mt-1">Registered in England and Wales</p>
+                  <p className="text-gray-500 mt-2">VAT: GB375949535</p>
                 </div>
               </div>
 
@@ -266,7 +266,7 @@ export default function AboutPage() {
                 <Phone className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
                 <div>
                   <h3 className="font-semibold text-white mb-1">Support</h3>
-                  <p className="text-white/60">
+                  <p className="text-gray-500">
                     <Link to="/contact" className="text-gold hover:underline">
                       Contact Us
                     </Link>
@@ -279,11 +279,11 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-graphite/30">
+      <section className="py-16 bg-white/30">
         <div className="container-cinematic text-center">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl font-bold text-white mb-4">Join Our Growing Community</h2>
-            <p className="text-white/60 text-lg mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Join Our Growing Community</h2>
+            <p className="text-gray-500 text-lg mb-8">
               Whether you're buying or selling, Loadify Market Ltd is here to help you succeed.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

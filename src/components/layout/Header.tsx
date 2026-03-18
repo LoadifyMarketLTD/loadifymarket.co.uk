@@ -60,7 +60,7 @@ export default function Header() {
       {/* Off-canvas Left Sidebar — only mounted after first open to keep initial DOM lean */}
       {sidebarMounted && <div
         id="marketplace-sidebar"
-        className={`fixed top-0 left-0 h-full w-72 bg-[#1E3A5F] z-50 transform transition-transform duration-300 ease-out overflow-y-auto border-r border-white/10 flex flex-col ${
+        className={`fixed top-0 left-0 h-full w-72 bg-white z-50 transform transition-transform duration-300 ease-out overflow-y-auto border-r border-gray-200 flex flex-col ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         aria-label="Marketplace Navigation"
@@ -68,9 +68,9 @@ export default function Header() {
         role="dialog"
       >
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 flex-shrink-0">
           <img
-              src="/branding/loadify-logo-on-navy.svg"
+              src="/branding/loadify-logo-transparent.svg"
               alt="Loadify Market"
               className="h-8 w-auto"
               loading="eager"
@@ -78,7 +78,7 @@ export default function Header() {
             />
           <button
             onClick={() => setSidebarOpen(false)}
-            className="p-2 text-white/50 hover:text-white transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-700 transition-colors"
             aria-label="Close navigation"
           >
             <X className="w-5 h-5" />
@@ -89,12 +89,12 @@ export default function Header() {
         <nav className="flex-1 px-4 py-5 space-y-5 overflow-y-auto">
           {/* Sell CTA */}
           <div>
-            <p className="text-[10px] font-bold text-[#F4C400]/60 uppercase tracking-widest mb-1.5 px-2">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 px-2">
               Start Selling
             </p>
             <Link
               to="/sell"
-              className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-gray-900 bg-[#F4C400] hover:bg-yellow-400 transition-all duration-200 group"
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#1E3A5F] hover:bg-[#2C4E73] transition-all duration-200 group"
             >
               <Store className="w-4 h-4 flex-shrink-0" />
               <span className="flex-1">Sell an Item</span>
@@ -104,7 +104,7 @@ export default function Header() {
 
           {/* Marketplace */}
           <div>
-            <p className="text-[10px] font-bold text-[#F4C400]/60 uppercase tracking-widest mb-1.5 px-2">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 px-2">
               Marketplace
             </p>
             <ul className="space-y-0.5">
@@ -114,10 +114,10 @@ export default function Header() {
                 { label: 'New Listings', href: '/catalog?sort=createdAt_desc', icon: Star },
               ].map(({ label, href, icon: Icon }) => (
                 <li key={label}>
-                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
-                    <Icon className="w-4 h-4 text-[#F4C400]/60 group-hover:text-[#F4C400] transition-colors flex-shrink-0" />
+                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-gray-600 hover:text-[#1E3A5F] hover:bg-gray-100 transition-all duration-200 group">
+                    <Icon className="w-4 h-4 text-gray-400 group-hover:text-[#1E3A5F] transition-colors flex-shrink-0" />
                     <span className="flex-1">{label}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-400 transition-colors" />
                   </Link>
                 </li>
               ))}
@@ -126,7 +126,7 @@ export default function Header() {
 
           {/* Categories */}
           <div>
-            <p className="text-[10px] font-bold text-[#F4C400]/60 uppercase tracking-widest mb-1.5 px-2">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 px-2">
               Categories
             </p>
             <ul className="space-y-0.5">
@@ -136,11 +136,11 @@ export default function Header() {
                   <li key={cat.slug}>
                     <Link
                       to={`/category/${cat.slug}`}
-                      className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group"
+                      className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-gray-600 hover:text-[#1E3A5F] hover:bg-gray-100 transition-all duration-200 group"
                     >
                       <CatIcon className={`w-4 h-4 flex-shrink-0 ${cat.iconColor} opacity-70 group-hover:opacity-100 transition-opacity`} />
                       <span className="flex-1">{cat.label}</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-400 transition-colors" />
                     </Link>
                   </li>
                 );
@@ -150,32 +150,32 @@ export default function Header() {
 
           {/* Account */}
           <div>
-            <p className="text-[10px] font-bold text-[#F4C400]/60 uppercase tracking-widest mb-1.5 px-2">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 px-2">
               Account
             </p>
             <ul className="space-y-0.5">
               {user ? (
                 <>
                   <li>
-                    <Link to="/dashboard" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
-                      <User className="w-4 h-4 text-[#F4C400]/60 group-hover:text-[#F4C400] transition-colors flex-shrink-0" />
+                    <Link to="/dashboard" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-gray-600 hover:text-[#1E3A5F] hover:bg-gray-100 transition-all duration-200 group">
+                      <User className="w-4 h-4 text-gray-400 group-hover:text-[#1E3A5F] transition-colors flex-shrink-0" />
                       <span className="flex-1">My Account</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-400 transition-colors" />
                     </Link>
                   </li>
                   {(user.role === 'seller' || user.role === 'owner') && (
                     <li>
-                      <Link to="/seller" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
-                        <LayoutDashboard className="w-4 h-4 text-[#F4C400]/60 group-hover:text-[#F4C400] transition-colors flex-shrink-0" />
+                      <Link to="/seller" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-gray-600 hover:text-[#1E3A5F] hover:bg-gray-100 transition-all duration-200 group">
+                        <LayoutDashboard className="w-4 h-4 text-gray-400 group-hover:text-[#1E3A5F] transition-colors flex-shrink-0" />
                         <span className="flex-1">Seller Dashboard</span>
-                        <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                        <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-400 transition-colors" />
                       </Link>
                     </li>
                   )}
                   <li>
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-red-300/80 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200 group"
+                      className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-red-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200 group"
                     >
                       <LogOut className="w-4 h-4 flex-shrink-0" />
                       <span className="flex-1 text-left">Log Out</span>
@@ -185,17 +185,17 @@ export default function Header() {
               ) : (
                 <>
                   <li>
-                    <Link to="/login" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
-                      <User className="w-4 h-4 text-[#F4C400]/60 group-hover:text-[#F4C400] transition-colors flex-shrink-0" />
+                    <Link to="/login" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-gray-600 hover:text-[#1E3A5F] hover:bg-gray-100 transition-all duration-200 group">
+                      <User className="w-4 h-4 text-gray-400 group-hover:text-[#1E3A5F] transition-colors flex-shrink-0" />
                       <span className="flex-1">Login</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-400 transition-colors" />
                     </Link>
                   </li>
                   <li>
-                    <Link to="/register" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
-                      <Store className="w-4 h-4 text-[#F4C400]/60 group-hover:text-[#F4C400] transition-colors flex-shrink-0" />
+                    <Link to="/register" className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-gray-600 hover:text-[#1E3A5F] hover:bg-gray-100 transition-all duration-200 group">
+                      <Store className="w-4 h-4 text-gray-400 group-hover:text-[#1E3A5F] transition-colors flex-shrink-0" />
                       <span className="flex-1">Register</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                      <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-400 transition-colors" />
                     </Link>
                   </li>
                 </>
@@ -205,7 +205,7 @@ export default function Header() {
 
           {/* Support */}
           <div>
-            <p className="text-[10px] font-bold text-[#F4C400]/60 uppercase tracking-widest mb-1.5 px-2">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 px-2">
               Support
             </p>
             <ul className="space-y-0.5">
@@ -214,10 +214,10 @@ export default function Header() {
                 { label: 'Help & FAQ', href: '/help', icon: HelpCircle },
               ].map(({ label, href, icon: Icon }) => (
                 <li key={label}>
-                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-white/70 hover:text-white hover:bg-white/10 transition-all duration-200 group">
-                    <Icon className="w-4 h-4 text-[#F4C400]/60 group-hover:text-[#F4C400] transition-colors flex-shrink-0" />
+                  <Link to={href} className="flex items-center gap-2.5 px-2 py-2 rounded-lg text-sm text-gray-600 hover:text-[#1E3A5F] hover:bg-gray-100 transition-all duration-200 group">
+                    <Icon className="w-4 h-4 text-gray-400 group-hover:text-[#1E3A5F] transition-colors flex-shrink-0" />
                     <span className="flex-1">{label}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-white/20 group-hover:text-white/40 transition-colors" />
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-400 transition-colors" />
                   </Link>
                 </li>
               ))}
@@ -226,8 +226,8 @@ export default function Header() {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="px-5 py-4 border-t border-white/10 flex-shrink-0">
-          <p className="text-xs text-white/50 text-center">{BRAND.name} — Open Marketplace</p>
+        <div className="px-5 py-4 border-t border-gray-200 flex-shrink-0">
+          <p className="text-xs text-gray-400 text-center">{BRAND.name} — Open Marketplace</p>
         </div>
       </div>}
 

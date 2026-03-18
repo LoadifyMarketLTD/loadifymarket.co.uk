@@ -21,12 +21,12 @@ export default function CookieBanner() {
   if (!showBanner) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-graphite/95 backdrop-blur-md border-t border-gold/20 shadow-cinematic-gold">
+    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gold/20 shadow-cinematic-gold">
       <div className="container-cinematic py-3">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
           <div className="flex items-center gap-2 flex-shrink-0">
             <Cookie className="w-4 h-4 text-gold flex-shrink-0" />
-            <p className="text-xs sm:text-sm text-white/80">
+            <p className="text-xs sm:text-sm text-gray-700">
               We use cookies to enhance your browsing experience.{' '}
               <Link to="/cookies" className="text-gold hover:underline whitespace-nowrap">
                 Cookie policy
@@ -36,7 +36,7 @@ export default function CookieBanner() {
           <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={declineCookies}
-              className="text-xs py-1.5 px-3 rounded-lg bg-white/5 text-white/70 hover:bg-white/10 hover:text-white transition-all whitespace-nowrap"
+              className="text-xs py-1.5 px-3 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-white transition-all whitespace-nowrap"
             >
               Decline
             </button>
@@ -48,7 +48,7 @@ export default function CookieBanner() {
             </button>
             <button
               onClick={declineCookies}
-              className="p-1.5 text-white/40 hover:text-white transition-colors flex-shrink-0 sm:hidden"
+              className="p-1.5 text-gray-400 hover:text-white transition-colors flex-shrink-0 sm:hidden"
               aria-label="Close"
             >
               <X className="w-4 h-4" />

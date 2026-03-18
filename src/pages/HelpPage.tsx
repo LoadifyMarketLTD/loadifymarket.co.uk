@@ -83,7 +83,7 @@ const SECTIONS = [
 function FAQItem({ q, a }: FAQ) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-white/10 last:border-b-0">
+    <div className="border-b border-gray-200 last:border-b-0">
       <button
         className="w-full flex items-start justify-between py-4 text-left group"
         onClick={() => setOpen(!open)}
@@ -95,12 +95,12 @@ function FAQItem({ q, a }: FAQ) {
         {open ? (
           <ChevronUp className="w-4 h-4 text-gold flex-shrink-0 mt-0.5" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-white/40 group-hover:text-gold flex-shrink-0 mt-0.5 transition-colors" />
+          <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-gold flex-shrink-0 mt-0.5 transition-colors" />
         )}
       </button>
       {open && (
         <div className="pb-4">
-          <p className="text-white/60 text-sm leading-relaxed">{a}</p>
+          <p className="text-gray-500 text-sm leading-relaxed">{a}</p>
         </div>
       )}
     </div>
@@ -119,7 +119,7 @@ export default function HelpPage() {
   })).filter(s => s.faqs.length > 0);
 
   return (
-    <div className="bg-jet min-h-screen pt-24">
+    <div className="bg-[#F8F9FA] min-h-screen pt-24">
       {/* Hero */}
       <section className="bg-gradient-to-b from-graphite/40 to-jet py-16">
         <div className="container-cinematic text-center">
@@ -127,7 +127,7 @@ export default function HelpPage() {
             <HelpCircle className="w-8 h-8 text-gold" />
           </div>
           <h1 className="text-4xl font-bold text-white mb-4">Help &amp; FAQ</h1>
-          <p className="text-white/60 text-lg mb-8 max-w-xl mx-auto">
+          <p className="text-gray-500 text-lg mb-8 max-w-xl mx-auto">
             Find answers to common questions about {BRAND.name}
           </p>
           {/* Search */}
@@ -139,7 +139,7 @@ export default function HelpPage() {
               placeholder="Search for help..."
               className="input-search w-full pl-12"
             />
-            <HelpCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
+            <HelpCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
           </div>
         </div>
       </section>
@@ -148,7 +148,7 @@ export default function HelpPage() {
       <div className="container-cinematic py-16 max-w-4xl">
         {filteredSections.length === 0 ? (
           <div className="text-center py-16">
-            <p className="text-white/50">No results found for "{search}"</p>
+            <p className="text-gray-400">No results found for "{search}"</p>
             <button onClick={() => setSearch('')} className="text-gold text-sm underline mt-2">Clear search</button>
           </div>
         ) : (
@@ -161,7 +161,7 @@ export default function HelpPage() {
                     <div className="p-2 bg-gold/10 rounded-premium-sm">
                       <Icon className="w-5 h-5 text-gold" />
                     </div>
-                    <h2 className="text-lg font-bold text-white">{section.title}</h2>
+                    <h2 className="text-lg font-bold text-gray-900">{section.title}</h2>
                   </div>
                   <div>
                     {section.faqs.map(faq => (
@@ -176,8 +176,8 @@ export default function HelpPage() {
 
         {/* Still need help? */}
         <div className="card-glass mt-10 text-center">
-          <h3 className="text-xl font-bold text-white mb-3">Still need help?</h3>
-          <p className="text-white/60 mb-6 text-sm">
+          <h3 className="text-xl font-bold text-gray-900 mb-3">Still need help?</h3>
+          <p className="text-gray-500 mb-6 text-sm">
             Our support team is available Monday–Friday 9am–6pm GMT.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">

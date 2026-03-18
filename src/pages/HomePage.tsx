@@ -393,14 +393,14 @@ export default function HomePage() {
       </section>
 
       {/* ── Wholesale & Bulk Trading ─────────────────────────────────────── */}
-      <section className="bg-[#1E3A5F] py-8 border-b border-white/10">
+      <section className="bg-[#F8F9FA] py-8 border-b border-gray-200">
         <div className="container-market">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-xl font-bold text-white">Wholesale &amp; Bulk Trading</h2>
-              <p className="text-sm text-white/60">Pallets, job lots, clearance loads and trade stock at warehouse prices</p>
+              <h2 className="text-xl font-bold text-gray-900">Wholesale &amp; Bulk Trading</h2>
+              <p className="text-sm text-gray-500">Pallets, job lots, clearance loads and trade stock at warehouse prices</p>
             </div>
-            <Link to="/category/wholesale" className="text-sm text-[#F4C400] hover:underline font-medium whitespace-nowrap">
+            <Link to="/category/wholesale" className="text-sm text-[#1E3A5F] hover:underline font-medium whitespace-nowrap">
               Browse All →
             </Link>
           </div>
@@ -409,20 +409,20 @@ export default function HomePage() {
               <Link
                 key={cat.slug}
                 to={`/category/${cat.slug}`}
-                className="group block rounded-xl overflow-hidden border border-white/10 hover:border-[#F4C400]/60 hover:shadow-lg transition-all duration-200"
+                className="group block rounded-xl overflow-hidden border border-gray-200 hover:border-[#1E3A5F]/40 hover:shadow-md transition-all duration-200 bg-white"
               >
-                <div className="aspect-[16/9] overflow-hidden bg-white/5">
+                <div className="aspect-[16/9] overflow-hidden bg-gray-100">
                   <img
                     src={cat.image}
                     alt={cat.label}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     loading="lazy"
                     decoding="async"
                   />
                 </div>
-                <div className="p-3 bg-white/5 backdrop-blur-sm">
-                  <p className="text-sm font-bold text-white truncate">{cat.label}</p>
-                  <p className="text-xs text-white/50 truncate">{cat.desc}</p>
+                <div className="p-3">
+                  <p className="text-sm font-bold text-gray-900 truncate">{cat.label}</p>
+                  <p className="text-xs text-gray-500 truncate">{cat.desc}</p>
                 </div>
               </Link>
             ))}

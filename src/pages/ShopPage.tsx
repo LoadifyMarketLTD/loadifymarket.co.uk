@@ -158,18 +158,18 @@ export default function ShopPage() {
   return (
     <div className="min-h-screen bg-jet">
       {/* Page Header */}
-      <div className="bg-graphite/30 border-b border-white/10 py-10">
+      <div className="bg-white/30 border-b border-gray-200 py-10">
         <div className="container-cinematic">
           <div className="flex items-center gap-3 mb-2">
             <ShoppingBag className="h-7 w-7 text-gold" />
-            <h1 className="text-3xl font-bold text-white">Shop Products</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Shop Products</h1>
           </div>
-          <p className="text-white/60">Browse electronics, fashion, home goods, tools, vehicles &amp; more</p>
+          <p className="text-gray-500">Browse electronics, fashion, home goods, tools, vehicles &amp; more</p>
         </div>
       </div>
 
       {/* Category Quick-Nav */}
-      <div className="bg-jet border-b border-white/10 py-4">
+      <div className="bg-jet border-b border-gray-200 py-4">
         <div className="container-cinematic">
           <div className="flex flex-wrap gap-3">
             <button
@@ -177,7 +177,7 @@ export default function ShopPage() {
               className={`flex items-center gap-2 px-4 py-2 rounded-premium-sm text-sm font-medium transition-all duration-200 ${
                 !selectedCategory
                   ? 'bg-gold text-jet'
-                  : 'bg-graphite text-white/70 hover:bg-graphite/80 hover:text-white'
+                  : 'bg-white text-gray-600 hover:bg-white/80 hover:text-white'
               }`}
             >
               All Categories
@@ -191,7 +191,7 @@ export default function ShopPage() {
                   className={`flex items-center gap-2 px-4 py-2 rounded-premium-sm text-sm font-medium transition-all duration-200 ${
                     selectedCategory && categories.find((c) => c.id === selectedCategory)?.slug === cat.slug
                       ? 'bg-gold text-jet'
-                      : 'bg-graphite text-white/70 hover:bg-graphite/80 hover:text-white'
+                      : 'bg-white text-gray-600 hover:bg-white/80 hover:text-white'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -207,7 +207,7 @@ export default function ShopPage() {
         {/* Search + Filter Bar */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search products..."
@@ -218,7 +218,7 @@ export default function ShopPage() {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -229,7 +229,7 @@ export default function ShopPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-graphite text-white border border-white/10 rounded-premium-sm px-4 py-2 text-sm focus:outline-none focus:border-gold"
+              className="bg-white text-white border border-gray-200 rounded-premium-sm px-4 py-2 text-sm focus:outline-none focus:border-gold"
             >
               <option value="createdAt_desc">Newest First</option>
               <option value="price_asc">Price: Low to High</option>
@@ -257,11 +257,11 @@ export default function ShopPage() {
         {showFilters && (
           <div className="card-glass p-6 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div>
-              <label className="block text-white/70 text-sm mb-2">Condition</label>
+              <label className="block text-gray-600 text-sm mb-2">Condition</label>
               <select
                 value={selectedCondition}
                 onChange={(e) => setSelectedCondition(e.target.value)}
-                className="w-full bg-graphite text-white border border-white/10 rounded-premium-sm px-3 py-2 text-sm focus:outline-none focus:border-gold"
+                className="w-full bg-white text-white border border-gray-200 rounded-premium-sm px-3 py-2 text-sm focus:outline-none focus:border-gold"
               >
                 <option value="">All Conditions</option>
                 <option value="new">New</option>
@@ -270,7 +270,7 @@ export default function ShopPage() {
               </select>
             </div>
             <div>
-              <label className="block text-white/70 text-sm mb-2">Max Price: £{priceRange[1].toLocaleString()}</label>
+              <label className="block text-gray-600 text-sm mb-2">Max Price: £{priceRange[1].toLocaleString()}</label>
               <input
                 type="range"
                 min={0}
@@ -282,11 +282,11 @@ export default function ShopPage() {
               />
             </div>
             <div>
-              <label className="block text-white/70 text-sm mb-2">Category</label>
+              <label className="block text-gray-600 text-sm mb-2">Category</label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full bg-graphite text-white border border-white/10 rounded-premium-sm px-3 py-2 text-sm focus:outline-none focus:border-gold"
+                className="w-full bg-white text-white border border-gray-200 rounded-premium-sm px-3 py-2 text-sm focus:outline-none focus:border-gold"
               >
                 <option value="">All Categories</option>
                 {categories.map((cat) => (
@@ -308,7 +308,7 @@ export default function ShopPage() {
           </div>
         ) : products.length > 0 ? (
           <>
-            <p className="text-white/50 text-sm mb-4">{products.length} products found</p>
+            <p className="text-gray-400 text-sm mb-4">{products.length} products found</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
               {products.map((product) => (
                 <ProductCard key={product.id} product={product} />
@@ -317,9 +317,9 @@ export default function ShopPage() {
           </>
         ) : (
           <div className="text-center py-24">
-            <ShoppingBag className="h-16 w-16 text-white/20 mx-auto mb-4" />
+            <ShoppingBag className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-white mb-2">No products found</h3>
-            <p className="text-white/50 mb-6">Try adjusting your search or filters</p>
+            <p className="text-gray-400 mb-6">Try adjusting your search or filters</p>
             <button onClick={clearFilters} className="btn-primary">
               Clear Filters
             </button>
@@ -330,7 +330,7 @@ export default function ShopPage() {
         <div className="mt-16 card-glass p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div>
             <h3 className="text-xl font-bold text-white mb-2">Looking for bulk stock or pallet deals?</h3>
-            <p className="text-white/60">Browse our B2B marketplace for wholesale lots, liquidation stock and pallet deals.</p>
+            <p className="text-gray-500">Browse our B2B marketplace for wholesale lots, liquidation stock and pallet deals.</p>
           </div>
           <Link to="/category/wholesale" className="btn-primary flex items-center gap-2 whitespace-nowrap">
             Shop Bulk &amp; Pallets

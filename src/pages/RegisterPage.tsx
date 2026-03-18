@@ -71,7 +71,7 @@ export default function RegisterPage() {
           <div className="card-glass p-8 text-center">
             <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-white mb-2">Account Created!</h2>
-            <p className="text-white/60 mb-6">
+            <p className="text-gray-500 mb-6">
               {isSeller
                 ? 'Your seller account is pending admin approval. You will be notified once approved.'
                 : 'Your account is ready. You can sign in now.'}
@@ -94,10 +94,10 @@ export default function RegisterPage() {
         <div className="card-glass p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-white mb-2">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
               {isSeller ? 'Seller Registration' : 'Create Account'}
             </h2>
-            <p className="text-white/60 text-sm">
+            <p className="text-gray-500 text-sm">
               {isSeller
                 ? 'Start selling on Loadify Market Ltd'
                 : 'Join Loadify Market Ltd today'}
@@ -115,12 +115,12 @@ export default function RegisterPage() {
           <form onSubmit={handleRegister} className="space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-white/80 mb-2">
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
                   First Name
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-4 w-4 text-white/40" />
+                    <User className="h-4 w-4 text-gray-400" />
                   </div>
                   <input
                     id="firstName"
@@ -135,12 +135,12 @@ export default function RegisterPage() {
                 </div>
               </div>
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-white/80 mb-2">
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
                   Last Name
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-4 w-4 text-white/40" />
+                    <User className="h-4 w-4 text-gray-400" />
                   </div>
                   <input
                     id="lastName"
@@ -158,12 +158,12 @@ export default function RegisterPage() {
 
             {isSeller && (
               <div>
-                <label htmlFor="storeName" className="block text-sm font-medium text-white/80 mb-2">
+                <label htmlFor="storeName" className="block text-sm font-medium text-gray-700 mb-2">
                   Store Name
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Building2 className="h-5 w-5 text-white/40" />
+                    <Building2 className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     id="storeName"
@@ -179,12 +179,12 @@ export default function RegisterPage() {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-white/40" />
+                  <Mail className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   id="email"
@@ -200,12 +200,12 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-white/40" />
+                  <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   id="password"
@@ -233,21 +233,21 @@ export default function RegisterPage() {
           {/* Toggle between buyer/seller */}
           <div className="mt-6 text-center space-y-3">
             {isSeller ? (
-              <p className="text-sm text-white/60">
+              <p className="text-sm text-gray-500">
                 Want to buy instead?{' '}
                 <Link to="/register" className="text-gold hover:text-gold/80 transition-colors font-medium">
                   Register as Buyer
                 </Link>
               </p>
             ) : (
-              <p className="text-sm text-white/60">
+              <p className="text-sm text-gray-500">
                 Want to sell?{' '}
                 <Link to="/register?type=seller" className="text-gold hover:text-gold/80 transition-colors font-medium">
                   Register as Seller
                 </Link>
               </p>
             )}
-            <p className="text-sm text-white/60">
+            <p className="text-sm text-gray-500">
               Already have an account?{' '}
               <Link to="/login" className="text-gold hover:text-gold/80 transition-colors font-medium">
                 Sign in

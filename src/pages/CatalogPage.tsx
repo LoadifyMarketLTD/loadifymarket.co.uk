@@ -255,7 +255,7 @@ export default function CatalogPage() {
   const TypeIcon = getTypeIcon();
 
   return (
-    <div className="bg-jet min-h-screen pt-24">
+    <div className="bg-[#F8F9FA] min-h-screen pt-24">
       {/* Hero Header */}
       <section className="bg-gradient-to-b from-graphite/50 to-jet py-12">
         <div className="container-cinematic">
@@ -264,8 +264,8 @@ export default function CatalogPage() {
               <TypeIcon className="w-8 h-8 text-gold" />
             </div>
             <div>
-              <h1 className="heading-section text-white">{getPageTitle()}</h1>
-              <p className="text-white/60 mt-1">
+              <h1 className="heading-section text-gray-900">{getPageTitle()}</h1>
+              <p className="text-gray-500 mt-1">
                 {products.length} {products.length === 1 ? 'item' : 'items'} available
               </p>
             </div>
@@ -273,7 +273,7 @@ export default function CatalogPage() {
 
           {/* Search Bar */}
           <div className="relative max-w-2xl mt-8">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-white/40" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
               value={searchQuery}
@@ -284,7 +284,7 @@ export default function CatalogPage() {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-gold transition-colors"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gold transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -300,7 +300,7 @@ export default function CatalogPage() {
                   className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 ${
                     !selectedType
                       ? 'bg-gold text-jet'
-                      : 'bg-graphite text-white hover:bg-graphite/80'
+                      : 'bg-white text-white hover:bg-white/80'
                   }`}
                 >
                   All Products
@@ -310,7 +310,7 @@ export default function CatalogPage() {
                   className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
                     selectedType === 'retail'
                       ? 'bg-gold text-jet'
-                      : 'bg-graphite text-white hover:bg-graphite/80'
+                      : 'bg-white text-white hover:bg-white/80'
                   }`}
                 >
                   <ShoppingBag className="w-4 h-4" />
@@ -321,7 +321,7 @@ export default function CatalogPage() {
                   className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
                     selectedType === 'handmade'
                       ? 'bg-gold text-jet'
-                      : 'bg-graphite text-white hover:bg-graphite/80'
+                      : 'bg-white text-white hover:bg-white/80'
                   }`}
                 >
                   <Sparkles className="w-4 h-4" />
@@ -336,7 +336,7 @@ export default function CatalogPage() {
                   className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
                     selectedType === 'pallet' || !selectedType
                       ? 'bg-gold text-jet'
-                      : 'bg-graphite text-white hover:bg-graphite/80'
+                      : 'bg-white text-white hover:bg-white/80'
                   }`}
                 >
                   <Package className="w-4 h-4" />
@@ -347,7 +347,7 @@ export default function CatalogPage() {
                   className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
                     selectedType === 'wholesale'
                       ? 'bg-gold text-jet'
-                      : 'bg-graphite text-white hover:bg-graphite/80'
+                      : 'bg-white text-white hover:bg-white/80'
                   }`}
                 >
                   <Package className="w-4 h-4" />
@@ -358,7 +358,7 @@ export default function CatalogPage() {
                   className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
                     selectedType === 'clearance'
                       ? 'bg-gold text-jet'
-                      : 'bg-graphite text-white hover:bg-graphite/80'
+                      : 'bg-white text-white hover:bg-white/80'
                   }`}
                 >
                   <Package className="w-4 h-4" />
@@ -388,7 +388,7 @@ export default function CatalogPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="input-field py-2 px-4 bg-graphite border-white/10"
+              className="input-field py-2 px-4 bg-white border-gray-200"
             >
               <option value="createdAt_desc">Newest First</option>
               <option value="createdAt_asc">Oldest First</option>
@@ -400,13 +400,13 @@ export default function CatalogPage() {
           </div>
 
           {/* View Toggle */}
-          <div className="flex bg-graphite rounded-premium-sm overflow-hidden">
+          <div className="flex bg-white rounded-premium-sm overflow-hidden">
             <button
               onClick={() => setViewMode('grid')}
               className={`p-3 transition-colors ${
                 viewMode === 'grid'
                   ? 'bg-gold text-jet'
-                  : 'text-white/60 hover:text-white'
+                  : 'text-gray-500 hover:text-white'
               }`}
               aria-label="Grid view"
             >
@@ -417,7 +417,7 @@ export default function CatalogPage() {
               className={`p-3 transition-colors ${
                 viewMode === 'list'
                   ? 'bg-gold text-jet'
-                  : 'text-white/60 hover:text-white'
+                  : 'text-gray-500 hover:text-white'
               }`}
               aria-label="List view"
             >
@@ -432,10 +432,10 @@ export default function CatalogPage() {
             <div className="w-72 flex-shrink-0">
               <div className="card-glass sticky top-28">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-bold text-white">Filters</h2>
+                  <h2 className="text-lg font-bold text-gray-900">Filters</h2>
                   <button
                     onClick={() => setShowFilters(false)}
-                    className="text-white/40 hover:text-white transition-colors lg:hidden"
+                    className="text-gray-400 hover:text-white transition-colors lg:hidden"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -443,7 +443,7 @@ export default function CatalogPage() {
 
                 {/* Category */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-white/60 mb-2">Category</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-2">Category</label>
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
@@ -460,7 +460,7 @@ export default function CatalogPage() {
 
                 {/* Price Range */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-white/60 mb-2">Price Range (£)</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-2">Price Range (£)</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="number"
@@ -470,7 +470,7 @@ export default function CatalogPage() {
                       placeholder="Min"
                       className="input-field flex-1 py-2 px-3 text-sm"
                     />
-                    <span className="text-white/40 flex-shrink-0">—</span>
+                    <span className="text-gray-400 flex-shrink-0">—</span>
                     <input
                       type="number"
                       min="0"
@@ -484,7 +484,7 @@ export default function CatalogPage() {
 
                 {/* Condition */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-white/60 mb-2">Condition</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-2">Condition</label>
                   <select
                     value={selectedCondition}
                     onChange={(e) => setSelectedCondition(e.target.value)}
@@ -499,7 +499,7 @@ export default function CatalogPage() {
 
                 {/* Listing Type */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-white/60 mb-2">Marketplace</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-2">Marketplace</label>
                   <select
                     value={selectedListingType}
                     onChange={(e) => setSelectedListingType(e.target.value)}
@@ -515,7 +515,7 @@ export default function CatalogPage() {
 
                 {/* Seller Rating Filter */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-white/60 mb-2">Min. Seller Rating</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-2">Min. Seller Rating</label>
                   <select
                     value={minSellerRating}
                     onChange={(e) => setMinSellerRating(e.target.value)}
@@ -531,7 +531,7 @@ export default function CatalogPage() {
 
                 {/* Seller Role Filter */}
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-white/60 mb-2">Seller Type</label>
+                  <label className="block text-sm font-medium text-gray-500 mb-2">Seller Type</label>
                   <select
                     value={selectedRole}
                     onChange={(e) => setSelectedRole(e.target.value)}
@@ -577,14 +577,14 @@ export default function CatalogPage() {
               <div className="flex justify-center items-center h-64">
                 <div className="text-center">
                   <div className="w-12 h-12 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                  <p className="text-white/60">Loading products...</p>
+                  <p className="text-gray-500">Loading products...</p>
                 </div>
               </div>
             ) : products.length === 0 ? (
               <div className="card-glass text-center py-16">
-                <Package className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2">No products found</h3>
-                <p className="text-white/60 mb-6">Try adjusting your filters or search criteria.</p>
+                <p className="text-gray-500 mb-6">Try adjusting your filters or search criteria.</p>
                 <button
                   onClick={() => {
                     setSelectedType('');
@@ -642,7 +642,7 @@ export default function CatalogPage() {
                       className="card-glass flex gap-6 hover:scale-[1.01] transition-all duration-300 group"
                     >
                       {/* Product Image */}
-                      <div className="w-48 h-48 flex-shrink-0 rounded-premium-sm overflow-hidden bg-graphite">
+                      <div className="w-48 h-48 flex-shrink-0 rounded-premium-sm overflow-hidden bg-white">
                         {product.images && product.images.length > 0 ? (
                           <img
                             src={product.images[0]}
@@ -651,7 +651,7 @@ export default function CatalogPage() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Package className="w-12 h-12 text-white/20" />
+                            <Package className="w-12 h-12 text-gray-300" />
                           </div>
                         )}
                       </div>
@@ -676,16 +676,16 @@ export default function CatalogPage() {
                                 currency: 'GBP',
                               }).format(product.price)}
                             </p>
-                            <p className="text-xs text-white/40">VAT included</p>
+                            <p className="text-xs text-gray-400">VAT included</p>
                           </div>
                         </div>
 
-                        <p className="text-white/60 text-sm mb-4 line-clamp-2">
+                        <p className="text-gray-500 text-sm mb-4 line-clamp-2">
                           {product.description}
                         </p>
 
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4 text-sm text-white/40">
+                          <div className="flex items-center gap-4 text-sm text-gray-400">
                             <span className="capitalize">{product.condition}</span>
                             <span>•</span>
                             <span>{product.stockQuantity} available</span>

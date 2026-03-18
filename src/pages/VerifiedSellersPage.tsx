@@ -58,13 +58,13 @@ export default function VerifiedSellersPage() {
   return (
     <div className="bg-white min-h-screen">
       {/* Hero */}
-      <section className="bg-[#1E3A5F] text-white py-12">
+      <section className="bg-white border-b border-gray-200 py-12">
         <div className="container-market text-center">
-          <div className="inline-flex items-center gap-2 bg-white/10 text-white text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+          <div className="inline-flex items-center gap-2 bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
             Buyer Confidence
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">Verified Sellers</h1>
-          <p className="text-white/80 text-base max-w-2xl mx-auto">
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Verified Sellers</h1>
+          <p className="text-gray-700 text-base max-w-2xl mx-auto">
             Every seller on Loadify Market goes through a rigorous verification process. Shop with
             confidence knowing that all listings come from vetted, trusted UK businesses.
           </p>
@@ -78,7 +78,7 @@ export default function VerifiedSellersPage() {
             </Link>
             <Link
               to="/register?type=seller"
-              className="inline-flex items-center gap-2 border-2 border-white text-white hover:bg-white hover:text-[#1E3A5F] font-semibold px-6 py-3 rounded transition-colors"
+              className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-6 py-3 rounded transition-colors"
             >
               <Store className="w-4 h-4" />
               Become a Verified Seller

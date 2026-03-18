@@ -17,7 +17,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="bg-jet min-h-screen pt-24">
+    <div className="bg-[#F8F9FA] min-h-screen pt-24">
       {/* Hero */}
       <section className="bg-gradient-to-b from-graphite/40 to-jet py-14">
         <div className="container-cinematic text-center">
@@ -25,7 +25,7 @@ export default function ContactPage() {
             <MessageSquare className="w-8 h-8 text-gold" />
           </div>
           <h1 className="text-4xl font-bold text-white mb-3">Contact Us</h1>
-          <p className="text-white/60 text-lg max-w-xl mx-auto">
+          <p className="text-gray-500 text-lg max-w-xl mx-auto">
             Get in touch with the {BRAND.name} team. We typically respond within 24 hours.
           </p>
         </div>
@@ -42,7 +42,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-white text-sm mb-1">Email Support</h3>
-                  <a href={`mailto:${BRAND.supportEmail}`} className="text-white/60 text-sm hover:text-gold transition-colors break-all">
+                  <a href={`mailto:${BRAND.supportEmail}`} className="text-gray-500 text-sm hover:text-gold transition-colors break-all">
                     {BRAND.supportEmail}
                   </a>
                 </div>
@@ -56,7 +56,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-white text-sm mb-1">Address</h3>
-                  <address className="not-italic text-white/60 text-sm leading-relaxed">
+                  <address className="not-italic text-gray-500 text-sm leading-relaxed">
                     {BRAND.companyAddress}
                   </address>
                 </div>
@@ -70,7 +70,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-white text-sm mb-1">Support Hours</h3>
-                  <p className="text-white/60 text-sm leading-relaxed">
+                  <p className="text-gray-500 text-sm leading-relaxed">
                     Monday – Friday<br />9:00 AM – 6:00 PM GMT
                   </p>
                 </div>
@@ -84,7 +84,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-white text-sm mb-1">VAT &amp; Company</h3>
-                  <p className="text-white/60 text-sm leading-relaxed">
+                  <p className="text-gray-500 text-sm leading-relaxed">
                     {BRAND.companyName}<br />
                     VAT: {BRAND.vatNumber}
                   </p>
@@ -101,7 +101,7 @@ export default function ContactPage() {
                   <CheckCircle className="w-8 h-8 text-green-400" />
                 </div>
                 <h2 className="text-2xl font-bold text-white mb-3">Message Sent!</h2>
-                <p className="text-white/60 mb-6">
+                <p className="text-gray-500 mb-6">
                   Thank you for contacting us. We'll get back to you at{' '}
                   <span className="text-gold">{form.email}</span> within 24 hours.
                 </p>
@@ -118,7 +118,7 @@ export default function ContactPage() {
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-sm font-medium text-white/60 mb-2">Full Name *</label>
+                      <label className="block text-sm font-medium text-gray-500 mb-2">Full Name *</label>
                       <input
                         type="text"
                         required
@@ -129,7 +129,7 @@ export default function ContactPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-white/60 mb-2">Email Address *</label>
+                      <label className="block text-sm font-medium text-gray-500 mb-2">Email Address *</label>
                       <input
                         type="email"
                         required
@@ -141,7 +141,7 @@ export default function ContactPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-white/60 mb-2">Subject *</label>
+                    <label className="block text-sm font-medium text-gray-500 mb-2">Subject *</label>
                     <select
                       required
                       value={form.subject}
@@ -160,7 +160,7 @@ export default function ContactPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-white/60 mb-2">Message *</label>
+                    <label className="block text-sm font-medium text-gray-500 mb-2">Message *</label>
                     <textarea
                       required
                       rows={6}

@@ -164,8 +164,8 @@ export default function CategoryPage() {
   if (!config) {
     return (
       <div className="min-h-screen bg-jet flex flex-col items-center justify-center gap-6 px-4">
-        <h1 className="text-2xl font-bold text-white">Category not found</h1>
-        <p className="text-white/60">The category you are looking for does not exist.</p>
+        <h1 className="text-2xl font-bold text-gray-900">Category not found</h1>
+        <p className="text-gray-500">The category you are looking for does not exist.</p>
         <Link to="/catalog" className="btn-primary">
           Browse all categories
         </Link>
@@ -189,10 +189,10 @@ export default function CategoryPage() {
       <section className="bg-gradient-to-b from-graphite/50 to-jet py-10">
         <div className="container-cinematic">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-1.5 text-sm text-white/40 mb-4" aria-label="Breadcrumb">
-            <Link to="/catalog" className="hover:text-white/70 transition-colors">All Categories</Link>
+          <nav className="flex items-center gap-1.5 text-sm text-gray-400 mb-4" aria-label="Breadcrumb">
+            <Link to="/catalog" className="hover:text-gray-600 transition-colors">All Categories</Link>
             <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-white/70">{config.label}</span>
+            <span className="text-gray-600">{config.label}</span>
           </nav>
 
           <div className="flex items-center gap-4">
@@ -200,15 +200,15 @@ export default function CategoryPage() {
               <Icon className={`w-8 h-8 ${config.iconColor}`} />
             </div>
             <div>
-              <h1 className="heading-section text-white">{config.title}</h1>
-              <p className="text-white/60 mt-1 max-w-xl">{config.subtitle}</p>
+              <h1 className="heading-section text-gray-900">{config.title}</h1>
+              <p className="text-gray-500 mt-1 max-w-xl">{config.subtitle}</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* ── Category-specific chips ────────────────────────────────────────── */}
-      <div className="bg-jet border-b border-white/10 py-3">
+      <div className="bg-jet border-b border-gray-200 py-3">
         <div className="container-cinematic">
           <div className="flex flex-wrap gap-2">
             {config.chips.map((chip) => {
@@ -223,7 +223,7 @@ export default function CategoryPage() {
                   className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                     isActive
                       ? 'bg-gold text-jet'
-                      : 'bg-graphite text-white/70 hover:bg-graphite/80 hover:text-white'
+                      : 'bg-white text-gray-600 hover:bg-white/80 hover:text-white'
                   }`}
                 >
                   {chip.label}
@@ -240,7 +240,7 @@ export default function CategoryPage() {
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           {/* Search */}
           <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/40" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
               placeholder={`Search ${config.label.toLowerCase()}...`}
@@ -251,7 +251,7 @@ export default function CategoryPage() {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -262,7 +262,7 @@ export default function CategoryPage() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="bg-graphite text-white border border-white/10 rounded-premium-sm px-4 py-2 text-sm focus:outline-none focus:border-gold"
+            className="bg-white text-white border border-gray-200 rounded-premium-sm px-4 py-2 text-sm focus:outline-none focus:border-gold"
           >
             <option value="createdAt_desc">Newest First</option>
             <option value="price_asc">Price: Low to High</option>
@@ -282,7 +282,7 @@ export default function CategoryPage() {
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
-              className="btn-glass text-sm flex items-center gap-1 text-white/70 hover:text-white"
+              className="btn-glass text-sm flex items-center gap-1 text-gray-600 hover:text-white"
             >
               <X className="h-4 w-4" /> Clear
             </button>
@@ -293,7 +293,7 @@ export default function CategoryPage() {
         {showFilters && (
           <div className="card-glass p-5 mb-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label className="block text-white/60 text-sm mb-1.5">Max Price (£)</label>
+              <label className="block text-gray-500 text-sm mb-1.5">Max Price (£)</label>
               <input
                 type="number"
                 min="0"
@@ -316,7 +316,7 @@ export default function CategoryPage() {
 
         {/* Product count */}
         {!loading && products.length > 0 && (
-          <p className="text-white/40 text-sm mb-4">
+          <p className="text-gray-400 text-sm mb-4">
             {products.length}{products.length === PRODUCT_LIMIT ? '+' : ''} products found
             {activeChip && activeChip !== config.chips[0] ? ` in "${activeChip.label}"` : ''}
           </p>
@@ -339,7 +339,7 @@ export default function CategoryPage() {
           <div className="card-glass text-center py-16">
             <Icon className={`h-16 w-16 mx-auto mb-4 opacity-20 ${config.iconColor}`} />
             <h3 className="text-xl font-bold text-white mb-2">{config.emptyState.title}</h3>
-            <p className="text-white/50 mb-6 max-w-md mx-auto">{config.emptyState.description}</p>
+            <p className="text-gray-400 mb-6 max-w-md mx-auto">{config.emptyState.description}</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
               {hasActiveFilters && (
                 <button onClick={clearAllFilters} className="btn-primary">
@@ -381,12 +381,12 @@ export default function CategoryPage() {
                 <Link
                   key={cat.slug}
                   to={`/category/${cat.slug}`}
-                  className="group flex items-center gap-2.5 p-3 bg-graphite rounded-premium-sm
-                             hover:bg-graphite/70 transition-all duration-200 border border-white/5
+                  className="group flex items-center gap-2.5 p-3 bg-white rounded-premium-sm
+                             hover:bg-white/70 transition-all duration-200 border border-gray-100
                              hover:border-gold/30"
                 >
                   <CatIcon className={`h-5 w-5 flex-shrink-0 ${cat.iconColor}`} />
-                  <span className="text-sm text-white/70 group-hover:text-white leading-tight line-clamp-1">
+                  <span className="text-sm text-gray-600 group-hover:text-white leading-tight line-clamp-1">
                     {cat.label}
                   </span>
                 </Link>

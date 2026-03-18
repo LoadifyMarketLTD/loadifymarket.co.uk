@@ -51,7 +51,7 @@ export default function CinematicCategoryPanels() {
                 {/* Icon container */}
                 <div className="absolute top-8 left-8 z-10">
                   <div className="relative">
-                    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-cinematic-md p-4 group-hover:bg-white/20 transition-all duration-300">
+                    <div className="bg-gray-100 backdrop-blur-sm border border-gray-200 rounded-cinematic-md p-4 group-hover:bg-gray-100 transition-all duration-300">
                       <category.icon className={`h-12 w-12 ${category.iconColor}`} strokeWidth={1.5} />
                     </div>
                     {/* Icon glow */}

@@ -72,9 +72,9 @@ export default function LogisticsLoadsPage() {
   ];
 
   return (
-    <div className="bg-jet min-h-screen">
+    <div className="bg-[#F8F9FA] min-h-screen">
       {/* Hero Section */}
-      <section className="relative py-20 bg-graphite/30 overflow-hidden">
+      <section className="relative py-20 bg-white/30 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-gold/8 rounded-full blur-[100px]" />
         </div>
@@ -86,7 +86,7 @@ export default function LogisticsLoadsPage() {
           <h1 className="heading-hero text-white mb-6">
             Logistics Loads <span className="text-gradient-gold">UK</span>
           </h1>
-          <p className="text-xl text-white/60 max-w-3xl mx-auto mb-10">
+          <p className="text-xl text-gray-500 max-w-3xl mx-auto mb-10">
             The UK's dedicated marketplace for freight loads. Post loads, find verified carriers,
             and move goods across the country with confidence.
           </p>
@@ -107,37 +107,37 @@ export default function LogisticsLoadsPage() {
       </section>
 
       {/* Stats Bar */}
-      <section className="py-10 bg-jet border-y border-white/5">
+      <section className="py-10 bg-jet border-y border-gray-100">
         <div className="container-cinematic">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
               <p className="text-3xl font-bold text-gradient-gold">1,000+</p>
-              <p className="text-white/60 text-sm mt-1">Active Loads</p>
+              <p className="text-gray-500 text-sm mt-1">Active Loads</p>
             </div>
             <div>
               <p className="text-3xl font-bold text-gradient-gold">500+</p>
-              <p className="text-white/60 text-sm mt-1">Verified Carriers</p>
+              <p className="text-gray-500 text-sm mt-1">Verified Carriers</p>
             </div>
             <div>
               <p className="text-3xl font-bold text-gradient-gold">UK Wide</p>
-              <p className="text-white/60 text-sm mt-1">Coverage</p>
+              <p className="text-gray-500 text-sm mt-1">Coverage</p>
             </div>
             <div>
               <p className="text-3xl font-bold text-gradient-gold">24/7</p>
-              <p className="text-white/60 text-sm mt-1">Platform Access</p>
+              <p className="text-gray-500 text-sm mt-1">Platform Access</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Load Types */}
-      <section className="py-16 bg-graphite/20">
+      <section className="py-16 bg-gray-100">
         <div className="container-cinematic">
           <div className="text-center mb-12">
-            <h2 className="heading-section text-white mb-4">
+            <h2 className="heading-section text-gray-900 mb-4">
               Types of <span className="text-gradient-gold">Loads</span> Available
             </h2>
-            <p className="text-white/60 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
               Whether you need a full artic or a single pallet moved, we have carriers ready.
             </p>
           </div>
@@ -147,7 +147,7 @@ export default function LogisticsLoadsPage() {
                 <CheckCircle className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
                 <div>
                   <h3 className="font-bold text-white mb-1">{type.label}</h3>
-                  <p className="text-white/60 text-sm">{type.description}</p>
+                  <p className="text-gray-500 text-sm">{type.description}</p>
                 </div>
               </div>
             ))}
@@ -159,10 +159,10 @@ export default function LogisticsLoadsPage() {
       <section className="py-16 bg-jet">
         <div className="container-cinematic">
           <div className="text-center mb-12">
-            <h2 className="heading-section text-white mb-4">
+            <h2 className="heading-section text-gray-900 mb-4">
               Why Use <span className="text-gradient-gold">Loadify Market Ltd</span>
             </h2>
-            <p className="text-white/60 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
               Built specifically for UK logistics professionals — brokers, carriers, and shippers.
             </p>
           </div>
@@ -178,7 +178,7 @@ export default function LogisticsLoadsPage() {
                     <Icon className="h-7 w-7 text-gold" />
                   </div>
                   <h3 className="text-lg font-bold text-white mb-3">{benefit.title}</h3>
-                  <p className="text-white/60 text-sm leading-relaxed">{benefit.description}</p>
+                  <p className="text-gray-500 text-sm leading-relaxed">{benefit.description}</p>
                 </div>
               );
             })}
@@ -187,13 +187,13 @@ export default function LogisticsLoadsPage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-16 bg-graphite/20">
+      <section className="py-16 bg-gray-100">
         <div className="container-cinematic">
           <div className="text-center mb-12">
-            <h2 className="heading-section text-white mb-4">
+            <h2 className="heading-section text-gray-900 mb-4">
               How It <span className="text-gradient-gold">Works</span>
             </h2>
-            <p className="text-white/60 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
               Simple, transparent process for posting and filling loads across the UK.
             </p>
           </div>
@@ -204,8 +204,8 @@ export default function LogisticsLoadsPage() {
                   <div className="w-10 h-10 bg-gold text-jet rounded-full flex items-center justify-center font-bold text-base mx-auto mb-5 shadow-cinematic-gold">
                     {step.number}
                   </div>
-                  <h3 className="text-base font-bold text-white mb-2">{step.title}</h3>
-                  <p className="text-sm text-white/50 leading-relaxed">{step.description}</p>
+                  <h3 className="text-base font-bold text-gray-900 mb-2">{step.title}</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">{step.description}</p>
                 </div>
               </div>
             ))}
@@ -225,8 +225,8 @@ export default function LogisticsLoadsPage() {
               <span className="inline-block mb-3 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 text-xs font-semibold uppercase tracking-wider">
                 Broker
               </span>
-              <h3 className="text-xl font-bold text-white mb-3">Are you a Broker?</h3>
-              <p className="text-white/60 text-sm mb-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Are you a Broker?</h3>
+              <p className="text-gray-500 text-sm mb-6">
                 Post loads on behalf of your clients. Manage multiple shipments and build your
                 verified broker profile.
               </p>
@@ -243,8 +243,8 @@ export default function LogisticsLoadsPage() {
               <span className="inline-block mb-3 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs font-semibold uppercase tracking-wider">
                 Carrier
               </span>
-              <h3 className="text-xl font-bold text-white mb-3">Are you a Carrier?</h3>
-              <p className="text-white/60 text-sm mb-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Are you a Carrier?</h3>
+              <p className="text-gray-500 text-sm mb-6">
                 Find loads that match your routes and vehicle type. Quote directly and keep your
                 trucks full.
               </p>
@@ -261,8 +261,8 @@ export default function LogisticsLoadsPage() {
               <span className="inline-block mb-3 px-3 py-1 rounded-full bg-green-500/20 border border-green-500/40 text-green-300 text-xs font-semibold uppercase tracking-wider">
                 Seller
               </span>
-              <h3 className="text-xl font-bold text-white mb-3">Need Goods Moved?</h3>
-              <p className="text-white/60 text-sm mb-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Need Goods Moved?</h3>
+              <p className="text-gray-500 text-sm mb-6">
                 Post your shipment requirements and receive competitive quotes from verified
                 carriers across the UK.
               </p>
@@ -275,15 +275,15 @@ export default function LogisticsLoadsPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-graphite/30 relative overflow-hidden">
+      <section className="py-20 bg-white/30 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gold/5 rounded-full blur-[100px]" />
         </div>
         <div className="container-cinematic relative z-10 text-center">
-          <h2 className="heading-section text-white mb-6">
+          <h2 className="heading-section text-gray-900 mb-6">
             Ready to <span className="text-gradient-gold">Find Your Next Load</span>?
           </h2>
-          <p className="text-xl text-white/60 max-w-2xl mx-auto mb-10">
+          <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10">
             Join thousands of UK logistics professionals on Loadify Market Ltd today.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

@@ -167,8 +167,8 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
     <div className="space-y-4">
       {/* Seller Name with Verification Badge */}
       {sellerInfo && (
-        <div className="flex items-center justify-between flex-wrap gap-3 pb-4 border-b border-white/10">
-          <h3 className="text-xl font-bold text-white">
+        <div className="flex items-center justify-between flex-wrap gap-3 pb-4 border-b border-gray-200">
+          <h3 className="text-xl font-bold text-gray-900">
             {sellerInfo.businessName || 
              `${sellerInfo.users.firstName || ''} ${sellerInfo.users.lastName || ''}`.trim() || 
              'Seller'}

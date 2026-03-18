@@ -61,7 +61,7 @@ function Stars({
         <Star
           key={s}
           className={`${cls} transition-colors ${
-            s <= active ? 'fill-gold text-gold' : 'text-white/20'
+            s <= active ? 'fill-gold text-gold' : 'text-gray-300'
           } ${interactive ? 'cursor-pointer hover:scale-110' : ''}`}
           onClick={interactive && onChange ? () => onChange(s) : undefined}
           onMouseEnter={interactive ? () => setHover(s) : undefined}
@@ -261,7 +261,7 @@ export default function ProductReviews({
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-4">Customer Reviews</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Customer Reviews</h2>
           {totalReviews > 0 ? (
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
               {/* Score */}
@@ -270,7 +270,7 @@ export default function ProductReviews({
                   {averageRating.toFixed(1)}
                 </p>
                 <Stars value={Math.round(averageRating)} size="md" />
-                <p className="text-white/50 text-sm mt-2">{totalReviews} review{totalReviews !== 1 ? 's' : ''}</p>
+                <p className="text-gray-400 text-sm mt-2">{totalReviews} review{totalReviews !== 1 ? 's' : ''}</p>
               </div>
               {/* Distribution bars */}
               <div className="space-y-1.5 flex-1 min-w-[180px]">
@@ -278,19 +278,19 @@ export default function ProductReviews({
                   <button
                     key={stars}
                     onClick={() => setFilterRating(filterRating === stars ? 'all' : stars)}
-                    className={`flex items-center gap-2 w-full rounded px-1.5 py-0.5 transition-colors ${filterRating === stars ? 'bg-gold/10' : 'hover:bg-white/5'}`}
+                    className={`flex items-center gap-2 w-full rounded px-1.5 py-0.5 transition-colors ${filterRating === stars ? 'bg-gold/10' : 'hover:bg-gray-50'}`}
                   >
-                    <span className="text-xs text-white/50 w-10 shrink-0">{stars} star</span>
-                    <div className="flex-1 bg-white/10 rounded-full h-1.5 overflow-hidden">
+                    <span className="text-xs text-gray-400 w-10 shrink-0">{stars} star</span>
+                    <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
                       <div className="bg-gold h-full transition-all duration-500" style={{ width: `${pct}%` }} />
                     </div>
-                    <span className="text-xs text-white/50 w-5 text-right shrink-0">{count}</span>
+                    <span className="text-xs text-gray-400 w-5 text-right shrink-0">{count}</span>
                   </button>
                 ))}
               </div>
             </div>
           ) : (
-            <p className="text-white/40">No reviews yet — be the first!</p>
+            <p className="text-gray-400">No reviews yet — be the first!</p>
           )}
         </div>
 
@@ -305,7 +305,7 @@ export default function ProductReviews({
               <Star className="w-4 h-4" /> Write a Review
             </button>
           ) : eligibilityChecked && eligibleOrders.length === 0 && user ? (
-            <div className="text-white/30 text-xs text-right max-w-[160px] leading-relaxed">
+            <div className="text-gray-300 text-xs text-right max-w-[160px] leading-relaxed">
               Purchase this product to leave a review
             </div>
           ) : reviews.some(r => r.userId === user?.id) ? (
@@ -326,7 +326,7 @@ export default function ProductReviews({
             <div className="text-center py-8">
               <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
               <p className="text-white font-bold text-lg">Review submitted!</p>
-              <p className="text-white/50 text-sm mt-1">Thank you for your feedback.</p>
+              <p className="text-gray-400 text-sm mt-1">Thank you for your feedback.</p>
               <button onClick={() => { setShowForm(false); setFormSuccess(false); }} className="btn-outline text-sm mt-4">Close</button>
             </div>
           ) : (
@@ -340,7 +340,7 @@ export default function ProductReviews({
 
               {/* Order selector */}
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-2">
+                <label className="block text-sm font-medium text-gray-500 mb-2">
                   Your Order <span className="text-red-400">*</span>
                 </label>
                 <select
@@ -354,23 +354,23 @@ export default function ProductReviews({
                     <option key={id} value={id}>Order #{id.slice(-8).toUpperCase()}</option>
                   ))}
                 </select>
-                <p className="text-white/30 text-xs mt-1">Only delivered orders are eligible.</p>
+                <p className="text-gray-300 text-xs mt-1">Only delivered orders are eligible.</p>
               </div>
 
               {/* Star rating */}
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-2">Overall Rating <span className="text-red-400">*</span></label>
+                <label className="block text-sm font-medium text-gray-500 mb-2">Overall Rating <span className="text-red-400">*</span></label>
                 <div className="flex items-center gap-3">
                   <Stars value={formRating} size="lg" interactive onChange={setFormRating} />
                   {formRating > 0 && (
-                    <span className="text-white/60 text-sm">{RATING_LABELS[formRating]}</span>
+                    <span className="text-gray-500 text-sm">{RATING_LABELS[formRating]}</span>
                   )}
                 </div>
               </div>
 
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-2">Review Title</label>
+                <label className="block text-sm font-medium text-gray-500 mb-2">Review Title</label>
                 <input
                   type="text"
                   value={formTitle}
@@ -383,7 +383,7 @@ export default function ProductReviews({
 
               {/* Comment */}
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-2">Your Review <span className="text-red-400">*</span></label>
+                <label className="block text-sm font-medium text-gray-500 mb-2">Your Review <span className="text-red-400">*</span></label>
                 <textarea
                   required
                   rows={5}
@@ -393,18 +393,18 @@ export default function ProductReviews({
                   maxLength={2000}
                   className="input-field w-full resize-none"
                 />
-                <p className="text-white/30 text-xs mt-1">{formComment.length}/2000</p>
+                <p className="text-gray-300 text-xs mt-1">{formComment.length}/2000</p>
               </div>
 
               {/* Images */}
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-2">
+                <label className="block text-sm font-medium text-gray-500 mb-2">
                   <ImagePlus className="w-4 h-4 inline mr-1" /> Add Photos (optional)
                 </label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {formImages.map((url, i) => (
                     <div key={i} className="relative">
-                      <img src={url} alt="" className="w-16 h-16 object-cover rounded-lg border border-white/10" />
+                      <img src={url} alt="" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
                       <button
                         type="button"
                         onClick={() => setFormImages(prev => prev.filter((_, j) => j !== i))}
@@ -416,7 +416,7 @@ export default function ProductReviews({
                     <button
                       type="button"
                       onClick={() => imageInputRef.current?.click()}
-                      className="w-16 h-16 border-2 border-dashed border-white/20 rounded-lg flex items-center justify-center text-white/30 hover:border-gold/40 hover:text-gold transition-colors"
+                      className="w-16 h-16 border-2 border-dashed border-gray-200 rounded-lg flex items-center justify-center text-gray-300 hover:border-gold/40 hover:text-gold transition-colors"
                     >
                       <ImagePlus className="w-6 h-6" />
                     </button>
@@ -458,7 +458,7 @@ export default function ProductReviews({
 
               {/* Video URL */}
               <div>
-                <label className="block text-sm font-medium text-white/60 mb-2">
+                <label className="block text-sm font-medium text-gray-500 mb-2">
                   <Video className="w-4 h-4 inline mr-1" /> Video Link (optional)
                 </label>
                 <input
@@ -468,7 +468,7 @@ export default function ProductReviews({
                   placeholder="https://youtube.com/… or direct video URL"
                   className="input-field w-full"
                 />
-                <p className="text-white/30 text-xs mt-1">YouTube, Vimeo or direct .mp4 links accepted.</p>
+                <p className="text-gray-300 text-xs mt-1">YouTube, Vimeo or direct .mp4 links accepted.</p>
               </div>
 
               <div className="flex gap-3 justify-end pt-2">
@@ -497,7 +497,7 @@ export default function ProductReviews({
               key={String(f)}
               onClick={() => setFilterRating(f)}
               className={`px-3 py-1.5 rounded-premium-sm text-xs font-medium transition-all ${
-                filterRating === f ? 'bg-gold text-jet' : 'bg-graphite text-white/60 hover:bg-graphite/70'
+                filterRating === f ? 'bg-gold text-jet' : 'bg-white text-gray-500 hover:bg-white/70'
               }`}
             >
               {f === 'all' ? 'All' : f === 'verified' ? '✓ Verified' : `${f}★`}
@@ -505,7 +505,7 @@ export default function ProductReviews({
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-white/40 text-xs">Sort:</span>
+          <span className="text-gray-400 text-xs">Sort:</span>
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value as typeof sortBy)}
@@ -529,7 +529,7 @@ export default function ProductReviews({
       ) : reviews.length === 0 ? (
         <div className="card-glass text-center py-14">
           <MessageSquare className="w-12 h-12 text-white/15 mx-auto mb-3" />
-          <p className="text-white/50">
+          <p className="text-gray-400">
             {filterRating === 'all'
               ? 'No reviews yet. Be the first to review this product!'
               : 'No reviews match this filter.'}
@@ -603,7 +603,7 @@ function ReviewCard({
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className="font-semibold text-white text-sm">{review.userName || 'Buyer'}</span>
             {review.isVerifiedPurchase && (
-              <span className="flex items-center gap-1 text-xs bg-green-500/15 text-green-400 border border-green-400/20 px-2 py-0.5 rounded-full">
+              <span className="flex items-center gap-1 text-xs bg-green-100 text-green-700 border border-green-400/20 px-2 py-0.5 rounded-full">
                 <CheckCircle className="w-3 h-3" /> Verified Purchase
               </span>
             )}
@@ -613,14 +613,14 @@ function ReviewCard({
             <span className="text-gold text-xs font-semibold">{RATING_LABELS[review.rating]}</span>
           </div>
         </div>
-        <span className="text-white/30 text-xs shrink-0">
+        <span className="text-gray-300 text-xs shrink-0">
           {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
         </span>
       </div>
 
       {/* Title + body */}
       {review.title && <h4 className="font-semibold text-white mb-1">{review.title}</h4>}
-      <p className="text-white/70 text-sm leading-relaxed mb-3 whitespace-pre-line">{review.comment}</p>
+      <p className="text-gray-600 text-sm leading-relaxed mb-3 whitespace-pre-line">{review.comment}</p>
 
       {/* Images */}
       {review.images && review.images.length > 0 && (
@@ -630,7 +630,7 @@ function ReviewCard({
               <img
                 src={img}
                 alt={`Review photo ${i + 1}`}
-                className="w-18 h-18 object-cover rounded-lg border border-white/10 hover:border-gold/40 transition-colors"
+                className="w-18 h-18 object-cover rounded-lg border border-gray-200 hover:border-gold/40 transition-colors"
                 style={{ width: 72, height: 72 }}
               />
             </button>
@@ -652,12 +652,12 @@ function ReviewCard({
 
       {/* Seller response */}
       {review.sellerResponse && !isResponding && (
-        <div className="mt-3 pt-3 border-t border-white/10 bg-gold/5 rounded-premium-sm p-3">
+        <div className="mt-3 pt-3 border-t border-gray-200 bg-gold/5 rounded-premium-sm p-3">
           <p className="text-xs font-bold text-gold mb-1 flex items-center gap-1">
             <Reply className="w-3.5 h-3.5" /> Seller Response
           </p>
-          <p className="text-white/70 text-sm leading-relaxed">{review.sellerResponse.text}</p>
-          <p className="text-white/30 text-xs mt-1">
+          <p className="text-gray-600 text-sm leading-relaxed">{review.sellerResponse.text}</p>
+          <p className="text-gray-300 text-xs mt-1">
             {formatDistanceToNow(new Date(review.sellerResponse.respondedAt), { addSuffix: true })}
           </p>
         </div>
@@ -665,7 +665,7 @@ function ReviewCard({
 
       {/* Seller response input */}
       {isSeller && isResponding && (
-        <div className="mt-3 pt-3 border-t border-white/10">
+        <div className="mt-3 pt-3 border-t border-gray-200">
           <p className="text-xs font-bold text-gold mb-2 flex items-center gap-1">
             <Reply className="w-3.5 h-3.5" /> Your Response
           </p>
@@ -677,7 +677,7 @@ function ReviewCard({
             maxLength={500}
             className="input-field w-full resize-none text-sm mb-2"
           />
-          <p className="text-white/30 text-xs mb-2">{responseText.length}/500</p>
+          <p className="text-gray-300 text-xs mb-2">{responseText.length}/500</p>
           <div className="flex gap-2">
             <button
               onClick={onCancelResponse}
@@ -698,12 +698,12 @@ function ReviewCard({
       )}
 
       {/* Action bar */}
-      <div className="flex items-center gap-4 pt-3 mt-3 border-t border-white/5">
+      <div className="flex items-center gap-4 pt-3 mt-3 border-t border-gray-100">
         <button
           onClick={onHelpful}
           disabled={!currentUserId || hasVoted || review.userId === currentUserId}
           className={`flex items-center gap-1.5 text-xs transition-colors disabled:opacity-40 ${
-            hasVoted ? 'text-gold' : 'text-white/40 hover:text-white'
+            hasVoted ? 'text-gold' : 'text-gray-400 hover:text-white'
           }`}
         >
           <ThumbsUp className="w-3.5 h-3.5" />
@@ -713,7 +713,7 @@ function ReviewCard({
         {isSeller && !isResponding && !review.sellerResponse && (
           <button
             onClick={onStartResponse}
-            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-gold transition-colors"
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gold transition-colors"
           >
             <Reply className="w-3.5 h-3.5" /> Respond
           </button>
@@ -722,7 +722,7 @@ function ReviewCard({
         {isSeller && review.sellerResponse && !isResponding && (
           <button
             onClick={onStartResponse}
-            className="flex items-center gap-1.5 text-xs text-white/40 hover:text-gold transition-colors"
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gold transition-colors"
           >
             <Reply className="w-3.5 h-3.5" /> Edit Response
           </button>
@@ -731,7 +731,7 @@ function ReviewCard({
         {currentUserId && currentUserId !== review.userId && (
           <button
             onClick={onFlag}
-            className="ml-auto flex items-center gap-1.5 text-xs text-white/20 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+            className="ml-auto flex items-center gap-1.5 text-xs text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
             title="Report this review"
           >
             <ShieldAlert className="w-3.5 h-3.5" /> Report

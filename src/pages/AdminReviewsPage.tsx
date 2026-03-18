@@ -43,7 +43,7 @@ function Stars({ value }: { value: number }) {
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   published: { label: 'Published', color: 'text-green-400' },
   flagged:   { label: 'Flagged',   color: 'text-yellow-400' },
-  hidden:    { label: 'Hidden',    color: 'text-white/40' },
+  hidden:    { label: 'Hidden',    color: 'text-gray-400' },
   removed:   { label: 'Removed',  color: 'text-red-400' },
 };
 
@@ -112,7 +112,7 @@ export default function AdminReviewsPage() {
 
   if (!user || !hasAdminAccess(user)) {
     return (
-      <div className="bg-jet min-h-screen pt-24 flex items-center justify-center">
+      <div className="bg-[#F8F9FA] min-h-screen pt-24 flex items-center justify-center">
         <div className="card-glass text-center py-16 px-8">
           <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
           <p className="text-white font-bold">Admin access required.</p>
@@ -125,19 +125,19 @@ export default function AdminReviewsPage() {
   }
 
   return (
-    <div className="bg-jet min-h-screen pt-24">
+    <div className="bg-[#F8F9FA] min-h-screen pt-24">
       <div className="container-cinematic py-10 max-w-6xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <Link to="/admin" className="p-2 rounded-premium-sm bg-graphite hover:bg-graphite/70 text-white/60 hover:text-white transition-colors">
+          <Link to="/admin" className="p-2 rounded-premium-sm bg-white hover:bg-white/70 text-gray-500 hover:text-white transition-colors">
             <ChevronLeft className="w-5 h-5" />
           </Link>
           <div className="p-3 bg-gold/10 rounded-premium-sm">
             <Star className="w-7 h-7 text-gold" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-white">Review Moderation</h1>
-            <p className="text-white/40 text-sm mt-1">Remove abusive reviews, block fake reviews, suspend accounts</p>
+            <h1 className="text-3xl font-bold text-gray-900">Review Moderation</h1>
+            <p className="text-gray-400 text-sm mt-1">Remove abusive reviews, block fake reviews, suspend accounts</p>
           </div>
         </div>
 
@@ -147,11 +147,11 @@ export default function AdminReviewsPage() {
             { label: 'Published',    value: published, color: 'text-green-400' },
             { label: 'Flagged',      value: flagged,   color: flagged > 0 ? 'text-yellow-400' : 'text-white' },
             { label: 'Abusive',      value: abusive,   color: abusive > 0 ? 'text-red-400' : 'text-white' },
-            { label: 'Removed',      value: removed,   color: 'text-white/40' },
+            { label: 'Removed',      value: removed,   color: 'text-gray-400' },
           ].map(stat => (
             <div key={stat.label} className="card-glass text-center">
               <p className={`text-3xl font-bold ${stat.color}`}>{stat.value}</p>
-              <p className="text-white/40 text-xs mt-1">{stat.label}</p>
+              <p className="text-gray-400 text-xs mt-1">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -159,7 +159,7 @@ export default function AdminReviewsPage() {
         {/* Search + filter bar */}
         <div className="flex flex-wrap gap-3 mb-6">
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
             <input
               type="text"
               value={search}
@@ -169,13 +169,13 @@ export default function AdminReviewsPage() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-white/40" />
+            <Filter className="w-4 h-4 text-gray-400" />
             {['all', 'flagged', 'published', 'hidden', 'removed'].map(s => (
               <button
                 key={s}
                 onClick={() => setFilterStatus(s)}
                 className={`px-3 py-2 rounded-premium-sm text-xs font-medium transition-all capitalize ${
-                  filterStatus === s ? 'bg-gold text-jet' : 'bg-graphite text-white/60 hover:bg-graphite/70'
+                  filterStatus === s ? 'bg-gold text-jet' : 'bg-white text-gray-500 hover:bg-white/70'
                 }`}
               >
                 {s}
@@ -221,12 +221,12 @@ export default function AdminReviewsPage() {
                             <ShieldAlert className="w-3 h-3" /> Abusive
                           </span>
                         )}
-                        <span className="text-white/30 text-xs ml-auto">
+                        <span className="text-gray-300 text-xs ml-auto">
                           {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
                         </span>
                       </div>
                       {review.title && <p className="font-semibold text-white text-sm mb-1">{review.title}</p>}
-                      <p className="text-white/70 text-sm leading-relaxed line-clamp-3">{review.comment}</p>
+                      <p className="text-gray-600 text-sm leading-relaxed line-clamp-3">{review.comment}</p>
                       {review.adminNote && (
                         <p className="text-yellow-400/70 text-xs mt-2 italic">Admin note: {review.adminNote}</p>
                       )}

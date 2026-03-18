@@ -34,7 +34,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void 
       type="button"
       onClick={onChange}
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        checked ? 'bg-gold' : 'bg-white/20'
+        checked ? 'bg-gold' : 'bg-gray-100'
       }`}
     >
       <span
@@ -49,8 +49,8 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void 
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="mb-6">
-      <h2 className="text-xl font-bold text-white">{title}</h2>
-      {subtitle && <p className="text-white/50 text-sm mt-1">{subtitle}</p>}
+      <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+      {subtitle && <p className="text-gray-400 text-sm mt-1">{subtitle}</p>}
     </div>
   );
 }
@@ -192,13 +192,13 @@ function ProfileTab() {
           </div>
           <div>
             <p className="text-white text-sm font-medium">Profile Picture</p>
-            <p className="text-white/40 text-xs mt-0.5">JPG, PNG or WebP. Max 5 MB.</p>
+            <p className="text-gray-400 text-xs mt-0.5">JPG, PNG or WebP. Max 5 MB.</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">First Name</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1">First Name</label>
             <input
               name="firstName"
               value={form.firstName}
@@ -208,7 +208,7 @@ function ProfileTab() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">Last Name</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Last Name</label>
             <input
               name="lastName"
               value={form.lastName}
@@ -219,7 +219,7 @@ function ProfileTab() {
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-white/70 mb-1">Email Address</label>
+          <label className="block text-sm font-medium text-gray-600 mb-1">Email Address</label>
           <input
             name="email"
             value={form.email}
@@ -227,12 +227,12 @@ function ProfileTab() {
             className="input-field w-full opacity-50 cursor-not-allowed"
             placeholder="Email"
           />
-          <p className="text-white/40 text-xs mt-1">
+          <p className="text-gray-400 text-xs mt-1">
             Email changes require identity verification. Contact support to update.
           </p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-white/70 mb-1">Phone Number</label>
+          <label className="block text-sm font-medium text-gray-600 mb-1">Phone Number</label>
           <input
             name="phone"
             value={form.phone}
@@ -317,7 +317,7 @@ function PasswordTab() {
       <SectionHeader title="Change Password" subtitle="Keep your account secure with a strong password" />
       <div className="space-y-4 max-w-md">
         <div>
-          <label className="block text-sm font-medium text-white/70 mb-1">New Password</label>
+          <label className="block text-sm font-medium text-gray-600 mb-1">New Password</label>
           <div className="relative">
             <input
               name="newPassword"
@@ -330,7 +330,7 @@ function PasswordTab() {
             <button
               type="button"
               onClick={() => setShowNew(v => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -345,20 +345,20 @@ function PasswordTab() {
                     <div
                       key={i}
                       className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
-                        i <= strength.score ? strength.color : 'bg-white/10'
+                        i <= strength.score ? strength.color : 'bg-gray-100'
                       }`}
                     />
                   ))}
                 </div>
-                <p className="text-xs text-white/50">
-                  Strength: <span className="font-medium text-white/80">{strength.label}</span>
+                <p className="text-xs text-gray-400">
+                  Strength: <span className="font-medium text-gray-700">{strength.label}</span>
                 </p>
               </div>
             );
           })()}
         </div>
         <div>
-          <label className="block text-sm font-medium text-white/70 mb-1">Confirm New Password</label>
+          <label className="block text-sm font-medium text-gray-600 mb-1">Confirm New Password</label>
           <div className="relative">
             <input
               name="confirmPassword"
@@ -371,7 +371,7 @@ function PasswordTab() {
             <button
               type="button"
               onClick={() => setShowConfirm(v => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -394,7 +394,7 @@ function PasswordTab() {
           <Lock className="w-4 h-4" />
           {saving ? 'Updating…' : 'Update Password'}
         </button>
-        <p className="text-white/40 text-xs">
+        <p className="text-gray-400 text-xs">
           Forgot your current password?{' '}
           <Link to="/forgot-password" className="text-gold hover:text-gold/80 underline">
             Reset via email
@@ -432,9 +432,9 @@ function EmailTab() {
     <div>
       <SectionHeader title="Email Settings" subtitle="Manage your email address and preferences" />
       <div className="space-y-4">
-        <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-          <p className="text-sm font-medium text-white/70 mb-1">Current email address</p>
-          <p className="text-white font-semibold">{user?.email}</p>
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <p className="text-sm font-medium text-gray-600 mb-1">Current email address</p>
+          <p className="text-gray-900 font-semibold">{user?.email}</p>
           {user?.isEmailVerified ? (
             <span className="inline-flex items-center gap-1 text-green-400 text-xs mt-2">
               <CheckCircle className="w-3 h-3" /> Verified
@@ -460,9 +460,9 @@ function EmailTab() {
             </div>
           )}
         </div>
-        <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
           <h3 className="font-medium text-white mb-1">Change Email Address</h3>
-          <p className="text-white/50 text-sm">
+          <p className="text-gray-400 text-sm">
             To change your email address, please contact our support team at{' '}
             <a href="mailto:support@loadifymarket.co.uk" className="text-gold hover:underline">
               support@loadifymarket.co.uk
@@ -475,7 +475,7 @@ function EmailTab() {
             <Mail className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
             <div>
               <h3 className="font-medium text-blue-300 mb-1">Transactional Emails</h3>
-              <p className="text-white/50 text-sm">
+              <p className="text-gray-400 text-sm">
                 Order confirmations, security alerts, and password resets are always delivered
                 regardless of your notification preferences.
               </p>
@@ -549,17 +549,17 @@ function NotificationsTab() {
     { key: 'promotionalEmails',   label: 'Promotional Emails',    desc: 'Special offers, new products, and marketplace news.' },
   ];
 
-  if (loading) return <p className="text-white/50 text-sm">Loading preferences…</p>;
+  if (loading) return <p className="text-gray-400 text-sm">Loading preferences…</p>;
 
   return (
     <div>
       <SectionHeader title="Notification Preferences" subtitle="Choose how you'd like to be notified" />
       <div className="space-y-3">
         {ITEMS.map(item => (
-          <div key={item.key} className="flex items-center justify-between p-4 bg-white/5 rounded-lg border border-white/10">
+          <div key={item.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex-1 pr-4">
               <p className="font-medium text-white text-sm">{item.label}</p>
-              <p className="text-white/50 text-xs mt-0.5">{item.desc}</p>
+              <p className="text-gray-400 text-xs mt-0.5">{item.desc}</p>
             </div>
             <Toggle
               checked={settings[item.key]}
@@ -643,23 +643,23 @@ function AddressesTab() {
     setAddresses([]);
   };
 
-  if (loading) return <p className="text-white/50 text-sm">Loading addresses…</p>;
+  if (loading) return <p className="text-gray-400 text-sm">Loading addresses…</p>;
 
   return (
     <div>
       <SectionHeader title="Saved Delivery Addresses" subtitle="Manage your saved delivery locations" />
       {addresses.length === 0 && !showForm && (
-        <p className="text-white/50 text-sm mb-4">No saved addresses yet.</p>
+        <p className="text-gray-400 text-sm mb-4">No saved addresses yet.</p>
       )}
       {addresses.map(addr => (
-        <div key={addr.id} className="p-4 bg-white/5 rounded-lg border border-white/10 mb-3 flex items-start justify-between gap-4">
+        <div key={addr.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 mb-3 flex items-start justify-between gap-4">
           <div>
             {addr.label && <p className="text-gold text-xs font-semibold mb-1">{addr.label} {addr.isDefault && '· Default'}</p>}
             <p className="text-white text-sm">{addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}</p>
-            <p className="text-white/60 text-sm">{addr.city}, {addr.postcode}, {addr.country}</p>
+            <p className="text-gray-500 text-sm">{addr.city}, {addr.postcode}, {addr.country}</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => { setForm({ ...addr }); setShowForm(true); }} className="text-white/50 hover:text-white transition-colors">
+            <button onClick={() => { setForm({ ...addr }); setShowForm(true); }} className="text-gray-400 hover:text-white transition-colors">
               <Save className="w-4 h-4" />
             </button>
             <button onClick={handleDelete} className="text-red-400/60 hover:text-red-400 transition-colors">
@@ -674,8 +674,8 @@ function AddressesTab() {
         </button>
       )}
       {showForm && (
-        <div className="p-4 bg-white/5 rounded-lg border border-white/10 space-y-3 mt-4">
-          <h3 className="font-medium text-white">New Address</h3>
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3 mt-4">
+          <h3 className="font-medium text-gray-900">New Address</h3>
           <input
             value={form.label ?? ''}
             onChange={e => setForm(p => ({ ...p, label: e.target.value }))}
@@ -725,12 +725,12 @@ function PaymentTab() {
   return (
     <div>
       <SectionHeader title="Payment Methods" subtitle="Manage your saved payment options" />
-      <div className="p-4 bg-white/5 rounded-lg border border-white/10 mb-4">
+      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 mb-4">
         <div className="flex items-start gap-3">
           <CreditCard className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
           <div>
             <h3 className="font-medium text-white mb-1">Secure Payments via Stripe</h3>
-            <p className="text-white/50 text-sm">
+            <p className="text-gray-400 text-sm">
               Loadify Market processes all payments securely through Stripe. Your card details are
               never stored on our servers — they are managed entirely by Stripe's PCI-DSS compliant
               infrastructure.
@@ -738,8 +738,8 @@ function PaymentTab() {
           </div>
         </div>
       </div>
-      <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-        <p className="text-white/60 text-sm">
+      <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <p className="text-gray-500 text-sm">
           Payment methods are managed per checkout. You can save cards directly through Stripe's
           secure checkout interface when completing a purchase.
         </p>
@@ -758,10 +758,10 @@ function BusinessTab() {
     return (
       <div>
         <SectionHeader title="Business / Store Information" subtitle="Available for seller accounts" />
-        <div className="p-6 bg-white/5 rounded-lg border border-white/10 text-center">
+        <div className="p-6 bg-gray-50 rounded-lg border border-gray-200 text-center">
           <Building2 className="w-12 h-12 text-gold/40 mx-auto mb-3" />
           <h3 className="font-semibold text-white mb-2">You are not a seller</h3>
-          <p className="text-white/50 text-sm mb-4">
+          <p className="text-gray-400 text-sm mb-4">
             Upgrade your account to start listing products and manage your store.
           </p>
           <Link to="/register?type=seller" className="btn-primary inline-flex items-center gap-2 text-sm">
@@ -776,8 +776,8 @@ function BusinessTab() {
     <div>
       <SectionHeader title="Business / Store Information" subtitle="Manage your seller profile and store details" />
       <div className="space-y-3">
-        <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-          <p className="text-white/60 text-sm mb-3">
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <p className="text-gray-500 text-sm mb-3">
             Your full business and store information is managed in the Seller Profile section.
           </p>
           <button
@@ -787,9 +787,9 @@ function BusinessTab() {
             <Building2 className="w-4 h-4" /> Open Seller Profile
           </button>
         </div>
-        <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
           <h3 className="font-medium text-white mb-1">Seller Dashboard</h3>
-          <p className="text-white/50 text-sm mb-3">
+          <p className="text-gray-400 text-sm mb-3">
             Manage your listings, orders, shipments, and earnings.
           </p>
           <button
@@ -829,20 +829,20 @@ export default function AccountSettingsPage() {
   const visibleTabs = TABS.filter(t => t.id !== 'business' || isSeller);
 
   return (
-    <div className="bg-jet min-h-screen pt-24">
+    <div className="bg-[#F8F9FA] min-h-screen pt-24">
       <div className="container-cinematic py-10 max-w-5xl">
 
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-1 text-white/50 hover:text-white transition-colors text-sm"
+            className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors text-sm"
           >
             <ChevronLeft className="w-4 h-4" /> Dashboard
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-white">Account Settings</h1>
-            <p className="text-white/40 text-sm">{user.email}</p>
+            <h1 className="text-2xl font-bold text-gray-900">Account Settings</h1>
+            <p className="text-gray-400 text-sm">{user.email}</p>
           </div>
         </div>
 
@@ -859,7 +859,7 @@ export default function AccountSettingsPage() {
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                       activeTab === tab.id
                         ? 'bg-gold/20 text-gold border border-gold/30'
-                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                        : 'text-gray-500 hover:text-white hover:bg-gray-50'
                     }`}
                   >
                     <Icon className="w-4 h-4 flex-shrink-0" />

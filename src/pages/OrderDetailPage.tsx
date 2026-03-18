@@ -164,7 +164,7 @@ export default function OrderDetailPage() {
 
   if (loading) {
     return (
-      <div className="bg-jet min-h-screen pt-24 flex items-center justify-center">
+      <div className="bg-[#F8F9FA] min-h-screen pt-24 flex items-center justify-center">
         <div className="w-10 h-10 border-2 border-gold border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -172,7 +172,7 @@ export default function OrderDetailPage() {
 
   if (!order) {
     return (
-      <div className="bg-jet min-h-screen pt-24">
+      <div className="bg-[#F8F9FA] min-h-screen pt-24">
         <div className="container-cinematic py-10 text-center">
           <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white mb-2">Order not found</h2>
@@ -185,18 +185,18 @@ export default function OrderDetailPage() {
   }
 
   return (
-    <div className="bg-jet min-h-screen pt-24">
+    <div className="bg-[#F8F9FA] min-h-screen pt-24">
       <div className="container-cinematic py-10 max-w-4xl">
         {/* Back */}
-        <Link to="/orders" className="flex items-center gap-2 text-white/50 hover:text-gold transition-colors mb-8 text-sm">
+        <Link to="/orders" className="flex items-center gap-2 text-gray-400 hover:text-gold transition-colors mb-8 text-sm">
           <ChevronLeft className="w-4 h-4" /> Back to Orders
         </Link>
 
         {/* Title Row */}
         <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white">Order Details</h1>
-            <p className="text-white/50 font-mono text-sm mt-1">{order.orderNumber}</p>
+            <h1 className="text-3xl font-bold text-gray-900">Order Details</h1>
+            <p className="text-gray-400 font-mono text-sm mt-1">{order.orderNumber}</p>
           </div>
           <div className="flex gap-3">
             <button
@@ -235,24 +235,24 @@ export default function OrderDetailPage() {
               return (
                 <div key={step.key} className="flex-1 flex flex-col items-center text-center">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-2 transition-all ${
-                    isComplete ? 'bg-gold text-jet' : 'bg-graphite/60 text-white/30'
+                    isComplete ? 'bg-gold text-jet' : 'bg-white/60 text-gray-300'
                   } ${isCurrent ? 'ring-2 ring-gold ring-offset-2 ring-offset-jet' : ''}`}>
                     <Icon className="w-5 h-5" />
                   </div>
-                  <span className={`text-xs font-medium ${isComplete ? 'text-gold' : 'text-white/30'}`}>
+                  <span className={`text-xs font-medium ${isComplete ? 'text-gold' : 'text-gray-300'}`}>
                     {step.label}
                   </span>
                   {idx < STATUS_STEPS.length - 1 && (
-                    <div className={`hidden sm:block absolute w-full h-0.5 top-5 left-1/2 ${isComplete ? 'bg-gold/50' : 'bg-white/10'}`} style={{ transform: 'translateX(0)' }} />
+                    <div className={`hidden sm:block absolute w-full h-0.5 top-5 left-1/2 ${isComplete ? 'bg-gold/50' : 'bg-gray-100'}`} style={{ transform: 'translateX(0)' }} />
                   )}
                 </div>
               );
             })}
           </div>
           {order.trackingNumber && (
-            <div className="mt-4 pt-4 border-t border-white/10 flex items-center gap-2">
+            <div className="mt-4 pt-4 border-t border-gray-200 flex items-center gap-2">
               <Truck className="w-4 h-4 text-gold" />
-              <span className="text-white/60 text-sm">Tracking: </span>
+              <span className="text-gray-500 text-sm">Tracking: </span>
               <span className="text-white font-mono text-sm">{order.trackingNumber}</span>
               <Link to={`/track-order?orderNumber=${order.orderNumber}`} className="ml-auto text-gold text-xs hover:underline">
                 Full Tracking →
@@ -268,36 +268,36 @@ export default function OrderDetailPage() {
             <h2 className="text-lg font-bold text-white mb-4">Order Summary</h2>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-white/50">Product</span>
+                <span className="text-gray-400">Product</span>
                 <span className="text-white font-medium">{order.productTitle || '–'}</span>
               </div>
               {order.storeName && (
                 <div className="flex justify-between items-center">
-                  <span className="text-white/50 flex items-center gap-1">
+                  <span className="text-gray-400 flex items-center gap-1">
                     <Store className="w-3 h-3" /> Sold by
                   </span>
                   <span className="text-gold font-medium">{order.storeName}</span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-white/50">Quantity</span>
+                <span className="text-gray-400">Quantity</span>
                 <span className="text-white">{order.quantity}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-white/50">Subtotal</span>
+                <span className="text-gray-400">Subtotal</span>
                 <span className="text-white">£{order.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-white/50">VAT</span>
+                <span className="text-gray-400">VAT</span>
                 <span className="text-white">£{order.vatAmount.toFixed(2)}</span>
               </div>
               {order.shippingAmount ? (
                 <div className="flex justify-between">
-                  <span className="text-white/50">Shipping</span>
+                  <span className="text-gray-400">Shipping</span>
                   <span className="text-white">£{order.shippingAmount.toFixed(2)}</span>
                 </div>
               ) : null}
-              <div className="flex justify-between pt-3 border-t border-white/10 font-bold">
+              <div className="flex justify-between pt-3 border-t border-gray-200 font-bold">
                 <span className="text-white">Total</span>
                 <span className="text-gold text-lg">£{order.total.toFixed(2)}</span>
               </div>
@@ -311,22 +311,22 @@ export default function OrderDetailPage() {
               Shipping Address
             </h2>
             {order.shippingAddress ? (
-              <address className="not-italic text-sm text-white/70 leading-relaxed">
+              <address className="not-italic text-sm text-gray-600 leading-relaxed">
                 {order.shippingAddress.line1}<br />
                 {order.shippingAddress.line2 && <>{order.shippingAddress.line2}<br /></>}
                 {order.shippingAddress.city}, {order.shippingAddress.postcode}<br />
                 {order.shippingAddress.country}
               </address>
             ) : (
-              <p className="text-white/40 text-sm">No address on file</p>
+              <p className="text-gray-400 text-sm">No address on file</p>
             )}
-            <div className="mt-4 pt-4 border-t border-white/10 text-sm">
+            <div className="mt-4 pt-4 border-t border-gray-200 text-sm">
               <div className="flex justify-between">
-                <span className="text-white/50">Delivery Method</span>
+                <span className="text-gray-400">Delivery Method</span>
                 <span className="text-white capitalize">{order.deliveryMethod}</span>
               </div>
               <div className="flex justify-between mt-2">
-                <span className="text-white/50">Ordered</span>
+                <span className="text-gray-400">Ordered</span>
                 <span className="text-white">{new Date(order.createdAt).toLocaleDateString('en-GB')}</span>
               </div>
             </div>
@@ -343,12 +343,12 @@ export default function OrderDetailPage() {
             <div className="flex gap-3 flex-wrap">
               {order.proofOfDelivery.images.map((img, i) => (
                 <a key={i} href={img} target="_blank" rel="noopener noreferrer">
-                  <img src={img} alt={`Proof ${i + 1}`} className="w-24 h-24 object-cover rounded-lg border border-white/10 hover:border-gold transition-colors" />
+                  <img src={img} alt={`Proof ${i + 1}`} className="w-24 h-24 object-cover rounded-lg border border-gray-200 hover:border-gold transition-colors" />
                 </a>
               ))}
             </div>
             {order.proofOfDelivery.receivedBy && (
-              <p className="text-white/50 text-xs mt-3">Received by: {order.proofOfDelivery.receivedBy}</p>
+              <p className="text-gray-400 text-xs mt-3">Received by: {order.proofOfDelivery.receivedBy}</p>
             )}
           </div>
         ) : null}
@@ -361,7 +361,7 @@ export default function OrderDetailPage() {
             </div>
             <div>
               <p className="text-white font-semibold text-sm">Invoice PDF</p>
-              <p className="text-white/40 text-xs">INV-{order.orderNumber} • {BRAND.name}</p>
+              <p className="text-gray-400 text-xs">INV-{order.orderNumber} • {BRAND.name}</p>
             </div>
           </div>
           <button

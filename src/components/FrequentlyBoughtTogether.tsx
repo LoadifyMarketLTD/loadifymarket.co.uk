@@ -229,7 +229,7 @@ export default function FrequentlyBoughtTogether({ productId, currentProduct }: 
                 className={`cursor-pointer border-2 rounded-lg p-4 transition-all ${
                   selectedProducts.has(productId)
                     ? 'border-gold bg-gold/5'
-                    : 'border-white/20 hover:border-white/40'
+                    : 'border-gray-200 hover:border-white/40'
                 }`}
                 onClick={() => toggleProductSelection(productId)}
               >
@@ -269,7 +269,7 @@ export default function FrequentlyBoughtTogether({ productId, currentProduct }: 
                   className={`cursor-pointer border-2 rounded-lg p-4 transition-all ${
                     selectedProducts.has(product.id)
                       ? 'border-gold bg-gold/5'
-                      : 'border-white/20 hover:border-white/40'
+                      : 'border-gray-200 hover:border-white/40'
                   }`}
                   onClick={() => toggleProductSelection(product.id)}
                 >
@@ -311,14 +311,14 @@ export default function FrequentlyBoughtTogether({ productId, currentProduct }: 
           {/* Plus Icons */}
           <div className="flex items-center justify-center gap-4 -mt-3">
             {bundleProducts.map((_, index) => (
-              <Plus key={index} className="w-5 h-5 text-white/40" />
+              <Plus key={index} className="w-5 h-5 text-gray-400" />
             ))}
           </div>
 
           {/* Total and Add to Cart */}
-          <div className="flex items-center justify-between pt-6 border-t border-white/10">
+          <div className="flex items-center justify-between pt-6 border-t border-gray-200">
             <div>
-              <p className="text-sm text-white/60 mb-1">
+              <p className="text-sm text-gray-500 mb-1">
                 Total for {selectedProducts.size} item{selectedProducts.size !== 1 ? 's' : ''}
               </p>
               <p className="text-3xl font-bold text-gold">
@@ -335,7 +335,7 @@ export default function FrequentlyBoughtTogether({ productId, currentProduct }: 
             </button>
           </div>
 
-          <p className="text-xs text-white/40 text-center">
+          <p className="text-xs text-gray-400 text-center">
             Click on items to select or deselect them
           </p>
         </div>

@@ -115,16 +115,16 @@ export default function HomeBelowFold() {
       </section>
 
       {/* ── Seller CTA + Trust (merged) ─────────────────────────────────── */}
-      <section className="bg-[#1E3A5F] py-10">
+      <section className="bg-[#F8F9FA] border-t border-gray-200 py-10">
         <div className="container-market">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
 
             {/* Left: Seller CTA */}
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
                 Start selling your stock on Loadify Market today
               </h2>
-              <p className="text-white/80 text-base mb-6">
+              <p className="text-gray-700 text-base mb-6">
                 List pallets, clearance and wholesale stock and reach thousands of UK buyers instantly.
               </p>
               <Link
@@ -139,20 +139,20 @@ export default function HomeBelowFold() {
 
             {/* Right: Trust items */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="flex flex-col items-center text-center p-4 bg-white/10 rounded-lg">
+              <div className="flex flex-col items-center text-center p-4 bg-gray-100 rounded-lg">
                 <Lock className="w-6 h-6 text-[#F4C400] mb-2" />
-                <h3 className="text-sm font-bold text-white mb-1">Secure Payments</h3>
-                <p className="text-white/70 text-xs leading-relaxed">Powered by Stripe — every transaction is encrypted.</p>
+                <h3 className="text-sm font-bold text-gray-900 mb-1">Secure Payments</h3>
+                <p className="text-gray-600 text-xs leading-relaxed">Powered by Stripe — every transaction is encrypted.</p>
               </div>
-              <div className="flex flex-col items-center text-center p-4 bg-white/10 rounded-lg">
+              <div className="flex flex-col items-center text-center p-4 bg-gray-100 rounded-lg">
                 <BadgeCheck className="w-6 h-6 text-[#F4C400] mb-2" />
-                <h3 className="text-sm font-bold text-white mb-1">Verified Sellers</h3>
-                <p className="text-white/70 text-xs leading-relaxed">All sellers are vetted before listing on the platform.</p>
+                <h3 className="text-sm font-bold text-gray-900 mb-1">Verified Sellers</h3>
+                <p className="text-gray-600 text-xs leading-relaxed">All sellers are vetted before listing on the platform.</p>
               </div>
-              <div className="flex flex-col items-center text-center p-4 bg-white/10 rounded-lg">
+              <div className="flex flex-col items-center text-center p-4 bg-gray-100 rounded-lg">
                 <Truck className="w-6 h-6 text-[#F4C400] mb-2" />
-                <h3 className="text-sm font-bold text-white mb-1">UK Delivery Support</h3>
-                <p className="text-white/70 text-xs leading-relaxed">Flexible delivery and collection options nationwide.</p>
+                <h3 className="text-sm font-bold text-gray-900 mb-1">UK Delivery Support</h3>
+                <p className="text-gray-600 text-xs leading-relaxed">Flexible delivery and collection options nationwide.</p>
               </div>
             </div>
 

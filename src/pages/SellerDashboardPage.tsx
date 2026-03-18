@@ -23,14 +23,14 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-white/10 text-white/70',
-  submitted: 'bg-blue-500/15 text-blue-400',
-  in_review: 'bg-yellow-500/15 text-yellow-400',
-  quoted: 'bg-purple-500/15 text-purple-400',
-  accepted: 'bg-green-500/15 text-green-400',
-  in_transit: 'bg-orange-500/15 text-orange-400',
-  delivered: 'bg-emerald-500/15 text-emerald-400',
-  cancelled: 'bg-red-500/15 text-red-400',
+  draft: 'bg-gray-100 text-gray-600',
+  submitted: 'bg-blue-100 text-blue-700',
+  in_review: 'bg-yellow-100 text-yellow-700',
+  quoted: 'bg-purple-100 text-purple-700',
+  accepted: 'bg-green-100 text-green-700',
+  in_transit: 'bg-orange-100 text-orange-700',
+  delivered: 'bg-emerald-100 text-emerald-700',
+  cancelled: 'bg-red-100 text-red-700',
 };
 
 export default function SellerDashboardPage() {
@@ -241,7 +241,7 @@ export default function SellerDashboardPage() {
       <div className="container-cinematic py-8">
         <div className="card-glass text-center py-12">
           <h2 className="text-2xl font-bold mb-4">Seller Access Required</h2>
-          <p className="text-white/60 mb-6">You need to be registered as a seller to access this page.</p>
+          <p className="text-gray-500 mb-6">You need to be registered as a seller to access this page.</p>
           <Link to="/register?type=seller" className="btn-primary">
             Register as Seller
           </Link>
@@ -251,11 +251,11 @@ export default function SellerDashboardPage() {
   }
 
   return (
-    <div className="bg-jet min-h-screen pt-24">
+    <div className="bg-[#F8F9FA] min-h-screen pt-24">
       <div className="container-cinematic py-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-white">
+          <h1 className="text-3xl font-bold text-gray-900">
             Welcome back, {getDisplayName(user, profile)}
           </h1>
           <div className="flex space-x-3">
@@ -272,12 +272,12 @@ export default function SellerDashboardPage() {
 
         {/* Profile Completeness Alert */}
         {profile && (profile.profileCompleteness || 0) < 75 && (
-          <div className="mb-6 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 flex items-center justify-between">
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center justify-between">
             <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 text-yellow-400 mr-3" />
+              <AlertCircle className="h-5 w-5 text-yellow-600 mr-3" />
               <div>
-                <p className="font-medium text-yellow-400">Complete your profile</p>
-                <p className="text-sm text-yellow-400/80">
+                <p className="font-medium text-yellow-700">Complete your profile</p>
+                <p className="text-sm text-yellow-600">
                   Your profile is {profile.profileCompleteness || 0}% complete. Complete at least 75% to publish products.
                 </p>
               </div>
@@ -289,70 +289,70 @@ export default function SellerDashboardPage() {
         )}
 
         {/* Tabs */}
-        <div className="mb-6 border-b border-white/10">
-          <div className="flex space-x-8">
+        <div className="mb-6 border-b border-gray-200">
+          <div className="flex space-x-8 overflow-x-auto">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`pb-4 px-2 font-medium transition-colors ${
+              className={`pb-4 px-2 font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'overview'
-                  ? 'border-b-2 border-gold text-gold'
-                  : 'text-white/60 hover:text-white'
+                  ? 'border-b-2 border-[#1E3A5F] text-[#1E3A5F]'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Overview
             </button>
             <button
               onClick={() => setActiveTab('analytics')}
-              className={`pb-4 px-2 font-medium transition-colors ${
+              className={`pb-4 px-2 font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'analytics'
-                  ? 'border-b-2 border-gold text-gold'
-                  : 'text-white/60 hover:text-white'
+                  ? 'border-b-2 border-[#1E3A5F] text-[#1E3A5F]'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Analytics
             </button>
             <button
               onClick={() => setActiveTab('products')}
-              className={`pb-4 px-2 font-medium transition-colors ${
+              className={`pb-4 px-2 font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'products'
-                  ? 'border-b-2 border-gold text-gold'
-                  : 'text-white/60 hover:text-white'
+                  ? 'border-b-2 border-[#1E3A5F] text-[#1E3A5F]'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Products ({stats.totalProducts})
             </button>
             <button
               onClick={() => setActiveTab('orders')}
-              className={`pb-4 px-2 font-medium transition-colors ${
+              className={`pb-4 px-2 font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'orders'
-                  ? 'border-b-2 border-gold text-gold'
-                  : 'text-white/60 hover:text-white'
+                  ? 'border-b-2 border-[#1E3A5F] text-[#1E3A5F]'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               Orders ({stats.totalOrders})
             </button>
             <button
               onClick={() => setActiveTab('deliveries')}
-              className={`pb-4 px-2 font-medium transition-colors flex items-center gap-1.5 ${
+              className={`pb-4 px-2 font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'deliveries'
-                  ? 'border-b-2 border-gold text-gold'
-                  : 'text-white/60 hover:text-white'
+                  ? 'border-b-2 border-[#1E3A5F] text-[#1E3A5F]'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               <Truck className="h-4 w-4" />
               Deliveries
               {deliveryRequests.length > 0 && (
-                <span className="ml-1 bg-amber-500/15 text-amber-400 text-xs font-bold px-1.5 py-0.5 rounded-full">
+                <span className="ml-1 bg-amber-100 text-amber-700 text-xs font-bold px-1.5 py-0.5 rounded-full">
                   {deliveryRequests.length}
                 </span>
               )}
             </button>
             <button
               onClick={() => setActiveTab('payouts')}
-              className={`pb-4 px-2 font-medium transition-colors flex items-center gap-1.5 ${
+              className={`pb-4 px-2 font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === 'payouts'
-                  ? 'border-b-2 border-gold text-gold'
-                  : 'text-white/60 hover:text-white'
+                  ? 'border-b-2 border-[#1E3A5F] text-[#1E3A5F]'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               <CreditCard className="h-4 w-4" />
@@ -363,7 +363,7 @@ export default function SellerDashboardPage() {
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <div className="text-white/50">Loading...</div>
+            <div className="text-gray-400">Loading...</div>
           </div>
         ) : (
           <>
@@ -375,91 +375,91 @@ export default function SellerDashboardPage() {
                   <div className="card-glass">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-white/60 text-sm">Total Products</p>
-                        <p className="text-3xl font-bold text-white mt-1">{stats.totalProducts}</p>
+                        <p className="text-gray-500 text-sm">Total Products</p>
+                        <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalProducts}</p>
                       </div>
-                      <Package className="h-12 w-12 text-gold/40" />
+                      <Package className="h-12 w-12 text-[#F4C400]/60" />
                     </div>
                   </div>
 
                   <div className="card-glass">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-white/60 text-sm">Active Products</p>
-                        <p className="text-3xl font-bold text-white mt-1">{stats.activeProducts}</p>
+                        <p className="text-gray-500 text-sm">Active Products</p>
+                        <p className="text-3xl font-bold text-gray-900 mt-1">{stats.activeProducts}</p>
                       </div>
-                      <Eye className="h-12 w-12 text-green-400/40" />
+                      <Eye className="h-12 w-12 text-green-500/60" />
                     </div>
                   </div>
 
                   <div className="card-glass">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-white/60 text-sm">Total Orders</p>
-                        <p className="text-3xl font-bold text-white mt-1">{stats.totalOrders}</p>
+                        <p className="text-gray-500 text-sm">Total Orders</p>
+                        <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalOrders}</p>
                       </div>
-                      <TrendingUp className="h-12 w-12 text-blue-400/40" />
+                      <TrendingUp className="h-12 w-12 text-blue-500/60" />
                     </div>
                   </div>
 
                   <div className="card-glass">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-white/60 text-sm">Total Revenue</p>
-                        <p className="text-3xl font-bold text-white mt-1">{formatPrice(stats.totalRevenue)}</p>
+                        <p className="text-gray-500 text-sm">Total Revenue</p>
+                        <p className="text-3xl font-bold text-gray-900 mt-1">{formatPrice(stats.totalRevenue)}</p>
                       </div>
-                      <DollarSign className="h-12 w-12 text-gold/40" />
+                      <DollarSign className="h-12 w-12 text-[#F4C400]/60" />
                     </div>
                   </div>
                 </div>
 
                 {/* Quick Actions */}
                 <div className="card-glass mb-8">
-                  <h2 className="text-xl font-bold text-white mb-4">Quick Actions</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                     <Link
                       to="/seller/products/new"
-                      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 hover:bg-gold/10 border border-white/10 hover:border-gold/40 transition-all text-center group"
+                      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-gray-50 hover:bg-[#F4C400]/10 border border-gray-200 hover:border-[#F4C400]/40 transition-all text-center group"
                     >
-                      <Plus className="h-7 w-7 text-gold group-hover:scale-110 transition-transform" />
-                      <span className="text-sm text-white/80 group-hover:text-white font-medium">Add Product</span>
+                      <Plus className="h-7 w-7 text-[#F4C400] group-hover:scale-110 transition-transform" />
+                      <span className="text-sm text-gray-600 group-hover:text-gray-900 font-medium">Add Product</span>
                     </Link>
                     <button
                       onClick={() => setActiveTab('orders')}
-                      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 hover:bg-blue-500/10 border border-white/10 hover:border-blue-400/40 transition-all text-center group"
+                      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 transition-all text-center group"
                     >
-                      <ShoppingBag className="h-7 w-7 text-blue-400 group-hover:scale-110 transition-transform" />
-                      <span className="text-sm text-white/80 group-hover:text-white font-medium">View Orders</span>
+                      <ShoppingBag className="h-7 w-7 text-blue-500 group-hover:scale-110 transition-transform" />
+                      <span className="text-sm text-gray-600 group-hover:text-gray-900 font-medium">View Orders</span>
                     </button>
                     <button
                       onClick={() => setActiveTab('payouts')}
-                      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 hover:bg-green-500/10 border border-white/10 hover:border-green-400/40 transition-all text-center group"
+                      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-gray-50 hover:bg-green-50 border border-gray-200 hover:border-green-300 transition-all text-center group"
                     >
-                      <DollarSign className="h-7 w-7 text-green-400 group-hover:scale-110 transition-transform" />
-                      <span className="text-sm text-white/80 group-hover:text-white font-medium">View Payouts</span>
+                      <DollarSign className="h-7 w-7 text-green-500 group-hover:scale-110 transition-transform" />
+                      <span className="text-sm text-gray-600 group-hover:text-gray-900 font-medium">View Payouts</span>
                     </button>
                     <Link
                       to="/transport-quote"
-                      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 hover:bg-purple-500/10 border border-white/10 hover:border-purple-400/40 transition-all text-center group"
+                      className="flex flex-col items-center gap-2 p-4 rounded-lg bg-gray-50 hover:bg-purple-50 border border-gray-200 hover:border-purple-300 transition-all text-center group"
                     >
-                      <Truck className="h-7 w-7 text-purple-400 group-hover:scale-110 transition-transform" />
-                      <span className="text-sm text-white/80 group-hover:text-white font-medium">Request Transport</span>
+                      <Truck className="h-7 w-7 text-purple-500 group-hover:scale-110 transition-transform" />
+                      <span className="text-sm text-gray-600 group-hover:text-gray-900 font-medium">Request Transport</span>
                     </Link>
                     {storeSlug ? (
                       <Link
                         to={`/seller/${storeSlug}`}
-                        className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 hover:bg-amber-500/10 border border-white/10 hover:border-amber-400/40 transition-all text-center group"
+                        className="flex flex-col items-center gap-2 p-4 rounded-lg bg-gray-50 hover:bg-amber-50 border border-gray-200 hover:border-amber-300 transition-all text-center group"
                       >
-                        <Store className="h-7 w-7 text-amber-400 group-hover:scale-110 transition-transform" />
-                        <span className="text-sm text-white/80 group-hover:text-white font-medium">View Public Store</span>
+                        <Store className="h-7 w-7 text-amber-500 group-hover:scale-110 transition-transform" />
+                        <span className="text-sm text-gray-600 group-hover:text-gray-900 font-medium">View Public Store</span>
                       </Link>
                     ) : (
                       <Link
                         to="/seller/profile"
-                        className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 hover:bg-amber-500/10 border border-white/10 hover:border-amber-400/40 transition-all text-center group"
+                        className="flex flex-col items-center gap-2 p-4 rounded-lg bg-gray-50 hover:bg-amber-50 border border-gray-200 hover:border-amber-300 transition-all text-center group"
                       >
-                        <Store className="h-7 w-7 text-amber-400/50 group-hover:scale-110 transition-transform" />
-                        <span className="text-sm text-white/50 group-hover:text-white font-medium">Set Up Store</span>
+                        <Store className="h-7 w-7 text-amber-400 group-hover:scale-110 transition-transform" />
+                        <span className="text-sm text-gray-400 group-hover:text-gray-700 font-medium">Set Up Store</span>
                       </Link>
                     )}
                   </div>
@@ -467,26 +467,26 @@ export default function SellerDashboardPage() {
 
                 {/* Recent Orders */}
                 <div className="card-glass">
-                  <h2 className="text-xl font-bold text-white mb-4">Recent Orders</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Orders</h2>
                   {orders.length === 0 ? (
-                    <p className="text-white/60 text-center py-8">No orders yet.</p>
+                    <p className="text-gray-400 text-center py-8">No orders yet.</p>
                   ) : (
                     <div className="space-y-3">
                       {orders.slice(0, 5).map((order) => (
-                        <div key={order.id} className="flex items-center justify-between border-b border-white/10 pb-3">
+                        <div key={order.id} className="flex items-center justify-between border-b border-gray-200 pb-3">
                           <div>
                             <p className="font-medium">Order #{order.orderNumber}</p>
-                            <p className="text-sm text-white/60">
+                            <p className="text-sm text-gray-500">
                               {new Date(order.createdAt).toLocaleDateString()}
                             </p>
                           </div>
                           <div className="text-right">
                             <p className="font-bold">{formatPrice(order.total)}</p>
                             <span className={`text-xs px-2 py-1 rounded ${
-                              order.status === 'delivered' ? 'bg-green-500/15 text-green-400' :
-                              order.status === 'shipped' ? 'bg-blue-500/15 text-blue-400' :
-                              order.status === 'paid' ? 'bg-yellow-500/15 text-yellow-400' :
-                              'bg-white/10 text-white'
+                              order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                              order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                              order.status === 'paid' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-gray-100 text-gray-700'
                             }`}>
                               {order.status}
                             </span>
@@ -498,15 +498,15 @@ export default function SellerDashboardPage() {
                 </div>
 
                 {/* XDrive Transport Support Note */}
-                <div className="card-glass mt-6 border-l-4 border-l-gold/50 bg-gold/5">
+                <div className="card-glass mt-6 border-l-4 border-l-[#F4C400]/50 bg-[#F4C400]/5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
-                      <Truck className="h-5 w-5 text-gold mt-0.5 flex-shrink-0" />
+                      <Truck className="h-5 w-5 text-[#F4C400] mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="font-semibold text-sm mb-1">
                           Need help moving sold stock or pallet deals?
                         </p>
-                        <p className="text-sm text-white/60">
+                        <p className="text-sm text-gray-500">
                           Transport support is available via XDrive Logistics for collection and
                           delivery of pallet deals, wholesale orders, and bulk stock.
                         </p>
@@ -528,21 +528,21 @@ export default function SellerDashboardPage() {
             {activeTab === 'analytics' && (
               <div>
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold mb-2">Sales Analytics</h2>
-                  <p className="text-white/60">Track your sales performance over time</p>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Sales Analytics</h2>
+                  <p className="text-gray-500">Track your sales performance over time</p>
                 </div>
 
                 {/* Time Period Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                   <div className="card-glass">
                     <div className="flex items-center mb-2">
-                      <BarChart3 className="h-5 w-5 text-gold mr-2" />
-                      <h3 className="font-semibold text-sm text-white/60">Last 30 Days</h3>
+                      <BarChart3 className="h-5 w-5 text-[#F4C400] mr-2" />
+                      <h3 className="font-semibold text-sm text-gray-500">Last 30 Days</h3>
                     </div>
                     <div className="space-y-2">
                       <div>
-                        <p className="text-xs text-white/50">Sales</p>
-                        <p className="text-2xl font-bold">
+                        <p className="text-xs text-gray-500">Sales</p>
+                        <p className="text-2xl font-bold text-gray-900">
                           {formatPrice(
                             orders
                               .filter((o) => {
@@ -556,8 +556,8 @@ export default function SellerDashboardPage() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-white/50">Orders</p>
-                        <p className="text-xl font-bold">
+                        <p className="text-xs text-gray-500">Orders</p>
+                        <p className="text-xl font-bold text-gray-900">
                           {
                             orders.filter((o) => {
                               const orderDate = new Date(o.createdAt);
@@ -574,16 +574,16 @@ export default function SellerDashboardPage() {
                   <div className="card-glass">
                     <div className="flex items-center mb-2">
                       <TrendingUp className="h-5 w-5 text-green-600 mr-2" />
-                      <h3 className="font-semibold text-sm text-white/60">All Time</h3>
+                      <h3 className="font-semibold text-sm text-gray-500">All Time</h3>
                     </div>
                     <div className="space-y-2">
                       <div>
-                        <p className="text-xs text-white/50">Total Sales</p>
-                        <p className="text-2xl font-bold">{formatPrice(stats.totalRevenue)}</p>
+                        <p className="text-xs text-gray-500">Total Sales</p>
+                        <p className="text-2xl font-bold text-gray-900">{formatPrice(stats.totalRevenue)}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-white/50">Total Orders</p>
-                        <p className="text-xl font-bold">{stats.totalOrders}</p>
+                        <p className="text-xs text-gray-500">Total Orders</p>
+                        <p className="text-xl font-bold text-gray-900">{stats.totalOrders}</p>
                       </div>
                     </div>
                   </div>
@@ -591,12 +591,12 @@ export default function SellerDashboardPage() {
                   <div className="card-glass">
                     <div className="flex items-center mb-2">
                       <DollarSign className="h-5 w-5 text-gold-500 mr-2" />
-                      <h3 className="font-semibold text-sm text-white/60">Average Order Value</h3>
+                      <h3 className="font-semibold text-sm text-gray-500">Average Order Value</h3>
                     </div>
                     <div className="space-y-2">
                       <div>
-                        <p className="text-xs text-white/50">Per Order</p>
-                        <p className="text-2xl font-bold">
+                        <p className="text-xs text-gray-500">Per Order</p>
+                        <p className="text-2xl font-bold text-gray-900">
                           {stats.totalOrders > 0
                             ? formatPrice(stats.totalRevenue / stats.totalOrders)
                             : formatPrice(0)}
@@ -608,7 +608,7 @@ export default function SellerDashboardPage() {
 
                 {/* Top Products */}
                 <div className="card-glass mb-8">
-                  <h3 className="text-xl font-bold text-white mb-4">Top 5 Products by Revenue</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">Top 5 Products by Revenue</h3>
                   {(() => {
                     // Calculate revenue per product
                     const productRevenue: Record<string, { product: Product; revenue: number; orderCount: number }> = {};
@@ -638,7 +638,7 @@ export default function SellerDashboardPage() {
 
                     if (topProducts.length === 0) {
                       return (
-                        <p className="text-white/60 text-center py-8">
+                        <p className="text-gray-400 text-center py-8">
                           No sales data available yet. Start selling to see analytics!
                         </p>
                       );
@@ -647,19 +647,19 @@ export default function SellerDashboardPage() {
                     return (
                       <div className="space-y-4">
                         {topProducts.map(({ product, revenue, orderCount }, index) => (
-                          <div key={product.id} className="flex items-center justify-between border-b border-white/10 pb-3">
+                          <div key={product.id} className="flex items-center justify-between border-b border-gray-200 pb-3">
                             <div className="flex items-center space-x-4">
-                              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-navy-100 text-gold font-bold">
+                              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#1E3A5F]/10 text-[#1E3A5F] font-bold">
                                 {index + 1}
                               </div>
                               <div>
                                 <p className="font-medium">{product.title}</p>
-                                <p className="text-sm text-white/60">{orderCount} orders</p>
+                                <p className="text-sm text-gray-500">{orderCount} orders</p>
                               </div>
                             </div>
                             <div className="text-right">
                               <p className="font-bold text-lg">{formatPrice(revenue)}</p>
-                              <p className="text-sm text-white/60">revenue</p>
+                              <p className="text-sm text-gray-500">revenue</p>
                             </div>
                           </div>
                         ))}
@@ -670,7 +670,7 @@ export default function SellerDashboardPage() {
 
                 {/* Simple Sales Chart - using text-based visualization */}
                 <div className="card-glass">
-                  <h3 className="text-xl font-bold text-white mb-4">Sales Trend (Last 7 Days)</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">Sales Trend (Last 7 Days)</h3>
                   {(() => {
                     // Group orders by date for last 7 days
                     const last7Days: { date: string; revenue: number; orders: number }[] = [];
@@ -700,11 +700,11 @@ export default function SellerDashboardPage() {
                           <div key={day.date}>
                             <div className="flex justify-between mb-1">
                               <span className="text-sm font-medium">{day.date}</span>
-                              <span className="text-sm text-white/60">
+                              <span className="text-sm text-gray-500">
                                 {formatPrice(day.revenue)} ({day.orders} orders)
                               </span>
                             </div>
-                            <div className="w-full bg-white/10 rounded-full h-6">
+                            <div className="w-full bg-gray-200 rounded-full h-6">
                               <div
                                 className="bg-navy-800 h-6 rounded-full transition-all flex items-center justify-end pr-2"
                                 style={{ width: `${(day.revenue / maxRevenue) * 100}%` }}
@@ -729,7 +729,7 @@ export default function SellerDashboardPage() {
             {activeTab === 'products' && (
               <div className="card-glass">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold">My Products</h2>
+                  <h2 className="text-xl font-bold text-gray-900">My Products</h2>
                   <Link to="/seller/products/new" className="btn-primary flex items-center space-x-2">
                     <Plus className="h-4 w-4" />
                     <span>Add New Product</span>
@@ -738,8 +738,8 @@ export default function SellerDashboardPage() {
 
                 {products.length === 0 ? (
                   <div className="text-center py-12">
-                    <Package className="h-16 w-16 mx-auto text-white/40 mb-4" />
-                    <p className="text-white/60 mb-4">You haven't added any products yet.</p>
+                    <Package className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                    <p className="text-gray-500 mb-4">You haven't added any products yet.</p>
                     <Link to="/seller/products/new" className="btn-primary">
                       Create Your First Product
                     </Link>
@@ -747,7 +747,7 @@ export default function SellerDashboardPage() {
                 ) : (
                   <div className="space-y-3">
                     {products.map((product) => (
-                      <div key={product.id} className="flex items-center justify-between border-b border-white/10 pb-3 hover:bg-white/5 p-2 rounded transition-colors">
+                      <div key={product.id} className="flex items-center justify-between border-b border-gray-200 pb-3 hover:bg-gray-50 p-2 rounded transition-colors">
                         <div className="flex items-center space-x-4">
                           {product.images && product.images.length > 0 ? (
                             <img
@@ -756,23 +756,23 @@ export default function SellerDashboardPage() {
                               className="w-16 h-16 object-cover rounded"
                             />
                           ) : (
-                            <div className="w-16 h-16 bg-white/10 rounded flex items-center justify-center">
-                              <Package className="h-6 w-6 text-white/40" />
+                            <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                              <Package className="h-6 w-6 text-gray-400" />
                             </div>
                           )}
                           <div>
                             <p className="font-medium">{product.title}</p>
-                            <p className="text-sm text-white/60">
+                            <p className="text-sm text-gray-500">
                               {formatPrice(product.price)} | Stock: {product.stockQuantity} | Views: {product.views}
                             </p>
                             <div className="flex items-center space-x-2 mt-1">
                               <span className={`text-xs px-2 py-0.5 rounded ${
-                                product.isActive ? 'bg-green-500/15 text-green-400' : 'bg-white/10 text-white'
+                                product.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
                               }`}>
                                 {product.isActive ? 'Active' : 'Inactive'}
                               </span>
                               <span className={`text-xs px-2 py-0.5 rounded ${
-                                product.isApproved ? 'bg-blue-500/15 text-blue-400' : 'bg-yellow-500/15 text-yellow-400'
+                                product.isApproved ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'
                               }`}>
                                 {product.isApproved ? 'Approved' : 'Pending Approval'}
                               </span>
@@ -831,37 +831,37 @@ export default function SellerDashboardPage() {
             {/* Orders Tab */}
             {activeTab === 'orders' && (
               <div className="card-glass">
-                <h2 className="text-xl font-bold text-white mb-4">My Orders</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">My Orders</h2>
                 {orders.length === 0 ? (
-                  <p className="text-white/60 text-center py-8">No orders yet.</p>
+                  <p className="text-gray-400 text-center py-8">No orders yet.</p>
                 ) : (
                   <div className="space-y-3">
                     {orders.map((order) => (
-                      <div key={order.id} className="border-b border-white/10 pb-3">
+                      <div key={order.id} className="border-b border-gray-200 pb-3">
                         <div className="flex items-center justify-between mb-2">
                           <div>
                             <p className="font-medium">Order #{order.orderNumber}</p>
-                            <p className="text-sm text-white/60">
+                            <p className="text-sm text-gray-500">
                               {new Date(order.createdAt).toLocaleDateString()}
                             </p>
                           </div>
                           <div className="text-right">
                             <p className="font-bold">{formatPrice(order.total)}</p>
-                            <p className="text-xs text-white/60">
+                            <p className="text-xs text-gray-500">
                               Your earning: {formatPrice(order.total - order.commission)}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className={`text-xs px-2 py-1 rounded ${
-                            order.status === 'delivered' ? 'bg-green-500/15 text-green-400' :
-                            order.status === 'shipped' ? 'bg-blue-500/15 text-blue-400' :
-                            order.status === 'paid' ? 'bg-yellow-500/15 text-yellow-400' :
-                            'bg-white/10 text-white'
+                            order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                            order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                            order.status === 'paid' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-gray-100 text-gray-700'
                           }`}>
                             {order.status}
                           </span>
-                          <Link to={`/orders/${order.id}`} className="text-sm text-gold hover:underline">
+                          <Link to={`/orders/${order.id}`} className="text-sm text-[#1E3A5F] hover:underline">
                             View Details
                           </Link>
                         </div>
@@ -882,7 +882,7 @@ export default function SellerDashboardPage() {
                         <Truck className="h-5 w-5 text-amber-500" />
                         Delivery Requests
                       </h2>
-                      <p className="text-sm text-white/50 mt-0.5">
+                      <p className="text-sm text-gray-400 mt-0.5">
                         Transport requests created from your Loadify listings via XDrive Logistics.
                       </p>
                     </div>
@@ -898,8 +898,8 @@ export default function SellerDashboardPage() {
                   {deliveryRequests.length === 0 ? (
                     <div className="text-center py-12">
                       <Truck className="h-14 w-14 mx-auto text-gray-300 mb-4" />
-                      <p className="text-white/60 mb-2 font-medium">No delivery requests yet</p>
-                      <p className="text-sm text-white/50 mb-6 max-w-xs mx-auto">
+                      <p className="text-gray-500 mb-2 font-medium">No delivery requests yet</p>
+                      <p className="text-sm text-gray-400 mb-6 max-w-xs mx-auto">
                         When a buyer requests transport for one of your listings, it will appear here.
                       </p>
                       <Link to="/transport-quote" className="btn-primary text-sm">
@@ -922,16 +922,16 @@ export default function SellerDashboardPage() {
                           sellerName: req.sellerName,
                         });
                         return (
-                          <div key={req.id} className="border border-gray-100 rounded-lg p-4 hover:bg-white/5 transition-colors">
+                          <div key={req.id} className="border border-gray-100 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap mb-1">
                                   <p className="font-semibold text-sm truncate">{req.listingTitle || req.itemType || '—'}</p>
-                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[req.status] || 'bg-white/10 text-white/70'}`}>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[req.status] || 'bg-gray-100 text-gray-600'}`}>
                                     {STATUS_LABELS[req.status] || req.status}
                                   </span>
                                 </div>
-                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-white/50 mb-2">
+                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 mb-2">
                                   <span className="flex items-center gap-1">
                                     <Clock className="h-3 w-3" />
                                     {new Date(req.createdAt).toLocaleDateString('en-GB', {
@@ -944,7 +944,7 @@ export default function SellerDashboardPage() {
                                   {req.dropoffPostcode && <span>→ {req.dropoffPostcode}</span>}
                                   {req.palletCount && <span>{req.palletCount} pallets</span>}
                                 </div>
-                                <p className="text-xs text-white/40">Ref: {req.id}</p>
+                                <p className="text-xs text-gray-400">Ref: {req.id}</p>
                               </div>
                               <div className="flex flex-col items-end gap-2 flex-shrink-0">
                                 {req.listingId && (
@@ -980,7 +980,7 @@ export default function SellerDashboardPage() {
                     <Truck className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
                       <p className="font-semibold text-sm mb-1">Transport powered by XDrive Logistics</p>
-                      <p className="text-sm text-white/60 mb-3">
+                      <p className="text-sm text-gray-500 mb-3">
                         All delivery requests from Loadify Market are handled by XDrive Logistics Ltd.
                         Open the XDrive app to track progress, accept quotes and manage in-transit orders.
                       </p>
@@ -1003,44 +1003,44 @@ export default function SellerDashboardPage() {
             {activeTab === 'payouts' && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-1">Payouts</h2>
-                  <p className="text-white/60">Track your earnings and manage your Stripe payout account.</p>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-1">Payouts</h2>
+                  <p className="text-gray-500">Track your earnings and manage your Stripe payout account.</p>
                 </div>
 
                 {/* Balance cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="card-glass">
-                    <p className="text-sm text-white/50 mb-1">Total Sales</p>
-                    <p className="text-2xl font-bold">{formatPrice(stats.totalRevenue)}</p>
-                    <p className="text-xs text-white/40 mt-1">Gross revenue (excl. VAT)</p>
+                    <p className="text-sm text-gray-500 mb-1">Total Sales</p>
+                    <p className="text-2xl font-bold text-gray-900">{formatPrice(stats.totalRevenue)}</p>
+                    <p className="text-xs text-gray-400 mt-1">Gross revenue (excl. VAT)</p>
                   </div>
                   <div className="card-glass">
-                    <p className="text-sm text-white/50 mb-1">Platform Fee (7%)</p>
+                    <p className="text-sm text-gray-500 mb-1">Platform Fee (7%)</p>
                     <p className="text-2xl font-bold text-red-600">
                       {formatPrice(orders.reduce((s, o) => s + (o.commission ?? 0), 0))}
                     </p>
-                    <p className="text-xs text-white/40 mt-1">Deducted automatically</p>
+                    <p className="text-xs text-gray-400 mt-1">Deducted automatically</p>
                   </div>
                   <div className="card-glass">
-                    <p className="text-sm text-white/50 mb-1">Available Balance</p>
+                    <p className="text-sm text-gray-500 mb-1">Available Balance</p>
                     <p className="text-2xl font-bold text-green-600">
                       {formatPrice(sellerBalance?.availableAmount ?? 0)}
                     </p>
-                    <p className="text-xs text-white/40 mt-1">Ready to withdraw</p>
+                    <p className="text-xs text-gray-400 mt-1">Ready to withdraw</p>
                   </div>
                   <div className="card-glass">
-                    <p className="text-sm text-white/50 mb-1">Pending Payouts</p>
+                    <p className="text-sm text-gray-500 mb-1">Pending Payouts</p>
                     <p className="text-2xl font-bold text-amber-600">
                       {formatPrice(sellerBalance?.pendingAmount ?? 0)}
                     </p>
-                    <p className="text-xs text-white/40 mt-1">In transit to your bank</p>
+                    <p className="text-xs text-gray-400 mt-1">In transit to your bank</p>
                   </div>
                 </div>
 
                 {/* ── Stripe Connect Panel ──────────────────────────────── */}
                 <div className="card-glass">
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-gold" />
+                    <CreditCard className="h-5 w-5 text-[#F4C400]" />
                     Stripe Connect
                   </h3>
 
@@ -1076,11 +1076,11 @@ export default function SellerDashboardPage() {
                   {/* State A: Not connected */}
                   {!platformNotConfigured && !profile?.stripeAccountId && (
                     <div className="text-center py-8">
-                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/10 mb-4">
-                        <CreditCard className="h-8 w-8 text-white/40" />
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                        <CreditCard className="h-8 w-8 text-gray-400" />
                       </div>
-                      <h4 className="text-lg font-semibold text-white mb-2">Connect Your Stripe Account</h4>
-                      <p className="text-white/60 mb-6 max-w-md mx-auto text-sm">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2">Connect Your Stripe Account</h4>
+                      <p className="text-gray-500 mb-6 max-w-md mx-auto text-sm">
                         Connect a Stripe account to receive automatic payouts after every sale.
                         The platform commission (7%) is deducted automatically — no admin approval needed.
                       </p>
@@ -1171,7 +1171,7 @@ export default function SellerDashboardPage() {
                         <ExternalLink className="h-4 w-4" />
                         {connectLoading ? 'Loading…' : 'View Stripe Dashboard'}
                       </button>
-                      <p className="text-xs text-white/40 font-mono">{profile.stripeAccountId}</p>
+                      <p className="text-xs text-gray-400 font-mono">{profile.stripeAccountId}</p>
                     </div>
                   )}
                 </div>
@@ -1181,12 +1181,12 @@ export default function SellerDashboardPage() {
                 <div className="card-glass">
                   <h3 className="text-lg font-semibold mb-4">Payout History</h3>
                   {sellerPayouts.length === 0 ? (
-                    <p className="text-white/50 text-center py-6">No payout records yet. Payouts will appear here once Stripe Connect transfers begin.</p>
+                    <p className="text-gray-400 text-center py-6">No payout records yet. Payouts will appear here once Stripe Connect transfers begin.</p>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-white/10 text-left text-white/50">
+                          <tr className="border-b border-gray-200 text-left text-gray-500">
                             <th className="pb-2 pr-4">Date</th>
                             <th className="pb-2 pr-4">Amount</th>
                             <th className="pb-2 pr-4">Status</th>
@@ -1195,22 +1195,22 @@ export default function SellerDashboardPage() {
                         </thead>
                         <tbody>
                           {sellerPayouts.map((p) => (
-                            <tr key={p.id} className="border-b border-white/10 last:border-0">
-                              <td className="py-2 pr-4 text-white/60">
+                            <tr key={p.id} className="border-b border-gray-200 last:border-0">
+                              <td className="py-2 pr-4 text-gray-500">
                                 {new Date(p.createdAt).toLocaleDateString('en-GB')}
                               </td>
                               <td className="py-2 pr-4 font-medium">{formatPrice(p.amount)}</td>
                               <td className="py-2 pr-4">
                                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                  p.status === 'paid'       ? 'bg-green-500/15 text-green-400' :
-                                  p.status === 'processing' ? 'bg-blue-500/15 text-blue-400' :
-                                  p.status === 'failed'     ? 'bg-red-500/15 text-red-400' :
-                                  'bg-yellow-500/15 text-yellow-400'
+                                  p.status === 'paid'       ? 'bg-green-100 text-green-700' :
+                                  p.status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                                  p.status === 'failed'     ? 'bg-red-100 text-red-700' :
+                                  'bg-yellow-100 text-yellow-700'
                                 }`}>
                                   {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
                                 </span>
                               </td>
-                              <td className="py-2 text-white/40 font-mono text-xs truncate max-w-[140px]">
+                              <td className="py-2 text-gray-400 font-mono text-xs truncate max-w-[140px]">
                                 {p.stripeTransferId ?? p.stripePayoutId ?? '—'}
                               </td>
                             </tr>

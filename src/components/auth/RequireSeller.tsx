@@ -23,7 +23,7 @@ export default function RequireSeller({ children }: Props) {
           <div className="card-glass max-w-md w-full text-center p-10">
             <p className="text-5xl mb-4">🏪</p>
             <h2 className="text-2xl font-bold text-white mb-2">Seller Account Required</h2>
-            <p className="text-white/60 mb-6">
+            <p className="text-gray-500 mb-6">
               You need a seller account to access this page. Register as a seller to start
               listing products on Loadify Market.
             </p>
