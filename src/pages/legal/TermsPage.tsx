@@ -84,6 +84,26 @@ export default function TermsPage() {
           by Stripe.
         </p>
 
+        <h2 className="text-2xl font-semibold mt-6 mb-3">5a. Payment Processing — Stripe</h2>
+        <p>
+          All payments made through the Loadify Market platform are processed securely by{' '}
+          <strong>Stripe</strong> (Stripe, Inc. / Stripe Payments Europe, Ltd.), a third-party payment
+          service provider. Loadify Market does not store or handle payment card data directly.
+        </p>
+        <ul className="list-disc pl-6 my-4">
+          <li>Buyers pay via Stripe's secure checkout. Card details are handled solely by Stripe.</li>
+          <li>Sellers receive payouts via <strong>Stripe Connect</strong>, Stripe's marketplace payout product.</li>
+          <li>Loadify Market (XDrive Logistics Ltd) is the platform operator, not the merchant of record.</li>
+          <li>Stripe's own Terms of Service and Privacy Policy apply to all payment processing.</li>
+          <li>Funds may be held in escrow via Stripe pending order confirmation.</li>
+        </ul>
+        <p>
+          By using the Platform, buyers and sellers agree to Stripe's Terms of Service, available at{' '}
+          <a href="https://stripe.com/gb/legal" target="_blank" rel="noopener noreferrer" className="underline text-blue-700">
+            stripe.com/gb/legal
+          </a>.
+        </p>
+
         <h2 className="text-2xl font-semibold mt-6 mb-3">6. VAT and Pricing</h2>
         <p>
           Prices displayed on the Platform are set by individual sellers. All prices should include VAT
