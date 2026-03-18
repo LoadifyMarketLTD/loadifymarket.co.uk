@@ -33,11 +33,11 @@ const NAV_COLUMNS = [
     heading: 'For Buyers',
     links: [
       { label: 'Browse Marketplace',   to: '/shop'                      },
-      { label: 'Wholesale & Pallets',  to: '/category/wholesale'        },
-      { label: 'Amazon Returns',       to: '/category/amazon-returns'   },
       { label: 'Electronics',          to: '/category/electronics'      },
       { label: 'Fashion',              to: '/category/fashion'          },
-      { label: 'Home & Garden',        to: '/category/home-garden'      },
+      { label: 'Home & Living',        to: '/category/home-garden'      },
+      { label: 'Tools & Equipment',    to: '/category/tools-diy'        },
+      { label: 'Clearance',            to: '/category/clearance'        },
       { label: 'Automotive',           to: '/category/automotive'       },
       { label: 'Track Order',          to: '/track-order'               },
       { label: 'Help & FAQ',           to: '/help'                      },
@@ -59,10 +59,8 @@ const NAV_COLUMNS = [
     heading: 'Marketplace',
     links: [
       { label: 'Buyer Protection',     to: '/buyer-protection'          },
-      { label: 'Transport Quote',      to: '/transport-quote'           },
-      { label: 'Request Shipping Quote', to: '/rfq'                     },
       { label: 'Verified Sellers',     to: '/verified-sellers'          },
-      { label: 'Wholesale Orders',     to: '/category/wholesale'        },
+      { label: 'All Categories',       to: '/catalog'                   },
       { label: 'Business Accounts',    to: '/contact'                   },
     ],
   },
@@ -123,10 +121,10 @@ export default function Footer() {
         <div className="lm-footer-inner lm-footer-cta-inner">
           <div className="lm-footer-cta-text">
             <p className="lm-footer-cta-headline">
-              Stay ahead of the best wholesale &amp; clearance deals
+              Start selling on the UK's modern multi-vendor marketplace
             </p>
             <p className="lm-footer-cta-sub">
-              Discover pallet drops, verified sellers and bulk offers across the UK — all in one place.
+              Thousands of products. Verified sellers. Secure payments. All in one place.
             </p>
           </div>
           <Link
@@ -188,7 +186,7 @@ export default function Footer() {
           <div className="lm-footer-about-col">
             <h3 className="lm-footer-heading">About Loadify Market</h3>
             <p className="lm-footer-about-desc">
-              UK multi-category marketplace connecting buyers and sellers of pallets, wholesale &amp; clearance stock.
+              UK multi-category marketplace connecting buyers and sellers across electronics, fashion, home, tools, and more.
             </p>
 
             <div className="lm-footer-about-info-group">
