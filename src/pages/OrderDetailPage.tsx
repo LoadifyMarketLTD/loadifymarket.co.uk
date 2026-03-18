@@ -20,7 +20,10 @@ const STATUS_STEPS = [
 const STATUS_ORDER = ['pending', 'paid', 'packed', 'shipped', 'delivered'];
 
 function generateInvoicePDF(order: Order & { productTitle?: string; storeName?: string }) {
-  // Build a printable HTML invoice and trigger browser print/save
+  // Build a printable HTML invoice and trigger browser print/save.
+  // The platform (Loadify Market / XDrive Logistics Ltd) is NOT the seller.
+  // The invoice header shows the seller's store name, not the platform company info.
+  const sellerName = order.storeName || 'Seller';
   const invoiceHTML = `
 <!DOCTYPE html>
 <html>
@@ -30,8 +33,9 @@ function generateInvoicePDF(order: Order & { productTitle?: string; storeName?: 
   <style>
     body { font-family: Arial, sans-serif; color: #222; padding: 40px; max-width: 700px; margin: 0 auto; }
     .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
-    .brand { font-size: 22px; font-weight: bold; color: #D4AF37; }
-    .brand-sub { font-size: 12px; color: #666; }
+    .seller-name { font-size: 22px; font-weight: bold; color: #333; }
+    .seller-sub { font-size: 12px; color: #666; }
+    .intermediary-note { font-size: 11px; color: #888; margin-top: 4px; font-style: italic; }
     .invoice-title { font-size: 28px; font-weight: bold; color: #222; }
     .invoice-meta { font-size: 13px; color: #555; line-height: 1.7; }
     .divider { border: none; border-top: 2px solid #D4AF37; margin: 24px 0; }
@@ -46,10 +50,9 @@ function generateInvoicePDF(order: Order & { productTitle?: string; storeName?: 
 <body>
   <div class="header">
     <div>
-      <div class="brand">${BRAND.name}</div>
-      <div class="brand-sub">${BRAND.companyAddress}</div>
-      <div class="brand-sub">VAT: ${BRAND.vatNumber}</div>
-      <div class="brand-sub">${BRAND.supportEmail}</div>
+      <div class="seller-name">${sellerName}</div>
+      <div class="seller-sub">Seller on Loadify Market</div>
+      <div class="intermediary-note">Sold via Loadify Market (marketplace intermediary)</div>
     </div>
     <div style="text-align:right">
       <div class="invoice-title">INVOICE</div>
@@ -107,9 +110,9 @@ function generateInvoicePDF(order: Order & { productTitle?: string; storeName?: 
   </table>
   <hr class="divider"/>
   <div class="footer">
-    <p>Thank you for your order. ${BRAND.name} operates as a marketplace platform facilitating transactions between buyers and independent sellers.</p>
-    <p>This product is sold and fulfilled by the seller. For returns or enquiries, please contact the seller directly or raise a dispute via your orders page within ${BRAND.returnsDays} days of delivery.</p>
-    <p>This invoice was generated automatically. Platform fee: ${BRAND.marketplaceFeePercent}%.</p>
+    <p>The contract of sale for this order is between you (the buyer) and ${sellerName} (the seller). This invoice is issued by ${sellerName}.</p>
+    <p>This transaction was facilitated by Loadify Market (marketplace intermediary), operated by XDrive Logistics Ltd. For returns or enquiries, please contact the seller directly or raise a dispute via your orders page within ${BRAND.returnsDays} days of delivery.</p>
+    <p>Loadify Market is not the seller and is not the merchant of record for this transaction.</p>
   </div>
 </body>
 </html>`;

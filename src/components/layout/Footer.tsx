@@ -84,7 +84,8 @@ const NAV_COLUMNS = [
       { label: 'Cookie Policy',        to: '/cookies'                   },
       { label: 'Returns Policy',       to: '/returns-policy'            },
       { label: 'Shipping Policy',      to: '/shipping-policy'           },
-      { label: 'Acceptable Use',       to: '/acceptable-use-policy'     },
+      { label: 'Buyer Terms',          to: '/buyer-terms'               },
+      { label: 'Seller Terms',         to: '/seller-terms'              },
     ],
   },
 ];
@@ -263,6 +264,15 @@ export default function Footer() {
               </a>
             ))}
           </div>
+        </div>
+        {/* Intermediary disclaimer */}
+        <div className="lm-footer-inner pb-4">
+          <p className="text-xs text-white/40 text-center">
+            {BRAND.name} is a marketplace platform operated by {BRAND.companyName}.
+            We act as an intermediary and do not sell products directly.
+            All transactions are between buyers and sellers.{' '}
+            <Link to="/terms" className="underline hover:text-white/60 transition-colors">Learn more</Link>.
+          </p>
         </div>
       </div>
 

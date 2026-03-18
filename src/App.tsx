@@ -61,6 +61,8 @@ const CookiePage = lazy(() => import('./pages/legal/CookiePage'));
 const ReturnsPolicy = lazy(() => import('./pages/legal/ReturnsPolicyPage'));
 const ShippingPolicy = lazy(() => import('./pages/legal/ShippingPolicyPage'));
 const AcceptableUsePolicyPage = lazy(() => import('./pages/legal/AcceptableUsePolicyPage'));
+const BuyerTermsPage = lazy(() => import('./pages/legal/BuyerTermsPage'));
+const SellerTermsPage = lazy(() => import('./pages/legal/SellerTermsPage'));
 const SellerGuidelinesPage = lazy(() => import('./pages/SellerGuidelinesPage'));
 const VerifiedSellersPage = lazy(() => import('./pages/VerifiedSellersPage'));
 const LogisticsLoadsPage = lazy(() => import('./pages/LogisticsLoadsPage'));
@@ -526,6 +528,16 @@ function App() {
           <Route path="acceptable-use-policy" element={
             <Suspense fallback={<PageLoader />}> 
               <AcceptableUsePolicyPage />
+            </Suspense>
+          } />
+          <Route path="buyer-terms" element={
+            <Suspense fallback={<PageLoader />}>
+              <BuyerTermsPage />
+            </Suspense>
+          } />
+          <Route path="seller-terms" element={
+            <Suspense fallback={<PageLoader />}>
+              <SellerTermsPage />
             </Suspense>
           } />
           <Route path="seller-guidelines" element={
