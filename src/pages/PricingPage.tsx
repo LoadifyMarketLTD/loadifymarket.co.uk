@@ -90,14 +90,14 @@ export default function PricingPage() {
   ];
 
   return (
-    <div className="bg-jet min-h-screen py-12">
+    <div className="bg-[#F8F9FA] min-h-screen py-12">
       {/* Header Section */}
-      <section className="py-12 bg-graphite/30">
+      <section className="py-12 bg-white/30">
         <div className="container-cinematic text-center">
-          <h1 className="heading-hero text-white mb-6">
+          <h1 className="heading-hero text-gray-900 mb-6">
             Simple, Transparent <span className="text-gradient-gold">Pricing</span>
           </h1>
-          <p className="text-xl text-white/60 max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-gray-500 max-w-3xl mx-auto mb-8">
             Choose the plan that fits your business. No hidden fees, no surprises.
           </p>
         </div>
@@ -126,18 +126,18 @@ export default function PricingPage() {
                     <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-3">
                       <Icon className="h-7 w-7 text-gold" />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
-                    <p className="text-white/50 text-sm mb-3">{plan.description}</p>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h3>
+                    <p className="text-gray-400 text-sm mb-3">{plan.description}</p>
                     <div className="mb-4">
-                      <span className="text-4xl font-bold text-white">
+                      <span className="text-4xl font-bold text-gray-900">
                         {plan.price === 'Custom' ? '' : '£'}
                         {plan.price}
                       </span>
                       {plan.price !== 'Custom' && (
-                        <span className="text-white/40 text-sm ml-2">/ {plan.period}</span>
+                        <span className="text-gray-400 text-sm ml-2">/ {plan.period}</span>
                       )}
                       {plan.price === 'Custom' && (
-                        <span className="text-white/40 text-sm block mt-1">{plan.period}</span>
+                        <span className="text-gray-400 text-sm block mt-1">{plan.period}</span>
                       )}
                     </div>
                   </div>
@@ -146,7 +146,7 @@ export default function PricingPage() {
                     {plan.features.map((feature, index) => (
                       <li key={index} className="flex items-start gap-2">
                         <Check className="w-4 h-4 text-gold flex-shrink-0 mt-0.5" />
-                        <span className="text-white/70 text-sm">{feature}</span>
+                        <span className="text-gray-600 text-sm">{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -156,7 +156,7 @@ export default function PricingPage() {
                     className={`w-full block text-center py-2.5 rounded-premium-sm font-semibold transition-all text-sm ${
                       plan.popular
                         ? 'bg-gold text-jet hover:bg-gold/90 shadow-cinematic-gold'
-                        : 'bg-graphite text-white hover:bg-graphite/80'
+                        : 'bg-white text-white hover:bg-white/80'
                     }`}
                   >
                     {plan.cta}
@@ -168,10 +168,10 @@ export default function PricingPage() {
 
           {/* Additional Info */}
           <div className="text-center mt-8">
-            <p className="text-white/50 text-sm">
+            <p className="text-gray-400 text-sm">
               All plans include payment processing and full access to our marketplace.
             </p>
-            <p className="text-white/50 text-sm mt-1">
+            <p className="text-gray-400 text-sm mt-1">
               VAT will be added where applicable.
             </p>
           </div>
@@ -181,17 +181,17 @@ export default function PricingPage() {
       {/* Features Comparison - Optional detailed table could go here */}
 
       {/* FAQ Section */}
-      <section className="py-16 bg-graphite/30">
+      <section className="py-16 bg-white/30">
         <div className="container-cinematic max-w-4xl">
-          <h2 className="heading-section text-white text-center mb-12">
+          <h2 className="heading-section text-gray-900 text-center mb-12">
             Frequently Asked <span className="text-gradient-gold">Questions</span>
           </h2>
 
           <div className="space-y-6">
             {faqs.map((faq, index) => (
-              <div key={index} className="card-glass">
-                <h3 className="text-lg font-bold text-white mb-3">{faq.question}</h3>
-                <p className="text-white/60 leading-relaxed">{faq.answer}</p>
+              <div key={index} className="bg-white border border-gray-200 rounded-xl p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-3">{faq.question}</h3>
+                <p className="text-gray-500 leading-relaxed">{faq.answer}</p>
               </div>
             ))}
           </div>
@@ -201,11 +201,11 @@ export default function PricingPage() {
       {/* CTA Section */}
       <section className="py-16">
         <div className="container-cinematic text-center">
-          <div className="card-glass max-w-2xl mx-auto">
-            <h2 className="text-3xl font-bold text-white mb-4">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 max-w-2xl mx-auto">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Ready to Start Selling?
             </h2>
-            <p className="text-white/60 mb-8">
+            <p className="text-gray-500 mb-8">
               Join thousands of sellers on Loadify Market Ltd and start reaching buyers across the UK.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

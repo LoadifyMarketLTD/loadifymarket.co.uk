@@ -28,14 +28,14 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-jet flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
-        <div className="card-glass p-8">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 p-8">
           {submitted ? (
             <div className="text-center">
               <CheckCircle className="h-14 w-14 text-green-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-white mb-2">Check your email</h2>
-              <p className="text-white/60 text-sm mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h2>
+              <p className="text-gray-500 text-sm mb-6">
                 We sent a password reset link to <span className="text-gold">{email}</span>.
                 Please check your inbox and follow the instructions.
               </p>
@@ -47,8 +47,8 @@ export default function ForgotPasswordPage() {
           ) : (
             <>
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-white mb-2">Forgot Password</h2>
-                <p className="text-white/60 text-sm">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Forgot Password</h2>
+                <p className="text-gray-500 text-sm">
                   Enter your email address and we'll send you a link to reset your password.
                 </p>
               </div>
@@ -61,12 +61,12 @@ export default function ForgotPasswordPage() {
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                     Email Address
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Mail className="h-5 w-5 text-white/40" />
+                      <Mail className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
                       id="email"
@@ -93,7 +93,7 @@ export default function ForgotPasswordPage() {
               <div className="mt-6 text-center">
                 <Link
                   to="/login"
-                  className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-gold transition-colors"
+                  className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gold transition-colors"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Back to Sign In

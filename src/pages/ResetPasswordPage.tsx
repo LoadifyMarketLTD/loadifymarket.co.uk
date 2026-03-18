@@ -54,14 +54,14 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-jet flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
-        <div className="card-glass p-8">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 p-8">
           {success ? (
             <div className="text-center">
               <CheckCircle className="h-14 w-14 text-green-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-white mb-2">Password Updated</h2>
-              <p className="text-white/60 text-sm mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Password Updated</h2>
+              <p className="text-gray-500 text-sm mb-6">
                 Your password has been successfully updated. Redirecting you to the login page…
               </p>
               <Link to="/login" className="btn-primary inline-block">
@@ -71,8 +71,8 @@ export default function ResetPasswordPage() {
           ) : (
             <>
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-white mb-2">Reset Password</h2>
-                <p className="text-white/60 text-sm">Enter your new password below.</p>
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Reset Password</h2>
+                <p className="text-gray-500 text-sm">Enter your new password below.</p>
               </div>
 
               {error && (
@@ -91,12 +91,12 @@ export default function ResetPasswordPage() {
               {hasSession && (
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-white/80 mb-2">
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                       New Password
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Lock className="h-5 w-5 text-white/40" />
+                        <Lock className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
                         id="password"
@@ -113,12 +113,12 @@ export default function ResetPasswordPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="confirm-password" className="block text-sm font-medium text-white/80 mb-2">
+                    <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-2">
                       Confirm New Password
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Lock className="h-5 w-5 text-white/40" />
+                        <Lock className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
                         id="confirm-password"

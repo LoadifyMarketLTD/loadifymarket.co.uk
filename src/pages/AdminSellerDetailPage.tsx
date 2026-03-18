@@ -335,7 +335,7 @@ export default function AdminSellerDetailPage() {
               <button
                 onClick={blockUser}
                 disabled={actionLoading}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm transition-colors"
+                className="bg-red-600 text-gray-900 px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm transition-colors"
               >
                 <Ban className="w-4 h-4" />
                 Block User
@@ -344,7 +344,7 @@ export default function AdminSellerDetailPage() {
               <button
                 onClick={unblockUser}
                 disabled={actionLoading}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm transition-colors"
+                className="bg-green-600 text-gray-900 px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm transition-colors"
               >
                 <CheckCircle className="w-4 h-4" />
                 Unblock User

@@ -38,15 +38,15 @@ export default class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-jet flex items-center justify-center px-4">
-          <div className="card-glass max-w-md w-full text-center p-10">
+        <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center px-4">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 max-w-md w-full text-center p-10">
             <p className="text-5xl mb-4">⚠️</p>
-            <h2 className="text-2xl font-bold text-white mb-2">Something went wrong</h2>
-            <p className="text-white/60 mb-2">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
+            <p className="text-gray-500 mb-2">
               An unexpected error occurred. Our team has been notified.
             </p>
             {this.state.error && (
-              <p className="text-white/30 text-xs font-mono mb-6 break-all">
+              <p className="text-gray-300 text-xs font-mono mb-6 break-all">
                 {this.state.error.message}
               </p>
             )}

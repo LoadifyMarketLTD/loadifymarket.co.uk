@@ -45,7 +45,7 @@ export default function OrdersPage() {
   const filtered = filter === 'all' ? orders : orders.filter(o => o.status === filter);
 
   return (
-    <div className="bg-jet min-h-screen pt-24">
+    <div className="bg-[#F8F9FA] min-h-screen pt-24">
       <div className="container-cinematic py-10">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
@@ -53,8 +53,8 @@ export default function OrdersPage() {
             <ShoppingBag className="w-7 h-7 text-gold" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-white">My Orders</h1>
-            <p className="text-white/50 text-sm mt-1">{orders.length} order{orders.length !== 1 ? 's' : ''} total</p>
+            <h1 className="text-3xl font-bold text-gray-900">My Orders</h1>
+            <p className="text-gray-400 text-sm mt-1">{orders.length} order{orders.length !== 1 ? 's' : ''} total</p>
           </div>
         </div>
 
@@ -65,7 +65,7 @@ export default function OrdersPage() {
               key={s}
               onClick={() => setFilter(s)}
               className={`px-4 py-2 rounded-premium-sm text-sm font-medium transition-all duration-200 capitalize ${
-                filter === s ? 'bg-gold text-jet' : 'bg-graphite text-white hover:bg-graphite/70'
+                filter === s ? 'bg-[#1E3A5F] text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-[#1E3A5F]'
               }`}
             >
               {s === 'all' ? 'All Orders' : s}
@@ -79,10 +79,10 @@ export default function OrdersPage() {
             <div className="w-10 h-10 border-2 border-gold border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="card-glass text-center py-20">
-            <Package className="w-16 h-16 text-white/20 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">No orders yet</h3>
-            <p className="text-white/50 mb-6">Start shopping to see your orders here.</p>
+          <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-20">
+            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No orders yet</h3>
+            <p className="text-gray-400 mb-6">Start shopping to see your orders here.</p>
             <Link to="/shop" className="btn-primary inline-flex items-center gap-2">
               <ShoppingBag className="w-5 h-5" />
               Browse Products
@@ -97,26 +97,26 @@ export default function OrdersPage() {
                 <Link
                   key={order.id}
                   to={`/orders/${order.id}`}
-                  className="card-glass flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:border-gold/30 transition-all duration-200 group block"
+                  className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:border-gold/30 transition-all duration-200 group block"
                 >
-                  <div className="p-3 rounded-premium-sm bg-graphite/60 flex-shrink-0">
+                  <div className="p-3 rounded-premium-sm bg-white/60 flex-shrink-0">
                     <Package className="w-8 h-8 text-gold" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <span className="font-bold text-white font-mono text-sm">{order.orderNumber}</span>
+                      <span className="font-bold text-gray-900 font-mono text-sm">{order.orderNumber}</span>
                       <span className={`flex items-center gap-1 text-xs font-semibold ${cfg.color}`}>
                         <Icon className="w-3.5 h-3.5" />
                         {cfg.label}
                       </span>
                     </div>
-                    <p className="text-white/50 text-xs mt-1">
+                    <p className="text-gray-400 text-xs mt-1">
                       Placed {new Date(order.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </p>
                   </div>
                   <div className="flex items-center gap-4 flex-shrink-0">
                     <span className="text-xl font-bold text-gold">£{order.total.toFixed(2)}</span>
-                    <ChevronRight className="w-5 h-5 text-white/30 group-hover:text-gold transition-colors" />
+                    <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gold transition-colors" />
                   </div>
                 </Link>
               );

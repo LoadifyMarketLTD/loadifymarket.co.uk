@@ -27,7 +27,7 @@ export default function CinematicHero() {
               </Link>
               <Link
                 to="/register?type=seller"
-                className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-7 py-3.5 rounded text-base transition-colors"
+                className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-[#1E3A5F] font-semibold px-7 py-3.5 rounded text-base transition-colors"
               >
                 <Store className="h-5 w-5" />
                 Start Selling

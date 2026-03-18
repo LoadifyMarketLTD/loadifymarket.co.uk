@@ -105,10 +105,10 @@
   }
 
   .btn-secondary {
-    @apply bg-transparent text-white px-8 py-4 rounded-premium-sm font-semibold
-           border-2 border-white/30 backdrop-blur-sm
+    @apply bg-white text-navy px-8 py-4 rounded-premium-sm font-semibold
+           border-2 border-navy/30
            transition-all duration-300 ease-out
-           hover:border-gold hover:text-gold hover:bg-white/5
+           hover:border-navy hover:text-navy hover:bg-navy/5
            active:scale-[0.98];
   }
 
@@ -121,10 +121,10 @@
   }
 
   .btn-glass {
-    @apply bg-white/10 backdrop-blur-glass text-white px-6 py-3 rounded-premium-sm font-medium
-           border border-white/20
+    @apply bg-white text-gray-700 px-6 py-3 rounded-premium-sm font-medium
+           border border-gray-300
            transition-all duration-300 ease-out
-           hover:bg-white/20 hover:border-gold/50
+           hover:bg-gray-50 hover:border-[#1E3A5F]/40 hover:text-[#1E3A5F]
            active:scale-[0.98];
   }
 
@@ -133,38 +133,39 @@
      ═══════════════════════════════════════════════════════════ */
 
   .card {
-    @apply bg-graphite rounded-premium-md p-6
-           shadow-premium-card
-           transition-all duration-500 ease-out;
+    @apply bg-white rounded-premium-md p-6
+           border border-gray-200
+           shadow-sm
+           transition-all duration-300 ease-out;
   }
 
   .card-cinematic {
     @apply relative overflow-hidden rounded-premium-md
-           bg-graphite shadow-cinematic
-           transition-all duration-500 ease-out
-           hover:shadow-cinematic-lg hover:scale-[1.02];
+           bg-white border border-gray-200 shadow-sm
+           transition-all duration-300 ease-out
+           hover:shadow-md hover:scale-[1.02];
   }
 
   .card-glass {
-    @apply bg-white/5 backdrop-blur-glass rounded-premium-md p-6
-           border border-white/10
-           shadow-glass
+    @apply bg-white rounded-premium-md p-6
+           border border-gray-200
+           shadow-sm
            transition-all duration-300 ease-out
-           hover:bg-white/10 hover:border-gold/30;
+           hover:shadow-md hover:border-navy/30;
   }
 
   /* Compact variant for dense forms (Transport Quote page) */
   .card-glass-compact {
-    @apply bg-white/5 backdrop-blur-glass rounded-xl p-4
-           border border-white/10
-           shadow-glass;
+    @apply bg-white rounded-xl p-4
+           border border-gray-200
+           shadow-sm;
   }
 
   .card-product {
-    @apply relative overflow-hidden rounded-premium-md bg-graphite
-           shadow-premium-card cursor-pointer
-           transition-all duration-500 ease-out
-           hover:shadow-cinematic-gold hover:scale-[1.01];
+    @apply relative overflow-hidden rounded-premium-md bg-white
+           border border-gray-200 shadow-sm cursor-pointer
+           transition-all duration-300 ease-out
+           hover:shadow-md hover:scale-[1.01];
   }
 
   .card-product-image {
@@ -189,48 +190,48 @@
      ═══════════════════════════════════════════════════════════ */
 
   .input-field {
-    @apply w-full px-5 py-4 bg-graphite/50 text-white
-           border border-white/10 rounded-premium-sm
-           placeholder:text-white/50
+    @apply w-full px-5 py-4 bg-white text-gray-900
+           border border-gray-300 rounded-premium-sm
+           placeholder:text-gray-400
            transition-all duration-300 ease-out
-           focus:outline-none focus:border-gold/50 focus:bg-graphite
-           focus:ring-2 focus:ring-gold/20;
+           focus:outline-none focus:border-navy/50
+           focus:ring-2 focus:ring-navy/20;
   }
 
   /* Compact input for dense forms (Transport Quote page) */
   .input-field-sm {
-    @apply w-full px-3 py-2 bg-graphite/50 text-white text-sm
-           border border-white/10 rounded-lg
-           placeholder:text-white/40
+    @apply w-full px-3 py-2 bg-white text-gray-900 text-sm
+           border border-gray-300 rounded-lg
+           placeholder:text-gray-400
            transition-all duration-200 ease-out
-           focus:outline-none focus:border-gold/50 focus:bg-graphite
-           focus:ring-1 focus:ring-gold/20;
+           focus:outline-none focus:border-navy/50
+           focus:ring-1 focus:ring-navy/20;
   }
 
   /* Compact form helpers */
   .field-label {
-    @apply block text-xs font-medium text-white/60 mb-1;
+    @apply block text-xs font-medium text-gray-600 mb-1;
   }
 
   .field-icon {
-    @apply absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30 pointer-events-none;
+    @apply absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none;
   }
 
   .field-error {
-    @apply text-red-400 text-xs mt-0.5;
+    @apply text-red-500 text-xs mt-0.5;
   }
 
   .section-heading-sm {
-    @apply flex items-center gap-2 text-sm font-bold text-white mb-3;
+    @apply flex items-center gap-2 text-sm font-bold text-gray-900 mb-3;
   }
 
   .input-search {
-    @apply w-full px-6 py-4 bg-white/5 text-white
-           border-0 rounded-full backdrop-blur-sm
-           placeholder:text-white/60
+    @apply w-full px-6 py-4 bg-white text-gray-900
+           border border-gray-300 rounded-full
+           placeholder:text-gray-400
            transition-all duration-300 ease-out
-           focus:outline-none focus:bg-white/10
-           focus:ring-2 focus:ring-gold/30;
+           focus:outline-none focus:border-navy/50
+           focus:ring-2 focus:ring-navy/20;
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -238,13 +239,13 @@
      ═══════════════════════════════════════════════════════════ */
 
   .nav-link {
-    @apply text-white/80 font-medium
+    @apply text-gray-700 font-medium
            transition-all duration-300 ease-out
-           hover:text-gold;
+           hover:text-navy;
   }
 
   .nav-link-active {
-    @apply text-gold font-semibold;
+    @apply text-navy font-semibold;
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -252,15 +253,15 @@
      ═══════════════════════════════════════════════════════════ */
 
   .glass {
-    @apply bg-white/5 backdrop-blur-glass border border-white/10;
+    @apply bg-white/80 border border-gray-200;
   }
 
   .glass-dark {
-    @apply bg-jet/80 backdrop-blur-glass border border-white/5;
+    @apply bg-navy/80 border border-navy/20;
   }
 
   .glass-gold {
-    @apply bg-gold/10 backdrop-blur-glass border border-gold/20;
+    @apply bg-gold/10 border border-gold/20;
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -304,7 +305,7 @@
   }
 
   .bg-section-alt {
-    @apply bg-graphite/30;
+    @apply bg-[#F5F7FA];
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -380,23 +381,23 @@
   }
 
   .badge-gold {
-    @apply badge bg-gold/20 text-gold border border-gold/30;
+    @apply badge bg-gold/20 text-yellow-800 border border-gold/40;
   }
 
   .badge-premium {
-    @apply badge bg-gradient-gold text-jet;
+    @apply badge bg-gradient-gold text-gray-900;
   }
 
   .badge-stock {
-    @apply badge bg-emerald-500/20 text-emerald-400 border border-emerald-500/30;
+    @apply badge bg-emerald-100 text-emerald-700 border border-emerald-200;
   }
 
   .badge-low-stock {
-    @apply badge bg-amber-500/20 text-amber-400 border border-amber-500/30;
+    @apply badge bg-amber-100 text-amber-700 border border-amber-200;
   }
 
   .badge-out-stock {
-    @apply badge bg-red-500/20 text-red-400 border border-red-500/30;
+    @apply badge bg-red-100 text-red-700 border border-red-200;
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -868,7 +869,8 @@
 
 /* ── Dashboard mini-footer ─────────────────────────────────────────────────── */
 .lm-footer-dash {
-  background: linear-gradient(180deg, #0A2239, #081A2C);
+  background: #F8FAFC;
+  border-top: 1px solid #E2E8F0;
 }
 
 .lm-footer-inner-sm {

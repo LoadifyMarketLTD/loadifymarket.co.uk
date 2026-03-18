@@ -35,14 +35,14 @@ export default function CinematicMarketplaceSwitch() {
   const [activeTab, setActiveTab] = useState<MarketplaceTab>('products');
 
   return (
-    <section className="py-20 bg-graphite/30">
+    <section className="py-20 bg-white/30">
       <div className="container-cinematic">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="heading-section text-white mb-4">
+          <h2 className="heading-section text-gray-900 mb-4">
             Explore the <span className="text-gradient-gold">Marketplace</span>
           </h2>
-          <p className="text-white/60 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
             Browse products, bulk lots, and connect with top sellers
           </p>
         </div>
@@ -54,7 +54,7 @@ export default function CinematicMarketplaceSwitch() {
             className={`flex items-center justify-center gap-3 px-8 py-4 rounded-premium-sm font-semibold transition-all duration-300 ${
               activeTab === 'products'
                 ? 'bg-gold text-jet shadow-cinematic-gold scale-105'
-                : 'bg-graphite text-white hover:bg-graphite/80 shadow-cinematic'
+                : 'bg-white text-white hover:bg-white/80 shadow-cinematic'
             }`}
           >
             <TrendingUp className="w-5 h-5" />
@@ -66,7 +66,7 @@ export default function CinematicMarketplaceSwitch() {
             className={`flex items-center justify-center gap-3 px-8 py-4 rounded-premium-sm font-semibold transition-all duration-300 ${
               activeTab === 'bulk'
                 ? 'bg-gold text-jet shadow-cinematic-gold scale-105'
-                : 'bg-graphite text-white hover:bg-graphite/80 shadow-cinematic'
+                : 'bg-white text-white hover:bg-white/80 shadow-cinematic'
             }`}
           >
             <Package className="w-5 h-5" />
@@ -78,7 +78,7 @@ export default function CinematicMarketplaceSwitch() {
             className={`flex items-center justify-center gap-3 px-8 py-4 rounded-premium-sm font-semibold transition-all duration-300 ${
               activeTab === 'featured'
                 ? 'bg-gold text-jet shadow-cinematic-gold scale-105'
-                : 'bg-graphite text-white hover:bg-graphite/80 shadow-cinematic'
+                : 'bg-white text-white hover:bg-white/80 shadow-cinematic'
             }`}
           >
             <Star className="w-5 h-5" />
@@ -95,7 +95,7 @@ export default function CinematicMarketplaceSwitch() {
                 <Link
                   key={cat.slug}
                   to={`/shop?category=${cat.slug}`}
-                  className={`group relative overflow-hidden rounded-premium-sm bg-gradient-to-br ${cat.color} border border-white/10 p-6 flex flex-col items-center justify-center text-center hover:border-gold/50 hover:scale-[1.03] transition-all duration-300 min-h-[140px]`}
+                  className={`group relative overflow-hidden rounded-premium-sm bg-gradient-to-br ${cat.color} border border-gray-200 p-6 flex flex-col items-center justify-center text-center hover:border-gold/50 hover:scale-[1.03] transition-all duration-300 min-h-[140px]`}
                 >
                   {cat.badge && (
                     <span className="absolute top-3 right-3 text-xs font-semibold bg-gold/20 text-gold border border-gold/30 rounded-full px-2 py-0.5">
@@ -105,7 +105,7 @@ export default function CinematicMarketplaceSwitch() {
                   <div className="w-12 h-12 rounded-premium-sm bg-gold/10 flex items-center justify-center mb-3 group-hover:bg-gold/20 transition-colors">
                     <Icon className="w-6 h-6 text-gold" />
                   </div>
-                  <h3 className="font-semibold text-white text-sm">{cat.name}</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">{cat.name}</h3>
                 </Link>
               );
             })}
@@ -119,7 +119,7 @@ export default function CinematicMarketplaceSwitch() {
               <div key={item.id} className="card-product group">
                 <div className="aspect-square bg-gradient-to-br from-graphite to-jet relative overflow-hidden">
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Package className="w-20 h-20 text-white/20 group-hover:scale-110 transition-transform duration-500" />
+                    <Package className="w-20 h-20 text-gray-300 group-hover:scale-110 transition-transform duration-500" />
                   </div>
                   <div className="absolute top-3 right-3 badge-gold">{item.pallets} Pallets</div>
                   <div className="absolute top-3 left-3 text-xs font-bold bg-gold text-jet px-2 py-1 rounded-full">
@@ -128,11 +128,11 @@ export default function CinematicMarketplaceSwitch() {
                   <div className="card-product-overlay" />
                 </div>
                 <div className="p-5">
-                  <h3 className="font-bold text-white mb-2 line-clamp-2">{item.title}</h3>
-                  <p className="text-sm text-white/50 mb-1">RRP: £{item.rrp.toLocaleString()}</p>
+                  <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">{item.title}</h3>
+                  <p className="text-sm text-gray-400 mb-1">RRP: £{item.rrp.toLocaleString()}</p>
                   <div className="flex items-baseline gap-1 mb-4">
                     <span className="price-tag">£{item.price.toLocaleString()}</span>
-                    <span className="text-sm text-white/60">/ lot</span>
+                    <span className="text-sm text-gray-500">/ lot</span>
                   </div>
                   <Link to="/category/wholesale" className="w-full btn-glass py-3 text-sm flex items-center justify-center gap-2">
                     <span>View Lot</span>
@@ -148,19 +148,19 @@ export default function CinematicMarketplaceSwitch() {
         {activeTab === 'featured' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn">
             {FEATURED_SELLERS.map((seller) => (
-              <div key={seller.id} className="card-glass hover:scale-[1.02] transition-all duration-300">
+              <div key={seller.id} className="bg-white border border-gray-200 rounded-xl p-6 hover:scale-[1.02] transition-all duration-300">
                 <div className="flex items-start gap-4 mb-4">
                   <div className="w-14 h-14 rounded-premium-sm bg-gold/20 flex items-center justify-center flex-shrink-0">
                     <span className="text-2xl font-bold text-gold">{seller.name.charAt(0)}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-bold text-white truncate">{seller.name}</h3>
+                      <h3 className="font-bold text-gray-900 truncate">{seller.name}</h3>
                       <span className="text-xs bg-gold/20 text-gold border border-gold/30 rounded-full px-2 py-0.5 flex-shrink-0">
                         {seller.badge}
                       </span>
                     </div>
-                    <p className="text-sm text-white/50 mt-1">{seller.type}</p>
+                    <p className="text-sm text-gray-400 mt-1">{seller.type}</p>
                   </div>
                   {seller.badge && (
                     <span className="absolute -top-2 -right-2 badge-gold text-[10px] px-1.5 py-0.5">
@@ -168,12 +168,12 @@ export default function CinematicMarketplaceSwitch() {
                     </span>
                   )}
                 </div>
-                <div className="flex items-center justify-between text-sm border-t border-white/10 pt-4">
+                <div className="flex items-center justify-between text-sm border-t border-gray-200 pt-4">
                   <div className="flex items-center gap-1">
                     <Star className="w-4 h-4 text-gold fill-gold" />
-                    <span className="text-white font-semibold">{seller.rating}</span>
+                    <span className="text-gray-900 font-semibold">{seller.rating}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-white/50">
+                  <div className="flex items-center gap-1 text-gray-400">
                     <Clock className="w-4 h-4" />
                     <span>{seller.sales.toLocaleString()} sales</span>
                   </div>

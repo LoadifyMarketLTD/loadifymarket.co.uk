@@ -278,7 +278,7 @@ export default function MessagesPage() {
                             <div className="flex items-center justify-between">
                               <h3 className="font-semibold text-sm truncate">{conv.otherUserName}</h3>
                               {conv.unreadCount! > 0 && (
-                                <span className="bg-red-600 text-white text-xs rounded-full px-2 py-0.5 ml-2">
+                                <span className="bg-red-600 text-gray-900 text-xs rounded-full px-2 py-0.5 ml-2">
                                   {conv.unreadCount}
                                 </span>
                               )}

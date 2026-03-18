@@ -73,16 +73,16 @@ export default function SearchPage() {
   const hasActiveFilters = !!(filters.category || filters.minPrice != null || filters.maxPrice != null || filters.condition || filters.listingType);
 
   return (
-    <div className="bg-jet min-h-screen pt-20">
+    <div className="bg-[#F8F9FA] min-h-screen pt-20">
       {/* Search bar */}
-      <div className="bg-graphite/60 border-b border-white/10 py-4 sticky top-16 z-30">
+      <div className="bg-white/60 border-b border-gray-200 py-4 sticky top-16 z-30">
         <div className="container-cinematic">
           <form
             onSubmit={e => { e.preventDefault(); const fd = new FormData(e.currentTarget); setFilter('q', (fd.get('q') as string) ?? ''); }}
             className="flex gap-3"
           >
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
               <input
                 name="q"
                 defaultValue={rawQuery}
@@ -114,23 +114,23 @@ export default function SearchPage() {
           {showFilters && (
             <aside className="w-64 shrink-0 space-y-5">
               <div className="flex items-center justify-between">
-                <h2 className="font-bold text-white">Filters</h2>
+                <h2 className="font-bold text-gray-900">Filters</h2>
                 {hasActiveFilters && (
-                  <button onClick={clearAll} className="text-gold text-xs hover:underline flex items-center gap-1">
+                  <button onClick={clearAll} className="text-[#1E3A5F] text-xs hover:underline flex items-center gap-1">
                     <X className="w-3 h-3" /> Clear all
                   </button>
                 )}
               </div>
 
               {/* Category */}
-              <div className="card-glass">
-                <p className="text-xs font-bold text-white/50 uppercase tracking-wide mb-3 flex items-center gap-2">
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
                   <Tag className="w-3.5 h-3.5" /> Category
                 </p>
                 <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
                   <button
                     onClick={() => setFilter('category', undefined)}
-                    className={`w-full text-left text-sm px-2 py-1.5 rounded transition-colors ${!filters.category ? 'text-gold bg-gold/10' : 'text-white/60 hover:text-white'}`}
+                    className={`w-full text-left text-sm px-2 py-1.5 rounded transition-colors ${!filters.category ? 'text-[#1E3A5F] bg-[#1E3A5F]/10' : 'text-gray-500 hover:text-[#1E3A5F]'}`}
                   >
                     All Categories
                   </button>
@@ -138,7 +138,7 @@ export default function SearchPage() {
                     <button
                       key={cat.id}
                       onClick={() => setFilter('category', cat.id)}
-                      className={`w-full text-left text-sm px-2 py-1.5 rounded transition-colors ${filters.category === cat.id ? 'text-gold bg-gold/10' : 'text-white/60 hover:text-white'}`}
+                      className={`w-full text-left text-sm px-2 py-1.5 rounded transition-colors ${filters.category === cat.id ? 'text-[#1E3A5F] bg-[#1E3A5F]/10' : 'text-gray-500 hover:text-[#1E3A5F]'}`}
                     >
                       {cat.name}
                     </button>
@@ -147,8 +147,8 @@ export default function SearchPage() {
               </div>
 
               {/* Price range */}
-              <div className="card-glass">
-                <p className="text-xs font-bold text-white/50 uppercase tracking-wide mb-3">Price Range (£)</p>
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Price Range (£)</p>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -158,7 +158,7 @@ export default function SearchPage() {
                     onChange={e => setFilter('minPrice', e.target.value || undefined)}
                     className="input-field w-full py-2 text-sm"
                   />
-                  <span className="text-white/30">–</span>
+                  <span className="text-gray-300">–</span>
                   <input
                     type="number"
                     min={0}
@@ -171,14 +171,14 @@ export default function SearchPage() {
               </div>
 
               {/* Condition */}
-              <div className="card-glass">
-                <p className="text-xs font-bold text-white/50 uppercase tracking-wide mb-3">Condition</p>
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Condition</p>
                 <div className="space-y-1.5">
                   {CONDITIONS.map(c => (
                     <button
                       key={c}
                       onClick={() => setFilter('condition', filters.condition === c ? undefined : c)}
-                      className={`w-full text-left text-sm px-2 py-1.5 rounded capitalize transition-colors ${filters.condition === c ? 'text-gold bg-gold/10' : 'text-white/60 hover:text-white'}`}
+                      className={`w-full text-left text-sm px-2 py-1.5 rounded capitalize transition-colors ${filters.condition === c ? 'text-[#1E3A5F] bg-[#1E3A5F]/10' : 'text-gray-500 hover:text-[#1E3A5F]'}`}
                     >
                       {c}
                     </button>
@@ -187,8 +187,8 @@ export default function SearchPage() {
               </div>
 
               {/* Listing type */}
-              <div className="card-glass">
-                <p className="text-xs font-bold text-white/50 uppercase tracking-wide mb-3 flex items-center gap-2">
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
                   <Layers className="w-3.5 h-3.5" /> Listing Type
                 </p>
                 <div className="space-y-1.5">
@@ -196,7 +196,7 @@ export default function SearchPage() {
                     <button
                       key={lt.key}
                       onClick={() => setFilter('listingType', filters.listingType === lt.key ? undefined : lt.key)}
-                      className={`w-full text-left text-sm px-2 py-1.5 rounded transition-colors ${filters.listingType === lt.key ? 'text-gold bg-gold/10' : 'text-white/60 hover:text-white'}`}
+                      className={`w-full text-left text-sm px-2 py-1.5 rounded transition-colors ${filters.listingType === lt.key ? 'text-[#1E3A5F] bg-[#1E3A5F]/10' : 'text-gray-500 hover:text-[#1E3A5F]'}`}
                     >
                       {lt.label}
                     </button>
@@ -212,20 +212,20 @@ export default function SearchPage() {
             <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
               <div>
                 {rawQuery ? (
-                  <h1 className="text-xl font-bold text-white">
+                  <h1 className="text-xl font-bold text-gray-900">
                     Results for <span className="text-gold">"{rawQuery}"</span>
                   </h1>
                 ) : (
-                  <h1 className="text-xl font-bold text-white">Browse Products</h1>
+                  <h1 className="text-xl font-bold text-gray-900">Browse Products</h1>
                 )}
                 {!loading && (
-                  <p className="text-white/40 text-sm mt-0.5">{total.toLocaleString()} result{total !== 1 ? 's' : ''}</p>
+                  <p className="text-gray-400 text-sm mt-0.5">{total.toLocaleString()} result{total !== 1 ? 's' : ''}</p>
                 )}
               </div>
 
               {/* Sort */}
               <div className="flex items-center gap-2">
-                <ArrowUpDown className="w-4 h-4 text-white/40" />
+                <ArrowUpDown className="w-4 h-4 text-gray-400" />
                 <select
                   value={filters.sortBy}
                   onChange={e => setFilter('sort', e.target.value)}
@@ -272,24 +272,24 @@ export default function SearchPage() {
             {loading && (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 {[...Array(8)].map((_, i) => (
-                  <div key={i} className="card-glass animate-pulse h-64 rounded-2xl" />
+                  <div key={i} className="bg-white border border-gray-200 rounded-xl p-6 animate-pulse h-64 rounded-2xl" />
                 ))}
               </div>
             )}
 
             {/* Error state */}
             {!loading && error && (
-              <div className="card-glass text-center py-12 border border-red-400/20">
+              <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-12 border border-red-400/20">
                 <p className="text-red-400 text-sm">{error}</p>
               </div>
             )}
 
             {/* Empty state */}
             {!loading && !error && results.length === 0 && (rawQuery || hasActiveFilters) && (
-              <div className="card-glass text-center py-16">
-                <Package className="w-16 h-16 text-white/10 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">No exact matches found</h3>
-                <p className="text-white/50 mb-6 text-sm">
+              <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-16">
+                <Package className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-gray-900 mb-2">No exact matches found</h3>
+                <p className="text-gray-400 mb-6 text-sm">
                   Try different keywords, remove some filters, or browse our categories.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -306,13 +306,13 @@ export default function SearchPage() {
                 {/* Related searches */}
                 {related.length > 0 && (
                   <div className="mt-8">
-                    <p className="text-white/40 text-sm mb-3">Try searching for:</p>
+                    <p className="text-gray-400 text-sm mb-3">Try searching for:</p>
                     <div className="flex flex-wrap gap-2 justify-center">
                       {related.map(s => (
                         <Link
                           key={s}
                           to={`/search?q=${encodeURIComponent(s)}`}
-                          className="bg-graphite/60 hover:bg-graphite text-white/70 hover:text-gold text-sm px-4 py-2 rounded-full transition-colors border border-white/10 hover:border-gold/30"
+                          className="bg-white/60 hover:bg-white text-gray-600 hover:text-gold text-sm px-4 py-2 rounded-full transition-colors border border-gray-200 hover:border-gold/30"
                         >
                           {s}
                         </Link>
@@ -335,7 +335,7 @@ export default function SearchPage() {
                 {/* Related searches */}
                 {related.length > 0 && (
                   <div className="mt-10">
-                    <p className="text-white/40 text-sm mb-3 flex items-center gap-2">
+                    <p className="text-gray-400 text-sm mb-3 flex items-center gap-2">
                       <ChevronDown className="w-4 h-4" /> Related searches
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -343,7 +343,7 @@ export default function SearchPage() {
                         <Link
                           key={s}
                           to={`/search?q=${encodeURIComponent(s)}`}
-                          className="bg-graphite/60 hover:bg-graphite text-white/70 hover:text-gold text-sm px-4 py-2 rounded-full transition-colors border border-white/10 hover:border-gold/30"
+                          className="bg-white/60 hover:bg-white text-gray-600 hover:text-gold text-sm px-4 py-2 rounded-full transition-colors border border-gray-200 hover:border-gold/30"
                         >
                           {s}
                         </Link>
@@ -357,15 +357,15 @@ export default function SearchPage() {
             {/* No query yet */}
             {!loading && !error && results.length === 0 && !rawQuery && !hasActiveFilters && (
               <div className="text-center py-20">
-                <Search className="w-16 h-16 text-white/10 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">Search Loadify Market</h3>
-                <p className="text-white/40">Enter keywords above to find products, bulk lots, and sellers.</p>
+                <Search className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Search Loadify Market</h3>
+                <p className="text-gray-400">Enter keywords above to find products, bulk lots, and sellers.</p>
                 <div className="flex flex-wrap gap-2 justify-center mt-8">
                   {['electronics', 'clothing pallet', 'tools', 'iphone', 'amazon returns'].map(s => (
                     <Link
                       key={s}
                       to={`/search?q=${encodeURIComponent(s)}`}
-                      className="bg-graphite/60 hover:bg-graphite text-white/60 hover:text-gold text-sm px-4 py-2 rounded-full transition-colors border border-white/10"
+                      className="bg-white/60 hover:bg-white text-gray-500 hover:text-gold text-sm px-4 py-2 rounded-full transition-colors border border-gray-200"
                     >
                       <Search className="w-3 h-3 inline mr-1.5 opacity-50" />{s}
                     </Link>

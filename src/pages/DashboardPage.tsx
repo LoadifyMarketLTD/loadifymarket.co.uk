@@ -79,12 +79,12 @@ export default function DashboardPage() {
 
 
   return (
-    <div className="bg-jet min-h-screen pt-24">
+    <div className="bg-[#F8F9FA] min-h-screen pt-24">
       <div className="container-cinematic py-10 max-w-5xl">
 
         {/* Welcome Header */}
-        <div className="card-glass flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8">
-          <div className="w-16 h-16 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8">
+          <div className="w-16 h-16 rounded-full bg-[#F4C400]/20 flex items-center justify-center flex-shrink-0">
             {user?.avatarUrl ? (
               <img src={user.avatarUrl} alt="" className="w-16 h-16 rounded-full object-cover" />
             ) : (
@@ -92,16 +92,16 @@ export default function DashboardPage() {
             )}
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-gray-900">
               Welcome back, {getDisplayName(user, sellerProfile)}
             </h1>
-            <p className="text-white/50 text-sm mt-1">{BRAND.name} Dashboard</p>
-            <div className="flex items-center gap-4 mt-2 text-xs text-white/40">
+            <p className="text-gray-500 text-sm mt-1">{BRAND.name} Dashboard</p>
+            <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
               <span className="flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
                 UK
               </span>
-              <span className="capitalize bg-gold/10 text-gold px-2 py-0.5 rounded-full border border-gold/20">
+              <span className="capitalize bg-gold/10 text-[#F4C400] px-2 py-0.5 rounded-full border border-[#F4C400]/20">
                 {user?.role || 'buyer'}
               </span>
               {user?.isEmailVerified && (
@@ -126,10 +126,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Orders Summary */}
-        <div className="card-glass mb-8">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-8">
           <div className="flex items-center gap-3 mb-4">
             <ClipboardList className="w-5 h-5 text-gold" />
-            <h2 className="text-lg font-bold text-white">Orders Summary</h2>
+            <h2 className="text-lg font-bold text-gray-900">Orders Summary</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
@@ -138,16 +138,16 @@ export default function DashboardPage() {
               { label: 'Delivered',      count: orderCounts.delivered },
               { label: 'Returns',        count: orderCounts.returns },
             ].map(item => (
-              <div key={item.label} className="flex flex-col items-center text-center p-3 bg-white/5 rounded-lg border border-white/10">
-                <span className="text-2xl font-bold text-gold">{item.count}</span>
-                <span className="text-xs text-white/50 mt-1">{item.label}</span>
+              <div key={item.label} className="flex flex-col items-center text-center p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <span className="text-2xl font-bold text-[#F4C400]">{item.count}</span>
+                <span className="text-xs text-gray-400 mt-1">{item.label}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Quick Links Grid */}
-        <h2 className="text-lg font-bold text-white mb-4">Quick Access</h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Quick Access</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-10">
           {QUICK_LINKS.map(link => {
             const Icon = link.icon;
@@ -155,13 +155,13 @@ export default function DashboardPage() {
               <Link
                 key={link.to}
                 to={link.to}
-                className="card-glass group hover:border-gold/40 hover:scale-[1.02] transition-all duration-200 flex flex-col items-center text-center p-6"
+                className="bg-white border border-gray-200 rounded-xl p-6 group hover:border-[#1E3A5F]/40 hover:scale-[1.02] transition-all duration-200 flex flex-col items-center text-center p-6"
               >
-                <div className="w-12 h-12 rounded-premium-sm bg-gold/10 flex items-center justify-center mb-3 group-hover:bg-gold/20 transition-colors">
+                <div className="w-12 h-12 rounded-premium-sm bg-gold/10 flex items-center justify-center mb-3 group-hover:bg-[#F4C400]/20 transition-colors">
                   <Icon className="w-6 h-6 text-gold" />
                 </div>
-                <span className="font-semibold text-white text-sm">{link.label}</span>
-                <span className="text-white/40 text-xs mt-1 leading-tight">{link.desc}</span>
+                <span className="font-semibold text-gray-900 text-sm">{link.label}</span>
+                <span className="text-gray-400 text-xs mt-1 leading-tight">{link.desc}</span>
               </Link>
             );
           })}
@@ -169,9 +169,9 @@ export default function DashboardPage() {
 
         {/* Seller Upgrade CTA */}
         {user?.role === 'buyer' && (
-          <div className="card-glass border border-gold/20 text-center py-8">
-            <h3 className="text-xl font-bold text-white mb-2">Want to start selling?</h3>
-            <p className="text-white/60 text-sm mb-5">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 border border-[#F4C400]/20 text-center py-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Want to start selling?</h3>
+            <p className="text-gray-500 text-sm mb-5">
               List products, bulk lots, and pallets. Only {BRAND.marketplaceFeePercent}% commission per sale.
             </p>
             <Link to="/register?type=seller" className="btn-primary inline-flex items-center gap-2">

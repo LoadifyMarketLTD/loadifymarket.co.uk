@@ -42,14 +42,14 @@ export default function HowItWorksPage() {
   ];
 
   return (
-    <div className="bg-jet min-h-screen py-12">
+    <div className="bg-[#F8F9FA] min-h-screen py-12">
       {/* Header Section */}
-      <section className="py-12 bg-graphite/30">
+      <section className="py-12 bg-white/30">
         <div className="container-cinematic text-center">
-          <h1 className="heading-hero text-white mb-6">
+          <h1 className="heading-hero text-gray-900 mb-6">
             How It Works
           </h1>
-          <p className="text-xl text-white/60 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-500 max-w-3xl mx-auto">
             Simple steps for buying or selling on Loadify Market Ltd.
           </p>
         </div>
@@ -65,7 +65,7 @@ export default function HowItWorksPage() {
                 <Link
                   key={index}
                   to={step.link}
-                  className="card-glass hover:scale-[1.02] transition-all duration-300 block"
+                  className="bg-white border border-gray-200 rounded-xl p-6 hover:scale-[1.02] transition-all duration-300 block"
                 >
                   {/* Step Number and Icon */}
                   <div className="flex items-center gap-3 mb-3">
@@ -77,8 +77,8 @@ export default function HowItWorksPage() {
 
                   {/* Step Content */}
                   <div>
-                    <h3 className="text-lg font-bold text-white mb-2">{step.title}</h3>
-                    <p className="text-white/60 text-sm">{step.description}</p>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">{step.title}</h3>
+                    <p className="text-gray-500 text-sm">{step.description}</p>
                   </div>
                 </Link>
               );
@@ -90,8 +90,8 @@ export default function HowItWorksPage() {
       {/* CTA Section */}
       <section className="py-12">
         <div className="container-cinematic">
-          <div className="card-glass max-w-2xl mx-auto text-center">
-            <h2 className="text-2xl font-bold text-white mb-6">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 max-w-2xl mx-auto text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Ready to Get Started?
             </h2>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

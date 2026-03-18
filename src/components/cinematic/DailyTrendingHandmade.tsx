@@ -55,7 +55,7 @@ export default function DailyTrendingHandmade() {
   ];
 
   return (
-    <section className="py-20 bg-graphite/50">
+    <section className="py-20 bg-gray-500">
       <div className="container-cinematic">
         {/* Section Header */}
         <div className="text-center mb-12">
@@ -64,11 +64,11 @@ export default function DailyTrendingHandmade() {
             <span className="text-sm font-medium text-gold">Curated for You</span>
           </div>
 
-          <h2 className="heading-section text-white mb-4">
+          <h2 className="heading-section text-gray-900 mb-4">
             Daily Trending <span className="text-gradient-gold">Handmade</span>
           </h2>
 
-          <p className="text-white/60 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
             Discover one-of-a-kind artisan pieces crafted with care. Each item tells a unique story.
           </p>
         </div>
@@ -104,10 +104,10 @@ export default function DailyTrendingHandmade() {
 
                 {/* Quick action buttons - appear on hover */}
                 <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                  <button className="p-3 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-gold hover:text-jet transition-all duration-300 shadow-lg">
+                  <button className="p-3 rounded-full bg-gray-100 backdrop-blur-sm text-gray-900 hover:bg-gold hover:text-jet transition-all duration-300 shadow-lg">
                     <Heart className="w-5 h-5" />
                   </button>
-                  <button className="p-3 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-gold hover:text-jet transition-all duration-300 shadow-lg">
+                  <button className="p-3 rounded-full bg-gray-100 backdrop-blur-sm text-gray-900 hover:bg-gold hover:text-jet transition-all duration-300 shadow-lg">
                     <ShoppingBag className="w-5 h-5" />
                   </button>
                 </div>
@@ -119,16 +119,16 @@ export default function DailyTrendingHandmade() {
               {/* Content */}
               <div className="p-6">
                 <div className="mb-3">
-                  <h3 className="text-lg font-bold text-white mb-1 line-clamp-2 group-hover:text-gold transition-colors duration-300">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-2 group-hover:text-gold transition-colors duration-300">
                     {item.title}
                   </h3>
-                  <p className="text-sm text-white/40 flex items-center gap-1">
+                  <p className="text-sm text-gray-400 flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-gold" />
                     By {item.artist}
                   </p>
                 </div>
 
-                <p className="text-sm text-white/50 mb-4 line-clamp-2">
+                <p className="text-sm text-gray-400 mb-4 line-clamp-2">
                   {item.description}
                 </p>
 
@@ -161,17 +161,17 @@ export default function DailyTrendingHandmade() {
 
         {/* Trust indicators */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-          <div className="card-glass">
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
             <div className="text-3xl font-bold text-gold mb-2">100%</div>
-            <p className="text-white/60">Authentic Handmade</p>
+            <p className="text-gray-500">Authentic Handmade</p>
           </div>
-          <div className="card-glass">
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
             <div className="text-3xl font-bold text-gold mb-2">500+</div>
-            <p className="text-white/60">Verified Artisans</p>
+            <p className="text-gray-500">Verified Artisans</p>
           </div>
-          <div className="card-glass">
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
             <div className="text-3xl font-bold text-gold mb-2">14 Days</div>
-            <p className="text-white/60">Satisfaction Guarantee</p>
+            <p className="text-gray-500">Satisfaction Guarantee</p>
           </div>
         </div>
       </div>

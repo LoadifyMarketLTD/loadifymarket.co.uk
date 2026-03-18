@@ -19,11 +19,11 @@ export default function RequireAdmin({ children }: Props) {
   return (
     <RequireAuth>
       {!isLoading && user && !hasAdminAccess(user) ? (
-        <div className="min-h-screen bg-jet flex items-center justify-center px-4">
-          <div className="card-glass max-w-md w-full text-center p-10">
+        <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center px-4">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 max-w-md w-full text-center p-10">
             <p className="text-5xl mb-4">🚫</p>
-            <h2 className="text-2xl font-bold text-white mb-2">Access Denied</h2>
-            <p className="text-white/60 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+            <p className="text-gray-500 mb-6">
               You need admin privileges to view this page.
             </p>
             <Link to="/dashboard" className="btn-primary">

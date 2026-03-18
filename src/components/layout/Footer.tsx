@@ -93,13 +93,13 @@ const NAV_COLUMNS = [
 // ── Dashboard mini-footer ─────────────────────────────────────────────────────
 function DashboardFooter() {
   return (
-    <footer className="lm-footer-dash text-white mt-auto border-t border-white/10">
+    <footer className="lm-footer-dash mt-auto">
       <div className="lm-footer-inner-sm">
-        <p className="text-xs text-white/60">© 2025 {BRAND.name}. All rights reserved.</p>
+        <p className="text-xs text-gray-400">© 2025 {BRAND.name}. All rights reserved.</p>
         <div className="flex items-center gap-5">
-          <Link to="/terms"   className="text-xs text-white/60 hover:text-[#F4B400] transition-colors">Terms</Link>
-          <Link to="/privacy" className="text-xs text-white/60 hover:text-[#F4B400] transition-colors">Privacy</Link>
-          <Link to="/contact" className="text-xs text-white/60 hover:text-[#F4B400] transition-colors">Contact</Link>
+          <Link to="/terms"   className="text-xs text-gray-400 hover:text-[#1E3A5F] transition-colors">Terms</Link>
+          <Link to="/privacy" className="text-xs text-gray-400 hover:text-[#1E3A5F] transition-colors">Privacy</Link>
+          <Link to="/contact" className="text-xs text-gray-400 hover:text-[#1E3A5F] transition-colors">Contact</Link>
         </div>
       </div>
     </footer>
@@ -267,11 +267,11 @@ export default function Footer() {
         </div>
         {/* Intermediary disclaimer */}
         <div className="lm-footer-inner pb-4">
-          <p className="text-xs text-white/40 text-center">
+          <p className="text-xs text-gray-400 text-center">
             {BRAND.name} is a marketplace platform operated by {BRAND.companyName}.
             We act as an intermediary and do not sell products directly.
             All transactions are between buyers and sellers.{' '}
-            <Link to="/terms" className="underline hover:text-white/60 transition-colors">Learn more</Link>.
+            <Link to="/terms" className="underline hover:text-gray-500 transition-colors">Learn more</Link>.
           </p>
         </div>
       </div>

@@ -48,7 +48,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
   open:      { label: 'Open',        color: 'text-yellow-400', bg: 'bg-yellow-400/10 border-yellow-400/30', icon: AlertTriangle },
   in_review: { label: 'In Review',   color: 'text-blue-400',   bg: 'bg-blue-400/10 border-blue-400/30',    icon: Clock },
   resolved:  { label: 'Resolved',    color: 'text-green-400',  bg: 'bg-green-400/10 border-green-400/30',  icon: CheckCircle },
-  closed:    { label: 'Closed',      color: 'text-white/40',   bg: 'bg-white/5 border-white/10',           icon: XCircle },
+  closed:    { label: 'Closed',      color: 'text-gray-400',   bg: 'bg-gray-50 border-gray-200',           icon: XCircle },
 };
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -194,11 +194,11 @@ export default function DisputesPage() {
 
   if (!user) {
     return (
-      <div className="bg-jet min-h-screen pt-24 flex items-center justify-center">
-        <div className="card-glass text-center py-16 px-8 max-w-md">
+      <div className="bg-[#F8F9FA] min-h-screen pt-24 flex items-center justify-center">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-16 px-8 max-w-md">
           <ShieldCheck className="w-16 h-16 text-gold mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-3">Sign In Required</h2>
-          <p className="text-white/60 mb-6">Sign in to manage your disputes and buyer protection cases.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Sign In Required</h2>
+          <p className="text-gray-500 mb-6">Sign in to manage your disputes and buyer protection cases.</p>
           <Link to="/login" className="btn-primary">Sign In</Link>
         </div>
       </div>
@@ -219,10 +219,10 @@ export default function DisputesPage() {
     const isActive = selected.status === 'open' || selected.status === 'in_review';
 
     return (
-      <div className="bg-jet min-h-screen pt-24">
+      <div className="bg-[#F8F9FA] min-h-screen pt-24">
         <div className="container-cinematic py-10 max-w-5xl">
           {/* Back */}
-          <button onClick={() => setSelected(null)} className="flex items-center gap-2 text-white/50 hover:text-gold transition-colors mb-8 text-sm">
+          <button onClick={() => setSelected(null)} className="flex items-center gap-2 text-gray-400 hover:text-gold transition-colors mb-8 text-sm">
             <ChevronLeft className="w-4 h-4" /> Back to Disputes
           </button>
 
@@ -235,33 +235,33 @@ export default function DisputesPage() {
                   <Icon className={`w-5 h-5 ${cfg.color}`} />
                   <span className={`text-sm font-bold ${cfg.color}`}>{cfg.label}</span>
                 </div>
-                <h2 className="text-lg font-bold text-white mb-1">{selected.subject}</h2>
-                <p className="text-white/50 text-xs">Order: {selected.orderNumber}</p>
-                <p className="text-white/40 text-xs mt-1">
+                <h2 className="text-lg font-bold text-gray-900 mb-1">{selected.subject}</h2>
+                <p className="text-gray-400 text-xs">Order: {selected.orderNumber}</p>
+                <p className="text-gray-400 text-xs mt-1">
                   Opened {new Date(selected.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                 </p>
 
                 {/* Protection reason */}
                 {reasonDef && (
-                  <div className="mt-4 pt-4 border-t border-white/10">
-                    <p className="text-xs font-semibold text-white/50 mb-1 uppercase tracking-wide">Reason</p>
-                    <p className="text-white text-sm font-medium">{reasonDef.label}</p>
-                    <p className="text-white/50 text-xs mt-1">{reasonDef.description}</p>
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">Reason</p>
+                    <p className="text-gray-900 text-sm font-medium">{reasonDef.label}</p>
+                    <p className="text-gray-400 text-xs mt-1">{reasonDef.description}</p>
                   </div>
                 )}
 
                 {/* Description */}
-                <div className="mt-4 pt-4 border-t border-white/10">
-                  <p className="text-xs font-semibold text-white/50 mb-1 uppercase tracking-wide">Description</p>
-                  <p className="text-white/70 text-sm leading-relaxed">{selected.description}</p>
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <p className="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">Description</p>
+                  <p className="text-gray-600 text-sm leading-relaxed">{selected.description}</p>
                 </div>
 
                 {/* Resolution */}
                 {selected.resolution && (
-                  <div className="mt-4 pt-4 border-t border-white/10">
-                    <p className="text-xs font-semibold text-white/50 mb-1 uppercase tracking-wide">Resolution</p>
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <p className="text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">Resolution</p>
                     {resDef && <p className="text-green-400 text-sm font-semibold mb-1">{resDef.label}</p>}
-                    <p className="text-white/70 text-sm">{selected.resolution}</p>
+                    <p className="text-gray-600 text-sm">{selected.resolution}</p>
                     {selected.refundAmount != null && (
                       <p className="text-gold font-bold mt-2">Refund: £{selected.refundAmount.toFixed(2)}</p>
                     )}
@@ -270,49 +270,49 @@ export default function DisputesPage() {
               </div>
 
               {/* Escrow status */}
-              <div className="card-glass">
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
                 <div className="flex items-center gap-2 mb-2">
                   <ShieldCheck className="w-4 h-4 text-gold" />
-                  <p className="text-sm font-bold text-white">Payment Escrow</p>
+                  <p className="text-sm font-bold text-gray-900">Payment Escrow</p>
                 </div>
                 <p className={`text-sm font-semibold ${escrow.color}`}>{escrow.label}</p>
-                <p className="text-white/50 text-xs mt-1">{escrow.description}</p>
+                <p className="text-gray-400 text-xs mt-1">{escrow.description}</p>
               </div>
 
               {/* Seller response countdown (only when open) */}
               {selected.status === 'open' && hoursLeft > 0 && (
-                <div className="card-glass border border-yellow-400/20">
+                <div className="bg-white border border-gray-200 rounded-xl p-6 border border-yellow-400/20">
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="w-4 h-4 text-yellow-400" />
-                    <p className="text-sm font-bold text-white">Seller Response</p>
+                    <p className="text-sm font-bold text-gray-900">Seller Response</p>
                   </div>
                   <p className="text-yellow-400 font-bold">{hoursLeft}h remaining</p>
-                  <p className="text-white/50 text-xs mt-1">Seller must respond within 48 hours or the case escalates to admin.</p>
+                  <p className="text-gray-400 text-xs mt-1">Seller must respond within 48 hours or the case escalates to admin.</p>
                 </div>
               )}
               {selected.status === 'open' && hoursLeft <= 0 && (
-                <div className="card-glass border border-red-400/20">
+                <div className="bg-white border border-gray-200 rounded-xl p-6 border border-red-400/20">
                   <div className="flex items-center gap-2 mb-2">
                     <AlertCircle className="w-4 h-4 text-red-400" />
                     <p className="text-sm font-bold text-red-400">Escalated to Admin</p>
                   </div>
-                  <p className="text-white/50 text-xs">Seller missed the 48h deadline. Our team is reviewing your case.</p>
+                  <p className="text-gray-400 text-xs">Seller missed the 48h deadline. Our team is reviewing your case.</p>
                 </div>
               )}
 
               {/* Dispute timeline */}
-              <div className="card-glass">
-                <p className="text-sm font-bold text-white mb-4">Case Timeline</p>
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
+                <p className="text-sm font-bold text-gray-900 mb-4">Case Timeline</p>
                 <div className="space-y-3">
                   {timeline.map((t, i) => (
                     <div key={i} className="flex gap-3 items-start">
                       <div className={`w-3 h-3 rounded-full flex-shrink-0 mt-0.5 ${t.isPast ? 'bg-gold' : 'bg-white/15'}`} />
                       <div>
-                        <p className={`text-xs font-semibold ${t.isPast ? 'text-white' : 'text-white/40'}`}>
+                        <p className={`text-xs font-semibold ${t.isPast ? 'text-gray-900' : 'text-gray-400'}`}>
                           Day {t.day} — {t.label}
                           {t.isDeadline && <span className="ml-1 text-gold/70">⚑</span>}
                         </p>
-                        <p className="text-white/40 text-xs">{t.description}</p>
+                        <p className="text-gray-400 text-xs">{t.description}</p>
                         <p className="text-white/25 text-xs">{t.date.toLocaleDateString('en-GB')}</p>
                       </div>
                     </div>
@@ -328,8 +328,8 @@ export default function DisputesPage() {
 
             {/* ── Right panel: messages ────────────────────────────── */}
             <div className="lg:col-span-2">
-              <div className="card-glass flex flex-col" style={{ minHeight: '520px' }}>
-                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col" style={{ minHeight: '520px' }}>
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <MessageCircle className="w-5 h-5 text-gold" />
                   Dispute Messages
                 </h3>
@@ -337,8 +337,8 @@ export default function DisputesPage() {
                 <div className="flex-1 overflow-y-auto space-y-3 mb-4 min-h-[300px]">
                   {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-40 text-center">
-                      <MessageCircle className="w-10 h-10 text-white/20 mb-3" />
-                      <p className="text-white/40 text-sm">No messages yet. Send the first message to the seller or support team.</p>
+                      <MessageCircle className="w-10 h-10 text-gray-300 mb-3" />
+                      <p className="text-gray-400 text-sm">No messages yet. Send the first message to the seller or support team.</p>
                     </div>
                   ) : (
                     messages.map(msg => {
@@ -350,14 +350,14 @@ export default function DisputesPage() {
                             isAdmin
                               ? 'bg-gold/20 border border-gold/30'
                               : isMe
-                              ? 'bg-graphite'
-                              : 'bg-graphite/50'
+                              ? 'bg-white'
+                              : 'bg-gray-500'
                           }`}>
-                            <p className="text-xs text-white/40 mb-1">
+                            <p className="text-xs text-gray-400 mb-1">
                               {isAdmin ? '🛡 Admin' : isMe ? 'You' : 'Seller'} ·{' '}
                               {new Date(msg.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                             </p>
-                            <p className="text-white text-sm leading-relaxed">{msg.message}</p>
+                            <p className="text-gray-700 text-sm leading-relaxed">{msg.message}</p>
                           </div>
                         </div>
                       );
@@ -367,7 +367,7 @@ export default function DisputesPage() {
 
                 {/* Message input */}
                 {isActive && (
-                  <form onSubmit={handleSendMessage} className="flex gap-2 border-t border-white/10 pt-4">
+                  <form onSubmit={handleSendMessage} className="flex gap-2 border-t border-gray-200 pt-4">
                     <input
                       type="text"
                       value={newMessage}
@@ -385,7 +385,7 @@ export default function DisputesPage() {
                   </form>
                 )}
                 {!isActive && (
-                  <p className="text-white/40 text-xs text-center pt-4 border-t border-white/10">
+                  <p className="text-gray-400 text-xs text-center pt-4 border-t border-gray-200">
                     This dispute is {selected.status}. Messaging is closed.
                   </p>
                 )}
@@ -402,7 +402,7 @@ export default function DisputesPage() {
   const abuseWarning = isAbuseRisk(disputes.map(d => d.createdAt));
 
   return (
-    <div className="bg-jet min-h-screen pt-24">
+    <div className="bg-[#F8F9FA] min-h-screen pt-24">
       <div className="container-cinematic py-10 max-w-4xl">
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
@@ -411,8 +411,8 @@ export default function DisputesPage() {
               <ShieldCheck className="w-7 h-7 text-gold" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white">My Disputes</h1>
-              <p className="text-white/50 text-sm mt-1">Manage buyer protection cases</p>
+              <h1 className="text-3xl font-bold text-gray-900">My Disputes</h1>
+              <p className="text-gray-400 text-sm mt-1">Manage buyer protection cases</p>
             </div>
           </div>
           <div className="flex gap-3">
@@ -432,11 +432,11 @@ export default function DisputesPage() {
 
         {/* Abuse warning */}
         {abuseWarning && (
-          <div className="card-glass border border-red-400/30 mb-6 flex items-start gap-3">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 border border-red-400/30 mb-6 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-white font-semibold text-sm">Account Notice</p>
-              <p className="text-white/60 text-xs mt-1">
+              <p className="text-gray-900 font-semibold text-sm">Account Notice</p>
+              <p className="text-gray-500 text-xs mt-1">
                 You have opened {PROTECTION_CONFIG.maxDisputesPerMonth}+ disputes this month. Repeated misuse may result in account suspension. Contact{' '}
                 <a href="mailto:loadifymarket.co.uk@gmail.com" className="text-gold hover:underline">support</a> if you need help.
               </p>
@@ -446,20 +446,20 @@ export default function DisputesPage() {
 
         {/* Create form */}
         {showForm && (
-          <div className="card-glass mb-8 border border-gold/20">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 mb-8 border border-gold/20">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-gold" />
                 Open a Buyer Protection Dispute
               </h2>
-              <button onClick={() => setShowForm(false)} className="text-white/40 hover:text-white text-xl leading-none">×</button>
+              <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-[#1E3A5F] text-xl leading-none">×</button>
             </div>
 
             {formSuccess ? (
               <div className="text-center py-8">
                 <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
-                <h3 className="text-white font-bold text-lg mb-2">Dispute Opened</h3>
-                <p className="text-white/60 text-sm mb-4">
+                <h3 className="text-gray-900 font-bold text-lg mb-2">Dispute Opened</h3>
+                <p className="text-gray-500 text-sm mb-4">
                   Your case is now open. The seller has 48 hours to respond. Payment is held in escrow until resolution.
                 </p>
                 <button onClick={() => { setShowForm(false); setFormSuccess(false); }} className="btn-outline text-sm">Close</button>
@@ -475,7 +475,7 @@ export default function DisputesPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-white/60 mb-2">Order Number <span className="text-red-400">*</span></label>
+                    <label className="block text-sm font-medium text-gray-500 mb-2">Order Number <span className="text-red-400">*</span></label>
                     <input
                       type="text"
                       required
@@ -487,7 +487,7 @@ export default function DisputesPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/60 mb-2">Protection Reason <span className="text-red-400">*</span></label>
+                    <label className="block text-sm font-medium text-gray-500 mb-2">Protection Reason <span className="text-red-400">*</span></label>
                     <select
                       required
                       value={form.protectionReason}
@@ -500,7 +500,7 @@ export default function DisputesPage() {
                       ))}
                     </select>
                     {form.protectionReason && (
-                      <p className="text-white/40 text-xs mt-1">
+                      <p className="text-gray-400 text-xs mt-1">
                         {PROTECTION_REASONS.find(r => r.key === form.protectionReason)?.description}
                       </p>
                     )}
@@ -508,7 +508,7 @@ export default function DisputesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-white/60 mb-2">Describe the Issue <span className="text-red-400">*</span></label>
+                  <label className="block text-sm font-medium text-gray-500 mb-2">Describe the Issue <span className="text-red-400">*</span></label>
                   <textarea
                     required
                     rows={4}
@@ -524,8 +524,8 @@ export default function DisputesPage() {
                   <div className="flex items-start gap-3 bg-gold/5 border border-gold/20 rounded-premium-sm p-3">
                     <Upload className="w-4 h-4 text-gold flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-white text-sm font-medium">Evidence Required</p>
-                      <p className="text-white/50 text-xs mt-0.5">
+                      <p className="text-gray-900 text-sm font-medium">Evidence Required</p>
+                      <p className="text-gray-400 text-xs mt-0.5">
                         This reason requires photo evidence. After submitting, upload images via the dispute messaging thread.
                       </p>
                     </div>
@@ -536,8 +536,8 @@ export default function DisputesPage() {
                 <div className="flex items-start gap-3 bg-blue-500/10 border border-blue-400/20 rounded-premium-sm p-3">
                   <ShieldCheck className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-white text-sm font-medium">Payment Protection Active</p>
-                    <p className="text-white/50 text-xs mt-0.5">
+                    <p className="text-gray-900 text-sm font-medium">Payment Protection Active</p>
+                    <p className="text-gray-400 text-xs mt-0.5">
                       Opening a dispute will freeze the escrow funds for this order. Your payment is protected until resolution.
                     </p>
                   </div>
@@ -561,10 +561,10 @@ export default function DisputesPage() {
             <div className="w-10 h-10 border-2 border-gold border-t-transparent rounded-full animate-spin" />
           </div>
         ) : disputes.length === 0 ? (
-          <div className="card-glass text-center py-20">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-20">
             <ShieldCheck className="w-16 h-16 text-gold mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">No disputes</h3>
-            <p className="text-white/50 mb-4">You have no active or past disputes.</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No disputes</h3>
+            <p className="text-gray-400 mb-4">You have no active or past disputes.</p>
             <Link to="/buyer-protection" className="text-gold text-sm hover:underline">
               Learn about Buyer Protection →
             </Link>
@@ -580,28 +580,28 @@ export default function DisputesPage() {
                 <button
                   key={dispute.id}
                   onClick={() => setSelected(dispute)}
-                  className="card-glass w-full text-left flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:border-gold/30 transition-all duration-200 group"
+                  className="bg-white border border-gray-200 rounded-xl p-6 w-full text-left flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:border-gold/30 transition-all duration-200 group"
                 >
                   <div className={`p-3 rounded-premium-sm border ${cfg.bg} flex-shrink-0`}>
                     <Ico className={`w-6 h-6 ${cfg.color}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap mb-1">
-                      <span className="font-bold text-white text-sm truncate">{dispute.subject}</span>
+                      <span className="font-bold text-gray-900 text-sm truncate">{dispute.subject}</span>
                       <span className={`text-xs font-semibold ${cfg.color}`}>{cfg.label}</span>
                       {dispute.buyerAbuseFlagged && (
                         <span className="text-xs text-red-400 border border-red-400/30 px-2 py-0.5 rounded-full">Flagged</span>
                       )}
                     </div>
-                    <p className="text-white/40 text-xs">Order: {dispute.orderNumber}</p>
-                    {reasonDef && <p className="text-white/40 text-xs">{reasonDef.label}</p>}
+                    <p className="text-gray-400 text-xs">Order: {dispute.orderNumber}</p>
+                    {reasonDef && <p className="text-gray-400 text-xs">{reasonDef.label}</p>}
                   </div>
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
                     <span className={`text-xs font-medium ${escrow.color}`}>{escrow.label}</span>
                     {dispute.refundAmount != null && (
                       <span className="text-gold text-sm font-bold">£{dispute.refundAmount.toFixed(2)}</span>
                     )}
-                    <span className="text-white/30 text-xs">
+                    <span className="text-gray-300 text-xs">
                       {new Date(dispute.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </span>
                   </div>

@@ -122,9 +122,9 @@ function YesNoSelect({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-xs font-medium text-white/60 mb-1">
+      <label htmlFor={id} className="block text-xs font-medium text-gray-500 mb-1">
         {label}{' '}
-        {optional && <span className="text-white/30 font-normal">(optional)</span>}
+        {optional && <span className="text-gray-300 font-normal">(optional)</span>}
       </label>
       <select
         id={id}
@@ -132,7 +132,7 @@ function YesNoSelect({
         className="input-field-sm w-full"
       >
         {YES_NO.map((v) => (
-          <option key={v} value={v} className="bg-graphite text-white">
+          <option key={v} value={v} className="bg-white text-gray-900">
             {v === '' ? '— Select —' : v}
           </option>
         ))}
@@ -291,13 +291,13 @@ export default function TransportQuotePage() {
     : buildXDriveAppUrl({ source: 'loadify-market' });
 
   return (
-    <div className="bg-jet min-h-screen pt-20">
+    <div className="bg-[#F8F9FA] min-h-screen pt-20">
       {/* Breadcrumb */}
-      <div className="bg-graphite/30">
+      <div className="bg-white/30">
         <div className="container-cinematic py-3">
           <Link
             to="/"
-            className="text-white/60 hover:text-gold transition-colors flex items-center gap-1.5 text-sm"
+            className="text-gray-500 hover:text-gold transition-colors flex items-center gap-1.5 text-sm"
           >
             <ChevronLeft className="w-4 h-4" />
             Back to Marketplace
@@ -314,10 +314,10 @@ export default function TransportQuotePage() {
               Transport support provided by XDrive Logistics
             </span>
           </div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
             Request a <span className="text-gradient-gold">Transport Quote</span>
           </h1>
-          <p className="text-white/50 text-sm">
+          <p className="text-gray-400 text-sm">
             Collection & delivery for marketplace orders, pallet deals, and wholesale stock.
           </p>
         </div>
@@ -325,17 +325,17 @@ export default function TransportQuotePage() {
         {/* Listing context block */}
         {hasListingContext && (
           <div className="max-w-4xl mx-auto mb-4">
-            <div className="bg-white/5 border border-gold/20 rounded-xl py-3 px-4">
+            <div className="bg-gray-50 border border-gold/20 rounded-xl py-3 px-4">
               <div className="flex items-start gap-3">
-                <Package className="w-4 h-4 text-gold flex-shrink-0 mt-0.5" />
+                <Package className="w-4 h-4 text-[#F4C400] flex-shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-white text-xs font-semibold mb-0.5">
+                  <p className="text-gray-900 text-xs font-semibold mb-0.5">
                     Delivery request for a Loadify Market listing
                   </p>
                   {listingTitle && (
-                    <p className="text-white/80 text-xs font-medium truncate">{listingTitle}</p>
+                    <p className="text-gray-700 text-xs font-medium truncate">{listingTitle}</p>
                   )}
-                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-white/40">
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-400">
                     {sellerName && (
                       <span className="flex items-center gap-1">
                         <Building2 className="w-3 h-3" />
@@ -379,16 +379,16 @@ export default function TransportQuotePage() {
         {/* Success State */}
         {submitState === 'success' ? (
           <div className="max-w-2xl mx-auto">
-            <div className="card-glass text-center py-12 px-8">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-12 px-8">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-500/10 rounded-full mb-4">
                 <CheckCircle className="w-8 h-8 text-emerald-400" />
               </div>
-              <h2 className="text-xl font-bold text-white mb-3">Quote Request Submitted</h2>
-              <p className="text-white/60 text-sm mb-1">
+              <h2 className="text-xl font-bold text-gray-900 mb-3">Quote Request Submitted</h2>
+              <p className="text-gray-500 text-sm mb-1">
                 Your delivery request has been submitted to XDrive Logistics.
               </p>
               {emailSent ? (
-                <p className="text-white/60 text-sm mb-5">
+                <p className="text-gray-500 text-sm mb-5">
                   A member of the XDrive Logistics team will be in touch within 1 business day.
                 </p>
               ) : (
@@ -401,20 +401,20 @@ export default function TransportQuotePage() {
                 </div>
               )}
               {savedRequest && (
-                <div className="bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-left mb-6">
-                  <p className="text-white/40 text-xs mb-1.5 uppercase tracking-wider">
+                <div className="bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-left mb-6">
+                  <p className="text-gray-400 text-xs mb-1.5 uppercase tracking-wider">
                     Request summary
                   </p>
-                  <p className="text-white text-sm font-semibold mb-1 truncate">
+                  <p className="text-gray-900 text-sm font-semibold mb-1 truncate">
                     {savedRequest.listingTitle || savedRequest.itemType}
                   </p>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/50">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400">
                     <span>Pickup: {savedRequest.pickupPostcode || '—'}</span>
                     <span>Dropoff: {savedRequest.dropoffPostcode || '—'}</span>
                     {savedRequest.palletCount && <span>Pallets: {savedRequest.palletCount}</span>}
-                    <span className="text-gold/70">Status: Submitted</span>
+                    <span className="text-[#F4C400]/80">Status: Submitted</span>
                   </div>
-                  <p className="text-white/30 text-xs mt-2">Ref: {savedRequest.id}</p>
+                  <p className="text-gray-300 text-xs mt-2">Ref: {savedRequest.id}</p>
                 </div>
               )}
               <div className="mb-6">
@@ -428,7 +428,7 @@ export default function TransportQuotePage() {
                   Open in XDrive Logistics App
                   <ExternalLink className="w-4 h-4" />
                 </a>
-                <p className="text-white/30 text-xs mt-1.5">
+                <p className="text-gray-300 text-xs mt-1.5">
                   Opens app.xdrivelogistics.co.uk with your request pre-loaded
                 </p>
               </div>
@@ -448,7 +448,7 @@ export default function TransportQuotePage() {
             <div className="max-w-4xl mx-auto space-y-4">
 
               {/* SECTION 1 — Contact Details */}
-              <div className="card-glass-compact">
+              <div className="bg-white border border-gray-200 rounded-xl p-6-compact">
                 <h2 className="section-heading-sm">
                   <User className="w-4 h-4 text-gold" />
                   Contact Details
@@ -514,7 +514,7 @@ export default function TransportQuotePage() {
                   <div>
                     <label className="field-label">
                       Company Name{' '}
-                      <span className="text-white/30 font-normal">(optional)</span>
+                      <span className="text-gray-300 font-normal">(optional)</span>
                     </label>
                     <div className="relative">
                       <Building2 className="field-icon" />
@@ -531,7 +531,7 @@ export default function TransportQuotePage() {
               </div>
 
               {/* SECTION 2 — Collection & Delivery */}
-              <div className="card-glass-compact">
+              <div className="bg-white border border-gray-200 rounded-xl p-6-compact">
                 <h2 className="section-heading-sm">
                   <MapPin className="w-4 h-4 text-gold" />
                   Collection &amp; Delivery
@@ -596,7 +596,7 @@ export default function TransportQuotePage() {
                   <div>
                     <label className="field-label">
                       Preferred Collection Time{' '}
-                      <span className="text-white/30 font-normal">(optional)</span>
+                      <span className="text-gray-300 font-normal">(optional)</span>
                     </label>
                     <div className="relative">
                       <Clock className="field-icon" />
@@ -605,7 +605,7 @@ export default function TransportQuotePage() {
                         className="input-field-sm pl-9 w-full"
                       >
                         {TIME_WINDOWS.map((t) => (
-                          <option key={t} value={t} className="bg-graphite text-white">
+                          <option key={t} value={t} className="bg-white text-gray-900">
                             {t === '' ? '— Any Time —' : t}
                           </option>
                         ))}
@@ -616,7 +616,7 @@ export default function TransportQuotePage() {
                   <div className="sm:col-span-2">
                     <label className="field-label">
                       Preferred Delivery Time Window{' '}
-                      <span className="text-white/30 font-normal">(optional)</span>
+                      <span className="text-gray-300 font-normal">(optional)</span>
                     </label>
                     <div className="relative">
                       <Clock className="field-icon" />
@@ -625,7 +625,7 @@ export default function TransportQuotePage() {
                         className="input-field-sm pl-9 w-full"
                       >
                         {TIME_WINDOWS.map((t) => (
-                          <option key={t} value={t} className="bg-graphite text-white">
+                          <option key={t} value={t} className="bg-white text-gray-900">
                             {t === '' ? '— Any Time —' : t}
                           </option>
                         ))}
@@ -636,7 +636,7 @@ export default function TransportQuotePage() {
               </div>
 
               {/* SECTION 3 — Cargo Details */}
-              <div className="card-glass-compact">
+              <div className="bg-white border border-gray-200 rounded-xl p-6-compact">
                 <h2 className="section-heading-sm">
                   <Package className="w-4 h-4 text-gold" />
                   Cargo Details
@@ -678,7 +678,7 @@ export default function TransportQuotePage() {
                   <div>
                     <label className="field-label">
                       Total Weight{' '}
-                      <span className="text-white/30 font-normal">(optional)</span>
+                      <span className="text-gray-300 font-normal">(optional)</span>
                     </label>
                     <div className="relative">
                       <Weight className="field-icon" />
@@ -694,7 +694,7 @@ export default function TransportQuotePage() {
                   <div>
                     <label className="field-label">
                       Dimensions{' '}
-                      <span className="text-white/30 font-normal">(optional)</span>
+                      <span className="text-gray-300 font-normal">(optional)</span>
                     </label>
                     <div className="relative">
                       <Ruler className="field-icon" />
@@ -710,7 +710,7 @@ export default function TransportQuotePage() {
                   <div>
                     <label className="field-label">
                       Vehicle Type Needed{' '}
-                      <span className="text-white/30 font-normal">(optional)</span>
+                      <span className="text-gray-300 font-normal">(optional)</span>
                     </label>
                     <div className="relative">
                       <Truck className="field-icon" />
@@ -719,7 +719,7 @@ export default function TransportQuotePage() {
                         className="input-field-sm pl-9 w-full"
                       >
                         {VEHICLE_TYPES.map((v) => (
-                          <option key={v} value={v} className="bg-graphite text-white">
+                          <option key={v} value={v} className="bg-white text-gray-900">
                             {v === '' ? '— Select —' : v}
                           </option>
                         ))}
@@ -730,7 +730,7 @@ export default function TransportQuotePage() {
               </div>
 
               {/* SECTION 4 — Operational / Handling Details */}
-              <div className="card-glass-compact">
+              <div className="bg-white border border-gray-200 rounded-xl p-6-compact">
                 <h2 className="section-heading-sm">
                   <Settings2 className="w-4 h-4 text-gold" />
                   Operational / Handling Details
@@ -769,7 +769,7 @@ export default function TransportQuotePage() {
                   <div className="col-span-2 sm:col-span-3">
                     <label className="field-label">
                       Access Restrictions{' '}
-                      <span className="text-white/30 font-normal">(optional)</span>
+                      <span className="text-gray-300 font-normal">(optional)</span>
                     </label>
                     <input
                       {...register('accessRestrictions')}
@@ -782,7 +782,7 @@ export default function TransportQuotePage() {
               </div>
 
               {/* SECTION 5 — Additional Information */}
-              <div className="card-glass-compact">
+              <div className="bg-white border border-gray-200 rounded-xl p-6-compact">
                 <h2 className="section-heading-sm">
                   <FileText className="w-4 h-4 text-gold" />
                   Additional Information
@@ -791,7 +791,7 @@ export default function TransportQuotePage() {
                   <div className="sm:col-span-2">
                     <label className="field-label">
                       Delivery Notes{' '}
-                      <span className="text-white/30 font-normal">(optional)</span>
+                      <span className="text-gray-300 font-normal">(optional)</span>
                     </label>
                     <textarea
                       {...register('deliveryNotes')}
@@ -804,7 +804,7 @@ export default function TransportQuotePage() {
                   <div>
                     <label className="field-label">
                       Listing / Product Reference{' '}
-                      <span className="text-white/30 font-normal">(optional)</span>
+                      <span className="text-gray-300 font-normal">(optional)</span>
                     </label>
                     <div className="relative">
                       <FileText className="field-icon" />
@@ -820,10 +820,10 @@ export default function TransportQuotePage() {
                   <div>
                     <label className="field-label">
                       Upload Photos / Documents{' '}
-                      <span className="text-white/30 font-normal">(optional)</span>
+                      <span className="text-gray-300 font-normal">(optional)</span>
                     </label>
                     <div
-                      className="border border-dashed border-white/20 rounded-lg px-3 py-2.5 flex items-center gap-2 cursor-pointer hover:border-gold/40 transition-colors bg-white/3"
+                      className="border border-dashed border-gray-200 rounded-lg px-3 py-2.5 flex items-center gap-2 cursor-pointer hover:border-gold/40 transition-colors bg-white/3"
                       onClick={() => fileInputRef.current?.click()}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
@@ -834,8 +834,8 @@ export default function TransportQuotePage() {
                       role="button"
                       tabIndex={0}
                     >
-                      <Upload className="w-4 h-4 text-white/40 flex-shrink-0" />
-                      <span className="text-white/40 text-xs">
+                      <Upload className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-gray-400 text-xs">
                         {uploadedFiles.length > 0
                           ? `${uploadedFiles.length} file${uploadedFiles.length > 1 ? 's' : ''} selected`
                           : 'Click to upload (images, PDF)'}
@@ -856,7 +856,7 @@ export default function TransportQuotePage() {
               </div>
 
               {/* SECTION 6 — Consent + CTA */}
-              <div className="card-glass-compact">
+              <div className="bg-white border border-gray-200 rounded-xl p-6-compact">
                 <h2 className="section-heading-sm">
                   <Shield className="w-4 h-4 text-gold" />
                   Consent &amp; Submit
@@ -866,11 +866,11 @@ export default function TransportQuotePage() {
                     <input
                       {...register('gdprConsent')}
                       type="checkbox"
-                      className="mt-0.5 w-4 h-4 rounded border-white/20 bg-graphite/50 text-gold focus:ring-gold/30 flex-shrink-0 cursor-pointer"
+                      className="mt-0.5 w-4 h-4 rounded border-gray-200 bg-gray-500 text-gold focus:ring-gold/30 flex-shrink-0 cursor-pointer"
                     />
-                    <span className="text-white/60 text-sm group-hover:text-white/80 transition-colors">
+                    <span className="text-gray-500 text-sm group-hover:text-gray-700 transition-colors">
                       I agree to the{' '}
-                      <Link to="/privacy" className="text-gold hover:underline">
+                      <Link to="/privacy" className="text-[#1E3A5F] hover:underline">
                         Privacy Policy
                       </Link>{' '}
                       and consent to Loadify Market / XDrive Logistics processing my data to provide
@@ -886,9 +886,9 @@ export default function TransportQuotePage() {
                     <input
                       {...register('quoteTerms')}
                       type="checkbox"
-                      className="mt-0.5 w-4 h-4 rounded border-white/20 bg-graphite/50 text-gold focus:ring-gold/30 flex-shrink-0 cursor-pointer"
+                      className="mt-0.5 w-4 h-4 rounded border-gray-200 bg-gray-500 text-gold focus:ring-gold/30 flex-shrink-0 cursor-pointer"
                     />
-                    <span className="text-white/60 text-sm group-hover:text-white/80 transition-colors">
+                    <span className="text-gray-500 text-sm group-hover:text-gray-700 transition-colors">
                       I understand this is a quote request only. No charges will be made until I
                       accept a quote in writing. <span className="text-gold text-xs">*</span>
                     </span>
@@ -903,10 +903,10 @@ export default function TransportQuotePage() {
                   <div className="mt-3 border border-red-500/30 bg-red-500/5 rounded-lg flex items-start gap-3 py-3 px-4">
                     <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-white text-sm font-semibold">Something went wrong</p>
-                      <p className="text-white/60 text-xs mt-0.5">
+                      <p className="text-red-700 text-sm font-semibold">Something went wrong</p>
+                      <p className="text-gray-500 text-xs mt-0.5">
                         Please try again or{' '}
-                        <Link to="/contact" className="text-gold hover:underline">
+                        <Link to="/contact" className="text-[#1E3A5F] hover:underline">
                           contact us directly
                         </Link>
                         .
@@ -934,10 +934,10 @@ export default function TransportQuotePage() {
                       </>
                     )}
                   </button>
-                  <p className="text-white/40 text-xs">We'll respond within 1 business day.</p>
+                  <p className="text-gray-400 text-xs">We'll respond within 1 business day.</p>
                 </div>
 
-                <p className="text-white/25 text-xs mt-3">
+                <p className="text-gray-400 text-xs mt-3">
                   Transport quotes coordinated by XDrive Logistics Ltd — VAT: GB375949535
                 </p>
               </div>

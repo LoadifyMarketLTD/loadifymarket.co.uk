@@ -222,12 +222,12 @@ export default function ProductPage() {
 
   if (loading) {
     return (
-      <div className="bg-jet min-h-screen pt-24">
+      <div className="bg-[#F8F9FA] min-h-screen pt-24">
         <div className="container-cinematic py-12">
           <div className="flex justify-center items-center h-64">
             <div className="text-center">
               <div className="w-12 h-12 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-white/60">Loading product...</p>
+              <p className="text-gray-500">Loading product...</p>
             </div>
           </div>
         </div>
@@ -237,12 +237,12 @@ export default function ProductPage() {
 
   if (!product) {
     return (
-      <div className="bg-jet min-h-screen pt-24">
+      <div className="bg-[#F8F9FA] min-h-screen pt-24">
         <div className="container-cinematic py-12">
-          <div className="card-glass text-center py-16">
-            <Package className="w-16 h-16 text-white/20 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-4">Product Not Found</h2>
-            <p className="text-white/60 mb-6">
+          <div className="bg-white border border-gray-200 rounded-xl text-center py-16">
+            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h2>
+            <p className="text-gray-500 mb-6">
               The product you're looking for doesn't exist or has been removed.
             </p>
             <button onClick={() => navigate('/catalog')} className="btn-primary">
@@ -255,13 +255,13 @@ export default function ProductPage() {
   }
 
   return (
-    <div className="bg-jet min-h-screen pt-24">
+    <div className="bg-[#F8F9FA] min-h-screen pt-24">
       {/* Breadcrumb */}
-      <div className="bg-graphite/30">
+      <div className="bg-white/30">
         <div className="container-cinematic py-4">
           <button
             onClick={() => navigate(-1)}
-            className="text-white/60 hover:text-gold transition-colors flex items-center gap-2 text-sm"
+            className="text-gray-500 hover:text-gold transition-colors flex items-center gap-2 text-sm"
           >
             <ChevronLeft className="w-4 h-4" />
             Back to Catalog
@@ -274,7 +274,7 @@ export default function ProductPage() {
           {/* Product Images */}
           <div>
             {/* Main Image */}
-            <div className="relative aspect-square rounded-premium-lg overflow-hidden bg-graphite mb-4">
+            <div className="relative aspect-square rounded-premium-lg overflow-hidden bg-white mb-4">
               {product.images && product.images.length > 0 ? (
                 <img
                   src={product.images[selectedImage]}
@@ -283,7 +283,7 @@ export default function ProductPage() {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <TypeIcon className="w-32 h-32 text-white/20" />
+                  <TypeIcon className="w-32 h-32 text-gray-300" />
                 </div>
               )}
 
@@ -311,7 +311,7 @@ export default function ProductPage() {
                     className={`rounded-premium-sm overflow-hidden border-2 transition-all duration-300 ${
                       selectedImage === index
                         ? 'border-gold shadow-cinematic-gold'
-                        : 'border-white/10 hover:border-white/30'
+                        : 'border-gray-200 hover:border-white/30'
                     }`}
                   >
                     <img
@@ -328,7 +328,7 @@ export default function ProductPage() {
           {/* Product Info */}
           <div>
             {/* Title */}
-            <h1 className="heading-section text-white mb-4">{product.title}</h1>
+            <h1 className="heading-section text-gray-900 mb-4">{product.title}</h1>
 
             {/* Rating */}
             {product.rating > 0 && (
@@ -341,7 +341,7 @@ export default function ProductPage() {
                     />
                   ))}
                 </div>
-                <span className="text-white/60 ml-3">({product.reviewCount} reviews)</span>
+                <span className="text-gray-500 ml-3">({product.reviewCount} reviews)</span>
               </div>
             )}
 
@@ -349,10 +349,10 @@ export default function ProductPage() {
             <div className="mb-8">
               <div className="flex items-baseline gap-3">
                 <span className="text-5xl font-bold text-gold">{formatPrice(product.price)}</span>
-                <span className="text-white/40">VAT included</span>
+                <span className="text-gray-400">VAT included</span>
               </div>
               {product.priceExVat && (
-                <p className="text-sm text-white/40 mt-2">
+                <p className="text-sm text-gray-400 mt-2">
                   Ex VAT: {formatPrice(product.priceExVat)} | VAT ({product.vatRate * 100}%):{' '}
                   {formatPrice(product.price - product.priceExVat)}
                 </p>
@@ -381,35 +381,35 @@ export default function ProductPage() {
 
             {/* Condition */}
             <div className="mb-6">
-              <span className="text-white/40">Condition: </span>
-              <span className="font-medium text-white capitalize">{product.condition}</span>
+              <span className="text-gray-400">Condition: </span>
+              <span className="font-medium text-gray-900 capitalize">{product.condition}</span>
             </div>
 
             {/* Wholesale / Bulk structured details */}
             {(product.type === 'wholesale' || product.type === 'lot') && product.specifications && (
-              <div className="mb-6 p-4 bg-white/5 border border-white/10 rounded-lg">
-                <h3 className="text-sm font-semibold text-white/70 mb-3 uppercase tracking-wide">
+              <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <h3 className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">
                   {product.type === 'wholesale' ? 'Wholesale Details' : 'Bulk Lot Details'}
                 </h3>
                 <dl className="grid grid-cols-2 gap-3 text-sm">
                   {product.specifications.moq && (
                     <>
-                      <dt className="text-white/40">Min. Order Qty</dt>
-                      <dd className="text-white font-semibold">{product.specifications.moq} units</dd>
+                      <dt className="text-gray-400">Min. Order Qty</dt>
+                      <dd className="text-gray-900 font-semibold">{product.specifications.moq} units</dd>
                     </>
                   )}
                   {product.specifications.lotQuantity && (
                     <>
-                      <dt className="text-white/40">
+                      <dt className="text-gray-400">
                         {product.type === 'wholesale' ? 'Units in Lot' : 'Items in Lot'}
                       </dt>
-                      <dd className="text-white font-semibold">{product.specifications.lotQuantity}</dd>
+                      <dd className="text-gray-900 font-semibold">{product.specifications.lotQuantity}</dd>
                     </>
                   )}
                   {product.specifications.moq && (
                     <>
-                      <dt className="text-white/40">Price per Unit</dt>
-                      <dd className="text-white font-semibold">
+                      <dt className="text-gray-400">Price per Unit</dt>
+                      <dd className="text-gray-900 font-semibold">
                         {(() => {
                           const moqNum = parseInt(product.specifications.moq, 10);
                           return moqNum > 0
@@ -425,25 +425,25 @@ export default function ProductPage() {
 
             {/* Pallet details */}
             {product.type === 'pallet' && product.palletInfo && (
-              <div className="mb-6 p-4 bg-white/5 border border-white/10 rounded-lg">
-                <h3 className="text-sm font-semibold text-white/70 mb-3 uppercase tracking-wide">Pallet Details</h3>
+              <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <h3 className="text-sm font-semibold text-gray-600 mb-3 uppercase tracking-wide">Pallet Details</h3>
                 <dl className="grid grid-cols-2 gap-3 text-sm">
                   {product.palletInfo.palletCount > 0 && (
                     <>
-                      <dt className="text-white/40">Number of Pallets</dt>
-                      <dd className="text-white font-semibold">{product.palletInfo.palletCount}</dd>
+                      <dt className="text-gray-400">Number of Pallets</dt>
+                      <dd className="text-gray-900 font-semibold">{product.palletInfo.palletCount}</dd>
                     </>
                   )}
                   {product.palletInfo.itemsPerPallet > 0 && (
                     <>
-                      <dt className="text-white/40">Items per Pallet</dt>
-                      <dd className="text-white font-semibold">{product.palletInfo.itemsPerPallet}</dd>
+                      <dt className="text-gray-400">Items per Pallet</dt>
+                      <dd className="text-gray-900 font-semibold">{product.palletInfo.itemsPerPallet}</dd>
                     </>
                   )}
                   {product.palletInfo.palletType && (
                     <>
-                      <dt className="text-white/40">Pallet Type</dt>
-                      <dd className="text-white font-semibold capitalize">{product.palletInfo.palletType}</dd>
+                      <dt className="text-gray-400">Pallet Type</dt>
+                      <dd className="text-gray-900 font-semibold capitalize">{product.palletInfo.palletType}</dd>
                     </>
                   )}
                 </dl>
@@ -453,7 +453,7 @@ export default function ProductPage() {
             {/* Quantity Selector — retail products only */}
             {product.stockQuantity > 0 && !isBulkProduct && (
               <div className="mb-8">
-                <label className="block text-sm font-medium text-white/60 mb-2">Quantity</label>
+                <label className="block text-sm font-medium text-gray-500 mb-2">Quantity</label>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -539,9 +539,9 @@ export default function ProductPage() {
             )}
 
             {/* Seller Info Panel */}
-            <div className="card-glass mb-8">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 mb-8">
               <SellerPerformance sellerId={product.sellerId} compact={false} />
-              <div className="mt-4 pt-4 border-t border-white/10 flex flex-col gap-2">
+              <div className="mt-4 pt-4 border-t border-gray-200 flex flex-col gap-2">
                 {(product as Product & { storeSlug?: string }).storeSlug && (
                   <Link
                     to={`/seller/${(product as Product & { storeSlug?: string }).storeSlug}`}
@@ -567,21 +567,21 @@ export default function ProductPage() {
             {(() => {
               const productWithStore = product as Product & { storeSlug?: string; storeName?: string };
               return (
-                <div className="card-glass mb-8 border border-white/10">
-                  <h3 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+                <div className="bg-white border border-gray-200 rounded-xl p-6 mb-8">
+                  <h3 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
                     <Store className="w-4 h-4 text-gold" />
                     Seller Information
                   </h3>
-                  <p className="text-sm text-white/60 mb-3">
+                  <p className="text-sm text-gray-500 mb-3">
                     This product is sold and shipped directly by the seller listed above.
                   </p>
-                  <p className="text-xs text-white/40 mb-4 leading-relaxed">
+                  <p className="text-xs text-gray-400 mb-4 leading-relaxed">
                     Loadify Market operates as an online marketplace platform connecting buyers with
                     independent sellers. The seller is responsible for product availability, packaging,
                     shipping, delivery, returns, and customer service related to this product.
                   </p>
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-white/50">Sold by:</span>
+                    <span className="text-gray-400">Sold by:</span>
                     {productWithStore.storeSlug ? (
                       <Link
                         to={`/seller/${productWithStore.storeSlug}`}
@@ -590,7 +590,7 @@ export default function ProductPage() {
                         {productWithStore.storeName || 'View Seller Store'}
                       </Link>
                     ) : (
-                      <span className="text-white/70 font-medium">{productWithStore.storeName || 'Marketplace Seller'}</span>
+                      <span className="text-gray-600 font-medium">{productWithStore.storeName || 'Marketplace Seller'}</span>
                     )}
                   </div>
                 </div>
@@ -599,23 +599,23 @@ export default function ProductPage() {
 
             {/* Trust Badges */}
             <div className="grid grid-cols-3 gap-4">
-              <div className="card-glass text-center py-4">
+              <div className="bg-white border border-gray-200 rounded-xl text-center py-4 p-4">
                 <Shield className="w-6 h-6 text-gold mx-auto mb-2" />
-                <p className="text-xs text-white/60">Secure Marketplace Checkout</p>
+                <p className="text-xs text-gray-500">Secure Marketplace Checkout</p>
               </div>
-              <div className="card-glass text-center py-4">
+              <div className="bg-white border border-gray-200 rounded-xl text-center py-4 p-4">
                 <Zap className="w-6 h-6 text-gold mx-auto mb-2" />
-                <p className="text-xs text-white/60">Seller Fulfilled Shipping</p>
+                <p className="text-xs text-gray-500">Seller Fulfilled Shipping</p>
               </div>
-              <div className="card-glass text-center py-4">
+              <div className="bg-white border border-gray-200 rounded-xl text-center py-4 p-4">
                 <Truck className="w-6 h-6 text-gold mx-auto mb-2" />
-                <p className="text-xs text-white/60">Verified Marketplace Sellers</p>
+                <p className="text-xs text-gray-500">Verified Marketplace Sellers</p>
               </div>
             </div>
 
             {/* Delivery Options */}
-            <div className="card-glass mt-6 border border-white/5">
-              <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 mt-6">
+              <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Truck className="w-5 h-5 text-gold" />
                 Delivery Options
               </h3>
@@ -633,14 +633,14 @@ export default function ProductPage() {
                       return (
                         <div
                           key={opt.id}
-                          className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+                          className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
                         >
                           <div className="flex items-center gap-2">
                             <Package className="w-4 h-4 text-gold flex-shrink-0" />
                             <div>
-                              <p className="text-sm font-medium text-white">{method.name}</p>
+                              <p className="text-sm font-medium text-gray-900">{method.name}</p>
                               {method.courier && (
-                                <p className="text-xs text-white/40">{method.courier}</p>
+                                <p className="text-xs text-gray-400">{method.courier}</p>
                               )}
                             </div>
                           </div>
@@ -652,7 +652,7 @@ export default function ProductPage() {
 
                   {/* Dispatch time — use first option's value */}
                   {shippingOptions[0]?.dispatch_time && (
-                    <p className="text-xs text-white/40 mb-4">
+                    <p className="text-xs text-gray-400 mb-4">
                       Dispatch time: {shippingOptions[0].dispatch_time}
                     </p>
                   )}
@@ -660,8 +660,8 @@ export default function ProductPage() {
               ) : (
                 <div className="space-y-3 mb-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-white/50">Delivery</span>
-                    <span className="text-white/80 font-medium">Royal Mail Tracked Delivery</span>
+                    <span className="text-gray-400">Delivery</span>
+                    <span className="text-gray-700 font-medium">Royal Mail Tracked Delivery</span>
                   </div>
                 </div>
               )}
@@ -671,11 +671,11 @@ export default function ProductPage() {
                 <>
                   {product.palletInfo && (
                     <div className="flex items-center justify-between text-sm mb-3">
-                      <span className="text-white/50">Pallet count</span>
-                      <span className="text-white/80 font-medium">{product.palletInfo.palletCount}</span>
+                      <span className="text-gray-400">Pallet count</span>
+                      <span className="text-gray-700 font-medium">{product.palletInfo.palletCount}</span>
                     </div>
                   )}
-                  <p className="text-white/40 text-xs mb-4 leading-relaxed">
+                  <p className="text-gray-400 text-xs mb-4 leading-relaxed">
                     Transport support is available via XDrive Logistics for pallet and bulk orders.
                   </p>
                   <Link
@@ -694,23 +694,23 @@ export default function ProductPage() {
         {/* Pallet Info */}
         {product.type === 'pallet' && product.palletInfo && (
           <div className="mt-12">
-            <div className="card-glass glass-gold">
-              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <div className="bg-[#F4C400]/5 border border-[#F4C400]/20 rounded-xl p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Package className="w-6 h-6 text-gold" />
                 Pallet Information
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <p className="text-white/40 text-sm">Pallet Count</p>
-                  <p className="text-2xl font-bold text-white">{product.palletInfo.palletCount}</p>
+                  <p className="text-gray-400 text-sm">Pallet Count</p>
+                  <p className="text-2xl font-bold text-gray-900">{product.palletInfo.palletCount}</p>
                 </div>
                 <div>
-                  <p className="text-white/40 text-sm">Items per Pallet</p>
-                  <p className="text-2xl font-bold text-white">{product.palletInfo.itemsPerPallet}</p>
+                  <p className="text-gray-400 text-sm">Items per Pallet</p>
+                  <p className="text-2xl font-bold text-gray-900">{product.palletInfo.itemsPerPallet}</p>
                 </div>
                 <div>
-                  <p className="text-white/40 text-sm">Pallet Type</p>
-                  <p className="text-2xl font-bold text-white capitalize">
+                  <p className="text-gray-400 text-sm">Pallet Type</p>
+                  <p className="text-2xl font-bold text-gray-900 capitalize">
                     {product.palletInfo.palletType}
                   </p>
                 </div>
@@ -721,10 +721,10 @@ export default function ProductPage() {
 
         {/* Description */}
         <div className="mt-12">
-          <div className="card-glass">
-            <h2 className="text-2xl font-bold text-white mb-6">Description</h2>
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Description</h2>
             <div className="prose prose-invert max-w-full">
-              <p className="text-white/70 whitespace-pre-line leading-relaxed">
+              <p className="text-gray-600 whitespace-pre-line leading-relaxed">
                 {product.description}
               </p>
             </div>
@@ -734,25 +734,25 @@ export default function ProductPage() {
         {/* Dimensions */}
         {product.dimensions && (
           <div className="mt-8">
-            <div className="card-glass">
-              <h3 className="text-xl font-bold text-white mb-4">Dimensions</h3>
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Dimensions</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                  <p className="text-white/40 text-sm">Length</p>
-                  <p className="text-lg font-bold text-white">{product.dimensions.length} cm</p>
+                  <p className="text-gray-400 text-sm">Length</p>
+                  <p className="text-lg font-bold text-gray-900">{product.dimensions.length} cm</p>
                 </div>
                 <div>
-                  <p className="text-white/40 text-sm">Width</p>
-                  <p className="text-lg font-bold text-white">{product.dimensions.width} cm</p>
+                  <p className="text-gray-400 text-sm">Width</p>
+                  <p className="text-lg font-bold text-gray-900">{product.dimensions.width} cm</p>
                 </div>
                 <div>
-                  <p className="text-white/40 text-sm">Height</p>
-                  <p className="text-lg font-bold text-white">{product.dimensions.height} cm</p>
+                  <p className="text-gray-400 text-sm">Height</p>
+                  <p className="text-lg font-bold text-gray-900">{product.dimensions.height} cm</p>
                 </div>
                 {product.weight && (
                   <div>
-                    <p className="text-white/40 text-sm">Weight</p>
-                    <p className="text-lg font-bold text-white">{product.weight} kg</p>
+                    <p className="text-gray-400 text-sm">Weight</p>
+                    <p className="text-lg font-bold text-gray-900">{product.weight} kg</p>
                   </div>
                 )}
               </div>
@@ -763,13 +763,13 @@ export default function ProductPage() {
         {/* Specifications */}
         {product.specifications && Object.keys(product.specifications).length > 0 && (
           <div className="mt-8">
-            <div className="card-glass">
-              <h2 className="text-2xl font-bold text-white mb-6">Specifications</h2>
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Specifications</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Object.entries(product.specifications).map(([key, value]) => (
-                  <div key={key} className="flex border-b border-white/10 pb-3">
-                    <span className="text-white/40 w-1/2">{key}</span>
-                    <span className="text-white w-1/2">{value}</span>
+                  <div key={key} className="flex border-b border-gray-200 pb-3">
+                    <span className="text-gray-400 w-1/2">{key}</span>
+                    <span className="text-gray-900 w-1/2">{value}</span>
                   </div>
                 ))}
               </div>
@@ -782,14 +782,14 @@ export default function ProductPage() {
 
         {/* Product Q&A Section */}
         <div className="mt-12">
-          <div className="card-glass">
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
             <ProductQA productId={product.id} sellerId={product.sellerId} />
           </div>
         </div>
 
         {/* Reviews Section */}
         <div className="mt-12">
-          <div className="card-glass">
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
             <ProductReviews 
               productId={product.id} 
               averageRating={product.rating}

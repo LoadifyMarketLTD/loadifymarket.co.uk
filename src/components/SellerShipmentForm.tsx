@@ -259,7 +259,7 @@ export default function SellerShipmentForm({ orderId, existingShipment, onClose,
             <button
               onClick={handleCreateOrUpdate}
               disabled={loading}
-              className="w-full bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              className="w-full bg-orange-500 text-gray-900 py-2 px-4 rounded-lg hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
               <Truck className="w-5 h-5" aria-hidden="true" />
               {loading ? 'Saving...' : existingShipment ? 'Update Shipment' : 'Create Shipment'}
@@ -306,7 +306,7 @@ export default function SellerShipmentForm({ orderId, existingShipment, onClose,
               <button
                 onClick={handleUpdateStatus}
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                className="w-full bg-blue-600 text-gray-900 py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? 'Updating...' : 'Update Status'}
               </button>

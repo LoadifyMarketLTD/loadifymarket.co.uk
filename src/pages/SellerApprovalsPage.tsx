@@ -258,7 +258,7 @@ export default function SellerApprovalsPage() {
                     {seller.user.isActive ? (
                       <button
                         onClick={() => blockUser(seller.user.id)}
-                        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center space-x-2"
+                        className="bg-red-600 text-gray-900 px-4 py-2 rounded-lg hover:bg-red-700 flex items-center space-x-2"
                       >
                         <Ban className="h-4 w-4" />
                         <span>Block</span>
@@ -266,7 +266,7 @@ export default function SellerApprovalsPage() {
                     ) : (
                       <button
                         onClick={() => unblockUser(seller.user.id)}
-                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2"
+                        className="bg-green-600 text-gray-900 px-4 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2"
                       >
                         <CheckCircle className="h-4 w-4" />
                         <span>Unblock</span>

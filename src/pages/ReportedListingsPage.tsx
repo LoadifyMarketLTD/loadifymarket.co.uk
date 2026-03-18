@@ -274,7 +274,7 @@ export default function ReportedListingsPage() {
                         {report.product && (
                           <button
                             onClick={() => deactivateProduct(report.productId, report.id)}
-                            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center justify-center space-x-2"
+                            className="bg-red-600 text-gray-900 px-4 py-2 rounded-lg hover:bg-red-700 flex items-center justify-center space-x-2"
                           >
                             <AlertCircle className="h-4 w-4" />
                             <span>Deactivate</span>

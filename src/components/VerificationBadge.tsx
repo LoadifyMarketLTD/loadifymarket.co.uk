@@ -37,7 +37,7 @@ export default function VerificationBadge({
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 rounded-full bg-white/5 border border-white/20 text-white/60 font-semibold ${sizeClasses[size]}`}
+      className={`inline-flex items-center gap-1.5 rounded-full bg-gray-50 border border-gray-200 text-gray-500 font-semibold ${sizeClasses[size]}`}
       title="Pending Verification"
     >
       <AlertCircle className={iconSizes[size]} />

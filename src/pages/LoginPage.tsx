@@ -88,13 +88,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-jet flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
-        <div className="card-glass p-8">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-white mb-2">Sign In</h2>
-            <p className="text-white/60 text-sm">Welcome back to Loadify Market Ltd</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Sign In</h2>
+            <p className="text-gray-500 text-sm">Welcome back to Loadify Market Ltd</p>
           </div>
           
           {/* Error Message */}
@@ -107,12 +107,12 @@ export default function LoginPage() {
           {/* Login Form */}
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-white/80 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-white/40" />
+                  <Mail className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   id="email"
@@ -129,7 +129,7 @@ export default function LoginPage() {
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label htmlFor="password" className="block text-sm font-medium text-white/80">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                   Password
                 </label>
                 <Link to="/forgot-password" className="text-sm text-gold hover:text-gold/80 transition-colors">
@@ -138,7 +138,7 @@ export default function LoginPage() {
               </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-white/40" />
+                  <Lock className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   id="password"
@@ -166,10 +166,10 @@ export default function LoginPage() {
           <div className="mt-8 mb-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/10"></div>
+                <div className="w-full border-t border-gray-200"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-graphite text-white/60">New to Loadify Market Ltd?</span>
+                <span className="px-2 bg-white text-gray-500">New to Loadify Market Ltd?</span>
               </div>
             </div>
           </div>

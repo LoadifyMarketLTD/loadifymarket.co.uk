@@ -205,13 +205,13 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
         <div className="w-full max-w-xs">
           <div className="relative">
             {mode === 'trending' && (
-              <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-orange-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg pointer-events-none">
+              <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-orange-600/90 text-gray-900 text-xs font-bold px-2 py-0.5 rounded-full shadow-lg pointer-events-none">
                 <Flame className="w-3 h-3" />
                 #1
               </div>
             )}
             {mode === 'newest' && (
-              <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-emerald-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg pointer-events-none">
+              <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-emerald-600/90 text-gray-900 text-xs font-bold px-2 py-0.5 rounded-full shadow-lg pointer-events-none">
                 <Clock className="w-3 h-3" />
                 New
               </div>
@@ -229,13 +229,13 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
         <div key={product.id} className="relative">
           {/* Mode badge overlay */}
           {mode === 'trending' && index < 3 && (
-            <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-orange-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg pointer-events-none">
+            <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-orange-600/90 text-gray-900 text-xs font-bold px-2 py-0.5 rounded-full shadow-lg pointer-events-none">
               <Flame className="w-3 h-3" />
               #{index + 1}
             </div>
           )}
           {mode === 'newest' && (
-            <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-emerald-600/90 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg pointer-events-none">
+            <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-emerald-600/90 text-gray-900 text-xs font-bold px-2 py-0.5 rounded-full shadow-lg pointer-events-none">
               <Clock className="w-3 h-3" />
               New
             </div>

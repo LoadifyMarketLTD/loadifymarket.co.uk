@@ -70,13 +70,13 @@ export default function RFQPage() {
   }, []);
 
   return (
-    <div className="bg-jet min-h-screen pt-24">
+    <div className="bg-[#F8F9FA] min-h-screen pt-24">
       {/* Breadcrumb */}
-      <div className="bg-graphite/30">
+      <div className="bg-white/30">
         <div className="container-cinematic py-4">
           <Link
             to="/"
-            className="text-white/60 hover:text-gold transition-colors flex items-center gap-2 text-sm"
+            className="text-gray-500 hover:text-gold transition-colors flex items-center gap-2 text-sm"
           >
             <ChevronLeft className="w-4 h-4" />
             Back to Marketplace
@@ -91,10 +91,10 @@ export default function RFQPage() {
             <FileText className="w-4 h-4 text-gold" />
             <span className="text-gold text-sm font-medium">B2B Wholesale Marketplace</span>
           </div>
-          <h1 className="heading-section text-white mb-4">
+          <h1 className="heading-section text-gray-900 mb-4">
             Request a <span className="text-gradient-gold">Wholesale Quote</span>
           </h1>
-          <p className="text-white/60 text-lg">
+          <p className="text-gray-500 text-lg">
             Submit your bulk purchase requirements and our suppliers will get back to you with
             competitive pricing.
           </p>
@@ -103,13 +103,13 @@ export default function RFQPage() {
         {/* Pre-fill notice */}
         {prefillProduct && (
           <div className="max-w-3xl mx-auto mb-6">
-            <div className="card-glass border border-gold/20 flex items-start gap-3 py-4 px-5">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 border border-gold/20 flex items-start gap-3 py-4 px-5">
               <Package className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-white text-sm font-semibold">
                   Product details pre-filled from your selected listing
                 </p>
-                <p className="text-white/60 text-xs mt-0.5">{prefillProduct}</p>
+                <p className="text-gray-500 text-xs mt-0.5">{prefillProduct}</p>
               </div>
             </div>
           </div>
@@ -118,12 +118,12 @@ export default function RFQPage() {
         {/* Success State */}
         {submitState === 'success' ? (
           <div className="max-w-2xl mx-auto">
-            <div className="card-glass text-center py-16 px-8">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-16 px-8">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-500/10 rounded-full mb-6">
                 <CheckCircle className="w-10 h-10 text-emerald-400" />
               </div>
-              <h2 className="text-2xl font-bold text-white mb-4">Quote Request Sent</h2>
-              <p className="text-white/60 mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Quote Request Sent</h2>
+              <p className="text-gray-500 mb-8">
                 Your request has been sent to suppliers.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -141,18 +141,18 @@ export default function RFQPage() {
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <div className="max-w-3xl mx-auto space-y-8">
               {/* Product & Quantity */}
-              <div className="card-glass">
-                <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                   <Package className="w-5 h-5 text-gold" />
                   Product Details
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="block text-sm font-medium text-gray-600 mb-2">
                       Product Name <span className="text-gold">*</span>
                     </label>
                     <div className="relative">
-                      <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
                       <input
                         {...register('product_name')}
                         type="text"
@@ -166,7 +166,7 @@ export default function RFQPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="block text-sm font-medium text-gray-600 mb-2">
                       Quantity <span className="text-gold">*</span>
                     </label>
                     <input
@@ -181,11 +181,11 @@ export default function RFQPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="block text-sm font-medium text-gray-600 mb-2">
                       Estimated Budget <span className="text-gold">*</span>
                     </label>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
                       <input
                         {...register('estimated_budget')}
                         type="text"
@@ -201,18 +201,18 @@ export default function RFQPage() {
               </div>
 
               {/* Delivery & Contact */}
-              <div className="card-glass">
-                <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                   <Globe className="w-5 h-5 text-gold" />
                   Delivery & Contact
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="block text-sm font-medium text-gray-600 mb-2">
                       Destination Country <span className="text-gold">*</span>
                     </label>
                     <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
                       <input
                         {...register('destination_country')}
                         type="text"
@@ -228,11 +228,11 @@ export default function RFQPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="block text-sm font-medium text-gray-600 mb-2">
                       Your Email <span className="text-gold">*</span>
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
                       <input
                         {...register('buyer_email')}
                         type="email"
@@ -247,12 +247,12 @@ export default function RFQPage() {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-white/70 mb-2">
+                    <label className="block text-sm font-medium text-gray-600 mb-2">
                       Additional Message{' '}
-                      <span className="text-white/30 text-xs font-normal">(optional)</span>
+                      <span className="text-gray-300 text-xs font-normal">(optional)</span>
                     </label>
                     <div className="relative">
-                      <MessageSquare className="absolute left-3 top-3.5 w-4 h-4 text-white/30" />
+                      <MessageSquare className="absolute left-3 top-3.5 w-4 h-4 text-gray-300" />
                       <textarea
                         {...register('message')}
                         rows={4}

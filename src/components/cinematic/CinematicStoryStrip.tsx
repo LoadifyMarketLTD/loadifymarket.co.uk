@@ -48,14 +48,14 @@ export default function CinematicStoryStrip() {
   ];
 
   return (
-    <section className="py-20 bg-jet">
+    <section className="py-20 bg-[#F8F9FA]">
       <div className="container-cinematic">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <h2 className="heading-section text-white mb-4">
+          <h2 className="heading-section text-gray-900 mb-4">
             How It <span className="text-gradient-gold">Works</span>
           </h2>
-          <p className="text-white/60 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
             From browsing to delivery – a simple, secure marketplace experience
           </p>
         </div>
@@ -77,10 +77,10 @@ export default function CinematicStoryStrip() {
                 </div>
 
                 {/* Content */}
-                <h3 className="text-base font-bold text-white mb-2 leading-tight">
+                <h3 className="text-base font-bold text-gray-900 mb-2 leading-tight">
                   {step.title}
                 </h3>
-                <p className="text-sm text-white/50 leading-relaxed">
+                <p className="text-sm text-gray-400 leading-relaxed">
                   {step.description}
                 </p>
 
