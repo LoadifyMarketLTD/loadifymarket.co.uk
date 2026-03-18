@@ -77,10 +77,11 @@ export default function TermsPage() {
 
         <h2 className="text-2xl font-semibold mt-6 mb-3">5. Platform Commission &amp; Service Fee</h2>
         <p>
-          Loadify Market charges a commission of 7% on all transactions completed through the Platform.
-          This commission is deducted from the seller's payout as a fee for providing the marketplace
-          platform services. The commission is not a charge to buyers and does not affect the buyer's
-          purchase price.
+          During the current introductory period, Loadify Market charges <strong>0% commission</strong> on
+          all transactions completed through the Platform. The Platform reserves the right to introduce
+          service fees or commission in the future, and sellers will be notified in advance of any such
+          changes. Loadify Market does not hold or process funds directly; payments are handled externally
+          by Stripe.
         </p>
 
         <h2 className="text-2xl font-semibold mt-6 mb-3">6. VAT and Pricing</h2>
@@ -123,8 +124,8 @@ export default function TermsPage() {
             Platform.</li>
           <li>You are responsible for all aspects of fulfilment, including packaging, shipping,
             delivery times, and returns handling.</li>
-          <li>You accept that Loadify Market will deduct a 7% commission from your payout as a
-            platform service fee.</li>
+          <li>You accept the platform fee structure as notified to you at the time of registration or as
+            subsequently communicated (currently 0% during the introductory period).</li>
           <li>Loadify Market provides only the platform infrastructure. It does not act as your agent,
             employer, or merchant of record.</li>
         </ul>
