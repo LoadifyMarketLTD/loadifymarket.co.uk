@@ -1,16 +1,272 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect, lazy, Suspense } from 'react';
-import {
-  ArrowRight, Layers,
-  LayoutGrid,
-  RotateCcw, Tag,
-  BadgeCheck, ShieldCheck, ShieldAlert,
-} from 'lucide-react';
+import { ArrowRight, LayoutGrid } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 import { supabase } from '../lib/supabase';
 import { buildSrcSet } from '../lib/imageOptimization';
 import type { Product } from '../types';
 import ProductCard from '../components/ProductCard';
+
+const HomeBelowFold = lazy(() => import('../components/HomeBelowFold'));
+
+// ── "What You Can Sell" categories (spec §3) ──────────────────────────────────
+const SELL_CATEGORIES = [
+  {
+    slug: 'electronics',
+    label: 'Electronics & Gadgets',
+    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=65&auto=format&fit=crop',
+  },
+  {
+    slug: 'fashion',
+    label: 'Fashion & Apparel',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=65&auto=format&fit=crop',
+  },
+  {
+    slug: 'home-garden',
+    label: 'Home & Living',
+    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=65&auto=format&fit=crop',
+  },
+  {
+    slug: 'tools-diy',
+    label: 'Tools & Equipment',
+    image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=65&auto=format&fit=crop',
+  },
+  {
+    slug: 'clearance',
+    label: 'Clearance & Overstock',
+    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=400&q=65&auto=format&fit=crop',
+  },
+  {
+    slug: 'wholesale',
+    label: 'Mixed Lots & Bundles',
+    image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=400&q=65&auto=format&fit=crop',
+  },
+];
+
+// ── Featured deal placeholder cards ──────────────────────────────────────────
+const PLACEHOLDER_FEATURED = [
+  {
+    id: 'pf-1',
+    title: 'Electronics — Mixed Consumer Stock',
+    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=65&auto=format&fit=crop',
+  },
+  {
+    id: 'pf-2',
+    title: 'Fashion & Clothing — Wholesale Lot',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=65&auto=format&fit=crop',
+  },
+  {
+    id: 'pf-3',
+    title: 'Tools & DIY — Trade Bundle',
+    image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=65&auto=format&fit=crop',
+  },
+  {
+    id: 'pf-4',
+    title: 'Home & Living — Clearance Lot',
+    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=65&auto=format&fit=crop',
+  },
+];
+
+// ── Supabase helpers ──────────────────────────────────────────────────────────
+type ProductRow = Product & { store?: { storeSlug?: string } | null };
+
+function transformProductRows(data: ProductRow[]) {
+  return data.map((product) => ({
+    ...product,
+    seller: product.seller
+      ? { ...product.seller, storeSlug: product.store?.storeSlug }
+      : undefined,
+  }));
+}
+
+const PRODUCT_QUERY_FIELDS = `
+  *,
+  seller:seller_profiles_public!left(
+    businessName,
+    isApproved,
+    rating,
+    marketplaceRole,
+    paymentBehaviour,
+    userId
+  ),
+  store:seller_stores!left(
+    storeSlug
+  )
+`;
+
+// ── Loading skeleton ──────────────────────────────────────────────────────────
+function ProductGridSkeleton({ count = 4 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="animate-pulse bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="bg-gray-200 aspect-[4/3]" />
+          <div className="p-3 space-y-2">
+            <div className="bg-gray-200 h-3 rounded w-full" />
+            <div className="bg-gray-200 h-3 rounded w-2/3" />
+            <div className="bg-gray-200 h-5 rounded w-1/2" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+export default function HomePage() {
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      try {
+        const { data } = await supabase
+          .from('products')
+          .select(PRODUCT_QUERY_FIELDS)
+          .eq('isActive', true)
+          .eq('isApproved', true)
+          .order('views', { ascending: false })
+          .limit(4);
+
+        setFeaturedProducts(data ? transformProductRows(data as ProductRow[]) : []);
+      } catch {
+        // silently swallow — section will show placeholder content
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFeatured();
+  }, []);
+
+  // Always display exactly 4 cards — pad with placeholders if fewer real products
+  const paddedFeatured = loading ? [] : [
+    ...featuredProducts.slice(0, 4),
+    ...PLACEHOLDER_FEATURED.slice(0, 4 - featuredProducts.slice(0, 4).length),
+  ];
+
+  return (
+    <div className="bg-white">
+
+      {/* ── 1. Hero ──────────────────────────────────────────────────────── */}
+      <CinematicHero />
+
+      {/* ── 3. What You Can Sell ─────────────────────────────────────────── */}
+      <section className="bg-white py-10 border-b border-gray-100">
+        <div className="container-market">
+          <div className="mb-7 text-center">
+            <h2 className="text-2xl font-extrabold text-gray-900">
+              Sell What Moves. Profit From What Others Can't.
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              List any stock category — from electronics to clearance — and reach serious buyers.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {SELL_CATEGORIES.map((cat) => (
+              <Link
+                key={cat.slug}
+                to={`/category/${cat.slug}`}
+                className="group block rounded-xl overflow-hidden border border-gray-200 hover:border-[#F4C400] hover:shadow-md transition-all duration-200"
+              >
+                <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+                  <img
+                    src={cat.image}
+                    alt={cat.label}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div className="p-2 text-center bg-white">
+                  <p className="text-xs font-semibold text-gray-800 leading-tight">{cat.label}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <div className="mt-5 text-center">
+            <Link
+              to="/catalog"
+              className="inline-flex items-center gap-2 text-sm text-[#1E3A5F] hover:underline font-semibold"
+            >
+              Browse all categories
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Featured Deals ───────────────────────────────────────────────── */}
+      <section className="bg-[#F8F9FA] py-10 border-b border-gray-100">
+        <div className="container-market">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-xl font-extrabold text-gray-900">Featured Deals</h2>
+              <p className="text-sm text-gray-500">Live stock from verified UK sellers</p>
+            </div>
+            <Link to="/catalog" className="text-sm text-[#1E3A5F] hover:underline font-semibold whitespace-nowrap">
+              View All →
+            </Link>
+          </div>
+
+          {loading ? (
+            <ProductGridSkeleton />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {paddedFeatured.map((item) =>
+                'sellerId' in item ? (
+                  <ProductCard key={item.id} product={item as Product} />
+                ) : (
+                  <Link
+                    key={item.id}
+                    to="/catalog"
+                    className="group block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md hover:border-[#F4C400] transition-all duration-200"
+                  >
+                    <div className="aspect-[4/3] overflow-hidden bg-gray-100">
+                      <img
+                        src={item.image}
+                        srcSet={buildSrcSet(item.image, [200, 300, 400]) || undefined}
+                        sizes="(max-width: 767px) calc(50vw - 1.5rem), (max-width: 1023px) calc(33vw - 1.5rem), 300px"
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </div>
+                    <div className="p-3">
+                      <p className="text-sm font-semibold text-gray-800 line-clamp-2 leading-tight mb-1.5">
+                        {item.title}
+                      </p>
+                      <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold bg-[#F4C400]/20 text-gray-700">
+                        Available Now
+                      </span>
+                    </div>
+                  </Link>
+                )
+              )}
+            </div>
+          )}
+
+          <div className="mt-6 text-center">
+            <Link
+              to="/catalog"
+              className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-bold px-6 py-2.5 rounded-lg transition-colors"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              Browse All Listings
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Below-fold sections (lazy loaded) ──────────────────────────── */}
+      <Suspense fallback={null}>
+        <HomeBelowFold />
+      </Suspense>
+
+    </div>
+  );
+}
 
 const HomeBelowFold = lazy(() => import('../components/HomeBelowFold'));
 
