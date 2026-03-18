@@ -12,31 +12,34 @@ export default function CinematicHero() {
               UK Multi-Category Marketplace Intermediary
             </div>
             <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
-              Buy &amp; Sell Wholesale,<br />Clearance &amp; Pallet Deals<br className="hidden lg:block" /> Across the UK
+              Buy &amp; Sell Stock Through<br />One Trusted Marketplace
             </h1>
             <p className="text-lg text-gray-600 mb-2 leading-relaxed">
-              Loadify Market is an intermediary marketplace connecting independent buyers and sellers across the UK.
+              Connect with real sellers and buyers. List your stock, find new opportunities, and trade securely through our platform powered by Stripe.
             </p>
-            <p className="text-sm text-gray-500 mb-8">
-              We provide the platform only. Each seller is solely responsible for their listings, fulfilment, and product quality.
+            <p className="text-sm font-semibold text-[#1E3A5F] mb-8">
+              Start selling with 0% commission for the first 3 months.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link
-                to="/shop"
+                to="/register?type=seller"
                 className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-7 py-3.5 rounded text-base transition-colors shadow-sm"
               >
-                <ShoppingBag className="h-5 w-5" />
-                Buy Stock
-              </Link>
-              <Link
-                to="/register?type=seller"
-                className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-7 py-3.5 rounded text-base transition-colors"
-              >
                 <Store className="h-5 w-5" />
-                Sell Stock
+                Start Selling
                 <ArrowRight className="h-4 w-4" />
               </Link>
+              <Link
+                to="/shop"
+                className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-7 py-3.5 rounded text-base transition-colors"
+              >
+                <ShoppingBag className="h-5 w-5" />
+                Browse Products
+              </Link>
             </div>
+            <p className="text-xs text-gray-400 mt-4">
+              Loadify Market is a platform that connects independent sellers and buyers. All products are listed and sold by third-party sellers.
+            </p>
           </div>
 
           {/* Right: Hero Image */}
