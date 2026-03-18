@@ -8,7 +8,7 @@ export default function AcceptableUsePolicyPage() {
         <h2 className="text-2xl font-semibold mt-6 mb-3">1. Introduction</h2>
         <p>
           This Acceptable Use Policy ("AUP") sets out the rules governing the use of the Loadify Market
-          platform operated by XDrive Logistics Ltd (Company No: 13171804). By using our platform, you
+          platform operated by Loadify Market Ltd (Company No: 13171804). By using our platform, you
           agree to comply with this policy.
         </p>
 
@@ -92,7 +92,7 @@ export default function AcceptableUsePolicyPage() {
           <a href="mailto:loadifymarket.co.uk@gmail.com" className="text-[#1E3A5F] hover:underline">
             loadifymarket.co.uk@gmail.com
           </a>{' '}
-          or by post at: XDrive Logistics Ltd, 101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom.
+          or by post at: Loadify Market Ltd, 101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom.
         </p>
       </div>
     </div>

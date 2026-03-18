@@ -6,7 +6,7 @@ export const BRAND = {
   marketplaceFeePercent: Number(import.meta.env.VITE_MARKETPLACE_FEE_PERCENT) || 7,
   returnsDays: Number(import.meta.env.VITE_RETURNS_DAYS) || 14,
   vatNumber: import.meta.env.VITE_VAT_NUMBER || "GB375949535",
-  companyName: import.meta.env.VITE_COMPANY_NAME || "XDrive Logistics Ltd",
+  companyName: import.meta.env.VITE_COMPANY_NAME || "Loadify Market Ltd",
   companyNumber: "13171804",
   companyAddress: import.meta.env.VITE_COMPANY_ADDRESS || "101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom",
   tagline: "UK Multi-Category Marketplace — Buy & Sell Anything",

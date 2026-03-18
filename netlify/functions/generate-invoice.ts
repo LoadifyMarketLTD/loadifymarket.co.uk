@@ -41,23 +41,90 @@ export const handler: Handler = async (event) => {
       .eq('id', order.buyerId)
       .single();
 
+    // Fetch seller profile so the invoice is issued by the seller, not the
+    // platform.  Loadify Market is a marketplace intermediary — the contract
+    // of sale is between the buyer and the seller, so the seller must appear
+    // as the invoicing party.
+    const { data: sellerProfile } = await supabase
+      .from('seller_profiles')
+      .select('businessName, vatNumber, businessAddress, fullName')
+      .eq('userId', order.sellerId)
+      .maybeSingle<{
+        businessName: string | null;
+        vatNumber: string | null;
+        businessAddress: {
+          line1?: string;
+          line2?: string;
+          city?: string;
+          postal_code?: string;
+          country?: string;
+        } | null;
+        fullName: string | null;
+      }>();
+
+    // Fetch seller email for buyer contact information on the invoice.
+    const { data: sellerUser } = await supabase
+      .from('users')
+      .select('email')
+      .eq('id', order.sellerId)
+      .maybeSingle<{ email: string | null }>();
+
+    const sellerDisplayName =
+      sellerProfile?.businessName ||
+      sellerProfile?.fullName ||
+      'Seller';
+
     // Generate PDF
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.getWidth();
 
-    // Header
-    pdf.setFontSize(24);
+    // ── Seller Header ────────────────────────────────────────────────────────
+    // The invoice must be issued by the seller, not the platform.
+    // Loadify Market appears only as the marketplace facilitator.
+    pdf.setFontSize(22);
     pdf.setTextColor(36, 59, 83); // Navy
-    pdf.text('Loadify Market', 20, 20);
+    pdf.text(sellerDisplayName, 20, 20);
 
     pdf.setFontSize(10);
     pdf.setTextColor(100);
-    pdf.text('XDrive Logistics Ltd', 20, 28);
-    pdf.text('101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom', 20, 33);
-    pdf.text('VAT: GB375949535', 20, 38);
-    pdf.text('Email: loadifymarket.co.uk@gmail.com', 20, 43);
 
-    // Invoice title
+    let sellerHeaderY = 28;
+    if (sellerProfile?.businessAddress) {
+      const addr = sellerProfile.businessAddress;
+      const line1 = addr.line1 || '';
+      const line2 = addr.line2;
+      const cityPostal = [addr.city, addr.postal_code].filter(Boolean).join(', ');
+      const country = addr.country || '';
+      if (line1) {
+        pdf.text(line1, 20, sellerHeaderY);
+        sellerHeaderY += 5;
+      }
+      if (line2) {
+        pdf.text(line2, 20, sellerHeaderY);
+        sellerHeaderY += 5;
+      }
+      if (cityPostal) {
+        pdf.text(cityPostal, 20, sellerHeaderY);
+        sellerHeaderY += 5;
+      }
+      if (country) {
+        pdf.text(country, 20, sellerHeaderY);
+        sellerHeaderY += 5;
+      }
+    }
+    if (sellerProfile?.vatNumber) {
+      pdf.text(`VAT: ${sellerProfile.vatNumber}`, 20, sellerHeaderY);
+      sellerHeaderY += 5;
+    }
+
+    // Marketplace facilitator note — clearly identifies Loadify Market as
+    // an intermediary, not as the seller.
+    pdf.setFontSize(8);
+    pdf.setTextColor(130);
+    pdf.text('Sold via Loadify Market (marketplace intermediary)', 20, sellerHeaderY);
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Invoice title (top-right, aligned with seller header top)
     pdf.setFontSize(18);
     pdf.setTextColor(0);
     pdf.text('INVOICE', pageWidth - 60, 20);
@@ -66,12 +133,13 @@ export const handler: Handler = async (event) => {
     pdf.text(`Invoice #: ${order.orderNumber}`, pageWidth - 60, 28);
     pdf.text(`Date: ${new Date(order.createdAt).toLocaleDateString('en-GB')}`, pageWidth - 60, 33);
 
-    // Line separator
+    // Line separator — placed below the taller of the two header columns.
+    const separatorY = Math.max(sellerHeaderY + 8, 50);
     pdf.setDrawColor(200);
-    pdf.line(20, 50, pageWidth - 20, 50);
+    pdf.line(20, separatorY, pageWidth - 20, separatorY);
 
     // Bill To / Ship To
-    let y = 60;
+    let y = separatorY + 10;
     pdf.setFontSize(12);
     pdf.setFont(undefined, 'bold');
     pdf.text('Bill To:', 20, y);
@@ -95,19 +163,22 @@ export const handler: Handler = async (event) => {
       pdf.text(order.billingAddress.country, 20, y + 15);
     }
 
-    // Shipping address
+    // Shipping address — pinned to the same starting row as Bill To
+    const shipY = separatorY + 17;
     if (order.shippingAddress) {
-      pdf.text(buyerName, 110, 67);
-      pdf.text(order.shippingAddress.line1, 110, 72);
+      pdf.text(buyerName, 110, shipY);
+      pdf.text(order.shippingAddress.line1, 110, shipY + 5);
+      let shipOffsetY = shipY + 10;
       if (order.shippingAddress.line2) {
-        pdf.text(order.shippingAddress.line2, 110, 77);
+        pdf.text(order.shippingAddress.line2, 110, shipOffsetY);
+        shipOffsetY += 5;
       }
-      pdf.text(`${order.shippingAddress.city}, ${order.shippingAddress.postal_code}`, 110, order.shippingAddress.line2 ? 82 : 77);
-      pdf.text(order.shippingAddress.country, 110, order.shippingAddress.line2 ? 87 : 82);
+      pdf.text(`${order.shippingAddress.city}, ${order.shippingAddress.postal_code}`, 110, shipOffsetY);
+      pdf.text(order.shippingAddress.country, 110, shipOffsetY + 5);
     }
 
-    // Items table
-    y = 105;
+    // Items table — start below address blocks (fixed offset from separator)
+    y = separatorY + 55;
     pdf.setDrawColor(200);
     pdf.line(20, y, pageWidth - 20, y);
 
@@ -155,13 +226,24 @@ export const handler: Handler = async (event) => {
     pdf.text('Total:', pageWidth - 80, y);
     pdf.text(`£${order.total.toFixed(2)}`, pageWidth - 35, y);
 
-    // Footer
-    y = pdf.internal.pageSize.getHeight() - 30;
+    // Footer — seller contact note + intermediary disclaimer
+    y = pdf.internal.pageSize.getHeight() - 35;
     pdf.setFontSize(9);
     pdf.setFont(undefined, 'normal');
     pdf.setTextColor(100);
-    pdf.text('Thank you for your business!', 20, y);
-    pdf.text('For any queries, please contact: loadifymarket.co.uk@gmail.com', 20, y + 5);
+    pdf.text('Thank you for your purchase!', 20, y);
+    const sellerContact = sellerUser?.email
+      ? `${sellerDisplayName} — ${sellerUser.email}`
+      : sellerDisplayName;
+    pdf.text(`For queries about this order, please contact the seller: ${sellerContact}`, 20, y + 5);
+    pdf.setFontSize(8);
+    pdf.setTextColor(150);
+    pdf.text(
+      'This order was facilitated by Loadify Market (marketplace intermediary). ' +
+      'The contract of sale is between you and the seller above.',
+      20,
+      y + 12
+    );
 
     // Generate PDF as base64
     const pdfBase64 = pdf.output('datauristring').split(',')[1];
