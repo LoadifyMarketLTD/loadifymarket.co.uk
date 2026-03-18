@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Store, Tag, ShieldCheck, BadgeCheck } from 'lucide-react';
 
 const VALUE_POINTS = [
-  { icon: Tag,         label: '0% Commission',     note: 'Launch Offer' },
-  { icon: ShieldCheck, label: 'Secure Payments',   note: 'Stripe Protected' },
-  { icon: BadgeCheck,  label: 'Verified Buyers',   note: 'Controlled Onboarding' },
+  { icon: Tag,         label: '0% Commission',   note: 'Launch Offer' },
+  { icon: ShieldCheck, label: 'Secure Payments', note: 'Stripe Protected' },
+  { icon: BadgeCheck,  label: 'Verified Buyers', note: 'Controlled Onboarding' },
 ];
 
 export default function CinematicHero() {
@@ -18,9 +18,11 @@ export default function CinematicHero() {
             <div className="inline-flex items-center gap-2 bg-[#F4C400]/20 text-[#92700A] text-xs font-bold px-3 py-1.5 rounded-full mb-5 tracking-wide uppercase">
               Launch Phase — 0% Commission
             </div>
+
             <h1 className="text-4xl lg:text-5xl xl:text-6xl font-extrabold text-gray-900 leading-[1.1] mb-5">
               Sell Faster.<br />Scale Bigger.<br />Keep More Profit.
             </h1>
+
             <p className="text-lg text-gray-500 mb-8 leading-relaxed max-w-md">
               Join a UK marketplace built for serious sellers — not casual listings.
             </p>
@@ -58,6 +60,7 @@ export default function CinematicHero() {
                 Browse Marketplace
               </Link>
             </div>
+
             <p className="text-xs text-gray-400 mt-4">
               No setup fees. No contracts. Your stock, your prices, your business.
             </p>
