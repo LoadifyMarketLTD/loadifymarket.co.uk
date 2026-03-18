@@ -4,7 +4,7 @@ import { useCartStore, useAuthStore } from '../store';
 import { supabase } from '../lib/supabase';
 import { formatPrice } from '../lib/formatPrice';
 import type { ShippingMethod } from '../types/shipping';
-import { CreditCard, Info, MapPin, Package, Shield, Star, Truck } from 'lucide-react';
+import { CreditCard, Info, Lock, MapPin, Package, Shield, Star, Truck } from 'lucide-react';
 
 interface Address {
   line1: string;
@@ -586,21 +586,41 @@ export default function CheckoutPage() {
                 Shipped directly by the seller.
               </p>
 
-              {/* Marketplace Trust Badges */}
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-gray-700 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                  <span className="font-medium">Secure Marketplace Checkout</span>
+              {/* Guaranteed Safe & Secure Checkout */}
+              <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-gray-700">
+                <div className="flex items-center gap-2 mb-2">
+                  <Lock className="h-4 w-4 text-green-600 flex-shrink-0" />
+                  <span className="font-semibold text-green-800">Guaranteed Safe &amp; Secure Checkout</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Truck className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                  <span className="font-medium">Seller Fulfilled Shipping</span>
+                {/* Payment method icons */}
+                <div className="flex items-center gap-2 mb-3">
+                  {/* Visa */}
+                  <span className="inline-flex items-center justify-center rounded border border-gray-200 bg-white px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-blue-700" aria-label="Visa">VISA</span>
+                  {/* Mastercard */}
+                  <span className="inline-flex items-center justify-center gap-0.5 rounded border border-gray-200 bg-white px-1.5 py-0.5" aria-label="Mastercard">
+                    <span className="inline-block h-3.5 w-3.5 rounded-full bg-red-500 opacity-90" />
+                    <span className="inline-block h-3.5 w-3.5 -ml-2 rounded-full bg-yellow-400 opacity-90" />
+                  </span>
+                  {/* Amex */}
+                  <span className="inline-flex items-center justify-center rounded border border-gray-200 bg-white px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-blue-500" aria-label="American Express">AMEX</span>
+                  {/* Generic card */}
+                  <CreditCard className="h-5 w-5 text-gray-400" aria-label="Credit/Debit card" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <Star className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                  <span className="font-medium">Verified Marketplace Sellers</span>
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                    <span>Secure Marketplace Checkout</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Truck className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                    <span>Seller Fulfilled Shipping</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Star className="h-3.5 w-3.5 text-green-600 flex-shrink-0" />
+                    <span>Verified Marketplace Sellers</span>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500 pt-1">
+                <p className="mt-2 text-xs text-gray-500">
                   Payment is processed securely through Stripe. Payment details are never stored on our servers.
                 </p>
               </div>
