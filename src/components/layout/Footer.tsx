@@ -268,9 +268,11 @@ export default function Footer() {
         {/* Intermediary disclaimer */}
         <div className="lm-footer-inner pb-4">
           <p className="text-xs text-gray-400 text-center">
-            {BRAND.name} is a marketplace platform operated by {BRAND.companyName}.
-            We act as an intermediary and do not sell products directly.
-            All transactions are between buyers and sellers.{' '}
+            Loadify Market is an online marketplace connecting independent buyers and sellers.
+            We do not own or sell any products listed on the platform.
+            Sellers are solely responsible for their listings.
+            Payments are processed securely via{' '}
+            <span className="text-gray-300">Stripe</span>.{' '}
             <Link to="/terms" className="underline hover:text-gray-500 transition-colors">Learn more</Link>.
           </p>
         </div>

@@ -88,7 +88,7 @@ export interface Address {
 }
 
 export type ProductType = 'product' | 'pallet' | 'lot' | 'clearance' | 'retail' | 'handmade' | 'wholesale' | 'logistics';
-export type ProductCondition = 'new' | 'used' | 'refurbished';
+export type ProductCondition = 'new' | 'used' | 'refurbished' | 'returns_stock' | 'mixed' | 'other';
 export type StockStatus = 'in_stock' | 'low_stock' | 'out_of_stock' | 'clearance';
 
 // Listing type for filtering and display
