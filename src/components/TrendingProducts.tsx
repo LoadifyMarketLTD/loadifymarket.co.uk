@@ -26,7 +26,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
           .from('products')
           .select(`
             *,
-            seller:seller_profiles(
+            seller:seller_profiles_public(
               businessName,
               isApproved,
               rating,
@@ -56,7 +56,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
             .from('products')
             .select(`
               *,
-              seller:seller_profiles(
+              seller:seller_profiles_public(
                 businessName,
                 isApproved,
                 rating,
@@ -91,7 +91,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
         .from('products')
         .select(`
           *,
-          seller:seller_profiles(
+          seller:seller_profiles_public(
             businessName,
             isApproved,
             rating,
@@ -138,7 +138,7 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
           .from('products')
           .select(`
             *,
-            seller:seller_profiles(
+            seller:seller_profiles_public(
               businessName,
               isApproved,
               rating,

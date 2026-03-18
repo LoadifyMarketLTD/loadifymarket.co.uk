@@ -127,7 +127,7 @@ export default function CatalogPage() {
         .from('products')
         .select(`
           *,
-          seller:seller_profiles!left(
+          seller:seller_profiles_public!left(
             businessName,
             isApproved,
             rating,
@@ -166,9 +166,9 @@ export default function CatalogPage() {
       if (selectedListingType && (ALLOWED_LISTING_TYPES as readonly string[]).includes(selectedListingType)) {
         query = query.or(`listingType.eq.${selectedListingType},type.eq.${selectedListingType}`);
       }
-      // Apply role filter on the joined seller_profiles table
+      // Apply role filter on the joined seller_profiles_public view
       if (selectedRole) {
-        query = query.eq('seller_profiles.marketplaceRole', selectedRole);
+        query = query.eq('seller_profiles_public.marketplaceRole', selectedRole);
       }
       // Apply price range filter (use debounced values; validate positive finite numbers)
       const minPrice = debouncedPriceMin !== '' ? parseFloat(debouncedPriceMin) : null;
@@ -181,7 +181,7 @@ export default function CatalogPage() {
       }
       // Apply seller rating filter
       if (minSellerRating) {
-        query = query.gte('seller_profiles.rating', parseFloat(minSellerRating));
+        query = query.gte('seller_profiles_public.rating', parseFloat(minSellerRating));
       }
 
       // Apply sorting

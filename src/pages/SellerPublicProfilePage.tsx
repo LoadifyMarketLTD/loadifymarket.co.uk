@@ -10,6 +10,7 @@ import ProductCard from '../components/ProductCard';
 import { formatDistanceToNow } from 'date-fns';
 
 interface SellerData extends SellerProfile {
+  createdAt?: string;
   user?: {
     email: string;
     createdAt?: string;
@@ -44,13 +45,10 @@ export default function SellerPublicProfilePage() {
           return;
         }
 
-        // Fetch seller profile
+        // Fetch seller profile (public view — no sensitive fields)
         const { data: profileData, error: profileError } = await supabase
-          .from('seller_profiles')
-          .select(`
-            *,
-            user:users!inner(email, createdAt)
-          `)
+          .from('seller_profiles_public')
+          .select('*')
           .eq('userId', storeData.userId)
           .single();
 
@@ -69,7 +67,7 @@ export default function SellerPublicProfilePage() {
           .from('products')
           .select(`
             *,
-            seller:seller_profiles!left(
+            seller:seller_profiles_public!left(
               businessName,
               isApproved,
               rating,
@@ -210,7 +208,7 @@ export default function SellerPublicProfilePage() {
                 {seller.user?.email && (
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4" />
-                    <span>{seller.user.email}</span>
+                    <span>Verified Seller</span>
                   </div>
                 )}
               </div>
@@ -240,11 +238,11 @@ export default function SellerPublicProfilePage() {
                   <p className="text-2xl font-bold text-gold">{products.length}</p>
                   <p className="text-xs text-gray-500">Active Listings</p>
                 </div>
-                {seller.user?.createdAt && (
+                {seller.createdAt && (
                   <div>
                     <p className="text-sm font-medium text-gray-700 flex items-center gap-1">
                       <Calendar className="w-4 h-4 text-gold" />
-                      Member since {formatDistanceToNow(new Date(seller.user.createdAt), { addSuffix: false })}
+                      Member since {formatDistanceToNow(new Date(seller.createdAt), { addSuffix: false })}
                     </p>
                     <p className="text-xs text-gray-500">Joined</p>
                   </div>
