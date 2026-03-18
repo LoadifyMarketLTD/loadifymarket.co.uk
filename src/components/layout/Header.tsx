@@ -93,7 +93,7 @@ export default function Header() {
               Start Selling
             </p>
             <Link
-              to="/register?type=seller"
+              to="/sell"
               className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold text-gray-900 bg-[#F4C400] hover:bg-yellow-400 transition-all duration-200 group"
             >
               <Store className="w-4 h-4 flex-shrink-0" />
@@ -303,7 +303,7 @@ export default function Header() {
               {/* Right nav */}
               <nav className="hidden md:flex items-center gap-5 ml-auto">
                 <Link to="/catalog" className="text-sm text-gray-700 hover:text-[#1E3A5F] font-medium whitespace-nowrap">Shop</Link>
-                <Link to="/register?type=seller" className="text-sm text-gray-700 hover:text-[#1E3A5F] font-medium whitespace-nowrap">Start Selling</Link>
+                <Link to="/sell" className="text-sm text-gray-700 hover:text-[#1E3A5F] font-medium whitespace-nowrap">Start Selling</Link>
                 {user ? (
                   <>
                     <Link to="/dashboard" className="flex items-center gap-1 text-sm text-gray-700 hover:text-[#1E3A5F]">
