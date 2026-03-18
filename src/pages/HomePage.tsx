@@ -22,20 +22,28 @@ const TRUST_ITEMS = [
   { icon: Truck,       label: 'UK Delivery Support', desc: 'Nationwide delivery & collection' },
 ];
 
-// ── Category visual grid data ─────────────────────────────────────────────────
-const CATEGORY_GRID = [
-  { slug: 'amazon-returns', label: 'Amazon Returns',    image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&q=65&auto=format&fit=crop' },
-  { slug: 'clearance',      label: 'Clearance',         image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=400&q=65&auto=format&fit=crop' },
-  { slug: 'wholesale',      label: 'Wholesale',         image: 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=400&q=65&auto=format&fit=crop' },
+// ── Consumer goods categories ────────────────────────────────────────────────
+const CONSUMER_CATEGORIES = [
   { slug: 'electronics',    label: 'Electronics',       image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=65&auto=format&fit=crop' },
   { slug: 'home-garden',    label: 'Home & Garden',     image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=65&auto=format&fit=crop' },
-  { slug: 'tools-diy',      label: 'Tools & DIY',       image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=65&auto=format&fit=crop' },
-  { slug: 'business-supplies', label: 'Business Supplies', image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=65&auto=format&fit=crop' },
   { slug: 'fashion',        label: 'Fashion',           image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'health-beauty',  label: 'Health & Beauty',   image: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'sports-outdoors', label: 'Sports & Outdoors', image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&q=65&auto=format&fit=crop' },
   { slug: 'automotive',     label: 'Automotive',        image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&q=65&auto=format&fit=crop' },
   { slug: 'toys',           label: 'Toys',              image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'baby-kids',      label: 'Baby & Kids',       image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=400&q=65&auto=format&fit=crop' },
   { slug: 'pets',           label: 'Pets',              image: 'https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'tools-diy',      label: 'Tools & DIY',       image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=65&auto=format&fit=crop' },
+  { slug: 'food-drink',     label: 'Food & Drink',      image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=65&auto=format&fit=crop' },
   { slug: 'handmade',       label: 'Handmade',          image: 'https://images.unsplash.com/photo-1547895749-888a559fc2af?w=400&q=65&auto=format&fit=crop' },
+];
+
+// ── Wholesale / bulk / clearance categories ───────────────────────────────────
+const BULK_CATEGORIES = [
+  { slug: 'wholesale',      label: 'Wholesale Lots',    image: 'https://images.unsplash.com/photo-1553413077-190dd305871c?w=400&q=65&auto=format&fit=crop', desc: 'Bulk pallets & trade bundles' },
+  { slug: 'clearance',      label: 'Clearance Stock',   image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=400&q=65&auto=format&fit=crop', desc: 'End of line & overstock' },
+  { slug: 'amazon-returns', label: 'Amazon Returns',    image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&q=65&auto=format&fit=crop', desc: 'Grade A/B/C returns stock' },
+  { slug: 'business-supplies', label: 'Business Supplies', image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=65&auto=format&fit=crop', desc: 'Trade & commercial supplies' },
 ];
 
 
@@ -353,14 +361,14 @@ export default function HomePage() {
           <div className="flex items-center justify-between mb-5">
             <div>
               <h2 className="text-xl font-bold text-gray-900">Shop by Category</h2>
-              <p className="text-sm text-gray-500">Browse all product categories</p>
+              <p className="text-sm text-gray-500">Discover products across all categories</p>
             </div>
             <Link to="/catalog" className="text-sm text-[#1E3A5F] hover:underline font-medium whitespace-nowrap">
               All Categories →
             </Link>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-            {CATEGORY_GRID.map((cat) => (
+            {CONSUMER_CATEGORIES.map((cat) => (
               <Link
                 key={cat.slug}
                 to={`/category/${cat.slug}`}
@@ -377,6 +385,44 @@ export default function HomePage() {
                 </div>
                 <div className="p-2 text-center bg-white">
                   <p className="text-xs font-semibold text-gray-800 truncate">{cat.label}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Wholesale & Bulk Trading ─────────────────────────────────────── */}
+      <section className="bg-[#1E3A5F] py-8 border-b border-white/10">
+        <div className="container-market">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-xl font-bold text-white">Wholesale &amp; Bulk Trading</h2>
+              <p className="text-sm text-white/60">Pallets, job lots, clearance loads and trade stock at warehouse prices</p>
+            </div>
+            <Link to="/category/wholesale" className="text-sm text-[#F4C400] hover:underline font-medium whitespace-nowrap">
+              Browse All →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {BULK_CATEGORIES.map((cat) => (
+              <Link
+                key={cat.slug}
+                to={`/category/${cat.slug}`}
+                className="group block rounded-xl overflow-hidden border border-white/10 hover:border-[#F4C400]/60 hover:shadow-lg transition-all duration-200"
+              >
+                <div className="aspect-[16/9] overflow-hidden bg-white/5">
+                  <img
+                    src={cat.image}
+                    alt={cat.label}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div className="p-3 bg-white/5 backdrop-blur-sm">
+                  <p className="text-sm font-bold text-white truncate">{cat.label}</p>
+                  <p className="text-xs text-white/50 truncate">{cat.desc}</p>
                 </div>
               </Link>
             ))}
