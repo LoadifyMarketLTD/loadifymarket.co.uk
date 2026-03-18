@@ -152,10 +152,6 @@ export default function HomePage() {
                   decoding="async"
                   fetchPriority="high"
                 />
-                <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg px-4 py-3">
-                  <p className="text-xs font-bold text-[#0A2239] mb-0.5">Multi-Vendor Marketplace</p>
-                  <p className="text-xs text-gray-600">Built for sellers. Trusted by buyers.</p>
-                </div>
               </div>
             </div>
 
@@ -164,7 +160,7 @@ export default function HomePage() {
       </section>
 
       {/* ── §2  TRUST STRIP ───────────────────────────────────────────────── */}
-      <section className="bg-[#0A2239] py-5 border-b border-[#0A2239]">
+      <section className="bg-[#0A2239] py-5">
         <div className="container-market">
           <div className="flex flex-wrap justify-center gap-6 md:gap-12">
             {TRUST_STRIP.map(({ icon: Icon, label }) => (
@@ -184,10 +180,6 @@ export default function HomePage() {
             <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-4">
               Built for Serious Sellers — Not Casual Listings
             </h2>
-            <p className="text-gray-500 text-base max-w-xl mx-auto">
-              Loadify Market is a focused UK marketplace designed for businesses
-              that want to sell efficiently in a professional environment.
-            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -272,13 +264,9 @@ export default function HomePage() {
       {/* ── §6  STRONG CTA ────────────────────────────────────────────────── */}
       <section className="bg-[#0A2239] py-20">
         <div className="container-market text-center">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-5">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-10">
             Turn Stock Into Revenue — Not Storage
           </h2>
-          <p className="text-blue-200 text-base mb-10 max-w-lg mx-auto leading-relaxed">
-            Every product sitting still is lost opportunity. List it, sell it,
-            and grow your business on a cleaner marketplace.
-          </p>
           <Link
             to="/register?type=seller"
             className="inline-flex items-center gap-2 bg-[#D4AF37] hover:bg-[#C9A227] text-gray-900 font-extrabold px-10 py-5 rounded-xl text-base transition-colors shadow-xl"
