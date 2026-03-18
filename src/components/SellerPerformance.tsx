@@ -24,14 +24,9 @@ interface SellerInfoData {
   businessName?: string;
   rating: number;
   totalSales: number;
+  salesCount?: number;
   isApproved?: boolean;
   createdAt: string;
-  users: {
-    id: string;
-    createdAt: string;
-    firstName?: string;
-    lastName?: string;
-  };
 }
 
 export default function SellerPerformance({ sellerId, compact = false }: SellerPerformanceProps) {
@@ -42,15 +37,15 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
   const fetchSellerPerformance = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch seller profile
+      // Fetch seller profile (public view — no sensitive fields)
       const { data: sellerData, error: sellerError } = await supabase
-        .from('seller_profiles')
-        .select('*, users(*)')
+        .from('seller_profiles_public')
+        .select('userId, businessName, rating, salesCount, isApproved, createdAt')
         .eq('userId', sellerId)
         .single();
 
       if (sellerError) throw sellerError;
-      setSellerInfo(sellerData);
+      if (sellerData) setSellerInfo(sellerData as SellerInfoData);
 
       // Fetch seller statistics
       const { data: products } = await supabase
@@ -92,7 +87,7 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
         totalSales: orders?.length || 0,
         responseTime: avgResponseTime,
         onTimeShipment: onTimePercentage,
-        memberSince: sellerData?.users?.createdAt ?? new Date().toISOString(),
+        memberSince: sellerData?.createdAt ?? new Date().toISOString(),
         totalProducts,
         reviewCount: totalReviews,
       });
@@ -169,9 +164,7 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
       {sellerInfo && (
         <div className="flex items-center justify-between flex-wrap gap-3 pb-4 border-b border-gray-200">
           <h3 className="text-xl font-bold text-gray-900">
-            {sellerInfo.businessName || 
-             `${sellerInfo.users.firstName || ''} ${sellerInfo.users.lastName || ''}`.trim() || 
-             'Seller'}
+            {sellerInfo.businessName || 'Seller'}
           </h3>
           {sellerInfo.isApproved !== undefined && (
             <VerificationBadge isVerified={sellerInfo.isApproved} size="md" />

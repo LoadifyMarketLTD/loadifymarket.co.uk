@@ -98,7 +98,7 @@ export const handler: Handler = async (event) => {
           return { statusCode: 200, body: JSON.stringify({ received: true, skipped: true }) };
         }
         // Non-duplicate DB error — log but proceed (don't block order creation)
-        console.warn(`stripe_events insert failed for ${stripeEvent.id}:`, dedupError.message);
+        console.warn(`stripe_events insert failed for ${stripeEvent.id}, continuing with order processing: ${dedupError.message}`);
       }
     }
     // ──────────────────────────────────────────────────────────────────────
