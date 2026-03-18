@@ -8,10 +8,12 @@ import type { SearchFilters, SearchSortOption } from '../lib/search';
 import type { Category } from '../types';
 const CONDITIONS = ['new', 'used', 'refurbished'];
 const LISTING_TYPES = [
-  { key: 'retail',    label: 'Retail Product' },
-  { key: 'pallet',    label: 'Pallet / Bulk' },
+  { key: 'retail',    label: 'Single Item / Retail' },
+  { key: 'pallet',    label: 'Pallet Deal' },
   { key: 'wholesale', label: 'Wholesale' },
-  { key: 'handmade',  label: 'Handmade' },
+  { key: 'lot',       label: 'Bulk / Job Lot' },
+  { key: 'clearance', label: 'Clearance Stock' },
+  { key: 'handmade',  label: 'Handmade & Artisan' },
 ];
 const SORT_OPTIONS: { key: SearchSortOption; label: string }[] = [
   { key: 'relevance',  label: 'Best Match' },

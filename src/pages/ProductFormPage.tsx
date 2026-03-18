@@ -41,6 +41,8 @@ export default function ProductFormPage() {
       itemsPerPallet: '',
       palletType: '',
     },
+    moq: '',          // Wholesale: minimum order quantity
+    lotQuantity: '',  // Bulk/lot: number of items in the lot
   });
 
   const fetchProduct = useCallback(async () => {
@@ -78,6 +80,8 @@ export default function ProductFormPage() {
           weight: data.weight?.toString() || '',
           dimensions: data.dimensions || { length: '', width: '', height: '' },
           palletInfo: data.palletInfo || { palletCount: '', itemsPerPallet: '', palletType: '' },
+          moq: data.specifications?.moq || '',
+          lotQuantity: data.specifications?.lotQuantity || '',
         });
 
         // Load the shipping methods already linked to this product
@@ -138,6 +142,19 @@ export default function ProductFormPage() {
       // only allow non-critical fields to be updated.
       const isAdmin = user.role === 'admin' || user.role === 'owner';
 
+      // Build specifications merging any extra structured fields
+      const specs: Record<string, string> = { ...(formData.specifications || {}) };
+      if (formData.type === 'wholesale' && formData.moq) {
+        specs.moq = formData.moq;
+      } else {
+        delete specs.moq;
+      }
+      if ((formData.type === 'lot' || formData.type === 'wholesale') && formData.lotQuantity) {
+        specs.lotQuantity = formData.lotQuantity;
+      } else {
+        delete specs.lotQuantity;
+      }
+
       const productData = {
         sellerId: user.id,
         title: formData.title,
@@ -153,7 +170,7 @@ export default function ProductFormPage() {
         categoryId: formData.categoryId || null,
         subcategoryId: formData.subcategoryId || null,
         images: formData.images,
-        specifications: formData.specifications,
+        specifications: specs,
         weight: formData.weight ? parseFloat(formData.weight) : null,
         dimensions: (formData.dimensions.length && formData.dimensions.width && formData.dimensions.height) 
           ? formData.dimensions 
@@ -331,12 +348,12 @@ export default function ProductFormPage() {
                     className="input-field"
                     required
                   >
-                    <option value="product">Regular Product</option>
-                    <option value="retail">Retail</option>
+                    <option value="product">Single Item</option>
+                    <option value="retail">Retail Product</option>
                     <option value="handmade">Handmade / Artisan</option>
                     <option value="clearance">Clearance</option>
-                    <option value="pallet">Pallet</option>
-                    <option value="lot">Lot</option>
+                    <option value="pallet">Pallet Deal</option>
+                    <option value="lot">Bulk Lot</option>
                     <option value="wholesale">Wholesale</option>
                     <option value="logistics">Logistics</option>
                   </select>
@@ -457,6 +474,58 @@ export default function ProductFormPage() {
                       placeholder="e.g., Euro pallet"
                     />
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Wholesale — Minimum Order Quantity */}
+            {formData.type === 'wholesale' && (
+              <div className="mb-6 p-4 bg-indigo-50 rounded-lg">
+                <h3 className="font-semibold mb-3">Wholesale Details</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Minimum Order Quantity (MOQ)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={formData.moq}
+                      onChange={(e) => setFormData(prev => ({ ...prev, moq: e.target.value }))}
+                      className="input-field"
+                      placeholder="e.g., 10"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Minimum units a buyer must order</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Units in Lot / Batch</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={formData.lotQuantity}
+                      onChange={(e) => setFormData(prev => ({ ...prev, lotQuantity: e.target.value }))}
+                      className="input-field"
+                      placeholder="e.g., 100"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Total units available in this lot</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Bulk / Lot — quantity in the lot */}
+            {formData.type === 'lot' && (
+              <div className="mb-6 p-4 bg-amber-50 rounded-lg">
+                <h3 className="font-semibold mb-3">Bulk Lot Details</h3>
+                <div className="max-w-xs">
+                  <label className="block text-sm font-medium mb-1">Number of Items in Lot</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.lotQuantity}
+                    onChange={(e) => setFormData(prev => ({ ...prev, lotQuantity: e.target.value }))}
+                    className="input-field"
+                    placeholder="e.g., 50"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Total number of items sold as one lot</p>
                 </div>
               </div>
             )}
