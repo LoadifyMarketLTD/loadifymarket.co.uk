@@ -28,13 +28,13 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-jet flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
-        <div className="card-glass p-8">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 p-8">
           {submitted ? (
             <div className="text-center">
               <CheckCircle className="h-14 w-14 text-green-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-white mb-2">Check your email</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h2>
               <p className="text-gray-500 text-sm mb-6">
                 We sent a password reset link to <span className="text-gold">{email}</span>.
                 Please check your inbox and follow the instructions.

@@ -117,7 +117,7 @@ export default function SellerRFQPage() {
 
         {/* Empty State */}
         {!loading && rfqRequests.length === 0 && (
-          <div className="card-glass text-center py-16 px-8">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-16 px-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-50 rounded-full mb-6">
               <Inbox className="w-8 h-8 text-gray-300" />
             </div>
@@ -132,7 +132,7 @@ export default function SellerRFQPage() {
         {!loading && rfqRequests.length > 0 && (
           <div className="space-y-4">
             {rfqRequests.map((rfq) => (
-              <div key={rfq.id} className="card-glass">
+              <div key={rfq.id} className="bg-white border border-gray-200 rounded-xl p-6">
                 {/* Card Header */}
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div className="flex items-start gap-3">
@@ -140,7 +140,7 @@ export default function SellerRFQPage() {
                       <Package className="w-4 h-4 text-gold" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-white text-base leading-snug">
+                      <h3 className="font-bold text-gray-900 text-base leading-snug">
                         {rfq.product_name}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">

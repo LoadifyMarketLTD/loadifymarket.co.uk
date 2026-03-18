@@ -66,11 +66,11 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-jet flex items-center justify-center py-12 px-4">
+      <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-md">
-          <div className="card-glass p-8 text-center">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 p-8 text-center">
             <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">Account Created!</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Account Created!</h2>
             <p className="text-gray-500 mb-6">
               {isSeller
                 ? 'Your seller account is pending admin approval. You will be notified once approved.'
@@ -89,9 +89,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-jet flex items-center justify-center py-12 px-4">
+    <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-md">
-        <div className="card-glass p-8">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 p-8">
           {/* Header */}
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">

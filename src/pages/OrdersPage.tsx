@@ -65,7 +65,7 @@ export default function OrdersPage() {
               key={s}
               onClick={() => setFilter(s)}
               className={`px-4 py-2 rounded-premium-sm text-sm font-medium transition-all duration-200 capitalize ${
-                filter === s ? 'bg-gold text-jet' : 'bg-white text-white hover:bg-white/70'
+                filter === s ? 'bg-[#1E3A5F] text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-[#1E3A5F]'
               }`}
             >
               {s === 'all' ? 'All Orders' : s}
@@ -79,9 +79,9 @@ export default function OrdersPage() {
             <div className="w-10 h-10 border-2 border-gold border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="card-glass text-center py-20">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-20">
             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">No orders yet</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No orders yet</h3>
             <p className="text-gray-400 mb-6">Start shopping to see your orders here.</p>
             <Link to="/shop" className="btn-primary inline-flex items-center gap-2">
               <ShoppingBag className="w-5 h-5" />
@@ -97,14 +97,14 @@ export default function OrdersPage() {
                 <Link
                   key={order.id}
                   to={`/orders/${order.id}`}
-                  className="card-glass flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:border-gold/30 transition-all duration-200 group block"
+                  className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:border-gold/30 transition-all duration-200 group block"
                 >
                   <div className="p-3 rounded-premium-sm bg-white/60 flex-shrink-0">
                     <Package className="w-8 h-8 text-gold" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <span className="font-bold text-white font-mono text-sm">{order.orderNumber}</span>
+                      <span className="font-bold text-gray-900 font-mono text-sm">{order.orderNumber}</span>
                       <span className={`flex items-center gap-1 text-xs font-semibold ${cfg.color}`}>
                         <Icon className="w-3.5 h-3.5" />
                         {cfg.label}

@@ -22,7 +22,7 @@ export default function XDriveContentBlock({ className = '' }: XDriveContentBloc
           <Package className="w-5 h-5 text-gold" />
         </div>
         <div>
-          <h3 className="text-lg font-bold text-white mb-2">
+          <h3 className="text-lg font-bold text-gray-900 mb-2">
             Need Stock, Pallets or Wholesale Deals?
           </h3>
           <p className="text-gray-500 text-sm leading-relaxed">

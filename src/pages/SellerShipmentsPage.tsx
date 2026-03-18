@@ -260,7 +260,7 @@ export default function SellerShipmentsPage() {
                       </div>
                       <button
                         onClick={() => handleManageShipment(shipment.order_id, shipment)}
-                        className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2"
+                        className="bg-orange-500 text-gray-900 px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2"
                       >
                         <Truck className="w-4 h-4" aria-hidden="true" />
                         Manage
@@ -299,7 +299,7 @@ export default function SellerShipmentsPage() {
                       </div>
                       <button
                         onClick={() => handleManageShipment(order.id)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                        className="bg-blue-600 text-gray-900 px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
                       >
                         <Truck className="w-4 h-4" aria-hidden="true" />
                         Create Shipment

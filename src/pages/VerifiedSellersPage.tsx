@@ -78,7 +78,7 @@ export default function VerifiedSellersPage() {
             </Link>
             <Link
               to="/register?type=seller"
-              className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-6 py-3 rounded transition-colors"
+              className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-[#1E3A5F] font-semibold px-6 py-3 rounded transition-colors"
             >
               <Store className="w-4 h-4" />
               Become a Verified Seller
@@ -163,7 +163,7 @@ export default function VerifiedSellersPage() {
             </Link>
             <Link
               to="/catalog"
-              className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-6 py-3 rounded transition-colors"
+              className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-[#1E3A5F] font-semibold px-6 py-3 rounded transition-colors"
             >
               Browse Marketplace
             </Link>

@@ -318,8 +318,8 @@ export default function ProductReviews({
 
       {/* ── Write review form ── */}
       {showForm && (
-        <div className="card-glass border border-gold/20">
-          <h3 className="text-lg font-bold text-white mb-5 flex items-center gap-2">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 border border-gold/20">
+          <h3 className="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
             <Star className="w-5 h-5 text-gold" /> Write Your Review
           </h3>
           {formSuccess ? (
@@ -408,7 +408,7 @@ export default function ProductReviews({
                       <button
                         type="button"
                         onClick={() => setFormImages(prev => prev.filter((_, j) => j !== i))}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center"
+                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-gray-900 text-xs flex items-center justify-center"
                       >×</button>
                     </div>
                   ))}
@@ -523,11 +523,11 @@ export default function ProductReviews({
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="card-glass animate-pulse h-32" />
+            <div key={i} className="bg-white border border-gray-200 rounded-xl p-6 animate-pulse h-32" />
           ))}
         </div>
       ) : reviews.length === 0 ? (
-        <div className="card-glass text-center py-14">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-14">
           <MessageSquare className="w-12 h-12 text-white/15 mx-auto mb-3" />
           <p className="text-gray-400">
             {filterRating === 'all'
@@ -596,12 +596,12 @@ function ReviewCard({
   const isResponding = respondingTo === review.id;
 
   return (
-    <div className="card-glass group">
+    <div className="bg-white border border-gray-200 rounded-xl p-6 group">
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div>
           <div className="flex items-center gap-2 flex-wrap mb-1">
-            <span className="font-semibold text-white text-sm">{review.userName || 'Buyer'}</span>
+            <span className="font-semibold text-gray-900 text-sm">{review.userName || 'Buyer'}</span>
             {review.isVerifiedPurchase && (
               <span className="flex items-center gap-1 text-xs bg-green-100 text-green-700 border border-green-400/20 px-2 py-0.5 rounded-full">
                 <CheckCircle className="w-3 h-3" /> Verified Purchase
@@ -619,7 +619,7 @@ function ReviewCard({
       </div>
 
       {/* Title + body */}
-      {review.title && <h4 className="font-semibold text-white mb-1">{review.title}</h4>}
+      {review.title && <h4 className="font-semibold text-gray-900 mb-1">{review.title}</h4>}
       <p className="text-gray-600 text-sm leading-relaxed mb-3 whitespace-pre-line">{review.comment}</p>
 
       {/* Images */}
@@ -703,7 +703,7 @@ function ReviewCard({
           onClick={onHelpful}
           disabled={!currentUserId || hasVoted || review.userId === currentUserId}
           className={`flex items-center gap-1.5 text-xs transition-colors disabled:opacity-40 ${
-            hasVoted ? 'text-gold' : 'text-gray-400 hover:text-white'
+            hasVoted ? 'text-gold' : 'text-gray-400 hover:text-[#1E3A5F]'
           }`}
         >
           <ThumbsUp className="w-3.5 h-3.5" />

@@ -386,7 +386,7 @@ export default function AdminDashboardPage() {
     return (
       <div className="bg-[#F8F9FA] min-h-screen pt-24">
         <div className="container-cinematic py-10">
-          <div className="card-glass text-center py-12">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-12">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Admin Access Required</h2>
             <p className="text-gray-500">You need admin privileges to access this page.</p>
           </div>
@@ -433,7 +433,7 @@ export default function AdminDashboardPage() {
               <div>
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-500 text-sm">Total Users</p>
@@ -444,7 +444,7 @@ export default function AdminDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-500 text-sm">Pending Products</p>
@@ -454,7 +454,7 @@ export default function AdminDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-500 text-sm">Total Orders</p>
@@ -464,7 +464,7 @@ export default function AdminDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-500 text-sm">Open Disputes</p>
@@ -474,7 +474,7 @@ export default function AdminDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="card-glass md:col-span-2">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6 md:col-span-2">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-500 text-sm">Commission Revenue</p>
@@ -488,7 +488,7 @@ export default function AdminDashboardPage() {
 
                 {/* Quick Actions */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <h2 className="text-lg font-bold text-gray-900 mb-4">Pending Product Approvals</h2>
                     {products.filter(p => !p.isApproved).length === 0 ? (
                       <p className="text-gray-400">No pending products</p>
@@ -520,7 +520,7 @@ export default function AdminDashboardPage() {
                     )}
                   </div>
 
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <h2 className="text-lg font-bold text-gray-900 mb-4">Open Disputes</h2>
                     {disputes.filter(d => d.status === 'open').length === 0 ? (
                       <p className="text-gray-400">No open disputes</p>
@@ -536,7 +536,7 @@ export default function AdminDashboardPage() {
                     )}
                   </div>
 
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <h2 className="text-lg font-bold text-gray-900 mb-4">Quick Links</h2>
                     <div className="space-y-2">
                       <Link to="/admin/sellers" className="block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
@@ -636,7 +636,7 @@ export default function AdminDashboardPage() {
                     <>
                       {/* Key Metrics */}
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                        <div className="card-glass">
+                        <div className="bg-white border border-gray-200 rounded-xl p-6">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-gray-500 text-sm">GMV</p>
@@ -652,7 +652,7 @@ export default function AdminDashboardPage() {
                           </div>
                         </div>
 
-                        <div className="card-glass">
+                        <div className="bg-white border border-gray-200 rounded-xl p-6">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-gray-500 text-sm">Commission</p>
@@ -668,7 +668,7 @@ export default function AdminDashboardPage() {
                           </div>
                         </div>
 
-                        <div className="card-glass">
+                        <div className="bg-white border border-gray-200 rounded-xl p-6">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-gray-500 text-sm">New Users</p>
@@ -679,7 +679,7 @@ export default function AdminDashboardPage() {
                           </div>
                         </div>
 
-                        <div className="card-glass">
+                        <div className="bg-white border border-gray-200 rounded-xl p-6">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-gray-500 text-sm">New Sellers</p>
@@ -692,7 +692,7 @@ export default function AdminDashboardPage() {
                       </div>
 
                       {/* Orders by Status */}
-                      <div className="card-glass mb-6">
+                      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
                         <h3 className="text-lg font-bold text-gray-900 mb-4">Orders by Status</h3>
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                           <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
@@ -758,7 +758,7 @@ export default function AdminDashboardPage() {
                       </div>
 
                       {/* Revenue Trend */}
-                      <div className="card-glass">
+                      <div className="bg-white border border-gray-200 rounded-xl p-6">
                         <h3 className="text-xl font-bold mb-4">Revenue Trend</h3>
                         {(() => {
                           const days = dateRange === '7days' ? 7 : dateRange === '30days' ? 30 : 90;
@@ -824,7 +824,7 @@ export default function AdminDashboardPage() {
 
             {/* Users Tab */}
             {activeTab === 'users' && (
-              <div className="card-glass">
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold">All Users</h2>
                   <button onClick={handleExportUsers} className="btn-primary flex items-center gap-2">
@@ -843,7 +843,7 @@ export default function AdminDashboardPage() {
                         <span className={`text-xs px-2 py-1 rounded ${
                           u.role === 'admin' ? 'bg-red-100 text-red-700' :
                           u.role === 'seller' ? 'bg-blue-100 text-blue-700' :
-                          'bg-gray-100 text-white'
+                          'bg-gray-100 text-gray-600'
                         }`}>
                           {u.role}
                         </span>
@@ -890,7 +890,7 @@ export default function AdminDashboardPage() {
 
             {/* Products Tab */}
             {activeTab === 'products' && (
-              <div className="card-glass">
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold">All Products</h2>
                   <button onClick={handleExportProducts} className="btn-primary flex items-center gap-2">
@@ -954,7 +954,7 @@ export default function AdminDashboardPage() {
 
             {/* Orders Tab */}
             {activeTab === 'orders' && (
-              <div className="card-glass">
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold">All Orders</h2>
                   <button onClick={handleExportOrders} className="btn-primary flex items-center gap-2">
@@ -988,7 +988,7 @@ export default function AdminDashboardPage() {
 
             {/* Disputes Tab */}
             {activeTab === 'disputes' && (
-              <div className="card-glass">
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
                 <h2 className="text-xl font-bold mb-4">All Disputes</h2>
                 {disputes.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">No disputes</p>
@@ -1055,15 +1055,15 @@ export default function AdminDashboardPage() {
                         </p>
                         {connectPlatformStatus.keyPrefix && (
                           <p className="text-xs mt-1 text-gray-500">
-                            Active key: <code className="bg-graphite/80 px-1 py-0.5 rounded border border-gray-200">{connectPlatformStatus.keyPrefix}</code>
+                            Active key: <code className="bg-gray-200 px-1.5 py-0.5 rounded border border-gray-300 text-gray-800">{connectPlatformStatus.keyPrefix}</code>
                             {connectPlatformStatus.platformAccountId && (
-                              <> · Account: <code className="bg-graphite/80 px-1 py-0.5 rounded border border-gray-200">{connectPlatformStatus.platformAccountId}</code></>
+                              <> · Account: <code className="bg-gray-200 px-1.5 py-0.5 rounded border border-gray-300 text-gray-800">{connectPlatformStatus.platformAccountId}</code></>
                             )}
                           </p>
                         )}
                         {connectPlatformStatus.platformConfigured === false && (
                           <div className="mt-2 text-xs text-red-700 space-y-1">
-                            <p>The <code className="bg-graphite/80 px-1 py-0.5 rounded border border-red-500/30">STRIPE_SECRET_KEY</code> currently set in Netlify does <strong>not</strong> belong to a Connect-enabled platform account.</p>
+                            <p>The <code className="bg-red-100 px-1.5 py-0.5 rounded border border-red-300 text-red-800">STRIPE_SECRET_KEY</code> currently set in Netlify does <strong>not</strong> belong to a Connect-enabled platform account.</p>
                             <p>
                               <strong>Fix:</strong>{' '}
                               1. Update <code>STRIPE_SECRET_KEY</code> in Netlify → Site configuration → Environment variables to the new platform account's secret key.{' '}
@@ -1093,7 +1093,7 @@ export default function AdminDashboardPage() {
                   </div>
                 )}
                 {/* ──────────────────────────────────────────────────────────────── */}
-                <div className="card-glass">
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
                   {payoutRequests.length === 0 ? (
                     <p className="text-gray-400 text-center py-8">No payout requests.</p>
                   ) : (
@@ -1123,7 +1123,7 @@ export default function AdminDashboardPage() {
                                   pr.status === 'paid'      ? 'bg-green-100 text-green-700' :
                                   pr.status === 'approved'  ? 'bg-blue-100 text-blue-700' :
                                   pr.status === 'rejected'  ? 'bg-red-100 text-red-700' :
-                                  pr.status === 'cancelled' ? 'bg-gray-100 text-white' :
+                                  pr.status === 'cancelled' ? 'bg-gray-100 text-gray-600' :
                                   'bg-yellow-100 text-yellow-700'
                                 }`}>
                                   {pr.status.charAt(0).toUpperCase() + pr.status.slice(1)}
@@ -1162,7 +1162,7 @@ export default function AdminDashboardPage() {
                                           />
                                           <button
                                             onClick={() => handleRejectPayout(pr.id)}
-                                            className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                                            className="text-xs px-2 py-1 bg-red-600 text-gray-900 rounded hover:bg-red-700"
                                           >
                                             Confirm Reject
                                           </button>
@@ -1194,7 +1194,7 @@ export default function AdminDashboardPage() {
             {/* Exports Tab */}
             {activeTab === 'exports' && (
               <div className="space-y-6">
-                <div className="card-glass">
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">Export Data</h2>
                   <p className="text-gray-500 mb-8">
                     Download your marketplace data in CSV format for analysis and reporting.
@@ -1311,8 +1311,8 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
 
-                <div className="card-glass border border-blue-500/20 bg-blue-500/5">
-                  <h3 className="font-bold text-white mb-2">About CSV Exports</h3>
+                <div className="bg-white border border-gray-200 rounded-xl p-6 border border-blue-500/20 bg-blue-500/5">
+                  <h3 className="font-bold text-gray-900 mb-2">About CSV Exports</h3>
                   <ul className="text-sm text-gray-500 space-y-1 list-disc list-inside">
                     <li>All dates are in DD/MM/YYYY format</li>
                     <li>All amounts are in GBP (£)</li>

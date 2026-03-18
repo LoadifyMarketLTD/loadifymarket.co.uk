@@ -145,7 +145,7 @@ export default function BulkPage() {
   const hasActiveFilters = searchQuery || selectedBulkType || selectedCategory || sortBy !== 'createdAt_desc';
 
   return (
-    <div className="min-h-screen bg-jet">
+    <div className="min-h-screen bg-[#F8F9FA]">
       {/* Page Header */}
       <div className="bg-white/30 border-b border-gray-200 py-10">
         <div className="container-cinematic">
@@ -158,7 +158,7 @@ export default function BulkPage() {
       </div>
 
       {/* What's included info bar */}
-      <div className="bg-jet border-b border-gray-200 py-4">
+      <div className="bg-[#F8F9FA] border-b border-gray-200 py-4">
         <div className="container-cinematic">
           <div className="flex flex-wrap gap-6 text-sm text-gray-500">
             <div className="flex items-center gap-2">
@@ -192,7 +192,7 @@ export default function BulkPage() {
                 className={`px-4 py-2 rounded-premium-sm text-sm font-medium transition-all duration-200 ${
                   selectedBulkType === cat.slug
                     ? 'bg-gold text-jet'
-                    : 'bg-white text-gray-600 hover:bg-white/80 hover:text-white'
+                    : 'bg-white text-gray-600 hover:bg-white/80 hover:text-[#1E3A5F]'
                 }`}
               >
                 {cat.label}
@@ -217,7 +217,7 @@ export default function BulkPage() {
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#1E3A5F]"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -228,7 +228,7 @@ export default function BulkPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-white text-white border border-gray-200 rounded-premium-sm px-4 py-2 text-sm focus:outline-none focus:border-gold"
+              className="bg-white text-gray-900 border border-gray-200 rounded-premium-sm px-4 py-2 text-sm focus:outline-none focus:border-gold"
             >
               <option value="createdAt_desc">Newest First</option>
               <option value="price_asc">Price: Low to High</option>
@@ -238,14 +238,14 @@ export default function BulkPage() {
 
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`btn-glass flex items-center gap-2 ${showFilters ? 'bg-gold/20' : ''}`}
+              className={`btn-glass flex items-center gap-2 ${showFilters ? 'bg-[#1E3A5F]/10 border-[#1E3A5F]/30 text-[#1E3A5F]' : ''}`}
             >
               <Filter className="h-4 w-4" />
               Filters
             </button>
 
             {hasActiveFilters && (
-              <button onClick={clearFilters} className="btn-glass text-sm flex items-center gap-1">
+              <button onClick={clearFilters} className="btn-glass text-sm flex items-center gap-1 text-gray-600">
                 <X className="h-4 w-4" /> Clear
               </button>
             )}
@@ -254,7 +254,7 @@ export default function BulkPage() {
 
         {/* Expandable Filters */}
         {showFilters && (
-          <div className="card-glass p-6 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 p-6 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div>
               <label className="block text-gray-600 text-sm mb-2">Max Price: £{priceRange[1].toLocaleString()}</label>
               <input
@@ -272,7 +272,7 @@ export default function BulkPage() {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full bg-white text-white border border-gray-200 rounded-premium-sm px-3 py-2 text-sm focus:outline-none focus:border-gold"
+                className="w-full bg-white text-gray-900 border border-gray-200 rounded-premium-sm px-3 py-2 text-sm focus:outline-none focus:border-gold"
               >
                 <option value="">All Categories</option>
                 {categories.map((cat) => (
@@ -289,7 +289,7 @@ export default function BulkPage() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="card-glass h-64 animate-pulse" />
+              <div key={i} className="bg-white border border-gray-200 rounded-xl p-6 h-64 animate-pulse" />
             ))}
           </div>
         ) : products.length > 0 ? (
@@ -304,7 +304,7 @@ export default function BulkPage() {
         ) : (
           <div className="text-center py-24">
             <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">No bulk listings found</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No bulk listings found</h3>
             <p className="text-gray-400 mb-6">Check back soon for new pallet deals and bulk stock</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button onClick={clearFilters} className="btn-primary">
@@ -319,7 +319,7 @@ export default function BulkPage() {
 
         {/* Bulk Listing details */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="card-glass p-8">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 p-8">
             <h3 className="text-xl font-bold text-gray-900 mb-4">What you get with bulk listings</h3>
             <ul className="space-y-3 text-gray-500 text-sm">
               <li className="flex items-start gap-3">
@@ -344,7 +344,7 @@ export default function BulkPage() {
               </li>
             </ul>
           </div>
-          <div className="card-glass p-8 flex flex-col justify-between">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 p-8 flex flex-col justify-between">
             <div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">Got bulk stock to sell?</h3>
               <p className="text-gray-500 text-sm mb-6">

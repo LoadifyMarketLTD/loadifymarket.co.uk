@@ -124,9 +124,9 @@ export default function SellerPublicProfilePage() {
     return (
       <div className="bg-[#F8F9FA] min-h-screen pt-24">
         <div className="container-cinematic py-12">
-          <div className="card-glass text-center py-16">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-16">
             <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">Seller not found</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Seller not found</h2>
             <p className="text-gray-500 mb-6">The seller profile you're looking for doesn't exist.</p>
             <Link to="/catalog" className="btn-primary">
               Browse Products
@@ -160,7 +160,7 @@ export default function SellerPublicProfilePage() {
 
       {/* Seller Profile Header */}
       <div className="container-cinematic py-8">
-        <div className="card-glass">
+        <div className="bg-white border border-gray-200 rounded-xl p-6">
           <div className="flex flex-col md:flex-row gap-6 items-start">
             {/* Logo */}
             <div className="flex-shrink-0">
@@ -281,7 +281,7 @@ export default function SellerPublicProfilePage() {
         </div>
 
         {products.length === 0 ? (
-          <div className="card-glass text-center py-12">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-12">
             <Package className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">This seller has no active listings at the moment.</p>
           </div>

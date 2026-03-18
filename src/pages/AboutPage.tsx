@@ -51,7 +51,7 @@ export default function AboutPage() {
       {/* Header Section */}
       <section className="py-12 bg-white/30">
         <div className="container-cinematic text-center">
-          <h1 className="heading-hero text-white mb-6">
+          <h1 className="heading-hero text-gray-900 mb-6">
             About <span className="text-gradient-gold">Loadify Market Ltd</span>
           </h1>
           <p className="text-xl text-gray-500 max-w-3xl mx-auto mb-8">
@@ -63,7 +63,7 @@ export default function AboutPage() {
       {/* Story Section */}
       <section className="py-16">
         <div className="container-cinematic max-w-4xl">
-          <div className="card-glass">
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
             <h2 className="heading-section text-gray-900 mb-6 text-center">
               Our <span className="text-gradient-gold">Story</span>
             </h2>
@@ -105,7 +105,7 @@ export default function AboutPage() {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-5xl mx-auto mb-12">
             {stats.map((stat, index) => (
-              <div key={index} className="card-glass text-center">
+              <div key={index} className="bg-white border border-gray-200 rounded-xl p-6 text-center">
                 <div className="text-4xl font-bold text-gradient-gold mb-2">{stat.value}</div>
                 <div className="text-gray-500">{stat.label}</div>
               </div>
@@ -132,7 +132,7 @@ export default function AboutPage() {
               return (
                 <div
                   key={index}
-                  className="card-glass text-center hover:scale-[1.03] transition-all duration-500"
+                  className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:scale-[1.03] transition-all duration-500"
                 >
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-gold/10 rounded-premium-sm mb-6">
                     <Icon className="h-8 w-8 text-gold" />
@@ -156,10 +156,10 @@ export default function AboutPage() {
           </div>
 
           <div className="space-y-6">
-            <div className="card-glass flex items-start gap-4">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 flex items-start gap-4">
               <CheckCircle className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
               <div>
-                <h3 className="text-lg font-bold text-white mb-2">Verified Sellers Only</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Verified Sellers Only</h3>
                 <p className="text-gray-500">
                   Every seller is manually reviewed and approved by our team before they can list
                   products. No fake accounts, no scams.
@@ -167,10 +167,10 @@ export default function AboutPage() {
               </div>
             </div>
 
-            <div className="card-glass flex items-start gap-4">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 flex items-start gap-4">
               <CheckCircle className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
               <div>
-                <h3 className="text-lg font-bold text-white mb-2">Payment Processing</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Payment Processing</h3>
                 <p className="text-gray-500">
                   Payments are processed through Stripe. Connect directly with buyers and sellers
                   to finalize transactions.
@@ -178,10 +178,10 @@ export default function AboutPage() {
               </div>
             </div>
 
-            <div className="card-glass flex items-start gap-4">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 flex items-start gap-4">
               <CheckCircle className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
               <div>
-                <h3 className="text-lg font-bold text-white mb-2">UK Based & Supported</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">UK Based & Supported</h3>
                 <p className="text-gray-500">
                   We're a UK company serving UK businesses. Get support from a local team that
                   understands your market.
@@ -189,10 +189,10 @@ export default function AboutPage() {
               </div>
             </div>
 
-            <div className="card-glass flex items-start gap-4">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 flex items-start gap-4">
               <CheckCircle className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
               <div>
-                <h3 className="text-lg font-bold text-white mb-2">Multi-Category Platform</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Multi-Category Platform</h3>
                 <p className="text-gray-500">
                   Whether you're moving freight, buying wholesale stock, or selling handmade
                   goods—all in one marketplace.
@@ -200,10 +200,10 @@ export default function AboutPage() {
               </div>
             </div>
 
-            <div className="card-glass flex items-start gap-4">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 flex items-start gap-4">
               <CheckCircle className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
               <div>
-                <h3 className="text-lg font-bold text-white mb-2">Transparent Pricing</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Transparent Pricing</h3>
                 <p className="text-gray-500">
                   No hidden fees. No surprises. You know exactly what you'll pay before you list or
                   buy.
@@ -217,10 +217,10 @@ export default function AboutPage() {
       {/* Company Info Section */}
       <section className="py-16">
         <div className="container-cinematic max-w-4xl">
-          <div className="card-glass">
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
             <div className="text-center mb-8">
               <Award className="w-16 h-16 text-gold mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-white mb-2">Loadify Market Ltd</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Loadify Market Ltd</h2>
               <p className="text-gray-500">Registered UK Company</p>
             </div>
 
@@ -228,7 +228,7 @@ export default function AboutPage() {
               <div className="flex items-start gap-4">
                 <MapPin className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
                 <div>
-                  <h3 className="font-semibold text-white mb-1">Address</h3>
+                  <h3 className="font-semibold text-gray-900 mb-1">Address</h3>
                   <p className="text-gray-500">
                     101 Cornelian Street
                     <br />
@@ -242,7 +242,7 @@ export default function AboutPage() {
               <div className="flex items-start gap-4">
                 <Mail className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
                 <div>
-                  <h3 className="font-semibold text-white mb-1">Email</h3>
+                  <h3 className="font-semibold text-gray-900 mb-1">Email</h3>
                   <a
                     href="mailto:loadifymarket.co.uk@gmail.com"
                     className="text-gold hover:underline"
@@ -255,7 +255,7 @@ export default function AboutPage() {
               <div className="flex items-start gap-4">
                 <Shield className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
                 <div>
-                  <h3 className="font-semibold text-white mb-1">Company Number (CRN)</h3>
+                  <h3 className="font-semibold text-gray-900 mb-1">Company Number (CRN)</h3>
                   <p className="text-gray-500">13171804</p>
                   <p className="text-gray-400 text-xs mt-1">Registered in England and Wales</p>
                   <p className="text-gray-500 mt-2">VAT: GB375949535</p>
@@ -265,7 +265,7 @@ export default function AboutPage() {
               <div className="flex items-start gap-4">
                 <Phone className="w-6 h-6 text-gold flex-shrink-0 mt-1" />
                 <div>
-                  <h3 className="font-semibold text-white mb-1">Support</h3>
+                  <h3 className="font-semibold text-gray-900 mb-1">Support</h3>
                   <p className="text-gray-500">
                     <Link to="/contact" className="text-gold hover:underline">
                       Contact Us

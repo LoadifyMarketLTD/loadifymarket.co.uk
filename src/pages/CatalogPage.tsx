@@ -300,7 +300,7 @@ export default function CatalogPage() {
                   className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 ${
                     !selectedType
                       ? 'bg-gold text-jet'
-                      : 'bg-white text-white hover:bg-white/80'
+                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-[#1E3A5F]'
                   }`}
                 >
                   All Products
@@ -310,7 +310,7 @@ export default function CatalogPage() {
                   className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
                     selectedType === 'retail'
                       ? 'bg-gold text-jet'
-                      : 'bg-white text-white hover:bg-white/80'
+                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-[#1E3A5F]'
                   }`}
                 >
                   <ShoppingBag className="w-4 h-4" />
@@ -321,7 +321,7 @@ export default function CatalogPage() {
                   className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
                     selectedType === 'handmade'
                       ? 'bg-gold text-jet'
-                      : 'bg-white text-white hover:bg-white/80'
+                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-[#1E3A5F]'
                   }`}
                 >
                   <Sparkles className="w-4 h-4" />
@@ -336,7 +336,7 @@ export default function CatalogPage() {
                   className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
                     selectedType === 'pallet' || !selectedType
                       ? 'bg-gold text-jet'
-                      : 'bg-white text-white hover:bg-white/80'
+                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-[#1E3A5F]'
                   }`}
                 >
                   <Package className="w-4 h-4" />
@@ -347,7 +347,7 @@ export default function CatalogPage() {
                   className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
                     selectedType === 'wholesale'
                       ? 'bg-gold text-jet'
-                      : 'bg-white text-white hover:bg-white/80'
+                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-[#1E3A5F]'
                   }`}
                 >
                   <Package className="w-4 h-4" />
@@ -358,7 +358,7 @@ export default function CatalogPage() {
                   className={`px-4 py-2 rounded-premium-sm font-medium transition-all duration-300 flex items-center gap-2 ${
                     selectedType === 'clearance'
                       ? 'bg-gold text-jet'
-                      : 'bg-white text-white hover:bg-white/80'
+                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-[#1E3A5F]'
                   }`}
                 >
                   <Package className="w-4 h-4" />
@@ -406,7 +406,7 @@ export default function CatalogPage() {
               className={`p-3 transition-colors ${
                 viewMode === 'grid'
                   ? 'bg-gold text-jet'
-                  : 'text-gray-500 hover:text-white'
+                  : 'text-gray-500 hover:text-[#1E3A5F]'
               }`}
               aria-label="Grid view"
             >
@@ -417,7 +417,7 @@ export default function CatalogPage() {
               className={`p-3 transition-colors ${
                 viewMode === 'list'
                   ? 'bg-gold text-jet'
-                  : 'text-gray-500 hover:text-white'
+                  : 'text-gray-500 hover:text-[#1E3A5F]'
               }`}
               aria-label="List view"
             >
@@ -430,12 +430,12 @@ export default function CatalogPage() {
           {/* Filters Sidebar */}
           {showFilters && (
             <div className="w-72 flex-shrink-0">
-              <div className="card-glass sticky top-28">
+              <div className="bg-white border border-gray-200 rounded-xl p-6 sticky top-28">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-bold text-gray-900">Filters</h2>
                   <button
                     onClick={() => setShowFilters(false)}
-                    className="text-gray-400 hover:text-white transition-colors lg:hidden"
+                    className="text-gray-400 hover:text-[#1E3A5F] transition-colors lg:hidden"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -581,9 +581,9 @@ export default function CatalogPage() {
                 </div>
               </div>
             ) : products.length === 0 ? (
-              <div className="card-glass text-center py-16">
+              <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-16">
                 <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">No products found</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">No products found</h3>
                 <p className="text-gray-500 mb-6">Try adjusting your filters or search criteria.</p>
                 <button
                   onClick={() => {
@@ -639,7 +639,7 @@ export default function CatalogPage() {
                     <Link
                       key={product.id}
                       to={`/product/${product.id}`}
-                      className="card-glass flex gap-6 hover:scale-[1.01] transition-all duration-300 group"
+                      className="bg-white border border-gray-200 rounded-xl p-6 flex gap-6 hover:scale-[1.01] transition-all duration-300 group"
                     >
                       {/* Product Image */}
                       <div className="w-48 h-48 flex-shrink-0 rounded-premium-sm overflow-hidden bg-white">
@@ -660,7 +660,7 @@ export default function CatalogPage() {
                       <div className="flex-1 py-2">
                         <div className="flex items-start justify-between mb-3">
                           <div>
-                            <h3 className="font-bold text-lg text-white group-hover:text-gold transition-colors">
+                            <h3 className="font-bold text-lg text-gray-900 group-hover:text-gold transition-colors">
                               {product.title}
                             </h3>
                             {product.type !== 'product' && (

@@ -61,7 +61,7 @@ export default function CinematicCategoryPanels() {
 
                 {/* Content */}
                 <div className="absolute bottom-0 left-0 right-0 p-8 z-10">
-                  <h3 className="text-2xl font-display font-bold text-white mb-2 group-hover:text-gold-400 transition-colors duration-300">
+                  <h3 className="text-2xl font-display font-bold text-gray-900 mb-2 group-hover:text-gold-400 transition-colors duration-300">
                     {category.title}
                   </h3>
                   <p className="text-gray-300 text-sm mb-4 leading-relaxed">

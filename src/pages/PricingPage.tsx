@@ -94,7 +94,7 @@ export default function PricingPage() {
       {/* Header Section */}
       <section className="py-12 bg-white/30">
         <div className="container-cinematic text-center">
-          <h1 className="heading-hero text-white mb-6">
+          <h1 className="heading-hero text-gray-900 mb-6">
             Simple, Transparent <span className="text-gradient-gold">Pricing</span>
           </h1>
           <p className="text-xl text-gray-500 max-w-3xl mx-auto mb-8">
@@ -126,10 +126,10 @@ export default function PricingPage() {
                     <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-3">
                       <Icon className="h-7 w-7 text-gold" />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">{plan.name}</h3>
                     <p className="text-gray-400 text-sm mb-3">{plan.description}</p>
                     <div className="mb-4">
-                      <span className="text-4xl font-bold text-white">
+                      <span className="text-4xl font-bold text-gray-900">
                         {plan.price === 'Custom' ? '' : '£'}
                         {plan.price}
                       </span>
@@ -189,8 +189,8 @@ export default function PricingPage() {
 
           <div className="space-y-6">
             {faqs.map((faq, index) => (
-              <div key={index} className="card-glass">
-                <h3 className="text-lg font-bold text-white mb-3">{faq.question}</h3>
+              <div key={index} className="bg-white border border-gray-200 rounded-xl p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-3">{faq.question}</h3>
                 <p className="text-gray-500 leading-relaxed">{faq.answer}</p>
               </div>
             ))}
@@ -201,7 +201,7 @@ export default function PricingPage() {
       {/* CTA Section */}
       <section className="py-16">
         <div className="container-cinematic text-center">
-          <div className="card-glass max-w-2xl mx-auto">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Ready to Start Selling?
             </h2>

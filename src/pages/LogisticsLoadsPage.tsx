@@ -83,7 +83,7 @@ export default function LogisticsLoadsPage() {
             <Truck className="w-4 h-4" />
             <span>UK Logistics Marketplace</span>
           </div>
-          <h1 className="heading-hero text-white mb-6">
+          <h1 className="heading-hero text-gray-900 mb-6">
             Logistics Loads <span className="text-gradient-gold">UK</span>
           </h1>
           <p className="text-xl text-gray-500 max-w-3xl mx-auto mb-10">
@@ -107,7 +107,7 @@ export default function LogisticsLoadsPage() {
       </section>
 
       {/* Stats Bar */}
-      <section className="py-10 bg-jet border-y border-gray-100">
+      <section className="py-10 bg-[#F8F9FA] border-y border-gray-100">
         <div className="container-cinematic">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
@@ -143,10 +143,10 @@ export default function LogisticsLoadsPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {loadTypes.map((type, index) => (
-              <div key={index} className="card-glass flex items-start gap-4">
+              <div key={index} className="bg-white border border-gray-200 rounded-xl p-6 flex items-start gap-4">
                 <CheckCircle className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-bold text-white mb-1">{type.label}</h3>
+                  <h3 className="font-bold text-gray-900 mb-1">{type.label}</h3>
                   <p className="text-gray-500 text-sm">{type.description}</p>
                 </div>
               </div>
@@ -156,7 +156,7 @@ export default function LogisticsLoadsPage() {
       </section>
 
       {/* Benefits */}
-      <section className="py-16 bg-jet">
+      <section className="py-16 bg-[#F8F9FA]">
         <div className="container-cinematic">
           <div className="text-center mb-12">
             <h2 className="heading-section text-gray-900 mb-4">
@@ -172,12 +172,12 @@ export default function LogisticsLoadsPage() {
               return (
                 <div
                   key={index}
-                  className="card-glass text-center hover:scale-[1.03] transition-all duration-500"
+                  className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:scale-[1.03] transition-all duration-500"
                 >
                   <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-5">
                     <Icon className="h-7 w-7 text-gold" />
                   </div>
-                  <h3 className="text-lg font-bold text-white mb-3">{benefit.title}</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">{benefit.title}</h3>
                   <p className="text-gray-500 text-sm leading-relaxed">{benefit.description}</p>
                 </div>
               );
@@ -200,7 +200,7 @@ export default function LogisticsLoadsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {steps.map((step) => (
               <div key={step.number} className="relative group">
-                <div className="card-glass text-center">
+                <div className="bg-white border border-gray-200 rounded-xl p-6 text-center">
                   <div className="w-10 h-10 bg-gold text-jet rounded-full flex items-center justify-center font-bold text-base mx-auto mb-5 shadow-cinematic-gold">
                     {step.number}
                   </div>
@@ -214,11 +214,11 @@ export default function LogisticsLoadsPage() {
       </section>
 
       {/* Role Callout */}
-      <section className="py-16 bg-jet">
+      <section className="py-16 bg-[#F8F9FA]">
         <div className="container-cinematic">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Brokers */}
-            <div className="card-glass text-center hover:scale-[1.02] transition-all duration-500">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:scale-[1.02] transition-all duration-500">
               <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-5">
                 <Users className="h-7 w-7 text-gold" />
               </div>
@@ -236,7 +236,7 @@ export default function LogisticsLoadsPage() {
             </div>
 
             {/* Carriers */}
-            <div className="card-glass text-center hover:scale-[1.02] transition-all duration-500">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:scale-[1.02] transition-all duration-500">
               <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-5">
                 <Truck className="h-7 w-7 text-gold" />
               </div>
@@ -254,7 +254,7 @@ export default function LogisticsLoadsPage() {
             </div>
 
             {/* Sellers / Shippers */}
-            <div className="card-glass text-center hover:scale-[1.02] transition-all duration-500">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:scale-[1.02] transition-all duration-500">
               <div className="inline-flex items-center justify-center w-14 h-14 bg-gold/10 rounded-premium-sm mb-5">
                 <Package className="h-7 w-7 text-gold" />
               </div>

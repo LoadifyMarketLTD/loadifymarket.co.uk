@@ -105,7 +105,7 @@ export default function CinematicMarketplaceSwitch() {
                   <div className="w-12 h-12 rounded-premium-sm bg-gold/10 flex items-center justify-center mb-3 group-hover:bg-gold/20 transition-colors">
                     <Icon className="w-6 h-6 text-gold" />
                   </div>
-                  <h3 className="font-semibold text-white text-sm">{cat.name}</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">{cat.name}</h3>
                 </Link>
               );
             })}
@@ -128,7 +128,7 @@ export default function CinematicMarketplaceSwitch() {
                   <div className="card-product-overlay" />
                 </div>
                 <div className="p-5">
-                  <h3 className="font-bold text-white mb-2 line-clamp-2">{item.title}</h3>
+                  <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">{item.title}</h3>
                   <p className="text-sm text-gray-400 mb-1">RRP: £{item.rrp.toLocaleString()}</p>
                   <div className="flex items-baseline gap-1 mb-4">
                     <span className="price-tag">£{item.price.toLocaleString()}</span>
@@ -148,14 +148,14 @@ export default function CinematicMarketplaceSwitch() {
         {activeTab === 'featured' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn">
             {FEATURED_SELLERS.map((seller) => (
-              <div key={seller.id} className="card-glass hover:scale-[1.02] transition-all duration-300">
+              <div key={seller.id} className="bg-white border border-gray-200 rounded-xl p-6 hover:scale-[1.02] transition-all duration-300">
                 <div className="flex items-start gap-4 mb-4">
                   <div className="w-14 h-14 rounded-premium-sm bg-gold/20 flex items-center justify-center flex-shrink-0">
                     <span className="text-2xl font-bold text-gold">{seller.name.charAt(0)}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-bold text-white truncate">{seller.name}</h3>
+                      <h3 className="font-bold text-gray-900 truncate">{seller.name}</h3>
                       <span className="text-xs bg-gold/20 text-gold border border-gold/30 rounded-full px-2 py-0.5 flex-shrink-0">
                         {seller.badge}
                       </span>

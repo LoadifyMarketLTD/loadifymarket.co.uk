@@ -24,7 +24,7 @@ export default function ContactPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gold/10 rounded-full mb-6">
             <MessageSquare className="w-8 h-8 text-gold" />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-3">Contact Us</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-3">Contact Us</h1>
           <p className="text-gray-500 text-lg max-w-xl mx-auto">
             Get in touch with the {BRAND.name} team. We typically respond within 24 hours.
           </p>
@@ -35,13 +35,13 @@ export default function ContactPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           {/* Contact Info */}
           <div className="space-y-6">
-            <div className="card-glass">
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-gold/10 rounded-premium-sm flex-shrink-0">
                   <Mail className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-sm mb-1">Email Support</h3>
+                  <h3 className="font-bold text-gray-900 text-sm mb-1">Email Support</h3>
                   <a href={`mailto:${BRAND.supportEmail}`} className="text-gray-500 text-sm hover:text-gold transition-colors break-all">
                     {BRAND.supportEmail}
                   </a>
@@ -49,13 +49,13 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <div className="card-glass">
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-gold/10 rounded-premium-sm flex-shrink-0">
                   <MapPin className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-sm mb-1">Address</h3>
+                  <h3 className="font-bold text-gray-900 text-sm mb-1">Address</h3>
                   <address className="not-italic text-gray-500 text-sm leading-relaxed">
                     {BRAND.companyAddress}
                   </address>
@@ -63,13 +63,13 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <div className="card-glass">
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-gold/10 rounded-premium-sm flex-shrink-0">
                   <Clock className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-sm mb-1">Support Hours</h3>
+                  <h3 className="font-bold text-gray-900 text-sm mb-1">Support Hours</h3>
                   <p className="text-gray-500 text-sm leading-relaxed">
                     Monday – Friday<br />9:00 AM – 6:00 PM GMT
                   </p>
@@ -77,13 +77,13 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <div className="card-glass">
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
               <div className="flex items-start gap-4">
                 <div className="p-3 bg-gold/10 rounded-premium-sm flex-shrink-0">
                   <Phone className="w-5 h-5 text-gold" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-sm mb-1">VAT &amp; Company</h3>
+                  <h3 className="font-bold text-gray-900 text-sm mb-1">VAT &amp; Company</h3>
                   <p className="text-gray-500 text-sm leading-relaxed">
                     {BRAND.companyName}<br />
                     VAT: {BRAND.vatNumber}
@@ -96,11 +96,11 @@ export default function ContactPage() {
           {/* Contact Form */}
           <div className="lg:col-span-2">
             {sent ? (
-              <div className="card-glass text-center py-16">
+              <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-16">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500/10 rounded-full mb-6">
                   <CheckCircle className="w-8 h-8 text-green-400" />
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-3">Message Sent!</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-3">Message Sent!</h2>
                 <p className="text-gray-500 mb-6">
                   Thank you for contacting us. We'll get back to you at{' '}
                   <span className="text-gold">{form.email}</span> within 24 hours.
@@ -113,8 +113,8 @@ export default function ContactPage() {
                 </button>
               </div>
             ) : (
-              <div className="card-glass">
-                <h2 className="text-xl font-bold text-white mb-6">Send a Message</h2>
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Send a Message</h2>
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>

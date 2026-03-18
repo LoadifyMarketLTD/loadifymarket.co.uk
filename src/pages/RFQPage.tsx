@@ -103,7 +103,7 @@ export default function RFQPage() {
         {/* Pre-fill notice */}
         {prefillProduct && (
           <div className="max-w-3xl mx-auto mb-6">
-            <div className="card-glass border border-gold/20 flex items-start gap-3 py-4 px-5">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 border border-gold/20 flex items-start gap-3 py-4 px-5">
               <Package className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-white text-sm font-semibold">
@@ -118,7 +118,7 @@ export default function RFQPage() {
         {/* Success State */}
         {submitState === 'success' ? (
           <div className="max-w-2xl mx-auto">
-            <div className="card-glass text-center py-16 px-8">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-16 px-8">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-emerald-500/10 rounded-full mb-6">
                 <CheckCircle className="w-10 h-10 text-emerald-400" />
               </div>
@@ -141,8 +141,8 @@ export default function RFQPage() {
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <div className="max-w-3xl mx-auto space-y-8">
               {/* Product & Quantity */}
-              <div className="card-glass">
-                <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                   <Package className="w-5 h-5 text-gold" />
                   Product Details
                 </h2>
@@ -201,8 +201,8 @@ export default function RFQPage() {
               </div>
 
               {/* Delivery & Contact */}
-              <div className="card-glass">
-                <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
                   <Globe className="w-5 h-5 text-gold" />
                   Delivery & Contact
                 </h2>

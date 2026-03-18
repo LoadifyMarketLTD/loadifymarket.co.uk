@@ -191,7 +191,7 @@ function ProfileTab() {
             />
           </div>
           <div>
-            <p className="text-white text-sm font-medium">Profile Picture</p>
+            <p className="text-gray-900 text-sm font-medium">Profile Picture</p>
             <p className="text-gray-400 text-xs mt-0.5">JPG, PNG or WebP. Max 5 MB.</p>
           </div>
         </div>
@@ -461,7 +461,7 @@ function EmailTab() {
           )}
         </div>
         <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <h3 className="font-medium text-white mb-1">Change Email Address</h3>
+          <h3 className="font-medium text-gray-900 mb-1">Change Email Address</h3>
           <p className="text-gray-400 text-sm">
             To change your email address, please contact our support team at{' '}
             <a href="mailto:support@loadifymarket.co.uk" className="text-gold hover:underline">
@@ -558,7 +558,7 @@ function NotificationsTab() {
         {ITEMS.map(item => (
           <div key={item.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex-1 pr-4">
-              <p className="font-medium text-white text-sm">{item.label}</p>
+              <p className="font-medium text-gray-900 text-sm">{item.label}</p>
               <p className="text-gray-400 text-xs mt-0.5">{item.desc}</p>
             </div>
             <Toggle
@@ -655,11 +655,11 @@ function AddressesTab() {
         <div key={addr.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200 mb-3 flex items-start justify-between gap-4">
           <div>
             {addr.label && <p className="text-gold text-xs font-semibold mb-1">{addr.label} {addr.isDefault && '· Default'}</p>}
-            <p className="text-white text-sm">{addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}</p>
+            <p className="text-gray-700 text-sm">{addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}</p>
             <p className="text-gray-500 text-sm">{addr.city}, {addr.postcode}, {addr.country}</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => { setForm({ ...addr }); setShowForm(true); }} className="text-gray-400 hover:text-white transition-colors">
+            <button onClick={() => { setForm({ ...addr }); setShowForm(true); }} className="text-gray-400 hover:text-[#1E3A5F] transition-colors">
               <Save className="w-4 h-4" />
             </button>
             <button onClick={handleDelete} className="text-red-400/60 hover:text-red-400 transition-colors">
@@ -729,7 +729,7 @@ function PaymentTab() {
         <div className="flex items-start gap-3">
           <CreditCard className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
           <div>
-            <h3 className="font-medium text-white mb-1">Secure Payments via Stripe</h3>
+            <h3 className="font-medium text-gray-900 mb-1">Secure Payments via Stripe</h3>
             <p className="text-gray-400 text-sm">
               Loadify Market processes all payments securely through Stripe. Your card details are
               never stored on our servers — they are managed entirely by Stripe's PCI-DSS compliant
@@ -760,7 +760,7 @@ function BusinessTab() {
         <SectionHeader title="Business / Store Information" subtitle="Available for seller accounts" />
         <div className="p-6 bg-gray-50 rounded-lg border border-gray-200 text-center">
           <Building2 className="w-12 h-12 text-gold/40 mx-auto mb-3" />
-          <h3 className="font-semibold text-white mb-2">You are not a seller</h3>
+          <h3 className="font-semibold text-gray-900 mb-2">You are not a seller</h3>
           <p className="text-gray-400 text-sm mb-4">
             Upgrade your account to start listing products and manage your store.
           </p>
@@ -788,7 +788,7 @@ function BusinessTab() {
           </button>
         </div>
         <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <h3 className="font-medium text-white mb-1">Seller Dashboard</h3>
+          <h3 className="font-medium text-gray-900 mb-1">Seller Dashboard</h3>
           <p className="text-gray-400 text-sm mb-3">
             Manage your listings, orders, shipments, and earnings.
           </p>
@@ -836,7 +836,7 @@ export default function AccountSettingsPage() {
         <div className="flex items-center gap-4 mb-8">
           <button
             onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-1 text-gray-400 hover:text-white transition-colors text-sm"
+            className="flex items-center gap-1 text-gray-400 hover:text-[#1E3A5F] transition-colors text-sm"
           >
             <ChevronLeft className="w-4 h-4" /> Dashboard
           </button>
@@ -849,7 +849,7 @@ export default function AccountSettingsPage() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
           <nav className="lg:w-56 flex-shrink-0">
-            <div className="card-glass p-2">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 p-2">
               {visibleTabs.map(tab => {
                 const Icon = tab.icon;
                 return (
@@ -859,7 +859,7 @@ export default function AccountSettingsPage() {
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                       activeTab === tab.id
                         ? 'bg-gold/20 text-gold border border-gold/30'
-                        : 'text-gray-500 hover:text-white hover:bg-gray-50'
+                        : 'text-gray-500 hover:text-[#1E3A5F] hover:bg-gray-50'
                     }`}
                   >
                     <Icon className="w-4 h-4 flex-shrink-0" />

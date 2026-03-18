@@ -83,7 +83,7 @@ export default function DashboardPage() {
       <div className="container-cinematic py-10 max-w-5xl">
 
         {/* Welcome Header */}
-        <div className="card-glass flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-8">
           <div className="w-16 h-16 rounded-full bg-[#F4C400]/20 flex items-center justify-center flex-shrink-0">
             {user?.avatarUrl ? (
               <img src={user.avatarUrl} alt="" className="w-16 h-16 rounded-full object-cover" />
@@ -126,7 +126,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Orders Summary */}
-        <div className="card-glass mb-8">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-8">
           <div className="flex items-center gap-3 mb-4">
             <ClipboardList className="w-5 h-5 text-gold" />
             <h2 className="text-lg font-bold text-gray-900">Orders Summary</h2>
@@ -155,7 +155,7 @@ export default function DashboardPage() {
               <Link
                 key={link.to}
                 to={link.to}
-                className="card-glass group hover:border-[#1E3A5F]/40 hover:scale-[1.02] transition-all duration-200 flex flex-col items-center text-center p-6"
+                className="bg-white border border-gray-200 rounded-xl p-6 group hover:border-[#1E3A5F]/40 hover:scale-[1.02] transition-all duration-200 flex flex-col items-center text-center p-6"
               >
                 <div className="w-12 h-12 rounded-premium-sm bg-gold/10 flex items-center justify-center mb-3 group-hover:bg-[#F4C400]/20 transition-colors">
                   <Icon className="w-6 h-6 text-gold" />
@@ -169,7 +169,7 @@ export default function DashboardPage() {
 
         {/* Seller Upgrade CTA */}
         {user?.role === 'buyer' && (
-          <div className="card-glass border border-[#F4C400]/20 text-center py-8">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 border border-[#F4C400]/20 text-center py-8">
             <h3 className="text-xl font-bold text-gray-900 mb-2">Want to start selling?</h3>
             <p className="text-gray-500 text-sm mb-5">
               List products, bulk lots, and pallets. Only {BRAND.marketplaceFeePercent}% commission per sale.

@@ -126,7 +126,7 @@ export default function HelpPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gold/10 rounded-full mb-6">
             <HelpCircle className="w-8 h-8 text-gold" />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-4">Help &amp; FAQ</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Help &amp; FAQ</h1>
           <p className="text-gray-500 text-lg mb-8 max-w-xl mx-auto">
             Find answers to common questions about {BRAND.name}
           </p>
@@ -156,7 +156,7 @@ export default function HelpPage() {
             {filteredSections.map(section => {
               const Icon = section.icon;
               return (
-                <div key={section.title} className="card-glass">
+                <div key={section.title} className="bg-white border border-gray-200 rounded-xl p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 bg-gold/10 rounded-premium-sm">
                       <Icon className="w-5 h-5 text-gold" />
@@ -175,7 +175,7 @@ export default function HelpPage() {
         )}
 
         {/* Still need help? */}
-        <div className="card-glass mt-10 text-center">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 mt-10 text-center">
           <h3 className="text-xl font-bold text-gray-900 mb-3">Still need help?</h3>
           <p className="text-gray-500 mb-6 text-sm">
             Our support team is available Monday–Friday 9am–6pm GMT.

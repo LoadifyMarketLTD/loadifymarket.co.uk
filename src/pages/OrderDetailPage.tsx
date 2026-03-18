@@ -175,7 +175,7 @@ export default function OrderDetailPage() {
       <div className="bg-[#F8F9FA] min-h-screen pt-24">
         <div className="container-cinematic py-10 text-center">
           <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">Order not found</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Order not found</h2>
           <Link to="/orders" className="btn-primary mt-4 inline-flex items-center gap-2">
             <ChevronLeft className="w-4 h-4" /> Back to Orders
           </Link>
@@ -225,8 +225,8 @@ export default function OrderDetailPage() {
         </div>
 
         {/* Order Tracking Timeline */}
-        <div className="card-glass mb-6">
-          <h2 className="text-lg font-bold text-white mb-6">Tracking Timeline</h2>
+        <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-6">Tracking Timeline</h2>
           <div className="flex flex-col sm:flex-row gap-2">
             {STATUS_STEPS.map((step, idx) => {
               const Icon = step.icon;
@@ -264,8 +264,8 @@ export default function OrderDetailPage() {
         {/* Order Info Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* Order Summary */}
-          <div className="card-glass">
-            <h2 className="text-lg font-bold text-white mb-4">Order Summary</h2>
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h2>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-400">Product</span>
@@ -305,8 +305,8 @@ export default function OrderDetailPage() {
           </div>
 
           {/* Shipping Address */}
-          <div className="card-glass">
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-gold" />
               Shipping Address
             </h2>
@@ -335,8 +335,8 @@ export default function OrderDetailPage() {
 
         {/* Proof of Delivery */}
         {order.proofOfDelivery?.images?.length ? (
-          <div className="card-glass">
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-green-400" />
               Proof of Delivery
             </h2>

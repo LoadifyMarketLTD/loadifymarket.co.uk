@@ -30,7 +30,7 @@ export default function BuyerProtectionPage() {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gold/10 rounded-full mb-6">
             <ShieldCheck className="w-10 h-10 text-gold" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Buyer Protection
           </h1>
           <p className="text-gray-500 text-lg mb-8">
@@ -59,9 +59,9 @@ export default function BuyerProtectionPage() {
           ].map(f => {
             const Icon = f.icon;
             return (
-              <div key={f.label} className="card-glass text-center py-6">
+              <div key={f.label} className="bg-white border border-gray-200 rounded-xl p-6 text-center py-6">
                 <Icon className="w-8 h-8 text-gold mx-auto mb-3" />
-                <p className="text-white font-semibold text-sm">{f.label}</p>
+                <p className="text-gray-900 font-semibold text-sm">{f.label}</p>
               </div>
             );
           })}
@@ -74,12 +74,12 @@ export default function BuyerProtectionPage() {
             {PROTECTION_CONDITIONS.map(c => {
               const Icon = c.icon;
               return (
-                <div key={c.title} className="card-glass flex items-start gap-4">
+                <div key={c.title} className="bg-white border border-gray-200 rounded-xl p-6 flex items-start gap-4">
                   <div className="p-2.5 bg-gold/10 rounded-premium-sm shrink-0">
                     <Icon className="w-5 h-5 text-gold" />
                   </div>
                   <div>
-                    <p className="font-semibold text-white text-sm mb-1">{c.title}</p>
+                    <p className="font-semibold text-gray-900 text-sm mb-1">{c.title}</p>
                     <p className="text-gray-400 text-xs leading-relaxed">{c.desc}</p>
                   </div>
                 </div>
@@ -98,12 +98,12 @@ export default function BuyerProtectionPage() {
             {PROCESS_STEPS.map((step, i) => {
               const Icon = step.icon;
               return (
-                <div key={step.step} className="card-glass flex items-start gap-4 relative">
+                <div key={step.step} className="bg-white border border-gray-200 rounded-xl p-6 flex items-start gap-4 relative">
                   <div className="w-10 h-10 rounded-full bg-gold flex items-center justify-center text-jet font-bold text-sm shrink-0">
                     {step.step}
                   </div>
                   <div>
-                    <p className="font-bold text-white mb-1">{step.title}</p>
+                    <p className="font-bold text-gray-900 mb-1">{step.title}</p>
                     <p className="text-gray-500 text-sm leading-relaxed">{step.desc}</p>
                   </div>
                   {i < PROCESS_STEPS.length - 1 && (
@@ -118,7 +118,7 @@ export default function BuyerProtectionPage() {
         {/* Timeline */}
         <section className="mb-16">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Dispute Timeline</h2>
-          <div className="card-glass">
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
             <div className="flex flex-col sm:flex-row gap-0 sm:gap-0 relative">
               {/* Connector line */}
               <div className="hidden sm:block absolute top-6 left-0 right-0 h-0.5 bg-gray-100 z-0" style={{ left: '8%', right: '8%' }} />
@@ -129,7 +129,7 @@ export default function BuyerProtectionPage() {
                   }`}>
                     Day {event.day}
                   </div>
-                  <p className="font-semibold text-white text-sm mb-1">{event.label}</p>
+                  <p className="font-semibold text-gray-900 text-sm mb-1">{event.label}</p>
                   <p className="text-gray-400 text-xs leading-relaxed">{event.description}</p>
                 </div>
               ))}
@@ -142,10 +142,10 @@ export default function BuyerProtectionPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Possible Resolutions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {RESOLUTION_TYPES.filter(r => r.key !== 'withdrawn' && r.key !== 'rejected').map(r => (
-              <div key={r.key} className="card-glass border border-gray-200">
+              <div key={r.key} className="bg-white border border-gray-200 rounded-xl p-6 border border-gray-200">
                 <div className="flex items-center gap-2 mb-3">
                   <CheckCircle className="w-5 h-5 text-green-400" />
-                  <p className="font-bold text-white text-sm">{r.label}</p>
+                  <p className="font-bold text-gray-900 text-sm">{r.label}</p>
                 </div>
                 <p className="text-gray-500 text-xs leading-relaxed">{r.description}</p>
               </div>
@@ -156,18 +156,18 @@ export default function BuyerProtectionPage() {
         {/* Refund policy */}
         <section className="mb-16">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Refund Policy</h2>
-          <div className="card-glass space-y-4 text-sm">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4 text-sm">
             <div className="flex items-start gap-3">
               <ChevronRight className="w-4 h-4 text-gold shrink-0 mt-0.5" />
-              <p className="text-gray-600">Refunds are issued within <strong className="text-white">3–5 business days</strong> of an approved resolution, returned to your original payment method.</p>
+              <p className="text-gray-600">Refunds are issued within <strong className="text-gray-900">3–5 business days</strong> of an approved resolution, returned to your original payment method.</p>
             </div>
             <div className="flex items-start gap-3">
               <ChevronRight className="w-4 h-4 text-gold shrink-0 mt-0.5" />
-              <p className="text-gray-600">Returns must be submitted within <strong className="text-white">{BRAND.returnsDays} days</strong> of delivery. Items must be in original condition where possible.</p>
+              <p className="text-gray-600">Returns must be submitted within <strong className="text-gray-900">{BRAND.returnsDays} days</strong> of delivery. Items must be in original condition where possible.</p>
             </div>
             <div className="flex items-start gap-3">
               <ChevronRight className="w-4 h-4 text-gold shrink-0 mt-0.5" />
-              <p className="text-gray-600">Payments are held in <strong className="text-white">escrow</strong> until delivery is confirmed. Funds are never released to the seller during an open dispute.</p>
+              <p className="text-gray-600">Payments are held in <strong className="text-gray-900">escrow</strong> until delivery is confirmed. Funds are never released to the seller during an open dispute.</p>
             </div>
             <div className="flex items-start gap-3">
               <ChevronRight className="w-4 h-4 text-gold shrink-0 mt-0.5" />
@@ -178,11 +178,11 @@ export default function BuyerProtectionPage() {
 
         {/* Abuse protection notice */}
         <section className="mb-16">
-          <div className="card-glass border border-yellow-400/20">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 border border-yellow-400/20">
             <div className="flex items-start gap-4">
               <AlertTriangle className="w-6 h-6 text-yellow-400 shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-bold text-white mb-2">Abuse Prevention</h3>
+                <h3 className="font-bold text-gray-900 mb-2">Abuse Prevention</h3>
                 <p className="text-gray-500 text-sm leading-relaxed">
                   {BRAND.name} monitors for misuse of the buyer protection system. Buyers who repeatedly open fraudulent disputes may have their accounts suspended and may be liable for any losses incurred. Admin has the authority to reject disputes and suspend accounts where abuse is detected.
                 </p>
@@ -193,9 +193,9 @@ export default function BuyerProtectionPage() {
 
         {/* CTA */}
         <section className="text-center">
-          <div className="card-glass py-12">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 py-12">
             <ShieldCheck className="w-14 h-14 text-gold mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-white mb-3">Need to Open a Dispute?</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">Need to Open a Dispute?</h3>
             <p className="text-gray-500 mb-6 max-w-md mx-auto">
               Go to your orders, find the affected order, and click Open Dispute. Our team will help resolve your case.
             </p>

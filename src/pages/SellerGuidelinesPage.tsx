@@ -85,7 +85,7 @@ export default function SellerGuidelinesPage() {
             </Link>
             <Link
               to="/pricing"
-              className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-6 py-3 rounded transition-colors"
+              className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-[#1E3A5F] font-semibold px-6 py-3 rounded transition-colors"
             >
               View Fees &amp; Pricing
             </Link>
@@ -169,7 +169,7 @@ export default function SellerGuidelinesPage() {
             </Link>
             <Link
               to="/contact"
-              className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-6 py-3 rounded transition-colors"
+              className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-[#1E3A5F] font-semibold px-6 py-3 rounded transition-colors"
             >
               Contact Us
             </Link>

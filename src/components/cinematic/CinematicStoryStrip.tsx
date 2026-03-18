@@ -48,7 +48,7 @@ export default function CinematicStoryStrip() {
   ];
 
   return (
-    <section className="py-20 bg-jet">
+    <section className="py-20 bg-[#F8F9FA]">
       <div className="container-cinematic">
         {/* Section Header */}
         <div className="text-center mb-16">

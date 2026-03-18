@@ -121,10 +121,10 @@
   }
 
   .btn-glass {
-    @apply bg-white/10 backdrop-blur-glass text-white px-6 py-3 rounded-premium-sm font-medium
-           border border-white/20
+    @apply bg-white text-gray-700 px-6 py-3 rounded-premium-sm font-medium
+           border border-gray-300
            transition-all duration-300 ease-out
-           hover:bg-white/20 hover:border-gold/50
+           hover:bg-gray-50 hover:border-[#1E3A5F]/40 hover:text-[#1E3A5F]
            active:scale-[0.98];
   }
 

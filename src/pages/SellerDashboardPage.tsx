@@ -239,7 +239,7 @@ export default function SellerDashboardPage() {
   if (!user || !hasSellerAccess(user)) {
     return (
       <div className="container-cinematic py-8">
-        <div className="card-glass text-center py-12">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-12">
           <h2 className="text-2xl font-bold mb-4">Seller Access Required</h2>
           <p className="text-gray-500 mb-6">You need to be registered as a seller to access this page.</p>
           <Link to="/register?type=seller" className="btn-primary">
@@ -372,7 +372,7 @@ export default function SellerDashboardPage() {
               <div>
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-500 text-sm">Total Products</p>
@@ -382,7 +382,7 @@ export default function SellerDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-500 text-sm">Active Products</p>
@@ -392,7 +392,7 @@ export default function SellerDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-500 text-sm">Total Orders</p>
@@ -402,7 +402,7 @@ export default function SellerDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-gray-500 text-sm">Total Revenue</p>
@@ -414,7 +414,7 @@ export default function SellerDashboardPage() {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="card-glass mb-8">
+                <div className="bg-white border border-gray-200 rounded-xl p-6 mb-8">
                   <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                     <Link
@@ -466,7 +466,7 @@ export default function SellerDashboardPage() {
                 </div>
 
                 {/* Recent Orders */}
-                <div className="card-glass">
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
                   <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Orders</h2>
                   {orders.length === 0 ? (
                     <p className="text-gray-400 text-center py-8">No orders yet.</p>
@@ -498,7 +498,7 @@ export default function SellerDashboardPage() {
                 </div>
 
                 {/* XDrive Transport Support Note */}
-                <div className="card-glass mt-6 border-l-4 border-l-[#F4C400]/50 bg-[#F4C400]/5">
+                <div className="bg-white border border-gray-200 rounded-xl p-6 mt-6 border-l-4 border-l-[#F4C400]/50 bg-[#F4C400]/5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
                       <Truck className="h-5 w-5 text-[#F4C400] mt-0.5 flex-shrink-0" />
@@ -534,7 +534,7 @@ export default function SellerDashboardPage() {
 
                 {/* Time Period Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <div className="flex items-center mb-2">
                       <BarChart3 className="h-5 w-5 text-[#F4C400] mr-2" />
                       <h3 className="font-semibold text-sm text-gray-500">Last 30 Days</h3>
@@ -571,7 +571,7 @@ export default function SellerDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <div className="flex items-center mb-2">
                       <TrendingUp className="h-5 w-5 text-green-600 mr-2" />
                       <h3 className="font-semibold text-sm text-gray-500">All Time</h3>
@@ -588,7 +588,7 @@ export default function SellerDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <div className="flex items-center mb-2">
                       <DollarSign className="h-5 w-5 text-gold-500 mr-2" />
                       <h3 className="font-semibold text-sm text-gray-500">Average Order Value</h3>
@@ -607,7 +607,7 @@ export default function SellerDashboardPage() {
                 </div>
 
                 {/* Top Products */}
-                <div className="card-glass mb-8">
+                <div className="bg-white border border-gray-200 rounded-xl p-6 mb-8">
                   <h3 className="text-xl font-bold text-gray-900 mb-4">Top 5 Products by Revenue</h3>
                   {(() => {
                     // Calculate revenue per product
@@ -669,7 +669,7 @@ export default function SellerDashboardPage() {
                 </div>
 
                 {/* Simple Sales Chart - using text-based visualization */}
-                <div className="card-glass">
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-4">Sales Trend (Last 7 Days)</h3>
                   {(() => {
                     // Group orders by date for last 7 days
@@ -710,7 +710,7 @@ export default function SellerDashboardPage() {
                                 style={{ width: `${(day.revenue / maxRevenue) * 100}%` }}
                               >
                                 {day.revenue > 0 && (
-                                  <span className="text-xs text-white font-medium">
+                                  <span className="text-xs text-gray-900 font-medium">
                                     {formatPrice(day.revenue)}
                                   </span>
                                 )}
@@ -727,7 +727,7 @@ export default function SellerDashboardPage() {
 
             {/* Products Tab */}
             {activeTab === 'products' && (
-              <div className="card-glass">
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-bold text-gray-900">My Products</h2>
                   <Link to="/seller/products/new" className="btn-primary flex items-center space-x-2">
@@ -830,7 +830,7 @@ export default function SellerDashboardPage() {
 
             {/* Orders Tab */}
             {activeTab === 'orders' && (
-              <div className="card-glass">
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">My Orders</h2>
                 {orders.length === 0 ? (
                   <p className="text-gray-400 text-center py-8">No orders yet.</p>
@@ -875,7 +875,7 @@ export default function SellerDashboardPage() {
             {/* Deliveries Tab */}
             {activeTab === 'deliveries' && (
               <div>
-                <div className="card-glass mb-6">
+                <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
                   <div className="flex items-center justify-between mb-5">
                     <div>
                       <h2 className="text-xl font-bold flex items-center gap-2">
@@ -1009,26 +1009,26 @@ export default function SellerDashboardPage() {
 
                 {/* Balance cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <p className="text-sm text-gray-500 mb-1">Total Sales</p>
                     <p className="text-2xl font-bold text-gray-900">{formatPrice(stats.totalRevenue)}</p>
                     <p className="text-xs text-gray-400 mt-1">Gross revenue (excl. VAT)</p>
                   </div>
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <p className="text-sm text-gray-500 mb-1">Platform Fee (7%)</p>
                     <p className="text-2xl font-bold text-red-600">
                       {formatPrice(orders.reduce((s, o) => s + (o.commission ?? 0), 0))}
                     </p>
                     <p className="text-xs text-gray-400 mt-1">Deducted automatically</p>
                   </div>
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <p className="text-sm text-gray-500 mb-1">Available Balance</p>
                     <p className="text-2xl font-bold text-green-600">
                       {formatPrice(sellerBalance?.availableAmount ?? 0)}
                     </p>
                     <p className="text-xs text-gray-400 mt-1">Ready to withdraw</p>
                   </div>
-                  <div className="card-glass">
+                  <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <p className="text-sm text-gray-500 mb-1">Pending Payouts</p>
                     <p className="text-2xl font-bold text-amber-600">
                       {formatPrice(sellerBalance?.pendingAmount ?? 0)}
@@ -1038,7 +1038,7 @@ export default function SellerDashboardPage() {
                 </div>
 
                 {/* ── Stripe Connect Panel ──────────────────────────────── */}
-                <div className="card-glass">
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-[#F4C400]" />
                     Stripe Connect
@@ -1178,7 +1178,7 @@ export default function SellerDashboardPage() {
                 {/* ──────────────────────────────────────────────────────── */}
 
                 {/* Payout History */}
-                <div className="card-glass">
+                <div className="bg-white border border-gray-200 rounded-xl p-6">
                   <h3 className="text-lg font-semibold mb-4">Payout History</h3>
                   {sellerPayouts.length === 0 ? (
                     <p className="text-gray-400 text-center py-6">No payout records yet. Payouts will appear here once Stripe Connect transfers begin.</p>

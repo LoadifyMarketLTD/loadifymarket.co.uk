@@ -36,7 +36,7 @@ export default function CookieBanner() {
           <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={declineCookies}
-              className="text-xs py-1.5 px-3 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-white transition-all whitespace-nowrap"
+              className="text-xs py-1.5 px-3 rounded-lg bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-[#1E3A5F] transition-all whitespace-nowrap"
             >
               Decline
             </button>
@@ -48,7 +48,7 @@ export default function CookieBanner() {
             </button>
             <button
               onClick={declineCookies}
-              className="p-1.5 text-gray-400 hover:text-white transition-colors flex-shrink-0 sm:hidden"
+              className="p-1.5 text-gray-400 hover:text-[#1E3A5F] transition-colors flex-shrink-0 sm:hidden"
               aria-label="Close"
             >
               <X className="w-4 h-4" />

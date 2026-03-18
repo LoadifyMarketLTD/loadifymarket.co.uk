@@ -219,7 +219,7 @@ export default function FrequentlyBoughtTogether({ productId, currentProduct }: 
     <div className="my-12">
       <h2 className="text-2xl font-bold mb-6">Frequently Bought Together</h2>
       
-      <div className="card-glass">
+      <div className="bg-white border border-gray-200 rounded-xl p-6">
         <div className="space-y-6">
           {/* Product List */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -295,7 +295,7 @@ export default function FrequentlyBoughtTogether({ productId, currentProduct }: 
                   
                   <Link
                     to={`/product/${product.id}`}
-                    className="font-medium text-sm line-clamp-2 mb-2 text-white hover:text-gold transition-colors"
+                    className="font-medium text-sm line-clamp-2 mb-2 text-gray-900 hover:text-gold transition-colors"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {product.title}

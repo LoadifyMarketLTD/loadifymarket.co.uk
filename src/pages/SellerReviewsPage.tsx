@@ -145,7 +145,7 @@ export default function SellerReviewsPage() {
   if (!user) {
     return (
       <div className="bg-[#F8F9FA] min-h-screen pt-24 flex items-center justify-center">
-        <div className="card-glass text-center py-12 px-8">
+        <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-12 px-8">
           <p className="text-gray-500 mb-4">Sign in to view your seller reviews.</p>
           <Link to="/login" className="btn-primary">Sign In</Link>
         </div>
@@ -184,7 +184,7 @@ export default function SellerReviewsPage() {
           ].map(stat => {
             const Icon = stat.icon;
             return (
-              <div key={stat.label} className="card-glass text-center">
+              <div key={stat.label} className="bg-white border border-gray-200 rounded-xl p-6 text-center">
                 <Icon className={`w-6 h-6 mx-auto mb-2 ${stat.color}`} />
                 <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                 <p className="text-gray-400 text-xs mt-1">{stat.label}</p>
@@ -227,9 +227,9 @@ export default function SellerReviewsPage() {
             <div className="w-10 h-10 border-2 border-gold border-t-transparent rounded-full animate-spin" />
           </div>
         ) : reviews.length === 0 ? (
-          <div className="card-glass text-center py-20">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-20">
             <MessageSquare className="w-16 h-16 text-white/10 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">No reviews yet</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No reviews yet</h3>
             <p className="text-gray-400">Your product reviews will appear here once customers leave feedback.</p>
           </div>
         ) : (
@@ -237,7 +237,7 @@ export default function SellerReviewsPage() {
             {reviews.map(review => {
               const isResponding = respondingTo === review.id;
               return (
-                <div key={review.id} className="card-glass group">
+                <div key={review.id} className="bg-white border border-gray-200 rounded-xl p-6 group">
                   {/* Product label */}
                   <div className="flex items-center justify-between mb-3">
                     <Link
@@ -253,7 +253,7 @@ export default function SellerReviewsPage() {
 
                   {/* Buyer + stars */}
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="font-semibold text-white text-sm">{review.userName || 'Buyer'}</span>
+                    <span className="font-semibold text-gray-900 text-sm">{review.userName || 'Buyer'}</span>
                     {review.isVerifiedPurchase && (
                       <span className="flex items-center gap-1 text-xs text-green-400">
                         <CheckCircle className="w-3 h-3" /> Verified
@@ -268,7 +268,7 @@ export default function SellerReviewsPage() {
                   </div>
 
                   {/* Content */}
-                  {review.title && <h4 className="font-semibold text-white text-sm mb-1">{review.title}</h4>}
+                  {review.title && <h4 className="font-semibold text-gray-900 text-sm mb-1">{review.title}</h4>}
                   <p className="text-gray-600 text-sm leading-relaxed mb-3">{review.comment}</p>
 
                   {/* Images */}

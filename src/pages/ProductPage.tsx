@@ -239,7 +239,7 @@ export default function ProductPage() {
     return (
       <div className="bg-[#F8F9FA] min-h-screen pt-24">
         <div className="container-cinematic py-12">
-          <div className="card-glass text-center py-16">
+          <div className="bg-white border border-gray-200 rounded-xl text-center py-16">
             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h2>
             <p className="text-gray-500 mb-6">
@@ -443,7 +443,7 @@ export default function ProductPage() {
                   {product.palletInfo.palletType && (
                     <>
                       <dt className="text-gray-400">Pallet Type</dt>
-                      <dd className="text-white font-semibold capitalize">{product.palletInfo.palletType}</dd>
+                      <dd className="text-gray-900 font-semibold capitalize">{product.palletInfo.palletType}</dd>
                     </>
                   )}
                 </dl>
@@ -539,7 +539,7 @@ export default function ProductPage() {
             )}
 
             {/* Seller Info Panel */}
-            <div className="card-glass mb-8">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 mb-8">
               <SellerPerformance sellerId={product.sellerId} compact={false} />
               <div className="mt-4 pt-4 border-t border-gray-200 flex flex-col gap-2">
                 {(product as Product & { storeSlug?: string }).storeSlug && (
@@ -567,7 +567,7 @@ export default function ProductPage() {
             {(() => {
               const productWithStore = product as Product & { storeSlug?: string; storeName?: string };
               return (
-                <div className="card-glass mb-8 border border-gray-200">
+                <div className="bg-white border border-gray-200 rounded-xl p-6 mb-8">
                   <h3 className="text-base font-bold text-gray-900 mb-3 flex items-center gap-2">
                     <Store className="w-4 h-4 text-gold" />
                     Seller Information
@@ -599,22 +599,22 @@ export default function ProductPage() {
 
             {/* Trust Badges */}
             <div className="grid grid-cols-3 gap-4">
-              <div className="card-glass text-center py-4">
+              <div className="bg-white border border-gray-200 rounded-xl text-center py-4 p-4">
                 <Shield className="w-6 h-6 text-gold mx-auto mb-2" />
                 <p className="text-xs text-gray-500">Secure Marketplace Checkout</p>
               </div>
-              <div className="card-glass text-center py-4">
+              <div className="bg-white border border-gray-200 rounded-xl text-center py-4 p-4">
                 <Zap className="w-6 h-6 text-gold mx-auto mb-2" />
                 <p className="text-xs text-gray-500">Seller Fulfilled Shipping</p>
               </div>
-              <div className="card-glass text-center py-4">
+              <div className="bg-white border border-gray-200 rounded-xl text-center py-4 p-4">
                 <Truck className="w-6 h-6 text-gold mx-auto mb-2" />
                 <p className="text-xs text-gray-500">Verified Marketplace Sellers</p>
               </div>
             </div>
 
             {/* Delivery Options */}
-            <div className="card-glass mt-6 border border-gray-100">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 mt-6">
               <h3 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Truck className="w-5 h-5 text-gold" />
                 Delivery Options
@@ -694,7 +694,7 @@ export default function ProductPage() {
         {/* Pallet Info */}
         {product.type === 'pallet' && product.palletInfo && (
           <div className="mt-12">
-            <div className="card-glass glass-gold">
+            <div className="bg-[#F4C400]/5 border border-[#F4C400]/20 rounded-xl p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <Package className="w-6 h-6 text-gold" />
                 Pallet Information
@@ -710,7 +710,7 @@ export default function ProductPage() {
                 </div>
                 <div>
                   <p className="text-gray-400 text-sm">Pallet Type</p>
-                  <p className="text-2xl font-bold text-white capitalize">
+                  <p className="text-2xl font-bold text-gray-900 capitalize">
                     {product.palletInfo.palletType}
                   </p>
                 </div>
@@ -721,7 +721,7 @@ export default function ProductPage() {
 
         {/* Description */}
         <div className="mt-12">
-          <div className="card-glass">
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Description</h2>
             <div className="prose prose-invert max-w-full">
               <p className="text-gray-600 whitespace-pre-line leading-relaxed">
@@ -734,7 +734,7 @@ export default function ProductPage() {
         {/* Dimensions */}
         {product.dimensions && (
           <div className="mt-8">
-            <div className="card-glass">
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Dimensions</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
@@ -763,7 +763,7 @@ export default function ProductPage() {
         {/* Specifications */}
         {product.specifications && Object.keys(product.specifications).length > 0 && (
           <div className="mt-8">
-            <div className="card-glass">
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Specifications</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {Object.entries(product.specifications).map(([key, value]) => (
@@ -782,14 +782,14 @@ export default function ProductPage() {
 
         {/* Product Q&A Section */}
         <div className="mt-12">
-          <div className="card-glass">
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
             <ProductQA productId={product.id} sellerId={product.sellerId} />
           </div>
         </div>
 
         {/* Reviews Section */}
         <div className="mt-12">
-          <div className="card-glass">
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
             <ProductReviews 
               productId={product.id} 
               averageRating={product.rating}

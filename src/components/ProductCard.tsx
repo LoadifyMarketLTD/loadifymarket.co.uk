@@ -77,7 +77,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Discount badge */}
         {typeof discount === 'number' && discount > 0 && (
           <div className="absolute bottom-2 left-2">
-            <span className="inline-flex items-center gap-1 bg-[#C2410C] text-white text-[10px] font-bold px-2 py-0.5 rounded">
+            <span className="inline-flex items-center gap-1 bg-[#C2410C] text-gray-900 text-[10px] font-bold px-2 py-0.5 rounded">
               <Tag className="w-2.5 h-2.5" />
               -{discount}%
             </span>
