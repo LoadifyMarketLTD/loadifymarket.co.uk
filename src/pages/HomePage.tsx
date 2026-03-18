@@ -4,7 +4,7 @@ import {
   ArrowRight, Layers,
   LayoutGrid,
   RotateCcw, Tag,
-  BadgeCheck, ShieldCheck, Truck,
+  BadgeCheck, ShieldCheck, ShieldAlert,
 } from 'lucide-react';
 import CinematicHero from '../components/cinematic/CinematicHero';
 import { supabase } from '../lib/supabase';
@@ -17,9 +17,9 @@ const HomeBelowFold = lazy(() => import('../components/HomeBelowFold'));
 
 // ── Trust bar items ───────────────────────────────────────────────────────────
 const TRUST_ITEMS = [
-  { icon: BadgeCheck, label: 'Verified Sellers',   desc: 'All sellers are vetted before listing' },
-  { icon: ShieldCheck, label: 'Secure Platform',   desc: 'Payments powered by Stripe' },
-  { icon: Truck,       label: 'UK Delivery Support', desc: 'Nationwide delivery & collection' },
+  { icon: BadgeCheck, label: 'Verified Sellers',  desc: 'All sellers are vetted before listing' },
+  { icon: ShieldCheck, label: 'Secure Payments',  desc: 'Payments powered by Stripe' },
+  { icon: ShieldAlert, label: 'Buyer Protection', desc: 'Dispute resolution & purchase protection' },
 ];
 
 // ── Consumer goods categories ────────────────────────────────────────────────
@@ -397,8 +397,8 @@ export default function HomePage() {
         <div className="container-market">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Wholesale &amp; Bulk Trading</h2>
-              <p className="text-sm text-gray-500">Pallets, job lots, clearance loads and trade stock at warehouse prices</p>
+              <h2 className="text-xl font-bold text-gray-900">Stock Opportunities</h2>
+              <p className="text-sm text-gray-500">Wholesale lots, clearance, returns &amp; job lots — ready to resell</p>
             </div>
             <Link to="/category/wholesale" className="text-sm text-[#1E3A5F] hover:underline font-medium whitespace-nowrap">
               Browse All →
@@ -434,8 +434,8 @@ export default function HomePage() {
       <section className="bg-white py-8 border-b border-gray-200">
         <div className="container-market">
           <SectionHeader
-            title="Featured Products"
-            subtitle="Top picks from verified UK sellers"
+            title="Featured Deals"
+            subtitle="Top opportunities from verified UK sellers"
             viewAllHref="/catalog"
           />
 
@@ -465,7 +465,7 @@ export default function HomePage() {
                     </div>
                     <div className="p-3">
                       <p className="text-sm font-medium text-gray-800 line-clamp-2 leading-tight mb-1">{item.title}</p>
-                      <span className="inline-block text-xs px-2 py-0.5 rounded font-medium bg-[#F4C400]/20 text-gray-700">Coming Soon</span>
+                      <span className="inline-block text-xs px-2 py-0.5 rounded font-medium bg-[#F4C400]/20 text-gray-700">New Listing</span>
                     </div>
                   </Link>
                 )

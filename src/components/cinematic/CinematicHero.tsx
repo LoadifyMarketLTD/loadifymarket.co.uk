@@ -1,5 +1,12 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Store, ShoppingBag } from 'lucide-react';
+import { ArrowRight, Store, ShoppingBag, BadgeCheck, ShieldCheck, ShieldAlert, MapPin } from 'lucide-react';
+
+const HERO_TRUST = [
+  { icon: BadgeCheck, label: 'Verified Sellers' },
+  { icon: ShieldCheck, label: 'Secure Payments' },
+  { icon: ShieldAlert, label: 'Buyer Protection' },
+  { icon: MapPin,      label: 'UK Marketplace' },
+];
 
 export default function CinematicHero() {
   return (
@@ -9,18 +16,18 @@ export default function CinematicHero() {
           {/* Left: Text Content */}
           <div>
             <div className="inline-flex items-center gap-2 bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
-              UK Multi-Category Marketplace Intermediary
+              UK Stock &amp; Profit Marketplace
             </div>
             <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight mb-4">
-              Buy &amp; Sell Stock Through<br />One Trusted Marketplace
+              Turn Your Stock Into<br />Profit — Fast
             </h1>
             <p className="text-lg text-gray-600 mb-2 leading-relaxed">
-              Connect with real sellers and buyers. List your stock, find new opportunities, and trade securely through our platform powered by Stripe.
+              Buy &amp; sell wholesale, clearance, returns and mixed stock across the UK.
             </p>
-            <p className="text-sm font-semibold text-[#1E3A5F] mb-8">
+            <p className="text-sm font-semibold text-[#1E3A5F] mb-6">
               Start selling with 0% commission for the first 3 months.
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 mb-6">
               <Link
                 to="/register?type=seller"
                 className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-7 py-3.5 rounded text-base transition-colors shadow-sm"
@@ -37,7 +44,16 @@ export default function CinematicHero() {
                 Browse Products
               </Link>
             </div>
-            <p className="text-xs text-gray-400 mt-4">
+            {/* Inline trust signals */}
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              {HERO_TRUST.map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-1.5 text-xs text-gray-600">
+                  <Icon className="w-3.5 h-3.5 text-[#1E3A5F]" />
+                  <span>{label}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-400 mt-3">
               Loadify Market is a platform that connects independent sellers and buyers. All products are listed and sold by third-party sellers.
             </p>
           </div>
@@ -46,20 +62,19 @@ export default function CinematicHero() {
           <div className="relative">
             <div className="relative rounded-xl overflow-hidden shadow-lg aspect-[16/10]">
               <img
-                src="https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=65&auto=format&fit=max&fm=webp"
+                src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=768&q=65&auto=format&fit=max&fm=webp"
                 srcSet="
-                  https://images.unsplash.com/photo-1553413077-190dd305871c?w=480&q=65&auto=format&fit=max&fm=webp 480w,
-                  https://images.unsplash.com/photo-1553413077-190dd305871c?w=640&q=65&auto=format&fit=max&fm=webp 640w,
-                  https://images.unsplash.com/photo-1553413077-190dd305871c?w=768&q=65&auto=format&fit=max&fm=webp 768w,
-                  https://images.unsplash.com/photo-1553413077-190dd305871c?w=1280&q=65&auto=format&fit=max&fm=webp 1280w"
+                  https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=480&q=65&auto=format&fit=max&fm=webp 480w,
+                  https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=640&q=65&auto=format&fit=max&fm=webp 640w,
+                  https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=768&q=65&auto=format&fit=max&fm=webp 768w,
+                  https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1280&q=65&auto=format&fit=max&fm=webp 1280w"
                 sizes="(max-width: 480px) 100vw, (max-width: 1023px) 100vw, 640px"
-                alt="UK warehouse with pallets and stock"
+                alt="Mixed stock and products for a UK marketplace"
                 className="w-full h-full object-cover"
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
               />
-
             </div>
             {/* Floating stat badges */}
             <div className="absolute -bottom-3 -left-3 bg-white border border-gray-200 rounded-lg shadow-md px-4 py-2.5">
@@ -68,7 +83,7 @@ export default function CinematicHero() {
             </div>
             <div className="absolute -top-3 -right-3 bg-[#F4C400] rounded-lg shadow-md px-4 py-2.5">
               <p className="text-xs text-gray-700">Active Listings</p>
-              <p className="text-xl font-bold text-gray-900">1000+</p>
+              <p className="text-xl font-bold text-gray-900">1,000+</p>
             </div>
           </div>
         </div>
