@@ -2,16 +2,23 @@ import { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle, ShoppingBag, ArrowRight, Package, Shield, Truck, Star } from 'lucide-react';
 import { useCartStore } from '../store';
+import { useCart } from '../contexts/CartContext';
 import { BRAND } from '../constants/brand';
 
 export default function OrderSuccessPage() {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
-  const { clearCart } = useCartStore();
+  const { clearCart: clearZustandCart } = useCartStore();
+  const { clearCart: clearContextCart } = useCart();
 
   useEffect(() => {
-    // Clear cart after successful payment — run once on mount
-    clearCart();
+    // Clear both cart stores after successful payment.
+    // The pixel-perfect public checkout uses CartContext (key: loadify_cart).
+    // Protected/legacy pages use the Zustand store (key: loadify-cart).
+    // Clearing both ensures the cart is always empty after a successful payment
+    // regardless of which store the user's session was using.
+    clearZustandCart();
+    clearContextCart();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

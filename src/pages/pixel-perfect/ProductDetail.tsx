@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -7,18 +8,141 @@ import ProductInfo from "@/components/product/ProductInfo";
 import SellerCard from "@/components/product/SellerCard";
 import ProductReviews from "@/components/product/ProductReviews";
 import ProductCard from "@/components/catalog/ProductCard";
-import { mockProducts } from "@/data/mockProducts";
+import type { Product } from "@/components/catalog/ProductCard";
+import { supabase } from "@/lib/supabase";
+import { adaptProduct } from "@/lib/productAdapter";
+import type { DBProduct } from "@/lib/productAdapter";
 
-// Simulated extra images per product using other category images
-import homeImg from "@/assets/categories/home.jpg";
-import mixedPalletsImg from "@/assets/categories/mixed-pallets.jpg";
-import overstockImg from "@/assets/categories/overstock.jpg";
+const PRODUCT_QUERY = `
+  *,
+  category:categories!categoryId(name, slug),
+  subcategory:categories!subcategoryId(name, slug),
+  seller:seller_profiles_public!left(
+    businessName,
+    isApproved,
+    rating,
+    userId
+  )
+`;
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const product = mockProducts.find((p) => p.id === id);
 
-  if (!product) {
+  const [product, setProduct] = useState<Product | null>(null);
+  const [related, setRelated] = useState<Product[]>([]);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [sellerListingCount, setSellerListingCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchProduct = async () => {
+      setLoading(true);
+      setNotFound(false);
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select(PRODUCT_QUERY)
+          .eq("id", id)
+          .eq("isActive", true)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (!data) {
+          setNotFound(true);
+          return;
+        }
+
+        const normalised = {
+          ...data,
+          category: Array.isArray(data.category) ? data.category[0] : data.category,
+          subcategory: Array.isArray(data.subcategory) ? data.subcategory[0] : data.subcategory,
+          seller: Array.isArray(data.seller) ? data.seller[0] : data.seller,
+        } as unknown as DBProduct;
+
+        const adapted = adaptProduct(normalised);
+        setProduct(adapted);
+
+        // Use real product images (or at least the first one)
+        const imgs = Array.isArray(data.images) && data.images.length > 0
+          ? data.images
+          : [adapted.image];
+        setGalleryImages(imgs);
+
+        // Fetch related products from the same category
+        if (data.categoryId) {
+          const { data: relData } = await supabase
+            .from("products")
+            .select(PRODUCT_QUERY)
+            .eq("isActive", true)
+            .eq("isApproved", true)
+            .eq("categoryId", data.categoryId)
+            .neq("id", id)
+            .order("rating", { ascending: false })
+            .limit(3);
+
+          if (relData) {
+            const normRel = relData.map((p: Record<string, unknown>) => ({
+              ...p,
+              category: Array.isArray(p.category) ? p.category[0] : p.category,
+              subcategory: Array.isArray(p.subcategory) ? p.subcategory[0] : p.subcategory,
+              seller: Array.isArray(p.seller) ? p.seller[0] : p.seller,
+            }));
+            setRelated(normRel.map((p) => adaptProduct(p as unknown as DBProduct)));
+          }
+        }
+
+        // Fetch seller's active listing count
+        const sellerUserId = Array.isArray(data.seller)
+          ? data.seller[0]?.userId
+          : data.seller?.userId;
+        if (sellerUserId) {
+          const { count } = await supabase
+            .from("products")
+            .select("id", { count: "exact", head: true })
+            .eq("sellerId", sellerUserId)
+            .eq("isActive", true)
+            .eq("isApproved", true);
+          setSellerListingCount(count ?? 0);
+        }
+      } catch (err) {
+        console.error("Error fetching product:", err);
+        setNotFound(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="pt-20 pb-16">
+          <div className="container mx-auto px-4">
+            <div className="grid lg:grid-cols-[1fr_420px] gap-8 animate-pulse">
+              <div className="space-y-8">
+                <div className="aspect-[4/3] bg-card rounded-xl border border-border" />
+                <div className="h-48 bg-card rounded-xl border border-border" />
+              </div>
+              <div className="space-y-6">
+                <div className="h-80 bg-card rounded-xl border border-border" />
+                <div className="h-40 bg-card rounded-xl border border-border" />
+              </div>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (notFound || !product) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -32,20 +156,6 @@ const ProductDetail = () => {
       </div>
     );
   }
-
-  // Simulate multiple images
-  const galleryImages = [product.image, homeImg, mixedPalletsImg, overstockImg];
-
-  // Related products (same category, different id)
-  const related = mockProducts
-    .filter((p) => p.category === product.category && p.id !== product.id)
-    .slice(0, 3);
-
-  // If not enough related, fill with random
-  const relatedProducts =
-    related.length >= 3
-      ? related
-      : [...related, ...mockProducts.filter((p) => p.id !== product.id).slice(0, 3 - related.length)];
 
   return (
     <div className="min-h-screen bg-background">
@@ -78,7 +188,7 @@ const ProductDetail = () => {
                   <p>
                     This {product.condition.toLowerCase()} condition lot includes {product.unitCount}{" "}
                     {product.unitCount === 1 ? "lot" : "lots"} of {product.category.toLowerCase()} items.
-                    Located in {product.location}, available for collection or delivery UK-wide.
+                    {product.location ? ` Located in ${product.location}, available for collection or delivery UK-wide.` : "Available for UK-wide delivery."}
                   </p>
                   <p>
                     All items have been sourced from reputable UK retailers and brands. Ideal for
@@ -94,7 +204,7 @@ const ProductDetail = () => {
                   </ul>
                   <h3 className="font-display text-sm font-semibold text-foreground pt-2">Shipping & Collection</h3>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>Collection available from {product.location}</li>
+                    {product.location && <li>Collection available from {product.location}</li>}
                     <li>UK mainland delivery available (quote on request)</li>
                     <li>Items are securely packaged and ready for transport</li>
                   </ul>
@@ -132,18 +242,18 @@ const ProductDetail = () => {
                   verified={product.sellerVerified}
                   rating={product.rating}
                   location={product.location}
-                  totalListings={Math.floor(Math.random() * 20) + 5}
+                  totalListings={sellerListingCount}
                 />
               </div>
             </div>
           </div>
 
           {/* Related products */}
-          {relatedProducts.length > 0 && (
+          {related.length > 0 && (
             <div className="mt-16">
               <h2 className="font-display text-xl font-bold text-foreground mb-6">Similar Listings</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {relatedProducts.map((p) => (
+                {related.map((p) => (
                   <Link key={p.id} to={`/product/${p.id}`}>
                     <ProductCard product={p} />
                   </Link>
