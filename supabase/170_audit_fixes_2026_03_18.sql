@@ -26,17 +26,13 @@ DROP VIEW IF EXISTS seller_profiles_public;
 
 CREATE VIEW seller_profiles_public AS
 SELECT
-  id,
   "userId",
   "businessName",
-  "businessType",
   "marketplaceRole",
   "isApproved",
   "verificationStatus",
-  "rating",
-  "reviewCount",
+  rating,
   "salesCount",
-  "responseRate",
   "deliverySuccessRate",
   "paymentBehaviour",
   "createdAt"
@@ -157,5 +153,5 @@ COMMENT ON COLUMN orders."sellerId"  IS 'FK → seller_profiles.userId (not sell
 COMMENT ON COLUMN orders."buyerId"   IS 'FK → users.id';
 COMMENT ON COLUMN order_items."orderId"   IS 'FK → orders.id';
 COMMENT ON COLUMN order_items."productId" IS 'FK → products.id';
-COMMENT ON COLUMN products."sellerId"     IS 'FK → users.id (the seller user)';
+COMMENT ON COLUMN products."sellerId"     IS 'FK → users.id · seller_profiles.userId · seller_stores.userId (all equal the seller user UUID)';
 COMMENT ON COLUMN seller_profiles."userId" IS 'FK → users.id – one profile per seller user';

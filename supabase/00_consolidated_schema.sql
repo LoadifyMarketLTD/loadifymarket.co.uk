@@ -322,6 +322,16 @@ CREATE INDEX IF NOT EXISTS idx_products_fts
 CREATE TRIGGER trg_products_updatedAt BEFORE UPDATE ON products
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+-- FK: products.sellerId → seller_profiles(userId) — enables PostgREST auto-join
+ALTER TABLE products
+  ADD CONSTRAINT fk_products_seller_profile
+  FOREIGN KEY ("sellerId") REFERENCES seller_profiles("userId") ON DELETE CASCADE;
+
+-- FK: products.sellerId → seller_stores(userId) — enables PostgREST auto-join
+ALTER TABLE products
+  ADD CONSTRAINT fk_products_seller_store
+  FOREIGN KEY ("sellerId") REFERENCES seller_stores("userId") ON DELETE CASCADE;
+
 CREATE TABLE IF NOT EXISTS product_analytics (
   id               UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
   "productId"      UUID         NOT NULL REFERENCES products(id) ON DELETE CASCADE,

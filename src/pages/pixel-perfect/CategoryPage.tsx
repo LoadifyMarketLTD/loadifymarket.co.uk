@@ -22,7 +22,7 @@ const PRODUCT_QUERY = `
   subcategory:categories!subcategoryId(name, slug)
 `;
 
-/** Fetch seller info for a list of seller IDs from seller_profiles_public (safe public view) */
+/** Fetch seller info for a list of seller IDs from seller_profiles_public */
 async function fetchSellerMap(
   sellerIds: string[],
 ): Promise<Map<string, { businessName?: string; isApproved?: boolean; rating?: number; userId?: string }>> {
