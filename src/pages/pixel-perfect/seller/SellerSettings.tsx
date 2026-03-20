@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
-  Settings, Bell, Shield, CreditCard, Truck, Mail,
-  Globe, Eye, EyeOff, Save, Key
+  Settings, Bell, Shield, CreditCard, Truck,
+  Eye, EyeOff, Save, Key, ExternalLink, CheckCircle, AlertCircle, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/lib/supabase";
 
 const SellerSettings = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -24,8 +25,53 @@ const SellerSettings = () => {
     weeklyReport: true,
   });
 
+  // Stripe Connect state
+  const [connectLoading, setConnectLoading] = useState(false);
+  const [connectError, setConnectError] = useState("");
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+
   const toggleNotification = (key: keyof typeof notifications) =>
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const handleConnectStripe = async () => {
+    setConnectError("");
+    setConnectLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+      const response = await fetch("/.netlify/functions/connect-onboard", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      let data: Record<string, unknown> = {};
+      try { data = await response.json(); } catch { /* non-JSON response */ }
+      if (!response.ok) throw new Error((data.error as string) || "Failed to start Stripe onboarding");
+      window.location.href = data.url as string;
+    } catch (err) {
+      setConnectError(err instanceof Error ? err.message : "Failed to connect Stripe account");
+      setConnectLoading(false);
+    }
+  };
+
+  const handleViewStripeDashboard = async () => {
+    setConnectError("");
+    setDashboardLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+      const response = await fetch("/.netlify/functions/connect-dashboard", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to open Stripe dashboard");
+      window.open(data.url as string, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      setConnectError(err instanceof Error ? err.message : "Failed to open Stripe dashboard");
+    } finally {
+      setDashboardLoading(false);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6 max-w-[900px]">
@@ -138,61 +184,73 @@ const SellerSettings = () => {
             </div>
             <div>
               <Label className="text-xs">Shipping Origin Postcode</Label>
-              <Input defaultValue="M1 2AB" className="mt-1" />
+              <Input placeholder="e.g. M1 2AB" className="mt-1" />
             </div>
             <div>
               <Label className="text-xs">Free Shipping Threshold</Label>
-              <Input defaultValue="£500" className="mt-1" />
+              <Input placeholder="e.g. £500" className="mt-1" />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Payout Settings */}
+      {/* Payout Settings — Stripe Connect */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary" /> Payout Settings</CardTitle>
-          <CardDescription>Manage how and when you receive payments.</CardDescription>
+          <CardDescription>Connect your Stripe account to receive payouts from sales.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-xs">Payout Method</Label>
-              <Select defaultValue="bank">
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bank">Bank Transfer (BACS)</SelectItem>
-                  <SelectItem value="stripe">Stripe Connect</SelectItem>
-                  <SelectItem value="paypal">PayPal</SelectItem>
-                </SelectContent>
-              </Select>
+          {connectError && (
+            <div className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {connectError}
             </div>
-            <div>
-              <Label className="text-xs">Payout Frequency</Label>
-              <Select defaultValue="weekly">
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="biweekly">Bi-weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
+          )}
+          <div className="rounded-lg bg-muted/50 border border-border p-4 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                <CreditCard className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">Stripe Connect</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Payouts are sent automatically after order completion via Stripe Connect Express. Weekly payouts every Friday.
+                </p>
+              </div>
             </div>
-            <div>
-              <Label className="text-xs">Account Name</Label>
-              <Input defaultValue="TechWholesale UK Ltd" className="mt-1" />
-            </div>
-            <div>
-              <Label className="text-xs">Sort Code / Account No.</Label>
-              <Input defaultValue="••-••-•• / ••••••••" className="mt-1" readOnly />
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={connectLoading}
+                onClick={handleConnectStripe}
+                className="flex-1"
+              >
+                {connectLoading ? (
+                  <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Connecting…</>
+                ) : (
+                  <><CheckCircle className="h-4 w-4 mr-1.5" /> Connect / Resume Onboarding</>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={dashboardLoading}
+                onClick={handleViewStripeDashboard}
+                className="flex-1"
+              >
+                {dashboardLoading ? (
+                  <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Opening…</>
+                ) : (
+                  <><ExternalLink className="h-4 w-4 mr-1.5" /> View Stripe Dashboard</>
+                )}
+              </Button>
             </div>
           </div>
-          <div className="rounded-lg bg-muted/50 border border-border p-3">
-            <p className="text-xs text-muted-foreground">
-              Payout details are managed securely. To update your bank details, please contact support.
-            </p>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            Bank details are managed securely inside Stripe. Loadify does not store your bank information.
+          </p>
         </CardContent>
       </Card>
 

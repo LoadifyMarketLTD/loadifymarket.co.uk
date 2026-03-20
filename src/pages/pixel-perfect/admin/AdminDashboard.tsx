@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -5,40 +6,124 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Users, DollarSign, Package, ShieldCheck, TrendingUp, TrendingDown,
-  ArrowUpRight, AlertTriangle,
+  Users, Package, ShieldCheck, TrendingUp,
+  ArrowUpRight, AlertTriangle, Loader2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 
-const stats = [
-  { label: "Total Revenue", value: "£2,456,890", change: "+12.5%", up: true, icon: DollarSign },
-  { label: "Active Sellers", value: "342", change: "+8 this week", up: true, icon: Users },
-  { label: "Total Products", value: "12,847", change: "+156 new", up: true, icon: Package },
-  { label: "Pending Approvals", value: "18", change: "5 urgent", up: false, icon: ShieldCheck },
-];
+interface RecentSeller {
+  id: string;
+  name: string;
+  email: string;
+  date: string;
+  status: string;
+}
 
-const recentSellers = [
-  { id: 1, name: "TechWholesale UK", email: "info@techwholesale.co.uk", date: "2025-03-18", status: "pending" },
-  { id: 2, name: "HomeGoods Direct", email: "sales@homegoods.com", date: "2025-03-17", status: "pending" },
-  { id: 3, name: "SportMax Trade", email: "trade@sportmax.co.uk", date: "2025-03-17", status: "approved" },
-  { id: 4, name: "LuxeBeauty Wholesale", email: "info@luxebeauty.com", date: "2025-03-16", status: "rejected" },
-  { id: 5, name: "GreenPlanet Supplies", email: "hello@greenplanet.co.uk", date: "2025-03-15", status: "approved" },
-];
-
-const alerts = [
-  { id: 1, message: "3 sellers awaiting document verification", type: "warning" },
-  { id: 2, message: "Revenue target 92% achieved this month", type: "info" },
-  { id: 3, message: "5 flagged product listings need review", type: "warning" },
-  { id: 4, message: "System backup completed successfully", type: "success" },
-];
+interface DashboardStats {
+  totalUsers: number;
+  totalProducts: number;
+  totalOrders: number;
+  pendingSellers: number;
+}
 
 const statusColor: Record<string, string> = {
   pending: "bg-amber-500/15 text-amber-700 border-amber-200",
+  verified: "bg-emerald-500/15 text-emerald-700 border-emerald-200",
   approved: "bg-emerald-500/15 text-emerald-700 border-emerald-200",
   rejected: "bg-destructive/15 text-destructive border-destructive/20",
+  suspended: "bg-red-500/15 text-red-700 border-red-200",
 };
 
 const AdminDashboard = () => {
+  const [stats, setStats] = useState<DashboardStats>({
+    totalUsers: 0,
+    totalProducts: 0,
+    totalOrders: 0,
+    pendingSellers: 0,
+  });
+  const [recentSellers, setRecentSellers] = useState<RecentSeller[]>([]);
+  const [pendingReportsCount, setPendingReportsCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [usersRes, productsRes, ordersRes, pendingSellersRes, recentSellersRes, reportsRes] =
+          await Promise.all([
+            supabase.from("users").select("id", { count: "exact", head: true }),
+            supabase.from("products").select("id", { count: "exact", head: true }),
+            supabase.from("orders").select("id", { count: "exact", head: true }),
+            supabase
+              .from("seller_profiles")
+              .select("userId", { count: "exact", head: true })
+              .eq("isApproved", false),
+            supabase
+              .from("users")
+              .select("id, email, firstName, lastName, createdAt, seller_profiles(isApproved, verificationStatus, storeName, businessName)")
+              .eq("role", "seller")
+              .order("createdAt", { ascending: false })
+              .limit(5),
+            supabase
+              .from("reported_listings")
+              .select("id", { count: "exact", head: true })
+              .eq("status", "pending"),
+          ]);
+
+        setStats({
+          totalUsers: usersRes.count ?? 0,
+          totalProducts: productsRes.count ?? 0,
+          totalOrders: ordersRes.count ?? 0,
+          pendingSellers: pendingSellersRes.count ?? 0,
+        });
+
+        setPendingReportsCount(reportsRes.count ?? 0);
+
+        const sellers: RecentSeller[] = (recentSellersRes.data || []).map((u: any) => {
+          const profile = Array.isArray(u.seller_profiles) ? u.seller_profiles[0] : u.seller_profiles;
+          const name = profile?.storeName || profile?.businessName || `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email;
+          const status = profile?.verificationStatus ?? (profile?.isApproved ? "approved" : "pending");
+          return {
+            id: u.id,
+            name,
+            email: u.email,
+            date: u.createdAt ? new Date(u.createdAt).toISOString().split("T")[0] : "—",
+            status,
+          };
+        });
+        setRecentSellers(sellers);
+      } catch (err: any) {
+        setError(err.message || "Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const statsCards = [
+    { label: "Total Users", value: stats.totalUsers.toLocaleString(), change: "Registered", up: true, icon: Users },
+    { label: "Total Products", value: stats.totalProducts.toLocaleString(), change: "Listed", up: true, icon: Package },
+    { label: "Total Orders", value: stats.totalOrders.toLocaleString(), change: "All time", up: true, icon: ShieldCheck },
+    { label: "Pending Approvals", value: stats.pendingSellers.toString(), change: "Awaiting review", up: false, icon: ShieldCheck },
+  ];
+
+  const alerts = [
+    ...(stats.pendingSellers > 0
+      ? [{ id: "pending-sellers", message: `${stats.pendingSellers} seller${stats.pendingSellers !== 1 ? "s" : ""} awaiting approval`, type: "warning" }]
+      : []),
+    ...(pendingReportsCount > 0
+      ? [{ id: "pending-reports", message: `${pendingReportsCount} flagged listing${pendingReportsCount !== 1 ? "s" : ""} need review`, type: "warning" }]
+      : []),
+    ...(stats.pendingSellers === 0 && pendingReportsCount === 0
+      ? [{ id: "all-clear", message: "No pending actions — platform is running smoothly", type: "success" }]
+      : []),
+  ];
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -48,21 +133,33 @@ const AdminDashboard = () => {
         </p>
       </div>
 
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => (
+        {statsCards.map((s) => (
           <Card key={s.label}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                  <s.icon className="h-5 w-5 text-muted-foreground" />
+                  {loading ? (
+                    <Loader2 className="h-5 w-5 text-muted-foreground animate-spin" />
+                  ) : (
+                    <s.icon className="h-5 w-5 text-muted-foreground" />
+                  )}
                 </div>
                 <span className={`text-xs font-medium flex items-center gap-1 ${s.up ? "text-emerald-600" : "text-amber-600"}`}>
                   {s.up ? <TrendingUp className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
                   {s.change}
                 </span>
               </div>
-              <p className="text-2xl font-bold text-foreground mt-3">{s.value}</p>
+              <p className="text-2xl font-bold text-foreground mt-3">
+                {loading ? "—" : s.value}
+              </p>
               <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
             </CardContent>
           </Card>
@@ -84,30 +181,44 @@ const AdminDashboard = () => {
             </Button>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Business Name</TableHead>
-                  <TableHead className="hidden sm:table-cell">Email</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentSellers.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell className="font-medium">{s.name}</TableCell>
-                    <TableCell className="hidden sm:table-cell text-muted-foreground text-xs">{s.email}</TableCell>
-                    <TableCell className="text-muted-foreground text-xs">{s.date}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={statusColor[s.status]}>
-                        {s.status}
-                      </Badge>
-                    </TableCell>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Business Name</TableHead>
+                    <TableHead className="hidden sm:table-cell">Email</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {recentSellers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        No seller applications yet.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    recentSellers.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell className="font-medium">{s.name}</TableCell>
+                        <TableCell className="hidden sm:table-cell text-muted-foreground text-xs">{s.email}</TableCell>
+                        <TableCell className="text-muted-foreground text-xs">{s.date}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={statusColor[s.status] ?? statusColor["pending"]}>
+                            {s.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
@@ -118,20 +229,26 @@ const AdminDashboard = () => {
             <CardDescription>Recent notifications</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {alerts.map((a) => (
-              <div
-                key={a.id}
-                className={`rounded-lg border p-3 text-sm ${
-                  a.type === "warning"
-                    ? "border-amber-200 bg-amber-500/5 text-amber-700"
-                    : a.type === "success"
-                    ? "border-emerald-200 bg-emerald-500/5 text-emerald-700"
-                    : "border-border bg-muted/30 text-muted-foreground"
-                }`}
-              >
-                {a.message}
+            {loading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
-            ))}
+            ) : (
+              alerts.map((a) => (
+                <div
+                  key={a.id}
+                  className={`rounded-lg border p-3 text-sm ${
+                    a.type === "warning"
+                      ? "border-amber-200 bg-amber-500/5 text-amber-700"
+                      : a.type === "success"
+                      ? "border-emerald-200 bg-emerald-500/5 text-emerald-700"
+                      : "border-border bg-muted/30 text-muted-foreground"
+                  }`}
+                >
+                  {a.message}
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>

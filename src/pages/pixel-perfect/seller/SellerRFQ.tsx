@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { FileText, Search, Filter, Clock, CheckCircle2, XCircle, MessageSquare, PoundSterling, Send } from "lucide-react";
+import { useState, useEffect } from "react";
+import { FileText, Search, Filter, Clock, CheckCircle2, MessageSquare, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,59 +13,80 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabase";
+import type { RFQRequest } from "@/types";
 
-interface Quote {
-  id: string;
-  buyer: string;
-  company: string;
-  product: string;
-  quantity: string;
-  budget: string;
-  message: string;
-  status: "new" | "quoted" | "accepted" | "declined" | "expired";
-  receivedDate: string;
-  expiresDate: string;
-  quotedPrice?: string;
-}
-
-const quotes: Quote[] = [
-  { id: "RFQ-210", buyer: "Mark Thompson", company: "RetailHub London", product: "iPhone 15 Pro Max — Grade A", quantity: "100 units", budget: "£45,000 – £50,000", message: "We're looking for a bulk lot of iPhone 15 Pro Max in Grade A condition. Must include chargers. Can do repeat orders monthly.", status: "new", receivedDate: "19 Mar 2026", expiresDate: "26 Mar 2026" },
-  { id: "RFQ-209", buyer: "Sarah Williams", company: "BargainBox Ltd", product: "Mixed Clothing Pallets", quantity: "10 pallets", budget: "£8,000 – £12,000", message: "Need branded clothing pallets for our retail stores. Prefer mix of Nike, Adidas, Under Armour. Seasonal mix OK.", status: "quoted", receivedDate: "17 Mar 2026", expiresDate: "24 Mar 2026", quotedPrice: "£11,500" },
-  { id: "RFQ-208", buyer: "James Cooper", company: "MarketStall UK", product: "Amazon Returns — Electronics", quantity: "5 pallets", budget: "£3,000 – £5,000", message: "Looking for Amazon electronics returns. Any grade acceptable. Need manifest included.", status: "accepted", receivedDate: "14 Mar 2026", expiresDate: "21 Mar 2026", quotedPrice: "£4,200" },
-  { id: "RFQ-207", buyer: "Emma Davies", company: "ClearanceKing", product: "Power Tools Lot", quantity: "200 units", budget: "£6,000 – £8,000", message: "Need DeWalt, Makita, or Bosch power tools in working condition for our trade customers.", status: "declined", receivedDate: "10 Mar 2026", expiresDate: "17 Mar 2026" },
-  { id: "RFQ-206", buyer: "David Chen", company: "ValueFinds Ltd", product: "Health & Beauty Bundle", quantity: "3 pallets", budget: "£2,000 – £3,500", message: "Interested in branded skincare and fragrance pallets. Need retail-ready packaging.", status: "expired", receivedDate: "1 Mar 2026", expiresDate: "8 Mar 2026" },
-  { id: "RFQ-205", buyer: "Lisa Brown", company: "QuickSell Pro", product: "Home & Kitchen Mixed", quantity: "8 pallets", budget: "£5,000 – £7,000", message: "Looking for home goods pallets — cookware, small appliances, storage. Grade A/B preferred.", status: "new", receivedDate: "18 Mar 2026", expiresDate: "25 Mar 2026" },
-];
+type RFQStatus = "pending" | "replied";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  new: { label: "New", className: "bg-blue-500/10 text-blue-700" },
-  quoted: { label: "Quoted", className: "bg-amber-500/10 text-amber-700" },
-  accepted: { label: "Accepted", className: "bg-emerald-500/10 text-emerald-700" },
-  declined: { label: "Declined", className: "bg-red-500/10 text-red-700" },
-  expired: { label: "Expired", className: "bg-muted text-muted-foreground" },
+  pending: { label: "New", className: "bg-blue-500/10 text-blue-700" },
+  replied: { label: "Replied", className: "bg-emerald-500/10 text-emerald-700" },
 };
 
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
 const SellerRFQ = () => {
+  const [rfqs, setRfqs] = useState<RFQRequest[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<Quote | null>(null);
-  const [quotePrice, setQuotePrice] = useState("");
+  const [selected, setSelected] = useState<RFQRequest | null>(null);
   const [quoteNote, setQuoteNote] = useState("");
+  const [sending, setSending] = useState(false);
+  const [rfqError, setRfqError] = useState("");
 
-  const filtered = quotes.filter(
-    (q) =>
-      q.id.toLowerCase().includes(search.toLowerCase()) ||
-      q.buyer.toLowerCase().includes(search.toLowerCase()) ||
-      q.product.toLowerCase().includes(search.toLowerCase())
-  );
+  const load = async () => {
+    const { data } = await supabase
+      .from("rfq_requests")
+      .select("*")
+      .order("createdAt", { ascending: false });
+    setRfqs((data ?? []) as RFQRequest[]);
+    setLoading(false);
+  };
 
-  const byStatus = (status: string) => filtered.filter((q) => q.status === status);
+  useEffect(() => { load(); }, []);
 
-  const renderTable = (data: Quote[]) => (
+  const filtered = rfqs.filter((q) => {
+    const query = search.toLowerCase();
+    return (
+      q.id.toLowerCase().includes(query) ||
+      q.product_name.toLowerCase().includes(query) ||
+      q.buyer_email.toLowerCase().includes(query)
+    );
+  });
+
+  const byStatus = (status: RFQStatus) => filtered.filter((q) => q.status === status);
+
+  const handleSendReply = async () => {
+    if (!selected || !quoteNote.trim()) return;
+    setSending(true);
+    setRfqError("");
+    try {
+      const { error: dbError } = await supabase
+        .from("rfq_requests")
+        .update({ status: "replied" })
+        .eq("id", selected.id);
+      if (dbError) throw dbError;
+      const subject = encodeURIComponent(`Re: Quote Request – ${selected.product_name}`);
+      const body = encodeURIComponent(quoteNote);
+      window.location.href = `mailto:${selected.buyer_email}?subject=${subject}&body=${body}`;
+      await load();
+      setSelected(null);
+      setQuoteNote("");
+    } catch (e) {
+      setRfqError(e instanceof Error ? e.message : "Failed to send reply.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const renderTable = (data: RFQRequest[]) => (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>RFQ ID</TableHead>
-          <TableHead>Buyer</TableHead>
+          <TableHead>Buyer Email</TableHead>
           <TableHead className="hidden sm:table-cell">Product</TableHead>
           <TableHead className="hidden md:table-cell">Qty</TableHead>
           <TableHead className="hidden lg:table-cell">Budget</TableHead>
@@ -75,7 +96,11 @@ const SellerRFQ = () => {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.length === 0 ? (
+        {loading ? (
+          <TableRow>
+            <TableCell colSpan={8} className="text-center text-muted-foreground py-8">Loading RFQ requests…</TableCell>
+          </TableRow>
+        ) : data.length === 0 ? (
           <TableRow>
             <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
               <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
@@ -84,26 +109,21 @@ const SellerRFQ = () => {
           </TableRow>
         ) : (
           data.map((q) => {
-            const sc = statusConfig[q.status];
+            const sc = statusConfig[q.status] ?? statusConfig["pending"];
             return (
               <TableRow key={q.id}>
-                <TableCell className="font-medium text-sm">{q.id}</TableCell>
-                <TableCell>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{q.buyer}</p>
-                    <p className="text-xs text-muted-foreground">{q.company}</p>
-                  </div>
-                </TableCell>
-                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[180px] truncate">{q.product}</TableCell>
+                <TableCell className="font-medium text-sm">{q.id.slice(0, 8).toUpperCase()}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">{q.buyer_email}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[180px] truncate">{q.product_name}</TableCell>
                 <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{q.quantity}</TableCell>
-                <TableCell className="hidden lg:table-cell text-xs font-medium text-foreground">{q.budget}</TableCell>
+                <TableCell className="hidden lg:table-cell text-xs font-medium text-foreground">{q.estimated_budget}</TableCell>
                 <TableCell>
                   <Badge variant="outline" className={sc.className}>{sc.label}</Badge>
                 </TableCell>
-                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{q.receivedDate}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{formatDate(q.created_at)}</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setSelected(q); setQuotePrice(q.quotedPrice || ""); setQuoteNote(""); }}>
-                    {q.status === "new" ? "Quote" : "View"}
+                  <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setSelected(q); setQuoteNote(""); }}>
+                    {q.status === "pending" ? "Reply" : "View"}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -118,16 +138,18 @@ const SellerRFQ = () => {
     <div className="p-6 space-y-6 max-w-[1200px]">
       <div>
         <h1 className="font-display text-2xl font-bold text-foreground">RFQ / Quotes</h1>
-        <p className="text-sm text-muted-foreground mt-1">{quotes.length} quote requests · {byStatus("new").length} awaiting response</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {loading ? "Loading…" : `${rfqs.length} quote requests · ${byStatus("pending").length} awaiting response`}
+        </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "New Requests", count: byStatus("new").length, icon: MessageSquare, color: "text-blue-600 bg-blue-500/10" },
-          { label: "Quoted", count: byStatus("quoted").length, icon: PoundSterling, color: "text-amber-600 bg-amber-500/10" },
-          { label: "Accepted", count: byStatus("accepted").length, icon: CheckCircle2, color: "text-emerald-600 bg-emerald-500/10" },
-          { label: "Declined / Expired", count: filtered.filter((q) => ["declined", "expired"].includes(q.status)).length, icon: XCircle, color: "text-red-600 bg-red-500/10" },
+          { label: "New Requests", count: byStatus("pending").length, icon: MessageSquare, color: "text-blue-600 bg-blue-500/10" },
+          { label: "Replied", count: byStatus("replied").length, icon: CheckCircle2, color: "text-emerald-600 bg-emerald-500/10" },
+          { label: "Total", count: filtered.length, icon: FileText, color: "text-muted-foreground bg-muted" },
+          { label: "This Month", count: filtered.filter((q) => new Date(q.created_at).getMonth() === new Date().getMonth()).length, icon: Clock, color: "text-amber-600 bg-amber-500/10" },
         ].map((stat) => (
           <div key={stat.label} className="bg-card rounded-xl border border-border p-5 space-y-2">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}>
@@ -152,61 +174,69 @@ const SellerRFQ = () => {
       <Tabs defaultValue="all">
         <TabsList>
           <TabsTrigger value="all">All <Badge variant="secondary" className="ml-2 text-xs">{filtered.length}</Badge></TabsTrigger>
-          <TabsTrigger value="new">New</TabsTrigger>
-          <TabsTrigger value="quoted">Quoted</TabsTrigger>
-          <TabsTrigger value="accepted">Accepted</TabsTrigger>
+          <TabsTrigger value="pending">New</TabsTrigger>
+          <TabsTrigger value="replied">Replied</TabsTrigger>
         </TabsList>
         <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
-        <TabsContent value="new"><Card><CardContent className="pt-4">{renderTable(byStatus("new"))}</CardContent></Card></TabsContent>
-        <TabsContent value="quoted"><Card><CardContent className="pt-4">{renderTable(byStatus("quoted"))}</CardContent></Card></TabsContent>
-        <TabsContent value="accepted"><Card><CardContent className="pt-4">{renderTable(byStatus("accepted"))}</CardContent></Card></TabsContent>
+        <TabsContent value="pending"><Card><CardContent className="pt-4">{renderTable(byStatus("pending"))}</CardContent></Card></TabsContent>
+        <TabsContent value="replied"><Card><CardContent className="pt-4">{renderTable(byStatus("replied"))}</CardContent></Card></TabsContent>
       </Tabs>
 
-      {/* Quote Dialog */}
+      {/* RFQ Detail / Reply Dialog */}
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         {selected && (
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>{selected.id}</DialogTitle>
-              <DialogDescription>Quote request from {selected.company}</DialogDescription>
+              <DialogTitle>{selected.id.slice(0, 8).toUpperCase()}</DialogTitle>
+              <DialogDescription>Quote request from {selected.buyer_email}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-muted-foreground">Buyer</span><p className="font-medium text-foreground">{selected.buyer}</p></div>
-                <div><span className="text-muted-foreground">Company</span><p className="font-medium text-foreground">{selected.company}</p></div>
-                <div><span className="text-muted-foreground">Product</span><p className="font-medium text-foreground">{selected.product}</p></div>
+                <div><span className="text-muted-foreground">Buyer Email</span><p className="font-medium text-foreground">{selected.buyer_email}</p></div>
+                <div><span className="text-muted-foreground">Destination</span><p className="font-medium text-foreground">{selected.destination_country}</p></div>
+                <div><span className="text-muted-foreground">Product</span><p className="font-medium text-foreground">{selected.product_name}</p></div>
                 <div><span className="text-muted-foreground">Quantity</span><p className="font-medium text-foreground">{selected.quantity}</p></div>
-                <div><span className="text-muted-foreground">Budget</span><p className="font-semibold text-foreground">{selected.budget}</p></div>
-                <div><span className="text-muted-foreground">Expires</span><p className="font-medium text-foreground">{selected.expiresDate}</p></div>
+                <div><span className="text-muted-foreground">Budget</span><p className="font-semibold text-foreground">{selected.estimated_budget}</p></div>
+                <div><span className="text-muted-foreground">Received</span><p className="font-medium text-foreground">{formatDate(selected.created_at)}</p></div>
               </div>
-              <div className="rounded-lg bg-muted/50 border border-border p-3">
-                <p className="text-xs font-semibold text-muted-foreground mb-1">BUYER MESSAGE</p>
-                <p className="text-sm text-foreground">{selected.message}</p>
-              </div>
-              {selected.quotedPrice && (
-                <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">
-                  <p className="text-xs font-semibold text-primary mb-1">YOUR QUOTE</p>
-                  <p className="text-lg font-bold text-foreground">{selected.quotedPrice}</p>
+              {selected.message && (
+                <div className="rounded-lg bg-muted/50 border border-border p-3">
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">BUYER MESSAGE</p>
+                  <p className="text-sm text-foreground">{selected.message}</p>
                 </div>
               )}
-              {selected.status === "new" && (
+              {selected.status === "pending" && (
                 <div className="space-y-3">
+                  {rfqError && (
+                    <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">{rfqError}</div>
+                  )}
                   <div>
-                    <Label className="text-xs">Your Quote Price</Label>
-                    <Input placeholder="£0.00" value={quotePrice} onChange={(e) => setQuotePrice(e.target.value)} className="mt-1" />
+                    <Label className="text-xs">Your Reply / Quote</Label>
+                    <Textarea
+                      placeholder="Include your price, delivery terms, lead time, etc."
+                      value={quoteNote}
+                      onChange={(e) => setQuoteNote(e.target.value)}
+                      rows={4}
+                      className="mt-1"
+                    />
                   </div>
-                  <div>
-                    <Label className="text-xs">Notes for Buyer</Label>
-                    <Textarea placeholder="Include delivery terms, lead time, etc." value={quoteNote} onChange={(e) => setQuoteNote(e.target.value)} rows={3} className="mt-1" />
-                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Clicking "Send Reply" will open your email client pre-filled with the buyer's address and your message, and mark this request as replied.
+                  </p>
+                </div>
+              )}
+              {selected.status === "replied" && (
+                <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3">
+                  <p className="text-xs font-semibold text-emerald-700 mb-1">ALREADY REPLIED</p>
+                  <p className="text-sm text-muted-foreground">You have already replied to this request via email.</p>
                 </div>
               )}
             </div>
-            {selected.status === "new" && (
+            {selected.status === "pending" && (
               <DialogFooter className="flex gap-2">
                 <Button variant="outline" onClick={() => setSelected(null)}>Cancel</Button>
-                <Button disabled={!quotePrice.trim()} onClick={() => setSelected(null)}>
-                  <Send className="h-4 w-4 mr-1" /> Send Quote
+                <Button disabled={!quoteNote.trim() || sending} onClick={handleSendReply}>
+                  <Send className="h-4 w-4 mr-1" /> {sending ? "Sending…" : "Send Reply"}
                 </Button>
               </DialogFooter>
             )}

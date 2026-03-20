@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  UserCircle, Building2, MapPin, Mail, Phone, Globe, Star,
-  ShieldCheck, Camera, Save, Package, Users, Calendar
+  Building2, MapPin, Mail, Star,
+  ShieldCheck, Camera, Save, Package, Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,35 +10,116 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store";
 
-const profileData = {
-  businessName: "TechWholesale UK",
-  contactName: "John Doe",
-  email: "john@techwholesale.co.uk",
-  phone: "+44 7700 900123",
-  website: "www.techwholesale.co.uk",
-  companyNumber: "12345678",
-  vatNumber: "GB123456789",
-  address: "Unit 4, Industrial Estate",
-  city: "Manchester",
-  postcode: "M1 2AB",
-  country: "United Kingdom",
-  bio: "Leading UK wholesaler specialising in electronics, mixed pallets, and clearance stock. Over 5 years of experience supplying to retailers, market traders, and online sellers across the UK.",
-  categories: ["Electronics", "Mixed Pallets", "Returns", "Clearance"],
-  stats: {
-    rating: 4.8,
-    totalReviews: 72,
-    totalSales: 486,
-    totalCustomers: 186,
-    memberSince: "March 2021",
-  },
+interface ProfileForm {
+  businessName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  website: string;
+  companyNumber: string;
+  vatNumber: string;
+  address: string;
+  city: string;
+  postcode: string;
+  bio: string;
+}
+
+const defaultForm: ProfileForm = {
+  businessName: "",
+  contactName: "",
+  email: "",
+  phone: "",
+  website: "",
+  companyNumber: "",
+  vatNumber: "",
+  address: "",
+  city: "",
+  postcode: "",
+  bio: "",
 };
 
 const SellerProfile = () => {
-  const [form, setForm] = useState(profileData);
+  const { user } = useAuthStore();
+  const [form, setForm] = useState<ProfileForm>(defaultForm);
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+  const [stats, setStats] = useState({ rating: 0, totalSales: 0, memberSince: "" });
+  const [storeSlug, setStoreSlug] = useState("");
 
-  const updateField = (field: string, value: string) =>
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const [profileRes, storeRes] = await Promise.all([
+        supabase
+          .from("seller_profiles")
+          .select("businessName, vatNumber, companyRegistrationNumber, businessAddress, contactPhone, rating, totalSales, createdAt")
+          .eq("userId", user.id)
+          .maybeSingle(),
+        supabase
+          .from("seller_stores")
+          .select("storeSlug, storeName")
+          .eq("userId", user.id)
+          .maybeSingle(),
+      ]);
+
+      const p = profileRes.data;
+      const addr = (p?.businessAddress as { address?: string; city?: string; postcode?: string } | null) ?? {};
+
+      setForm({
+        businessName: p?.businessName ?? "",
+        contactName: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
+        email: user.email ?? "",
+        phone: p?.contactPhone ?? "",
+        website: storeRes.data?.storeSlug ? `loadifymarket.co.uk/store/${storeRes.data.storeSlug}` : "",
+        companyNumber: p?.companyRegistrationNumber ?? "",
+        vatNumber: p?.vatNumber ?? "",
+        address: addr.address ?? "",
+        city: addr.city ?? "",
+        postcode: addr.postcode ?? "",
+        bio: "",
+      });
+      setStats({
+        rating: p?.rating ?? 0,
+        totalSales: p?.totalSales ?? 0,
+        memberSince: p?.createdAt ? new Date(p.createdAt).toLocaleDateString("en-GB", { month: "long", year: "numeric" }) : "",
+      });
+      setStoreSlug(storeRes.data?.storeSlug ?? "");
+    };
+    load();
+  }, [user]);
+
+  const updateField = (field: keyof ProfileForm, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    setSaveMsg("");
+    try {
+      const nameParts = form.contactName.trim().split(" ");
+      const firstName = nameParts[0] ?? "";
+      const lastName = nameParts.slice(1).join(" ");
+
+      await Promise.all([
+        supabase.from("users").update({ firstName, lastName }).eq("id", user.id),
+        supabase.from("seller_profiles").update({
+          businessName: form.businessName,
+          vatNumber: form.vatNumber,
+          companyRegistrationNumber: form.companyNumber,
+          contactPhone: form.phone,
+          businessAddress: { address: form.address, city: form.city, postcode: form.postcode },
+        }).eq("userId", user.id),
+      ]);
+      setSaveMsg("Saved successfully.");
+    } catch {
+      setSaveMsg("Failed to save. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6 max-w-[900px]">
@@ -47,10 +128,11 @@ const SellerProfile = () => {
           <h1 className="font-display text-2xl font-bold text-foreground">Seller Profile</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your public seller profile and business information.</p>
         </div>
-        <Button className="bg-gradient-hero text-primary-foreground">
-          <Save className="mr-2 h-4 w-4" /> Save Changes
+        <Button className="bg-gradient-hero text-primary-foreground" onClick={handleSave} disabled={saving}>
+          <Save className="mr-2 h-4 w-4" /> {saving ? "Saving…" : "Save Changes"}
         </Button>
       </div>
+      {saveMsg && <p className="text-sm text-muted-foreground">{saveMsg}</p>}
 
       {/* Profile Header Card */}
       <Card>
@@ -66,21 +148,18 @@ const SellerProfile = () => {
             </div>
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-foreground">{form.businessName}</h2>
+                <h2 className="text-xl font-bold text-foreground">{form.businessName || "Your Business"}</h2>
                 <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200" variant="outline">
                   <ShieldCheck className="h-3 w-3 mr-1" /> Verified
                 </Badge>
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500" /> {form.stats.rating} ({form.stats.totalReviews} reviews)</span>
-                <span className="flex items-center gap-1"><Package className="h-3.5 w-3.5" /> {form.stats.totalSales} sales</span>
-                <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {form.stats.totalCustomers} customers</span>
-                <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> Since {form.stats.memberSince}</span>
+                <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500" /> {stats.rating ? stats.rating.toFixed(1) : "—"}</span>
+                <span className="flex items-center gap-1"><Package className="h-3.5 w-3.5" /> {stats.totalSales} sales</span>
+                <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {stats.memberSince ? `Since ${stats.memberSince}` : ""}</span>
               </div>
               <div className="flex flex-wrap gap-1.5 mt-1">
-                {form.categories.map((cat) => (
-                  <Badge key={cat} variant="secondary" className="text-xs">{cat}</Badge>
-                ))}
+                {storeSlug && <Badge variant="secondary" className="text-xs">{storeSlug}</Badge>}
               </div>
             </div>
           </div>
@@ -119,7 +198,7 @@ const SellerProfile = () => {
         </CardContent>
       </Card>
 
-      {/* Contact Info */}
+      {/* Contact */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2"><Mail className="h-4 w-4 text-primary" /> Contact Information</CardTitle>

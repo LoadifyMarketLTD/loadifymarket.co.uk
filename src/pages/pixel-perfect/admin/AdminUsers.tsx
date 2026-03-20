@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Users, Search, Filter, ShieldCheck, Ban, MoreHorizontal, Eye, Mail } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Users, Search, Filter, ShieldCheck, Ban, MoreHorizontal, Eye, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -14,35 +14,20 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/lib/supabase";
 
 interface User {
-  id: number;
+  id: string;
   name: string;
   email: string;
-  role: "buyer" | "seller" | "admin";
-  status: "active" | "suspended" | "pending";
-  joined: string;
-  orders: number;
-  spent: string;
-  lastActive: string;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
 }
-
-const users: User[] = [
-  { id: 1, name: "Jane Buyer", email: "jane@email.com", role: "buyer", status: "active", joined: "Jan 2024", orders: 24, spent: "£18,450", lastActive: "Today" },
-  { id: 2, name: "John Doe", email: "john@techwholesale.co.uk", role: "seller", status: "active", joined: "Mar 2021", orders: 486, spent: "£245,000", lastActive: "Today" },
-  { id: 3, name: "Sarah Williams", email: "sarah@homegoods.com", role: "seller", status: "pending", joined: "Mar 2026", orders: 0, spent: "£0", lastActive: "Yesterday" },
-  { id: 4, name: "Mark Thompson", email: "mark@retailhub.co.uk", role: "buyer", status: "active", joined: "Jun 2024", orders: 18, spent: "£42,300", lastActive: "2 days ago" },
-  { id: 5, name: "Emma Davies", email: "emma@luxebeauty.com", role: "seller", status: "suspended", joined: "Sep 2024", orders: 12, spent: "£8,200", lastActive: "1 week ago" },
-  { id: 6, name: "David Chen", email: "david@valuefinds.co.uk", role: "buyer", status: "active", joined: "Nov 2024", orders: 8, spent: "£6,800", lastActive: "Today" },
-  { id: 7, name: "Lisa Brown", email: "lisa@quicksell.co.uk", role: "seller", status: "active", joined: "Feb 2025", orders: 64, spent: "£78,500", lastActive: "Today" },
-  { id: 8, name: "Tom Wilson", email: "tom@toolking.com", role: "seller", status: "pending", joined: "Mar 2026", orders: 0, spent: "£0", lastActive: "3 days ago" },
-  { id: 9, name: "Admin User", email: "admin@loadify.co.uk", role: "admin", status: "active", joined: "Jan 2021", orders: 0, spent: "—", lastActive: "Today" },
-];
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   active: { label: "Active", className: "bg-emerald-500/15 text-emerald-700 border-emerald-200" },
-  suspended: { label: "Suspended", className: "bg-red-500/15 text-red-700 border-red-200" },
-  pending: { label: "Pending", className: "bg-amber-500/15 text-amber-700 border-amber-200" },
+  inactive: { label: "Suspended", className: "bg-red-500/15 text-red-700 border-red-200" },
 };
 
 const roleConfig: Record<string, { label: string; className: string }> = {
@@ -52,8 +37,62 @@ const roleConfig: Record<string, { label: string; className: string }> = {
 };
 
 const AdminUsers = () => {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<User | null>(null);
+
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: queryError } = await supabase
+        .from("users")
+        .select("id, email, firstName, lastName, role, isActive, createdAt")
+        .order("createdAt", { ascending: false });
+
+      if (queryError) throw queryError;
+
+      const mapped: User[] = (data || []).map((u: any) => ({
+        id: u.id,
+        name: `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email,
+        email: u.email,
+        role: u.role ?? "buyer",
+        isActive: u.isActive !== false,
+        createdAt: u.createdAt
+          ? new Date(u.createdAt).toLocaleDateString("en-GB", { month: "short", year: "numeric" })
+          : "—",
+      }));
+
+      setUsers(mapped);
+    } catch (err: any) {
+      setError(err.message || "Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+  const toggleBlock = async (userId: string, currentlyActive: boolean) => {
+    setActionLoading(userId);
+    setError(null);
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ isActive: !currentlyActive })
+        .eq("id", userId);
+      if (error) throw error;
+      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, isActive: !currentlyActive } : u));
+      if (selected?.id === userId) setSelected((s) => s ? { ...s, isActive: !currentlyActive } : s);
+    } catch (err: any) {
+      setError(err.message || "Failed to update user");
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const filtered = users.filter(
     (u) =>
@@ -62,6 +101,7 @@ const AdminUsers = () => {
   );
 
   const byRole = (role: string) => filtered.filter((u) => u.role === role);
+  const suspended = filtered.filter((u) => !u.isActive);
 
   const renderTable = (data: User[]) => (
     <Table>
@@ -70,55 +110,73 @@ const AdminUsers = () => {
           <TableHead>User</TableHead>
           <TableHead>Role</TableHead>
           <TableHead className="hidden sm:table-cell">Joined</TableHead>
-          <TableHead className="hidden md:table-cell">Orders</TableHead>
-          <TableHead className="hidden lg:table-cell">Total Value</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="hidden sm:table-cell">Last Active</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.length === 0 ? (
+        {loading ? (
           <TableRow>
-            <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+            <TableCell colSpan={5} className="text-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+            </TableCell>
+          </TableRow>
+        ) : data.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />No users found.
             </TableCell>
           </TableRow>
         ) : (
-          data.map((u) => (
-            <TableRow key={u.id}>
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0">
-                    {u.name.split(" ").map((n) => n[0]).join("")}
+          data.map((u) => {
+            const roleCfg = roleConfig[u.role] ?? { label: u.role, className: "bg-muted text-muted-foreground" };
+            const statusKey = u.isActive ? "active" : "inactive";
+            return (
+              <TableRow key={u.id}>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0">
+                      {u.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{u.name}</p>
+                      <p className="text-xs text-muted-foreground">{u.email}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{u.name}</p>
-                    <p className="text-xs text-muted-foreground">{u.email}</p>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell><Badge variant="outline" className={roleConfig[u.role].className}>{roleConfig[u.role].label}</Badge></TableCell>
-              <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{u.joined}</TableCell>
-              <TableCell className="hidden md:table-cell text-sm text-foreground">{u.orders}</TableCell>
-              <TableCell className="hidden lg:table-cell text-sm font-medium text-foreground">{u.spent}</TableCell>
-              <TableCell><Badge variant="outline" className={statusConfig[u.status].className}>{statusConfig[u.status].label}</Badge></TableCell>
-              <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{u.lastActive}</TableCell>
-              <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setSelected(u)}><Eye className="h-3.5 w-3.5 mr-2" /> View Details</DropdownMenuItem>
-                    <DropdownMenuItem><Mail className="h-3.5 w-3.5 mr-2" /> Send Email</DropdownMenuItem>
-                    <DropdownMenuItem><ShieldCheck className="h-3.5 w-3.5 mr-2" /> Change Role</DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive"><Ban className="h-3.5 w-3.5 mr-2" /> Suspend User</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))
+                </TableCell>
+                <TableCell><Badge variant="outline" className={roleCfg.className}>{roleCfg.label}</Badge></TableCell>
+                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{u.createdAt}</TableCell>
+                <TableCell><Badge variant="outline" className={statusConfig[statusKey].className}>{statusConfig[statusKey].label}</Badge></TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" disabled={actionLoading === u.id}>
+                        {actionLoading === u.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <MoreHorizontal className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setSelected(u)}>
+                        <Eye className="h-3.5 w-3.5 mr-2" /> View Details
+                      </DropdownMenuItem>
+                      {u.isActive ? (
+                        <DropdownMenuItem className="text-destructive" onClick={() => toggleBlock(u.id, u.isActive)}>
+                          <Ban className="h-3.5 w-3.5 mr-2" /> Suspend User
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onClick={() => toggleBlock(u.id, u.isActive)}>
+                          <ShieldCheck className="h-3.5 w-3.5 mr-2" /> Unsuspend User
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            );
+          })
         )}
       </TableBody>
     </Table>
@@ -133,12 +191,18 @@ const AdminUsers = () => {
         </div>
       </div>
 
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Total Users", count: users.length, color: "text-primary bg-primary/10" },
           { label: "Buyers", count: users.filter((u) => u.role === "buyer").length, color: "text-blue-600 bg-blue-500/10" },
           { label: "Sellers", count: users.filter((u) => u.role === "seller").length, color: "text-purple-600 bg-purple-500/10" },
-          { label: "Suspended", count: users.filter((u) => u.status === "suspended").length, color: "text-red-600 bg-red-500/10" },
+          { label: "Suspended", count: users.filter((u) => !u.isActive).length, color: "text-red-600 bg-red-500/10" },
         ].map((stat) => (
           <div key={stat.label} className="bg-card rounded-xl border border-border p-5 space-y-2">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}>
@@ -164,11 +228,13 @@ const AdminUsers = () => {
           <TabsTrigger value="buyer">Buyers</TabsTrigger>
           <TabsTrigger value="seller">Sellers</TabsTrigger>
           <TabsTrigger value="admin">Admins</TabsTrigger>
+          <TabsTrigger value="suspended">Suspended</TabsTrigger>
         </TabsList>
         <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
         <TabsContent value="buyer"><Card><CardContent className="pt-4">{renderTable(byRole("buyer"))}</CardContent></Card></TabsContent>
         <TabsContent value="seller"><Card><CardContent className="pt-4">{renderTable(byRole("seller"))}</CardContent></Card></TabsContent>
         <TabsContent value="admin"><Card><CardContent className="pt-4">{renderTable(byRole("admin"))}</CardContent></Card></TabsContent>
+        <TabsContent value="suspended"><Card><CardContent className="pt-4">{renderTable(suspended)}</CardContent></Card></TabsContent>
       </Tabs>
 
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
@@ -181,11 +247,28 @@ const AdminUsers = () => {
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div><span className="text-muted-foreground">Role</span><p className="font-medium text-foreground capitalize">{selected.role}</p></div>
-                <div><span className="text-muted-foreground">Status</span><p className="font-medium text-foreground capitalize">{selected.status}</p></div>
-                <div><span className="text-muted-foreground">Joined</span><p className="font-medium text-foreground">{selected.joined}</p></div>
-                <div><span className="text-muted-foreground">Last Active</span><p className="font-medium text-foreground">{selected.lastActive}</p></div>
-                <div><span className="text-muted-foreground">Total Orders</span><p className="font-medium text-foreground">{selected.orders}</p></div>
-                <div><span className="text-muted-foreground">Total Value</span><p className="font-semibold text-foreground">{selected.spent}</p></div>
+                <div><span className="text-muted-foreground">Status</span><p className="font-medium text-foreground capitalize">{selected.isActive ? "Active" : "Suspended"}</p></div>
+                <div><span className="text-muted-foreground">Joined</span><p className="font-medium text-foreground">{selected.createdAt}</p></div>
+              </div>
+              <div className="flex justify-end">
+                {selected.isActive ? (
+                  <Button
+                    variant="destructive"
+                    onClick={() => toggleBlock(selected.id, selected.isActive)}
+                    disabled={actionLoading === selected.id}
+                  >
+                    {actionLoading === selected.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Ban className="h-4 w-4 mr-1" />}
+                    Suspend User
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => toggleBlock(selected.id, selected.isActive)}
+                    disabled={actionLoading === selected.id}
+                  >
+                    {actionLoading === selected.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-1" />}
+                    Unsuspend User
+                  </Button>
+                )}
               </div>
             </div>
           </DialogContent>

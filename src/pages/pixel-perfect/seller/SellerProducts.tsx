@@ -1,15 +1,21 @@
-import { Package, Plus, Search, Filter } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Package, Plus, Search, Filter, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store";
 
-const products = [
-  { id: 1, name: "Samsung Galaxy & iPhone Mixed Lot", category: "Electronics", price: 2450, stock: 12, status: "active", views: 342 },
-  { id: 2, name: "Designer Clothing Bundle", category: "Clothing", price: 1800, stock: 5, status: "active", views: 218 },
-  { id: 3, name: "Skincare & Fragrance Bundle", category: "Health & Beauty", price: 890, stock: 0, status: "out_of_stock", views: 412 },
-  { id: 4, name: "DeWalt Power Tools End of Line", category: "Tools & DIY", price: 1750, stock: 8, status: "active", views: 198 },
-  { id: 5, name: "Mixed Amazon Returns x5 Lots", category: "Mixed Lots", price: 3200, stock: 2, status: "low_stock", views: 534 },
-  { id: 6, name: "Gym Equipment Clearance", category: "Sports", price: 980, stock: 15, status: "active", views: 145 },
-];
+interface Product {
+  id: string;
+  title: string;
+  categoryId: string;
+  price: number;
+  stockQuantity: number;
+  stockStatus: string;
+  isActive: boolean;
+  views: number;
+}
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   active: { label: "Active", className: "bg-emerald-500/10 text-emerald-700" },
@@ -18,16 +24,51 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   draft: { label: "Draft", className: "bg-muted text-muted-foreground" },
 };
 
+function deriveStatus(p: Product): string {
+  if (!p.isActive) return "draft";
+  if (p.stockQuantity === 0) return "out_of_stock";
+  if (p.stockQuantity <= 5) return "low_stock";
+  return "active";
+}
+
 const SellerProducts = () => {
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const { data } = await supabase
+        .from("products")
+        .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, views")
+        .eq("sellerId", user.id)
+        .order("createdAt", { ascending: false });
+      setProducts(data ?? []);
+      setLoading(false);
+    };
+    load();
+  }, [user]);
+
+  const filtered = products.filter((p) =>
+    p.title.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="p-6 space-y-6 max-w-[1200px]">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Products</h1>
-          <p className="text-sm text-muted-foreground mt-1">{products.length} products listed</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {loading ? "Loading…" : `${products.length} products listed`}
+          </p>
         </div>
-        <Button size="sm" className="bg-gradient-hero text-primary-foreground">
-          <Plus className="mr-2 h-4 w-4" /> Add Product
+        <Button size="sm" className="bg-gradient-hero text-primary-foreground" asChild>
+          <Link to="/seller/products/new">
+            <Plus className="mr-2 h-4 w-4" /> Add Product
+          </Link>
         </Button>
       </div>
 
@@ -35,7 +76,12 @@ const SellerProducts = () => {
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search products..." className="pl-9 h-10" />
+          <Input
+            placeholder="Search products..."
+            className="pl-9 h-10"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
         <Button variant="outline" size="default">
           <Filter className="mr-2 h-4 w-4" /> Filters
@@ -49,7 +95,6 @@ const SellerProducts = () => {
             <thead>
               <tr className="border-b border-border bg-muted/30">
                 <th className="text-left text-xs font-semibold text-muted-foreground p-4">Product</th>
-                <th className="text-left text-xs font-semibold text-muted-foreground p-4">Category</th>
                 <th className="text-left text-xs font-semibold text-muted-foreground p-4">Price</th>
                 <th className="text-left text-xs font-semibold text-muted-foreground p-4">Stock</th>
                 <th className="text-left text-xs font-semibold text-muted-foreground p-4">Status</th>
@@ -58,31 +103,53 @@ const SellerProducts = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {products.map((p) => {
-                const s = statusConfig[p.status];
-                return (
-                  <tr key={p.id} className="hover:bg-muted/20 transition-colors">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                          <Package className="h-4 w-4 text-muted-foreground" />
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">
+                    Loading products…
+                  </td>
+                </tr>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">
+                    <Package className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                    {search ? "No products match your search." : "No products yet. Add your first product!"}
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((p) => {
+                  const status = deriveStatus(p);
+                  const s = statusConfig[status];
+                  return (
+                    <tr key={p.id} className="hover:bg-muted/20 transition-colors">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                            <Package className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground line-clamp-1">{p.title}</span>
                         </div>
-                        <span className="text-sm font-medium text-foreground line-clamp-1">{p.name}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-sm text-muted-foreground">{p.category}</td>
-                    <td className="p-4 text-sm font-semibold text-foreground">£{p.price.toLocaleString()}</td>
-                    <td className="p-4 text-sm text-foreground">{p.stock}</td>
-                    <td className="p-4">
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${s.className}`}>{s.label}</span>
-                    </td>
-                    <td className="p-4 text-sm text-muted-foreground">{p.views}</td>
-                    <td className="p-4 text-right">
-                      <Button variant="ghost" size="sm" className="text-xs">Edit</Button>
-                    </td>
-                  </tr>
-                );
-              })}
+                      </td>
+                      <td className="p-4 text-sm font-semibold text-foreground">£{p.price.toLocaleString()}</td>
+                      <td className="p-4 text-sm text-foreground">{p.stockQuantity}</td>
+                      <td className="p-4">
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${s.className}`}>{s.label}</span>
+                      </td>
+                      <td className="p-4 text-sm text-muted-foreground">{p.views ?? 0}</td>
+                      <td className="p-4 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => navigate(`/seller/products/${p.id}/edit`)}
+                        >
+                          <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

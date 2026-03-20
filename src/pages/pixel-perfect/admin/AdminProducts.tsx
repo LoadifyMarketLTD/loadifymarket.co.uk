@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Package, Search, Filter, Eye, Ban, CheckCircle2, MoreHorizontal, AlertTriangle } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Package, Search, Filter, Eye, Ban, CheckCircle2, MoreHorizontal, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,39 +11,93 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/lib/supabase";
 
 interface Product {
-  id: number;
+  id: string;
   title: string;
   seller: string;
-  category: string;
   price: number;
-  status: "active" | "pending_review" | "flagged" | "removed";
-  listed: string;
-  views: number;
-  orders: number;
+  stockQuantity: number;
+  isActive: boolean;
+  createdAt: string;
 }
 
-const products: Product[] = [
-  { id: 1, title: "Samsung Galaxy & iPhone Mixed Lot — 50 Units", seller: "TechWholesale UK", category: "Electronics", price: 2450, status: "active", listed: "12 Mar 2026", views: 342, orders: 18 },
-  { id: 2, title: "Designer Clothing Bundle — Mixed Brands", seller: "TechWholesale UK", category: "Clothing", price: 1800, status: "active", listed: "10 Mar 2026", views: 218, orders: 12 },
-  { id: 3, title: "Counterfeit Nike Trainers (Reported)", seller: "ShadyDeals Ltd", category: "Clothing", price: 500, status: "flagged", listed: "15 Mar 2026", views: 89, orders: 0 },
-  { id: 4, title: "DeWalt Power Tools End of Line", seller: "ToolKing UK", category: "Tools", price: 1750, status: "active", listed: "8 Mar 2026", views: 198, orders: 8 },
-  { id: 5, title: "Mixed Amazon Returns x5 Lots", seller: "QuickSell Pro", category: "Mixed Lots", price: 3200, status: "pending_review", listed: "18 Mar 2026", views: 12, orders: 0 },
-  { id: 6, title: "Expired Supplements Bundle", seller: "HealthPlus Trade", category: "Health", price: 350, status: "removed", listed: "5 Mar 2026", views: 45, orders: 2 },
-  { id: 7, title: "Gym Equipment Clearance", seller: "SportMax Trade", category: "Sports", price: 980, status: "active", listed: "6 Mar 2026", views: 145, orders: 6 },
-  { id: 8, title: "Baby Clothing Pallet — New with Tags", seller: "HomeGoods Direct", category: "Baby", price: 1200, status: "pending_review", listed: "19 Mar 2026", views: 5, orders: 0 },
-];
-
-const statusConfig: Record<string, { label: string; className: string }> = {
-  active: { label: "Active", className: "bg-emerald-500/15 text-emerald-700 border-emerald-200" },
-  pending_review: { label: "Pending Review", className: "bg-amber-500/15 text-amber-700 border-amber-200" },
-  flagged: { label: "Flagged", className: "bg-red-500/15 text-red-700 border-red-200" },
-  removed: { label: "Removed", className: "bg-muted text-muted-foreground" },
-};
-
 const AdminProducts = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: queryError } = await supabase
+        .from("products")
+        .select(`
+          id,
+          title,
+          price,
+          stockQuantity,
+          isActive,
+          createdAt,
+          seller:seller_profiles!products_sellerId_fkey(storeName, businessName),
+          sellerUser:users!products_sellerId_fkey(firstName, lastName)
+        `)
+        .order("createdAt", { ascending: false })
+        .limit(200);
+
+      if (queryError) throw queryError;
+
+      const mapped: Product[] = (data || []).map((p: any) => {
+        const sellerProfile = Array.isArray(p.seller) ? p.seller[0] : p.seller;
+        const sellerUser = Array.isArray(p.sellerUser) ? p.sellerUser[0] : p.sellerUser;
+        const sellerName =
+          sellerProfile?.storeName ||
+          sellerProfile?.businessName ||
+          (sellerUser ? `${sellerUser.firstName ?? ""} ${sellerUser.lastName ?? ""}`.trim() : "—") ||
+          "—";
+        return {
+          id: p.id,
+          title: p.title,
+          seller: sellerName,
+          price: p.price ?? 0,
+          stockQuantity: p.stockQuantity ?? 0,
+          isActive: p.isActive ?? true,
+          createdAt: p.createdAt
+            ? new Date(p.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+            : "—",
+        };
+      });
+
+      setProducts(mapped);
+    } catch (err: any) {
+      setError(err.message || "Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+
+  const toggleActive = async (id: string, currentActive: boolean) => {
+    setActionLoading(id);
+    setError(null);
+    try {
+      const { error } = await supabase
+        .from("products")
+        .update({ isActive: !currentActive })
+        .eq("id", id);
+      if (error) throw error;
+      setProducts((prev) => prev.map((p) => p.id === id ? { ...p, isActive: !currentActive } : p));
+    } catch (err: any) {
+      setError(err.message || "Failed to update product");
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const filtered = products.filter(
     (p) =>
@@ -51,7 +105,8 @@ const AdminProducts = () => {
       p.seller.toLowerCase().includes(search.toLowerCase())
   );
 
-  const byStatus = (status: string) => filtered.filter((p) => p.status === status);
+  const activeProducts = filtered.filter((p) => p.isActive);
+  const inactiveProducts = filtered.filter((p) => !p.isActive);
 
   const renderTable = (data: Product[]) => (
     <Table>
@@ -59,18 +114,22 @@ const AdminProducts = () => {
         <TableRow>
           <TableHead>Product</TableHead>
           <TableHead className="hidden sm:table-cell">Seller</TableHead>
-          <TableHead className="hidden md:table-cell">Category</TableHead>
           <TableHead>Price</TableHead>
-          <TableHead className="hidden lg:table-cell">Views</TableHead>
-          <TableHead className="hidden lg:table-cell">Orders</TableHead>
+          <TableHead className="hidden md:table-cell">Stock</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.length === 0 ? (
+        {loading ? (
           <TableRow>
-            <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+            <TableCell colSpan={6} className="text-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+            </TableCell>
+          </TableRow>
+        ) : data.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
               <Package className="h-8 w-8 mx-auto mb-2 opacity-40" />No products found.
             </TableCell>
           </TableRow>
@@ -79,24 +138,47 @@ const AdminProducts = () => {
             <TableRow key={p.id}>
               <TableCell className="max-w-[250px]">
                 <p className="text-sm font-medium text-foreground truncate">{p.title}</p>
-                <p className="text-xs text-muted-foreground">{p.listed}</p>
+                <p className="text-xs text-muted-foreground">{p.createdAt}</p>
               </TableCell>
               <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{p.seller}</TableCell>
-              <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{p.category}</TableCell>
               <TableCell className="text-sm font-semibold text-foreground">£{p.price.toLocaleString()}</TableCell>
-              <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{p.views}</TableCell>
-              <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{p.orders}</TableCell>
-              <TableCell><Badge variant="outline" className={statusConfig[p.status].className}>{statusConfig[p.status].label}</Badge></TableCell>
+              <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{p.stockQuantity}</TableCell>
+              <TableCell>
+                <Badge
+                  variant="outline"
+                  className={
+                    p.isActive
+                      ? "bg-emerald-500/15 text-emerald-700 border-emerald-200"
+                      : "bg-muted text-muted-foreground"
+                  }
+                >
+                  {p.isActive ? "Active" : "Inactive"}
+                </Badge>
+              </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" disabled={actionLoading === p.id}>
+                      {actionLoading === p.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <MoreHorizontal className="h-4 w-4" />
+                      )}
+                    </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem><Eye className="h-3.5 w-3.5 mr-2" /> View Listing</DropdownMenuItem>
-                    <DropdownMenuItem><CheckCircle2 className="h-3.5 w-3.5 mr-2" /> Approve</DropdownMenuItem>
-                    <DropdownMenuItem><AlertTriangle className="h-3.5 w-3.5 mr-2" /> Flag</DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive"><Ban className="h-3.5 w-3.5 mr-2" /> Remove</DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Eye className="h-3.5 w-3.5 mr-2" /> View Listing
+                    </DropdownMenuItem>
+                    {p.isActive ? (
+                      <DropdownMenuItem onClick={() => toggleActive(p.id, p.isActive)} className="text-destructive">
+                        <Ban className="h-3.5 w-3.5 mr-2" /> Deactivate
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={() => toggleActive(p.id, p.isActive)}>
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-2" /> Activate
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -111,8 +193,16 @@ const AdminProducts = () => {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Product Moderation</h1>
-        <p className="text-muted-foreground text-sm mt-1">{products.length} total listings · {byStatus("pending_review").length} pending review · {byStatus("flagged").length} flagged</p>
+        <p className="text-muted-foreground text-sm mt-1">
+          {products.length} total listings · {activeProducts.length} active · {inactiveProducts.length} inactive
+        </p>
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
@@ -125,14 +215,12 @@ const AdminProducts = () => {
       <Tabs defaultValue="all">
         <TabsList>
           <TabsTrigger value="all">All <Badge variant="secondary" className="ml-2 text-xs">{filtered.length}</Badge></TabsTrigger>
-          <TabsTrigger value="pending_review">Pending</TabsTrigger>
-          <TabsTrigger value="flagged">Flagged</TabsTrigger>
           <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="inactive">Inactive</TabsTrigger>
         </TabsList>
         <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
-        <TabsContent value="pending_review"><Card><CardContent className="pt-4">{renderTable(byStatus("pending_review"))}</CardContent></Card></TabsContent>
-        <TabsContent value="flagged"><Card><CardContent className="pt-4">{renderTable(byStatus("flagged"))}</CardContent></Card></TabsContent>
-        <TabsContent value="active"><Card><CardContent className="pt-4">{renderTable(byStatus("active"))}</CardContent></Card></TabsContent>
+        <TabsContent value="active"><Card><CardContent className="pt-4">{renderTable(activeProducts)}</CardContent></Card></TabsContent>
+        <TabsContent value="inactive"><Card><CardContent className="pt-4">{renderTable(inactiveProducts)}</CardContent></Card></TabsContent>
       </Tabs>
     </div>
   );

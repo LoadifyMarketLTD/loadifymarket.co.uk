@@ -39,9 +39,7 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const ShopPage = lazy(() => import('./pages/ShopPage'));
 const CategoryPage = lazy(() => import('./pages/CategoryPage'));
 const SellPage = lazy(() => import('./pages/SellPage'));
-const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage'));
-const SellerDashboardPage = lazy(() => import('./pages/SellerDashboardPage'));
 const SellerProfilePage = lazy(() => import('./pages/SellerProfilePage'));
 const SellerPublicProfilePage = lazy(() => import('./pages/SellerPublicProfilePage'));
 const SellerReturnsPage = lazy(() => import('./pages/SellerReturnsPage'));
@@ -49,7 +47,6 @@ const SellerShipmentsPage = lazy(() => import('./pages/SellerShipmentsPage'));
 const SellerReviewsPage = lazy(() => import('./pages/SellerReviewsPage'));
 const SellerRFQPage = lazy(() => import('./pages/SellerRFQPage'));
 const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
-const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const AdminReviewsPage = lazy(() => import('./pages/AdminReviewsPage'));
 const CategoryManagementPage = lazy(() => import('./pages/CategoryManagementPage'));
 const SellerApprovalsPage = lazy(() => import('./pages/SellerApprovalsPage'));
@@ -77,6 +74,39 @@ const VerifiedSellersPage = lazy(() => import('./pages/VerifiedSellersPage'));
 const LogisticsLoadsPage = lazy(() => import('./pages/LogisticsLoadsPage'));
 const TransportQuotePage = lazy(() => import('./pages/TransportQuotePage'));
 const RFQPage = lazy(() => import('./pages/RFQPage'));
+
+// ─── Pixel-perfect dashboard shells ──────────────────────────────────────────
+const PPSellerShell    = lazy(() => import('./pages/pixel-perfect/seller/SellerShell'));
+const PPSellerDashboard = lazy(() => import('./pages/pixel-perfect/seller/SellerDashboard'));
+const PPSellerProducts  = lazy(() => import('./pages/pixel-perfect/seller/SellerProducts'));
+const PPSellerOrders    = lazy(() => import('./pages/pixel-perfect/seller/SellerOrders'));
+const PPSellerShipments = lazy(() => import('./pages/pixel-perfect/seller/SellerShipments'));
+const PPSellerReturns   = lazy(() => import('./pages/pixel-perfect/seller/SellerReturns'));
+const PPSellerRFQ       = lazy(() => import('./pages/pixel-perfect/seller/SellerRFQ'));
+const PPSellerProfile   = lazy(() => import('./pages/pixel-perfect/seller/SellerProfile'));
+const PPSellerSettings  = lazy(() => import('./pages/pixel-perfect/seller/SellerSettings'));
+const PPSellerReviews   = lazy(() => import('./pages/pixel-perfect/seller/SellerReviewsPage'));
+
+const PPBuyerShell     = lazy(() => import('./pages/pixel-perfect/buyer/BuyerShell'));
+const PPBuyerDashboard = lazy(() => import('./pages/pixel-perfect/buyer/BuyerDashboard'));
+const PPBuyerOrders    = lazy(() => import('./pages/pixel-perfect/buyer/BuyerOrders'));
+const PPBuyerAddresses = lazy(() => import('./pages/pixel-perfect/buyer/BuyerAddresses'));
+const PPBuyerPayments  = lazy(() => import('./pages/pixel-perfect/buyer/BuyerPayments'));
+const PPBuyerReviews   = lazy(() => import('./pages/pixel-perfect/buyer/BuyerReviews'));
+const PPBuyerProfile   = lazy(() => import('./pages/pixel-perfect/buyer/BuyerProfile'));
+const PPBuyerSettings  = lazy(() => import('./pages/pixel-perfect/buyer/BuyerSettings'));
+const PPBuyerWishlist  = lazy(() => import('./pages/pixel-perfect/buyer/BuyerWishlist'));
+
+const PPAdminShell      = lazy(() => import('./pages/pixel-perfect/admin/AdminShell'));
+const PPAdminDashboard  = lazy(() => import('./pages/pixel-perfect/admin/AdminDashboard'));
+const PPAdminUsers      = lazy(() => import('./pages/pixel-perfect/admin/AdminUsers'));
+const PPAdminApprovals  = lazy(() => import('./pages/pixel-perfect/admin/AdminApprovals'));
+const PPAdminProducts   = lazy(() => import('./pages/pixel-perfect/admin/AdminProducts'));
+const PPAdminOrders     = lazy(() => import('./pages/pixel-perfect/admin/AdminOrders'));
+const PPAdminFlagged    = lazy(() => import('./pages/pixel-perfect/admin/AdminFlagged'));
+const PPAdminReports    = lazy(() => import('./pages/pixel-perfect/admin/AdminReports'));
+const PPAdminSupport    = lazy(() => import('./pages/pixel-perfect/admin/AdminSupport'));
+const PPAdminSettings   = lazy(() => import('./pages/pixel-perfect/admin/AdminSettings'));
 
 // Loading component
 function PageLoader() {
@@ -206,6 +236,57 @@ function App() {
         <Route path="forgot-password" element={<Suspense fallback={<PageLoader />}><PPForgotPassword /></Suspense>} />
         <Route path="reset-password" element={<Suspense fallback={<PageLoader />}><PPResetPassword /></Suspense>} />
 
+        {/* ── Pixel-perfect dashboard routes (own shell with sidebar) ──────────── */}
+        {/* /pp/seller – RequireSeller */}
+        <Route path="pp/seller" element={
+          <RequireSeller>
+            <Suspense fallback={<PageLoader />}><PPSellerShell /></Suspense>
+          </RequireSeller>
+        }>
+          <Route index element={<Suspense fallback={<PageLoader />}><PPSellerDashboard /></Suspense>} />
+          <Route path="products" element={<Suspense fallback={<PageLoader />}><PPSellerProducts /></Suspense>} />
+          <Route path="orders" element={<Suspense fallback={<PageLoader />}><PPSellerOrders /></Suspense>} />
+          <Route path="shipments" element={<Suspense fallback={<PageLoader />}><PPSellerShipments /></Suspense>} />
+          <Route path="returns" element={<Suspense fallback={<PageLoader />}><PPSellerReturns /></Suspense>} />
+          <Route path="rfq" element={<Suspense fallback={<PageLoader />}><PPSellerRFQ /></Suspense>} />
+          <Route path="reviews" element={<Suspense fallback={<PageLoader />}><PPSellerReviews /></Suspense>} />
+          <Route path="profile" element={<Suspense fallback={<PageLoader />}><PPSellerProfile /></Suspense>} />
+          <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPSellerSettings /></Suspense>} />
+        </Route>
+
+        {/* /pp/buyer – RequireAuth */}
+        <Route path="pp/buyer" element={
+          <RequireAuth>
+            <Suspense fallback={<PageLoader />}><PPBuyerShell /></Suspense>
+          </RequireAuth>
+        }>
+          <Route index element={<Suspense fallback={<PageLoader />}><PPBuyerDashboard /></Suspense>} />
+          <Route path="orders" element={<Suspense fallback={<PageLoader />}><PPBuyerOrders /></Suspense>} />
+          <Route path="wishlist" element={<Suspense fallback={<PageLoader />}><PPBuyerWishlist /></Suspense>} />
+          <Route path="addresses" element={<Suspense fallback={<PageLoader />}><PPBuyerAddresses /></Suspense>} />
+          <Route path="payments" element={<Suspense fallback={<PageLoader />}><PPBuyerPayments /></Suspense>} />
+          <Route path="reviews" element={<Suspense fallback={<PageLoader />}><PPBuyerReviews /></Suspense>} />
+          <Route path="profile" element={<Suspense fallback={<PageLoader />}><PPBuyerProfile /></Suspense>} />
+          <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPBuyerSettings /></Suspense>} />
+        </Route>
+
+        {/* /pp/admin – RequireAdmin */}
+        <Route path="pp/admin" element={
+          <RequireAdmin>
+            <Suspense fallback={<PageLoader />}><PPAdminShell /></Suspense>
+          </RequireAdmin>
+        }>
+          <Route index element={<Suspense fallback={<PageLoader />}><PPAdminDashboard /></Suspense>} />
+          <Route path="users" element={<Suspense fallback={<PageLoader />}><PPAdminUsers /></Suspense>} />
+          <Route path="approvals" element={<Suspense fallback={<PageLoader />}><PPAdminApprovals /></Suspense>} />
+          <Route path="products" element={<Suspense fallback={<PageLoader />}><PPAdminProducts /></Suspense>} />
+          <Route path="orders" element={<Suspense fallback={<PageLoader />}><PPAdminOrders /></Suspense>} />
+          <Route path="flagged" element={<Suspense fallback={<PageLoader />}><PPAdminFlagged /></Suspense>} />
+          <Route path="reports" element={<Suspense fallback={<PageLoader />}><PPAdminReports /></Suspense>} />
+          <Route path="support" element={<Suspense fallback={<PageLoader />}><PPAdminSupport /></Suspense>} />
+          <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPAdminSettings /></Suspense>} />
+        </Route>
+
         {/* ── All other routes wrapped in shared Layout (Header + Footer) ───────── */}
         <Route element={<Layout />}> 
             <Route path="shop" element={<Suspense fallback={<PageLoader />}><ShopPage /></Suspense>} />
@@ -220,14 +301,8 @@ function App() {
               </Suspense>
             } />
 
-            {/* Protected: Dashboard */}
-            <Route path="dashboard" element={
-              <RequireAuth>
-                <Suspense fallback={<PageLoader />}> 
-                  <DashboardPage />
-                </Suspense>
-              </RequireAuth>
-            } />
+            {/* Protected: Dashboard → redirects to pixel-perfect buyer hub */}
+            <Route path="dashboard" element={<Navigate to="/pp/buyer" replace />} />
             {/* Protected: Account Settings */}
             <Route path="account-settings" element={
               <RequireAuth>
@@ -236,14 +311,8 @@ function App() {
                 </Suspense>
               </RequireAuth>
             } />
-            {/* Protected: Seller Dashboard */}
-            <Route path="seller" element={
-              <RequireSeller>
-                <Suspense fallback={<PageLoader />}> 
-                  <SellerDashboardPage />
-                </Suspense>
-              </RequireSeller>
-            } />
+            {/* Protected: Seller Dashboard → redirects to pixel-perfect seller hub */}
+            <Route path="seller" element={<Navigate to="/pp/seller" replace />} />
             {/* Protected: Seller Profile */}
             <Route path="seller/profile" element={
               <RequireSeller>
@@ -290,14 +359,8 @@ function App() {
                 </Suspense>
               </RequireSeller>
             } />
-            {/* Protected: Admin Dashboard */}
-            <Route path="admin" element={
-              <RequireAdmin>
-                <Suspense fallback={<PageLoader />}> 
-                  <AdminDashboardPage />
-                </Suspense>
-              </RequireAdmin>
-            } />
+            {/* Protected: Admin Dashboard → redirects to pixel-perfect admin hub */}
+            <Route path="admin" element={<Navigate to="/pp/admin" replace />} />
             {/* Protected: Admin Categories */}
             <Route path="admin/categories" element={
               <RequireAdmin>

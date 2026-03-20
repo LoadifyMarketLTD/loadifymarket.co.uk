@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ShoppingCart, Search, Filter, Eye } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { ShoppingCart, Search, Filter, Eye, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,28 +11,17 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
+import { supabase } from "@/lib/supabase";
 
 interface Order {
   id: string;
+  orderNumber: string;
   buyer: string;
-  seller: string;
-  items: number;
+  product: string;
   total: number;
-  status: "paid" | "packed" | "shipped" | "delivered" | "cancelled" | "refunded" | "disputed";
+  status: string;
   date: string;
-  paymentMethod: string;
 }
-
-const orders: Order[] = [
-  { id: "ORD-3042", buyer: "Jane Buyer", seller: "TechWholesale UK", items: 3, total: 2450, status: "paid", date: "19 Mar 2026", paymentMethod: "Visa •••• 4821" },
-  { id: "ORD-3041", buyer: "Mark Thompson", seller: "TechWholesale UK", items: 1, total: 890, status: "shipped", date: "19 Mar 2026", paymentMethod: "Mastercard •••• 7193" },
-  { id: "ORD-3040", buyer: "David Chen", seller: "SportMax Trade", items: 5, total: 3200, status: "packed", date: "18 Mar 2026", paymentMethod: "Visa •••• 9012" },
-  { id: "ORD-3039", buyer: "Jane Buyer", seller: "QuickSell Pro", items: 2, total: 1750, status: "delivered", date: "18 Mar 2026", paymentMethod: "Visa •••• 4821" },
-  { id: "ORD-3038", buyer: "Lisa Brown", seller: "ToolKing UK", items: 1, total: 650, status: "disputed", date: "17 Mar 2026", paymentMethod: "Amex •••• 3042" },
-  { id: "ORD-3037", buyer: "Mark Thompson", seller: "HomeGoods Direct", items: 4, total: 4100, status: "delivered", date: "17 Mar 2026", paymentMethod: "Mastercard •••• 7193" },
-  { id: "ORD-3036", buyer: "David Chen", seller: "TechWholesale UK", items: 2, total: 1200, status: "cancelled", date: "16 Mar 2026", paymentMethod: "Visa •••• 9012" },
-  { id: "ORD-3035", buyer: "Jane Buyer", seller: "SportMax Trade", items: 1, total: 980, status: "refunded", date: "15 Mar 2026", paymentMethod: "Visa •••• 4821" },
-];
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   paid: { label: "Paid", className: "bg-blue-500/15 text-blue-700 border-blue-200" },
@@ -45,18 +34,71 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 };
 
 const AdminOrders = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Order | null>(null);
 
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: queryError } = await supabase
+        .from("orders")
+        .select(`
+          id,
+          orderNumber,
+          total,
+          status,
+          createdAt,
+          buyer:users!orders_buyerId_fkey(firstName, lastName),
+          product:products(title)
+        `)
+        .order("createdAt", { ascending: false })
+        .limit(100);
+
+      if (queryError) throw queryError;
+
+      const mapped: Order[] = (data || []).map((o: any) => {
+        const buyerObj = Array.isArray(o.buyer) ? o.buyer[0] : o.buyer;
+        const productObj = Array.isArray(o.product) ? o.product[0] : o.product;
+        const buyerName = buyerObj
+          ? `${buyerObj.firstName ?? ""} ${buyerObj.lastName ?? ""}`.trim() || "—"
+          : "—";
+        return {
+          id: o.id,
+          orderNumber: o.orderNumber || o.id.slice(0, 8).toUpperCase(),
+          buyer: buyerName,
+          product: productObj?.title || "—",
+          total: o.total ?? 0,
+          status: o.status ?? "paid",
+          date: o.createdAt
+            ? new Date(o.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+            : "—",
+        };
+      });
+
+      setOrders(mapped);
+    } catch (err: any) {
+      setError(err.message || "Failed to load orders");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+
   const filtered = orders.filter(
     (o) =>
-      o.id.toLowerCase().includes(search.toLowerCase()) ||
+      o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
       o.buyer.toLowerCase().includes(search.toLowerCase()) ||
-      o.seller.toLowerCase().includes(search.toLowerCase())
+      o.product.toLowerCase().includes(search.toLowerCase())
   );
 
   const byStatus = (status: string) => filtered.filter((o) => o.status === status);
   const activeOrders = filtered.filter((o) => !["cancelled", "refunded"].includes(o.status));
+  const totalValue = orders.reduce((s, o) => s + (o.total || 0), 0);
 
   const renderTable = (data: Order[]) => (
     <Table>
@@ -64,8 +106,7 @@ const AdminOrders = () => {
         <TableRow>
           <TableHead>Order</TableHead>
           <TableHead>Buyer</TableHead>
-          <TableHead className="hidden sm:table-cell">Seller</TableHead>
-          <TableHead className="hidden md:table-cell">Items</TableHead>
+          <TableHead className="hidden sm:table-cell">Product</TableHead>
           <TableHead>Total</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="hidden sm:table-cell">Date</TableHead>
@@ -73,27 +114,37 @@ const AdminOrders = () => {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.length === 0 ? (
+        {loading ? (
           <TableRow>
-            <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+            <TableCell colSpan={7} className="text-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+            </TableCell>
+          </TableRow>
+        ) : data.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
               <ShoppingCart className="h-8 w-8 mx-auto mb-2 opacity-40" />No orders found.
             </TableCell>
           </TableRow>
         ) : (
-          data.map((o) => (
-            <TableRow key={o.id}>
-              <TableCell className="font-medium text-sm">{o.id}</TableCell>
-              <TableCell className="text-sm">{o.buyer}</TableCell>
-              <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{o.seller}</TableCell>
-              <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{o.items}</TableCell>
-              <TableCell className="text-sm font-semibold text-foreground">£{o.total.toLocaleString()}</TableCell>
-              <TableCell><Badge variant="outline" className={statusConfig[o.status].className}>{statusConfig[o.status].label}</Badge></TableCell>
-              <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{o.date}</TableCell>
-              <TableCell className="text-right">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelected(o)}><Eye className="h-4 w-4" /></Button>
-              </TableCell>
-            </TableRow>
-          ))
+          data.map((o) => {
+            const cfg = statusConfig[o.status] ?? { label: o.status, className: "bg-muted text-muted-foreground" };
+            return (
+              <TableRow key={o.id}>
+                <TableCell className="font-medium text-sm">{o.orderNumber}</TableCell>
+                <TableCell className="text-sm">{o.buyer}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[180px] truncate">{o.product}</TableCell>
+                <TableCell className="text-sm font-semibold text-foreground">£{o.total.toLocaleString()}</TableCell>
+                <TableCell><Badge variant="outline" className={cfg.className}>{cfg.label}</Badge></TableCell>
+                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{o.date}</TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelected(o)}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            );
+          })
         )}
       </TableBody>
     </Table>
@@ -103,12 +154,20 @@ const AdminOrders = () => {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Order Management</h1>
-        <p className="text-muted-foreground text-sm mt-1">{orders.length} total orders · {byStatus("disputed").length} disputed</p>
+        <p className="text-muted-foreground text-sm mt-1">
+          {orders.length} total orders · {byStatus("disputed").length} disputed
+        </p>
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Orders", count: orders.length, value: `£${orders.reduce((s, o) => s + o.total, 0).toLocaleString()}` },
+          { label: "Total Orders", count: orders.length, value: `£${totalValue.toLocaleString()}` },
           { label: "Active", count: activeOrders.length, value: "In progress" },
           { label: "Delivered", count: byStatus("delivered").length, value: "Completed" },
           { label: "Disputed", count: byStatus("disputed").length, value: "Needs attention" },
@@ -146,17 +205,20 @@ const AdminOrders = () => {
         {selected && (
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>{selected.id}</DialogTitle>
+              <DialogTitle>{selected.orderNumber}</DialogTitle>
               <DialogDescription>Order details</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div><span className="text-muted-foreground">Buyer</span><p className="font-medium text-foreground">{selected.buyer}</p></div>
-                <div><span className="text-muted-foreground">Seller</span><p className="font-medium text-foreground">{selected.seller}</p></div>
-                <div><span className="text-muted-foreground">Items</span><p className="font-medium text-foreground">{selected.items}</p></div>
+                <div><span className="text-muted-foreground">Product</span><p className="font-medium text-foreground">{selected.product}</p></div>
                 <div><span className="text-muted-foreground">Total</span><p className="font-semibold text-foreground">£{selected.total.toLocaleString()}</p></div>
-                <div><span className="text-muted-foreground">Payment</span><p className="font-medium text-foreground">{selected.paymentMethod}</p></div>
                 <div><span className="text-muted-foreground">Date</span><p className="font-medium text-foreground">{selected.date}</p></div>
+                <div><span className="text-muted-foreground">Status</span>
+                  <p><Badge variant="outline" className={(statusConfig[selected.status] ?? { className: "bg-muted text-muted-foreground" }).className}>
+                    {(statusConfig[selected.status] ?? { label: selected.status }).label}
+                  </Badge></p>
+                </div>
               </div>
             </div>
           </DialogContent>
