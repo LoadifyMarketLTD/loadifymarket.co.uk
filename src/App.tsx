@@ -9,6 +9,9 @@ import RequireAuth from './components/auth/RequireAuth';
 import RequireAdmin from './components/auth/RequireAdmin';
 import RequireSeller from './components/auth/RequireSeller';
 
+// Pixel-perfect homepage (standalone — includes its own Navbar + Footer)
+const PixelPerfectIndex = lazy(() => import('./pages/pixel-perfect/Index'));
+
 // Public pages — lazy-loaded to keep the initial JS bundle small
 const HomePage = lazy(() => import('./pages/HomePage'));
 const CatalogPage = lazy(() => import('./pages/CatalogPage'));
@@ -176,8 +179,11 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Layout />}> 
-          <Route index element={<Suspense fallback={<PageLoader />}><HomePage /></Suspense>} />
+      {/* Pixel-perfect homepage — standalone with its own Navbar + Footer */}
+      <Route path="/" element={<Suspense fallback={<PageLoader />}><PixelPerfectIndex /></Suspense>} />
+
+      {/* All other routes wrapped in shared Layout (Header + Footer) */}
+      <Route element={<Layout />}> 
           <Route path="shop" element={<Suspense fallback={<PageLoader />}><ShopPage /></Suspense>} />
           <Route path="bulk" element={<Navigate to="/category/wholesale" replace />} />
           <Route path="catalog" element={<Suspense fallback={<PageLoader />}><CatalogPage /></Suspense>} />

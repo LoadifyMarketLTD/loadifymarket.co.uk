@@ -4,12 +4,12 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/loadify-logo.png";
 import NavbarSearch from "@/components/NavbarSearch";
-import { useCart } from "@/contexts/CartContext";
+import { useCartStore } from "@/store";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const { cartCount } = useCart();
+  const cartCount = useCartStore((s) => s.getTotalItems());
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border">
