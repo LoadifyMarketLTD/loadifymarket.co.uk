@@ -54,7 +54,7 @@ const AdminReports = () => {
               .eq("isApproved", true),
             supabase
               .from("seller_profiles")
-              .select("storeName, businessName, rating, totalSales, userId, users!seller_profiles_userId_fkey(firstName, lastName)")
+              .select("userId, storeName, businessName, rating, totalSales")
               .gt("rating", 0)
               .order("totalSales", { ascending: false })
               .limit(5),
@@ -108,12 +108,7 @@ const AdminReports = () => {
         ]);
 
         const sellers: TopSeller[] = (topSellersRes.data || []).map((s: any) => {
-          const userObj = Array.isArray(s.users) ? s.users[0] : s.users;
-          const name =
-            s.storeName ||
-            s.businessName ||
-            (userObj ? `${userObj.firstName ?? ""} ${userObj.lastName ?? ""}`.trim() : "—") ||
-            "—";
+          const name = s.storeName || s.businessName || s.userId?.slice(0, 8).toUpperCase() || "—";
           return { name, totalSales: s.totalSales ?? 0, rating: s.rating ?? 0 };
         });
         setTopSellers(sellers);

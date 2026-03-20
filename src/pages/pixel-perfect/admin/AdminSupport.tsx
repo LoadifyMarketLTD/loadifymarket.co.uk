@@ -59,39 +59,33 @@ const AdminSupport = () => {
         .from("support_tickets")
         .select(`
           id,
+          userId,
           subject,
           category,
           priority,
           status,
           createdAt,
-          updatedAt,
-          user:users!support_tickets_userId_fkey(firstName, lastName, email)
+          updatedAt
         `)
         .order("createdAt", { ascending: false });
 
       if (queryError) throw queryError;
 
-      const mapped: Ticket[] = (data || []).map((t: any) => {
-        const userObj = Array.isArray(t.user) ? t.user[0] : t.user;
-        const userName = userObj
-          ? `${userObj.firstName ?? ""} ${userObj.lastName ?? ""}`.trim() || userObj.email || "—"
-          : "—";
-        return {
-          id: t.id,
-          subject: t.subject || "—",
-          userName,
-          userEmail: userObj?.email || "—",
-          category: t.category || "—",
-          priority: t.priority ?? "medium",
-          status: t.status ?? "open",
-          createdAt: t.createdAt
-            ? new Date(t.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-            : "—",
-          updatedAt: t.updatedAt
-            ? new Date(t.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-            : "—",
-        };
-      });
+      const mapped: Ticket[] = (data || []).map((t: any) => ({
+        id: t.id,
+        subject: t.subject || "—",
+        userName: t.userId ? t.userId.slice(0, 8).toUpperCase() : "—",
+        userEmail: "—",
+        category: t.category || "—",
+        priority: t.priority ?? "medium",
+        status: t.status ?? "open",
+        createdAt: t.createdAt
+          ? new Date(t.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+          : "—",
+        updatedAt: t.updatedAt
+          ? new Date(t.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+          : "—",
+      }));
 
       setTickets(mapped);
     } catch (err: any) {

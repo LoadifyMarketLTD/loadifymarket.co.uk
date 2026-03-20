@@ -1,17 +1,21 @@
 /**
  * productAdapter.ts
  *
- * Converts real Supabase product records (with joined category / seller info)
- * into the simplified `Product` shape used by the pixel-perfect catalog
- * components ( @/components/catalog/ProductCard, ProductInfo, SellerCard, etc.).
+ * Converts real Supabase product records into the simplified `Product` shape
+ * used by the pixel-perfect catalog components.
  *
- * This is the bridge between the existing working Supabase backend and the
- * new pixel-perfect frontend — no mock data is used here.
+ * Usage pattern:
+ *  1. Fetch products (with category joins only)
+ *  2. Fetch seller_profiles rows by userId in a separate query
+ *  3. Merge seller data into product objects in code
+ *  4. Call adaptProduct() / adaptProducts() to get UI-ready shapes
+ *
+ * This avoids ambiguous PostgREST embedded joins on views and respects RLS.
  */
 
 import type { Product as UIProduct } from "@/components/catalog/ProductCard";
 
-/** Shape returned by Supabase when we JOIN categories + seller_profiles_public */
+/** Shape of a product row from Supabase with optional joined category and seller data */
 export interface DBProduct {
   id: string;
   title: string;
@@ -30,7 +34,7 @@ export interface DBProduct {
   // Joined from categories table (PostgREST embeds as object or array)
   category?: { name: string; slug: string } | Array<{ name: string; slug: string }> | null;
   subcategory?: { name: string; slug: string } | Array<{ name: string; slug: string }> | null;
-  // Joined from seller_profiles_public
+  // Seller info — fetched separately from seller_profiles and merged in code
   seller?:
     | { businessName?: string | null; isApproved?: boolean | null; rating?: number | null; userId?: string }
     | Array<{ businessName?: string | null; isApproved?: boolean | null; rating?: number | null; userId?: string }>

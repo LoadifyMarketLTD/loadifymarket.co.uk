@@ -98,7 +98,7 @@ export async function searchProducts(
 
   let q = supabase
     .from('products')
-    .select('*, seller:seller_profiles!left(rating, businessName, isApproved, paymentBehaviour)', { count: 'exact' })
+    .select('*', { count: 'exact' })
     .eq('isActive', true)
     .eq('isApproved', true);
 
@@ -191,7 +191,7 @@ export async function getAutocompleteSuggestions(
       });
     });
 
-    // Sellers
+    // Sellers — seller_profiles has public read (RLS USING TRUE)
     const { data: sellers } = await supabase
       .from('seller_profiles')
       .select('userId, businessName, storeName')

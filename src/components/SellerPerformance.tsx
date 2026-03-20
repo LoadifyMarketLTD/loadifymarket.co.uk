@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { Star, Package, Clock, TrendingUp, Award, MessageCircle } from 'lucide-react';
+import { Star, Package, TrendingUp, Award } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import VerificationBadge from './VerificationBadge';
 
@@ -12,7 +12,6 @@ interface SellerPerformanceProps {
 interface SellerStats {
   rating: number;
   totalSales: number;
-  responseTime: number; // in hours
   onTimeShipment: number; // percentage
   memberSince: string;
   totalProducts: number;
@@ -37,9 +36,9 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
   const fetchSellerPerformance = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch seller profile (public view — no sensitive fields)
+      // Fetch seller profile from seller_profiles (public via RLS USING TRUE)
       const { data: sellerData, error: sellerError } = await supabase
-        .from('seller_profiles_public')
+        .from('seller_profiles')
         .select('userId, businessName, rating, salesCount, isApproved, createdAt')
         .eq('userId', sellerId)
         .single();
@@ -47,13 +46,14 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
       if (sellerError) throw sellerError;
       if (sellerData) setSellerInfo(sellerData as SellerInfoData);
 
-      // Fetch seller statistics
+      // Fetch seller's products for performance stats
       const { data: products } = await supabase
         .from('products')
         .select('id, reviewCount, rating')
         .eq('sellerId', sellerId)
         .eq('isApproved', true);
 
+      // Fetch seller's orders for on-time shipping calculation
       const { data: orders } = await supabase
         .from('orders')
         .select('id, createdAt, shippedAt, status')
@@ -73,19 +73,15 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
         const shipped = new Date(o.shippedAt);
         const created = new Date(o.createdAt);
         const hoursDiff = (shipped.getTime() - created.getTime()) / (1000 * 60 * 60);
-        return hoursDiff <= 48; // Consider on-time if shipped within 48 hours
+        return hoursDiff <= 48; // On-time = shipped within 48 hours
       });
       const onTimePercentage = shippedOrders.length > 0
         ? (onTimeOrders.length / shippedOrders.length) * 100
         : 100;
 
-      // Calculate average response time (mock data for now)
-      const avgResponseTime = 4; // 4 hours average response time
-
       setStats({
         rating: avgRating,
         totalSales: orders?.length || 0,
-        responseTime: avgResponseTime,
         onTimeShipment: onTimePercentage,
         memberSince: sellerData?.createdAt ?? new Date().toISOString(),
         totalProducts,
@@ -126,8 +122,7 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
   const getPerformanceLevel = () => {
     const score = (
       (stats.rating / 5) * 0.4 +
-      (stats.onTimeShipment / 100) * 0.3 +
-      (stats.responseTime <= 6 ? 1 : stats.responseTime <= 12 ? 0.7 : 0.4) * 0.3
+      (stats.onTimeShipment / 100) * 0.6
     );
 
     if (score >= 0.9) return { label: 'Elite Seller', color: 'gold', icon: '⭐' };
@@ -150,10 +145,6 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
           <Package className="w-4 h-4" />
           <span>{stats.totalSales} sales</span>
         </div>
-        <div className="flex items-center gap-1 text-gray-600">
-          <Clock className="w-4 h-4" />
-          <span>~{stats.responseTime}h response</span>
-        </div>
       </div>
     );
   }
@@ -171,7 +162,7 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
           )}
         </div>
       )}
-      
+
       {/* Performance Badge */}
       <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-${performanceLevel.color}-50 border border-${performanceLevel.color}-200`}>
         <span className="text-xl">{performanceLevel.icon}</span>
@@ -219,14 +210,6 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
         </div>
 
         <div className="flex items-start gap-3">
-          <Clock className="w-5 h-5 text-purple-600 mt-1 flex-shrink-0" />
-          <div>
-            <p className="text-sm text-gray-500">Response Time</p>
-            <p className="font-semibold text-lg">~{stats.responseTime} hours</p>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-3">
           <Award className="w-5 h-5 text-orange-600 mt-1 flex-shrink-0" />
           <div>
             <p className="text-sm text-gray-500">On-Time Shipping</p>
@@ -253,12 +236,6 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
             <span>Highly rated by customers</span>
           </div>
         )}
-        {stats.responseTime <= 6 && (
-          <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 px-3 py-2 rounded">
-            <MessageCircle className="w-4 h-4" />
-            <span>Responds quickly to messages</span>
-          </div>
-        )}
         {stats.onTimeShipment >= 95 && (
           <div className="flex items-center gap-2 text-sm text-purple-700 bg-purple-50 px-3 py-2 rounded">
             <Package className="w-4 h-4" />
@@ -269,3 +246,4 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
     </div>
   );
 }
+

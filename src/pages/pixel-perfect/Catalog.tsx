@@ -13,17 +13,28 @@ import { supabase } from "@/lib/supabase";
 import { adaptProducts } from "@/lib/productAdapter";
 import type { DBProduct } from "@/lib/productAdapter";
 
+// Product select — category joins only; seller data fetched separately
 const PRODUCT_QUERY = `
   *,
   category:categories!categoryId(name, slug),
-  subcategory:categories!subcategoryId(name, slug),
-  seller:seller_profiles_public!left(
-    businessName,
-    isApproved,
-    rating,
-    userId
-  )
+  subcategory:categories!subcategoryId(name, slug)
 `;
+
+/** Fetch seller info for a list of seller IDs from seller_profiles (public via RLS USING TRUE) */
+async function fetchSellerMap(
+  sellerIds: string[],
+): Promise<Map<string, { businessName?: string; isApproved?: boolean; rating?: number; userId?: string }>> {
+  const map = new Map<string, { businessName?: string; isApproved?: boolean; rating?: number; userId?: string }>();
+  if (sellerIds.length === 0) return map;
+  const { data } = await supabase
+    .from("seller_profiles")
+    .select("userId, businessName, isApproved, rating")
+    .in("userId", sellerIds);
+  (data ?? []).forEach((row: { userId?: string; businessName?: string; isApproved?: boolean; rating?: number }) => {
+    if (row.userId) map.set(row.userId, row);
+  });
+  return map;
+}
 
 const Catalog = () => {
   const [searchParams] = useSearchParams();
@@ -72,6 +83,7 @@ const Catalog = () => {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
+      // Step 1: Fetch products with category joins only
       let query = supabase
         .from("products")
         .select(PRODUCT_QUERY)
@@ -111,13 +123,22 @@ const Catalog = () => {
       const { data, error } = await query.limit(96);
       if (error) throw error;
 
-      const mapped = (data || []).map((p: Record<string, unknown>) => ({
+      // Step 2: Collect unique sellerIds
+      const rows = data || [];
+      const sellerIds = [...new Set(rows.map((p: Record<string, unknown>) => p.sellerId as string).filter(Boolean))];
+
+      // Step 3: Fetch seller_profiles by userId
+      const sellerMap = await fetchSellerMap(sellerIds);
+
+      // Step 4: Merge seller data and normalise category arrays
+      const mapped = rows.map((p: Record<string, unknown>) => ({
         ...p,
         category: Array.isArray(p.category) ? p.category[0] : p.category,
         subcategory: Array.isArray(p.subcategory) ? p.subcategory[0] : p.subcategory,
-        seller: Array.isArray(p.seller) ? p.seller[0] : p.seller,
+        seller: sellerMap.get(p.sellerId as string) ?? null,
       }));
 
+      // Step 5: Adapt to UI shape
       setProducts(adaptProducts(mapped as unknown as DBProduct[]));
     } catch (err) {
       console.error("Error fetching catalog products:", err);

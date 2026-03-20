@@ -18,7 +18,6 @@ import type { Shipment } from "@/types/shipping";
 interface ShipmentRow extends Shipment {
   orders?: {
     orderNumber?: string;
-    users?: { firstName?: string; lastName?: string } | null;
     products?: { title?: string } | null;
   } | null;
 }
@@ -54,7 +53,7 @@ const SellerShipments = () => {
     const load = async () => {
       const { data } = await supabase
         .from("shipments")
-        .select(`*, orders(orderNumber, products(title), users!orders_buyerId_fkey(firstName, lastName))`)
+        .select(`*, orders(orderNumber, products(title))`)
         .eq("seller_id", user.id)
         .order("created_at", { ascending: false });
       setShipments((data ?? []) as ShipmentRow[]);
@@ -65,12 +64,10 @@ const SellerShipments = () => {
 
   const filtered = shipments.filter((s) => {
     const q = search.toLowerCase();
-    const buyer = s.orders?.users;
-    const buyerName = buyer ? `${buyer.firstName ?? ""} ${buyer.lastName ?? ""}`.trim() : "";
     return (
       s.id.toLowerCase().includes(q) ||
       (s.tracking_number ?? "").toLowerCase().includes(q) ||
-      buyerName.toLowerCase().includes(q)
+      (s.orders?.orderNumber ?? "").toLowerCase().includes(q)
     );
   });
 
@@ -108,15 +105,13 @@ const SellerShipments = () => {
           data.map((s) => {
             const displayStatus = mapStatus(s.status);
             const sc = statusConfig[displayStatus];
-            const buyer = s.orders?.users;
-            const buyerName = buyer ? `${buyer.firstName ?? ""} ${buyer.lastName ?? ""}`.trim() || "Buyer" : "Buyer";
             return (
               <TableRow key={s.id}>
                 <TableCell className="font-medium text-sm">{s.id.slice(0, 8).toUpperCase()}</TableCell>
                 <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">
                   {s.orders?.orderNumber ?? s.order_id.slice(0, 8)}
                 </TableCell>
-                <TableCell className="text-sm">{buyerName}</TableCell>
+                <TableCell className="text-sm">Customer</TableCell>
                 <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{s.courier_name ?? "—"}</TableCell>
                 <TableCell className="hidden lg:table-cell text-xs text-muted-foreground font-mono">{s.tracking_number ?? "—"}</TableCell>
                 <TableCell>
@@ -184,8 +179,6 @@ const SellerShipments = () => {
       {/* Tracking Dialog */}
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         {selected && (() => {
-          const buyer = selected.orders?.users;
-          const buyerName = buyer ? `${buyer.firstName ?? ""} ${buyer.lastName ?? ""}`.trim() || "Buyer" : "Buyer";
           const displayStatus = mapStatus(selected.status);
           const sc = statusConfig[displayStatus];
           return (
@@ -198,7 +191,7 @@ const SellerShipments = () => {
               </DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-muted-foreground">Buyer</span><p className="font-medium text-foreground">{buyerName}</p></div>
+                  <div><span className="text-muted-foreground">Buyer</span><p className="font-medium text-foreground">Customer</p></div>
                   <div><span className="text-muted-foreground">Status</span><p className="font-medium text-foreground"><Badge variant="outline" className={sc.className}>{sc.label}</Badge></p></div>
                   <div><span className="text-muted-foreground">Order</span><p className="font-medium text-foreground">{selected.orders?.orderNumber ?? selected.order_id.slice(0, 8)}</p></div>
                   <div><span className="text-muted-foreground">Dispatched</span><p className="font-medium text-foreground">{selected.dispatched_at ? new Date(selected.dispatched_at).toLocaleDateString("en-GB") : "—"}</p></div>

@@ -13,17 +13,28 @@ import { supabase } from "@/lib/supabase";
 import { adaptProduct } from "@/lib/productAdapter";
 import type { DBProduct } from "@/lib/productAdapter";
 
+// Product select — category joins only; seller data fetched separately
 const PRODUCT_QUERY = `
   *,
   category:categories!categoryId(name, slug),
-  subcategory:categories!subcategoryId(name, slug),
-  seller:seller_profiles_public!left(
-    businessName,
-    isApproved,
-    rating,
-    userId
-  )
+  subcategory:categories!subcategoryId(name, slug)
 `;
+
+/** Fetch seller info for a list of seller IDs from seller_profiles (public via RLS USING TRUE) */
+async function fetchSellerMap(
+  sellerIds: string[],
+): Promise<Map<string, { businessName?: string; isApproved?: boolean; rating?: number; userId?: string }>> {
+  const map = new Map<string, { businessName?: string; isApproved?: boolean; rating?: number; userId?: string }>();
+  if (sellerIds.length === 0) return map;
+  const { data } = await supabase
+    .from("seller_profiles")
+    .select("userId, businessName, isApproved, rating")
+    .in("userId", sellerIds);
+  (data ?? []).forEach((row: { userId?: string; businessName?: string; isApproved?: boolean; rating?: number }) => {
+    if (row.userId) map.set(row.userId, row);
+  });
+  return map;
+}
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -42,6 +53,7 @@ const ProductDetail = () => {
       setLoading(true);
       setNotFound(false);
       try {
+        // Step 1: Fetch product with category joins only
         const { data, error } = await supabase
           .from("products")
           .select(PRODUCT_QUERY)
@@ -56,17 +68,22 @@ const ProductDetail = () => {
           return;
         }
 
+        // Step 2 & 3: Fetch seller info separately
+        const sellerMap = await fetchSellerMap(data.sellerId ? [data.sellerId] : []);
+
+        // Step 4: Merge
         const normalised = {
           ...data,
           category: Array.isArray(data.category) ? data.category[0] : data.category,
           subcategory: Array.isArray(data.subcategory) ? data.subcategory[0] : data.subcategory,
-          seller: Array.isArray(data.seller) ? data.seller[0] : data.seller,
+          seller: sellerMap.get(data.sellerId) ?? null,
         } as unknown as DBProduct;
 
+        // Step 5: Adapt to UI shape
         const adapted = adaptProduct(normalised);
         setProduct(adapted);
 
-        // Use real product images (or at least the first one)
+        // Use real product images
         const imgs = Array.isArray(data.images) && data.images.length > 0
           ? data.images
           : [adapted.image];
@@ -84,26 +101,27 @@ const ProductDetail = () => {
             .order("rating", { ascending: false })
             .limit(3);
 
-          if (relData) {
+          if (relData && relData.length > 0) {
+            // Fetch sellers for related products
+            const relSellerIds = [...new Set(relData.map((p: Record<string, unknown>) => p.sellerId as string).filter(Boolean))];
+            const relSellerMap = await fetchSellerMap(relSellerIds);
+
             const normRel = relData.map((p: Record<string, unknown>) => ({
               ...p,
               category: Array.isArray(p.category) ? p.category[0] : p.category,
               subcategory: Array.isArray(p.subcategory) ? p.subcategory[0] : p.subcategory,
-              seller: Array.isArray(p.seller) ? p.seller[0] : p.seller,
+              seller: relSellerMap.get(p.sellerId as string) ?? null,
             }));
             setRelated(normRel.map((p) => adaptProduct(p as unknown as DBProduct)));
           }
         }
 
         // Fetch seller's active listing count
-        const sellerUserId = Array.isArray(data.seller)
-          ? data.seller[0]?.userId
-          : data.seller?.userId;
-        if (sellerUserId) {
+        if (data.sellerId) {
           const { count } = await supabase
             .from("products")
             .select("id", { count: "exact", head: true })
-            .eq("sellerId", sellerUserId)
+            .eq("sellerId", data.sellerId)
             .eq("isActive", true)
             .eq("isApproved", true);
           setSellerListingCount(count ?? 0);

@@ -73,7 +73,7 @@ const SellerDashboard = () => {
             .eq("sellerId", user.id),
           supabase
             .from("orders")
-            .select(`id, orderNumber, total, status, createdAt, buyerId, users!orders_buyerId_fkey(firstName, lastName)`)
+            .select(`id, orderNumber, total, status, createdAt, buyerId`)
             .eq("sellerId", user.id)
             .order("createdAt", { ascending: false })
             .limit(5),
@@ -87,7 +87,6 @@ const SellerDashboard = () => {
         const products = productsRes.data ?? [];
         const orders = (ordersRes.data ?? []) as Array<{
           id: string; orderNumber: string; total: number; status: string; createdAt: string; buyerId: string;
-          users?: Array<{ firstName?: string; lastName?: string }> | { firstName?: string; lastName?: string } | null;
         }>;
 
         // Stats
@@ -111,17 +110,14 @@ const SellerDashboard = () => {
 
         // Recent orders
         setRecentOrders(
-          orders.map((o) => {
-            const u = Array.isArray(o.users) ? o.users[0] : o.users;
-            return {
-              id: o.id,
-              orderNumber: o.orderNumber,
-              buyerName: u?.firstName ? `${u.firstName}${u.lastName ? " " + u.lastName : ""}` : "Buyer",
-              total: o.total,
-              status: o.status,
-              createdAt: o.createdAt,
-            };
-          })
+          orders.map((o) => ({
+            id: o.id,
+                        orderNumber: o.orderNumber,
+            buyerName: "Customer",
+            total: o.total,
+            status: o.status,
+            createdAt: o.createdAt,
+          }))
         );
 
         // Top products by views
