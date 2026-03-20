@@ -34,21 +34,13 @@ const PPSignup             = lazy(() => import('./pages/pixel-perfect/Signup'));
 const PPForgotPassword     = lazy(() => import('./pages/pixel-perfect/ForgotPassword'));
 const PPResetPassword      = lazy(() => import('./pages/pixel-perfect/ResetPassword'));
 
-// Public pages — lazy-loaded to keep the initial JS bundle small
-const HomePage = lazy(() => import('./pages/HomePage'));
-const CatalogPage = lazy(() => import('./pages/CatalogPage'));
-const ProductPage = lazy(() => import('./pages/ProductPage'));
-const LoginPage = lazy(() => import('./pages/LoginPage'));
-const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+// ─── Functional pages — still using old layout (no pixel-perfect equivalent yet) ─
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const ShopPage = lazy(() => import('./pages/ShopPage'));
 const CategoryPage = lazy(() => import('./pages/CategoryPage'));
 const SellPage = lazy(() => import('./pages/SellPage'));
-
-// Lazy load heavy/secondary pages
-const CartPage = lazy(() => import('./pages/CartPage'));
-const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage'));
 const SellerDashboardPage = lazy(() => import('./pages/SellerDashboardPage'));
 const SellerProfilePage = lazy(() => import('./pages/SellerProfilePage'));
 const SellerPublicProfilePage = lazy(() => import('./pages/SellerPublicProfilePage'));
@@ -66,6 +58,7 @@ const ReportedListingsPage = lazy(() => import('./pages/ReportedListingsPage'));
 const AdminShipmentsPage = lazy(() => import('./pages/AdminShipmentsPage'));
 const OrdersPage = lazy(() => import('./pages/OrdersPage'));
 const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage'));
+const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
 const TrackingPage = lazy(() => import('./pages/TrackingPage'));
 const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
 const ReturnsPage = lazy(() => import('./pages/ReturnsPage'));
@@ -74,31 +67,16 @@ const WishlistPage = lazy(() => import('./pages/WishlistPage'));
 const MessagesPage = lazy(() => import('./pages/MessagesPage'));
 const NotificationSettingsPage = lazy(() => import('./pages/NotificationSettingsPage'));
 const HelpPage = lazy(() => import('./pages/HelpPage'));
-const ContactPage = lazy(() => import('./pages/ContactPage'));
 const BuyerProtectionPage = lazy(() => import('./pages/BuyerProtectionPage'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 const PricingPage = lazy(() => import('./pages/PricingPage'));
 const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage'));
-const AboutPage = lazy(() => import('./pages/AboutPage'));
-const TermsPage = lazy(() => import('./pages/legal/TermsPage'));
-const PrivacyPage = lazy(() => import('./pages/legal/PrivacyPage'));
-const CookiePage = lazy(() => import('./pages/legal/CookiePage'));
-const ReturnsPolicy = lazy(() => import('./pages/legal/ReturnsPolicyPage'));
-const ShippingPolicy = lazy(() => import('./pages/legal/ShippingPolicyPage'));
 const AcceptableUsePolicyPage = lazy(() => import('./pages/legal/AcceptableUsePolicyPage'));
-const DisclaimerPage = lazy(() => import('./pages/legal/DisclaimerPage'));
-const BuyerTermsPage = lazy(() => import('./pages/legal/BuyerTermsPage'));
-const SellerTermsPage = lazy(() => import('./pages/legal/SellerTermsPage'));
 const SellerGuidelinesPage = lazy(() => import('./pages/SellerGuidelinesPage'));
 const VerifiedSellersPage = lazy(() => import('./pages/VerifiedSellersPage'));
 const LogisticsLoadsPage = lazy(() => import('./pages/LogisticsLoadsPage'));
 const TransportQuotePage = lazy(() => import('./pages/TransportQuotePage'));
 const RFQPage = lazy(() => import('./pages/RFQPage'));
-const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
-const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
-const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
-const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage'));
-const DealsPage = lazy(() => import('./pages/DealsPage'));
 
 // Loading component
 function PageLoader() {
