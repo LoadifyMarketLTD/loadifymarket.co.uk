@@ -37,7 +37,7 @@ const NAV_COLUMNS = [
       { label: 'Fashion',              to: '/category/fashion'          },
       { label: 'Home & Living',        to: '/category/home-garden'      },
       { label: 'Tools & Equipment',    to: '/category/tools-diy'        },
-      { label: 'Clearance',            to: '/category/clearance'        },
+      { label: 'Deals & Clearance',    to: '/deals'                     },
       { label: 'Automotive',           to: '/category/automotive'       },
       { label: 'Track Order',          to: '/track-order'               },
       { label: 'Help & FAQ',           to: '/help'                      },

@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Search, Menu, X, LayoutGrid, TrendingUp, Star, MessageCircle, HelpCircle, Store, ChevronRight, LogOut, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, X, LayoutGrid, TrendingUp, Star, MessageCircle, HelpCircle, Store, ChevronRight, LogOut, LayoutDashboard, Tag } from 'lucide-react';
 import { useAuthStore, useCartStore } from '../../store';
 import { useState, useEffect } from 'react';
 import { BRAND } from '../../constants/brand';
@@ -389,6 +389,17 @@ export default function Header() {
               >
                 <LayoutGrid className="h-3.5 w-3.5" />
                 All Categories
+              </Link>
+              <Link
+                to="/deals"
+                className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors flex-shrink-0 border-b-2 ${
+                  location.pathname === '/deals'
+                    ? 'border-[#F4C400] text-[#F4C400]'
+                    : 'border-transparent text-[#F4C400]/80 hover:text-[#F4C400] hover:border-[#F4C400]/50'
+                }`}
+              >
+                <Tag className="h-3.5 w-3.5" />
+                Deals
               </Link>
               {CATEGORY_CONFIG.map((cat) => {
                 const CatIcon = cat.icon;
