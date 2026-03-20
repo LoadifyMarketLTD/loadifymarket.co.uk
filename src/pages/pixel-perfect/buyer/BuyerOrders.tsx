@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,52 +9,86 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Search, Package, Eye } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store";
 
-const orders = [
-  { id: "ORD-2847", date: "2025-03-18", items: "iPhone 15 Pro Max (x50)", total: "£32,500.00", status: "shipped", tracking: "RM9281736GB" },
-  { id: "ORD-2831", date: "2025-03-15", items: "Sony WH-1000XM5 (x100)", total: "£18,900.00", status: "processing", tracking: "—" },
-  { id: "ORD-2819", date: "2025-03-12", items: "Mixed Electronics Pallet", total: "£3,120.00", status: "delivered", tracking: "RM8172634GB" },
-  { id: "ORD-2804", date: "2025-03-08", items: "Samsung 65\" QLED (x20)", total: "£12,400.00", status: "delivered", tracking: "RM7263541GB" },
-  { id: "ORD-2791", date: "2025-03-05", items: "Apple AirPods Pro (x200)", total: "£28,000.00", status: "delivered", tracking: "RM6354128GB" },
-  { id: "ORD-2778", date: "2025-03-01", items: "Dyson V15 Detect (x30)", total: "£14,700.00", status: "cancelled", tracking: "—" },
-  { id: "ORD-2765", date: "2025-02-25", items: "Gaming Accessories Pallet", total: "£4,850.00", status: "delivered", tracking: "RM5241637GB" },
-];
+interface OrderRow {
+  id: string;
+  orderNumber: string;
+  total: number;
+  status: string;
+  createdAt: string;
+  products: { title: string } | null;
+}
 
 const statusColor: Record<string, string> = {
-  processing: "bg-amber-500/15 text-amber-700 border-amber-200",
+  pending: "bg-amber-500/15 text-amber-700 border-amber-200",
+  paid: "bg-amber-500/15 text-amber-700 border-amber-200",
+  packed: "bg-amber-500/15 text-amber-700 border-amber-200",
   shipped: "bg-blue-500/15 text-blue-700 border-blue-200",
   delivered: "bg-emerald-500/15 text-emerald-700 border-emerald-200",
   cancelled: "bg-destructive/15 text-destructive border-destructive/20",
+  refunded: "bg-destructive/15 text-destructive border-destructive/20",
 };
 
 const BuyerOrders = () => {
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchOrders = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .select("id, orderNumber, total, status, createdAt, products(title)")
+          .eq("buyerId", user.id)
+          .order("createdAt", { ascending: false });
+        if (error) throw error;
+        setOrders((data as OrderRow[]) || []);
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, [user]);
 
   const filtered = orders.filter(
     (o) =>
-      o.id.toLowerCase().includes(search.toLowerCase()) ||
-      o.items.toLowerCase().includes(search.toLowerCase())
+      (o.orderNumber || o.id).toLowerCase().includes(search.toLowerCase()) ||
+      (o.products?.title ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   const byStatus = (status: string) => filtered.filter((o) => o.status === status);
 
-  const renderTable = (data: typeof orders) => (
+  const renderTable = (data: OrderRow[]) => (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Order ID</TableHead>
-          <TableHead className="hidden sm:table-cell">Items</TableHead>
+          <TableHead className="hidden sm:table-cell">Product</TableHead>
           <TableHead>Date</TableHead>
           <TableHead>Total</TableHead>
-          <TableHead>Tracking</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="text-right">Action</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.length === 0 ? (
+        {loading ? (
           <TableRow>
-            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+            <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+              Loading…
+            </TableCell>
+          </TableRow>
+        ) : data.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
               <Package className="h-8 w-8 mx-auto mb-2 opacity-40" />
               No orders found.
             </TableCell>
@@ -61,16 +96,28 @@ const BuyerOrders = () => {
         ) : (
           data.map((o) => (
             <TableRow key={o.id}>
-              <TableCell className="font-medium text-sm">{o.id}</TableCell>
-              <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[200px] truncate">{o.items}</TableCell>
-              <TableCell className="text-xs text-muted-foreground">{o.date}</TableCell>
-              <TableCell className="font-semibold text-sm">{o.total}</TableCell>
-              <TableCell className="text-xs text-muted-foreground font-mono">{o.tracking}</TableCell>
+              <TableCell className="font-medium text-sm">
+                {o.orderNumber || o.id.slice(0, 8).toUpperCase()}
+              </TableCell>
+              <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[200px] truncate">
+                {o.products?.title ?? "—"}
+              </TableCell>
+              <TableCell className="text-xs text-muted-foreground">
+                {new Date(o.createdAt).toLocaleDateString("en-GB")}
+              </TableCell>
+              <TableCell className="font-semibold text-sm">
+                £{(o.total ?? 0).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </TableCell>
               <TableCell>
-                <Badge variant="outline" className={statusColor[o.status]}>{o.status}</Badge>
+                <Badge variant="outline" className={statusColor[o.status] ?? ""}>{o.status}</Badge>
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => navigate(`/orders/${o.id}`)}
+                >
                   <Eye className="h-4 w-4" />
                 </Button>
               </TableCell>
@@ -107,7 +154,7 @@ const BuyerOrders = () => {
         </TabsList>
 
         <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
-        <TabsContent value="processing"><Card><CardContent className="pt-4">{renderTable(byStatus("processing"))}</CardContent></Card></TabsContent>
+        <TabsContent value="processing"><Card><CardContent className="pt-4">{renderTable(filtered.filter((o) => ["pending","paid","packed"].includes(o.status)))}</CardContent></Card></TabsContent>
         <TabsContent value="shipped"><Card><CardContent className="pt-4">{renderTable(byStatus("shipped"))}</CardContent></Card></TabsContent>
         <TabsContent value="delivered"><Card><CardContent className="pt-4">{renderTable(byStatus("delivered"))}</CardContent></Card></TabsContent>
       </Tabs>

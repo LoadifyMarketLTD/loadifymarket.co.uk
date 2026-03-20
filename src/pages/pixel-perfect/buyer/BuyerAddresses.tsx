@@ -1,122 +1,193 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Plus, Pencil, Trash2, Home, Building2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { MapPin, Home, Building2, Save, X } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store";
 
-interface Address {
-  id: number;
-  label: string;
-  type: "home" | "business";
-  name: string;
-  line1: string;
+interface AddressData {
+  name?: string;
+  line1?: string;
   line2?: string;
-  city: string;
-  postcode: string;
-  country: string;
-  isDefault: boolean;
+  city?: string;
+  postcode?: string;
+  country?: string;
 }
 
-const initialAddresses: Address[] = [
-  {
-    id: 1, label: "Main Warehouse", type: "business",
-    name: "Jane Buyer", line1: "Unit 12, Thames Industrial Estate",
-    line2: "Dock Road", city: "London", postcode: "E16 2AA", country: "United Kingdom",
-    isDefault: true,
-  },
-  {
-    id: 2, label: "Home Office", type: "home",
-    name: "Jane Buyer", line1: "42 Primrose Hill Road",
-    city: "London", postcode: "NW3 4TG", country: "United Kingdom",
-    isDefault: false,
-  },
-  {
-    id: 3, label: "North Depot", type: "business",
-    name: "Jane Buyer c/o Northern Logistics", line1: "Bay 7, Trafford Park",
-    line2: "Manchester Distribution Centre", city: "Manchester", postcode: "M17 1SN", country: "United Kingdom",
-    isDefault: false,
-  },
-];
+interface AddressFormProps {
+  label: string;
+  type: "shipping" | "billing";
+  data: AddressData;
+  onSave: (type: "shipping" | "billing", data: AddressData) => Promise<void>;
+}
 
-const BuyerAddresses = () => {
-  const [addresses, setAddresses] = useState(initialAddresses);
+const emptyAddress = (): AddressData => ({
+  name: "", line1: "", line2: "", city: "", postcode: "", country: "United Kingdom",
+});
 
-  const setDefault = (id: number) => {
-    setAddresses((prev) =>
-      prev.map((a) => ({ ...a, isDefault: a.id === id }))
-    );
+const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState<AddressData>(data);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { setForm(data); }, [data]);
+
+  const updateField = (field: keyof AddressData, value: string) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
+
+  const handleSave = async () => {
+    setSaving(true);
+    await onSave(type, form);
+    setSaving(false);
+    setEditing(false);
   };
 
-  const remove = (id: number) => {
-    setAddresses((prev) => prev.filter((a) => a.id !== id));
+  const hasData = data.line1 || data.city || data.postcode;
+
+  return (
+    <Card className={hasData ? "ring-2 ring-primary/20" : ""}>
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            {type === "shipping" ? (
+              <Building2 className="h-4 w-4 text-primary" />
+            ) : (
+              <Home className="h-4 w-4 text-primary" />
+            )}
+            <span className="text-sm font-semibold text-foreground">{label}</span>
+          </div>
+          {hasData && !editing && (
+            <Badge className="text-[10px]">Saved</Badge>
+          )}
+        </div>
+
+        {editing ? (
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Full Name</Label>
+              <Input value={form.name ?? ""} onChange={(e) => updateField("name", e.target.value)} className="mt-1 h-8 text-sm" />
+            </div>
+            <div>
+              <Label className="text-xs">Address Line 1</Label>
+              <Input value={form.line1 ?? ""} onChange={(e) => updateField("line1", e.target.value)} className="mt-1 h-8 text-sm" />
+            </div>
+            <div>
+              <Label className="text-xs">Address Line 2</Label>
+              <Input value={form.line2 ?? ""} onChange={(e) => updateField("line2", e.target.value)} className="mt-1 h-8 text-sm" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">City</Label>
+                <Input value={form.city ?? ""} onChange={(e) => updateField("city", e.target.value)} className="mt-1 h-8 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Postcode</Label>
+                <Input value={form.postcode ?? ""} onChange={(e) => updateField("postcode", e.target.value)} className="mt-1 h-8 text-sm" />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Country</Label>
+              <Input value={form.country ?? ""} onChange={(e) => updateField("country", e.target.value)} className="mt-1 h-8 text-sm" />
+            </div>
+            <div className="flex items-center gap-2 pt-1">
+              <Button size="sm" className="text-xs" onClick={handleSave} disabled={saving}>
+                <Save className="h-3 w-3 mr-1" />{saving ? "Saving…" : "Save"}
+              </Button>
+              <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setEditing(false); setForm(data); }}>
+                <X className="h-3 w-3 mr-1" />Cancel
+              </Button>
+            </div>
+          </div>
+        ) : hasData ? (
+          <>
+            <div className="text-sm text-muted-foreground space-y-0.5">
+              {data.name && <p className="font-medium text-foreground">{data.name}</p>}
+              {data.line1 && <p>{data.line1}</p>}
+              {data.line2 && <p>{data.line2}</p>}
+              {(data.city || data.postcode) && <p>{[data.city, data.postcode].filter(Boolean).join(", ")}</p>}
+              {data.country && <p>{data.country}</p>}
+            </div>
+            <div className="mt-4 pt-3 border-t border-border">
+              <Button variant="outline" size="sm" className="text-xs" onClick={() => setEditing(true)}>
+                Edit
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-sm text-muted-foreground mb-3">No address saved yet.</p>
+            <Button variant="outline" size="sm" className="text-xs" onClick={() => setEditing(true)}>
+              Add Address
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+const BuyerAddresses = () => {
+  const { user } = useAuthStore();
+  const [shippingAddress, setShippingAddress] = useState<AddressData>(emptyAddress());
+  const [billingAddress, setBillingAddress] = useState<AddressData>(emptyAddress());
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchProfile = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("buyer_profiles")
+          .select("shippingAddress, billingAddress")
+          .eq("userId", user.id)
+          .single();
+
+        if (error && error.code !== "PGRST116") throw error;
+        if (data) {
+          setShippingAddress(data.shippingAddress || emptyAddress());
+          setBillingAddress(data.billingAddress || emptyAddress());
+        }
+      } catch (err) {
+        console.error("Error fetching addresses:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, [user]);
+
+  const handleSave = async (type: "shipping" | "billing", data: AddressData) => {
+    if (!user) return;
+    const field = type === "shipping" ? "shippingAddress" : "billingAddress";
+    await supabase
+      .from("buyer_profiles")
+      .upsert({ userId: user.id, [field]: data }, { onConflict: "userId" });
+    if (type === "shipping") setShippingAddress(data);
+    else setBillingAddress(data);
   };
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Saved Addresses</h1>
-          <p className="text-muted-foreground text-sm mt-1">Manage your delivery addresses.</p>
-        </div>
-        <Button size="sm">
-          <Plus className="h-4 w-4 mr-1" /> Add Address
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Saved Addresses</h1>
+        <p className="text-muted-foreground text-sm mt-1">Manage your delivery and billing addresses.</p>
       </div>
 
-      {addresses.length === 0 ? (
+      {loading ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <MapPin className="h-12 w-12 mb-4 opacity-40" />
-            <p className="text-lg font-medium">No addresses saved</p>
-            <p className="text-sm mt-1">Add a delivery address to get started.</p>
+            <p>Loading addresses…</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {addresses.map((addr) => (
-            <Card key={addr.id} className={`relative ${addr.isDefault ? "ring-2 ring-primary/30" : ""}`}>
-              {addr.isDefault && (
-                <Badge className="absolute top-3 right-3 text-[10px]">Default</Badge>
-              )}
-              <CardContent className="p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  {addr.type === "business" ? (
-                    <Building2 className="h-4 w-4 text-primary" />
-                  ) : (
-                    <Home className="h-4 w-4 text-primary" />
-                  )}
-                  <span className="text-sm font-semibold text-foreground">{addr.label}</span>
-                </div>
-
-                <div className="text-sm text-muted-foreground space-y-0.5">
-                  <p className="font-medium text-foreground">{addr.name}</p>
-                  <p>{addr.line1}</p>
-                  {addr.line2 && <p>{addr.line2}</p>}
-                  <p>{addr.city}, {addr.postcode}</p>
-                  <p>{addr.country}</p>
-                </div>
-
-                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border">
-                  {!addr.isDefault && (
-                    <Button variant="outline" size="sm" className="text-xs" onClick={() => setDefault(addr.id)}>
-                      Set as Default
-                    </Button>
-                  )}
-                  <Button variant="ghost" size="icon" className="h-8 w-8 ml-auto">
-                    <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => remove(addr.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <AddressCard label="Shipping Address" type="shipping" data={shippingAddress} onSave={handleSave} />
+          <AddressCard label="Billing Address" type="billing" data={billingAddress} onSave={handleSave} />
         </div>
       )}
     </div>

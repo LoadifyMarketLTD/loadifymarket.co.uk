@@ -1,46 +1,83 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Heart, ShoppingCart, Trash2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store";
 
-interface WishlistItem {
-  id: number;
-  name: string;
-  seller: string;
-  price: string;
-  originalPrice?: string;
-  image: string;
-  inStock: boolean;
-  onSale: boolean;
+interface WishlistProduct {
+  id: string;
+  title: string;
+  price: number;
+  images: string[];
+  isActive: boolean;
 }
 
-const initialItems: WishlistItem[] = [
-  { id: 1, name: "iPhone 15 Pro Max — 50 Units", seller: "TechWholesale UK", price: "£32,500", image: "📱", inStock: true, onSale: false },
-  { id: 2, name: "Sony WH-1000XM5 — 100 Units", seller: "AudioDirect Ltd", price: "£18,900", originalPrice: "£21,000", image: "🎧", inStock: true, onSale: true },
-  { id: 3, name: "Samsung 65\" QLED TV — 20 Units", seller: "ScreenPlus Trade", price: "£12,400", image: "📺", inStock: true, onSale: false },
-  { id: 4, name: "Dyson V15 Detect — 30 Units", seller: "HomeGoods Direct", price: "£14,700", originalPrice: "£16,200", image: "🧹", inStock: false, onSale: true },
-  { id: 5, name: "Apple AirPods Pro — 200 Units", seller: "TechWholesale UK", price: "£28,000", image: "🎵", inStock: true, onSale: false },
-  { id: 6, name: "Nintendo Switch OLED — 40 Units", seller: "GameZone Wholesale", price: "£10,800", image: "🎮", inStock: true, onSale: false },
-  { id: 7, name: "Nespresso Vertuo — 50 Units", seller: "KitchenPro Trade", price: "£6,250", image: "☕", inStock: false, onSale: false },
-  { id: 8, name: "Canon EOS R6 II — 15 Units", seller: "PhotoPro Wholesale", price: "£22,350", originalPrice: "£24,000", image: "📷", inStock: true, onSale: true },
-];
-
 const BuyerWishlist = () => {
-  const [items, setItems] = useState(initialItems);
+  const { user } = useAuthStore();
+  const [items, setItems] = useState<WishlistProduct[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const remove = (id: number) => setItems((prev) => prev.filter((i) => i.id !== id));
+  const fetchWishlist = useCallback(async () => {
+    if (!user) { setLoading(false); return; }
+    setLoading(true);
+    try {
+      const { data: wishlistData, error: wishlistError } = await supabase
+        .from("wishlists")
+        .select("productIds")
+        .eq("userId", user.id)
+        .single();
+
+      if (wishlistError && wishlistError.code !== "PGRST116") throw wishlistError;
+
+      const productIds: string[] = wishlistData?.productIds || [];
+      if (productIds.length === 0) { setItems([]); return; }
+
+      const { data: products, error: productsError } = await supabase
+        .from("products")
+        .select("id, title, price, images, isActive")
+        .in("id", productIds);
+
+      if (productsError) throw productsError;
+      setItems((products as WishlistProduct[]) || []);
+    } catch (err) {
+      console.error("Error fetching wishlist:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => { fetchWishlist(); }, [fetchWishlist]);
+
+  const remove = async (id: string) => {
+    if (!user) return;
+    const newIds = items.filter((i) => i.id !== id).map((i) => i.id);
+    setItems((prev) => prev.filter((i) => i.id !== id));
+    await supabase
+      .from("wishlists")
+      .update({ productIds: newIds, updatedAt: new Date().toISOString() })
+      .eq("userId", user.id);
+  };
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">My Wishlist</h1>
-          <p className="text-muted-foreground text-sm mt-1">{items.length} items saved for later.</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            {loading ? "Loading…" : `${items.length} item${items.length !== 1 ? "s" : ""} saved for later.`}
+          </p>
         </div>
       </div>
 
-      {items.length === 0 ? (
+      {loading ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+            <p>Loading your wishlist…</p>
+          </CardContent>
+        </Card>
+      ) : items.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <Heart className="h-12 w-12 mb-4 opacity-40" />
@@ -52,26 +89,28 @@ const BuyerWishlist = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {items.map((item) => (
             <Card key={item.id} className="group relative overflow-hidden">
-              {item.onSale && (
+              {!item.isActive && (
                 <Badge className="absolute top-3 left-3 z-10 bg-destructive text-destructive-foreground text-[10px]">
-                  SALE
+                  UNAVAILABLE
                 </Badge>
               )}
               <CardContent className="p-4">
-                <div className="w-full h-28 rounded-lg bg-muted flex items-center justify-center text-4xl mb-3">
-                  {item.image}
-                </div>
-                <p className="text-sm font-medium text-foreground line-clamp-2 leading-snug">{item.name}</p>
-                <p className="text-xs text-muted-foreground mt-1">{item.seller}</p>
-
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-base font-bold text-foreground">{item.price}</span>
-                  {item.originalPrice && (
-                    <span className="text-xs text-muted-foreground line-through">{item.originalPrice}</span>
+                <div className="w-full h-28 rounded-lg bg-muted flex items-center justify-center mb-3 overflow-hidden">
+                  {item.images?.[0] ? (
+                    <img src={item.images[0]} alt={item.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <Heart className="h-10 w-10 text-muted-foreground opacity-30" />
                   )}
                 </div>
+                <p className="text-sm font-medium text-foreground line-clamp-2 leading-snug">{item.title}</p>
 
-                {!item.inStock && (
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-base font-bold text-foreground">
+                    £{(item.price ?? 0).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+
+                {!item.isActive && (
                   <Badge variant="outline" className="mt-2 text-[10px] bg-muted text-muted-foreground">Out of Stock</Badge>
                 )}
 
@@ -79,7 +118,7 @@ const BuyerWishlist = () => {
                   <Button
                     size="sm"
                     className="flex-1 text-xs"
-                    disabled={!item.inStock}
+                    disabled={!item.isActive}
                   >
                     <ShoppingCart className="h-3 w-3 mr-1" />
                     Add to Cart
