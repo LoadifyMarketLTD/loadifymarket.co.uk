@@ -12,6 +12,9 @@
 -- Sensitive fields remain excluded: commission, listingLimit,
 --   stripeAccountId, stripeConnectStatus, verificationDocuments, etc.
 --
+-- Note: businessType, reviewCount, and responseRate do NOT exist on the
+--   seller_profiles table and are therefore not included in this view.
+--
 -- Run AFTER migration 170.
 -- ================================================================
 
@@ -21,15 +24,12 @@ CREATE VIEW seller_profiles_public AS
 SELECT
   "userId",
   "businessName",
-  "businessType",
   "marketplaceRole",
   "isApproved",
   "verificationStatus",
-  "rating",
-  "reviewCount",
+  rating,
   "salesCount",
   "totalSales",
-  "responseRate",
   "deliverySuccessRate",
   "paymentBehaviour",
   "businessAddress",
@@ -41,5 +41,6 @@ FROM seller_profiles;
 GRANT SELECT ON seller_profiles_public TO anon, authenticated;
 
 COMMENT ON VIEW seller_profiles_public IS
-  'Safe public projection of seller_profiles. PK is userId (no id column). '
-  'Excludes commission, listingLimit, stripeAccountId, stripeConnectStatus, verificationDocuments.';
+  'Safe public projection of seller_profiles. PK is userId. '
+  'Excludes commission, listingLimit, stripeAccountId, stripeConnectStatus, verificationDocuments. '
+  'businessType, reviewCount, and responseRate do not exist on seller_profiles and are omitted.';

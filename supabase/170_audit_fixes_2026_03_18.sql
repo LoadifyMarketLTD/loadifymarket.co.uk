@@ -28,14 +28,11 @@ CREATE VIEW seller_profiles_public AS
 SELECT
   "userId",
   "businessName",
-  "businessType",
   "marketplaceRole",
   "isApproved",
   "verificationStatus",
-  "rating",
-  "reviewCount",
+  rating,
   "salesCount",
-  "responseRate",
   "deliverySuccessRate",
   "paymentBehaviour",
   "createdAt"
