@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, CreditCard, MapPin, User, Phone, Mail,
-  Building2, ShieldCheck, Lock, Truck, Check, CheckCircle2
+  Building2, ShieldCheck, Lock, Truck, Check, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
+import { useAuthStore } from "@/store";
 
 const steps = [
   { id: "shipping", label: "Shipping", icon: Truck },
@@ -19,14 +20,15 @@ const steps = [
 ];
 
 const Checkout = () => {
-  const { cartItems, subtotal, clearCart } = useCart();
-  const navigate = useNavigate();
+  const { cartItems, subtotal } = useCart();
+  const { user } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(0);
-  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [shippingData, setShippingData] = useState({
     firstName: "",
     lastName: "",
-    email: "",
+    email: user?.email ?? "",
     phone: "",
     company: "",
     address1: "",
@@ -44,13 +46,65 @@ const Checkout = () => {
   const vat = Math.round(subtotal * 0.2);
   const total = subtotal + shipping + vat;
 
-  const handlePlaceOrder = () => {
-    setOrderPlaced(true);
-    clearCart();
+  // ── Submit to Stripe via Netlify function ──────────────────────────────────
+  const handlePlaceOrder = async () => {
+    setIsSubmitting(true);
+    setCheckoutError(null);
+
+    try {
+      const address = {
+        line1: shippingData.address1 || "N/A",
+        ...(shippingData.address2 ? { line2: shippingData.address2 } : {}),
+        city: shippingData.city || "N/A",
+        postal_code: shippingData.postcode || "N/A",
+        country: "GB",
+      };
+
+      const items = cartItems.map((item) => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+        price: item.product.price,
+        title: item.product.title,
+        // sellerId is overridden server-side from the DB price validation step
+        // in create-checkout.ts, so the client-side value is a safe placeholder.
+        sellerId: "",
+      }));
+
+      const body = {
+        items,
+        buyerId: user?.id ?? "",
+        guestEmail: !user ? shippingData.email : undefined,
+        shippingAmount: shipping,
+        shippingMethod: "Standard",
+        shippingAddress: address,
+        billingAddress: address,
+      };
+
+      const res = await fetch("/.netlify/functions/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Checkout failed. Please try again.");
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned. Please try again.");
+      }
+    } catch (err) {
+      setCheckoutError(err instanceof Error ? err.message : "Something went wrong.");
+      setIsSubmitting(false);
+    }
   };
 
-  // Redirect to cart if empty and no order placed
-  if (cartItems.length === 0 && !orderPlaced) {
+  // Redirect to cart if empty
+  if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -63,42 +117,6 @@ const Checkout = () => {
                 Browse Catalog <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  // Order confirmation screen
-  if (orderPlaced) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="pt-24 pb-16">
-          <div className="container mx-auto px-4">
-            <div className="max-w-lg mx-auto text-center space-y-6 py-16">
-              <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto">
-                <CheckCircle2 className="h-10 w-10 text-emerald-500" />
-              </div>
-              <h1 className="font-display text-3xl font-bold text-foreground">Order Placed!</h1>
-              <p className="text-muted-foreground text-lg">
-                Thank you for your order. Your order reference is <span className="font-semibold text-foreground">#{Math.random().toString(36).substring(2, 10).toUpperCase()}</span>.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                You'll receive a confirmation email shortly. This is a demo — no real payment has been processed.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-                <Link to="/catalog">
-                  <Button className="bg-gradient-hero text-primary-foreground font-semibold">
-                    Continue Shopping <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link to="/dashboard/orders">
-                  <Button variant="outline">View Orders</Button>
-                </Link>
-              </div>
-            </div>
           </div>
         </main>
         <Footer />
@@ -247,40 +265,20 @@ const Checkout = () => {
                     </div>
                   </div>
 
-                  {/* Stripe-style card form (UI only) */}
-                  <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-6 space-y-5">
+                  {/* Stripe secure payment notice */}
+                  <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-6 space-y-4">
                     <div className="flex items-center gap-2 text-sm font-medium text-primary">
                       <Lock className="h-4 w-4" />
-                      Secure Payment
+                      Secure Payment via Stripe
                     </div>
-
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="cardName">Name on Card</Label>
-                        <Input id="cardName" placeholder="John Doe" className="h-11 bg-background" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="cardNumber">Card Number</Label>
-                        <div className="relative">
-                          <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input id="cardNumber" placeholder="4242 4242 4242 4242" className="pl-10 h-11 bg-background" />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="expiry">Expiry Date</Label>
-                          <Input id="expiry" placeholder="MM / YY" className="h-11 bg-background" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="cvc">CVC</Label>
-                          <Input id="cvc" placeholder="123" className="h-11 bg-background" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 pt-2">
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/200px-Visa_Inc._logo.svg.png" alt="Visa" className="h-6 opacity-60" />
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/200px-Mastercard-logo.svg.png" alt="Mastercard" className="h-6 opacity-60" />
+                    <p className="text-sm text-muted-foreground">
+                      Your payment details are handled securely by Stripe — the world's leading payment
+                      processor. You'll be redirected to Stripe's secure checkout page to complete your
+                      payment. We never store your card details.
+                    </p>
+                    <div className="flex items-center gap-3 pt-1">
+                      <ShieldCheck className="h-5 w-5 text-primary" />
+                      <span className="text-xs text-muted-foreground">256-bit SSL encrypted · PCI-DSS compliant</span>
                     </div>
                   </div>
 
@@ -364,16 +362,32 @@ const Checkout = () => {
                     </div>
                   </div>
 
+                  {checkoutError && (
+                    <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-4 text-sm text-destructive">
+                      {checkoutError}
+                    </div>
+                  )}
+
                   <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => setCurrentStep(1)} className="h-11">
+                    <Button variant="outline" onClick={() => setCurrentStep(1)} className="h-11" disabled={isSubmitting}>
                       <ArrowLeft className="mr-2 h-4 w-4" /> Back
                     </Button>
                     <Button
                       onClick={handlePlaceOrder}
+                      disabled={isSubmitting}
                       className="flex-1 h-12 bg-gradient-accent text-accent-foreground font-bold text-base hover:opacity-90 transition-opacity"
                     >
-                      <Lock className="mr-2 h-5 w-5" />
-                      Place Order · £{total.toLocaleString()}
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Redirecting to Stripe…
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="mr-2 h-5 w-5" />
+                          Pay Securely · £{total.toLocaleString()}
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>

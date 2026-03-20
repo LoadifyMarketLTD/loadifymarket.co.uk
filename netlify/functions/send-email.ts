@@ -17,7 +17,7 @@ const supabase =
 interface EmailRequest {
   to: string;
   subject: string;
-  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'transport_quote_request' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification';
+  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'transport_quote_request' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry';
   data: Record<string, unknown>;
 }
 
@@ -243,6 +243,23 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         </div>
         <p>Please arrange shipment as soon as possible to keep your seller rating high and your customers happy.</p>
         <a href="${process.env.URL}/seller" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Ship Now</a>
+      `;
+      break;
+
+    case 'contact_enquiry':
+      content = `
+        <h2 style="color: #243b53;">New Contact Form Submission</h2>
+        <p>A visitor has submitted a message via the Loadify Market contact form.</p>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Name:</strong> ${String(data.name || '')}</p>
+          <p style="margin: 8px 0 0 0;"><strong>Email:</strong> ${String(data.email || '')}</p>
+          ${data.subject ? `<p style="margin: 8px 0 0 0;"><strong>Subject:</strong> ${String(data.subject)}</p>` : ''}
+        </div>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Message:</strong></p>
+          <p style="margin: 8px 0 0 0; white-space: pre-wrap;">${String(data.message || '')}</p>
+        </div>
+        <p style="color: #888; font-size: 12px;">Submitted at: ${new Date().toLocaleString('en-GB')}</p>
       `;
       break;
 

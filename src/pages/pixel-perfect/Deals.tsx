@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { X, Package, Tag, RotateCcw, Layers, TrendingDown, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
@@ -10,44 +10,59 @@ import ProductCard from "@/components/catalog/ProductCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { mockProducts } from "@/data/mockProducts";
+import type { Product } from "@/components/catalog/ProductCard";
+import { supabase } from "@/lib/supabase";
+import { adaptProducts } from "@/lib/productAdapter";
+import type { DBProduct } from "@/lib/productAdapter";
 import heroWarehouse from "@/assets/hero-clearance-alt1.jpg";
 
-const dealCategories = [
-  "Mixed Lots",
-  "Customer Returns",
-  "Overstock",
-  "Clearance Deals",
-];
+// Deal types that appear on this page (maps to DB product `type` column)
+const DEALS_TYPES = ["lot", "clearance", "pallet", "wholesale"];
+
+const PRODUCT_QUERY = `
+  *,
+  category:categories!categoryId(name, slug),
+  subcategory:categories!subcategoryId(name, slug),
+  seller:seller_profiles_public!left(
+    businessName,
+    isApproved,
+    rating,
+    userId
+  )
+`;
 
 const dealSubSections = [
   {
     icon: Package,
     label: "Mixed Lots & Pallets",
     description: "Sellers list mixed merchandise pallets — browse and buy directly from them.",
-    category: "Mixed Lots",
+    types: ["lot", "pallet"],
   },
   {
     icon: RotateCcw,
     label: "Customer Returns",
     description: "Sellers offering graded and unchecked customer return stock.",
-    category: "Customer Returns",
+    types: ["lot"],
+    condition: "returns_stock",
   },
   {
     icon: Layers,
     label: "Overstock & End-of-Line",
     description: "Excess inventory and discontinued lines listed by sellers across the UK.",
-    category: "Overstock",
+    types: ["wholesale"],
   },
   {
     icon: TrendingDown,
     label: "Clearance & Flash Deals",
     description: "Time-limited clearance listings from sellers looking to move stock fast.",
-    category: "Clearance Deals",
+    types: ["clearance"],
   },
 ];
 
 const Deals = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
@@ -55,48 +70,90 @@ const Deals = () => {
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [filtersVisible, setFiltersVisible] = useState(false);
+  // Active deal subsection filter (by type array)
+  const [activeSubTypes, setActiveSubTypes] = useState<string[] | null>(null);
+
+  // ── Fetch deal products from Supabase ──────────────────────────────────────
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      // If a subsection is active, filter to its types only; otherwise show all deal types
+      const typesToFetch = activeSubTypes && activeSubTypes.length > 0 ? activeSubTypes : DEALS_TYPES;
+
+      let query = supabase
+        .from("products")
+        .select(PRODUCT_QUERY)
+        .eq("isActive", true)
+        .eq("isApproved", true)
+        .in("type", typesToFetch);
+
+      if (priceRange[0] > 0) query = query.gte("price", priceRange[0]);
+      if (priceRange[1] < 10000) query = query.lte("price", priceRange[1]);
+
+      switch (sortBy) {
+        case "price-low":
+          query = query.order("price", { ascending: true });
+          break;
+        case "price-high":
+          query = query.order("price", { ascending: false });
+          break;
+        case "popular":
+          query = query.order("views", { ascending: false });
+          break;
+        case "rating":
+          query = query.order("rating", { ascending: false });
+          break;
+        default:
+          query = query.order("createdAt", { ascending: false });
+          break;
+      }
+
+      const { data, error } = await query.limit(96);
+      if (error) throw error;
+
+      const mapped = (data || []).map((p: Record<string, unknown>) => ({
+        ...p,
+        category: Array.isArray(p.category) ? p.category[0] : p.category,
+        subcategory: Array.isArray(p.subcategory) ? p.subcategory[0] : p.subcategory,
+        seller: Array.isArray(p.seller) ? p.seller[0] : p.seller,
+      }));
+
+      setProducts(adaptProducts(mapped as unknown as DBProduct[]));
+    } catch (err) {
+      console.error("Error fetching deals:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [priceRange, sortBy, activeSubTypes]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const clearAll = () => {
     setSelectedCategories([]);
     setSelectedConditions([]);
     setSelectedLocations([]);
     setPriceRange([0, 10000]);
+    setActiveSubTypes(null);
   };
 
-  // Pre-filter to deal categories only, then apply user filters
+  // Client-side filtering on category name, condition, location (subsection filtering is server-side)
   const filteredProducts = useMemo(() => {
-    let products = mockProducts.filter((p) => dealCategories.includes(p.category));
+    let list = [...products];
 
     if (selectedCategories.length > 0) {
-      products = products.filter((p) => selectedCategories.includes(p.category));
+      list = list.filter((p) => selectedCategories.includes(p.category));
     }
     if (selectedConditions.length > 0) {
-      products = products.filter((p) => selectedConditions.includes(p.condition));
+      list = list.filter((p) => selectedConditions.includes(p.condition));
     }
     if (selectedLocations.length > 0) {
-      products = products.filter((p) => selectedLocations.includes(p.location));
-    }
-    products = products.filter((p) => p.price >= priceRange[0] && p.price <= priceRange[1]);
-
-    switch (sortBy) {
-      case "price-low":
-        products.sort((a, b) => a.price - b.price);
-        break;
-      case "price-high":
-        products.sort((a, b) => b.price - a.price);
-        break;
-      case "popular":
-        products.sort((a, b) => b.views - a.views);
-        break;
-      case "rating":
-        products.sort((a, b) => b.rating - a.rating);
-        break;
-      default:
-        break;
+      list = list.filter((p) => selectedLocations.includes(p.location));
     }
 
-    return products;
-  }, [selectedCategories, selectedConditions, selectedLocations, priceRange, sortBy]);
+    return list;
+  }, [products, selectedCategories, selectedConditions, selectedLocations]);
 
   const activeFilters = [
     ...selectedCategories,
@@ -177,29 +234,32 @@ const Deals = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {dealSubSections.map((section) => {
-              const count = mockProducts.filter((p) => p.category === section.category).length;
+              const isActive = activeSubTypes !== null &&
+                section.types.every((t) => activeSubTypes?.includes(t)) &&
+                activeSubTypes.length === section.types.length;
+              const count = loading ? "…" : products.length;
               return (
                 <button
-                  key={section.category}
+                  key={section.label}
                   onClick={() => {
-                    setSelectedCategories(
-                      selectedCategories.includes(section.category)
-                        ? selectedCategories.filter((c) => c !== section.category)
-                        : [section.category]
-                    );
+                    setActiveSubTypes(isActive ? null : section.types);
                   }}
                   className={`text-left p-4 rounded-xl border transition-all duration-200 ${
-                    selectedCategories.includes(section.category)
+                    isActive
                       ? "border-primary bg-primary/5 shadow-sm"
                       : "border-border bg-card hover:border-primary/30 hover:shadow-sm"
                   }`}
                 >
                   <section.icon className={`h-5 w-5 mb-2 ${
-                    selectedCategories.includes(section.category) ? "text-primary" : "text-muted-foreground"
+                    isActive ? "text-primary" : "text-muted-foreground"
                   }`} />
                   <h3 className="font-display text-sm font-semibold text-foreground mb-1">{section.label}</h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">{section.description}</p>
-                  <p className="text-xs font-medium text-primary mt-2">{count} listing{count !== 1 ? "s" : ""}</p>
+                  <p className="text-xs font-medium text-primary mt-2">
+                    {isActive
+                      ? loading ? "…" : `${products.length} listing${products.length !== 1 ? "s" : ""}`
+                      : "Browse →"}
+                  </p>
                 </button>
               );
             })}
@@ -297,7 +357,13 @@ const Deals = () => {
 
             {/* Product grid */}
             <div className="flex-1 min-w-0">
-              {filteredProducts.length === 0 ? (
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="bg-card rounded-xl border border-border aspect-[4/5] animate-pulse" />
+                  ))}
+                </div>
+              ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="text-lg font-display font-semibold text-foreground mb-2">No listings found</p>
                   <p className="text-sm text-muted-foreground mb-4">Try adjusting your filters or browse the full marketplace.</p>

@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Search, Tag, Package, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
-import { mockProducts } from "@/data/mockProducts";
+import { supabase } from "@/lib/supabase";
 
 const categories = [
   "Electronics & Technology", "Clothing & Apparel", "Home & Garden",
@@ -12,6 +12,14 @@ const categories = [
   "Customer Returns", "Overstock", "Clearance & Bargains",
 ];
 
+interface SearchProduct {
+  id: string;
+  title: string;
+  price: number;
+  images: string[];
+  category?: { name: string } | null;
+}
+
 interface Props {
   className?: string;
   onSelect?: () => void;
@@ -20,6 +28,7 @@ interface Props {
 const NavbarSearch = ({ className, onSelect }: Props) => {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [matchedProducts, setMatchedProducts] = useState<SearchProduct[]>([]);
   const ref = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
@@ -29,13 +38,41 @@ const NavbarSearch = ({ className, onSelect }: Props) => {
     ? categories.filter((c) => c.toLowerCase().includes(q)).slice(0, 4)
     : [];
 
-  const matchedProducts = q.length >= 2
-    ? mockProducts.filter((p) =>
-        p.title.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q) ||
-        p.seller.toLowerCase().includes(q)
-      ).slice(0, 5)
-    : [];
+  // Debounced product search from Supabase
+  const searchProducts = useCallback(async (searchTerm: string) => {
+    if (searchTerm.length < 2) {
+      setMatchedProducts([]);
+      return;
+    }
+    try {
+      const { data } = await supabase
+        .from("products")
+        .select(`id, title, price, images, category:categories!categoryId(name)`)
+        .eq("isActive", true)
+        .eq("isApproved", true)
+        .or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
+        .order("rating", { ascending: false })
+        .limit(5);
+
+      if (data) {
+        const normalised = data.map((p: Record<string, unknown>) => ({
+          ...p,
+          category: Array.isArray(p.category) ? (p.category[0] as { name: string }) : p.category as { name: string } | null,
+        })) as SearchProduct[];
+        setMatchedProducts(normalised);
+      }
+    } catch {
+      setMatchedProducts([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (q.length >= 2) searchProducts(q);
+      else setMatchedProducts([]);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [q, searchProducts]);
 
   const hasResults = matchedCategories.length > 0 || matchedProducts.length > 0;
 
@@ -107,21 +144,29 @@ const NavbarSearch = ({ className, onSelect }: Props) => {
                 <div className="px-3 pt-2 pb-1">
                   {matchedCategories.length > 0 && <div className="border-t border-border mb-2" />}
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Products</p>
-                  {matchedProducts.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => goToProduct(p.id)}
-                      className="flex items-center gap-3 w-full text-left px-2 py-2 rounded-md hover:bg-muted/60 transition-colors group"
-                    >
-                      <div className="w-9 h-9 rounded-md bg-muted overflow-hidden shrink-0">
-                        <img src={p.image} alt="" className="w-full h-full object-cover" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground truncate group-hover:text-primary transition-colors">{p.title}</p>
-                        <p className="text-xs text-muted-foreground">{p.category} · £{p.price.toLocaleString()}</p>
-                      </div>
-                    </button>
-                  ))}
+                  {matchedProducts.map((p) => {
+                    const image = Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : undefined;
+                    const catName = p.category?.name ?? "Product";
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => goToProduct(p.id)}
+                        className="flex items-center gap-3 w-full text-left px-2 py-2 rounded-md hover:bg-muted/60 transition-colors group"
+                      >
+                        <div className="w-9 h-9 rounded-md bg-muted overflow-hidden shrink-0 flex items-center justify-center">
+                          {image ? (
+                            <img src={image} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <Package className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground truncate group-hover:text-primary transition-colors">{p.title}</p>
+                          <p className="text-xs text-muted-foreground">{catName} · £{Number(p.price).toLocaleString()}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
 
