@@ -19,7 +19,7 @@ const PRODUCT_SELECT = `
   store:seller_stores(storeSlug)
 `;
 
-/** Fetch seller info for a list of seller IDs from seller_profiles (public read via RLS USING TRUE) */
+/** Fetch seller info for a list of seller IDs from seller_profiles_public */
 async function fetchSellerMap(sellerIds: string[]): Promise<Map<string, {
   businessName?: string;
   isApproved?: boolean;
@@ -30,7 +30,7 @@ async function fetchSellerMap(sellerIds: string[]): Promise<Map<string, {
 }>> {
   if (sellerIds.length === 0) return new Map();
   const { data } = await supabase
-    .from('seller_profiles')
+    .from('seller_profiles_public')
     .select('userId, businessName, isApproved, rating, marketplaceRole, paymentBehaviour')
     .in('userId', sellerIds);
   const map = new Map<string, typeof data extends Array<infer T> ? T : never>();
