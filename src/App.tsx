@@ -39,9 +39,7 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const ShopPage = lazy(() => import('./pages/ShopPage'));
 const CategoryPage = lazy(() => import('./pages/CategoryPage'));
 const SellPage = lazy(() => import('./pages/SellPage'));
-const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage'));
-const SellerDashboardPage = lazy(() => import('./pages/SellerDashboardPage'));
 const SellerProfilePage = lazy(() => import('./pages/SellerProfilePage'));
 const SellerPublicProfilePage = lazy(() => import('./pages/SellerPublicProfilePage'));
 const SellerReturnsPage = lazy(() => import('./pages/SellerReturnsPage'));
@@ -49,7 +47,6 @@ const SellerShipmentsPage = lazy(() => import('./pages/SellerShipmentsPage'));
 const SellerReviewsPage = lazy(() => import('./pages/SellerReviewsPage'));
 const SellerRFQPage = lazy(() => import('./pages/SellerRFQPage'));
 const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
-const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
 const AdminReviewsPage = lazy(() => import('./pages/AdminReviewsPage'));
 const CategoryManagementPage = lazy(() => import('./pages/CategoryManagementPage'));
 const SellerApprovalsPage = lazy(() => import('./pages/SellerApprovalsPage'));
@@ -304,14 +301,8 @@ function App() {
               </Suspense>
             } />
 
-            {/* Protected: Dashboard */}
-            <Route path="dashboard" element={
-              <RequireAuth>
-                <Suspense fallback={<PageLoader />}> 
-                  <DashboardPage />
-                </Suspense>
-              </RequireAuth>
-            } />
+            {/* Protected: Dashboard → redirects to pixel-perfect buyer hub */}
+            <Route path="dashboard" element={<Navigate to="/pp/buyer" replace />} />
             {/* Protected: Account Settings */}
             <Route path="account-settings" element={
               <RequireAuth>
@@ -320,14 +311,8 @@ function App() {
                 </Suspense>
               </RequireAuth>
             } />
-            {/* Protected: Seller Dashboard */}
-            <Route path="seller" element={
-              <RequireSeller>
-                <Suspense fallback={<PageLoader />}> 
-                  <SellerDashboardPage />
-                </Suspense>
-              </RequireSeller>
-            } />
+            {/* Protected: Seller Dashboard → redirects to pixel-perfect seller hub */}
+            <Route path="seller" element={<Navigate to="/pp/seller" replace />} />
             {/* Protected: Seller Profile */}
             <Route path="seller/profile" element={
               <RequireSeller>
@@ -374,14 +359,8 @@ function App() {
                 </Suspense>
               </RequireSeller>
             } />
-            {/* Protected: Admin Dashboard */}
-            <Route path="admin" element={
-              <RequireAdmin>
-                <Suspense fallback={<PageLoader />}> 
-                  <AdminDashboardPage />
-                </Suspense>
-              </RequireAdmin>
-            } />
+            {/* Protected: Admin Dashboard → redirects to pixel-perfect admin hub */}
+            <Route path="admin" element={<Navigate to="/pp/admin" replace />} />
             {/* Protected: Admin Categories */}
             <Route path="admin/categories" element={
               <RequireAdmin>

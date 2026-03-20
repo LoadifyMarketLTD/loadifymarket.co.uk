@@ -90,6 +90,14 @@ const AdminReports = () => {
             period: "All time",
           },
           {
+            label: "Total Orders",
+            value: totalOrders.toLocaleString(),
+            change: "All time",
+            up: true,
+            icon: ShoppingCart,
+            period: "Platform-wide",
+          },
+          {
             label: "Approved Sellers",
             value: (approvedSellersRes.count ?? 0).toLocaleString(),
             change: "Verified",
@@ -120,8 +128,6 @@ const AdminReports = () => {
             .map(([status, count]) => ({ status, count }))
             .sort((a, b) => b.count - a.count)
         );
-
-        void totalOrders;
       } catch (err: any) {
         setError(err.message || "Failed to load reports");
       } finally {

@@ -79,8 +79,8 @@ const SellerDashboard = () => {
             .limit(5),
           supabase
             .from("seller_profiles")
-            .select("rating, reviewCount")
-            .eq("sellerId", user.id)
+            .select("rating")
+            .eq("userId", user.id)
             .maybeSingle(),
         ]);
 
