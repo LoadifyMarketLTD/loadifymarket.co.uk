@@ -5,16 +5,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import logo from "@/assets/loadify-logo.png";
+import { supabase } from "@/lib/supabase";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Wire to backend password reset
-    console.log("Password reset requested for:", email);
-    setSubmitted(true);
+    setError("");
+    setLoading(true);
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (resetError) throw resetError;
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send reset email");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -87,8 +100,11 @@ const ForgotPassword = () => {
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
-                  Send Reset Link
+                {error && (
+                  <p className="text-sm text-destructive text-center">{error}</p>
+                )}
+                <Button type="submit" disabled={loading} className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
+                  {loading ? "Sending…" : "Send Reset Link"}
                 </Button>
               </form>
             </>

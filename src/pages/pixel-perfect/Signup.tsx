@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, User, Building2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -9,20 +9,48 @@ import logo from "@/assets/loadify-logo.png";
 
 const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     company: "",
     email: "",
     password: "",
   });
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Signup submitted", formData);
+    setError("");
+    setLoading(true);
+    try {
+      const nameParts = formData.name.trim().split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+      const res = await fetch("/.netlify/functions/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email: formData.email,
+          password: formData.password,
+          role: "buyer",
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Registration failed");
+      toast({ title: "Account created!", description: "Check your email to verify your account, then sign in." });
+      navigate("/login");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const passwordStrength = (pw: string) => {
@@ -198,8 +226,11 @@ const Signup = () => {
               )}
             </div>
 
-            <Button type="submit" className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
-              Create Account
+            {error && (
+              <p className="text-sm text-destructive text-center">{error}</p>
+            )}
+            <Button type="submit" disabled={loading} className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
+              {loading ? "Creating account…" : "Create Account"}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">
