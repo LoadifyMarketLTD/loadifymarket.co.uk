@@ -11,6 +11,7 @@ import RequireSeller from './components/auth/RequireSeller';
 // ─── Pixel-perfect pages — standalone (include own Navbar + Footer) ───────────
 const PixelPerfectIndex    = lazy(() => import('./pages/pixel-perfect/Index'));
 const PPCatalog            = lazy(() => import('./pages/pixel-perfect/Catalog'));
+const PPCategoryPage       = lazy(() => import('./pages/pixel-perfect/CategoryPage'));
 const PPProductDetail      = lazy(() => import('./pages/pixel-perfect/ProductDetail'));
 const PPCart               = lazy(() => import('./pages/pixel-perfect/Cart'));
 const PPCheckout           = lazy(() => import('./pages/pixel-perfect/Checkout'));
@@ -182,6 +183,7 @@ function App() {
         {/* ── Pixel-perfect standalone pages (own Navbar + Footer) ─────────────── */}
         <Route path="/" element={<Suspense fallback={<PageLoader />}><PixelPerfectIndex /></Suspense>} />
         <Route path="catalog" element={<Suspense fallback={<PageLoader />}><PPCatalog /></Suspense>} />
+        <Route path="category/:slug" element={<Suspense fallback={<PageLoader />}><PPCategoryPage /></Suspense>} />
         <Route path="product/:id" element={<Suspense fallback={<PageLoader />}><PPProductDetail /></Suspense>} />
         <Route path="cart" element={<Suspense fallback={<PageLoader />}><PPCart /></Suspense>} />
         <Route path="checkout" element={<Suspense fallback={<PageLoader />}><PPCheckout /></Suspense>} />
@@ -295,6 +297,7 @@ function App() {
         <Route path="dashboard" element={<Navigate to="/pp/buyer" replace />} />
         <Route path="seller" element={<Navigate to="/pp/seller" replace />} />
         <Route path="admin" element={<Navigate to="/pp/admin" replace />} />
+        <Route path="shop" element={<Navigate to="/catalog" replace />} />
         <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />
         <Route path="seller-dashboard" element={<Navigate to="/pp/seller" replace />} />
         <Route path="admin-dashboard" element={<Navigate to="/pp/admin" replace />} />

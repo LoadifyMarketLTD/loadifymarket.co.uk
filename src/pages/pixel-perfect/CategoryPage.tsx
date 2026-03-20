@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { X } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
@@ -8,10 +8,12 @@ import CatalogFilters from "@/components/catalog/CatalogFilters";
 import CatalogHeader from "@/components/catalog/CatalogHeader";
 import ProductCard from "@/components/catalog/ProductCard";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { Product } from "@/components/catalog/ProductCard";
 import { supabase } from "@/lib/supabase";
 import { adaptProducts } from "@/lib/productAdapter";
 import type { DBProduct } from "@/lib/productAdapter";
+import CATEGORY_CONFIG from "@/lib/category-config";
 
 // Product select — category joins only; seller data fetched separately
 const PRODUCT_QUERY = `
@@ -36,16 +38,16 @@ async function fetchSellerMap(
   return map;
 }
 
-const Catalog = () => {
-  const [searchParams] = useSearchParams();
-  const queryParam = searchParams.get("q") || "";
-  const categoryParam = searchParams.get("category") || "";
+const CategoryPage = () => {
+  const { slug } = useParams<{ slug: string }>();
+
+  const config = CATEGORY_CONFIG.find((c) => c.slug === slug);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dbCategories, setDbCategories] = useState<string[]>([]);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
 
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [activeChip, setActiveChip] = useState<number>(0);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
@@ -53,55 +55,73 @@ const Catalog = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [filtersVisible, setFiltersVisible] = useState(false);
 
-  // Sync category param from URL into filter state on mount / param change
+  // ── Resolve category slug → UUID once on mount ────────────────────────────
   useEffect(() => {
-    if (categoryParam) {
-      setSelectedCategories((prev) =>
-        prev.includes(categoryParam) ? prev : [categoryParam]
-      );
+    if (!config) return;
+    const filter = config.productFilter;
+    if (filter.categorySlug) {
+      supabase
+        .from("categories")
+        .select("id")
+        .eq("slug", filter.categorySlug)
+        .single()
+        .then(({ data }) => {
+          if (data) setCategoryId(data.id as string);
+        });
     }
-  }, [categoryParam]);
-
-  // ── Fetch real category names from Supabase (once on mount) ───────────────
-  useEffect(() => {
-    supabase
-      .from("categories")
-      .select("name")
-      .eq("isActive", true)
-      .order("order", { ascending: true })
-      .then(({ data }) => {
-        if (data) {
-          const names = data
-            .map((c: { name: string }) => c.name)
-            .filter((n: string) => n !== "Logistics Jobs"); // exclude internal-only
-          setDbCategories(names);
-        }
-      });
-  }, []);
+  }, [config]);
 
   // ── Fetch products from Supabase ──────────────────────────────────────────
   const fetchProducts = useCallback(async () => {
+    if (!config) return;
     setLoading(true);
+
+    const filter = config.productFilter;
+    const chip = config.chips[activeChip];
+
     try {
-      // Step 1: Fetch products with category joins only
       let query = supabase
         .from("products")
         .select(PRODUCT_QUERY)
         .eq("isActive", true)
-        .eq("isApproved", true)
-        .not("type", "eq", "logistics");
+        .eq("isApproved", true);
 
-      // Server-side text search
-      if (queryParam.trim()) {
-        const q = queryParam.trim();
-        query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
+      if (filter.types) {
+        // Filter by product type (e.g. lot, clearance, pallet)
+        query = query.in("type", filter.types);
+      } else if (filter.categorySlug && categoryId) {
+        // Filter by category UUID
+        query = query.eq("categoryId", categoryId);
       }
 
-      // Server-side price filter
+      // Chip: search term (terms are hardcoded config values, sanitize for safe PostgREST interpolation)
+      if (chip?.searchTerm) {
+        // Strip characters that have special meaning in PostgREST filter syntax
+        const sanitize = (s: string) => s.replace(/[%,.()"'\\]/g, "");
+        const terms = chip.searchTerm.trim().split(/\s+/).map(sanitize).filter(Boolean);
+        if (terms.length > 0) {
+          const orClause = terms
+            .map((t) => `title.ilike.%${t}%,description.ilike.%${t}%`)
+            .join(",");
+          query = query.or(orClause);
+        }
+      }
+
+      // Chip: condition override
+      if (chip?.condition) {
+        query = query.eq("condition", chip.condition);
+      }
+
+      // User-selected condition filter
+      if (selectedConditions.length > 0) {
+        query = query.in("condition", selectedConditions);
+      }
+
+      // Price range
       if (priceRange[0] > 0) query = query.gte("price", priceRange[0]);
       if (priceRange[1] < 10000) query = query.lte("price", priceRange[1]);
 
-      // Server-side sort
+      // Sort
       switch (sortBy) {
         case "price-low":
           query = query.order("price", { ascending: true });
@@ -123,14 +143,10 @@ const Catalog = () => {
       const { data, error } = await query.limit(96);
       if (error) throw error;
 
-      // Step 2: Collect unique sellerIds
       const rows = data || [];
       const sellerIds = [...new Set(rows.map((p: Record<string, unknown>) => p.sellerId as string).filter(Boolean))];
-
-      // Step 3: Fetch seller_profiles by userId
       const sellerMap = await fetchSellerMap(sellerIds);
 
-      // Step 4: Merge seller data and normalise category arrays
       const mapped = rows.map((p: Record<string, unknown>) => ({
         ...p,
         category: Array.isArray(p.category) ? p.category[0] : p.category,
@@ -138,46 +154,37 @@ const Catalog = () => {
         seller: sellerMap.get(p.sellerId as string) ?? null,
       }));
 
-      // Step 5: Adapt to UI shape
       setProducts(adaptProducts(mapped as unknown as DBProduct[]));
     } catch (err) {
-      console.error("Error fetching catalog products:", err);
+      console.error("Error fetching category products:", err);
     } finally {
       setLoading(false);
     }
-  }, [queryParam, priceRange, sortBy]);
+  }, [config, activeChip, categoryId, selectedConditions, priceRange, sortBy]);
 
+  // Fetch when categoryId resolves (for slug-based filters) or dependencies change
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    if (!config) return;
+    const filter = config.productFilter;
+    // For type-based categories, fetch immediately; for slug-based, wait for categoryId
+    if (filter.types || categoryId) {
+      fetchProducts();
+    }
+  }, [fetchProducts, config, categoryId]);
 
   const clearAll = () => {
-    setSelectedCategories([]);
     setSelectedConditions([]);
     setSelectedLocations([]);
     setPriceRange([0, 10000]);
   };
 
-  // Client-side filtering on category name, condition display label, location
+  // Client-side location filter
   const filteredProducts = useMemo(() => {
-    let list = [...products];
-
-    if (selectedCategories.length > 0) {
-      list = list.filter((p) => selectedCategories.includes(p.category));
-    }
-    if (selectedConditions.length > 0) {
-      list = list.filter((p) => selectedConditions.includes(p.condition));
-    }
-    if (selectedLocations.length > 0) {
-      list = list.filter((p) => selectedLocations.includes(p.location));
-    }
-
-    return list;
-  }, [products, selectedCategories, selectedConditions, selectedLocations]);
+    if (selectedLocations.length === 0) return products;
+    return products.filter((p) => selectedLocations.includes(p.location));
+  }, [products, selectedLocations]);
 
   const activeFilters = [
-    ...(queryParam.trim() ? [`"${queryParam}"`] : []),
-    ...selectedCategories,
     ...selectedConditions,
     ...selectedLocations,
     ...(priceRange[0] > 0 || priceRange[1] < 10000
@@ -186,13 +193,7 @@ const Catalog = () => {
   ];
 
   const removeFilter = (filter: string) => {
-    if (filter.startsWith('"') && filter.endsWith('"')) {
-      // Can't remove query param via state — user can clear search bar
-      return;
-    }
-    if (selectedCategories.includes(filter)) {
-      setSelectedCategories(selectedCategories.filter((c) => c !== filter));
-    } else if (selectedConditions.includes(filter)) {
+    if (selectedConditions.includes(filter)) {
       setSelectedConditions(selectedConditions.filter((c) => c !== filter));
     } else if (selectedLocations.includes(filter)) {
       setSelectedLocations(selectedLocations.filter((c) => c !== filter));
@@ -200,6 +201,27 @@ const Catalog = () => {
       setPriceRange([0, 10000]);
     }
   };
+
+  // ── 404 state for unknown slugs ───────────────────────────────────────────
+  if (!config) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="pt-20 pb-16">
+          <div className="container mx-auto px-4 py-20 text-center">
+            <p className="text-2xl font-display font-bold text-foreground mb-4">Category Not Found</p>
+            <p className="text-muted-foreground mb-8">The category you're looking for doesn't exist.</p>
+            <Button asChild>
+              <Link to="/catalog">Browse All Listings</Link>
+            </Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const Icon = config.icon;
 
   return (
     <div className="min-h-screen bg-background">
@@ -210,12 +232,44 @@ const Catalog = () => {
           <BreadcrumbNav
             items={[
               { label: "Home", to: "/" },
-              { label: "Catalog" },
+              { label: "Catalog", to: "/catalog" },
+              { label: config.label },
             ]}
             showBack={true}
             backLabel="Back"
-            backTo="/"
+            backTo="/catalog"
           />
+
+          {/* Category hero */}
+          <div className="py-6 flex items-center gap-4">
+            <div className={`${config.accentBg} rounded-xl p-3 shrink-0`}>
+              <Icon className={`h-8 w-8 ${config.iconColor}`} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-display font-bold text-foreground">{config.title}</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">{config.subtitle}</p>
+            </div>
+          </div>
+
+          {/* Chip filters */}
+          {config.chips.length > 1 && (
+            <div className="flex flex-wrap gap-2 pb-6">
+              {config.chips.map((chip, i) => (
+                <button
+                  key={chip.label}
+                  onClick={() => setActiveChip(i)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                    activeChip === i
+                      ? "bg-foreground text-background border-foreground"
+                      : "bg-background text-muted-foreground border-border hover:border-foreground hover:text-foreground"
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="pb-4">
             <CatalogHeader
               totalResults={filteredProducts.length}
@@ -226,11 +280,6 @@ const Catalog = () => {
               onToggleFilters={() => setFiltersVisible(!filtersVisible)}
               filtersVisible={filtersVisible}
             />
-            {queryParam.trim() && (
-              <p className="text-sm text-muted-foreground mt-2">
-                Showing results for: <span className="font-medium text-foreground">"{queryParam}"</span>
-              </p>
-            )}
           </div>
 
           {/* Active filter tags */}
@@ -254,9 +303,12 @@ const Catalog = () => {
             {/* Sidebar filters - desktop */}
             <aside className="hidden lg:block w-64 shrink-0">
               <div className="sticky top-24 bg-card rounded-xl border border-border p-5">
+                {/* Category filter is intentionally omitted: this page already scopes products
+                    to a single category via the slug. Showing a category picker here would
+                    be redundant. The empty props satisfy the CatalogFilters interface. */}
                 <CatalogFilters
-                  selectedCategories={selectedCategories}
-                  setSelectedCategories={setSelectedCategories}
+                  selectedCategories={[]}
+                  setSelectedCategories={() => {}}
                   selectedConditions={selectedConditions}
                   setSelectedConditions={setSelectedConditions}
                   selectedLocations={selectedLocations}
@@ -264,7 +316,7 @@ const Catalog = () => {
                   priceRange={priceRange}
                   setPriceRange={setPriceRange}
                   onClearAll={clearAll}
-                  availableCategories={dbCategories}
+                  availableCategories={[]}
                 />
               </div>
             </aside>
@@ -280,9 +332,10 @@ const Catalog = () => {
                       <X className="h-5 w-5" />
                     </button>
                   </div>
+                  {/* Category filter omitted — already scoped by page slug */}
                   <CatalogFilters
-                    selectedCategories={selectedCategories}
-                    setSelectedCategories={setSelectedCategories}
+                    selectedCategories={[]}
+                    setSelectedCategories={() => {}}
                     selectedConditions={selectedConditions}
                     setSelectedConditions={setSelectedConditions}
                     selectedLocations={selectedLocations}
@@ -290,7 +343,7 @@ const Catalog = () => {
                     priceRange={priceRange}
                     setPriceRange={setPriceRange}
                     onClearAll={clearAll}
-                    availableCategories={dbCategories}
+                    availableCategories={[]}
                   />
                 </div>
               </div>
@@ -315,8 +368,15 @@ const Catalog = () => {
                 </div>
               ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-20">
-                  <p className="text-lg font-display font-semibold text-foreground mb-2">No listings found</p>
-                  <p className="text-sm text-muted-foreground">Try adjusting your filters to see more results.</p>
+                  <p className="text-lg font-display font-semibold text-foreground mb-2">
+                    {config.emptyState.title}
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    {config.emptyState.description}
+                  </p>
+                  <Button asChild variant="outline">
+                    <Link to="/catalog">Browse All Listings</Link>
+                  </Button>
                 </div>
               ) : (
                 <div
@@ -341,4 +401,4 @@ const Catalog = () => {
   );
 };
 
-export default Catalog;
+export default CategoryPage;
