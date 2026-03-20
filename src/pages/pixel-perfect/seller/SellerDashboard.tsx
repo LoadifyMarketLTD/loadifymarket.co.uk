@@ -73,7 +73,7 @@ const SellerDashboard = () => {
             .eq("sellerId", user.id),
           supabase
             .from("orders")
-            .select(`id, orderNumber, total, status, createdAt, users!orders_buyerId_fkey(firstName, lastName)`)
+            .select(`id, orderNumber, total, status, createdAt, buyerId, users!orders_buyerId_fkey(firstName, lastName)`)
             .eq("sellerId", user.id)
             .order("createdAt", { ascending: false })
             .limit(5),
@@ -86,7 +86,7 @@ const SellerDashboard = () => {
 
         const products = productsRes.data ?? [];
         const orders = (ordersRes.data ?? []) as Array<{
-          id: string; orderNumber: string; total: number; status: string; createdAt: string;
+          id: string; orderNumber: string; total: number; status: string; createdAt: string; buyerId: string;
           users?: Array<{ firstName?: string; lastName?: string }> | { firstName?: string; lastName?: string } | null;
         }>;
 
@@ -98,14 +98,12 @@ const SellerDashboard = () => {
         const productsListed = products.filter((p) => p.isActive).length;
         const lowStockItems = products.filter((p) => p.stockQuantity !== null && p.stockQuantity > 0 && p.stockQuantity <= 5).length;
 
+        const buyerIds = new Set(orders.map((o) => o.buyerId).filter(Boolean));
         setStats({
           totalRevenue,
           activeOrders,
           productsListed,
-          totalCustomers: new Set(orders.map((o) => {
-            const u = Array.isArray(o.users) ? o.users[0] : o.users;
-            return u?.firstName ? `${u.firstName}${u.lastName ?? ""}` : "unknown";
-          })).size,
+          totalCustomers: buyerIds.size,
           pendingShipments: orders.filter((o) => o.status === "paid" || o.status === "packed").length,
           lowStockItems,
           sellerRating: profileRes.data?.rating ?? 0,

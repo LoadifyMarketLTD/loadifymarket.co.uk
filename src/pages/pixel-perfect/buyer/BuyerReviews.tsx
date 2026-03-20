@@ -53,7 +53,7 @@ const BuyerReviews = () => {
           .eq("userId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
-        setReviews((data as ReviewRow[]) || []);
+        setReviews((data as unknown as ReviewRow[]) || []);
       } catch (err) {
         console.error("Error fetching reviews:", err);
       } finally {

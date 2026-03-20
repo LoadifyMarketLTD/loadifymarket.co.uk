@@ -34,6 +34,7 @@ const SellerRFQ = () => {
   const [selected, setSelected] = useState<RFQRequest | null>(null);
   const [quoteNote, setQuoteNote] = useState("");
   const [sending, setSending] = useState(false);
+  const [rfqError, setRfqError] = useState("");
 
   const load = async () => {
     const { data } = await supabase
@@ -60,17 +61,21 @@ const SellerRFQ = () => {
   const handleSendReply = async () => {
     if (!selected || !quoteNote.trim()) return;
     setSending(true);
+    setRfqError("");
     try {
-      await supabase
+      const { error: dbError } = await supabase
         .from("rfq_requests")
         .update({ status: "replied" })
         .eq("id", selected.id);
+      if (dbError) throw dbError;
       const subject = encodeURIComponent(`Re: Quote Request – ${selected.product_name}`);
       const body = encodeURIComponent(quoteNote);
-      window.open(`mailto:${selected.buyer_email}?subject=${subject}&body=${body}`, "_blank");
+      window.location.href = `mailto:${selected.buyer_email}?subject=${subject}&body=${body}`;
       await load();
       setSelected(null);
       setQuoteNote("");
+    } catch (e) {
+      setRfqError(e instanceof Error ? e.message : "Failed to send reply.");
     } finally {
       setSending(false);
     }
@@ -202,6 +207,9 @@ const SellerRFQ = () => {
               )}
               {selected.status === "pending" && (
                 <div className="space-y-3">
+                  {rfqError && (
+                    <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">{rfqError}</div>
+                  )}
                   <div>
                     <Label className="text-xs">Your Reply / Quote</Label>
                     <Textarea

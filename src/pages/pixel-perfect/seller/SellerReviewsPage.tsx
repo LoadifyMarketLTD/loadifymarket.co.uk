@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,48 +11,31 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { Star, Search, MessageSquare, ThumbsUp, AlertCircle, TrendingUp } from "lucide-react";
+import { Star, Search, MessageSquare, ThumbsUp, AlertCircle } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store";
 
 interface Review {
-  id: number;
-  buyer: string;
+  id: string;
+  productId: string;
   product: string;
+  userId: string;
   rating: number;
   title: string;
   text: string;
   date: string;
-  status: "published" | "pending" | "replied";
-  reply?: string;
+  status: "published" | "hidden" | "removed" | "flagged";
+  sellerResponse: { text: string; respondedAt: string } | null;
+  helpfulCount: number;
+  isAbusive: boolean;
 }
-
-const mockReviews: Review[] = [
-  { id: 1, buyer: "Mark Thompson", product: "Samsung Galaxy & iPhone Mixed Lot", rating: 5, title: "Excellent quality lot", text: "Received the pallet within 3 days. Items were exactly as described. Great value.", date: "2025-03-15", status: "replied", reply: "Thank you Mark! Glad you're happy with the purchase. We look forward to serving you again." },
-  { id: 2, buyer: "Sarah Williams", product: "Samsung Galaxy & iPhone Mixed Lot", rating: 4, title: "Good deal, minor issues", text: "Overall a solid purchase. A couple of items had minor cosmetic damage.", date: "2025-03-10", status: "published" },
-  { id: 3, buyer: "James Cooper", product: "Premium Clothing Pallet", rating: 5, title: "Best wholesale supplier", text: "Third purchase and the quality is consistently excellent.", date: "2025-03-05", status: "replied", reply: "Thanks James! Your loyalty means a lot to us." },
-  { id: 4, buyer: "Emma Davies", product: "DeWalt & Makita Power Tools", rating: 3, title: "Decent but could be better", text: "About 70% was sellable, lower than expected based on description.", date: "2025-02-28", status: "pending" },
-  { id: 5, buyer: "David Chen", product: "Home & Kitchen Essentials Bundle", rating: 5, title: "Superb value", text: "Every single item was in great condition. Manifest was accurate.", date: "2025-02-20", status: "published" },
-  { id: 6, buyer: "Lisa Brown", product: "Sports Equipment Clearance Lot", rating: 2, title: "Disappointed", text: "Several items were damaged beyond what was described. Expected better quality.", date: "2025-02-15", status: "pending" },
-  { id: 7, buyer: "Tom Wilson", product: "Premium Clothing Pallet", rating: 4, title: "Solid purchase", text: "Good variety and most items in excellent condition. Fast shipping too.", date: "2025-02-10", status: "published" },
-];
-
-const stats = {
-  avgRating: 4.2,
-  totalReviews: 72,
-  responseRate: 85,
-  distribution: [
-    { stars: 5, count: 42, pct: 58 },
-    { stars: 4, count: 18, pct: 25 },
-    { stars: 3, count: 8, pct: 11 },
-    { stars: 2, count: 3, pct: 4 },
-    { stars: 1, count: 1, pct: 1 },
-  ],
-};
 
 const statusColor: Record<string, string> = {
   published: "bg-emerald-500/15 text-emerald-700 border-emerald-200",
-  pending: "bg-amber-500/15 text-amber-700 border-amber-200",
-  replied: "bg-blue-500/15 text-blue-700 border-blue-200",
+  hidden: "bg-amber-500/15 text-amber-700 border-amber-200",
+  flagged: "bg-orange-500/15 text-orange-700 border-orange-200",
+  removed: "bg-red-500/15 text-red-700 border-red-200",
 };
 
 const StarDisplay = ({ rating }: { rating: number }) => (
@@ -64,46 +47,130 @@ const StarDisplay = ({ rating }: { rating: number }) => (
 );
 
 const SellerReviewsPage = () => {
+  const { user } = useAuthStore();
   const [search, setSearch] = useState("");
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [replyText, setReplyText] = useState("");
-  const [reviews, setReviews] = useState(mockReviews);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [replySaving, setReplySaving] = useState(false);
+  const [replyError, setReplyError] = useState("");
+
+  const fetchReviews = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { data: products } = await supabase
+        .from("products")
+        .select("id, title")
+        .eq("sellerId", user.id);
+
+      if (!products?.length) { setReviews([]); setLoading(false); return; }
+
+      const productIds = products.map((p: { id: string }) => p.id);
+      const titleMap: Record<string, string> = Object.fromEntries(
+        (products as { id: string; title: string }[]).map((p) => [p.id, p.title])
+      );
+
+      const { data, error } = await supabase
+        .from("reviews")
+        .select("id, productId, userId, rating, title, comment, sellerResponse, status, isAbusive, helpfulCount, createdAt")
+        .in("productId", productIds)
+        .not("status", "in", '("removed")')
+        .order("createdAt", { ascending: false });
+
+      if (error) throw error;
+
+      setReviews(
+        (data ?? []).map((r) => ({
+          id: r.id,
+          productId: r.productId,
+          product: titleMap[r.productId] ?? "Product",
+          userId: r.userId,
+          rating: r.rating,
+          title: r.title ?? "",
+          text: r.comment ?? "",
+          date: new Date(r.createdAt).toISOString().slice(0, 10),
+          status: r.status as Review["status"],
+          sellerResponse: r.sellerResponse ?? null,
+          helpfulCount: r.helpfulCount ?? 0,
+          isAbusive: r.isAbusive ?? false,
+        }))
+      );
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => { fetchReviews(); }, [fetchReviews]);
+
+  // Computed stats
+  const totalReviews = reviews.length;
+  const avgRating = totalReviews
+    ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / totalReviews) * 10) / 10
+    : 0;
+  const withReply = reviews.filter((r) => r.sellerResponse).length;
+  const responseRate = totalReviews ? Math.round((withReply / totalReviews) * 100) : 0;
+  const awaitingReply = reviews.filter((r) => !r.sellerResponse && r.status === "published").length;
+  const distribution = [5, 4, 3, 2, 1].map((stars) => {
+    const count = reviews.filter((r) => r.rating === stars).length;
+    return { stars, count, pct: totalReviews ? Math.round((count / totalReviews) * 100) : 0 };
+  });
 
   const filtered = reviews.filter(
     (r) =>
-      r.buyer.toLowerCase().includes(search.toLowerCase()) ||
       r.product.toLowerCase().includes(search.toLowerCase()) ||
       r.title.toLowerCase().includes(search.toLowerCase())
   );
 
   const byStatus = (status: string) => filtered.filter((r) => r.status === status);
+  const withReplyFilter = (hasReply: boolean) =>
+    filtered.filter((r) => (hasReply ? !!r.sellerResponse : !r.sellerResponse));
 
-  const handleReply = () => {
+  const handleReply = async () => {
     if (!selectedReview || !replyText.trim()) return;
-    setReviews((prev) =>
-      prev.map((r) =>
-        r.id === selectedReview.id ? { ...r, status: "replied" as const, reply: replyText } : r
-      )
-    );
-    setSelectedReview(null);
-    setReplyText("");
+    setReplySaving(true);
+    setReplyError("");
+    try {
+      const resp = { text: replyText.trim(), respondedAt: new Date().toISOString() };
+      const { error } = await supabase
+        .from("reviews")
+        .update({ sellerResponse: resp })
+        .eq("id", selectedReview.id);
+      if (error) throw error;
+      setReviews((prev) =>
+        prev.map((r) => r.id === selectedReview.id ? { ...r, sellerResponse: resp } : r)
+      );
+      setSelectedReview(null);
+      setReplyText("");
+    } catch (e) {
+      setReplyError(e instanceof Error ? e.message : "Failed to save reply.");
+    } finally {
+      setReplySaving(false);
+    }
   };
 
   const renderTable = (data: Review[]) => (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Buyer</TableHead>
           <TableHead className="hidden sm:table-cell">Product</TableHead>
           <TableHead>Rating</TableHead>
           <TableHead className="hidden md:table-cell">Review</TableHead>
           <TableHead>Date</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead>Reply</TableHead>
           <TableHead className="text-right">Action</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.length === 0 ? (
+        {loading ? (
+          <TableRow>
+            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">Loading reviews…</TableCell>
+          </TableRow>
+        ) : data.length === 0 ? (
           <TableRow>
             <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
               No reviews found.
@@ -112,22 +179,26 @@ const SellerReviewsPage = () => {
         ) : (
           data.map((r) => (
             <TableRow key={r.id}>
-              <TableCell className="font-medium text-sm">{r.buyer}</TableCell>
               <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[150px] truncate">{r.product}</TableCell>
               <TableCell><StarDisplay rating={r.rating} /></TableCell>
               <TableCell className="hidden md:table-cell text-xs text-muted-foreground max-w-[200px] truncate">{r.title}</TableCell>
               <TableCell className="text-xs text-muted-foreground">{r.date}</TableCell>
               <TableCell>
-                <Badge variant="outline" className={statusColor[r.status]}>{r.status}</Badge>
+                <Badge variant="outline" className={statusColor[r.status] ?? ""}>{r.status}</Badge>
+              </TableCell>
+              <TableCell>
+                {r.sellerResponse
+                  ? <Badge variant="outline" className="bg-blue-500/15 text-blue-700 border-blue-200">Replied</Badge>
+                  : <Badge variant="outline" className="bg-amber-500/15 text-amber-700 border-amber-200">Pending</Badge>}
               </TableCell>
               <TableCell className="text-right">
                 <Button
                   variant="ghost"
                   size="sm"
                   className="text-xs"
-                  onClick={() => { setSelectedReview(r); setReplyText(r.reply || ""); }}
+                  onClick={() => { setSelectedReview(r); setReplyText(r.sellerResponse?.text ?? ""); setReplyError(""); }}
                 >
-                  {r.status === "replied" ? "View" : "Reply"}
+                  {r.sellerResponse ? "View" : "Reply"}
                 </Button>
               </TableCell>
             </TableRow>
@@ -153,7 +224,7 @@ const SellerReviewsPage = () => {
                 <Star className="h-5 w-5 text-amber-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{stats.avgRating}</p>
+                <p className="text-2xl font-bold text-foreground">{avgRating || "—"}</p>
                 <p className="text-xs text-muted-foreground">Avg. Rating</p>
               </div>
             </div>
@@ -166,7 +237,7 @@ const SellerReviewsPage = () => {
                 <MessageSquare className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{stats.totalReviews}</p>
+                <p className="text-2xl font-bold text-foreground">{totalReviews}</p>
                 <p className="text-xs text-muted-foreground">Total Reviews</p>
               </div>
             </div>
@@ -179,7 +250,7 @@ const SellerReviewsPage = () => {
                 <ThumbsUp className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{stats.responseRate}%</p>
+                <p className="text-2xl font-bold text-foreground">{responseRate}%</p>
                 <p className="text-xs text-muted-foreground">Response Rate</p>
               </div>
             </div>
@@ -192,7 +263,7 @@ const SellerReviewsPage = () => {
                 <AlertCircle className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{byStatus("pending").length}</p>
+                <p className="text-2xl font-bold text-foreground">{awaitingReply}</p>
                 <p className="text-xs text-muted-foreground">Awaiting Reply</p>
               </div>
             </div>
@@ -207,7 +278,7 @@ const SellerReviewsPage = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-            {stats.distribution.map((d) => (
+            {distribution.map((d) => (
               <div key={d.stars} className="flex sm:flex-col items-center gap-2">
                 <div className="flex items-center gap-1">
                   <span className="text-sm font-medium text-foreground">{d.stars}</span>
@@ -235,22 +306,22 @@ const SellerReviewsPage = () => {
       <Tabs defaultValue="all">
         <TabsList>
           <TabsTrigger value="all">All <Badge variant="secondary" className="ml-2 text-xs">{filtered.length}</Badge></TabsTrigger>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
+          <TabsTrigger value="pending">Pending Reply</TabsTrigger>
           <TabsTrigger value="published">Published</TabsTrigger>
-          <TabsTrigger value="replied">Replied</TabsTrigger>
+          <TabsTrigger value="flagged">Flagged</TabsTrigger>
         </TabsList>
         <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
-        <TabsContent value="pending"><Card><CardContent className="pt-4">{renderTable(byStatus("pending"))}</CardContent></Card></TabsContent>
+        <TabsContent value="pending"><Card><CardContent className="pt-4">{renderTable(withReplyFilter(false))}</CardContent></Card></TabsContent>
         <TabsContent value="published"><Card><CardContent className="pt-4">{renderTable(byStatus("published"))}</CardContent></Card></TabsContent>
-        <TabsContent value="replied"><Card><CardContent className="pt-4">{renderTable(byStatus("replied"))}</CardContent></Card></TabsContent>
+        <TabsContent value="flagged"><Card><CardContent className="pt-4">{renderTable(byStatus("flagged"))}</CardContent></Card></TabsContent>
       </Tabs>
 
       {/* Review Detail / Reply Dialog */}
-      <Dialog open={!!selectedReview} onOpenChange={() => setSelectedReview(null)}>
+      <Dialog open={!!selectedReview} onOpenChange={() => { setSelectedReview(null); setReplyError(""); }}>
         {selectedReview && (
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Review from {selectedReview.buyer}</DialogTitle>
+              <DialogTitle>Review</DialogTitle>
               <DialogDescription>{selectedReview.product}</DialogDescription>
             </DialogHeader>
 
@@ -264,34 +335,36 @@ const SellerReviewsPage = () => {
                 <p className="text-sm text-muted-foreground mt-1">{selectedReview.text}</p>
               </div>
 
-              {selectedReview.reply && selectedReview.status === "replied" && (
+              {selectedReview.sellerResponse && (
                 <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">
                   <p className="text-xs font-semibold text-primary mb-1">Your Reply</p>
-                  <p className="text-sm text-foreground">{selectedReview.reply}</p>
+                  <p className="text-sm text-foreground">{selectedReview.sellerResponse.text}</p>
                 </div>
               )}
 
-              {selectedReview.status !== "replied" && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Your Reply</p>
-                  <Textarea
-                    placeholder="Write a response to this review..."
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-              )}
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">
+                  {selectedReview.sellerResponse ? "Edit Reply" : "Your Reply"}
+                </p>
+                {replyError && (
+                  <p className="text-xs text-destructive mb-1">{replyError}</p>
+                )}
+                <Textarea
+                  placeholder="Write a response to this review..."
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  rows={3}
+                />
+              </div>
             </div>
 
-            {selectedReview.status !== "replied" && (
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setSelectedReview(null)}>Cancel</Button>
-                <Button onClick={handleReply} disabled={!replyText.trim()}>
-                  <MessageSquare className="h-4 w-4 mr-1" /> Send Reply
-                </Button>
-              </DialogFooter>
-            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setSelectedReview(null); setReplyError(""); }}>Cancel</Button>
+              <Button onClick={handleReply} disabled={!replyText.trim() || replySaving}>
+                <MessageSquare className="h-4 w-4 mr-1" />
+                {replySaving ? "Saving…" : selectedReview.sellerResponse ? "Update Reply" : "Send Reply"}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         )}
       </Dialog>

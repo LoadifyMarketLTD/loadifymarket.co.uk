@@ -43,9 +43,10 @@ const SellerSettings = () => {
         method: "POST",
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to start Stripe onboarding");
-      window.location.href = data.url;
+      let data: Record<string, unknown> = {};
+      try { data = await response.json(); } catch { /* non-JSON response */ }
+      if (!response.ok) throw new Error((data.error as string) || "Failed to start Stripe onboarding");
+      window.location.href = data.url as string;
     } catch (err) {
       setConnectError(err instanceof Error ? err.message : "Failed to connect Stripe account");
       setConnectLoading(false);
@@ -64,7 +65,7 @@ const SellerSettings = () => {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to open Stripe dashboard");
-      window.open(data.url, "_blank", "noopener,noreferrer");
+      window.open(data.url as string, "_blank", "noopener,noreferrer");
     } catch (err) {
       setConnectError(err instanceof Error ? err.message : "Failed to open Stripe dashboard");
     } finally {

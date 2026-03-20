@@ -49,7 +49,7 @@ const BuyerOrders = () => {
           .eq("buyerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
-        setOrders((data as OrderRow[]) || []);
+        setOrders((data as unknown as OrderRow[]) || []);
       } catch (err) {
         console.error("Error fetching orders:", err);
       } finally {

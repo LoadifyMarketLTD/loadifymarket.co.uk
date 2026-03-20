@@ -36,6 +36,7 @@ const SellerReturns = () => {
   const [selected, setSelected] = useState<Return | null>(null);
   const [responseText, setResponseText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const load = async () => {
     if (!user) return;
@@ -64,8 +65,10 @@ const SellerReturns = () => {
   const handleApprove = async () => {
     if (!selected) return;
     setSubmitting(true);
+    setError("");
     try {
-      await supabase.from("returns").update({ status: "approved" }).eq("id", selected.id);
+      const { error: dbError } = await supabase.from("returns").update({ status: "approved" }).eq("id", selected.id);
+      if (dbError) { setError(dbError.message); return; }
       await load();
       setSelected(null);
     } finally {
@@ -76,8 +79,10 @@ const SellerReturns = () => {
   const handleReject = async () => {
     if (!selected) return;
     setSubmitting(true);
+    setError("");
     try {
-      await supabase.from("returns").update({ status: "rejected" }).eq("id", selected.id);
+      const { error: dbError } = await supabase.from("returns").update({ status: "rejected" }).eq("id", selected.id);
+      if (dbError) { setError(dbError.message); return; }
       await load();
       setSelected(null);
     } finally {
@@ -197,6 +202,9 @@ const SellerReturns = () => {
               <DialogDescription>Return request for order {selected.orderId.slice(0, 8)}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-2">
+              {error && (
+                <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">{error}</div>
+              )}
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div><span className="text-muted-foreground">Reason</span><p className="font-medium text-foreground">{selected.reason}</p></div>
                 <div><span className="text-muted-foreground">Refund Amount</span>

@@ -61,7 +61,7 @@ const BuyerDashboard = () => {
             .single(),
         ]);
 
-        const allOrders = (ordersRes.data as OrderRow[]) || [];
+        const allOrders = (ordersRes.data as unknown as OrderRow[]) || [];
         setRecentOrders(allOrders.slice(0, 5));
         setTotalOrders(allOrders.length);
         setTotalSpent(allOrders.reduce((sum, o) => sum + (o.total || 0), 0));
