@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Truck, Search, Filter, MapPin, Clock, Package, ExternalLink, CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Truck, Search, Filter, MapPin, Clock, Package, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,81 +11,28 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store";
+import type { Shipment } from "@/types/shipping";
 
-interface Shipment {
-  id: string;
-  orderId: string;
-  buyer: string;
-  destination: string;
-  carrier: string;
-  tracking: string;
-  items: number;
-  weight: string;
-  status: "label_created" | "picked_up" | "in_transit" | "out_for_delivery" | "delivered";
-  estimatedDelivery: string;
-  shippedDate: string;
-  events: { date: string; description: string }[];
+interface ShipmentRow extends Shipment {
+  orders?: {
+    orderNumber?: string;
+    users?: { firstName?: string; lastName?: string } | null;
+    products?: { title?: string } | null;
+  } | null;
 }
 
-const shipments: Shipment[] = [
-  {
-    id: "SHP-3021", orderId: "ORD-1042", buyer: "RetailHub London", destination: "London, E14 5AB",
-    carrier: "Royal Mail", tracking: "RM9281736GB", items: 3, weight: "24.5 kg",
-    status: "in_transit", estimatedDelivery: "21 Mar 2026", shippedDate: "19 Mar 2026",
-    events: [
-      { date: "19 Mar 10:42", description: "Parcel collected from seller" },
-      { date: "19 Mar 14:15", description: "Arrived at Manchester sorting facility" },
-      { date: "19 Mar 22:30", description: "Departed Manchester — en route to London" },
-    ],
-  },
-  {
-    id: "SHP-3020", orderId: "ORD-1041", buyer: "BargainBox Ltd", destination: "Birmingham, B1 1BB",
-    carrier: "DPD", tracking: "DPD728391UK", items: 1, weight: "8.2 kg",
-    status: "out_for_delivery", estimatedDelivery: "19 Mar 2026", shippedDate: "18 Mar 2026",
-    events: [
-      { date: "18 Mar 15:00", description: "Parcel collected from seller" },
-      { date: "18 Mar 23:10", description: "Arrived at Birmingham depot" },
-      { date: "19 Mar 07:20", description: "Out for delivery" },
-    ],
-  },
-  {
-    id: "SHP-3019", orderId: "ORD-1040", buyer: "MarketStall UK", destination: "Leeds, LS1 4AP",
-    carrier: "Hermes", tracking: "HME9182736", items: 5, weight: "42.0 kg",
-    status: "label_created", estimatedDelivery: "22 Mar 2026", shippedDate: "—",
-    events: [
-      { date: "19 Mar 09:00", description: "Shipping label created" },
-    ],
-  },
-  {
-    id: "SHP-3018", orderId: "ORD-1039", buyer: "ClearanceKing", destination: "Bristol, BS1 5EH",
-    carrier: "Royal Mail", tracking: "RM8172634GB", items: 2, weight: "15.8 kg",
-    status: "delivered", estimatedDelivery: "18 Mar 2026", shippedDate: "16 Mar 2026",
-    events: [
-      { date: "16 Mar 11:00", description: "Parcel collected from seller" },
-      { date: "17 Mar 06:45", description: "Arrived at Bristol depot" },
-      { date: "18 Mar 10:12", description: "Delivered — signed by J. Clarke" },
-    ],
-  },
-  {
-    id: "SHP-3017", orderId: "ORD-1038", buyer: "ValueFinds Ltd", destination: "Glasgow, G1 1XQ",
-    carrier: "DPD", tracking: "DPD192837UK", items: 1, weight: "6.3 kg",
-    status: "picked_up", estimatedDelivery: "21 Mar 2026", shippedDate: "19 Mar 2026",
-    events: [
-      { date: "19 Mar 08:30", description: "Shipping label created" },
-      { date: "19 Mar 13:45", description: "Parcel collected by DPD driver" },
-    ],
-  },
-  {
-    id: "SHP-3016", orderId: "ORD-1037", buyer: "QuickSell Pro", destination: "Edinburgh, EH1 3EG",
-    carrier: "Royal Mail", tracking: "RM7263541GB", items: 4, weight: "31.0 kg",
-    status: "delivered", estimatedDelivery: "17 Mar 2026", shippedDate: "15 Mar 2026",
-    events: [
-      { date: "15 Mar 14:00", description: "Parcel collected from seller" },
-      { date: "16 Mar 08:00", description: "Arrived at Edinburgh depot" },
-      { date: "17 Mar 11:30", description: "Delivered — left in safe place" },
-    ],
-  },
-];
+/** Map DB status to the display config keys */
+function mapStatus(status: string): string {
+  const s = status.toLowerCase().replace(/ /g, "_");
+  if (s === "dispatched" || s === "in_transit") return "in_transit";
+  if (s === "out_for_delivery") return "out_for_delivery";
+  if (s === "delivered") return "delivered";
+  if (s === "pending" || s === "processing") return "label_created";
+  if (s === "picked_up") return "picked_up";
+  return "label_created";
+}
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   label_created: { label: "Label Created", className: "bg-muted text-muted-foreground" },
@@ -96,20 +43,41 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 };
 
 const SellerShipments = () => {
+  const { user } = useAuthStore();
+  const [shipments, setShipments] = useState<ShipmentRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<Shipment | null>(null);
+  const [selected, setSelected] = useState<ShipmentRow | null>(null);
 
-  const filtered = shipments.filter(
-    (s) =>
-      s.id.toLowerCase().includes(search.toLowerCase()) ||
-      s.buyer.toLowerCase().includes(search.toLowerCase()) ||
-      s.tracking.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const { data } = await supabase
+        .from("shipments")
+        .select(`*, orders(orderNumber, products(title), users!orders_buyerId_fkey(firstName, lastName))`)
+        .eq("seller_id", user.id)
+        .order("created_at", { ascending: false });
+      setShipments((data ?? []) as ShipmentRow[]);
+      setLoading(false);
+    };
+    load();
+  }, [user]);
 
-  const byStatus = (status: string) => filtered.filter((s) => s.status === status);
-  const activeShipments = filtered.filter((s) => s.status !== "delivered");
+  const filtered = shipments.filter((s) => {
+    const q = search.toLowerCase();
+    const buyer = s.orders?.users;
+    const buyerName = buyer ? `${buyer.firstName ?? ""} ${buyer.lastName ?? ""}`.trim() : "";
+    return (
+      s.id.toLowerCase().includes(q) ||
+      (s.tracking_number ?? "").toLowerCase().includes(q) ||
+      buyerName.toLowerCase().includes(q)
+    );
+  });
 
-  const renderTable = (data: Shipment[]) => (
+  const byStatus = (status: string) => filtered.filter((s) => mapStatus(s.status) === status);
+  const activeShipments = filtered.filter((s) => mapStatus(s.status) !== "delivered");
+
+  const renderTable = (data: ShipmentRow[]) => (
     <Table>
       <TableHeader>
         <TableRow>
@@ -119,32 +87,41 @@ const SellerShipments = () => {
           <TableHead className="hidden md:table-cell">Carrier</TableHead>
           <TableHead className="hidden lg:table-cell">Tracking</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="hidden sm:table-cell">ETA</TableHead>
           <TableHead className="text-right">Action</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.length === 0 ? (
+        {loading ? (
           <TableRow>
-            <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+              Loading shipments…
+            </TableCell>
+          </TableRow>
+        ) : data.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
               <Truck className="h-8 w-8 mx-auto mb-2 opacity-40" />
               No shipments found.
             </TableCell>
           </TableRow>
         ) : (
           data.map((s) => {
-            const sc = statusConfig[s.status];
+            const displayStatus = mapStatus(s.status);
+            const sc = statusConfig[displayStatus];
+            const buyer = s.orders?.users;
+            const buyerName = buyer ? `${buyer.firstName ?? ""} ${buyer.lastName ?? ""}`.trim() || "Buyer" : "Buyer";
             return (
               <TableRow key={s.id}>
-                <TableCell className="font-medium text-sm">{s.id}</TableCell>
-                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{s.orderId}</TableCell>
-                <TableCell className="text-sm">{s.buyer}</TableCell>
-                <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{s.carrier}</TableCell>
-                <TableCell className="hidden lg:table-cell text-xs text-muted-foreground font-mono">{s.tracking}</TableCell>
+                <TableCell className="font-medium text-sm">{s.id.slice(0, 8).toUpperCase()}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">
+                  {s.orders?.orderNumber ?? s.order_id.slice(0, 8)}
+                </TableCell>
+                <TableCell className="text-sm">{buyerName}</TableCell>
+                <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{s.courier_name ?? "—"}</TableCell>
+                <TableCell className="hidden lg:table-cell text-xs text-muted-foreground font-mono">{s.tracking_number ?? "—"}</TableCell>
                 <TableCell>
                   <Badge variant="outline" className={sc.className}>{sc.label}</Badge>
                 </TableCell>
-                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{s.estimatedDelivery}</TableCell>
                 <TableCell className="text-right">
                   <Button variant="ghost" size="sm" className="text-xs" onClick={() => setSelected(s)}>Track</Button>
                 </TableCell>
@@ -160,14 +137,16 @@ const SellerShipments = () => {
     <div className="p-6 space-y-6 max-w-[1200px]">
       <div>
         <h1 className="font-display text-2xl font-bold text-foreground">Shipments</h1>
-        <p className="text-sm text-muted-foreground mt-1">{shipments.length} shipments · {activeShipments.length} active</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {loading ? "Loading…" : `${shipments.length} shipments · ${activeShipments.length} active`}
+        </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Label Created", count: byStatus("label_created").length, icon: Package, color: "text-muted-foreground bg-muted" },
-          { label: "In Transit", count: filtered.filter((s) => ["picked_up", "in_transit"].includes(s.status)).length, icon: Truck, color: "text-purple-600 bg-purple-500/10" },
+          { label: "In Transit", count: filtered.filter((s) => ["picked_up", "in_transit"].includes(mapStatus(s.status))).length, icon: Truck, color: "text-purple-600 bg-purple-500/10" },
           { label: "Out for Delivery", count: byStatus("out_for_delivery").length, icon: MapPin, color: "text-amber-600 bg-amber-500/10" },
           { label: "Delivered", count: byStatus("delivered").length, icon: CheckCircle2, color: "text-emerald-600 bg-emerald-500/10" },
         ].map((stat) => (
@@ -204,41 +183,40 @@ const SellerShipments = () => {
 
       {/* Tracking Dialog */}
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
-        {selected && (
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Truck className="h-5 w-5 text-primary" /> {selected.id}
-              </DialogTitle>
-              <DialogDescription>{selected.carrier} · {selected.tracking}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-2">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-muted-foreground">Buyer</span><p className="font-medium text-foreground">{selected.buyer}</p></div>
-                <div><span className="text-muted-foreground">Destination</span><p className="font-medium text-foreground">{selected.destination}</p></div>
-                <div><span className="text-muted-foreground">Items / Weight</span><p className="font-medium text-foreground">{selected.items} items · {selected.weight}</p></div>
-                <div><span className="text-muted-foreground">ETA</span><p className="font-medium text-foreground">{selected.estimatedDelivery}</p></div>
-              </div>
-              <div className="border-t border-border pt-4">
-                <p className="text-xs font-semibold text-muted-foreground mb-3">TRACKING HISTORY</p>
-                <div className="space-y-3">
-                  {[...selected.events].reverse().map((event, i) => (
-                    <div key={i} className="flex gap-3">
-                      <div className="flex flex-col items-center">
-                        <div className={`w-2.5 h-2.5 rounded-full mt-1.5 ${i === 0 ? "bg-primary" : "bg-muted-foreground/30"}`} />
-                        {i < selected.events.length - 1 && <div className="w-px flex-1 bg-border mt-1" />}
-                      </div>
-                      <div className="pb-3">
-                        <p className="text-sm text-foreground">{event.description}</p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><Clock className="h-3 w-3" /> {event.date}</p>
-                      </div>
-                    </div>
-                  ))}
+        {selected && (() => {
+          const buyer = selected.orders?.users;
+          const buyerName = buyer ? `${buyer.firstName ?? ""} ${buyer.lastName ?? ""}`.trim() || "Buyer" : "Buyer";
+          const displayStatus = mapStatus(selected.status);
+          const sc = statusConfig[displayStatus];
+          return (
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Truck className="h-5 w-5 text-primary" /> {selected.id.slice(0, 8).toUpperCase()}
+                </DialogTitle>
+                <DialogDescription>{selected.courier_name ?? "Carrier"} · {selected.tracking_number ?? "No tracking"}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div><span className="text-muted-foreground">Buyer</span><p className="font-medium text-foreground">{buyerName}</p></div>
+                  <div><span className="text-muted-foreground">Status</span><p className="font-medium text-foreground"><Badge variant="outline" className={sc.className}>{sc.label}</Badge></p></div>
+                  <div><span className="text-muted-foreground">Order</span><p className="font-medium text-foreground">{selected.orders?.orderNumber ?? selected.order_id.slice(0, 8)}</p></div>
+                  <div><span className="text-muted-foreground">Dispatched</span><p className="font-medium text-foreground">{selected.dispatched_at ? new Date(selected.dispatched_at).toLocaleDateString("en-GB") : "—"}</p></div>
+                </div>
+                {selected.proof_of_delivery_url && (
+                  <div className="rounded-lg bg-muted/50 border border-border p-3">
+                    <p className="text-xs font-semibold text-muted-foreground mb-1">PROOF OF DELIVERY</p>
+                    <a href={selected.proof_of_delivery_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">View document</a>
+                  </div>
+                )}
+                <div className="rounded-lg bg-muted/50 border border-border p-3">
+                  <p className="text-xs font-semibold text-muted-foreground mb-1">SHIPMENT CREATED</p>
+                  <p className="text-sm text-foreground flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {new Date(selected.created_at).toLocaleString("en-GB")}</p>
                 </div>
               </div>
-            </div>
-          </DialogContent>
-        )}
+            </DialogContent>
+          );
+        })()}
       </Dialog>
     </div>
   );
