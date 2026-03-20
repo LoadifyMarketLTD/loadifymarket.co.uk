@@ -13,6 +13,48 @@ interface TrendingProductsProps {
   excludeIds?: string[];
 }
 
+// ── Base product select — categories only, no seller embed ────────────────────
+const PRODUCT_SELECT = `
+  *,
+  store:seller_stores(storeSlug)
+`;
+
+/** Fetch seller info for a list of seller IDs from seller_profiles (public read via RLS USING TRUE) */
+async function fetchSellerMap(sellerIds: string[]): Promise<Map<string, {
+  businessName?: string;
+  isApproved?: boolean;
+  rating?: number;
+  marketplaceRole?: string;
+  paymentBehaviour?: string;
+  userId?: string;
+}>> {
+  if (sellerIds.length === 0) return new Map();
+  const { data } = await supabase
+    .from('seller_profiles')
+    .select('userId, businessName, isApproved, rating, marketplaceRole, paymentBehaviour')
+    .in('userId', sellerIds);
+  const map = new Map<string, typeof data extends Array<infer T> ? T : never>();
+  (data ?? []).forEach((row) => { if (row.userId) map.set(row.userId, row as never); });
+  return map as ReturnType<typeof fetchSellerMap> extends Promise<infer M> ? M : never;
+}
+
+/** Merge separately-fetched seller data + store slug into product rows */
+function mergeSellerData(
+  data: (Product & { store?: { storeSlug?: string } | null })[],
+  sellerMap: Map<string, Record<string, unknown>>,
+): Product[] {
+  return data.map((product) => {
+    const sellerInfo = sellerMap.get(product.sellerId) ?? {};
+    return {
+      ...product,
+      seller: {
+        ...sellerInfo,
+        storeSlug: product.store?.storeSlug,
+      } as Product['seller'],
+    };
+  });
+}
+
 export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'trending', skip = 0, onDataLoaded, excludeIds = [] }: TrendingProductsProps) {
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,24 +62,13 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
   const fetchTrendingProducts = useCallback(async () => {
     setLoading(true);
     try {
+      let rawProducts: (Product & { store?: { storeSlug?: string } | null })[] = [];
+
       if (mode === 'newest') {
         // Newest listings — order by creation date descending, with offset for deduplication
         const baseQuery = supabase
           .from('products')
-          .select(`
-            *,
-            seller:seller_profiles_public(
-              businessName,
-              isApproved,
-              rating,
-              marketplaceRole,
-              paymentBehaviour,
-              userId
-            ),
-            store:seller_stores(
-              storeSlug
-            )
-          `)
+          .select(PRODUCT_SELECT)
           .eq('isApproved', true)
           .eq('isActive', true)
           .order('createdAt', { ascending: false });
@@ -50,24 +81,11 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
 
         if (error) throw error;
 
-        // Fallback: if skip returns nothing, fetch from start (small dataset)
         if (!data || data.length === 0) {
+          // Fallback: if skip returns nothing, fetch from start (small dataset)
           const fallbackQuery = supabase
             .from('products')
-            .select(`
-              *,
-              seller:seller_profiles_public(
-                businessName,
-                isApproved,
-                rating,
-                marketplaceRole,
-                paymentBehaviour,
-                userId
-              ),
-              store:seller_stores(
-                storeSlug
-              )
-            `)
+            .select(PRODUCT_SELECT)
             .eq('isApproved', true)
             .eq('isActive', true)
             .order('createdAt', { ascending: false })
@@ -76,92 +94,67 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
             ? await fallbackQuery.not('id', 'in', `(${excludeIds.join(',')})`)
             : await fallbackQuery;
           if (fallbackErr) throw fallbackErr;
-          setTrendingProducts(transformProducts(fallbackData || []));
+          rawProducts = (fallbackData || []) as typeof rawProducts;
         } else {
-          setTrendingProducts(transformProducts(data));
+          rawProducts = data as typeof rawProducts;
         }
-        return;
-      }
-
-      // Trending: Calculate trending score based on recent activity
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - days);
-
-      const trendQuery = supabase
-        .from('products')
-        .select(`
-          *,
-          seller:seller_profiles_public(
-            businessName,
-            isApproved,
-            rating,
-            marketplaceRole,
-            paymentBehaviour,
-            userId
-          ),
-          store:seller_stores(
-            storeSlug
-          )
-        `)
-        .eq('isApproved', true)
-        .eq('isActive', true)
-        .gte('lastViewedAt', cutoffDate.toISOString())
-        .order('addToCartCount', { ascending: false })
-        .order('views', { ascending: false })
-        .limit(maxProducts * 3); // Get more to filter, sort and exclude
-
-      const { data, error } = excludeIds.length > 0
-        ? await trendQuery.not('id', 'in', `(${excludeIds.join(',')})`)
-        : await trendQuery;
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        // Calculate trending score for each product
-        const productsWithScore = data.map(product => ({
-          ...product,
-          trendingScore: 
-            (product.views || 0) * 0.3 +
-            (product.addToCartCount || 0) * 0.5 +
-            (product.reviewCount || 0) * 0.2
-        }));
-
-        // Sort by trending score and take top products
-        const sorted = productsWithScore
-          .sort((a, b) => b.trendingScore - a.trendingScore)
-          .slice(0, maxProducts);
-
-        setTrendingProducts(transformProducts(sorted));
       } else {
-        // Fallback to most viewed products if no recent activity
-        const fallbackTrendQuery = supabase
+        // Trending: Calculate trending score based on recent activity
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+
+        const trendQuery = supabase
           .from('products')
-          .select(`
-            *,
-            seller:seller_profiles_public(
-              businessName,
-              isApproved,
-              rating,
-              marketplaceRole,
-              paymentBehaviour,
-              userId
-            ),
-            store:seller_stores(
-              storeSlug
-            )
-          `)
+          .select(PRODUCT_SELECT)
           .eq('isApproved', true)
           .eq('isActive', true)
+          .gte('lastViewedAt', cutoffDate.toISOString())
+          .order('addToCartCount', { ascending: false })
           .order('views', { ascending: false })
-          .limit(maxProducts);
+          .limit(maxProducts * 3); // Get more to filter, sort and exclude
 
-        const { data: fallbackData, error: fallbackError } = excludeIds.length > 0
-          ? await fallbackTrendQuery.not('id', 'in', `(${excludeIds.join(',')})`)
-          : await fallbackTrendQuery;
+        const { data, error } = excludeIds.length > 0
+          ? await trendQuery.not('id', 'in', `(${excludeIds.join(',')})`)
+          : await trendQuery;
 
-        if (fallbackError) throw fallbackError;
-        setTrendingProducts(transformProducts(fallbackData || []));
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          // Calculate trending score for each product and take top N
+          const withScore = (data as typeof rawProducts).map(p => ({
+            ...p,
+            _score:
+              ((p as Product).views || 0) * 0.3 +
+              ((p as unknown as { addToCartCount?: number }).addToCartCount || 0) * 0.5 +
+              ((p as Product).reviewCount || 0) * 0.2,
+          }));
+          rawProducts = withScore
+            .sort((a, b) => b._score - a._score)
+            .slice(0, maxProducts) as typeof rawProducts;
+        } else {
+          // Fallback to most viewed products if no recent activity
+          const fallbackTrendQuery = supabase
+            .from('products')
+            .select(PRODUCT_SELECT)
+            .eq('isApproved', true)
+            .eq('isActive', true)
+            .order('views', { ascending: false })
+            .limit(maxProducts);
+
+          const { data: fallbackData, error: fallbackError } = excludeIds.length > 0
+            ? await fallbackTrendQuery.not('id', 'in', `(${excludeIds.join(',')})`)
+            : await fallbackTrendQuery;
+
+          if (fallbackError) throw fallbackError;
+          rawProducts = (fallbackData || []) as typeof rawProducts;
+        }
       }
+
+      // Fetch seller public info separately (avoids PostgREST embedded join on view)
+      const sellerIds = [...new Set(rawProducts.map((p) => p.sellerId).filter(Boolean))];
+      const sellerMap = await fetchSellerMap(sellerIds);
+
+      setTrendingProducts(mergeSellerData(rawProducts, sellerMap));
     } catch (error) {
       console.error('Error fetching trending products:', error);
       setTrendingProducts([]);
@@ -247,13 +240,3 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
   );
 }
 
-// Transform Supabase joined data to include storeSlug in seller object
-function transformProducts(data: (Product & { store?: { storeSlug?: string } | null })[]) {
-  return data.map((product) => ({
-    ...product,
-    seller: product.seller ? {
-      ...product.seller,
-      storeSlug: product.store?.storeSlug,
-    } : undefined,
-  }));
-}

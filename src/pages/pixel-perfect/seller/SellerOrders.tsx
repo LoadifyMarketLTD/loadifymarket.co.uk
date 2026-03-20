@@ -40,25 +40,21 @@ const SellerOrders = () => {
     const load = async () => {
       const { data } = await supabase
         .from("orders")
-        .select(`id, orderNumber, total, status, createdAt, users!orders_buyerId_fkey(firstName, lastName)`)
+        .select(`id, orderNumber, total, status, createdAt, buyerId`)
         .eq("sellerId", user.id)
         .order("createdAt", { ascending: false });
       const rows = (data ?? []) as Array<{
-        id: string; orderNumber: string; total: number; status: string; createdAt: string;
-        users?: Array<{ firstName?: string; lastName?: string }> | { firstName?: string; lastName?: string } | null;
+        id: string; orderNumber: string; total: number; status: string; createdAt: string; buyerId: string;
       }>;
       setOrders(
-        rows.map((o) => {
-          const u = Array.isArray(o.users) ? o.users[0] : o.users;
-          return {
-            id: o.id,
-            orderNumber: o.orderNumber,
-            buyerName: u?.firstName ? `${u.firstName}${u.lastName ? " " + u.lastName : ""}` : "Buyer",
-            total: o.total,
-            status: o.status,
-            createdAt: o.createdAt,
-          };
-        })
+        rows.map((o) => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          buyerName: "Customer",
+          total: o.total,
+          status: o.status,
+          createdAt: o.createdAt,
+        }))
       );
       setLoading(false);
     };

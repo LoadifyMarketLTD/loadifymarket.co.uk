@@ -44,6 +44,7 @@ const AdminOrders = () => {
     setLoading(true);
     setError(null);
     try {
+      // Step 1: Fetch orders with product title only (no user embed)
       const { data, error: queryError } = await supabase
         .from("orders")
         .select(`
@@ -52,7 +53,7 @@ const AdminOrders = () => {
           total,
           status,
           createdAt,
-          buyer:users!orders_buyerId_fkey(firstName, lastName),
+          buyerId,
           product:products(title)
         `)
         .order("createdAt", { ascending: false })
@@ -61,15 +62,11 @@ const AdminOrders = () => {
       if (queryError) throw queryError;
 
       const mapped: Order[] = (data || []).map((o: any) => {
-        const buyerObj = Array.isArray(o.buyer) ? o.buyer[0] : o.buyer;
         const productObj = Array.isArray(o.product) ? o.product[0] : o.product;
-        const buyerName = buyerObj
-          ? `${buyerObj.firstName ?? ""} ${buyerObj.lastName ?? ""}`.trim() || "—"
-          : "—";
         return {
           id: o.id,
           orderNumber: o.orderNumber || o.id.slice(0, 8).toUpperCase(),
-          buyer: buyerName,
+          buyer: o.buyerId ? o.buyerId.slice(0, 8).toUpperCase() : "—",
           product: productObj?.title || "—",
           total: o.total ?? 0,
           status: o.status ?? "paid",

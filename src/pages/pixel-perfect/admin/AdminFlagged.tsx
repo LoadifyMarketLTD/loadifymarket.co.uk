@@ -51,12 +51,12 @@ const AdminFlagged = () => {
         .select(`
           id,
           productId,
+          reportedBy,
           reason,
           description,
           status,
           createdAt,
-          product:products(title),
-          reporter:users!reported_listings_reportedBy_fkey(firstName, lastName, email)
+          product:products(title)
         `)
         .order("createdAt", { ascending: false });
 
@@ -64,15 +64,11 @@ const AdminFlagged = () => {
 
       const mapped: FlaggedItem[] = (data || []).map((r: any) => {
         const productObj = Array.isArray(r.product) ? r.product[0] : r.product;
-        const reporterObj = Array.isArray(r.reporter) ? r.reporter[0] : r.reporter;
-        const reporterName = reporterObj
-          ? `${reporterObj.firstName ?? ""} ${reporterObj.lastName ?? ""}`.trim() || reporterObj.email || "—"
-          : "—";
         return {
           id: r.id,
           productId: r.productId,
           productTitle: productObj?.title || "Unknown product",
-          reportedBy: reporterName,
+          reportedBy: r.reportedBy ? r.reportedBy.slice(0, 8).toUpperCase() : "—",
           reason: r.reason || "—",
           description: r.description || "—",
           status: r.status ?? "pending",

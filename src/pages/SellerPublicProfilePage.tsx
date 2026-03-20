@@ -11,10 +11,6 @@ import { formatDistanceToNow } from 'date-fns';
 
 interface SellerData extends SellerProfile {
   createdAt?: string;
-  user?: {
-    email: string;
-    createdAt?: string;
-  };
   store?: SellerStore;
 }
 
@@ -31,7 +27,7 @@ export default function SellerPublicProfilePage() {
       try {
         setLoading(true);
 
-        // First, get the store to find the userId
+        // Step 1: Get the store to find the userId
         const { data: storeData, error: storeError } = await supabase
           .from('seller_stores')
           .select('*')
@@ -45,9 +41,9 @@ export default function SellerPublicProfilePage() {
           return;
         }
 
-        // Fetch seller profile (public view — no sensitive fields)
+        // Step 2: Fetch seller profile directly from seller_profiles (public via RLS USING TRUE)
         const { data: profileData, error: profileError } = await supabase
-          .from('seller_profiles_public')
+          .from('seller_profiles')
           .select('*')
           .eq('userId', storeData.userId)
           .single();
@@ -62,23 +58,10 @@ export default function SellerPublicProfilePage() {
 
         setSeller(combinedData);
 
-        // Fetch active products from this seller
-        const { data: productsData, error: productsError } = await supabase
+        // Step 3: Fetch active products (base rows only — no seller embed)
+        const { data: rawProducts, error: productsError } = await supabase
           .from('products')
-          .select(`
-            *,
-            seller:seller_profiles_public!left(
-              businessName,
-              isApproved,
-              rating,
-              marketplaceRole,
-              paymentBehaviour,
-              userId
-            ),
-            store:seller_stores!left(
-              storeSlug
-            )
-          `)
+          .select('*, store:seller_stores!left(storeSlug)')
           .eq('sellerId', storeData.userId)
           .eq('isActive', true)
           .eq('isApproved', true)
@@ -87,14 +70,19 @@ export default function SellerPublicProfilePage() {
 
         if (productsError) throw productsError;
 
-        // Transform data to include store slug in seller object
-        const transformedProducts = productsData?.map((product) => ({
+        // Step 4: Merge seller info into products
+        const transformedProducts = (rawProducts ?? []).map((product) => ({
           ...product,
-          seller: product.seller ? {
-            ...product.seller,
-            storeSlug: (product.store as { storeSlug?: string } | null)?.storeSlug,
-          } : undefined,
-        })) || [];
+          seller: {
+            businessName: profileData.businessName,
+            isApproved: profileData.isApproved,
+            rating: profileData.rating,
+            marketplaceRole: profileData.marketplaceRole,
+            paymentBehaviour: profileData.paymentBehaviour,
+            userId: profileData.userId,
+            storeSlug: storeData.storeSlug,
+          },
+        }));
 
         setProducts(transformedProducts);
       } catch (error) {
@@ -205,7 +193,7 @@ export default function SellerPublicProfilePage() {
                     <span>{seller.contactPhone}</span>
                   </div>
                 )}
-                {seller.user?.email && (
+                {seller.isApproved && (
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4" />
                     <span>Verified Seller</span>
