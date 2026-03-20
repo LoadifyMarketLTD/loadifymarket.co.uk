@@ -41,9 +41,9 @@ export default function SellerPublicProfilePage() {
           return;
         }
 
-        // Step 2: Fetch seller profile from seller_profiles_public (safe public view)
+        // Step 2: Fetch seller profile from seller_profiles
         const { data: profileData, error: profileError } = await supabase
-          .from('seller_profiles_public')
+          .from('seller_profiles')
           .select('*')
           .eq('userId', storeData.userId)
           .single();
