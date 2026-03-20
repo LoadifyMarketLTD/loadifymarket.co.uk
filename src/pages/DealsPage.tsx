@@ -70,7 +70,6 @@ export default function DealsPage() {
         <div className="container-market">
           <BreadcrumbNav
             items={[{ label: 'Deals & Clearance' }]}
-            className="mb-4 [&_a]:text-white/60 [&_a:hover]:text-white [&_span]:text-white [&_svg]:text-white/40"
           />
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-[#D4AF37] flex items-center justify-center">

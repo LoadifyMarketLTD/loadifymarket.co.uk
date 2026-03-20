@@ -1,207 +1,175 @@
-import { ShoppingCart, Heart, Share2, Package, Truck, Shield, Zap, Tag } from 'lucide-react';
-import { formatPrice } from '../../lib/formatPrice';
-import type { Product } from '../../types';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  ArrowRight, Package, MapPin, Clock, Eye, Tag,
+  Truck, ShieldCheck, MessageSquare, ShoppingCart
+} from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
+import type { Product } from "@/components/catalog/ProductCard";
+import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface ProductInfoProps {
+  title: string;
+  price: number;
+  originalPrice?: number;
+  category: string;
+  subcategory: string;
+  condition: string;
+  location: string;
+  unitCount: number;
+  views: number;
+  listed: string;
   product: Product;
-  quantity: number;
-  onQuantityChange: (qty: number) => void;
-  onAddToCart: () => void;
-  onToggleWishlist: () => void;
-  isInWishlist: boolean;
-  wishlistLoading?: boolean;
-  addingToCart?: boolean;
-  isBulkProduct?: boolean;
-  onRequestQuote?: () => void;
 }
 
-/**
- * ProductInfo — the right-hand column on the product detail page, showing
- * price, quantity picker, add-to-cart / request-quote CTA, and trust badges.
- */
-export default function ProductInfo({
-  product,
-  quantity,
-  onQuantityChange,
-  onAddToCart,
-  onToggleWishlist,
-  isInWishlist,
-  wishlistLoading = false,
-  addingToCart = false,
-  isBulkProduct = false,
-  onRequestQuote,
-}: ProductInfoProps) {
-  const maxQty = Math.max(1, product.stock ?? 999);
-  const inStock = (product.stock ?? 1) > 0;
+const conditionColor: Record<string, string> = {
+  New: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
+  "Like New": "bg-blue-500/10 text-blue-700 border-blue-200",
+  Mixed: "bg-amber-500/10 text-amber-700 border-amber-200",
+  Unchecked: "bg-purple-500/10 text-purple-700 border-purple-200",
+  "Damaged Packaging": "bg-red-500/10 text-red-700 border-red-200",
+};
 
-  const handleShare = async () => {
-    try {
-      await navigator.share({ title: product.name, url: window.location.href });
-    } catch {
-      await navigator.clipboard.writeText(window.location.href);
-    }
+const ProductInfo = ({
+  title,
+  price,
+  originalPrice,
+  category,
+  subcategory,
+  condition,
+  location,
+  unitCount,
+  views,
+  listed,
+  product,
+}: ProductInfoProps) => {
+  const { addToCart } = useCart();
+  const navigate = useNavigate();
+
+  const discount = originalPrice
+    ? Math.round(((originalPrice - price) / originalPrice) * 100)
+    : 0;
+
+  const handleBuyNow = () => {
+    addToCart(product);
+    navigate("/cart");
+  };
+
+  const handleAddToCart = () => {
+    addToCart(product);
+    toast({
+      title: "Added to cart",
+      description: `${title} has been added to your cart.`,
+    });
   };
 
   return (
-    <div className="space-y-5">
-      {/* Category tag */}
-      {product.categoryId && (
-        <div className="flex items-center gap-1.5 text-xs text-[#0A2239] font-semibold">
-          <Tag className="h-3.5 w-3.5" />
-          <span>Product</span>
-        </div>
-      )}
+    <div className="space-y-6">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <a href="/catalog" className="hover:text-foreground transition-colors">Catalog</a>
+        <span>/</span>
+        <span>{category}</span>
+        <span>/</span>
+        <span className="text-foreground">{subcategory}</span>
+      </div>
 
-      {/* Title */}
-      <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 leading-snug">
-        {product.name}
-      </h1>
+      {/* Title & condition */}
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${conditionColor[condition] || ""}`}>
+            {condition}
+          </span>
+          {discount > 0 && (
+            <Badge className="bg-destructive text-destructive-foreground text-xs font-bold">
+              -{discount}% OFF
+            </Badge>
+          )}
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground leading-tight">
+          {title}
+        </h1>
+      </div>
 
       {/* Price */}
-      <div className="flex items-baseline gap-2 flex-wrap">
-        <span className="text-3xl font-extrabold text-[#0A2239]">
-          {formatPrice(product.price)}
+      <div className="flex items-baseline gap-3">
+        <span className="font-display text-3xl font-bold text-foreground">
+          £{price.toLocaleString()}
         </span>
-        {typeof product.compareAtPrice === 'number' && product.compareAtPrice > product.price && (
+        {originalPrice && (
           <>
-            <span className="text-lg text-gray-400 line-through">
-              {formatPrice(product.compareAtPrice)}
+            <span className="text-lg text-muted-foreground line-through">
+              £{originalPrice.toLocaleString()}
             </span>
-            <span className="text-sm font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-              Save {formatPrice(product.compareAtPrice - product.price)}
+            <span className="text-sm font-semibold text-destructive">
+              Save £{(originalPrice - price).toLocaleString()}
             </span>
           </>
         )}
       </div>
 
-      {/* Stock status */}
-      <div>
-        {inStock ? (
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-green-700 bg-green-50 px-3 py-1 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-green-500" />
-            In Stock
-            {typeof product.stock === 'number' && product.stock <= 10 && (
-              <span className="text-orange-600 ml-1">— only {product.stock} left</span>
-            )}
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-red-500" />
-            Out of Stock
-          </span>
-        )}
+      {/* Meta info */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Package className="h-4 w-4 text-primary" />
+          {unitCount} {unitCount === 1 ? "lot" : "lots"}
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <MapPin className="h-4 w-4 text-primary" />
+          {location}
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Clock className="h-4 w-4 text-primary" />
+          Listed {listed}
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Eye className="h-4 w-4 text-primary" />
+          {views} views
+        </div>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Tag className="h-4 w-4 text-primary" />
+          {category}
+        </div>
       </div>
 
-      {/* Short description */}
-      {product.description && (
-        <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
-          {product.description}
-        </p>
-      )}
-
-      {/* Quantity + CTA */}
-      {!isBulkProduct ? (
-        <div className="space-y-3">
-          {/* Quantity picker */}
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-semibold text-gray-700" htmlFor="product-qty">
-              Qty:
-            </label>
-            <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
-              <button
-                onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
-                disabled={quantity <= 1}
-                className="px-3 py-2 text-gray-600 hover:bg-gray-100 disabled:opacity-40 transition-colors"
-                aria-label="Decrease quantity"
-              >
-                −
-              </button>
-              <input
-                id="product-qty"
-                type="number"
-                min={1}
-                max={maxQty}
-                value={quantity}
-                onChange={(e) =>
-                  onQuantityChange(Math.min(maxQty, Math.max(1, Number(e.target.value))))
-                }
-                className="w-12 text-center text-sm font-semibold border-x border-gray-300 py-2 focus:outline-none"
-              />
-              <button
-                onClick={() => onQuantityChange(Math.min(maxQty, quantity + 1))}
-                disabled={quantity >= maxQty}
-                className="px-3 py-2 text-gray-600 hover:bg-gray-100 disabled:opacity-40 transition-colors"
-                aria-label="Increase quantity"
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          {/* Add to cart */}
-          <div className="flex gap-2">
-            <button
-              onClick={onAddToCart}
-              disabled={!inStock || addingToCart}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#C9A227] disabled:opacity-60 text-gray-900 font-extrabold px-6 py-3.5 rounded-xl text-sm transition-colors shadow-md"
-            >
-              <ShoppingCart className="h-4 w-4" />
-              {addingToCart ? 'Adding…' : 'Add to Cart'}
-            </button>
-
-            {/* Wishlist */}
-            <button
-              onClick={onToggleWishlist}
-              disabled={wishlistLoading}
-              aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
-              className={`p-3.5 rounded-xl border transition-colors ${
-                isInWishlist
-                  ? 'bg-red-50 border-red-200 text-red-500'
-                  : 'border-gray-300 text-gray-500 hover:border-red-300 hover:text-red-400'
-              }`}
-            >
-              <Heart className={`h-5 w-5 ${isInWishlist ? 'fill-red-400' : ''}`} />
-            </button>
-
-            {/* Share */}
-            <button
-              onClick={handleShare}
-              aria-label="Share product"
-              className="p-3.5 rounded-xl border border-gray-300 text-gray-500 hover:border-gray-400 transition-colors"
-            >
-              <Share2 className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      ) : (
-        /* Bulk / logistics CTA */
-        <div className="space-y-3">
-          <p className="text-xs text-gray-500 bg-blue-50 border border-blue-100 rounded-lg p-3">
-            This is a bulk / pallet listing. Contact the seller or request a logistics quote to proceed.
-          </p>
-          <button
-            onClick={onRequestQuote}
-            className="w-full inline-flex items-center justify-center gap-2 bg-[#0A2239] hover:bg-[#0d2d47] text-white font-extrabold px-6 py-3.5 rounded-xl text-sm transition-colors shadow-md"
-          >
-            <Zap className="h-4 w-4" />
-            Request Logistics Quote
-          </button>
-        </div>
-      )}
-
       {/* Trust badges */}
-      <div className="border-t border-gray-200 pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {[
-          { icon: Shield, text: 'Buyer Protection' },
-          { icon: Truck,  text: 'UK Delivery' },
-          { icon: Package, text: 'Easy Returns' },
-        ].map(({ icon: Icon, text }) => (
-          <div key={text} className="flex items-center gap-2 text-xs text-gray-500">
-            <Icon className="h-4 w-4 text-[#0A2239] flex-shrink-0" />
-            <span>{text}</span>
-          </div>
-        ))}
+      <div className="flex flex-wrap gap-4 py-3 border-y border-border">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <ShieldCheck className="h-4 w-4 text-primary" />
+          Buyer Protection
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Truck className="h-4 w-4 text-primary" />
+          UK-Wide Delivery
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <ShieldCheck className="h-4 w-4 text-primary" />
+          Secure Payment
+        </div>
+      </div>
+
+      {/* CTA buttons */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Button
+          size="lg"
+          className="flex-1 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
+          onClick={handleBuyNow}
+        >
+          Buy Now <ArrowRight className="ml-2 h-5 w-5" />
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          className="flex-1 text-base"
+          onClick={handleAddToCart}
+        >
+          <ShoppingCart className="mr-2 h-5 w-5" />
+          Add to Cart
+        </Button>
       </div>
     </div>
   );
-}
+};
+
+export default ProductInfo;

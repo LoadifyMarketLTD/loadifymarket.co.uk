@@ -1,90 +1,128 @@
-import { Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  ShoppingBag,
-  Heart,
-  RotateCcw,
-  AlertTriangle,
-  MessageSquare,
-  Bell,
-  Truck,
-  Settings,
-  ChevronRight,
-  User,
-} from 'lucide-react';
+  LayoutDashboard, ShoppingBag, Heart, MapPin, CreditCard,
+  Star, UserCircle, Settings, LogOut,
+} from "lucide-react";
+import { NavLink } from "@/components/NavLink";
+import { useLocation } from "react-router-dom";
+import logo from "@/assets/loadify-logo.png";
 
-interface NavItem {
-  label: string;
-  to: string;
-  icon: React.FC<React.SVGProps<SVGSVGElement>>;
-  exact?: boolean;
-}
+import {
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
+  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
+  SidebarFooter, SidebarHeader, useSidebar,
+} from "@/components/ui/sidebar";
 
-const NAV_ITEMS: NavItem[] = [
-  { label: 'My Account',    to: '/dashboard',            icon: LayoutDashboard, exact: true },
-  { label: 'Orders',        to: '/orders',               icon: ShoppingBag },
-  { label: 'Wishlist',      to: '/wishlist',             icon: Heart },
-  { label: 'Returns',       to: '/returns',              icon: RotateCcw },
-  { label: 'Disputes',      to: '/disputes',             icon: AlertTriangle },
-  { label: 'Messages',      to: '/messages',             icon: MessageSquare },
-  { label: 'Track Order',   to: '/track-order',          icon: Truck },
-  { label: 'Notifications', to: '/notifications',        icon: Bell },
-  { label: 'Settings',      to: '/account-settings',     icon: Settings },
+const mainItems = [
+  { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
+  { title: "My Orders", url: "/dashboard/orders", icon: ShoppingBag },
+  { title: "Wishlist", url: "/dashboard/wishlist", icon: Heart },
+  { title: "Addresses", url: "/dashboard/addresses", icon: MapPin },
+  { title: "Payments", url: "/dashboard/payments", icon: CreditCard },
+  { title: "My Reviews", url: "/dashboard/reviews", icon: Star },
 ];
 
-/**
- * BuyerSidebar — navigation sidebar for the buyer / account area.
- */
-export default function BuyerSidebar() {
-  const { pathname } = useLocation();
+const accountItems = [
+  { title: "Profile", url: "/dashboard/profile", icon: UserCircle },
+  { title: "Settings", url: "/dashboard/settings", icon: Settings },
+];
 
-  const isActive = (item: NavItem) =>
-    item.exact ? pathname === item.to : pathname.startsWith(item.to);
+export function BuyerSidebar() {
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  const isActive = (path: string) =>
+    path === "/dashboard" ? currentPath === "/dashboard" : currentPath.startsWith(path);
 
   return (
-    <aside className="w-56 flex-shrink-0 hidden lg:flex flex-col bg-white border-r border-gray-200 min-h-screen">
-      {/* Header */}
-      <div className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-200">
-        <div className="w-8 h-8 rounded-lg bg-[#0A2239] flex items-center justify-center">
-          <User className="h-4 w-4 text-[#D4AF37]" />
+    <Sidebar collapsible="icon" className="border-r border-border">
+      <SidebarHeader className="p-4">
+        <div className="flex items-center gap-2">
+          <img src={logo} alt="Loadify" className="h-8 w-8 shrink-0" />
+          {!collapsed && (
+            <span className="font-display text-base font-bold text-foreground">
+              My <span className="text-primary">Account</span>
+            </span>
+          )}
         </div>
-        <span className="text-sm font-extrabold text-gray-900">My Account</span>
-      </div>
+      </SidebarHeader>
 
-      {/* Nav items */}
-      <nav className="flex-1 py-3 px-2 space-y-0.5" aria-label="Account navigation">
-        {NAV_ITEMS.map((item) => {
-          const active = isActive(item);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors group ${
-                active
-                  ? 'bg-[#0A2239] text-white font-semibold'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-              }`}
-              aria-current={active ? 'page' : undefined}
-            >
-              <Icon className={`h-4 w-4 flex-shrink-0 ${active ? 'text-[#D4AF37]' : 'text-gray-400 group-hover:text-gray-600'}`} />
-              <span className="flex-1">{item.label}</span>
-              {active && <ChevronRight className="h-3.5 w-3.5 text-white/50" />}
-            </Link>
-          );
-        })}
-      </nav>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Shopping</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {mainItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url)}
+                    tooltip={collapsed ? item.title : undefined}
+                  >
+                    <NavLink
+                      to={item.url}
+                      end={item.url === "/dashboard"}
+                      className="hover:bg-muted/50"
+                      activeClassName="bg-primary/10 text-primary font-medium"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-      {/* Bottom */}
-      <div className="px-4 py-4 border-t border-gray-200">
-        <Link
-          to="/shop"
-          className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-800 py-1 transition-colors"
-        >
-          <ShoppingBag className="h-3.5 w-3.5" />
-          Continue Shopping
-        </Link>
-      </div>
-    </aside>
+        <SidebarGroup>
+          <SidebarGroupLabel>Account</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {accountItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url)}
+                    tooltip={collapsed ? item.title : undefined}
+                  >
+                    <NavLink
+                      to={item.url}
+                      className="hover:bg-muted/50"
+                      activeClassName="bg-primary/10 text-primary font-medium"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter className="p-3">
+        {!collapsed ? (
+          <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
+            <div className="w-9 h-9 rounded-full bg-gradient-hero flex items-center justify-center text-primary-foreground text-sm font-bold shrink-0">
+              JB
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">Jane Buyer</p>
+              <p className="text-xs text-muted-foreground truncate">jane@email.com</p>
+            </div>
+            <LogOut className="h-4 w-4 text-muted-foreground shrink-0 cursor-pointer hover:text-foreground transition-colors" />
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            <div className="w-9 h-9 rounded-full bg-gradient-hero flex items-center justify-center text-primary-foreground text-sm font-bold">
+              JB
+            </div>
+          </div>
+        )}
+      </SidebarFooter>
+    </Sidebar>
   );
 }

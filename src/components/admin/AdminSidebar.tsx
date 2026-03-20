@@ -1,91 +1,129 @@
-import { Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  Users,
-  Package,
-  ShoppingBag,
-  AlertTriangle,
-  Star,
-  DollarSign,
-  Settings,
-  Truck,
-  Flag,
-  ChevronRight,
-  Shield,
-} from 'lucide-react';
+  LayoutDashboard, Users, ShieldCheck, Package, ShoppingCart,
+  BarChart3, Settings, LogOut, Flag, MessageSquare,
+} from "lucide-react";
+import { NavLink } from "@/components/NavLink";
+import { useLocation } from "react-router-dom";
+import logo from "@/assets/loadify-logo.png";
 
-interface NavItem {
-  label: string;
-  to: string;
-  icon: React.FC<React.SVGProps<SVGSVGElement>>;
-  exact?: boolean;
-}
+import {
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
+  SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
+  SidebarFooter, SidebarHeader, useSidebar,
+} from "@/components/ui/sidebar";
 
-const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard',         to: '/admin/dashboard',    icon: LayoutDashboard, exact: true },
-  { label: 'Seller Approvals',  to: '/admin/sellers',      icon: Users },
-  { label: 'Products',          to: '/admin/dashboard',    icon: Package },
-  { label: 'Orders',            to: '/admin/dashboard',    icon: ShoppingBag },
-  { label: 'Disputes',          to: '/admin/dashboard',    icon: AlertTriangle },
-  { label: 'Reviews',           to: '/admin/reviews',      icon: Star },
-  { label: 'Shipments',         to: '/admin/shipments',    icon: Truck },
-  { label: 'Reported Listings', to: '/admin/reported',     icon: Flag },
-  { label: 'Payouts',           to: '/admin/dashboard',    icon: DollarSign },
-  { label: 'Categories',        to: '/admin/categories',   icon: Settings },
+const mainItems = [
+  { title: "Overview", url: "/admin", icon: LayoutDashboard },
+  { title: "Seller Approvals", url: "/admin/approvals", icon: ShieldCheck },
+  { title: "Users", url: "/admin/users", icon: Users },
+  { title: "Products", url: "/admin/products", icon: Package },
+  { title: "Orders", url: "/admin/orders", icon: ShoppingCart },
+  { title: "Reports", url: "/admin/reports", icon: BarChart3 },
+  { title: "Flagged Content", url: "/admin/flagged", icon: Flag },
+  { title: "Support Tickets", url: "/admin/support", icon: MessageSquare },
 ];
 
-/**
- * AdminSidebar — navigation sidebar for the admin area.
- */
-export default function AdminSidebar() {
-  const { pathname } = useLocation();
+const systemItems = [
+  { title: "Settings", url: "/admin/settings", icon: Settings },
+];
 
-  const isActive = (item: NavItem) =>
-    item.exact ? pathname === item.to : pathname.startsWith(item.to);
+export function AdminSidebar() {
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  const isActive = (path: string) =>
+    path === "/admin" ? currentPath === "/admin" : currentPath.startsWith(path);
 
   return (
-    <aside className="w-60 flex-shrink-0 hidden lg:flex flex-col bg-[#0A2239] min-h-screen">
-      {/* Header */}
-      <div className="flex items-center gap-2.5 px-5 py-4 border-b border-white/10">
-        <div className="w-8 h-8 rounded-lg bg-[#D4AF37] flex items-center justify-center">
-          <Shield className="h-4 w-4 text-[#0A2239]" />
+    <Sidebar collapsible="icon" className="border-r border-border">
+      <SidebarHeader className="p-4">
+        <div className="flex items-center gap-2">
+          <img src={logo} alt="Loadify" className="h-8 w-8 shrink-0" />
+          {!collapsed && (
+            <span className="font-display text-base font-bold text-foreground">
+              Admin <span className="text-destructive">Panel</span>
+            </span>
+          )}
         </div>
-        <span className="text-sm font-extrabold text-white">Admin Panel</span>
-      </div>
+      </SidebarHeader>
 
-      {/* Nav items */}
-      <nav className="flex-1 py-3 px-2 space-y-0.5" aria-label="Admin navigation">
-        {NAV_ITEMS.map((item) => {
-          const active = isActive(item);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={`${item.label}-${item.to}`}
-              to={item.to}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors group ${
-                active
-                  ? 'bg-white/15 text-white font-semibold'
-                  : 'text-white/60 hover:bg-white/10 hover:text-white'
-              }`}
-              aria-current={active ? 'page' : undefined}
-            >
-              <Icon className={`h-4 w-4 flex-shrink-0 ${active ? 'text-[#D4AF37]' : 'text-white/40 group-hover:text-white/70'}`} />
-              <span className="flex-1">{item.label}</span>
-              {active && <ChevronRight className="h-3.5 w-3.5 text-white/30" />}
-            </Link>
-          );
-        })}
-      </nav>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {mainItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url)}
+                    tooltip={collapsed ? item.title : undefined}
+                  >
+                    <NavLink
+                      to={item.url}
+                      end={item.url === "/admin"}
+                      className="hover:bg-muted/50"
+                      activeClassName="bg-destructive/10 text-destructive font-medium"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-      {/* Footer */}
-      <div className="px-4 py-4 border-t border-white/10">
-        <Link
-          to="/"
-          className="flex items-center gap-2 text-xs text-white/40 hover:text-white/70 py-1 transition-colors"
-        >
-          View Site
-        </Link>
-      </div>
-    </aside>
+        <SidebarGroup>
+          <SidebarGroupLabel>System</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {systemItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url)}
+                    tooltip={collapsed ? item.title : undefined}
+                  >
+                    <NavLink
+                      to={item.url}
+                      className="hover:bg-muted/50"
+                      activeClassName="bg-destructive/10 text-destructive font-medium"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter className="p-3">
+        {!collapsed ? (
+          <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
+            <div className="w-9 h-9 rounded-full bg-destructive flex items-center justify-center text-destructive-foreground text-sm font-bold shrink-0">
+              AD
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">Admin User</p>
+              <p className="text-xs text-muted-foreground truncate">Super Admin</p>
+            </div>
+            <LogOut className="h-4 w-4 text-muted-foreground shrink-0 cursor-pointer hover:text-foreground transition-colors" />
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            <div className="w-9 h-9 rounded-full bg-destructive flex items-center justify-center text-destructive-foreground text-sm font-bold">
+              AD
+            </div>
+          </div>
+        )}
+      </SidebarFooter>
+    </Sidebar>
   );
 }

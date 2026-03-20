@@ -1,182 +1,171 @@
-import { X } from 'lucide-react';
+import { useState } from "react";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 
-interface Category {
-  id: string;
-  name: string;
+const categories = [
+  "Electronics & Technology",
+  "Clothing & Apparel",
+  "Home & Garden",
+  "Health & Beauty",
+  "Toys & Games",
+  "Food & Drink",
+  "Tools & DIY",
+  "Sports & Leisure",
+  "Automotive",
+  "Office & Stationery",
+  "Baby & Nursery",
+  "Jewellery & Watches",
+  "Mixed Lots",
+  "Customer Returns",
+  "Overstock",
+  "Clearance Deals",
+];
+
+const conditions = ["New", "Like New", "Mixed", "Unchecked", "Damaged Packaging"];
+
+const locations = [
+  "London",
+  "Manchester",
+  "Birmingham",
+  "Leeds",
+  "Glasgow",
+  "Bristol",
+  "Liverpool",
+  "Sheffield",
+  "Edinburgh",
+  "Cardiff",
+];
+
+interface FilterSectionProps {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
 }
+
+const FilterSection = ({ title, children, defaultOpen = true }: FilterSectionProps) => {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-b border-border pb-4">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between py-2 text-sm font-semibold text-foreground"
+      >
+        {title}
+        {open ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+      </button>
+      {open && <div className="pt-2 space-y-2">{children}</div>}
+    </div>
+  );
+};
 
 interface CatalogFiltersProps {
-  show: boolean;
-  onClose: () => void;
-  categories: Category[];
-  selectedCategory: string;
-  onCategoryChange: (categoryId: string) => void;
+  selectedCategories: string[];
+  setSelectedCategories: (v: string[]) => void;
+  selectedConditions: string[];
+  setSelectedConditions: (v: string[]) => void;
+  selectedLocations: string[];
+  setSelectedLocations: (v: string[]) => void;
   priceRange: [number, number];
-  onPriceRangeChange: (range: [number, number]) => void;
-  minPrice?: number;
-  maxPrice?: number;
-  inStockOnly: boolean;
-  onInStockChange: (value: boolean) => void;
-  onReset: () => void;
+  setPriceRange: (v: [number, number]) => void;
+  onClearAll: () => void;
 }
 
-/**
- * CatalogFilters — collapsible filter panel displayed alongside the product
- * grid.  On mobile it slides in as an overlay; on desktop it sits in a
- * left-hand sidebar column.
- */
-export default function CatalogFilters({
-  show,
-  onClose,
-  categories,
-  selectedCategory,
-  onCategoryChange,
+const CatalogFilters = ({
+  selectedCategories,
+  setSelectedCategories,
+  selectedConditions,
+  setSelectedConditions,
+  selectedLocations,
+  setSelectedLocations,
   priceRange,
-  onPriceRangeChange,
-  minPrice = 0,
-  maxPrice = 10000,
-  inStockOnly,
-  onInStockChange,
-  onReset,
-}: CatalogFiltersProps) {
-  if (!show) return null;
+  setPriceRange,
+  onClearAll,
+}: CatalogFiltersProps) => {
+  const totalActive =
+    selectedCategories.length + selectedConditions.length + selectedLocations.length +
+    (priceRange[0] > 0 || priceRange[1] < 10000 ? 1 : 0);
+
+  const toggleItem = (arr: string[], setArr: (v: string[]) => void, item: string) => {
+    setArr(arr.includes(item) ? arr.filter((i) => i !== item) : [...arr, item]);
+  };
 
   return (
-    <>
-      {/* Mobile backdrop */}
-      <div
-        className="fixed inset-0 bg-black/40 z-30 lg:hidden"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Filter panel */}
-      <aside
-        className={`
-          fixed inset-y-0 left-0 z-40 w-72 bg-white shadow-2xl overflow-y-auto p-5
-          flex flex-col gap-6
-          lg:static lg:inset-auto lg:z-auto lg:shadow-none lg:rounded-xl
-          lg:border lg:border-gray-200 lg:h-fit
-        `}
-        aria-label="Product filters"
-      >
-        {/* Panel header */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-extrabold text-gray-900 uppercase tracking-wide">
-            Filters
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-700 lg:hidden"
-            aria-label="Close filters"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* ── Category ──────────────────────────────────────────────── */}
-        {categories.length > 0 && (
-          <div>
-            <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">
-              Category
-            </h3>
-            <ul className="space-y-1">
-              <li>
-                <button
-                  onClick={() => onCategoryChange('')}
-                  className={`w-full text-left text-sm px-3 py-2 rounded-lg transition-colors ${
-                    !selectedCategory
-                      ? 'bg-[#0A2239] text-white font-semibold'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                >
-                  All Categories
-                </button>
-              </li>
-              {categories.map((cat) => (
-                <li key={cat.id}>
-                  <button
-                    onClick={() => onCategoryChange(cat.id)}
-                    className={`w-full text-left text-sm px-3 py-2 rounded-lg transition-colors ${
-                      selectedCategory === cat.id
-                        ? 'bg-[#0A2239] text-white font-semibold'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    {cat.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-display text-base font-semibold text-foreground">Filters</h3>
+        {totalActive > 0 && (
+          <Button variant="ghost" size="sm" onClick={onClearAll} className="text-xs text-muted-foreground hover:text-foreground h-auto p-0">
+            Clear all ({totalActive})
+          </Button>
         )}
+      </div>
 
-        {/* ── Price Range ───────────────────────────────────────────── */}
-        <div>
-          <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">
-            Price Range
-          </h3>
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="flex-1">
-                <label htmlFor="filter-price-min" className="text-xs text-gray-500 mb-1 block">Min (£)</label>
-                <input
-                  id="filter-price-min"
-                  type="number"
-                  min={minPrice}
-                  max={priceRange[1]}
-                  value={priceRange[0]}
-                  onChange={(e) =>
-                    onPriceRangeChange([Math.max(minPrice, Number(e.target.value)), priceRange[1]])
-                  }
-                  className="w-full h-9 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-[#0A2239]"
-                />
-              </div>
-              <span className="text-gray-400 text-sm mt-5">–</span>
-              <div className="flex-1">
-                <label htmlFor="filter-price-max" className="text-xs text-gray-500 mb-1 block">Max (£)</label>
-                <input
-                  id="filter-price-max"
-                  type="number"
-                  min={priceRange[0]}
-                  max={maxPrice}
-                  value={priceRange[1]}
-                  onChange={(e) =>
-                    onPriceRangeChange([priceRange[0], Math.min(maxPrice, Number(e.target.value))])
-                  }
-                  className="w-full h-9 px-3 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-[#0A2239]"
-                />
-              </div>
-            </div>
-          </div>
+      <FilterSection title="Category">
+        <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+          {categories.map((cat) => (
+            <label key={cat} className="flex items-center gap-2 cursor-pointer group">
+              <Checkbox
+                checked={selectedCategories.includes(cat)}
+                onCheckedChange={() => toggleItem(selectedCategories, setSelectedCategories, cat)}
+              />
+              <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors truncate">
+                {cat}
+              </span>
+            </label>
+          ))}
         </div>
+      </FilterSection>
 
-        {/* ── Availability ──────────────────────────────────────────── */}
-        <div>
-          <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">
-            Availability
-          </h3>
-          <label className="flex items-center gap-2.5 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={inStockOnly}
-              onChange={(e) => onInStockChange(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-[#0A2239] focus:ring-[#0A2239] cursor-pointer"
+      <FilterSection title="Condition">
+        {conditions.map((cond) => (
+          <label key={cond} className="flex items-center gap-2 cursor-pointer group">
+            <Checkbox
+              checked={selectedConditions.includes(cond)}
+              onCheckedChange={() => toggleItem(selectedConditions, setSelectedConditions, cond)}
             />
-            <span className="text-sm text-gray-700 group-hover:text-gray-900">
-              In Stock Only
+            <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+              {cond}
             </span>
           </label>
-        </div>
+        ))}
+      </FilterSection>
 
-        {/* ── Reset ─────────────────────────────────────────────────── */}
-        <button
-          onClick={onReset}
-          className="w-full text-sm text-gray-500 hover:text-[#0A2239] underline text-left transition-colors"
-        >
-          Reset all filters
-        </button>
-      </aside>
-    </>
+      <FilterSection title="Price Range">
+        <div className="px-1 pt-2">
+          <Slider
+            min={0}
+            max={10000}
+            step={100}
+            value={priceRange}
+            onValueChange={(v) => setPriceRange(v as [number, number])}
+            className="mb-3"
+          />
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <span>£{priceRange[0].toLocaleString()}</span>
+            <span>£{priceRange[1].toLocaleString()}</span>
+          </div>
+        </div>
+      </FilterSection>
+
+      <FilterSection title="Location" defaultOpen={false}>
+        <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
+          {locations.map((loc) => (
+            <label key={loc} className="flex items-center gap-2 cursor-pointer group">
+              <Checkbox
+                checked={selectedLocations.includes(loc)}
+                onCheckedChange={() => toggleItem(selectedLocations, setSelectedLocations, loc)}
+              />
+              <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+                {loc}
+              </span>
+            </label>
+          ))}
+        </div>
+      </FilterSection>
+    </div>
   );
-}
+};
+
+export default CatalogFilters;
