@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Lock, Eye, EyeOff, CheckCircle2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import logo from "@/assets/loadify-logo.png";
+import { supabase } from "@/lib/supabase";
 
 const ResetPassword = () => {
   const [password, setPassword] = useState("");
@@ -12,9 +13,21 @@ const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [sessionChecking, setSessionChecking] = useState(true);
   const [error, setError] = useState("");
+  const [hasSession, setHasSession] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setHasSession(true);
+      else setError("This password reset link is invalid or has expired. Please request a new one.");
+      setSessionChecking(false);
+    });
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -27,9 +40,17 @@ const ResetPassword = () => {
       return;
     }
 
-    // TODO: Wire to backend updateUser({ password })
-    console.log("Password reset submitted");
-    setSubmitted(true);
+    setLoading(true);
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) throw updateError;
+      setSubmitted(true);
+      setTimeout(() => navigate("/login"), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reset password");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -76,7 +97,11 @@ const ResetPassword = () => {
             </span>
           </div>
 
-          {!submitted ? (
+          {sessionChecking ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+            </div>
+          ) : !submitted ? (
             <>
               <div className="space-y-2 text-center">
                 <h1 className="font-display text-3xl font-bold text-foreground">Set new password</h1>
@@ -136,8 +161,8 @@ const ResetPassword = () => {
                   <p className="text-sm text-destructive font-medium">{error}</p>
                 )}
 
-                <Button type="submit" className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
-                  Reset Password
+                <Button type="submit" disabled={loading || !hasSession} className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
+                  {loading ? "Resetting…" : "Reset Password"}
                 </Button>
               </form>
             </>
@@ -160,7 +185,7 @@ const ResetPassword = () => {
             </div>
           )}
 
-          {!submitted && (
+          {!sessionChecking && !submitted && (
             <div className="text-center">
               <Link
                 to="/login"

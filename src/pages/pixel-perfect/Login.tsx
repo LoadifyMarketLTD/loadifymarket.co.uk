@@ -1,20 +1,56 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import logo from "@/assets/loadify-logo.png";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuthStore();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (user) {
+      const nextUrl = searchParams.get("next");
+      if (nextUrl) navigate(nextUrl, { replace: true });
+      else if (user.role === "seller") navigate("/seller", { replace: true });
+      else if (user.role === "admin" || user.role === "owner") navigate("/admin", { replace: true });
+      else navigate("/dashboard", { replace: true });
+    }
+  }, [user, searchParams, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login submitted", { email, password });
+    setError("");
+    setLoading(true);
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      if (authError) throw authError;
+      const nextUrl = searchParams.get("next");
+      if (nextUrl) { navigate(nextUrl, { replace: true }); return; }
+      let redirectTo = "/dashboard";
+      if (data.user) {
+        const { data: profile, error: profileError } = await supabase.from("users").select("role").eq("id", data.user.id).single();
+        if (profileError) console.warn("Could not fetch user role, defaulting to /dashboard:", profileError.message);
+        if (profile?.role === "seller") redirectTo = "/seller";
+        else if (profile?.role === "admin" || profile?.role === "owner") redirectTo = "/admin";
+      }
+      navigate(redirectTo, { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed. Please check your credentials.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -137,8 +173,11 @@ const Login = () => {
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
-              Sign In
+            {error && (
+              <p className="text-sm text-destructive text-center">{error}</p>
+            )}
+            <Button type="submit" disabled={loading} className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
+              {loading ? "Signing in…" : "Sign In"}
             </Button>
           </form>
 

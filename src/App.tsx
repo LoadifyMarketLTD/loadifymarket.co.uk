@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useEffect, lazy, Suspense } from 'react';
 import { supabase } from './lib/supabase';
 import { useAuthStore } from './store';
+import { CartProvider } from './contexts/CartContext';
 
 // Layout
 import Layout from './components/Layout';
@@ -9,8 +10,29 @@ import RequireAuth from './components/auth/RequireAuth';
 import RequireAdmin from './components/auth/RequireAdmin';
 import RequireSeller from './components/auth/RequireSeller';
 
-// Pixel-perfect homepage (standalone — includes its own Navbar + Footer)
-const PixelPerfectIndex = lazy(() => import('./pages/pixel-perfect/Index'));
+// ─── Pixel-perfect pages — standalone (include own Navbar + Footer) ───────────
+const PixelPerfectIndex    = lazy(() => import('./pages/pixel-perfect/Index'));
+const PPCatalog            = lazy(() => import('./pages/pixel-perfect/Catalog'));
+const PPProductDetail      = lazy(() => import('./pages/pixel-perfect/ProductDetail'));
+const PPCart               = lazy(() => import('./pages/pixel-perfect/Cart'));
+const PPCheckout           = lazy(() => import('./pages/pixel-perfect/Checkout'));
+const PPAboutUs            = lazy(() => import('./pages/pixel-perfect/AboutUs'));
+const PPContactUs          = lazy(() => import('./pages/pixel-perfect/ContactUs'));
+const PPDeals              = lazy(() => import('./pages/pixel-perfect/Deals'));
+const PPTerms              = lazy(() => import('./pages/pixel-perfect/TermsAndConditions'));
+const PPPrivacy            = lazy(() => import('./pages/pixel-perfect/PrivacyPolicy'));
+const PPCookies            = lazy(() => import('./pages/pixel-perfect/CookiePolicy'));
+const PPReturnsPolicy      = lazy(() => import('./pages/pixel-perfect/ReturnsPolicy'));
+const PPShippingPolicy     = lazy(() => import('./pages/pixel-perfect/ShippingPolicy'));
+const PPBuyerTerms         = lazy(() => import('./pages/pixel-perfect/BuyerTerms'));
+const PPSellerTerms        = lazy(() => import('./pages/pixel-perfect/SellerTerms'));
+const PPDisclaimer         = lazy(() => import('./pages/pixel-perfect/Disclaimer'));
+
+// ─── Pixel-perfect auth pages — standalone (full-page designs, no Layout) ────
+const PPLogin              = lazy(() => import('./pages/pixel-perfect/Login'));
+const PPSignup             = lazy(() => import('./pages/pixel-perfect/Signup'));
+const PPForgotPassword     = lazy(() => import('./pages/pixel-perfect/ForgotPassword'));
+const PPResetPassword      = lazy(() => import('./pages/pixel-perfect/ResetPassword'));
 
 // Public pages — lazy-loaded to keep the initial JS bundle small
 const HomePage = lazy(() => import('./pages/HomePage'));
@@ -178,411 +200,344 @@ function App() {
   }, [setUser, setLoading]);
 
   return (
-    <Routes>
-      {/* Pixel-perfect homepage — standalone with its own Navbar + Footer */}
-      <Route path="/" element={<Suspense fallback={<PageLoader />}><PixelPerfectIndex /></Suspense>} />
+    <CartProvider>
+      <Routes>
+        {/* ── Pixel-perfect standalone pages (own Navbar + Footer) ─────────────── */}
+        <Route path="/" element={<Suspense fallback={<PageLoader />}><PixelPerfectIndex /></Suspense>} />
+        <Route path="catalog" element={<Suspense fallback={<PageLoader />}><PPCatalog /></Suspense>} />
+        <Route path="product/:id" element={<Suspense fallback={<PageLoader />}><PPProductDetail /></Suspense>} />
+        <Route path="cart" element={<Suspense fallback={<PageLoader />}><PPCart /></Suspense>} />
+        <Route path="checkout" element={<Suspense fallback={<PageLoader />}><PPCheckout /></Suspense>} />
+        <Route path="about" element={<Suspense fallback={<PageLoader />}><PPAboutUs /></Suspense>} />
+        <Route path="contact" element={<Suspense fallback={<PageLoader />}><PPContactUs /></Suspense>} />
+        <Route path="deals" element={<Suspense fallback={<PageLoader />}><PPDeals /></Suspense>} />
+        <Route path="terms" element={<Suspense fallback={<PageLoader />}><PPTerms /></Suspense>} />
+        <Route path="privacy" element={<Suspense fallback={<PageLoader />}><PPPrivacy /></Suspense>} />
+        <Route path="cookies" element={<Suspense fallback={<PageLoader />}><PPCookies /></Suspense>} />
+        <Route path="returns-policy" element={<Suspense fallback={<PageLoader />}><PPReturnsPolicy /></Suspense>} />
+        <Route path="shipping-policy" element={<Suspense fallback={<PageLoader />}><PPShippingPolicy /></Suspense>} />
+        <Route path="buyer-terms" element={<Suspense fallback={<PageLoader />}><PPBuyerTerms /></Suspense>} />
+        <Route path="seller-terms" element={<Suspense fallback={<PageLoader />}><PPSellerTerms /></Suspense>} />
+        <Route path="disclaimer" element={<Suspense fallback={<PageLoader />}><PPDisclaimer /></Suspense>} />
 
-      {/* All other routes wrapped in shared Layout (Header + Footer) */}
-      <Route element={<Layout />}> 
-          <Route path="shop" element={<Suspense fallback={<PageLoader />}><ShopPage /></Suspense>} />
-          <Route path="bulk" element={<Navigate to="/category/wholesale" replace />} />
-          <Route path="catalog" element={<Suspense fallback={<PageLoader />}><CatalogPage /></Suspense>} />
-          <Route path="category/:slug" element={<Suspense fallback={<PageLoader />}><CategoryPage /></Suspense>} />
-          <Route path="product/:id" element={<Suspense fallback={<PageLoader />}><ProductPage /></Suspense>} />
-          <Route path="login" element={<Suspense fallback={<PageLoader />}><LoginPage /></Suspense>} />
-          <Route path="register" element={<Suspense fallback={<PageLoader />}><RegisterPage /></Suspense>} />
-          <Route path="sell" element={<Suspense fallback={<PageLoader />}><SellPage /></Suspense>} />
-          
-          {/* Forgot Password */}
-          <Route path="forgot-password" element={
-            <Suspense fallback={<PageLoader />}> 
-              <ForgotPasswordPage />
-            </Suspense>
-          } />
-          {/* Reset Password — Supabase redirects here after email link */}
-          <Route path="reset-password" element={
-            <Suspense fallback={<PageLoader />}> 
-              <ResetPasswordPage />
-            </Suspense>
-          } />
-          {/* Order Success — Stripe redirects here after payment */}
-          <Route path="orders/success" element={
-            <Suspense fallback={<PageLoader />}> 
-              <OrderSuccessPage />
-            </Suspense>
-          } />
-          
-          {/* Lazy loaded routes with Suspense */}
-          {/* Protected: Cart */}
-          <Route path="cart" element={
-            <RequireAuth>
-              <Suspense fallback={<PageLoader />}> 
-                <CartPage />
-              </Suspense>
-            </RequireAuth>
-          } />
-          {/* Protected: Checkout */}
-          <Route path="checkout" element={
-            <RequireAuth>
-              <Suspense fallback={<PageLoader />}> 
-                <CheckoutPage />
-              </Suspense>
-            </RequireAuth>
-          } />
-          {/* Protected: Dashboard */}
-          <Route path="dashboard" element={
-            <RequireAuth>
-              <Suspense fallback={<PageLoader />}> 
-                <DashboardPage />
-              </Suspense>
-            </RequireAuth>
-          } />
-          {/* Protected: Account Settings */}
-          <Route path="account-settings" element={
-            <RequireAuth>
-              <Suspense fallback={<PageLoader />}> 
-                <AccountSettingsPage />
-              </Suspense>
-            </RequireAuth>
-          } />
-          {/* Protected: Seller Dashboard */}
-          <Route path="seller" element={
-            <RequireSeller>
-              <Suspense fallback={<PageLoader />}> 
-                <SellerDashboardPage />
-              </Suspense>
-            </RequireSeller>
-          } />
-          {/* Protected: Seller Profile */}
-          <Route path="seller/profile" element={
-            <RequireSeller>
-              <Suspense fallback={<PageLoader />}> 
-                <SellerProfilePage />
-              </Suspense>
-            </RequireSeller>
-          } />
-          {/* Public: Seller Public Profile */}
-          <Route path="seller/:slug" element={
-            <Suspense fallback={<PageLoader />}> 
-              <SellerPublicProfilePage />
-            </Suspense>
-          } />
-          {/* Protected: Seller Returns */}
-          <Route path="seller/returns" element={
-            <RequireSeller>
-              <Suspense fallback={<PageLoader />}> 
-                <SellerReturnsPage />
-              </Suspense>
-            </RequireSeller>
-          } />
-          {/* Protected: Seller Shipments */}
-          <Route path="seller/shipments" element={
-            <RequireSeller>
-              <Suspense fallback={<PageLoader />}> 
-                <SellerShipmentsPage />
-              </Suspense>
-            </RequireSeller>
-          } />
-          {/* Protected: Create Product */}
-          <Route path="seller/products/new" element={
-            <RequireSeller>
-              <Suspense fallback={<PageLoader />}> 
-                <ProductFormPage />
-              </Suspense>
-            </RequireSeller>
-          } />
-          {/* Protected: Edit Product */}
-          <Route path="seller/products/:id/edit" element={
-            <RequireSeller>
-              <Suspense fallback={<PageLoader />}> 
-                <ProductFormPage />
-              </Suspense>
-            </RequireSeller>
-          } />
-          {/* Protected: Admin Dashboard */}
-          <Route path="admin" element={
-            <RequireAdmin>
-              <Suspense fallback={<PageLoader />}> 
-                <AdminDashboardPage />
-              </Suspense>
-            </RequireAdmin>
-          } />
-          {/* Protected: Admin Categories */}
-          <Route path="admin/categories" element={
-            <RequireAdmin>
-              <Suspense fallback={<PageLoader />}> 
-                <CategoryManagementPage />
-              </Suspense>
-            </RequireAdmin>
-          } />
-          {/* Protected: Admin Sellers */}
-          <Route path="admin/sellers" element={
-            <RequireAdmin>
-              <Suspense fallback={<PageLoader />}> 
-                <SellerApprovalsPage />
-              </Suspense>
-            </RequireAdmin>
-          } />
-          {/* Protected: Admin Seller Detail */}
-          <Route path="admin/sellers/:id" element={
-            <RequireAdmin>
-              <Suspense fallback={<PageLoader />}> 
-                <AdminSellerDetailPage />
-              </Suspense>
-            </RequireAdmin>
-          } />
-          {/* Protected: Admin Reported Listings */}
-          <Route path="admin/reported-listings" element={
-            <RequireAdmin>
-              <Suspense fallback={<PageLoader />}> 
-                <ReportedListingsPage />
-              </Suspense>
-            </RequireAdmin>
-          } />
-          {/* Protected: Admin Shipments */}
-          <Route path="admin/shipments" element={
-            <RequireAdmin>
-              <Suspense fallback={<PageLoader />}> 
-                <AdminShipmentsPage />
-              </Suspense>
-            </RequireAdmin>
-          } />
-          {/* Protected: Orders */}
-          <Route path="orders" element={
-            <RequireAuth>
-              <Suspense fallback={<PageLoader />}> 
-                <OrdersPage />
-              </Suspense>
-            </RequireAuth>
-          } />
-          {/* Protected: Order Detail */}
-          <Route path="orders/:id" element={
-            <RequireAuth>
-              <Suspense fallback={<PageLoader />}> 
-                <OrderDetailPage />
-              </Suspense>
-            </RequireAuth>
-          } />
-          {/* Public: Tracking */}
-          <Route path="tracking/:orderNumber" element={
-            <Suspense fallback={<PageLoader />}> 
-              <TrackingPage />
-            </Suspense>
-          } />
-          {/* Public: Track Order */}
-          <Route path="track-order" element={
-            <Suspense fallback={<PageLoader />}> 
-              <TrackOrderPage />
-            </Suspense>
-          } />
-          {/* Protected: Returns */}
-          <Route path="returns" element={
-            <RequireAuth>
-              <Suspense fallback={<PageLoader />}> 
-                <ReturnsPage />
-              </Suspense>
-            </RequireAuth>
-          } />
-          {/* Protected: Disputes */}
-          <Route path="disputes" element={
-            <RequireAuth>
-              <Suspense fallback={<PageLoader />}> 
-                <DisputesPage />
-              </Suspense>
-            </RequireAuth>
-          } />
-          {/* Protected: Wishlist */}
-          <Route path="wishlist" element={
-            <RequireAuth>
-              <Suspense fallback={<PageLoader />}> 
-                <WishlistPage />
-              </Suspense>
-            </RequireAuth>
-          } />
-          {/* Protected: Messages */}
-          <Route path="messages" element={
-            <RequireAuth>
-              <Suspense fallback={<PageLoader />}> 
-                <MessagesPage />
-              </Suspense>
-            </RequireAuth>
-          } />
-          {/* Protected: Notifications */}
-          <Route path="notifications" element={
-            <RequireAuth>
-              <Suspense fallback={<PageLoader />}> 
-                <NotificationSettingsPage />
-              </Suspense>
-            </RequireAuth>
-          } />
-          {/* Public: Help */}
-          <Route path="help" element={
-            <Suspense fallback={<PageLoader />}> 
-              <HelpPage />
-            </Suspense>
-          } />
-          {/* Public: Contact - Allow potential customers to reach out */}
-          <Route path="contact" element={
-            <Suspense fallback={<PageLoader />}> 
-              <ContactPage />
-            </Suspense>
-          } />
-          
-          {/* Info Pages */}
-          <Route path="pricing" element={
-            <Suspense fallback={<PageLoader />}> 
-              <PricingPage />
-            </Suspense>
-          } />
-          <Route path="how-it-works" element={
-            <Suspense fallback={<PageLoader />}> 
-              <HowItWorksPage />
-            </Suspense>
-          } />
-          <Route path="about" element={
-            <Suspense fallback={<PageLoader />}> 
-              <AboutPage />
-            </Suspense>
-          } />
+        {/* ── Pixel-perfect auth pages (standalone full-page designs) ──────────── */}
+        <Route path="login" element={<Suspense fallback={<PageLoader />}><PPLogin /></Suspense>} />
+        <Route path="register" element={<Suspense fallback={<PageLoader />}><PPSignup /></Suspense>} />
+        <Route path="signup" element={<Suspense fallback={<PageLoader />}><PPSignup /></Suspense>} />
+        <Route path="forgot-password" element={<Suspense fallback={<PageLoader />}><PPForgotPassword /></Suspense>} />
+        <Route path="reset-password" element={<Suspense fallback={<PageLoader />}><PPResetPassword /></Suspense>} />
 
-          {/* Public: Search */}
-          <Route path="search" element={
-            <Suspense fallback={<PageLoader />}> 
-              <SearchPage />
-            </Suspense>
-          } />
+        {/* ── All other routes wrapped in shared Layout (Header + Footer) ───────── */}
+        <Route element={<Layout />}> 
+            <Route path="shop" element={<Suspense fallback={<PageLoader />}><ShopPage /></Suspense>} />
+            <Route path="bulk" element={<Navigate to="/category/wholesale" replace />} />
+            <Route path="category/:slug" element={<Suspense fallback={<PageLoader />}><CategoryPage /></Suspense>} />
+            <Route path="sell" element={<Suspense fallback={<PageLoader />}><SellPage /></Suspense>} />
 
-          {/* Public: Buyer Protection */}
-          <Route path="buyer-protection" element={
-            <Suspense fallback={<PageLoader />}> 
-              <BuyerProtectionPage />
-            </Suspense>
-          } />
-
-          {/* Protected: Seller Reviews */}
-          <Route path="seller/reviews" element={
-            <RequireSeller>
+            {/* Order Success — Stripe redirects here after payment */}
+            <Route path="orders/success" element={
               <Suspense fallback={<PageLoader />}> 
-                <SellerReviewsPage />
+                <OrderSuccessPage />
               </Suspense>
-            </RequireSeller>
-          } />
+            } />
 
-          {/* Protected: Seller RFQ Inbox */}
-          <Route path="seller/rfq" element={
-            <RequireSeller>
+            {/* Protected: Dashboard */}
+            <Route path="dashboard" element={
+              <RequireAuth>
+                <Suspense fallback={<PageLoader />}> 
+                  <DashboardPage />
+                </Suspense>
+              </RequireAuth>
+            } />
+            {/* Protected: Account Settings */}
+            <Route path="account-settings" element={
+              <RequireAuth>
+                <Suspense fallback={<PageLoader />}> 
+                  <AccountSettingsPage />
+                </Suspense>
+              </RequireAuth>
+            } />
+            {/* Protected: Seller Dashboard */}
+            <Route path="seller" element={
+              <RequireSeller>
+                <Suspense fallback={<PageLoader />}> 
+                  <SellerDashboardPage />
+                </Suspense>
+              </RequireSeller>
+            } />
+            {/* Protected: Seller Profile */}
+            <Route path="seller/profile" element={
+              <RequireSeller>
+                <Suspense fallback={<PageLoader />}> 
+                  <SellerProfilePage />
+                </Suspense>
+              </RequireSeller>
+            } />
+            {/* Public: Seller Public Profile */}
+            <Route path="seller/:slug" element={
               <Suspense fallback={<PageLoader />}> 
-                <SellerRFQPage />
+                <SellerPublicProfilePage />
               </Suspense>
-            </RequireSeller>
-          } />
-
-          {/* Protected: Admin Reviews Moderation */}
-          <Route path="admin/reviews" element={
-            <RequireAdmin>
+            } />
+            {/* Protected: Seller Returns */}
+            <Route path="seller/returns" element={
+              <RequireSeller>
+                <Suspense fallback={<PageLoader />}> 
+                  <SellerReturnsPage />
+                </Suspense>
+              </RequireSeller>
+            } />
+            {/* Protected: Seller Shipments */}
+            <Route path="seller/shipments" element={
+              <RequireSeller>
+                <Suspense fallback={<PageLoader />}> 
+                  <SellerShipmentsPage />
+                </Suspense>
+              </RequireSeller>
+            } />
+            {/* Protected: Create Product */}
+            <Route path="seller/products/new" element={
+              <RequireSeller>
+                <Suspense fallback={<PageLoader />}> 
+                  <ProductFormPage />
+                </Suspense>
+              </RequireSeller>
+            } />
+            {/* Protected: Edit Product */}
+            <Route path="seller/products/:id/edit" element={
+              <RequireSeller>
+                <Suspense fallback={<PageLoader />}> 
+                  <ProductFormPage />
+                </Suspense>
+              </RequireSeller>
+            } />
+            {/* Protected: Admin Dashboard */}
+            <Route path="admin" element={
+              <RequireAdmin>
+                <Suspense fallback={<PageLoader />}> 
+                  <AdminDashboardPage />
+                </Suspense>
+              </RequireAdmin>
+            } />
+            {/* Protected: Admin Categories */}
+            <Route path="admin/categories" element={
+              <RequireAdmin>
+                <Suspense fallback={<PageLoader />}> 
+                  <CategoryManagementPage />
+                </Suspense>
+              </RequireAdmin>
+            } />
+            {/* Protected: Admin Sellers */}
+            <Route path="admin/sellers" element={
+              <RequireAdmin>
+                <Suspense fallback={<PageLoader />}> 
+                  <SellerApprovalsPage />
+                </Suspense>
+              </RequireAdmin>
+            } />
+            {/* Protected: Admin Seller Detail */}
+            <Route path="admin/sellers/:id" element={
+              <RequireAdmin>
+                <Suspense fallback={<PageLoader />}> 
+                  <AdminSellerDetailPage />
+                </Suspense>
+              </RequireAdmin>
+            } />
+            {/* Protected: Admin Reported Listings */}
+            <Route path="admin/reported-listings" element={
+              <RequireAdmin>
+                <Suspense fallback={<PageLoader />}> 
+                  <ReportedListingsPage />
+                </Suspense>
+              </RequireAdmin>
+            } />
+            {/* Protected: Admin Shipments */}
+            <Route path="admin/shipments" element={
+              <RequireAdmin>
+                <Suspense fallback={<PageLoader />}> 
+                  <AdminShipmentsPage />
+                </Suspense>
+              </RequireAdmin>
+            } />
+            {/* Protected: Orders */}
+            <Route path="orders" element={
+              <RequireAuth>
+                <Suspense fallback={<PageLoader />}> 
+                  <OrdersPage />
+                </Suspense>
+              </RequireAuth>
+            } />
+            {/* Protected: Order Detail */}
+            <Route path="orders/:id" element={
+              <RequireAuth>
+                <Suspense fallback={<PageLoader />}> 
+                  <OrderDetailPage />
+                </Suspense>
+              </RequireAuth>
+            } />
+            {/* Public: Tracking */}
+            <Route path="tracking/:orderNumber" element={
               <Suspense fallback={<PageLoader />}> 
-                <AdminReviewsPage />
+                <TrackingPage />
               </Suspense>
-            </RequireAdmin>
-          } />
+            } />
+            {/* Public: Track Order */}
+            <Route path="track-order" element={
+              <Suspense fallback={<PageLoader />}> 
+                <TrackOrderPage />
+              </Suspense>
+            } />
+            {/* Protected: Returns */}
+            <Route path="returns" element={
+              <RequireAuth>
+                <Suspense fallback={<PageLoader />}> 
+                  <ReturnsPage />
+                </Suspense>
+              </RequireAuth>
+            } />
+            {/* Protected: Disputes */}
+            <Route path="disputes" element={
+              <RequireAuth>
+                <Suspense fallback={<PageLoader />}> 
+                  <DisputesPage />
+                </Suspense>
+              </RequireAuth>
+            } />
+            {/* Protected: Wishlist */}
+            <Route path="wishlist" element={
+              <RequireAuth>
+                <Suspense fallback={<PageLoader />}> 
+                  <WishlistPage />
+                </Suspense>
+              </RequireAuth>
+            } />
+            {/* Protected: Messages */}
+            <Route path="messages" element={
+              <RequireAuth>
+                <Suspense fallback={<PageLoader />}> 
+                  <MessagesPage />
+                </Suspense>
+              </RequireAuth>
+            } />
+            {/* Protected: Notifications */}
+            <Route path="notifications" element={
+              <RequireAuth>
+                <Suspense fallback={<PageLoader />}> 
+                  <NotificationSettingsPage />
+                </Suspense>
+              </RequireAuth>
+            } />
+            {/* Public: Help */}
+            <Route path="help" element={
+              <Suspense fallback={<PageLoader />}> 
+                <HelpPage />
+              </Suspense>
+            } />
+            
+            {/* Info Pages */}
+            <Route path="pricing" element={
+              <Suspense fallback={<PageLoader />}> 
+                <PricingPage />
+              </Suspense>
+            } />
+            <Route path="how-it-works" element={
+              <Suspense fallback={<PageLoader />}> 
+                <HowItWorksPage />
+              </Suspense>
+            } />
 
-          {/* SEO: Logistics Loads UK */}
-          <Route path="logistics-loads" element={
-            <Suspense fallback={<PageLoader />}> 
-              <LogisticsLoadsPage />
-            </Suspense>
-          } />
+            {/* Public: Search */}
+            <Route path="search" element={
+              <Suspense fallback={<PageLoader />}> 
+                <SearchPage />
+              </Suspense>
+            } />
 
-          {/* Public: Transport Quote — XDrive Logistics integration */}
-          <Route path="transport-quote" element={
-            <Suspense fallback={<PageLoader />}> 
-              <TransportQuotePage />
-            </Suspense>
-          } />
+            {/* Public: Buyer Protection */}
+            <Route path="buyer-protection" element={
+              <Suspense fallback={<PageLoader />}> 
+                <BuyerProtectionPage />
+              </Suspense>
+            } />
 
-          {/* Public: RFQ — B2B wholesale quote requests */}
-          <Route path="rfq" element={
-            <Suspense fallback={<PageLoader />}> 
-              <RFQPage />
-            </Suspense>
-          } />
-          
-          {/* Legal Pages */}
-          <Route path="terms" element={
-            <Suspense fallback={<PageLoader />}> 
-              <TermsPage />
-            </Suspense>
-          } />
-          <Route path="privacy" element={
-            <Suspense fallback={<PageLoader />}> 
-              <PrivacyPage />
-            </Suspense>
-          } />
-          <Route path="cookies" element={
-            <Suspense fallback={<PageLoader />}> 
-              <CookiePage />
-            </Suspense>
-          } />
-          <Route path="returns-policy" element={
-            <Suspense fallback={<PageLoader />}> 
-              <ReturnsPolicy />
-            </Suspense>
-          } />
-          <Route path="shipping-policy" element={
-            <Suspense fallback={<PageLoader />}> 
-              <ShippingPolicy />
-            </Suspense>
-          } />
-          <Route path="acceptable-use-policy" element={
-            <Suspense fallback={<PageLoader />}> 
-              <AcceptableUsePolicyPage />
-            </Suspense>
-          } />
-          <Route path="disclaimer" element={
-            <Suspense fallback={<PageLoader />}>
-              <DisclaimerPage />
-            </Suspense>
-          } />
-          <Route path="buyer-terms" element={
-            <Suspense fallback={<PageLoader />}>
-              <BuyerTermsPage />
-            </Suspense>
-          } />
-          <Route path="seller-terms" element={
-            <Suspense fallback={<PageLoader />}>
-              <SellerTermsPage />
-            </Suspense>
-          } />
-          <Route path="seller-guidelines" element={
-            <Suspense fallback={<PageLoader />}> 
-              <SellerGuidelinesPage />
-            </Suspense>
-          } />
-          <Route path="verified-sellers" element={
-            <Suspense fallback={<PageLoader />}> 
-              <VerifiedSellersPage />
-            </Suspense>
-          } />
-          
-          {/* Public: Deals & Clearance */}
-          <Route path="deals" element={
-            <Suspense fallback={<PageLoader />}>
-              <DealsPage />
-            </Suspense>
-          } />
+            {/* Protected: Seller Reviews */}
+            <Route path="seller/reviews" element={
+              <RequireSeller>
+                <Suspense fallback={<PageLoader />}> 
+                  <SellerReviewsPage />
+                </Suspense>
+              </RequireSeller>
+            } />
 
-          {/* Route aliases for expected URLs */}
-          <Route path="admin/reported" element={<Navigate to="/admin/reported-listings" replace />} />
-          <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />
-          <Route path="seller-dashboard" element={<Navigate to="/seller" replace />} />
-          <Route path="admin-dashboard" element={<Navigate to="/admin" replace />} />
+            {/* Protected: Seller RFQ Inbox */}
+            <Route path="seller/rfq" element={
+              <RequireSeller>
+                <Suspense fallback={<PageLoader />}> 
+                  <SellerRFQPage />
+                </Suspense>
+              </RequireSeller>
+            } />
 
-          {/* Public: Category pages — redirect to Shop filtered by category slug */}
-          <Route path="categories/:slug" element={<CategoryRedirect />} />
+            {/* Protected: Admin Reviews Moderation */}
+            <Route path="admin/reviews" element={
+              <RequireAdmin>
+                <Suspense fallback={<PageLoader />}> 
+                  <AdminReviewsPage />
+                </Suspense>
+              </RequireAdmin>
+            } />
 
-          <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFoundPage /></Suspense>} />
-        </Route>
+            {/* SEO: Logistics Loads UK */}
+            <Route path="logistics-loads" element={
+              <Suspense fallback={<PageLoader />}> 
+                <LogisticsLoadsPage />
+              </Suspense>
+            } />
+
+            {/* Public: Transport Quote — XDrive Logistics integration */}
+            <Route path="transport-quote" element={
+              <Suspense fallback={<PageLoader />}> 
+                <TransportQuotePage />
+              </Suspense>
+            } />
+
+            {/* Public: RFQ — B2B wholesale quote requests */}
+            <Route path="rfq" element={
+              <Suspense fallback={<PageLoader />}> 
+                <RFQPage />
+              </Suspense>
+            } />
+            
+            {/* Legal Pages still in Layout (acceptable-use only — rest handled by pixel-perfect above) */}
+            <Route path="acceptable-use-policy" element={
+              <Suspense fallback={<PageLoader />}> 
+                <AcceptableUsePolicyPage />
+              </Suspense>
+            } />
+            <Route path="seller-guidelines" element={
+              <Suspense fallback={<PageLoader />}> 
+                <SellerGuidelinesPage />
+              </Suspense>
+            } />
+            <Route path="verified-sellers" element={
+              <Suspense fallback={<PageLoader />}> 
+                <VerifiedSellersPage />
+              </Suspense>
+            } />
+
+            {/* Route aliases for expected URLs */}
+            <Route path="admin/reported" element={<Navigate to="/admin/reported-listings" replace />} />
+            <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />
+            <Route path="seller-dashboard" element={<Navigate to="/seller" replace />} />
+            <Route path="admin-dashboard" element={<Navigate to="/admin" replace />} />
+
+            {/* Public: Category pages — redirect to Shop filtered by category slug */}
+            <Route path="categories/:slug" element={<CategoryRedirect />} />
+
+            <Route path="*" element={<Suspense fallback={<PageLoader />}><NotFoundPage /></Suspense>} />
+          </Route>
       </Routes>
+    </CartProvider>
   );
 }
 
