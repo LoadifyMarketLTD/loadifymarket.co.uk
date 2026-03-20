@@ -188,7 +188,7 @@ const ProductDetail = () => {
                   <p>
                     This {product.condition.toLowerCase()} condition lot includes {product.unitCount}{" "}
                     {product.unitCount === 1 ? "lot" : "lots"} of {product.category.toLowerCase()} items.
-                    {product.location ? ` Located in ${product.location}, available for collection or delivery UK-wide.` : " Available for UK-wide delivery."}
+                    {product.location ? ` Located in ${product.location}, available for collection or delivery UK-wide.` : "Available for UK-wide delivery."}
                   </p>
                   <p>
                     All items have been sourced from reputable UK retailers and brands. Ideal for

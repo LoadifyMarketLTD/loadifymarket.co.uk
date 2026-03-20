@@ -32,6 +32,7 @@ const Catalog = () => {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dbCategories, setDbCategories] = useState<string[]>([]);
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
@@ -49,6 +50,23 @@ const Catalog = () => {
       );
     }
   }, [categoryParam]);
+
+  // ── Fetch real category names from Supabase (once on mount) ───────────────
+  useEffect(() => {
+    supabase
+      .from("categories")
+      .select("name")
+      .eq("isActive", true)
+      .order("order", { ascending: true })
+      .then(({ data }) => {
+        if (data) {
+          const names = data
+            .map((c: { name: string }) => c.name)
+            .filter((n: string) => n !== "Logistics Jobs"); // exclude internal-only
+          setDbCategories(names);
+        }
+      });
+  }, []);
 
   // ── Fetch products from Supabase ──────────────────────────────────────────
   const fetchProducts = useCallback(async () => {
@@ -225,6 +243,7 @@ const Catalog = () => {
                   priceRange={priceRange}
                   setPriceRange={setPriceRange}
                   onClearAll={clearAll}
+                  availableCategories={dbCategories}
                 />
               </div>
             </aside>
@@ -250,6 +269,7 @@ const Catalog = () => {
                     priceRange={priceRange}
                     setPriceRange={setPriceRange}
                     onClearAll={clearAll}
+                    availableCategories={dbCategories}
                   />
                 </div>
               </div>

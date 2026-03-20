@@ -256,9 +256,11 @@ const Deals = () => {
                   <h3 className="font-display text-sm font-semibold text-foreground mb-1">{section.label}</h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">{section.description}</p>
                   <p className="text-xs font-medium text-primary mt-2">
-                    {isActive
-                      ? loading ? "…" : `${products.length} listing${products.length !== 1 ? "s" : ""}`
-                      : "Browse →"}
+                    {(() => {
+                      if (!isActive) return "Browse →";
+                      if (loading) return "…";
+                      return `${products.length} listing${products.length !== 1 ? "s" : ""}`;
+                    })()}
                   </p>
                 </button>
               );

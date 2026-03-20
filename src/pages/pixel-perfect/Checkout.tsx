@@ -38,8 +38,33 @@ const Checkout = () => {
     postcode: "",
   });
 
+  const [shippingError, setShippingError] = useState<string | null>(null);
+
+  const handleContinueToPayment = () => {
+    // Validate required shipping fields before advancing
+    if (!shippingData.firstName.trim() || !shippingData.lastName.trim()) {
+      setShippingError("Please enter your first and last name.");
+      return;
+    }
+    if (!shippingData.email.trim()) {
+      setShippingError("Please enter a valid email address.");
+      return;
+    }
+    if (!shippingData.address1.trim()) {
+      setShippingError("Please enter your street address.");
+      return;
+    }
+    if (!shippingData.city.trim() || !shippingData.postcode.trim()) {
+      setShippingError("Please enter your city and postcode.");
+      return;
+    }
+    setShippingError(null);
+    setCurrentStep(1);
+  };
+
   const handleShippingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setShippingData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    if (shippingError) setShippingError(null);
   };
 
   const shipping = subtotal > 2000 ? 0 : 149;
@@ -53,10 +78,10 @@ const Checkout = () => {
 
     try {
       const address = {
-        line1: shippingData.address1 || "N/A",
+        line1: shippingData.address1,
         ...(shippingData.address2 ? { line2: shippingData.address2 } : {}),
-        city: shippingData.city || "N/A",
-        postal_code: shippingData.postcode || "N/A",
+        city: shippingData.city,
+        postal_code: shippingData.postcode,
         country: "GB",
       };
 
@@ -243,8 +268,14 @@ const Checkout = () => {
                     </div>
                   </div>
 
+                  {shippingError && (
+                    <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+                      {shippingError}
+                    </div>
+                  )}
+
                   <Button
-                    onClick={() => setCurrentStep(1)}
+                    onClick={handleContinueToPayment}
                     className="w-full sm:w-auto h-11 bg-gradient-hero text-primary-foreground font-semibold px-8"
                   >
                     Continue to Payment <ArrowRight className="ml-2 h-4 w-4" />

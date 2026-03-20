@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
@@ -70,6 +70,8 @@ interface CatalogFiltersProps {
   priceRange: [number, number];
   setPriceRange: (v: [number, number]) => void;
   onClearAll: () => void;
+  /** Real category names fetched from DB — falls back to hardcoded list when not supplied */
+  availableCategories?: string[];
 }
 
 const CatalogFilters = ({
@@ -82,7 +84,13 @@ const CatalogFilters = ({
   priceRange,
   setPriceRange,
   onClearAll,
+  availableCategories,
 }: CatalogFiltersProps) => {
+  // Use DB-sourced category names when provided; fall back to design-time defaults
+  const categoryList = availableCategories && availableCategories.length > 0
+    ? availableCategories
+    : categories;
+
   const totalActive =
     selectedCategories.length + selectedConditions.length + selectedLocations.length +
     (priceRange[0] > 0 || priceRange[1] < 10000 ? 1 : 0);
@@ -104,7 +112,7 @@ const CatalogFilters = ({
 
       <FilterSection title="Category">
         <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
-          {categories.map((cat) => (
+          {categoryList.map((cat) => (
             <label key={cat} className="flex items-center gap-2 cursor-pointer group">
               <Checkbox
                 checked={selectedCategories.includes(cat)}
