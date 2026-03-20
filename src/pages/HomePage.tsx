@@ -14,6 +14,9 @@ import {
   Banknote,
   CreditCard,
 } from 'lucide-react';
+import CountdownBanner from '../components/CountdownBanner';
+import FeaturesSection from '../components/home/FeaturesSection';
+import StatsSection from '../components/home/StatsSection';
 
 // ── §1  Hero image ────────────────────────────────────────────────────────────
 const HERO_IMG_BASE = 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d';
@@ -94,12 +97,15 @@ const HOW_IT_WORKS = [
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Homepage
-// Section order: Hero → Trust Strip → Seller Value → Category Grid →
-//                How It Works → Strong CTA
+// Section order: Countdown → Hero → Trust Strip → Seller Value → Features →
+//                Stats → Category Grid → How It Works → Strong CTA
 // ─────────────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   return (
     <div className="bg-white">
+
+      {/* ── §0  COUNTDOWN BANNER ──────────────────────────────────────────── */}
+      <CountdownBanner />
 
       {/* ── §1  HERO ──────────────────────────────────────────────────────── */}
       <section className="bg-white border-b border-gray-100">
@@ -198,6 +204,12 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── §4a  FEATURES SECTION ────────────────────────────────────────── */}
+      <FeaturesSection />
+
+      {/* ── §4b  STATS SECTION ───────────────────────────────────────────── */}
+      <StatsSection />
 
       {/* ── §4  CATEGORY GRID ─────────────────────────────────────────────── */}
       <section className="bg-white py-16 border-b border-gray-200">

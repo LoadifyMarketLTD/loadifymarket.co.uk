@@ -73,6 +73,7 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
 const AccountSettingsPage = lazy(() => import('./pages/AccountSettingsPage'));
+const DealsPage = lazy(() => import('./pages/DealsPage'));
 
 // Loading component
 function PageLoader() {
@@ -557,7 +558,15 @@ function App() {
             </Suspense>
           } />
           
+          {/* Public: Deals & Clearance */}
+          <Route path="deals" element={
+            <Suspense fallback={<PageLoader />}>
+              <DealsPage />
+            </Suspense>
+          } />
+
           {/* Route aliases for expected URLs */}
+          <Route path="admin/reported" element={<Navigate to="/admin/reported-listings" replace />} />
           <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />
           <Route path="seller-dashboard" element={<Navigate to="/seller" replace />} />
           <Route path="admin-dashboard" element={<Navigate to="/admin" replace />} />
