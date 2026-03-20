@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,54 +8,118 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Search, CheckCircle2, XCircle, Eye, Building2, Mail, Calendar, FileText,
+  Search, CheckCircle2, XCircle, Eye, Building2, Mail, Calendar, Loader2,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import { supabase } from "@/lib/supabase";
 
 interface Seller {
-  id: number;
+  userId: string;
   name: string;
   email: string;
-  phone: string;
   company: string;
-  registrationNumber: string;
   date: string;
-  status: "pending" | "approved" | "rejected";
-  products: string;
-  notes: string;
+  status: "pending" | "verified" | "rejected" | "suspended";
+  isApproved: boolean;
 }
-
-const mockSellers: Seller[] = [
-  { id: 1, name: "John Smith", email: "john@techwholesale.co.uk", phone: "+44 7911 123456", company: "TechWholesale UK", registrationNumber: "GB123456789", date: "2025-03-18", status: "pending", products: "Electronics, Phones, Tablets", notes: "Large UK distributor with 5 years experience." },
-  { id: 2, name: "Sarah Johnson", email: "sarah@homegoods.com", phone: "+44 7922 987654", company: "HomeGoods Direct", registrationNumber: "GB987654321", date: "2025-03-17", status: "pending", products: "Home & Garden, Furniture", notes: "New business, first wholesale application." },
-  { id: 3, name: "Mike Brown", email: "mike@sportmax.co.uk", phone: "+44 7933 456789", company: "SportMax Trade", registrationNumber: "GB456789123", date: "2025-03-17", status: "approved", products: "Sports Equipment, Clothing", notes: "Verified retailer with multiple locations." },
-  { id: 4, name: "Emma Wilson", email: "emma@luxebeauty.com", phone: "+44 7944 321654", company: "LuxeBeauty Wholesale", registrationNumber: "GB321654987", date: "2025-03-16", status: "rejected", products: "Beauty, Skincare", notes: "Incomplete documentation provided." },
-  { id: 5, name: "David Green", email: "david@greenplanet.co.uk", phone: "+44 7955 789123", company: "GreenPlanet Supplies", registrationNumber: "GB789123456", date: "2025-03-15", status: "approved", products: "Eco Products, Cleaning", notes: "Eco-certified supplier." },
-  { id: 6, name: "Lisa Chen", email: "lisa@asiatrade.co.uk", phone: "+44 7966 654321", company: "AsiaTrade Direct", registrationNumber: "GB654321789", date: "2025-03-14", status: "pending", products: "Food & Drink, Snacks", notes: "Importing Asian goods to UK market." },
-  { id: 7, name: "Tom Davies", email: "tom@toolkinguk.com", phone: "+44 7977 111222", company: "ToolKing UK", registrationNumber: "GB111222333", date: "2025-03-13", status: "pending", products: "Tools, Hardware", notes: "Established hardware distributor." },
-];
 
 const statusColor: Record<string, string> = {
   pending: "bg-amber-500/15 text-amber-700 border-amber-200",
-  approved: "bg-emerald-500/15 text-emerald-700 border-emerald-200",
+  verified: "bg-emerald-500/15 text-emerald-700 border-emerald-200",
   rejected: "bg-destructive/15 text-destructive border-destructive/20",
+  suspended: "bg-red-500/15 text-red-700 border-red-200",
 };
 
 const AdminApprovals = () => {
-  const [sellers, setSellers] = useState(mockSellers);
+  const [sellers, setSellers] = useState<Seller[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
 
-  const handleApprove = (id: number) => {
-    setSellers((prev) => prev.map((s) => (s.id === id ? { ...s, status: "approved" as const } : s)));
-    setSelectedSeller(null);
+  const fetchSellers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: sellerUsers, error: usersError } = await supabase
+        .from("users")
+        .select("id, email, firstName, lastName, createdAt")
+        .eq("role", "seller")
+        .order("createdAt", { ascending: false });
+
+      if (usersError) throw usersError;
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from("seller_profiles")
+        .select("userId, isApproved, verificationStatus, storeName, businessName, fullName");
+
+      if (profilesError) throw profilesError;
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.userId, p]));
+
+      const combined: Seller[] = (sellerUsers || []).map((u: any) => {
+        const p = profileMap.get(u.id) as any;
+        const company = p?.storeName || p?.businessName || "—";
+        const name = p?.fullName || `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email;
+        const status: Seller["status"] = p?.verificationStatus ?? (p?.isApproved ? "verified" : "pending");
+        return {
+          userId: u.id,
+          name,
+          email: u.email,
+          company,
+          date: u.createdAt ? new Date(u.createdAt).toISOString().split("T")[0] : "—",
+          status,
+          isApproved: p?.isApproved ?? false,
+        };
+      });
+
+      setSellers(combined);
+    } catch (err: any) {
+      setError(err.message || "Failed to load sellers");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchSellers(); }, [fetchSellers]);
+
+  const handleApprove = async (userId: string) => {
+    setActionLoading(userId);
+    setError(null);
+    try {
+      const { error } = await supabase
+        .from("seller_profiles")
+        .update({ isApproved: true, verificationStatus: "verified" })
+        .eq("userId", userId);
+      if (error) throw error;
+      setSellers((prev) => prev.map((s) => s.userId === userId ? { ...s, status: "verified", isApproved: true } : s));
+      if (selectedSeller?.userId === userId) setSelectedSeller((s) => s ? { ...s, status: "verified", isApproved: true } : s);
+    } catch (err: any) {
+      setError(err.message || "Failed to approve seller");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const handleReject = (id: number) => {
-    setSellers((prev) => prev.map((s) => (s.id === id ? { ...s, status: "rejected" as const } : s)));
-    setSelectedSeller(null);
+  const handleReject = async (userId: string) => {
+    setActionLoading(userId);
+    setError(null);
+    try {
+      const { error } = await supabase
+        .from("seller_profiles")
+        .update({ isApproved: false, verificationStatus: "rejected" })
+        .eq("userId", userId);
+      if (error) throw error;
+      setSellers((prev) => prev.map((s) => s.userId === userId ? { ...s, status: "rejected", isApproved: false } : s));
+      if (selectedSeller?.userId === userId) setSelectedSeller((s) => s ? { ...s, status: "rejected", isApproved: false } : s);
+    } catch (err: any) {
+      setError(err.message || "Failed to reject seller");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const filtered = sellers.filter(
@@ -65,7 +129,10 @@ const AdminApprovals = () => {
       s.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const byStatus = (status: string) => filtered.filter((s) => s.status === status);
+  const byStatus = (status: string) =>
+    status === "pending"
+      ? filtered.filter((s) => !s.isApproved && s.status !== "rejected" && s.status !== "suspended")
+      : filtered.filter((s) => s.status === status);
 
   const renderTable = (data: Seller[]) => (
     <Table>
@@ -73,43 +140,57 @@ const AdminApprovals = () => {
         <TableRow>
           <TableHead>Business</TableHead>
           <TableHead className="hidden md:table-cell">Contact</TableHead>
-          <TableHead className="hidden sm:table-cell">Products</TableHead>
           <TableHead>Date</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.length === 0 ? (
+        {loading ? (
           <TableRow>
-            <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+            <TableCell colSpan={5} className="text-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+            </TableCell>
+          </TableRow>
+        ) : data.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
               No applications found.
             </TableCell>
           </TableRow>
         ) : (
           data.map((s) => (
-            <TableRow key={s.id}>
+            <TableRow key={s.userId}>
               <TableCell>
                 <p className="font-medium text-sm">{s.company}</p>
                 <p className="text-xs text-muted-foreground">{s.name}</p>
               </TableCell>
               <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{s.email}</TableCell>
-              <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[150px] truncate">{s.products}</TableCell>
               <TableCell className="text-xs text-muted-foreground">{s.date}</TableCell>
               <TableCell>
-                <Badge variant="outline" className={statusColor[s.status]}>{s.status}</Badge>
+                <Badge variant="outline" className={statusColor[s.status] ?? statusColor["pending"]}>{s.status}</Badge>
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedSeller(s)}>
                     <Eye className="h-4 w-4" />
                   </Button>
-                  {s.status === "pending" && (
+                  {!s.isApproved && s.status !== "rejected" && s.status !== "suspended" && (
                     <>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10" onClick={() => handleApprove(s.id)}>
-                        <CheckCircle2 className="h-4 w-4" />
+                      <Button
+                        variant="ghost" size="icon"
+                        className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10"
+                        onClick={() => handleApprove(s.userId)}
+                        disabled={actionLoading === s.userId}
+                      >
+                        {actionLoading === s.userId ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleReject(s.id)}>
+                      <Button
+                        variant="ghost" size="icon"
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                        onClick={() => handleReject(s.userId)}
+                        disabled={actionLoading === s.userId}
+                      >
                         <XCircle className="h-4 w-4" />
                       </Button>
                     </>
@@ -123,6 +204,8 @@ const AdminApprovals = () => {
     </Table>
   );
 
+  const pendingList = byStatus("pending");
+
   return (
     <div className="p-6 space-y-6">
       <div>
@@ -131,6 +214,12 @@ const AdminApprovals = () => {
           Review and manage seller registration requests.
         </p>
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-sm">
@@ -147,32 +236,24 @@ const AdminApprovals = () => {
       <Tabs defaultValue="pending">
         <TabsList>
           <TabsTrigger value="pending">
-            Pending <Badge variant="secondary" className="ml-2 text-xs">{byStatus("pending").length}</Badge>
+            Pending <Badge variant="secondary" className="ml-2 text-xs">{pendingList.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="approved">Approved</TabsTrigger>
+          <TabsTrigger value="verified">Approved</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
           <TabsTrigger value="all">All</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pending">
-          <Card>
-            <CardContent className="pt-4">{renderTable(byStatus("pending"))}</CardContent>
-          </Card>
+          <Card><CardContent className="pt-4">{renderTable(pendingList)}</CardContent></Card>
         </TabsContent>
-        <TabsContent value="approved">
-          <Card>
-            <CardContent className="pt-4">{renderTable(byStatus("approved"))}</CardContent>
-          </Card>
+        <TabsContent value="verified">
+          <Card><CardContent className="pt-4">{renderTable(byStatus("verified"))}</CardContent></Card>
         </TabsContent>
         <TabsContent value="rejected">
-          <Card>
-            <CardContent className="pt-4">{renderTable(byStatus("rejected"))}</CardContent>
-          </Card>
+          <Card><CardContent className="pt-4">{renderTable(byStatus("rejected"))}</CardContent></Card>
         </TabsContent>
         <TabsContent value="all">
-          <Card>
-            <CardContent className="pt-4">{renderTable(filtered)}</CardContent>
-          </Card>
+          <Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card>
         </TabsContent>
       </Tabs>
 
@@ -202,13 +283,6 @@ const AdminApprovals = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <FileText className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Reg. Number</p>
-                    <p className="text-sm font-medium">{selectedSeller.registrationNumber}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
                   <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                   <div>
                     <p className="text-xs text-muted-foreground">Applied</p>
@@ -217,31 +291,31 @@ const AdminApprovals = () => {
                 </div>
               </div>
 
-              <div className="rounded-lg bg-muted/50 p-3">
-                <p className="text-xs text-muted-foreground mb-1">Products / Categories</p>
-                <p className="text-sm">{selectedSeller.products}</p>
-              </div>
-
-              <div className="rounded-lg bg-muted/50 p-3">
-                <p className="text-xs text-muted-foreground mb-1">Notes</p>
-                <p className="text-sm">{selectedSeller.notes}</p>
-              </div>
-
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">Current Status:</span>
-                <Badge variant="outline" className={statusColor[selectedSeller.status]}>
+                <Badge variant="outline" className={statusColor[selectedSeller.status] ?? statusColor["pending"]}>
                   {selectedSeller.status}
                 </Badge>
               </div>
             </div>
 
-            {selectedSeller.status === "pending" && (
+            {!selectedSeller.isApproved && selectedSeller.status !== "rejected" && selectedSeller.status !== "suspended" && (
               <DialogFooter className="gap-2">
-                <Button variant="outline" onClick={() => handleReject(selectedSeller.id)}>
-                  <XCircle className="h-4 w-4 mr-1" /> Reject
+                <Button
+                  variant="outline"
+                  onClick={() => handleReject(selectedSeller.userId)}
+                  disabled={actionLoading === selectedSeller.userId}
+                >
+                  {actionLoading === selectedSeller.userId ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <XCircle className="h-4 w-4 mr-1" />}
+                  Reject
                 </Button>
-                <Button onClick={() => handleApprove(selectedSeller.id)} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                  <CheckCircle2 className="h-4 w-4 mr-1" /> Approve
+                <Button
+                  onClick={() => handleApprove(selectedSeller.userId)}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  disabled={actionLoading === selectedSeller.userId}
+                >
+                  {actionLoading === selectedSeller.userId ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
+                  Approve
                 </Button>
               </DialogFooter>
             )}

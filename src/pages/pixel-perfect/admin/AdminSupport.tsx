@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { MessageSquare, Search, Filter, Clock, CheckCircle2, AlertCircle, User, Send } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { MessageSquare, Search, Filter, Clock, CheckCircle2, AlertCircle, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,73 +11,27 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/lib/supabase";
 
 interface Ticket {
   id: string;
   subject: string;
-  user: string;
-  userRole: "buyer" | "seller";
+  userName: string;
+  userEmail: string;
   category: string;
-  priority: "low" | "medium" | "high" | "urgent";
-  status: "open" | "in_progress" | "resolved" | "closed";
-  created: string;
-  lastUpdate: string;
-  messages: { from: string; text: string; date: string }[];
+  priority: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
 }
-
-const tickets: Ticket[] = [
-  {
-    id: "TKT-1024", subject: "Order not delivered after 7 days", user: "Jane Buyer", userRole: "buyer",
-    category: "Delivery", priority: "high", status: "open", created: "19 Mar 2026", lastUpdate: "19 Mar 2026",
-    messages: [
-      { from: "Jane Buyer", text: "My order ORD-2847 was shipped 7 days ago but hasn't arrived. Royal Mail tracking shows it's stuck at Manchester sorting facility.", date: "19 Mar 10:30" },
-    ],
-  },
-  {
-    id: "TKT-1023", subject: "Unable to withdraw earnings", user: "John Doe", userRole: "seller",
-    category: "Payments", priority: "urgent", status: "in_progress", created: "18 Mar 2026", lastUpdate: "19 Mar 2026",
-    messages: [
-      { from: "John Doe", text: "I've been trying to withdraw my earnings for 3 days now but keep getting an error. My balance shows £4,200 available.", date: "18 Mar 14:00" },
-      { from: "Support Team", text: "We're investigating this with our payment provider. Your funds are safe and we'll resolve this within 24 hours.", date: "19 Mar 09:15" },
-    ],
-  },
-  {
-    id: "TKT-1022", subject: "Product listing rejected without reason", user: "Lisa Brown", userRole: "seller",
-    category: "Listings", priority: "medium", status: "open", created: "17 Mar 2026", lastUpdate: "17 Mar 2026",
-    messages: [
-      { from: "Lisa Brown", text: "My listing for 'Home & Kitchen Mixed Pallet' was rejected but I didn't receive any explanation. The listing complied with all guidelines.", date: "17 Mar 16:45" },
-    ],
-  },
-  {
-    id: "TKT-1021", subject: "Refund not processed", user: "Mark Thompson", userRole: "buyer",
-    category: "Refunds", priority: "high", status: "in_progress", created: "15 Mar 2026", lastUpdate: "18 Mar 2026",
-    messages: [
-      { from: "Mark Thompson", text: "I was approved for a refund on RET-498 on 12 March but haven't received the money back to my card yet.", date: "15 Mar 11:00" },
-      { from: "Support Team", text: "Refunds typically take 5-7 business days. We've confirmed with Stripe that the refund was initiated. Please check again by 20 March.", date: "18 Mar 10:00" },
-    ],
-  },
-  {
-    id: "TKT-1020", subject: "How to become a verified seller?", user: "Tom Davies", userRole: "seller",
-    category: "Account", priority: "low", status: "resolved", created: "14 Mar 2026", lastUpdate: "15 Mar 2026",
-    messages: [
-      { from: "Tom Davies", text: "What documents do I need to submit to get the verified seller badge?", date: "14 Mar 09:00" },
-      { from: "Support Team", text: "You need: 1) Companies House registration, 2) VAT certificate, 3) Proof of address. Upload via Seller Profile > Verification.", date: "15 Mar 08:30" },
-    ],
-  },
-  {
-    id: "TKT-1019", subject: "Account access issue", user: "Emma Davies", userRole: "seller",
-    category: "Account", priority: "medium", status: "closed", created: "12 Mar 2026", lastUpdate: "13 Mar 2026",
-    messages: [
-      { from: "Emma Davies", text: "I can't log in to my seller dashboard. Keep getting 'account suspended' error.", date: "12 Mar 15:00" },
-      { from: "Support Team", text: "Your account was suspended due to multiple buyer complaints. Please review our seller guidelines and submit an appeal.", date: "13 Mar 09:00" },
-    ],
-  },
-];
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   open: { label: "Open", className: "bg-blue-500/15 text-blue-700 border-blue-200" },
   in_progress: { label: "In Progress", className: "bg-amber-500/15 text-amber-700 border-amber-200" },
+  waiting_customer: { label: "Waiting", className: "bg-purple-500/15 text-purple-700 border-purple-200" },
   resolved: { label: "Resolved", className: "bg-emerald-500/15 text-emerald-700 border-emerald-200" },
   closed: { label: "Closed", className: "bg-muted text-muted-foreground" },
 };
@@ -90,19 +44,93 @@ const priorityConfig: Record<string, { label: string; className: string }> = {
 };
 
 const AdminSupport = () => {
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Ticket | null>(null);
-  const [replyText, setReplyText] = useState("");
+
+  const fetchTickets = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: queryError } = await supabase
+        .from("support_tickets")
+        .select(`
+          id,
+          subject,
+          category,
+          priority,
+          status,
+          createdAt,
+          updatedAt,
+          user:users!support_tickets_userId_fkey(firstName, lastName, email)
+        `)
+        .order("createdAt", { ascending: false });
+
+      if (queryError) throw queryError;
+
+      const mapped: Ticket[] = (data || []).map((t: any) => {
+        const userObj = Array.isArray(t.user) ? t.user[0] : t.user;
+        const userName = userObj
+          ? `${userObj.firstName ?? ""} ${userObj.lastName ?? ""}`.trim() || userObj.email || "—"
+          : "—";
+        return {
+          id: t.id,
+          subject: t.subject || "—",
+          userName,
+          userEmail: userObj?.email || "—",
+          category: t.category || "—",
+          priority: t.priority ?? "medium",
+          status: t.status ?? "open",
+          createdAt: t.createdAt
+            ? new Date(t.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+            : "—",
+          updatedAt: t.updatedAt
+            ? new Date(t.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+            : "—",
+        };
+      });
+
+      setTickets(mapped);
+    } catch (err: any) {
+      setError(err.message || "Failed to load support tickets");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchTickets(); }, [fetchTickets]);
+
+  const updateStatus = async (id: string, newStatus: string) => {
+    setActionLoading(id);
+    setError(null);
+    try {
+      const { error } = await supabase
+        .from("support_tickets")
+        .update({ status: newStatus, updatedAt: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+      setTickets((prev) => prev.map((t) => t.id === id ? { ...t, status: newStatus } : t));
+      if (selected?.id === id) setSelected((s) => s ? { ...s, status: newStatus } : s);
+    } catch (err: any) {
+      setError(err.message || "Failed to update ticket status");
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const filtered = tickets.filter(
     (t) =>
       t.id.toLowerCase().includes(search.toLowerCase()) ||
       t.subject.toLowerCase().includes(search.toLowerCase()) ||
-      t.user.toLowerCase().includes(search.toLowerCase())
+      t.userName.toLowerCase().includes(search.toLowerCase())
   );
 
   const byStatus = (status: string) => filtered.filter((t) => t.status === status);
-  const openTickets = filtered.filter((t) => ["open", "in_progress"].includes(t.status));
+  const openTickets = filtered.filter((t) => ["open", "in_progress", "waiting_customer"].includes(t.status));
+  const urgentOpen = tickets.filter((t) => t.priority === "urgent" && ["open", "in_progress"].includes(t.status));
 
   const renderTable = (data: Ticket[]) => (
     <Table>
@@ -118,32 +146,49 @@ const AdminSupport = () => {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.length === 0 ? (
+        {loading ? (
+          <TableRow>
+            <TableCell colSpan={7} className="text-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+            </TableCell>
+          </TableRow>
+        ) : data.length === 0 ? (
           <TableRow>
             <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
               <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-40" />No tickets found.
             </TableCell>
           </TableRow>
         ) : (
-          data.map((t) => (
-            <TableRow key={t.id}>
-              <TableCell>
-                <p className="text-sm font-medium text-foreground">{t.id}</p>
-                <p className="text-xs text-muted-foreground max-w-[200px] truncate">{t.subject}</p>
-              </TableCell>
-              <TableCell>
-                <p className="text-sm">{t.user}</p>
-                <p className="text-xs text-muted-foreground capitalize">{t.userRole}</p>
-              </TableCell>
-              <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{t.category}</TableCell>
-              <TableCell><Badge variant="outline" className={priorityConfig[t.priority].className}>{priorityConfig[t.priority].label}</Badge></TableCell>
-              <TableCell><Badge variant="outline" className={statusConfig[t.status].className}>{statusConfig[t.status].label}</Badge></TableCell>
-              <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{t.lastUpdate}</TableCell>
-              <TableCell className="text-right">
-                <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setSelected(t); setReplyText(""); }}>View</Button>
-              </TableCell>
-            </TableRow>
-          ))
+          data.map((t) => {
+            const priCfg = priorityConfig[t.priority] ?? { label: t.priority, className: "bg-muted text-muted-foreground" };
+            const stCfg = statusConfig[t.status] ?? { label: t.status, className: "bg-muted text-muted-foreground" };
+            return (
+              <TableRow key={t.id}>
+                <TableCell>
+                  <p className="text-sm font-medium text-foreground">{t.id.slice(0, 8).toUpperCase()}</p>
+                  <p className="text-xs text-muted-foreground max-w-[200px] truncate">{t.subject}</p>
+                </TableCell>
+                <TableCell>
+                  <p className="text-sm">{t.userName}</p>
+                  <p className="text-xs text-muted-foreground">{t.userEmail}</p>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{t.category}</TableCell>
+                <TableCell><Badge variant="outline" className={priCfg.className}>{priCfg.label}</Badge></TableCell>
+                <TableCell><Badge variant="outline" className={stCfg.className}>{stCfg.label}</Badge></TableCell>
+                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{t.updatedAt}</TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setSelected(t)}
+                  >
+                    View
+                  </Button>
+                </TableCell>
+              </TableRow>
+            );
+          })
         )}
       </TableBody>
     </Table>
@@ -153,18 +198,28 @@ const AdminSupport = () => {
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Support Tickets</h1>
-        <p className="text-muted-foreground text-sm mt-1">{tickets.length} total · {openTickets.length} open</p>
+        <p className="text-muted-foreground text-sm mt-1">
+          {tickets.length} total · {openTickets.length} open
+        </p>
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Open", count: byStatus("open").length, icon: AlertCircle, color: "text-blue-600 bg-blue-500/10" },
           { label: "In Progress", count: byStatus("in_progress").length, icon: Clock, color: "text-amber-600 bg-amber-500/10" },
           { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "text-emerald-600 bg-emerald-500/10" },
-          { label: "Urgent", count: tickets.filter((t) => t.priority === "urgent" && ["open", "in_progress"].includes(t.status)).length, icon: AlertCircle, color: "text-red-600 bg-red-500/10" },
+          { label: "Urgent", count: urgentOpen.length, icon: AlertCircle, color: "text-red-600 bg-red-500/10" },
         ].map((stat) => (
           <div key={stat.label} className="bg-card rounded-xl border border-border p-5 space-y-2">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}><stat.icon className="h-5 w-5" /></div>
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}>
+              <stat.icon className="h-5 w-5" />
+            </div>
             <div className="font-display text-2xl font-bold text-foreground">{stat.count}</div>
             <p className="text-xs text-muted-foreground">{stat.label}</p>
           </div>
@@ -181,7 +236,9 @@ const AdminSupport = () => {
 
       <Tabs defaultValue="open">
         <TabsList>
-          <TabsTrigger value="open">Open <Badge variant="secondary" className="ml-2 text-xs">{openTickets.length}</Badge></TabsTrigger>
+          <TabsTrigger value="open">
+            Open <Badge variant="secondary" className="ml-2 text-xs">{openTickets.length}</Badge>
+          </TabsTrigger>
           <TabsTrigger value="resolved">Resolved</TabsTrigger>
           <TabsTrigger value="all">All</TabsTrigger>
         </TabsList>
@@ -194,31 +251,71 @@ const AdminSupport = () => {
         {selected && (
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>{selected.id} — {selected.subject}</DialogTitle>
-              <DialogDescription>{selected.user} ({selected.userRole}) · {selected.category}</DialogDescription>
+              <DialogTitle>{selected.id.slice(0, 8).toUpperCase()} — {selected.subject}</DialogTitle>
+              <DialogDescription>{selected.userName} · {selected.category}</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-2 max-h-[400px] overflow-y-auto">
-              {selected.messages.map((msg, i) => (
-                <div key={i} className={`rounded-lg p-3 ${msg.from === "Support Team" ? "bg-primary/5 border border-primary/20" : "bg-muted/50 border border-border"}`}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <User className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-xs font-semibold text-foreground">{msg.from}</span>
-                    <span className="text-xs text-muted-foreground ml-auto">{msg.date}</span>
-                  </div>
-                  <p className="text-sm text-foreground">{msg.text}</p>
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span className="text-muted-foreground">User</span><p className="font-medium text-foreground">{selected.userName}</p></div>
+                <div><span className="text-muted-foreground">Email</span><p className="font-medium text-foreground">{selected.userEmail}</p></div>
+                <div><span className="text-muted-foreground">Priority</span>
+                  <p><Badge variant="outline" className={(priorityConfig[selected.priority] ?? { className: "bg-muted text-muted-foreground" }).className}>
+                    {(priorityConfig[selected.priority] ?? { label: selected.priority }).label}
+                  </Badge></p>
                 </div>
-              ))}
-              {["open", "in_progress"].includes(selected.status) && (
-                <div>
-                  <Textarea placeholder="Type your reply..." value={replyText} onChange={(e) => setReplyText(e.target.value)} rows={3} />
+                <div><span className="text-muted-foreground">Status</span>
+                  <p><Badge variant="outline" className={(statusConfig[selected.status] ?? { className: "bg-muted text-muted-foreground" }).className}>
+                    {(statusConfig[selected.status] ?? { label: selected.status }).label}
+                  </Badge></p>
+                </div>
+                <div><span className="text-muted-foreground">Created</span><p className="font-medium text-foreground">{selected.createdAt}</p></div>
+                <div><span className="text-muted-foreground">Updated</span><p className="font-medium text-foreground">{selected.updatedAt}</p></div>
+              </div>
+
+              {["open", "in_progress", "waiting_customer"].includes(selected.status) && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground">UPDATE STATUS</p>
+                  <div className="flex items-center gap-2">
+                    <Select
+                      defaultValue={selected.status}
+                      onValueChange={(val) => updateStatus(selected.id, val)}
+                      disabled={actionLoading === selected.id}
+                    >
+                      <SelectTrigger className="flex-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="open">Open</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="waiting_customer">Waiting Customer</SelectItem>
+                        <SelectItem value="resolved">Resolved</SelectItem>
+                        <SelectItem value="closed">Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {actionLoading === selected.id && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                  </div>
                 </div>
               )}
             </div>
-            {["open", "in_progress"].includes(selected.status) && (
+            {["open", "in_progress", "waiting_customer"].includes(selected.status) && (
               <DialogFooter className="flex gap-2">
-                <Button variant="outline" onClick={() => setSelected(null)}>Close Ticket</Button>
-                <Button disabled={!replyText.trim()} onClick={() => setSelected(null)}>
-                  <Send className="h-4 w-4 mr-1" /> Send Reply
+                <Button
+                  variant="outline"
+                  onClick={() => updateStatus(selected.id, "closed")}
+                  disabled={actionLoading === selected.id}
+                >
+                  Close Ticket
+                </Button>
+                <Button
+                  onClick={() => updateStatus(selected.id, "resolved")}
+                  disabled={actionLoading === selected.id}
+                >
+                  {actionLoading === selected.id ? (
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
+                  )}
+                  Mark Resolved
                 </Button>
               </DialogFooter>
             )}
