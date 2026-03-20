@@ -34,6 +34,11 @@ const PPSignup             = lazy(() => import('./pages/pixel-perfect/Signup'));
 const PPForgotPassword     = lazy(() => import('./pages/pixel-perfect/ForgotPassword'));
 const PPResetPassword      = lazy(() => import('./pages/pixel-perfect/ResetPassword'));
 
+// ─── Layout wrappers (shadcn sidebar) — used for /seller, /admin, /dashboard ─
+const SellerLayout = lazy(() => import('./components/seller/SellerLayout'));
+const AdminLayout  = lazy(() => import('./components/admin/AdminLayout'));
+const BuyerLayout  = lazy(() => import('./components/buyer/BuyerLayout'));
+
 // ─── Functional pages — no pixel-perfect equivalent yet ──────────────────────
 // OrderSuccessPage: required for Stripe payment redirect
 const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
@@ -195,7 +200,11 @@ function App() {
         <Route path="privacy" element={<Suspense fallback={<PageLoader />}><PPPrivacy /></Suspense>} />
         <Route path="cookies" element={<Suspense fallback={<PageLoader />}><PPCookies /></Suspense>} />
         <Route path="returns-policy" element={<Suspense fallback={<PageLoader />}><PPReturnsPolicy /></Suspense>} />
+        {/* /returns — alias expected by Lovable checklist */}
+        <Route path="returns" element={<Suspense fallback={<PageLoader />}><PPReturnsPolicy /></Suspense>} />
         <Route path="shipping-policy" element={<Suspense fallback={<PageLoader />}><PPShippingPolicy /></Suspense>} />
+        {/* /shipping — alias expected by Lovable checklist */}
+        <Route path="shipping" element={<Suspense fallback={<PageLoader />}><PPShippingPolicy /></Suspense>} />
         <Route path="buyer-terms" element={<Suspense fallback={<PageLoader />}><PPBuyerTerms /></Suspense>} />
         <Route path="seller-terms" element={<Suspense fallback={<PageLoader />}><PPSellerTerms /></Suspense>} />
         <Route path="disclaimer" element={<Suspense fallback={<PageLoader />}><PPDisclaimer /></Suspense>} />
@@ -294,13 +303,59 @@ function App() {
         <Route path="seller-guidelines" element={<Suspense fallback={<PageLoader />}><SellerGuidelinesPage /></Suspense>} />
 
         {/* ── Redirect aliases ──────────────────────────────────────────────────── */}
-        <Route path="dashboard" element={<Navigate to="/pp/buyer" replace />} />
-        <Route path="seller" element={<Navigate to="/pp/seller" replace />} />
-        <Route path="admin" element={<Navigate to="/pp/admin" replace />} />
+        {/* ── /seller/* — SellerLayout (shadcn sidebar, /seller/* nav links) ────── */}
+        <Route path="seller" element={
+          <RequireSeller>
+            <Suspense fallback={<PageLoader />}><SellerLayout /></Suspense>
+          </RequireSeller>
+        }>
+          <Route index element={<Suspense fallback={<PageLoader />}><PPSellerDashboard /></Suspense>} />
+          <Route path="products" element={<Suspense fallback={<PageLoader />}><PPSellerProducts /></Suspense>} />
+          <Route path="orders" element={<Suspense fallback={<PageLoader />}><PPSellerOrders /></Suspense>} />
+          <Route path="shipments" element={<Suspense fallback={<PageLoader />}><PPSellerShipments /></Suspense>} />
+          <Route path="returns" element={<Suspense fallback={<PageLoader />}><PPSellerReturns /></Suspense>} />
+          <Route path="rfq" element={<Suspense fallback={<PageLoader />}><PPSellerRFQ /></Suspense>} />
+          <Route path="reviews" element={<Suspense fallback={<PageLoader />}><PPSellerReviews /></Suspense>} />
+          <Route path="profile" element={<Suspense fallback={<PageLoader />}><PPSellerProfile /></Suspense>} />
+          <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPSellerSettings /></Suspense>} />
+        </Route>
+
+        {/* ── /admin/* — AdminLayout (shadcn sidebar, /admin/* nav links) ────────── */}
+        <Route path="admin" element={
+          <RequireAdmin>
+            <Suspense fallback={<PageLoader />}><AdminLayout /></Suspense>
+          </RequireAdmin>
+        }>
+          <Route index element={<Suspense fallback={<PageLoader />}><PPAdminDashboard /></Suspense>} />
+          <Route path="approvals" element={<Suspense fallback={<PageLoader />}><PPAdminApprovals /></Suspense>} />
+          <Route path="users" element={<Suspense fallback={<PageLoader />}><PPAdminUsers /></Suspense>} />
+          <Route path="products" element={<Suspense fallback={<PageLoader />}><PPAdminProducts /></Suspense>} />
+          <Route path="orders" element={<Suspense fallback={<PageLoader />}><PPAdminOrders /></Suspense>} />
+          <Route path="flagged" element={<Suspense fallback={<PageLoader />}><PPAdminFlagged /></Suspense>} />
+          <Route path="reports" element={<Suspense fallback={<PageLoader />}><PPAdminReports /></Suspense>} />
+          <Route path="support" element={<Suspense fallback={<PageLoader />}><PPAdminSupport /></Suspense>} />
+          <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPAdminSettings /></Suspense>} />
+        </Route>
+
+        {/* ── /dashboard/* — BuyerLayout (shadcn sidebar, /dashboard/* nav links) ── */}
+        <Route path="dashboard" element={
+          <RequireAuth>
+            <Suspense fallback={<PageLoader />}><BuyerLayout /></Suspense>
+          </RequireAuth>
+        }>
+          <Route index element={<Suspense fallback={<PageLoader />}><PPBuyerDashboard /></Suspense>} />
+          <Route path="orders" element={<Suspense fallback={<PageLoader />}><PPBuyerOrders /></Suspense>} />
+          <Route path="wishlist" element={<Suspense fallback={<PageLoader />}><PPBuyerWishlist /></Suspense>} />
+          <Route path="addresses" element={<Suspense fallback={<PageLoader />}><PPBuyerAddresses /></Suspense>} />
+          <Route path="payments" element={<Suspense fallback={<PageLoader />}><PPBuyerPayments /></Suspense>} />
+          <Route path="reviews" element={<Suspense fallback={<PageLoader />}><PPBuyerReviews /></Suspense>} />
+          <Route path="profile" element={<Suspense fallback={<PageLoader />}><PPBuyerProfile /></Suspense>} />
+          <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPBuyerSettings /></Suspense>} />
+        </Route>
         <Route path="shop" element={<Navigate to="/catalog" replace />} />
         <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />
-        <Route path="seller-dashboard" element={<Navigate to="/pp/seller" replace />} />
-        <Route path="admin-dashboard" element={<Navigate to="/pp/admin" replace />} />
+        <Route path="seller-dashboard" element={<Navigate to="/seller" replace />} />
+        <Route path="admin-dashboard" element={<Navigate to="/admin" replace />} />
 
         {/* ── Wildcard — pixel-perfect 404 ─────────────────────────────────────── */}
         <Route path="*" element={<Suspense fallback={<PageLoader />}><PPNotFound /></Suspense>} />
