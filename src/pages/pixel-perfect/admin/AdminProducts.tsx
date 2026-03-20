@@ -23,45 +23,104 @@ interface Product {
   createdAt: string;
 }
 
+type ProductRow = {
+  id: string;
+  title: string | null;
+  price: number | null;
+  stockQuantity: number | null;
+  isActive: boolean | null;
+  createdAt: string | null;
+  sellerId: string | null;
+};
+
+type SellerProfileRow = {
+  userId: string;
+  storeName?: string | null;
+  businessName?: string | null;
+};
+
+type UserRow = {
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+};
+
 const AdminProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(""
+);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: queryError } = await supabase
+      // 1) Fetch products first (include sellerId)
+      const { data: productsData, error: productsError } = await supabase
         .from("products")
-        .select(`
-          id,
-          title,
-          price,
-          stockQuantity,
-          isActive,
-          createdAt,
-          seller:seller_profiles!products_sellerId_fkey(storeName, businessName),
-          sellerUser:users!products_sellerId_fkey(firstName, lastName)
-        `)
+        .select("id,title,price,stockQuantity,isActive,createdAt,sellerId")
         .order("createdAt", { ascending: false })
         .limit(200);
 
-      if (queryError) throw queryError;
+      if (productsError) throw productsError;
 
-      const mapped: Product[] = (data || []).map((p: any) => {
-        const sellerProfile = Array.isArray(p.seller) ? p.seller[0] : p.seller;
-        const sellerUser = Array.isArray(p.sellerUser) ? p.sellerUser[0] : p.sellerUser;
+      const productRows: ProductRow[] = (productsData || []) as ProductRow[];
+
+      const sellerIds = Array.from(
+        new Set(productRows.map((p) => p.sellerId).filter((id): id is string => Boolean(id)))
+      );
+
+      // 2) Fetch seller_profiles by userId IN sellerIds
+      const sellerProfilesByUserId = new Map<string, SellerProfileRow>();
+      if (sellerIds.length > 0) {
+        const { data: sellerProfiles, error: sellerProfilesError } = await supabase
+          .from("seller_profiles")
+          .select("userId,storeName,businessName")
+          .in("userId", sellerIds);
+
+        if (sellerProfilesError) throw sellerProfilesError;
+
+        (sellerProfiles || []).forEach((sp) => {
+          const row = sp as SellerProfileRow;
+          if (row?.userId) sellerProfilesByUserId.set(row.userId, row);
+        });
+      }
+
+      // 3) Fetch users by id IN sellerIds
+      const usersById = new Map<string, UserRow>();
+      if (sellerIds.length > 0) {
+        const { data: usersData, error: usersError } = await supabase
+          .from("users")
+          .select("id,firstName,lastName")
+          .in("id", sellerIds);
+
+        if (usersError) throw usersError;
+
+        (usersData || []).forEach((u) => {
+          const row = u as UserRow;
+          if (row?.id) usersById.set(row.id, row);
+        });
+      }
+
+      // 4) Map seller display name in code
+      const mapped: Product[] = productRows.map((p) => {
+        const sellerId = p.sellerId;
+        const sellerProfile = sellerId ? sellerProfilesByUserId.get(sellerId) : undefined;
+        const sellerUser = sellerId ? usersById.get(sellerId) : undefined;
+
         const sellerName =
           sellerProfile?.storeName ||
           sellerProfile?.businessName ||
-          (sellerUser ? `${sellerUser.firstName ?? ""} ${sellerUser.lastName ?? ""}`.trim() : "—") ||
+          (sellerUser
+            ? `${sellerUser.firstName ?? ""} ${sellerUser.lastName ?? ""}`.trim()
+            : "—") ||
           "—";
+
         return {
           id: p.id,
-          title: p.title,
+          title: p.title ?? "—",
           seller: sellerName,
           price: p.price ?? 0,
           stockQuantity: p.stockQuantity ?? 0,
