@@ -26,7 +26,6 @@ DROP VIEW IF EXISTS seller_profiles_public;
 
 CREATE VIEW seller_profiles_public AS
 SELECT
-  id,
   "userId",
   "businessName",
   "businessType",

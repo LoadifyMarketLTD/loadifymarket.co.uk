@@ -19,7 +19,6 @@ DROP VIEW IF EXISTS seller_profiles_public;
 
 CREATE VIEW seller_profiles_public AS
 SELECT
-  id,
   "userId",
   "businessName",
   "businessType",
@@ -42,5 +41,5 @@ FROM seller_profiles;
 GRANT SELECT ON seller_profiles_public TO anon, authenticated;
 
 COMMENT ON VIEW seller_profiles_public IS
-  'Safe public projection of seller_profiles. Excludes commission, '
-  'listingLimit, stripeAccountId, stripeConnectStatus, verificationDocuments.';
+  'Safe public projection of seller_profiles. PK is userId (no id column). '
+  'Excludes commission, listingLimit, stripeAccountId, stripeConnectStatus, verificationDocuments.';
