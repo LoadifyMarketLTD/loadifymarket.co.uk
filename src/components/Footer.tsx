@@ -123,7 +123,7 @@ const Footer = () => {
                 <FooterLink to="/catalog">Home &amp; Garden</FooterLink>
                 <FooterLink to="/catalog">All Categories</FooterLink>
                 <FooterLink to="/dashboard/orders">Track Order</FooterLink>
-                <FooterLink to="/contact">Help &amp; FAQ</FooterLink>
+                <FooterLink to="/faq">Help &amp; FAQ</FooterLink>
               </ul>
             </div>
 
