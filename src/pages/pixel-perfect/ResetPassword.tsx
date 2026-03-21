@@ -24,6 +24,9 @@ const ResetPassword = () => {
       if (session) setHasSession(true);
       else setError("This password reset link is invalid or has expired. Please request a new one.");
       setSessionChecking(false);
+    }).catch(() => {
+      setError("Failed to verify reset link. Please try again.");
+      setSessionChecking(false);
     });
   }, []);
 

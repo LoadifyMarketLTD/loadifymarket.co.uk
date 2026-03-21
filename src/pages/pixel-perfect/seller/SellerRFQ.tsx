@@ -70,10 +70,10 @@ const SellerRFQ = () => {
       if (dbError) throw dbError;
       const subject = encodeURIComponent(`Re: Quote Request – ${selected.product_name}`);
       const body = encodeURIComponent(quoteNote);
-      window.location.href = `mailto:${selected.buyer_email}?subject=${subject}&body=${body}`;
       await load();
       setSelected(null);
       setQuoteNote("");
+      window.location.href = `mailto:${encodeURIComponent(selected.buyer_email)}?subject=${subject}&body=${body}`;
     } catch (e) {
       setRfqError(e instanceof Error ? e.message : "Failed to send reply.");
     } finally {

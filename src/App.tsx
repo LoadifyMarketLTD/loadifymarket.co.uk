@@ -152,6 +152,9 @@ function App() {
       } else {
         setLoading(false);
       }
+    }).catch(() => {
+      // Network error or Supabase unreachable — unblock loading so the app is usable
+      setLoading(false);
     });
 
     // Listen for auth changes
@@ -272,7 +275,10 @@ function App() {
         {/* ── Standalone functional pages (no pixel-perfect equivalent yet) ─────── */}
 
         {/* Order Success — Stripe redirects here after payment */}
-        <Route path="orders/success" element={<Suspense fallback={<PageLoader />}><OrderSuccessPage /></Suspense>} />
+        {/* NOTE: create-checkout.ts uses /order-success — keep this route matching that */}
+        <Route path="order-success" element={<Suspense fallback={<PageLoader />}><OrderSuccessPage /></Suspense>} />
+        {/* Alias for any old links using /orders/success */}
+        <Route path="orders/success" element={<Navigate to="/order-success" replace />} />
 
         {/* Checkout Error — Stripe redirects here on payment failure */}
         <Route path="checkout/error" element={<Suspense fallback={<PageLoader />}><PPCheckoutError /></Suspense>} />
