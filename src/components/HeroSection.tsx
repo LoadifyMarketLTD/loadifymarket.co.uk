@@ -5,16 +5,16 @@ import heroImg from "@/assets/hero-seller-dashboard.jpg";
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-[90vh] flex items-center overflow-hidden">
-      {/* Full-size background image */}
+    <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-background">
+      {/* Full-size background image — contain so all objects are fully visible */}
       <img
         src={heroImg}
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover object-center"
+        className="absolute inset-0 w-full h-full object-contain object-center opacity-40"
       />
-      {/* Overlay for text readability */}
-      <div className="absolute inset-0 bg-background/70" />
+      {/* Light overlay for text readability */}
+      <div className="absolute inset-0 bg-background/50" />
 
       <div className="relative z-10 container mx-auto px-4 py-28">
         <div className="max-w-2xl space-y-7">
@@ -70,7 +70,7 @@ const HeroSection = () => {
             ].map((badge) => (
               <div
                 key={badge.label}
-                className="flex items-center gap-1.5 rounded-full border border-border bg-card/80 backdrop-blur-sm px-4 py-2 text-sm font-medium text-foreground shadow-sm"
+                className="flex items-center gap-1.5 rounded-full border border-border bg-card/80 px-4 py-2 text-sm font-medium text-foreground shadow-sm"
               >
                 <badge.icon className="h-4 w-4 text-primary" />
                 {badge.label}
