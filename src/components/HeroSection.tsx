@@ -5,25 +5,28 @@ import heroImg from "@/assets/hero-seller-dashboard.jpg";
 
 const HeroSection = () => {
   return (
-    <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-background">
+    <section className="relative min-h-[90vh] flex items-center overflow-hidden">
       {/* Full-size background image — contain so all objects are fully visible */}
-      <img
-        src={heroImg}
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-contain object-center opacity-40"
-      />
-      {/* Light overlay for text readability */}
-      <div className="absolute inset-0 bg-background/50" />
+      <div className="absolute inset-0">
+        <img
+          src={heroImg}
+          alt=""
+          role="presentation"
+          className="w-full h-full object-contain object-center opacity-40"
+        />
+        {/* Gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/20" />
+      </div>
 
+      {/* Content overlay */}
       <div className="relative z-10 container mx-auto px-4 py-28">
         <div className="max-w-2xl space-y-7">
-          <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-display font-bold leading-[1.08] text-foreground">
+          <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-display font-bold leading-[1.08] text-white">
             The UK Wholesale{" "}
             <span className="text-primary">Marketplace.</span>
           </h1>
 
-          <p className="text-lg text-muted-foreground max-w-md leading-relaxed">
+          <p className="text-lg text-white/80 max-w-md leading-relaxed">
             A trusted platform where UK businesses buy and sell wholesale, clearance and overstock — all in one place.
           </p>
 
@@ -34,8 +37,8 @@ const HeroSection = () => {
               "Wholesale, Pallets & Clearance",
               "Secure Payments via Stripe",
             ].map((item) => (
-              <li key={item} className="flex items-center gap-2.5 text-foreground font-medium">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
+              <li key={item} className="flex items-center gap-2.5 text-white font-medium">
+                <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" aria-hidden="true" />
                 {item}
               </li>
             ))}
@@ -70,7 +73,7 @@ const HeroSection = () => {
             ].map((badge) => (
               <div
                 key={badge.label}
-                className="flex items-center gap-1.5 rounded-full border border-border bg-card/80 px-4 py-2 text-sm font-medium text-foreground shadow-sm"
+                className="flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white shadow-sm"
               >
                 <badge.icon className="h-4 w-4 text-primary" />
                 {badge.label}
