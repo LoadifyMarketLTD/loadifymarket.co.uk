@@ -387,7 +387,7 @@ const CategoryPage = () => {
                   }
                 >
                   {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard key={product.id} product={product} linkState={{ flow: "marketplace", categorySlug: slug, categoryLabel: config?.label }} />
                   ))}
                 </div>
               )}

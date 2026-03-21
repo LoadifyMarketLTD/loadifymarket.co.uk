@@ -327,7 +327,7 @@ const Catalog = () => {
                   }
                 >
                   {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard key={product.id} product={product} linkState={{ flow: "marketplace" }} />
                   ))}
                 </div>
               )}

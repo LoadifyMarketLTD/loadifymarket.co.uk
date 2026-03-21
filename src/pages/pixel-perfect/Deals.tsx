@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { X, Package, Tag, RotateCcw, Layers, TrendingDown, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
@@ -71,6 +72,12 @@ const dealSubSections = [
 ];
 
 const Deals = () => {
+  const location = useLocation();
+  // Both /deals and /clearance render this page; detect which for breadcrumb
+  const isDeals = location.pathname === "/deals";
+  const pageLabel = isDeals ? "Deals" : "Clearance";
+  const pagePath = isDeals ? "/deals" : "/clearance";
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -213,8 +220,7 @@ const Deals = () => {
               <BreadcrumbNav
                 items={[
                   { label: "Home", to: "/" },
-                  { label: "Catalog", to: "/catalog" },
-                  { label: "Clearance" },
+                  { label: pageLabel },
                 ]}
                 showBack={false}
               />
@@ -403,7 +409,7 @@ const Deals = () => {
                   }
                 >
                   {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard key={product.id} product={product} linkState={{ flow: "clearance", from: pagePath, fromLabel: pageLabel }} />
                   ))}
                 </div>
               )}
