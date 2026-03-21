@@ -55,7 +55,7 @@ const AdminUsers = () => {
 
       if (queryError) throw queryError;
 
-      const mapped: User[] = (data || []).map((u: any) => ({
+      const mapped: User[] = (data || []).map((u) => ({
         id: u.id,
         name: `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email,
         email: u.email,
@@ -67,8 +67,8 @@ const AdminUsers = () => {
       }));
 
       setUsers(mapped);
-    } catch (err: any) {
-      setError(err.message || "Failed to load users");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to load users");
     } finally {
       setLoading(false);
     }
@@ -87,8 +87,8 @@ const AdminUsers = () => {
       if (error) throw error;
       setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, isActive: !currentlyActive } : u));
       if (selected?.id === userId) setSelected((s) => s ? { ...s, isActive: !currentlyActive } : s);
-    } catch (err: any) {
-      setError(err.message || "Failed to update user");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to update user");
     } finally {
       setActionLoading(null);
     }

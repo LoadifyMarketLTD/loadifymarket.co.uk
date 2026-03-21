@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { MessageSquare, Search, Filter, Clock, CheckCircle2, AlertCircle, User, Loader2 } from "lucide-react";
+import { MessageSquare, Search, Filter, Clock, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -71,7 +71,7 @@ const AdminSupport = () => {
 
       if (queryError) throw queryError;
 
-      const mapped: Ticket[] = (data || []).map((t: any) => ({
+      const mapped: Ticket[] = (data || []).map((t) => ({
         id: t.id,
         subject: t.subject || "—",
         userName: t.userId ? t.userId.slice(0, 8).toUpperCase() : "—",
@@ -88,8 +88,8 @@ const AdminSupport = () => {
       }));
 
       setTickets(mapped);
-    } catch (err: any) {
-      setError(err.message || "Failed to load support tickets");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to load support tickets");
     } finally {
       setLoading(false);
     }
@@ -108,8 +108,8 @@ const AdminSupport = () => {
       if (error) throw error;
       setTickets((prev) => prev.map((t) => t.id === id ? { ...t, status: newStatus } : t));
       if (selected?.id === id) setSelected((s) => s ? { ...s, status: newStatus } : s);
-    } catch (err: any) {
-      setError(err.message || "Failed to update ticket status");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to update ticket status");
     } finally {
       setActionLoading(null);
     }

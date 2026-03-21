@@ -25,7 +25,7 @@ const CatalogHeader = ({
   viewMode,
   setViewMode,
   onToggleFilters,
-  filtersVisible,
+  filtersVisible: _filtersVisible,
 }: CatalogHeaderProps) => {
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

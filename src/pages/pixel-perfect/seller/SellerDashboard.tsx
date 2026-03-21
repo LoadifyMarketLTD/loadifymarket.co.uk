@@ -4,7 +4,6 @@ import {
   Package, ShoppingCart, PoundSterling, TrendingUp, ArrowUpRight,
   ArrowDownRight, Eye, Users, Star, Truck, Clock
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
