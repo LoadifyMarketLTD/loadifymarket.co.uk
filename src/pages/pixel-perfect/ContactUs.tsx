@@ -2,14 +2,16 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
-import { Mail, MapPin, Clock, Loader2 } from "lucide-react";
+import { Mail, MapPin, Clock, Phone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import { BRAND } from "@/constants/brand";
+import { formatPhoneNumber } from "@/lib/utils";
 
-const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || "support@loadifymarket.co.uk";
+const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || BRAND.supportEmail;
 
 const ContactUs = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -130,8 +132,20 @@ const ContactUs = () => {
                   </div>
                   <div>
                     <p className="font-medium text-foreground text-sm">Email</p>
-                    <a href="mailto:loadifymarket.co.uk@gmail.com" className="text-sm text-primary hover:underline">
-                      loadifymarket.co.uk@gmail.com
+                    <a href={`mailto:${SUPPORT_EMAIL}`} className="text-sm text-primary hover:underline">
+                      {SUPPORT_EMAIL}
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Phone className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground text-sm">Phone</p>
+                    <a href={`tel:${BRAND.supportPhone}`} className="text-sm text-primary hover:underline">
+                      {formatPhoneNumber(BRAND.supportPhone)}
                     </a>
                   </div>
                 </div>

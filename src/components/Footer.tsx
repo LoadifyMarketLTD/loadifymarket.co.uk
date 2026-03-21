@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle2, ShieldCheck, Truck, MapPin, Mail } from "lucide-react";
+import { ArrowRight, CheckCircle2, ShieldCheck, Truck, MapPin, Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import logo from "@/assets/loadify-logo.png";
@@ -106,6 +106,10 @@ const Footer = () => {
                 <p className="flex items-center gap-1.5">
                   <Mail className="h-3.5 w-3.5 text-accent shrink-0" />
                   loadifymarket.co.uk@gmail.com
+                </p>
+                <p className="flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5 text-accent shrink-0" />
+                  +44 7423 272138
                 </p>
               </div>
             </div>

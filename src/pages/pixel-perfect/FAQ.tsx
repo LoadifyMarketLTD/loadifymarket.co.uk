@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { Link } from "react-router-dom";
+import { BRAND } from "@/constants/brand";
 
 interface FaqItem {
   question: string;
@@ -238,8 +239,8 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
               Contact page
             </Link>{" "}
             or email us at{" "}
-            <a href="mailto:support@loadifymarket.co.uk" className="text-primary underline">
-              support@loadifymarket.co.uk
+            <a href={`mailto:${BRAND.supportEmail}`} className="text-primary underline">
+              {BRAND.supportEmail}
             </a>
             .
           </>
