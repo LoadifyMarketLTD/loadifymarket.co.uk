@@ -231,6 +231,7 @@ const ProductDetail = () => {
 
               {/* Reviews */}
               <ProductReviews
+                productId={id ?? ""}
                 productRating={product.rating ?? 0}
                 reviewCount={product.reviewCount ?? 0}
               />

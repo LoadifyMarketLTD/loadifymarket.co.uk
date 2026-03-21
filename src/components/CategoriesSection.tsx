@@ -206,8 +206,9 @@ const CategoriesSection = () => {
         });
         setSlugCounts(sc);
         setTypeCounts(tc);
-      } catch {
-        // Silently ignore fetch errors; fallback counts remain displayed
+      } catch (err) {
+        console.error("Failed to fetch category counts:", err);
+        // Fallback counts remain displayed
       }
     };
     fetchCounts();
