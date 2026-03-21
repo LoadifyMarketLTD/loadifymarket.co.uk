@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useLocation, Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
@@ -38,11 +38,21 @@ async function fetchSellerMap(
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const location = useLocation();
+  // State passed from listing pages (Catalog, CategoryPage, Clearance)
+  const navState = (location.state ?? {}) as {
+    flow?: string;
+    from?: string;
+    fromLabel?: string;
+    categorySlug?: string;
+    categoryLabel?: string;
+  };
 
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [sellerListingCount, setSellerListingCount] = useState(0);
+  const [productCategorySlug, setProductCategorySlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -82,6 +92,10 @@ const ProductDetail = () => {
         // Step 5: Adapt to UI shape
         const adapted = adaptProduct(normalised);
         setProduct(adapted);
+
+        // Capture category slug for breadcrumb link
+        const rawCat = Array.isArray(data.category) ? data.category[0] : data.category;
+        setProductCategorySlug((rawCat as { slug?: string } | null)?.slug ?? null);
 
         // Use real product images
         const imgs = Array.isArray(data.images) && data.images.length > 0
@@ -181,17 +195,33 @@ const ProductDetail = () => {
 
       <main className="pt-20 pb-16">
         <div className="container mx-auto px-4">
-          <BreadcrumbNav
-            items={[
-              { label: "Home", to: "/" },
-              { label: "Catalog", to: "/catalog" },
-              { label: product.category, to: "/catalog" },
-              { label: product.title },
-            ]}
-            showBack={true}
-            backLabel="Back to Catalog"
-            backTo="/catalog"
-          />
+          {(() => {
+            const isClearance = navState.flow === "clearance";
+            const sectionLabel = isClearance
+              ? (navState.fromLabel ?? "Clearance")
+              : "Catalog";
+            const sectionPath = isClearance
+              ? (navState.from ?? "/clearance")
+              : "/catalog";
+            // Category slug: prefer what was passed from CategoryPage, fall back to DB-derived
+            const catSlug = navState.categorySlug ?? productCategorySlug;
+            const catLabel = navState.categoryLabel ?? product.category;
+            return (
+              <BreadcrumbNav
+                items={[
+                  { label: "Home", to: "/" },
+                  { label: sectionLabel, to: sectionPath },
+                  ...(catSlug
+                    ? [{ label: catLabel, to: `/category/${catSlug}` }]
+                    : [{ label: catLabel }]),
+                  { label: product.title },
+                ]}
+                showBack={true}
+                backLabel={isClearance ? `Back to ${sectionLabel}` : "Back to Catalog"}
+                backTo={sectionPath}
+              />
+            );
+          })()}
 
           {/* Main content */}
           <div className="grid lg:grid-cols-[1fr_420px] gap-8">
@@ -231,6 +261,7 @@ const ProductDetail = () => {
 
               {/* Reviews */}
               <ProductReviews
+                productId={id ?? ""}
                 productRating={product.rating ?? 0}
                 reviewCount={product.reviewCount ?? 0}
               />

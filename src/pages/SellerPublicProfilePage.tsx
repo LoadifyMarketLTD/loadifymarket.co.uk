@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Product, SellerProfile, SellerStore } from '../types';
-import { Store, Package, MapPin, Mail, Phone, ArrowLeft, MessageCircle, ArrowRight, Calendar } from 'lucide-react';
+import { Store, Package, MapPin, Mail, Phone, MessageCircle, ArrowRight, Calendar } from 'lucide-react';
 import VerificationBadge from '../components/VerificationBadge';
 import RoleBadge from '../components/RoleBadge';
 import PaymentBehaviourBadge from '../components/PaymentBehaviourBadge';
 import ProductCard from '../components/ProductCard';
+import BreadcrumbNav from '../components/BreadcrumbNav';
 import { formatDistanceToNow } from 'date-fns';
 
 interface SellerData extends SellerProfile {
@@ -125,12 +126,18 @@ export default function SellerPublicProfilePage() {
 
   return (
     <div className="bg-[#F8F9FA] min-h-screen pt-24">
-      {/* Back Button */}
-      <div className="container-cinematic py-6">
-        <Link to="/catalog" className="inline-flex items-center gap-2 text-gray-500 hover:text-gold transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          Back to Catalog
-        </Link>
+      {/* Breadcrumb */}
+      <div className="container-cinematic py-4">
+        <BreadcrumbNav
+          items={[
+            { label: "Home", to: "/" },
+            { label: "Catalog", to: "/catalog" },
+            { label: seller.businessName || seller.store?.storeName || "Seller" },
+          ]}
+          showBack={true}
+          backLabel="Back to Catalog"
+          backTo="/catalog"
+        />
       </div>
 
       {/* Store Banner */}

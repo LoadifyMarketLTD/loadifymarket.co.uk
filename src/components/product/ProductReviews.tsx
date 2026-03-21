@@ -1,36 +1,30 @@
-import { useState } from "react";
-import { Star, ThumbsUp, MessageSquare, User } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Star, ThumbsUp, MessageSquare, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store";
 
-interface Review {
-  id: number;
-  author: string;
+interface DBReview {
+  id: string;
   rating: number;
-  date: string;
-  title: string;
-  text: string;
-  helpful: number;
-  verified: boolean;
+  title: string | null;
+  comment: string | null;
+  isVerifiedPurchase: boolean;
+  helpfulCount: number;
+  helpfulVoters: string[];
+  createdAt: string;
+  users: { firstName: string | null; lastName: string | null } | null;
 }
 
-const mockReviews: Review[] = [
-  { id: 1, author: "Mark Thompson", rating: 5, date: "2025-03-15", title: "Excellent quality lot", text: "Received the pallet within 3 days. Items were exactly as described — about 90% were in perfect condition. Great value for resale. Will definitely buy again from this seller.", helpful: 12, verified: true },
-  { id: 2, author: "Sarah Williams", rating: 4, date: "2025-03-10", title: "Good deal, minor issues", text: "Overall a solid purchase. A couple of items had minor cosmetic damage not mentioned in the listing, but the price more than makes up for it. Communication with seller was quick.", helpful: 8, verified: true },
-  { id: 3, author: "James Cooper", rating: 5, date: "2025-03-05", title: "Best wholesale supplier", text: "This is my third purchase and the quality is consistently excellent. Packaging was secure and delivery was on time. Highly recommended for anyone in the resale business.", helpful: 15, verified: true },
-  { id: 4, author: "Emma Davies", rating: 3, date: "2025-02-28", title: "Decent but could be better", text: "The lot was okay. About 70% was sellable, which is lower than I expected based on the 'Grade A/B' description. Seller did respond to my concerns though.", helpful: 5, verified: false },
-  { id: 5, author: "David Chen", rating: 5, date: "2025-02-20", title: "Superb value", text: "Absolutely fantastic lot. Every single item was in great condition. The manifest was accurate and delivery was well-organised. 10/10.", helpful: 9, verified: true },
-];
-
-const ratingDistribution = [
-  { stars: 5, count: 42, pct: 58 },
-  { stars: 4, count: 18, pct: 25 },
-  { stars: 3, count: 8, pct: 11 },
-  { stars: 2, count: 3, pct: 4 },
-  { stars: 1, count: 1, pct: 1 },
-];
+interface RatingBucket {
+  stars: number;
+  count: number;
+  pct: number;
+}
 
 const StarRating = ({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" }) => {
   const s = size === "sm" ? "h-3.5 w-3.5" : "h-5 w-5";
@@ -76,21 +70,185 @@ const InteractiveStarRating = ({ value, onChange }: InteractiveStarRatingProps) 
 };
 
 interface ProductReviewsProps {
+  productId: string;
   productRating: number;
   reviewCount: number;
 }
 
-const ProductReviews = ({ productRating, reviewCount }: ProductReviewsProps) => {
+const ProductReviews = ({ productId, productRating, reviewCount }: ProductReviewsProps) => {
+  const { user } = useAuthStore();
   const [showForm, setShowForm] = useState(false);
   const [newRating, setNewRating] = useState(0);
-  const [reviews, setReviews] = useState(mockReviews);
-  const [helpfulClicked, setHelpfulClicked] = useState<Set<number>>(new Set());
+  const [newTitle, setNewTitle] = useState("");
+  const [newComment, setNewComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleHelpful = (id: number) => {
-    if (helpfulClicked.has(id)) return;
-    setReviews((prev) => prev.map((r) => (r.id === id ? { ...r, helpful: r.helpful + 1 } : r)));
-    setHelpfulClicked((prev) => new Set(prev).add(id));
+  const [reviews, setReviews] = useState<DBReview[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+  const [ratingDistribution, setRatingDistribution] = useState<RatingBucket[]>([]);
+  const [helpfulVoting, setHelpfulVoting] = useState<Set<string>>(new Set());
+
+  const fetchReviews = useCallback(async () => {
+    setLoadingReviews(true);
+    try {
+      const { data, error } = await supabase
+        .from("reviews")
+        .select(`
+          id, rating, title, comment, isVerifiedPurchase,
+          helpfulCount, helpfulVoters, createdAt,
+          users(firstName, lastName)
+        `)
+        .eq("productId", productId)
+        .eq("status", "published")
+        .order("createdAt", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      const rows = (data ?? []) as unknown as DBReview[];
+      setReviews(rows);
+
+      // Build rating distribution from real data
+      const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      rows.forEach((r) => { if (r.rating >= 1 && r.rating <= 5) counts[r.rating]++; });
+      const total = rows.length;
+      const dist: RatingBucket[] = [5, 4, 3, 2, 1].map((stars) => ({
+        stars,
+        count: counts[stars],
+        pct: total > 0 ? Math.round((counts[stars] / total) * 100) : 0,
+      }));
+      setRatingDistribution(dist);
+    } catch (err) {
+      console.error("Failed to load reviews:", err);
+      // silently fall back to empty state
+    } finally {
+      setLoadingReviews(false);
+    }
+  }, [productId]);
+
+  useEffect(() => {
+    if (productId) fetchReviews();
+  }, [productId, fetchReviews]);
+
+  const handleHelpful = async (review: DBReview) => {
+    if (!user) {
+      toast({ title: "Sign in required", description: "Please sign in to mark reviews as helpful." });
+      return;
+    }
+    if (review.helpfulVoters.includes(user.id) || helpfulVoting.has(review.id)) return;
+
+    setHelpfulVoting((prev) => new Set(prev).add(review.id));
+    try {
+      const newVoters = [...review.helpfulVoters, user.id];
+      await supabase
+        .from("reviews")
+        .update({ helpfulCount: review.helpfulCount + 1, helpfulVoters: newVoters })
+        .eq("id", review.id);
+      setReviews((prev) =>
+        prev.map((r) =>
+          r.id === review.id
+            ? { ...r, helpfulCount: r.helpfulCount + 1, helpfulVoters: newVoters }
+            : r,
+        ),
+      );
+    } catch {
+      toast({ title: "Error", description: "Could not record your vote. Please try again.", variant: "destructive" });
+    } finally {
+      setHelpfulVoting((prev) => { const s = new Set(prev); s.delete(review.id); return s; });
+    }
   };
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      toast({ title: "Sign in required", description: "Please sign in to write a review." });
+      return;
+    }
+    if (newRating === 0) {
+      toast({ title: "Rating required", description: "Please select a star rating.", variant: "destructive" });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      // Find a completed order where this user purchased this specific product
+      // Check single-product orders (orders.productId) and multi-item orders (order_items)
+      const [singleOrderRes, multiOrderRes] = await Promise.all([
+        supabase
+          .from("orders")
+          .select("id")
+          .eq("buyerId", user.id)
+          .eq("productId", productId)
+          .in("status", ["delivered", "completed"])
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("order_items")
+          .select("orderId, orders!inner(id, buyerId, status)")
+          .eq("productId", productId)
+          .limit(1)
+          .maybeSingle(),
+      ]);
+
+      // Accept from single-product orders; for multi-item orders verify ownership + status
+      const orderData =
+        singleOrderRes.data ??
+        (() => {
+          const item = multiOrderRes.data as { orderId: string; orders: { id: string; buyerId: string; status: string } } | null;
+          if (
+            item?.orders &&
+            item.orders.buyerId === user.id &&
+            ["delivered", "completed"].includes(item.orders.status)
+          ) {
+            return { id: item.orderId };
+          }
+          return null;
+        })();
+
+      if (!orderData) {
+        toast({
+          title: "Purchase required",
+          description: "You can only review products you have purchased and received.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase.from("reviews").insert({
+        productId,
+        userId: user.id,
+        orderId: orderData.id,
+        rating: newRating,
+        title: newTitle.trim() || null,
+        comment: newComment.trim() || null,
+        isVerifiedPurchase: true,
+        status: "published",
+      });
+
+      if (error) {
+        if (error.code === "23505") {
+          toast({ title: "Already reviewed", description: "You have already submitted a review for this product." });
+        } else {
+          throw error;
+        }
+        return;
+      }
+
+      toast({ title: "Review submitted!", description: "Thank you for your feedback." });
+      setShowForm(false);
+      setNewRating(0);
+      setNewTitle("");
+      setNewComment("");
+      await fetchReviews();
+    } catch {
+      toast({ title: "Error", description: "Could not submit your review. Please try again.", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const displayRating = productRating > 0 ? productRating.toFixed(1) : "—";
+  const displayCount = reviewCount > 0 ? reviewCount : reviews.length;
 
   return (
     <div className="bg-card rounded-xl border border-border p-6 space-y-6">
@@ -107,9 +265,9 @@ const ProductReviews = ({ productRating, reviewCount }: ProductReviewsProps) => 
       {/* Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-6">
         <div className="flex flex-col items-center justify-center text-center">
-          <span className="text-4xl font-bold text-foreground">{productRating}</span>
+          <span className="text-4xl font-bold text-foreground">{displayRating}</span>
           <StarRating rating={Math.round(productRating)} size="md" />
-          <p className="text-xs text-muted-foreground mt-1">{reviewCount} reviews</p>
+          <p className="text-xs text-muted-foreground mt-1">{displayCount} review{displayCount !== 1 ? "s" : ""}</p>
         </div>
         <div className="space-y-2">
           {ratingDistribution.map((r) => (
@@ -124,7 +282,7 @@ const ProductReviews = ({ productRating, reviewCount }: ProductReviewsProps) => 
 
       {/* Write Review Form */}
       {showForm && (
-        <div className="border border-border rounded-lg p-4 space-y-4 bg-muted/20">
+        <form onSubmit={handleSubmitReview} className="border border-border rounded-lg p-4 space-y-4 bg-muted/20">
           <h3 className="text-sm font-semibold text-foreground">Write Your Review</h3>
           <div>
             <p className="text-xs text-muted-foreground mb-1">Your Rating</p>
@@ -135,58 +293,102 @@ const ProductReviews = ({ productRating, reviewCount }: ProductReviewsProps) => 
             <input
               className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               placeholder="Summarize your experience"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              maxLength={160}
             />
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-1">Your Review</p>
-            <Textarea placeholder="Share your experience with this product..." rows={3} />
+            <Textarea
+              placeholder="Share your experience with this product..."
+              rows={3}
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              maxLength={2000}
+            />
           </div>
           <div className="flex gap-2">
-            <Button size="sm">Submit Review</Button>
-            <Button size="sm" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+            <Button type="submit" size="sm" disabled={submitting}>
+              {submitting && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+              Submit Review
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setShowForm(false)}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
           </div>
-        </div>
+        </form>
       )}
 
       {/* Reviews List */}
-      <div className="space-y-4">
-        {reviews.map((review) => (
-          <div key={review.id} className="border border-border rounded-lg p-4 space-y-2">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">{review.author}</span>
-                    {review.verified && (
-                      <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-200">
-                        Verified Buyer
-                      </Badge>
-                    )}
+      {loadingReviews ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : reviews.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-6">
+          No reviews yet. Be the first to review this product.
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {reviews.map((review) => {
+            const firstName = review.users?.firstName ?? "";
+            const lastName = review.users?.lastName ?? "";
+            const authorName = [firstName, lastName].filter(Boolean).join(" ") || "Buyer";
+            const alreadyVoted = user ? review.helpfulVoters.includes(user.id) : false;
+            return (
+              <div key={review.id} className="border border-border rounded-lg p-4 space-y-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground">{authorName}</span>
+                        {review.isVerifiedPurchase && (
+                          <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-200">
+                            Verified Buyer
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(review.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">{review.date}</p>
+                  <StarRating rating={review.rating} />
                 </div>
+                {review.title && (
+                  <h4 className="text-sm font-semibold text-foreground">{review.title}</h4>
+                )}
+                {review.comment && (
+                  <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleHelpful(review)}
+                  disabled={alreadyVoted || helpfulVoting.has(review.id)}
+                  className={`flex items-center gap-1.5 text-xs transition-colors ${
+                    alreadyVoted
+                      ? "text-primary cursor-default"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <ThumbsUp className="h-3.5 w-3.5" />
+                  Helpful ({review.helpfulCount})
+                </button>
               </div>
-              <StarRating rating={review.rating} />
-            </div>
-            <h4 className="text-sm font-semibold text-foreground">{review.title}</h4>
-            <p className="text-sm text-muted-foreground leading-relaxed">{review.text}</p>
-            <button
-              onClick={() => handleHelpful(review.id)}
-              className={`flex items-center gap-1.5 text-xs transition-colors ${
-                helpfulClicked.has(review.id)
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <ThumbsUp className="h-3.5 w-3.5" />
-              Helpful ({review.helpful})
-            </button>
-          </div>
-        ))}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

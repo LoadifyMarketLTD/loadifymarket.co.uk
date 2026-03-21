@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Package, Shirt, Laptop, Home, Wrench, ShoppingBag,
@@ -6,6 +6,7 @@ import {
   Dumbbell, Baby, Sparkles, ChevronDown, ChevronUp,
   RotateCcw, TrendingDown, Layers
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 import electronicsImg from "@/assets/categories/electronics.jpg";
 import clothingImg from "@/assets/categories/clothing.jpg";
@@ -30,6 +31,8 @@ const categories = [
     label: "Electronics & Technology",
     count: "85+ listings",
     image: electronicsImg,
+    dbSlugs: ["electronics", "media-electronics"],
+    dbTypes: [] as string[],
     subcategories: ["Phones & Tablets", "Laptops & PCs", "TV & Audio", "Gaming Consoles", "Accessories", "Smart Home"],
   },
   {
@@ -37,6 +40,8 @@ const categories = [
     label: "Clothing & Apparel",
     count: "200+ listings",
     image: clothingImg,
+    dbSlugs: ["fashion", "clothing"],
+    dbTypes: [] as string[],
     subcategories: ["Men's Clothing", "Women's Clothing", "Children's Clothing", "Footwear", "Accessories & Bags", "Sportswear"],
   },
   {
@@ -44,6 +49,8 @@ const categories = [
     label: "Home & Garden",
     count: "95+ listings",
     image: homeImg,
+    dbSlugs: ["home-garden"],
+    dbTypes: [] as string[],
     subcategories: ["Furniture", "Kitchen & Dining", "Bedding & Linen", "Garden & Outdoor", "Lighting", "Décor & Accessories"],
   },
   {
@@ -51,6 +58,8 @@ const categories = [
     label: "Health & Beauty",
     count: "110+ listings",
     image: healthBeautyImg,
+    dbSlugs: ["health-beauty"],
+    dbTypes: [] as string[],
     subcategories: ["Skincare", "Haircare", "Makeup & Cosmetics", "Fragrances", "Health & Wellness", "Personal Care"],
   },
   {
@@ -58,6 +67,8 @@ const categories = [
     label: "Toys & Games",
     count: "75+ listings",
     image: toysImg,
+    dbSlugs: ["toys"],
+    dbTypes: [] as string[],
     subcategories: ["Action Figures", "Board Games", "Educational Toys", "Outdoor Toys", "Dolls & Playsets", "Puzzles"],
   },
   {
@@ -65,6 +76,8 @@ const categories = [
     label: "Food & Drink",
     count: "60+ listings",
     image: foodDrinkImg,
+    dbSlugs: ["food-drink"],
+    dbTypes: [] as string[],
     subcategories: ["Snacks & Confectionery", "Beverages", "Canned & Dry Goods", "Health Foods", "Specialty & Gourmet", "Seasonal"],
   },
   {
@@ -72,6 +85,8 @@ const categories = [
     label: "Tools & DIY",
     count: "55+ listings",
     image: toolsImg,
+    dbSlugs: ["tools"],
+    dbTypes: [] as string[],
     subcategories: ["Power Tools", "Hand Tools", "Plumbing", "Electrical", "Paint & Decorating", "Fixings & Hardware"],
   },
   {
@@ -79,6 +94,8 @@ const categories = [
     label: "Sports & Leisure",
     count: "65+ listings",
     image: sportsImg,
+    dbSlugs: ["sports-outdoors"],
+    dbTypes: [] as string[],
     subcategories: ["Fitness Equipment", "Cycling", "Camping & Hiking", "Water Sports", "Team Sports", "Leisure & Travel"],
   },
   {
@@ -86,6 +103,8 @@ const categories = [
     label: "Automotive",
     count: "40+ listings",
     image: automotiveImg,
+    dbSlugs: ["vehicles"],
+    dbTypes: [] as string[],
     subcategories: ["Car Parts", "Car Accessories", "Cleaning & Valeting", "Tools & Equipment", "Oils & Fluids", "Tyres & Wheels"],
   },
   {
@@ -93,6 +112,8 @@ const categories = [
     label: "Office & Stationery",
     count: "45+ listings",
     image: officeImg,
+    dbSlugs: ["business", "office-supplies"],
+    dbTypes: [] as string[],
     subcategories: ["Office Furniture", "Printers & Ink", "Paper & Supplies", "Office Tech", "Filing & Storage", "Pens & Writing"],
   },
   {
@@ -100,6 +121,8 @@ const categories = [
     label: "Baby & Nursery",
     count: "50+ listings",
     image: babyImg,
+    dbSlugs: ["baby-kids"],
+    dbTypes: [] as string[],
     subcategories: ["Prams & Pushchairs", "Baby Clothing", "Feeding", "Nursery Furniture", "Toys (0-3 yrs)", "Safety & Care"],
   },
   {
@@ -107,6 +130,8 @@ const categories = [
     label: "Jewellery & Watches",
     count: "30+ listings",
     image: jewelleryImg,
+    dbSlugs: ["jewellery", "accessories"],
+    dbTypes: [] as string[],
     subcategories: ["Necklaces & Pendants", "Rings & Earrings", "Bracelets", "Watches", "Fashion Jewellery", "Accessories"],
   },
   {
@@ -114,6 +139,8 @@ const categories = [
     label: "Mixed Lots",
     count: "120+ listings",
     image: mixedPalletsImg,
+    dbSlugs: ["mixed-job-lots", "wholesale-pallets"],
+    dbTypes: [] as string[],
     subcategories: ["General Mixed", "Department Store Returns", "Amazon Returns", "Seasonal Mixed", "High Value Mixed", "Liquidation Lots"],
   },
   {
@@ -121,6 +148,8 @@ const categories = [
     label: "Customer Returns",
     count: "90+ listings",
     image: returnsImg,
+    dbSlugs: [] as string[],
+    dbTypes: ["lot"],
     subcategories: ["Electronics Returns", "Clothing Returns", "Home Returns", "Appliance Returns", "Graded Returns", "Unchecked Returns"],
   },
   {
@@ -128,6 +157,8 @@ const categories = [
     label: "Overstock",
     count: "130+ listings",
     image: overstockImg,
+    dbSlugs: ["wholesale-pallets"],
+    dbTypes: ["pallet", "wholesale"],
     subcategories: ["Brand Overstock", "Seasonal Overstock", "End of Line", "Excess Inventory", "Wholesale Lots", "Bulk Deals"],
   },
   {
@@ -135,14 +166,63 @@ const categories = [
     label: "Clearance Deals",
     count: "150+ listings",
     image: clearanceImg,
+    dbSlugs: [] as string[],
+    dbTypes: ["clearance"],
     subcategories: ["Flash Sales", "Closing Down Stock", "Damaged Packaging", "Short Dated", "Sample Stock", "One-Off Deals"],
   },
 ];
+
+type CategoryRow = typeof categories[0];
+
+interface ProductCountRow {
+  type?: string;
+  category?: { slug?: string } | { slug?: string }[] | null;
+}
 
 const CategoriesSection = () => {
   const navigate = useNavigate();
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [slugCounts, setSlugCounts] = useState<Record<string, number>>({});
+  const [typeCounts, setTypeCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("type, category:categories!categoryId(slug)")
+          .eq("isActive", true)
+          .eq("isApproved", true)
+          .not("type", "eq", "logistics");
+        if (error || !data) return;
+        const sc: Record<string, number> = {};
+        const tc: Record<string, number> = {};
+        (data as ProductCountRow[]).forEach((p) => {
+          const cat = Array.isArray(p.category) ? p.category[0] : p.category;
+          const slug = (cat as { slug?: string } | null)?.slug;
+          if (slug) sc[slug] = (sc[slug] ?? 0) + 1;
+          if (p.type) tc[p.type] = (tc[p.type] ?? 0) + 1;
+        });
+        setSlugCounts(sc);
+        setTypeCounts(tc);
+      } catch (err) {
+        console.error("Failed to fetch category counts:", err);
+        // Fallback counts remain displayed
+      }
+    };
+    fetchCounts();
+  }, []);
+
+  const getLiveCount = (cat: CategoryRow): number =>
+    cat.dbSlugs.reduce((sum, s) => sum + (slugCounts[s] ?? 0), 0) +
+    cat.dbTypes.reduce((sum, t) => sum + (typeCounts[t] ?? 0), 0);
+
+  const getCountLabel = (cat: CategoryRow): string => {
+    const live = getLiveCount(cat);
+    if (live > 0) return `${live} listing${live === 1 ? "" : "s"}`;
+    return cat.count;
+  };
 
   const visibleCategories = showAll ? categories : categories.slice(0, 8);
 
@@ -179,7 +259,7 @@ const CategoriesSection = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <span className="font-display text-sm font-semibold text-foreground block truncate">{cat.label}</span>
-                    <span className="text-xs text-muted-foreground">{cat.count}</span>
+                    <span className="text-xs text-muted-foreground">{getCountLabel(cat)}</span>
                   </div>
                 </div>
 
