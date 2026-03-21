@@ -35,29 +35,29 @@ const features = [
 
 const FeaturesSection = () => {
   return (
-    <section id="features" className="py-24 bg-background">
+    <section id="features" className="py-14 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-sm font-semibold uppercase tracking-wider text-primary">Platform Features</span>
-          <h2 className="mt-3 text-3xl sm:text-4xl font-display font-bold text-foreground">
+        <div className="text-center max-w-xl mx-auto mb-9">
+          <span className="text-xs font-semibold uppercase tracking-wider text-primary">Platform Features</span>
+          <h2 className="mt-2 text-xl sm:text-2xl font-display font-bold text-foreground">
             Everything You Need to Trade
           </h2>
-          <p className="mt-4 text-muted-foreground">
+          <p className="mt-2 text-sm text-muted-foreground">
             A complete marketplace platform built for wholesale and clearance stock trading in the UK.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
           {features.map((feature) => (
             <div
               key={feature.title}
-              className="group bg-card rounded-xl p-6 shadow-card hover:shadow-elevated transition-all duration-300 border border-border hover:border-primary/20"
+              className="group bg-card rounded-lg p-3.5 shadow-card hover:shadow-elevated transition-all duration-300 border border-border hover:border-primary/20"
             >
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-gradient-hero group-hover:text-primary-foreground transition-colors">
-                <feature.icon className="h-6 w-6 text-primary group-hover:text-primary-foreground" />
+              <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center mb-2 group-hover:bg-gradient-hero group-hover:text-primary-foreground transition-colors">
+                <feature.icon className="h-3.5 w-3.5 text-primary group-hover:text-primary-foreground" />
               </div>
-              <h3 className="font-display text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+              <h3 className="font-display text-sm font-semibold text-foreground mb-1">{feature.title}</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>
