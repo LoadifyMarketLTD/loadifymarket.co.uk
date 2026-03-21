@@ -61,7 +61,7 @@ const AdminOrders = () => {
 
       if (queryError) throw queryError;
 
-      const mapped: Order[] = (data || []).map((o: any) => {
+      const mapped: Order[] = (data || []).map((o) => {
         const productObj = Array.isArray(o.product) ? o.product[0] : o.product;
         return {
           id: o.id,
@@ -77,8 +77,8 @@ const AdminOrders = () => {
       });
 
       setOrders(mapped);
-    } catch (err: any) {
-      setError(err.message || "Failed to load orders");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to load orders");
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Settings, Bell, Shield, CreditCard, Truck,
+  Bell, Shield, CreditCard, Truck,
   Eye, EyeOff, Save, Key, ExternalLink, CheckCircle, AlertCircle, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";

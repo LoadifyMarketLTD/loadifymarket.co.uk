@@ -59,7 +59,7 @@ export const generateOrganizationSchema = () => {
     foundingDate: '2025',
     contactPoint: {
       '@type': 'ContactPoint',
-      telephone: '+44',
+      telephone: '+447423272138',
       contactType: 'Customer Service',
       email: 'loadifymarket.co.uk@gmail.com',
       availableLanguage: ['English'],

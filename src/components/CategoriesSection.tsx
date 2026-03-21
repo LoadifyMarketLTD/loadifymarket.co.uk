@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Package, Shirt, Laptop, Home, Wrench, ShoppingBag,
+  Package, Shirt, Laptop, Home, Wrench,
   Heart, Gamepad2, UtensilsCrossed, Car, Briefcase,
   Dumbbell, Baby, Sparkles, ChevronDown, ChevronUp,
   RotateCcw, TrendingDown, Layers

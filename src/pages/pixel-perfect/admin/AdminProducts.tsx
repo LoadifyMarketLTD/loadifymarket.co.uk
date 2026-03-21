@@ -132,8 +132,8 @@ const AdminProducts = () => {
       });
 
       setProducts(mapped);
-    } catch (err: any) {
-      setError(err.message || "Failed to load products");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to load products");
     } finally {
       setLoading(false);
     }
@@ -151,8 +151,8 @@ const AdminProducts = () => {
         .eq("id", id);
       if (error) throw error;
       setProducts((prev) => prev.map((p) => p.id === id ? { ...p, isActive: !currentActive } : p));
-    } catch (err: any) {
-      setError(err.message || "Failed to update product");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to update product");
     } finally {
       setActionLoading(null);
     }

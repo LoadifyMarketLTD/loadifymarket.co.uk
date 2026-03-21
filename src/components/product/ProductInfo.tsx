@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight, Package, MapPin, Clock, Eye, Tag,
-  Truck, ShieldCheck, MessageSquare, ShoppingCart
+  Truck, ShieldCheck, ShoppingCart
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import type { Product } from "@/components/catalog/ProductCard";

@@ -1,231 +1,212 @@
 # Loadify Market
 
-A comprehensive B2B & B2C marketplace platform for products, pallets, and bulk lots.
+**UK online services marketplace** operated by XDrive Logistics Ltd (Co. No: 13171804, VAT: GB375949535).
 
-## 🚀 Quick Start
+Buyers discover, compare and book **services** — transport, logistics, freight, warehousing, equipment hire and more — from verified sellers. No physical products, no depot.
 
-**New to the project?** Start here:
-- 📘 **[Complete Setup Guide](./COMPLETE_SETUP_GUIDE.md)** - Step-by-step installation and configuration
-- 🗄️ **[Database Setup Guide](./DATABASE_SETUP_COMPLETE.md)** - Complete database initialization
-- 📚 **[Documentation Index (DOCS.md)](./DOCS.md)** - Navigate all project docs in one place
+---
 
-## ✨ Core Marketplace Features
+## 📚 Documentation
 
-### 1. Product Listing System ✅
-- Create listings for products, pallets, lots, and clearance items
-- Upload up to 10 images per product
-- Full category tree with 15 main categories and 60+ subcategories
-- Pricing with automatic VAT calculation
-- Stock management and product specifications
+| Doc | Purpose |
+|---|---|
+| [COMPLETE_SETUP_GUIDE.md](./COMPLETE_SETUP_GUIDE.md) | Step-by-step installation and configuration |
+| [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | System architecture, domain model, data flow |
+| [docs/openapi.yaml](./docs/openapi.yaml) | API reference (OpenAPI 3.0) |
+| [DATABASE_SETUP_COMPLETE.md](./DATABASE_SETUP_COMPLETE.md) | Database initialisation guide |
+| [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | Netlify deployment instructions |
+| [docs/SHIPPING.md](./docs/SHIPPING.md) | Shipment and tracking system |
 
-### 2. Seller Dashboard ✅
-- Complete product management (add/edit/delete)
-- Order tracking and management
-- Earnings overview with commission tracking
-- Analytics and performance metrics
-- Store profile management
-- Shipment and returns handling
+---
 
-### 3. Buyer Features ✅
-- Advanced product search and filtering
-- Multiple view modes (grid/list)
-- Wishlist functionality
-- Shopping cart with persistent storage
-- Secure checkout with Stripe
-- Order tracking
-- Seller messaging system
+## ✨ Features
 
-### 4. Admin Panel ✅
-- Seller approval workflow
-- Product moderation
+### Buyers
+- Browse and search service listings by category, price, location type
+- Submit a Request for Quote (RFQ) and receive competitive offers from sellers
+- Secure checkout via Stripe (GBP)
+- In-order messaging with sellers
+- Order tracking and review system
+- Wishlist and saved searches
+
+### Sellers
+- Service listing management (draft → active lifecycle)
+- Order management dashboard (requested → accepted → in_progress → completed)
+- Stripe Connect Express payout onboarding
+- Quote submission for buyer RFQs
+- Reviews and ratings
+
+### Admin
+- Seller verification and approval workflow
+- Listing moderation
 - User management
-- Category management
-- Reported listings review
-- System analytics and metrics
-- Data export capabilities
+- Dispute resolution
+- Analytics and reporting
 
-### 5. Complete Database Schema ✅
-All entities implemented:
-- Users (buyer, seller, admin roles)
-- Products & Categories
-- Orders & Reviews
-- Messages & Conversations
-- Carts & Wishlists
-- Payment Sessions
-- Seller Stores
-- Returns & Disputes
-- Payouts
-
-### 6. Authentication ✅
-- Supabase-powered authentication
-- Separate buyer and seller registration
-- Email verification ready
-- Role-based access control
-- Secure session management
+---
 
 ## 📋 Prerequisites
 
 - **Node.js 20+** and npm
-- **Supabase account** (free tier works)
-- **Stripe account** (optional - for payments, test mode available)
-- **SendGrid account** (optional - for email notifications)
+- **Supabase account** (free tier works for development)
+- **Stripe account** (test mode available — no real payments needed in development)
+- **SendGrid account** (optional — transactional email)
 
-## 🛠️ Installation
+---
 
-For complete setup instructions, see **[COMPLETE_SETUP_GUIDE.md](./COMPLETE_SETUP_GUIDE.md)**
+## 🛠️ Quick Start
 
-### Quick Start:
-
-1. **Clone and install**:
 ```bash
+# 1. Clone and install
 git clone https://github.com/LoadifyMarketLTD/loadifymarket.co.uk.git
 cd loadifymarket.co.uk
 npm install
-```
 
-2. **Set up database**:
-   - Create a Supabase project
-   - Run `database-complete.sql` in Supabase SQL Editor
-   - Run `database-seed-categories.sql` to populate categories
-   - Run `database-seed-testdata.sql` for test data (development only)
-
-3. **Configure environment**:
-```bash
+# 2. Configure environment
 cp .env.example .env
-# Edit .env with your Supabase credentials
-```
+# Edit .env — set VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_STRIPE_PUBLISHABLE_KEY
 
-4. **Start development**:
-```bash
+# 3. Initialise database
+# In Supabase SQL Editor, run migrations in order:
+#   supabase/00_consolidated_schema.sql   ← full baseline schema
+#   supabase/10_rls_policies.sql          ← Row-Level Security
+#   supabase/200_services_marketplace.sql ← services, RFQ, messaging tables
+#   (and any higher-numbered migrations)
+
+# 4. Start dev server (hot reload)
 npm run dev
 ```
 
 Visit [http://localhost:5173](http://localhost:5173)
 
-**Note:** In **development**, the app falls back to a mock Supabase client when credentials are not configured. In **production**, `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are required — the app will throw an error at startup if they are missing (no mock fallback).
+---
 
-## 🏗️ Build
+## 🧑‍💻 Development Commands
 
 ```bash
-npm run build
+npm run dev          # Start Vite dev server with HMR
+npm run build        # TypeScript check + Vite production build
+npm run lint         # ESLint
+npm test             # Vitest unit tests (single run)
+npm run test:watch   # Vitest in watch mode
 ```
+
+Local Netlify Functions (Stripe, register, email):
+```bash
+npm install -g netlify-cli
+netlify dev          # Starts frontend + Netlify Functions at http://localhost:8888
+```
+
+---
+
+## 🏗️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 19 + TypeScript + Vite |
+| Styling | Tailwind CSS + shadcn/ui |
+| State | Zustand |
+| Database | Supabase (PostgreSQL + Auth + Storage) |
+| API | Supabase PostgREST + Netlify Functions |
+| Payments | Stripe Checkout + Stripe Connect Express |
+| Email | SendGrid |
+| Hosting | Netlify (CDN + serverless functions) |
+| CI | GitHub Actions (`.github/workflows/ci.yml`) |
+
+---
+
+## 📂 Key Project Structure
+
+```
+├── src/
+│   ├── pages/pixel-perfect/   # Full-page React components
+│   │   ├── seller/            # /seller/* seller dashboard
+│   │   ├── buyer/             # /dashboard/* buyer dashboard
+│   │   └── admin/             # /admin/* admin panel
+│   ├── components/
+│   │   └── ErrorBoundary.tsx  # Global error boundary
+│   └── lib/
+│       ├── supabase.ts        # Supabase client
+│       └── errorTracking.ts   # Client-side error reporting
+├── netlify/functions/         # Serverless API handlers
+│   ├── register.ts            # User registration
+│   ├── create-checkout.ts     # Stripe Checkout session
+│   ├── stripe-webhook.ts      # Stripe event handler
+│   ├── connect-onboard.ts     # Stripe Connect onboarding
+│   └── send-email.ts          # SendGrid transactional email
+├── supabase/                  # SQL migrations (numbered)
+│   └── 200_services_marketplace.sql  # Services, RFQ, messaging
+├── docs/
+│   ├── ARCHITECTURE.md        # System architecture
+│   └── openapi.yaml           # API reference
+└── public/
+    ├── sitemap.xml
+    └── robots.txt
+```
+
+---
 
 ## 🚀 Deployment
 
-The project is configured for Netlify deployment:
+The project deploys to Netlify automatically via the configuration in `netlify.toml`.
 
-1. Connect your GitHub repository to Netlify
-2. **IMPORTANT:** Leave the "Build command" field **EMPTY** in Netlify UI (uses netlify.toml)
-3. Set environment variables in Netlify dashboard
-4. Deploy!
+1. Connect the GitHub repository to Netlify.
+2. Leave the **Build command** field **empty** in the Netlify UI (it reads from `netlify.toml`).
+3. Set the following environment variables in the Netlify dashboard:
 
-The `netlify.toml` file is already configured with the correct build command.
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_SUPABASE_URL` | ✅ | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | ✅ | Supabase anon/public key |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Supabase service role key (functions only) |
+| `STRIPE_SECRET_KEY` | ✅ | Stripe secret key |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | ✅ | Stripe publishable key |
+| `STRIPE_WEBHOOK_SECRET` | ✅ | Stripe webhook signing secret |
+| `STRIPE_CONNECT_WEBHOOK_SECRET` | ✅ | Stripe Connect webhook secret |
+| `SENDGRID_API_KEY` | Optional | SendGrid API key for emails |
+| `VITE_SUPPORT_EMAIL` | Optional | Support email address |
 
-**⚠️ Common Issue:** If you see "Prisma schema not found" errors, the Netlify UI has an incorrect build command override. See [NETLIFY_TROUBLESHOOTING.md](./NETLIFY_TROUBLESHOOTING.md) for the solution.
+For detailed instructions see [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md).
 
-For detailed deployment instructions, see [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md).
+---
 
-## 📦 Tech Stack
+## 🔐 Security
 
-- **Frontend**: React 19 + TypeScript + Vite
-- **Styling**: Tailwind CSS
-- **State Management**: Zustand
-- **Backend**: Supabase (PostgreSQL + Auth + Storage)
-- **Payments**: Stripe Connect
-- **Email**: SendGrid
-- **Forms**: React Hook Form + Zod
-- **Icons**: Lucide React
-- **PDF Generation**: jsPDF
-- **Hosting**: Netlify
+- Row-Level Security (RLS) on every PostgreSQL table.
+- All payments processed by Stripe (PCI-DSS Level 1) — card details never stored on our servers.
+- Stripe webhook signature verification on every event.
+- Supabase JWT with short-lived access tokens + refresh tokens.
+- Rate limiting on registration, email, and error-reporting endpoints.
+- Content-Security-Policy with violation reporting.
 
-## 📂 Project Structure
+---
 
-```
-src/
-├── components/       # Reusable UI components
-│   ├── layout/      # Header, Footer, Navigation
-│   ├── CategorySelector.tsx
-│   ├── ImageUpload.tsx
-│   └── ProductCard.tsx
-├── pages/           # Page components
-│   ├── HomePage.tsx
-│   ├── CatalogPage.tsx
-│   ├── ProductFormPage.tsx
-│   ├── SellerDashboardPage.tsx
-│   ├── AdminDashboardPage.tsx
-│   ├── legal/       # Terms, Privacy, etc.
-│   └── ...
-├── lib/             # Library configurations
-│   ├── supabase.ts  # Supabase client
-│   └── mocks/       # Mock services for development
-├── store/           # Zustand state management
-├── types/           # TypeScript definitions
-└── App.tsx          # Main app with routing
+## 🧪 Test Accounts & Stripe Cards
 
-Database Files:
-├── database-complete.sql          # Complete schema with all tables
-├── database-seed-categories.sql   # Category tree data
-├── database-seed-testdata.sql     # Test users and products
-└── DATABASE_SETUP_COMPLETE.md     # Database setup guide
-```
+After running the seed scripts:
 
-## 🔐 Security Features
+| Role | Email | Password |
+|---|---|---|
+| Buyer | buyer@test.com | test1234 |
+| Seller (approved) | seller@test.com | test1234 |
+| Admin | admin@loadifymarket.co.uk | test1234 |
 
-- Row Level Security (RLS) in Supabase
-- Secure authentication with Supabase Auth
-- Email verification for sellers
-- Input validation and sanitization
-- HTTPS only in production
-- Secure payment processing with Stripe
-- Protected API routes with role-based access
+**Stripe test cards:**
+- ✅ Success: `4242 4242 4242 4242` (any future expiry, any CVV)
+- ❌ Decline: `4000 0000 0000 0002`
 
-## 📚 Documentation
-
-- **[Complete Setup Guide](./COMPLETE_SETUP_GUIDE.md)** - Full installation and configuration
-- **[Database Setup](./DATABASE_SETUP_COMPLETE.md)** - Database initialization guide
-- **[Features Documentation](./FEATURES.md)** - Detailed feature descriptions
-- **[Shipping System](./docs/SHIPPING.md)** - Shipment and tracking documentation
-- **[Mock Services Guide](./MOCK_SERVICES_GUIDE.md)** - Development without external services
-
-## 🧪 Testing
-
-### Development with Test Data
-
-After running `database-seed-testdata.sql`, you have:
-- **Test Buyer**: buyer@test.com
-- **Test Seller**: seller@test.com (approved)
-- **Admin**: admin@loadifymarket.co.uk
-- **5 Sample Products** across different categories
-
-### Test Stripe Cards
-- Success: `4242 4242 4242 4242`
-- Decline: `4000 0000 0000 0002`
-- Use any future expiry and any CVV
-
-## 📦 Shipping & Tracking
-
-The platform includes a comprehensive DHL-like shipping and tracking system. For detailed documentation, see [docs/SHIPPING.md](docs/SHIPPING.md).
-
-**Key Features:**
-- Multiple shipping options (Standard, Express, Pallet)
-- Real-time shipment tracking with status history
-- Automated email notifications for status changes
-- Proof of delivery upload and management
-- Seller shipment dashboard
-- Admin shipment oversight
-- Public order tracking page
+---
 
 ## 📧 Contact
 
-**Company**: XDrive Logistics LTD  
-**Email**: loadifymarket.co.uk@gmail.com  
-**Address**: 101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom  
-**VAT**: GB375949535
+**Company**: XDrive Logistics Ltd  
+**Support**: loadifymarket.co.uk@gmail.com  
+**Phone**: +44 7423 272138  
+**Address**: 101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom
+
+---
 
 ## 📄 License
 
-Copyright © 2021 XDrive Logistics LTD. All rights reserved.
+Copyright © 2025 XDrive Logistics Ltd. All rights reserved.
 
-## 🤝 Contributing
-
-This is a private project. For inquiries, please contact loadifymarket.co.uk@gmail.com.

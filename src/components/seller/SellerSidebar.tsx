@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, Package, ShoppingCart, Truck, RotateCcw,
-  Star, FileText, UserCircle, Settings, LogOut, ChevronUp
+  Star, FileText, UserCircle, Settings, LogOut
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";

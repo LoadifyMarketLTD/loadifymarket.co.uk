@@ -1,0 +1,1978 @@
+openapi: 3.0.3
+info:
+  title: Loadify Market API
+  version: 2.0.0
+  description: |
+    REST API for **Loadify Market LTD** — a UK-based online services
+    marketplace (B2B / B2C) operated by XDrive Logistics Ltd.
+
+    **Platform model:** sellers list *services* (transport, logistics,
+    consultancy, equipment hire, etc.). Buyers discover, book, and pay for
+    those services entirely online.  There are no physical products, no
+    warehouse, and no depot.
+
+    ### Authentication
+    All authenticated endpoints require a Supabase JWT bearer token:
+    ```
+    Authorization: Bearer <supabase-jwt>
+    ```
+    Obtain a token via `POST /auth/v1/token` (Supabase Auth) or via the
+    `/register` function which returns a `userId` that can then sign in.
+
+    ### Serverless endpoints
+    Bespoke business-logic endpoints are Netlify Functions served at:
+    `/.netlify/functions/{function-name}`
+
+    Standard CRUD on database entities is available through the Supabase
+    PostgREST gateway at:
+    `https://<project>.supabase.co/rest/v1/{table}`
+
+  contact:
+    name: Loadify Market Support
+    url: https://loadifymarket.co.uk/contact
+    email: loadifymarket.co.uk@gmail.com
+  license:
+    name: Proprietary
+    url: https://loadifymarket.co.uk/terms
+
+servers:
+  - url: https://loadifymarket.co.uk/.netlify/functions
+    description: Production — Netlify Functions
+  - url: http://localhost:8888/.netlify/functions
+    description: Local development (netlify dev)
+
+tags:
+  - name: Auth
+    description: User registration and authentication
+  - name: Users
+    description: User profiles and account management
+  - name: Sellers
+    description: Seller onboarding, profiles and verification
+  - name: Services
+    description: Service listings (the core catalogue of what sellers offer)
+  - name: Requests & Quotes
+    description: Buyer request-for-quote flow — post a brief, receive seller offers
+  - name: Orders
+    description: Booking lifecycle — from request to completion
+  - name: Payments
+    description: Payment processing via Stripe
+  - name: Messages
+    description: In-order messaging between buyer and seller
+  - name: Reviews
+    description: Ratings and reviews on completed orders
+  - name: Connect
+    description: Stripe Connect Express payout onboarding for sellers
+  - name: Notifications
+    description: Transactional email notifications (SendGrid)
+  - name: Reporting
+    description: Client-side error and CSP-violation reporting
+  - name: System
+    description: Health check and diagnostic endpoints
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PATHS
+# ─────────────────────────────────────────────────────────────────────────────
+paths:
+
+  # ── Auth ──────────────────────────────────────────────────────────────────
+
+  /register:
+    post:
+      tags: [Auth]
+      summary: Register a new user account
+      description: |
+        Creates a Supabase auth user via the Admin API (email confirmed
+        immediately — no verification email sent).  For `seller` role, also
+        upserts `seller_profiles` and `seller_stores` rows.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              buyer:
+                summary: Buyer registration
+                value:
+                  email: buyer@example.com
+                  password: "securepassword"
+                  firstName: Jane
+                  lastName: Smith
+                  role: buyer
+              seller:
+                summary: Seller registration
+                value:
+                  email: seller@example.com
+                  password: "securepassword"
+                  firstName: John
+                  lastName: Doe
+                  role: seller
+                  storeName: John's Transport Services
+      responses:
+        '200':
+          description: Account created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  userId:
+                    type: string
+                    format: uuid
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email address already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '503':
+          description: Registration service not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /resend-verification:
+    post:
+      tags: [Auth]
+      summary: Resend a verification / magic-link email (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId, adminId]
+              properties:
+                userId:
+                  type: string
+                  format: uuid
+                adminId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Verification email sent
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  # ── Users ─────────────────────────────────────────────────────────────────
+  # Note: CRUD on the `users` and `user_profiles` tables is handled by the
+  # Supabase PostgREST gateway with RLS enforcement.  The paths below
+  # document the logical contract.
+
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get the current user's profile
+      description: Returns the authenticated user's full profile including role and status.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags: [Users]
+      summary: Update the current user's profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ── Sellers ───────────────────────────────────────────────────────────────
+
+  /sellers:
+    post:
+      tags: [Sellers]
+      summary: Apply for a seller account
+      description: |
+        Submits a seller application.  Status is set to `pending` until an
+        admin approves.  The seller can then access the full seller dashboard
+        and create service listings.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSellerRequest'
+      responses:
+        '201':
+          description: Seller application submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /sellers/me:
+    get:
+      tags: [Sellers]
+      summary: Get the current seller's profile and statistics
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Seller profile with statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerProfileFull'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: User is not a seller
+
+  /sellers/{id}:
+    get:
+      tags: [Sellers]
+      summary: Get a seller's public profile
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Public seller profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SellerPublicProfile'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Services (Catalogue) ──────────────────────────────────────────────────
+
+  /categories:
+    get:
+      tags: [Services]
+      summary: List all service categories
+      description: Returns the full category tree (parent → children).
+      responses:
+        '200':
+          description: Category tree
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+
+  /categories/{slug}:
+    get:
+      tags: [Services]
+      summary: Get a category with its subcategories
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+          example: transport
+      responses:
+        '200':
+          description: Category details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryWithChildren'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /services:
+    get:
+      tags: [Services]
+      summary: Search and list services
+      description: |
+        Full-text search and filtered listing of active services.
+        Results are paginated.
+      parameters:
+        - name: q
+          in: query
+          description: Full-text search query
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: Category slug
+          schema:
+            type: string
+        - name: location_type
+          in: query
+          description: Service location type
+          schema:
+            type: string
+            enum: [online, onsite, hybrid]
+        - name: min_price
+          in: query
+          schema:
+            type: number
+            format: float
+        - name: max_price
+          in: query
+          schema:
+            type: number
+            format: float
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [price_asc, price_desc, rating_desc, newest]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of services
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceListResponse'
+
+    post:
+      tags: [Services]
+      summary: Create a new service listing
+      description: Seller only.  New services are created with status `draft`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateServiceRequest'
+      responses:
+        '201':
+          description: Service created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /services/{id}:
+    get:
+      tags: [Services]
+      summary: Get service details
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Service details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Services]
+      summary: Update a service listing
+      description: Seller owner only.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateServiceRequest'
+      responses:
+        '200':
+          description: Service updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Services]
+      summary: Delete a service listing
+      description: Seller owner or admin only.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '204':
+          description: Service deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /services/{id}/publish:
+    post:
+      tags: [Services]
+      summary: Publish a draft service
+      description: |
+        Transitions status from `draft` → `active`.  An event is emitted to
+        the Search Service to index the listing.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Service published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ── Requests & Quotes ─────────────────────────────────────────────────────
+
+  /requests:
+    get:
+      tags: [Requests & Quotes]
+      summary: List open service requests
+      description: |
+        Sellers see requests matching their service categories.
+        Buyers see their own requests.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, closed]
+      responses:
+        '200':
+          description: List of service requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Requests & Quotes]
+      summary: Post a new service request (buyer)
+      description: |
+        Buyers describe what they need.  Sellers can then submit quotes.
+        Status starts as `open`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateServiceRequestBody'
+      responses:
+        '201':
+          description: Request posted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /requests/{id}:
+    get:
+      tags: [Requests & Quotes]
+      summary: Get request details including quotes
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Request with quotes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceRequestWithQuotes'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /requests/{id}/quotes:
+    post:
+      tags: [Requests & Quotes]
+      summary: Submit a quote for a request (seller)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuoteRequest'
+      responses:
+        '201':
+          description: Quote submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quote'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /quotes/{id}/accept:
+    post:
+      tags: [Requests & Quotes]
+      summary: Accept a quote (buyer) — creates an order
+      description: |
+        Transitions the quote to `accepted`, sets all other quotes for the
+        same request to `rejected`, closes the request, and creates an
+        `order` with status `requested`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Quote accepted, order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Cart & Checkout ───────────────────────────────────────────────────────
+
+  /create-checkout:
+    post:
+      tags: [Payments]
+      summary: Create a Stripe Checkout Session
+      description: |
+        Validates cart items against the database (price integrity), creates
+        a Stripe Checkout Session (GBP), and returns the hosted checkout URL.
+
+        After payment the buyer is redirected to
+        `/checkout/success?session_id={CHECKOUT_SESSION_ID}`.
+
+        On payment failure the buyer is redirected to `/checkout/error`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCheckoutRequest'
+      responses:
+        '200':
+          description: Stripe Checkout Session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                    description: Hosted Stripe Checkout URL
+                  sessionId:
+                    type: string
+                    description: Stripe Session ID (cs_…)
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  # ── Orders ────────────────────────────────────────────────────────────────
+
+  /orders:
+    get:
+      tags: [Orders]
+      summary: List orders for the current user
+      description: |
+        Buyers see their purchases; sellers see orders for their services.
+        Filter by `status` or `role` query parameter.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [requested, accepted, in_progress, completed, cancelled]
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [buyer, seller]
+      responses:
+        '200':
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Orders]
+      summary: Create an order directly from a service (buy now)
+      description: |
+        For services with `fixed_price` model.  Creates an order with status
+        `requested` and initiates the payment flow.  Quote-based orders are
+        created via `POST /quotes/{id}/accept`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /orders/{id}:
+    get:
+      tags: [Orders]
+      summary: Get order details
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Order details with items, payment and messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /orders/{id}/accept:
+    post:
+      tags: [Orders]
+      summary: Seller accepts the order
+      description: Transitions `requested` → `accepted`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Order accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /orders/{id}/start:
+    post:
+      tags: [Orders]
+      summary: Seller starts delivering the service
+      description: Transitions `accepted` → `in_progress`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Order in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /orders/{id}/complete:
+    post:
+      tags: [Orders]
+      summary: Mark the order as completed
+      description: |
+        Either the seller marks service as delivered, or the buyer confirms
+        completion.  Transitions `in_progress` → `completed`.
+        Triggers the platform commission transfer and unlocks review.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Order completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /orders/{id}/cancel:
+    post:
+      tags: [Orders]
+      summary: Cancel an order
+      description: |
+        Can be called by buyer, seller, or admin subject to business rules.
+        Cancellation may trigger a refund depending on payment status.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Order cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ── Payments ──────────────────────────────────────────────────────────────
+
+  /payments:
+    post:
+      tags: [Payments]
+      summary: Record a payment against an order
+      description: |
+        Called after the payment provider confirms payment (or internally by
+        the Stripe webhook handler).  Sets `orders.status = paid`.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+      responses:
+        '201':
+          description: Payment recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /stripe-webhook:
+    post:
+      tags: [Payments]
+      summary: Handle Stripe webhook events
+      description: |
+        Receives signed webhook events from Stripe.  Verified with
+        `STRIPE_WEBHOOK_SECRET` or `STRIPE_CONNECT_WEBHOOK_SECRET`.
+
+        Handled events:
+        - `checkout.session.completed` — creates order + order items,
+          triggers seller Connect transfer
+        - `account.updated` — syncs Connect account status to
+          `seller_profiles.stripeConnectStatus`
+
+        Idempotent: duplicate events (by `event.id`) are skipped.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Stripe Event object (raw body for signature verification)
+      responses:
+        '200':
+          description: Event processed
+        '400':
+          description: Invalid signature or unknown event
+
+  # ── Messages ──────────────────────────────────────────────────────────────
+
+  /orders/{id}/messages:
+    get:
+      tags: [Messages]
+      summary: Get messages on an order
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Message thread
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags: [Messages]
+      summary: Send a message on an order
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  maxLength: 5000
+      responses:
+        '201':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ── Reviews ───────────────────────────────────────────────────────────────
+
+  /reviews:
+    get:
+      tags: [Reviews]
+      summary: List reviews
+      parameters:
+        - name: service_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: seller_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+
+    post:
+      tags: [Reviews]
+      summary: Submit a review for a completed order
+      description: Buyer only.  One review per order.  Requires `completed` status.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReviewRequest'
+      responses:
+        '201':
+          description: Review submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Review already submitted for this order
+
+  # ── Stripe Connect ────────────────────────────────────────────────────────
+
+  /connect-onboard:
+    post:
+      tags: [Connect]
+      summary: Start or resume Stripe Connect Express onboarding
+      description: |
+        Returns a short-lived Stripe-hosted onboarding URL.  The seller's
+        browser should be redirected to this URL.
+
+        Redirect targets after completion:
+        - Success: `/seller?tab=payouts&connect=success`
+        - Refresh: `/seller?tab=payouts&connect=refresh`
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Onboarding URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /connect-dashboard:
+    post:
+      tags: [Connect]
+      summary: Get a Stripe Express dashboard login link
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Express dashboard login link
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Seller has not completed Connect onboarding
+
+  /connect-status:
+    post:
+      tags: [Connect]
+      summary: Fetch and sync Stripe Connect account status
+      description: |
+        Fetches live Stripe Connect capabilities and persists the result in
+        `seller_profiles.stripeConnectStatus`.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Connect account status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /connect-platform-check:
+    post:
+      tags: [Connect]
+      summary: Check whether the platform Stripe account has Connect enabled (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Platform Connect configuration status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  platformConfigured:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ── Notifications ─────────────────────────────────────────────────────────
+
+  /send-email:
+    post:
+      tags: [Notifications]
+      summary: Send a transactional email via SendGrid
+      description: |
+        Dispatches a transactional email using a named template.
+        Rate-limited to prevent abuse.
+
+        Supported templates:
+        `order_confirmation`, `order_accepted`, `service_completed`,
+        `order_cancelled`, `dispute_opened`, `seller_new_order`,
+        `seller_shipping_reminder`, `admin_seller_verification`,
+        `contact_enquiry`
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendEmailRequest'
+      responses:
+        '200':
+          description: Email sent
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  # ── Reporting ─────────────────────────────────────────────────────────────
+
+  /error-report:
+    post:
+      tags: [Reporting]
+      summary: Report a client-side JavaScript error
+      description: Rate-limited to 60 reports per hour per IP.  Always returns 204.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                stack:
+                  type: string
+                url:
+                  type: string
+                  format: uri
+                userAgent:
+                  type: string
+                timestamp:
+                  type: string
+                  format: date-time
+      responses:
+        '204':
+          description: Report received
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /csp-report:
+    post:
+      tags: [Reporting]
+      summary: Receive Content-Security-Policy violation reports
+      requestBody:
+        required: true
+        content:
+          application/csp-report:
+            schema:
+              type: object
+          application/reports+json:
+            schema:
+              type: object
+      responses:
+        '204':
+          description: Report received
+
+  # ── System ────────────────────────────────────────────────────────────────
+
+  /health:
+    get:
+      tags: [System]
+      summary: Health check
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  service:
+                    type: string
+                    example: loadify-market
+
+# ─────────────────────────────────────────────────────────────────────────────
+# COMPONENTS
+# ─────────────────────────────────────────────────────────────────────────────
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase JWT obtained via `POST /auth/v1/token`
+
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  # ── Schemas ──────────────────────────────────────────────────────────────
+
+  schemas:
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    # Auth
+
+    RegisterRequest:
+      type: object
+      required: [email, password, firstName, lastName, role]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+          enum: [buyer, seller]
+        storeName:
+          type: string
+          description: Optional — displayed name for the seller's storefront
+
+    # Users
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+          enum: [buyer, seller, admin]
+        phone:
+          type: string
+          nullable: true
+        companyName:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        vatNumber:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        companyName:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        vatNumber:
+          type: string
+
+    # Sellers
+
+    CreateSellerRequest:
+      type: object
+      required: [businessName, registrationNumber]
+      properties:
+        businessName:
+          type: string
+        registrationNumber:
+          type: string
+        vatNumber:
+          type: string
+        businessAddress:
+          type: string
+        contactPhone:
+          type: string
+
+    SellerProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        businessName:
+          type: string
+        verificationStatus:
+          type: string
+          enum: [pending, approved, rejected]
+        isApproved:
+          type: boolean
+        rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 5
+        salesCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    SellerProfileFull:
+      allOf:
+        - $ref: '#/components/schemas/SellerProfile'
+        - type: object
+          properties:
+            totalSales:
+              type: number
+              format: float
+            deliverySuccessRate:
+              type: number
+              format: float
+            stripeConnectStatus:
+              type: string
+              enum: [pending, restricted, active]
+
+    SellerPublicProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        businessName:
+          type: string
+        rating:
+          type: number
+          format: float
+        salesCount:
+          type: integer
+        deliverySuccessRate:
+          type: number
+          format: float
+        businessAddress:
+          type: string
+        contactPhone:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # Services
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        sortOrder:
+          type: integer
+
+    CategoryWithChildren:
+      allOf:
+        - $ref: '#/components/schemas/Category'
+        - type: object
+          properties:
+            children:
+              type: array
+              items:
+                $ref: '#/components/schemas/Category'
+
+    ServiceAttribute:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+
+    ServiceMedia:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        type:
+          type: string
+          enum: [image, video, document]
+        sortOrder:
+          type: integer
+
+    Service:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sellerId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        basePrice:
+          type: number
+          format: float
+          description: Price in GBP
+        currency:
+          type: string
+          default: GBP
+        serviceType:
+          type: string
+          enum: [fixed_price, hourly, per_km, per_project]
+        locationType:
+          type: string
+          enum: [online, onsite, hybrid]
+        status:
+          type: string
+          enum: [draft, active, inactive]
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceAttribute'
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceMedia'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateServiceRequest:
+      type: object
+      required: [title, categoryId, basePrice, serviceType, locationType]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        categoryId:
+          type: string
+          format: uuid
+        basePrice:
+          type: number
+          format: float
+          minimum: 0
+        serviceType:
+          type: string
+          enum: [fixed_price, hourly, per_km, per_project]
+        locationType:
+          type: string
+          enum: [online, onsite, hybrid]
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceAttribute'
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceMedia'
+
+    UpdateServiceRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        basePrice:
+          type: number
+          format: float
+        serviceType:
+          type: string
+          enum: [fixed_price, hourly, per_km, per_project]
+        locationType:
+          type: string
+          enum: [online, onsite, hybrid]
+        status:
+          type: string
+          enum: [draft, active, inactive]
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceAttribute'
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceMedia'
+
+    ServiceListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Service'
+        meta:
+          type: object
+          properties:
+            total:
+              type: integer
+            page:
+              type: integer
+            perPage:
+              type: integer
+            totalPages:
+              type: integer
+
+    # Requests & Quotes
+
+    ServiceRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        buyerId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        budgetMin:
+          type: number
+          format: float
+          nullable: true
+        budgetMax:
+          type: number
+          format: float
+          nullable: true
+        location:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [open, closed]
+        createdAt:
+          type: string
+          format: date-time
+
+    ServiceRequestWithQuotes:
+      allOf:
+        - $ref: '#/components/schemas/ServiceRequest'
+        - type: object
+          properties:
+            quotes:
+              type: array
+              items:
+                $ref: '#/components/schemas/Quote'
+
+    CreateServiceRequestBody:
+      type: object
+      required: [title, description, categoryId]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        categoryId:
+          type: string
+          format: uuid
+        budgetMin:
+          type: number
+          format: float
+        budgetMax:
+          type: number
+          format: float
+        location:
+          type: string
+
+    Quote:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        requestId:
+          type: string
+          format: uuid
+        sellerId:
+          type: string
+          format: uuid
+        price:
+          type: number
+          format: float
+        message:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateQuoteRequest:
+      type: object
+      required: [price, message]
+      properties:
+        price:
+          type: number
+          format: float
+          minimum: 0
+        message:
+          type: string
+
+    # Orders
+
+    CreateCheckoutRequest:
+      type: object
+      required: [items, buyerId, shippingAddress, billingAddress]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [productId, quantity, price, title, sellerId]
+            properties:
+              productId:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+              price:
+                type: number
+                format: float
+              title:
+                type: string
+              sellerId:
+                type: string
+                format: uuid
+        buyerId:
+          type: string
+          format: uuid
+        shippingAddress:
+          type: object
+          additionalProperties:
+            type: string
+        billingAddress:
+          type: object
+          additionalProperties:
+            type: string
+
+    CreateOrderRequest:
+      type: object
+      required: [serviceId, totalAmount]
+      properties:
+        serviceId:
+          type: string
+          format: uuid
+        totalAmount:
+          type: number
+          format: float
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        buyerId:
+          type: string
+          format: uuid
+        sellerId:
+          type: string
+          format: uuid
+        serviceId:
+          type: string
+          format: uuid
+          nullable: true
+        quoteId:
+          type: string
+          format: uuid
+          nullable: true
+        totalAmount:
+          type: number
+          format: float
+        currency:
+          type: string
+          default: GBP
+        status:
+          type: string
+          enum: [requested, accepted, in_progress, completed, cancelled]
+        scheduledAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    OrderDetail:
+      allOf:
+        - $ref: '#/components/schemas/Order'
+        - type: object
+          properties:
+            service:
+              $ref: '#/components/schemas/Service'
+            payment:
+              $ref: '#/components/schemas/Payment'
+            messages:
+              type: array
+              items:
+                $ref: '#/components/schemas/Message'
+            review:
+              $ref: '#/components/schemas/Review'
+
+    # Payments
+
+    CreatePaymentRequest:
+      type: object
+      required: [orderId, provider, amount]
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        provider:
+          type: string
+          enum: [stripe]
+        providerTransactionId:
+          type: string
+        amount:
+          type: number
+          format: float
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        provider:
+          type: string
+        providerTransactionId:
+          type: string
+        amount:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [pending, completed, failed, refunded]
+        createdAt:
+          type: string
+          format: date-time
+
+    # Messages
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        senderId:
+          type: string
+          format: uuid
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # Reviews
+
+    CreateReviewRequest:
+      type: object
+      required: [orderId, rating]
+      properties:
+        orderId:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        reviewerId:
+          type: string
+          format: uuid
+        sellerId:
+          type: string
+          format: uuid
+        serviceId:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    # Connect
+
+    ConnectStatus:
+      type: object
+      properties:
+        stripeConnectStatus:
+          type: string
+          enum: [pending, restricted, active]
+        chargesEnabled:
+          type: boolean
+        payoutsEnabled:
+          type: boolean
+        detailsSubmitted:
+          type: boolean
+
+    # Email
+
+    SendEmailRequest:
+      type: object
+      required: [to, subject, template]
+      properties:
+        to:
+          type: string
+          format: email
+        subject:
+          type: string
+        template:
+          type: string
+          enum:
+            - order_confirmation
+            - order_accepted
+            - service_completed
+            - order_cancelled
+            - dispute_opened
+            - seller_new_order
+            - seller_shipping_reminder
+            - admin_seller_verification
+            - contact_enquiry
+        data:
+          type: object
+          description: Template-specific variables
+          additionalProperties: true
+
+  # ── Responses ─────────────────────────────────────────────────────────────
+
+  responses:
+
+    BadRequest:
+      description: Bad request — missing or invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Missing or invalid authorization token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Authenticated but insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    TooManyRequests:
+      description: Rate limit exceeded — try again later
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    InternalError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

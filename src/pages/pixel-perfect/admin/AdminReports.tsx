@@ -61,7 +61,7 @@ const AdminReports = () => {
             supabase.from("orders").select("status"),
           ]);
 
-        const totalRevenue = (ordersRes.data || []).reduce((sum: number, o: any) => sum + (o.total ?? 0), 0);
+        const totalRevenue = (ordersRes.data || []).reduce((sum: number, o) => sum + (o.total ?? 0), 0);
         const totalOrders = ordersRes.data?.length ?? 0;
 
         setKpis([
@@ -107,14 +107,14 @@ const AdminReports = () => {
           },
         ]);
 
-        const sellers: TopSeller[] = (topSellersRes.data || []).map((s: any) => {
+        const sellers: TopSeller[] = (topSellersRes.data || []).map((s) => {
           const name = s.storeName || s.businessName || s.userId?.slice(0, 8).toUpperCase() || "—";
           return { name, totalSales: s.totalSales ?? 0, rating: s.rating ?? 0 };
         });
         setTopSellers(sellers);
 
         const statusCounts: Record<string, number> = {};
-        (allOrdersRes.data || []).forEach((o: any) => {
+        (allOrdersRes.data || []).forEach((o) => {
           const st = o.status ?? "unknown";
           statusCounts[st] = (statusCounts[st] ?? 0) + 1;
         });
@@ -123,8 +123,8 @@ const AdminReports = () => {
             .map(([status, count]) => ({ status, count }))
             .sort((a, b) => b.count - a.count)
         );
-      } catch (err: any) {
-        setError(err.message || "Failed to load reports");
+      } catch (err: unknown) {
+        setError((err as Error).message || "Failed to load reports");
       } finally {
         setLoading(false);
       }

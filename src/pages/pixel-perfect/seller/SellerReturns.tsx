@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { RotateCcw, Search, Filter, AlertCircle, CheckCircle2, Clock, XCircle, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,7 @@ const SellerReturns = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
       .from("returns")
@@ -47,9 +47,9 @@ const SellerReturns = () => {
       .order("createdAt", { ascending: false });
     setReturns((data ?? []) as Return[]);
     setLoading(false);
-  };
+  }, [user]);
 
-  useEffect(() => { load(); }, [user]);
+  useEffect(() => { load(); }, [load]);
 
   const filtered = returns.filter((r) => {
     const q = search.toLowerCase();

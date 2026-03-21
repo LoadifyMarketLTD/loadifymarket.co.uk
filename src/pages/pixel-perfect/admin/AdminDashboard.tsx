@@ -82,7 +82,7 @@ const AdminDashboard = () => {
 
         setPendingReportsCount(reportsRes.count ?? 0);
 
-        const sellers: RecentSeller[] = (recentSellersRes.data || []).map((u: any) => {
+        const sellers: RecentSeller[] = (recentSellersRes.data || []).map((u) => {
           const profile = Array.isArray(u.seller_profiles) ? u.seller_profiles[0] : u.seller_profiles;
           const name = profile?.storeName || profile?.businessName || `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email;
           const status = profile?.verificationStatus ?? (profile?.isApproved ? "approved" : "pending");
@@ -95,8 +95,8 @@ const AdminDashboard = () => {
           };
         });
         setRecentSellers(sellers);
-      } catch (err: any) {
-        setError(err.message || "Failed to load dashboard data");
+      } catch (err: unknown) {
+        setError((err as Error).message || "Failed to load dashboard data");
       } finally {
         setLoading(false);
       }

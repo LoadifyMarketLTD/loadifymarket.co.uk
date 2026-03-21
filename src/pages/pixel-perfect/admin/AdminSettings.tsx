@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Settings, Bell, Shield, Globe, Database, Save, Key,
+  Settings, Globe, Database, Save, Key,
   Eye, EyeOff, Trash2, RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";

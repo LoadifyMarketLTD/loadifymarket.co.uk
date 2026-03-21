@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import type { ReactNode, ErrorInfo } from 'react';
+import { captureError } from '../lib/errorTracking';
 
 interface Props {
   children: ReactNode;
@@ -13,6 +14,9 @@ interface State {
 /**
  * Global error boundary — catches unhandled render errors and shows
  * a friendly fallback instead of a blank white screen.
+ *
+ * Errors are forwarded to the errorTracking module so they are persisted
+ * via the `error-report` Netlify function in production.
  */
 export default class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
@@ -25,7 +29,9 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('Uncaught error:', error, info.componentStack);
+    // Forward to the centralised error-tracking module so the error is
+    // persisted via the error-report Netlify function in production.
+    captureError(error, `ErrorBoundary: ${info.componentStack ?? ''}`);
   }
 
   handleReset = () => {

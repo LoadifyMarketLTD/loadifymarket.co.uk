@@ -62,7 +62,7 @@ const AdminFlagged = () => {
 
       if (queryError) throw queryError;
 
-      const mapped: FlaggedItem[] = (data || []).map((r: any) => {
+      const mapped: FlaggedItem[] = (data || []).map((r) => {
         const productObj = Array.isArray(r.product) ? r.product[0] : r.product;
         return {
           id: r.id,
@@ -79,8 +79,8 @@ const AdminFlagged = () => {
       });
 
       setItems(mapped);
-    } catch (err: any) {
-      setError(err.message || "Failed to load flagged items");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to load flagged items");
     } finally {
       setLoading(false);
     }
@@ -99,8 +99,8 @@ const AdminFlagged = () => {
       if (error) throw error;
       setItems((prev) => prev.map((i) => i.id === id ? { ...i, status: newStatus } : i));
       if (selected?.id === id) setSelected((s) => s ? { ...s, status: newStatus } : s);
-    } catch (err: any) {
-      setError(err.message || "Failed to update status");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to update status");
     } finally {
       setActionLoading(null);
     }

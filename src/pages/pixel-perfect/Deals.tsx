@@ -257,7 +257,6 @@ const Deals = () => {
               const isActive = activeSubTypes !== null &&
                 section.types.every((t) => activeSubTypes?.includes(t)) &&
                 activeSubTypes.length === section.types.length;
-              const count = loading ? "…" : products.length;
               return (
                 <button
                   key={section.label}

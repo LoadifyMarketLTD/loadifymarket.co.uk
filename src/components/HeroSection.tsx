@@ -71,9 +71,9 @@ const HeroSection = () => {
             </div>
           </div>
 
-          {/* Right — Hero Image */}
-          <div className="relative hidden md:block">
-            <div className="rounded-2xl overflow-hidden shadow-[var(--shadow-elevated)] border border-border">
+          {/* Right — Hero Image (visible on all screen sizes) */}
+          <div className="relative mt-6 lg:mt-0">
+            <div className="rounded-2xl overflow-hidden shadow-[var(--shadow-elevated)] border border-border mx-auto max-w-sm sm:max-w-md lg:max-w-none">
               <img
                 src={heroImg}
                 alt="Loadify Market platform dashboard showing marketplace overview"

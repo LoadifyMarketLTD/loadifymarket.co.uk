@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,10 +58,10 @@ const AdminApprovals = () => {
 
       if (profilesError) throw profilesError;
 
-      const profileMap = new Map((profiles || []).map((p: any) => [p.userId, p]));
+      const profileMap = new Map((profiles || []).map((p) => [p.userId, p]));
 
-      const combined: Seller[] = (sellerUsers || []).map((u: any) => {
-        const p = profileMap.get(u.id) as any;
+      const combined: Seller[] = (sellerUsers || []).map((u) => {
+        const p = profileMap.get(u.id);
         const company = p?.storeName || p?.businessName || "—";
         const name = p?.fullName || `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email;
         const status: Seller["status"] = p?.verificationStatus ?? (p?.isApproved ? "verified" : "pending");
@@ -77,8 +77,8 @@ const AdminApprovals = () => {
       });
 
       setSellers(combined);
-    } catch (err: any) {
-      setError(err.message || "Failed to load sellers");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to load sellers");
     } finally {
       setLoading(false);
     }
@@ -97,8 +97,8 @@ const AdminApprovals = () => {
       if (error) throw error;
       setSellers((prev) => prev.map((s) => s.userId === userId ? { ...s, status: "verified", isApproved: true } : s));
       if (selectedSeller?.userId === userId) setSelectedSeller((s) => s ? { ...s, status: "verified", isApproved: true } : s);
-    } catch (err: any) {
-      setError(err.message || "Failed to approve seller");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to approve seller");
     } finally {
       setActionLoading(null);
     }
@@ -115,8 +115,8 @@ const AdminApprovals = () => {
       if (error) throw error;
       setSellers((prev) => prev.map((s) => s.userId === userId ? { ...s, status: "rejected", isApproved: false } : s));
       if (selectedSeller?.userId === userId) setSelectedSeller((s) => s ? { ...s, status: "rejected", isApproved: false } : s);
-    } catch (err: any) {
-      setError(err.message || "Failed to reject seller");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to reject seller");
     } finally {
       setActionLoading(null);
     }
