@@ -39,7 +39,7 @@ async function fetchSellerMap(
 const ProductDetail = () => {
   const { id } = useParams();
   const location = useLocation();
-  // State passed from listing pages (Catalog, CategoryPage, Deals)
+  // State passed from listing pages (Catalog, CategoryPage, Clearance)
   const navState = (location.state ?? {}) as {
     flow?: string;
     from?: string;

@@ -194,7 +194,6 @@ function App() {
         <Route path="checkout" element={<Suspense fallback={<PageLoader />}><PPCheckout /></Suspense>} />
         <Route path="about" element={<Suspense fallback={<PageLoader />}><PPAboutUs /></Suspense>} />
         <Route path="contact" element={<Suspense fallback={<PageLoader />}><PPContactUs /></Suspense>} />
-        <Route path="deals" element={<Suspense fallback={<PageLoader />}><PPDeals /></Suspense>} />
         <Route path="clearance" element={<Suspense fallback={<PageLoader />}><PPDeals /></Suspense>} />
         <Route path="terms" element={<Suspense fallback={<PageLoader />}><PPTerms /></Suspense>} />
         <Route path="privacy" element={<Suspense fallback={<PageLoader />}><PPPrivacy /></Suspense>} />
