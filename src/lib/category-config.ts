@@ -1,47 +1,42 @@
 /**
  * category-config.ts
  *
- * Single source of truth for the 12 main product category pages served by
- * /category/:slug.  Each entry drives the CategoryPage's title, subtitle,
+ * Single source of truth for the 9 main marketplace category pages served
+ * by /category/:slug.  Each entry drives the CategoryPage's title, subtitle,
  * icon, subcategory chips, empty-state copy, and the Supabase product filter.
  *
  * "All Categories" is served by /catalog.
- * All 12 main categories are served exclusively by /category/:slug.
  */
 
 import {
-  Cpu, Shirt, Home, Wrench, Car, Briefcase, RotateCcw, Tag,
-  Gamepad2, PawPrint, Sparkles, Layers,
-  Trophy, Heart, Baby, UtensilsCrossed,
+  Cpu,
+  Shirt,
+  Home,
+  Wrench,
+  Car,
+  Gamepad2,
+  Sparkles,
+  Heart,
+  Briefcase,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-/**
- * A chip displayed inside a category page.
- * Clicking it narrows the product listing within the parent category.
- */
+/** A chip displayed inside a category page to filter results. */
 export interface CategoryChip {
-  /** Display label on the chip button */
   label: string;
-  /**
-   * Space-separated search terms applied as OR-ilike against title &
-   * description.  e.g. "laptop notebook" matches either word.
-   */
+  /** Full-text search term added to the query */
   searchTerm?: string;
-  /** Filter by product condition field ('new' | 'used' | 'refurbished'). */
+  /** Filter by product condition */
   condition?: string;
 }
 
-/**
- * How to query products for this category.
- * Exactly one of `types` or `categorySlug` must be set.
- */
+/** How to query products for this category. */
 export interface CategoryProductFilter {
-  /** Filter by product.type IN (...types).  Used for Amazon Returns / Clearance. */
+  /** Query by product type column values */
   types?: string[];
-  /** Filter by category slug → resolved to UUID via the categories table. */
+  /** Query by category.slug (resolved to UUID at runtime) */
   categorySlug?: string;
 }
 
@@ -62,6 +57,10 @@ export interface CategoryConfig {
   accentBg: string;
   /** Category-specific filter chips shown beneath the hero */
   chips: CategoryChip[];
+  /** Subcategory names (used in nav mega-menu and category page) */
+  subcategories: string[];
+  /** Representative image for cards */
+  image: string;
   emptyState: {
     title: string;
     description: string;
@@ -72,452 +71,252 @@ export interface CategoryConfig {
 // ── Config entries ────────────────────────────────────────────────────────────
 
 const CATEGORY_CONFIG: readonly CategoryConfig[] = [
-  // ── Amazon Returns ─────────────────────────────────────────────────────────
-  {
-    slug: 'amazon-returns',
-    label: 'Amazon Returns',
-    title: 'Amazon Returns',
-    subtitle: 'Grade A, B and C customer returns — warehouse-direct at unbeatable prices',
-    icon: RotateCcw,
-    iconColor: 'text-orange-500',
-    accentBg: 'bg-orange-500/15',
-    chips: [
-      { label: 'All Returns' },
-      { label: 'Mixed Returns', searchTerm: 'mixed returns lot' },
-      { label: 'Customer Returns', condition: 'used' },
-      { label: 'Electronics Returns', searchTerm: 'electronics returns' },
-      { label: 'Home Returns', searchTerm: 'home garden returns' },
-      { label: 'General Merchandise', searchTerm: 'general merchandise returns' },
-      { label: 'Small Appliance Returns', searchTerm: 'appliance small returns' },
-    ],
-    emptyState: {
-      title: 'No Amazon Returns listings right now',
-      description:
-        'Return lots are added as new pallets arrive. Check back soon or browse Clearance stock.',
-    },
-    productFilter: { types: ['lot'] },
-  },
-
-  // ── Clearance ──────────────────────────────────────────────────────────────
-  {
-    slug: 'clearance',
-    label: 'Clearance',
-    title: 'Clearance',
-    subtitle: 'End of line, overstock and liquidation — everything heavily discounted',
-    icon: Tag,
-    iconColor: 'text-red-500',
-    accentBg: 'bg-red-500/15',
-    chips: [
-      { label: 'All Clearance' },
-      { label: 'End of Line', searchTerm: 'end of line eol' },
-      { label: 'Overstock', searchTerm: 'overstock surplus excess' },
-      { label: 'Liquidation', searchTerm: 'liquidation liquidated' },
-      { label: 'Retail Clearance', searchTerm: 'retail clearance' },
-      { label: 'Seasonal Clearance', searchTerm: 'seasonal clearance' },
-      { label: 'Warehouse Clearance', searchTerm: 'warehouse clearance' },
-    ],
-    emptyState: {
-      title: 'No clearance listings available yet',
-      description:
-        'Clearance lines are added as sellers clear stock. Browse Wholesale or all categories in the meantime.',
-    },
-    productFilter: { types: ['clearance'] },
-  },
-
-  // ── Wholesale ─────────────────────────────────────────────────────────────
-  {
-    slug: 'wholesale',
-    label: 'Wholesale',
-    title: 'Wholesale',
-    subtitle: 'Bulk pallet listings, job lots and trade bundles from verified UK wholesalers',
-    icon: Layers,
-    iconColor: 'text-yellow-500',
-    accentBg: 'bg-yellow-500/15',
-    chips: [
-      { label: 'All Wholesale' },
-      { label: 'Bulk Lots', searchTerm: 'bulk lot' },
-      { label: 'Mixed Pallets', searchTerm: 'mixed pallet' },
-      { label: 'Full Pallets', searchTerm: 'full pallet' },
-      { label: 'Business Clearance', searchTerm: 'business clearance' },
-      { label: 'Job Lots', searchTerm: 'job lot joblot' },
-      { label: 'Trade Bundles', searchTerm: 'trade bundle wholesale' },
-    ],
-    emptyState: {
-      title: 'No wholesale lots listed yet',
-      description:
-        'Wholesale pallets and bulk lots are added by verified trade sellers. Check back soon or browse all categories.',
-    },
-    productFilter: { types: ['pallet', 'wholesale', 'lot'] },
-  },
-
-  // ── Electronics ───────────────────────────────────────────────────────────
+  // ── Electronics ────────────────────────────────────────────────────────────
   {
     slug: 'electronics',
     label: 'Electronics',
     title: 'Electronics',
-    subtitle: 'Phones, laptops, gaming, audio, cameras, smart home and more',
+    subtitle: 'Smartphones, laptops, tablets, audio, smart home and gaming gear from verified UK sellers',
     icon: Cpu,
-    iconColor: 'text-blue-500',
-    accentBg: 'bg-blue-500/15',
+    iconColor: 'text-blue-600',
+    accentBg: 'bg-blue-600/10',
+    image: '/images/categories/electronics.jpg',
+    subcategories: ['Smartphones', 'Laptops', 'Tablets', 'Audio', 'Smart Home', 'Gaming', 'Accessories'],
     chips: [
       { label: 'All Electronics' },
-      { label: 'Mobile Phones', searchTerm: 'mobile phone smartphone' },
-      { label: 'Laptops', searchTerm: 'laptop notebook computer' },
-      { label: 'Tablets', searchTerm: 'tablet ipad android' },
-      { label: 'Audio', searchTerm: 'headphone speaker audio earphone' },
-      { label: 'TVs & Displays', searchTerm: 'tv television display monitor screen' },
-      { label: 'Gaming', searchTerm: 'gaming console game controller' },
-      { label: 'Cameras', searchTerm: 'camera photography dslr' },
-      { label: 'Accessories', searchTerm: 'electronics accessories cable charger' },
-      { label: 'Smart Home', searchTerm: 'smart home alexa google nest' },
-      { label: 'Small Electronics', searchTerm: 'small appliance gadget device' },
+      { label: 'Smartphones', searchTerm: 'smartphone mobile phone iphone android' },
+      { label: 'Laptops', searchTerm: 'laptop notebook computer macbook' },
+      { label: 'Tablets', searchTerm: 'tablet ipad android tablet' },
+      { label: 'Audio', searchTerm: 'headphones earbuds speaker audio bluetooth' },
+      { label: 'Smart Home', searchTerm: 'smart home alexa google nest wifi' },
+      { label: 'Gaming', searchTerm: 'gaming console controller game xbox playstation' },
+      { label: 'Accessories', searchTerm: 'electronics accessories cable charger case' },
     ],
     emptyState: {
-      title: 'No electronics products found',
+      title: 'No Electronics found',
       description:
-        'Try adjusting your search or filters, or browse another subcategory. New electronics are listed every day.',
+        'Try adjusting your search or filters. New electronics are listed every day.',
     },
     productFilter: { categorySlug: 'electronics' },
   },
 
-  // ── Home & Garden ─────────────────────────────────────────────────────────
-  {
-    slug: 'home-garden',
-    label: 'Home & Garden',
-    title: 'Home & Garden',
-    subtitle: 'Furniture, kitchenware, décor, bedding, lighting and garden essentials',
-    icon: Home,
-    iconColor: 'text-emerald-500',
-    accentBg: 'bg-emerald-500/15',
-    chips: [
-      { label: 'All Home & Garden' },
-      { label: 'Furniture', searchTerm: 'furniture sofa chair table desk' },
-      { label: 'Kitchen & Dining', searchTerm: 'kitchen cookware dining utensil' },
-      { label: 'Home Decor', searchTerm: 'home decor decoration ornament' },
-      { label: 'Bedding', searchTerm: 'bedding duvet pillow mattress' },
-      { label: 'Lighting', searchTerm: 'lighting lamp light bulb' },
-      { label: 'Storage', searchTerm: 'storage box shelf organiser' },
-      { label: 'Garden Tools', searchTerm: 'garden tool spade fork mower' },
-      { label: 'Outdoor Living', searchTerm: 'outdoor patio garden furniture' },
-      { label: 'DIY Home Essentials', searchTerm: 'diy home paint tile flooring' },
-    ],
-    emptyState: {
-      title: 'No Home & Garden products found',
-      description:
-        'Try adjusting your search or filters, or select another subcategory. New home and garden items are added regularly.',
-    },
-    productFilter: { categorySlug: 'home-garden' },
-  },
-
-  // ── Tools & DIY ───────────────────────────────────────────────────────────
-  {
-    slug: 'tools-diy',
-    label: 'Tools & DIY',
-    title: 'Tools & DIY',
-    subtitle: 'Power tools, hand tools, hardware, safety equipment and building supplies',
-    icon: Wrench,
-    iconColor: 'text-amber-600',
-    accentBg: 'bg-amber-600/15',
-    chips: [
-      { label: 'All Tools & DIY' },
-      { label: 'Power Tools', searchTerm: 'power drill saw grinder sander' },
-      { label: 'Hand Tools', searchTerm: 'hand tool spanner wrench screwdriver' },
-      { label: 'Tool Storage', searchTerm: 'tool storage box chest bag' },
-      { label: 'Hardware', searchTerm: 'hardware bolt nut fixing bracket' },
-      { label: 'Building Materials', searchTerm: 'building construction timber brick' },
-      { label: 'Safety Equipment', searchTerm: 'safety ppe gloves helmet high vis' },
-      { label: 'Electrical Tools', searchTerm: 'electrical cable wire socket tester' },
-      { label: 'Plumbing Tools', searchTerm: 'plumbing pipe fitting valve' },
-      { label: 'Workshop Equipment', searchTerm: 'workshop bench vice lathe grinder' },
-    ],
-    emptyState: {
-      title: 'No Tools & DIY products found',
-      description:
-        'Try adjusting your search or filters, or browse another subcategory. New tools are listed by trade sellers regularly.',
-    },
-    productFilter: { categorySlug: 'tools' },
-  },
-
-  // ── Business Supplies ─────────────────────────────────────────────────────
-  {
-    slug: 'business-supplies',
-    label: 'Business Supplies',
-    title: 'Business Supplies',
-    subtitle: 'Office essentials, packaging, catering, cleaning and warehouse stock',
-    icon: Briefcase,
-    iconColor: 'text-indigo-500',
-    accentBg: 'bg-indigo-500/15',
-    chips: [
-      { label: 'All Business Supplies' },
-      { label: 'Office Supplies', searchTerm: 'office stationery printer paper desk' },
-      { label: 'Packaging', searchTerm: 'packaging boxes bags tape bubble' },
-      { label: 'Storage & Shelving', searchTerm: 'storage shelf racking shelving' },
-      { label: 'Cleaning Supplies', searchTerm: 'cleaning hygiene janitorial sanitiser' },
-      { label: 'Catering Supplies', searchTerm: 'catering food service kitchen commercial' },
-      { label: 'Retail Supplies', searchTerm: 'retail pos display signage' },
-      { label: 'Warehouse Essentials', searchTerm: 'warehouse pallet truck forklift' },
-      { label: 'Workwear & PPE', searchTerm: 'workwear ppe safety uniform hi-vis' },
-    ],
-    emptyState: {
-      title: 'No Business Supplies listed yet',
-      description:
-        'Try adjusting your filters or browse a different subcategory. Business stock is added regularly.',
-    },
-    productFilter: { categorySlug: 'business' },
-  },
-
-  // ── Fashion ───────────────────────────────────────────────────────────────
+  // ── Fashion ────────────────────────────────────────────────────────────────
   {
     slug: 'fashion',
     label: 'Fashion',
     title: 'Fashion',
-    subtitle: "Men's, women's and kids' clothing, shoes, bags, jewellery and accessories",
+    subtitle: 'Clothing, shoes, bags and accessories for women, men and everyone in between',
     icon: Shirt,
     iconColor: 'text-pink-500',
-    accentBg: 'bg-pink-500/15',
+    accentBg: 'bg-pink-500/10',
+    image: '/images/categories/fashion.jpg',
+    subcategories: ["Women's Clothing", "Men's Clothing", 'Shoes', 'Bags', 'Jewellery', 'Accessories'],
     chips: [
       { label: 'All Fashion' },
-      { label: "Men's Clothing", searchTerm: 'mens clothing shirt trouser jacket' },
-      { label: "Women's Clothing", searchTerm: 'womens ladies clothing dress blouse' },
-      { label: "Kids' Clothing", searchTerm: 'kids children boys girls baby clothing' },
-      { label: 'Shoes', searchTerm: 'shoes trainers boots heels sandals' },
-      { label: 'Bags & Accessories', searchTerm: 'handbag bag accessories belt scarf hat' },
-      { label: 'Jewellery', searchTerm: 'jewellery necklace ring bracelet earring' },
-      { label: 'Watches', searchTerm: 'watch timepiece wristwatch' },
-      { label: 'Workwear', searchTerm: 'workwear uniform hi-vis work clothing' },
-      { label: 'Mixed Fashion Lots', searchTerm: 'mixed fashion lot clothing bundle' },
+      { label: "Women's Clothing", searchTerm: "women clothing dress top skirt blouse" },
+      { label: "Men's Clothing", searchTerm: "men clothing shirt trousers jacket hoodie" },
+      { label: 'Shoes', searchTerm: 'shoes trainers boots heels sandals footwear' },
+      { label: 'Bags', searchTerm: 'bag handbag tote backpack purse' },
+      { label: 'Jewellery', searchTerm: 'jewellery necklace bracelet ring earring' },
+      { label: 'Accessories', searchTerm: 'fashion accessories scarf hat belt gloves' },
     ],
     emptyState: {
-      title: 'No fashion products found',
+      title: 'No Fashion items found',
       description:
-        'Try adjusting your search or filters, or select another subcategory. New clothing and accessories are added daily.',
+        'Try adjusting your search or browse other categories. New fashion items are added regularly.',
     },
     productFilter: { categorySlug: 'fashion' },
   },
 
-  // ── Automotive ────────────────────────────────────────────────────────────
+  // ── Home & Kitchen ─────────────────────────────────────────────────────────
+  {
+    slug: 'home-kitchen',
+    label: 'Home & Kitchen',
+    title: 'Home & Kitchen',
+    subtitle: 'Appliances, cookware, storage, home decor and furniture for every room',
+    icon: Home,
+    iconColor: 'text-emerald-600',
+    accentBg: 'bg-emerald-600/10',
+    image: '/images/categories/home-kitchen.jpg',
+    subcategories: ['Small Appliances', 'Kitchen Tools', 'Storage', 'Cleaning', 'Home Decor', 'Furniture'],
+    chips: [
+      { label: 'All Home & Kitchen' },
+      { label: 'Small Appliances', searchTerm: 'small appliance kettle toaster microwave blender' },
+      { label: 'Kitchen Tools', searchTerm: 'kitchen tools cookware pan pot utensil' },
+      { label: 'Storage', searchTerm: 'storage box shelf organiser container basket' },
+      { label: 'Cleaning', searchTerm: 'cleaning mop vacuum hoover brush cloth' },
+      { label: 'Home Decor', searchTerm: 'home decor candle vase ornament cushion lamp' },
+      { label: 'Furniture', searchTerm: 'furniture sofa chair table desk shelf unit' },
+    ],
+    emptyState: {
+      title: 'No Home & Kitchen products found',
+      description:
+        'Try adjusting your search or filters. New home and kitchen items are listed regularly.',
+    },
+    productFilter: { categorySlug: 'home-kitchen' },
+  },
+
+  // ── Beauty ─────────────────────────────────────────────────────────────────
+  {
+    slug: 'beauty',
+    label: 'Beauty',
+    title: 'Beauty',
+    subtitle: 'Skincare, haircare, makeup, fragrance and beauty tools from premium brands',
+    icon: Sparkles,
+    iconColor: 'text-rose-500',
+    accentBg: 'bg-rose-500/10',
+    image: '/images/categories/beauty.jpg',
+    subcategories: ['Skincare', 'Haircare', 'Makeup', 'Fragrance', 'Beauty Tools'],
+    chips: [
+      { label: 'All Beauty' },
+      { label: 'Skincare', searchTerm: 'skincare moisturiser serum cleanser toner spf' },
+      { label: 'Haircare', searchTerm: 'haircare shampoo conditioner hair dryer styling' },
+      { label: 'Makeup', searchTerm: 'makeup foundation lipstick mascara eyeshadow blush' },
+      { label: 'Fragrance', searchTerm: 'fragrance perfume cologne eau de toilette body mist' },
+      { label: 'Beauty Tools', searchTerm: 'beauty tools hair dryer straightener curler device' },
+    ],
+    emptyState: {
+      title: 'No Beauty products found',
+      description:
+        'Try adjusting your search or filters. New beauty and skincare products are added regularly.',
+    },
+    productFilter: { categorySlug: 'beauty' },
+  },
+
+  // ── Tools & DIY ────────────────────────────────────────────────────────────
+  {
+    slug: 'tools-diy',
+    label: 'Tools & DIY',
+    title: 'Tools & DIY',
+    subtitle: 'Power tools, hand tools, hardware, workshop essentials and safety equipment',
+    icon: Wrench,
+    iconColor: 'text-amber-600',
+    accentBg: 'bg-amber-600/10',
+    image: '/images/categories/tools-diy.jpg',
+    subcategories: ['Power Tools', 'Hand Tools', 'Hardware', 'Workshop', 'Electrical', 'Safety Equipment'],
+    chips: [
+      { label: 'All Tools & DIY' },
+      { label: 'Power Tools', searchTerm: 'power drill saw grinder sander jigsaw circular' },
+      { label: 'Hand Tools', searchTerm: 'hand tool spanner wrench screwdriver hammer pliers' },
+      { label: 'Hardware', searchTerm: 'hardware screw bolt nut fastener fixing anchor' },
+      { label: 'Workshop', searchTerm: 'workshop workbench toolbox storage cabinet organiser' },
+      { label: 'Electrical', searchTerm: 'electrical wire cable socket switch fuse breaker' },
+      { label: 'Safety Equipment', searchTerm: 'safety equipment gloves goggles helmet mask ppe' },
+    ],
+    emptyState: {
+      title: 'No Tools & DIY products found',
+      description:
+        'Try adjusting your search or filters. New tools and hardware are listed regularly.',
+    },
+    productFilter: { categorySlug: 'tools-diy' },
+  },
+
+  // ── Toys & Games ───────────────────────────────────────────────────────────
+  {
+    slug: 'toys-games',
+    label: 'Toys & Games',
+    title: 'Toys & Games',
+    subtitle: 'Educational toys, board games, outdoor play and gifts for all ages',
+    icon: Gamepad2,
+    iconColor: 'text-violet-500',
+    accentBg: 'bg-violet-500/10',
+    image: '/images/categories/toys-games.jpg',
+    subcategories: ['Educational Toys', 'Outdoor Toys', 'Board Games', 'Action Figures', 'Baby Toys'],
+    chips: [
+      { label: 'All Toys & Games' },
+      { label: 'Educational Toys', searchTerm: 'educational toy learning puzzle stem science' },
+      { label: 'Outdoor Toys', searchTerm: 'outdoor toy trampoline scooter bike ride on' },
+      { label: 'Board Games', searchTerm: 'board game card game chess checkers puzzle strategy' },
+      { label: 'Action Figures', searchTerm: 'action figure doll collectible superhero toy' },
+      { label: 'Baby Toys', searchTerm: 'baby toy rattle teether activity mat sensory' },
+    ],
+    emptyState: {
+      title: 'No Toys & Games found',
+      description:
+        'Try adjusting your search or filters. New toys and games are added regularly.',
+    },
+    productFilter: { categorySlug: 'toys-games' },
+  },
+
+  // ── Health & Wellness ──────────────────────────────────────────────────────
+  {
+    slug: 'health-wellness',
+    label: 'Health & Wellness',
+    title: 'Health & Wellness',
+    subtitle: 'Personal care, fitness accessories, wellness devices and supplements',
+    icon: Heart,
+    iconColor: 'text-red-500',
+    accentBg: 'bg-red-500/10',
+    image: '/images/categories/health-wellness.jpg',
+    subcategories: ['Personal Care', 'Fitness Accessories', 'Wellness Devices', 'Supplements', 'Massagers'],
+    chips: [
+      { label: 'All Health & Wellness' },
+      { label: 'Personal Care', searchTerm: 'personal care electric toothbrush shaver razor trimmer' },
+      { label: 'Fitness Accessories', searchTerm: 'fitness accessory yoga mat resistance band weight dumbbell' },
+      { label: 'Wellness Devices', searchTerm: 'wellness device blood pressure monitor thermometer pulse oximeter' },
+      { label: 'Supplements', searchTerm: 'supplement protein vitamin mineral health nutrition' },
+      { label: 'Massagers', searchTerm: 'massager massage gun foam roller percussion back neck' },
+    ],
+    emptyState: {
+      title: 'No Health & Wellness products found',
+      description:
+        'Try adjusting your search or filters. New health and wellness products are added regularly.',
+    },
+    productFilter: { categorySlug: 'health-wellness' },
+  },
+
+  // ── Automotive ─────────────────────────────────────────────────────────────
   {
     slug: 'automotive',
     label: 'Automotive',
     title: 'Automotive',
-    subtitle: 'Car parts, van parts, tyres, batteries, tools and vehicle accessories',
+    subtitle: 'Car accessories, cleaning kits, interior accessories and automotive lighting',
     icon: Car,
-    iconColor: 'text-rose-600',
-    accentBg: 'bg-rose-600/15',
+    iconColor: 'text-slate-600',
+    accentBg: 'bg-slate-600/10',
+    image: '/images/categories/automotive.jpg',
+    subcategories: ['Car Accessories', 'Cleaning Kits', 'Interior Accessories', 'Tools', 'Lighting'],
     chips: [
       { label: 'All Automotive' },
-      { label: 'Car Parts', searchTerm: 'car parts engine exhaust brake suspension' },
-      { label: 'Van Parts', searchTerm: 'van parts commercial vehicle' },
-      { label: 'Tools & Garage', searchTerm: 'garage tool mechanics ramp lift' },
-      { label: 'Car Care', searchTerm: 'car care polish wax valeting' },
-      { label: 'Tyres & Wheels', searchTerm: 'tyres tires wheels alloy rim' },
-      { label: 'Batteries', searchTerm: 'car battery starter jump' },
-      { label: 'Accessories', searchTerm: 'car accessories interior exterior dash' },
-      { label: 'Diagnostics', searchTerm: 'diagnostics obd scanner reader' },
-      { label: 'Commercial Vehicle Supplies', searchTerm: 'commercial vehicle fleet hgv' },
+      { label: 'Car Accessories', searchTerm: 'car accessory phone holder dash cam parking sensor' },
+      { label: 'Cleaning Kits', searchTerm: 'car cleaning kit polish wax shampoo tyre cleaner' },
+      { label: 'Interior Accessories', searchTerm: 'car interior seat cover mat organiser air freshener' },
+      { label: 'Tools', searchTerm: 'automotive tool jack torque wrench jump starter' },
+      { label: 'Lighting', searchTerm: 'car lighting led bulb strip ambient interior exterior' },
     ],
     emptyState: {
-      title: 'No automotive products found',
+      title: 'No Automotive products found',
       description:
-        'Try adjusting your search or filters, or browse another subcategory. New automotive parts and accessories are added regularly.',
+        'Try adjusting your search or filters. New automotive accessories are listed regularly.',
     },
-    productFilter: { categorySlug: 'vehicles' },
+    productFilter: { categorySlug: 'automotive' },
   },
 
-  // ── Toys ──────────────────────────────────────────────────────────────────
+  // ── Office Supplies ────────────────────────────────────────────────────────
   {
-    slug: 'toys',
-    label: 'Toys',
-    title: 'Toys',
-    subtitle: 'Baby toys, educational toys, games, puzzles and hobby collectibles',
-    icon: Gamepad2,
-    iconColor: 'text-purple-500',
-    accentBg: 'bg-purple-500/15',
+    slug: 'office-supplies',
+    label: 'Office Supplies',
+    title: 'Office Supplies',
+    subtitle: 'Desk accessories, stationery, office storage and business essentials',
+    icon: Briefcase,
+    iconColor: 'text-indigo-600',
+    accentBg: 'bg-indigo-600/10',
+    image: '/images/categories/office-supplies.jpg',
+    subcategories: ['Desk Accessories', 'Office Storage', 'Stationery', 'Printers & Ink', 'Business Essentials'],
     chips: [
-      { label: 'All Toys' },
-      { label: 'Baby & Toddler Toys', searchTerm: 'baby toddler toy infant' },
-      { label: 'Educational Toys', searchTerm: 'educational learning toy stem' },
-      { label: 'Outdoor Toys', searchTerm: 'outdoor toy trampoline scooter bike' },
-      { label: 'Action Figures', searchTerm: 'action figure superhero character toy' },
-      { label: 'Dolls', searchTerm: 'doll barbie playset' },
-      { label: 'Games & Puzzles', searchTerm: 'game puzzle board card jigsaw' },
-      { label: 'Hobby & Collectibles', searchTerm: 'hobby collectible model train' },
+      { label: 'All Office Supplies' },
+      { label: 'Desk Accessories', searchTerm: 'desk accessory monitor stand lamp pen holder calendar' },
+      { label: 'Office Storage', searchTerm: 'office storage file folder binder cabinet drawer' },
+      { label: 'Stationery', searchTerm: 'stationery pen pencil notebook planner sticky note' },
+      { label: 'Printers & Ink', searchTerm: 'printer ink toner cartridge paper scanner copier' },
+      { label: 'Business Essentials', searchTerm: 'business card lanyard id badge shredder binding' },
     ],
     emptyState: {
-      title: 'No toy products found',
+      title: 'No Office Supplies found',
       description:
-        'Try adjusting your search or filters, or select another subcategory. New toys are listed regularly.',
+        'Try adjusting your search or filters. New office supplies are added regularly.',
     },
-    productFilter: { categorySlug: 'toys' },
-  },
-
-  // ── Pets ──────────────────────────────────────────────────────────────────
-  {
-    slug: 'pets',
-    label: 'Pets',
-    title: 'Pets',
-    subtitle: 'Dog supplies, cat supplies, pet food, aquarium and small animal essentials',
-    icon: PawPrint,
-    iconColor: 'text-teal-500',
-    accentBg: 'bg-teal-500/15',
-    chips: [
-      { label: 'All Pets' },
-      { label: 'Dog Supplies', searchTerm: 'dog puppy canine lead collar bed' },
-      { label: 'Cat Supplies', searchTerm: 'cat kitten feline litter scratching' },
-      { label: 'Pet Food', searchTerm: 'pet food feed treat kibble' },
-      { label: 'Small Animal Supplies', searchTerm: 'small animal hamster rabbit guinea pig' },
-      { label: 'Aquarium', searchTerm: 'aquarium fish tank filter' },
-      { label: 'Bird Supplies', searchTerm: 'bird cage perch seed feeder' },
-      { label: 'Pet Accessories', searchTerm: 'pet accessories toy grooming' },
-    ],
-    emptyState: {
-      title: 'No pet products found',
-      description:
-        'Try adjusting your search or filters, or browse another subcategory. New pet supplies are added regularly.',
-    },
-    productFilter: { categorySlug: 'pets' },
-  },
-
-  // ── Handmade ──────────────────────────────────────────────────────────────
-  {
-    slug: 'handmade',
-    label: 'Handmade',
-    title: 'Handmade',
-    subtitle: 'Unique handcrafted items — gifts, candles, art, jewellery and personalised pieces',
-    icon: Sparkles,
-    iconColor: 'text-fuchsia-500',
-    accentBg: 'bg-fuchsia-500/15',
-    chips: [
-      { label: 'All Handmade' },
-      { label: 'Home Decor', searchTerm: 'handmade home decor decoration' },
-      { label: 'Gifts', searchTerm: 'handmade gift present' },
-      { label: 'Candles', searchTerm: 'candle wax scented soy' },
-      { label: 'Jewellery', searchTerm: 'handmade jewellery necklace ring' },
-      { label: 'Art & Crafts', searchTerm: 'art craft painting print' },
-      { label: 'Personalised Items', searchTerm: 'personalised custom bespoke engraved' },
-      { label: 'Crochet / Knitted', searchTerm: 'crochet knitted knit wool' },
-      { label: 'Seasonal', searchTerm: 'seasonal christmas halloween wedding' },
-    ],
-    emptyState: {
-      title: 'No handmade products found',
-      description:
-        'Try adjusting your search or filters, or select another subcategory. New handmade items are listed regularly.',
-    },
-    productFilter: { categorySlug: 'handmade' },
-  },
-
-  // ── Sports & Outdoors ──────────────────────────────────────────────────────
-  {
-    slug: 'sports-outdoors',
-    label: 'Sports & Outdoors',
-    title: 'Sports & Outdoors',
-    subtitle: 'Fitness equipment, outdoor gear, cycling, camping and team sports',
-    icon: Trophy,
-    iconColor: 'text-green-600',
-    accentBg: 'bg-green-600/15',
-    chips: [
-      { label: 'All Sports & Outdoors' },
-      { label: 'Gym & Fitness', searchTerm: 'gym fitness dumbbell weights treadmill' },
-      { label: 'Cycling', searchTerm: 'bike bicycle cycling helmet pump' },
-      { label: 'Football & Team Sports', searchTerm: 'football rugby cricket bat ball goal' },
-      { label: 'Running', searchTerm: 'running trainers jogging shoes' },
-      { label: 'Camping & Hiking', searchTerm: 'camping hiking tent sleeping bag rucksack' },
-      { label: 'Outdoor Clothing', searchTerm: 'outdoor jacket waterproof fleece hiking' },
-      { label: 'Water Sports', searchTerm: 'water sports kayak surf paddle board' },
-      { label: 'Golf', searchTerm: 'golf club driver iron bag trolley' },
-      { label: 'Racket Sports', searchTerm: 'tennis badminton squash racket' },
-    ],
-    emptyState: {
-      title: 'No Sports & Outdoors products found',
-      description:
-        'Try adjusting your search or filters. New sports and outdoor equipment is listed regularly.',
-    },
-    productFilter: { categorySlug: 'sports-outdoors' },
-  },
-
-  // ── Health & Beauty ────────────────────────────────────────────────────────
-  {
-    slug: 'health-beauty',
-    label: 'Health & Beauty',
-    title: 'Health & Beauty',
-    subtitle: 'Skincare, haircare, vitamins, fragrances, personal care and wellness',
-    icon: Heart,
-    iconColor: 'text-rose-500',
-    accentBg: 'bg-rose-500/15',
-    chips: [
-      { label: 'All Health & Beauty' },
-      { label: 'Skincare', searchTerm: 'skincare moisturiser serum face cream' },
-      { label: 'Haircare', searchTerm: 'haircare shampoo conditioner hair mask' },
-      { label: 'Fragrances', searchTerm: 'fragrance perfume aftershave cologne' },
-      { label: 'Make-up & Cosmetics', searchTerm: 'makeup cosmetics foundation lipstick' },
-      { label: 'Vitamins & Supplements', searchTerm: 'vitamins supplements health protein' },
-      { label: 'Personal Care', searchTerm: 'personal care hygiene deodorant body' },
-      { label: 'Hair Tools', searchTerm: 'hair dryer straightener curler tools' },
-      { label: 'Oral Care', searchTerm: 'oral care toothbrush toothpaste whitening' },
-      { label: 'Wellness', searchTerm: 'wellness massage relaxation aromatherapy' },
-    ],
-    emptyState: {
-      title: 'No Health & Beauty products found',
-      description:
-        'Try adjusting your search or filters. New beauty and health products are added regularly.',
-    },
-    productFilter: { categorySlug: 'health-beauty' },
-  },
-
-  // ── Baby & Kids ────────────────────────────────────────────────────────────
-  {
-    slug: 'baby-kids',
-    label: 'Baby & Kids',
-    title: 'Baby & Kids',
-    subtitle: 'Everything for babies and children — clothing, nursery, feeding, toys and more',
-    icon: Baby,
-    iconColor: 'text-sky-500',
-    accentBg: 'bg-sky-500/15',
-    chips: [
-      { label: 'All Baby & Kids' },
-      { label: 'Baby Clothing', searchTerm: 'baby clothing babygrow sleepsuit vest' },
-      { label: 'Nursery', searchTerm: 'nursery cot moses basket bedding changing' },
-      { label: 'Feeding', searchTerm: 'feeding bottle breast pump highchair weaning' },
-      { label: 'Pushchairs & Prams', searchTerm: 'pushchair pram buggy stroller car seat' },
-      { label: "Children's Clothing", searchTerm: 'kids boys girls clothing school uniform' },
-      { label: 'Baby Toys', searchTerm: 'baby toy rattle teether playmat activity' },
-      { label: 'Safety & Health', searchTerm: 'baby safety monitor gate stair barrier' },
-      { label: 'Baby Bathing', searchTerm: 'baby bath tub wash towel care' },
-    ],
-    emptyState: {
-      title: 'No Baby & Kids products found',
-      description:
-        'Try adjusting your search or filters. New baby and children items are added regularly.',
-    },
-    productFilter: { categorySlug: 'baby-kids' },
-  },
-
-  // ── Food & Drink ───────────────────────────────────────────────────────────
-  {
-    slug: 'food-drink',
-    label: 'Food & Drink',
-    title: 'Food & Drink',
-    subtitle: 'Grocery essentials, beverages, snacks, wholesale food and catering supplies',
-    icon: UtensilsCrossed,
-    iconColor: 'text-lime-600',
-    accentBg: 'bg-lime-600/15',
-    chips: [
-      { label: 'All Food & Drink' },
-      { label: 'Snacks & Confectionery', searchTerm: 'snack chocolate sweets confectionery' },
-      { label: 'Beverages', searchTerm: 'drink beverage coffee tea juice energy' },
-      { label: 'Grocery', searchTerm: 'grocery food tinned pasta rice cereal' },
-      { label: 'Health Foods', searchTerm: 'health food protein bar organic vegan' },
-      { label: 'Alcohol', searchTerm: 'alcohol wine beer spirits whisky' },
-      { label: 'Wholesale Food', searchTerm: 'wholesale food catering bulk supply' },
-      { label: 'Bakery', searchTerm: 'bakery bread cake biscuit pastry' },
-      { label: 'Condiments & Sauces', searchTerm: 'sauce condiment spice seasoning' },
-    ],
-    emptyState: {
-      title: 'No Food & Drink products found',
-      description:
-        'Try adjusting your search or filters. New food and drink listings are added regularly.',
-    },
-    productFilter: { categorySlug: 'food-drink' },
+    productFilter: { categorySlug: 'office-supplies' },
   },
 ];
 
