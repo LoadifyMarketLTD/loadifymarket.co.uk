@@ -28,7 +28,6 @@ const conditionColor: Record<string, string> = {
   "Like New": "bg-blue-500/10 text-blue-700 border-blue-200",
   Mixed: "bg-amber-500/10 text-amber-700 border-amber-200",
   Unchecked: "bg-purple-500/10 text-purple-700 border-purple-200",
-  "Damaged Packaging": "bg-red-500/10 text-red-700 border-red-200",
 };
 
 const ProductInfo = ({

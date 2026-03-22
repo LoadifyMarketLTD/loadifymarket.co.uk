@@ -11,7 +11,6 @@ import babyImg from "@/assets/categories/baby.jpg";
 import mixedPalletsImg from "@/assets/categories/mixed-pallets.jpg";
 import returnsImg from "@/assets/categories/returns.jpg";
 import overstockImg from "@/assets/categories/overstock.jpg";
-import clearanceImg from "@/assets/categories/clearance.jpg";
 
 export const mockProducts: Product[] = [
   {
@@ -157,7 +156,7 @@ export const mockProducts: Product[] = [
     originalPrice: 2200,
     category: "Sports & Leisure",
     subcategory: "Fitness Equipment",
-    condition: "Damaged Packaging",
+    condition: "Mixed",
     location: "Glasgow",
     seller: "FitClear UK",
     sellerVerified: false,
@@ -199,22 +198,5 @@ export const mockProducts: Product[] = [
     rating: 4.1,
     views: 367,
     listed: "12 hours ago",
-  },
-  {
-    id: "12",
-    title: "Flash Sale: Electronics & Gadgets - Damaged Packaging Only",
-    image: clearanceImg,
-    price: 480,
-    originalPrice: 1500,
-    category: "Clearance Deals",
-    subcategory: "Damaged Packaging",
-    condition: "Damaged Packaging",
-    location: "Edinburgh",
-    seller: "ClearancePro",
-    sellerVerified: true,
-    unitCount: 1,
-    rating: 4.0,
-    views: 521,
-    listed: "45 minutes ago",
   },
 ];
