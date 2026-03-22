@@ -41,16 +41,16 @@ const stats = [
 
 const PlatformFeatures = () => {
   return (
-    <section className="py-14 bg-[#F4F7FB]">
+    <section className="py-14 bg-white">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-xl mx-auto mb-10">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#1A4DBE]">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#2563EB]">
             Why Loadify Market
           </span>
-          <h2 className="mt-2 text-2xl sm:text-3xl font-display font-bold text-[#1F2937]">
+          <h2 className="mt-2 text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
             A Platform Built for UK Trade
           </h2>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-[#334155]">
             Trusted by buyers and sellers across the UK for wholesale, clearance and returns stock.
           </p>
         </div>
@@ -59,13 +59,13 @@ const PlatformFeatures = () => {
           {stats.map((stat) => (
             <div
               key={stat.label}
-              className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col items-center text-center hover:shadow-md transition-shadow duration-300"
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col items-center text-center hover:shadow-md transition-shadow duration-300"
             >
               <div className={`w-11 h-11 rounded-xl ${stat.color} flex items-center justify-center mb-3`}>
                 <stat.icon className="h-5 w-5" />
               </div>
-              <p className="text-xl font-extrabold text-[#1F2937]">{stat.value}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
+              <p className="text-xl font-extrabold text-[#0F172A]">{stat.value}</p>
+              <p className="text-xs text-[#334155] mt-0.5">{stat.label}</p>
             </div>
           ))}
         </div>

@@ -95,15 +95,15 @@ function CategoryCard({
 
 const CategoryGrid = () => {
   return (
-    <section className="bg-[#F4F7FB] py-12 px-4 lg:px-6">
-      <div className="max-w-[1360px] mx-auto">
+    <section className="bg-[#F5F7FB] py-12 px-4 lg:px-6">
+      <div className="max-w-[1280px] mx-auto">
         {/* Section header */}
         <div className="text-center mb-8">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#1A4080]">Explore</span>
-          <h2 className="mt-1 text-2xl sm:text-3xl font-display font-bold text-[#0F2D52]">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#2563EB]">Explore</span>
+          <h2 className="mt-1 text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
             Shop by Category
           </h2>
-          <p className="mt-1.5 text-sm text-gray-500">
+          <p className="mt-1.5 text-sm text-[#334155]">
             Browse thousands of listings across every major product category.
           </p>
         </div>

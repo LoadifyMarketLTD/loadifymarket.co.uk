@@ -4,12 +4,12 @@ import { Link } from "react-router-dom";
 
 const CTASection = () => {
   return (
-    <section id="contact" className="py-16 bg-white">
+    <section id="contact" className="py-16 bg-[#F5F7FB]">
       <div className="container mx-auto px-4">
-        <div className="relative overflow-hidden rounded-3xl bg-[#0F2D52] p-10 sm:p-16 text-center">
+        <div className="relative overflow-hidden rounded-3xl bg-[#0F172A] p-10 sm:p-16 text-center">
           {/* Decorative blobs */}
-          <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-[#1A4080]/60 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-blue-800/40 blur-3xl pointer-events-none" />
+          <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-[#2563EB]/40 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-blue-700/30 blur-3xl pointer-events-none" />
           {/* Dot pattern */}
           <div
             className="absolute inset-0 opacity-[0.06] pointer-events-none"
@@ -34,7 +34,7 @@ const CTASection = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10 hover:border-white/60 font-bold text-base px-8"
+                  className="border-white/30 text-white hover:bg-white/10 hover:border-white/60 font-bold text-base px-8 h-12"
                 >
                   Browse Marketplace <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -42,7 +42,7 @@ const CTASection = () => {
               <Link to="/signup">
                 <Button
                   size="lg"
-                  className="bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-base px-8 shadow-lg shadow-emerald-900/30"
+                  className="bg-[#2563EB] hover:bg-[#1d4ed8] text-white font-bold text-base px-8 h-12 shadow-lg shadow-blue-900/40"
                 >
                   Create Free Account <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>

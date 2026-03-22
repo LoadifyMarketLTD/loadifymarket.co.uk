@@ -1,10 +1,16 @@
-import { ArrowRight, CheckCircle2, ShieldCheck, Tag, Layers, Star } from "lucide-react";
+import { ArrowRight, ShieldCheck, CreditCard, MessageSquare, Layers, Star, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import electronicsImg from "@/assets/categories/electronics.jpg";
 import clothingImg from "@/assets/categories/clothing.jpg";
 import toolsImg from "@/assets/categories/tools.jpg";
 import healthBeautyImg from "@/assets/categories/health-beauty.jpg";
+
+const trustChips = [
+  { icon: ShieldCheck, label: "Verified Sellers", color: "text-emerald-600 bg-emerald-50" },
+  { icon: CreditCard, label: "Secure Payments", color: "text-blue-600 bg-blue-50" },
+  { icon: MessageSquare, label: "Real-time Messaging", color: "text-violet-600 bg-violet-50" },
+];
 
 const MockCard = ({
   title,
@@ -41,13 +47,13 @@ const MockCard = ({
       </div>
       <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${badgeColor}`}>{badge}</span>
     </div>
-    <p className="text-sm font-bold text-[#1A4080]">{price}</p>
+    <p className="text-sm font-bold text-[#2563EB]">{price}</p>
   </div>
 );
 
 const HeroSection = () => {
   return (
-    <section className="bg-gradient-to-br from-white via-blue-50/40 to-slate-50 py-16 lg:py-24 overflow-hidden">
+    <section className="bg-white py-16 lg:py-24 overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
@@ -58,42 +64,42 @@ const HeroSection = () => {
               🇬🇧 The UK's Trusted Marketplace
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-[3rem] font-display font-extrabold leading-[1.08] text-[#0F2D52]">
+            <h1 className="text-4xl sm:text-5xl lg:text-[3rem] font-display font-extrabold leading-[1.08] text-[#0F172A]">
               The UK Marketplace{" "}
-              <span className="text-[#1A7DC4]">Connecting Buyers &amp; Sellers</span>
+              <span className="text-[#2563EB]">Connecting Buyers &amp; Sellers</span>
             </h1>
 
-            <p className="text-lg text-slate-600 leading-relaxed">
+            <p className="text-lg text-[#334155] leading-relaxed">
               Discover wholesale stock, clearance goods and returns pallets from verified UK sellers — all on one trusted platform.
             </p>
 
-            <ul className="space-y-2.5">
-              {[
-                "Verified Sellers & Real Buyers",
-                "Wholesale, Clearance & Returns Listings",
-                "Secure Payments via Stripe",
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-2.5 text-slate-700 font-medium">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" aria-hidden="true" />
-                  {item}
-                </li>
+            {/* Trust feature chips */}
+            <div className="flex flex-wrap gap-2">
+              {trustChips.map((chip) => (
+                <span
+                  key={chip.label}
+                  className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border border-gray-100 bg-white shadow-sm ${chip.color}`}
+                >
+                  <chip.icon className="h-3.5 w-3.5 shrink-0" />
+                  {chip.label}
+                </span>
               ))}
-            </ul>
+            </div>
 
             <div className="flex flex-wrap gap-3 pt-1">
               <Link to="/catalog">
                 <Button
                   size="lg"
-                  className="bg-[#0F2D52] hover:bg-[#1A4080] text-white font-bold text-base px-8 shadow-md"
+                  className="bg-[#2563EB] hover:bg-[#1d4ed8] text-white font-bold text-base px-8 h-12 shadow-md shadow-blue-200"
                 >
-                  Browse Listings <ArrowRight className="ml-2 h-5 w-5" />
+                  Browse Marketplace <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/register?type=seller">
+              <Link to="/signup?type=seller">
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-[#0F2D52] text-[#0F2D52] hover:bg-blue-50 font-bold text-base px-8"
+                  className="border-[#2563EB] text-[#2563EB] hover:bg-blue-50 font-bold text-base px-8 h-12"
                 >
                   Start Selling <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -108,12 +114,12 @@ const HeroSection = () => {
 
           {/* RIGHT: marketplace visual mockup */}
           <div className="relative hidden lg:flex flex-col gap-3">
-            <div className="absolute -inset-6 bg-gradient-to-br from-blue-100/60 via-sky-100/40 to-slate-100/40 rounded-3xl" />
+            <div className="absolute -inset-6 bg-gradient-to-br from-blue-50/80 via-sky-50/60 to-slate-100/40 rounded-3xl" />
 
             {/* Platform header card */}
-            <div className="relative bg-white rounded-2xl shadow-lg border border-slate-100 p-4 flex items-center justify-between">
+            <div className="relative bg-white rounded-2xl shadow-md border border-slate-100 p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#0F2D52] flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center">
                   <Layers className="h-4 w-4 text-white" />
                 </div>
                 <div>
@@ -134,7 +140,7 @@ const HeroSection = () => {
             {/* Stats row */}
             <div className="relative grid grid-cols-3 gap-3">
               {[
-                { label: "Active Listings", value: "500+", icon: Tag, colorClass: "text-[#1A4080] bg-blue-50" },
+                { label: "Active Listings", value: "500+", icon: Tag, colorClass: "text-[#2563EB] bg-blue-50" },
                 { label: "Verified Sellers", value: "120+", icon: ShieldCheck, colorClass: "text-emerald-600 bg-emerald-50" },
                 { label: "Categories", value: "16", icon: Layers, colorClass: "text-sky-600 bg-sky-50" },
               ].map((stat) => (

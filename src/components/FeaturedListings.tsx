@@ -3,13 +3,13 @@ import React, { useState, useCallback } from "react";
 import { Star, ArrowRight, Eye, X } from "lucide-react";
 
 const FILTER_TABS = [
-  { key: "all",         label: "All"         },
-  { key: "electronics", label: "Electronics" },
-  { key: "fashion",     label: "Fashion"     },
-  { key: "home",        label: "Home"        },
-  { key: "beauty",      label: "Beauty"      },
-  { key: "tools",       label: "Tools"       },
-  { key: "office",      label: "Office"      },
+  { key: "all",         label: "All"              },
+  { key: "new",         label: "New Arrivals"      },
+  { key: "best",        label: "Best in Category"  },
+  { key: "electronics", label: "Electronics"       },
+  { key: "fashion",     label: "Fashion"           },
+  { key: "home",        label: "Home"              },
+  { key: "tools",       label: "Tools"             },
 ];
 
 const featuredListings = [
@@ -23,6 +23,7 @@ const featuredListings = [
     reviews: 124,
     category: "Electronics",
     filterKey: "electronics",
+    isNew: true,
   },
   {
     id: "2",
@@ -34,6 +35,7 @@ const featuredListings = [
     reviews: 88,
     category: "Tools & DIY",
     filterKey: "tools",
+    isNew: false,
   },
   {
     id: "3",
@@ -45,6 +47,7 @@ const featuredListings = [
     reviews: 214,
     category: "Fashion",
     filterKey: "fashion",
+    isNew: false,
   },
   {
     id: "4",
@@ -56,6 +59,7 @@ const featuredListings = [
     reviews: 176,
     category: "Beauty",
     filterKey: "beauty",
+    isNew: true,
   },
   {
     id: "5",
@@ -67,6 +71,7 @@ const featuredListings = [
     reviews: 53,
     category: "Home",
     filterKey: "home",
+    isNew: true,
   },
   {
     id: "6",
@@ -78,6 +83,7 @@ const featuredListings = [
     reviews: 309,
     category: "Fashion",
     filterKey: "fashion",
+    isNew: false,
   },
   {
     id: "7",
@@ -89,6 +95,7 @@ const featuredListings = [
     reviews: 98,
     category: "Electronics",
     filterKey: "electronics",
+    isNew: true,
   },
   {
     id: "8",
@@ -100,6 +107,7 @@ const featuredListings = [
     reviews: 431,
     category: "Electronics",
     filterKey: "electronics",
+    isNew: false,
   },
   {
     id: "9",
@@ -111,6 +119,7 @@ const featuredListings = [
     reviews: 187,
     category: "Fashion",
     filterKey: "fashion",
+    isNew: true,
   },
   {
     id: "10",
@@ -122,6 +131,7 @@ const featuredListings = [
     reviews: 65,
     category: "Office",
     filterKey: "office",
+    isNew: true,
   },
 ];
 
@@ -213,7 +223,11 @@ const FeaturedListings = () => {
   const visibleListings =
     activeFilter === "all"
       ? featuredListings
-      : featuredListings.filter((item) => item.filterKey === activeFilter);
+      : activeFilter === "new"
+        ? featuredListings.filter((item) => item.isNew)
+        : activeFilter === "best"
+          ? featuredListings.filter((item) => item.stars >= 5)
+          : featuredListings.filter((item) => item.filterKey === activeFilter);
 
   return (
     <>
@@ -222,20 +236,20 @@ const FeaturedListings = () => {
       )}
 
       <section className="bg-white py-10 px-4 lg:px-6">
-        <div className="max-w-[1360px] mx-auto">
+        <div className="max-w-[1280px] mx-auto">
           {/* Section header */}
           <div className="flex items-start justify-between mb-1">
-            <h2 className="text-2xl font-extrabold text-[#1F2937]">
-              Featured <span className="text-[#1A4DBE]">Listings</span>
+            <h2 className="text-2xl font-extrabold text-[#0F172A]">
+              Featured <span className="text-[#2563EB]">Listings</span>
             </h2>
             <Link
               to="/catalog"
-              className="text-sm font-medium text-[#1A4DBE] hover:underline flex items-center gap-1 mt-1"
+              className="text-sm font-medium text-[#2563EB] hover:underline flex items-center gap-1 mt-1"
             >
               View All <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <p className="text-sm text-gray-500 mb-5">
+          <p className="text-sm text-[#334155] mb-5">
             Discover the best products from our verified UK sellers
           </p>
 
@@ -252,8 +266,8 @@ const FeaturedListings = () => {
                 aria-pressed={activeFilter === tab.key}
                 className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-300 ${
                   activeFilter === tab.key
-                    ? "bg-[#1A4DBE] text-white border-[#1A4DBE]"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-[#1A4DBE] hover:text-[#1A4DBE]"
+                    ? "bg-[#2563EB] text-white border-[#2563EB]"
+                    : "bg-white text-gray-600 border-gray-200 hover:border-[#2563EB] hover:text-[#2563EB]"
                 }`}
               >
                 {tab.label}
@@ -267,7 +281,7 @@ const FeaturedListings = () => {
               <Link
                 key={item.id}
                 to="/catalog"
-                className="group bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-[3px] transition-all duration-300 flex flex-col"
+                className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-[3px] transition-all duration-300 flex flex-col"
               >
                 <div className="relative overflow-hidden w-full">
                   <img
@@ -291,13 +305,13 @@ const FeaturedListings = () => {
                   </div>
                 </div>
                 <div className="p-2 flex-1 flex flex-col">
-                  <p className="text-[11px] font-bold text-[#1F2937] line-clamp-1 mb-0.5">
+                  <p className="text-[11px] font-bold text-[#0F172A] line-clamp-1 mb-0.5">
                     {item.title}
                   </p>
                   <StarRow count={item.stars} small />
-                  <p className="text-[10px] text-gray-600 mt-0.5 truncate">{item.seller}</p>
-                  <p className="text-xs font-extrabold text-[#1F2937] mt-1">{item.price}</p>
-                  <p className="text-[10px] text-gray-600 truncate">{item.category}</p>
+                  <p className="text-[10px] text-[#334155] mt-0.5 truncate">{item.seller}</p>
+                  <p className="text-xs font-extrabold text-[#0F172A] mt-1">{item.price}</p>
+                  <p className="text-[10px] text-[#2563EB] truncate">{item.category}</p>
                 </div>
               </Link>
             ))}
