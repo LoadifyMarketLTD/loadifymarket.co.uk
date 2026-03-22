@@ -1,7 +1,7 @@
 import { ArrowRight, CheckCircle2, ShieldCheck, Truck, MapPin, Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import logo from "@/assets/loadify-logo.png";
+import logo from "@/assets/loadify-logo.svg";
 
 const FooterLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
   <li>

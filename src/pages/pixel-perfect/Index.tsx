@@ -1,547 +1,781 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
+  Search,
   BadgeCheck,
   ShieldCheck,
   Store,
   ArrowRight,
   Star,
-  CheckCircle2,
-  Package,
-  Sparkles,
-  Wallet,
-  Users,
-  Layers3,
+  ChevronDown,
+  User,
+  Menu,
+  X,
+  MapPin,
 } from "lucide-react";
+import logo from "@/assets/loadify-logo.svg";
+import { useAuthStore } from "@/store";
+import { supabase } from "@/lib/supabase";
 
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+// ─── DATA ─────────────────────────────────────────────────────────────────────
 
-const categories = [
-  { name: "Electronics", count: "85+ listings", image: "/images/mock/electronics.jpg" },
-  { name: "Fashion", count: "200+ listings", image: "/images/mock/fashion.jpg" },
-  { name: "Home & Kitchen", count: "95+ listings", image: "/images/mock/home.jpg" },
-  { name: "Beauty", count: "110+ listings", image: "/images/mock/beauty.jpg" },
-  { name: "Tools", count: "55+ listings", image: "/images/mock/tools.jpg" },
-  { name: "Office", count: "45+ listings", image: "/images/mock/office.jpg" },
-  { name: "Baby", count: "50+ listings", image: "/images/mock/baby.jpg" },
-  { name: "Automotive", count: "40+ listings", image: "/images/mock/automotive.jpg" },
-  { name: "Mixed Lots", count: "120+ listings", image: "/images/mock/mixed.jpg" },
-  { name: "Clearance", count: "150+ listings", image: "/images/mock/clearance.jpg" },
-  { name: "Returns", count: "90+ listings", image: "/images/mock/returns.jpg" },
-  { name: "Overstock", count: "130+ listings", image: "/images/mock/overstock.jpg" },
-];
-
-const listings = [
-  { title: "Smartwatch Bundle", price: "£89", category: "Electronics", image: "/images/mock/listing-smartwatch.jpg" },
-  { title: "Designer Bag", price: "£120", category: "Fashion", image: "/images/mock/listing-bag.jpg" },
-  { title: "Office Chair", price: "£145", category: "Office", image: "/images/mock/listing-chair.jpg" },
-  { title: "Tool Kit Set", price: "£65", category: "Tools", image: "/images/mock/listing-toolkit.jpg" },
-  { title: "Skincare Bundle", price: "£49", category: "Beauty", image: "/images/mock/listing-skincare.jpg" },
-  { title: "Laptop Deal", price: "£299", category: "Electronics", image: "/images/mock/listing-laptop.jpg" },
-  { title: "Wireless Headphones", price: "£39", category: "Electronics", image: "/images/mock/listing-headphones.jpg" },
-  { title: "Minimal Desk", price: "£99", category: "Home & Kitchen", image: "/images/mock/listing-desk.jpg" },
-];
-
-const featureCards = [
-  {
-    icon: Layers3,
-    title: "Multi-Category Marketplace",
-    text: "A flexible platform where sellers across many categories can list and buyers can discover trusted offers.",
-  },
+const trustItems = [
   {
     icon: BadgeCheck,
     title: "Verified Sellers",
-    text: "Trust-led onboarding helps keep the marketplace professional, safer, and more credible.",
+    sub: "All listings verified",
+    color: "text-blue-500",
   },
   {
     icon: ShieldCheck,
     title: "Secure Payments",
-    text: "Clear checkout flow and secure payment infrastructure for smooth buyer and seller transactions.",
+    sub: "Secure transactions",
+    color: "text-blue-500",
   },
   {
-    icon: Users,
-    title: "Buyer & Seller Accounts",
-    text: "One platform, two journeys — buyers discover and purchase, sellers list and manage their offers.",
+    icon: Store,
+    title: "Free to Join",
+    sub: "No listing fees",
+    color: "text-emerald-500",
   },
   {
-    icon: Package,
-    title: "Fast Product Discovery",
-    text: "Clean browsing, strong categories, and featured listings help buyers find what matters faster.",
-  },
-  {
-    icon: Wallet,
-    title: "Business-Friendly Growth",
-    text: "A marketplace built to help sellers gain visibility and help buyers connect with serious suppliers.",
+    icon: MapPin,
+    title: "UK-Based Marketplace",
+    sub: "Shop UK Marketplace",
+    color: "text-blue-500",
   },
 ];
 
-function TrustPill({
-  icon: Icon,
-  text,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  text: string;
-}) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-sm text-white/90 backdrop-blur">
-      <Icon className="h-4 w-4 text-emerald-300" />
-      <span>{text}</span>
-    </div>
-  );
+const topCategories = [
+  {
+    name: "Electronics",
+    count: "130+ listings",
+    priceRange: "£130.60+ · £299",
+    stars: 4,
+    image: "/images/category-electronics.jpg",
+  },
+  {
+    name: "Fashion",
+    count: "900+ listings",
+    priceRange: "",
+    stars: 3,
+    image: "/images/category-clothing.jpg",
+  },
+  {
+    name: "Home & Kitchen",
+    count: "110+ listings",
+    priceRange: "",
+    stars: 4,
+    image: "/images/category-home.jpg",
+  },
+];
+
+const productCards = [
+  {
+    title: "Sample listing",
+    price: "£0.09 – £000",
+    category: "Bulk listing",
+    stars: 4,
+    image: "/images/mock/electronics.jpg",
+  },
+  {
+    title: "Tool Set",
+    price: "£0.009 – £000",
+    category: "Sample listings",
+    stars: 4,
+    image: "/images/mock/tools.jpg",
+  },
+  {
+    title: "Designer Handbag",
+    price: "£0.90",
+    category: "Electronics",
+    stars: 3,
+    image: "/images/mock/listing-bag.jpg",
+  },
+  {
+    title: "Smartwatch",
+    price: "£110.9 – £000",
+    category: "Linear listings",
+    stars: 4,
+    image: "/images/mock/listing-smartwatch.jpg",
+  },
+];
+
+const featuredListings = [
+  {
+    title: "Sample Listing",
+    seller: "Exact Bazaar",
+    price: "£00.99",
+    category: "Electronics",
+    stars: 5,
+    image: "/images/mock/listing-headphones.jpg",
+  },
+  {
+    title: "Sample Listing",
+    seller: "Dr. Blue Bazaar",
+    price: "£00.99",
+    category: "Heat Spray",
+    stars: 5,
+    image: "/images/mock/listing-toolkit.jpg",
+  },
+  {
+    title: "Designer Handbag",
+    seller: "Greatfan",
+    price: "£00.90",
+    category: "Tools & DIY",
+    stars: 3,
+    image: "/images/mock/listing-bag.jpg",
+  },
+  {
+    title: "Smartwatch",
+    seller: "Saver listings",
+    price: "£00.99–£000",
+    category: "Electronics",
+    stars: 3,
+    image: "/images/mock/listing-smartwatch.jpg",
+  },
+  {
+    title: "Skincare Set",
+    seller: "Gadgetbourne",
+    price: "£00.99",
+    category: "Electronics",
+    stars: 4,
+    image: "/images/mock/beauty.jpg",
+  },
+  {
+    title: "Office Chair",
+    seller: "Steel listings",
+    price: "£00.99",
+    category: "Office",
+    stars: 4,
+    image: "/images/mock/listing-chair.jpg",
+  },
+];
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+
+const FALLBACK = "/images/placeholder-product.jpg";
+
+function imgFallback(e: React.SyntheticEvent<HTMLImageElement>) {
+  (e.currentTarget as HTMLImageElement).src = FALLBACK;
 }
 
-function StatCard({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-sm">
-      <div className="text-2xl font-bold text-slate-900">{value}</div>
-      <div className="mt-1 text-xs text-slate-500">{label}</div>
-    </div>
-  );
-}
-
-function ListingCard({
-  image,
-  title,
-  price,
-  category,
+function StarRow({
+  count = 4,
+  small = false,
 }: {
-  image: string;
-  title: string;
-  price: string;
-  category: string;
+  count?: number;
+  small?: boolean;
 }) {
+  const cls = small ? "h-3 w-3" : "h-3.5 w-3.5";
   return (
-    <div className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-      <div className="aspect-[4/3] overflow-hidden bg-slate-100">
-        <img
-          src={image}
-          alt={title}
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = "/images/mock/hero-collage.jpg";
-          }}
+    <div className="flex items-center gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={`${cls} ${
+            i < count
+              ? "fill-yellow-400 text-yellow-400"
+              : "fill-gray-200 text-gray-200"
+          }`}
         />
-      </div>
-      <div className="space-y-2 p-4">
-        <div className="text-xs font-medium uppercase tracking-wide text-sky-600">{category}</div>
-        <h3 className="line-clamp-2 text-sm font-semibold text-slate-900">{title}</h3>
-        <div className="text-base font-bold text-slate-900">{price}</div>
-      </div>
+      ))}
     </div>
   );
 }
 
-function CategoryCard({
-  name,
-  count,
-  image,
-}: {
-  name: string;
-  count: string;
-  image: string;
-}) {
-  return (
-    <div className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-      <div className="aspect-[16/9] overflow-hidden bg-slate-100">
-        <img
-          src={image}
-          alt={name}
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = "/images/mock/hero-collage.jpg";
-          }}
-        />
-      </div>
-      <div className="space-y-1 p-4">
-        <h3 className="text-sm font-semibold text-slate-900">{name}</h3>
-        <p className="text-xs text-slate-500">{count}</p>
-      </div>
-    </div>
-  );
-}
+// ─── HERO TILE GRID DATA ───────────────────────────────────────────────────────
+
+const heroTiles = [
+  { img: "/images/category-electronics.jpg", label: "Electronics" },
+  { img: "/images/mock/fashion.jpg", label: "Fashion" },
+  { img: "/images/category-home.jpg", label: "Home" },
+  { img: "/images/mock/tools.jpg", label: "Tools" },
+  { img: "/images/mock/beauty.jpg", label: "Beauty" },
+  { img: "/images/mock/automotive.jpg", label: "Auto" },
+];
+
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
 export default function PixelPerfectIndex() {
+  const [searchValue, setSearchValue] = useState("");
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const dashboardPath =
+    user?.role === "seller"
+      ? "/pp/seller"
+      : user?.role === "admin" || user?.role === "owner"
+      ? "/pp/admin"
+      : "/pp/buyer";
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    logout();
+    navigate("/login");
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    navigate(
+      `/catalog${searchValue ? `?q=${encodeURIComponent(searchValue)}` : ""}`
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <Navbar />
+    <div className="min-h-screen bg-white font-sans antialiased">
+      {/* ── THIN DARK STRIP ────────────────────────────────────────────── */}
+      <div className="h-7 w-full bg-[#0d1f3c]" />
 
-      <main>
-        <section className="border-b border-slate-200 bg-slate-950">
-          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-2 lg:items-center lg:px-6 lg:py-10">
-            <div className="space-y-6">
-              <div className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-medium text-emerald-300">
-                UK's Trusted Marketplace Platform
-              </div>
+      {/* ── MAIN HEADER ────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+        <div className="max-w-[1360px] mx-auto px-4 lg:px-6 flex items-center gap-4 h-[68px]">
+          {/* Logo */}
+          <Link
+            to="/"
+            className="flex items-center gap-2.5 shrink-0 w-[200px] lg:w-[220px]"
+          >
+            <img
+              src={logo}
+              alt="Loadify Market logo"
+              className="h-9 w-9 object-contain"
+            />
+            <span className="font-bold text-[17px] tracking-tight text-[#0d1f3c] whitespace-nowrap">
+              Loadify{" "}
+              <span className="text-[#2563eb]">Market</span>
+            </span>
+          </Link>
 
-              <div className="space-y-4">
-                <h1 className="max-w-2xl text-4xl font-extrabold leading-tight text-white md:text-5xl">
-                  The UK Marketplace
-                  <br />
-                  Connecting <span className="text-sky-400">Buyers</span> &{" "}
-                  <span className="text-emerald-400">Sellers</span>
-                </h1>
-
-                <p className="max-w-xl text-lg leading-relaxed text-slate-300">
-                  Discover trusted suppliers, list your products, and grow your business — all in one secure platform.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <TrustPill icon={BadgeCheck} text="Verified Sellers" />
-                <TrustPill icon={ShieldCheck} text="Secure Payments" />
-                <TrustPill icon={Store} text="Free to Join" />
-                <TrustPill icon={Sparkles} text="Marketplace for Many Categories" />
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  to="/catalog"
-                  className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-6 py-3 font-semibold text-white transition hover:bg-sky-600"
-                >
-                  Browse Marketplace
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-
-                <Link
-                  to="/register?type=seller"
-                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-3 font-semibold text-white transition hover:bg-emerald-600"
-                >
-                  Start Selling
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-
+          {/* Search bar */}
+          <form
+            onSubmit={handleSearch}
+            className="flex-1 hidden sm:block"
+          >
             <div className="relative">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-sky-500/20 to-emerald-500/10 blur-3xl" />
-              <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur">
-                <div className="absolute inset-0">
-                  <img
-                    src="/images/mock/hero-collage.jpg"
-                    alt="Collection of marketplace products including electronics, fashion, home goods and more"
-                    className="h-full w-full object-cover opacity-25"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = "/images/mock/electronics.jpg";
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-slate-950/55" />
-                </div>
-
-                <div className="relative space-y-4 p-5">
-                  <div className="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm">
-                    <div>
-                      <div className="text-sm font-semibold text-slate-900">Loadify Market</div>
-                      <div className="text-xs text-slate-500">Live marketplace</div>
-                    </div>
-                    <div className="flex items-center gap-1 text-amber-500">
-                      <Star className="h-4 w-4 fill-current" />
-                      <Star className="h-4 w-4 fill-current" />
-                      <Star className="h-4 w-4 fill-current" />
-                      <Star className="h-4 w-4 fill-current" />
-                      <Star className="h-4 w-4 fill-current" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    <StatCard value="500+" label="Active Listings" />
-                    <StatCard value="120+" label="Verified Sellers" />
-                    <StatCard value="16" label="Categories" />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    {listings.slice(0, 4).map((item) => (
-                      <div key={item.title} className="overflow-hidden rounded-2xl bg-white shadow-sm">
-                        <div className="aspect-[4/3] overflow-hidden bg-slate-100">
-                          <img
-                            src={item.image}
-                            alt={item.title}
-                            className="h-full w-full object-cover"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src = "/images/mock/hero-collage.jpg";
-                            }}
-                          />
-                        </div>
-                        <div className="space-y-1 p-3">
-                          <div className="text-xs uppercase tracking-wide text-sky-600">{item.category}</div>
-                          <div className="line-clamp-1 text-sm font-semibold text-slate-900">{item.title}</div>
-                          <div className="text-sm font-bold text-slate-900">{item.price}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm">
-                    <div className="inline-flex items-center gap-2 text-sm text-slate-700">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                      Buyer Protection Active
-                    </div>
-                    <div className="text-sm font-medium text-slate-700">Secure marketplace experience</div>
-                  </div>
-                </div>
-              </div>
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search products, categories..."
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                className="w-full h-[46px] pl-10 pr-4 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition placeholder:text-gray-400"
+              />
             </div>
+          </form>
+
+          {/* Desktop right actions */}
+          <div className="hidden lg:flex items-center gap-5 ml-auto shrink-0">
+            {user ? (
+              <>
+                <Link
+                  to={dashboardPath}
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600 transition"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="text-sm font-medium text-gray-500 hover:text-gray-800 transition"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600 transition"
+                >
+                  Dashboard
+                </Link>
+                <User className="h-5 w-5 text-gray-400" />
+                <Link
+                  to="/register"
+                  className="text-sm font-semibold text-gray-800 hover:text-blue-600 transition"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
-        </section>
 
-        <section className="border-b border-slate-200 bg-white">
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-4 py-4 text-sm text-slate-600 lg:px-6">
-            <div className="inline-flex items-center gap-2">
-              <BadgeCheck className="h-4 w-4 text-emerald-500" />
-              Verified UK Businesses
-            </div>
-            <div className="inline-flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-sky-500" />
-              Secure Payments
-            </div>
-            <div className="inline-flex items-center gap-2">
-              <Store className="h-4 w-4 text-indigo-500" />
-              Free to Browse & Register
-            </div>
-            <div className="inline-flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-amber-500" />
-              Marketplace for Many Categories
-            </div>
-          </div>
-        </section>
+          {/* Mobile hamburger */}
+          <button
+            className="lg:hidden ml-auto p-2 text-gray-600"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
 
-        <section className="bg-slate-50">
-          <div className="mx-auto max-w-7xl px-4 py-10 lg:px-6">
-            <div className="mb-6 flex items-end justify-between gap-4">
-              <div>
-                <div className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-sky-600">Categories</div>
-                <h2 className="text-3xl font-bold text-slate-900">Browse by Category</h2>
-                <p className="mt-2 max-w-2xl text-slate-600">
-                  Explore offers across multiple industries and product types from trusted marketplace sellers.
-                </p>
-              </div>
-
-              <Link
-                to="/catalog"
-                className="hidden rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 md:inline-flex"
-              >
-                View all
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {categories.map((item) => (
-                <CategoryCard key={item.name} {...item} />
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-white">
-          <div className="mx-auto max-w-7xl px-4 py-10 lg:px-6">
-            <div className="mb-6 flex items-end justify-between gap-4">
-              <div>
-                <div className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">Marketplace Activity</div>
-                <h2 className="text-3xl font-bold text-slate-900">Featured Listings</h2>
-                <p className="mt-2 max-w-2xl text-slate-600">
-                  A live marketplace should feel active. These example cards show how listings should appear across categories.
-                </p>
-              </div>
-
-              <Link
-                to="/catalog"
-                className="hidden rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 md:inline-flex"
-              >
-                Explore listings
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {listings.map((item) => (
-                <ListingCard key={item.title} {...item} />
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-slate-50">
-          <div className="mx-auto max-w-7xl px-4 py-10 lg:px-6">
-            <div className="mb-6 text-center">
-              <div className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-sky-600">Why Loadify</div>
-              <h2 className="text-3xl font-bold text-slate-900">Built for Buyers and Sellers</h2>
-              <p className="mx-auto mt-2 max-w-2xl text-slate-600">
-                One homepage, one platform, two journeys — designed to help both sides trade with confidence.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">For Sellers</div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <h3 className="font-semibold text-slate-900">Reach Real Buyers</h3>
-                    <p className="mt-2 text-sm text-slate-600">List your offers where serious buyers are already browsing by category.</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <h3 className="font-semibold text-slate-900">Sell Across Categories</h3>
-                    <p className="mt-2 text-sm text-slate-600">Electronics, fashion, beauty, home, tools, office, mixed lots and more.</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <h3 className="font-semibold text-slate-900">Build Visibility</h3>
-                    <p className="mt-2 text-sm text-slate-600">Use a clean marketplace storefront to present your listings professionally.</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <h3 className="font-semibold text-slate-900">Trade Securely</h3>
-                    <p className="mt-2 text-sm text-slate-600">Benefit from secure platform flows and a trusted environment.</p>
-                  </div>
-                </div>
-
-                <div className="mt-5">
+        {/* Mobile menu */}
+        {mobileOpen && (
+          <div className="lg:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-2">
+            <Link
+              to="/catalog"
+              onClick={() => setMobileOpen(false)}
+              className="block py-2 text-sm text-gray-700"
+            >
+              Catalog
+            </Link>
+            <Link
+              to="/clearance"
+              onClick={() => setMobileOpen(false)}
+              className="block py-2 text-sm text-gray-700"
+            >
+              Deals
+            </Link>
+            <Link
+              to="/contact"
+              onClick={() => setMobileOpen(false)}
+              className="block py-2 text-sm text-gray-700"
+            >
+              Contact
+            </Link>
+            <div className="flex gap-3 pt-2 border-t border-gray-100">
+              {user ? (
+                <Link
+                  to={dashboardPath}
+                  className="flex-1 text-center py-2 text-sm font-medium bg-blue-600 text-white rounded-lg"
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <>
                   <Link
-                    to="/register?type=seller"
-                    className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 font-semibold text-white transition hover:bg-emerald-600"
+                    to="/login"
+                    className="flex-1 text-center py-2 text-sm font-medium border border-gray-200 rounded-lg text-gray-700"
                   >
-                    Start Selling
-                    <ArrowRight className="h-4 w-4" />
+                    Sign In
                   </Link>
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-sky-600">For Buyers</div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <h3 className="font-semibold text-slate-900">Discover Trusted Sellers</h3>
-                    <p className="mt-2 text-sm text-slate-600">Browse sellers and listings across many categories on one platform.</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <h3 className="font-semibold text-slate-900">Compare Offers Faster</h3>
-                    <p className="mt-2 text-sm text-slate-600">Explore categories, featured deals, and listings in one clean marketplace experience.</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <h3 className="font-semibold text-slate-900">Buy with Confidence</h3>
-                    <p className="mt-2 text-sm text-slate-600">Marketplace trust, verified sellers, and secure payment flow help reduce friction.</p>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <h3 className="font-semibold text-slate-900">Explore Many Categories</h3>
-                    <p className="mt-2 text-sm text-slate-600">From electronics and fashion to office, beauty, home and mixed lots.</p>
-                  </div>
-                </div>
-
-                <div className="mt-5">
-                  <Link
-                    to="/catalog"
-                    className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-5 py-3 font-semibold text-white transition hover:bg-sky-600"
-                  >
-                    Browse Marketplace
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-white">
-          <div className="mx-auto max-w-7xl px-4 py-10 lg:px-6">
-            <div className="mb-6 text-center">
-              <div className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-indigo-600">Platform Features</div>
-              <h2 className="text-3xl font-bold text-slate-900">Everything You Need to Trade</h2>
-              <p className="mx-auto mt-2 max-w-2xl text-slate-600">
-                Designed as a marketplace platform first — not a seller of products, but a place where trading can happen clearly and professionally.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {featureCards.map(({ icon: Icon, title, text }) => (
-                <div key={title} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
-                  <div className="mb-3 inline-flex rounded-xl bg-sky-100 p-3 text-sky-600">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-slate-50">
-          <div className="mx-auto max-w-7xl px-4 py-10 lg:px-6">
-            <div className="mb-8 text-center">
-              <div className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">How It Works</div>
-              <h2 className="text-3xl font-bold text-slate-900">Simple for Buyers. Simple for Sellers.</h2>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-sky-600">Buyer Journey</div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  {[
-                    { step: "01", title: "Create Account", text: "Join the platform and start browsing trusted listings." },
-                    { step: "02", title: "Discover Offers", text: "Explore categories and compare seller listings." },
-                    { step: "03", title: "Complete Deal", text: "Proceed through the platform's secure flow." },
-                  ].map((item) => (
-                    <div key={item.step} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center">
-                      <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-sky-500 font-bold text-white">
-                        {item.step}
-                      </div>
-                      <h3 className="font-semibold text-slate-900">{item.title}</h3>
-                      <p className="mt-2 text-sm text-slate-600">{item.text}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">Seller Journey</div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  {[
-                    { step: "01", title: "Create Seller Account", text: "Register and prepare your marketplace presence." },
-                    { step: "02", title: "List Products", text: "Publish offers across relevant categories." },
-                    { step: "03", title: "Grow Visibility", text: "Be discovered by buyers browsing the platform." },
-                  ].map((item) => (
-                    <div key={item.step} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center">
-                      <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 font-bold text-white">
-                        {item.step}
-                      </div>
-                      <h3 className="font-semibold text-slate-900">{item.title}</h3>
-                      <p className="mt-2 text-sm text-slate-600">{item.text}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-slate-950">
-          <div className="mx-auto max-w-7xl px-4 py-10 lg:px-6">
-            <div className="overflow-hidden rounded-3xl bg-gradient-to-r from-sky-500 via-sky-400 to-emerald-400 p-8 shadow-2xl">
-              <div className="mx-auto max-w-3xl text-center">
-                <h2 className="text-3xl font-bold text-slate-950 md:text-4xl">Ready to Join the Marketplace?</h2>
-                <p className="mt-3 text-lg text-slate-900/80">
-                  Whether you want to browse trusted listings or start selling your products, Loadify gives you the platform to do it.
-                </p>
-
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                  <Link
-                    to="/catalog"
-                    className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-6 py-3 font-semibold text-white transition hover:bg-slate-800"
-                  >
-                    Browse Marketplace
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-
                   <Link
                     to="/register"
-                    className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
+                    className="flex-1 text-center py-2 text-sm font-medium bg-blue-600 text-white rounded-lg"
                   >
-                    Create Free Account
-                    <ArrowRight className="h-4 w-4" />
+                    Sign Up
                   </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* ── NAV ROW ────────────────────────────────────────────────────── */}
+      <nav className="bg-white border-b border-gray-100 sticky top-[68px] z-40">
+        <div className="max-w-[1360px] mx-auto px-4 lg:px-6 flex items-center h-[44px] overflow-x-auto scrollbar-hide gap-0">
+          <Link
+            to="/catalog"
+            className="px-3 h-full flex items-center text-sm font-medium text-blue-600 border-b-2 border-blue-600 shrink-0 whitespace-nowrap"
+          >
+            Catalog
+          </Link>
+          <Link
+            to="/clearance"
+            className="px-3 h-full flex items-center text-sm text-gray-600 hover:text-gray-900 transition shrink-0"
+          >
+            Deals
+          </Link>
+          <Link
+            to="/contact"
+            className="px-3 h-full flex items-center text-sm text-gray-600 hover:text-gray-900 transition shrink-0"
+          >
+            Contact
+          </Link>
+          <button className="px-3 h-full flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition shrink-0">
+            Information <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+          <button className="px-3 h-full flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition shrink-0">
+            Resources <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+          <Link
+            to="/contact"
+            className="px-3 h-full flex items-center text-sm text-gray-600 hover:text-gray-900 transition shrink-0"
+          >
+            Contact
+          </Link>
+
+          {/* Google rating */}
+          <div className="ml-auto flex items-center gap-1.5 text-sm shrink-0 pl-4">
+            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+            <span className="font-semibold text-gray-800">5.0</span>
+            <span className="text-gray-300">|</span>
+            <span className="text-gray-500 text-[11px]">4.24</span>
+            <span className="font-medium text-[#4285F4] text-[11px]">
+              Google
+            </span>
+          </div>
+        </div>
+      </nav>
+
+      <main>
+        {/* ── HERO ───────────────────────────────────────────────────────── */}
+        <section className="bg-[#f4f7fc] px-4 pt-5 pb-0 lg:px-6">
+          <div className="max-w-[1360px] mx-auto">
+            <div className="relative bg-gradient-to-br from-[#d6e8fb] via-[#ddeeff] to-[#e8f3ff] rounded-[24px] overflow-hidden">
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] items-stretch min-h-[380px] lg:min-h-[400px]">
+                {/* Left: copy */}
+                <div className="flex flex-col justify-center px-7 lg:px-12 pt-9 pb-6 max-w-[600px]">
+                  <h1 className="text-[34px] sm:text-[42px] lg:text-[52px] font-extrabold text-[#0d1f3c] leading-[1.06]">
+                    The UK Marketplace
+                    <br />
+                    Connecting{" "}
+                    <span className="text-[#2563eb]">Buyers</span> &amp;
+                    Sellers
+                  </h1>
+                  <p className="mt-4 text-[17px] leading-relaxed text-gray-500 max-w-[460px]">
+                    Discover trusted suppliers, list your products, and grow
+                    your business — all in one secure platform.
+                  </p>
+                  <div className="mt-7 flex flex-wrap gap-3">
+                    <Link
+                      to="/catalog"
+                      className="inline-flex items-center gap-2 bg-[#2563eb] text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-blue-700 transition shadow-md shadow-blue-200/60"
+                    >
+                      Browse Marketplace
+                    </Link>
+                    <Link
+                      to="/register?type=seller"
+                      className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-xl text-sm font-semibold hover:bg-gray-50 transition shadow-sm"
+                    >
+                      <Store className="h-4 w-4 text-emerald-500" />
+                      Start Selling
+                    </Link>
+                  </div>
                 </div>
+
+                {/* Right: product-tile + phone composition */}
+                <div className="hidden lg:flex items-end self-stretch w-[480px] relative overflow-hidden">
+                  {/* Dark panel */}
+                  <div className="absolute inset-x-0 bottom-0 top-0 bg-[#1a3260] rounded-tl-[20px]">
+                    {/* Tile grid background */}
+                    <div className="grid grid-cols-3 gap-2.5 p-5">
+                      {heroTiles.map((t) => (
+                        <div
+                          key={t.label}
+                          className="aspect-square rounded-xl overflow-hidden bg-[#1f4475]/60 border border-white/10"
+                        >
+                          <img
+                            src={t.img}
+                            alt={t.label}
+                            className="w-full h-full object-cover opacity-75"
+                            onError={imgFallback}
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Phone mockup — lower-right */}
+                    <div className="absolute right-8 bottom-0 w-[132px]">
+                      <div
+                        className="relative bg-[#0a1a38] rounded-[30px] border-[5px] border-[#1e3870] shadow-2xl overflow-hidden"
+                        style={{ paddingTop: "195%" }}
+                      >
+                        <div className="absolute inset-0 flex flex-col">
+                          {/* Notch */}
+                          <div className="flex justify-center pt-2.5">
+                            <div className="h-1.5 w-10 bg-[#1e3870] rounded-full" />
+                          </div>
+                          {/* Screen */}
+                          <div className="flex-1 bg-white mx-1 mb-1 rounded-b-[24px] overflow-hidden">
+                            <div className="bg-[#2563eb] text-white text-[6.5px] font-bold px-2 py-1 flex items-center gap-1">
+                              <span>≋</span> Loadify Market
+                            </div>
+                            <img
+                              src="/images/mock/listing-smartwatch.jpg"
+                              alt="Smartwatch listing"
+                              className="w-full h-[68px] object-cover"
+                              onError={imgFallback}
+                            />
+                            <div className="px-2 py-1.5">
+                              <div className="text-[7px] font-bold text-gray-800">
+                                Smartwatch
+                              </div>
+                              <div className="text-[6px] text-gray-400 mt-0.5">
+                                £89.99
+                              </div>
+                              <div className="flex gap-0.5 mt-1">
+                                {[1, 2, 3, 4].map((i) => (
+                                  <Star
+                                    key={i}
+                                    className="h-1.5 w-1.5 fill-yellow-400 text-yellow-400"
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Floating info card */}
+                    <div className="absolute top-5 right-5 bg-white rounded-xl shadow-lg px-3 py-2">
+                      <div className="text-[10px] font-semibold text-gray-800">
+                        Smartlisting
+                      </div>
+                      <div className="text-[9px] text-gray-400 mt-0.5">
+                        Featurelisting
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Trust bar — inside hero at bottom */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-5 lg:px-8 py-5">
+                {trustItems.map(({ icon: Icon, title, sub, color }) => (
+                  <div
+                    key={title}
+                    className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3.5 flex items-center gap-3"
+                  >
+                    <Icon className={`h-5 w-5 shrink-0 ${color}`} />
+                    <div>
+                      <div className="text-sm font-semibold text-gray-800">
+                        {title}
+                      </div>
+                      <div className="text-[11px] text-gray-400 mt-0.5">
+                        {sub}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </section>
-      </main>
 
-      <Footer />
+        {/* ── 3 LARGE CATEGORY CARDS ─────────────────────────────────────── */}
+        <section className="bg-white">
+          <div className="max-w-[1360px] mx-auto px-4 lg:px-6 py-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {topCategories.map((cat) => (
+                <Link
+                  key={cat.name}
+                  to="/catalog"
+                  className="group block rounded-[20px] overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition bg-white"
+                >
+                  <div className="aspect-[16/9] overflow-hidden bg-gray-100">
+                    <img
+                      src={cat.image}
+                      alt={cat.name}
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      onError={imgFallback}
+                    />
+                  </div>
+                  <div className="px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base font-bold text-gray-900">
+                        {cat.name}
+                      </h3>
+                      {cat.priceRange && (
+                        <span className="text-[11px] text-gray-400">
+                          {cat.priceRange}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between mt-1.5">
+                      <StarRow count={cat.stars} />
+                      <span className="text-[11px] text-gray-400">
+                        {cat.count}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 4 PRODUCT CARDS ────────────────────────────────────────────── */}
+        <section className="bg-white">
+          <div className="max-w-[1360px] mx-auto px-4 lg:px-6 pb-5">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {productCards.map((p) => (
+                <Link
+                  key={p.title}
+                  to="/catalog"
+                  className="group block bg-white rounded-[18px] border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition"
+                >
+                  <div className="aspect-[4/3] overflow-hidden bg-gray-50">
+                    <img
+                      src={p.image}
+                      alt={p.title}
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      onError={imgFallback}
+                    />
+                  </div>
+                  <div className="px-3.5 py-3">
+                    <h3 className="text-sm font-bold text-gray-900">
+                      {p.title}
+                    </h3>
+                    <div className="text-xs text-gray-400 mt-0.5">
+                      {p.price}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <StarRow count={p.stars} small />
+                      <span className="text-[10px] text-gray-400">
+                        {p.category}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── FEATURED LISTINGS ──────────────────────────────────────────── */}
+        <section className="bg-white border-t border-gray-100 py-6">
+          <div className="max-w-[1360px] mx-auto px-4 lg:px-6">
+            <h2 className="text-[28px] font-extrabold text-gray-900 mb-5">
+              Featured{" "}
+              <span className="text-[#2563eb]">Listings</span>
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {featuredListings.map((item, idx) => (
+                <Link
+                  key={idx}
+                  to="/catalog"
+                  className="group block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition"
+                >
+                  <div className="aspect-square overflow-hidden bg-gray-50">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      onError={imgFallback}
+                    />
+                  </div>
+                  <div className="px-2.5 py-2.5">
+                    <div className="text-[12px] font-semibold text-gray-800 line-clamp-1">
+                      {item.title}
+                    </div>
+                    <div className="flex items-center gap-0.5 mt-0.5">
+                      <StarRow count={item.stars} small />
+                      <span className="text-[9px] text-gray-400 ml-0.5 line-clamp-1">
+                        {item.seller}
+                      </span>
+                    </div>
+                    <div className="text-[11px] font-bold text-gray-900 mt-0.5">
+                      {item.price}
+                    </div>
+                    <div className="text-[9px] text-gray-400">
+                      {item.category}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── CTA SECTION ────────────────────────────────────────────────── */}
+        <section className="relative overflow-hidden">
+          {/* Layered dark-blue atmospheric background */}
+          <div className="absolute inset-0 bg-[#0d1f3c]" />
+          <div className="absolute inset-0">
+            <img
+              src="/images/hero.jpg"
+              alt=""
+              className="h-full w-full object-cover opacity-25"
+              onError={() => {}}
+            />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0d1f3c]/60 via-[#0a2040]/70 to-[#071830]/90" />
+
+          <div className="relative max-w-[1360px] mx-auto px-4 lg:px-6 py-16 lg:py-20 text-center">
+            <h2 className="text-[28px] sm:text-[38px] lg:text-[44px] font-extrabold text-white leading-tight">
+              Ready to Join the Marketplace?
+            </h2>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+              <Link
+                to="/catalog"
+                className="inline-flex items-center gap-2 bg-white text-gray-900 px-8 py-3.5 rounded-xl text-sm font-semibold hover:bg-gray-100 transition shadow-lg"
+              >
+                Browse Marketplace
+              </Link>
+              <Link
+                to="/register"
+                className="inline-flex items-center gap-2 bg-emerald-500 text-white px-8 py-3.5 rounded-xl text-sm font-semibold hover:bg-emerald-600 transition shadow-lg"
+              >
+                Create Account
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ── FOOTER ─────────────────────────────────────────────────────── */}
+        <footer className="bg-[#0a1628] text-white">
+          <div className="max-w-[1360px] mx-auto px-4 lg:px-6 pt-5 pb-4">
+            {/* Links row */}
+            <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-2 text-sm text-white/60">
+              <Link to="/about" className="hover:text-white transition">
+                About Us
+              </Link>
+              <Link to="/faq" className="hover:text-white transition">
+                Help Center
+              </Link>
+              <Link to="/privacy" className="hover:text-white transition">
+                Privacy Policy
+              </Link>
+              <Link to="/terms" className="hover:text-white transition">
+                Terms
+              </Link>
+              {/* Payment labels */}
+              <span className="text-white/35 text-[11px] font-medium tracking-wide">
+                VISA
+              </span>
+              <span className="text-white/35 text-[11px] font-medium tracking-wide">
+                Mastercard
+              </span>
+              {/* Social icons */}
+              {[
+                {
+                  label: "Facebook",
+                  href: "https://www.facebook.com/profile.php?id=61583570176707",
+                  path: "M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z",
+                },
+                {
+                  label: "LinkedIn",
+                  href: "https://www.linkedin.com/company/loadify-market/",
+                  path: "M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z",
+                },
+                {
+                  label: "Instagram",
+                  href: "https://www.instagram.com/loadifymarket/",
+                  path: "M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z",
+                },
+              ].map((s) => (
+                <a
+                  key={s.label}
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={s.label}
+                  className="hover:text-white transition"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d={s.path} />
+                  </svg>
+                </a>
+              ))}
+            </div>
+
+            {/* Copyright */}
+            <div className="mt-3 pt-3 border-t border-white/10 text-center text-[11px] text-white/30">
+              © 2024 Loadify Market. All rights reserved.
+            </div>
+          </div>
+        </footer>
+      </main>
     </div>
   );
 }
+
