@@ -44,6 +44,7 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
           alt={product.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
+          onError={(e) => { const img = e.target as HTMLImageElement; if (img.src !== window.location.origin + '/images/placeholder-product.jpg') img.src = '/images/placeholder-product.jpg'; }}
         />
         {discount > 0 && (
           <Badge className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs font-bold">
