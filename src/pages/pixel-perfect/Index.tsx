@@ -52,21 +52,21 @@ const topCategories = [
     count: "130+ listings",
     priceRange: "£130.60+ · £299",
     stars: 4,
-    image: "/images/category-electronics.jpg",
+    image: "/images/categories/electronics.jpg",
   },
   {
     name: "Fashion",
     count: "900+ listings",
     priceRange: "",
     stars: 3,
-    image: "/images/category-clothing.jpg",
+    image: "/images/categories/fashion.jpg",
   },
   {
     name: "Home & Kitchen",
     count: "110+ listings",
     priceRange: "",
     stars: 4,
-    image: "/images/category-home.jpg",
+    image: "/images/categories/home-kitchen.jpg",
   },
 ];
 
@@ -76,28 +76,28 @@ const productCards = [
     price: "£0.09 – £000",
     category: "Bulk listing",
     stars: 4,
-    image: "/images/mock/electronics.jpg",
+    image: "/images/products/sample-listing.jpg",
   },
   {
     title: "Tool Set",
     price: "£0.009 – £000",
-    category: "Sample listings",
+    category: "Tools & DIY",
     stars: 4,
-    image: "/images/mock/tools.jpg",
+    image: "/images/products/toolset.jpg",
   },
   {
     title: "Designer Handbag",
     price: "£0.90",
-    category: "Electronics",
+    category: "Fashion",
     stars: 3,
-    image: "/images/mock/listing-bag.jpg",
+    image: "/images/products/handbag.jpg",
   },
   {
     title: "Smartwatch",
     price: "£110.9 – £000",
-    category: "Linear listings",
+    category: "Electronics",
     stars: 4,
-    image: "/images/mock/listing-smartwatch.jpg",
+    image: "/images/products/smartwatch.jpg",
   },
 ];
 
@@ -108,7 +108,7 @@ const featuredListings = [
     price: "£00.99",
     category: "Electronics",
     stars: 5,
-    image: "/images/mock/listing-headphones.jpg",
+    image: "/images/featured/earbuds.jpg",
   },
   {
     title: "Sample Listing",
@@ -116,7 +116,7 @@ const featuredListings = [
     price: "£00.99",
     category: "Heat Spray",
     stars: 5,
-    image: "/images/mock/listing-toolkit.jpg",
+    image: "/images/featured/toolbox.jpg",
   },
   {
     title: "Designer Handbag",
@@ -124,7 +124,7 @@ const featuredListings = [
     price: "£00.90",
     category: "Tools & DIY",
     stars: 3,
-    image: "/images/mock/listing-bag.jpg",
+    image: "/images/featured/handbag2.jpg",
   },
   {
     title: "Smartwatch",
@@ -132,15 +132,15 @@ const featuredListings = [
     price: "£00.99–£000",
     category: "Electronics",
     stars: 3,
-    image: "/images/mock/listing-smartwatch.jpg",
+    image: "/images/featured/smartwatch2.jpg",
   },
   {
     title: "Skincare Set",
     seller: "Gadgetbourne",
     price: "£00.99",
-    category: "Electronics",
+    category: "Beauty",
     stars: 4,
-    image: "/images/mock/beauty.jpg",
+    image: "/images/featured/skincare2.jpg",
   },
   {
     title: "Office Chair",
@@ -148,16 +148,19 @@ const featuredListings = [
     price: "£00.99",
     category: "Office",
     stars: 4,
-    image: "/images/mock/listing-chair.jpg",
+    image: "/images/featured/chair.jpg",
   },
 ];
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
-const FALLBACK = "/images/placeholder-product.jpg";
+// Light grey placeholder — neutral, does not make all broken images look identical
+const FALLBACK_SVG =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3C/svg%3E";
 
 function imgFallback(e: React.SyntheticEvent<HTMLImageElement>) {
-  (e.currentTarget as HTMLImageElement).src = FALLBACK;
+  const img = e.currentTarget as HTMLImageElement;
+  if (img.src !== FALLBACK_SVG) img.src = FALLBACK_SVG;
 }
 
 function StarRow({
@@ -187,9 +190,9 @@ function StarRow({
 // ─── HERO TILE GRID DATA ───────────────────────────────────────────────────────
 
 const heroTiles = [
-  { img: "/images/category-electronics.jpg", label: "Electronics" },
-  { img: "/images/mock/fashion.jpg", label: "Fashion" },
-  { img: "/images/category-home.jpg", label: "Home" },
+  { img: "/images/categories/electronics.jpg", label: "Electronics" },
+  { img: "/images/categories/fashion.jpg", label: "Fashion" },
+  { img: "/images/categories/home-kitchen.jpg", label: "Home" },
   { img: "/images/mock/tools.jpg", label: "Tools" },
   { img: "/images/mock/beauty.jpg", label: "Beauty" },
   { img: "/images/mock/automotive.jpg", label: "Auto" },
