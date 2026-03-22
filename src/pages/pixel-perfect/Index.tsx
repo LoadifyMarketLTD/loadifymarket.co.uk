@@ -72,7 +72,7 @@ const topCategories = [
 
 const productCards = [
   {
-    title: "Sample listing",
+    title: "Sample Listing",
     price: "£0.09 – £000",
     category: "Bulk listing",
     stars: 4,
@@ -178,7 +178,7 @@ function StarRow({
           key={i}
           className={`${cls} ${
             i < count
-              ? "fill-yellow-400 text-yellow-400"
+              ? "fill-[#FFC107] text-[#FFC107]"
               : "fill-gray-200 text-gray-200"
           }`}
         />
@@ -246,7 +246,7 @@ export default function PixelPerfectIndex() {
             />
             <span className="font-bold text-[17px] tracking-tight text-[#0d1f3c] whitespace-nowrap">
               Loadify{" "}
-              <span className="text-[#2563eb]">Market</span>
+              <span className="text-[#1A4DBE]">Market</span>
             </span>
           </Link>
 
@@ -341,7 +341,7 @@ export default function PixelPerfectIndex() {
               {user ? (
                 <Link
                   to={dashboardPath}
-                  className="flex-1 text-center py-2 text-sm font-medium bg-blue-600 text-white rounded-lg"
+                  className="flex-1 text-center py-2 text-sm font-medium bg-[#1A4DBE] text-white rounded-lg"
                 >
                   Dashboard
                 </Link>
@@ -355,7 +355,7 @@ export default function PixelPerfectIndex() {
                   </Link>
                   <Link
                     to="/register"
-                    className="flex-1 text-center py-2 text-sm font-medium bg-blue-600 text-white rounded-lg"
+                    className="flex-1 text-center py-2 text-sm font-medium bg-[#1A4DBE] text-white rounded-lg"
                   >
                     Sign Up
                   </Link>
@@ -371,7 +371,7 @@ export default function PixelPerfectIndex() {
         <div className="max-w-[1360px] mx-auto px-4 lg:px-6 flex items-center h-[44px] overflow-x-auto scrollbar-hide gap-0">
           <Link
             to="/catalog"
-            className="px-3 h-full flex items-center text-sm font-medium text-blue-600 border-b-2 border-blue-600 shrink-0 whitespace-nowrap"
+            className="px-3 h-full flex items-center text-sm font-medium text-[#1A4DBE] border-b-2 border-[#1A4DBE] shrink-0 whitespace-nowrap"
           >
             Catalog
           </Link>
@@ -402,7 +402,7 @@ export default function PixelPerfectIndex() {
 
           {/* Google rating */}
           <div className="ml-auto flex items-center gap-1.5 text-sm shrink-0 pl-4">
-            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+            <Star className="h-3.5 w-3.5 fill-[#FFC107] text-[#FFC107]" />
             <span className="font-semibold text-gray-800">5.0</span>
             <span className="text-gray-300">|</span>
             <span className="text-gray-500 text-[11px]">4.24</span>
@@ -421,11 +421,11 @@ export default function PixelPerfectIndex() {
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] items-stretch min-h-[380px] lg:min-h-[400px]">
                 {/* Left: copy */}
                 <div className="flex flex-col justify-center px-7 lg:px-12 pt-9 pb-6 max-w-[600px]">
-                  <h1 className="text-[34px] sm:text-[42px] lg:text-[52px] font-extrabold text-[#0d1f3c] leading-[1.06]">
+                  <h1 className="text-[34px] sm:text-[42px] lg:text-[52px] font-extrabold text-[#0d1f3c] leading-[1.06] tracking-tight">
                     The UK Marketplace
                     <br />
                     Connecting{" "}
-                    <span className="text-[#2563eb]">Buyers</span> &amp;
+                    <span className="text-[#1A4DBE]">Buyers</span> &amp;
                     Sellers
                   </h1>
                   <p className="mt-4 text-[17px] leading-relaxed text-gray-500 max-w-[460px]">
@@ -435,15 +435,15 @@ export default function PixelPerfectIndex() {
                   <div className="mt-7 flex flex-wrap gap-3">
                     <Link
                       to="/catalog"
-                      className="inline-flex items-center gap-2 bg-[#2563eb] text-white px-6 py-3 rounded-xl text-sm font-semibold hover:bg-blue-700 transition shadow-md shadow-blue-200/60"
+                      className="inline-flex items-center gap-2 bg-[#1A4DBE] text-white px-6 py-3 rounded-lg text-sm font-semibold hover:bg-[#163fa0] transition shadow-md shadow-blue-200/60"
                     >
                       Browse Marketplace
                     </Link>
                     <Link
                       to="/register?type=seller"
-                      className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-800 px-6 py-3 rounded-xl text-sm font-semibold hover:bg-gray-50 transition shadow-sm"
+                      className="inline-flex items-center gap-2 bg-[#28A745] text-white px-6 py-3 rounded-lg text-sm font-semibold hover:bg-[#22963d] transition shadow-sm"
                     >
-                      <Store className="h-4 w-4 text-emerald-500" />
+                      <Store className="h-4 w-4 text-white" />
                       Start Selling
                     </Link>
                   </div>
@@ -483,7 +483,7 @@ export default function PixelPerfectIndex() {
                           </div>
                           {/* Screen */}
                           <div className="flex-1 bg-white mx-1 mb-1 rounded-b-[24px] overflow-hidden">
-                            <div className="bg-[#2563eb] text-white text-[6.5px] font-bold px-2 py-1 flex items-center gap-1">
+                            <div className="bg-[#1A4DBE] text-white text-[6.5px] font-bold px-2 py-1 flex items-center gap-1">
                               <span>≋</span> Loadify Market
                             </div>
                             <img
@@ -503,7 +503,7 @@ export default function PixelPerfectIndex() {
                                 {[1, 2, 3, 4].map((i) => (
                                   <Star
                                     key={i}
-                                    className="h-1.5 w-1.5 fill-yellow-400 text-yellow-400"
+                                    className="h-1.5 w-1.5 fill-[#FFC107] text-[#FFC107]"
                                   />
                                 ))}
                               </div>
@@ -557,9 +557,9 @@ export default function PixelPerfectIndex() {
                 <Link
                   key={cat.name}
                   to="/catalog"
-                  className="group block rounded-[20px] overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition bg-white"
+                  className="group block rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] transition bg-white"
                 >
-                  <div className="aspect-[16/9] overflow-hidden bg-gray-100">
+                  <div className="aspect-[16/9] overflow-hidden bg-[#F9FAFB]">
                     <img
                       src={cat.image}
                       alt={cat.name}
@@ -599,13 +599,13 @@ export default function PixelPerfectIndex() {
                 <Link
                   key={p.title}
                   to="/catalog"
-                  className="group block bg-white rounded-[18px] border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition"
+                  className="group block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] transition"
                 >
-                  <div className="aspect-[4/3] overflow-hidden bg-gray-50">
+                  <div className="aspect-[4/3] overflow-hidden bg-white flex items-center justify-center p-3">
                     <img
                       src={p.image}
                       alt={p.title}
-                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
                       onError={imgFallback}
                     />
                   </div>
@@ -634,20 +634,20 @@ export default function PixelPerfectIndex() {
           <div className="max-w-[1360px] mx-auto px-4 lg:px-6">
             <h2 className="text-[28px] font-extrabold text-gray-900 mb-5">
               Featured{" "}
-              <span className="text-[#2563eb]">Listings</span>
+              <span className="text-[#1A4DBE]">Listings</span>
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {featuredListings.map((item, idx) => (
                 <Link
                   key={idx}
                   to="/catalog"
-                  className="group block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition"
+                  className="group block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] transition"
                 >
-                  <div className="aspect-square overflow-hidden bg-gray-50">
+                  <div className="aspect-square overflow-hidden bg-white flex items-center justify-center p-2">
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
                       onError={imgFallback}
                     />
                   </div>
@@ -695,13 +695,13 @@ export default function PixelPerfectIndex() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <Link
                 to="/catalog"
-                className="inline-flex items-center gap-2 bg-white text-gray-900 px-8 py-3.5 rounded-xl text-sm font-semibold hover:bg-gray-100 transition shadow-lg"
+                className="inline-flex items-center gap-2 bg-white text-gray-900 px-8 py-3.5 rounded-lg text-sm font-semibold hover:bg-gray-100 transition shadow-lg"
               >
                 Browse Marketplace
               </Link>
               <Link
                 to="/register"
-                className="inline-flex items-center gap-2 bg-emerald-500 text-white px-8 py-3.5 rounded-xl text-sm font-semibold hover:bg-emerald-600 transition shadow-lg"
+                className="inline-flex items-center gap-2 bg-[#28A745] text-white px-8 py-3.5 rounded-lg text-sm font-semibold hover:bg-[#22963d] transition shadow-lg"
               >
                 Create Account
                 <ArrowRight className="h-4 w-4" />
