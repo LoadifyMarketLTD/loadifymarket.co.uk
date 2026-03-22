@@ -1,192 +1,161 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import React, { useState, useCallback } from "react";
 import {
-  Search,
   BadgeCheck,
   ShieldCheck,
   Store,
-  ArrowRight,
-  Star,
-  ChevronDown,
-  User,
-  Menu,
-  X,
   MapPin,
-  Zap,
+  Star,
+  ArrowRight,
+  ShoppingBag,
+  X,
   Eye,
-  Globe,
-  TrendingUp,
-  Package,
-  CreditCard,
-  CheckCircle,
-  Users,
 } from "lucide-react";
-import logo from "@/assets/loadify-logo.svg";
-import { useAuthStore } from "@/store";
-import { supabase } from "@/lib/supabase";
-import CATEGORIES, { FEATURED_CATEGORIES } from "@/data/categories";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
-// ─── DATA ─────────────────────────────────────────────────────────────────────
+// ─── TRUST STRIP ──────────────────────────────────────────────────────────────
 
 const trustItems = [
+  { icon: BadgeCheck,  title: "Verified Sellers",     sub: "All listings verified",   color: "text-[#1A4DBE]" },
+  { icon: ShieldCheck, title: "Secure Payments",      sub: "Protected transactions",  color: "text-[#1A4DBE]" },
+  { icon: Store,       title: "Free to Join",         sub: "No upfront listing fees", color: "text-[#28A745]" },
+  { icon: MapPin,      title: "UK-Based Marketplace", sub: "Serving UK businesses",   color: "text-[#1A4DBE]" },
+];
+
+// ─── ROW 1 — 2 WIDE CATEGORY CARDS ───────────────────────────────────────────
+
+const bigCategories = [
   {
-    icon: BadgeCheck,
-    title: "Verified Sellers",
-    sub: "All listings verified",
-    color: "text-blue-500",
+    slug: "electronics",
+    label: "Electronics",
+    count: "1,300+",
+    img: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=700&auto=format&fit=crop",
   },
   {
-    icon: ShieldCheck,
-    title: "Secure Payments",
-    sub: "Secure transactions",
-    color: "text-blue-500",
-  },
-  {
-    icon: Store,
-    title: "Free to Join",
-    sub: "No listing fees",
-    color: "text-emerald-500",
-  },
-  {
-    icon: MapPin,
-    title: "UK-Based Marketplace",
-    sub: "Shop UK Marketplace",
-    color: "text-blue-500",
+    slug: "fashion",
+    label: "Fashion",
+    count: "900+",
+    img: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=700&auto=format&fit=crop",
   },
 ];
 
-// Category cards: driven from central data — no duplication
-// topCategories = first 3 featured categories (Electronics, Fashion, Home & Kitchen)
-const topCategories = FEATURED_CATEGORIES.slice(0, 3).map((cat) => ({
-  name: cat.name,
-  slug: cat.slug,
-  image: cat.image,
-  description: cat.description,
-}));
+// ─── ROW 2 — 3 MEDIUM CATEGORY CARDS ─────────────────────────────────────────
 
-// Product showcase cards — aligned with the 9 approved categories (no pallets/clearance)
-const productCards = [
+const mediumCategories = [
   {
-    title: "Wireless Earbuds",
-    price: "From £19.99",
-    category: "Electronics",
-    categorySlug: "electronics",
-    stars: 5,
-    image: "/images/featured/earbuds.jpg",
+    slug: "home-garden",
+    label: "Home & Kitchen",
+    count: "1,100+",
+    img: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500&auto=format&fit=crop",
   },
   {
-    title: "Tool Set",
-    price: "From £24.99",
-    category: "Tools & DIY",
-    categorySlug: "tools-diy",
-    stars: 4,
-    image: "/images/products/toolset.jpg",
+    slug: "tools-diy",
+    label: "Tools & DIY",
+    count: "450+",
+    img: "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=500&auto=format&fit=crop",
   },
   {
-    title: "Designer Handbag",
-    price: "From £34.99",
-    category: "Fashion",
-    categorySlug: "fashion",
-    stars: 4,
-    image: "/images/products/handbag.jpg",
-  },
-  {
-    title: "Smartwatch",
-    price: "From £49.99",
-    category: "Electronics",
-    categorySlug: "electronics",
-    stars: 4,
-    image: "/images/products/smartwatch.jpg",
+    slug: "toys",
+    label: "Toys & Games",
+    count: "320+",
+    img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&auto=format&fit=crop",
   },
 ];
 
-// Featured listing cards — aligned with the 9 approved categories
+// ─── FILTER TABS ──────────────────────────────────────────────────────────────
+
+const FILTER_TABS = [
+  { key: "all",         label: "All"         },
+  { key: "electronics", label: "Electronics" },
+  { key: "fashion",     label: "Fashion"     },
+  { key: "home",        label: "Home"        },
+  { key: "beauty",      label: "Beauty"      },
+  { key: "tools",       label: "Tools"       },
+  { key: "office",      label: "Office"      },
+];
+
+// ─── FEATURED LISTINGS ────────────────────────────────────────────────────────
+
 const featuredListings = [
   {
+    id: "1",
+    img: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&auto=format&fit=crop",
     title: "Wireless Earbuds",
-    seller: "AudioPro UK",
-    price: "£29.99",
+    seller: "TechDeals UK",
+    price: "£49.99",
+    stars: 4,
+    reviews: 124,
     category: "Electronics",
-    categorySlug: "electronics",
-    stars: 5,
-    image: "/images/featured/earbuds.jpg",
+    filterKey: "electronics",
   },
   {
-    title: "Tool Kit Set",
-    seller: "BuildRight",
-    price: "£44.99",
+    id: "2",
+    img: "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&auto=format&fit=crop",
+    title: "Professional Tool Kit",
+    seller: "ToolMaster Pro",
+    price: "£79.99",
+    stars: 5,
+    reviews: 87,
     category: "Tools & DIY",
-    categorySlug: "tools-diy",
-    stars: 4,
-    image: "/images/featured/toolbox.jpg",
+    filterKey: "tools",
   },
   {
-    title: "Laptop Pro",
-    seller: "TechSource UK",
-    price: "£649.00",
+    id: "3",
+    img: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400&auto=format&fit=crop",
+    title: "Designer Handbag",
+    seller: "Fashion Vault UK",
+    price: "£64.90",
+    stars: 3,
+    reviews: 34,
+    category: "Fashion",
+    filterKey: "fashion",
+  },
+  {
+    id: "4",
+    img: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=400&auto=format&fit=crop",
+    title: "Smart Watch Pro",
+    seller: "GadgetHub",
+    price: "£129.99",
+    stars: 3,
+    reviews: 56,
     category: "Electronics",
-    categorySlug: "electronics",
-    stars: 5,
-    image: "/images/products/laptop.jpg",
+    filterKey: "electronics",
   },
   {
-    title: "Smartwatch SE",
-    seller: "WearTech",
-    price: "£89.99",
-    category: "Electronics",
-    categorySlug: "electronics",
-    stars: 4,
-    image: "/images/products/smartwatch.jpg",
-  },
-  {
+    id: "5",
+    img: "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400&auto=format&fit=crop",
     title: "Skincare Gift Set",
-    seller: "GlowBeauty",
-    price: "£32.00",
-    category: "Beauty",
-    categorySlug: "beauty",
+    seller: "Beauty Boutique",
+    price: "£34.99",
     stars: 5,
-    image: "/images/featured/skincare2.jpg",
+    reviews: 98,
+    category: "Beauty",
+    filterKey: "beauty",
   },
   {
-    title: "Office Chair",
-    seller: "WorkspaceUK",
-    price: "£119.00",
-    category: "Office Supplies",
-    categorySlug: "office-supplies",
+    id: "6",
+    img: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400&auto=format&fit=crop",
+    title: "Ergonomic Office Chair",
+    seller: "WorkSpace Direct",
+    price: "£199.00",
     stars: 4,
-    image: "/images/featured/chair.jpg",
+    reviews: 65,
+    category: "Office",
+    filterKey: "office",
   },
 ];
-
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
-// Light grey placeholder — neutral, does not make all broken images look identical
-const FALLBACK_SVG =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3C/svg%3E";
-
-function imgFallback(e: React.SyntheticEvent<HTMLImageElement>) {
-  const img = e.currentTarget as HTMLImageElement;
-  if (img.src !== FALLBACK_SVG) img.src = FALLBACK_SVG;
-}
-
-function StarRow({
-  count = 4,
-  small = false,
-}: {
-  count?: number;
-  small?: boolean;
-}) {
-  const cls = small ? "h-3 w-3" : "h-3.5 w-3.5";
+function StarRow({ count, small = false }: { count: number; small?: boolean }) {
   return (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((n) => (
         <Star
-          key={i}
-          className={`${cls} ${
-            i < count
-              ? "fill-[#FFC107] text-[#FFC107]"
-              : "fill-gray-200 text-gray-200"
+          key={n}
+          className={`${small ? "h-2.5 w-2.5" : "h-3 w-3"} ${
+            n <= count ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"
           }`}
         />
       ))}
@@ -194,453 +163,180 @@ function StarRow({
   );
 }
 
-// ─── HERO TILE GRID DATA — derived from central categories ────────────────────
+// ─── QUICK VIEW MODAL ─────────────────────────────────────────────────────────
 
-/** Short display labels for hero tiles (explicit, not derived by string-split) */
-const HERO_TILE_SHORT_NAMES: Record<string, string> = {
-  electronics:      "Electronics",
-  fashion:          "Fashion",
-  "home-kitchen":   "Home",
-  beauty:           "Beauty",
-  "tools-diy":      "Tools",
-  "toys-games":     "Toys",
-};
+type Listing = (typeof featuredListings)[0];
 
-const heroTiles = CATEGORIES.slice(0, 6).map((cat) => ({
-  img: cat.image,
-  label: HERO_TILE_SHORT_NAMES[cat.slug] ?? cat.name,
-  slug: cat.slug,
-}));
+function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void }) {
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget) onClose();
+    },
+    [onClose]
+  );
 
-// ─── FEATURES DATA ────────────────────────────────────────────────────────────
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backdropFilter: "blur(5px)", backgroundColor: "rgba(0,0,0,0.45)" }}
+      onClick={handleBackdropClick}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+        <div className="relative">
+          <img src={item.img} alt={item.title} className="w-full h-64 object-cover" />
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 bg-white/90 hover:bg-white text-gray-700 rounded-full w-8 h-8 flex items-center justify-center shadow transition-all"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="p-6">
+          <p className="text-xs font-semibold text-[#1A4DBE] uppercase tracking-wide mb-1">
+            {item.category}
+          </p>
+          <h3 className="text-xl font-extrabold text-[#1F2937] mb-1">{item.title}</h3>
+          <p className="text-xs text-gray-500 mb-3">by {item.seller}</p>
+          <div className="flex items-center gap-2 mb-4">
+            <StarRow count={item.stars} />
+            <span className="text-sm text-gray-500">({item.reviews} reviews)</span>
+          </div>
+          <p className="text-2xl font-extrabold text-[#1F2937] mb-6">{item.price}</p>
+          <div className="flex gap-3">
+            <Link
+              to="/catalog"
+              onClick={onClose}
+              className="flex-1 text-center bg-[#1A4DBE] text-white font-semibold py-2.5 rounded-xl hover:bg-[#1640a0] transition-all text-sm"
+            >
+              View Details
+            </Link>
+            <Link
+              to="/register"
+              onClick={onClose}
+              className="flex-1 text-center border-2 border-[#1A4DBE] text-[#1A4DBE] font-semibold py-2.5 rounded-xl hover:bg-blue-50 transition-all text-sm"
+            >
+              Buy Now
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-const platformFeatures = [
-  {
-    icon: BadgeCheck,
-    title: "Verified Sellers",
-    desc: "Every seller on our platform goes through a rigorous verification process to ensure you're buying from trustworthy businesses.",
-    color: "bg-blue-50 text-blue-600",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Secure Payments",
-    desc: "All transactions are fully protected with industry-leading encryption. Buy and sell with complete confidence.",
-    color: "bg-emerald-50 text-emerald-600",
-  },
-  {
-    icon: Zap,
-    title: "Fast & Easy Listing",
-    desc: "List your products in minutes with our streamlined process. Reach thousands of buyers immediately.",
-    color: "bg-amber-50 text-amber-600",
-  },
-  {
-    icon: Globe,
-    title: "UK-Wide Reach",
-    desc: "Connect with buyers and sellers from across the UK. Expand your customer base without any boundaries.",
-    color: "bg-purple-50 text-purple-600",
-  },
-  {
-    icon: TrendingUp,
-    title: "Grow Your Sales",
-    desc: "Access powerful tools and analytics to optimise your listings and increase your revenue over time.",
-    color: "bg-rose-50 text-rose-600",
-  },
-  {
-    icon: Users,
-    title: "Community Support",
-    desc: "Join a thriving community of UK marketplace professionals. Get help, share knowledge, and grow together.",
-    color: "bg-indigo-50 text-indigo-600",
-  },
-];
+// ─── CATEGORY CARD (shared) ───────────────────────────────────────────────────
 
-// ─── HOW IT WORKS DATA ────────────────────────────────────────────────────────
-
-const howItWorksSteps = [
-  {
-    step: "01",
-    title: "Create Your Account",
-    desc: "Sign up in minutes for free. Choose whether you want to browse as a buyer or start selling your products.",
-    icon: Users,
-    color: "bg-blue-600",
-  },
-  {
-    step: "02",
-    title: "Browse or List",
-    desc: "Discover thousands of products across all categories, or list your own items with detailed descriptions and photos.",
-    icon: Package,
-    color: "bg-blue-600",
-  },
-  {
-    step: "03",
-    title: "Connect & Trade",
-    desc: "Message sellers directly, make secure purchases, or receive enquiries for your listed products.",
-    icon: Store,
-    color: "bg-blue-600",
-  },
-  {
-    step: "04",
-    title: "Secure Payment",
-    desc: "Complete transactions safely through our protected payment gateway. Buyers and sellers are both fully covered.",
-    icon: CreditCard,
-    color: "bg-emerald-600",
-  },
-];
-
-// ─── FEATURED LISTING FILTER TABS — derived from central categories ───────────
-
-const FILTER_TABS = ["All", ...CATEGORIES.slice(0, 6).map((c) => c.name)];
+function CategoryCard({
+  slug,
+  label,
+  count,
+  img,
+  imgHeight,
+}: {
+  slug: string;
+  label: string;
+  count: string;
+  img: string;
+  imgHeight: string;
+}) {
+  return (
+    <Link
+      to={`/category/${slug}`}
+      className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-[3px] transition-all duration-300 flex flex-col"
+    >
+      <div className="overflow-hidden">
+        <img
+          src={img}
+          alt={label}
+          className={`w-full ${imgHeight} object-cover group-hover:scale-105 transition-transform duration-300`}
+        />
+      </div>
+      <div className="flex items-center justify-between px-4 py-3">
+        <span className="text-sm font-bold text-[#1F2937]">{label}</span>
+        <span className="text-xs font-semibold text-[#1A4DBE] flex items-center gap-0.5 whitespace-nowrap">
+          {count} <ArrowRight className="h-3 w-3" />
+        </span>
+      </div>
+    </Link>
+  );
+}
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
-
 export default function PixelPerfectIndex() {
-  const [searchValue, setSearchValue] = useState("");
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("All");
-  const { user, logout } = useAuthStore();
-  const navigate = useNavigate();
+  const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [quickViewItem, setQuickViewItem] = useState<Listing | null>(null);
 
-  // Filter featured listings by the active tab
   const visibleListings =
-    activeTab === "All"
+    activeFilter === "all"
       ? featuredListings
-      : featuredListings.filter((item) => item.category === activeTab);
-
-  const dashboardPath =
-    user?.role === "seller"
-      ? "/pp/seller"
-      : user?.role === "admin" || user?.role === "owner"
-      ? "/pp/admin"
-      : "/pp/buyer";
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    logout();
-    navigate("/login");
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    navigate(
-      `/catalog${searchValue ? `?q=${encodeURIComponent(searchValue)}` : ""}`
-    );
-  };
+      : featuredListings.filter((item) => item.filterKey === activeFilter);
 
   return (
     <div className="min-h-screen bg-white font-sans antialiased">
-      {/* ── THIN DARK STRIP ────────────────────────────────────────────── */}
-      <div className="h-7 w-full bg-[#0d1f3c]" />
+      <Navbar />
 
-      {/* ── MAIN HEADER ────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
-        <div className="max-w-[1360px] mx-auto px-4 lg:px-6 flex items-center gap-4 h-[68px]">
-          {/* Logo */}
-          <Link
-            to="/"
-            className="flex items-center gap-2.5 shrink-0 w-[200px] lg:w-[220px]"
-          >
-            <img
-              src={logo}
-              alt="Loadify Market logo"
-              className="h-9 w-9 object-contain"
-            />
-            <span className="font-bold text-[17px] tracking-tight text-[#0d1f3c] whitespace-nowrap">
-              Loadify{" "}
-              <span className="text-[#1A4DBE]">Market</span>
-            </span>
-          </Link>
+      {quickViewItem && (
+        <QuickViewModal item={quickViewItem} onClose={() => setQuickViewItem(null)} />
+      )}
 
-          {/* Search bar */}
-          <form
-            onSubmit={handleSearch}
-            className="flex-1 hidden sm:block"
-          >
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-gray-400 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search products, categories..."
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                className="w-full h-[46px] pl-10 pr-4 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition placeholder:text-gray-400"
-              />
-            </div>
-          </form>
-
-          {/* Desktop right actions */}
-          <div className="hidden lg:flex items-center gap-5 ml-auto shrink-0">
-            {user ? (
-              <>
-                <Link
-                  to={dashboardPath}
-                  className="text-sm font-medium text-gray-700 hover:text-blue-600 transition"
-                >
-                  Dashboard
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="text-sm font-medium text-gray-500 hover:text-gray-800 transition"
-                >
-                  Sign Out
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="text-sm font-medium text-gray-700 hover:text-blue-600 transition"
-                >
-                  Dashboard
-                </Link>
-                <User className="h-5 w-5 text-gray-400" />
-                <Link
-                  to="/register"
-                  className="text-sm font-semibold text-gray-800 hover:text-blue-600 transition"
-                >
-                  Sign Up
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* Mobile hamburger */}
-          <button
-            className="lg:hidden ml-auto p-2 text-gray-600"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-        </div>
-
-        {/* Mobile menu */}
-        {mobileOpen && (
-          <div className="lg:hidden border-t border-gray-100 bg-white px-4 py-3 space-y-2">
-            <Link
-              to="/catalog"
-              onClick={() => setMobileOpen(false)}
-              className="block py-2 text-sm text-gray-700"
-            >
-              Catalog
-            </Link>
-            <Link
-              to="/clearance"
-              onClick={() => setMobileOpen(false)}
-              className="block py-2 text-sm text-gray-700"
-            >
-              Deals
-            </Link>
-            <Link
-              to="/contact"
-              onClick={() => setMobileOpen(false)}
-              className="block py-2 text-sm text-gray-700"
-            >
-              Contact
-            </Link>
-            <div className="flex gap-3 pt-2 border-t border-gray-100">
-              {user ? (
-                <Link
-                  to={dashboardPath}
-                  className="flex-1 text-center py-2 text-sm font-medium bg-[#1A4DBE] text-white rounded-lg"
-                >
-                  Dashboard
-                </Link>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="flex-1 text-center py-2 text-sm font-medium border border-gray-200 rounded-lg text-gray-700"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="flex-1 text-center py-2 text-sm font-medium bg-[#1A4DBE] text-white rounded-lg"
-                  >
-                    Sign Up
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </header>
-
-      {/* ── NAV ROW ────────────────────────────────────────────────────── */}
-      <nav className="bg-white border-b border-gray-100 sticky top-[68px] z-40">
-        <div className="max-w-[1360px] mx-auto px-4 lg:px-6 flex items-center h-[44px] overflow-x-auto scrollbar-hide gap-0">
-          <Link
-            to="/catalog"
-            className="px-3 h-full flex items-center text-sm font-medium text-[#1A4DBE] border-b-2 border-[#1A4DBE] shrink-0 whitespace-nowrap"
-          >
-            Catalog
-          </Link>
-          <Link
-            to="/clearance"
-            className="px-3 h-full flex items-center text-sm text-gray-600 hover:text-gray-900 transition shrink-0"
-          >
-            Deals
-          </Link>
-          <Link
-            to="/contact"
-            className="px-3 h-full flex items-center text-sm text-gray-600 hover:text-gray-900 transition shrink-0"
-          >
-            Contact
-          </Link>
-          <button className="px-3 h-full flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition shrink-0">
-            Information <ChevronDown className="h-3.5 w-3.5" />
-          </button>
-          <button className="px-3 h-full flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 transition shrink-0">
-            Resources <ChevronDown className="h-3.5 w-3.5" />
-          </button>
-          <Link
-            to="/contact"
-            className="px-3 h-full flex items-center text-sm text-gray-600 hover:text-gray-900 transition shrink-0"
-          >
-            Contact
-          </Link>
-
-          {/* Google rating */}
-          <div className="ml-auto flex items-center gap-1.5 text-sm shrink-0 pl-4">
-            <Star className="h-3.5 w-3.5 fill-[#FFC107] text-[#FFC107]" />
-            <span className="font-semibold text-gray-800">5.0</span>
-            <span className="text-gray-300">|</span>
-            <span className="text-gray-500 text-[11px]">4.24</span>
-            <span className="font-medium text-[#4285F4] text-[11px]">
-              Google
-            </span>
-          </div>
-        </div>
-      </nav>
+      {/* clear fixed navbar */}
+      <div className="pt-16" />
 
       <main>
-        {/* ── HERO ───────────────────────────────────────────────────────── */}
-        <section className="bg-[#f4f7fc] px-4 pt-5 pb-0 lg:px-6">
-          <div className="max-w-[1360px] mx-auto">
-            <div className="relative bg-gradient-to-br from-[#d6e8fb] via-[#ddeeff] to-[#e8f3ff] rounded-[24px] overflow-hidden">
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] items-stretch min-h-[380px] lg:min-h-[400px]">
-                {/* Left: copy */}
-                <div className="flex flex-col justify-center px-7 lg:px-12 pt-9 pb-6 max-w-[600px]">
-                  <h1 className="text-[34px] sm:text-[42px] lg:text-[52px] font-extrabold text-[#0d1f3c] leading-[1.06] tracking-tight">
-                    The UK Marketplace
-                    <br />
-                    Connecting{" "}
-                    <span className="text-[#1A4DBE]">Buyers</span> &amp;
-                    Sellers
-                  </h1>
-                  <p className="mt-4 text-[17px] leading-relaxed text-gray-500 max-w-[460px]">
-                    Discover trusted suppliers, list your products, and grow
-                    your business — all in one secure platform.
-                  </p>
-                  <div className="mt-7 flex flex-wrap gap-3">
-                    <Link
-                      to="/catalog"
-                      className="inline-flex items-center gap-2 bg-[#1A4DBE] text-white px-6 py-3 rounded-lg text-sm font-semibold hover:bg-[#163fa0] transition shadow-md shadow-blue-200/60"
-                    >
-                      Browse Marketplace
-                    </Link>
-                    <Link
-                      to="/register?type=seller"
-                      className="inline-flex items-center gap-2 bg-[#28A745] text-white px-6 py-3 rounded-lg text-sm font-semibold hover:bg-[#22963d] transition shadow-sm"
-                    >
-                      <Store className="h-4 w-4 text-white" />
-                      Start Selling
-                    </Link>
-                  </div>
-                </div>
+        {/* ── 1. HERO ─────────────────────────────────────────────────────── */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-[#d6e4f7] via-[#e2ecf8] to-[#eef3fc] px-4 pt-10 pb-24 lg:pt-14 lg:pb-32 lg:px-6">
+          <div className="max-w-[1360px] mx-auto grid lg:grid-cols-2 gap-10 items-center">
 
-                {/* Right: product-tile + phone composition */}
-                <div className="hidden lg:flex items-end self-stretch w-[480px] relative overflow-hidden">
-                  {/* Dark panel */}
-                  <div className="absolute inset-x-0 bottom-0 top-0 bg-[#1a3260] rounded-tl-[20px]">
-                    {/* Tile grid background */}
-                    <div className="grid grid-cols-3 gap-2.5 p-5">
-                      {heroTiles.map((t) => (
-                        <div
-                          key={t.label}
-                          className="aspect-square rounded-xl overflow-hidden bg-[#1f4475]/60 border border-white/10"
-                        >
-                          <img
-                            src={t.img}
-                            alt={t.label}
-                            className="w-full h-full object-cover opacity-75"
-                            onError={imgFallback}
-                          />
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Phone mockup — lower-right */}
-                    <div className="absolute right-8 bottom-0 w-[132px]">
-                      <div
-                        className="relative bg-[#0a1a38] rounded-[30px] border-[5px] border-[#1e3870] shadow-2xl overflow-hidden"
-                        style={{ paddingTop: "195%" }}
-                      >
-                        <div className="absolute inset-0 flex flex-col">
-                          {/* Notch */}
-                          <div className="flex justify-center pt-2.5">
-                            <div className="h-1.5 w-10 bg-[#1e3870] rounded-full" />
-                          </div>
-                          {/* Screen */}
-                          <div className="flex-1 bg-white mx-1 mb-1 rounded-b-[24px] overflow-hidden">
-                            <div className="bg-[#1A4DBE] text-white text-[6.5px] font-bold px-2 py-1 flex items-center gap-1">
-                              <span>≋</span> Loadify Market
-                            </div>
-                            <img
-                              src="/images/products/smartwatch.jpg"
-                              alt="Smartwatch listing"
-                              className="w-full h-[68px] object-cover"
-                              onError={imgFallback}
-                            />
-                            <div className="px-2 py-1.5">
-                              <div className="text-[7px] font-bold text-gray-800">
-                                Smartwatch
-                              </div>
-                              <div className="text-[6px] text-gray-400 mt-0.5">
-                                £89.99
-                              </div>
-                              <div className="flex gap-0.5 mt-1">
-                                {[1, 2, 3, 4].map((i) => (
-                                  <Star
-                                    key={i}
-                                    className="h-1.5 w-1.5 fill-[#FFC107] text-[#FFC107]"
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Floating info card */}
-                    <div className="absolute top-5 right-5 bg-white rounded-xl shadow-lg px-3 py-2">
-                      <div className="text-[10px] font-semibold text-gray-800">
-                        Smartlisting
-                      </div>
-                      <div className="text-[9px] text-gray-400 mt-0.5">
-                        Featurelisting
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            {/* Left: copy */}
+            <div className="space-y-5 max-w-xl">
+              <h1 className="text-4xl lg:text-[2.75rem] font-extrabold text-[#1F2937] leading-tight">
+                The UK Marketplace Connecting{" "}
+                <span className="text-[#1A4DBE]">Buyers</span> &amp; Sellers
+              </h1>
+              <p className="text-[15px] text-gray-600 leading-relaxed">
+                Discover trusted suppliers, list your products, and grow your
+                business — all in one secure platform.
+              </p>
+              <div className="flex flex-wrap gap-3 pt-1">
+                <Link
+                  to="/catalog"
+                  className="inline-flex items-center gap-2 bg-[#1A4DBE] text-white font-semibold px-6 py-3 rounded-lg text-sm hover:bg-[#1640a0] hover:-translate-y-[3px] transition-all duration-300 shadow-md shadow-blue-200"
+                >
+                  Browse Marketplace
+                </Link>
+                <Link
+                  to="/register?type=seller"
+                  className="inline-flex items-center gap-2 bg-white border border-gray-300 text-[#1F2937] font-semibold px-6 py-3 rounded-lg text-sm hover:border-[#1A4DBE] hover:-translate-y-[3px] transition-all duration-300 shadow-sm"
+                >
+                  <ShoppingBag className="h-4 w-4 text-[#28A745]" />
+                  Start Selling
+                </Link>
               </div>
+            </div>
 
-              {/* Trust bar — inside hero at bottom */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-5 lg:px-8 py-5">
-                {trustItems.map(({ icon: Icon, title, sub, color }) => (
-                  <div
-                    key={title}
-                    className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3.5 flex items-center gap-3"
-                  >
-                    <Icon className={`h-5 w-5 shrink-0 ${color}`} />
+            {/* Right: product collage */}
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl h-60 lg:h-[370px]">
+              <img
+                src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=900&auto=format&fit=crop"
+                alt="UK Multi-Category Marketplace"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/15 to-transparent" />
+            </div>
+          </div>
+
+          {/* ── Floating trust strip ── */}
+          <div className="absolute bottom-0 left-0 right-0 translate-y-1/2 px-4 lg:px-6 z-10">
+            <div className="max-w-[1100px] mx-auto bg-white rounded-2xl shadow-lg border border-gray-100 px-6 py-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-100">
+                {trustItems.map((item) => (
+                  <div key={item.title} className="flex items-center gap-3 px-4 first:pl-0">
+                    <item.icon className={`h-7 w-7 shrink-0 ${item.color}`} />
                     <div>
-                      <div className="text-sm font-semibold text-gray-800">
-                        {title}
-                      </div>
-                      <div className="text-[11px] text-gray-400 mt-0.5">
-                        {sub}
-                      </div>
+                      <p className="text-sm font-semibold text-[#1F2937]">{item.title}</p>
+                      <p className="text-[11px] text-gray-400">{item.sub}</p>
                     </div>
                   </div>
                 ))}
@@ -649,447 +345,168 @@ export default function PixelPerfectIndex() {
           </div>
         </section>
 
-        {/* ── 3 LARGE CATEGORY CARDS ─────────────────────────────────────── */}
-        <section className="bg-white">
-          <div className="max-w-[1360px] mx-auto px-4 lg:px-6 py-5">
+        {/* spacer for floating trust strip */}
+        <div className="h-16 bg-[#F4F7FB]" />
+
+        {/* ── 2. CATEGORIES ───────────────────────────────────────────────── */}
+        <section className="bg-[#F4F7FB] pt-6 pb-10 px-4 lg:px-6">
+          <div className="max-w-[1360px] mx-auto space-y-4">
+
+            {/* Row 1: 2 wide landscape cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {bigCategories.map((cat) => (
+                <CategoryCard
+                  key={cat.slug}
+                  slug={cat.slug}
+                  label={cat.label}
+                  count={cat.count}
+                  img={cat.img}
+                  imgHeight="h-52"
+                />
+              ))}
+            </div>
+
+            {/* Row 2: 3 medium cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {topCategories.map((cat) => (
-                <Link
+              {mediumCategories.map((cat) => (
+                <CategoryCard
                   key={cat.slug}
-                  to={`/category/${cat.slug}`}
-                  className="group block rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] transition bg-white"
-                >
-                  <div className="aspect-[16/9] overflow-hidden bg-[#F9FAFB]">
-                    <img
-                      src={cat.image}
-                      alt={cat.name}
-                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                      onError={imgFallback}
-                    />
-                  </div>
-                  <div className="px-4 py-3">
-                    <h3 className="text-base font-bold text-gray-900">
-                      {cat.name}
-                    </h3>
-                    <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">
-                      {cat.description}
-                    </p>
-                    <span className="inline-flex items-center gap-1 mt-2 text-[11px] font-medium text-[#1A4DBE]">
-                      Shop now <ArrowRight className="h-3 w-3" />
-                    </span>
-                  </div>
-                </Link>
+                  slug={cat.slug}
+                  label={cat.label}
+                  count={cat.count}
+                  img={cat.img}
+                  imgHeight="h-40"
+                />
               ))}
             </div>
           </div>
         </section>
 
-        {/* ── 4 PRODUCT CARDS ────────────────────────────────────────────── */}
-        <section className="bg-white">
-          <div className="max-w-[1360px] mx-auto px-4 lg:px-6 pb-5">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {productCards.map((p) => (
-                <Link
-                  key={p.title}
-                  to={`/category/${p.categorySlug}`}
-                  className="group block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] transition"
-                >
-                  <div className="aspect-[4/3] overflow-hidden bg-white flex items-center justify-center p-3">
-                    <img
-                      src={p.image}
-                      alt={p.title}
-                      className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
-                      onError={imgFallback}
-                    />
-                  </div>
-                  <div className="px-3.5 py-3">
-                    <h3 className="text-sm font-bold text-gray-900">
-                      {p.title}
-                    </h3>
-                    <div className="text-xs text-gray-400 mt-0.5">
-                      {p.price}
-                    </div>
-                    <div className="flex items-center gap-1.5 mt-1.5">
-                      <StarRow count={p.stars} small />
-                      <span className="text-[10px] text-gray-400">
-                        {p.category}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* ── 3. FEATURED LISTINGS ────────────────────────────────────────── */}
+        <section className="bg-white py-10 px-4 lg:px-6">
+          <div className="max-w-[1360px] mx-auto">
 
-        {/* ── ALL CATEGORIES GRID ────────────────────────────────────────── */}
-        <section className="bg-[#f4f7fc] border-t border-gray-100 py-8">
-          <div className="max-w-[1360px] mx-auto px-4 lg:px-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-              <h2 className="text-[22px] font-extrabold text-gray-900">
-                Shop by{" "}
-                <span className="text-[#1A4DBE]">Category</span>
+            {/* Section header */}
+            <div className="flex items-start justify-between mb-1">
+              <h2 className="text-2xl font-extrabold text-[#1F2937]">
+                Featured <span className="text-[#1A4DBE]">Listings</span>
               </h2>
               <Link
                 to="/catalog"
-                className="text-sm font-medium text-[#1A4DBE] hover:underline flex items-center gap-1"
+                className="text-sm font-medium text-[#1A4DBE] hover:underline flex items-center gap-1 mt-1"
               >
-                All categories <ArrowRight className="h-3.5 w-3.5" />
+                View All <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-3">
-              {CATEGORIES.map((cat) => (
-                <Link
-                  key={cat.slug}
-                  to={`/category/${cat.slug}`}
-                  className="group flex flex-col items-center gap-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-3 hover:shadow-md hover:border-blue-200 transition"
-                >
-                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-[#f4f7fc] flex items-center justify-center">
-                    <img
-                      src={cat.image}
-                      alt={cat.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                      onError={imgFallback}
-                    />
-                  </div>
-                  <span className="text-[11px] font-semibold text-gray-700 text-center leading-tight group-hover:text-[#1A4DBE] transition-colors">
-                    {cat.name}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
+            <p className="text-sm text-gray-500 mb-5">
+              Discover the best products from our verified UK sellers
+            </p>
 
-        {/* ── FEATURED LISTINGS ──────────────────────────────────────────── */}
-        <section className="bg-white border-t border-gray-100 py-6">
-          <div className="max-w-[1360px] mx-auto px-4 lg:px-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-              <h2 className="text-[28px] font-extrabold text-gray-900">
-                Featured{" "}
-                <span className="text-[#1A4DBE]">Listings</span>
-              </h2>
-              <Link
-                to="/catalog"
-                className="text-sm font-medium text-[#1A4DBE] hover:underline flex items-center gap-1"
-              >
-                View all <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
             {/* Filter tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide mb-5 pb-1">
+            <div className="flex flex-wrap gap-2 mb-6">
               {FILTER_TABS.map((tab) => (
                 <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition ${
-                    activeTab === tab
-                      ? "bg-[#1A4DBE] text-white shadow-sm shadow-blue-200"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  key={tab.key}
+                  onClick={() => setActiveFilter(tab.key)}
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-300 ${
+                    activeFilter === tab.key
+                      ? "bg-[#1A4DBE] text-white border-[#1A4DBE]"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-[#1A4DBE] hover:text-[#1A4DBE]"
                   }`}
                 >
-                  {tab}
+                  {tab.label}
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+
+            {/* Product grid: 6 compact cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {visibleListings.map((item) => (
-                <div
-                  key={`${item.title}-${item.categorySlug}`}
-                  className="group relative bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] transition"
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-label={`Quick view ${item.title}`}
+                  className="group bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-[3px] transition-all duration-300 cursor-pointer flex flex-col text-left w-full"
+                  onClick={() => setQuickViewItem(item)}
                 >
-                  <div className="aspect-square overflow-hidden bg-white flex items-center justify-center p-2">
+                  <div className="relative overflow-hidden w-full">
                     <img
-                      src={item.image}
+                      src={item.img}
                       alt={item.title}
-                      className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
-                      onError={imgFallback}
+                      className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                  </div>
-                  {/* Quick View overlay — positioned above card footer (~88px tall) */}
-                  <Link
-                    to={`/category/${item.categorySlug}`}
-                    className="absolute inset-x-0 bottom-[88px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <span className="bg-[#0d1f3c]/90 text-white text-[10px] font-semibold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
-                      <Eye className="h-3 w-3" /> Quick View
-                    </span>
-                  </Link>
-                  <div className="px-2.5 py-2.5">
-                    <div className="text-[12px] font-semibold text-gray-800 line-clamp-1">
-                      {item.title}
-                    </div>
-                    <div className="flex items-center gap-0.5 mt-0.5">
-                      <StarRow count={item.stars} small />
-                      <span className="text-[9px] text-gray-400 ml-0.5 line-clamp-1">
-                        {item.seller}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white text-gray-900 text-[10px] font-semibold px-2.5 py-1 rounded-full shadow flex items-center gap-1">
+                        <Eye className="h-3 w-3" /> Quick View
                       </span>
                     </div>
-                    <div className="text-[11px] font-bold text-gray-900 mt-0.5">
-                      {item.price}
-                    </div>
-                    <div className="text-[9px] text-gray-400">
-                      {item.category}
-                    </div>
                   </div>
-                </div>
+                  <div className="p-2 flex-1 flex flex-col">
+                    <p className="text-[11px] font-bold text-[#1F2937] line-clamp-1 mb-0.5">
+                      {item.title}
+                    </p>
+                    <StarRow count={item.stars} small />
+                    <p className="text-[10px] text-gray-400 mt-0.5 truncate">{item.seller}</p>
+                    <p className="text-xs font-extrabold text-[#1F2937] mt-1">{item.price}</p>
+                    <p className="text-[10px] text-gray-400 truncate">{item.category}</p>
+                  </div>
+                </button>
               ))}
             </div>
           </div>
         </section>
 
-        {/* ── BUYER + SELLER SPLIT CTA ───────────────────────────────────── */}
-        <section className="bg-[#f4f7fc] border-t border-gray-100 py-10 lg:py-14">
-          <div className="max-w-[1360px] mx-auto px-4 lg:px-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Buyer card */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-8 py-8 flex flex-col gap-4">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50">
-                  <Search className="h-6 w-6 text-[#1A4DBE]" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-extrabold text-[#0d1f3c]">
-                    Browse &amp; Buy
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-500 leading-relaxed">
-                    Discover thousands of products from verified UK sellers.
-                    From electronics to fashion, find exactly what you need at
-                    competitive prices.
-                  </p>
-                </div>
-                <ul className="space-y-2">
-                  {[
-                    "Access thousands of verified listings",
-                    "Secure buyer protection on every order",
-                    "Direct messaging with sellers",
-                  ].map((item) => (
-                    <li key={item} className="flex items-center gap-2 text-sm text-gray-600">
-                      <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  to="/catalog"
-                  className="mt-2 inline-flex items-center gap-2 bg-[#1A4DBE] text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#163fa0] transition self-start shadow-sm"
-                >
-                  Start Browsing <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-
-              {/* Seller card */}
-              <div className="bg-[#0d1f3c] rounded-2xl px-8 py-8 flex flex-col gap-4">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/10">
-                  <Store className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-extrabold text-white">
-                    Sell on Loadify Market
-                  </h3>
-                  <p className="mt-2 text-sm text-white/70 leading-relaxed">
-                    Reach thousands of buyers across the UK. List your products
-                    for free and grow your business with our powerful seller
-                    tools.
-                  </p>
-                </div>
-                <ul className="space-y-2">
-                  {[
-                    "Free to list — no upfront fees",
-                    "Seller dashboard with analytics",
-                    "Fast onboarding & verification",
-                  ].map((item) => (
-                    <li key={item} className="flex items-center gap-2 text-sm text-white/80">
-                      <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  to="/register?type=seller"
-                  className="mt-2 inline-flex items-center gap-2 bg-[#28A745] text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#22963d] transition self-start shadow-sm"
-                >
-                  Start Selling <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── WHY CHOOSE LOADIFY ─────────────────────────────────────────── */}
-        <section className="bg-white border-t border-gray-100 py-10 lg:py-14">
-          <div className="max-w-[1360px] mx-auto px-4 lg:px-6">
-            <div className="text-center mb-8">
-              <h2 className="text-[28px] font-extrabold text-gray-900">
-                Why Choose{" "}
-                <span className="text-[#1A4DBE]">Loadify Market</span>
-              </h2>
-              <p className="mt-2 text-sm text-gray-500 max-w-[520px] mx-auto">
-                Everything you need to buy and sell with confidence in the UK&apos;s
-                most trusted multi-category marketplace.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {platformFeatures.map(({ icon: Icon, title, desc, color }) => (
-                <div
-                  key={title}
-                  className="bg-white rounded-xl border border-gray-100 shadow-sm px-6 py-5 hover:shadow-md transition"
-                >
-                  <div
-                    className={`inline-flex h-11 w-11 items-center justify-center rounded-xl ${color} mb-4`}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <h3 className="text-base font-bold text-gray-900">{title}</h3>
-                  <p className="mt-1.5 text-sm text-gray-500 leading-relaxed">
-                    {desc}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── HOW IT WORKS ───────────────────────────────────────────────── */}
-        <section className="bg-[#f4f7fc] border-t border-gray-100 py-10 lg:py-14">
-          <div className="max-w-[1360px] mx-auto px-4 lg:px-6">
-            <div className="text-center mb-8">
-              <h2 className="text-[28px] font-extrabold text-gray-900">
-                How It{" "}
-                <span className="text-[#1A4DBE]">Works</span>
-              </h2>
-              <p className="mt-2 text-sm text-gray-500 max-w-[480px] mx-auto">
-                Get started in four simple steps and join thousands of buyers
-                and sellers already trading on Loadify Market.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {howItWorksSteps.map(({ step, title, desc, icon: Icon, color }) => (
-                <div key={step} className="relative flex flex-col items-center text-center">
-                  {/* Connector line — offset left by half icon width (24px) to start at icon edge */}
-                  <div className="hidden lg:block absolute top-6 left-[calc(50%+28px)] right-0 h-px bg-gray-200 -z-0" />
-                  <div
-                    className={`relative z-10 flex h-12 w-12 items-center justify-center rounded-full ${color} text-white shadow-md mb-4`}
-                  >
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <span className="text-xs font-bold text-gray-400 tracking-widest mb-1">
-                    STEP {step}
-                  </span>
-                  <h3 className="text-base font-bold text-gray-900 mb-1">
-                    {title}
-                  </h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── CTA SECTION ────────────────────────────────────────────────── */}
-        <section className="relative overflow-hidden">
-          {/* Layered dark-blue atmospheric background */}
-          <div className="absolute inset-0 bg-[#0d1f3c]" />
-          <div className="absolute inset-0">
-            <img
-              src="/images/hero.jpg"
-              alt=""
-              className="h-full w-full object-cover opacity-25"
-              onError={() => {}}
-            />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0d1f3c]/60 via-[#0a2040]/70 to-[#071830]/90" />
-
-          <div className="relative max-w-[1360px] mx-auto px-4 lg:px-6 py-16 lg:py-20 text-center">
-            <h2 className="text-[28px] sm:text-[38px] lg:text-[44px] font-extrabold text-white leading-tight">
+        {/* ── 4. CTA BANNER ───────────────────────────────────────────────── */}
+        <section
+          className="relative py-16 px-4 overflow-hidden"
+          style={{
+            background:
+              "linear-gradient(135deg, #0a1628 0%, #0f2347 35%, #1a3a6b 65%, #0a1628 100%)",
+          }}
+        >
+          {/* decorative glow */}
+          <div
+            className="absolute bottom-0 right-0 w-[32rem] h-[32rem] rounded-full opacity-25 pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(circle, #3a7bd5 0%, #1A4DBE 40%, transparent 70%)",
+              transform: "translate(30%, 30%)",
+            }}
+          />
+          <div
+            className="absolute top-0 left-0 w-80 h-80 rounded-full opacity-10 pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(circle, #60a5fa 0%, transparent 70%)",
+              transform: "translate(-40%, -40%)",
+            }}
+          />
+          <div className="relative max-w-[1360px] mx-auto text-center">
+            <h2 className="text-3xl font-extrabold text-white mb-3">
               Ready to Join the Marketplace?
             </h2>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <p className="text-blue-300 text-sm mb-8 max-w-md mx-auto">
+              Connect with thousands of UK buyers and sellers. Free to join — start exploring today.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
               <Link
                 to="/catalog"
-                className="inline-flex items-center gap-2 bg-white text-gray-900 px-8 py-3.5 rounded-lg text-sm font-semibold hover:bg-gray-100 transition shadow-lg"
+                className="inline-flex items-center gap-2 border-2 border-white text-white font-semibold px-8 py-3 rounded-lg text-sm hover:bg-white/10 hover:-translate-y-[3px] transition-all duration-300"
               >
                 Browse Marketplace
               </Link>
               <Link
                 to="/register"
-                className="inline-flex items-center gap-2 bg-[#28A745] text-white px-8 py-3.5 rounded-lg text-sm font-semibold hover:bg-[#22963d] transition shadow-lg"
+                className="inline-flex items-center gap-2 bg-[#28A745] text-white font-semibold px-8 py-3 rounded-lg text-sm hover:bg-[#219538] hover:-translate-y-[3px] transition-all duration-300 shadow-lg shadow-green-900/30"
               >
-                Create Account
-                <ArrowRight className="h-4 w-4" />
+                Create Account <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>
         </section>
-
-        {/* ── FOOTER ─────────────────────────────────────────────────────── */}
-        <footer className="bg-[#0a1628] text-white">
-          <div className="max-w-[1360px] mx-auto px-4 lg:px-6 pt-5 pb-4">
-            {/* Links row */}
-            <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-2 text-sm text-white/60">
-              <Link to="/about" className="hover:text-white transition">
-                About Us
-              </Link>
-              <Link to="/faq" className="hover:text-white transition">
-                Help Center
-              </Link>
-              <Link to="/privacy" className="hover:text-white transition">
-                Privacy Policy
-              </Link>
-              <Link to="/terms" className="hover:text-white transition">
-                Terms
-              </Link>
-              {/* Payment labels */}
-              <span className="text-white/35 text-[11px] font-medium tracking-wide">
-                VISA
-              </span>
-              <span className="text-white/35 text-[11px] font-medium tracking-wide">
-                Mastercard
-              </span>
-              {/* Social icons */}
-              {[
-                {
-                  label: "Facebook",
-                  href: "https://www.facebook.com/profile.php?id=61583570176707",
-                  path: "M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z",
-                },
-                {
-                  label: "LinkedIn",
-                  href: "https://www.linkedin.com/company/loadify-market/",
-                  path: "M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z",
-                },
-                {
-                  label: "Instagram",
-                  href: "https://www.instagram.com/loadifymarket/",
-                  path: "M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z",
-                },
-              ].map((s) => (
-                <a
-                  key={s.label}
-                  href={s.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={s.label}
-                  className="hover:text-white transition"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d={s.path} />
-                  </svg>
-                </a>
-              ))}
-            </div>
-
-            {/* Copyright */}
-            <div className="mt-3 pt-3 border-t border-white/10 text-center text-[11px] text-white/30">
-              © 2024 Loadify Market. All rights reserved.
-            </div>
-          </div>
-        </footer>
       </main>
+
+      <Footer />
     </div>
   );
 }
-
