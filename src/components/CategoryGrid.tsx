@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
-const bigCategories = [
+const categories = [
   {
     slug: "electronics",
     label: "Electronics",
@@ -14,9 +14,6 @@ const bigCategories = [
     count: "900+",
     img: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=700&auto=format&fit=crop",
   },
-];
-
-const mediumCategories = [
   {
     slug: "home-garden",
     label: "Home & Kitchen",
@@ -35,6 +32,24 @@ const mediumCategories = [
     count: "320+",
     img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&auto=format&fit=crop",
   },
+  {
+    slug: "beauty",
+    label: "Beauty",
+    count: "280+",
+    img: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=500&auto=format&fit=crop",
+  },
+  {
+    slug: "health-wellness",
+    label: "Health & Wellness",
+    count: "210+",
+    img: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&auto=format&fit=crop",
+  },
+  {
+    slug: "automotive",
+    label: "Automotive",
+    count: "175+",
+    img: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=500&auto=format&fit=crop",
+  },
 ];
 
 function CategoryCard({
@@ -42,31 +57,36 @@ function CategoryCard({
   label,
   count,
   img,
-  imgHeight,
+  tall,
 }: {
   slug: string;
   label: string;
   count: string;
   img: string;
-  imgHeight: string;
+  tall?: boolean;
 }) {
   return (
     <Link
       to={`/category/${slug}`}
-      className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-[3px] transition-all duration-300 flex flex-col"
+      className="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+      style={{ minHeight: tall ? "260px" : "180px" }}
     >
-      <div className="overflow-hidden">
-        <img
-          src={img}
-          alt={label}
-          loading="lazy"
-          className={`w-full ${imgHeight} object-cover group-hover:scale-105 transition-transform duration-300`}
-        />
-      </div>
-      <div className="flex items-center justify-between px-4 py-3">
-        <span className="text-sm font-bold text-[#1F2937]">{label}</span>
-        <span className="text-xs font-semibold text-[#1A4DBE] flex items-center gap-0.5 whitespace-nowrap">
-          {count} <ArrowRight className="h-3 w-3" />
+      <img
+        src={img}
+        alt={label}
+        loading="lazy"
+        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+      />
+      {/* gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+      {/* label */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
+        <div>
+          <p className="text-white font-bold text-sm sm:text-base leading-tight drop-shadow">{label}</p>
+          <p className="text-white/70 text-xs mt-0.5">{count} items</p>
+        </div>
+        <span className="shrink-0 w-7 h-7 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:bg-white/30 transition-colors">
+          <ArrowRight className="h-3.5 w-3.5 text-white" />
         </span>
       </div>
     </Link>
@@ -75,33 +95,37 @@ function CategoryCard({
 
 const CategoryGrid = () => {
   return (
-    <section className="bg-[#F4F7FB] pt-6 pb-10 px-4 lg:px-6">
-      <div className="max-w-[1360px] mx-auto space-y-4">
-        {/* Row 1: 2 wide landscape cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {bigCategories.map((cat) => (
-            <CategoryCard
-              key={cat.slug}
-              slug={cat.slug}
-              label={cat.label}
-              count={cat.count}
-              img={cat.img}
-              imgHeight="h-52"
-            />
+    <section className="bg-[#F4F7FB] py-12 px-4 lg:px-6">
+      <div className="max-w-[1360px] mx-auto">
+        {/* Section header */}
+        <div className="text-center mb-8">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#1A4080]">Explore</span>
+          <h2 className="mt-1 text-2xl sm:text-3xl font-display font-bold text-[#0F2D52]">
+            Shop by Category
+          </h2>
+          <p className="mt-1.5 text-sm text-gray-500">
+            Browse thousands of listings across every major product category.
+          </p>
+        </div>
+
+        {/* Row 1: 2 wide cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          {categories.slice(0, 2).map((cat) => (
+            <CategoryCard key={cat.slug} {...cat} tall />
           ))}
         </div>
 
-        {/* Row 2: 3 medium cards */}
+        {/* Row 2: 3 cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          {categories.slice(2, 5).map((cat) => (
+            <CategoryCard key={cat.slug} {...cat} />
+          ))}
+        </div>
+
+        {/* Row 3: 3 cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {mediumCategories.map((cat) => (
-            <CategoryCard
-              key={cat.slug}
-              slug={cat.slug}
-              label={cat.label}
-              count={cat.count}
-              img={cat.img}
-              imgHeight="h-40"
-            />
+          {categories.slice(5, 8).map((cat) => (
+            <CategoryCard key={cat.slug} {...cat} />
           ))}
         </div>
       </div>

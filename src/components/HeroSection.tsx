@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle2, ShieldCheck, Tag, TrendingDown, Layers, Star } from "lucide-react";
+import { ArrowRight, CheckCircle2, ShieldCheck, Tag, Layers, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import electronicsImg from "@/assets/categories/electronics.jpg";
@@ -21,13 +21,17 @@ const MockCard = ({
   badgeColor: string;
   image: string;
 }) => (
-  <div className="bg-white rounded-xl shadow-md border border-slate-100 p-3 flex flex-col gap-2 hover:shadow-lg transition-shadow">
+  <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-3 flex flex-col gap-2 hover:shadow-md transition-shadow">
     <div className="w-full h-20 rounded-lg overflow-hidden">
       <img
         src={image}
         alt={category}
         className="w-full h-full object-cover"
-        onError={(e) => { const img = e.target as HTMLImageElement; if (img.src !== window.location.origin + '/images/placeholder-product.jpg') img.src = '/images/placeholder-product.jpg'; }}
+        onError={(e) => {
+          const img = e.target as HTMLImageElement;
+          if (img.src !== window.location.origin + "/images/placeholder-product.jpg")
+            img.src = "/images/placeholder-product.jpg";
+        }}
       />
     </div>
     <div className="flex items-start justify-between gap-1">
@@ -37,40 +41,30 @@ const MockCard = ({
       </div>
       <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${badgeColor}`}>{badge}</span>
     </div>
-    <p className="text-sm font-bold text-primary">{price}</p>
+    <p className="text-sm font-bold text-[#1A4080]">{price}</p>
   </div>
 );
 
 const HeroSection = () => {
   return (
-    <section
-      className="relative min-h-[88vh] flex items-center overflow-hidden"
-      style={{
-        backgroundImage: "url('/images/hero.jpg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
-      {/* Dark overlay */}
-      <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(rgba(10,34,57,0.7), rgba(10,34,57,0.9))" }} />
+    <section className="bg-gradient-to-br from-white via-blue-50/40 to-slate-50 py-16 lg:py-24 overflow-hidden">
+      <div className="container mx-auto px-4">
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
-      <div className="relative z-10 container mx-auto px-4 py-16 lg:py-20">
-        <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-
-          {/* LEFT SIDE */}
+          {/* LEFT: text content */}
           <div className="space-y-6 max-w-xl">
-            <div className="inline-flex items-center gap-2 bg-emerald-900/50 border border-emerald-500/50 text-emerald-300 text-xs font-semibold px-3 py-1.5 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              UK's Trusted B2B Marketplace
+            <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full">
+              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+              🇬🇧 The UK's Trusted Marketplace
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-[3.2rem] font-display font-bold leading-[1.08] text-white">
-              The UK Marketplace for{" "}
-              <span className="text-emerald-400">Wholesale, Clearance &amp; Returns</span>
+            <h1 className="text-4xl sm:text-5xl lg:text-[3rem] font-display font-extrabold leading-[1.08] text-[#0F2D52]">
+              The UK Marketplace{" "}
+              <span className="text-[#1A7DC4]">Connecting Buyers &amp; Sellers</span>
             </h1>
 
-            <p className="text-lg text-slate-300 leading-relaxed">
-              Connect with verified UK sellers and buyers. List your stock, discover suppliers, and trade securely — all in one place.
+            <p className="text-lg text-slate-600 leading-relaxed">
+              Discover wholesale stock, clearance goods and returns pallets from verified UK sellers — all on one trusted platform.
             </p>
 
             <ul className="space-y-2.5">
@@ -79,8 +73,8 @@ const HeroSection = () => {
                 "Wholesale, Clearance & Returns Listings",
                 "Secure Payments via Stripe",
               ].map((item) => (
-                <li key={item} className="flex items-center gap-2.5 text-slate-200 font-medium">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" aria-hidden="true" />
+                <li key={item} className="flex items-center gap-2.5 text-slate-700 font-medium">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" aria-hidden="true" />
                   {item}
                 </li>
               ))}
@@ -90,17 +84,16 @@ const HeroSection = () => {
               <Link to="/catalog">
                 <Button
                   size="lg"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base px-8 shadow-lg shadow-emerald-600/25"
+                  className="bg-[#0F2D52] hover:bg-[#1A4080] text-white font-bold text-base px-8 shadow-md"
                 >
                   Browse Listings <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-
               <Link to="/register?type=seller">
                 <Button
                   size="lg"
                   variant="outline"
-                  className="bg-white hover:bg-slate-50 text-slate-900 border-slate-300 font-bold text-base px-8 shadow-sm"
+                  className="border-[#0F2D52] text-[#0F2D52] hover:bg-blue-50 font-bold text-base px-8"
                 >
                   Start Selling <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -108,30 +101,31 @@ const HeroSection = () => {
             </div>
 
             <p className="text-xs text-slate-400 flex items-center gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
               Verified UK Businesses • Secure Payments • Buyer Protection
             </p>
           </div>
 
-          {/* RIGHT SIDE — marketplace visual mockup */}
+          {/* RIGHT: marketplace visual mockup */}
           <div className="relative hidden lg:flex flex-col gap-3">
-            {/* Decorative gradient blob */}
-            <div className="absolute -inset-8 bg-gradient-to-br from-primary/5 via-emerald-500/5 to-blue-500/5 rounded-3xl blur-2xl pointer-events-none" />
+            <div className="absolute -inset-6 bg-gradient-to-br from-blue-100/60 via-sky-100/40 to-slate-100/40 rounded-3xl" />
 
-            {/* Platform header bar */}
-            <div className="relative bg-white rounded-2xl shadow-xl border border-slate-100 p-4 flex items-center justify-between">
+            {/* Platform header card */}
+            <div className="relative bg-white rounded-2xl shadow-lg border border-slate-100 p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gradient-hero flex items-center justify-center">
-                  <Layers className="h-4 w-4 text-primary-foreground" />
+                <div className="w-9 h-9 rounded-xl bg-[#0F2D52] flex items-center justify-center">
+                  <Layers className="h-4 w-4 text-white" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-slate-900">Loadify Market</p>
-                  <p className="text-[11px] text-slate-500">Live marketplace</p>
+                  <p className="text-[11px] text-slate-500">Live UK marketplace</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <div className="flex items-center gap-0.5">
-                  {[1,2,3,4,5].map(i => <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />)}
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  ))}
                 </div>
                 <span className="text-xs font-bold text-slate-800">5.0</span>
               </div>
@@ -140,12 +134,12 @@ const HeroSection = () => {
             {/* Stats row */}
             <div className="relative grid grid-cols-3 gap-3">
               {[
-                { label: "Active Listings", value: "500+", icon: Tag, color: "text-primary bg-primary/10" },
-                { label: "Verified Sellers", value: "120+", icon: ShieldCheck, color: "text-emerald-600 bg-emerald-50" },
-                { label: "Categories", value: "16", icon: Layers, color: "text-blue-600 bg-blue-50" },
-              ].map(stat => (
+                { label: "Active Listings", value: "500+", icon: Tag, colorClass: "text-[#1A4080] bg-blue-50" },
+                { label: "Verified Sellers", value: "120+", icon: ShieldCheck, colorClass: "text-emerald-600 bg-emerald-50" },
+                { label: "Categories", value: "16", icon: Layers, colorClass: "text-sky-600 bg-sky-50" },
+              ].map((stat) => (
                 <div key={stat.label} className="bg-white rounded-xl border border-slate-100 shadow-sm p-3 text-center">
-                  <div className={`w-8 h-8 rounded-lg ${stat.color} flex items-center justify-center mx-auto mb-1.5`}>
+                  <div className={`w-8 h-8 rounded-lg ${stat.colorClass} flex items-center justify-center mx-auto mb-1.5`}>
                     <stat.icon className="h-4 w-4" />
                   </div>
                   <p className="text-base font-bold text-slate-900">{stat.value}</p>
@@ -154,7 +148,7 @@ const HeroSection = () => {
               ))}
             </div>
 
-            {/* Product card grid */}
+            {/* Product grid */}
             <div className="relative grid grid-cols-2 gap-3">
               <MockCard title="Mixed Electronics Pallet" category="Electronics" price="£380" badge="CLEARANCE" badgeColor="bg-red-100 text-red-700" image={electronicsImg} />
               <MockCard title="Wholesale Clothing Lot" category="Fashion" price="£240" badge="WHOLESALE" badgeColor="bg-blue-100 text-blue-700" image={clothingImg} />
@@ -169,7 +163,7 @@ const HeroSection = () => {
                 <span className="font-medium">Buyer Protection Active</span>
               </div>
               <div className="flex items-center gap-2 text-xs text-slate-600">
-                <TrendingDown className="h-4 w-4 text-primary" />
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="font-medium">0% Commission for New Sellers</span>
               </div>
             </div>

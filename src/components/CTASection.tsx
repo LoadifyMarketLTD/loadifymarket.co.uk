@@ -4,29 +4,47 @@ import { Link } from "react-router-dom";
 
 const CTASection = () => {
   return (
-    <section id="contact" className="py-16 bg-gradient-to-br from-blue-950 via-slate-900 to-slate-900">
+    <section id="contact" className="py-16 bg-white">
       <div className="container mx-auto px-4">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/90 via-primary to-blue-800 p-10 sm:p-14 text-center">
-          {/* Decorative circles */}
-          <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-white/5 blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-accent/10 blur-3xl" />
+        <div className="relative overflow-hidden rounded-3xl bg-[#0F2D52] p-10 sm:p-16 text-center">
+          {/* Decorative blobs */}
+          <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-[#1A4080]/60 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-blue-800/40 blur-3xl pointer-events-none" />
+          {/* Dot pattern */}
+          <div
+            className="absolute inset-0 opacity-[0.06] pointer-events-none"
+            style={{
+              backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
 
           <div className="relative max-w-2xl mx-auto space-y-5">
-            <h2 className="text-3xl sm:text-4xl font-display font-bold text-primary-foreground">
+            <span className="inline-block text-xs font-semibold uppercase tracking-widest text-blue-300 mb-1">
+              Join Loadify Market
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-display font-bold text-white leading-tight">
               Ready to Join the Marketplace?
             </h2>
-            <p className="text-primary-foreground/80 text-lg">
-              Buy wholesale stock or sell your inventory — all in one trusted platform.
+            <p className="text-blue-200 text-lg">
+              Buy wholesale stock or sell your inventory — all in one trusted UK platform.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
               <Link to="/catalog">
-                <Button size="lg" className="bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-base px-8 shadow-lg">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white/30 text-white hover:bg-white/10 hover:border-white/60 font-bold text-base px-8"
+                >
                   Browse Marketplace <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link to="/register">
-                <Button size="lg" variant="outline" className="border-white/30 text-primary-foreground hover:bg-white/10 hover:border-white/50 text-base">
-                  Create Free Account
+              <Link to="/signup">
+                <Button
+                  size="lg"
+                  className="bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-base px-8 shadow-lg shadow-emerald-900/30"
+                >
+                  Create Free Account <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
             </div>
