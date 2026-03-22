@@ -52,6 +52,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
           decoding="async"
+          onError={(e) => { const img = e.target as HTMLImageElement; if (img.src !== window.location.origin + '/images/placeholder-product.jpg') img.src = '/images/placeholder-product.jpg'; }}
         />
 
         {/* Wishlist button */}

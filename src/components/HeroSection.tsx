@@ -1,6 +1,10 @@
-import { ArrowRight, CheckCircle2, ShieldCheck, Package, Tag, TrendingDown, Layers, Star } from "lucide-react";
+import { ArrowRight, CheckCircle2, ShieldCheck, Tag, TrendingDown, Layers, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import electronicsImg from "@/assets/categories/electronics.jpg";
+import clothingImg from "@/assets/categories/clothing.jpg";
+import toolsImg from "@/assets/categories/tools.jpg";
+import healthBeautyImg from "@/assets/categories/health-beauty.jpg";
 
 const MockCard = ({
   title,
@@ -8,16 +12,23 @@ const MockCard = ({
   price,
   badge,
   badgeColor,
+  image,
 }: {
   title: string;
   category: string;
   price: string;
   badge: string;
   badgeColor: string;
+  image: string;
 }) => (
   <div className="bg-white rounded-xl shadow-md border border-slate-100 p-3 flex flex-col gap-2 hover:shadow-lg transition-shadow">
-    <div className="w-full h-20 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-      <Package className="h-8 w-8 text-slate-400" />
+    <div className="w-full h-20 rounded-lg overflow-hidden">
+      <img
+        src={image}
+        alt={category}
+        className="w-full h-full object-cover"
+        onError={(e) => { const img = e.target as HTMLImageElement; if (img.src !== window.location.origin + '/images/placeholder-product.jpg') img.src = '/images/placeholder-product.jpg'; }}
+      />
     </div>
     <div className="flex items-start justify-between gap-1">
       <div className="flex-1 min-w-0">
@@ -32,26 +43,33 @@ const MockCard = ({
 
 const HeroSection = () => {
   return (
-    <section className="relative bg-gradient-to-br from-slate-50 via-white to-blue-50/40 min-h-[88vh] flex items-center overflow-hidden">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, #1e293b 1px, transparent 0)", backgroundSize: "28px 28px" }} />
+    <section
+      className="relative min-h-[88vh] flex items-center overflow-hidden"
+      style={{
+        backgroundImage: "url('/images/hero.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
+      {/* Dark overlay */}
+      <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(rgba(10,34,57,0.7), rgba(10,34,57,0.9))" }} />
 
       <div className="relative z-10 container mx-auto px-4 py-16 lg:py-20">
         <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
 
           {/* LEFT SIDE */}
           <div className="space-y-6 max-w-xl">
-            <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold px-3 py-1.5 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="inline-flex items-center gap-2 bg-emerald-900/50 border border-emerald-500/50 text-emerald-300 text-xs font-semibold px-3 py-1.5 rounded-full">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               UK's Trusted B2B Marketplace
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-[3.2rem] font-display font-bold leading-[1.08] text-slate-900">
+            <h1 className="text-4xl sm:text-5xl lg:text-[3.2rem] font-display font-bold leading-[1.08] text-white">
               The UK Marketplace for{" "}
-              <span className="text-primary">Wholesale, Clearance &amp; Returns</span>
+              <span className="text-emerald-400">Wholesale, Clearance &amp; Returns</span>
             </h1>
 
-            <p className="text-lg text-slate-600 leading-relaxed">
+            <p className="text-lg text-slate-300 leading-relaxed">
               Connect with verified UK sellers and buyers. List your stock, discover suppliers, and trade securely — all in one place.
             </p>
 
@@ -61,8 +79,8 @@ const HeroSection = () => {
                 "Wholesale, Clearance & Returns Listings",
                 "Secure Payments via Stripe",
               ].map((item) => (
-                <li key={item} className="flex items-center gap-2.5 text-slate-700 font-medium">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" aria-hidden="true" />
+                <li key={item} className="flex items-center gap-2.5 text-slate-200 font-medium">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" aria-hidden="true" />
                   {item}
                 </li>
               ))}
@@ -89,8 +107,8 @@ const HeroSection = () => {
               </Link>
             </div>
 
-            <p className="text-xs text-slate-500 flex items-center gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+            <p className="text-xs text-slate-400 flex items-center gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
               Verified UK Businesses • Secure Payments • Buyer Protection
             </p>
           </div>
@@ -138,10 +156,10 @@ const HeroSection = () => {
 
             {/* Product card grid */}
             <div className="relative grid grid-cols-2 gap-3">
-              <MockCard title="Mixed Electronics Pallet" category="Electronics" price="£380" badge="CLEARANCE" badgeColor="bg-red-100 text-red-700" />
-              <MockCard title="Wholesale Clothing Lot" category="Fashion" price="£240" badge="WHOLESALE" badgeColor="bg-blue-100 text-blue-700" />
-              <MockCard title="Returns Pallet — Tools" category="Tools & DIY" price="£195" badge="RETURNS" badgeColor="bg-amber-100 text-amber-700" />
-              <MockCard title="Health & Beauty Bundle" category="Health & Beauty" price="£165" badge="NEW" badgeColor="bg-emerald-100 text-emerald-700" />
+              <MockCard title="Mixed Electronics Pallet" category="Electronics" price="£380" badge="CLEARANCE" badgeColor="bg-red-100 text-red-700" image={electronicsImg} />
+              <MockCard title="Wholesale Clothing Lot" category="Fashion" price="£240" badge="WHOLESALE" badgeColor="bg-blue-100 text-blue-700" image={clothingImg} />
+              <MockCard title="Returns Pallet — Tools" category="Tools & DIY" price="£195" badge="RETURNS" badgeColor="bg-amber-100 text-amber-700" image={toolsImg} />
+              <MockCard title="Health & Beauty Bundle" category="Health & Beauty" price="£165" badge="NEW" badgeColor="bg-emerald-100 text-emerald-700" image={healthBeautyImg} />
             </div>
 
             {/* Bottom trust row */}
