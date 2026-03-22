@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import React from "react";
+import React, { useState, useCallback } from "react";
 import {
   BadgeCheck,
   ShieldCheck,
@@ -13,6 +13,8 @@ import {
   Users,
   CheckCircle2,
   ChevronRight,
+  X,
+  Eye,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -70,6 +72,16 @@ const specialCategories = [
   { slug: "wholesale", img: "/images/mock/overstock.jpg", label: "Wholesale & Bulk", badge: "Trade Prices" },
 ];
 
+const FILTER_TABS = [
+  { key: "all",         label: "All" },
+  { key: "electronics", label: "Electronics" },
+  { key: "fashion",     label: "Fashion" },
+  { key: "home",        label: "Home" },
+  { key: "beauty",      label: "Beauty" },
+  { key: "tools",       label: "Tools" },
+  { key: "office",      label: "Office" },
+];
+
 const featuredListings = [
   {
     id: "1",
@@ -80,6 +92,7 @@ const featuredListings = [
     stars: 5,
     reviews: 124,
     category: "Electronics",
+    filterKey: "electronics",
     badge: "Hot Deal",
   },
   {
@@ -91,6 +104,7 @@ const featuredListings = [
     stars: 4,
     reviews: 87,
     category: "Fashion",
+    filterKey: "fashion",
     badge: "New In",
   },
   {
@@ -102,6 +116,7 @@ const featuredListings = [
     stars: 5,
     reviews: 213,
     category: "Office",
+    filterKey: "office",
     badge: "Best Seller",
   },
   {
@@ -113,6 +128,7 @@ const featuredListings = [
     stars: 4,
     reviews: 56,
     category: "Tools",
+    filterKey: "tools",
     badge: "",
   },
   {
@@ -124,6 +140,7 @@ const featuredListings = [
     stars: 5,
     reviews: 98,
     category: "Beauty",
+    filterKey: "beauty",
     badge: "Limited",
   },
   {
@@ -135,6 +152,7 @@ const featuredListings = [
     stars: 4,
     reviews: 174,
     category: "Electronics",
+    filterKey: "electronics",
     badge: "Clearance",
   },
   {
@@ -146,6 +164,7 @@ const featuredListings = [
     stars: 5,
     reviews: 311,
     category: "Electronics",
+    filterKey: "electronics",
     badge: "Top Rated",
   },
   {
@@ -156,7 +175,8 @@ const featuredListings = [
     originalPrice: "£450.00",
     stars: 4,
     reviews: 65,
-    category: "Office",
+    category: "Home",
+    filterKey: "home",
     badge: "",
   },
 ];
@@ -198,14 +218,21 @@ const howItWorksSeller = [
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
+function calculateSavingsPercent(price: string, originalPrice: string): number {
+  const current = parseFloat(price.replace("£", ""));
+  const original = parseFloat(originalPrice.replace("£", ""));
+  if (!original || original <= current) return 0;
+  return Math.round((1 - current / original) * 100);
+}
+
 function StarRow({ count, small = false }: { count: number; small?: boolean }) {
   return (
     <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((i) => (
+      {[1, 2, 3, 4, 5].map((starNumber) => (
         <Star
-          key={i}
+          key={starNumber}
           className={`${small ? "h-2.5 w-2.5" : "h-3 w-3"} ${
-            i <= count ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"
+            starNumber <= count ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"
           }`}
         />
       ))}
@@ -213,12 +240,107 @@ function StarRow({ count, small = false }: { count: number; small?: boolean }) {
   );
 }
 
+// ─── QUICK VIEW MODAL ─────────────────────────────────────────────────────────
+
+type Listing = (typeof featuredListings)[0];
+
+interface QuickViewModalProps {
+  item: Listing;
+  onClose: () => void;
+}
+
+function QuickViewModal({ item, onClose }: QuickViewModalProps) {
+  const handleBackdropClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.target === e.currentTarget) onClose();
+    },
+    [onClose]
+  );
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backdropFilter: "blur(5px)", backgroundColor: "rgba(0,0,0,0.45)" }}
+      onClick={handleBackdropClick}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in">
+        <div className="relative">
+          <img
+            src={item.img}
+            alt={item.title}
+            className="w-full h-64 object-cover"
+          />
+          {item.badge && (
+            <span className="absolute top-3 left-3 bg-[#1A4DBE] text-white text-[11px] font-bold px-2.5 py-1 rounded-full">
+              {item.badge}
+            </span>
+          )}
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 bg-white/90 hover:bg-white text-gray-700 rounded-full w-8 h-8 flex items-center justify-center shadow transition-all duration-300"
+            aria-label="Close quick view"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="p-6">
+          <p className="text-xs font-semibold text-[#1A4DBE] uppercase tracking-wide mb-1">
+            {item.category}
+          </p>
+          <h3 className="text-xl font-extrabold text-gray-900 mb-3">{item.title}</h3>
+          <div className="flex items-center gap-2 mb-4">
+            <StarRow count={item.stars} />
+            <span className="text-sm text-gray-500">({item.reviews} reviews)</span>
+          </div>
+          <div className="flex items-baseline gap-3 mb-6">
+            <span className="text-2xl font-extrabold text-gray-900">{item.price}</span>
+            <span className="text-sm text-gray-400 line-through">{item.originalPrice}</span>
+            {item.originalPrice && calculateSavingsPercent(item.price, item.originalPrice) > 0 && (
+              <span className="text-sm font-semibold text-emerald-600">
+                Save {calculateSavingsPercent(item.price, item.originalPrice)}%
+              </span>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <Link
+              to="/catalog"
+              onClick={onClose}
+              className="flex-1 text-center bg-[#1A4DBE] text-white font-semibold py-2.5 rounded-xl hover:bg-[#1640a0] transition-all duration-300 text-sm"
+            >
+              View Full Details
+            </Link>
+            <Link
+              to="/register"
+              onClick={onClose}
+              className="flex-1 text-center border-2 border-[#1A4DBE] text-[#1A4DBE] font-semibold py-2.5 rounded-xl hover:bg-blue-50 transition-all duration-300 text-sm"
+            >
+              Buy Now
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
 export default function PixelPerfectIndex() {
+  const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [quickViewItem, setQuickViewItem] = useState<Listing | null>(null);
+
+  const visibleListings =
+    activeFilter === "all"
+      ? featuredListings
+      : featuredListings.filter((item) => item.filterKey === activeFilter);
   return (
     <div className="min-h-screen bg-white font-sans antialiased">
       <Navbar />
+
+      {/* Quick View Modal */}
+      {quickViewItem && (
+        <QuickViewModal item={quickViewItem} onClose={() => setQuickViewItem(null)} />
+      )}
 
       {/* top padding to clear fixed Navbar */}
       <div className="pt-16" />
@@ -242,13 +364,13 @@ export default function PixelPerfectIndex() {
               <div className="flex flex-wrap gap-3">
                 <Link
                   to="/catalog"
-                  className="inline-flex items-center gap-2 bg-[#1A4DBE] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#1640a0] transition"
+                  className="inline-flex items-center gap-2 bg-[#1A4DBE] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#1640a0] hover:-translate-y-[3px] transition-all duration-300"
                 >
                   Shop Now <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
                   to="/register?type=seller"
-                  className="inline-flex items-center gap-2 border-2 border-[#1A4DBE] text-[#1A4DBE] font-semibold px-6 py-3 rounded-xl hover:bg-blue-50 transition"
+                  className="inline-flex items-center gap-2 border-2 border-[#1A4DBE] text-[#1A4DBE] font-semibold px-6 py-3 rounded-xl hover:bg-blue-50 hover:-translate-y-[3px] transition-all duration-300"
                 >
                   Start Selling
                 </Link>
@@ -362,7 +484,7 @@ export default function PixelPerfectIndex() {
         {/* ── 4. FEATURED LISTINGS ────────────────────────────────────────── */}
         <section className="bg-white py-10">
           <div className="max-w-[1360px] mx-auto px-4 lg:px-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-5">
               <h2 className="text-2xl font-extrabold text-gray-900">
                 Featured Listings
               </h2>
@@ -373,12 +495,32 @@ export default function PixelPerfectIndex() {
                 View All <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
+
+            {/* Filter tabs */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              {FILTER_TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  data-filter={tab.key}
+                  onClick={() => setActiveFilter(tab.key)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-all duration-300 ${
+                    activeFilter === tab.key
+                      ? "bg-[#1A4DBE] text-white border-[#1A4DBE]"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-[#1A4DBE] hover:text-[#1A4DBE]"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Product grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {featuredListings.map((item) => (
-                <Link
+              {visibleListings.map((item) => (
+                <div
                   key={item.id}
-                  to="/catalog"
-                  className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                  className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-[3px] cursor-pointer"
+                  onClick={() => setQuickViewItem(item)}
                 >
                   <div className="relative overflow-hidden">
                     <img
@@ -391,6 +533,12 @@ export default function PixelPerfectIndex() {
                         {item.badge}
                       </span>
                     )}
+                    {/* Quick View overlay */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white text-gray-900 text-xs font-semibold px-3 py-1.5 rounded-full shadow flex items-center gap-1.5">
+                        <Eye className="h-3.5 w-3.5" /> Quick View
+                      </span>
+                    </div>
                   </div>
                   <div className="p-3">
                     <p className="text-xs text-gray-400 mb-0.5">{item.category}</p>
@@ -406,7 +554,7 @@ export default function PixelPerfectIndex() {
                       <span className="text-xs text-gray-400 line-through">{item.originalPrice}</span>
                     </div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           </div>
@@ -442,7 +590,7 @@ export default function PixelPerfectIndex() {
                 </ul>
                 <Link
                   to="/catalog"
-                  className="inline-flex items-center gap-2 bg-[#1A4DBE] text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-[#1640a0] transition text-sm"
+                  className="inline-flex items-center gap-2 bg-[#1A4DBE] text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-[#1640a0] hover:-translate-y-[2px] transition-all duration-300 text-sm"
                 >
                   Start Shopping <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -474,7 +622,7 @@ export default function PixelPerfectIndex() {
                 </ul>
                 <Link
                   to="/register?type=seller"
-                  className="inline-flex items-center gap-2 bg-emerald-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-emerald-700 transition text-sm"
+                  className="inline-flex items-center gap-2 bg-emerald-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-emerald-700 hover:-translate-y-[2px] transition-all duration-300 text-sm"
                 >
                   Become a Seller <ArrowRight className="h-4 w-4" />
                 </Link>
@@ -496,7 +644,7 @@ export default function PixelPerfectIndex() {
             </div>
             <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
               {features.map((f) => (
-                <div key={f.title} className="text-center px-4 py-6 rounded-2xl bg-gray-50 hover:bg-blue-50 transition">
+                <div key={f.title} className="text-center px-4 py-6 rounded-2xl bg-gray-50 hover:bg-blue-50 hover:-translate-y-[3px] transition-all duration-300 cursor-default">
                   <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <f.icon className="h-6 w-6 text-[#1A4DBE]" />
                   </div>
@@ -565,13 +713,13 @@ export default function PixelPerfectIndex() {
             <div className="flex flex-wrap justify-center gap-4">
               <Link
                 to="/register"
-                className="inline-flex items-center gap-2 bg-white text-[#1A4DBE] font-bold px-7 py-3 rounded-xl hover:bg-blue-50 transition"
+                className="inline-flex items-center gap-2 bg-[#28A745] text-white font-bold px-7 py-3 rounded-xl hover:bg-[#219538] transition-all duration-300 motion-safe:animate-pulse hover:animate-none"
               >
                 Create Free Account <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 to="/register?type=seller"
-                className="inline-flex items-center gap-2 border-2 border-white text-white font-bold px-7 py-3 rounded-xl hover:bg-white/10 transition"
+                className="inline-flex items-center gap-2 border-2 border-white text-white font-bold px-7 py-3 rounded-xl hover:bg-white/10 transition-all duration-300"
               >
                 Start Selling
               </Link>
