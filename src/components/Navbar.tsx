@@ -2,7 +2,7 @@ import { Menu, X, Search, ShoppingCart, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import logo from "@/assets/loadify-logo.png";
+import logo from "@/assets/loadify-logo.svg";
 import NavbarSearch from "@/components/NavbarSearch";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
