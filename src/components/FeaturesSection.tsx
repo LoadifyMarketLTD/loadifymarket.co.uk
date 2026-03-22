@@ -37,9 +37,9 @@ const FeaturesSection = () => {
   return (
     <section id="features" className="py-14 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-xl mx-auto mb-9">
+        <div className="text-center max-w-xl mx-auto mb-8">
           <span className="text-xs font-semibold uppercase tracking-wider text-primary">Platform Features</span>
-          <h2 className="mt-2 text-xl sm:text-2xl font-display font-bold text-foreground">
+          <h2 className="mt-2 text-2xl sm:text-3xl font-display font-bold text-foreground">
             Everything You Need to Trade
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -47,17 +47,17 @@ const FeaturesSection = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {features.map((feature) => (
             <div
               key={feature.title}
-              className="group bg-card rounded-lg p-3.5 shadow-card hover:shadow-elevated transition-all duration-300 border border-border hover:border-primary/20"
+              className="group bg-card rounded-xl p-5 shadow-sm hover:shadow-elevated transition-all duration-300 border border-border hover:border-primary/30"
             >
-              <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center mb-2 group-hover:bg-gradient-hero group-hover:text-primary-foreground transition-colors">
-                <feature.icon className="h-3.5 w-3.5 text-primary group-hover:text-primary-foreground" />
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-gradient-hero group-hover:text-primary-foreground transition-colors">
+                <feature.icon className="h-5 w-5 text-primary group-hover:text-primary-foreground" />
               </div>
-              <h3 className="font-display text-sm font-semibold text-foreground mb-1">{feature.title}</h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">{feature.description}</p>
+              <h3 className="font-display text-base font-semibold text-foreground mb-1.5">{feature.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>
