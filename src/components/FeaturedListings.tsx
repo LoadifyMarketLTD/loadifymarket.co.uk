@@ -3,13 +3,12 @@ import React, { useState, useCallback } from "react";
 import { Star, ArrowRight, Eye, X } from "lucide-react";
 
 const FILTER_TABS = [
-  { key: "all",         label: "All"         },
-  { key: "electronics", label: "Electronics" },
-  { key: "fashion",     label: "Fashion"     },
-  { key: "home",        label: "Home"        },
-  { key: "beauty",      label: "Beauty"      },
-  { key: "tools",       label: "Tools"       },
-  { key: "office",      label: "Office"      },
+  { key: "all",         label: "All"           },
+  { key: "new",         label: "New Arrivals"  },
+  { key: "best",        label: "Best in Category" },
+  { key: "flash",       label: "Flash Sale"    },
+  { key: "electronics", label: "Electronics"   },
+  { key: "fashion",     label: "Fashion"       },
 ];
 
 const featuredListings = [
@@ -27,18 +26,18 @@ const featuredListings = [
   {
     id: "2",
     img: "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&auto=format&fit=crop",
-    title: "Professional Tool Kit",
+    title: "Professional Tool Set",
     seller: "ToolMaster Pro",
     price: "£79.99",
     stars: 5,
     reviews: 88,
     category: "Tools & DIY",
-    filterKey: "tools",
+    filterKey: "best",
   },
   {
     id: "3",
-    img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&auto=format&fit=crop",
-    title: "Minimalist Watch",
+    img: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop",
+    title: "Designer Handbag",
     seller: "StyleHub London",
     price: "£129.99",
     stars: 5,
@@ -48,6 +47,17 @@ const featuredListings = [
   },
   {
     id: "4",
+    img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&auto=format&fit=crop",
+    title: "Minimalist Watch",
+    seller: "UrbanGear Co.",
+    price: "£89.99",
+    stars: 4,
+    reviews: 309,
+    category: "Fashion",
+    filterKey: "fashion",
+  },
+  {
+    id: "5",
     img: "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=400&auto=format&fit=crop",
     title: "Skincare Gift Set",
     seller: "GlowBeauty UK",
@@ -55,10 +65,10 @@ const featuredListings = [
     stars: 4,
     reviews: 176,
     category: "Beauty",
-    filterKey: "beauty",
+    filterKey: "new",
   },
   {
-    id: "5",
+    id: "6",
     img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&auto=format&fit=crop",
     title: "Modern Sofa",
     seller: "HomeStyle Direct",
@@ -66,18 +76,7 @@ const featuredListings = [
     stars: 4,
     reviews: 53,
     category: "Home",
-    filterKey: "home",
-  },
-  {
-    id: "6",
-    img: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop",
-    title: "Leather Backpack",
-    seller: "UrbanGear Co.",
-    price: "£89.99",
-    stars: 5,
-    reviews: 309,
-    category: "Fashion",
-    filterKey: "fashion",
+    filterKey: "best",
   },
   {
     id: "7",
@@ -88,7 +87,7 @@ const featuredListings = [
     stars: 4,
     reviews: 98,
     category: "Electronics",
-    filterKey: "electronics",
+    filterKey: "flash",
   },
   {
     id: "8",
@@ -100,28 +99,6 @@ const featuredListings = [
     reviews: 431,
     category: "Electronics",
     filterKey: "electronics",
-  },
-  {
-    id: "9",
-    img: "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=400&auto=format&fit=crop",
-    title: "Running Trainers",
-    seller: "SportZone UK",
-    price: "£64.99",
-    stars: 4,
-    reviews: 187,
-    category: "Fashion",
-    filterKey: "fashion",
-  },
-  {
-    id: "10",
-    img: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&auto=format&fit=crop",
-    title: "Desk Organiser Set",
-    seller: "OfficePro Supplies",
-    price: "£22.99",
-    stars: 4,
-    reviews: 65,
-    category: "Office",
-    filterKey: "office",
   },
 ];
 
@@ -221,27 +198,27 @@ const FeaturedListings = () => {
         <QuickViewModal item={quickViewItem} onClose={() => setQuickViewItem(null)} />
       )}
 
-      <section className="bg-white py-10 px-4 lg:px-6">
-        <div className="max-w-[1360px] mx-auto">
+      <section className="bg-white py-12 px-4 sm:px-6">
+        <div className="max-w-[1280px] mx-auto">
           {/* Section header */}
           <div className="flex items-start justify-between mb-1">
-            <h2 className="text-2xl font-extrabold text-[#1F2937]">
-              Featured <span className="text-[#1A4DBE]">Listings</span>
+            <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
+              Featured <span className="text-[#2563EB]">Listings</span>
             </h2>
             <Link
               to="/catalog"
-              className="text-sm font-medium text-[#1A4DBE] hover:underline flex items-center gap-1 mt-1"
+              className="text-sm font-medium text-[#2563EB] hover:underline flex items-center gap-1 mt-1"
             >
               View All <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <p className="text-sm text-gray-500 mb-5">
+          <p className="text-sm text-[#64748B] mb-6">
             Discover the best products from our verified UK sellers
           </p>
 
-          {/* Filter tabs */}
+          {/* Filter pills */}
           <div
-            className="flex flex-wrap gap-2 mb-6"
+            className="flex flex-wrap gap-2 mb-8"
             role="group"
             aria-label="Filter listings by category"
           >
@@ -250,10 +227,10 @@ const FeaturedListings = () => {
                 key={tab.key}
                 onClick={() => setActiveFilter(tab.key)}
                 aria-pressed={activeFilter === tab.key}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-300 ${
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 ${
                   activeFilter === tab.key
-                    ? "bg-[#1A4DBE] text-white border-[#1A4DBE]"
-                    : "bg-white text-gray-600 border-gray-200 hover:border-[#1A4DBE] hover:text-[#1A4DBE]"
+                    ? "bg-[#2563EB] text-white border-[#2563EB] shadow-sm"
+                    : "bg-white text-[#334155] border-gray-200 hover:border-[#2563EB] hover:text-[#2563EB]"
                 }`}
               >
                 {tab.label}
@@ -261,26 +238,26 @@ const FeaturedListings = () => {
             ))}
           </div>
 
-          {/* Product grid: 6 compact cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {/* Product grid: 4-column */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {visibleListings.map((item) => (
               <Link
                 key={item.id}
                 to="/catalog"
-                className="group bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-[3px] transition-all duration-300 flex flex-col"
+                className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col"
               >
                 <div className="relative overflow-hidden w-full">
                   <img
                     src={item.img}
                     alt={item.title}
                     loading="lazy"
-                    className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-all duration-300 flex items-center justify-center">
                     <button
                       type="button"
                       aria-label={`Quick view ${item.title}`}
-                      className="opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white text-gray-900 text-[10px] font-semibold px-2.5 py-1 rounded-full shadow flex items-center gap-1"
+                      className="opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white text-[#0F172A] text-[10px] font-semibold px-2.5 py-1 rounded-full shadow flex items-center gap-1"
                       onClick={(e) => {
                         e.preventDefault();
                         setQuickViewItem(item);
@@ -290,14 +267,17 @@ const FeaturedListings = () => {
                     </button>
                   </div>
                 </div>
-                <div className="p-2 flex-1 flex flex-col">
-                  <p className="text-[11px] font-bold text-[#1F2937] line-clamp-1 mb-0.5">
+                <div className="p-3 flex-1 flex flex-col gap-1">
+                  <p className="text-xs font-semibold text-[#2563EB] uppercase tracking-wide">{item.category}</p>
+                  <p className="text-sm font-bold text-[#0F172A] line-clamp-2 leading-snug">
                     {item.title}
                   </p>
-                  <StarRow count={item.stars} small />
-                  <p className="text-[10px] text-gray-600 mt-0.5 truncate">{item.seller}</p>
-                  <p className="text-xs font-extrabold text-[#1F2937] mt-1">{item.price}</p>
-                  <p className="text-[10px] text-gray-600 truncate">{item.category}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <StarRow count={item.stars} small />
+                    <span className="text-[10px] text-[#64748B]">({item.reviews})</span>
+                  </div>
+                  <p className="text-[10px] text-[#64748B] truncate">{item.seller}</p>
+                  <p className="text-base font-extrabold text-[#0F172A] mt-auto">{item.price}</p>
                 </div>
               </Link>
             ))}

@@ -46,21 +46,21 @@ const sellerSteps = [
 
 const StepRow = ({ title, steps }: { title: string; steps: typeof buyerSteps }) => (
   <div>
-    <h3 className="text-center font-display text-lg font-semibold text-primary mb-6">{title}</h3>
+    <h3 className="text-center font-display text-lg font-semibold text-[#2563EB] mb-6">{title}</h3>
     <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
       {steps.map((item, i) => (
         <div key={item.step} className="relative text-center group">
           {i < steps.length - 1 && (
-            <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-px border-t-2 border-dashed border-border" />
+            <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-px border-t-2 border-dashed border-gray-200" />
           )}
-          <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-hero text-primary-foreground mb-4 shadow-elevated group-hover:scale-105 transition-transform">
+          <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#2563EB] text-white mb-4 shadow-md group-hover:scale-105 transition-transform">
             <item.icon className="h-7 w-7" />
-            <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-accent text-accent-foreground text-xs font-bold flex items-center justify-center">
+            <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center">
               {item.step}
             </span>
           </div>
-          <h4 className="font-display text-base font-semibold text-foreground mb-1.5">{item.title}</h4>
-          <p className="text-sm text-muted-foreground max-w-[260px] mx-auto leading-relaxed">{item.description}</p>
+          <h4 className="font-display text-base font-semibold text-[#0F172A] mb-1.5">{item.title}</h4>
+          <p className="text-sm text-[#64748B] max-w-[260px] mx-auto leading-relaxed">{item.description}</p>
         </div>
       ))}
     </div>
@@ -69,16 +69,16 @@ const StepRow = ({ title, steps }: { title: string; steps: typeof buyerSteps }) 
 
 const HowItWorksSection = () => {
   return (
-    <section id="how-it-works" className="py-14 bg-muted/50">
-      <div className="container mx-auto px-4">
+    <section id="how-it-works" className="py-16 bg-[#F5F7FB]">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="text-sm font-semibold uppercase tracking-wider text-primary">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#2563EB]">
             How It Works
           </span>
-          <h2 className="mt-3 text-3xl sm:text-4xl font-display font-bold text-foreground">
+          <h2 className="mt-3 text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
             Simple for Buyers. Simple for Sellers.
           </h2>
-          <p className="mt-4 text-muted-foreground">
+          <p className="mt-3 text-[#64748B]">
             Whether you're buying or selling, get started in 3 easy steps.
           </p>
         </div>
@@ -93,7 +93,7 @@ const HowItWorksSection = () => {
           <Link to="/catalog">
             <Button
               size="lg"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base px-8 shadow-lg shadow-primary/20"
+              className="h-12 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-base px-8 rounded-xl shadow-md"
             >
               Browse Marketplace <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
@@ -101,7 +101,7 @@ const HowItWorksSection = () => {
           <Link to="/signup">
             <Button
               size="lg"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base px-8 shadow-lg shadow-emerald-600/20"
+              className="h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base px-8 rounded-xl shadow-md"
             >
               Create Seller Account <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
