@@ -25,6 +25,26 @@ const BuyerWishlist = () => {
   const [items, setItems] = useState<WishlistProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
+  /** Build a minimal Product object from a wishlist item for cart use.
+   *  Only id, title, price, and image are displayed in the cart — the
+   *  checkout flow re-validates full product data from the database. */
+  const wishlistItemToCartProduct = useCallback((item: WishlistProduct): Product => ({
+    id: item.id,
+    title: item.title,
+    price: item.price,
+    image: item.images?.[0] ?? "",
+    category: "",
+    subcategory: "",
+    condition: "New",
+    location: "",
+    seller: "",
+    sellerVerified: false,
+    unitCount: 1,
+    rating: 0,
+    views: 0,
+    listed: "",
+  }), []);
+
   const fetchWishlist = useCallback(async () => {
     if (!user) { setLoading(false); return; }
     setLoading(true);
@@ -128,25 +148,7 @@ const BuyerWishlist = () => {
                     className="flex-1 text-xs"
                     disabled={!item.isActive}
                     onClick={() => {
-                      // Only id, title, price, and image are used for cart display.
-                      // Checkout re-validates product data from the database.
-                      const cartProduct: Product = {
-                        id: item.id,
-                        title: item.title,
-                        price: item.price,
-                        image: item.images?.[0] ?? "",
-                        category: "",
-                        subcategory: "",
-                        condition: "New",
-                        location: "",
-                        seller: "",
-                        sellerVerified: false,
-                        unitCount: 1,
-                        rating: 0,
-                        views: 0,
-                        listed: "",
-                      };
-                      addToCart(cartProduct, 1);
+                      addToCart(wishlistItemToCartProduct(item), 1);
                       toast({ title: "Added to cart", description: item.title });
                     }}
                   >

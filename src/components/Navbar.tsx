@@ -21,6 +21,11 @@ const Navbar = () => {
     navigate("/login");
   };
 
+  const handleMobileLogout = () => {
+    setMobileOpen(false);
+    handleLogout();
+  };
+
   const dashboardPath =
     user?.role === "seller" ? "/pp/seller" :
     user?.role === "admin" || user?.role === "owner" ? "/pp/admin" :
@@ -111,7 +116,7 @@ const Navbar = () => {
                 <Button variant="ghost" size="sm" className="flex-1" asChild>
                   <Link to={dashboardPath} onClick={() => setMobileOpen(false)}>Dashboard</Link>
                 </Button>
-                <Button size="sm" className="flex-1" variant="outline" onClick={() => { setMobileOpen(false); handleLogout(); }}>
+                <Button size="sm" className="flex-1" variant="outline" onClick={handleMobileLogout}>
                   Sign Out
                 </Button>
               </>
