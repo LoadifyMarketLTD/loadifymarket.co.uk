@@ -21,7 +21,7 @@ function loadNotifications() {
   try {
     const raw = localStorage.getItem(NOTIF_STORAGE_KEY);
     if (raw) return JSON.parse(raw) as Record<string, boolean>;
-  } catch { /* ignore */ }
+  } catch { /* malformed JSON — fall through and return null to use defaults */ }
   return null;
 }
 

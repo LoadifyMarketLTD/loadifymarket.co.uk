@@ -152,8 +152,9 @@ function App() {
       } else {
         setLoading(false);
       }
-    }).catch(() => {
+    }).catch((err: unknown) => {
       // Network error or Supabase unreachable — unblock loading so the app is usable
+      console.error('[App] Auth initialization error:', err);
       setLoading(false);
     });
 

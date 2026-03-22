@@ -36,20 +36,26 @@ export default function RequireSeller({ children }: Props) {
   useEffect(() => {
     if (!user || user.role !== 'seller') return;
     let cancelled = false;
-    supabase
-      .from('seller_profiles')
-      .select('isApproved')
-      .eq('userId', user.id)
-      .single()
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (error) {
-          console.warn('RequireSeller: failed to fetch approval status', error.message);
-          setApprovalState('error');
-        } else {
-          setApprovalState(data?.isApproved ? 'approved' : 'unapproved');
-        }
-      });
+    // Wrap in Promise.resolve to gain a full Promise (Supabase returns PromiseLike).
+    Promise.resolve(
+      supabase
+        .from('seller_profiles')
+        .select('isApproved')
+        .eq('userId', user.id)
+        .single()
+    ).then(({ data, error }) => {
+      if (cancelled) return;
+      if (error) {
+        console.warn('RequireSeller: failed to fetch approval status', error.message);
+        setApprovalState('error');
+      } else {
+        setApprovalState(data?.isApproved ? 'approved' : 'unapproved');
+      }
+    }).catch((err: unknown) => {
+      if (cancelled) return;
+      console.warn('RequireSeller: unexpected error fetching approval status', err);
+      setApprovalState('error');
+    });
     return () => { cancelled = true; };
   }, [user]);
 

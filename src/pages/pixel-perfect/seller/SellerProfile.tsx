@@ -142,7 +142,7 @@ const SellerProfile = () => {
                 {form.businessName
                   ? form.businessName.slice(0, 2).toUpperCase()
                   : form.contactName
-                    ? form.contactName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
+                  ? form.contactName.split(" ").filter((n: string) => n.length > 0).map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
                     : "??"}
               </div>
               <button className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
