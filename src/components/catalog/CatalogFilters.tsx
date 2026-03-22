@@ -23,7 +23,7 @@ const categories = [
   "Clearance Deals",
 ];
 
-const conditions = ["New", "Like New", "Mixed", "Unchecked", "Damaged Packaging"];
+const conditions = ["New", "Like New", "Mixed", "Unchecked"];
 
 const locations = [
   "London",

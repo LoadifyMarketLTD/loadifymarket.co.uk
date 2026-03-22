@@ -195,6 +195,8 @@ function App() {
         <Route path="/" element={<Suspense fallback={<PageLoader />}><PixelPerfectIndex /></Suspense>} />
         <Route path="catalog" element={<Suspense fallback={<PageLoader />}><PPCatalog /></Suspense>} />
         <Route path="category/:slug" element={<Suspense fallback={<PageLoader />}><PPCategoryPage /></Suspense>} />
+        {/* /categories/:slug — canonical plural alias */}
+        <Route path="categories/:slug" element={<Suspense fallback={<PageLoader />}><PPCategoryPage /></Suspense>} />
         <Route path="product/:id" element={<Suspense fallback={<PageLoader />}><PPProductDetail /></Suspense>} />
         <Route path="cart" element={<Suspense fallback={<PageLoader />}><PPCart /></Suspense>} />
         <Route path="checkout" element={<Suspense fallback={<PageLoader />}><PPCheckout /></Suspense>} />

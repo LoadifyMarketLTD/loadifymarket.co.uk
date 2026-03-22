@@ -255,6 +255,21 @@ const CategoryPage = () => {
             </div>
           </div>
 
+          {/* Subcategory pills */}
+          {config.subcategories.length > 0 && (
+            <div className="flex flex-wrap gap-2 pb-4">
+              {config.subcategories.map((sub) => (
+                <Link
+                  key={sub}
+                  to={`/category/${config.slug}?sub=${encodeURIComponent(sub.toLowerCase().replace(/\s+/g, "-"))}`}
+                  className="px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary border border-border transition-colors"
+                >
+                  {sub}
+                </Link>
+              ))}
+            </div>
+          )}
+
           {/* Chip filters */}
           {config.chips.length > 1 && (
             <div className="flex flex-wrap gap-2 pb-6">
