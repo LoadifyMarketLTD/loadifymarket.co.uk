@@ -61,9 +61,20 @@ const SellerSettings = () => {
 
       // Change password if the user has filled in the password fields
       if (newPassword || currentPassword) {
+        if (!currentPassword) throw new Error("Please enter your current password.");
         if (!newPassword) throw new Error("Please enter a new password.");
         if (newPassword !== confirmPassword) throw new Error("New passwords do not match.");
         if (newPassword.length < 8) throw new Error("Password must be at least 8 characters.");
+
+        // Re-authenticate with the current password to verify it before updating
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.email) throw new Error("Unable to verify your identity. Please log in again.");
+        const { error: reAuthError } = await supabase.auth.signInWithPassword({
+          email: session.user.email,
+          password: currentPassword,
+        });
+        if (reAuthError) throw new Error("Current password is incorrect.");
+
         const { error } = await supabase.auth.updateUser({ password: newPassword });
         if (error) throw error;
         passwordChanged = true;
