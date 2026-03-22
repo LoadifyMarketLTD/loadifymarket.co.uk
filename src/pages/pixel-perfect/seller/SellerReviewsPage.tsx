@@ -76,7 +76,7 @@ const SellerReviewsPage = () => {
         .from("reviews")
         .select("id, productId, userId, rating, title, comment, sellerResponse, status, isAbusive, helpfulCount, createdAt")
         .in("productId", productIds)
-        .not("status", "in", '("removed")')
+        .not("status", "in", "(removed)")
         .order("createdAt", { ascending: false });
 
       if (error) throw error;

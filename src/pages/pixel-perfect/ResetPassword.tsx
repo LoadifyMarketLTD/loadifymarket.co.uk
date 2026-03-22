@@ -20,14 +20,38 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Listen for the PASSWORD_RECOVERY event that Supabase fires when a user
+    // arrives via the reset-password email link (the token is in the URL hash).
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setHasSession(true);
+        setSessionChecking(false);
+      }
+    });
+
+    // Fallback: user may already have an active session (e.g. still logged in)
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setHasSession(true);
-      else setError("This password reset link is invalid or has expired. Please request a new one.");
-      setSessionChecking(false);
+      if (session) {
+        setHasSession(true);
+        setSessionChecking(false);
+      } else {
+        // Don't show the error immediately — wait for the auth state change
+        // event which fires shortly after mount when the hash token is processed.
+        setTimeout(() => {
+          setSessionChecking((checking) => {
+            if (checking) {
+              setError("This password reset link is invalid or has expired. Please request a new one.");
+            }
+            return false;
+          });
+        }, 2000);
+      }
     }).catch(() => {
       setError("Failed to verify reset link. Please try again.");
       setSessionChecking(false);
     });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

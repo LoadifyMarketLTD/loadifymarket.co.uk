@@ -15,8 +15,9 @@ const Cart = () => {
 
   const discount = promoApplied ? Math.round(subtotal * 0.1) : 0;
   const shipping = subtotal > 2000 ? 0 : 149;
-  const vat = Math.round((subtotal - discount) * 0.2);
-  const total = subtotal - discount + shipping + vat;
+  // Product prices are VAT-inclusive; show the VAT portion already within the price
+  const vat = Math.round((subtotal - discount) / 6);
+  const total = subtotal - discount + shipping;
 
   if (cartItems.length === 0) {
     return (

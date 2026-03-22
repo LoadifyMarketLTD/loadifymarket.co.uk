@@ -25,6 +25,7 @@ const BuyerProfile = () => {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
   const [totalOrders, setTotalOrders] = useState(0);
   const [memberSince, setMemberSince] = useState("—");
   const [form, setForm] = useState<FormState>({
@@ -124,8 +125,11 @@ const BuyerProfile = () => {
             { onConflict: "userId" }
           ),
       ]);
+      setSaveMsg("Profile saved successfully.");
+      setTimeout(() => setSaveMsg(""), 3000);
     } catch (err) {
       console.error("Error saving profile:", err);
+      setSaveMsg("Failed to save. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -144,6 +148,11 @@ const BuyerProfile = () => {
           <Save className="mr-2 h-4 w-4" />{saving ? "Saving…" : "Save Changes"}
         </Button>
       </div>
+      {saveMsg && (
+        <p className={`text-sm font-medium ${saveMsg.startsWith("Failed") ? "text-destructive" : "text-emerald-600"}`}>
+          {saveMsg}
+        </p>
+      )}
 
       {/* Profile Header */}
       <Card>

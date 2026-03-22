@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, CreditCard, MapPin, User, Phone, Mail,
@@ -40,6 +40,13 @@ const Checkout = () => {
 
   const [shippingError, setShippingError] = useState<string | null>(null);
 
+  // Sync email once auth resolves (user may be null at initial render)
+  useEffect(() => {
+    if (user?.email && !shippingData.email) {
+      setShippingData((prev) => ({ ...prev, email: user.email ?? "" }));
+    }
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleContinueToPayment = () => {
     // Validate required shipping fields before advancing
     if (!shippingData.firstName.trim() || !shippingData.lastName.trim()) {
@@ -68,8 +75,9 @@ const Checkout = () => {
   };
 
   const shipping = subtotal > 2000 ? 0 : 149;
-  const vat = Math.round(subtotal * 0.2);
-  const total = subtotal + shipping + vat;
+  // Product prices are VAT-inclusive; show the VAT portion already within the price
+  const vat = Math.round(subtotal / 6);
+  const total = subtotal + shipping;
 
   // ── Submit to Stripe via Netlify function ──────────────────────────────────
   const handlePlaceOrder = async () => {

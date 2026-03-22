@@ -4,8 +4,10 @@ import { Outlet } from "react-router-dom";
 import { Bell, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
 
 const BuyerLayout = () => {
+  const { cartCount } = useCart();
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -21,7 +23,9 @@ const BuyerLayout = () => {
               <Button variant="ghost" size="icon" className="relative" asChild>
                 <Link to="/cart">
                   <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary rounded-full text-[10px] font-bold text-primary-foreground flex items-center justify-center">3</span>
+                  {cartCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary rounded-full text-[10px] font-bold text-primary-foreground flex items-center justify-center">{cartCount}</span>
+                  )}
                 </Link>
               </Button>
               <Button variant="ghost" size="icon" className="relative">
