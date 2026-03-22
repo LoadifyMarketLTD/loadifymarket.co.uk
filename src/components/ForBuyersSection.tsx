@@ -31,10 +31,10 @@ const benefits = [
 
 const ForBuyersSection = () => {
   return (
-    <section className="py-20 sm:py-24 bg-muted/40">
+    <section className="py-12 sm:py-14 bg-muted/40">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="max-w-2xl mx-auto text-center mb-14">
+        <div className="max-w-2xl mx-auto text-center mb-8">
           <span className="text-sm font-semibold uppercase tracking-wider text-primary">
             For Buyers
           </span>
@@ -47,13 +47,13 @@ const ForBuyersSection = () => {
         </div>
 
         {/* Benefit grid */}
-        <div className="grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div className="grid sm:grid-cols-2 gap-4 max-w-4xl mx-auto">
           {benefits.map((benefit) => (
             <div
               key={benefit.title}
-              className="flex gap-4 p-6 rounded-xl bg-card border border-border shadow-card hover:shadow-elevated hover:border-primary/20 transition-all duration-300"
+              className="flex gap-4 p-5 rounded-xl bg-card border border-border shadow-sm hover:shadow-elevated hover:border-primary/20 transition-all duration-300"
             >
-              <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <benefit.icon className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -69,7 +69,7 @@ const ForBuyersSection = () => {
         </div>
 
         {/* CTA */}
-        <div className="text-center mt-12">
+        <div className="text-center mt-8">
           <Link to="/catalog">
             <Button
               size="lg"
@@ -81,7 +81,7 @@ const ForBuyersSection = () => {
         </div>
 
         {/* Minimal trust indicators */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mt-10 pt-8 border-t border-border">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mt-8 pt-6 border-t border-border">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <ShieldCheck className="h-4 w-4 text-primary" />
             <span>Buyer Protection Included</span>

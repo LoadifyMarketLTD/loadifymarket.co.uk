@@ -227,9 +227,9 @@ const CategoriesSection = () => {
   const visibleCategories = showAll ? categories : categories.slice(0, 8);
 
   return (
-    <section id="categories" className="py-24 bg-background">
+    <section id="categories" className="py-14 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-2xl mx-auto mb-16">
+        <div className="text-center max-w-2xl mx-auto mb-8">
           <span className="text-sm font-semibold uppercase tracking-wider text-primary">Categories</span>
           <h2 className="mt-3 text-3xl sm:text-4xl font-display font-bold text-foreground">
             Browse by Category
