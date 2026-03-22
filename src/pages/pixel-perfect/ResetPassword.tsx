@@ -33,6 +33,8 @@ const ResetPassword = () => {
       }
     });
 
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
     // Fallback: user may already have an active session (e.g. still logged in)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
@@ -41,7 +43,7 @@ const ResetPassword = () => {
       } else {
         // Don't show the error immediately — wait for the auth state change
         // event which fires shortly after mount when the hash token is processed.
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           setSessionChecking((checking) => {
             if (checking) {
               setError("This password reset link is invalid or has expired. Please request a new one.");
@@ -55,7 +57,10 @@ const ResetPassword = () => {
       setSessionChecking(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

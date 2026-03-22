@@ -235,7 +235,7 @@ const CategoriesSection = () => {
             Browse by Category
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Find exactly what you're looking for across our wide range of wholesale, stock and clearance categories.
+            Find exactly what you're looking for from verified sellers across wholesale, clearance and returns categories.
           </p>
         </div>
 
