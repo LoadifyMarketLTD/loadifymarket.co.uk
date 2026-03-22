@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, lazy, Suspense } from "react";
 import {
   BadgeCheck,
   ShieldCheck,
@@ -12,7 +12,9 @@ import {
   Eye,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+
+// Footer is below the fold — lazy load to keep initial bundle lean
+const Footer = lazy(() => import("@/components/Footer"));
 
 // ─── TRUST STRIP ──────────────────────────────────────────────────────────────
 
@@ -326,6 +328,8 @@ export default function PixelPerfectIndex() {
               <img
                 src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=900&auto=format&fit=crop"
                 alt="UK Multi-Category Marketplace"
+                width="900"
+                height="506"
                 className="w-full h-full object-cover"
                 loading="eager"
                 fetchPriority="high"
@@ -343,7 +347,7 @@ export default function PixelPerfectIndex() {
                     <item.icon className={`h-7 w-7 shrink-0 ${item.color}`} />
                     <div>
                       <p className="text-sm font-semibold text-[#1F2937]">{item.title}</p>
-                      <p className="text-[11px] text-gray-400">{item.sub}</p>
+                      <p className="text-[11px] text-gray-600">{item.sub}</p>
                     </div>
                   </div>
                 ))}
@@ -458,9 +462,9 @@ export default function PixelPerfectIndex() {
                       {item.title}
                     </p>
                     <StarRow count={item.stars} small />
-                    <p className="text-[10px] text-gray-400 mt-0.5 truncate">{item.seller}</p>
+                    <p className="text-[10px] text-gray-600 mt-0.5 truncate">{item.seller}</p>
                     <p className="text-xs font-extrabold text-[#1F2937] mt-1">{item.price}</p>
-                    <p className="text-[10px] text-gray-400 truncate">{item.category}</p>
+                    <p className="text-[10px] text-gray-600 truncate">{item.category}</p>
                   </div>
                 </Link>
               ))}
@@ -518,7 +522,9 @@ export default function PixelPerfectIndex() {
         </section>
       </main>
 
-      <Footer />
+      <Suspense fallback={null}>
+        <Footer />
+      </Suspense>
     </div>
   );
 }
