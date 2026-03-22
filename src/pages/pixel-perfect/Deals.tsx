@@ -14,7 +14,7 @@ import type { Product } from "@/components/catalog/ProductCard";
 import { supabase } from "@/lib/supabase";
 import { adaptProducts } from "@/lib/productAdapter";
 import type { DBProduct } from "@/lib/productAdapter";
-import heroWarehouse from "@/assets/hero-clearance-alt1.jpg";
+const heroWarehouse = "/images/categories/clearance.jpg";
 
 // Deal types that appear on this page (maps to DB product `type` column)
 const DEALS_TYPES = ["lot", "clearance", "pallet", "wholesale"];
