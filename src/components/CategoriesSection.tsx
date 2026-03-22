@@ -69,7 +69,6 @@ const CategoriesSection = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {visible.map((cat) => {
-            const Icon = cat.icon;
             const isExpanded = expandedSlug === cat.slug;
             return (
               <div
