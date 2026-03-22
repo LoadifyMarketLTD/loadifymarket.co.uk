@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, CreditCard, MapPin, User, Phone, Mail,
@@ -39,13 +39,17 @@ const Checkout = () => {
   });
 
   const [shippingError, setShippingError] = useState<string | null>(null);
+  // Track whether we've already auto-filled the email so we never overwrite
+  // changes the user makes after the initial sync.
+  const emailSyncedRef = useRef(false);
 
   // Sync email once auth resolves (user may be null at initial render)
   useEffect(() => {
-    if (user?.email && !shippingData.email) {
+    if (user?.email && !emailSyncedRef.current) {
+      emailSyncedRef.current = true;
       setShippingData((prev) => ({ ...prev, email: user.email ?? "" }));
     }
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user?.email]);
 
   const handleContinueToPayment = () => {
     // Validate required shipping fields before advancing

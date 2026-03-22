@@ -8,6 +8,10 @@ import logo from "@/assets/loadify-logo.png";
 import { supabase } from "@/lib/supabase";
 
 const ResetPassword = () => {
+  // Time to wait for Supabase's PASSWORD_RECOVERY auth event before showing
+  // the "invalid link" error. The event fires asynchronously after mount as
+  // the SDK processes the hash token in the URL.
+  const PASSWORD_RECOVERY_WAIT_MS = 2000;
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -44,7 +48,7 @@ const ResetPassword = () => {
             }
             return false;
           });
-        }, 2000);
+        }, PASSWORD_RECOVERY_WAIT_MS);
       }
     }).catch(() => {
       setError("Failed to verify reset link. Please try again.");
