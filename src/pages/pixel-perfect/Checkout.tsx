@@ -75,7 +75,8 @@ const Checkout = () => {
   };
 
   const shipping = subtotal > 2000 ? 0 : 149;
-  // Product prices are VAT-inclusive; show the VAT portion already within the price
+  // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
+  // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
   const vat = Math.round(subtotal / 6);
   const total = subtotal + shipping;
 

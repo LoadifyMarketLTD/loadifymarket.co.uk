@@ -68,12 +68,18 @@ const SellerRFQ = () => {
         .update({ status: "replied" })
         .eq("id", selected.id);
       if (dbError) throw dbError;
+
+      // Capture values before clearing state
+      const buyerEmail = selected.buyer_email;
       const subject = encodeURIComponent(`Re: Quote Request – ${selected.product_name}`);
       const body = encodeURIComponent(quoteNote);
+
       await load();
       setSelected(null);
       setQuoteNote("");
-      window.location.href = `mailto:${encodeURIComponent(selected.buyer_email)}?subject=${subject}&body=${body}`;
+
+      // email address must NOT be encoded or the mailto link breaks
+      window.location.href = `mailto:${buyerEmail}?subject=${subject}&body=${body}`;
     } catch (e) {
       setRfqError(e instanceof Error ? e.message : "Failed to send reply.");
     } finally {
