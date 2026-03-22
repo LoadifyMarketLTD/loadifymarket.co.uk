@@ -12,7 +12,7 @@ import Footer from "@/components/Footer";
 
 export default function PixelPerfectIndex() {
   return (
-    <div className="min-h-screen bg-white font-sans antialiased">
+    <div className="min-h-screen bg-[#F5F7FB] font-sans antialiased">
       <TopBar />
       <Header />
       {/* spacer: 40px top bar + 64px navbar */}

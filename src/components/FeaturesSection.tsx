@@ -41,14 +41,14 @@ const features = [
 
 const FeaturesSection = () => {
   return (
-    <section id="features" className="py-14 bg-white">
-      <div className="container mx-auto px-4">
+    <section id="features" className="py-16 bg-white">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
         <div className="text-center max-w-xl mx-auto mb-10">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#1A4080]">Platform Features</span>
-          <h2 className="mt-2 text-2xl sm:text-3xl font-display font-bold text-[#0F2D52]">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#2563EB]">Platform Features</span>
+          <h2 className="mt-2 text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
             Why Choose Loadify Market
           </h2>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-[#64748B]">
             A complete marketplace platform built for wholesale and clearance stock trading in the UK.
           </p>
         </div>
@@ -57,13 +57,13 @@ const FeaturesSection = () => {
           {features.map((feature) => (
             <div
               key={feature.title}
-              className="group bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+              className="group bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
             >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${feature.color}`}>
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${feature.color}`}>
                 <feature.icon className="h-5 w-5" />
               </div>
-              <h3 className="text-base font-semibold text-[#0F2D52] mb-2">{feature.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{feature.description}</p>
+              <h3 className="text-base font-semibold text-[#0F172A] mb-2">{feature.title}</h3>
+              <p className="text-sm text-[#64748B] leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>
