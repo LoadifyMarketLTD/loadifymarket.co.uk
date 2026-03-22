@@ -7,7 +7,10 @@ import NavbarSearch from "@/components/NavbarSearch";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
 import { supabase } from "@/lib/supabase";
+// Category data: src/data/categories.ts (single source of truth)
+// Full UI config (icons, colours): src/lib/category-config.ts (derives from above)
 import CATEGORY_CONFIG from "@/lib/category-config";
+import type { CategoryConfig } from "@/lib/category-config";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);

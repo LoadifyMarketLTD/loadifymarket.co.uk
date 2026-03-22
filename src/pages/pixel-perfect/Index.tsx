@@ -24,6 +24,7 @@ import {
 import logo from "@/assets/loadify-logo.svg";
 import { useAuthStore } from "@/store";
 import { supabase } from "@/lib/supabase";
+import CATEGORIES, { FEATURED_CATEGORIES } from "@/data/categories";
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
 
@@ -54,111 +55,109 @@ const trustItems = [
   },
 ];
 
-const topCategories = [
-  {
-    name: "Electronics",
-    count: "130+ listings",
-    priceRange: "£130.60+ · £299",
-    stars: 4,
-    image: "/images/categories/electronics.jpg",
-  },
-  {
-    name: "Fashion",
-    count: "900+ listings",
-    priceRange: "",
-    stars: 3,
-    image: "/images/categories/fashion.jpg",
-  },
-  {
-    name: "Home & Kitchen",
-    count: "110+ listings",
-    priceRange: "",
-    stars: 4,
-    image: "/images/categories/home-kitchen.jpg",
-  },
-];
+// Category cards: driven from central data — no duplication
+// topCategories = first 3 featured categories (Electronics, Fashion, Home & Kitchen)
+const topCategories = FEATURED_CATEGORIES.slice(0, 3).map((cat) => ({
+  name: cat.name,
+  slug: cat.slug,
+  image: cat.image,
+  description: cat.description,
+}));
 
+// Product showcase cards — aligned with the 9 approved categories (no pallets/clearance)
 const productCards = [
   {
-    title: "Sample Listing",
-    price: "£0.09 – £000",
-    category: "Bulk listing",
-    stars: 4,
-    image: "/images/products/sample-listing.jpg",
+    title: "Wireless Earbuds",
+    price: "From £19.99",
+    category: "Electronics",
+    categorySlug: "electronics",
+    stars: 5,
+    image: "/images/featured/earbuds.jpg",
   },
   {
     title: "Tool Set",
-    price: "£0.009 – £000",
+    price: "From £24.99",
     category: "Tools & DIY",
+    categorySlug: "tools-diy",
     stars: 4,
     image: "/images/products/toolset.jpg",
   },
   {
     title: "Designer Handbag",
-    price: "£0.90",
+    price: "From £34.99",
     category: "Fashion",
-    stars: 3,
+    categorySlug: "fashion",
+    stars: 4,
     image: "/images/products/handbag.jpg",
   },
   {
     title: "Smartwatch",
-    price: "£110.9 – £000",
+    price: "From £49.99",
     category: "Electronics",
+    categorySlug: "electronics",
     stars: 4,
     image: "/images/products/smartwatch.jpg",
   },
 ];
 
+// Featured listing cards — aligned with the 9 approved categories
 const featuredListings = [
   {
-    title: "Sample Listing",
-    seller: "Exact Bazaar",
-    price: "£00.99",
+    title: "Wireless Earbuds",
+    seller: "AudioPro UK",
+    price: "£29.99",
     category: "Electronics",
+    categorySlug: "electronics",
     stars: 5,
     image: "/images/featured/earbuds.jpg",
   },
   {
-    title: "Sample Listing",
-    seller: "Dr. Blue Bazaar",
-    price: "£00.99",
-    category: "Heat Spray",
-    stars: 5,
+    title: "Tool Kit Set",
+    seller: "BuildRight",
+    price: "£44.99",
+    category: "Tools & DIY",
+    categorySlug: "tools-diy",
+    stars: 4,
     image: "/images/featured/toolbox.jpg",
   },
   {
-    title: "Designer Handbag",
-    seller: "Greatfan",
-    price: "£00.90",
-    category: "Tools & DIY",
-    stars: 3,
-    image: "/images/featured/handbag2.jpg",
-  },
-  {
-    title: "Smartwatch",
-    seller: "Saver listings",
-    price: "£00.99–£000",
+    title: "Laptop Pro",
+    seller: "TechSource UK",
+    price: "£649.00",
     category: "Electronics",
-    stars: 3,
-    image: "/images/featured/smartwatch2.jpg",
+    categorySlug: "electronics",
+    stars: 5,
+    image: "/images/products/laptop.jpg",
   },
   {
-    title: "Skincare Set",
-    seller: "Gadgetbourne",
-    price: "£00.99",
-    category: "Beauty",
+    title: "Smartwatch SE",
+    seller: "WearTech",
+    price: "£89.99",
+    category: "Electronics",
+    categorySlug: "electronics",
     stars: 4,
+    image: "/images/products/smartwatch.jpg",
+  },
+  {
+    title: "Skincare Gift Set",
+    seller: "GlowBeauty",
+    price: "£32.00",
+    category: "Beauty",
+    categorySlug: "beauty",
+    stars: 5,
     image: "/images/featured/skincare2.jpg",
   },
   {
     title: "Office Chair",
-    seller: "Steel listings",
-    price: "£00.99",
-    category: "Office",
+    seller: "WorkspaceUK",
+    price: "£119.00",
+    category: "Office Supplies",
+    categorySlug: "office-supplies",
     stars: 4,
     image: "/images/featured/chair.jpg",
   },
 ];
+
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -195,16 +194,23 @@ function StarRow({
   );
 }
 
-// ─── HERO TILE GRID DATA ───────────────────────────────────────────────────────
+// ─── HERO TILE GRID DATA — derived from central categories ────────────────────
 
-const heroTiles = [
-  { img: "/images/categories/electronics.jpg", label: "Electronics" },
-  { img: "/images/categories/fashion.jpg", label: "Fashion" },
-  { img: "/images/categories/home-kitchen.jpg", label: "Home" },
-  { img: "/images/products/toolset.jpg", label: "Tools" },
-  { img: "/images/featured/skincare2.jpg", label: "Beauty" },
-  { img: "/images/featured/toolbox.jpg", label: "Auto" },
-];
+/** Short display labels for hero tiles (explicit, not derived by string-split) */
+const HERO_TILE_SHORT_NAMES: Record<string, string> = {
+  electronics:      "Electronics",
+  fashion:          "Fashion",
+  "home-kitchen":   "Home",
+  beauty:           "Beauty",
+  "tools-diy":      "Tools",
+  "toys-games":     "Toys",
+};
+
+const heroTiles = CATEGORIES.slice(0, 6).map((cat) => ({
+  img: cat.image,
+  label: HERO_TILE_SHORT_NAMES[cat.slug] ?? cat.name,
+  slug: cat.slug,
+}));
 
 // ─── FEATURES DATA ────────────────────────────────────────────────────────────
 
@@ -280,9 +286,9 @@ const howItWorksSteps = [
   },
 ];
 
-// ─── FEATURED LISTING FILTER TABS ────────────────────────────────────────────
+// ─── FEATURED LISTING FILTER TABS — derived from central categories ───────────
 
-const FILTER_TABS = ["All", "Electronics", "Fashion", "Home & Kitchen", "Tools & DIY", "Beauty"];
+const FILTER_TABS = ["All", ...CATEGORIES.slice(0, 6).map((c) => c.name)];
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
@@ -293,6 +299,12 @@ export default function PixelPerfectIndex() {
   const [activeTab, setActiveTab] = useState("All");
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+
+  // Filter featured listings by the active tab
+  const visibleListings =
+    activeTab === "All"
+      ? featuredListings
+      : featuredListings.filter((item) => item.category === activeTab);
 
   const dashboardPath =
     user?.role === "seller"
@@ -643,8 +655,8 @@ export default function PixelPerfectIndex() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {topCategories.map((cat) => (
                 <Link
-                  key={cat.name}
-                  to="/catalog"
+                  key={cat.slug}
+                  to={`/category/${cat.slug}`}
                   className="group block rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] transition bg-white"
                 >
                   <div className="aspect-[16/9] overflow-hidden bg-[#F9FAFB]">
@@ -656,22 +668,15 @@ export default function PixelPerfectIndex() {
                     />
                   </div>
                   <div className="px-4 py-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-base font-bold text-gray-900">
-                        {cat.name}
-                      </h3>
-                      {cat.priceRange && (
-                        <span className="text-[11px] text-gray-400">
-                          {cat.priceRange}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between mt-1.5">
-                      <StarRow count={cat.stars} />
-                      <span className="text-[11px] text-gray-400">
-                        {cat.count}
-                      </span>
-                    </div>
+                    <h3 className="text-base font-bold text-gray-900">
+                      {cat.name}
+                    </h3>
+                    <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-1">
+                      {cat.description}
+                    </p>
+                    <span className="inline-flex items-center gap-1 mt-2 text-[11px] font-medium text-[#1A4DBE]">
+                      Shop now <ArrowRight className="h-3 w-3" />
+                    </span>
                   </div>
                 </Link>
               ))}
@@ -686,7 +691,7 @@ export default function PixelPerfectIndex() {
               {productCards.map((p) => (
                 <Link
                   key={p.title}
-                  to="/catalog"
+                  to={`/category/${p.categorySlug}`}
                   className="group block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] transition"
                 >
                   <div className="aspect-[4/3] overflow-hidden bg-white flex items-center justify-center p-3">
@@ -711,6 +716,45 @@ export default function PixelPerfectIndex() {
                       </span>
                     </div>
                   </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── ALL CATEGORIES GRID ────────────────────────────────────────── */}
+        <section className="bg-[#f4f7fc] border-t border-gray-100 py-8">
+          <div className="max-w-[1360px] mx-auto px-4 lg:px-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+              <h2 className="text-[22px] font-extrabold text-gray-900">
+                Shop by{" "}
+                <span className="text-[#1A4DBE]">Category</span>
+              </h2>
+              <Link
+                to="/catalog"
+                className="text-sm font-medium text-[#1A4DBE] hover:underline flex items-center gap-1"
+              >
+                All categories <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-3">
+              {CATEGORIES.map((cat) => (
+                <Link
+                  key={cat.slug}
+                  to={`/category/${cat.slug}`}
+                  className="group flex flex-col items-center gap-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-3 hover:shadow-md hover:border-blue-200 transition"
+                >
+                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-[#f4f7fc] flex items-center justify-center">
+                    <img
+                      src={cat.image}
+                      alt={cat.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                      onError={imgFallback}
+                    />
+                  </div>
+                  <span className="text-[11px] font-semibold text-gray-700 text-center leading-tight group-hover:text-[#1A4DBE] transition-colors">
+                    {cat.name}
+                  </span>
                 </Link>
               ))}
             </div>
@@ -749,9 +793,9 @@ export default function PixelPerfectIndex() {
               ))}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              {featuredListings.map((item, idx) => (
+              {visibleListings.map((item) => (
                 <div
-                  key={idx}
+                  key={`${item.title}-${item.categorySlug}`}
                   className="group relative bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] transition"
                 >
                   <div className="aspect-square overflow-hidden bg-white flex items-center justify-center p-2">
@@ -764,7 +808,7 @@ export default function PixelPerfectIndex() {
                   </div>
                   {/* Quick View overlay — positioned above card footer (~88px tall) */}
                   <Link
-                    to="/catalog"
+                    to={`/category/${item.categorySlug}`}
                     className="absolute inset-x-0 bottom-[88px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <span className="bg-[#0d1f3c]/90 text-white text-[10px] font-semibold px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg">

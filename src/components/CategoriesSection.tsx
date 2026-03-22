@@ -1,275 +1,118 @@
+/**
+ * CategoriesSection.tsx
+ *
+ * Displays the 9 marketplace categories in a card grid.
+ * Data sourced entirely from src/data/categories.ts — no duplication.
+ */
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Package, Shirt, Laptop, Home, Wrench,
-  Heart, Gamepad2, UtensilsCrossed, Car, Briefcase,
-  Dumbbell, Baby, Sparkles, ChevronDown, ChevronUp,
-  RotateCcw, TrendingDown, Layers
-} from "lucide-react";
+import { ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-
-import electronicsImg from "@/assets/categories/electronics.jpg";
-import clothingImg from "@/assets/categories/clothing.jpg";
-import homeImg from "@/assets/categories/home.jpg";
-import healthBeautyImg from "@/assets/categories/health-beauty.jpg";
-import toysImg from "@/assets/categories/toys.jpg";
-import foodDrinkImg from "@/assets/categories/food-drink.jpg";
-import toolsImg from "@/assets/categories/tools.jpg";
-import sportsImg from "@/assets/categories/sports.jpg";
-import automotiveImg from "@/assets/categories/automotive.jpg";
-import officeImg from "@/assets/categories/office.jpg";
-import babyImg from "@/assets/categories/baby.jpg";
-import jewelleryImg from "@/assets/categories/jewellery.jpg";
-import mixedPalletsImg from "@/assets/categories/mixed-pallets.jpg";
-import returnsImg from "@/assets/categories/returns.jpg";
-import overstockImg from "@/assets/categories/overstock.jpg";
-import clearanceImg from "@/assets/categories/clearance.jpg";
-
-const categories = [
-  {
-    icon: Laptop,
-    label: "Electronics & Technology",
-    count: "85+ listings",
-    image: electronicsImg,
-    dbSlugs: ["electronics", "media-electronics"],
-    dbTypes: [] as string[],
-    subcategories: ["Phones & Tablets", "Laptops & PCs", "TV & Audio", "Gaming Consoles", "Accessories", "Smart Home"],
-  },
-  {
-    icon: Shirt,
-    label: "Clothing & Apparel",
-    count: "200+ listings",
-    image: clothingImg,
-    dbSlugs: ["fashion", "clothing"],
-    dbTypes: [] as string[],
-    subcategories: ["Men's Clothing", "Women's Clothing", "Children's Clothing", "Footwear", "Accessories & Bags", "Sportswear"],
-  },
-  {
-    icon: Home,
-    label: "Home & Garden",
-    count: "95+ listings",
-    image: homeImg,
-    dbSlugs: ["home-garden"],
-    dbTypes: [] as string[],
-    subcategories: ["Furniture", "Kitchen & Dining", "Bedding & Linen", "Garden & Outdoor", "Lighting", "Décor & Accessories"],
-  },
-  {
-    icon: Heart,
-    label: "Health & Beauty",
-    count: "110+ listings",
-    image: healthBeautyImg,
-    dbSlugs: ["health-beauty"],
-    dbTypes: [] as string[],
-    subcategories: ["Skincare", "Haircare", "Makeup & Cosmetics", "Fragrances", "Health & Wellness", "Personal Care"],
-  },
-  {
-    icon: Gamepad2,
-    label: "Toys & Games",
-    count: "75+ listings",
-    image: toysImg,
-    dbSlugs: ["toys"],
-    dbTypes: [] as string[],
-    subcategories: ["Action Figures", "Board Games", "Educational Toys", "Outdoor Toys", "Dolls & Playsets", "Puzzles"],
-  },
-  {
-    icon: UtensilsCrossed,
-    label: "Food & Drink",
-    count: "60+ listings",
-    image: foodDrinkImg,
-    dbSlugs: ["food-drink"],
-    dbTypes: [] as string[],
-    subcategories: ["Snacks & Confectionery", "Beverages", "Canned & Dry Goods", "Health Foods", "Specialty & Gourmet", "Seasonal"],
-  },
-  {
-    icon: Wrench,
-    label: "Tools & DIY",
-    count: "55+ listings",
-    image: toolsImg,
-    dbSlugs: ["tools"],
-    dbTypes: [] as string[],
-    subcategories: ["Power Tools", "Hand Tools", "Plumbing", "Electrical", "Paint & Decorating", "Fixings & Hardware"],
-  },
-  {
-    icon: Dumbbell,
-    label: "Sports & Leisure",
-    count: "65+ listings",
-    image: sportsImg,
-    dbSlugs: ["sports-outdoors"],
-    dbTypes: [] as string[],
-    subcategories: ["Fitness Equipment", "Cycling", "Camping & Hiking", "Water Sports", "Team Sports", "Leisure & Travel"],
-  },
-  {
-    icon: Car,
-    label: "Automotive",
-    count: "40+ listings",
-    image: automotiveImg,
-    dbSlugs: ["vehicles"],
-    dbTypes: [] as string[],
-    subcategories: ["Car Parts", "Car Accessories", "Cleaning & Valeting", "Tools & Equipment", "Oils & Fluids", "Tyres & Wheels"],
-  },
-  {
-    icon: Briefcase,
-    label: "Office & Stationery",
-    count: "45+ listings",
-    image: officeImg,
-    dbSlugs: ["business", "office-supplies"],
-    dbTypes: [] as string[],
-    subcategories: ["Office Furniture", "Printers & Ink", "Paper & Supplies", "Office Tech", "Filing & Storage", "Pens & Writing"],
-  },
-  {
-    icon: Baby,
-    label: "Baby & Nursery",
-    count: "50+ listings",
-    image: babyImg,
-    dbSlugs: ["baby-kids"],
-    dbTypes: [] as string[],
-    subcategories: ["Prams & Pushchairs", "Baby Clothing", "Feeding", "Nursery Furniture", "Toys (0-3 yrs)", "Safety & Care"],
-  },
-  {
-    icon: Sparkles,
-    label: "Jewellery & Watches",
-    count: "30+ listings",
-    image: jewelleryImg,
-    dbSlugs: ["jewellery", "accessories"],
-    dbTypes: [] as string[],
-    subcategories: ["Necklaces & Pendants", "Rings & Earrings", "Bracelets", "Watches", "Fashion Jewellery", "Accessories"],
-  },
-  {
-    icon: Package,
-    label: "Mixed Lots",
-    count: "120+ listings",
-    image: mixedPalletsImg,
-    dbSlugs: ["mixed-job-lots", "wholesale-pallets"],
-    dbTypes: [] as string[],
-    subcategories: ["General Mixed", "Department Store Returns", "Amazon Returns", "Seasonal Mixed", "High Value Mixed", "Liquidation Lots"],
-  },
-  {
-    icon: RotateCcw,
-    label: "Customer Returns",
-    count: "90+ listings",
-    image: returnsImg,
-    dbSlugs: [] as string[],
-    dbTypes: ["lot"],
-    subcategories: ["Electronics Returns", "Clothing Returns", "Home Returns", "Appliance Returns", "Graded Returns", "Unchecked Returns"],
-  },
-  {
-    icon: Layers,
-    label: "Overstock",
-    count: "130+ listings",
-    image: overstockImg,
-    dbSlugs: ["wholesale-pallets"],
-    dbTypes: ["pallet", "wholesale"],
-    subcategories: ["Brand Overstock", "Seasonal Overstock", "End of Line", "Excess Inventory", "Wholesale Lots", "Bulk Deals"],
-  },
-  {
-    icon: TrendingDown,
-    label: "Clearance Deals",
-    count: "150+ listings",
-    image: clearanceImg,
-    dbSlugs: [] as string[],
-    dbTypes: ["clearance"],
-    subcategories: ["Flash Sales", "Closing Down Stock", "Damaged Packaging", "Short Dated", "Sample Stock", "One-Off Deals"],
-  },
-];
-
-type CategoryRow = typeof categories[0];
+import CATEGORY_CONFIG from "@/lib/category-config";
 
 interface ProductCountRow {
-  type?: string;
   category?: { slug?: string } | { slug?: string }[] | null;
 }
 
 const CategoriesSection = () => {
   const navigate = useNavigate();
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+  const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [slugCounts, setSlugCounts] = useState<Record<string, number>>({});
-  const [typeCounts, setTypeCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    const fetchCounts = async () => {
+    (async () => {
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("type, category:categories!categoryId(slug)")
+          .select("category:categories!categoryId(slug)")
           .eq("isActive", true)
-          .eq("isApproved", true)
-          .not("type", "eq", "logistics");
+          .eq("isApproved", true);
         if (error || !data) return;
         const sc: Record<string, number> = {};
-        const tc: Record<string, number> = {};
         (data as ProductCountRow[]).forEach((p) => {
           const cat = Array.isArray(p.category) ? p.category[0] : p.category;
           const slug = (cat as { slug?: string } | null)?.slug;
           if (slug) sc[slug] = (sc[slug] ?? 0) + 1;
-          if (p.type) tc[p.type] = (tc[p.type] ?? 0) + 1;
         });
         setSlugCounts(sc);
-        setTypeCounts(tc);
-      } catch (err) {
-        console.error("Failed to fetch category counts:", err);
-        // Fallback counts remain displayed
+      } catch {
+        // counts remain at 0 — fallback labels shown
       }
-    };
-    fetchCounts();
+    })();
   }, []);
 
-  const getLiveCount = (cat: CategoryRow): number =>
-    cat.dbSlugs.reduce((sum, s) => sum + (slugCounts[s] ?? 0), 0) +
-    cat.dbTypes.reduce((sum, t) => sum + (typeCounts[t] ?? 0), 0);
-
-  const getCountLabel = (cat: CategoryRow): string => {
-    const live = getLiveCount(cat);
+  const getCountLabel = (slug: string): string => {
+    const live = slugCounts[slug] ?? 0;
     if (live > 0) return `${live} listing${live === 1 ? "" : "s"}`;
-    return cat.count;
+    return "Browse listings";
   };
 
-  const visibleCategories = showAll ? categories : categories.slice(0, 8);
+  const visible = showAll ? CATEGORY_CONFIG : CATEGORY_CONFIG.slice(0, 8);
 
   return (
     <section id="categories" className="py-14 bg-background">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-2xl mx-auto mb-8">
-          <span className="text-sm font-semibold uppercase tracking-wider text-primary">Categories</span>
+          <span className="text-sm font-semibold uppercase tracking-wider text-primary">
+            Categories
+          </span>
           <h2 className="mt-3 text-3xl sm:text-4xl font-display font-bold text-foreground">
             Browse by Category
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Find exactly what you're looking for from verified sellers across wholesale, clearance and returns categories.
+            Discover thousands of products across all categories from verified UK
+            sellers — all in one trusted marketplace.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {visibleCategories.map((cat, index) => {
-            const isExpanded = expandedIndex === index;
+          {visible.map((cat) => {
+            const Icon = cat.icon;
+            const isExpanded = expandedSlug === cat.slug;
             return (
               <div
-                key={cat.label}
+                key={cat.slug}
                 className="group rounded-xl bg-card border border-border hover:border-primary/30 hover:shadow-elevated transition-all duration-300 overflow-hidden"
               >
-                {/* Category header with image */}
-                <div className="flex items-center gap-3 p-3">
+                {/* Header */}
+                <button
+                  className="w-full flex items-center gap-3 p-3 text-left"
+                  onClick={() => navigate(`/category/${cat.slug}`)}
+                >
                   <div className="w-14 h-14 rounded-lg overflow-hidden shrink-0">
                     <img
                       src={cat.image}
                       alt={cat.label}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       loading="lazy"
-                      onError={(e) => { const img = e.target as HTMLImageElement; if (img.src !== window.location.origin + '/images/placeholder-product.jpg') img.src = '/images/placeholder-product.jpg'; }}
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        if (!img.src.includes("placeholder"))
+                          img.src = "/images/placeholder-product.jpg";
+                      }}
                     />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="font-display text-sm font-semibold text-foreground block truncate">{cat.label}</span>
-                    <span className="text-xs text-muted-foreground">{getCountLabel(cat)}</span>
+                  <div className="flex-1 min-w-0 text-left">
+                    <span className="font-display text-sm font-semibold text-foreground block truncate">
+                      {cat.label}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {getCountLabel(cat.slug)}
+                    </span>
                   </div>
-                </div>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
 
-                {/* Expand button */}
+                {/* Subcategories toggle */}
                 <button
-                  onClick={() => setExpandedIndex(isExpanded ? null : index)}
+                  onClick={() => setExpandedSlug(isExpanded ? null : cat.slug)}
                   className="w-full flex items-center justify-between gap-2 px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors border-t border-border"
                 >
-                  <span className="text-xs font-medium text-muted-foreground">Subcategories</span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Subcategories
+                  </span>
                   {isExpanded ? (
                     <ChevronUp className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                   ) : (
@@ -278,12 +121,14 @@ const CategoriesSection = () => {
                 </button>
 
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t border-border pt-3 animate-fade-in">
+                  <div className="px-4 pb-4 border-t border-border pt-3">
                     <ul className="space-y-1.5">
                       {cat.subcategories.map((sub) => (
                         <li key={sub}>
                           <button
-                            onClick={() => navigate(`/catalog?category=${encodeURIComponent(cat.label)}`)}
+                            onClick={() =>
+                              navigate(`/category/${cat.slug}`)
+                            }
                             className="w-full text-left text-sm text-muted-foreground hover:text-primary transition-colors py-1 px-3 rounded-md hover:bg-primary/5"
                           >
                             {sub}
@@ -298,17 +143,23 @@ const CategoriesSection = () => {
           })}
         </div>
 
-        {categories.length > 8 && (
+        {CATEGORY_CONFIG.length > 8 && (
           <div className="text-center mt-8">
             <button
               onClick={() => {
                 setShowAll(!showAll);
-                setExpandedIndex(null);
+                setExpandedSlug(null);
               }}
               className="inline-flex items-center gap-2 text-primary font-semibold hover:underline transition-all"
             >
-              {showAll ? "Show Less" : `View All ${categories.length} Categories`}
-              {showAll ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {showAll
+                ? "Show Less"
+                : `View All ${CATEGORY_CONFIG.length} Categories`}
+              {showAll ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
             </button>
           </div>
         )}
