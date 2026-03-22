@@ -308,6 +308,7 @@ function App() {
         {/* Public: Order Tracking — no pixel-perfect equivalent yet */}
         <Route path="tracking/:orderNumber" element={<Suspense fallback={<PageLoader />}><TrackingPage /></Suspense>} />
         <Route path="track-order" element={<Suspense fallback={<PageLoader />}><TrackOrderPage /></Suspense>} />
+        <Route path="track" element={<Navigate to="/track-order" replace />} />
 
         {/* Legal pages without pixel-perfect equivalents */}
         <Route path="acceptable-use-policy" element={<Suspense fallback={<PageLoader />}><AcceptableUsePolicyPage /></Suspense>} />
