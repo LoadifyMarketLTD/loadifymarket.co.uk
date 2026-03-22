@@ -193,9 +193,9 @@ const heroTiles = [
   { img: "/images/categories/electronics.jpg", label: "Electronics" },
   { img: "/images/categories/fashion.jpg", label: "Fashion" },
   { img: "/images/categories/home-kitchen.jpg", label: "Home" },
-  { img: "/images/mock/tools.jpg", label: "Tools" },
-  { img: "/images/mock/beauty.jpg", label: "Beauty" },
-  { img: "/images/mock/automotive.jpg", label: "Auto" },
+  { img: "/images/products/toolset.jpg", label: "Tools" },
+  { img: "/images/featured/skincare2.jpg", label: "Beauty" },
+  { img: "/images/featured/toolbox.jpg", label: "Auto" },
 ];
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
@@ -487,7 +487,7 @@ export default function PixelPerfectIndex() {
                               <span>≋</span> Loadify Market
                             </div>
                             <img
-                              src="/images/mock/listing-smartwatch.jpg"
+                              src="/images/products/smartwatch.jpg"
                               alt="Smartwatch listing"
                               className="w-full h-[68px] object-cover"
                               onError={imgFallback}
