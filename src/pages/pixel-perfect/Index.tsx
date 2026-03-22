@@ -7,17 +7,18 @@ import {
   MapPin,
   Star,
   ArrowRight,
-  Zap,
-  Package,
-  TrendingUp,
-  Users,
-  CheckCircle2,
-  ChevronRight,
+  ShoppingBag,
   X,
   Eye,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+
+// ─── CSS VARIABLES (design tokens) ────────────────────────────────────────────
+// --primary-blue:    #1A4DBE
+// --secondary-green: #28A745
+// --text-dark:       #1F2937
+// --bg-light:        #F9FAFB
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
 
@@ -29,49 +30,77 @@ interface TrustItem {
 }
 
 const trustItems: TrustItem[] = [
+  { icon: BadgeCheck,  title: "Verified Sellers",      sub: "All listings verified",      color: "text-[#1A4DBE]" },
+  { icon: ShieldCheck, title: "Secure Payments",       sub: "Store trust & protection",   color: "text-[#1A4DBE]" },
+  { icon: Store,       title: "Free to Join",          sub: "No upfront listing fees",    color: "text-[#28A745]" },
+  { icon: MapPin,      title: "UK-Based Marketplace",  sub: "Serving UK businesses",      color: "text-[#1A4DBE]" },
+];
+
+// ── Big (landscape) category cards ─────────────────────────────────────────
+const bigCategories = [
   {
-    icon: BadgeCheck,
-    title: "Verified Sellers",
-    sub: "All listings verified",
-    color: "text-blue-500",
+    slug: "electronics",
+    img: "/images/mock/electronics.jpg",
+    label: "Electronics",
+    priceRange: "£130 - £299",
+    listingCount: "130+ listings",
+    stars: 4,
   },
   {
-    icon: ShieldCheck,
-    title: "Secure Payments",
-    sub: "Protected transactions",
-    color: "text-blue-500",
+    slug: "fashion",
+    img: "/images/mock/fashion.jpg",
+    label: "Fashion",
+    priceRange: "",
+    listingCount: "900+ listings",
+    stars: 3,
   },
   {
-    icon: Store,
-    title: "Free to List",
-    sub: "No upfront listing fees",
-    color: "text-emerald-500",
-  },
-  {
-    icon: MapPin,
-    title: "UK-Based Marketplace",
-    sub: "Serving UK businesses",
-    color: "text-blue-500",
+    slug: "home-garden",
+    img: "/images/mock/home.jpg",
+    label: "Home & Kitchen",
+    priceRange: "",
+    listingCount: "110+ listings",
+    stars: 4,
   },
 ];
 
-const categories = [
-  { slug: "electronics", img: "/images/mock/electronics.jpg", label: "Electronics" },
-  { slug: "fashion", img: "/images/mock/fashion.jpg", label: "Fashion" },
-  { slug: "home-garden", img: "/images/mock/home.jpg", label: "Home & Garden" },
-  { slug: "health-beauty", img: "/images/mock/beauty.jpg", label: "Beauty" },
-  { slug: "tools-diy", img: "/images/mock/tools.jpg", label: "Tools & DIY" },
-  { slug: "business-supplies", img: "/images/mock/office.jpg", label: "Office & Business" },
-  { slug: "baby-kids", img: "/images/mock/baby.jpg", label: "Baby & Kids" },
-  { slug: "automotive", img: "/images/mock/automotive.jpg", label: "Automotive" },
+// ── Small (product-card) category rows ─────────────────────────────────────
+const smallCategories = [
+  {
+    slug: "business-supplies",
+    img: "/images/mock/listing-desk.jpg",
+    title: "Standing Desk",
+    price: "£0.09 - £50",
+    stars: 4,
+    category: "Bulk listings",
+  },
+  {
+    slug: "tools-diy",
+    img: "/images/mock/listing-toolkit.jpg",
+    title: "Tool Set",
+    price: "£39 - £79",
+    stars: 4,
+    category: "Tools & DIY",
+  },
+  {
+    slug: "fashion",
+    img: "/images/mock/listing-bag.jpg",
+    title: "Designer Handbag",
+    price: "£54.90",
+    stars: 3,
+    category: "Fashion",
+  },
+  {
+    slug: "electronics",
+    img: "/images/mock/listing-smartwatch.jpg",
+    title: "Smartwatch",
+    price: "£89 - £149",
+    stars: 3,
+    category: "Electronics",
+  },
 ];
 
-const specialCategories = [
-  { slug: "clearance", img: "/images/mock/clearance.jpg", label: "Clearance Sale", badge: "Up to 70% off" },
-  { slug: "amazon-returns", img: "/images/mock/returns.jpg", label: "Amazon Returns", badge: "Great Deals" },
-  { slug: "wholesale", img: "/images/mock/overstock.jpg", label: "Wholesale & Bulk", badge: "Trade Prices" },
-];
-
+// ── Filter tabs ────────────────────────────────────────────────────────────
 const FILTER_TABS = [
   { key: "all",         label: "All" },
   { key: "electronics", label: "Electronics" },
@@ -82,156 +111,105 @@ const FILTER_TABS = [
   { key: "office",      label: "Office" },
 ];
 
+// ── Featured Listings data ─────────────────────────────────────────────────
 const featuredListings = [
   {
     id: "1",
-    img: "/images/mock/listing-smartwatch.jpg",
-    title: "Smart Watch Pro Series X",
-    price: "£89.99",
-    originalPrice: "£149.99",
+    img: "/images/mock/listing-headphones.jpg",
+    title: "Wireless Headphones",
+    seller: "TechDeals UK",
+    price: "£49.99",
+    originalPrice: "£89.99",
     stars: 5,
     reviews: 124,
     category: "Electronics",
     filterKey: "electronics",
-    badge: "Hot Deal",
+    badge: "",
   },
   {
     id: "2",
-    img: "/images/mock/listing-bag.jpg",
-    title: "Premium Leather Handbag",
-    price: "£54.99",
-    originalPrice: "£99.00",
-    stars: 4,
-    reviews: 87,
-    category: "Fashion",
-    filterKey: "fashion",
-    badge: "New In",
-  },
-  {
-    id: "3",
-    img: "/images/mock/listing-chair.jpg",
-    title: "Ergonomic Office Chair",
+    img: "/images/mock/listing-desk.jpg",
+    title: "Standing Desk",
+    seller: "Office Direct",
     price: "£199.00",
     originalPrice: "£349.00",
     stars: 5,
-    reviews: 213,
-    category: "Office",
-    filterKey: "office",
-    badge: "Best Seller",
+    reviews: 87,
+    category: "Home & Office",
+    filterKey: "home",
+    badge: "",
+  },
+  {
+    id: "3",
+    img: "/images/mock/listing-bag.jpg",
+    title: "Designer Handbag",
+    seller: "Fashion Vault",
+    price: "£54.90",
+    originalPrice: "£120.00",
+    stars: 3,
+    reviews: 34,
+    category: "Fashion",
+    filterKey: "fashion",
+    badge: "",
   },
   {
     id: "4",
-    img: "/images/mock/listing-toolkit.jpg",
-    title: "Professional Tool Kit 150pc",
-    price: "£44.99",
-    originalPrice: "£79.99",
-    stars: 4,
+    img: "/images/mock/listing-smartwatch.jpg",
+    title: "Smartwatch Pro",
+    seller: "GadgetHub",
+    price: "£89.99",
+    originalPrice: "£149.99",
+    stars: 3,
     reviews: 56,
-    category: "Tools",
-    filterKey: "tools",
+    category: "Electronics",
+    filterKey: "electronics",
     badge: "",
   },
   {
     id: "5",
     img: "/images/mock/listing-skincare.jpg",
-    title: "Luxury Skincare Gift Set",
+    title: "Skincare Gift Set",
+    seller: "Beauty Boutique",
     price: "£34.99",
     originalPrice: "£60.00",
     stars: 5,
     reviews: 98,
     category: "Beauty",
     filterKey: "beauty",
-    badge: "Limited",
+    badge: "",
   },
   {
     id: "6",
-    img: "/images/mock/listing-laptop.jpg",
-    title: "Refurbished Laptop 15.6″",
-    price: "£349.00",
-    originalPrice: "£599.00",
-    stars: 4,
-    reviews: 174,
-    category: "Electronics",
-    filterKey: "electronics",
-    badge: "Clearance",
-  },
-  {
-    id: "7",
-    img: "/images/mock/listing-headphones.jpg",
-    title: "Wireless Noise-Cancelling Headphones",
-    price: "£79.99",
-    originalPrice: "£129.99",
-    stars: 5,
-    reviews: 311,
-    category: "Electronics",
-    filterKey: "electronics",
-    badge: "Top Rated",
-  },
-  {
-    id: "8",
-    img: "/images/mock/listing-desk.jpg",
-    title: "Height-Adjustable Standing Desk",
-    price: "£279.00",
-    originalPrice: "£450.00",
+    img: "/images/mock/listing-chair.jpg",
+    title: "Office Chair",
+    seller: "Comfort Seating",
+    price: "£199.00",
+    originalPrice: "£350.00",
     stars: 4,
     reviews: 65,
-    category: "Home",
-    filterKey: "home",
+    category: "Office",
+    filterKey: "office",
     badge: "",
   },
-];
-
-const features = [
-  {
-    icon: Zap,
-    title: "Instant Listings",
-    desc: "List your products in minutes with our streamlined seller dashboard.",
-  },
-  {
-    icon: Package,
-    title: "All Categories",
-    desc: "From electronics to fashion, beauty to bulk — one platform, every category.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Grow Your Sales",
-    desc: "Reach thousands of UK buyers actively shopping every day.",
-  },
-  {
-    icon: Users,
-    title: "Trusted Community",
-    desc: "Verified sellers, buyer protection, and transparent reviews.",
-  },
-];
-
-const howItWorksBuyer = [
-  { step: "1", title: "Browse & Discover", desc: "Explore thousands of listings across every category." },
-  { step: "2", title: "Compare & Buy", desc: "Secure checkout with buyer protection on every order." },
-  { step: "3", title: "Receive & Review", desc: "Get your items delivered and leave a verified review." },
-];
-
-const howItWorksSeller = [
-  { step: "1", title: "Create Your Account", desc: "Sign up for free and set up your seller profile." },
-  { step: "2", title: "List Your Products", desc: "Add products with photos, prices, and descriptions." },
-  { step: "3", title: "Get Paid", desc: "Receive payments securely, direct to your account." },
 ];
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
 function calculateSavingsPercent(price: string, originalPrice: string): number {
-  const current = parseFloat(price.replace("£", ""));
-  const original = parseFloat(originalPrice.replace("£", ""));
-  if (!original || original <= current) return 0;
+  const current = parseFloat(price.replace("£", "").split("-")[0].trim());
+  const original = parseFloat(originalPrice.replace("£", "").trim());
+  if (isNaN(current) || isNaN(original) || original <= current) return 0;
   return Math.round((1 - current / original) * 100);
 }
 
-function StarRow({ count, small = false }: { count: number; small?: boolean }) {
+function StarRow({ count, total = 5, small = false }: { count: number; total?: number; small?: boolean }) {
+  const size = small ? "h-2.5 w-2.5" : "h-3 w-3";
   return (
     <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((starNumber) => (
+      {Array.from({ length: total }, (_, idx) => idx + 1).map((starNumber) => (
         <Star
           key={starNumber}
-          className={`${small ? "h-2.5 w-2.5" : "h-3 w-3"} ${
+          className={`${size} ${
             starNumber <= count ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"
           }`}
         />
@@ -257,19 +235,19 @@ function QuickViewModal({ item, onClose }: QuickViewModalProps) {
     [onClose]
   );
 
+  const savings = item.originalPrice
+    ? calculateSavingsPercent(item.price, item.originalPrice)
+    : 0;
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ backdropFilter: "blur(5px)", backgroundColor: "rgba(0,0,0,0.45)" }}
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
         <div className="relative">
-          <img
-            src={item.img}
-            alt={item.title}
-            className="w-full h-64 object-cover"
-          />
+          <img src={item.img} alt={item.title} className="w-full h-64 object-cover" />
           {item.badge && (
             <span className="absolute top-3 left-3 bg-[#1A4DBE] text-white text-[11px] font-bold px-2.5 py-1 rounded-full">
               {item.badge}
@@ -287,18 +265,19 @@ function QuickViewModal({ item, onClose }: QuickViewModalProps) {
           <p className="text-xs font-semibold text-[#1A4DBE] uppercase tracking-wide mb-1">
             {item.category}
           </p>
-          <h3 className="text-xl font-extrabold text-gray-900 mb-3">{item.title}</h3>
+          <h3 className="text-xl font-extrabold text-[#1F2937] mb-1">{item.title}</h3>
+          <p className="text-xs text-gray-500 mb-3">by {item.seller}</p>
           <div className="flex items-center gap-2 mb-4">
             <StarRow count={item.stars} />
             <span className="text-sm text-gray-500">({item.reviews} reviews)</span>
           </div>
           <div className="flex items-baseline gap-3 mb-6">
-            <span className="text-2xl font-extrabold text-gray-900">{item.price}</span>
-            <span className="text-sm text-gray-400 line-through">{item.originalPrice}</span>
-            {item.originalPrice && calculateSavingsPercent(item.price, item.originalPrice) > 0 && (
-              <span className="text-sm font-semibold text-emerald-600">
-                Save {calculateSavingsPercent(item.price, item.originalPrice)}%
-              </span>
+            <span className="text-2xl font-extrabold text-[#1F2937]">{item.price}</span>
+            {item.originalPrice && (
+              <span className="text-sm text-gray-400 line-through">{item.originalPrice}</span>
+            )}
+            {savings > 0 && (
+              <span className="text-sm font-semibold text-emerald-600">Save {savings}%</span>
             )}
           </div>
           <div className="flex gap-3">
@@ -307,7 +286,7 @@ function QuickViewModal({ item, onClose }: QuickViewModalProps) {
               onClick={onClose}
               className="flex-1 text-center bg-[#1A4DBE] text-white font-semibold py-2.5 rounded-xl hover:bg-[#1640a0] transition-all duration-300 text-sm"
             >
-              View Full Details
+              View Details
             </Link>
             <Link
               to="/register"
@@ -333,6 +312,7 @@ export default function PixelPerfectIndex() {
     activeFilter === "all"
       ? featuredListings
       : featuredListings.filter((item) => item.filterKey === activeFilter);
+
   return (
     <div className="min-h-screen bg-white font-sans antialiased">
       <Navbar />
@@ -347,133 +327,118 @@ export default function PixelPerfectIndex() {
 
       <main>
         {/* ── 1. HERO ─────────────────────────────────────────────────────── */}
-        <section className="bg-gradient-to-br from-[#d6e8fb] via-[#ddeeff] to-[#e8f3ff] px-4 py-10 lg:py-16 lg:px-6">
-          <div className="max-w-[1360px] mx-auto grid lg:grid-cols-2 gap-8 items-center">
-            <div className="space-y-5">
-              <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide">
-                UK's Multi-Category Marketplace
-              </span>
-              <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight">
-                Buy & Sell Anything —{" "}
-                <span className="text-[#1A4DBE]">All in One Place</span>
+        <section className="relative overflow-hidden bg-gradient-to-br from-[#dde9f8] via-[#e5eef9] to-[#eef3fc] px-4 pt-10 pb-20 lg:pt-14 lg:pb-28 lg:px-6">
+          <div className="max-w-[1360px] mx-auto grid lg:grid-cols-2 gap-10 items-center">
+            {/* Left: text */}
+            <div className="space-y-5 max-w-xl">
+              <h1 className="text-4xl lg:text-5xl font-extrabold text-[#1F2937] leading-tight">
+                The UK Marketplace<br />
+                Connecting{" "}
+                <span className="text-[#1A4DBE]">Buyers</span> &amp; Sellers
               </h1>
-              <p className="text-lg text-gray-600 max-w-lg">
-                Discover great deals across electronics, fashion, home, beauty, tools, and more.
-                Verified UK sellers. Secure payments. Free to list.
+              <p className="text-base text-gray-600">
+                Discover trusted suppliers, list your products, and grow your business
+                — all in one secure platform.
               </p>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 pt-1">
                 <Link
                   to="/catalog"
-                  className="inline-flex items-center gap-2 bg-[#1A4DBE] text-white font-semibold px-6 py-3 rounded-xl hover:bg-[#1640a0] hover:-translate-y-[3px] transition-all duration-300"
+                  className="inline-flex items-center gap-2 bg-[#1A4DBE] text-white font-semibold px-6 py-3 rounded-lg hover:bg-[#1640a0] hover:-translate-y-[3px] transition-all duration-300 text-sm"
                 >
-                  Shop Now <ArrowRight className="h-4 w-4" />
+                  Browse Marketplace
                 </Link>
                 <Link
                   to="/register?type=seller"
-                  className="inline-flex items-center gap-2 border-2 border-[#1A4DBE] text-[#1A4DBE] font-semibold px-6 py-3 rounded-xl hover:bg-blue-50 hover:-translate-y-[3px] transition-all duration-300"
+                  className="inline-flex items-center gap-2 bg-white border border-gray-300 text-[#1F2937] font-semibold px-6 py-3 rounded-lg hover:border-[#1A4DBE] hover:-translate-y-[3px] transition-all duration-300 text-sm shadow-sm"
                 >
+                  <ShoppingBag className="h-4 w-4 text-[#28A745]" />
                   Start Selling
                 </Link>
               </div>
-              <div className="flex items-center gap-4 text-sm text-gray-500">
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" /> No listing fees
-                </span>
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Buyer protection
-                </span>
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" /> UK verified sellers
-                </span>
-              </div>
             </div>
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl h-64 lg:h-[400px]">
+
+            {/* Right: hero image */}
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl h-64 lg:h-[380px]">
               <img
                 src="/images/mock/hero-collage.jpg"
-                alt="Marketplace hero"
+                alt="UK Marketplace"
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-              {/* floating badge */}
-              <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur rounded-xl px-4 py-2 shadow-lg flex items-center gap-2">
-                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                <span className="text-sm font-bold text-gray-900">4.9</span>
-                <span className="text-xs text-gray-500">Trusted UK Marketplace</span>
+            </div>
+          </div>
+
+          {/* ── Trust strip (floating card, overlaps bottom of hero) ── */}
+          <div className="absolute bottom-0 left-0 right-0 translate-y-1/2 px-4 lg:px-6 z-10">
+            <div className="max-w-[1100px] mx-auto bg-white rounded-2xl shadow-lg border border-gray-100 px-6 py-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 divide-x divide-gray-100">
+                {trustItems.map((item) => (
+                  <div key={item.title} className="flex items-center gap-3 px-2 first:pl-0">
+                    <item.icon className={`h-7 w-7 shrink-0 ${item.color}`} />
+                    <div>
+                      <p className="text-sm font-semibold text-[#1F2937]">{item.title}</p>
+                      <p className="text-[11px] text-gray-400">{item.sub}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </section>
 
-        {/* ── 2. TRUST STRIP ──────────────────────────────────────────────── */}
-        <section className="bg-white border-y border-gray-100 py-4">
-          <div className="max-w-[1360px] mx-auto px-4 lg:px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {trustItems.map((item) => (
-                <div key={item.title} className="flex items-center gap-3">
-                  <item.icon className={`h-7 w-7 shrink-0 ${item.color}`} />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800">{item.title}</p>
-                    <p className="text-xs text-gray-500">{item.sub}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* spacer to compensate for trust strip overlap */}
+        <div className="h-16 bg-[#F9FAFB]" />
 
-        {/* ── 3. CATEGORIES ───────────────────────────────────────────────── */}
-        <section className="bg-gray-50 py-10">
-          <div className="max-w-[1360px] mx-auto px-4 lg:px-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-extrabold text-gray-900">Shop by Category</h2>
-              <Link
-                to="/catalog"
-                className="text-sm font-medium text-[#1A4DBE] hover:underline flex items-center gap-1"
-              >
-                All Categories <ChevronRight className="h-4 w-4" />
-              </Link>
-            </div>
-
-            {/* Main categories */}
-            <div className="grid grid-cols-4 md:grid-cols-8 gap-3 mb-5">
-              {categories.map((cat) => (
-                <Link
-                  key={cat.slug}
-                  to={`/category/${cat.slug}`}
-                  className="group flex flex-col items-center gap-2"
-                >
-                  <div className="w-full aspect-square rounded-2xl overflow-hidden bg-white shadow-sm group-hover:shadow-md transition-shadow">
-                    <img
-                      src={cat.img}
-                      alt={cat.label}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <span className="text-xs font-medium text-gray-700 text-center leading-tight">
-                    {cat.label}
-                  </span>
-                </Link>
-              ))}
-            </div>
-
-            {/* Special categories */}
+        {/* ── 2. CATEGORIES ───────────────────────────────────────────────── */}
+        <section className="bg-[#F9FAFB] pt-6 pb-10 px-4 lg:px-6">
+          <div className="max-w-[1360px] mx-auto space-y-4">
+            {/* Row 1 — 3 large landscape cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {specialCategories.map((cat) => (
+              {bigCategories.map((cat) => (
                 <Link
                   key={cat.slug}
                   to={`/category/${cat.slug}`}
-                  className="group relative rounded-2xl overflow-hidden h-36 shadow-sm hover:shadow-md transition-shadow"
+                  className="group relative rounded-2xl overflow-hidden h-48 shadow-sm hover:shadow-md hover:-translate-y-[3px] transition-all duration-300"
                 >
                   <img
                     src={cat.img}
                     alt={cat.label}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/20 flex flex-col justify-end p-4">
-                    <span className="text-[11px] font-semibold text-amber-300 uppercase tracking-wide mb-1">
-                      {cat.badge}
-                    </span>
-                    <span className="text-base font-bold text-white">{cat.label}</span>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <p className="text-white font-bold text-base mb-0.5">{cat.label}</p>
+                    <div className="flex items-center gap-2">
+                      <StarRow count={cat.stars} small />
+                      <span className="text-[11px] text-gray-300">{cat.priceRange ? `${cat.priceRange} · ` : ""}{cat.listingCount}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Row 2 — 4 compact product cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {smallCategories.map((item) => (
+                <Link
+                  key={item.slug + item.title}
+                  to={`/category/${item.slug}`}
+                  className="group bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-[3px] transition-all duration-300 flex flex-col"
+                >
+                  <div className="overflow-hidden">
+                    <img
+                      src={item.img}
+                      alt={item.title}
+                      className="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <div className="p-3 flex-1">
+                    <p className="text-xs font-semibold text-[#1F2937] mb-0.5 truncate">{item.title}</p>
+                    <p className="text-[11px] text-[#1A4DBE] font-medium mb-1">{item.price}</p>
+                    <div className="flex items-center gap-1">
+                      <StarRow count={item.stars} small />
+                      <span className="text-[10px] text-gray-400 ml-0.5">{item.category}</span>
+                    </div>
                   </div>
                 </Link>
               ))}
@@ -481,29 +446,31 @@ export default function PixelPerfectIndex() {
           </div>
         </section>
 
-        {/* ── 4. FEATURED LISTINGS ────────────────────────────────────────── */}
-        <section className="bg-white py-10">
-          <div className="max-w-[1360px] mx-auto px-4 lg:px-6">
+        {/* ── 3. FEATURED LISTINGS ────────────────────────────────────────── */}
+        <section className="bg-white py-10 px-4 lg:px-6">
+          <div className="max-w-[1360px] mx-auto">
+            {/* Title */}
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-2xl font-extrabold text-gray-900">
-                Featured Listings
+              <h2 className="text-2xl font-extrabold text-[#1F2937]">
+                Featured{" "}
+                <span className="text-[#1A4DBE]">Listings</span>
               </h2>
               <Link
                 to="/catalog"
                 className="text-sm font-medium text-[#1A4DBE] hover:underline flex items-center gap-1"
               >
-                View All <ChevronRight className="h-4 w-4" />
+                View All <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
 
             {/* Filter tabs */}
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-wrap gap-2 mb-5">
               {FILTER_TABS.map((tab) => (
                 <button
                   key={tab.key}
                   data-filter={tab.key}
                   onClick={() => setActiveFilter(tab.key)}
-                  className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-all duration-300 ${
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-300 ${
                     activeFilter === tab.key
                       ? "bg-[#1A4DBE] text-white border-[#1A4DBE]"
                       : "bg-white text-gray-600 border-gray-200 hover:border-[#1A4DBE] hover:text-[#1A4DBE]"
@@ -514,12 +481,12 @@ export default function PixelPerfectIndex() {
               ))}
             </div>
 
-            {/* Product grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {/* Product grid — 6 compact cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {visibleListings.map((item) => (
                 <div
                   key={item.id}
-                  className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-[3px] cursor-pointer"
+                  className="group bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-[3px] transition-all duration-300 cursor-pointer flex flex-col"
                   onClick={() => setQuickViewItem(item)}
                 >
                   <div className="relative overflow-hidden">
@@ -528,31 +495,21 @@ export default function PixelPerfectIndex() {
                       alt={item.title}
                       className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    {item.badge && (
-                      <span className="absolute top-2 left-2 bg-[#1A4DBE] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        {item.badge}
-                      </span>
-                    )}
                     {/* Quick View overlay */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                      <span className="opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white text-gray-900 text-xs font-semibold px-3 py-1.5 rounded-full shadow flex items-center gap-1.5">
-                        <Eye className="h-3.5 w-3.5" /> Quick View
+                      <span className="opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white text-gray-900 text-[10px] font-semibold px-2.5 py-1 rounded-full shadow flex items-center gap-1">
+                        <Eye className="h-3 w-3" /> Quick View
                       </span>
                     </div>
                   </div>
-                  <div className="p-3">
-                    <p className="text-xs text-gray-400 mb-0.5">{item.category}</p>
-                    <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug mb-1.5">
-                      {item.title}
-                    </h3>
-                    <div className="flex items-center gap-1.5 mb-2">
+                  <div className="p-2 flex-1 flex flex-col">
+                    <p className="text-[11px] font-semibold text-[#1F2937] line-clamp-1 mb-0.5">{item.title}</p>
+                    <div className="flex items-center gap-0.5 mb-0.5">
                       <StarRow count={item.stars} small />
-                      <span className="text-[10px] text-gray-400">({item.reviews})</span>
                     </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-base font-extrabold text-gray-900">{item.price}</span>
-                      <span className="text-xs text-gray-400 line-through">{item.originalPrice}</span>
-                    </div>
+                    <p className="text-[10px] text-gray-400 mb-0.5 truncate">{item.seller}</p>
+                    <p className="text-xs font-bold text-[#1F2937] mt-auto">{item.price}</p>
+                    <p className="text-[10px] text-gray-400 truncate">{item.category}</p>
                   </div>
                 </div>
               ))}
@@ -560,175 +517,45 @@ export default function PixelPerfectIndex() {
           </div>
         </section>
 
-        {/* ── 5. COMBINED BUYER + SELLER SECTION ──────────────────────────── */}
-        <section className="bg-gradient-to-br from-[#f0f6ff] to-[#e8f0fd] py-12">
-          <div className="max-w-[1360px] mx-auto px-4 lg:px-6">
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Buyer panel */}
-              <div className="bg-white rounded-2xl p-8 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <ShieldCheck className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">For Buyers</p>
-                    <h3 className="text-xl font-bold text-gray-900">Shop With Confidence</h3>
-                  </div>
-                </div>
-                <ul className="space-y-3 mb-6">
-                  {[
-                    "Thousands of products across every category",
-                    "Verified UK sellers — quality guaranteed",
-                    "Secure checkout with buyer protection",
-                    "Easy returns and responsive support",
-                  ].map((point) => (
-                    <li key={point} className="flex items-start gap-2.5 text-sm text-gray-600">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  to="/catalog"
-                  className="inline-flex items-center gap-2 bg-[#1A4DBE] text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-[#1640a0] hover:-translate-y-[2px] transition-all duration-300 text-sm"
-                >
-                  Start Shopping <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-
-              {/* Seller panel */}
-              <div className="bg-white rounded-2xl p-8 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                    <Store className="h-5 w-5 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">For Sellers</p>
-                    <h3 className="text-xl font-bold text-gray-900">Grow Your Business</h3>
-                  </div>
-                </div>
-                <ul className="space-y-3 mb-6">
-                  {[
-                    "Free to list — no monthly subscription",
-                    "Reach thousands of UK buyers daily",
-                    "Sell any category: retail, wholesale, clearance",
-                    "Fast payouts and seller dashboard analytics",
-                  ].map((point) => (
-                    <li key={point} className="flex items-start gap-2.5 text-sm text-gray-600">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  to="/register?type=seller"
-                  className="inline-flex items-center gap-2 bg-emerald-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-emerald-700 hover:-translate-y-[2px] transition-all duration-300 text-sm"
-                >
-                  Become a Seller <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── 6. FEATURES ─────────────────────────────────────────────────── */}
-        <section className="bg-white py-12">
-          <div className="max-w-[1360px] mx-auto px-4 lg:px-6">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-extrabold text-gray-900 mb-2">
-                Why Loadify Market?
-              </h2>
-              <p className="text-gray-500 text-sm max-w-xl mx-auto">
-                A modern UK marketplace built for buyers and sellers who want simplicity, trust, and results.
-              </p>
-            </div>
-            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6">
-              {features.map((f) => (
-                <div key={f.title} className="text-center px-4 py-6 rounded-2xl bg-gray-50 hover:bg-blue-50 hover:-translate-y-[3px] transition-all duration-300 cursor-default">
-                  <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <f.icon className="h-6 w-6 text-[#1A4DBE]" />
-                  </div>
-                  <h3 className="text-sm font-bold text-gray-900 mb-1">{f.title}</h3>
-                  <p className="text-xs text-gray-500 leading-relaxed">{f.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ── 7. HOW IT WORKS ─────────────────────────────────────────────── */}
-        <section className="bg-gray-50 py-12">
-          <div className="max-w-[1360px] mx-auto px-4 lg:px-6">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-extrabold text-gray-900">How It Works</h2>
-            </div>
-            <div className="grid md:grid-cols-2 gap-10">
-              {/* Buyers */}
-              <div>
-                <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-4">For Buyers</p>
-                <div className="space-y-5">
-                  {howItWorksBuyer.map((s) => (
-                    <div key={s.step} className="flex gap-4 items-start">
-                      <div className="w-9 h-9 rounded-full bg-[#1A4DBE] text-white font-bold text-sm flex items-center justify-center shrink-0">
-                        {s.step}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">{s.title}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {/* Sellers */}
-              <div>
-                <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-4">For Sellers</p>
-                <div className="space-y-5">
-                  {howItWorksSeller.map((s) => (
-                    <div key={s.step} className="flex gap-4 items-start">
-                      <div className="w-9 h-9 rounded-full bg-emerald-600 text-white font-bold text-sm flex items-center justify-center shrink-0">
-                        {s.step}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-gray-900">{s.title}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── 8. FINAL CTA ────────────────────────────────────────────────── */}
-        <section className="bg-[#1A4DBE] py-14 px-4">
-          <div className="max-w-[1360px] mx-auto text-center">
-            <h2 className="text-3xl font-extrabold text-white mb-3">
-              Ready to get started?
+        {/* ── 4. CTA BANNER ───────────────────────────────────────────────── */}
+        <section
+          className="relative py-16 px-4 overflow-hidden"
+          style={{
+            background:
+              "linear-gradient(135deg, #0a1628 0%, #0f2347 35%, #1a3a6b 65%, #0a1628 100%)",
+          }}
+        >
+          {/* decorative earth-glow overlay */}
+          <div
+            className="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-20 pointer-events-none"
+            style={{
+              background: "radial-gradient(circle, #3a7bd5 0%, #1A4DBE 40%, transparent 70%)",
+              transform: "translate(30%, 30%)",
+            }}
+          />
+          <div className="relative max-w-[1360px] mx-auto text-center">
+            <h2 className="text-3xl font-extrabold text-white mb-7">
+              Ready to Join the Marketplace?
             </h2>
-            <p className="text-blue-200 text-sm mb-7 max-w-md mx-auto">
-              Join thousands of UK buyers and sellers on Loadify Market today. It's free to join.
-            </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link
-                to="/register"
-                className="inline-flex items-center gap-2 bg-[#28A745] text-white font-bold px-7 py-3 rounded-xl hover:bg-[#219538] transition-all duration-300 motion-safe:animate-pulse hover:animate-none"
+                to="/catalog"
+                className="inline-flex items-center gap-2 border-2 border-white text-white font-semibold px-7 py-3 rounded-lg hover:bg-white/10 hover:-translate-y-[3px] transition-all duration-300 text-sm"
               >
-                Create Free Account <ArrowRight className="h-4 w-4" />
+                Browse Marketplace
               </Link>
               <Link
-                to="/register?type=seller"
-                className="inline-flex items-center gap-2 border-2 border-white text-white font-bold px-7 py-3 rounded-xl hover:bg-white/10 transition-all duration-300"
+                to="/register"
+                className="inline-flex items-center gap-2 bg-[#28A745] text-white font-semibold px-7 py-3 rounded-lg hover:bg-[#219538] hover:-translate-y-[3px] transition-all duration-300 text-sm motion-safe:animate-pulse hover:animate-none"
               >
-                Start Selling
+                Create Account <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>
         </section>
       </main>
 
-      {/* ── 9. FOOTER ───────────────────────────────────────────────────── */}
+      {/* ── FOOTER ──────────────────────────────────────────────────────── */}
       <Footer />
     </div>
   );
