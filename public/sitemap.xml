@@ -8,7 +8,7 @@
     <priority>1.0</priority>
   </url>
 
-  <!-- ── Service catalogue ─────────────────────────────────────────────── -->
+  <!-- ── Product catalogue ─────────────────────────────────────────────── -->
   <url>
     <loc>https://loadifymarket.co.uk/catalog</loc>
     <changefreq>daily</changefreq>
@@ -22,34 +22,84 @@
 
   <!-- ── Category pages ────────────────────────────────────────────────── -->
   <url>
-    <loc>https://loadifymarket.co.uk/category/transport</loc>
+    <loc>https://loadifymarket.co.uk/category/amazon-returns</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/clearance</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/electronics</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://loadifymarket.co.uk/category/logistics</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://loadifymarket.co.uk/category/warehousing</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://loadifymarket.co.uk/category/freight</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://loadifymarket.co.uk/category/equipment-hire</loc>
+    <loc>https://loadifymarket.co.uk/category/home-garden</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://loadifymarket.co.uk/category/consultancy</loc>
+    <loc>https://loadifymarket.co.uk/category/fashion</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/tools-diy</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/automotive</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/toys</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/pets</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/business-supplies</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/wholesale</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/handmade</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/sports-outdoors</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/health-beauty</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/baby-kids</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/food-drink</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
   </url>
 
   <!-- ── Auth ──────────────────────────────────────────────────────────── -->
@@ -99,6 +149,16 @@
   </url>
   <url>
     <loc>https://loadifymarket.co.uk/cookies</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/returns-policy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/shipping-policy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>

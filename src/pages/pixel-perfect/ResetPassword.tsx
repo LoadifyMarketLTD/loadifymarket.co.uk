@@ -8,6 +8,10 @@ import logo from "@/assets/loadify-logo.png";
 import { supabase } from "@/lib/supabase";
 
 const ResetPassword = () => {
+  // Time to wait for Supabase's PASSWORD_RECOVERY auth event before showing
+  // the "invalid link" error. The event fires asynchronously after mount as
+  // the SDK processes the hash token in the URL.
+  const PASSWORD_RECOVERY_WAIT_MS = 2000;
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -20,11 +24,43 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Listen for the PASSWORD_RECOVERY event that Supabase fires when a user
+    // arrives via the reset-password email link (the token is in the URL hash).
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setHasSession(true);
+        setSessionChecking(false);
+      }
+    });
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    // Fallback: user may already have an active session (e.g. still logged in)
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setHasSession(true);
-      else setError("This password reset link is invalid or has expired. Please request a new one.");
+      if (session) {
+        setHasSession(true);
+        setSessionChecking(false);
+      } else {
+        // Don't show the error immediately — wait for the auth state change
+        // event which fires shortly after mount when the hash token is processed.
+        timeoutId = setTimeout(() => {
+          setSessionChecking((checking) => {
+            if (checking) {
+              setError("This password reset link is invalid or has expired. Please request a new one.");
+            }
+            return false;
+          });
+        }, PASSWORD_RECOVERY_WAIT_MS);
+      }
+    }).catch(() => {
+      setError("Failed to verify reset link. Please try again.");
       setSessionChecking(false);
     });
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

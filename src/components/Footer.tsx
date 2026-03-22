@@ -138,8 +138,8 @@ const Footer = () => {
               </h4>
               <ul className="space-y-2 text-sm text-background/60">
                 <FooterLink to="/signup">Start Selling</FooterLink>
-                <FooterLink to="/seller">Seller Dashboard</FooterLink>
-                <FooterLink to="/seller/products">List a Product</FooterLink>
+                <FooterLink to="/pp/seller">Seller Dashboard</FooterLink>
+                <FooterLink to="/pp/seller/products">List a Product</FooterLink>
                 <FooterLink to="/seller-terms">Seller Fees &amp; Pricing</FooterLink>
                 <FooterLink to="/seller-terms">Seller Guidelines</FooterLink>
                 <FooterLink to="/#how-it-works">How It Works</FooterLink>

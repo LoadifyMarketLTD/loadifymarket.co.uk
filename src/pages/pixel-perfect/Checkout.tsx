@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, CreditCard, MapPin, User, Phone, Mail,
@@ -39,6 +39,17 @@ const Checkout = () => {
   });
 
   const [shippingError, setShippingError] = useState<string | null>(null);
+  // Track whether we've already auto-filled the email so we never overwrite
+  // changes the user makes after the initial sync.
+  const emailSyncedRef = useRef(false);
+
+  // Sync email once auth resolves (user may be null at initial render)
+  useEffect(() => {
+    if (user?.email && !emailSyncedRef.current) {
+      emailSyncedRef.current = true;
+      setShippingData((prev) => ({ ...prev, email: user.email ?? "" }));
+    }
+  }, [user?.email]);
 
   const handleContinueToPayment = () => {
     // Validate required shipping fields before advancing
@@ -68,8 +79,10 @@ const Checkout = () => {
   };
 
   const shipping = subtotal > 2000 ? 0 : 149;
-  const vat = Math.round(subtotal * 0.2);
-  const total = subtotal + shipping + vat;
+  // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
+  // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
+  const vat = Math.round(subtotal / 6);
+  const total = subtotal + shipping;
 
   // ── Submit to Stripe via Netlify function ──────────────────────────────────
   const handlePlaceOrder = async () => {

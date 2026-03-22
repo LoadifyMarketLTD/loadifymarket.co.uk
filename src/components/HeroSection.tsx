@@ -20,17 +20,17 @@ const HeroSection = () => {
       <div className="relative z-10 container mx-auto px-4 py-28">
         <div className="max-w-2xl space-y-7">
           <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-display font-bold leading-[1.08] text-slate-900">
-            Grow your sales with <span className="text-primary">Loadify Market</span>
+            The UK Marketplace for <span className="text-primary">Wholesale, Clearance &amp; Returns</span>
           </h1>
 
           <p className="text-lg text-slate-600 max-w-md leading-relaxed">
-            Trade clearance &amp; bulk stock across the UK
+            Connect with verified UK sellers and buyers. List your stock, discover suppliers, and trade securely — all in one place.
           </p>
 
           <ul className="space-y-3">
             {[
               "Verified Sellers & Real Buyers",
-              "Wholesale, Pallets & Clearance",
+              "Wholesale, Clearance & Returns Listings",
               "Secure Payments via Stripe",
             ].map((item) => (
               <li key={item} className="flex items-center gap-2.5 text-slate-700 font-medium">
@@ -41,12 +41,12 @@ const HeroSection = () => {
           </ul>
 
           <div className="flex flex-wrap gap-3">
-            <Link to="/choose-role">
+            <Link to="/catalog">
               <Button
                 size="lg"
                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base px-8 shadow-lg shadow-emerald-600/20"
               >
-                Get Started <ArrowRight className="ml-2 h-5 w-5" />
+                Browse Listings <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
 
@@ -66,17 +66,7 @@ const HeroSection = () => {
                 variant="outline"
                 className="bg-white/70 hover:bg-white text-slate-900 border-slate-200 font-bold text-base px-8 shadow-sm"
               >
-                Register as Buyer <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-
-            <Link to="/register?type=broker">
-              <Button
-                size="lg"
-                variant="outline"
-                className="bg-white/70 hover:bg-white text-slate-900 border-slate-200 font-bold text-base px-8 shadow-sm"
-              >
-                Register as Broker <ArrowRight className="ml-2 h-5 w-5" />
+                Join as Buyer <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
           </div>

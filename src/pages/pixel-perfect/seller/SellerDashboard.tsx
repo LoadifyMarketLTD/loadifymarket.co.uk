@@ -65,7 +65,7 @@ const SellerDashboard = () => {
     if (!user) return;
     const load = async () => {
       try {
-        const [productsRes, ordersRes, profileRes] = await Promise.all([
+        const [productsRes, allOrdersRes, profileRes] = await Promise.all([
           supabase
             .from("products")
             .select("id, title, views, addToCartCount, stockQuantity, isActive")
@@ -74,8 +74,7 @@ const SellerDashboard = () => {
             .from("orders")
             .select(`id, orderNumber, total, status, createdAt, buyerId`)
             .eq("sellerId", user.id)
-            .order("createdAt", { ascending: false })
-            .limit(5),
+            .order("createdAt", { ascending: false }),
           supabase
             .from("seller_profiles")
             .select("rating")
@@ -84,7 +83,7 @@ const SellerDashboard = () => {
         ]);
 
         const products = productsRes.data ?? [];
-        const orders = (ordersRes.data ?? []) as Array<{
+        const orders = (allOrdersRes.data ?? []) as Array<{
           id: string; orderNumber: string; total: number; status: string; createdAt: string; buyerId: string;
         }>;
 
@@ -107,9 +106,9 @@ const SellerDashboard = () => {
           sellerRating: profileRes.data?.rating ?? 0,
         });
 
-        // Recent orders
+        // Recent orders (show last 5 only)
         setRecentOrders(
-          orders.map((o) => ({
+          orders.slice(0, 5).map((o) => ({
             id: o.id,
                         orderNumber: o.orderNumber,
             buyerName: "Customer",

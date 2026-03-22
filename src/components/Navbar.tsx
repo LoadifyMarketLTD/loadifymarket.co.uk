@@ -1,25 +1,45 @@
-import { Menu, X, Search, ShoppingCart } from "lucide-react";
+import { Menu, X, Search, ShoppingCart, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "@/assets/loadify-logo.png";
 import NavbarSearch from "@/components/NavbarSearch";
 import { useCart } from "@/contexts/CartContext";
+import { useAuthStore } from "@/store";
+import { supabase } from "@/lib/supabase";
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const { cartCount } = useCart();
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    logout();
+    navigate("/login");
+  };
+
+  const handleMobileLogout = () => {
+    setMobileOpen(false);
+    handleLogout();
+  };
+
+  const dashboardPath =
+    user?.role === "seller" ? "/pp/seller" :
+    user?.role === "admin" || user?.role === "owner" ? "/pp/admin" :
+    "/pp/buyer";
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
-        <div className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="Loadify Market" className="h-9 w-9" />
           <span className="font-display text-xl font-bold tracking-tight text-foreground whitespace-nowrap">
             Loadify <span className="text-primary">Market</span>
           </span>
-        </div>
+        </Link>
 
         {/* Desktop search */}
         <NavbarSearch className="hidden lg:block w-48 xl:w-72 2xl:w-96" />
@@ -40,8 +60,23 @@ const Navbar = () => {
               </span>
             )}
           </Link>
-          <Button variant="ghost" size="sm" asChild><Link to="/login">Sign In</Link></Button>
-          <Button size="sm" className="bg-gradient-hero text-primary-foreground" asChild><Link to="/signup">Get Started</Link></Button>
+          {user ? (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to={dashboardPath}>
+                  <User className="h-4 w-4 mr-1" /> Dashboard
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-1" /> Sign Out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild><Link to="/login">Sign In</Link></Button>
+              <Button size="sm" className="bg-gradient-hero text-primary-foreground" asChild><Link to="/signup">Get Started</Link></Button>
+            </>
+          )}
         </div>
 
         {/* Mobile/tablet buttons */}
@@ -71,13 +106,26 @@ const Navbar = () => {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="lg:hidden bg-card border-b border-border px-4 py-4 space-y-3">
-          <Link to="/catalog" className="block text-sm font-medium text-muted-foreground">Catalog</Link>
-          <Link to="/clearance" className="block text-sm font-medium text-muted-foreground">Deals</Link>
-          <Link to="/catalog" className="block text-sm font-medium text-muted-foreground">Categories</Link>
-          <Link to="/contact" className="block text-sm font-medium text-muted-foreground">Contact</Link>
+          <Link to="/catalog" onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-muted-foreground">Catalog</Link>
+          <Link to="/clearance" onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-muted-foreground">Deals</Link>
+          <Link to="/catalog" onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-muted-foreground">Categories</Link>
+          <Link to="/contact" onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-muted-foreground">Contact</Link>
           <div className="flex gap-2 pt-2">
-            <Button variant="ghost" size="sm" className="flex-1" asChild><Link to="/login">Sign In</Link></Button>
-            <Button size="sm" className="flex-1 bg-gradient-hero text-primary-foreground" asChild><Link to="/signup">Get Started</Link></Button>
+            {user ? (
+              <>
+                <Button variant="ghost" size="sm" className="flex-1" asChild>
+                  <Link to={dashboardPath} onClick={() => setMobileOpen(false)}>Dashboard</Link>
+                </Button>
+                <Button size="sm" className="flex-1" variant="outline" onClick={handleMobileLogout}>
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" className="flex-1" asChild><Link to="/login" onClick={() => setMobileOpen(false)}>Sign In</Link></Button>
+                <Button size="sm" className="flex-1 bg-gradient-hero text-primary-foreground" asChild><Link to="/signup" onClick={() => setMobileOpen(false)}>Get Started</Link></Button>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Bell, Shield, Globe, Eye, EyeOff, Save, Key, Trash2
+  Bell, Shield, Globe, Eye, EyeOff, Save, Key, Trash2, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +11,18 @@ import { Separator } from "@/components/ui/separator";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store";
 
 const BuyerSettings = () => {
+  const { user } = useAuthStore();
+  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
   const [notifications, setNotifications] = useState({
     orderUpdates: true,
     deliveryAlerts: true,
@@ -25,6 +34,39 @@ const BuyerSettings = () => {
 
   const toggleNotification = (key: keyof typeof notifications) =>
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const handleChangePassword = async () => {
+    if (!user?.email) return;
+    if (newPassword.length < 8) {
+      toast({ title: "Password too short", description: "New password must be at least 8 characters.", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Passwords do not match", description: "New password and confirmation must be identical.", variant: "destructive" });
+      return;
+    }
+    if (!currentPassword) {
+      toast({ title: "Current password required", description: "Enter your current password to confirm this change.", variant: "destructive" });
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      // Re-authenticate with current password before updating
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email: user.email, password: currentPassword });
+      if (signInError) {
+        toast({ title: "Incorrect current password", description: "Please check your current password and try again.", variant: "destructive" });
+        return;
+      }
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: "Password updated", description: "Your password has been changed successfully." });
+      setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+    } catch (err) {
+      toast({ title: "Failed to update password", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setSavingPassword(false);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6 max-w-[900px]">
@@ -73,7 +115,12 @@ const BuyerSettings = () => {
             <div>
               <Label className="text-xs">Current Password</Label>
               <div className="relative mt-1">
-                <Input type={showPassword ? "text" : "password"} placeholder="••••••••" />
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
                 <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -82,13 +129,33 @@ const BuyerSettings = () => {
             <div />
             <div>
               <Label className="text-xs">New Password</Label>
-              <Input type="password" placeholder="••••••••" className="mt-1" />
+              <Input
+                type="password"
+                placeholder="••••••••"
+                className="mt-1"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
             </div>
             <div>
               <Label className="text-xs">Confirm New Password</Label>
-              <Input type="password" placeholder="••••••••" className="mt-1" />
+              <Input
+                type="password"
+                placeholder="••••••••"
+                className="mt-1"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
             </div>
           </div>
+          <Button
+            size="sm"
+            onClick={handleChangePassword}
+            disabled={savingPassword || !currentPassword || !newPassword || !confirmPassword}
+          >
+            {savingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Key className="mr-2 h-4 w-4" />}
+            Update Password
+          </Button>
           <Separator />
           <div className="flex items-center justify-between">
             <div>

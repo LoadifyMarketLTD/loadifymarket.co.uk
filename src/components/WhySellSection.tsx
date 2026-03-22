@@ -70,7 +70,7 @@ const WhySellSection = () => {
 
         {/* CTA */}
         <div className="text-center mt-12">
-          <Link to="/signup">
+          <Link to="/register?type=seller">
             <Button
               size="lg"
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base px-8 shadow-lg shadow-emerald-600/20"

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { RotateCcw, Search, Filter, AlertCircle, CheckCircle2, Clock, XCircle, Package } from "lucide-react";
+import { RotateCcw, Search, Filter, AlertCircle, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,11 +17,10 @@ import { useAuthStore } from "@/store";
 import type { Return } from "@/types";
 
 const statusConfig: Record<string, { label: string; className: string; icon: React.ElementType }> = {
-  requested: { label: "Requested", className: "bg-amber-500/10 text-amber-700", icon: AlertCircle },
-  approved: { label: "Approved", className: "bg-blue-500/10 text-blue-700", icon: CheckCircle2 },
-  received: { label: "Received", className: "bg-purple-500/10 text-purple-700", icon: Package },
-  refunded: { label: "Refunded", className: "bg-emerald-500/10 text-emerald-700", icon: CheckCircle2 },
-  rejected: { label: "Rejected", className: "bg-red-500/10 text-red-700", icon: XCircle },
+  requested:  { label: "Requested",  className: "bg-amber-500/10 text-amber-700",   icon: AlertCircle },
+  approved:   { label: "Approved",   className: "bg-blue-500/10 text-blue-700",     icon: CheckCircle2 },
+  completed:  { label: "Completed",  className: "bg-emerald-500/10 text-emerald-700", icon: CheckCircle2 },
+  rejected:   { label: "Rejected",   className: "bg-red-500/10 text-red-700",       icon: XCircle },
 };
 
 function formatDate(dateStr: string): string {
@@ -156,8 +155,8 @@ const SellerReturns = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Pending Review", count: byStatus("requested").length, icon: AlertCircle, color: "text-amber-600 bg-amber-500/10" },
-          { label: "Approved / In Progress", count: filtered.filter((r) => ["approved", "received"].includes(r.status)).length, icon: Clock, color: "text-blue-600 bg-blue-500/10" },
-          { label: "Refunded", count: byStatus("refunded").length, icon: CheckCircle2, color: "text-emerald-600 bg-emerald-500/10" },
+          { label: "Approved / In Progress", count: byStatus("approved").length, icon: Clock, color: "text-blue-600 bg-blue-500/10" },
+          { label: "Completed", count: byStatus("completed").length, icon: CheckCircle2, color: "text-emerald-600 bg-emerald-500/10" },
           { label: "Rejected", count: byStatus("rejected").length, icon: XCircle, color: "text-red-600 bg-red-500/10" },
         ].map((stat) => (
           <div key={stat.label} className="bg-card rounded-xl border border-border p-5 space-y-2">
@@ -185,12 +184,12 @@ const SellerReturns = () => {
           <TabsTrigger value="all">All <Badge variant="secondary" className="ml-2 text-xs">{filtered.length}</Badge></TabsTrigger>
           <TabsTrigger value="requested">Pending</TabsTrigger>
           <TabsTrigger value="approved">In Progress</TabsTrigger>
-          <TabsTrigger value="refunded">Refunded</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
         </TabsList>
         <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
         <TabsContent value="requested"><Card><CardContent className="pt-4">{renderTable(byStatus("requested"))}</CardContent></Card></TabsContent>
-        <TabsContent value="approved"><Card><CardContent className="pt-4">{renderTable(filtered.filter((r) => ["approved", "received"].includes(r.status)))}</CardContent></Card></TabsContent>
-        <TabsContent value="refunded"><Card><CardContent className="pt-4">{renderTable(byStatus("refunded"))}</CardContent></Card></TabsContent>
+        <TabsContent value="approved"><Card><CardContent className="pt-4">{renderTable(byStatus("approved"))}</CardContent></Card></TabsContent>
+        <TabsContent value="completed"><Card><CardContent className="pt-4">{renderTable(byStatus("completed"))}</CardContent></Card></TabsContent>
       </Tabs>
 
       {/* Return Detail Dialog */}

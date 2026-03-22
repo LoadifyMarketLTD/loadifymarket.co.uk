@@ -133,7 +133,7 @@ const SellerOrders = () => {
                         variant="ghost"
                         size="sm"
                         className="text-xs"
-                        onClick={() => navigate(`/orders/${o.id}`)}
+                        onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}
                       >
                         View
                       </Button>

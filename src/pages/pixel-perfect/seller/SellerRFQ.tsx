@@ -40,7 +40,7 @@ const SellerRFQ = () => {
     const { data } = await supabase
       .from("rfq_requests")
       .select("*")
-      .order("createdAt", { ascending: false });
+      .order("created_at", { ascending: false });
     setRfqs((data ?? []) as RFQRequest[]);
     setLoading(false);
   };
@@ -68,12 +68,18 @@ const SellerRFQ = () => {
         .update({ status: "replied" })
         .eq("id", selected.id);
       if (dbError) throw dbError;
+
+      // Capture values before clearing state
+      const buyerEmail = selected.buyer_email;
       const subject = encodeURIComponent(`Re: Quote Request – ${selected.product_name}`);
       const body = encodeURIComponent(quoteNote);
-      window.location.href = `mailto:${selected.buyer_email}?subject=${subject}&body=${body}`;
+
       await load();
       setSelected(null);
       setQuoteNote("");
+
+      // email address must NOT be encoded or the mailto link breaks
+      window.location.href = `mailto:${buyerEmail}?subject=${subject}&body=${body}`;
     } catch (e) {
       setRfqError(e instanceof Error ? e.message : "Failed to send reply.");
     } finally {

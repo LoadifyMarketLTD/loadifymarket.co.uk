@@ -13,17 +13,36 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import { toast } from "@/hooks/use-toast";
+
+const NOTIF_STORAGE_KEY = "loadify_seller_notifications";
+
+function loadNotifications() {
+  try {
+    const raw = localStorage.getItem(NOTIF_STORAGE_KEY);
+    if (raw) return JSON.parse(raw) as Record<string, boolean>;
+  } catch { /* malformed JSON — fall through and return null to use defaults */ }
+  return null;
+}
+
+const defaultNotifications = {
+  orderAlerts: true,
+  returnAlerts: true,
+  rfqAlerts: true,
+  reviewAlerts: false,
+  marketingEmails: false,
+  weeklyReport: true,
+};
 
 const SellerSettings = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [notifications, setNotifications] = useState({
-    orderAlerts: true,
-    returnAlerts: true,
-    rfqAlerts: true,
-    reviewAlerts: false,
-    marketingEmails: false,
-    weeklyReport: true,
-  });
+  const [notifications, setNotifications] = useState<typeof defaultNotifications>(
+    () => ({ ...defaultNotifications, ...(loadNotifications() ?? {}) })
+  );
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [saveLoading, setSaveLoading] = useState(false);
 
   // Stripe Connect state
   const [connectLoading, setConnectLoading] = useState(false);
@@ -32,6 +51,54 @@ const SellerSettings = () => {
 
   const toggleNotification = (key: keyof typeof notifications) =>
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const handleSaveSettings = async () => {
+    setSaveLoading(true);
+    let passwordChanged = false;
+    try {
+      // Persist notification preferences to localStorage
+      localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(notifications));
+
+      // Change password if the user has filled in the password fields
+      if (newPassword || currentPassword) {
+        if (!currentPassword) throw new Error("Please enter your current password.");
+        if (!newPassword) throw new Error("Please enter a new password.");
+        if (newPassword !== confirmPassword) throw new Error("New passwords do not match.");
+        if (newPassword.length < 8) throw new Error("Password must be at least 8 characters.");
+
+        // Re-authenticate with the current password to verify it before updating
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user?.email) throw new Error("Unable to verify your identity. Please log in again.");
+        const { error: reAuthError } = await supabase.auth.signInWithPassword({
+          email: session.user.email,
+          password: currentPassword,
+        });
+        if (reAuthError) throw new Error("Current password is incorrect.");
+
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        if (error) throw error;
+        passwordChanged = true;
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      }
+
+      toast({
+        title: "Settings saved",
+        description: passwordChanged
+          ? "Notification preferences and password updated."
+          : "Notification preferences saved.",
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to save settings",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaveLoading(false);
+    }
+  };
 
   const handleConnectStripe = async () => {
     setConnectError("");
@@ -80,8 +147,9 @@ const SellerSettings = () => {
           <h1 className="font-display text-2xl font-bold text-foreground">Settings</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your account preferences and security.</p>
         </div>
-        <Button className="bg-gradient-hero text-primary-foreground">
-          <Save className="mr-2 h-4 w-4" /> Save Settings
+        <Button className="bg-gradient-hero text-primary-foreground" onClick={handleSaveSettings} disabled={saveLoading}>
+          {saveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          Save Settings
         </Button>
       </div>
 
@@ -122,7 +190,7 @@ const SellerSettings = () => {
             <div>
               <Label className="text-xs">Current Password</Label>
               <div className="relative mt-1">
-                <Input type={showPassword ? "text" : "password"} placeholder="••••••••" />
+                <Input type={showPassword ? "text" : "password"} placeholder="••••••••" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
                 <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -131,11 +199,11 @@ const SellerSettings = () => {
             <div />
             <div>
               <Label className="text-xs">New Password</Label>
-              <Input type="password" placeholder="••••••••" className="mt-1" />
+              <Input type="password" placeholder="••••••••" className="mt-1" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
             </div>
             <div>
               <Label className="text-xs">Confirm New Password</Label>
-              <Input type="password" placeholder="••••••••" className="mt-1" />
+              <Input type="password" placeholder="••••••••" className="mt-1" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
             </div>
           </div>
           <Separator />

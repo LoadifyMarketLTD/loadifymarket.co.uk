@@ -64,19 +64,23 @@ const Catalog = () => {
 
   // ── Fetch real category names from Supabase (once on mount) ───────────────
   useEffect(() => {
-    supabase
-      .from("categories")
-      .select("name")
-      .eq("isActive", true)
-      .order("order", { ascending: true })
-      .then(({ data }) => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("categories")
+          .select("name")
+          .eq("isActive", true)
+          .order("order", { ascending: true });
         if (data) {
           const names = data
             .map((c: { name: string }) => c.name)
             .filter((n: string) => n !== "Logistics Jobs"); // exclude internal-only
           setDbCategories(names);
         }
-      });
+      } catch (err) {
+        console.error("categories fetch failed:", err);
+      }
+    })();
   }, []);
 
   // ── Fetch products from Supabase ──────────────────────────────────────────

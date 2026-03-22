@@ -152,6 +152,10 @@ function App() {
       } else {
         setLoading(false);
       }
+    }).catch((err: unknown) => {
+      // Network error or Supabase unreachable — unblock loading so the app is usable
+      console.error('[App] Auth initialization error:', err);
+      setLoading(false);
     });
 
     // Listen for auth changes
@@ -272,7 +276,10 @@ function App() {
         {/* ── Standalone functional pages (no pixel-perfect equivalent yet) ─────── */}
 
         {/* Order Success — Stripe redirects here after payment */}
-        <Route path="orders/success" element={<Suspense fallback={<PageLoader />}><OrderSuccessPage /></Suspense>} />
+        {/* NOTE: create-checkout.ts uses /order-success — keep this route matching that */}
+        <Route path="order-success" element={<Suspense fallback={<PageLoader />}><OrderSuccessPage /></Suspense>} />
+        {/* Alias for any old links using /orders/success */}
+        <Route path="orders/success" element={<Navigate to="/order-success" replace />} />
 
         {/* Checkout Error — Stripe redirects here on payment failure */}
         <Route path="checkout/error" element={<Suspense fallback={<PageLoader />}><PPCheckoutError /></Suspense>} />
@@ -302,6 +309,7 @@ function App() {
         {/* Public: Order Tracking — no pixel-perfect equivalent yet */}
         <Route path="tracking/:orderNumber" element={<Suspense fallback={<PageLoader />}><TrackingPage /></Suspense>} />
         <Route path="track-order" element={<Suspense fallback={<PageLoader />}><TrackOrderPage /></Suspense>} />
+        <Route path="track" element={<Navigate to="/track-order" replace />} />
 
         {/* Legal pages without pixel-perfect equivalents */}
         <Route path="acceptable-use-policy" element={<Suspense fallback={<PageLoader />}><AcceptableUsePolicyPage /></Suspense>} />

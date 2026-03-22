@@ -60,14 +60,18 @@ const CategoryPage = () => {
     if (!config) return;
     const filter = config.productFilter;
     if (filter.categorySlug) {
-      supabase
-        .from("categories")
-        .select("id")
-        .eq("slug", filter.categorySlug)
-        .single()
-        .then(({ data }) => {
+      (async () => {
+        try {
+          const { data } = await supabase
+            .from("categories")
+            .select("id")
+            .eq("slug", filter.categorySlug)
+            .single();
           if (data) setCategoryId(data.id as string);
-        });
+        } catch (err) {
+          console.error("category id lookup failed:", err);
+        }
+      })();
     }
   }, [config]);
 
