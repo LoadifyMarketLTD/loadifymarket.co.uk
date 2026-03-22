@@ -150,10 +150,11 @@ const featuredListings = [
 
 function StarRow({ count, small = false }: { count: number; small?: boolean }) {
   return (
-    <div className="flex gap-0.5">
+    <div className="flex gap-0.5" role="img" aria-label={`${count} out of 5 stars`}>
       {[1, 2, 3, 4, 5].map((n) => (
         <Star
           key={n}
+          aria-hidden="true"
           className={`${small ? "h-2.5 w-2.5" : "h-3 w-3"} ${
             n <= count ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"
           }`}
@@ -177,6 +178,9 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="quick-view-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ backdropFilter: "blur(5px)", backgroundColor: "rgba(0,0,0,0.45)" }}
       onClick={handleBackdropClick}
@@ -187,7 +191,7 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
           <button
             onClick={onClose}
             className="absolute top-3 right-3 bg-white/90 hover:bg-white text-gray-700 rounded-full w-8 h-8 flex items-center justify-center shadow transition-all"
-            aria-label="Close"
+            aria-label="Close quick view"
           >
             <X className="h-4 w-4" />
           </button>
@@ -196,7 +200,7 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
           <p className="text-xs font-semibold text-[#1A4DBE] uppercase tracking-wide mb-1">
             {item.category}
           </p>
-          <h3 className="text-xl font-extrabold text-[#1F2937] mb-1">{item.title}</h3>
+          <h3 id="quick-view-title" className="text-xl font-extrabold text-[#1F2937] mb-1">{item.title}</h3>
           <p className="text-xs text-gray-500 mb-3">by {item.seller}</p>
           <div className="flex items-center gap-2 mb-4">
             <StarRow count={item.stars} />
@@ -249,6 +253,7 @@ function CategoryCard({
         <img
           src={img}
           alt={label}
+          loading="lazy"
           className={`w-full ${imgHeight} object-cover group-hover:scale-105 transition-transform duration-300`}
         />
       </div>
@@ -322,6 +327,8 @@ export default function PixelPerfectIndex() {
                 src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=900&auto=format&fit=crop"
                 alt="UK Multi-Category Marketplace"
                 className="w-full h-full object-cover"
+                loading="eager"
+                fetchPriority="high"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/15 to-transparent" />
             </div>
@@ -403,11 +410,12 @@ export default function PixelPerfectIndex() {
             </p>
 
             {/* Filter tabs */}
-            <div className="flex flex-wrap gap-2 mb-6">
+            <div className="flex flex-wrap gap-2 mb-6" role="group" aria-label="Filter listings by category">
               {FILTER_TABS.map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveFilter(tab.key)}
+                  aria-pressed={activeFilter === tab.key}
                   className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-300 ${
                     activeFilter === tab.key
                       ? "bg-[#1A4DBE] text-white border-[#1A4DBE]"
@@ -422,23 +430,27 @@ export default function PixelPerfectIndex() {
             {/* Product grid: 6 compact cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {visibleListings.map((item) => (
-                <button
+                <Link
                   key={item.id}
-                  type="button"
-                  aria-label={`Quick view ${item.title}`}
-                  className="group bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-[3px] transition-all duration-300 cursor-pointer flex flex-col text-left w-full"
-                  onClick={() => setQuickViewItem(item)}
+                  to="/catalog"
+                  className="group bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-[3px] transition-all duration-300 flex flex-col"
                 >
                   <div className="relative overflow-hidden w-full">
                     <img
                       src={item.img}
                       alt={item.title}
+                      loading="lazy"
                       className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                      <span className="opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white text-gray-900 text-[10px] font-semibold px-2.5 py-1 rounded-full shadow flex items-center gap-1">
-                        <Eye className="h-3 w-3" /> Quick View
-                      </span>
+                      <button
+                        type="button"
+                        aria-label={`Quick view ${item.title}`}
+                        className="opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white text-gray-900 text-[10px] font-semibold px-2.5 py-1 rounded-full shadow flex items-center gap-1"
+                        onClick={(e) => { e.preventDefault(); setQuickViewItem(item); }}
+                      >
+                        <Eye className="h-3 w-3" aria-hidden="true" /> Quick View
+                      </button>
                     </div>
                   </div>
                   <div className="p-2 flex-1 flex flex-col">
@@ -450,7 +462,7 @@ export default function PixelPerfectIndex() {
                     <p className="text-xs font-extrabold text-[#1F2937] mt-1">{item.price}</p>
                     <p className="text-[10px] text-gray-400 truncate">{item.category}</p>
                   </div>
-                </button>
+                </Link>
               ))}
             </div>
           </div>

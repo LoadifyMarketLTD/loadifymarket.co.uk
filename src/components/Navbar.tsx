@@ -72,6 +72,8 @@ const Navbar = () => {
               className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               onClick={() => setCategoriesOpen(!categoriesOpen)}
               onMouseEnter={() => setCategoriesOpen(true)}
+              aria-expanded={categoriesOpen}
+              aria-haspopup="true"
             >
               Categories <ChevronDown className={`h-3.5 w-3.5 transition-transform ${categoriesOpen ? "rotate-180" : ""}`} />
             </button>
@@ -163,12 +165,14 @@ const Navbar = () => {
         <div className="flex lg:hidden items-center gap-1">
           <button
             className="text-foreground p-2"
+            aria-label="Toggle search"
             onClick={() => { setMobileSearchOpen(!mobileSearchOpen); setMobileOpen(false); }}
           >
             <Search size={20} />
           </button>
           <button
             className="text-foreground p-2"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
             onClick={() => { setMobileOpen(!mobileOpen); setMobileSearchOpen(false); }}
           >
             {mobileOpen ? <X size={24} /> : <Menu size={24} />}
@@ -192,18 +196,21 @@ const Navbar = () => {
           <div>
             <button
               className="flex items-center justify-between w-full py-2 text-sm font-medium text-muted-foreground"
+              aria-expanded={mobileExpanded === "categories"}
+              aria-controls="mobile-categories-menu"
               onClick={() => setMobileExpanded(mobileExpanded === "categories" ? null : "categories")}
             >
               Categories <ChevronDown className={`h-4 w-4 transition-transform ${mobileExpanded === "categories" ? "rotate-180" : ""}`} />
             </button>
             {mobileExpanded === "categories" && (
-              <div className="pl-3 space-y-1 pb-2">
+              <div id="mobile-categories-menu" className="pl-3 space-y-1 pb-2">
                 {CATEGORY_CONFIG.map((cat) => {
                   const Icon = cat.icon;
                   return (
                     <div key={cat.slug}>
                       <button
                         className="flex items-center justify-between w-full py-1.5 text-sm font-medium text-gray-700"
+                        aria-expanded={mobileExpanded === cat.slug}
                         onClick={() => setMobileExpanded(mobileExpanded === cat.slug ? "categories" : cat.slug)}
                       >
                         <span className="flex items-center gap-2">
