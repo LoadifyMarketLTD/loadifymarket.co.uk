@@ -116,7 +116,7 @@ const BuyerOrders = () => {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
-                  onClick={() => navigate(`/orders/${o.id}`)}
+                  onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}
                 >
                   <Eye className="h-4 w-4" />
                 </Button>

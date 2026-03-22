@@ -3,8 +3,10 @@ import {
   Star, FileText, UserCircle, Settings, LogOut
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import logo from "@/assets/loadify-logo.png";
+import { useAuthStore } from "@/store";
+import { supabase } from "@/lib/supabase";
 
 import {
   Sidebar,
@@ -39,7 +41,22 @@ export function SellerSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
+  const { user, logout } = useAuthStore();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    logout();
+    navigate("/login");
+  };
+
+  const initials = user
+    ? `${(user.firstName?.[0] ?? "").toUpperCase()}${(user.lastName?.[0] ?? "").toUpperCase()}` || "S"
+    : "S";
+  const displayName = user
+    ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || "Seller"
+    : "Seller";
 
   const isActive = (path: string) =>
     path === "/seller" ? currentPath === "/seller" : currentPath.startsWith(path);
@@ -120,19 +137,23 @@ export function SellerSidebar() {
         {!collapsed ? (
           <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
             <div className="w-9 h-9 rounded-full bg-gradient-hero flex items-center justify-center text-primary-foreground text-sm font-bold shrink-0">
-              JD
+              {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">John Doe</p>
-              <p className="text-xs text-muted-foreground truncate">TechWholesale UK</p>
+              <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email ?? ""}</p>
             </div>
-            <LogOut className="h-4 w-4 text-muted-foreground shrink-0 cursor-pointer hover:text-foreground transition-colors" />
+            <button onClick={handleLogout} aria-label="Sign out">
+              <LogOut className="h-4 w-4 text-muted-foreground shrink-0 cursor-pointer hover:text-foreground transition-colors" />
+            </button>
           </div>
         ) : (
           <div className="flex justify-center">
-            <div className="w-9 h-9 rounded-full bg-gradient-hero flex items-center justify-center text-primary-foreground text-sm font-bold">
-              JD
-            </div>
+            <button onClick={handleLogout} aria-label="Sign out">
+              <div className="w-9 h-9 rounded-full bg-gradient-hero flex items-center justify-center text-primary-foreground text-sm font-bold">
+                {initials}
+              </div>
+            </button>
           </div>
         )}
       </SidebarFooter>

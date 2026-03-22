@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Package, Search, Filter, Eye, Ban, CheckCircle2, MoreHorizontal, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,7 @@ type UserRow = {
 };
 
 const AdminProducts = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -226,7 +228,7 @@ const AdminProducts = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(`/product/${p.id}`)}>
                       <Eye className="h-3.5 w-3.5 mr-2" /> View Listing
                     </DropdownMenuItem>
                     {p.isActive ? (

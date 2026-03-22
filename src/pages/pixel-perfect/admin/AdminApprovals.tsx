@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Search, CheckCircle2, XCircle, Eye, Building2, Mail, Calendar, Loader2,
+  Search, CheckCircle2, XCircle, Eye, Building2, Mail, Calendar, Loader2, ExternalLink,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -33,6 +34,7 @@ const statusColor: Record<string, string> = {
 };
 
 const AdminApprovals = () => {
+  const navigate = useNavigate();
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -297,6 +299,15 @@ const AdminApprovals = () => {
                   {selectedSeller.status}
                 </Badge>
               </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => { setSelectedSeller(null); navigate(`/admin/sellers/${selectedSeller.userId}`); }}
+              >
+                <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> View Full Profile
+              </Button>
             </div>
 
             {!selectedSeller.isApproved && selectedSeller.status !== "rejected" && selectedSeller.status !== "suspended" && (

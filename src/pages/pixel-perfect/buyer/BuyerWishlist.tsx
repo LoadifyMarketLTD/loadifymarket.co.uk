@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Heart, ShoppingCart, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { useCart } from "@/contexts/CartContext";
+import { useToast } from "@/hooks/use-toast";
+import type { Product } from "@/components/catalog/ProductCard";
 
 interface WishlistProduct {
   id: string;
@@ -16,6 +20,8 @@ interface WishlistProduct {
 
 const BuyerWishlist = () => {
   const { user } = useAuthStore();
+  const { addToCart } = useCart();
+  const { toast } = useToast();
   const [items, setItems] = useState<WishlistProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -95,14 +101,16 @@ const BuyerWishlist = () => {
                 </Badge>
               )}
               <CardContent className="p-4">
-                <div className="w-full h-28 rounded-lg bg-muted flex items-center justify-center mb-3 overflow-hidden">
-                  {item.images?.[0] ? (
-                    <img src={item.images[0]} alt={item.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <Heart className="h-10 w-10 text-muted-foreground opacity-30" />
-                  )}
-                </div>
-                <p className="text-sm font-medium text-foreground line-clamp-2 leading-snug">{item.title}</p>
+                <Link to={`/product/${item.id}`} className="block">
+                  <div className="w-full h-28 rounded-lg bg-muted flex items-center justify-center mb-3 overflow-hidden">
+                    {item.images?.[0] ? (
+                      <img src={item.images[0]} alt={item.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <Heart className="h-10 w-10 text-muted-foreground opacity-30" />
+                    )}
+                  </div>
+                  <p className="text-sm font-medium text-foreground line-clamp-2 leading-snug">{item.title}</p>
+                </Link>
 
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-base font-bold text-foreground">
@@ -119,6 +127,28 @@ const BuyerWishlist = () => {
                     size="sm"
                     className="flex-1 text-xs"
                     disabled={!item.isActive}
+                    onClick={() => {
+                      // Only id, title, price, and image are used for cart display.
+                      // Checkout re-validates product data from the database.
+                      const cartProduct: Product = {
+                        id: item.id,
+                        title: item.title,
+                        price: item.price,
+                        image: item.images?.[0] ?? "",
+                        category: "",
+                        subcategory: "",
+                        condition: "New",
+                        location: "",
+                        seller: "",
+                        sellerVerified: false,
+                        unitCount: 1,
+                        rating: 0,
+                        views: 0,
+                        listed: "",
+                      };
+                      addToCart(cartProduct, 1);
+                      toast({ title: "Added to cart", description: item.title });
+                    }}
                   >
                     <ShoppingCart className="h-3 w-3 mr-1" />
                     Add to Cart

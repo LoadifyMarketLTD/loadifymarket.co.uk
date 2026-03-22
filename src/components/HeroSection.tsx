@@ -41,7 +41,7 @@ const HeroSection = () => {
           </ul>
 
           <div className="flex flex-wrap gap-3">
-            <Link to="/choose-role">
+            <Link to="/signup">
               <Button
                 size="lg"
                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base px-8 shadow-lg shadow-emerald-600/20"
