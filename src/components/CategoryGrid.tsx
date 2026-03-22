@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Cpu, Shirt, Home, Wrench, Gamepad2 } from "lucide-react";
 
 const categories = [
   {
@@ -7,72 +7,72 @@ const categories = [
     label: "Electronics",
     count: "1,300+",
     img: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=700&auto=format&fit=crop",
+    icon: Cpu,
+    accent: "bg-blue-50 text-[#2563EB]",
   },
   {
     slug: "fashion",
     label: "Fashion",
     count: "900+",
     img: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=700&auto=format&fit=crop",
+    icon: Shirt,
+    accent: "bg-pink-50 text-pink-600",
   },
   {
     slug: "home-garden",
     label: "Home & Kitchen",
     count: "1,100+",
     img: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500&auto=format&fit=crop",
+    icon: Home,
+    accent: "bg-amber-50 text-amber-600",
   },
   {
     slug: "tools-diy",
     label: "Tools & DIY",
     count: "450+",
     img: "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=500&auto=format&fit=crop",
+    icon: Wrench,
+    accent: "bg-orange-50 text-orange-600",
   },
   {
     slug: "toys",
     label: "Toys & Games",
     count: "320+",
     img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&auto=format&fit=crop",
+    icon: Gamepad2,
+    accent: "bg-violet-50 text-violet-600",
   },
 ];
 
-function CategoryCard({
-  slug,
-  label,
-  count,
-  img,
-  tall,
-}: {
-  slug: string;
-  label: string;
-  count: string;
-  img: string;
-  tall?: boolean;
-}) {
+type Category = (typeof categories)[0];
+
+function CategoryCard({ slug, label, count, img, icon: Icon, accent }: Category) {
   return (
     <Link
       to={`/category/${slug}`}
-      className="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white"
-      style={{ minHeight: tall ? "260px" : "190px" }}
+      className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col"
     >
-      <img
-        src={img}
-        alt={label}
-        loading="lazy"
-        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-      />
-      {/* gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
-      {/* top badge */}
-      <div className="absolute top-3 right-3">
-        <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-white/20 backdrop-blur-sm text-white px-2 py-1 rounded-full border border-white/20">
-          CATEGORIES <ArrowRight className="h-2.5 w-2.5" />
-        </span>
+      {/* Image */}
+      <div className="relative overflow-hidden h-40">
+        <img
+          src={img}
+          alt={label}
+          loading="lazy"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
       </div>
-      {/* label */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
-        <div>
-          <p className="text-white font-bold text-sm sm:text-base leading-tight drop-shadow">{label}</p>
-          <p className="text-white/70 text-xs mt-0.5">{count} items</p>
+      {/* Info */}
+      <div className="p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${accent}`}>
+            <Icon className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-[#0F172A] leading-tight">{label}</p>
+            <p className="text-xs text-[#64748B] mt-0.5">{count} items</p>
+          </div>
         </div>
+        <ArrowRight className="h-4 w-4 text-[#64748B] group-hover:text-[#2563EB] group-hover:translate-x-0.5 transition-all duration-200 shrink-0" />
       </div>
     </Link>
   );
@@ -93,16 +93,9 @@ const CategoryGrid = () => {
           </p>
         </div>
 
-        {/* Row 1: 2 tall cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          {categories.slice(0, 2).map((cat) => (
-            <CategoryCard key={cat.slug} {...cat} tall />
-          ))}
-        </div>
-
-        {/* Row 2: 3 medium cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {categories.slice(2, 5).map((cat) => (
+        {/* 5-column grid on large, 2-col on small */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          {categories.map((cat) => (
             <CategoryCard key={cat.slug} {...cat} />
           ))}
         </div>

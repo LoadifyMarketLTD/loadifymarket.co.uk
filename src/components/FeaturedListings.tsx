@@ -149,30 +149,30 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
           </button>
         </div>
         <div className="p-6">
-          <p className="text-xs font-semibold text-[#1A4DBE] uppercase tracking-wide mb-1">
+          <p className="text-xs font-semibold text-[#2563EB] uppercase tracking-wide mb-1">
             {item.category}
           </p>
-          <h3 id="quick-view-title" className="text-xl font-extrabold text-[#1F2937] mb-1">
+          <h3 id="quick-view-title" className="text-xl font-extrabold text-[#0F172A] mb-1">
             {item.title}
           </h3>
-          <p className="text-xs text-gray-500 mb-3">by {item.seller}</p>
+          <p className="text-xs text-[#64748B] mb-3">by {item.seller}</p>
           <div className="flex items-center gap-2 mb-4">
             <StarRow count={item.stars} />
-            <span className="text-sm text-gray-500">({item.reviews} reviews)</span>
+            <span className="text-sm text-[#64748B]">({item.reviews} reviews)</span>
           </div>
-          <p className="text-2xl font-extrabold text-[#1F2937] mb-6">{item.price}</p>
+          <p className="text-2xl font-extrabold text-[#0F172A] mb-6">{item.price}</p>
           <div className="flex gap-3">
             <Link
               to="/catalog"
               onClick={onClose}
-              className="flex-1 text-center bg-[#1A4DBE] text-white font-semibold py-2.5 rounded-xl hover:bg-[#1640a0] transition-all text-sm"
+              className="flex-1 text-center bg-[#2563EB] text-white font-semibold py-2.5 rounded-xl hover:bg-[#1D4ED8] transition-all text-sm"
             >
               View Details
             </Link>
             <Link
               to="/register"
               onClick={onClose}
-              className="flex-1 text-center border-2 border-[#1A4DBE] text-[#1A4DBE] font-semibold py-2.5 rounded-xl hover:bg-blue-50 transition-all text-sm"
+              className="flex-1 text-center border-2 border-[#2563EB] text-[#2563EB] font-semibold py-2.5 rounded-xl hover:bg-blue-50 transition-all text-sm"
             >
               Buy Now
             </Link>
