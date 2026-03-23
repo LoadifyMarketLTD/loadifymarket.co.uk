@@ -1,77 +1,143 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Cpu, Shirt, Home, Wrench, Gamepad2, Sparkles, Heart, Car } from "lucide-react";
+import electronicsImg from "@/assets/categories/electronics.jpg";
+import fashionImg from "@/assets/categories/clothing.jpg";
+import homeImg from "@/assets/categories/home.jpg";
+import toolsImg from "@/assets/categories/tools.jpg";
+import toysImg from "@/assets/categories/toys.jpg";
+import healthImg from "@/assets/categories/health-beauty.jpg";
+import automotiveImg from "@/assets/categories/automotive.jpg";
+
+/**
+ * 8 categories in a 2+3+3 grid (desktop: 6-col, mobile: 2-col).
+ *
+ * Desktop layout:
+ *   Row 1 (tall ~260px):  [Electronics: 3 cols] [Fashion: 3 cols]
+ *   Row 2 (short ~190px): [Home: 2 cols] [Beauty: 2 cols] [Tools: 2 cols]
+ *   Row 3 (short ~190px): [Toys: 2 cols] [Health: 2 cols] [Automotive: 2 cols]
+ */
 
 const categories = [
+  // ── Row 1 (tall, wide) ─────────────────────────────────────────────
   {
     slug: "electronics",
     label: "Electronics",
     count: "1,300+",
-    img: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=700&auto=format&fit=crop",
+    img: electronicsImg,
+    icon: Cpu,
+    overlay: "from-[#0F172A]/75 via-[#1e3a5f]/50 to-transparent",
+    colSpan: "lg:col-span-3",
+    tall: true,
   },
   {
     slug: "fashion",
     label: "Fashion",
     count: "900+",
-    img: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=700&auto=format&fit=crop",
+    img: fashionImg,
+    icon: Shirt,
+    overlay: "from-[#3b1a4a]/75 via-pink-900/50 to-transparent",
+    colSpan: "lg:col-span-3",
+    tall: true,
   },
+  // ── Row 2 (medium) ────────────────────────────────────────────────
   {
-    slug: "home-garden",
+    slug: "home-kitchen",
     label: "Home & Kitchen",
     count: "1,100+",
-    img: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500&auto=format&fit=crop",
+    img: homeImg,
+    icon: Home,
+    overlay: "from-[#3b2a0a]/75 via-amber-900/50 to-transparent",
+    colSpan: "lg:col-span-2",
+    tall: false,
+  },
+  {
+    slug: "beauty",
+    label: "Beauty",
+    count: "640+",
+    img: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&auto=format&fit=crop",
+    icon: Sparkles,
+    overlay: "from-[#4a1a2a]/75 via-rose-900/50 to-transparent",
+    colSpan: "lg:col-span-2",
+    tall: false,
   },
   {
     slug: "tools-diy",
     label: "Tools & DIY",
     count: "450+",
-    img: "https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=500&auto=format&fit=crop",
+    img: toolsImg,
+    icon: Wrench,
+    overlay: "from-[#3b1a00]/75 via-orange-900/50 to-transparent",
+    colSpan: "lg:col-span-2",
+    tall: false,
   },
+  // ── Row 3 (medium) ────────────────────────────────────────────────
   {
-    slug: "toys",
+    slug: "toys-games",
     label: "Toys & Games",
     count: "320+",
-    img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&auto=format&fit=crop",
+    img: toysImg,
+    icon: Gamepad2,
+    overlay: "from-[#1a0a4a]/75 via-violet-900/50 to-transparent",
+    colSpan: "lg:col-span-2",
+    tall: false,
+  },
+  {
+    slug: "health-wellness",
+    label: "Health & Wellness",
+    count: "380+",
+    img: healthImg,
+    icon: Heart,
+    overlay: "from-[#0a3a2a]/75 via-teal-900/50 to-transparent",
+    colSpan: "lg:col-span-2",
+    tall: false,
+  },
+  {
+    slug: "automotive",
+    label: "Automotive",
+    count: "290+",
+    img: automotiveImg,
+    icon: Car,
+    overlay: "from-[#1a2a3a]/75 via-slate-900/50 to-transparent",
+    colSpan: "lg:col-span-2",
+    tall: false,
   },
 ];
 
-function CategoryCard({
-  slug,
-  label,
-  count,
-  img,
-  tall,
-}: {
-  slug: string;
-  label: string;
-  count: string;
-  img: string;
-  tall?: boolean;
-}) {
+type Cat = (typeof categories)[0];
+
+function CatCard({ slug, label, count, img, icon: Icon, overlay, tall }: Cat) {
   return (
     <Link
       to={`/category/${slug}`}
-      className="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 bg-white"
-      style={{ minHeight: tall ? "260px" : "190px" }}
+      className={`group relative overflow-hidden rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex ${
+        tall ? "min-h-[200px] lg:min-h-[260px]" : "min-h-[150px] lg:min-h-[190px]"
+      }`}
     >
+      {/* Image */}
       <img
         src={img}
         alt={label}
         loading="lazy"
         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
       />
-      {/* gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
-      {/* top badge */}
-      <div className="absolute top-3 right-3">
-        <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-white/20 backdrop-blur-sm text-white px-2 py-1 rounded-full border border-white/20">
-          CATEGORIES <ArrowRight className="h-2.5 w-2.5" />
-        </span>
-      </div>
-      {/* label */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
-        <div>
-          <p className="text-white font-bold text-sm sm:text-base leading-tight drop-shadow">{label}</p>
-          <p className="text-white/70 text-xs mt-0.5">{count} items</p>
+      {/* Gradient overlay (bottom-heavy so label is readable) */}
+      <div className={`absolute inset-0 bg-gradient-to-t ${overlay}`} />
+
+      {/* Content */}
+      <div className="relative mt-auto w-full p-4">
+        <div className="flex items-end justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-0.5">
+              <div className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
+                <Icon className="h-3.5 w-3.5 text-white" aria-hidden="true" />
+              </div>
+              <p className={`font-bold text-white ${tall ? "text-base" : "text-sm"}`}>{label}</p>
+            </div>
+            <p className="text-xs text-white/70 ml-9">{count} items</p>
+          </div>
+          <div className="w-7 h-7 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0 group-hover:bg-white/35 transition-colors">
+            <ArrowRight className="h-3.5 w-3.5 text-white" aria-hidden="true" />
+          </div>
         </div>
       </div>
     </Link>
@@ -79,33 +145,50 @@ function CategoryCard({
 }
 
 const CategoryGrid = () => {
+  const row1 = categories.filter((c) => c.tall);
+  const row23 = categories.filter((c) => !c.tall);
+
   return (
     <section className="bg-[#F5F7FB] py-12 px-4 sm:px-6">
       <div className="max-w-[1280px] mx-auto">
+
         {/* Section header */}
-        <div className="text-center mb-8">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#2563EB]">Explore</span>
-          <h2 className="mt-1 text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
-            Shop by Category
-          </h2>
-          <p className="mt-1.5 text-sm text-[#64748B]">
-            Browse thousands of listings across every major product category.
-          </p>
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#2563EB]">Explore</span>
+            <h2 className="mt-1 text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
+              Shop by Category
+            </h2>
+            <p className="mt-1 text-sm text-[#64748B]">
+              Browse thousands of products across 8 major categories
+            </p>
+          </div>
+          <Link
+            to="/catalog"
+            className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+          >
+            All Categories <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
 
-        {/* Row 1: 2 tall cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          {categories.slice(0, 2).map((cat) => (
-            <CategoryCard key={cat.slug} {...cat} tall />
+        {/* Row 1: 2 large featured cards */}
+        <div className="grid grid-cols-2 gap-3 lg:gap-4 mb-3 lg:mb-4">
+          {row1.map((cat) => (
+            <div key={cat.slug}>
+              <CatCard {...cat} />
+            </div>
           ))}
         </div>
 
-        {/* Row 2: 3 medium cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {categories.slice(2, 5).map((cat) => (
-            <CategoryCard key={cat.slug} {...cat} />
+        {/* Rows 2 & 3: 3 + 3 medium cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4">
+          {row23.map((cat) => (
+            <div key={cat.slug}>
+              <CatCard {...cat} />
+            </div>
           ))}
         </div>
+
       </div>
     </section>
   );

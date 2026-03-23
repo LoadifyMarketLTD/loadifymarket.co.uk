@@ -1,29 +1,29 @@
-import { ShieldCheck, CreditCard, FileText, BadgeCheck } from "lucide-react";
+import { ShieldCheck, CreditCard, Zap, BadgeCheck } from "lucide-react";
 
 const benefits = [
   {
     icon: ShieldCheck,
     color: "text-emerald-600 bg-emerald-50",
     title: "Verified Sellers",
-    description: "Every seller vetted & approved.",
+    description: "Every seller is vetted & approved before listing.",
   },
   {
     icon: CreditCard,
     color: "text-[#2563EB] bg-blue-50",
     title: "Secure Payments",
-    description: "Stripe-powered buyer protection.",
+    description: "Stripe-powered checkout with buyer protection.",
   },
   {
-    icon: FileText,
+    icon: Zap,
     color: "text-amber-600 bg-amber-50",
-    title: "Fast Invoice",
-    description: "Instant invoicing & receipts.",
+    title: "Fast Deals",
+    description: "Discover, message and buy in minutes.",
   },
   {
     icon: BadgeCheck,
     color: "text-violet-600 bg-violet-50",
-    title: "Trusted Suppliers",
-    description: "Nationwide network, verified.",
+    title: "UK Coverage",
+    description: "Nationwide network of trusted UK suppliers.",
   },
 ];
 

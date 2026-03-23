@@ -15,8 +15,8 @@ export default function PixelPerfectIndex() {
     <div className="min-h-screen bg-[#F5F7FB] font-sans antialiased">
       <TopBar />
       <Header />
-      {/* spacer: 40px top bar + 64px navbar */}
-      <div className="pt-[104px]" />
+      {/* spacer: 40px top bar + 64px header row + 40px category nav */}
+      <div className="pt-[144px]" />
       <main>
         <HeroSection />
         <TrustStrip />
