@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 import { hasAdminAccess, hasSellerAccess } from '../../lib/roleUtils';
-import { supabase } from '../../lib/supabase';
 import RequireAuth from './RequireAuth';
 
 interface Props {
@@ -37,13 +36,13 @@ export default function RequireSeller({ children }: Props) {
     if (!user || user.role !== 'seller') return;
     let cancelled = false;
     // Wrap in Promise.resolve to gain a full Promise (Supabase returns PromiseLike).
-    Promise.resolve(
+    import('../../lib/supabase').then(({ supabase }) => Promise.resolve(
       supabase
         .from('seller_profiles')
         .select('isApproved')
         .eq('userId', user.id)
         .single()
-    ).then(({ data, error }) => {
+    )).then(({ data, error }) => {
       if (cancelled) return;
       if (error) {
         console.warn('RequireSeller: failed to fetch approval status', error.message);
