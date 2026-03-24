@@ -381,7 +381,7 @@ const Checkout = () => {
                       <button onClick={() => setCurrentStep(1)} className="text-sm text-primary hover:underline">Edit</button>
                     </div>
                     <div className="text-sm text-muted-foreground pl-[52px]">
-                      <p>Visa ending in •••• 4242</p>
+                      <p>Card details entered securely on Stripe's checkout page</p>
                     </div>
                   </div>
 

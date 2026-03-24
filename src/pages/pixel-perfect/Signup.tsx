@@ -260,7 +260,7 @@ const Signup = () => {
               <p className="text-sm text-destructive text-center">{error}</p>
             )}
             <Button type="submit" disabled={loading} className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
-              {loading ? "Creating account…" : isSeller ? "Submit Application" : "Create Account"}
+              {loading ? "Creating account…" : isSeller ? "Create Seller Account" : "Create Account"}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">

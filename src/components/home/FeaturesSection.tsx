@@ -29,7 +29,7 @@ const FEATURES = [
   {
     icon: Globe,
     title: 'UK-Wide Reach',
-    desc: 'Reach buyers across all of the United Kingdom — integrated with XDrive logistics for seamless delivery.',
+    desc: 'Reach buyers across all of the United Kingdom — list your stock and connect with buyers in your region.',
   },
 ];
 
