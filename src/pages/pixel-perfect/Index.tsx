@@ -1,6 +1,9 @@
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
+import CategorySlider from "@/components/CategorySlider";
+import FeaturedProducts from "@/components/FeaturedProducts";
+import DealsSection from "@/components/DealsSection";
 import TrustStrip from "@/components/TrustStrip";
 import PaymentTrustSection from "@/components/PaymentTrustSection";
 import CategoryGrid from "@/components/CategoryGrid";
@@ -21,6 +24,12 @@ export default function PixelPerfectIndex() {
       <div className="pt-[144px]" />
       <main>
         <HeroSection />
+        {/* Category strip — horizontal scroll, icon + label per category */}
+        <CategorySlider />
+        {/* Featured products grid — 4 columns, 12 products */}
+        <FeaturedProducts />
+        {/* Deals / promo banner cards */}
+        <DealsSection />
         <TrustStrip />
         <PaymentTrustSection />
         <CategoryGrid />
