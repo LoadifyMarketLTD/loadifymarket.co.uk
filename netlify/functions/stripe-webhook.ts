@@ -29,6 +29,27 @@ const supabase = process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_R
     )
   : null;
 
+// ── 0% Commission Promotion ───────────────────────────────────────────────────
+// The platform charges 0% commission on all transactions until
+// 1 July 2026 23:59:59 BST (= 22:59:59 UTC). After that date the normal
+// 7% commission rate resumes automatically without any manual intervention.
+//
+// Exported so the unit test can reference the exact deadline value.
+export const ZERO_COMMISSION_PROMO_END_UTC = new Date('2026-07-01T22:59:59Z').getTime();
+
+/**
+ * Returns the effective commission rate for the current moment.
+ *   - 0    during the promotion  (now < ZERO_COMMISSION_PROMO_END_UTC)
+ *   - 0.07 once the promotion ends (now >= ZERO_COMMISSION_PROMO_END_UTC)
+ *
+ * Exported for unit testing — use vi.useFakeTimers / vi.setSystemTime to
+ * pin Date.now() to a specific point in time when testing.
+ */
+export function getCommissionRate(): number {
+  return Date.now() < ZERO_COMMISSION_PROMO_END_UTC ? 0 : 0.07;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const handler: Handler = async (event) => {
   // Return 501 if not configured — require at least one webhook signing secret.
   if (!stripe || !supabase || WEBHOOK_SECRETS.length === 0) {
@@ -212,7 +233,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   const VAT_RATE = 0.20;
-  const COMMISSION_RATE = 0.07;
+  // Dynamic commission rate: 0% during the promo period, 7% after July 1 2026.
+  const COMMISSION_RATE = getCommissionRate();
   const totalShipping = parseFloat(metadata.shippingAmount || '0');
   const totalSubtotal = parseFloat(metadata.subtotal);
 
