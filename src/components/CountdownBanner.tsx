@@ -53,22 +53,22 @@ const CountdownBanner = ({ variant = "homepage" }: CountdownBannerProps) => {
 
   if (variant === "hero") {
     return (
-      <div className="inline-flex flex-wrap items-center gap-2 bg-blue-50 border border-blue-100 text-[#0F172A] text-xs font-semibold px-3 py-1.5 rounded-full">
-        <span className="text-[#64748B] font-medium whitespace-nowrap">0% Commission ends in:</span>
-        <div className="flex items-center gap-1">
-          {digits.map((d, i) => (
-            <div key={d.label} className="flex items-center gap-1">
-              <div className="flex flex-col items-center min-w-[1.75rem] text-center">
-                <span className="text-xs font-extrabold text-[#2563EB] tabular-nums leading-none">
-                  {pad(d.value)}
-                </span>
-                <span className="text-[8px] font-semibold text-[#64748B] uppercase tracking-wide leading-none mt-0.5">
-                  {d.label}
-                </span>
-              </div>
-              {i < digits.length - 1 && (
-                <span className="text-[#94A3B8] font-bold text-xs -mt-2.5 select-none">:</span>
-              )}
+      <div className="space-y-3">
+        <p className="text-[11px] sm:text-xs font-bold text-[#64748B] uppercase tracking-[0.2em]">
+          0% Commission ends in
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+          {digits.map((d) => (
+            <div
+              key={d.label}
+              className="flex flex-col items-center bg-white border border-slate-200 shadow-sm rounded-xl px-4 py-4 sm:px-4 sm:py-4 lg:py-5"
+            >
+              <span className="font-display text-4xl sm:text-4xl lg:text-5xl font-extrabold tabular-nums text-[#2563EB] leading-none">
+                {pad(d.value)}
+              </span>
+              <span className="text-[10px] sm:text-[11px] font-bold text-[#94A3B8] uppercase tracking-widest mt-2 leading-none">
+                {d.label}
+              </span>
             </div>
           ))}
         </div>

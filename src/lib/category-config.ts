@@ -61,7 +61,7 @@ type UIOverride = Omit<CategoryConfig, 'slug' | 'label' | 'title' | 'subcategori
 
 const UI_OVERRIDES: Record<string, UIOverride> = {
   electronics: {
-    subtitle: 'Smartphones, laptops, tablets, audio, smart home and gaming gear from verified UK sellers',
+    subtitle: 'Smartphones, laptops, tablets, audio, smart home and gaming gear from independent UK sellers',
     icon: Cpu,
     iconColor: 'text-blue-600',
     accentBg: 'bg-blue-600/10',

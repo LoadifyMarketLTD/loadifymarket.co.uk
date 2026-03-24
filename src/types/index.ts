@@ -6,6 +6,15 @@ export type MarketplaceRole = 'carrier' | 'broker' | 'seller' | null;
 // Payment behaviour indicator
 export type PaymentBehaviour = 'pays_on_time' | 'sometimes_late' | 'repeated_delays' | null;
 
+/**
+ * Canonical seller account lifecycle status (migration 210).
+ *   draft     → signed up; setup not yet complete
+ *   submitted → profile complete; Stripe not yet fully ready
+ *   active    → profile complete AND Stripe ready (auto-set)
+ *   suspended → manually suspended by admin/owner
+ */
+export type SellerStatus = 'draft' | 'submitted' | 'active' | 'suspended';
+
 export interface User {
   id: string;
   email: string;
@@ -49,7 +58,11 @@ export interface SellerProfile {
   vatNumber?: string;
   companyRegistrationNumber?: string;
   businessAddress?: Address;
-  // Verification
+  // Seller activation status (canonical — migration 210)
+  sellerStatus?: SellerStatus;
+  activatedAt?: string;
+  // Legacy verification fields (deprecated — kept for backwards compatibility)
+  // Use sellerStatus instead of verificationStatus for new code.
   verificationStatus?: SellerVerificationStatus;
   verificationDocuments?: VerificationDocument[];
   verifiedAt?: string;
@@ -57,6 +70,7 @@ export interface SellerProfile {
   // Stripe Connect Express
   stripeAccountId?: string;
   stripeConnectStatus?: 'pending' | 'restricted' | 'active' | null;
+  /** @deprecated Use sellerStatus === 'active' instead */
   isApproved: boolean;
   // Reputation metrics
   rating: number;

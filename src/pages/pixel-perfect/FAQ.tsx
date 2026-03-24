@@ -27,12 +27,12 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
       {
         question: "Do you hold or ship any physical products?",
         answer:
-          "No. Loadify Market is a services marketplace — we do not hold stock, operate a warehouse, or manage physical deliveries. All transactions are for services offered by independently verified sellers.",
+          "No. Loadify Market is a services marketplace — we do not hold stock, operate a warehouse, or manage physical deliveries. All transactions are for services offered by registered sellers on the platform.",
       },
       {
         question: "Who can use Loadify Market?",
         answer:
-          "Any UK-based business or individual can register as a buyer. To sell services on the platform you must complete our seller verification process. Both B2B and B2C transactions are supported.",
+          "Any UK-based business or individual can register as a buyer. To sell on the platform you must complete your seller profile and connect a Stripe account. Both B2B and B2C transactions are supported.",
       },
     ],
   },
@@ -56,17 +56,17 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
         question: "How do I become a seller?",
         answer: (
           <>
-            After registering, choose the <strong>Seller</strong> role during sign-up or apply
-            from your account dashboard. You will need to provide business details for
-            verification. Once approved by our team you gain access to the full seller
-            dashboard and can start listing services.
+            After registering, choose the <strong>Seller</strong> role during sign-up or from
+            your account dashboard. You will need to complete your business profile and connect
+            a Stripe account. Once all setup steps are complete, your seller account is
+            activated automatically — no manual review required.
           </>
         ),
       },
       {
-        question: "How long does seller verification take?",
+        question: "How does seller activation work?",
         answer:
-          "We aim to review all seller applications within 1–2 business days. You will be notified by email as soon as a decision is made.",
+          "Your seller account is activated automatically once you complete your business profile (name, phone, address) and connect a Stripe account with payments enabled. There is no manual approval step for normal seller accounts.",
       },
       {
         question: "Can I have both a buyer and seller account?",
@@ -94,7 +94,7 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
       {
         question: "Can I request a custom quote?",
         answer:
-          "Yes. If you have specific requirements, use the Request for Quote feature to describe what you need. Verified sellers in the relevant category can then submit offers for you to review and accept.",
+          "Yes. If you have specific requirements, use the Request for Quote feature to describe what you need. Registered sellers in the relevant category can then submit offers for you to review and accept.",
       },
       {
         question: "What payment methods are accepted?",
@@ -195,9 +195,9 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
     section: "Trust & Safety",
     items: [
       {
-        question: "How are sellers verified?",
+        question: "How does seller activation work?",
         answer:
-          "Every seller must provide valid business details and pass our internal review before their listings go live. We verify company registration numbers and require compliance with our Seller Guidelines.",
+          "Sellers must complete their business profile and connect a Stripe account with payments enabled before they can list products. This is checked automatically — there is no manual review step for normal seller accounts. Sellers who do not meet these requirements cannot list until their setup is complete.",
       },
       {
         question: "Is my payment secure?",

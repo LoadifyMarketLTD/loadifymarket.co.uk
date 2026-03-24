@@ -300,7 +300,7 @@ const Deals = () => {
               </div>
               <div className="flex items-start gap-3">
                 <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">3</span>
-                <p className="text-muted-foreground"><strong className="text-foreground">Transactions happen</strong> through the platform with secure checkout and buyer protection.</p>
+                <p className="text-muted-foreground"><strong className="text-foreground">Transactions happen</strong> through the platform with secure checkout via Stripe.</p>
               </div>
             </div>
           </div>

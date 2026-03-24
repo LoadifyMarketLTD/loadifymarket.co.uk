@@ -35,7 +35,7 @@ const PrivacyPolicy = () => {
           <ul>
             <li>To provide and maintain our marketplace platform</li>
             <li>To process transactions and payments</li>
-            <li>To verify seller accounts and maintain platform trust</li>
+            <li>To manage seller account setup and maintain platform records</li>
             <li>To communicate with you about your account, orders and enquiries</li>
             <li>To improve our platform and user experience</li>
             <li>To comply with legal obligations</li>

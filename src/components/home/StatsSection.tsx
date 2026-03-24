@@ -17,7 +17,7 @@ const STATS: Stat[] = [
   {
     value: '2,500',
     suffix: '+',
-    label: 'Verified Sellers',
+    label: 'Registered Sellers',
     description: 'UK-based businesses selling on the platform',
   },
   {

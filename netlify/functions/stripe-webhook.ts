@@ -521,6 +521,9 @@ async function handleRefund(charge: Stripe.Charge) {
  * or Stripe adds a restriction. We map the live account flags to our
  * three-state stripeConnectStatus and persist it so the seller dashboard
  * reflects the current state without needing a separate status-sync call.
+ *
+ * After updating stripeConnectStatus, we call tryAutoActivateSeller to
+ * automatically activate the seller if all conditions are now met.
  */
 async function handleConnectAccountUpdated(account: Stripe.Account) {
   let stripeConnectStatus: 'pending' | 'restricted' | 'active';
@@ -541,12 +544,45 @@ async function handleConnectAccountUpdated(account: Stripe.Account) {
 
   if (error) {
     console.error(`account.updated: failed to update seller_profiles for ${account.id}:`, error.message);
-  } else if (!updated || updated.length === 0) {
-    // No row matched — the account ID is not in our DB. This can happen if
-    // the webhook is received before the seller has been persisted, or for
-    // Connect accounts that belong to a different platform environment.
-    console.warn(`account.updated: no seller_profiles row found for stripeAccountId=${account.id} — skipping`);
-  } else {
-    console.log(`account.updated: ${account.id} → stripeConnectStatus=${stripeConnectStatus}`);
+    return;
   }
+
+  if (!updated || updated.length === 0) {
+    console.warn(`account.updated: no seller_profiles row found for stripeAccountId=${account.id} — skipping`);
+    return;
+  }
+
+  console.log(`account.updated: ${account.id} → stripeConnectStatus=${stripeConnectStatus}`);
+
+  // ── Auto-activation check ──────────────────────────────────────────────
+  // Import lazily so this module stays loadable even when the helper file is
+  // temporarily absent (e.g. first deploy before functions are bundled).
+  try {
+    const { tryAutoActivateSeller } = await import('./_shared/sellerActivation');
+    const sellerId = (updated[0] as { userId: string }).userId;
+    const result = await tryAutoActivateSeller(supabase!, sellerId);
+
+    if (result?.firstActivation) {
+      // Send admin notification — fire-and-forget, non-blocking.
+      const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+      const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
+      if (adminEmail) {
+        fetch(`${appUrl}/.netlify/functions/send-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: adminEmail,
+            subject: 'Loadify: Seller Account Now Active',
+            template: 'admin_seller_active',
+            data: { activatedAt: new Date().toLocaleString('en-GB') },
+          }),
+        }).catch((err: unknown) => console.warn('account.updated: admin notification failed (non-fatal):', err));
+      }
+    }
+  } catch (activationError) {
+    // Non-fatal: the stripeConnectStatus update already succeeded above.
+    // Activation will be re-evaluated next time connect-status is called.
+    console.warn('account.updated: auto-activation check failed (non-fatal):', activationError);
+  }
+  // ──────────────────────────────────────────────────────────────────────
 }

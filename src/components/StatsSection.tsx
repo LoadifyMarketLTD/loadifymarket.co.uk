@@ -7,7 +7,7 @@ const StatsSection = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12">
           <div className="flex items-center gap-2 text-primary-foreground/80 text-sm">
             <ShieldCheck className="h-5 w-5 text-accent" />
-            <span>Verified UK Business</span>
+            <span>Registered UK Business</span>
           </div>
           <div className="flex items-center gap-2 text-primary-foreground/80 text-sm">
             <CreditCard className="h-5 w-5 text-accent" />

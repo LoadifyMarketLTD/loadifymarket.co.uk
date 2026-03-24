@@ -123,7 +123,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.seller.isApproved && (
               <span className="flex items-center gap-0.5 text-green-600">
                 <CheckCircle2 className="w-3 h-3" />
-                Verified
+                Active
               </span>
             )}
           </div>

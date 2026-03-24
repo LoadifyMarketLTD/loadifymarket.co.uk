@@ -62,8 +62,8 @@ const CategoriesSection = () => {
             Browse by Category
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Discover thousands of products across all categories from verified UK
-            sellers — all in one trusted marketplace.
+            Discover thousands of products across all categories from independent UK
+            sellers — all in one marketplace.
           </p>
         </div>
 

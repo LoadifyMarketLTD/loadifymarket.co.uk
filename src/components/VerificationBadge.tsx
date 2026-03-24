@@ -27,10 +27,10 @@ export default function VerificationBadge({
     return (
       <div
         className={`inline-flex items-center gap-1.5 rounded-full bg-gold/20 border border-gold/40 text-gold font-semibold ${sizeClasses[size]}`}
-        title="Verified Seller"
+        title="Active Seller"
       >
         <ShieldCheck className={iconSizes[size]} />
-        {showLabel && <span>Verified</span>}
+        {showLabel && <span>Active</span>}
       </div>
     );
   }
@@ -38,10 +38,10 @@ export default function VerificationBadge({
   return (
     <div
       className={`inline-flex items-center gap-1.5 rounded-full bg-gray-50 border border-gray-200 text-gray-500 font-semibold ${sizeClasses[size]}`}
-      title="Pending Verification"
+      title="Setup in progress"
     >
       <AlertCircle className={iconSizes[size]} />
-      {showLabel && <span>Unverified</span>}
+      {showLabel && <span>Inactive</span>}
     </div>
   );
 }

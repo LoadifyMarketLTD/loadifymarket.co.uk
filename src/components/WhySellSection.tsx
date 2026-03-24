@@ -7,7 +7,7 @@ const benefits = [
     icon: Users,
     title: "Real Buyers, Not Browsers",
     description:
-      "Buyers on Loadify are verified businesses looking to purchase wholesale, clearance or overstock — not casual shoppers.",
+      "Buyers on Loadify are registered businesses looking to purchase wholesale, clearance or overstock — not casual shoppers.",
   },
   {
     icon: TrendingUp,
@@ -42,7 +42,7 @@ const WhySellSection = () => {
             Your Stock Deserves Real Buyers
           </h2>
           <p className="mt-4 text-muted-foreground text-lg leading-relaxed">
-            Stop sitting on dead stock. Loadify connects you with verified UK businesses ready to buy wholesale, clearance and overstock.
+            Stop sitting on dead stock. Loadify connects you with registered UK businesses ready to buy wholesale, clearance and overstock.
           </p>
         </div>
 
@@ -84,7 +84,7 @@ const WhySellSection = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mt-8 pt-6 border-t border-border">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <ShieldCheck className="h-4 w-4 text-primary" />
-            <span>Verified UK Business</span>
+            <span>Registered UK Business</span>
           </div>
           <div className="flex items-center gap-2.5 text-sm text-muted-foreground">
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">

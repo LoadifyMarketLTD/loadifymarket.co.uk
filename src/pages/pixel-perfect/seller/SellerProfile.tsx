@@ -47,6 +47,7 @@ const SellerProfile = () => {
   const [saveMsg, setSaveMsg] = useState("");
   const [stats, setStats] = useState({ rating: 0, totalSales: 0, memberSince: "" });
   const [storeSlug, setStoreSlug] = useState("");
+  const [sellerStatus, setSellerStatus] = useState<string>("draft");
 
   useEffect(() => {
     if (!user) return;
@@ -54,7 +55,7 @@ const SellerProfile = () => {
       const [profileRes, storeRes] = await Promise.all([
         supabase
           .from("seller_profiles")
-          .select("businessName, vatNumber, companyRegistrationNumber, businessAddress, contactPhone, rating, totalSales, createdAt")
+          .select("businessName, vatNumber, companyRegistrationNumber, businessAddress, contactPhone, rating, totalSales, createdAt, sellerStatus")
           .eq("userId", user.id)
           .maybeSingle(),
         supabase
@@ -86,6 +87,7 @@ const SellerProfile = () => {
         memberSince: p?.createdAt ? new Date(p.createdAt).toLocaleDateString("en-GB", { month: "long", year: "numeric" }) : "",
       });
       setStoreSlug(storeRes.data?.storeSlug ?? "");
+      setSellerStatus(p?.sellerStatus ?? "draft");
     };
     load();
   }, [user]);
@@ -112,7 +114,20 @@ const SellerProfile = () => {
           businessAddress: { address: form.address, city: form.city, postcode: form.postcode },
         }).eq("userId", user.id),
       ]);
-      setSaveMsg("Saved successfully.");
+      setSaveMsg("Profile saved.");
+
+      // Trigger activation re-check after profile update.
+      // connect-status evaluates profile completeness + Stripe readiness
+      // and updates sellerStatus automatically if all conditions are now met.
+      supabase.auth.getSession().then(({ data: sessionData }) => {
+        const token = sessionData.session?.access_token;
+        if (token) {
+          fetch("/.netlify/functions/connect-status", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          }).catch(() => { /* non-fatal */ });
+        }
+      });
     } catch {
       setSaveMsg("Failed to save. Please try again.");
     } finally {
@@ -152,9 +167,21 @@ const SellerProfile = () => {
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold text-foreground">{form.businessName || "Your Business"}</h2>
-                <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200" variant="outline">
-                  <ShieldCheck className="h-3 w-3 mr-1" /> Verified
-                </Badge>
+                {sellerStatus === "active" && (
+                  <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200" variant="outline">
+                    <ShieldCheck className="h-3 w-3 mr-1" /> Active
+                  </Badge>
+                )}
+                {sellerStatus === "submitted" && (
+                  <Badge className="bg-amber-500/10 text-amber-700 border-amber-200" variant="outline">
+                    Setup in progress
+                  </Badge>
+                )}
+                {sellerStatus === "suspended" && (
+                  <Badge className="bg-red-500/10 text-red-700 border-red-200" variant="outline">
+                    Suspended
+                  </Badge>
+                )}
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500" /> {stats.rating ? stats.rating.toFixed(1) : "—"}</span>

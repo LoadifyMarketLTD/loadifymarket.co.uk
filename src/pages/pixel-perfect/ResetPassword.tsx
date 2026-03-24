@@ -109,7 +109,7 @@ const ResetPassword = () => {
           </p>
           <div className="grid grid-cols-3 gap-4 pt-4">
             {[
-              { label: "Verified Sellers", value: "✓" },
+              { label: "Registered Sellers", value: "✓" },
               { label: "Secure Payments", value: "✓" },
               { label: "UK Businesses", value: "✓" },
             ].map((stat) => (

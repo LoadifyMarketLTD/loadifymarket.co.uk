@@ -13,7 +13,7 @@ export default function CinematicCategoryPanels() {
     },
     {
       title: 'Pallets & Wholesale Stock',
-      description: 'Clear stock in bulk, verified wholesale buyers',
+      description: 'Clear stock in bulk, registered wholesale buyers',
       icon: Package,
       link: '/catalog?listingType=wholesale',
       bgGradient: 'from-gray-800 to-gray-900',

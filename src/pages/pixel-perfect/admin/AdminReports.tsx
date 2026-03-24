@@ -98,9 +98,9 @@ const AdminReports = () => {
             period: "Platform-wide",
           },
           {
-            label: "Approved Sellers",
+            label: "Active Sellers",
             value: (approvedSellersRes.count ?? 0).toLocaleString(),
-            change: "Verified",
+            change: "Active",
             up: true,
             icon: Users,
             period: "Active sellers",

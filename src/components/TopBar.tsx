@@ -4,7 +4,7 @@ const TopBar = () => (
   <div className="fixed top-0 left-0 right-0 z-50 bg-[#0F2D52] text-white h-10 flex items-center">
     <div className="container mx-auto px-4 flex items-center justify-between">
       <span className="text-[11px] text-blue-200 hidden sm:block">
-        🇬🇧 UK's #1 Trusted B2B Marketplace — Verified Sellers, Secure Payments
+        🇬🇧 UK's #1 B2B Wholesale Marketplace — Registered Sellers, Secure Payments
       </span>
       <span className="text-[11px] text-blue-200 sm:hidden">🇬🇧 UK's #1 Marketplace</span>
       <div className="flex items-center gap-3 text-[11px] text-blue-200">

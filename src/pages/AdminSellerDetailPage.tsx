@@ -24,7 +24,6 @@ import {
   RefreshCcw,
   Send,
 } from 'lucide-react';import { formatDistanceToNow } from 'date-fns';
-import VerificationBadge from '../components/VerificationBadge';
 import RoleBadge from '../components/RoleBadge';
 
 const DEFAULT_COMMISSION_RATE = 7;
@@ -110,35 +109,37 @@ export default function AdminSellerDetailPage() {
     fetchSeller();
   }, [fetchSeller]);
 
-  const approveSeller = async () => {
-    if (!id) return;
+  const suspendSeller = async () => {
+    if (!id || !confirm('Suspend this seller? They will not be able to use seller features.')) return;
     setActionLoading(true);
     try {
       const { error } = await supabase
         .from('seller_profiles')
-        .update({ isApproved: true })
+        .update({ sellerStatus: 'suspended' })
         .eq('userId', id);
       if (error) throw error;
       await fetchSeller();
     } catch (err) {
-      console.error('Error approving seller:', err);
+      console.error('Error suspending seller:', err);
     } finally {
       setActionLoading(false);
     }
   };
 
-  const revokeSeller = async () => {
-    if (!id || !confirm('Revoke approval for this seller?')) return;
+  const reactivateSeller = async () => {
+    if (!id) return;
     setActionLoading(true);
     try {
+      // Set back to 'submitted' — the auto-activation logic will promote to
+      // 'active' automatically if all conditions are already met.
       const { error } = await supabase
         .from('seller_profiles')
-        .update({ isApproved: false })
+        .update({ sellerStatus: 'submitted' })
         .eq('userId', id);
       if (error) throw error;
       await fetchSeller();
     } catch (err) {
-      console.error('Error revoking seller:', err);
+      console.error('Error reactivating seller:', err);
     } finally {
       setActionLoading(false);
     }
@@ -287,15 +288,20 @@ export default function AdminSellerDetailPage() {
               {sellerUser.firstName} {sellerUser.lastName}
             </h1>
             <div className="flex flex-wrap items-center gap-2 mt-2">
-              {profile.isApproved ? (
+              {(profile.sellerStatus === 'active') ? (
                 <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
                   <CheckCircle className="w-3 h-3" />
-                  Approved Seller
+                  Seller account active
+                </span>
+              ) : (profile.sellerStatus === 'suspended') ? (
+                <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+                  <Ban className="w-3 h-3" />
+                  Seller account suspended
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
                   <ShieldAlert className="w-3 h-3" />
-                  Pending Approval
+                  Setup in progress
                 </span>
               )}
               {!sellerUser.isActive && (
@@ -304,30 +310,29 @@ export default function AdminSellerDetailPage() {
                   Blocked
                 </span>
               )}
-              <VerificationBadge isVerified={profile.isApproved} size="sm" />
               {profile.marketplaceRole && <RoleBadge role={profile.marketplaceRole} size="sm" />}
             </div>
           </div>
 
           {/* Quick action buttons */}
           <div className="flex flex-wrap gap-2">
-            {!profile.isApproved ? (
+            {profile.sellerStatus !== 'suspended' ? (
               <button
-                onClick={approveSeller}
+                onClick={suspendSeller}
                 disabled={actionLoading}
-                className="btn-primary flex items-center gap-2"
+                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2 text-sm transition-colors"
               >
-                <CheckCircle className="w-4 h-4" />
-                Approve Seller
+                <Ban className="w-4 h-4" />
+                Suspend Seller
               </button>
             ) : (
               <button
-                onClick={revokeSeller}
+                onClick={reactivateSeller}
                 disabled={actionLoading}
-                className="btn-outline flex items-center gap-2"
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 text-sm transition-colors"
               >
-                <XCircle className="w-4 h-4" />
-                Revoke Approval
+                <CheckCircle className="w-4 h-4" />
+                Reactivate Seller
               </button>
             )}
 
@@ -500,10 +505,10 @@ export default function AdminSellerDetailPage() {
                     </dd>
                   </div>
                 )}
-                {profile.verificationStatus && (
+                {profile.sellerStatus && (
                   <div>
-                    <dt className="text-gray-500">Verification Status</dt>
-                    <dd className="mt-0.5 capitalize">{profile.verificationStatus}</dd>
+                    <dt className="text-gray-500">Seller Status</dt>
+                    <dd className="mt-0.5 capitalize">{profile.sellerStatus}</dd>
                   </div>
                 )}
                 {profile.marketplaceRole && (

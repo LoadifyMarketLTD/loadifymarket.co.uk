@@ -385,7 +385,7 @@ const Checkout = () => {
                       <button onClick={() => setCurrentStep(1)} className="text-sm text-primary hover:underline">Edit</button>
                     </div>
                     <div className="text-sm text-muted-foreground pl-[52px]">
-                      <p>Card payment — details entered securely on Stripe</p>
+                      <p>Card details entered securely on Stripe's checkout page</p>
                     </div>
                   </div>
 
@@ -488,7 +488,7 @@ const Checkout = () => {
               <div className="bg-card rounded-xl border border-border p-4 space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
-                  Buyer Protection included
+                  Dispute support available
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Lock className="h-4 w-4 text-primary shrink-0" />

@@ -212,7 +212,7 @@ const FeaturedListings = () => {
             </Link>
           </div>
           <p className="text-sm text-[#64748B] mb-6">
-            Discover the best products from our verified UK sellers
+            Discover the best products from independent UK sellers
           </p>
 
           {/* Filter pills */}

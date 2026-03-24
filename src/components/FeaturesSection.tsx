@@ -11,11 +11,11 @@ const features = [
     tagColor: "text-[#2563EB] bg-blue-50",
     title: "Browse & Discover",
     description:
-      "Explore thousands of products across 16 categories — electronics, fashion, beauty, home goods, tools and more — all from verified UK sellers in one place.",
+      "Explore thousands of products across 16 categories — electronics, fashion, beauty, home goods, tools and more — all from independent UK sellers in one place.",
     bullets: [
       "500+ live listings updated daily",
       "Smart search with category filters",
-      "Verified seller profiles & ratings",
+      "Seller profiles & ratings",
     ],
     cta: { label: "Browse Marketplace", to: "/catalog" },
     img: "https://images.unsplash.com/photo-1555421689-491a97ff2040?w=600&auto=format&fit=crop",
@@ -29,10 +29,10 @@ const features = [
     tagColor: "text-emerald-700 bg-emerald-50",
     title: "Safe & Secure Transactions",
     description:
-      "Every seller is vetted before they list. All payments are processed via Stripe with full buyer protection, transparent fees and instant order tracking.",
+      "Sellers must complete their profile and connect a Stripe account before listing. All payments are processed via Stripe with transparent fees and instant order tracking.",
     bullets: [
       "Stripe-powered secure checkout",
-      "Buyer protection on every order",
+      "Transparent fees on every order",
       "Real-time messaging with sellers",
     ],
     cta: { label: "How It Works", to: "/catalog" },

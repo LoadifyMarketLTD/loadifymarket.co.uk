@@ -84,7 +84,7 @@ export default function OrderSuccessPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Star className="w-4 h-4 text-gold flex-shrink-0" />
-                <span className="text-gray-600 text-xs">Verified Marketplace Sellers</span>
+                <span className="text-gray-600 text-xs">Independent Marketplace Sellers</span>
               </div>
             </div>
             <p className="text-gray-400 text-xs mt-3 leading-relaxed">
