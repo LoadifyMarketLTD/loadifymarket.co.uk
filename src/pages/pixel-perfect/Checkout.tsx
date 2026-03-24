@@ -12,6 +12,7 @@ import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
+import PaymentMethodBadges from "@/components/PaymentMethodBadges";
 
 const steps = [
   { id: "shipping", label: "Shipping", icon: Truck },
@@ -323,6 +324,9 @@ const Checkout = () => {
                     <div className="flex items-center gap-3 pt-1">
                       <ShieldCheck className="h-5 w-5 text-primary" />
                       <span className="text-xs text-muted-foreground">256-bit SSL encrypted · PCI-DSS compliant</span>
+                    </div>
+                    <div className="border-t border-border pt-4">
+                      <PaymentMethodBadges showLabel={true} size="sm" />
                     </div>
                   </div>
 

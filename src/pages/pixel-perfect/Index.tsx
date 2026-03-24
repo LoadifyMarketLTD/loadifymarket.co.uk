@@ -2,6 +2,7 @@ import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
+import PaymentTrustSection from "@/components/PaymentTrustSection";
 import CategoryGrid from "@/components/CategoryGrid";
 import FeaturedListings from "@/components/FeaturedListings";
 import FeaturesSection from "@/components/FeaturesSection";
@@ -21,6 +22,7 @@ export default function PixelPerfectIndex() {
       <main>
         <HeroSection />
         <TrustStrip />
+        <PaymentTrustSection />
         <CategoryGrid />
         {/* Below-fold sections: deferred with IntersectionObserver to reduce
             the initial DOM node count from ~1,200 down toward the recommended
