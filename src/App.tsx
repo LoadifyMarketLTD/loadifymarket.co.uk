@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, lazy, Suspense } from 'react';
-import { supabase } from './lib/supabase';
 import { useAuthStore } from './store';
 import { CartProvider } from './contexts/CartContext';
 
@@ -126,66 +125,78 @@ function App() {
       };
     }
 
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        // Fetch user profile with role
-        supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-          .then(({ data, error }) => {
-            if (data) {
-              setUser(data);
-            } else {
-              if (error) {
-                // Table missing or row not found — still treat as logged in
-                // using auth session metadata so the user isn't stuck logged-out.
-                console.warn('users table query failed, falling back to auth session:', error.message);
-                setUser(userFromSession(session.user));
+    // Defer supabase import so vendor-supabase.js is not in the critical-path
+    // bundle — it loads after the initial render, shaving ~37 KiB from the
+    // bytes parsed before first paint.
+    let cleanup: (() => void) | undefined;
+
+    import('./lib/supabase').then(({ supabase }) => {
+      // Check active session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          // Fetch user profile with role
+          supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single()
+            .then(({ data, error }) => {
+              if (data) {
+                setUser(data);
               } else {
-                setLoading(false);
+                if (error) {
+                  // Table missing or row not found — still treat as logged in
+                  // using auth session metadata so the user isn't stuck logged-out.
+                  console.warn('users table query failed, falling back to auth session:', error.message);
+                  setUser(userFromSession(session.user));
+                } else {
+                  setLoading(false);
+                }
               }
-            }
-          });
-      } else {
+            });
+        } else {
+          setLoading(false);
+        }
+      }).catch((err: unknown) => {
+        // Network error or Supabase unreachable — unblock loading so the app is usable
+        console.error('[App] Auth initialization error:', err);
         setLoading(false);
-      }
+      });
+
+      // Listen for auth changes
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) {
+          supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single()
+            .then(({ data, error }) => {
+              if (data) {
+                setUser(data);
+              } else {
+                if (error) {
+                  console.warn('users table query failed, falling back to auth session:', error.message);
+                  setUser(userFromSession(session.user));
+                } else {
+                  setUser(null);
+                }
+              }
+            });
+        } else {
+          setUser(null);
+        }
+      });
+
+      cleanup = () => subscription.unsubscribe();
     }).catch((err: unknown) => {
-      // Network error or Supabase unreachable — unblock loading so the app is usable
-      console.error('[App] Auth initialization error:', err);
+      console.error('[App] Failed to load supabase module:', err);
       setLoading(false);
     });
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
-          .then(({ data, error }) => {
-            if (data) {
-              setUser(data);
-            } else {
-              if (error) {
-                console.warn('users table query failed, falling back to auth session:', error.message);
-                setUser(userFromSession(session.user));
-              } else {
-                setUser(null);
-              }
-            }
-          });
-      } else {
-        setUser(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    return () => cleanup?.();
   }, [setUser, setLoading]);
 
   return (

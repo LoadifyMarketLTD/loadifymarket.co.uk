@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import logo from "@/assets/loadify-logo.svg";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
-import { supabase } from "@/lib/supabase";
 import CATEGORY_CONFIG from "@/lib/category-config";
 
 /**
@@ -35,6 +34,7 @@ const Header = () => {
   };
 
   const handleLogout = async () => {
+    const { supabase } = await import('@/lib/supabase');
     await supabase.auth.signOut();
     logout();
     navigate("/login");

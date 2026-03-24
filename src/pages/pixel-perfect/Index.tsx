@@ -9,6 +9,7 @@ import HowItWorks from "@/components/HowItWorks";
 import PlatformFeatures from "@/components/PlatformFeatures";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
+import LazySection from "@/components/LazySection";
 
 export default function PixelPerfectIndex() {
   return (
@@ -21,13 +22,29 @@ export default function PixelPerfectIndex() {
         <HeroSection />
         <TrustStrip />
         <CategoryGrid />
-        <FeaturedListings />
-        <FeaturesSection />
-        <HowItWorks />
-        <PlatformFeatures />
-        <CTASection />
+        {/* Below-fold sections: deferred with IntersectionObserver to reduce
+            the initial DOM node count from ~1,200 down toward the recommended
+            maximum of 800 elements. Components mount only when the user
+            scrolls near them (rootMargin keeps a 300 px look-ahead). */}
+        <LazySection>
+          <FeaturedListings />
+        </LazySection>
+        <LazySection>
+          <FeaturesSection />
+        </LazySection>
+        <LazySection>
+          <HowItWorks />
+        </LazySection>
+        <LazySection>
+          <PlatformFeatures />
+        </LazySection>
+        <LazySection>
+          <CTASection />
+        </LazySection>
       </main>
-      <Footer />
+      <LazySection>
+        <Footer />
+      </LazySection>
     </div>
   );
 }
