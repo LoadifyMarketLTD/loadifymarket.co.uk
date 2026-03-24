@@ -203,7 +203,7 @@ export default function SellerPublicProfilePage() {
                 {seller.isApproved && (
                   <div className="flex items-center gap-2">
                     <Mail className="w-4 h-4" />
-                    <span>Verified Seller</span>
+                    <span>Active Seller</span>
                   </div>
                 )}
               </div>

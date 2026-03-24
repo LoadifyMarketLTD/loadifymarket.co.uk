@@ -78,7 +78,7 @@ const HeroSection = () => {
 
             <ul className="space-y-2.5">
               {[
-                "Verified Sellers & Real Buyers",
+                "Registered Sellers & Active Buyers",
                 "Thousands of Products Across 16 Categories",
                 "Secure Payments via Stripe",
               ].map((item) => (
@@ -111,7 +111,7 @@ const HeroSection = () => {
 
             <p className="text-xs text-[#64748B] flex items-center gap-1.5">
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-              Verified UK Businesses • Secure Payments • Buyer Protection
+              Registered UK Businesses • Secure Payments via Stripe
             </p>
           </div>
 

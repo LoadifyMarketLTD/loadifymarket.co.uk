@@ -56,7 +56,7 @@ const Signup = () => {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Registration failed");
       const description = isSeller
-        ? "Your seller application has been submitted. Sign in and you will be notified once your account is reviewed."
+        ? "Your seller account has been created. Sign in to complete your setup and start selling."
         : "Your account is ready. Sign in to get started.";
       toast({ title: "Account created!", description });
       navigate("/login");
@@ -78,13 +78,13 @@ const Signup = () => {
 
   const sellerBullets = [
     "Reach thousands of UK wholesale buyers",
-    "Seller account reviewed within 1–2 business days",
+    "Automatic activation — complete setup and connect Stripe",
     "Secure payments via Stripe — no hidden fees",
   ];
   const buyerBullets = [
     "Free to join — no upfront fees",
-    "Buyer protection on every transaction",
-    "Verified sellers and secure payments",
+    "Secure checkout on every purchase",
+    "Registered sellers and secure payments",
   ];
   const bullets = isSeller ? sellerBullets : buyerBullets;
 
@@ -105,7 +105,7 @@ const Signup = () => {
           </h2>
           <p className="text-primary-foreground/70 text-lg leading-relaxed">
             {isSeller
-              ? "Apply to become a verified seller and start reaching thousands of UK wholesale buyers."
+              ? "Set up your seller account and start reaching thousands of UK wholesale buyers."
               : "Create your free account to start buying or selling wholesale, clearance and overstock goods."}
           </p>
 
@@ -141,7 +141,7 @@ const Signup = () => {
             </h1>
             <p className="text-muted-foreground">
               {isSeller
-                ? "Submit your application — our team will review it within 1–2 business days."
+                ? "Create your account and complete seller setup to start listing products."
                 : "Get started with wholesale trading today"}
             </p>
           </div>

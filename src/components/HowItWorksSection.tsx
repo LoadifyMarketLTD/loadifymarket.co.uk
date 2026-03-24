@@ -27,8 +27,8 @@ const sellerSteps = [
   {
     icon: UserPlus,
     step: "01",
-    title: "Sign Up & Get Verified",
-    description: "Create your free seller account. We verify every seller to keep the marketplace trusted.",
+    title: "Sign Up & Complete Setup",
+    description: "Create your free seller account, complete your profile and connect a Stripe account to start selling.",
   },
   {
     icon: PackagePlus,

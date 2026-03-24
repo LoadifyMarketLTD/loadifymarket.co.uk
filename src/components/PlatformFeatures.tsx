@@ -7,19 +7,19 @@ const buyerBenefits = [
     icon: Search,
     color: "text-[#2563EB] bg-blue-50",
     title: "Browse 500+ Listings",
-    desc: "Find wholesale lots, clearance stock and pallets from verified UK sellers — all in one place.",
+    desc: "Find wholesale lots, clearance stock and pallets from registered UK sellers — all in one place.",
   },
   {
     icon: ShieldCheck,
     color: "text-emerald-600 bg-emerald-50",
-    title: "Verified Sellers Only",
-    desc: "Every seller is vetted before listing. Buy with confidence on a trusted UK marketplace.",
+    title: "Active Seller Accounts",
+    desc: "Sellers complete their profile and Stripe setup before listing on the marketplace.",
   },
   {
     icon: CreditCard,
     color: "text-violet-600 bg-violet-50",
     title: "Secure Stripe Checkout",
-    desc: "Pay safely via Stripe with buyer protection and full transaction transparency.",
+    desc: "Pay safely via Stripe with full transaction transparency.",
   },
   {
     icon: HeadphonesIcon,
@@ -154,7 +154,7 @@ const PlatformFeatures = () => {
         <div className="mt-6 bg-white rounded-2xl border border-gray-100 shadow-sm py-5 px-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           {[
             { value: "500+", label: "Active Listings" },
-            { value: "120+", label: "Verified Sellers" },
+            { value: "120+", label: "Registered Sellers" },
             { value: "16", label: "Categories" },
             { value: "UK-Wide", label: "Delivery Support" },
           ].map((s) => (

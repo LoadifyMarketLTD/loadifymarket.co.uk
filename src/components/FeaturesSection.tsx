@@ -29,10 +29,10 @@ const features = [
     tagColor: "text-emerald-700 bg-emerald-50",
     title: "Safe & Secure Transactions",
     description:
-      "Every seller is vetted before they list. All payments are processed via Stripe with full buyer protection, transparent fees and instant order tracking.",
+      "Sellers must complete their profile and connect a Stripe account before listing. All payments are processed via Stripe with transparent fees and instant order tracking.",
     bullets: [
       "Stripe-powered secure checkout",
-      "Buyer protection on every order",
+      "Transparent fees on every order",
       "Real-time messaging with sellers",
     ],
     cta: { label: "How It Works", to: "/catalog" },

@@ -17,7 +17,7 @@ const supabase =
 interface EmailRequest {
   to: string;
   subject: string;
-  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'transport_quote_request' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry';
+  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'transport_quote_request' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry' | 'admin_new_buyer' | 'admin_new_seller' | 'admin_seller_active';
   data: Record<string, unknown>;
 }
 
@@ -275,6 +275,42 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         </div>
         <p>Please log in to the admin dashboard to review the submitted documents and approve or reject the verification.</p>
         <a href="${process.env.URL}/admin/sellers" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Review Verification</a>
+      `;
+      break;
+
+    case 'admin_new_buyer':
+      content = `
+        <h2 style="color: #243b53;">New Buyer Registration</h2>
+        <p>A new buyer account has been created on Loadify Market.</p>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Registered:</strong> ${String(data.registeredAt || new Date().toLocaleString('en-GB'))}</p>
+        </div>
+        <p>No action required. The buyer has direct access to the platform.</p>
+        <a href="${process.env.URL}/admin/users" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Users</a>
+      `;
+      break;
+
+    case 'admin_new_seller':
+      content = `
+        <h2 style="color: #243b53;">New Seller Registration</h2>
+        <p>A new seller account has been created on Loadify Market and is setting up their store.</p>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Registered:</strong> ${String(data.registeredAt || new Date().toLocaleString('en-GB'))}</p>
+        </div>
+        <p>The seller must complete their profile and connect a Stripe account before their store is active. No manual approval is required.</p>
+        <a href="${process.env.URL}/admin/approvals" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Sellers</a>
+      `;
+      break;
+
+    case 'admin_seller_active':
+      content = `
+        <h2 style="color: #243b53;">Seller Account Now Active</h2>
+        <p>A seller account has met all setup requirements and is now active on Loadify Market.</p>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Activated:</strong> ${String(data.activatedAt || new Date().toLocaleString('en-GB'))}</p>
+        </div>
+        <p>The seller's account was activated automatically after their profile and Stripe setup were complete.</p>
+        <a href="${process.env.URL}/admin/approvals" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Sellers</a>
       `;
       break;
 

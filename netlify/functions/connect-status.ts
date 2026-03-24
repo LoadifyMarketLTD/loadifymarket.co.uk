@@ -56,10 +56,22 @@ export const handler: Handler = async (event) => {
       .single<{ stripeAccountId: string | null }>();
 
     if (!profile?.stripeAccountId) {
-      // No Stripe account yet — return null status without error.
+      // No Stripe account yet — check profile completeness and return current status.
+      let sellerStatus: string | null = null;
+      let profileComplete = false;
+      try {
+        const { tryAutoActivateSeller } = await import('./_shared/sellerActivation');
+        const result = await tryAutoActivateSeller(supabase, user.id);
+        if (result) {
+          sellerStatus = result.sellerStatus;
+          profileComplete = result.profileComplete;
+        }
+      } catch (err) {
+        console.warn('connect-status: activation check failed (non-fatal):', err);
+      }
       return {
         statusCode: 200,
-        body: JSON.stringify({ stripeConnectStatus: null }),
+        body: JSON.stringify({ stripeConnectStatus: null, sellerStatus, profileComplete }),
       };
     }
 
@@ -104,6 +116,45 @@ export const handler: Handler = async (event) => {
       .update({ stripeConnectStatus })
       .eq('userId', user.id);
 
+    // ── Auto-activation check ──────────────────────────────────────────────
+    // After updating stripeConnectStatus, re-evaluate whether the seller now
+    // meets all activation conditions.  tryAutoActivateSeller only writes to
+    // the DB when the derived status differs from the stored one.
+    let sellerStatus: string | null = null;
+    let profileComplete = false;
+    try {
+      const { tryAutoActivateSeller } = await import('./_shared/sellerActivation');
+      const result = await tryAutoActivateSeller(supabase, user.id);
+      if (result) {
+        sellerStatus = result.sellerStatus;
+        profileComplete = result.profileComplete;
+
+        // Send admin notification if seller just became active
+        if (result.changed && result.sellerStatus === 'active') {
+          const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+          const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
+          if (adminEmail) {
+            fetch(`${appUrl}/.netlify/functions/send-email`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: adminEmail,
+                subject: 'Loadify: Seller Account Now Active',
+                template: 'admin_seller_active',
+                data: { activatedAt: new Date().toLocaleString('en-GB') },
+              }),
+            }).catch((err: unknown) =>
+              console.warn('connect-status: admin notification failed (non-fatal):', err),
+            );
+          }
+        }
+      }
+    } catch (activationError) {
+      // Non-fatal: Stripe status was already updated above.
+      console.warn('connect-status: auto-activation check failed (non-fatal):', activationError);
+    }
+    // ──────────────────────────────────────────────────────────────────────
+
     return {
       statusCode: 200,
       body: JSON.stringify({
@@ -111,6 +162,8 @@ export const handler: Handler = async (event) => {
         chargesEnabled: account.charges_enabled,
         payoutsEnabled: account.payouts_enabled,
         detailsSubmitted: account.details_submitted,
+        sellerStatus,
+        profileComplete,
       }),
     };
   } catch (error) {

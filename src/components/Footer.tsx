@@ -23,7 +23,7 @@ const Footer = () => {
               Find what you need — or sell what you don't
             </p>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Browse thousands of listings from verified sellers across the UK, or start selling today.
+              Browse thousands of listings from registered sellers across the UK, or start selling today.
             </p>
           </div>
           <Link to="/catalog" className="shrink-0">
@@ -46,7 +46,7 @@ const Footer = () => {
           <div className="flex flex-wrap items-center justify-center gap-5 text-sm text-background/70">
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-              Verified Sellers
+              Registered Sellers
             </span>
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="h-4 w-4 text-emerald-400" />
@@ -152,8 +152,8 @@ const Footer = () => {
                 Marketplace
               </h4>
               <ul className="space-y-2 text-sm text-background/60">
-                <FooterLink to="/buyer-terms">Buyer Protection</FooterLink>
-                <FooterLink to="/catalog">Verified Sellers</FooterLink>
+                <FooterLink to="/buyer-terms">Buyer Terms</FooterLink>
+                <FooterLink to="/catalog">Browse Sellers</FooterLink>
                 <FooterLink to="/shipping">Shipping &amp; Delivery</FooterLink>
                 <FooterLink to="/returns">Returns &amp; Refunds</FooterLink>
                 <FooterLink to="/contact">Report a Problem</FooterLink>

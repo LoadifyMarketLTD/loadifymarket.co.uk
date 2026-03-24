@@ -55,6 +55,8 @@ const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
 // Legal pages without pixel-perfect equivalents
 const AcceptableUsePolicyPage = lazy(() => import('./pages/legal/AcceptableUsePolicyPage'));
 const SellerGuidelinesPage = lazy(() => import('./pages/SellerGuidelinesPage'));
+// SellerSetupPage: shown to sellers who have not yet activated their account
+const SellerSetupPage = lazy(() => import('./pages/pixel-perfect/seller/SellerSetupPage'));
 
 // ─── Pixel-perfect dashboard shells ──────────────────────────────────────────
 const PPSellerShell    = lazy(() => import('./pages/pixel-perfect/seller/SellerShell'));
@@ -307,6 +309,14 @@ function App() {
           <RequireSeller>
             <Suspense fallback={<PageLoader />}><ProductFormPage /></Suspense>
           </RequireSeller>
+        } />
+
+        {/* Seller: Setup page — accessible with RequireAuth only (not RequireSeller)
+            so that draft/submitted sellers can complete their onboarding here. */}
+        <Route path="seller/setup" element={
+          <RequireAuth>
+            <Suspense fallback={<PageLoader />}><SellerSetupPage /></Suspense>
+          </RequireAuth>
         } />
 
         {/* Public: Seller Public Profile — no pixel-perfect equivalent yet */}

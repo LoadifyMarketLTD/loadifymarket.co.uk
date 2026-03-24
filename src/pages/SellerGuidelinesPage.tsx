@@ -31,9 +31,9 @@ const GUIDELINES = [
   },
   {
     icon: BadgeCheck,
-    title: 'Verification Process',
+    title: 'Seller Setup Process',
     description:
-      'All sellers undergo identity and business verification before their listings go live. You must provide valid UK business information and pass our onboarding review.',
+      'To list on Loadify Market you must complete your business profile and connect a Stripe account. Your seller account is activated automatically once all setup steps are complete.',
   },
   {
     icon: MessageCircle,
