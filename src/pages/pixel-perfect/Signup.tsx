@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, User, Building2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,11 @@ const Signup = () => {
     password: "",
   });
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Determine role from ?type= query param. Default to buyer.
+  const isSeller = searchParams.get("type") === "seller";
+  const role: "buyer" | "seller" = isSeller ? "seller" : "buyer";
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -31,20 +36,29 @@ const Signup = () => {
       const nameParts = formData.name.trim().split(" ");
       const firstName = nameParts[0] || "";
       const lastName = nameParts.slice(1).join(" ") || "";
+      const body: Record<string, string> = {
+        firstName,
+        lastName,
+        email: formData.email,
+        password: formData.password,
+        role,
+      };
+      // Pass the company/store name for seller registrations so it is stored
+      // in seller_profiles.storeName and seller_stores.storeName immediately.
+      if (isSeller && formData.company.trim()) {
+        body.storeName = formData.company.trim();
+      }
       const res = await fetch("/.netlify/functions/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName,
-          lastName,
-          email: formData.email,
-          password: formData.password,
-          role: "buyer",
-        }),
+        body: JSON.stringify(body),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Registration failed");
-      toast({ title: "Account created!", description: "Check your email to verify your account, then sign in." });
+      const description = isSeller
+        ? "Your seller application has been submitted. Sign in and you will be notified once your account is reviewed."
+        : "Your account is ready. Sign in to get started.";
+      toast({ title: "Account created!", description });
       navigate("/login");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
@@ -62,6 +76,18 @@ const Signup = () => {
 
   const strength = passwordStrength(formData.password);
 
+  const sellerBullets = [
+    "Reach thousands of UK wholesale buyers",
+    "Seller account reviewed within 1–2 business days",
+    "Secure payments via Stripe — no hidden fees",
+  ];
+  const buyerBullets = [
+    "Free to join — no upfront fees",
+    "Buyer protection on every transaction",
+    "Verified sellers and secure payments",
+  ];
+  const bullets = isSeller ? sellerBullets : buyerBullets;
+
   return (
     <div className="min-h-screen flex">
       {/* Left — branding panel */}
@@ -75,18 +101,16 @@ const Signup = () => {
             </span>
           </div>
           <h2 className="font-display text-2xl font-bold text-primary-foreground">
-            Join the UK Wholesale Marketplace
+            {isSeller ? "Sell on Loadify Market" : "Join the UK Wholesale Marketplace"}
           </h2>
           <p className="text-primary-foreground/70 text-lg leading-relaxed">
-            Create your free account to start buying or selling wholesale, clearance and overstock goods.
+            {isSeller
+              ? "Apply to become a verified seller and start reaching thousands of UK wholesale buyers."
+              : "Create your free account to start buying or selling wholesale, clearance and overstock goods."}
           </p>
 
           <div className="space-y-4 pt-4 text-left">
-            {[
-              "Free to join — no upfront fees",
-              "Buyer protection on every transaction",
-              "Verified sellers and secure payments",
-            ].map((item) => (
+            {bullets.map((item) => (
               <div key={item} className="flex items-center gap-3">
                 <div className="h-6 w-6 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
                   <svg className="h-3.5 w-3.5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -112,8 +136,14 @@ const Signup = () => {
           </div>
 
           <div className="space-y-2 text-center">
-            <h1 className="font-display text-3xl font-bold text-foreground">Create your account</h1>
-            <p className="text-muted-foreground">Get started with wholesale trading today</p>
+            <h1 className="font-display text-3xl font-bold text-foreground">
+              {isSeller ? "Apply as a Seller" : "Create your account"}
+            </h1>
+            <p className="text-muted-foreground">
+              {isSeller
+                ? "Submit your application — our team will review it within 1–2 business days."
+                : "Get started with wholesale trading today"}
+            </p>
           </div>
 
           {/* Social buttons */}
@@ -161,13 +191,13 @@ const Signup = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="company">Company</Label>
+                <Label htmlFor="company">{isSeller ? "Store / Company Name" : "Company"}</Label>
                 <div className="relative">
                   <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="company"
                     name="company"
-                    placeholder="Acme Ltd"
+                    placeholder={isSeller ? "My Store Ltd" : "Acme Ltd"}
                     className="pl-10 h-11"
                     value={formData.company}
                     onChange={handleChange}
@@ -230,7 +260,7 @@ const Signup = () => {
               <p className="text-sm text-destructive text-center">{error}</p>
             )}
             <Button type="submit" disabled={loading} className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
-              {loading ? "Creating account…" : "Create Account"}
+              {loading ? "Creating account…" : isSeller ? "Submit Application" : "Create Account"}
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">
@@ -239,6 +269,22 @@ const Signup = () => {
               <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
             </p>
           </form>
+
+          {isSeller ? (
+            <p className="text-center text-sm text-muted-foreground">
+              Just want to browse and buy?{" "}
+              <Link to="/signup" className="text-primary font-medium hover:underline">
+                Create a buyer account
+              </Link>
+            </p>
+          ) : (
+            <p className="text-center text-sm text-muted-foreground">
+              Want to sell on Loadify?{" "}
+              <Link to="/signup?type=seller" className="text-primary font-medium hover:underline">
+                Apply as a seller
+              </Link>
+            </p>
+          )}
 
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}

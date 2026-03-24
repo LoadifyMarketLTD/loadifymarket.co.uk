@@ -9,7 +9,7 @@ interface Props {
   children: ReactNode;
 }
 
-type ApprovalState = 'pending' | 'approved' | 'unapproved' | 'error';
+type ApprovalState = 'pending' | 'approved' | 'unapproved' | 'rejected' | 'error';
 
 const CardShell = ({ children }: { children: ReactNode }) => (
   <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center px-4">
@@ -23,10 +23,9 @@ const CardShell = ({ children }: { children: ReactNode }) => (
  * Route guard that requires seller, admin, or owner role.
  * Unauthenticated users are redirected to /login.
  * Authenticated buyers see a prompt to register as a seller instead.
- * Sellers whose isApproved is false see a "pending approval" notice.
+ * Sellers whose isApproved is false see a "pending approval" or "rejected" notice
+ * depending on their verificationStatus.
  * Admins and owners bypass the isApproved check entirely.
- *
- * approvalState: 'pending' = fetch in progress, 'approved'/'unapproved'/'error' = result known.
  */
 export default function RequireSeller({ children }: Props) {
   const { user, isLoading } = useAuthStore();
@@ -39,7 +38,7 @@ export default function RequireSeller({ children }: Props) {
     import('../../lib/supabase').then(({ supabase }) => Promise.resolve(
       supabase
         .from('seller_profiles')
-        .select('isApproved')
+        .select('isApproved, verificationStatus')
         .eq('userId', user.id)
         .single()
     )).then(({ data, error }) => {
@@ -47,8 +46,12 @@ export default function RequireSeller({ children }: Props) {
       if (error) {
         console.warn('RequireSeller: failed to fetch approval status', error.message);
         setApprovalState('error');
+      } else if (data?.isApproved) {
+        setApprovalState('approved');
+      } else if (data?.verificationStatus === 'rejected') {
+        setApprovalState('rejected');
       } else {
-        setApprovalState(data?.isApproved ? 'approved' : 'unapproved');
+        setApprovalState('unapproved');
       }
     }).catch((err: unknown) => {
       if (cancelled) return;
@@ -73,8 +76,21 @@ export default function RequireSeller({ children }: Props) {
             listing products on Loadify Market.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/register?type=seller" className="btn-primary">Register as Seller</Link>
+            <Link to="/signup?type=seller" className="btn-primary">Apply as Seller</Link>
             <Link to="/dashboard" className="btn-secondary">Back to Dashboard</Link>
+          </div>
+        </CardShell>
+      ) : !loading && user?.role === 'seller' && !hasAdminAccess(user) && approvalState === 'rejected' ? (
+        <CardShell>
+          <p className="text-5xl mb-4">❌</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Application Not Approved</h2>
+          <p className="text-gray-500 mb-6">
+            Your seller application was not approved at this time. Please contact our support
+            team if you believe this is an error or would like to reapply.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/contact" className="btn-primary">Contact Support</Link>
+            <Link to="/" className="btn-secondary">Back to Home</Link>
           </div>
         </CardShell>
       ) : !loading && user?.role === 'seller' && !hasAdminAccess(user) && approvalState === 'unapproved' ? (
