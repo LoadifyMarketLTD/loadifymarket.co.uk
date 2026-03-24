@@ -1,6 +1,7 @@
 import { ArrowRight, CheckCircle2, ShieldCheck, Tag, Layers, Star, MessageCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import CountdownBanner from "@/components/CountdownBanner";
 
 /* ─── Marketplace product card shown in hero right panel ─── */
 const ProductCard = ({
@@ -64,10 +65,7 @@ const HeroSection = () => {
 
           {/* ── LEFT: headline + CTAs ── */}
           <div className="space-y-6 max-w-xl">
-            <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-[#2563EB] text-xs font-semibold px-3 py-1.5 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse" />
-              🇬🇧 The UK's Trusted Marketplace
-            </div>
+            <CountdownBanner variant="hero" />
 
             <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-display font-extrabold leading-[1.06] text-[#0F172A]">
               The UK Marketplace{" "}
