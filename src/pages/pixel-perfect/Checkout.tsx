@@ -484,7 +484,7 @@ const Checkout = () => {
               <div className="bg-card rounded-xl border border-border p-4 space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
-                  Buyer Protection included
+                  Dispute support available
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Lock className="h-4 w-4 text-primary shrink-0" />

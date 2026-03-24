@@ -39,7 +39,7 @@ const TrustSection = () => {
     },
     {
       icon: <ShieldCheck className="h-4 w-4 text-primary shrink-0" />,
-      label: "Buyer Protection Included",
+      label: "Dispute Support Available",
     },
     {
       icon: <Wallet className="h-4 w-4 text-primary shrink-0" />,

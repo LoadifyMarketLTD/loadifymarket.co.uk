@@ -18,6 +18,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export interface SellerProfileSnapshot {
   userId: string;
   sellerStatus: string;
+  activatedAt?: string | null;
   storeName?: string | null;
   businessName?: string | null;
   contactPhone?: string | null;
@@ -65,6 +66,13 @@ export interface ActivationResult {
   stripeActive: boolean;
   /** true if sellerStatus was updated in this call */
   changed: boolean;
+  /**
+   * true if this call is the FIRST time this seller reached 'active' status
+   * (activatedAt was null before this update). Use this — not just `changed` —
+   * to gate admin notification emails, preventing duplicate sends when both the
+   * Stripe webhook and a connect-status poll fire around the same time.
+   */
+  firstActivation: boolean;
 }
 
 /**
@@ -82,7 +90,7 @@ export async function tryAutoActivateSeller(
   const { data: profile, error } = await supabase
     .from('seller_profiles')
     .select(
-      'userId, sellerStatus, storeName, businessName, contactPhone, businessAddress, stripeAccountId, stripeConnectStatus',
+      'userId, sellerStatus, activatedAt, storeName, businessName, contactPhone, businessAddress, stripeAccountId, stripeConnectStatus',
     )
     .eq('userId', sellerId)
     .single<SellerProfileSnapshot>();
@@ -105,6 +113,12 @@ export async function tryAutoActivateSeller(
   );
 
   const changed = newStatus !== profile.sellerStatus;
+  // firstActivation: true only if this call transitions the seller to 'active'
+  // for the very first time (activatedAt was null before this update).
+  // This prevents duplicate admin emails when both the Stripe webhook and a
+  // connect-status poll fire simultaneously — only the first writer wins.
+  const firstActivation =
+    changed && newStatus === 'active' && !profile.activatedAt;
 
   if (changed) {
     const { error: updateError } = await supabase
@@ -126,5 +140,5 @@ export async function tryAutoActivateSeller(
     );
   }
 
-  return { sellerStatus: newStatus, profileComplete, stripeActive, changed };
+  return { sellerStatus: newStatus, profileComplete, stripeActive, changed, firstActivation };
 }

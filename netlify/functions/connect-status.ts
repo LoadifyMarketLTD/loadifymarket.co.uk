@@ -130,7 +130,7 @@ export const handler: Handler = async (event) => {
         profileComplete = result.profileComplete;
 
         // Send admin notification if seller just became active
-        if (result.changed && result.sellerStatus === 'active') {
+        if (result.firstActivation) {
           const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
           const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
           if (adminEmail) {

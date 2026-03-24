@@ -562,7 +562,7 @@ async function handleConnectAccountUpdated(account: Stripe.Account) {
     const sellerId = (updated[0] as { userId: string }).userId;
     const result = await tryAutoActivateSeller(supabase!, sellerId);
 
-    if (result?.changed && result.sellerStatus === 'active') {
+    if (result?.firstActivation) {
       // Send admin notification — fire-and-forget, non-blocking.
       const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
       const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');

@@ -84,7 +84,7 @@ const ForBuyersSection = () => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mt-8 pt-6 border-t border-border">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <ShieldCheck className="h-4 w-4 text-primary" />
-            <span>Buyer Protection Included</span>
+            <span>Dispute Support Available</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <PoundSterling className="h-4 w-4 text-primary" />

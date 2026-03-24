@@ -200,7 +200,7 @@ const HeroSection = () => {
               <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-3 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs text-[#334155]">
                   <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                  <span className="font-medium">Buyer Protection Active</span>
+                  <span className="font-medium">Dispute Support Available</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-[#334155]">
                   <MessageCircle className="h-4 w-4 text-[#2563EB]" />

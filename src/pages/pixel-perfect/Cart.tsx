@@ -243,7 +243,7 @@ const Cart = () => {
               <div className="bg-card rounded-xl border border-border p-4 space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
-                  <span>Buyer Protection on every order</span>
+                  <span>Dispute support available</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Truck className="h-4 w-4 text-primary shrink-0" />

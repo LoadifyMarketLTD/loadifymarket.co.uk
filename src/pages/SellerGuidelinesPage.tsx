@@ -73,7 +73,7 @@ export default function SellerGuidelinesPage() {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Seller Guidelines</h1>
           <p className="text-gray-700 text-base max-w-2xl mx-auto">
             Everything you need to know to sell successfully on Loadify Market. Follow these
-            guidelines to build trust, protect buyers, and grow your business.
+            guidelines to build trust, support buyers, and grow your business.
           </p>
           <div className="flex flex-wrap gap-3 justify-center mt-6">
             <Link
