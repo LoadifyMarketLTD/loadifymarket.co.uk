@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight, Package, MapPin, Clock, Eye, Tag,
@@ -11,8 +10,6 @@ import { useNavigate } from "react-router-dom";
 
 interface ProductInfoProps {
   title: string;
-  price: number;
-  originalPrice?: number;
   category: string;
   subcategory: string;
   condition: string;
@@ -32,8 +29,6 @@ const conditionColor: Record<string, string> = {
 
 const ProductInfo = ({
   title,
-  price,
-  originalPrice,
   category,
   subcategory,
   condition,
@@ -45,10 +40,6 @@ const ProductInfo = ({
 }: ProductInfoProps) => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
-
-  const discount = originalPrice
-    ? Math.round(((originalPrice - price) / originalPrice) * 100)
-    : 0;
 
   const handleBuyNow = () => {
     addToCart(product);
@@ -80,32 +71,10 @@ const ProductInfo = ({
           <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${conditionColor[condition] || ""}`}>
             {condition}
           </span>
-          {discount > 0 && (
-            <Badge className="bg-destructive text-destructive-foreground text-xs font-bold">
-              -{discount}% OFF
-            </Badge>
-          )}
         </div>
         <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground leading-tight">
           {title}
         </h1>
-      </div>
-
-      {/* Price */}
-      <div className="flex items-baseline gap-3">
-        <span className="font-display text-3xl font-bold text-foreground">
-          £{price.toLocaleString()}
-        </span>
-        {originalPrice && (
-          <>
-            <span className="text-lg text-muted-foreground line-through">
-              £{originalPrice.toLocaleString()}
-            </span>
-            <span className="text-sm font-semibold text-destructive">
-              Save £{(originalPrice - price).toLocaleString()}
-            </span>
-          </>
-        )}
       </div>
 
       {/* Meta info */}

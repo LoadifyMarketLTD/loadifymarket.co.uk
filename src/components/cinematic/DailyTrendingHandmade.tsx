@@ -132,8 +132,7 @@ export default function DailyTrendingHandmade() {
                   {item.description}
                 </p>
 
-                <div className="flex items-center justify-between">
-                  <span className="price-tag">£{item.price}</span>
+                <div className="flex items-center justify-end">
                   <Link
                     to={`/product/${item.id}`}
                     className="btn-glass py-2 px-4 text-sm flex items-center gap-2"

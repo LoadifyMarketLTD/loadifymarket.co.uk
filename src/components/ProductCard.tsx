@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { Heart, Package, Truck, Sparkles, Eye, MapPin, Star, CheckCircle2, Tag } from 'lucide-react';
 import { useWishlist } from '../lib/useWishlist';
 import { getCategoryFallbackImage } from '../lib/categoryImages';
-import { formatPrice } from '../lib/formatPrice';
 import VerificationBadge from './VerificationBadge';
 import RoleBadge from './RoleBadge';
 import type { Product } from '../types';
@@ -36,7 +35,6 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const typeInfo = getTypeInfo();
   const TypeIcon = typeInfo.icon;
-  const discount = (product as unknown as { discount?: number }).discount;
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200 group flex flex-col">
@@ -74,16 +72,6 @@ export default function ProductCard({ product }: ProductCardProps) {
             {typeInfo.label}
           </span>
         </div>
-
-        {/* Discount badge */}
-        {typeof discount === 'number' && discount > 0 && (
-          <div className="absolute bottom-2 left-2">
-            <span className="inline-flex items-center gap-1 bg-[#C2410C] text-gray-900 text-[10px] font-bold px-2 py-0.5 rounded">
-              <Tag className="w-2.5 h-2.5" />
-              -{discount}%
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Content */}
@@ -152,9 +140,6 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.description}
           </p>
         )}
-
-        {/* Price */}
-        <p className="text-lg font-bold text-[#1E3A5F] mb-2">{formatPrice(product.price)}</p>
 
         {/* Stock / condition */}
         <div className="flex items-center justify-between text-xs text-gray-400 mb-2.5">

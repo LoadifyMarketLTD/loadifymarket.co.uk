@@ -274,8 +274,6 @@ const ProductDetail = () => {
                   <ProductInfo
                     product={product}
                     title={product.title}
-                    price={product.price}
-                    originalPrice={product.originalPrice}
                     category={product.category}
                     subcategory={product.subcategory}
                     condition={product.condition}

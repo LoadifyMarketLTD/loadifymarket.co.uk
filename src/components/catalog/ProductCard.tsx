@@ -1,5 +1,4 @@
 import { MapPin, Package, Star, Eye } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -30,10 +29,6 @@ const conditionColor: Record<string, string> = {
 };
 
 const ProductCard = ({ product, linkState }: { product: Product; linkState?: Record<string, unknown> }) => {
-  const discount = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-    : 0;
-
   return (
     <div className="group bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-elevated transition-all duration-300 overflow-hidden">
       {/* Image */}
@@ -45,11 +40,6 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
           loading="lazy"
           onError={(e) => { const img = e.target as HTMLImageElement; if (img.src !== window.location.origin + '/images/placeholder-product.jpg') img.src = '/images/placeholder-product.jpg'; }}
         />
-        {discount > 0 && (
-          <Badge className="absolute top-3 left-3 bg-destructive text-destructive-foreground text-xs font-bold">
-            -{discount}%
-          </Badge>
-        )}
         <div className={`absolute top-3 right-3 text-xs font-medium px-2 py-1 rounded-full border ${conditionColor[product.condition] || ""}`}>
           {product.condition}
         </div>
@@ -69,16 +59,6 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
           {product.title}
         </h3>
 
-        <div className="flex items-center gap-2">
-          <span className="font-display text-lg font-bold text-foreground">
-            £{product.price.toLocaleString()}
-          </span>
-          {product.originalPrice && (
-            <span className="text-sm text-muted-foreground line-through">
-              £{product.originalPrice.toLocaleString()}
-            </span>
-          )}
-        </div>
 
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
