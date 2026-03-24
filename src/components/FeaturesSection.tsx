@@ -11,11 +11,11 @@ const features = [
     tagColor: "text-[#2563EB] bg-blue-50",
     title: "Browse & Discover",
     description:
-      "Explore thousands of products across 16 categories — electronics, fashion, beauty, home goods, tools and more — all from verified UK sellers in one place.",
+      "Explore thousands of products across 16 categories — electronics, fashion, beauty, home goods, tools and more — all from independent UK sellers in one place.",
     bullets: [
       "500+ live listings updated daily",
       "Smart search with category filters",
-      "Verified seller profiles & ratings",
+      "Seller profiles & ratings",
     ],
     cta: { label: "Browse Marketplace", to: "/catalog" },
     img: "https://images.unsplash.com/photo-1555421689-491a97ff2040?w=600&auto=format&fit=crop",

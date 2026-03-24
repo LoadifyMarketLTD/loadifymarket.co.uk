@@ -73,7 +73,7 @@ const HeroSection = () => {
             </h1>
 
             <p className="text-lg text-[#334155] leading-relaxed">
-              Discover thousands of products from verified UK sellers — electronics, fashion, home goods, beauty and more, all on one trusted platform.
+              Discover thousands of products from independent UK sellers — electronics, fashion, home goods, beauty and more, all on one platform.
             </p>
 
             <ul className="space-y-2.5">

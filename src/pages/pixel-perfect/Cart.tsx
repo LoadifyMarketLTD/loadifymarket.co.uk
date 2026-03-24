@@ -117,7 +117,7 @@ const Cart = () => {
                         <div className="flex items-center gap-2 mt-1.5">
                           <span className="text-xs text-muted-foreground">{product.seller}</span>
                           {product.sellerVerified && (
-                            <span className="text-xs text-primary font-medium">✓ Verified</span>
+                            <span className="text-xs text-primary font-medium">✓ Active</span>
                           )}
                         </div>
                         <div className="flex items-center gap-2 mt-1">

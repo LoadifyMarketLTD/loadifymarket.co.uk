@@ -40,7 +40,7 @@ const sellerBenefits = [
     icon: Users,
     color: "text-emerald-600 bg-emerald-50",
     title: "Reach Real UK Buyers",
-    desc: "Access a growing base of verified buyers actively searching for wholesale and clearance stock.",
+    desc: "Access a growing base of registered buyers actively searching for wholesale and clearance stock.",
   },
   {
     icon: Banknote,

@@ -94,7 +94,7 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
       {
         question: "Can I request a custom quote?",
         answer:
-          "Yes. If you have specific requirements, use the Request for Quote feature to describe what you need. Verified sellers in the relevant category can then submit offers for you to review and accept.",
+          "Yes. If you have specific requirements, use the Request for Quote feature to describe what you need. Registered sellers in the relevant category can then submit offers for you to review and accept.",
       },
       {
         question: "What payment methods are accepted?",

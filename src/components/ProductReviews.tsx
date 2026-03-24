@@ -500,7 +500,7 @@ export default function ProductReviews({
                 filterRating === f ? 'bg-gold text-jet' : 'bg-white text-gray-500 hover:bg-white/70'
               }`}
             >
-              {f === 'all' ? 'All' : f === 'verified' ? '✓ Verified' : `${f}★`}
+              {f === 'all' ? 'All' : f === 'verified' ? '✓ Confirmed' : `${f}★`}
             </button>
           ))}
         </div>

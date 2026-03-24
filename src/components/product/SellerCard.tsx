@@ -18,7 +18,7 @@ const SellerCard = ({ name, verified, rating, location, totalListings }: SellerC
         {verified && (
           <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
             <ShieldCheck className="h-3.5 w-3.5" />
-            Verified
+            Active
           </span>
         )}
       </div>

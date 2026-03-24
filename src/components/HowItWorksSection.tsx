@@ -7,19 +7,19 @@ const buyerSteps = [
     icon: UserPlus,
     step: "01",
     title: "Create a Free Account",
-    description: "Sign up in under 2 minutes. Browse the marketplace as a verified buyer.",
+    description: "Sign up in under 2 minutes. Browse the marketplace as a registered buyer.",
   },
   {
     icon: Search,
     step: "02",
     title: "Find the Stock You Need",
-    description: "Search wholesale, clearance and pallet deals from verified UK sellers across all categories.",
+    description: "Search wholesale, clearance and pallet deals from independent UK sellers across all categories.",
   },
   {
     icon: PoundSterling,
     step: "03",
     title: "Buy & Get It Delivered",
-    description: "Purchase securely via Stripe. Arrange delivery with the seller or use our logistics support.",
+    description: "Purchase securely via Stripe. Arrange delivery directly with the seller.",
   },
 ];
 

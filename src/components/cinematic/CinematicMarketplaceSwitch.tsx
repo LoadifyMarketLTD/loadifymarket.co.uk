@@ -26,9 +26,9 @@ const FEATURED_DEALS = [
 ];
 
 const FEATURED_SELLERS = [
-  { id: 1, name: 'TechPro Wholesale', rating: 4.9, sales: 1240, badge: 'Verified', type: 'Electronics & Tech' },
+  { id: 1, name: 'TechPro Wholesale', rating: 4.9, sales: 1240, badge: 'Active', type: 'Electronics & Tech' },
   { id: 2, name: 'Fashion Forward UK', rating: 4.8, sales: 876, badge: 'Top Seller', type: 'Fashion & Apparel' },
-  { id: 3, name: 'Home Essentials Ltd', rating: 4.7, sales: 654, badge: 'Verified', type: 'Home & Garden' },
+  { id: 3, name: 'Home Essentials Ltd', rating: 4.7, sales: 654, badge: 'Active', type: 'Home & Garden' },
 ];
 
 export default function CinematicMarketplaceSwitch() {

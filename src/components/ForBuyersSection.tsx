@@ -5,15 +5,15 @@ import { Link } from "react-router-dom";
 const benefits = [
   {
     icon: Search,
-    title: "Discover Verified Suppliers",
+    title: "Discover Independent Suppliers",
     description:
-      "Browse thousands of listings from approved UK sellers — wholesale lots, clearance lines, pallets and returns — all in one marketplace.",
+      "Browse thousands of listings from registered UK sellers — wholesale lots, clearance lines, pallets and returns — all in one marketplace.",
   },
   {
     icon: ShieldCheck,
     title: "Trade with Confidence",
     description:
-      "Every seller is vetted and approved before listing. Buyer protection is built in so you can purchase knowing the platform has your back.",
+      "Sellers must complete their profile and connect a Stripe account before listing. Dispute support is available if issues arise.",
   },
   {
     icon: PoundSterling,
@@ -25,7 +25,7 @@ const benefits = [
     icon: Truck,
     title: "Flexible Delivery Options",
     description:
-      "Arrange delivery directly with sellers or use our integrated logistics support. Track your order from purchase to delivery.",
+      "Arrange delivery directly with sellers. Delivery is the seller's responsibility — order updates are shared through the platform.",
   },
 ];
 
@@ -42,7 +42,7 @@ const ForBuyersSection = () => {
             Find Suppliers You Can Trust
           </h2>
           <p className="mt-4 text-muted-foreground text-lg leading-relaxed">
-            Loadify connects you with verified UK sellers offering wholesale, clearance and returns stock — all on one trusted platform.
+            Loadify connects you with independent UK sellers offering wholesale, clearance and returns stock — all on one platform.
           </p>
         </div>
 

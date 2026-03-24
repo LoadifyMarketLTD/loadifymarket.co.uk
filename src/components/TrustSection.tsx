@@ -4,7 +4,7 @@ const TrustSection = () => {
   const items = [
     {
       icon: <UserCheck className="h-4 w-4 text-primary shrink-0" />,
-      label: "Verified UK Businesses",
+      label: "Registered UK Businesses",
     },
     {
       icon: (
