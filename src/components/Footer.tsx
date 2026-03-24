@@ -140,7 +140,7 @@ const Footer = () => {
                 <FooterLink to="/pp/seller">Seller Dashboard</FooterLink>
                 <FooterLink to="/pp/seller/products">List a Product</FooterLink>
                 <FooterLink to="/seller-terms">Seller Fees &amp; Pricing</FooterLink>
-                <FooterLink to="/seller-terms">Seller Guidelines</FooterLink>
+                <FooterLink to="/seller-guidelines">Seller Guidelines</FooterLink>
                 <FooterLink to="/#how-it-works">How It Works</FooterLink>
                 <FooterLink to="/contact">Partner With Us</FooterLink>
               </ul>
@@ -182,6 +182,7 @@ const Footer = () => {
                 <FooterLink to="/privacy">Privacy Policy</FooterLink>
                 <FooterLink to="/cookies">Cookie Policy</FooterLink>
                 <FooterLink to="/disclaimer">Disclaimer</FooterLink>
+                <FooterLink to="/acceptable-use-policy">Acceptable Use Policy</FooterLink>
                 <FooterLink to="/returns">Returns Policy</FooterLink>
                 <FooterLink to="/shipping">Shipping Policy</FooterLink>
                 <FooterLink to="/buyer-terms">Buyer Terms</FooterLink>
