@@ -1,12 +1,12 @@
 import { ArrowRight, CheckCircle2, ShieldCheck, Tag, Layers, Star, MessageCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import CountdownBanner from "@/components/CountdownBanner";
 
 /* ─── Marketplace product card shown in hero right panel ─── */
 const ProductCard = ({
   title,
   category,
-  price,
   badge,
   badgeVariant,
   img,
@@ -14,7 +14,6 @@ const ProductCard = ({
 }: {
   title: string;
   category: string;
-  price: string;
   badge: string;
   badgeVariant: "blue" | "green" | "orange" | "rose";
   img: string;
@@ -46,13 +45,12 @@ const ProductCard = ({
       <div className="p-2.5">
         <p className="text-[11px] font-semibold text-[#2563EB] uppercase tracking-wide">{category}</p>
         <p className="text-xs font-bold text-[#0F172A] leading-snug mt-0.5 line-clamp-1">{title}</p>
-        <div className="flex items-center justify-between mt-1.5">
+        <div className="flex items-center mt-1.5">
           <div className="flex gap-0.5">
             {[1, 2, 3, 4, 5].map((n) => (
               <Star key={n} className={`h-2.5 w-2.5 ${n <= stars ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"}`} />
             ))}
           </div>
-          <p className="text-sm font-extrabold text-[#0F172A]">{price}</p>
         </div>
       </div>
     </div>
@@ -67,10 +65,7 @@ const HeroSection = () => {
 
           {/* ── LEFT: headline + CTAs ── */}
           <div className="space-y-6 max-w-xl">
-            <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-[#2563EB] text-xs font-semibold px-3 py-1.5 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse" />
-              🇬🇧 The UK's Trusted Marketplace
-            </div>
+            <CountdownBanner variant="hero" />
 
             <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-display font-extrabold leading-[1.06] text-[#0F172A]">
               The UK Marketplace{" "}
@@ -170,7 +165,6 @@ const HeroSection = () => {
                 <ProductCard
                   title="Sony WH-1000XM5 Earbuds"
                   category="Electronics"
-                  price="£49.99"
                   badge="NEW"
                   badgeVariant="blue"
                   img="https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&auto=format&fit=crop"
@@ -179,7 +173,6 @@ const HeroSection = () => {
                 <ProductCard
                   title="Summer Dress Collection"
                   category="Fashion"
-                  price="£29.99"
                   badge="HOT"
                   badgeVariant="rose"
                   img="https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=400&auto=format&fit=crop"
@@ -188,7 +181,6 @@ const HeroSection = () => {
                 <ProductCard
                   title="Smart Home Starter Kit"
                   category="Home & Kitchen"
-                  price="£64.99"
                   badge="SALE"
                   badgeVariant="orange"
                   img="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&auto=format&fit=crop"
@@ -197,7 +189,6 @@ const HeroSection = () => {
                 <ProductCard
                   title="Beauty Essentials Set"
                   category="Beauty"
-                  price="£34.99"
                   badge="TOP"
                   badgeVariant="green"
                   img="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400&auto=format&fit=crop"

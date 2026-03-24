@@ -101,16 +101,6 @@ export default function RelatedProducts({ currentProduct, maxProducts = 6 }: Rel
             <h3 className="font-medium text-sm line-clamp-2 group-hover:text-navy-800 transition-colors">
               {product.title}
             </h3>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="font-bold text-navy-800">
-                £{product.price.toFixed(2)}
-              </span>
-              {product.priceExVat && (
-                <span className="text-xs text-gray-500">
-                  (£{product.priceExVat.toFixed(2)} ex VAT)
-                </span>
-              )}
-            </div>
           </Link>
         ))}
       </div>

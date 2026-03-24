@@ -128,12 +128,7 @@ export default function CinematicMarketplaceSwitch() {
                   <div className="card-product-overlay" />
                 </div>
                 <div className="p-5">
-                  <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">{item.title}</h3>
-                  <p className="text-sm text-gray-400 mb-1">RRP: £{item.rrp.toLocaleString()}</p>
-                  <div className="flex items-baseline gap-1 mb-4">
-                    <span className="price-tag">£{item.price.toLocaleString()}</span>
-                    <span className="text-sm text-gray-500">/ lot</span>
-                  </div>
+                  <h3 className="font-bold text-gray-900 mb-4 line-clamp-2">{item.title}</h3>
                   <Link to="/category/wholesale" className="w-full btn-glass py-3 text-sm flex items-center justify-center gap-2">
                     <span>View Lot</span>
                     <ArrowRight className="w-4 h-4" />

@@ -3,8 +3,8 @@ import { ArrowRight, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
-// FIXED: Use a fixed target date (19 April 2026) instead of relative date
-const TARGET_TIME = new Date("2026-04-19T00:00:00Z").getTime();
+// Target: 1 July 2026 23:59:59 BST (= 22:59:59 UTC)
+const TARGET_TIME = new Date("2026-07-01T22:59:59Z").getTime();
 
 interface TimeLeft {
   days: number;
@@ -28,8 +28,8 @@ function pad(n: number) {
 }
 
 interface CountdownBannerProps {
-  /** "homepage" = full-width strip below hero; "inline" = compact version for /clearance */
-  variant?: "homepage" | "inline";
+  /** "homepage" = full-width strip below hero; "inline" = compact version for /clearance; "hero" = replaces pill badge in HeroSection */
+  variant?: "homepage" | "inline" | "hero";
 }
 
 const CountdownBanner = ({ variant = "homepage" }: CountdownBannerProps) => {
@@ -50,6 +50,31 @@ const CountdownBanner = ({ variant = "homepage" }: CountdownBannerProps) => {
   ];
 
   if (expired) return null;
+
+  if (variant === "hero") {
+    return (
+      <div className="inline-flex flex-wrap items-center gap-2 bg-blue-50 border border-blue-100 text-[#0F172A] text-xs font-semibold px-3 py-1.5 rounded-full">
+        <span className="text-[#64748B] font-medium whitespace-nowrap">0% Commission ends in:</span>
+        <div className="flex items-center gap-1">
+          {digits.map((d, i) => (
+            <div key={d.label} className="flex items-center gap-1">
+              <div className="flex flex-col items-center min-w-[1.75rem] text-center">
+                <span className="text-xs font-extrabold text-[#2563EB] tabular-nums leading-none">
+                  {pad(d.value)}
+                </span>
+                <span className="text-[8px] font-semibold text-[#64748B] uppercase tracking-wide leading-none mt-0.5">
+                  {d.label}
+                </span>
+              </div>
+              {i < digits.length - 1 && (
+                <span className="text-[#94A3B8] font-bold text-xs -mt-2.5 select-none">:</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (variant === "inline") {
     return (

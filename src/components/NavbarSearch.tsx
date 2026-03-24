@@ -162,7 +162,7 @@ const NavbarSearch = ({ className, onSelect }: Props) => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-foreground truncate group-hover:text-primary transition-colors">{p.title}</p>
-                          <p className="text-xs text-muted-foreground">{catName} · £{Number(p.price).toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">{catName}</p>
                         </div>
                       </button>
                     );

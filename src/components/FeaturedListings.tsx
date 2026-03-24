@@ -160,7 +160,6 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
             <StarRow count={item.stars} />
             <span className="text-sm text-[#64748B]">({item.reviews} reviews)</span>
           </div>
-          <p className="text-2xl font-extrabold text-[#0F172A] mb-6">{item.price}</p>
           <div className="flex gap-3">
             <Link
               to="/catalog"
@@ -277,7 +276,6 @@ const FeaturedListings = () => {
                     <span className="text-[10px] text-[#64748B]">({item.reviews})</span>
                   </div>
                   <p className="text-[10px] text-[#64748B] truncate">{item.seller}</p>
-                  <p className="text-base font-extrabold text-[#0F172A] mt-auto">{item.price}</p>
                 </div>
               </Link>
             ))}
