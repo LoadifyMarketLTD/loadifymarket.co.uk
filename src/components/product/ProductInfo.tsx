@@ -7,6 +7,7 @@ import { useCart } from "@/contexts/CartContext";
 import type { Product } from "@/components/catalog/ProductCard";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import PaymentMethodBadges from "@/components/PaymentMethodBadges";
 
 interface ProductInfoProps {
   title: string;
@@ -136,6 +137,9 @@ const ProductInfo = ({
           Add to Cart
         </Button>
       </div>
+
+      {/* Accepted payment methods */}
+      <PaymentMethodBadges size="sm" />
     </div>
   );
 };

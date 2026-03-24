@@ -12,6 +12,7 @@ import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
+import PaymentMethodBadges from "@/components/PaymentMethodBadges";
 
 const steps = [
   { id: "shipping", label: "Shipping", icon: Truck },
@@ -324,6 +325,9 @@ const Checkout = () => {
                       <ShieldCheck className="h-5 w-5 text-primary" />
                       <span className="text-xs text-muted-foreground">256-bit SSL encrypted · PCI-DSS compliant</span>
                     </div>
+                    <div className="border-t border-border pt-4">
+                      <PaymentMethodBadges showLabel={true} size="sm" />
+                    </div>
                   </div>
 
                   <div className="flex gap-3">
@@ -381,7 +385,7 @@ const Checkout = () => {
                       <button onClick={() => setCurrentStep(1)} className="text-sm text-primary hover:underline">Edit</button>
                     </div>
                     <div className="text-sm text-muted-foreground pl-[52px]">
-                      <p>Visa ending in •••• 4242</p>
+                      <p>Card payment — details entered securely on Stripe</p>
                     </div>
                   </div>
 
