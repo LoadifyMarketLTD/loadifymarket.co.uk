@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 24" role="img" aria-labelledby="amex-title">
+  <title id="amex-title">American Express</title>
+  <!--
+    American Express compact badge.
+    Background: American Express Blue #016FD0
+    Wordmark: "AMEX" in bold uppercase Arial (guaranteed available on all platforms).
+    This is the universally recognised compact badge format used across
+    payment processors and checkout pages.
+  -->
+  <rect width="38" height="24" rx="3" fill="#016FD0"/>
+  <text
+    x="19"
+    y="16.5"
+    font-family="Arial, Helvetica, 'Liberation Sans', sans-serif"
+    font-weight="bold"
+    font-size="10"
+    fill="#ffffff"
+    text-anchor="middle"
+    letter-spacing="0.5"
+  >AMEX</text>
+</svg>

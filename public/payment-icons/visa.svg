@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 24" role="img" aria-labelledby="visa-title">
+  <title id="visa-title">Visa</title>
+  <!--
+    Visa wordmark badge.
+    Background: white   Text: Visa Classic Blue #1A1F71
+    Font: Arial/Helvetica bold (universally available on all platforms).
+    The current Visa wordmark (redesigned 2014) uses a strong bold
+    sans-serif typeface — not an italic serif as in earlier versions.
+    font-size and letter-spacing are tuned to fill ~80% of the 38-unit
+    width without clipping on any platform.
+  -->
+  <rect width="38" height="24" rx="3" fill="#ffffff"/>
+  <text
+    x="19"
+    y="16.5"
+    font-family="Arial, Helvetica, 'Liberation Sans', sans-serif"
+    font-weight="bold"
+    font-size="12"
+    fill="#1A1F71"
+    text-anchor="middle"
+    letter-spacing="1"
+  >VISA</text>
+</svg>
