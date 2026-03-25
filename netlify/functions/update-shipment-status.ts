@@ -1,9 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 import { Handler, HandlerEvent } from '@netlify/functions';
 
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  console.error('update-shipment-status: missing required environment variables');
+}
+
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  supabaseUrl!,
+  supabaseServiceRoleKey!
 );
 
 interface UpdateStatusRequest {
@@ -73,7 +80,10 @@ async function sendStatusEmail(order: { buyerId: string; orderNumber: string; id
 
     await fetch(`${process.env.URL}/.netlify/functions/send-email`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
+      },
       body: JSON.stringify({
         to: buyer.email,
         subject: emailConfig.subject,
@@ -95,6 +105,13 @@ async function sendStatusEmail(order: { buyerId: string; orderNumber: string; id
 }
 
 export const handler: Handler = async (event) => {
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Server configuration error' }),
+    };
+  }
+
   if (event.httpMethod !== 'PUT') {
     return {
       statusCode: 405,

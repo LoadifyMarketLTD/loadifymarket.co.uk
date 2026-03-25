@@ -119,9 +119,18 @@ const Checkout = () => {
         billingAddress: address,
       };
 
+      // Send the Supabase session token so the server can verify buyerId.
+      const { supabase } = await import("@/lib/supabase");
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (authSession?.access_token) {
+        headers["Authorization"] = `Bearer ${authSession.access_token}`;
+      }
+
       const res = await fetch("/.netlify/functions/create-checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(body),
       });
 

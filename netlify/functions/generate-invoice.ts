@@ -2,9 +2,16 @@ import { Handler } from '@netlify/functions';
 import { jsPDF } from 'jspdf';
 import { createClient } from '@supabase/supabase-js';
 
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  console.error('generate-invoice: missing required environment variables');
+}
+
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  supabaseUrl!,
+  supabaseServiceRoleKey!
 );
 
 interface InvoiceRequest {
@@ -18,6 +25,34 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Method not allowed' }),
     };
   }
+
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Server configuration error' }),
+    };
+  }
+
+  // ── Authentication ─────────────────────────────────────────────────────────
+  // The caller must supply a valid Supabase JWT in the Authorization header.
+  // The authenticated user must be the buyer or seller of the requested order.
+  const authHeader = event.headers.authorization || event.headers.Authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return {
+      statusCode: 401,
+      body: JSON.stringify({ error: 'Authentication required' }),
+    };
+  }
+
+  const token = authHeader.substring(7);
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !authUser) {
+    return {
+      statusCode: 401,
+      body: JSON.stringify({ error: 'Invalid authentication token' }),
+    };
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   try {
     const body: InvoiceRequest = JSON.parse(event.body || '{}');
@@ -33,6 +68,27 @@ export const handler: Handler = async (event) => {
     if (orderError || !order) {
       throw new Error('Order not found');
     }
+
+    // ── Authorization check ──────────────────────────────────────────────────
+    // Only the buyer or seller of this order may download its invoice.
+    // Fetch the user's role to also allow admins.
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', authUser.id)
+      .single<{ role: string }>();
+
+    const isAdmin = userData?.role === 'admin';
+    const isBuyer = order.buyerId === authUser.id;
+    const isSeller = order.sellerId === authUser.id;
+
+    if (!isAdmin && !isBuyer && !isSeller) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: 'You do not have permission to access this invoice' }),
+      };
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     // Fetch buyer details
     const { data: buyer } = await supabase

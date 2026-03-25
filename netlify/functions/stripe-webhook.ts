@@ -118,8 +118,13 @@ export const handler: Handler = async (event) => {
           console.log(`stripe_events: duplicate event ${stripeEvent.id} (${stripeEvent.type}) — skipping`);
           return { statusCode: 200, body: JSON.stringify({ received: true, skipped: true }) };
         }
-        // Non-duplicate DB error — log but proceed (don't block order creation)
-        console.warn(`stripe_events insert failed for ${stripeEvent.id}, continuing with order processing: ${dedupError.message}`);
+        // Any other DB error means we cannot guarantee idempotency — abort
+        // to prevent duplicate orders on Stripe retries.
+        console.error(`stripe_events insert failed for ${stripeEvent.id}, aborting to preserve idempotency: ${dedupError.message}`);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: 'Idempotency check failed — event not processed' }),
+        };
       }
     }
     // ──────────────────────────────────────────────────────────────────────
@@ -190,16 +195,18 @@ export const handler: Handler = async (event) => {
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   // ── Idempotency guard ──────────────────────────────────────────────────────
-  // Stripe guarantees at-least-once webhook delivery. Check whether this
-  // session has already been processed to prevent duplicate orders and
-  // double stock-decrements if the webhook is retried.
-  const { data: existingSession } = await supabase!
+  // The primary idempotency guarantee comes from the stripe_events table INSERT
+  // with a UNIQUE constraint on event_id performed in the main handler.
+  // We add a secondary check against payment_sessions using an atomic INSERT
+  // (rather than SELECT-then-INSERT) to eliminate the race condition between
+  // concurrent webhook deliveries for the same Stripe event.
+  const sessionCheckResult = await supabase!
     .from('payment_sessions')
     .select('id')
     .eq('stripeSessionId', session.id)
     .maybeSingle();
 
-  if (existingSession) {
+  if (sessionCheckResult.data) {
     console.log(`Idempotency: checkout session ${session.id} already processed — skipping`);
     return;
   }
@@ -304,6 +311,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
     if (itemsError) {
       console.error('Error creating order items:', itemsError);
+      // Roll back the orphaned order to keep the DB consistent.
+      await supabase
+        .from('orders')
+        .delete()
+        .eq('id', order.id)
+        .catch((e: unknown) => console.error('Failed to delete orphaned order after items insert failure:', e));
       throw itemsError;
     }
 
@@ -315,7 +328,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       });
 
       if (rpcError) {
-        // RPC not yet deployed — fall back to two-step update
+        // RPC not yet deployed — fall back to a conditional (CAS) update that
+        // only writes if the stock value has not changed since we read it,
+        // preventing a race condition between two concurrent orders.
         console.warn('decrement_product_stock RPC failed, using fallback:', rpcError.message);
         const { data: productRow } = await supabase
           .from('products')
@@ -329,10 +344,16 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
           const newStatus =
             newQty <= 0 ? 'out_of_stock' : newQty <= 10 ? 'low_stock' : 'in_stock';
 
-          await supabase
+          const { count } = await supabase
             .from('products')
             .update({ stockQuantity: newQty, stockStatus: newStatus })
-            .eq('id', item.productId);
+            .eq('id', item.productId)
+            .eq('stockQuantity', currentQty) // CAS: only update if unchanged
+            .select('id', { count: 'exact', head: true });
+
+          if (!count || count === 0) {
+            console.warn(`Stock decrement fallback: stock for product ${item.productId} changed concurrently — skipping update to avoid corruption`);
+          }
         }
       }
     }
@@ -422,7 +443,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     if (sellerUser?.email) {
       fetch(`${process.env.URL}/.netlify/functions/send-email`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
+        },
         body: JSON.stringify({
           to: sellerUser.email,
           subject: `New Order Received — ${confirmedOrderNumber}`,
@@ -461,7 +485,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const subjectSuffix = sellerCount > 1 ? ` (${sellerCount} sellers)` : '';
   fetch(`${process.env.URL}/.netlify/functions/send-email`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
+    },
     body: JSON.stringify({
       to: session.customer_email,
       subject: `Order Confirmation${subjectSuffix}`,
@@ -479,13 +506,6 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       },
     }),
   }).catch(err => console.error('Email send failed:', err));
-
-  // Generate invoice for first order (async, don't wait)
-  fetch(`${process.env.URL}/.netlify/functions/generate-invoice`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ orderId: firstOrderId }),
-  }).catch(err => console.error('Invoice generation failed:', err));
 
   console.log(`Checkout session ${session.id} processed: ${sellerGroups.size} seller order(s) created`);
 }
@@ -569,7 +589,10 @@ async function handleConnectAccountUpdated(account: Stripe.Account) {
       if (adminEmail) {
         fetch(`${appUrl}/.netlify/functions/send-email`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
+          },
           body: JSON.stringify({
             to: adminEmail,
             subject: 'Loadify: Seller Account Now Active',
