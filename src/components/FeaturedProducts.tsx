@@ -6,8 +6,6 @@ const PRODUCTS = [
     id: "fp-1",
     img: "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&auto=format&fit=crop&q=80",
     title: "Pro Wireless Headphones",
-    price: "£79.99",
-    originalPrice: "£109.99",
     stars: 5,
     reviews: 248,
     category: "Electronics",
@@ -18,8 +16,6 @@ const PRODUCTS = [
     id: "fp-2",
     img: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&auto=format&fit=crop&q=80",
     title: "Athletic Running Shoes",
-    price: "£64.99",
-    originalPrice: "£89.99",
     stars: 4,
     reviews: 183,
     category: "Fashion",
@@ -30,8 +26,6 @@ const PRODUCTS = [
     id: "fp-3",
     img: "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=400&auto=format&fit=crop&q=80",
     title: "Luxury Skincare Set",
-    price: "£44.99",
-    originalPrice: null,
     stars: 5,
     reviews: 312,
     category: "Beauty",
@@ -42,8 +36,6 @@ const PRODUCTS = [
     id: "fp-4",
     img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&auto=format&fit=crop&q=80",
     title: "Minimalist Leather Watch",
-    price: "£119.99",
-    originalPrice: "£159.99",
     stars: 5,
     reviews: 97,
     category: "Fashion",
@@ -54,8 +46,6 @@ const PRODUCTS = [
     id: "fp-5",
     img: "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=400&auto=format&fit=crop&q=80",
     title: "Mechanical Keyboard RGB",
-    price: "£89.99",
-    originalPrice: null,
     stars: 5,
     reviews: 431,
     category: "Electronics",
@@ -66,8 +56,6 @@ const PRODUCTS = [
     id: "fp-6",
     img: "https://images.unsplash.com/photo-1541643600914-78b084683702?w=400&auto=format&fit=crop&q=80",
     title: "Perfume Gift Collection",
-    price: "£54.99",
-    originalPrice: "£74.99",
     stars: 4,
     reviews: 156,
     category: "Beauty",
@@ -78,8 +66,6 @@ const PRODUCTS = [
     id: "fp-7",
     img: "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=400&auto=format&fit=crop&q=80",
     title: "Smart Home LED Strip",
-    price: "£19.99",
-    originalPrice: "£29.99",
     stars: 4,
     reviews: 274,
     category: "Home & Kitchen",
@@ -90,8 +76,6 @@ const PRODUCTS = [
     id: "fp-8",
     img: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop&q=80",
     title: "Designer Leather Handbag",
-    price: "£139.99",
-    originalPrice: null,
     stars: 5,
     reviews: 89,
     category: "Fashion",
@@ -102,8 +86,6 @@ const PRODUCTS = [
     id: "fp-9",
     img: "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&auto=format&fit=crop&q=80",
     title: "18V Cordless Drill Set",
-    price: "£84.99",
-    originalPrice: "£119.99",
     stars: 5,
     reviews: 163,
     category: "Tools & DIY",
@@ -114,8 +96,6 @@ const PRODUCTS = [
     id: "fp-10",
     img: "https://images.unsplash.com/photo-1544244015-0df4592987d0?w=400&auto=format&fit=crop&q=80",
     title: "Tablet Protective Case",
-    price: "£22.99",
-    originalPrice: null,
     stars: 4,
     reviews: 98,
     category: "Electronics",
@@ -126,8 +106,6 @@ const PRODUCTS = [
     id: "fp-11",
     img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&auto=format&fit=crop&q=80",
     title: "Creative Building Blocks",
-    price: "£29.99",
-    originalPrice: "£39.99",
     stars: 5,
     reviews: 207,
     category: "Toys & Games",
@@ -138,8 +116,6 @@ const PRODUCTS = [
     id: "fp-12",
     img: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400&auto=format&fit=crop&q=80",
     title: "Premium Yoga Mat",
-    price: "£34.99",
-    originalPrice: null,
     stars: 4,
     reviews: 145,
     category: "Health & Wellness",
@@ -225,13 +201,6 @@ const FeaturedProducts = () => {
                 <div className="flex items-center gap-1.5">
                   <StarRow count={product.stars} />
                   <span className="text-[10px] text-[#64748B]">({product.reviews})</span>
-                </div>
-
-                <div className="flex items-baseline gap-2">
-                  <span className="text-sm font-extrabold text-[#0F172A]">{product.price}</span>
-                  {product.originalPrice && (
-                    <span className="text-xs text-[#94A3B8] line-through">{product.originalPrice}</span>
-                  )}
                 </div>
               </div>
             </Link>

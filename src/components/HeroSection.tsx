@@ -10,7 +10,6 @@ const MiniProductCard = ({
   badge,
   badgeVariant,
   img,
-  price,
   stars,
 }: {
   title: string;
@@ -18,7 +17,6 @@ const MiniProductCard = ({
   badge: string;
   badgeVariant: "blue" | "green" | "orange" | "rose" | "violet" | "sky";
   img: string;
-  price: string;
   stars: number;
 }) => {
   const badgeClasses: Record<string, string> = {
@@ -49,13 +47,12 @@ const MiniProductCard = ({
       <div className="p-2">
         <p className="text-[9px] font-semibold text-[#2563EB] uppercase tracking-wide leading-none">{category}</p>
         <p className="text-[10px] font-bold text-[#0F172A] leading-snug mt-0.5 line-clamp-1">{title}</p>
-        <div className="flex items-center justify-between mt-1">
+        <div className="flex items-center justify-start mt-1">
           <div className="flex gap-0.5">
             {[1, 2, 3, 4, 5].map((n) => (
               <Star key={n} className={`h-2 w-2 ${n <= stars ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"}`} />
             ))}
           </div>
-          <span className="text-[10px] font-bold text-[#0F172A]">{price}</span>
         </div>
       </div>
     </div>
@@ -88,7 +85,6 @@ const HERO_PRODUCTS = [
     badge: "NEW",
     badgeVariant: "blue" as const,
     img: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=300&auto=format&fit=crop&q=80",
-    price: "£49.99",
     stars: 5,
   },
   {
@@ -97,7 +93,6 @@ const HERO_PRODUCTS = [
     badge: "HOT",
     badgeVariant: "rose" as const,
     img: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=300&auto=format&fit=crop&q=80",
-    price: "£39.99",
     stars: 4,
   },
   {
@@ -106,7 +101,6 @@ const HERO_PRODUCTS = [
     badge: "SALE",
     badgeVariant: "orange" as const,
     img: "https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=300&auto=format&fit=crop&q=80",
-    price: "£24.99",
     stars: 4,
   },
   {
@@ -115,7 +109,6 @@ const HERO_PRODUCTS = [
     badge: "TOP",
     badgeVariant: "green" as const,
     img: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=300&auto=format&fit=crop&q=80",
-    price: "£34.99",
     stars: 5,
   },
   {
@@ -124,7 +117,6 @@ const HERO_PRODUCTS = [
     badge: "NEW",
     badgeVariant: "blue" as const,
     img: "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=300&auto=format&fit=crop&q=80",
-    price: "£89.99",
     stars: 5,
   },
   {
@@ -133,7 +125,6 @@ const HERO_PRODUCTS = [
     badge: "HOT",
     badgeVariant: "violet" as const,
     img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&auto=format&fit=crop&q=80",
-    price: "£129.99",
     stars: 4,
   },
   {
@@ -142,7 +133,6 @@ const HERO_PRODUCTS = [
     badge: "DEAL",
     badgeVariant: "orange" as const,
     img: "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=300&auto=format&fit=crop&q=80",
-    price: "£79.99",
     stars: 5,
   },
   {
@@ -151,7 +141,6 @@ const HERO_PRODUCTS = [
     badge: "NEW",
     badgeVariant: "green" as const,
     img: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=300&auto=format&fit=crop&q=80",
-    price: "£29.99",
     stars: 4,
   },
   {
@@ -160,7 +149,6 @@ const HERO_PRODUCTS = [
     badge: "TOP",
     badgeVariant: "rose" as const,
     img: "https://images.unsplash.com/photo-1541643600914-78b084683702?w=300&auto=format&fit=crop&q=80",
-    price: "£59.99",
     stars: 5,
   },
   {
@@ -169,7 +157,6 @@ const HERO_PRODUCTS = [
     badge: "SALE",
     badgeVariant: "sky" as const,
     img: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=300&auto=format&fit=crop&q=80",
-    price: "£19.99",
     stars: 4,
   },
   {
@@ -178,7 +165,6 @@ const HERO_PRODUCTS = [
     badge: "NEW",
     badgeVariant: "violet" as const,
     img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&auto=format&fit=crop&q=80",
-    price: "£24.99",
     stars: 5,
   },
   {
@@ -187,7 +173,6 @@ const HERO_PRODUCTS = [
     badge: "HOT",
     badgeVariant: "sky" as const,
     img: "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=300&auto=format&fit=crop&q=80",
-    price: "£14.99",
     stars: 4,
   },
 ];
