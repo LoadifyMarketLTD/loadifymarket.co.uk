@@ -95,7 +95,7 @@ export const handler: Handler = async (event) => {
   });
 
   if (supabase) {
-    supabase
+    const { error: insertError } = await supabase
       .from('error_reports')
       .insert({
         message: String(report.message ?? '').slice(0, 500),
@@ -104,12 +104,10 @@ export const handler: Handler = async (event) => {
         context: String(report.context ?? '').slice(0, 100),
         timestamp: report.timestamp ?? new Date().toISOString(),
         ip,
-      })
-      .then(({ error }) => {
-        if (error && error.code !== '42P01') {
-          console.error('[ErrorReport] DB insert failed:', error.message);
-        }
       });
+    if (insertError && insertError.code !== '42P01') {
+      console.error('[ErrorReport] DB insert failed:', insertError.message);
+    }
   }
 
   return { statusCode: 204, body: '' };

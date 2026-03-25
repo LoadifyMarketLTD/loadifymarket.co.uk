@@ -103,7 +103,7 @@ export default {
           800: '#92400E',
           900: '#78350F',
         },
-        primary: {
+        brand: {
           DEFAULT: '#38BDF8',
           50: '#F0F9FF',
           100: '#E0F2FE',

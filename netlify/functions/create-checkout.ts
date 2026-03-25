@@ -70,11 +70,27 @@ export const handler: Handler = async (event) => {
   }
 
   const { items, buyerId, shippingAddress, billingAddress } = body;
-  if (!items?.length || !buyerId || !shippingAddress || !billingAddress) {
+  if (!items?.length || !shippingAddress || !billingAddress) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
   }
 
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+  // 5a. If an Authorization header is present, verify the token and ensure
+  //     buyerId matches the authenticated user to prevent order spoofing.
+  let verifiedBuyerId = buyerId ?? '';
+  const authHeader = event.headers.authorization || event.headers.Authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !authUser) {
+      return { statusCode: 401, body: JSON.stringify({ error: 'Invalid authentication token' }) };
+    }
+    if (buyerId && buyerId !== authUser.id) {
+      return { statusCode: 403, body: JSON.stringify({ error: 'buyerId does not match authenticated user' }) };
+    }
+    verifiedBuyerId = authUser.id;
+  }
 
   // 5. Validate products from DB (price integrity + availability)
   const productIds = items.map((i) => i.productId);
@@ -101,7 +117,7 @@ export const handler: Handler = async (event) => {
 
   // 6. Create Stripe checkout session
   try {
-    const stripe = new Stripe(stripeKey);
+    const stripe = new Stripe(stripeKey, { apiVersion: '2025-08-27.basil' });
     const lineItems = items.map((item) => {
       const dbProduct = productMap.get(item.productId) as DBProduct;
       const unitAmount = Math.round(dbProduct.price * 100);
@@ -135,7 +151,7 @@ export const handler: Handler = async (event) => {
       success_url: `${siteUrl}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/cart`,
       metadata: {
-        buyerId,
+        buyerId: verifiedBuyerId,
         productIds: productIds.join(','),
       },
     });

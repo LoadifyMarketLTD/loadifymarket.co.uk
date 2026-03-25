@@ -1,12 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
 import { Handler } from '@netlify/functions';
 
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  console.error('track-shipment: missing required environment variables');
+}
+
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  supabaseUrl!,
+  supabaseServiceRoleKey!
 );
 
 export const handler: Handler = async (event) => {
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Server configuration error' }),
+    };
+  }
+
   if (event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
@@ -132,7 +146,7 @@ export const handler: Handler = async (event) => {
       statusCode: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-store',
       },
       body: JSON.stringify(response),
     };

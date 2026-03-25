@@ -1,9 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 import { Handler, HandlerEvent } from '@netlify/functions';
 
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  console.error('upload-proof-of-delivery: missing required environment variables');
+}
+
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  supabaseUrl!,
+  supabaseServiceRoleKey!
 );
 
 const BUCKET_NAME = process.env.SUPABASE_BUCKET_NAME || 'proof-of-delivery';
@@ -33,6 +40,13 @@ async function getAuthUser(event: HandlerEvent) {
 }
 
 export const handler: Handler = async (event) => {
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Server configuration error' }),
+    };
+  }
+
   try {
     // Authenticate user
     const user = await getAuthUser(event);
