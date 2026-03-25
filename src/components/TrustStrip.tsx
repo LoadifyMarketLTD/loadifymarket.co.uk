@@ -4,14 +4,14 @@ const benefits = [
   {
     icon: ShieldCheck,
     color: "text-emerald-600 bg-emerald-50",
-    title: "Verified Sellers",
-    description: "Every seller is vetted & approved before listing.",
+    title: "Active Seller Accounts",
+    description: "Sellers complete profile and Stripe setup before listing.",
   },
   {
     icon: CreditCard,
     color: "text-[#2563EB] bg-blue-50",
     title: "Secure Payments",
-    description: "Stripe-powered checkout with buyer protection.",
+    description: "Stripe-powered checkout for every transaction.",
   },
   {
     icon: Zap,
@@ -23,7 +23,7 @@ const benefits = [
     icon: BadgeCheck,
     color: "text-violet-600 bg-violet-50",
     title: "UK Coverage",
-    description: "Nationwide network of trusted UK suppliers.",
+    description: "Nationwide network of UK suppliers.",
   },
 ];
 

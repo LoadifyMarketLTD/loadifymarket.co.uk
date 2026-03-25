@@ -31,9 +31,9 @@ const GUIDELINES = [
   },
   {
     icon: BadgeCheck,
-    title: 'Verification Process',
+    title: 'Seller Setup Process',
     description:
-      'All sellers undergo identity and business verification before their listings go live. You must provide valid UK business information and pass our onboarding review.',
+      'To list on Loadify Market you must complete your business profile and connect a Stripe account. Your seller account is activated automatically once all setup steps are complete.',
   },
   {
     icon: MessageCircle,
@@ -73,7 +73,7 @@ export default function SellerGuidelinesPage() {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Seller Guidelines</h1>
           <p className="text-gray-700 text-base max-w-2xl mx-auto">
             Everything you need to know to sell successfully on Loadify Market. Follow these
-            guidelines to build trust, protect buyers, and grow your business.
+            guidelines to build trust, support buyers, and grow your business.
           </p>
           <div className="flex flex-wrap gap-3 justify-center mt-6">
             <Link
@@ -157,7 +157,7 @@ export default function SellerGuidelinesPage() {
         <div className="container-market text-center">
           <h2 className="text-xl font-bold text-gray-900 mb-2">Ready to start selling?</h2>
           <p className="text-gray-600 text-sm mb-5">
-            Join hundreds of verified UK sellers already using Loadify Market.
+            Join hundreds of independent UK sellers already using Loadify Market.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link

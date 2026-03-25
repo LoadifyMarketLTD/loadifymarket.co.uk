@@ -34,7 +34,7 @@ const AboutUs = () => {
                 Our Mission
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                To create the most efficient and trusted marketplace for wholesale and clearance stock trading in the UK. We believe every seller deserves real buyers, and every buyer deserves verified, quality stock at competitive prices.
+                To create the most efficient and trusted marketplace for wholesale and clearance stock trading in the UK. We believe every seller deserves real buyers, and every buyer deserves quality stock at competitive prices.
               </p>
             </section>
 
@@ -55,7 +55,7 @@ const AboutUs = () => {
                 Trust &amp; Safety
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                Every seller on Loadify Market is verified before they can list. Payments are processed securely via Stripe, and we provide buyer protection to ensure safe transactions. We are a verified business on Google with a 5.0 rating.
+                Sellers must complete their business profile and connect a Stripe account before they can list products. Payments are processed securely via Stripe. We are a registered business on Google with a 5.0 rating.
               </p>
             </section>
 

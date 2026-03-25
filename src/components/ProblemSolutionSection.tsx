@@ -72,7 +72,7 @@ const ProblemSolutionSection = () => {
           <div className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-50 to-blue-50 border border-emerald-200/60 rounded-2xl px-6 py-4">
             <ArrowRight className="h-5 w-5 text-emerald-600 shrink-0" />
             <p className="text-base font-semibold text-slate-800">
-              Loadify connects verified buyers and sellers in one secure UK marketplace.
+              Loadify connects buyers and sellers in one secure UK marketplace.
             </p>
           </div>
         </div>

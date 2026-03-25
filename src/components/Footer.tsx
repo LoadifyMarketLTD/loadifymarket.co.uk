@@ -23,7 +23,7 @@ const Footer = () => {
               Find what you need — or sell what you don't
             </p>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Browse thousands of listings from verified sellers across the UK, or start selling today.
+              Browse thousands of listings from registered sellers across the UK, or start selling today.
             </p>
           </div>
           <Link to="/catalog" className="shrink-0">
@@ -46,7 +46,7 @@ const Footer = () => {
           <div className="flex flex-wrap items-center justify-center gap-5 text-sm text-background/70">
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-              Verified Sellers
+              Registered Sellers
             </span>
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="h-4 w-4 text-emerald-400" />
@@ -140,7 +140,7 @@ const Footer = () => {
                 <FooterLink to="/pp/seller">Seller Dashboard</FooterLink>
                 <FooterLink to="/pp/seller/products">List a Product</FooterLink>
                 <FooterLink to="/seller-terms">Seller Fees &amp; Pricing</FooterLink>
-                <FooterLink to="/seller-terms">Seller Guidelines</FooterLink>
+                <FooterLink to="/seller-guidelines">Seller Guidelines</FooterLink>
                 <FooterLink to="/#how-it-works">How It Works</FooterLink>
                 <FooterLink to="/contact">Partner With Us</FooterLink>
               </ul>
@@ -152,8 +152,8 @@ const Footer = () => {
                 Marketplace
               </h4>
               <ul className="space-y-2 text-sm text-background/60">
-                <FooterLink to="/buyer-terms">Buyer Protection</FooterLink>
-                <FooterLink to="/catalog">Verified Sellers</FooterLink>
+                <FooterLink to="/buyer-terms">Buyer Terms</FooterLink>
+                <FooterLink to="/catalog">Browse Sellers</FooterLink>
                 <FooterLink to="/shipping">Shipping &amp; Delivery</FooterLink>
                 <FooterLink to="/returns">Returns &amp; Refunds</FooterLink>
                 <FooterLink to="/contact">Report a Problem</FooterLink>
@@ -182,6 +182,7 @@ const Footer = () => {
                 <FooterLink to="/privacy">Privacy Policy</FooterLink>
                 <FooterLink to="/cookies">Cookie Policy</FooterLink>
                 <FooterLink to="/disclaimer">Disclaimer</FooterLink>
+                <FooterLink to="/acceptable-use-policy">Acceptable Use Policy</FooterLink>
                 <FooterLink to="/returns">Returns Policy</FooterLink>
                 <FooterLink to="/shipping">Shipping Policy</FooterLink>
                 <FooterLink to="/buyer-terms">Buyer Terms</FooterLink>

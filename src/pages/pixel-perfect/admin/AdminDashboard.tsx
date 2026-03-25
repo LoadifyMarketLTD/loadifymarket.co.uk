@@ -28,10 +28,9 @@ interface DashboardStats {
 }
 
 const statusColor: Record<string, string> = {
-  pending: "bg-amber-500/15 text-amber-700 border-amber-200",
-  verified: "bg-emerald-500/15 text-emerald-700 border-emerald-200",
-  approved: "bg-emerald-500/15 text-emerald-700 border-emerald-200",
-  rejected: "bg-destructive/15 text-destructive border-destructive/20",
+  active:    "bg-emerald-500/15 text-emerald-700 border-emerald-200",
+  submitted: "bg-amber-500/15 text-amber-700 border-amber-200",
+  draft:     "bg-muted text-muted-foreground border-border",
   suspended: "bg-red-500/15 text-red-700 border-red-200",
 };
 
@@ -60,10 +59,10 @@ const AdminDashboard = () => {
             supabase
               .from("seller_profiles")
               .select("userId", { count: "exact", head: true })
-              .eq("isApproved", false),
+              .in("sellerStatus", ["draft", "submitted"]),
             supabase
               .from("users")
-              .select("id, email, firstName, lastName, createdAt, seller_profiles(isApproved, verificationStatus, storeName, businessName)")
+              .select("id, email, firstName, lastName, createdAt, seller_profiles(sellerStatus, storeName, businessName)")
               .eq("role", "seller")
               .order("createdAt", { ascending: false })
               .limit(5),
@@ -85,7 +84,7 @@ const AdminDashboard = () => {
         const sellers: RecentSeller[] = (recentSellersRes.data || []).map((u) => {
           const profile = Array.isArray(u.seller_profiles) ? u.seller_profiles[0] : u.seller_profiles;
           const name = profile?.storeName || profile?.businessName || `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email;
-          const status = profile?.verificationStatus ?? (profile?.isApproved ? "approved" : "pending");
+          const status = profile?.sellerStatus ?? "draft";
           return {
             id: u.id,
             name,
@@ -109,12 +108,12 @@ const AdminDashboard = () => {
     { label: "Total Users", value: stats.totalUsers.toLocaleString(), change: "Registered", up: true, icon: Users },
     { label: "Total Products", value: stats.totalProducts.toLocaleString(), change: "Listed", up: true, icon: Package },
     { label: "Total Orders", value: stats.totalOrders.toLocaleString(), change: "All time", up: true, icon: ShieldCheck },
-    { label: "Pending Approvals", value: stats.pendingSellers.toString(), change: "Awaiting review", up: false, icon: ShieldCheck },
+    { label: "Setup Incomplete", value: stats.pendingSellers.toString(), change: "Sellers in progress", up: false, icon: ShieldCheck },
   ];
 
   const alerts = [
     ...(stats.pendingSellers > 0
-      ? [{ id: "pending-sellers", message: `${stats.pendingSellers} seller${stats.pendingSellers !== 1 ? "s" : ""} awaiting approval`, type: "warning" }]
+      ? [{ id: "incomplete-sellers", message: `${stats.pendingSellers} seller${stats.pendingSellers !== 1 ? "s" : ""} still setting up their account`, type: "warning" }]
       : []),
     ...(pendingReportsCount > 0
       ? [{ id: "pending-reports", message: `${pendingReportsCount} flagged listing${pendingReportsCount !== 1 ? "s" : ""} need review`, type: "warning" }]
@@ -171,8 +170,8 @@ const AdminDashboard = () => {
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <div>
-              <CardTitle className="text-base">Recent Seller Applications</CardTitle>
-              <CardDescription>Latest registration requests</CardDescription>
+              <CardTitle className="text-base">Recent Seller Registrations</CardTitle>
+              <CardDescription>Latest seller accounts</CardDescription>
             </div>
             <Button variant="outline" size="sm" className="text-xs" asChild>
               <Link to="/admin/approvals">

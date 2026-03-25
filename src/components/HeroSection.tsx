@@ -202,13 +202,13 @@ const HeroSection = () => {
             </h1>
 
             <p className="text-lg text-[#334155] leading-relaxed">
-              Discover thousands of products from active UK sellers — electronics, fashion, home goods, beauty and more, all on one trusted platform.
+              Discover thousands of products from independent UK sellers — electronics, fashion, home goods, beauty and more, all on one platform.
             </p>
 
             <ul className="space-y-2">
               {[
-                "Active Sellers & Registered Buyers",
-                "Thousands of Products Across 9 Categories",
+                "Registered Sellers & Active Buyers",
+                "Thousands of Products Across 16 Categories",
                 "Secure Payments via Stripe",
               ].map((item) => (
                 <li key={item} className="flex items-center gap-2.5 text-[#334155] font-medium">
@@ -314,7 +314,7 @@ const HeroSection = () => {
               <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-2.5 flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-xs text-[#334155]">
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-                  <span className="font-medium">Secure Checkout</span>
+                  <span className="font-medium">Dispute Support Available</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-[#334155]">
                   <MessageCircle className="h-3.5 w-3.5 text-[#2563EB]" />

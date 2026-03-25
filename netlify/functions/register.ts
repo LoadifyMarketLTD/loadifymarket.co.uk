@@ -193,6 +193,26 @@ export const handler: Handler = async (event) => {
   }
   // ────────────────────────────────────────────────────────────────────────────
 
+  // ── Admin notification email ──────────────────────────────────────────────
+  // Fire-and-forget: a failure here must never block successful registration.
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+  const appUrl = process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
+  if (adminEmail) {
+    const template = role === 'seller' ? 'admin_new_seller' : 'admin_new_buyer';
+    const subject  = role === 'seller' ? 'Loadify: New Seller Registration' : 'Loadify: New Buyer Registration';
+    fetch(`${appUrl}/.netlify/functions/send-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: adminEmail,
+        subject,
+        template,
+        data: { registeredAt: new Date().toLocaleString('en-GB') },
+      }),
+    }).catch((err: unknown) => console.warn('register: admin notification failed (non-fatal):', err));
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json' },

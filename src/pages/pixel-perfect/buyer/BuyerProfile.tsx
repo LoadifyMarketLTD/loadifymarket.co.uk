@@ -171,7 +171,7 @@ const BuyerProfile = () => {
                 <h2 className="text-xl font-bold text-foreground">
                   {loading ? "Loading…" : `${form.firstName} ${form.lastName}`.trim() || "—"}
                 </h2>
-                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">Verified Buyer</Badge>
+                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-xs">Registered Buyer</Badge>
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> Since {memberSince}</span>

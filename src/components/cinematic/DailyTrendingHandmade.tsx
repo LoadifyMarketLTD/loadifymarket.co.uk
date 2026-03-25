@@ -166,11 +166,11 @@ export default function DailyTrendingHandmade() {
           </div>
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <div className="text-3xl font-bold text-gold mb-2">500+</div>
-            <p className="text-gray-500">Verified Artisans</p>
+            <p className="text-gray-500">Independent Artisans</p>
           </div>
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <div className="text-3xl font-bold text-gold mb-2">14 Days</div>
-            <p className="text-gray-500">Satisfaction Guarantee</p>
+            <p className="text-gray-500">14-Day Return Window</p>
           </div>
         </div>
       </div>
