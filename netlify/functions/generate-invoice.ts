@@ -2,11 +2,6 @@ import { Handler } from '@netlify/functions';
 import { jsPDF } from 'jspdf';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 interface InvoiceRequest {
   orderId: string;
 }
@@ -18,6 +13,46 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Method not allowed' }),
     };
   }
+
+  // ── Env var validation ──────────────────────────────────────────────────────
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('generate-invoice: VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set.');
+    return {
+      statusCode: 503,
+      body: JSON.stringify({ error: 'Invoice service is not configured.' }),
+    };
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  // ── JWT Authentication ──────────────────────────────────────────────────────
+  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return {
+      statusCode: 401,
+      body: JSON.stringify({ error: 'Authentication required' }),
+    };
+  }
+
+  const token = authHeader.substring(7);
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !authUser) {
+    return {
+      statusCode: 401,
+      body: JSON.stringify({ error: 'Invalid or expired token' }),
+    };
+  }
+
+  // Get user role
+  const { data: callerUser } = await supabase
+    .from('users')
+    .select('id, role')
+    .eq('id', authUser.id)
+    .single<{ id: string; role: string }>();
+  // ────────────────────────────────────────────────────────────────────────────
 
   try {
     const body: InvoiceRequest = JSON.parse(event.body || '{}');
@@ -33,6 +68,18 @@ export const handler: Handler = async (event) => {
     if (orderError || !order) {
       throw new Error('Order not found');
     }
+
+    // ── Authorization: caller must be buyer, seller, or admin ─────────────────
+    const isAdmin = callerUser?.role === 'admin';
+    const isBuyer = authUser.id === order.buyerId;
+    const isSeller = authUser.id === order.sellerId;
+    if (!isAdmin && !isBuyer && !isSeller) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: 'You are not authorized to generate this invoice' }),
+      };
+    }
+    // ──────────────────────────────────────────────────────────────────────────
 
     // Fetch buyer details
     const { data: buyer } = await supabase
@@ -152,7 +199,7 @@ export const handler: Handler = async (event) => {
     // Buyer details
     const buyerName = `${buyer?.firstName || ''} ${buyer?.lastName || ''}`.trim() || 'Customer';
     pdf.text(buyerName, 20, y);
-    
+
     if (order.billingAddress) {
       pdf.text(order.billingAddress.line1, 20, y + 5);
       if (order.billingAddress.line2) {

@@ -1,10 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Handler, HandlerEvent } from '@netlify/functions';
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase(): SupabaseClient | null {
+  const url = process.env.VITE_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 interface CreateShipmentRequest {
   order_id: string;
@@ -16,7 +18,7 @@ interface CreateShipmentRequest {
 }
 
 // Helper to get user from Authorization header
-async function getAuthUser(event: HandlerEvent) {
+async function getAuthUser(event: HandlerEvent, supabase: SupabaseClient) {
   const authHeader = event.headers.authorization || event.headers.Authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
@@ -24,7 +26,7 @@ async function getAuthUser(event: HandlerEvent) {
 
   const token = authHeader.substring(7);
   const { data: { user }, error } = await supabase.auth.getUser(token);
-  
+
   if (error || !user) {
     return null;
   }
@@ -47,9 +49,18 @@ export const handler: Handler = async (event) => {
     };
   }
 
+  const supabase = getSupabase();
+  if (!supabase) {
+    console.error('create-shipment: VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set.');
+    return {
+      statusCode: 503,
+      body: JSON.stringify({ error: 'Shipment service is not configured.' }),
+    };
+  }
+
   try {
     // Authenticate user
-    const user = await getAuthUser(event);
+    const user = await getAuthUser(event, supabase);
     if (!user) {
       return {
         statusCode: 401,

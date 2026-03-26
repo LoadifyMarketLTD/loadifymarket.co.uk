@@ -1,10 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Handler, HandlerEvent } from '@netlify/functions';
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase(): SupabaseClient | null {
+  const url = process.env.VITE_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
+}
 
 interface UpdateStatusRequest {
   status: string;
@@ -12,7 +14,7 @@ interface UpdateStatusRequest {
 }
 
 // Helper to get user from Authorization header
-async function getAuthUser(event: HandlerEvent) {
+async function getAuthUser(event: HandlerEvent, supabase: SupabaseClient) {
   const authHeader = event.headers.authorization || event.headers.Authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
@@ -20,7 +22,7 @@ async function getAuthUser(event: HandlerEvent) {
 
   const token = authHeader.substring(7);
   const { data: { user }, error } = await supabase.auth.getUser(token);
-  
+
   if (error || !user) {
     return null;
   }
@@ -36,7 +38,7 @@ async function getAuthUser(event: HandlerEvent) {
 }
 
 // Helper to send email notifications
-async function sendStatusEmail(order: { buyerId: string; orderNumber: string; id: string }, shipment: { tracking_number?: string | null; courier_name?: string | null }, status: string) {
+async function sendStatusEmail(supabase: SupabaseClient, order: { buyerId: string; orderNumber: string; id: string }, shipment: { tracking_number?: string | null; courier_name?: string | null }, status: string) {
   const emailTemplates: Record<string, { subject: string; template: string }> = {
     'Dispatched': {
       subject: 'Your order has been dispatched',
@@ -73,7 +75,10 @@ async function sendStatusEmail(order: { buyerId: string; orderNumber: string; id
 
     await fetch(`${process.env.URL}/.netlify/functions/send-email`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Internal-Secret': process.env.NETLIFY_INTERNAL_SECRET || '',
+      },
       body: JSON.stringify({
         to: buyer.email,
         subject: emailConfig.subject,
@@ -102,9 +107,18 @@ export const handler: Handler = async (event) => {
     };
   }
 
+  const supabase = getSupabase();
+  if (!supabase) {
+    console.error('update-shipment-status: VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set.');
+    return {
+      statusCode: 503,
+      body: JSON.stringify({ error: 'Shipment service is not configured.' }),
+    };
+  }
+
   try {
     // Authenticate user
-    const user = await getAuthUser(event);
+    const user = await getAuthUser(event, supabase);
     if (!user) {
       return {
         statusCode: 401,
@@ -206,7 +220,7 @@ export const handler: Handler = async (event) => {
     }
 
     // Send email notification for certain statuses
-    await sendStatusEmail(shipment.orders, updatedShipment, status);
+    await sendStatusEmail(supabase, shipment.orders, updatedShipment, status);
 
     return {
       statusCode: 200,

@@ -136,7 +136,10 @@ export const handler: Handler = async (event) => {
           if (adminEmail) {
             fetch(`${appUrl}/.netlify/functions/send-email`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Internal-Secret': process.env.NETLIFY_INTERNAL_SECRET || '',
+              },
               body: JSON.stringify({
                 to: adminEmail,
                 subject: 'Loadify: Seller Account Now Active',

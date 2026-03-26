@@ -1,11 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Handler } from '@netlify/functions';
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'GET') {
     return {
@@ -13,6 +8,20 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Method not allowed' }),
     };
   }
+
+  // ── Env var validation ────────────────────────────────────────────────────
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('track-shipment: VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set.');
+    return {
+      statusCode: 503,
+      body: JSON.stringify({ error: 'Tracking service is not configured.' }),
+    };
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
     const params = event.queryStringParameters || {};
@@ -132,7 +141,7 @@ export const handler: Handler = async (event) => {
       statusCode: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-store',
       },
       body: JSON.stringify(response),
     };

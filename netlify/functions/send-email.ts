@@ -3,7 +3,16 @@ import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from './_shared/rateLimiter';
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
+// ── HTML injection protection ───────────────────────────────────────────────
+function escapeHtml(str: unknown): string {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+// ────────────────────────────────────────────────────────────────────────────
 
 const supabase =
   process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -13,6 +22,10 @@ const supabase =
         { auth: { autoRefreshToken: false, persistSession: false } },
       )
     : null;
+
+// Templates that are accessible from the public contact form without the
+// internal secret. All other templates require X-Internal-Secret.
+const PUBLIC_TEMPLATES = new Set(['contact_enquiry', 'transport_quote_request']);
 
 interface EmailRequest {
   to: string;
@@ -28,6 +41,43 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Method not allowed' }),
     };
   }
+
+  // ── Env var validation ────────────────────────────────────────────────────
+  const sendgridApiKey = process.env.SENDGRID_API_KEY;
+  if (!sendgridApiKey) {
+    console.error('send-email: SENDGRID_API_KEY is not set.');
+    return {
+      statusCode: 503,
+      body: JSON.stringify({ error: 'Email service is not configured.' }),
+    };
+  }
+  sgMail.setApiKey(sendgridApiKey);
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // ── Parse body early so we can check the template ──────────────────────────
+  let body: EmailRequest;
+  try {
+    body = JSON.parse(event.body || '{}') as EmailRequest;
+  } catch {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
+  }
+  const { to, subject, template, data } = body;
+
+  // ── X-Internal-Secret gate ────────────────────────────────────────────────
+  // Public templates (contact_enquiry, transport_quote_request) can be called
+  // from the frontend without the secret. All other templates are internal-only
+  // and require the NETLIFY_INTERNAL_SECRET header for protection against abuse.
+  if (!PUBLIC_TEMPLATES.has(template)) {
+    const internalSecret = process.env.NETLIFY_INTERNAL_SECRET;
+    const providedSecret = event.headers['x-internal-secret'];
+    if (!internalSecret || providedSecret !== internalSecret) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: 'Forbidden' }),
+      };
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   // ── Rate limiting: 20 emails per IP per 15 minutes ───────────────────────
   if (supabase) {
@@ -54,9 +104,6 @@ export const handler: Handler = async (event) => {
   // ─────────────────────────────────────────────────────────────────────────
 
   try {
-    const body: EmailRequest = JSON.parse(event.body || '{}');
-    const { to, subject, template, data } = body;
-
     const htmlContent = generateEmailHTML(template, data);
 
     const msg = {
@@ -108,18 +155,18 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
     case 'order_confirmation':
       content = `
         <h2 style="color: #243b53;">Order Confirmation</h2>
-        <p>Hi ${String(data.customerName || 'Customer')},</p>
+        <p>Hi ${escapeHtml(data.customerName || 'Customer')},</p>
         <p>Thank you for your order! Your order has been confirmed and is being processed.</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Order Number:</strong> ${String(data.orderNumber || '')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Order Date:</strong> ${String(data.orderDate || '')}</p>
+          <p style="margin: 0;"><strong>Order Number:</strong> ${escapeHtml(data.orderNumber || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Order Date:</strong> ${escapeHtml(data.orderDate || '')}</p>
           <p style="margin: 10px 0 0 0;"><strong>Total:</strong> £${typeof data.total === 'number' ? data.total.toFixed(2) : '0.00'}</p>
         </div>
         <h3 style="color: #243b53;">Order Items:</h3>
         ${Array.isArray(data.items) ? data.items.map((item: Record<string, unknown>) => `
           <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
-            <p style="margin: 0;"><strong>${String(item.title || '')}</strong></p>
-            <p style="margin: 5px 0 0 0; color: #666;">Quantity: ${String(item.quantity || 0)} | Price: £${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}</p>
+            <p style="margin: 0;"><strong>${escapeHtml(item.title || '')}</strong></p>
+            <p style="margin: 5px 0 0 0; color: #666;">Quantity: ${escapeHtml(item.quantity || 0)} | Price: £${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}</p>
           </div>
         `).join('') : ''}
         <p style="margin-top: 20px;">We'll send you another email when your order has been shipped.</p>
@@ -130,26 +177,26 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
     case 'order_shipped':
       content = `
         <h2 style="color: #243b53;">Your Order Has Been Shipped!</h2>
-        <p>Hi ${data.customerName},</p>
-        <p>Great news! Your order #${data.orderNumber} has been shipped.</p>
+        <p>Hi ${escapeHtml(data.customerName)},</p>
+        <p>Great news! Your order #${escapeHtml(data.orderNumber)} has been shipped.</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Tracking Number:</strong> ${data.trackingNumber || 'Not available'}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Carrier:</strong> ${data.carrier || 'Standard Delivery'}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Estimated Delivery:</strong> ${data.estimatedDelivery || '3-5 business days'}</p>
+          <p style="margin: 0;"><strong>Tracking Number:</strong> ${escapeHtml(data.trackingNumber || 'Not available')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Carrier:</strong> ${escapeHtml(data.carrier || 'Standard Delivery')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Estimated Delivery:</strong> ${escapeHtml(data.estimatedDelivery || '3-5 business days')}</p>
         </div>
         <p>You can track your order on our website using your order number.</p>
-        <a href="${process.env.URL}/tracking/${data.orderNumber}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Track Order</a>
+        <a href="${escapeHtml(process.env.URL)}/tracking/${escapeHtml(data.orderNumber)}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Track Order</a>
       `;
       break;
 
     case 'order_delivered':
       content = `
         <h2 style="color: #243b53;">Order Delivered!</h2>
-        <p>Hi ${data.customerName},</p>
-        <p>Your order #${data.orderNumber} has been delivered.</p>
+        <p>Hi ${escapeHtml(data.customerName)},</p>
+        <p>Your order #${escapeHtml(data.orderNumber)} has been delivered.</p>
         <p>We hope you're satisfied with your purchase. If you have any issues, please don't hesitate to contact us.</p>
         <p style="margin-top: 20px;">Would you like to leave a review?</p>
-        <a href="${process.env.URL}/orders/${data.orderId}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Order &amp; Review</a>
+        <a href="${escapeHtml(process.env.URL)}/orders/${escapeHtml(data.orderId)}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Order &amp; Review</a>
         <p style="margin-top: 20px; color: #666; font-size: 14px;">Remember: You have 14 days from delivery to request a return if needed.</p>
       `;
       break;
@@ -157,10 +204,10 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
     case 'return_requested':
       content = `
         <h2 style="color: #243b53;">Return Request Received</h2>
-        <p>Hi ${data.customerName},</p>
-        <p>We've received your return request for order #${data.orderNumber}.</p>
+        <p>Hi ${escapeHtml(data.customerName)},</p>
+        <p>We've received your return request for order #${escapeHtml(data.orderNumber)}.</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Reason:</strong> ${data.reason}</p>
+          <p style="margin: 0;"><strong>Reason:</strong> ${escapeHtml(data.reason)}</p>
           <p style="margin: 10px 0 0 0;"><strong>Status:</strong> Under Review</p>
         </div>
         <p>The seller will review your request and respond within 2 business days.</p>
@@ -171,10 +218,10 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
     case 'dispute_opened':
       content = `
         <h2 style="color: #243b53;">Dispute Opened</h2>
-        <p>Hi ${data.customerName},</p>
-        <p>A dispute has been opened for order #${data.orderNumber}.</p>
+        <p>Hi ${escapeHtml(data.customerName)},</p>
+        <p>A dispute has been opened for order #${escapeHtml(data.orderNumber)}.</p>
         <div style="background-color: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #ffc107;">
-          <p style="margin: 0;"><strong>Subject:</strong> ${data.subject}</p>
+          <p style="margin: 0;"><strong>Subject:</strong> ${escapeHtml(data.subject)}</p>
           <p style="margin: 10px 0 0 0;"><strong>Status:</strong> Open</p>
         </div>
         <p>Our team will review this dispute and work to resolve it as quickly as possible.</p>
@@ -187,27 +234,27 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <h2 style="color: #243b53;">New Transport Quote Request</h2>
         <p>A new delivery request has been submitted from <strong>Loadify Market</strong>.</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Reference:</strong> ${String(data.requestId || '')}</p>
-          <p style="margin: 8px 0 0 0;"><strong>Contact:</strong> ${String(data.fullName || '')} — ${String(data.email || '')} — ${String(data.phone || '')}</p>
-          ${data.companyName ? `<p style="margin: 8px 0 0 0;"><strong>Company:</strong> ${String(data.companyName)}</p>` : ''}
+          <p style="margin: 0;"><strong>Reference:</strong> ${escapeHtml(data.requestId || '')}</p>
+          <p style="margin: 8px 0 0 0;"><strong>Contact:</strong> ${escapeHtml(data.fullName || '')} — ${escapeHtml(data.email || '')} — ${escapeHtml(data.phone || '')}</p>
+          ${data.companyName ? `<p style="margin: 8px 0 0 0;"><strong>Company:</strong> ${escapeHtml(data.companyName)}</p>` : ''}
         </div>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Item:</strong> ${String(data.itemType || '')}</p>
-          ${data.listingTitle ? `<p style="margin: 8px 0 0 0;"><strong>Listing:</strong> ${String(data.listingTitle)} (ID: ${String(data.listingId || '')})</p>` : ''}
-          ${data.sellerName ? `<p style="margin: 8px 0 0 0;"><strong>Seller:</strong> ${String(data.sellerName)} (ID: ${String(data.sellerId || '')})</p>` : ''}
-          <p style="margin: 8px 0 0 0;"><strong>Pallets / Items:</strong> ${String(data.palletCount || '')}</p>
-          ${data.weight ? `<p style="margin: 8px 0 0 0;"><strong>Weight:</strong> ${String(data.weight)}</p>` : ''}
-          ${data.dimensions ? `<p style="margin: 8px 0 0 0;"><strong>Dimensions:</strong> ${String(data.dimensions)}</p>` : ''}
-          ${data.quantity ? `<p style="margin: 8px 0 0 0;"><strong>Quantity:</strong> ${String(data.quantity)}</p>` : ''}
+          <p style="margin: 0;"><strong>Item:</strong> ${escapeHtml(data.itemType || '')}</p>
+          ${data.listingTitle ? `<p style="margin: 8px 0 0 0;"><strong>Listing:</strong> ${escapeHtml(data.listingTitle)} (ID: ${escapeHtml(data.listingId || '')})</p>` : ''}
+          ${data.sellerName ? `<p style="margin: 8px 0 0 0;"><strong>Seller:</strong> ${escapeHtml(data.sellerName)} (ID: ${escapeHtml(data.sellerId || '')})</p>` : ''}
+          <p style="margin: 8px 0 0 0;"><strong>Pallets / Items:</strong> ${escapeHtml(data.palletCount || '')}</p>
+          ${data.weight ? `<p style="margin: 8px 0 0 0;"><strong>Weight:</strong> ${escapeHtml(data.weight)}</p>` : ''}
+          ${data.dimensions ? `<p style="margin: 8px 0 0 0;"><strong>Dimensions:</strong> ${escapeHtml(data.dimensions)}</p>` : ''}
+          ${data.quantity ? `<p style="margin: 8px 0 0 0;"><strong>Quantity:</strong> ${escapeHtml(data.quantity)}</p>` : ''}
         </div>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Pickup Postcode:</strong> ${String(data.pickupPostcode || '')}</p>
-          <p style="margin: 8px 0 0 0;"><strong>Dropoff Postcode:</strong> ${String(data.dropoffPostcode || '')}</p>
-          <p style="margin: 8px 0 0 0;"><strong>Collection Date:</strong> ${String(data.collectionDate || '')}</p>
+          <p style="margin: 0;"><strong>Pickup Postcode:</strong> ${escapeHtml(data.pickupPostcode || '')}</p>
+          <p style="margin: 8px 0 0 0;"><strong>Dropoff Postcode:</strong> ${escapeHtml(data.dropoffPostcode || '')}</p>
+          <p style="margin: 8px 0 0 0;"><strong>Collection Date:</strong> ${escapeHtml(data.collectionDate || '')}</p>
         </div>
-        ${data.deliveryNotes ? `<p><strong>Delivery Notes:</strong> ${String(data.deliveryNotes)}</p>` : ''}
-        ${data.listingReference ? `<p><strong>Listing Reference:</strong> ${String(data.listingReference)}</p>` : ''}
-        <p style="color: #888; font-size: 12px;">Source: ${String(data.source || 'loadify-market')}</p>
+        ${data.deliveryNotes ? `<p><strong>Delivery Notes:</strong> ${escapeHtml(data.deliveryNotes)}</p>` : ''}
+        ${data.listingReference ? `<p><strong>Listing Reference:</strong> ${escapeHtml(data.listingReference)}</p>` : ''}
+        <p style="color: #888; font-size: 12px;">Source: ${escapeHtml(data.source || 'loadify-market')}</p>
       `;
       break;
 
@@ -216,19 +263,19 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <h2 style="color: #243b53;">New Order Received</h2>
         <p>You have a new order on Loadify Market!</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Order Number:</strong> ${String(data.orderNumber || '')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Order Date:</strong> ${String(data.orderDate || '')}</p>
+          <p style="margin: 0;"><strong>Order Number:</strong> ${escapeHtml(data.orderNumber || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Order Date:</strong> ${escapeHtml(data.orderDate || '')}</p>
           <p style="margin: 10px 0 0 0;"><strong>Order Total:</strong> £${typeof data.sellerTotal === 'number' ? data.sellerTotal.toFixed(2) : '0.00'}</p>
         </div>
         <h3 style="color: #243b53;">Items Ordered:</h3>
         ${Array.isArray(data.items) ? data.items.map((item: Record<string, unknown>) => `
           <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
-            <p style="margin: 0;"><strong>${String(item.title || '')}</strong></p>
-            <p style="margin: 5px 0 0 0; color: #666;">Quantity: ${String(item.quantity || 0)} | Price: £${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}</p>
+            <p style="margin: 0;"><strong>${escapeHtml(item.title || '')}</strong></p>
+            <p style="margin: 5px 0 0 0; color: #666;">Quantity: ${escapeHtml(item.quantity || 0)} | Price: £${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}</p>
           </div>
         `).join('') : ''}
         <p style="margin-top: 20px;">Please process this order promptly. Log in to your seller dashboard to view full order details and arrange shipping.</p>
-        <a href="${process.env.URL}/seller" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Seller Dashboard</a>
+        <a href="${escapeHtml(process.env.URL)}/seller" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Seller Dashboard</a>
         <p style="margin-top: 20px; color: #888; font-size: 13px;">Reminder: Please ship within your stated dispatch time to maintain your seller rating.</p>
       `;
       break;
@@ -238,11 +285,11 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <h2 style="color: #243b53;">Shipping Reminder</h2>
         <p>You have an order that is awaiting shipment.</p>
         <div style="background-color: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #ffc107;">
-          <p style="margin: 0;"><strong>Order Number:</strong> ${String(data.orderNumber || '')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Ordered On:</strong> ${String(data.orderDate || '')}</p>
+          <p style="margin: 0;"><strong>Order Number:</strong> ${escapeHtml(data.orderNumber || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Ordered On:</strong> ${escapeHtml(data.orderDate || '')}</p>
         </div>
         <p>Please arrange shipment as soon as possible to keep your seller rating high and your customers happy.</p>
-        <a href="${process.env.URL}/seller" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Ship Now</a>
+        <a href="${escapeHtml(process.env.URL)}/seller" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Ship Now</a>
       `;
       break;
 
@@ -251,13 +298,13 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <h2 style="color: #243b53;">New Contact Form Submission</h2>
         <p>A visitor has submitted a message via the Loadify Market contact form.</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Name:</strong> ${String(data.name || '')}</p>
-          <p style="margin: 8px 0 0 0;"><strong>Email:</strong> ${String(data.email || '')}</p>
-          ${data.subject ? `<p style="margin: 8px 0 0 0;"><strong>Subject:</strong> ${String(data.subject)}</p>` : ''}
+          <p style="margin: 0;"><strong>Name:</strong> ${escapeHtml(data.name || '')}</p>
+          <p style="margin: 8px 0 0 0;"><strong>Email:</strong> ${escapeHtml(data.email || '')}</p>
+          ${data.subject ? `<p style="margin: 8px 0 0 0;"><strong>Subject:</strong> ${escapeHtml(data.subject)}</p>` : ''}
         </div>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
           <p style="margin: 0;"><strong>Message:</strong></p>
-          <p style="margin: 8px 0 0 0; white-space: pre-wrap;">${String(data.message || '')}</p>
+          <p style="margin: 8px 0 0 0; white-space: pre-wrap;">${escapeHtml(data.message || '')}</p>
         </div>
         <p style="color: #888; font-size: 12px;">Submitted at: ${new Date().toLocaleString('en-GB')}</p>
       `;
@@ -268,13 +315,13 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <h2 style="color: #243b53;">New Seller Verification Request</h2>
         <p>A seller has submitted a verification request and requires review.</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Seller:</strong> ${String(data.sellerName || 'Unknown')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Email:</strong> ${String(data.sellerEmail || '')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Business:</strong> ${String(data.businessName || '')}</p>
-          <p style="margin: 10px 0 0 0;"><strong>Submitted:</strong> ${String(data.submittedAt || new Date().toLocaleDateString('en-GB'))}</p>
+          <p style="margin: 0;"><strong>Seller:</strong> ${escapeHtml(data.sellerName || 'Unknown')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Email:</strong> ${escapeHtml(data.sellerEmail || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Business:</strong> ${escapeHtml(data.businessName || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Submitted:</strong> ${escapeHtml(data.submittedAt || new Date().toLocaleDateString('en-GB'))}</p>
         </div>
         <p>Please log in to the admin dashboard to review the submitted documents and approve or reject the verification.</p>
-        <a href="${process.env.URL}/admin/sellers" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Review Verification</a>
+        <a href="${escapeHtml(process.env.URL)}/admin/sellers" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Review Verification</a>
       `;
       break;
 
@@ -283,10 +330,10 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <h2 style="color: #243b53;">New Buyer Registration</h2>
         <p>A new buyer account has been created on Loadify Market.</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Registered:</strong> ${String(data.registeredAt || new Date().toLocaleString('en-GB'))}</p>
+          <p style="margin: 0;"><strong>Registered:</strong> ${escapeHtml(data.registeredAt || new Date().toLocaleString('en-GB'))}</p>
         </div>
         <p>No action required. The buyer has direct access to the platform.</p>
-        <a href="${process.env.URL}/admin/users" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Users</a>
+        <a href="${escapeHtml(process.env.URL)}/admin/users" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Users</a>
       `;
       break;
 
@@ -295,10 +342,10 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <h2 style="color: #243b53;">New Seller Registration</h2>
         <p>A new seller account has been created on Loadify Market and is setting up their store.</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Registered:</strong> ${String(data.registeredAt || new Date().toLocaleString('en-GB'))}</p>
+          <p style="margin: 0;"><strong>Registered:</strong> ${escapeHtml(data.registeredAt || new Date().toLocaleString('en-GB'))}</p>
         </div>
         <p>The seller must complete their profile and connect a Stripe account before their store is active. No manual approval is required.</p>
-        <a href="${process.env.URL}/admin/approvals" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Sellers</a>
+        <a href="${escapeHtml(process.env.URL)}/admin/approvals" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Sellers</a>
       `;
       break;
 
@@ -307,17 +354,17 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <h2 style="color: #243b53;">Seller Account Now Active</h2>
         <p>A seller account has met all setup requirements and is now active on Loadify Market.</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Activated:</strong> ${String(data.activatedAt || new Date().toLocaleString('en-GB'))}</p>
+          <p style="margin: 0;"><strong>Activated:</strong> ${escapeHtml(data.activatedAt || new Date().toLocaleString('en-GB'))}</p>
         </div>
         <p>The seller's account was activated automatically after their profile and Stripe setup were complete.</p>
-        <a href="${process.env.URL}/admin/approvals" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Sellers</a>
+        <a href="${escapeHtml(process.env.URL)}/admin/approvals" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Sellers</a>
       `;
       break;
 
     default:
       content = `
         <h2>Email Notification</h2>
-        <p>${JSON.stringify(data)}</p>
+        <p>${escapeHtml(JSON.stringify(data))}</p>
       `;
   }
 

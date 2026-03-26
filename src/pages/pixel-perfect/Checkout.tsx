@@ -12,6 +12,7 @@ import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
+import { supabase } from "@/lib/supabase";
 import PaymentMethodBadges from "@/components/PaymentMethodBadges";
 
 const steps = [
@@ -119,9 +120,16 @@ const Checkout = () => {
         billingAddress: address,
       };
 
+      // Get auth token if user is logged in
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
       const res = await fetch("/.netlify/functions/create-checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(body),
       });
 

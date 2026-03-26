@@ -76,6 +76,24 @@ export const handler: Handler = async (event) => {
 
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
+  // ── Auth token verification for buyerId ─────────────────────────────────
+  // If an Authorization header is present, verify the token and ensure the
+  // buyerId in the request body matches the authenticated user. This prevents
+  // user A from placing an order under user B's account.
+  // Guest checkout (no auth header) is still allowed.
+  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !authUser) {
+      return { statusCode: 401, body: JSON.stringify({ error: 'Invalid or expired token' }) };
+    }
+    if (authUser.id !== buyerId) {
+      return { statusCode: 403, body: JSON.stringify({ error: 'buyerId does not match authenticated user' }) };
+    }
+  }
+  // ──────────────────────────────────────────────────────────────────────────
+
   // 5. Validate products from DB (price integrity + availability)
   const productIds = items.map((i) => i.productId);
   const { data: dbProducts, error: dbError } = await supabase
@@ -101,7 +119,7 @@ export const handler: Handler = async (event) => {
 
   // 6. Create Stripe checkout session
   try {
-    const stripe = new Stripe(stripeKey);
+    const stripe = new Stripe(stripeKey, { apiVersion: '2025-08-27.basil' });
     const lineItems = items.map((item) => {
       const dbProduct = productMap.get(item.productId) as DBProduct;
       const unitAmount = Math.round(dbProduct.price * 100);

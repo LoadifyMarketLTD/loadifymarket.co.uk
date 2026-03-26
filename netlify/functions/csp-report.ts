@@ -58,9 +58,9 @@ export const handler: Handler = async (event) => {
   if (cspReport) {
     console.warn('[CSP Violation]', JSON.stringify(cspReport));
 
-    // Persist to database for monitoring (fire-and-forget, non-blocking).
+    // Persist to database for monitoring.
     if (supabase) {
-      supabase
+      const { error } = await supabase
         .from('csp_reports')
         .insert({
           documentUri: cspReport['document-uri'],
@@ -72,14 +72,13 @@ export const handler: Handler = async (event) => {
           statusCode: cspReport['status-code'],
           userAgent: event.headers['user-agent'],
           reportedAt: new Date().toISOString(),
-        })
-        .then(({ error }) => {
-          if (error && error.code !== '42P01') {
-            // Log insertion errors (except "table does not exist" which is
-            // expected before the migration is applied).
-            console.error('[CSP Violation] DB insert failed:', error.message);
-          }
         });
+
+      if (error && error.code !== '42P01') {
+        // Log insertion errors (except "table does not exist" which is
+        // expected before the migration is applied).
+        console.error('[CSP Violation] DB insert failed:', error.message);
+      }
     }
   }
 
