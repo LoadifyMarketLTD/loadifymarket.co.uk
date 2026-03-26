@@ -39,11 +39,16 @@ const HeroSection = () => {
           position: relative;
           height: 100vh;
           min-height: 600px;
-          background-image: url('/hero.jpeg');
-          background-size: cover;
-          background-position: center right;
-          background-repeat: no-repeat;
           overflow: hidden;
+        }
+        .lfy-hero-bg {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center right;
+          z-index: 0;
         }
 
         /* ── Badge + countdown block — upper-center / slightly-right sky ── */
@@ -178,6 +183,23 @@ const HeroSection = () => {
       `}</style>
 
       <section className="lfy-hero" aria-label="Hero banner">
+        {/* LCP image — served as explicit <img> so browsers can discover and
+            prioritise it via the preload scanner. WebP (smaller) for modern
+            browsers; JPEG as fallback. fetchPriority="high" + loading="eager" +
+            decoding="sync" eliminate any scheduling or decode delay for LCP. */}
+        <picture>
+          <source srcSet="/hero.webp" type="image/webp" />
+          <img
+            src="/hero.jpeg"
+            alt=""
+            aria-hidden="true"
+            className="lfy-hero-bg"
+            fetchPriority="high"
+            loading="eager"
+            width="1536"
+            height="1024"
+          />
+        </picture>
 
         {/* Badge + countdown — top center / slightly right sky area */}
         {!expired && (
