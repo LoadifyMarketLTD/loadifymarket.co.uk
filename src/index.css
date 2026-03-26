@@ -281,4 +281,9 @@
   .font-display {
     font-family: var(--font-display);
   }
+  .break-inside-avoid {
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+  }
 }
