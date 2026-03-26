@@ -133,21 +133,141 @@
 
 /* ── Hero section layout ──────────────────────────────────────────────────── */
 .hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  position: relative;
+  height: 100vh;
+  min-height: 580px;
+
+  background-image: url('/hero.jpeg');
+  background-size: cover;
+  background-position: center right;
+  background-repeat: no-repeat;
 }
 
-.hero-right {
-  flex: 1;
+/* Safe content zone — left 40% (empty sky area) */
+.hero-content {
+  position: absolute;
+  top: 22%;
+  left: 0;
+  width: 40%;
+  padding: 0 24px 0 48px;
+  z-index: 2;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
 }
 
-.hero-img {
+/* Promo row: badge + countdown — right-aligned within content zone */
+.hero-promo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-bottom: 28px;
+}
+
+/* "0% Fees Until July 1" badge */
+.hero-fee-badge {
+  background: #FEF9C3;
+  color: #78350F;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
+}
+
+/* Countdown — glass effect */
+.hero-countdown {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #1e293b;
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 6px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+
+/* Headline */
+.hero-headline {
+  font-family: var(--font-display);
+  font-size: clamp(1.875rem, 3vw, 2.875rem);
+  font-weight: 800;
+  color: #0A2239;
+  line-height: 1.15;
   max-width: 500px;
-  width: 100%;
-  object-fit: contain;
+  margin-bottom: 16px;
+}
+
+/* Subtext */
+.hero-subtext {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: #555555;
+  max-width: 420px;
+  margin-bottom: 32px;
+}
+
+/* CTA row */
+.hero-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Primary button — green */
+.hero-btn-primary {
+  background: #22C55E;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  padding: 12px 28px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.4);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.hero-btn-primary:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+}
+
+/* Secondary button — outline */
+.hero-btn-secondary {
+  background: transparent;
+  color: #0A2239;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  padding: 11px 28px;
+  border-radius: 10px;
+  border: 2px solid rgba(10, 34, 57, 0.7);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.hero-btn-secondary:hover {
+  background: #0A2239;
+  color: #ffffff;
+}
+
+/* Mobile: expand content zone */
+@media (max-width: 768px) {
+  .hero-content {
+    width: 90%;
+    top: 15%;
+    padding: 0 20px;
+  }
+  .hero-promo {
+    align-items: flex-start;
+  }
 }
 
 @layer utilities {

@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { X } from "lucide-react";
 
-/* ─── Countdown target: 1 July 2026 23:59:59 BST ─── */
-const TARGET_TIME = new Date("2026-07-01T22:59:59Z").getTime();
+/* ── Countdown target: July 1 2026 00:00:00 BST = June 30 23:00:00 UTC ── */
+const TARGET_TIME = new Date("2026-06-30T23:00:00Z").getTime();
 
 function getTimeLeft() {
   const diff = Math.max(0, TARGET_TIME - Date.now());
@@ -22,6 +21,7 @@ function pad(n: number) {
 
 const HeroSection = () => {
   const [time, setTime] = useState(getTimeLeft);
+  const [roleModalOpen, setRoleModalOpen] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setTime(getTimeLeft()), 1000);
@@ -32,71 +32,98 @@ const HeroSection = () => {
     time.days === 0 && time.hours === 0 && time.minutes === 0 && time.seconds === 0;
 
   return (
-    <section className="relative bg-[#D2E8F4] overflow-hidden min-h-[520px] lg:min-h-[600px]">
+    <>
+      <section className="hero" aria-label="Hero banner">
 
-      {/* Brand logo — top left overlay */}
-      <div className="absolute top-5 left-5 sm:top-6 sm:left-8 z-10">
-        <img
-          src="/branding/loadify-logo-transparent.svg"
-          alt="Loadify Market"
-          className="h-8 sm:h-9 w-auto"
-        />
-      </div>
+        {/* ── Left 40% safe sky zone: all content lives here ────────── */}
+        <div className="hero-content">
 
-      {/* TOP RIGHT: promo badge + countdown */}
-      {!expired && (
-        <div className="absolute top-5 right-5 sm:top-6 sm:right-8 z-10 flex flex-col items-end gap-1.5">
-          <div className="bg-[#F5C518] text-[#1A1A2E] text-sm font-extrabold px-4 py-1.5 rounded-full shadow-md tracking-wide">
-            0% Fees Until July 1
-          </div>
-          <p className="text-[#1A2744] text-sm font-bold tabular-nums tracking-wider drop-shadow-sm">
-            {pad(time.days)}d&nbsp;{pad(time.hours)}h&nbsp;{pad(time.minutes)}m&nbsp;{pad(time.seconds)}s
-          </p>
-        </div>
-      )}
+          {/* Badge + countdown — right-aligned within the content zone */}
+          {!expired && (
+            <div className="hero-promo">
+              <span className="hero-fee-badge">0% Fees Until July 1</span>
+              <span className="hero-countdown">
+                {pad(time.days)}d&nbsp;{pad(time.hours)}h&nbsp;{pad(time.minutes)}m&nbsp;{pad(time.seconds)}s
+              </span>
+            </div>
+          )}
 
-      {/* Two-column layout: text left, hero image right */}
-      <div className="hero relative z-10 max-w-[1280px] mx-auto px-6 sm:px-10 min-h-[520px] lg:min-h-[600px] py-16 lg:py-20">
-
-        {/* LEFT: title + subtext + buttons */}
-        <div className="space-y-6 max-w-[520px]">
-          <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-display font-extrabold leading-[1.08] text-[#1A2744]">
-            Buy &amp; Sell Across the UK — 0% Fees Until July 1
+          {/* Headline */}
+          <h1 className="hero-headline">
+            Grow your sales with Loadify Market
           </h1>
 
-          <p className="text-lg text-[#2B3E6B] leading-relaxed">
-            Join the fastest growing UK marketplace.
-            <br />
-            Start selling or buying today with zero commission.
+          {/* Subtext */}
+          <p className="hero-subtext">
+            Sell smarter. Reach more buyers. Scale your business faster.
           </p>
 
-          <div className="flex flex-wrap gap-4 pt-2">
-            <Link to="/seller/products/new">
-              <Button
-                size="lg"
-                className="h-14 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-base px-9 rounded-xl shadow-lg"
-              >
-                Create Listing <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+          {/* CTA buttons */}
+          <div className="hero-cta-row">
+            <button
+              className="hero-btn-primary"
+              onClick={() => setRoleModalOpen(true)}
+            >
+              Get Started
+            </button>
             <Link to="/catalog">
-              <Button
-                size="lg"
-                className="h-14 bg-white/80 hover:bg-white text-[#1A2744] font-bold text-base px-9 rounded-xl shadow border border-[#1A2744]/20"
-              >
-                Browse Marketplace <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              <button className="hero-btn-secondary">
+                Browse Marketplace
+              </button>
             </Link>
           </div>
+
         </div>
 
-        {/* RIGHT: hero product image */}
-        <div className="hero-right">
-          <img src="/hero.jpeg" alt="Hero" className="hero-img" />
-        </div>
+      </section>
 
-      </div>
-    </section>
+      {/* ── Role selection modal ──────────────────────────────────────────── */}
+      {roleModalOpen && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setRoleModalOpen(false)}
+        >
+          <div
+            className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors"
+              onClick={() => setRoleModalOpen(false)}
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+            <h2 className="text-xl font-bold text-[#0A2239] mb-1 text-center">
+              Join Loadify Market
+            </h2>
+            <p className="text-sm text-gray-500 mb-6 text-center">
+              How would you like to get started?
+            </p>
+            <div className="flex flex-col gap-3">
+              <Link to="/signup" onClick={() => setRoleModalOpen(false)}>
+                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-[#22C55E] hover:bg-green-50 rounded-xl p-4 cursor-pointer transition-all">
+                  <span className="text-2xl">🛒</span>
+                  <div>
+                    <p className="font-semibold text-[#0A2239]">I'm a Buyer</p>
+                    <p className="text-xs text-gray-500">Browse and buy products</p>
+                  </div>
+                </div>
+              </Link>
+              <Link to="/signup?type=seller" onClick={() => setRoleModalOpen(false)}>
+                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-[#22C55E] hover:bg-green-50 rounded-xl p-4 cursor-pointer transition-all">
+                  <span className="text-2xl">🏪</span>
+                  <div>
+                    <p className="font-semibold text-[#0A2239]">I'm a Seller</p>
+                    <p className="text-xs text-gray-500">List and sell your products</p>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
