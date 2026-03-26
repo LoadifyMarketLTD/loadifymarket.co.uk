@@ -162,13 +162,13 @@ const FeaturedProducts = () => {
           </Link>
         </div>
 
-        {/* Product grid — masonry columns, no empty row gaps */}
-        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-x-5 space-y-5">
+        {/* Product grid — 4 columns desktop, 2 mobile */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {PRODUCTS.map((product) => (
             <Link
               key={product.id}
               to="/catalog"
-              className="break-inside-avoid group bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col"
+              className="group bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col"
             >
               {/* Image */}
               <div className="relative overflow-hidden bg-slate-50 aspect-square">
