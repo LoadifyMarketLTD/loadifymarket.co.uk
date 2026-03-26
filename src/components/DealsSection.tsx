@@ -84,8 +84,8 @@ const DealsSection = () => {
           </Link>
         </div>
 
-        {/* Deal cards — masonry 2-column, no empty row gaps */}
-        <div className="columns-1 sm:columns-2 gap-x-4 space-y-4">
+        {/* Deal cards grid: 2 large + 2 medium */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {DEALS.map((deal, idx) => {
             const BadgeIcon = deal.badgeIcon;
             const isLarge = idx < 2;
@@ -93,7 +93,7 @@ const DealsSection = () => {
               <Link
                 key={deal.id}
                 to={deal.href}
-                className="break-inside-avoid group relative overflow-hidden rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                className="group relative overflow-hidden rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 sm:col-span-1 lg:col-span-2"
                 style={{ minHeight: isLarge ? "280px" : "220px" }}
               >
                 {/* Background image */}
