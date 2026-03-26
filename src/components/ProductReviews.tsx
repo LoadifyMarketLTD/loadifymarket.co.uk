@@ -404,7 +404,7 @@ export default function ProductReviews({
                 <div className="flex flex-wrap gap-2 mb-2">
                   {formImages.map((url, i) => (
                     <div key={i} className="relative">
-                      <img src={url} alt="" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
+                      <img src={url} alt="" width="64" height="64" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
                       <button
                         type="button"
                         onClick={() => setFormImages(prev => prev.filter((_, j) => j !== i))}

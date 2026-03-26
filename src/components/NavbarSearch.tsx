@@ -155,7 +155,7 @@ const NavbarSearch = ({ className, onSelect }: Props) => {
                       >
                         <div className="w-9 h-9 rounded-md bg-muted overflow-hidden shrink-0 flex items-center justify-center">
                           {image ? (
-                            <img src={image} alt="" className="w-full h-full object-cover" />
+                            <img src={image} alt="" width="36" height="36" className="w-full h-full object-cover" />
                           ) : (
                             <Package className="h-4 w-4 text-muted-foreground" />
                           )}
