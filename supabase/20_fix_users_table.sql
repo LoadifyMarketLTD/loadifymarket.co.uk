@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS seller_profiles (
   "responseTimeHours"         DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   "onTimeShipmentRate"        DECIMAL(5,2) NOT NULL DEFAULT 100.00,
   "marketplaceRole"           TEXT         CHECK ("marketplaceRole" IN ('carrier','broker','seller')),
+  "paymentBehaviour"          TEXT         CHECK ("paymentBehaviour" IN ('pays_on_time','sometimes_late','repeated_delays')),
   "isVerified"                BOOLEAN      NOT NULL DEFAULT FALSE,
   "profileCompleteness"       INTEGER      NOT NULL DEFAULT 0,
   "createdAt"                 TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
@@ -128,6 +129,22 @@ BEGIN
       FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
   END IF;
 END $$;
+
+-- ── MIGRATE EXISTING SELLER_PROFILES TABLE ──────────────────────
+-- Safe to run even when upgrading from an older schema that pre-dates
+-- these columns.  Each statement is a no-op if the column already exists.
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "disputeRate"         DECIMAL(5,4) NOT NULL DEFAULT 0.0000;
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "deliverySuccessRate" DECIMAL(5,4) NOT NULL DEFAULT 1.0000;
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "responseTimeHours"   DECIMAL(5,2) NOT NULL DEFAULT 0.00;
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "onTimeShipmentRate"  DECIMAL(5,2) NOT NULL DEFAULT 100.00;
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "marketplaceRole"     TEXT         CHECK ("marketplaceRole" IN ('carrier','broker','seller'));
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "paymentBehaviour"    TEXT         CHECK ("paymentBehaviour" IN ('pays_on_time','sometimes_late','repeated_delays'));
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "isVerified"          BOOLEAN      NOT NULL DEFAULT FALSE;
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "profileCompleteness" INTEGER      NOT NULL DEFAULT 0;
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "contactPhone"        TEXT;
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "stripeConnectStatus" TEXT         CHECK ("stripeConnectStatus" IN ('pending', 'restricted', 'active'));
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "sellerStatus"        TEXT         NOT NULL DEFAULT 'draft' CHECK ("sellerStatus" IN ('draft', 'submitted', 'active', 'suspended'));
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "activatedAt"         TIMESTAMPTZ;
 
 -- ──────────────────────────────────────────────────────────────
 -- public.seller_stores
