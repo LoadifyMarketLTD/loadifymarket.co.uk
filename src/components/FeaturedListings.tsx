@@ -14,7 +14,7 @@ const FILTER_TABS = [
 const featuredListings = [
   {
     id: "1",
-    img: "/images/featured/earbuds.jpg",
+    img: "/images/featured/earbuds.webp",
     title: "Wireless Earbuds",
     seller: "TechDeals UK",
     price: "£49.99",
@@ -25,7 +25,7 @@ const featuredListings = [
   },
   {
     id: "2",
-    img: "/images/featured/toolbox.jpg",
+    img: "/images/featured/toolbox.webp",
     title: "Professional Tool Set",
     seller: "ToolMaster Pro",
     price: "£79.99",
@@ -36,7 +36,7 @@ const featuredListings = [
   },
   {
     id: "3",
-    img: "/images/products/handbag.jpg",
+    img: "/images/products/handbag.webp",
     title: "Designer Handbag",
     seller: "StyleHub London",
     price: "£129.99",
@@ -47,7 +47,7 @@ const featuredListings = [
   },
   {
     id: "4",
-    img: "/images/products/smartwatch.jpg",
+    img: "/images/products/smartwatch.webp",
     title: "Minimalist Watch",
     seller: "UrbanGear Co.",
     price: "£89.99",
@@ -58,7 +58,7 @@ const featuredListings = [
   },
   {
     id: "5",
-    img: "/images/featured/skincare2.jpg",
+    img: "/images/featured/skincare2.webp",
     title: "Skincare Gift Set",
     seller: "GlowBeauty UK",
     price: "£34.99",
@@ -69,7 +69,7 @@ const featuredListings = [
   },
   {
     id: "6",
-    img: "/images/featured/chair.jpg",
+    img: "/images/featured/chair.webp",
     title: "Modern Sofa",
     seller: "HomeStyle Direct",
     price: "£699.00",
@@ -80,7 +80,7 @@ const featuredListings = [
   },
   {
     id: "7",
-    img: "/images/products/sample-listing.jpg",
+    img: "/images/products/sample-listing.webp",
     title: "iPad Case Stand",
     seller: "TechAccessories",
     price: "£19.99",
@@ -91,7 +91,7 @@ const featuredListings = [
   },
   {
     id: "8",
-    img: "/images/products/headphones.jpg",
+    img: "/images/products/headphones.webp",
     title: "Mechanical Keyboard",
     seller: "KeyboardKing",
     price: "£119.99",
@@ -139,7 +139,17 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
     >
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
         <div className="relative">
-          <img src={item.img} alt={item.title} className="w-full h-64 object-cover" />
+          <img
+            src={item.img}
+            alt={item.title}
+            className="w-full h-64 object-cover"
+            onError={(e) => {
+              const el = e.target as HTMLImageElement;
+              if (el.src.endsWith(".webp")) {
+                el.src = el.src.replace(".webp", ".jpg");
+              }
+            }}
+          />
           <button
             onClick={onClose}
             className="absolute top-3 right-3 bg-white/90 hover:bg-white text-gray-700 rounded-full w-8 h-8 flex items-center justify-center shadow transition-all"
@@ -253,6 +263,12 @@ const FeaturedListings = () => {
                     width="400"
                     height="300"
                     className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      const el = e.target as HTMLImageElement;
+                      if (el.src.endsWith(".webp")) {
+                        el.src = el.src.replace(".webp", ".jpg");
+                      }
+                    }}
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-all duration-300 flex items-center justify-center">
                     <button

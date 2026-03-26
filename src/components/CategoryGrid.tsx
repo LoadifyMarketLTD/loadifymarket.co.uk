@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Cpu, Shirt, Home, Wrench, Gamepad2, Sparkles, Heart, Car } from "lucide-react";
-import electronicsImg from "@/assets/categories/electronics.jpg";
-import fashionImg from "@/assets/categories/clothing.jpg";
-import homeImg from "@/assets/categories/home.jpg";
-import toolsImg from "@/assets/categories/tools.jpg";
-import toysImg from "@/assets/categories/toys.jpg";
-import healthImg from "@/assets/categories/health-beauty.jpg";
-import automotiveImg from "@/assets/categories/automotive.jpg";
+import electronicsImg from "@/assets/categories/electronics.webp";
+import fashionImg from "@/assets/categories/clothing.webp";
+import homeImg from "@/assets/categories/home.webp";
+import toolsImg from "@/assets/categories/tools.webp";
+import toysImg from "@/assets/categories/toys.webp";
+import healthImg from "@/assets/categories/health-beauty.webp";
+import automotiveImg from "@/assets/categories/automotive.webp";
 
 /**
  * 8 categories in a 2+3+3 grid (desktop: 6-col, mobile: 2-col).
@@ -54,7 +54,7 @@ const categories = [
     slug: "beauty",
     label: "Beauty",
     count: "640+",
-    img: "/images/categories/beauty.jpg",
+    img: "/images/categories/beauty.webp",
     icon: Sparkles,
     overlay: "from-[#4a1a2a]/75 via-rose-900/50 to-transparent",
     colSpan: "lg:col-span-2",
@@ -161,7 +161,7 @@ const CategoryGrid = () => {
               Shop by Category
             </h2>
             <p className="mt-1 text-sm text-[#64748B]">
-              Browse thousands of products across 9 categories
+              Browse thousands of products across 8 major categories
             </p>
           </div>
           <Link

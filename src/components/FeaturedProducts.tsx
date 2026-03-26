@@ -4,7 +4,7 @@ import { Star, ArrowRight, ShoppingCart } from "lucide-react";
 const PRODUCTS = [
   {
     id: "fp-1",
-    img: "/images/products/headphones.jpg",
+    img: "/images/products/headphones.webp",
     title: "Pro Wireless Headphones",
     stars: 5,
     reviews: 248,
@@ -14,7 +14,7 @@ const PRODUCTS = [
   },
   {
     id: "fp-2",
-    img: "/images/categories/fashion.jpg",
+    img: "/images/categories/fashion.webp",
     title: "Athletic Running Shoes",
     stars: 4,
     reviews: 183,
@@ -24,7 +24,7 @@ const PRODUCTS = [
   },
   {
     id: "fp-3",
-    img: "/images/products/skincare.jpg",
+    img: "/images/products/skincare.webp",
     title: "Luxury Skincare Set",
     stars: 5,
     reviews: 312,
@@ -34,7 +34,7 @@ const PRODUCTS = [
   },
   {
     id: "fp-4",
-    img: "/images/products/smartwatch.jpg",
+    img: "/images/products/smartwatch.webp",
     title: "Minimalist Leather Watch",
     stars: 5,
     reviews: 97,
@@ -44,7 +44,7 @@ const PRODUCTS = [
   },
   {
     id: "fp-5",
-    img: "/images/products/laptop.jpg",
+    img: "/images/products/laptop.webp",
     title: "Mechanical Keyboard RGB",
     stars: 5,
     reviews: 431,
@@ -54,7 +54,7 @@ const PRODUCTS = [
   },
   {
     id: "fp-6",
-    img: "/images/featured/skincare2.jpg",
+    img: "/images/featured/skincare2.webp",
     title: "Perfume Gift Collection",
     stars: 4,
     reviews: 156,
@@ -64,7 +64,7 @@ const PRODUCTS = [
   },
   {
     id: "fp-7",
-    img: "/images/categories/home-kitchen.jpg",
+    img: "/images/categories/home-kitchen.webp",
     title: "Smart Home LED Strip",
     stars: 4,
     reviews: 274,
@@ -74,7 +74,7 @@ const PRODUCTS = [
   },
   {
     id: "fp-8",
-    img: "/images/products/handbag.jpg",
+    img: "/images/products/handbag.webp",
     title: "Designer Leather Handbag",
     stars: 5,
     reviews: 89,
@@ -84,7 +84,7 @@ const PRODUCTS = [
   },
   {
     id: "fp-9",
-    img: "/images/products/toolset.jpg",
+    img: "/images/products/toolset.webp",
     title: "18V Cordless Drill Set",
     stars: 5,
     reviews: 163,
@@ -94,7 +94,7 @@ const PRODUCTS = [
   },
   {
     id: "fp-10",
-    img: "/images/products/sample-listing.jpg",
+    img: "/images/products/sample-listing.webp",
     title: "Tablet Protective Case",
     stars: 4,
     reviews: 98,
@@ -104,7 +104,7 @@ const PRODUCTS = [
   },
   {
     id: "fp-11",
-    img: "/images/categories/toys-games.jpg",
+    img: "/images/categories/toys-games.webp",
     title: "Creative Building Blocks",
     stars: 5,
     reviews: 207,
@@ -114,7 +114,7 @@ const PRODUCTS = [
   },
   {
     id: "fp-12",
-    img: "/images/categories/health-wellness.jpg",
+    img: "/images/categories/health-wellness.webp",
     title: "Premium Yoga Mat",
     stars: 4,
     reviews: 145,
@@ -182,7 +182,11 @@ const FeaturedProducts = () => {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
                     const el = e.target as HTMLImageElement;
-                    el.src = "/images/placeholder-product.jpg";
+                    if (el.src.endsWith(".webp")) {
+                      el.src = el.src.replace(".webp", ".jpg");
+                    } else {
+                      el.src = "/images/placeholder-product.jpg";
+                    }
                   }}
                 />
                 {/* Badge */}

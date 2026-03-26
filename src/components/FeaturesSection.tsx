@@ -18,7 +18,7 @@ const features = [
       "Seller profiles & ratings",
     ],
     cta: { label: "Browse Marketplace", to: "/catalog" },
-    img: "/images/products/laptop.jpg",
+    img: "/images/products/laptop.webp",
   },
   {
     icon: ShieldCheck,
@@ -36,7 +36,7 @@ const features = [
       "Real-time messaging with sellers",
     ],
     cta: { label: "How It Works", to: "/catalog" },
-    img: "/images/products/office-chair.jpg",
+    img: "/images/products/office-chair.webp",
   },
   {
     icon: BarChart3,
@@ -54,7 +54,7 @@ const features = [
       "Fast Stripe payouts",
     ],
     cta: { label: "Start Selling", to: "/signup" },
-    img: "/images/products/headphones.jpg",
+    img: "/images/products/headphones.webp",
   },
 ];
 
@@ -93,6 +93,12 @@ const FeaturesSection = () => {
                   loading="lazy"
                   decoding="async"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  onError={(e) => {
+                    const el = e.target as HTMLImageElement;
+                    if (el.src.endsWith(".webp")) {
+                      el.src = el.src.replace(".webp", ".jpg");
+                    }
+                  }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
               </div>
