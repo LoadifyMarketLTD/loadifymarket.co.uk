@@ -176,9 +176,9 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-x-5 space-y-5">
         {[...Array(maxProducts)].map((_, i) => (
-          <div key={i} className="animate-pulse">
+          <div key={i} className="break-inside-avoid animate-pulse">
             <div className="bg-gray-200 aspect-[4/3] rounded mb-2"></div>
             <div className="bg-gray-200 h-3 rounded mb-1"></div>
             <div className="bg-gray-200 h-3 rounded w-2/3"></div>
@@ -217,9 +217,9 @@ export default function TrendingProducts({ maxProducts = 8, days = 7, mode = 'tr
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4">
+    <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-x-5 space-y-5">
       {trendingProducts.map((product, index) => (
-        <div key={product.id} className="relative">
+        <div key={product.id} className="break-inside-avoid relative">
           {/* Mode badge overlay */}
           {mode === 'trending' && index < 3 && (
             <div className="absolute top-2 left-2 z-20 flex items-center gap-1 bg-orange-600/90 text-gray-900 text-xs font-bold px-2 py-0.5 rounded-full shadow-lg pointer-events-none">
