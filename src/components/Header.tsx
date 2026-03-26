@@ -47,8 +47,8 @@ const Header = () => {
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
 
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <img src={logo} alt="Loadify Market" className="h-8 w-8" />
+        <Link to="/" aria-label="Loadify Market — Home" className="flex items-center gap-2 shrink-0">
+          <img src={logo} alt="" aria-hidden="true" className="h-8 w-8" />
           <span className="font-display text-lg font-bold text-[#0F172A] whitespace-nowrap hidden sm:block">
             Loadify <span className="text-[#2563EB]">Market</span>
           </span>
@@ -131,7 +131,7 @@ const Header = () => {
       {/* ── Row 2: Category quick-links (desktop only) ─────────────────── */}
       <nav aria-label="Category navigation" className="hidden lg:block border-t border-gray-100">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
-          <div className="flex items-center gap-0.5 h-10 overflow-x-auto">
+          <div className="flex items-center gap-0.5 h-10">
             <Link
               to="/catalog"
               className="shrink-0 text-xs font-semibold text-[#334155] hover:text-[#2563EB] hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
@@ -139,19 +139,26 @@ const Header = () => {
               All Categories
             </Link>
             <span className="w-px h-4 bg-gray-200 mx-1 shrink-0" aria-hidden="true" />
-            {CATEGORY_CONFIG.slice(0, 8).map((cat) => {
+            {CATEGORY_CONFIG.slice(0, 6).map((cat) => {
               const Icon = cat.icon;
               return (
                 <Link
                   key={cat.slug}
                   to={`/category/${cat.slug}`}
-                  className="flex items-center gap-1.5 shrink-0 text-xs font-medium text-[#334155] hover:text-[#2563EB] hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1 shrink-0 text-xs font-medium text-[#334155] hover:text-[#2563EB] hover:bg-blue-50 px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                 >
                   <Icon className={`h-3.5 w-3.5 ${cat.iconColor}`} aria-hidden="true" />
                   {cat.label}
                 </Link>
               );
             })}
+            <span className="w-px h-4 bg-gray-200 mx-1 shrink-0" aria-hidden="true" />
+            <Link
+              to="/catalog"
+              className="shrink-0 text-xs font-medium text-[#2563EB] hover:text-[#1D4ED8] hover:bg-blue-50 px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+            >
+              More →
+            </Link>
           </div>
         </div>
       </nav>
