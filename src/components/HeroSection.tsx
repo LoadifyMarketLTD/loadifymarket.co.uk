@@ -29,10 +29,9 @@ const HeroSection = () => {
     // does not compete with LCP painting or inflate INP on low-end devices.
     // Falls back to immediate start in environments without requestIdleCallback.
     const startTimer = () => { id = setInterval(() => setTime(getTimeLeft()), 1000); };
-    if (typeof (window as Window & { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback === 'function') {
-      const w = window as Window & { requestIdleCallback: (cb: () => void) => number; cancelIdleCallback: (h: number) => void };
-      const handle = w.requestIdleCallback(startTimer);
-      return () => { w.cancelIdleCallback(handle); if (id !== undefined) clearInterval(id); };
+    if ('requestIdleCallback' in window) {
+      const handle = window.requestIdleCallback(startTimer);
+      return () => { window.cancelIdleCallback(handle); if (id !== undefined) clearInterval(id); };
     }
     startTimer();
     return () => { if (id !== undefined) clearInterval(id); };

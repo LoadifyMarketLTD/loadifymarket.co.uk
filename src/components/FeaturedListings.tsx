@@ -14,7 +14,7 @@ const FILTER_TABS = [
 const featuredListings = [
   {
     id: "1",
-    img: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&auto=format&fit=crop",
+    img: "/images/featured/earbuds.jpg",
     title: "Wireless Earbuds",
     seller: "TechDeals UK",
     price: "£49.99",
@@ -25,7 +25,7 @@ const featuredListings = [
   },
   {
     id: "2",
-    img: "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&auto=format&fit=crop",
+    img: "/images/featured/toolbox.jpg",
     title: "Professional Tool Set",
     seller: "ToolMaster Pro",
     price: "£79.99",
@@ -36,7 +36,7 @@ const featuredListings = [
   },
   {
     id: "3",
-    img: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop",
+    img: "/images/products/handbag.jpg",
     title: "Designer Handbag",
     seller: "StyleHub London",
     price: "£129.99",
@@ -47,7 +47,7 @@ const featuredListings = [
   },
   {
     id: "4",
-    img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&auto=format&fit=crop",
+    img: "/images/products/smartwatch.jpg",
     title: "Minimalist Watch",
     seller: "UrbanGear Co.",
     price: "£89.99",
@@ -58,7 +58,7 @@ const featuredListings = [
   },
   {
     id: "5",
-    img: "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=400&auto=format&fit=crop",
+    img: "/images/featured/skincare2.jpg",
     title: "Skincare Gift Set",
     seller: "GlowBeauty UK",
     price: "£34.99",
@@ -69,7 +69,7 @@ const featuredListings = [
   },
   {
     id: "6",
-    img: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&auto=format&fit=crop",
+    img: "/images/featured/chair.jpg",
     title: "Modern Sofa",
     seller: "HomeStyle Direct",
     price: "£699.00",
@@ -80,7 +80,7 @@ const featuredListings = [
   },
   {
     id: "7",
-    img: "https://images.unsplash.com/photo-1544244015-0df4592987d0?w=400&auto=format&fit=crop",
+    img: "/images/products/sample-listing.jpg",
     title: "iPad Case Stand",
     seller: "TechAccessories",
     price: "£19.99",
@@ -91,7 +91,7 @@ const featuredListings = [
   },
   {
     id: "8",
-    img: "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=400&auto=format&fit=crop",
+    img: "/images/products/headphones.jpg",
     title: "Mechanical Keyboard",
     seller: "KeyboardKing",
     price: "£119.99",
