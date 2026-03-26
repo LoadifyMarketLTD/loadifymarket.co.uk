@@ -110,6 +110,41 @@ Covered by ERROR A above. Use `LANGUAGE plpgsql` and run STEP 1 first.
 
 ---
 
+### ERROR G — `42601: syntax error at or near ""isVerified""` / `LINE 1: "isVerified" BOOLEAN NOT NULL DEFAULT FALSE,`
+
+**What happened:** An existing `seller_profiles` table (created from an older
+schema) is missing columns that were added later: `isVerified`, `paymentBehaviour`,
+`profileCompleteness`, `contactPhone`, and the performance-metric columns.
+Because the table already exists, `CREATE TABLE IF NOT EXISTS seller_profiles`
+in the migration files is silently skipped — leaving the new columns absent.
+
+**Same root cause as ERROR B** (columns added to a `CREATE TABLE` body never
+backfilled via `ALTER TABLE`).
+
+**Fix in repo:** `01_users_profiles.sql` and `20_fix_users_table.sql` now
+include `ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS` statements
+immediately after the `CREATE TABLE IF NOT EXISTS seller_profiles` block.
+These are safe no-ops if the column already exists.
+
+If the `seller_profiles` table already exists from an old schema, run:
+
+```sql
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "disputeRate"         DECIMAL(5,4) NOT NULL DEFAULT 0.0000;
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "deliverySuccessRate" DECIMAL(5,4) NOT NULL DEFAULT 1.0000;
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "responseTimeHours"   DECIMAL(5,2) NOT NULL DEFAULT 0.00;
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "onTimeShipmentRate"  DECIMAL(5,2) NOT NULL DEFAULT 100.00;
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "marketplaceRole"     TEXT         CHECK ("marketplaceRole" IN ('carrier','broker','seller'));
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "paymentBehaviour"    TEXT         CHECK ("paymentBehaviour" IN ('pays_on_time','sometimes_late','repeated_delays'));
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "isVerified"          BOOLEAN      NOT NULL DEFAULT FALSE;
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "profileCompleteness" INTEGER      NOT NULL DEFAULT 0;
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "contactPhone"        TEXT;
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "stripeConnectStatus" TEXT         CHECK ("stripeConnectStatus" IN ('pending', 'restricted', 'active'));
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "sellerStatus"        TEXT         NOT NULL DEFAULT 'draft' CHECK ("sellerStatus" IN ('draft', 'submitted', 'active', 'suspended'));
+ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS "activatedAt"         TIMESTAMPTZ;
+```
+
+---
+
 ## FRESH INSTALL vs UPGRADE
 
 ### Fresh install (recommended)

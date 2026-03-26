@@ -152,13 +152,38 @@ CREATE TABLE IF NOT EXISTS seller_profiles (
   "isVerified"                BOOLEAN      NOT NULL DEFAULT FALSE,
   "profileCompleteness"       INTEGER      NOT NULL DEFAULT 0,
   "contactPhone"              TEXT,
+  "stripeConnectStatus"       TEXT         CHECK ("stripeConnectStatus" IN ('pending', 'restricted', 'active')),
+  "sellerStatus"              TEXT         NOT NULL DEFAULT 'draft'
+                                CHECK ("sellerStatus" IN ('draft', 'submitted', 'active', 'suspended')),
+  "activatedAt"               TIMESTAMPTZ,
   "createdAt"                 TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   "updatedAt"                 TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_seller_profiles_approved     ON seller_profiles ("isApproved");
 CREATE INDEX IF NOT EXISTS idx_seller_profiles_verification ON seller_profiles ("verificationStatus");
+CREATE INDEX IF NOT EXISTS idx_seller_profiles_status       ON seller_profiles ("sellerStatus");
 CREATE TRIGGER trg_seller_profiles_updatedAt BEFORE UPDATE ON seller_profiles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE OR REPLACE FUNCTION sync_seller_approval_from_status()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW."sellerStatus" = 'active' THEN
+    NEW."isApproved" = TRUE;
+    IF NEW."activatedAt" IS NULL THEN
+      NEW."activatedAt" = NOW();
+    END IF;
+  ELSIF NEW."sellerStatus" IN ('draft', 'submitted', 'suspended') THEN
+    NEW."isApproved" = FALSE;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_seller_status_sync ON seller_profiles;
+CREATE TRIGGER trg_seller_status_sync
+  BEFORE UPDATE OF "sellerStatus" ON seller_profiles
+  FOR EACH ROW EXECUTE FUNCTION sync_seller_approval_from_status();
 
 CREATE TABLE IF NOT EXISTS seller_stores (
   "userId"           UUID        PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
