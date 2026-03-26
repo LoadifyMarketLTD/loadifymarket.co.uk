@@ -20,8 +20,8 @@ export default function PixelPerfectIndex() {
     <div className="min-h-screen bg-[#F5F7FB] font-sans antialiased">
       <TopBar />
       <Header />
-      {/* spacer: 40px top bar + 64px header row + 40px category nav */}
-      <div className="pt-[144px]" />
+      {/* spacer: 40px top bar + 64px header row + 48px category nav */}
+      <div className="pt-[152px]" />
       <main>
         <HeroSection />
         {/* Category strip — horizontal scroll, icon + label per category */}

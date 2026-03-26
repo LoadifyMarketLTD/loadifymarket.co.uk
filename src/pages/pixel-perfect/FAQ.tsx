@@ -132,7 +132,7 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
       {
         question: "What commission does Loadify Market charge?",
         answer:
-          "Commission rates vary by category and are displayed in your seller agreement during onboarding. The commission is deducted automatically from each completed order.",
+          "Loadify Market charges a 7% commission on all completed sales, deducted automatically from each order. During our launch promotion — until 1 July 2026 — new sellers benefit from 0% commission. Standard fees apply from 1 July 2026 onwards.",
       },
       {
         question: "How do I manage orders?",

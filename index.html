@@ -55,14 +55,9 @@
     <meta name="msapplication-TileColor" content="#0A0A0A" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-    <!-- Preconnect to Google Fonts -->
+    <!-- Preconnect to Supabase (API/auth requests fire immediately on load) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-    <!-- Preconnect to Unsplash image CDN — establishes DNS + TCP + TLS early so
-         the many Unsplash images on the homepage don't each pay the full
-         connection-setup penalty (~200–400 ms on 3G). -->
-    <link rel="preconnect" href="https://images.unsplash.com" />
     <!-- Preload LCP hero image — WebP for modern browsers, served from /public.
          fetchpriority="high" tells the preload scanner this is the most critical
          resource. type="image/webp" lets browsers that do not support WebP skip

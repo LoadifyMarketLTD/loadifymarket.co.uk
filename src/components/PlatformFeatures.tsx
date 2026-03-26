@@ -46,7 +46,7 @@ const sellerBenefits = [
     icon: Banknote,
     color: "text-amber-600 bg-amber-50",
     title: "Fast Stripe Payouts",
-    desc: "Payments processed securely via Stripe. Funds arrive quickly with transparent fee structure.",
+    desc: "Payments processed securely via Stripe. 7% commission on completed sales with fast payouts.",
   },
   {
     icon: TrendingUp,
@@ -155,7 +155,7 @@ const PlatformFeatures = () => {
           {[
             { value: "500+", label: "Active Listings" },
             { value: "120+", label: "Registered Sellers" },
-            { value: "16", label: "Categories" },
+            { value: "9", label: "Categories" },
             { value: "UK-Wide", label: "Delivery Support" },
           ].map((s) => (
             <div key={s.label}>
