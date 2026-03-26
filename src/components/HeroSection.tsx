@@ -32,10 +32,8 @@ const HeroSection = () => {
     time.days === 0 && time.hours === 0 && time.minutes === 0 && time.seconds === 0;
 
   return (
-    <section
-      className="relative min-h-[520px] lg:min-h-[600px] bg-cover bg-center bg-no-repeat overflow-hidden"
-      style={{ backgroundImage: "url('/hero.jpg')" }}
-    >
+    <section className="relative bg-[#D2E8F4] overflow-hidden min-h-[520px] lg:min-h-[600px]">
+
       {/* Brand logo — top left overlay */}
       <div className="absolute top-5 left-5 sm:top-6 sm:left-8 z-10">
         <img
@@ -48,20 +46,20 @@ const HeroSection = () => {
       {/* TOP RIGHT: promo badge + countdown */}
       {!expired && (
         <div className="absolute top-5 right-5 sm:top-6 sm:right-8 z-10 flex flex-col items-end gap-1.5">
-          {/* Gold badge */}
           <div className="bg-[#F5C518] text-[#1A1A2E] text-sm font-extrabold px-4 py-1.5 rounded-full shadow-md tracking-wide">
             0% Fees Until July 1
           </div>
-          {/* Countdown — plain dark text, no background */}
           <p className="text-[#1A2744] text-sm font-bold tabular-nums tracking-wider drop-shadow-sm">
             {pad(time.days)}d&nbsp;{pad(time.hours)}h&nbsp;{pad(time.minutes)}m&nbsp;{pad(time.seconds)}s
           </p>
         </div>
       )}
 
-      {/* Main content — left-aligned text only, right side shows image products */}
-      <div className="relative z-10 max-w-[1280px] mx-auto px-6 sm:px-10 min-h-[520px] lg:min-h-[600px] flex items-center py-16 lg:py-20">
-        <div className="w-full max-w-[520px] space-y-6">
+      {/* Two-column layout: text left, hero image right */}
+      <div className="relative z-10 max-w-[1280px] mx-auto px-6 sm:px-10 grid lg:grid-cols-2 min-h-[520px] lg:min-h-[600px] items-center gap-0 py-16 lg:py-20">
+
+        {/* LEFT: title + subtext + buttons */}
+        <div className="space-y-6 max-w-[520px]">
           <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] font-display font-extrabold leading-[1.08] text-[#1A2744]">
             Buy &amp; Sell Across the UK — 0% Fees Until July 1
           </h1>
@@ -76,7 +74,7 @@ const HeroSection = () => {
             <Link to="/seller/products/new">
               <Button
                 size="lg"
-                className="h-13 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-base px-9 rounded-xl shadow-lg"
+                className="h-14 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-base px-9 rounded-xl shadow-lg"
               >
                 Create Listing <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -84,13 +82,24 @@ const HeroSection = () => {
             <Link to="/catalog">
               <Button
                 size="lg"
-                className="h-13 bg-white/80 hover:bg-white text-[#1A2744] font-bold text-base px-9 rounded-xl shadow border border-[#1A2744]/20"
+                className="h-14 bg-white/80 hover:bg-white text-[#1A2744] font-bold text-base px-9 rounded-xl shadow border border-[#1A2744]/20"
               >
                 Browse Marketplace <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
           </div>
         </div>
+
+        {/* RIGHT: hero product image */}
+        <div className="hidden lg:flex items-end justify-center h-full pt-8">
+          <img
+            src="/hero.jpeg"
+            alt="UK Marketplace — shop laptops, headphones, trainers and more"
+            className="w-full max-w-[620px] object-contain object-bottom select-none pointer-events-none"
+            draggable={false}
+          />
+        </div>
+
       </div>
     </section>
   );
