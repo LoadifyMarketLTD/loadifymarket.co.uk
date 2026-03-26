@@ -131,6 +131,25 @@
   }
 }
 
+/* ── Hero section layout ──────────────────────────────────────────────────── */
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hero-right {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.hero-img {
+  max-width: 500px;
+  width: 100%;
+  object-fit: contain;
+}
+
 @layer utilities {
   .scrollbar-none {
     scrollbar-width: none;

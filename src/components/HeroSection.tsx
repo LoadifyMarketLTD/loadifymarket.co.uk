@@ -56,7 +56,7 @@ const HeroSection = () => {
       )}
 
       {/* Two-column layout: text left, hero image right */}
-      <div className="relative z-10 max-w-[1280px] mx-auto px-6 sm:px-10 grid lg:grid-cols-2 min-h-[520px] lg:min-h-[600px] items-center gap-0 py-16 lg:py-20">
+      <div className="hero relative z-10 max-w-[1280px] mx-auto px-6 sm:px-10 min-h-[520px] lg:min-h-[600px] py-16 lg:py-20">
 
         {/* LEFT: title + subtext + buttons */}
         <div className="space-y-6 max-w-[520px]">
@@ -91,13 +91,8 @@ const HeroSection = () => {
         </div>
 
         {/* RIGHT: hero product image */}
-        <div className="hidden lg:flex items-end justify-center h-full pt-8">
-          <img
-            src="/hero.jpeg"
-            alt="UK Marketplace — shop laptops, headphones, trainers and more"
-            className="w-full max-w-[620px] object-contain object-bottom select-none pointer-events-none"
-            draggable={false}
-          />
+        <div className="hero-right">
+          <img src="/hero.jpeg" alt="Hero" className="hero-img" />
         </div>
 
       </div>
