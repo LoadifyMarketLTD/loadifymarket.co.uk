@@ -161,7 +161,7 @@ const CategoryGrid = () => {
               Shop by Category
             </h2>
             <p className="mt-1 text-sm text-[#64748B]">
-              Browse thousands of products across 8 major categories
+              Browse thousands of products across 9 categories
             </p>
           </div>
           <Link

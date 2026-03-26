@@ -86,7 +86,7 @@ const PaymentTrustSection = () => (
           <ShieldCheck className="h-5 w-5 text-emerald-600 shrink-0" aria-hidden="true" />
           <div>
             <p className="text-xs font-semibold text-emerald-700 leading-none">Secure Checkout</p>
-            <p className="text-[10px] text-emerald-600 mt-0.5 leading-none">Buyer protection included</p>
+            <p className="text-[10px] text-emerald-600 mt-0.5 leading-none">Dispute support available</p>
           </div>
         </div>
 

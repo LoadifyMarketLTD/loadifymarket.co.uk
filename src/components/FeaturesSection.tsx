@@ -11,7 +11,7 @@ const features = [
     tagColor: "text-[#2563EB] bg-blue-50",
     title: "Browse & Discover",
     description:
-      "Explore thousands of products across 16 categories — electronics, fashion, beauty, home goods, tools and more — all from independent UK sellers in one place.",
+      "Explore thousands of products across 9 categories — electronics, fashion, beauty, home goods, tools and more — all from independent UK sellers in one place.",
     bullets: [
       "500+ live listings updated daily",
       "Smart search with category filters",
@@ -49,7 +49,7 @@ const features = [
     description:
       "List your products for free, reach real UK buyers and manage everything from a powerful seller dashboard — orders, analytics, payouts and more.",
     bullets: [
-      "Free to list, low transaction fees",
+      "Free to list — 7% commission on sales",
       "Full seller dashboard & analytics",
       "Fast Stripe payouts",
     ],
