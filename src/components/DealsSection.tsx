@@ -8,7 +8,7 @@ const DEALS = [
     subtitle: "Headphones, keyboards, smart home & more",
     cta: "Shop Electronics",
     href: "/category/electronics",
-    img: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=800&auto=format&fit=crop&q=80",
+    img: "/images/categories/electronics.jpg",
     badge: "Limited Time",
     badgeIcon: Clock,
     discount: "40% OFF",
@@ -22,7 +22,7 @@ const DEALS = [
     subtitle: "Dresses, shoes, bags & accessories",
     cta: "Shop Fashion",
     href: "/category/fashion",
-    img: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=800&auto=format&fit=crop&q=80",
+    img: "/images/categories/fashion.jpg",
     badge: "Today Only",
     badgeIcon: Tag,
     discount: "30% OFF",
@@ -36,7 +36,7 @@ const DEALS = [
     subtitle: "Premium skincare, fragrances & gift sets",
     cta: "Shop Beauty",
     href: "/category/beauty",
-    img: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&auto=format&fit=crop&q=80",
+    img: "/images/categories/beauty.jpg",
     badge: "New Arrivals",
     badgeIcon: Percent,
     discount: "25% OFF",
@@ -50,7 +50,7 @@ const DEALS = [
     subtitle: "Smart lighting, storage, cookware & décor",
     cta: "Shop Home",
     href: "/category/home-kitchen",
-    img: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&auto=format&fit=crop&q=80",
+    img: "/images/categories/home-kitchen.jpg",
     badge: "Clearance",
     badgeIcon: Tag,
     discount: "35% OFF",
@@ -100,7 +100,10 @@ const DealsSection = () => {
                 <img
                   src={deal.img}
                   alt={deal.title}
+                  width="800"
+                  height="280"
                   loading="lazy"
+                  decoding="async"
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   onError={(e) => {
                     const el = e.target as HTMLImageElement;

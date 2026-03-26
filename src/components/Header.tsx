@@ -41,7 +41,7 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-10 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+    <header className="fixed top-10 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-sm" style={{ willChange: 'transform' }}>
 
       {/* ── Row 1: Logo | Search | Actions ─────────────────────────────── */}
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
