@@ -7,64 +7,48 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/hooks/use-toast";
 import { BRAND } from "@/constants/brand";
 import { formatPhoneNumber } from "@/lib/utils";
 
 const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || BRAND.supportEmail;
 
+function encode(data: Record<string, string>) {
+  return Object.keys(data)
+    .map((key) => encodeURIComponent(key) + "=" + encodeURIComponent(data[key]))
+    .join("&");
+}
+
 const ContactUs = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     subject: "",
     message: "",
+    "bot-field": "",
   });
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData((prev) => ({ ...prev, [e.target.id]: e.target.value }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setStatus("loading");
 
     try {
-      const res = await fetch("/.netlify/functions/send-email", {
+      const res = await fetch("/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: SUPPORT_EMAIL,
-          subject: `Contact Enquiry: ${formData.subject}`,
-          template: "contact_enquiry",
-          data: {
-            name: formData.name,
-            email: formData.email,
-            subject: formData.subject,
-            message: formData.message,
-          },
-        }),
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: encode({ "form-name": "contact", ...formData }),
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to send message");
-      }
+      if (!res.ok) throw new Error("Submit failed");
 
-      toast({
-        title: "Message sent",
-        description: "Thank you for contacting us. We'll get back to you within 24–48 hours.",
-      });
-
-      setFormData({ name: "", email: "", subject: "", message: "" });
+      setFormData({ name: "", email: "", subject: "", message: "", "bot-field": "" });
+      setStatus("success");
     } catch {
-      toast({
-        title: "Failed to send message",
-        description: "Please try again or email us directly at " + SUPPORT_EMAIL,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+      setStatus("error");
     }
   };
 
@@ -87,27 +71,51 @@ const ContactUs = () => {
               <h2 className="text-xl font-display font-semibold text-foreground mb-5">
                 Send Us a Message
               </h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form
+                name="contact"
+                method="POST"
+                data-netlify="true"
+                netlify-honeypot="bot-field"
+                onSubmit={handleSubmit}
+                className="space-y-4"
+              >
+                {/* Required hidden inputs for Netlify Forms */}
+                <input type="hidden" name="form-name" value="contact" />
+
+                {/* Honeypot — hidden from real users */}
+                <div className="hidden" aria-hidden="true">
+                  <Label htmlFor="bot-field">Don&apos;t fill this out if you&apos;re human:</Label>
+                  <Input
+                    id="bot-field"
+                    name="bot-field"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={formData["bot-field"]}
+                    onChange={handleChange}
+                  />
+                </div>
+
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" placeholder="John Smith" required value={formData.name} onChange={handleChange} />
+                    <Input id="name" name="name" placeholder="John Smith" required value={formData.name} onChange={handleChange} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" type="email" placeholder="john@company.co.uk" required value={formData.email} onChange={handleChange} />
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" name="email" type="email" placeholder="john@company.co.uk" required value={formData.email} onChange={handleChange} />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="subject">Subject</Label>
-                  <Input id="subject" placeholder="How can we help?" required value={formData.subject} onChange={handleChange} />
+                  <Input id="subject" name="subject" placeholder="How can we help?" value={formData.subject} onChange={handleChange} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="message">Message</Label>
-                  <Textarea id="message" placeholder="Tell us more about your enquiry..." rows={5} required value={formData.message} onChange={handleChange} />
+                  <Textarea id="message" name="message" placeholder="Tell us more about your enquiry..." rows={5} required value={formData.message} onChange={handleChange} />
                 </div>
-                <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
-                  {isSubmitting ? (
+
+                <Button type="submit" className="w-full sm:w-auto" disabled={status === "loading"}>
+                  {status === "loading" ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Sending…
@@ -116,6 +124,17 @@ const ContactUs = () => {
                     "Send Message"
                   )}
                 </Button>
+
+                {status === "success" && (
+                  <p className="text-sm text-green-600 font-medium pt-1">
+                    Thank you. Your message has been sent successfully.
+                  </p>
+                )}
+                {status === "error" && (
+                  <p className="text-sm text-destructive font-medium pt-1">
+                    Something went wrong. Please try again.
+                  </p>
+                )}
               </form>
             </div>
 
