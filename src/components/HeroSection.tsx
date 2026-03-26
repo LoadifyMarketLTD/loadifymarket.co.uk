@@ -63,48 +63,72 @@ const HeroSection = () => {
         /* ── Badge + countdown block — upper-center / slightly-right sky ── */
         .lfy-hero-promo {
           position: absolute;
-          top: 12%;
-          left: 52%;
+          top: 7%;
+          left: 55%;
           transform: translateX(-50%);
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 10px;
+          gap: 12px;
           z-index: 3;
         }
         .lfy-hero-badge {
           background: #FEF3C7;
           color: #92400E;
-          font-size: 1rem;
+          font-size: 1.125rem;
           font-weight: 800;
-          padding: 9px 22px;
+          padding: 10px 28px;
           border-radius: 999px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+          box-shadow: 0 2px 12px rgba(0,0,0,0.22);
           white-space: nowrap;
           letter-spacing: 0.01em;
         }
-        .lfy-hero-countdown {
-          background: rgba(255, 255, 255, 0.93);
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
+        .lfy-hero-promo-label {
+          font-size: 0.75rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
           color: #0A2239;
-          font-size: 1.6rem;
+          opacity: 0.7;
+          margin-bottom: -4px;
+        }
+        .lfy-hero-countdown-card {
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-radius: 18px;
+          border: 1.5px solid rgba(255,255,255,0.9);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+          padding: 18px 32px 14px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          min-width: 280px;
+        }
+        .lfy-hero-countdown {
+          color: #0A2239;
+          font-size: 2.25rem;
           font-weight: 800;
           font-variant-numeric: tabular-nums;
-          padding: 12px 28px;
-          border-radius: 14px;
-          border: 1.5px solid rgba(255,255,255,0.85);
-          box-shadow: 0 6px 24px rgba(0,0,0,0.22);
           white-space: nowrap;
-          letter-spacing: 0.07em;
+          letter-spacing: 0.06em;
+          line-height: 1;
+        }
+        .lfy-hero-countdown-sub {
+          font-size: 0.6875rem;
+          font-weight: 600;
+          color: #64748b;
+          letter-spacing: 0.04em;
+          white-space: nowrap;
         }
 
         /* ── Left text block — left sky area ── */
         .lfy-hero-text {
           position: absolute;
-          top: 26%;
+          top: 8%;
           left: 0;
-          width: 42%;
+          width: 44%;
           padding: 0 24px 0 52px;
           z-index: 2;
           display: flex;
@@ -171,13 +195,20 @@ const HeroSection = () => {
         /* Mobile */
         @media (max-width: 768px) {
           .lfy-hero-promo {
-            top: 8%;
+            top: 6%;
             left: 50%;
             transform: translateX(-50%);
           }
+          .lfy-hero-countdown-card {
+            min-width: 220px;
+            padding: 14px 20px 10px;
+          }
           .lfy-hero-countdown {
-            font-size: 1.25rem;
-            padding: 10px 20px;
+            font-size: 1.625rem;
+          }
+          .lfy-hero-badge {
+            font-size: 0.9375rem;
+            padding: 8px 18px;
           }
           .lfy-hero-text {
             top: auto;
@@ -213,10 +244,14 @@ const HeroSection = () => {
         {/* Badge + countdown — top center / slightly right sky area */}
         {!expired && (
           <div className="lfy-hero-promo">
-            <span className="lfy-hero-badge">0% Fees Until July 1</span>
-            <span className="lfy-hero-countdown">
-              {pad(time.days)}d&nbsp;{pad(time.hours)}h&nbsp;{pad(time.minutes)}m&nbsp;{pad(time.seconds)}s
-            </span>
+            <span className="lfy-hero-badge">🎉 0% Fees Until July 1</span>
+            <div className="lfy-hero-countdown-card">
+              <span className="lfy-hero-promo-label">Offer ends in</span>
+              <span className="lfy-hero-countdown">
+                {pad(time.days)}d&nbsp;{pad(time.hours)}h&nbsp;{pad(time.minutes)}m&nbsp;{pad(time.seconds)}s
+              </span>
+              <span className="lfy-hero-countdown-sub">days · hours · minutes · seconds</span>
+            </div>
           </div>
         )}
 
