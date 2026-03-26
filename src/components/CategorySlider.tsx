@@ -9,7 +9,7 @@ const CATEGORIES = [
     icon: Cpu,
     color: "bg-blue-50 text-blue-600",
     border: "border-blue-100",
-    img: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=120&auto=format&fit=crop&q=80",
+    img: "/images/categories/electronics.jpg",
   },
   {
     slug: "fashion",
@@ -17,7 +17,7 @@ const CATEGORIES = [
     icon: Shirt,
     color: "bg-pink-50 text-pink-600",
     border: "border-pink-100",
-    img: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=120&auto=format&fit=crop&q=80",
+    img: "/images/categories/fashion.jpg",
   },
   {
     slug: "home-kitchen",
@@ -25,7 +25,7 @@ const CATEGORIES = [
     icon: Home,
     color: "bg-amber-50 text-amber-600",
     border: "border-amber-100",
-    img: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=120&auto=format&fit=crop&q=80",
+    img: "/images/categories/home-kitchen.jpg",
   },
   {
     slug: "beauty",
@@ -33,7 +33,7 @@ const CATEGORIES = [
     icon: Sparkles,
     color: "bg-rose-50 text-rose-600",
     border: "border-rose-100",
-    img: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=120&auto=format&fit=crop&q=80",
+    img: "/images/categories/beauty.jpg",
   },
   {
     slug: "tools-diy",
@@ -41,7 +41,7 @@ const CATEGORIES = [
     icon: Wrench,
     color: "bg-orange-50 text-orange-600",
     border: "border-orange-100",
-    img: "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=120&auto=format&fit=crop&q=80",
+    img: "/images/categories/tools-diy.jpg",
   },
   {
     slug: "toys-games",
@@ -49,7 +49,7 @@ const CATEGORIES = [
     icon: Gamepad2,
     color: "bg-violet-50 text-violet-600",
     border: "border-violet-100",
-    img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=120&auto=format&fit=crop&q=80",
+    img: "/images/categories/toys-games.jpg",
   },
   {
     slug: "health-wellness",
@@ -57,7 +57,7 @@ const CATEGORIES = [
     icon: Heart,
     color: "bg-teal-50 text-teal-600",
     border: "border-teal-100",
-    img: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=120&auto=format&fit=crop&q=80",
+    img: "/images/categories/health-wellness.jpg",
   },
   {
     slug: "automotive",
@@ -65,7 +65,7 @@ const CATEGORIES = [
     icon: Car,
     color: "bg-slate-50 text-slate-600",
     border: "border-slate-200",
-    img: "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=120&auto=format&fit=crop&q=80",
+    img: "/images/categories/automotive.jpg",
   },
   {
     slug: "office-supplies",
@@ -73,7 +73,7 @@ const CATEGORIES = [
     icon: Briefcase,
     color: "bg-indigo-50 text-indigo-600",
     border: "border-indigo-100",
-    img: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=120&auto=format&fit=crop&q=80",
+    img: "/images/categories/office-supplies.jpg",
   },
 ];
 
@@ -98,7 +98,10 @@ function CategoryTile({ slug, label, icon: Icon, color, border, img }: Category)
           <img
             src={img}
             alt={label}
+            width="64"
+            height="64"
             loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
             onError={() => setImgFailed(true)}
           />

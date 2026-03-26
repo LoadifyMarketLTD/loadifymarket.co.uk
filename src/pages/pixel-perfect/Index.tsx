@@ -32,7 +32,9 @@ export default function PixelPerfectIndex() {
         <DealsSection />
         <TrustStrip />
         <PaymentTrustSection />
-        <CategoryGrid />
+        <LazySection>
+          <CategoryGrid />
+        </LazySection>
         {/* Below-fold sections: deferred with IntersectionObserver to reduce
             the initial DOM node count from ~1,200 down toward the recommended
             maximum of 800 elements. Components mount only when the user

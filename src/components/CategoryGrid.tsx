@@ -54,7 +54,7 @@ const categories = [
     slug: "beauty",
     label: "Beauty",
     count: "640+",
-    img: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=600&auto=format&fit=crop",
+    img: "/images/categories/beauty.jpg",
     icon: Sparkles,
     overlay: "from-[#4a1a2a]/75 via-rose-900/50 to-transparent",
     colSpan: "lg:col-span-2",
@@ -118,6 +118,7 @@ function CatCard({ slug, label, count, img, icon: Icon, overlay, tall }: Cat) {
         src={img}
         alt={label}
         loading="lazy"
+        decoding="async"
         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
       />
       {/* Gradient overlay (bottom-heavy so label is readable) */}

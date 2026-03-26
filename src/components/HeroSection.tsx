@@ -24,8 +24,18 @@ const HeroSection = () => {
   const [roleModalOpen, setRoleModalOpen] = useState(false);
 
   useEffect(() => {
-    const id = setInterval(() => setTime(getTimeLeft()), 1000);
-    return () => clearInterval(id);
+    let id: ReturnType<typeof setInterval> | undefined;
+    // Defer timer start until after the browser's first idle period so it
+    // does not compete with LCP painting or inflate INP on low-end devices.
+    // Falls back to immediate start in environments without requestIdleCallback.
+    const startTimer = () => { id = setInterval(() => setTime(getTimeLeft()), 1000); };
+    if (typeof (window as Window & { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback === 'function') {
+      const w = window as Window & { requestIdleCallback: (cb: () => void) => number; cancelIdleCallback: (h: number) => void };
+      const handle = w.requestIdleCallback(startTimer);
+      return () => { w.cancelIdleCallback(handle); if (id !== undefined) clearInterval(id); };
+    }
+    startTimer();
+    return () => { if (id !== undefined) clearInterval(id); };
   }, []);
 
   const expired =

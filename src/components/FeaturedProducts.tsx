@@ -175,7 +175,10 @@ const FeaturedProducts = () => {
                 <img
                   src={product.img}
                   alt={product.title}
+                  width="400"
+                  height="400"
                   loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
                     const el = e.target as HTMLImageElement;
