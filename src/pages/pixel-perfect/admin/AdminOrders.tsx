@@ -42,6 +42,25 @@ const AdminOrders = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Order | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const updateOrderStatus = async (id: string, newStatus: string) => {
+    setActionLoading(id);
+    setError(null);
+    try {
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update({ status: newStatus })
+        .eq("id", id);
+      if (updateError) throw updateError;
+      setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status: newStatus } : o));
+      setSelected((s) => s && s.id === id ? { ...s, status: newStatus } : s);
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to update order status");
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -220,7 +239,34 @@ const AdminOrders = () => {
                   </Badge></p>
                 </div>
               </div>
+              <div className="space-y-2 pt-2 border-t border-border">
+                <p className="text-xs font-semibold text-muted-foreground">UPDATE STATUS</p>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={selected.status}
+                    onValueChange={(val) => updateOrderStatus(selected.id, val)}
+                    disabled={actionLoading === selected.id}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="packed">Packed</SelectItem>
+                      <SelectItem value="shipped">Shipped</SelectItem>
+                      <SelectItem value="delivered">Delivered</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="refunded">Refunded</SelectItem>
+                      <SelectItem value="disputed">Disputed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {actionLoading === selected.id && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                </div>
+              </div>
             </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSelected(null)}>Close</Button>
+            </DialogFooter>
           </DialogContent>
         )}
       </Dialog>

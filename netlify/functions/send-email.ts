@@ -25,7 +25,7 @@ const supabase =
 interface EmailRequest {
   to: string;
   subject: string;
-  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'transport_quote_request' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry' | 'admin_new_buyer' | 'admin_new_seller' | 'admin_seller_active' | 'seller_welcome' | 'seller_account_active';
+  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'transport_quote_request' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry' | 'admin_new_buyer' | 'admin_new_seller' | 'admin_seller_active' | 'seller_welcome' | 'seller_account_active' | 'buyer_welcome';
   data: Record<string, unknown>;
 }
 
@@ -387,6 +387,16 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         </div>
         <p>You can now list products and start receiving orders. Head to your seller dashboard to get started.</p>
         <a href="${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/seller" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Go to Seller Dashboard</a>
+        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at support@loadifymarket.co.uk</p>
+      `;
+      break;
+
+    case 'buyer_welcome':
+      content = `
+        <h2 style="color: #243b53;">Welcome to Loadify Market</h2>
+        <p>Hi ${escapeHtml(data.buyerName as string || 'there')},</p>
+        <p>Your Loadify Market account has been created successfully. You can now browse products, place orders, and track your deliveries.</p>
+        <a href="${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/catalog" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Start Shopping</a>
         <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at support@loadifymarket.co.uk</p>
       `;
       break;

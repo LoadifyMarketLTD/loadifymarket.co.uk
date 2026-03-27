@@ -38,6 +38,36 @@ const AdminReports = () => {
   const [topSellers, setTopSellers] = useState<TopSeller[]>([]);
   const [orderBreakdown, setOrderBreakdown] = useState<OrderBreakdown[]>([]);
 
+  const handleExport = () => {
+    const rows: string[][] = [
+      ["Platform KPIs"],
+      ["Metric", "Value", "Period"],
+      ...kpis.map((k) => [k.label, k.value, k.period]),
+      [],
+      ["Order Breakdown"],
+      ["Status", "Count"],
+      ...orderBreakdown.map((o) => [o.status, String(o.count)]),
+      [],
+      ["Top Sellers"],
+      ["Name", "Total Sales", "Rating"],
+      ...topSellers.map((s) => [s.name, String(s.totalSales), s.rating.toFixed(1)]),
+    ];
+    const csvContent = rows
+      .map((row) =>
+        row.map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(",")
+      )
+      .join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `loadify-reports-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   useEffect(() => {
     const fetchReports = async () => {
       setLoading(true);
@@ -149,7 +179,7 @@ const AdminReports = () => {
               <SelectItem value="30d">Last 30 days</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="default"><Download className="mr-2 h-4 w-4" /> Export</Button>
+          <Button variant="outline" size="default" onClick={handleExport} disabled={loading}><Download className="mr-2 h-4 w-4" /> Export</Button>
         </div>
       </div>
 
