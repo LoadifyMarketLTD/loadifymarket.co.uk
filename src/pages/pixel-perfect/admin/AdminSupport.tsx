@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import { MessageSquare, Search, Filter, Clock, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { MessageSquare, Search, Filter, Clock, CheckCircle2, AlertCircle, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +16,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store";
 
 interface Ticket {
   id: string;
@@ -44,12 +46,16 @@ const priorityConfig: Record<string, { label: string; className: string }> = {
 };
 
 const AdminSupport = () => {
+  const { user } = useAuthStore();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Ticket | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [replySending, setReplySending] = useState(false);
+  const [replyMsg, setReplyMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
   const fetchTickets = useCallback(async () => {
     setLoading(true);
@@ -112,6 +118,34 @@ const AdminSupport = () => {
       setError((err as Error).message || "Failed to update ticket status");
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleReply = async () => {
+    if (!selected || !replyText.trim()) return;
+    setReplySending(true);
+    setReplyMsg(null);
+    try {
+      const { error: insertError } = await supabase
+        .from("support_ticket_messages")
+        .insert({
+          ticketId: selected.id,
+          senderId: user?.id ?? null,
+          senderName: "Admin",
+          isStaff: true,
+          message: replyText.trim(),
+        });
+      if (insertError) throw insertError;
+      // Move ticket to in_progress if it was open
+      if (selected.status === "open") {
+        await updateStatus(selected.id, "in_progress");
+      }
+      setReplyText("");
+      setReplyMsg({ text: "Reply sent.", ok: true });
+    } catch (err: unknown) {
+      setReplyMsg({ text: (err as Error).message || "Failed to send reply.", ok: false });
+    } finally {
+      setReplySending(false);
     }
   };
 
@@ -241,7 +275,7 @@ const AdminSupport = () => {
         <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
       </Tabs>
 
-      <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
+      <Dialog open={!!selected} onOpenChange={(open) => { if (!open) { setSelected(null); setReplyText(""); setReplyMsg(null); } }}>
         {selected && (
           <DialogContent className="max-w-lg">
             <DialogHeader>
@@ -290,29 +324,55 @@ const AdminSupport = () => {
                   </div>
                 </div>
               )}
+
+              {/* Admin reply */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <p className="text-xs font-semibold text-muted-foreground">REPLY TO CUSTOMER</p>
+                <Textarea
+                  placeholder="Type your reply..."
+                  rows={3}
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  disabled={replySending}
+                  className="resize-none text-sm"
+                />
+                {replyMsg && (
+                  <p className={`text-xs ${replyMsg.ok ? "text-emerald-600" : "text-destructive"}`}>{replyMsg.text}</p>
+                )}
+              </div>
             </div>
-            {["open", "in_progress", "waiting_customer"].includes(selected.status) && (
-              <DialogFooter className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => updateStatus(selected.id, "closed")}
-                  disabled={actionLoading === selected.id}
-                >
-                  Close Ticket
-                </Button>
-                <Button
-                  onClick={() => updateStatus(selected.id, "resolved")}
-                  disabled={actionLoading === selected.id}
-                >
-                  {actionLoading === selected.id ? (
-                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="h-4 w-4 mr-1" />
-                  )}
-                  Mark Resolved
-                </Button>
-              </DialogFooter>
-            )}
+            <DialogFooter className="flex gap-2">
+              {["open", "in_progress", "waiting_customer"].includes(selected.status) && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => updateStatus(selected.id, "closed")}
+                    disabled={actionLoading === selected.id}
+                  >
+                    Close Ticket
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => updateStatus(selected.id, "resolved")}
+                    disabled={actionLoading === selected.id}
+                  >
+                    {actionLoading === selected.id ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4 mr-1" />
+                    )}
+                    Mark Resolved
+                  </Button>
+                </>
+              )}
+              <Button
+                onClick={handleReply}
+                disabled={replySending || !replyText.trim()}
+              >
+                {replySending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />}
+                Send Reply
+              </Button>
+            </DialogFooter>
           </DialogContent>
         )}
       </Dialog>
