@@ -394,7 +394,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
     case 'buyer_welcome':
       content = `
         <h2 style="color: #243b53;">Welcome to Loadify Market</h2>
-        <p>Hi ${escapeHtml(data.buyerName as string || 'there')},</p>
+        <p>Hi ${escapeHtml((data.buyerName as string) || 'there')},</p>
         <p>Your Loadify Market account has been created successfully. You can now browse products, place orders, and track your deliveries.</p>
         <a href="${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/catalog" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Start Shopping</a>
         <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at support@loadifymarket.co.uk</p>

@@ -327,7 +327,7 @@ const AdminSupport = () => {
 
               {/* Admin reply */}
               <div className="space-y-2 pt-2 border-t border-border">
-                <p className="text-xs font-semibold text-muted-foreground">REPLY TO CUSTOMER</p>
+                <p className="text-xs font-semibold text-muted-foreground">SEND REPLY</p>
                 <Textarea
                   placeholder="Type your reply..."
                   rows={3}
