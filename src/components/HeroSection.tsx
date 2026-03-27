@@ -159,7 +159,7 @@ const HeroSection = () => {
           align-items: center;
         }
         .lfy-btn-primary {
-          background: #22C55E;
+          background: #15803d;
           color: #ffffff;
           font-weight: 700;
           font-size: 0.9375rem;
@@ -167,12 +167,12 @@ const HeroSection = () => {
           border-radius: 10px;
           border: none;
           cursor: pointer;
-          box-shadow: 0 4px 16px rgba(34,197,94,0.45);
+          box-shadow: 0 4px 16px rgba(21,128,61,0.45);
           transition: background 0.15s ease, transform 0.1s ease;
           white-space: nowrap;
         }
         .lfy-btn-primary:hover {
-          background: #16a34a;
+          background: #14532d;
           transform: translateY(-1px);
         }
         .lfy-btn-secondary {
@@ -305,7 +305,7 @@ const HeroSection = () => {
             </p>
             <div className="flex flex-col gap-3">
               <Link to="/signup" onClick={() => setRoleModalOpen(false)}>
-                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-[#22C55E] hover:bg-green-50 rounded-xl p-4 cursor-pointer transition-all">
+                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-[#15803d] hover:bg-green-50 rounded-xl p-4 cursor-pointer transition-all">
                   <span className="text-2xl">🛒</span>
                   <div>
                     <p className="font-semibold text-[#0A2239]">I'm a Buyer</p>
@@ -314,7 +314,7 @@ const HeroSection = () => {
                 </div>
               </Link>
               <Link to="/signup?type=seller" onClick={() => setRoleModalOpen(false)}>
-                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-[#22C55E] hover:bg-green-50 rounded-xl p-4 cursor-pointer transition-all">
+                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-[#15803d] hover:bg-green-50 rounded-xl p-4 cursor-pointer transition-all">
                   <span className="text-2xl">🏪</span>
                   <div>
                     <p className="font-semibold text-[#0A2239]">I'm a Seller</p>
