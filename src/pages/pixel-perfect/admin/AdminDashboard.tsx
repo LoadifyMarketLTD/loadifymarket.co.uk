@@ -32,9 +32,15 @@ const DEFAULT_STATUS_COLOR = "bg-muted text-muted-foreground border-border";
 const statusColor: Record<string, string> = {
   active:    "bg-emerald-500/15 text-emerald-700 border-emerald-200",
   submitted: "bg-amber-500/15 text-amber-700 border-amber-200",
-  pending:   "bg-amber-500/15 text-amber-700 border-amber-200",
   draft:     DEFAULT_STATUS_COLOR,
   suspended: "bg-red-500/15 text-red-700 border-red-200",
+};
+
+const statusLabel: Record<string, string> = {
+  active:    "Active",
+  submitted: "Setup in progress",
+  draft:     "Setup required",
+  suspended: "Suspended",
 };
 
 const AdminDashboard = () => {
@@ -62,7 +68,7 @@ const AdminDashboard = () => {
             supabase
               .from("seller_profiles")
               .select("userId", { count: "exact", head: true })
-              .in("sellerStatus", ["draft", "submitted", "pending"]),
+              .in("sellerStatus", ["draft", "submitted"]),
             supabase
               .from("users")
               .select("id, email, firstName, lastName, createdAt, seller_profiles(sellerStatus, storeName, businessName)")
@@ -212,7 +218,7 @@ const AdminDashboard = () => {
                         <TableCell className="text-muted-foreground text-xs">{s.date}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className={statusColor[s.status] ?? DEFAULT_STATUS_COLOR}>
-                            {s.status}
+                            {statusLabel[s.status] ?? s.status}
                           </Badge>
                         </TableCell>
                       </TableRow>
