@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { Star, Search, MessageSquare, ThumbsUp, Pencil } from "lucide-react";
+import { Star, Search, MessageSquare, ThumbsUp, Pencil, Plus, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -11,9 +13,13 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { useToast } from "@/hooks/use-toast";
 
 interface ReviewRow {
   id: string;
@@ -27,6 +33,28 @@ interface ReviewRow {
   products: { title: string } | null;
 }
 
+interface ReviewableOrder {
+  orderId: string;
+  productId: string;
+  productTitle: string;
+}
+
+const StarPicker = ({ value, onChange }: { value: number; onChange: (v: number) => void }) => (
+  <div className="flex gap-1">
+    {[1, 2, 3, 4, 5].map((i) => (
+      <button
+        key={i}
+        type="button"
+        onClick={() => onChange(i)}
+        className="focus:outline-none"
+        aria-label={`Rate ${i} stars`}
+      >
+        <Star className={`h-6 w-6 transition-colors ${i <= value ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30 hover:text-amber-300"}`} />
+      </button>
+    ))}
+  </div>
+);
+
 const StarDisplay = ({ rating }: { rating: number }) => (
   <div className="flex items-center gap-0.5">
     {[1, 2, 3, 4, 5].map((i) => (
@@ -37,10 +65,17 @@ const StarDisplay = ({ rating }: { rating: number }) => (
 
 const BuyerReviews = () => {
   const { user } = useAuthStore();
+  const { toast } = useToast();
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<ReviewRow | null>(null);
+
+  // Write-review dialog state
+  const [writeOpen, setWriteOpen] = useState(false);
+  const [reviewableOrders, setReviewableOrders] = useState<ReviewableOrder[]>([]);
+  const [newReview, setNewReview] = useState({ orderId: "", productId: "", productTitle: "", rating: 5, title: "", comment: "" });
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -63,6 +98,32 @@ const BuyerReviews = () => {
     fetchReviews();
   }, [user]);
 
+  // Load reviewable (delivered, not-yet-reviewed) orders
+  useEffect(() => {
+    if (!user) return;
+    const fetchReviewableOrders = async () => {
+      const { data: orders } = await supabase
+        .from("orders")
+        .select("id, productId, products(title)")
+        .eq("buyerId", user.id)
+        .eq("status", "delivered");
+      if (!orders?.length) return;
+      const { data: existingReviews } = await supabase
+        .from("reviews")
+        .select("orderId")
+        .eq("userId", user.id);
+      const reviewedOrderIds = new Set((existingReviews ?? []).map((r: { orderId: string }) => r.orderId));
+      const reviewable = orders
+        .filter((o) => !reviewedOrderIds.has(o.id))
+        .map((o) => {
+          const prod = Array.isArray(o.products) ? o.products[0] : o.products;
+          return { orderId: o.id, productId: o.productId, productTitle: (prod as { title?: string })?.title ?? "Unknown Product" };
+        });
+      setReviewableOrders(reviewable);
+    };
+    fetchReviewableOrders();
+  }, [user]);
+
   const filtered = reviews.filter(
     (r) =>
       (r.products?.title ?? "").toLowerCase().includes(search.toLowerCase()) ||
@@ -70,6 +131,45 @@ const BuyerReviews = () => {
   );
 
   const byStatus = (status: string) => filtered.filter((r) => r.status === status);
+
+  const handleOrderSelect = (orderId: string) => {
+    const order = reviewableOrders.find((o) => o.orderId === orderId);
+    if (order) setNewReview((prev) => ({ ...prev, orderId: order.orderId, productId: order.productId, productTitle: order.productTitle }));
+  };
+
+  const handleSubmitReview = async () => {
+    if (!user || !newReview.orderId || !newReview.productId || !newReview.rating) return;
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.from("reviews").insert({
+        userId: user.id,
+        orderId: newReview.orderId,
+        productId: newReview.productId,
+        rating: newReview.rating,
+        title: newReview.title.trim() || null,
+        comment: newReview.comment.trim() || null,
+        isVerifiedPurchase: true,
+        status: "published",
+      });
+      if (error) throw error;
+      toast({ title: "Review submitted", description: "Thank you for your feedback!" });
+      setWriteOpen(false);
+      setNewReview({ orderId: "", productId: "", productTitle: "", rating: 5, title: "", comment: "" });
+      // Refresh reviews list
+      const { data } = await supabase
+        .from("reviews")
+        .select("id, productId, rating, title, comment, sellerResponse, status, createdAt, products(title)")
+        .eq("userId", user.id)
+        .order("createdAt", { ascending: false });
+      setReviews((data as unknown as ReviewRow[]) || []);
+      // Remove the reviewed order from reviewable list
+      setReviewableOrders((prev) => prev.filter((o) => o.orderId !== newReview.orderId));
+    } catch (err) {
+      toast({ title: "Failed to submit review", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const avgRating = reviews.length
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
@@ -137,9 +237,16 @@ const BuyerReviews = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">My Reviews</h1>
-        <p className="text-muted-foreground text-sm mt-1">Reviews you've left for products.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">My Reviews</h1>
+          <p className="text-muted-foreground text-sm mt-1">Reviews you've left for products.</p>
+        </div>
+        {reviewableOrders.length > 0 && (
+          <Button size="sm" onClick={() => setWriteOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Write a Review
+          </Button>
+        )}
       </div>
 
       {/* Stats */}
@@ -265,6 +372,63 @@ const BuyerReviews = () => {
             </DialogFooter>
           </DialogContent>
         )}
+      </Dialog>
+
+      {/* Write a Review Dialog */}
+      <Dialog open={writeOpen} onOpenChange={(open) => { if (!open) { setWriteOpen(false); setNewReview({ orderId: "", productId: "", productTitle: "", rating: 5, title: "", comment: "" }); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Write a Review</DialogTitle>
+            <DialogDescription>Share your experience with a product you purchased.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-xs">Select Product</Label>
+              <Select value={newReview.orderId} onValueChange={handleOrderSelect}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Choose an order to review…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {reviewableOrders.map((o) => (
+                    <SelectItem key={o.orderId} value={o.orderId}>{o.productTitle}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs mb-2 block">Rating</Label>
+              <StarPicker value={newReview.rating} onChange={(v) => setNewReview((prev) => ({ ...prev, rating: v }))} />
+            </div>
+            <div>
+              <Label className="text-xs">Review Title (optional)</Label>
+              <Input
+                placeholder="Summarise your experience…"
+                className="mt-1"
+                value={newReview.title}
+                onChange={(e) => setNewReview((prev) => ({ ...prev, title: e.target.value }))}
+                maxLength={120}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Your Review (optional)</Label>
+              <Textarea
+                placeholder="Tell other buyers what you thought of this product…"
+                className="mt-1 resize-none"
+                rows={4}
+                value={newReview.comment}
+                onChange={(e) => setNewReview((prev) => ({ ...prev, comment: e.target.value }))}
+                maxLength={1000}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWriteOpen(false)} disabled={submitting}>Cancel</Button>
+            <Button onClick={handleSubmitReview} disabled={submitting || !newReview.orderId}>
+              {submitting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Star className="h-4 w-4 mr-1" />}
+              Submit Review
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </div>
   );

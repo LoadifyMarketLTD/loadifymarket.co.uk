@@ -583,23 +583,46 @@ async function handleConnectAccountUpdated(account: Stripe.Account) {
     const result = await tryAutoActivateSeller(supabase!, sellerId);
 
     if (result?.firstActivation) {
-      // Send admin notification — fire-and-forget, non-blocking.
+      // Send notifications — fire-and-forget, non-blocking.
       const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
       const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
+      const activatedAt = new Date().toLocaleString('en-GB');
+      const internalHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
+      };
+
+      // Notify admin
       if (adminEmail) {
         fetch(`${appUrl}/.netlify/functions/send-email`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
-          },
+          headers: internalHeaders,
           body: JSON.stringify({
             to: adminEmail,
             subject: 'Loadify: Seller Account Now Active',
             template: 'admin_seller_active',
-            data: { activatedAt: new Date().toLocaleString('en-GB') },
+            data: { activatedAt },
           }),
         }).catch((err: unknown) => console.warn('account.updated: admin notification failed (non-fatal):', err));
+      }
+
+      // Notify the seller themselves — look up their email from the users table
+      const { data: userRow } = await supabase!
+        .from('users')
+        .select('email')
+        .eq('id', sellerId)
+        .single<{ email: string }>();
+      if (userRow?.email) {
+        fetch(`${appUrl}/.netlify/functions/send-email`, {
+          method: 'POST',
+          headers: internalHeaders,
+          body: JSON.stringify({
+            to: userRow.email,
+            subject: 'Your Loadify Market store is now live!',
+            template: 'seller_account_active',
+            data: { activatedAt },
+          }),
+        }).catch((err: unknown) => console.warn('account.updated: seller activation email failed (non-fatal):', err));
       }
     }
   } catch (activationError) {

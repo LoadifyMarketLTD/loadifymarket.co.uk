@@ -9,8 +9,11 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 
 interface Order {
@@ -39,6 +42,25 @@ const AdminOrders = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Order | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const updateOrderStatus = async (id: string, newStatus: string) => {
+    setActionLoading(id);
+    setError(null);
+    try {
+      const { error: updateError } = await supabase
+        .from("orders")
+        .update({ status: newStatus })
+        .eq("id", id);
+      if (updateError) throw updateError;
+      setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status: newStatus } : o));
+      setSelected((s) => s && s.id === id ? { ...s, status: newStatus } : s);
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to update order status");
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -61,12 +83,28 @@ const AdminOrders = () => {
 
       if (queryError) throw queryError;
 
-      const mapped: Order[] = (data || []).map((o) => {
+      const rows = data || [];
+
+      // Step 2: Resolve buyer names from users table
+      const buyerIds = [...new Set(rows.map((o) => o.buyerId).filter(Boolean))];
+      const buyerNames: Record<string, string> = {};
+      if (buyerIds.length > 0) {
+        const { data: buyers } = await supabase
+          .from("users")
+          .select("id, firstName, lastName")
+          .in("id", buyerIds);
+        (buyers ?? []).forEach((b: { id: string; firstName?: string; lastName?: string }) => {
+          const name = [b.firstName, b.lastName].filter(Boolean).join(" ").trim();
+          buyerNames[b.id] = name || "Customer";
+        });
+      }
+
+      const mapped: Order[] = rows.map((o) => {
         const productObj = Array.isArray(o.product) ? o.product[0] : o.product;
         return {
           id: o.id,
           orderNumber: o.orderNumber || o.id.slice(0, 8).toUpperCase(),
-          buyer: o.buyerId ? o.buyerId.slice(0, 8).toUpperCase() : "—",
+          buyer: buyerNames[o.buyerId] ?? (o.buyerId ? o.buyerId.slice(0, 8).toUpperCase() : "—"),
           product: productObj?.title || "—",
           total: o.total ?? 0,
           status: o.status ?? "paid",
@@ -217,7 +255,34 @@ const AdminOrders = () => {
                   </Badge></p>
                 </div>
               </div>
+              <div className="space-y-2 pt-2 border-t border-border">
+                <p className="text-xs font-semibold text-muted-foreground">UPDATE STATUS</p>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={selected.status}
+                    onValueChange={(val) => updateOrderStatus(selected.id, val)}
+                    disabled={actionLoading === selected.id}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="packed">Packed</SelectItem>
+                      <SelectItem value="shipped">Shipped</SelectItem>
+                      <SelectItem value="delivered">Delivered</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="refunded">Refunded</SelectItem>
+                      <SelectItem value="disputed">Disputed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {actionLoading === selected.id && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                </div>
+              </div>
             </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSelected(null)}>Close</Button>
+            </DialogFooter>
           </DialogContent>
         )}
       </Dialog>

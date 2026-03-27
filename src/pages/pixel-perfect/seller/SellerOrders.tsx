@@ -46,11 +46,26 @@ const SellerOrders = () => {
       const rows = (data ?? []) as Array<{
         id: string; orderNumber: string; total: number; status: string; createdAt: string; buyerId: string;
       }>;
+
+      // Resolve buyer names via secondary query
+      const buyerIds = [...new Set(rows.map((o) => o.buyerId).filter(Boolean))];
+      const buyerNames: Record<string, string> = {};
+      if (buyerIds.length > 0) {
+        const { data: buyers } = await supabase
+          .from("users")
+          .select("id, firstName, lastName")
+          .in("id", buyerIds);
+        (buyers ?? []).forEach((b: { id: string; firstName?: string; lastName?: string }) => {
+          const name = [b.firstName, b.lastName].filter(Boolean).join(" ").trim();
+          buyerNames[b.id] = name || "Customer";
+        });
+      }
+
       setOrders(
         rows.map((o) => ({
           id: o.id,
           orderNumber: o.orderNumber,
-          buyerName: "Customer",
+          buyerName: buyerNames[o.buyerId] ?? "Customer",
           total: o.total,
           status: o.status,
           createdAt: o.createdAt,

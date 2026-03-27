@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Package, Plus, Search, Filter, Pencil } from "lucide-react";
+import { Package, Plus, Search, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
@@ -37,6 +37,7 @@ const SellerProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
     if (!user) return;
@@ -52,9 +53,9 @@ const SellerProducts = () => {
     load();
   }, [user]);
 
-  const filtered = products.filter((p) =>
-    p.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = products
+    .filter((p) => p.title.toLowerCase().includes(search.toLowerCase()))
+    .filter((p) => statusFilter === "all" || deriveStatus(p) === statusFilter);
 
   return (
     <div className="p-6 space-y-6 max-w-[1200px]">
@@ -73,8 +74,8 @@ const SellerProducts = () => {
       </div>
 
       {/* Search & Filters */}
-      <div className="flex gap-3">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search products..."
@@ -83,9 +84,21 @@ const SellerProducts = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Button variant="outline" size="default">
-          <Filter className="mr-2 h-4 w-4" /> Filters
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          {(["all", "active", "draft", "low_stock", "out_of_stock"] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                statusFilter === s
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-border hover:border-primary/40"
+              }`}
+            >
+              {s === "all" ? "All" : statusConfig[s]?.label ?? s}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Table */}

@@ -129,25 +129,45 @@ export const handler: Handler = async (event) => {
         sellerStatus = result.sellerStatus;
         profileComplete = result.profileComplete;
 
-        // Send admin notification if seller just became active
+        // Send notifications if seller just became active for the first time
         if (result.firstActivation) {
           const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
           const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
+          const activatedAt = new Date().toLocaleString('en-GB');
+          const internalHeaders: Record<string, string> = {
+            'Content-Type': 'application/json',
+            ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
+          };
+
+          // Notify admin
           if (adminEmail) {
             fetch(`${appUrl}/.netlify/functions/send-email`, {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
-              },
+              headers: internalHeaders,
               body: JSON.stringify({
                 to: adminEmail,
                 subject: 'Loadify: Seller Account Now Active',
                 template: 'admin_seller_active',
-                data: { activatedAt: new Date().toLocaleString('en-GB') },
+                data: { activatedAt },
               }),
             }).catch((err: unknown) =>
               console.warn('connect-status: admin notification failed (non-fatal):', err),
+            );
+          }
+
+          // Notify the seller themselves
+          if (user.email) {
+            fetch(`${appUrl}/.netlify/functions/send-email`, {
+              method: 'POST',
+              headers: internalHeaders,
+              body: JSON.stringify({
+                to: user.email,
+                subject: 'Your Loadify Market store is now live!',
+                template: 'seller_account_active',
+                data: { activatedAt },
+              }),
+            }).catch((err: unknown) =>
+              console.warn('connect-status: seller activation email failed (non-fatal):', err),
             );
           }
         }

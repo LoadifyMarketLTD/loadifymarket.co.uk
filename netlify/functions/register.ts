@@ -214,6 +214,43 @@ export const handler: Handler = async (event) => {
       }),
     }).catch((err: unknown) => console.warn('register: admin notification failed (non-fatal):', err));
   }
+
+  // ── Seller welcome email ───────────────────────────────────────────────────
+  // Send a confirmation to the seller so they know their account was created
+  // and understand the next steps (complete profile + connect Stripe).
+  if (role === 'seller') {
+    fetch(`${appUrl}/.netlify/functions/send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
+      },
+      body: JSON.stringify({
+        to: email,
+        subject: 'Welcome to Loadify Market — complete your seller setup',
+        template: 'seller_welcome',
+        data: { sellerName: `${firstName} ${lastName}` },
+      }),
+    }).catch((err: unknown) => console.warn('register: seller welcome email failed (non-fatal):', err));
+  }
+
+  // ── Buyer welcome email ────────────────────────────────────────────────────
+  // Send a welcome confirmation to the buyer so they know their account is ready.
+  if (role === 'buyer') {
+    fetch(`${appUrl}/.netlify/functions/send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
+      },
+      body: JSON.stringify({
+        to: email,
+        subject: 'Welcome to Loadify Market',
+        template: 'buyer_welcome',
+        data: { buyerName: `${firstName} ${lastName}` },
+      }),
+    }).catch((err: unknown) => console.warn('register: buyer welcome email failed (non-fatal):', err));
+  }
   // ─────────────────────────────────────────────────────────────────────────
 
   return {

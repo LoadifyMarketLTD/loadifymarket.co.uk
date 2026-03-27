@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Bell, Shield, Globe, Eye, EyeOff, Save, Key, Trash2, Loader2
 } from "lucide-react";
@@ -15,6 +15,18 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 
+interface BuyerPrefs {
+  orderUpdates?: boolean;
+  deliveryAlerts?: boolean;
+  priceDrops?: boolean;
+  newListings?: boolean;
+  sellerReplies?: boolean;
+  newsletter?: boolean;
+  currency?: string;
+  language?: string;
+  orderDisplay?: string;
+}
+
 const BuyerSettings = () => {
   const { user } = useAuthStore();
   const { toast } = useToast();
@@ -23,6 +35,7 @@ const BuyerSettings = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
   const [notifications, setNotifications] = useState({
     orderUpdates: true,
     deliveryAlerts: true,
@@ -31,9 +44,78 @@ const BuyerSettings = () => {
     sellerReplies: true,
     newsletter: false,
   });
+  const [prefs, setPrefs] = useState({
+    currency: "gbp",
+    language: "en",
+    orderDisplay: "newest",
+  });
+
+  // Load saved notification prefs + preferences on mount
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const [profileRes, notifRes] = await Promise.all([
+        supabase.from("buyer_profiles").select("preferences").eq("userId", user.id).maybeSingle(),
+        supabase.from("notification_settings").select("orderConfirmation, shippingUpdates, promotionalEmails").eq("userId", user.id).maybeSingle(),
+      ]);
+      const stored = profileRes.data?.preferences as BuyerPrefs | null;
+      if (stored) {
+        setNotifications((prev) => ({
+          orderUpdates: stored.orderUpdates ?? prev.orderUpdates,
+          deliveryAlerts: stored.deliveryAlerts ?? prev.deliveryAlerts,
+          priceDrops: stored.priceDrops ?? prev.priceDrops,
+          newListings: stored.newListings ?? prev.newListings,
+          sellerReplies: stored.sellerReplies ?? prev.sellerReplies,
+          newsletter: stored.newsletter ?? prev.newsletter,
+        }));
+        setPrefs((prev) => ({
+          currency: stored.currency ?? prev.currency,
+          language: stored.language ?? prev.language,
+          orderDisplay: stored.orderDisplay ?? prev.orderDisplay,
+        }));
+      } else if (notifRes.data) {
+        // Fall back to notification_settings for partial data
+        setNotifications((prev) => ({
+          ...prev,
+          orderUpdates: notifRes.data?.orderConfirmation ?? prev.orderUpdates,
+          deliveryAlerts: notifRes.data?.shippingUpdates ?? prev.deliveryAlerts,
+          newsletter: notifRes.data?.promotionalEmails ?? prev.newsletter,
+        }));
+      }
+    };
+    load();
+  }, [user]);
 
   const toggleNotification = (key: keyof typeof notifications) =>
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const handleSaveSettings = async () => {
+    if (!user) return;
+    setSavingSettings(true);
+    try {
+      // Persist all notification prefs + UI preferences to buyer_profiles.preferences JSONB
+      await supabase.from("buyer_profiles").upsert(
+        { userId: user.id, preferences: { ...notifications, ...prefs } },
+        { onConflict: "userId" }
+      );
+      // Also sync the relevant flags to notification_settings for email engine
+      await supabase.from("notification_settings").upsert(
+        {
+          userId: user.id,
+          orderConfirmation: notifications.orderUpdates,
+          shippingUpdates: notifications.deliveryAlerts,
+          deliveryConfirmation: notifications.deliveryAlerts,
+          promotionalEmails: notifications.newsletter,
+        },
+        { onConflict: "userId" }
+      );
+      toast({ title: "Settings saved", description: "Your preferences have been updated." });
+    } catch (err) {
+      toast({ title: "Failed to save settings", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   const handleChangePassword = async () => {
     if (!user?.email) return;
@@ -75,7 +157,10 @@ const BuyerSettings = () => {
           <h1 className="text-2xl font-bold text-foreground">Account Settings</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your preferences, notifications, and security.</p>
         </div>
-        <Button size="sm"><Save className="mr-2 h-4 w-4" /> Save Settings</Button>
+        <Button size="sm" onClick={handleSaveSettings} disabled={savingSettings}>
+          {savingSettings ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          Save Settings
+        </Button>
       </div>
 
       {/* Notifications */}
@@ -176,7 +261,7 @@ const BuyerSettings = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-xs">Currency</Label>
-              <Select defaultValue="gbp">
+              <Select value={prefs.currency} onValueChange={(v) => setPrefs((p) => ({ ...p, currency: v }))}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="gbp">GBP (£)</SelectItem>
@@ -187,7 +272,7 @@ const BuyerSettings = () => {
             </div>
             <div>
               <Label className="text-xs">Language</Label>
-              <Select defaultValue="en">
+              <Select value={prefs.language} onValueChange={(v) => setPrefs((p) => ({ ...p, language: v }))}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="en">English</SelectItem>
@@ -209,7 +294,7 @@ const BuyerSettings = () => {
             </div>
             <div>
               <Label className="text-xs">Order Display</Label>
-              <Select defaultValue="newest">
+              <Select value={prefs.orderDisplay} onValueChange={(v) => setPrefs((p) => ({ ...p, orderDisplay: v }))}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="newest">Newest First</SelectItem>

@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Settings, Globe, Database, Save, Key,
-  Eye, EyeOff, Trash2, RefreshCw
+  Eye, EyeOff, Trash2, RefreshCw, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,20 +12,78 @@ import { Separator } from "@/components/ui/separator";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/lib/supabase";
+
+type FeatureKey = "sellerRegistration" | "buyerRegistration" | "rfqSystem" | "reviewSystem" | "maintenanceMode" | "autoApproveProducts";
+type Features = Record<FeatureKey, boolean>;
+
+const DEFAULT_FEATURES: Features = {
+  sellerRegistration: true,
+  buyerRegistration: true,
+  rfqSystem: true,
+  reviewSystem: true,
+  maintenanceMode: false,
+  autoApproveProducts: false,
+};
 
 const AdminSettings = () => {
   const [showKey, setShowKey] = useState(false);
-  const [features, setFeatures] = useState({
-    sellerRegistration: true,
-    buyerRegistration: true,
-    rfqSystem: true,
-    reviewSystem: true,
-    maintenanceMode: false,
-    autoApproveProducts: false,
-  });
+  const [features, setFeatures] = useState<Features>(DEFAULT_FEATURES);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveMsg, setSaveMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
-  const toggleFeature = (key: keyof typeof features) =>
+  // Load persisted settings from platform_settings on mount
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase
+        .from("platform_settings")
+        .select("key, value")
+        .in("key", ["feature_flags", "maintenance_mode"]);
+      if (!data) return;
+      const featureFlagsRow = data.find((r) => r.key === "feature_flags");
+      const maintenanceRow = data.find((r) => r.key === "maintenance_mode");
+      setFeatures((prev) => {
+        let next = { ...prev };
+        if (featureFlagsRow?.value && typeof featureFlagsRow.value === "object") {
+          next = { ...next, ...(featureFlagsRow.value as Partial<Features>) };
+        }
+        if (maintenanceRow?.value !== undefined) {
+          next = { ...next, maintenanceMode: maintenanceRow.value === true || maintenanceRow.value === "true" };
+        }
+        return next;
+      });
+    };
+    load();
+  }, []);
+
+  const toggleFeature = (key: FeatureKey) =>
     setFeatures((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const handleSave = async () => {
+    setSaveLoading(true);
+    setSaveMsg(null);
+    try {
+      const { maintenanceMode, ...flagsWithoutMaintenance } = features;
+      const ops = [
+        supabase.from("platform_settings").upsert(
+          { key: "feature_flags", value: flagsWithoutMaintenance },
+          { onConflict: "key" }
+        ),
+        supabase.from("platform_settings").upsert(
+          { key: "maintenance_mode", value: maintenanceMode },
+          { onConflict: "key" }
+        ),
+      ];
+      const results = await Promise.all(ops);
+      const firstError = results.find((r) => r.error)?.error;
+      if (firstError) throw firstError;
+      setSaveMsg({ text: "Settings saved successfully.", ok: true });
+    } catch (err: unknown) {
+      setSaveMsg({ text: (err as Error).message || "Failed to save settings.", ok: false });
+    } finally {
+      setSaveLoading(false);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6 max-w-[900px]">
@@ -34,7 +92,15 @@ const AdminSettings = () => {
           <h1 className="text-2xl font-bold text-foreground">System Settings</h1>
           <p className="text-sm text-muted-foreground mt-1">Configure platform behaviour and integrations.</p>
         </div>
-        <Button size="sm"><Save className="mr-2 h-4 w-4" /> Save Settings</Button>
+        <div className="flex items-center gap-3">
+          {saveMsg && (
+            <p className={`text-xs ${saveMsg.ok ? "text-emerald-600" : "text-destructive"}`}>{saveMsg.text}</p>
+          )}
+          <Button size="sm" onClick={handleSave} disabled={saveLoading}>
+            {saveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            Save Settings
+          </Button>
+        </div>
       </div>
 
       {/* Feature Toggles */}
