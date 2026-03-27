@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Bell, Shield, CreditCard, Truck,
   Eye, EyeOff, Save, Key, ExternalLink, CheckCircle, AlertCircle, Loader2
@@ -13,17 +13,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
 
-const NOTIF_STORAGE_KEY = "loadify_seller_notifications";
-
-function loadNotifications() {
-  try {
-    const raw = localStorage.getItem(NOTIF_STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as Record<string, boolean>;
-  } catch { /* malformed JSON — fall through and return null to use defaults */ }
-  return null;
-}
+const SHIPPING_STORAGE_KEY = "loadify_seller_shipping_defaults";
 
 const defaultNotifications = {
   orderAlerts: true,
@@ -34,11 +27,24 @@ const defaultNotifications = {
   weeklyReport: true,
 };
 
+const defaultShipping = {
+  carrier: "royal_mail",
+  dispatchTime: "2",
+  originPostcode: "",
+  freeShippingThreshold: "",
+};
+
 const SellerSettings = () => {
+  const { user } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
-  const [notifications, setNotifications] = useState<typeof defaultNotifications>(
-    () => ({ ...defaultNotifications, ...(loadNotifications() ?? {}) })
-  );
+  const [notifications, setNotifications] = useState<typeof defaultNotifications>(defaultNotifications);
+  const [shipping, setShipping] = useState(() => {
+    try {
+      const raw = localStorage.getItem(SHIPPING_STORAGE_KEY);
+      if (raw) return { ...defaultShipping, ...(JSON.parse(raw) as Partial<typeof defaultShipping>) };
+    } catch { /* ignore */ }
+    return defaultShipping;
+  });
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -49,15 +55,51 @@ const SellerSettings = () => {
   const [connectError, setConnectError] = useState("");
   const [dashboardLoading, setDashboardLoading] = useState(false);
 
-  const toggleNotification = (key: keyof typeof notifications) =>
+      // Load notification prefs from DB on mount
+  // Mapping: orderAlerts→orderConfirmation, returnAlerts→shippingUpdates, marketingEmails→promotionalEmails
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const { data } = await supabase
+        .from("notification_settings")
+        .select("orderConfirmation, shippingUpdates, promotionalEmails")
+        .eq("userId", user.id)
+        .maybeSingle();
+      if (data) {
+        setNotifications((prev) => ({
+          ...prev,
+          orderAlerts: data.orderConfirmation ?? prev.orderAlerts,
+          returnAlerts: data.shippingUpdates ?? prev.returnAlerts,
+          marketingEmails: data.promotionalEmails ?? prev.marketingEmails,
+        }));
+      }
+    };
+    load();
+  }, [user]);
+
+  const toggleNotification = (key: keyof typeof defaultNotifications) =>
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const handleSaveSettings = async () => {
+    if (!user) return;
     setSaveLoading(true);
     let passwordChanged = false;
     try {
-      // Persist notification preferences to localStorage
-      localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(notifications));
+      // Persist notification preferences to DB (notification_settings)
+      // deliveryConfirmation mirrors orderAlerts — both are "order lifecycle" events
+      await supabase.from("notification_settings").upsert(
+        {
+          userId: user.id,
+          orderConfirmation: notifications.orderAlerts,
+          shippingUpdates: notifications.returnAlerts,
+          deliveryConfirmation: notifications.orderAlerts,  // mirrors orderAlerts
+          promotionalEmails: notifications.marketingEmails,
+        },
+        { onConflict: "userId" }
+      );
+
+      // Persist shipping defaults to localStorage (no DB column for these UI prefs)
+      localStorage.setItem(SHIPPING_STORAGE_KEY, JSON.stringify(shipping));
 
       // Change password if the user has filled in the password fields
       if (newPassword || currentPassword) {
@@ -66,7 +108,6 @@ const SellerSettings = () => {
         if (newPassword !== confirmPassword) throw new Error("New passwords do not match.");
         if (newPassword.length < 8) throw new Error("Password must be at least 8 characters.");
 
-        // Re-authenticate with the current password to verify it before updating
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user?.email) throw new Error("Unable to verify your identity. Please log in again.");
         const { error: reAuthError } = await supabase.auth.signInWithPassword({
@@ -87,7 +128,7 @@ const SellerSettings = () => {
         title: "Settings saved",
         description: passwordChanged
           ? "Notification preferences and password updated."
-          : "Notification preferences saved.",
+          : "Notification preferences and shipping defaults saved.",
       });
     } catch (err) {
       toast({
@@ -227,7 +268,7 @@ const SellerSettings = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-xs">Default Carrier</Label>
-              <Select defaultValue="royal_mail">
+              <Select value={shipping.carrier} onValueChange={(v) => setShipping((s) => ({ ...s, carrier: v }))}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="royal_mail">Royal Mail</SelectItem>
@@ -240,7 +281,7 @@ const SellerSettings = () => {
             </div>
             <div>
               <Label className="text-xs">Default Dispatch Time</Label>
-              <Select defaultValue="2">
+              <Select value={shipping.dispatchTime} onValueChange={(v) => setShipping((s) => ({ ...s, dispatchTime: v }))}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="1">1 business day</SelectItem>
@@ -252,11 +293,21 @@ const SellerSettings = () => {
             </div>
             <div>
               <Label className="text-xs">Shipping Origin Postcode</Label>
-              <Input placeholder="e.g. M1 2AB" className="mt-1" />
+              <Input
+                placeholder="e.g. M1 2AB"
+                className="mt-1"
+                value={shipping.originPostcode}
+                onChange={(e) => setShipping((s) => ({ ...s, originPostcode: e.target.value }))}
+              />
             </div>
             <div>
               <Label className="text-xs">Free Shipping Threshold</Label>
-              <Input placeholder="e.g. £500" className="mt-1" />
+              <Input
+                placeholder="e.g. 500"
+                className="mt-1"
+                value={shipping.freeShippingThreshold}
+                onChange={(e) => setShipping((s) => ({ ...s, freeShippingThreshold: e.target.value }))}
+              />
             </div>
           </div>
         </CardContent>

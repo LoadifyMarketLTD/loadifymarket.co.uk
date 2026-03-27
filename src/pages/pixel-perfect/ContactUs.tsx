@@ -12,12 +12,6 @@ import { formatPhoneNumber } from "@/lib/utils";
 
 const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || BRAND.supportEmail;
 
-function encode(data: Record<string, string>) {
-  return Object.keys(data)
-    .map((key) => encodeURIComponent(key) + "=" + encodeURIComponent(data[key]))
-    .join("&");
-}
-
 const ContactUs = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -37,10 +31,22 @@ const ContactUs = () => {
     setStatus("loading");
 
     try {
-      const res = await fetch("/", {
+      // Relative path is correct for browser→Netlify Function calls.
+      // Backend functions use an absolute URL (process.env.URL) because they run server-side.
+      const res = await fetch("/.netlify/functions/send-email", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: encode({ "form-name": "contact", ...formData }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: SUPPORT_EMAIL,
+          subject: `Contact Form: ${formData.subject || "New Enquiry"}`,
+          template: "contact_enquiry",
+          data: {
+            name: formData.name,
+            email: formData.email,
+            subject: formData.subject,
+            message: formData.message,
+          },
+        }),
       });
 
       if (!res.ok) throw new Error("Submit failed");

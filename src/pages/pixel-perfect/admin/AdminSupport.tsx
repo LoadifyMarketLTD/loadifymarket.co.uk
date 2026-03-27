@@ -77,11 +77,27 @@ const AdminSupport = () => {
 
       if (queryError) throw queryError;
 
-      const mapped: Ticket[] = (data || []).map((t) => ({
+      const rows = data || [];
+
+      // Step 2: Resolve user names and emails from users table
+      const userIds = [...new Set(rows.map((t) => t.userId).filter(Boolean))];
+      const userInfo: Record<string, { name: string; email: string }> = {};
+      if (userIds.length > 0) {
+        const { data: users } = await supabase
+          .from("users")
+          .select("id, firstName, lastName, email")
+          .in("id", userIds);
+        (users ?? []).forEach((u: { id: string; firstName?: string; lastName?: string; email?: string }) => {
+          const name = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
+          userInfo[u.id] = { name: name || "User", email: u.email ?? "—" };
+        });
+      }
+
+      const mapped: Ticket[] = rows.map((t) => ({
         id: t.id,
         subject: t.subject || "—",
-        userName: t.userId ? t.userId.slice(0, 8).toUpperCase() : "—",
-        userEmail: "—",
+        userName: userInfo[t.userId]?.name ?? (t.userId ? t.userId.slice(0, 8).toUpperCase() : "—"),
+        userEmail: userInfo[t.userId]?.email ?? "—",
         category: t.category || "—",
         priority: t.priority ?? "medium",
         status: t.status ?? "open",

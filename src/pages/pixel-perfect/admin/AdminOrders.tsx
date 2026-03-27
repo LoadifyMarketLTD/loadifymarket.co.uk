@@ -83,12 +83,28 @@ const AdminOrders = () => {
 
       if (queryError) throw queryError;
 
-      const mapped: Order[] = (data || []).map((o) => {
+      const rows = data || [];
+
+      // Step 2: Resolve buyer names from users table
+      const buyerIds = [...new Set(rows.map((o) => o.buyerId).filter(Boolean))];
+      const buyerNames: Record<string, string> = {};
+      if (buyerIds.length > 0) {
+        const { data: buyers } = await supabase
+          .from("users")
+          .select("id, firstName, lastName")
+          .in("id", buyerIds);
+        (buyers ?? []).forEach((b: { id: string; firstName?: string; lastName?: string }) => {
+          const name = [b.firstName, b.lastName].filter(Boolean).join(" ").trim();
+          buyerNames[b.id] = name || "Customer";
+        });
+      }
+
+      const mapped: Order[] = rows.map((o) => {
         const productObj = Array.isArray(o.product) ? o.product[0] : o.product;
         return {
           id: o.id,
           orderNumber: o.orderNumber || o.id.slice(0, 8).toUpperCase(),
-          buyer: o.buyerId ? o.buyerId.slice(0, 8).toUpperCase() : "—",
+          buyer: buyerNames[o.buyerId] ?? (o.buyerId ? o.buyerId.slice(0, 8).toUpperCase() : "—"),
           product: productObj?.title || "—",
           total: o.total ?? 0,
           status: o.status ?? "paid",

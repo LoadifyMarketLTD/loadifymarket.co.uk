@@ -1,12 +1,15 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight, Package, MapPin, Clock, Eye, Tag,
-  Truck, ShieldCheck, ShoppingCart
+  Truck, ShieldCheck, ShoppingCart, Heart
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import type { Product } from "@/components/catalog/ProductCard";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store";
 import PaymentMethodBadges from "@/components/PaymentMethodBadges";
 
 interface ProductInfoProps {
@@ -41,6 +44,70 @@ const ProductInfo = ({
 }: ProductInfoProps) => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  // Check if this product is already in the user's wishlist
+  useEffect(() => {
+    if (!user || !product.id) return;
+    supabase
+      .from("wishlists")
+      .select("productIds")
+      .eq("userId", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        const ids: string[] = data?.productIds ?? [];
+        setIsWishlisted(ids.includes(product.id));
+      });
+  }, [user, product.id]);
+
+  const handleToggleWishlist = async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    setWishlistLoading(true);
+    try {
+      const { data: wl } = await supabase
+        .from("wishlists")
+        .select("productIds")
+        .eq("userId", user.id)
+        .maybeSingle();
+      const existing: string[] = wl?.productIds ?? [];
+      const alreadyIn = existing.includes(product.id);
+      const newIds = alreadyIn
+        ? existing.filter((id) => id !== product.id)
+        : [...existing, product.id];
+
+      if (wl) {
+        await supabase
+          .from("wishlists")
+          .update({ productIds: newIds })
+          .eq("userId", user.id);
+      } else {
+        await supabase
+          .from("wishlists")
+          .insert({ userId: user.id, productIds: newIds });
+      }
+
+      setIsWishlisted(!alreadyIn);
+      toast({
+        title: alreadyIn ? "Removed from wishlist" : "Added to wishlist",
+        description: alreadyIn
+          ? `${title} removed from your wishlist.`
+          : `${title} saved to your wishlist.`,
+      });
+    } catch (err) {
+      toast({
+        title: "Wishlist error",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   const handleBuyNow = () => {
     addToCart(product);
@@ -135,6 +202,16 @@ const ProductInfo = ({
         >
           <ShoppingCart className="mr-2 h-5 w-5" />
           Add to Cart
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          className={`shrink-0 ${isWishlisted ? "text-rose-500 border-rose-300 hover:bg-rose-50" : ""}`}
+          onClick={handleToggleWishlist}
+          disabled={wishlistLoading}
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          <Heart className={`h-5 w-5 ${isWishlisted ? "fill-rose-500" : ""}`} />
         </Button>
       </div>
 
