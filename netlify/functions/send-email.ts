@@ -25,7 +25,7 @@ const supabase =
 interface EmailRequest {
   to: string;
   subject: string;
-  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'transport_quote_request' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry' | 'admin_new_buyer' | 'admin_new_seller' | 'admin_seller_active';
+  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'transport_quote_request' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry' | 'admin_new_buyer' | 'admin_new_seller' | 'admin_seller_active' | 'seller_welcome' | 'seller_account_active';
   data: Record<string, unknown>;
 }
 
@@ -359,6 +359,35 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         </div>
         <p>The seller's account was activated automatically after their profile and Stripe setup were complete.</p>
         <a href="${process.env.URL}/admin/approvals" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Sellers</a>
+      `;
+      break;
+
+    case 'seller_welcome':
+      content = `
+        <h2 style="color: #243b53;">Welcome to Loadify Market</h2>
+        <p>Hi ${escapeHtml(data.sellerName || 'there')},</p>
+        <p>Your seller account has been created successfully. To start selling on Loadify Market you need to complete two quick steps:</p>
+        <ol style="line-height: 1.8;">
+          <li><strong>Complete your profile</strong> — add your business name, contact phone number, and business address.</li>
+          <li><strong>Connect your Stripe account</strong> — this is required to receive payouts for your sales.</li>
+        </ol>
+        <p>Once both steps are done your store will go live automatically — no manual approval needed.</p>
+        <a href="${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/seller/setup" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Complete Your Setup</a>
+        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at support@loadifymarket.co.uk</p>
+      `;
+      break;
+
+    case 'seller_account_active':
+      content = `
+        <h2 style="color: #243b53;">Your Store Is Now Live!</h2>
+        <p>Hi ${escapeHtml(data.sellerName || 'there')},</p>
+        <p>Great news — your Loadify Market seller account is now active. Your profile is complete and your Stripe account is connected and ready to accept payments.</p>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Activated:</strong> ${escapeHtml(data.activatedAt || new Date().toLocaleString('en-GB'))}</p>
+        </div>
+        <p>You can now list products and start receiving orders. Head to your seller dashboard to get started.</p>
+        <a href="${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/seller" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Go to Seller Dashboard</a>
+        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at support@loadifymarket.co.uk</p>
       `;
       break;
 
