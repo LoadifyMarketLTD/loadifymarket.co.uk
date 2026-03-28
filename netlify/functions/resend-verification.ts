@@ -89,10 +89,10 @@ export const handler: Handler = async (event) => {
     return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden – admin role required' }) };
   }
 
-  // Look up the target user's email
+  // Look up the target user's email and name
   const { data: targetUser, error: targetErr } = await adminClient
     .from('users')
-    .select('email')
+    .select('email, fullName')
     .eq('id', userId)
     .single();
 
@@ -100,14 +100,15 @@ export const handler: Handler = async (event) => {
     return { statusCode: 404, body: JSON.stringify({ error: 'Target user not found' }) };
   }
 
-  // Send a magic-link / OTP email via the Admin API.
-  // generateLink returns a sign-in link that the user can click to verify
-  // their email address and log in.
+  // Generate a magic-link via the Admin API.
+  // generateLink returns the action_link URL but does NOT send any email on
+  // its own — we must deliver it ourselves via send-email (SendGrid).
+  const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
   const { data: linkData, error: linkErr } = await adminClient.auth.admin.generateLink({
     type: 'magiclink',
     email: targetUser.email,
     options: {
-      redirectTo: `${process.env.VITE_APP_URL || 'https://loadifymarket.co.uk'}/dashboard`,
+      redirectTo: `${appUrl}/dashboard`,
     },
   });
 
@@ -116,6 +117,46 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 500,
       body: JSON.stringify({ error: linkErr?.message || 'Failed to generate verification link' }),
+    };
+  }
+
+  const actionLink = (linkData as { properties?: { action_link?: string } }).properties?.action_link;
+  if (!actionLink) {
+    console.error('resend-verification: action_link missing from generateLink response', linkData);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to generate verification link' }),
+    };
+  }
+
+  // Deliver the magic link via SendGrid through the send-email function.
+  const internalHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(process.env.NETLIFY_INTERNAL_SECRET
+      ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET }
+      : {}),
+  };
+
+  const emailRes = await fetch(`${appUrl}/.netlify/functions/send-email`, {
+    method: 'POST',
+    headers: internalHeaders,
+    body: JSON.stringify({
+      to: targetUser.email,
+      subject: 'Your Loadify Market sign-in link',
+      template: 'resend_verification',
+      data: {
+        userName: targetUser.fullName || targetUser.email,
+        actionLink,
+      },
+    }),
+  });
+
+  if (!emailRes.ok) {
+    const errText = await emailRes.text().catch(() => '');
+    console.error('resend-verification: send-email failed:', emailRes.status, errText);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to send verification email' }),
     };
   }
 
