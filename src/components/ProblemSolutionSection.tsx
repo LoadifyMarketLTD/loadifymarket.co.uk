@@ -2,7 +2,7 @@ import { XCircle, ArrowRight } from "lucide-react";
 
 const sellerProblems = [
   "Struggling to move dead inventory?",
-  "No reliable buyers for bulk stock?",
+  "No reliable buyers for bulk products?",
   "Paying fees with zero results?",
 ];
 

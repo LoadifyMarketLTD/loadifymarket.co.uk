@@ -52,7 +52,7 @@ const dealSubSections = [
   {
     icon: RotateCcw,
     label: "Customer Returns",
-    description: "Sellers offering graded and unchecked customer return stock.",
+    description: "Sellers offering graded and unchecked customer return products.",
     types: ["lot"],
     condition: "returns_stock",
   },
@@ -65,7 +65,7 @@ const dealSubSections = [
   {
     icon: TrendingDown,
     label: "Clearance & Flash Deals",
-    description: "Time-limited clearance listings from sellers looking to move stock fast.",
+    description: "Time-limited clearance listings from sellers looking to move products fast.",
     types: ["clearance"],
   },
 ];
@@ -228,10 +228,10 @@ const Deals = () => {
                 Pallets, Clearance &amp; Bulk Deals
               </h1>
               <p className="text-foreground text-base font-semibold leading-relaxed drop-shadow-sm mb-2">
-                Browse thousands of listings from UK sellers or sell your excess stock fast.
+                Browse thousands of listings from UK sellers or list your own products today.
               </p>
               <p className="text-sm text-foreground font-medium drop-shadow-sm mb-5">
-                This is a marketplace section where sellers list stock and buyers connect directly.
+                This is a marketplace section where sellers list products and buyers connect directly.
               </p>
               <div className="flex flex-wrap gap-3">
                 <a href="#listings">
@@ -292,7 +292,7 @@ const Deals = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
               <div className="flex items-start gap-3">
                 <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">1</span>
-                <p className="text-muted-foreground"><strong className="text-foreground">Sellers list</strong> their pallets, clearance, or bulk stock on the platform.</p>
+                <p className="text-muted-foreground"><strong className="text-foreground">Sellers list</strong> their pallets, clearance, or bulk products on the platform.</p>
               </div>
               <div className="flex items-start gap-3">
                 <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">2</span>
@@ -411,10 +411,10 @@ const Deals = () => {
           {/* Bottom CTA */}
           <div className="mt-12 text-center bg-card rounded-xl border border-border p-8">
             <h3 className="font-display text-xl font-bold text-foreground mb-2">
-              Have pallets, clearance, or bulk stock to sell?
+              Have pallets, clearance, or bulk products to sell?
             </h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-lg mx-auto">
-              List your stock on Loadify Market and reach thousands of buyers across the UK.
+              List your products on Loadify Market and reach thousands of buyers across the UK.
               Free to create an account — you only pay when you sell.
             </p>
             <Link to="/signup">

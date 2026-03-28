@@ -19,7 +19,7 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
           <>
             Loadify Market is a UK-based multi-category marketplace for physical goods.
             Independent sellers list and manage their own inventory — covering retail items,
-            wholesale stock, clearance lines, pallets, job lots and more — while buyers browse,
+            wholesale products, clearance lines, pallets, job lots and more — while buyers browse,
             compare and purchase directly from sellers. We are operated by{" "}
             <strong>XDrive Logistics Ltd</strong> (Co. No: 13171804), registered in England
             and Wales.
@@ -29,7 +29,7 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
       {
         question: "Does the platform hold or store products?",
         answer:
-          "No. Loadify Market does not own, store or dispatch any products. All products are listed, stocked and fulfilled by independent sellers. The platform connects buyers and sellers and processes payments via Stripe.",
+          "No. Loadify Market does not own, store or dispatch any products. All products are listed, managed and fulfilled by independent sellers. The platform connects buyers and sellers and processes payments via Stripe.",
       },
       {
         question: "Who can use Loadify Market?",
@@ -122,7 +122,7 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
               Seller Dashboard
             </Link>{" "}
             go to <strong>Products → New Listing</strong>. Fill in the title, description,
-            category, price and stock quantity, then publish when ready.
+            category, price and product quantity, then publish when ready.
           </>
         ),
       },

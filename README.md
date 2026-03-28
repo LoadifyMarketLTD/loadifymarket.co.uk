@@ -2,7 +2,7 @@
 
 **UK multi-category physical goods marketplace**, operated by XDrive Logistics Ltd (Co. No: 13171804, VAT: GB375949535).
 
-Independent UK sellers list and sell physical products across all consumer goods categories. The platform does not own inventory, hold stock, or operate a depot — sellers manage their own stock and fulfil orders directly. Buyers browse, purchase via Stripe, and receive orders from sellers with full shipment tracking.
+Independent UK sellers list and sell physical products across all consumer goods categories. The platform does not own inventory, hold or store products, or operate a depot — sellers manage their own inventory and fulfil orders directly. Buyers browse, purchase via Stripe, and receive orders from sellers with full shipment tracking.
 
 ---
 
@@ -53,7 +53,7 @@ Independent UK sellers list and sell physical products across all consumer goods
 
 ## 💰 Business Model
 
-The platform charges a **7% commission** on each completed transaction, deducted before the seller's payout is processed via Stripe Connect. The platform acts solely as an intermediary — it does not own products, hold inventory, or operate a fulfilment depot. Sellers are responsible for stock management and order fulfilment.
+The platform charges a **7% commission** on each completed transaction, deducted before the seller's payout is processed via Stripe Connect. The platform acts solely as an intermediary — it does not own products, hold inventory, or operate a fulfilment depot. Sellers are responsible for their own inventory management and order fulfilment.
 
 > **Launch promotion:** 0% commission on all transactions until 1 July 2026. The standard 7% rate resumes automatically after that date.
 

@@ -19,7 +19,7 @@ const benefits = [
     icon: Package,
     title: "Any Product, Any Volume",
     description:
-      "Whether you're selling a single item or a full container of stock, Loadify gives every listing the same visibility to buyers.",
+      "Whether you're selling a single item or a full container of products, Loadify gives every listing the same visibility to buyers.",
   },
   {
     icon: PoundSterling,

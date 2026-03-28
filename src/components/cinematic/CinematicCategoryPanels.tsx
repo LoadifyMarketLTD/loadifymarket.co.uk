@@ -5,15 +5,15 @@ export default function CinematicCategoryPanels() {
   const categories = [
     {
       title: 'Clearance & Deals',
-      description: 'End-of-line stock, returns and discounted items from UK sellers',
+      description: 'End-of-line products, returns and discounted items from UK sellers',
       icon: Tag,
       link: '/catalog?type=clearance',
       bgGradient: 'from-slate-800 to-slate-900',
       iconColor: 'text-gold-400',
     },
     {
-      title: 'Pallets & Wholesale Stock',
-      description: 'Clear stock in bulk, registered wholesale buyers',
+      title: 'Pallets & Wholesale',
+      description: 'Buy wholesale products in bulk from registered UK sellers',
       icon: Package,
       link: '/catalog?listingType=wholesale',
       bgGradient: 'from-gray-800 to-gray-900',
