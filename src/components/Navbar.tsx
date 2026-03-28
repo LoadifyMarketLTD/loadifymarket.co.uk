@@ -25,7 +25,7 @@ const Navbar = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     logout();
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   const handleMobileLogout = () => {

@@ -39,7 +39,7 @@ export function BuyerSidebar() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     logout();
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   const initials = user

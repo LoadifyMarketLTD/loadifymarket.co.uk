@@ -99,7 +99,11 @@ const SellerSettings = () => {
       );
 
       // Persist shipping defaults to localStorage (no DB column for these UI prefs)
-      localStorage.setItem(SHIPPING_STORAGE_KEY, JSON.stringify(shipping));
+      try {
+        localStorage.setItem(SHIPPING_STORAGE_KEY, JSON.stringify(shipping));
+      } catch {
+        // Silently ignore storage errors (private/incognito mode, quota exceeded).
+      }
 
       // Change password if the user has filled in the password fields
       if (newPassword || currentPassword) {

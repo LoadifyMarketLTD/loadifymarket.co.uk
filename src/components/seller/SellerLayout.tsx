@@ -1,9 +1,10 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SellerSidebar } from "@/components/seller/SellerSidebar";
 import { Outlet } from "react-router-dom";
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import NotificationBell from "@/components/NotificationBell";
 
 const SellerLayout = () => {
   return (
@@ -23,10 +24,7 @@ const SellerLayout = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-4 w-4 text-muted-foreground" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
-              </Button>
+              <NotificationBell href="/seller/notifications" />
               <Button variant="outline" size="sm" className="text-xs hidden sm:inline-flex" asChild>
                 <a href="/" target="_blank" rel="noreferrer">View Storefront</a>
               </Button>

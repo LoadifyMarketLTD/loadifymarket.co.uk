@@ -1,10 +1,11 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { BuyerSidebar } from "@/components/buyer/BuyerSidebar";
 import { Outlet } from "react-router-dom";
-import { Bell, ShoppingCart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
+import NotificationBell from "@/components/NotificationBell";
 
 const BuyerLayout = () => {
   const { cartCount } = useCart();
@@ -28,10 +29,7 @@ const BuyerLayout = () => {
                   )}
                 </Link>
               </Button>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-4 w-4 text-muted-foreground" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
-              </Button>
+              <NotificationBell href="/dashboard/notifications" />
               <Button variant="outline" size="sm" className="text-xs hidden sm:inline-flex" asChild>
                 <Link to="/catalog">Browse Catalog</Link>
               </Button>

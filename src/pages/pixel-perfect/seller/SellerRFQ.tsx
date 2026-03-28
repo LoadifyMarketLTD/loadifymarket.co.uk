@@ -40,7 +40,7 @@ const SellerRFQ = () => {
     const { data } = await supabase
       .from("rfq_requests")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("createdAt", { ascending: false });
     setRfqs((data ?? []) as RFQRequest[]);
     setLoading(false);
   };

@@ -21,7 +21,11 @@ const getStoredConsent = (): CookiePreferences | null => {
 };
 
 const storeConsent = (prefs: CookiePreferences) => {
-  localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(prefs));
+  try {
+    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(prefs));
+  } catch {
+    // Silently ignore storage errors (private/incognito mode, quota exceeded).
+  }
 };
 
 const CookieConsent = () => {
