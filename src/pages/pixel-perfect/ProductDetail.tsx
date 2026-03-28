@@ -241,7 +241,7 @@ const ProductDetail = () => {
                   <p>
                     All items have been sourced from reputable UK retailers and brands. Ideal for
                     resellers, market traders, online sellers, and wholesale buyers looking for
-                    quality stock at below-retail prices.
+                    quality products at below-retail prices.
                   </p>
                   <h3 className="font-display text-sm font-semibold text-foreground pt-2">What's Included</h3>
                   <ul className="list-disc list-inside space-y-1">
@@ -254,7 +254,7 @@ const ProductDetail = () => {
                   <ul className="list-disc list-inside space-y-1">
                     {product.location && <li>Collection available from {product.location}</li>}
                     <li>UK mainland delivery available (quote on request)</li>
-                    <li>Items are securely packaged and ready for transport</li>
+                    <li>Items are securely packaged and ready for dispatch</li>
                   </ul>
                 </div>
               </div>

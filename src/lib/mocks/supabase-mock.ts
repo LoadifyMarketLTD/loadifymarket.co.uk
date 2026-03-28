@@ -302,7 +302,7 @@ const initializeMockData = () => {
   mockStorage.products.set('product-12', {
     id: 'product-12',
     title: 'Clearance Electronics — Accessories & Cables',
-    description: 'Brand new accessories and cables, end of line stock',
+    description: 'Brand new accessories and cables, end of line products',
     price: 89.00,
     type: 'clearance',
     condition: 'new',
@@ -390,7 +390,7 @@ const initializeMockData = () => {
   mockStorage.products.set('product-16', {
     id: 'product-16',
     title: 'Trade Pallet — Mixed Homeware & Kitchen',
-    description: 'Trade pallet of homeware and kitchen products, Grade A stock',
+    description: 'Trade pallet of homeware and kitchen products, Grade A condition',
     price: 1100.00,
     type: 'pallet',
     condition: 'new',
@@ -411,7 +411,7 @@ const initializeMockData = () => {
   mockStorage.products.set('product-17', {
     id: 'product-17',
     title: 'Wholesale Health & Beauty — 200 Units',
-    description: 'Wholesale health and beauty products, mixed branded stock',
+    description: 'Wholesale health and beauty products, mixed branded items',
     price: 750.00,
     type: 'wholesale',
     condition: 'new',

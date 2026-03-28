@@ -4,11 +4,11 @@ import type { Product } from '../types';
  * Minimal product fields required to resolve a category fallback image.
  * Both `categoryId` and `type` are used so that products without a
  * recognised category still receive a sensible visual (e.g. a pallet
- * image for bulk/logistics listings).
+ * image for bulk/pallet listings).
  */
 export type CategoryImageProduct = Pick<Product, 'categoryId' | 'type'>;
 
-/** Shared warehouse / pallet image for bulk-type categories and the default fallback. */
+/** Shared storage image for bulk-type categories and the default fallback. */
 const WAREHOUSE_IMAGE = '/images/products/toolset.jpg';
 
 /**

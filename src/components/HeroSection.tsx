@@ -258,23 +258,23 @@ const HeroSection = () => {
         {/* Left text block — left sky area */}
         <div className="lfy-hero-text">
           <h1 className="lfy-hero-headline">
-            Grow your sales with Loadify Market
+            Buy &amp; Sell Products Across the UK — All in One Marketplace
           </h1>
           <p className="lfy-hero-subtext">
-            Sell smarter. Reach more buyers. Scale your business faster.
+            Browse products from independent sellers across multiple categories — from everyday items to wholesale and clearance deals.
           </p>
           <div className="lfy-hero-cta">
-            <button
-              className="lfy-btn-primary"
-              onClick={() => setRoleModalOpen(true)}
-            >
-              Get Started
-            </button>
             <Link to="/catalog">
-              <button className="lfy-btn-secondary">
+              <button className="lfy-btn-primary">
                 Browse Marketplace
               </button>
             </Link>
+            <button
+              className="lfy-btn-secondary"
+              onClick={() => setRoleModalOpen(true)}
+            >
+              Start Selling
+            </button>
           </div>
         </div>
 

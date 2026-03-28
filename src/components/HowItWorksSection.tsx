@@ -40,7 +40,7 @@ const sellerSteps = [
     icon: PoundSterling,
     step: "03",
     title: "Sell & Get Paid",
-    description: "Buyers purchase your stock. Payments are processed securely via Stripe with fast payouts.",
+    description: "Buyers purchase your products. Payments are processed securely via Stripe with fast payouts.",
   },
 ];
 

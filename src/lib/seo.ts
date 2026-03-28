@@ -209,18 +209,18 @@ export const updatePageMeta = (config: SEOConfig) => {
 // Pre-defined SEO configs for common pages
 export const pageSEO = {
   home: {
-    title: 'Loadify Market Ltd - Marketplace for Logistics Loads, Pallets & Wholesale',
-    description: 'UK marketplace connecting buyers and sellers. Find logistics loads, wholesale pallets, and business stock. Multi-seller marketplace platform.',
+    title: 'Loadify Market — UK Multi-Category Marketplace for Physical Goods',
+    description: 'UK marketplace where businesses and individuals buy and sell physical products. Browse independent sellers across retail, wholesale, clearance and more.',
     canonical: 'https://loadifymarket.co.uk',
   },
   catalog: {
-    title: 'Browse Listings - Loads, Pallets & More | Loadify Market Ltd',
-    description: 'Explore our catalog of logistics loads, pallets, and wholesale lots. Filter by category, condition, and price. New listings added daily.',
+    title: 'Browse Products | Loadify Market',
+    description: 'Explore products from independent UK sellers across all categories. Filter by category, condition, and price. New listings added daily.',
     canonical: 'https://loadifymarket.co.uk/catalog',
   },
   about: {
-    title: 'About Loadify Market Ltd - Trusted B2B & B2C Marketplace',
-    description: 'Learn about Loadify Market Ltd. Your reliable partner for B2B and B2C trading since 2025.',
+    title: 'About Loadify Market — UK Multi-Category Marketplace',
+    description: 'Loadify Market is operated by XDrive Logistics Ltd. A UK marketplace for physical goods where independent sellers list and manage their own products.',
     canonical: 'https://loadifymarket.co.uk/about',
   },
 };

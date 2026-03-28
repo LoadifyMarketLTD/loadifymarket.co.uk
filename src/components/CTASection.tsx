@@ -24,10 +24,10 @@ const CTASection = () => {
               Join Loadify Market
             </span>
             <h2 className="text-3xl sm:text-4xl font-display font-bold text-white leading-tight">
-              Ready to Join the Marketplace?
+              Ready to Start Buying or Selling?
             </h2>
             <p className="text-blue-200 text-lg">
-              Buy wholesale stock or sell your inventory — all in one trusted UK platform.
+              Browse products from independent UK sellers or list your own — all in one trusted marketplace.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
               <Link to="/catalog">
