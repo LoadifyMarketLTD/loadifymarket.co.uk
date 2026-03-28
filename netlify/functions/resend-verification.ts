@@ -92,7 +92,7 @@ export const handler: Handler = async (event) => {
   // Look up the target user's email and name
   const { data: targetUser, error: targetErr } = await adminClient
     .from('users')
-    .select('email, fullName')
+    .select('email, "firstName", "lastName"')
     .eq('id', userId)
     .single();
 
@@ -145,7 +145,7 @@ export const handler: Handler = async (event) => {
       subject: 'Your Loadify Market sign-in link',
       template: 'resend_verification',
       data: {
-        userName: targetUser.fullName || targetUser.email,
+        userName: [targetUser.firstName, targetUser.lastName].filter(Boolean).join(' ') || targetUser.email,
         actionLink,
       },
     }),
