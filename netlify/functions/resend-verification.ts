@@ -92,13 +92,16 @@ export const handler: Handler = async (event) => {
   // Look up the target user's email and name
   const { data: targetUser, error: targetErr } = await adminClient
     .from('users')
-    .select('email, fullName')
+    .select('email, "firstName", "lastName"')
     .eq('id', userId)
     .single();
 
   if (targetErr || !targetUser?.email) {
     return { statusCode: 404, body: JSON.stringify({ error: 'Target user not found' }) };
   }
+
+  const targetFullName =
+    [targetUser.firstName, targetUser.lastName].filter(Boolean).join(' ') || targetUser.email;
 
   // Generate a magic-link via the Admin API.
   // generateLink returns the action_link URL but does NOT send any email on
@@ -145,7 +148,7 @@ export const handler: Handler = async (event) => {
       subject: 'Your Loadify Market sign-in link',
       template: 'resend_verification',
       data: {
-        userName: targetUser.fullName || targetUser.email,
+        userName: targetFullName,
         actionLink,
       },
     }),
