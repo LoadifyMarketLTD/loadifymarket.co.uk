@@ -200,7 +200,7 @@ const Footer = () => {
             <div className="text-xs text-background/40 text-center md:text-left">
               <p>© 2026 Loadify Market. All rights reserved.</p>
               <p className="mt-1">
-                Loadify Market is an online marketplace platform that connects independent buyers and sellers. We do not own, stock, or sell any products listed on the platform. All listings are created by independent sellers who are solely responsible for their products, pricing and fulfilment. Payments are processed securely via third-party providers.
+                Loadify Market does not hold inventory. All products are listed and fulfilled by independent sellers. The platform connects buyers and sellers and processes payments as an intermediary — it does not own, stock, or dispatch any products. Sellers are solely responsible for their listings, pricing and fulfilment.
               </p>
             </div>
             <div className="flex items-center gap-4 text-xs text-background/50 shrink-0">

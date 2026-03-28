@@ -10,7 +10,7 @@ import ImageUpload from '../components/ImageUpload';
 import ShippingMethodSelector from '../components/ShippingMethodSelector';
 
 // Listing types that require bulk/pallet-specific fields
-const BULK_PRODUCT_TYPES: ProductType[] = ['pallet', 'lot', 'wholesale', 'logistics'];
+const BULK_PRODUCT_TYPES: ProductType[] = ['pallet', 'lot', 'wholesale'];
 // Delay in ms before navigating away after a successful save
 const SUCCESS_REDIRECT_DELAY_MS = 1800;
 
@@ -514,7 +514,6 @@ export default function ProductFormPage() {
                     <option value="pallet">Pallet Deal</option>
                     <option value="lot">Bulk Lot</option>
                     <option value="wholesale">Wholesale</option>
-                    <option value="logistics">Logistics</option>
                   </select>
                 </div>
 
@@ -784,8 +783,7 @@ export default function ProductFormPage() {
               ) : (
                 <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
                   <p className="text-sm text-gray-600">
-                    <strong>Pallet & bulk products</strong> use <strong>XDrive Logistics</strong> for transport.
-                    Buyers will request a transport quote directly through the XDrive platform.
+                    <strong>Pallet &amp; bulk listings</strong> — ensure your shipping details and dimensions are accurate so buyers can arrange collection or delivery.
                   </p>
                 </div>
               )}

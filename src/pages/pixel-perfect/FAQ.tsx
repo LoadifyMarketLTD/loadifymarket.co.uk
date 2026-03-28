@@ -17,17 +17,19 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
         question: "What is Loadify Market?",
         answer: (
           <>
-            Loadify Market is a UK-based online marketplace connecting buyers and sellers of
-            services in transport, logistics, equipment hire, and related industries. We are
-            operated by <strong>XDrive Logistics Ltd</strong> (Co. No: 13171804), registered in
-            England and Wales.
+            Loadify Market is a UK-based multi-category marketplace for physical goods.
+            Independent sellers list and manage their own inventory — covering retail items,
+            wholesale stock, clearance lines, pallets, job lots and more — while buyers browse,
+            compare and purchase directly from sellers. We are operated by{" "}
+            <strong>XDrive Logistics Ltd</strong> (Co. No: 13171804), registered in England
+            and Wales.
           </>
         ),
       },
       {
-        question: "Do you hold or ship any physical products?",
+        question: "Does the platform hold or store products?",
         answer:
-          "No. Loadify Market is a services marketplace — we do not hold stock, operate a warehouse, or manage physical deliveries. All transactions are for services offered by registered sellers on the platform.",
+          "No. Loadify Market does not own, store or dispatch any products. All products are listed, stocked and fulfilled by independent sellers. The platform connects buyers and sellers and processes payments via Stripe.",
       },
       {
         question: "Who can use Loadify Market?",
@@ -76,18 +78,18 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
     ],
   },
   {
-    section: "Buying Services",
+    section: "Buying on Loadify",
     items: [
       {
-        question: "How do I find and book a service?",
+        question: "How do I find and buy a product?",
         answer: (
           <>
             Browse by{" "}
             <Link to="/catalog" className="text-primary underline">
               category
             </Link>{" "}
-            or use the search bar to find services. Click a listing to view full details,
-            then use the <strong>Book / Request</strong> button to start the booking process.
+            or use the search bar to find products. Click a listing to view full details,
+            then add to cart and proceed to checkout.
           </>
         ),
       },
@@ -104,23 +106,23 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
       {
         question: "When am I charged?",
         answer:
-          "For fixed-price services you are charged at the time of booking. For quote-based bookings you are charged when you accept a quote and confirm the order.",
+          "You are charged at the time of purchase when you complete checkout.",
       },
     ],
   },
   {
-    section: "Selling Services",
+    section: "Selling on Loadify",
     items: [
       {
-        question: "How do I list a service?",
+        question: "How do I list a product?",
         answer: (
           <>
             From your{" "}
             <Link to="/seller" className="text-primary underline">
               Seller Dashboard
             </Link>{" "}
-            go to <strong>Services → New Service</strong>. Fill in the title, description,
-            pricing model, and category, then publish when ready.
+            go to <strong>Products → New Listing</strong>. Fill in the title, description,
+            category, price and stock quantity, then publish when ready.
           </>
         ),
       },
@@ -142,7 +144,7 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
             <Link to="/seller/orders" className="text-primary underline">
               Seller Orders
             </Link>{" "}
-            section. You can accept, start, and mark orders as complete from there. Use the
+            section. Update the order status as you pack and ship, and use the
             messaging feature to communicate with buyers directly on each order.
           </>
         ),
@@ -157,16 +159,16 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
         answer: (
           <ol className="list-decimal list-inside space-y-1">
             <li>
-              <strong>Requested</strong> — buyer places order
+              <strong>Paid</strong> — buyer completes checkout via Stripe
             </li>
             <li>
-              <strong>Accepted</strong> — seller confirms
+              <strong>Packed</strong> — seller confirms the order is prepared
             </li>
             <li>
-              <strong>In Progress</strong> — service is being delivered
+              <strong>Shipped</strong> — seller adds courier name and tracking number
             </li>
             <li>
-              <strong>Completed</strong> — service delivered and confirmed
+              <strong>Delivered</strong> — order is confirmed delivered
             </li>
           </ol>
         ),
@@ -174,7 +176,7 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
       {
         question: "Can I cancel an order?",
         answer:
-          "Cancellations can be requested by either the buyer or seller before the service reaches In Progress status. Cancellation and refund terms are governed by our Terms & Conditions and the individual seller's cancellation policy.",
+          "Cancellations can be requested by either the buyer or seller before the order is packed. Cancellation and refund terms are governed by our Terms & Conditions and the individual seller's returns policy.",
       },
       {
         question: "How do I raise a dispute?",

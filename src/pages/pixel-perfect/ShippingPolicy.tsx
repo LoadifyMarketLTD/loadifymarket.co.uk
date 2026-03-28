@@ -42,8 +42,8 @@ const ShippingPolicy = () => {
           </ul>
           <p>These are estimates only. Actual delivery times may vary due to stock availability, carrier schedules and external factors.</p>
 
-          <h2>5. Pallet &amp; Freight Deliveries</h2>
-          <p>For pallet and large freight orders:</p>
+          <h2>5. Pallet &amp; Large Item Deliveries</h2>
+          <p>For pallet and large item orders:</p>
           <ul>
             <li>Delivery is typically kerbside unless otherwise agreed</li>
             <li>The buyer is responsible for having adequate means to receive and unload pallets</li>

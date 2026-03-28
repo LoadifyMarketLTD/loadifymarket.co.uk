@@ -101,12 +101,12 @@ export interface Address {
   country: string;
 }
 
-export type ProductType = 'product' | 'pallet' | 'lot' | 'clearance' | 'retail' | 'handmade' | 'wholesale' | 'logistics';
+export type ProductType = 'product' | 'pallet' | 'lot' | 'clearance' | 'retail' | 'handmade' | 'wholesale';
 export type ProductCondition = 'new' | 'used' | 'refurbished' | 'returns_stock' | 'mixed' | 'other';
 export type StockStatus = 'in_stock' | 'low_stock' | 'out_of_stock' | 'clearance';
 
 // Listing type for filtering and display
-export type ListingType = 'pallet' | 'wholesale' | 'retail' | 'handmade' | 'logistics';
+export type ListingType = 'pallet' | 'wholesale' | 'retail' | 'handmade';
 
 export interface Product {
   id: string;
@@ -140,13 +140,6 @@ export interface Product {
   isHandmade?: boolean; // Flag for handmade items
   isUnique?: boolean; // Flag for unique/one-of-a-kind items
   artistName?: string; // For handmade items - creator/artist name
-  logisticsInfo?: {
-    // For logistics jobs
-    pickupLocation?: string;
-    deliveryLocation?: string;
-    vehicleType?: string;
-    pickupDate?: string;
-  };
   isActive: boolean;
   isApproved: boolean;
   views: number;
@@ -473,41 +466,4 @@ export interface RFQRequest {
   message?: string;
   status: RFQStatus;
   created_at: string;
-}
-
-// ─── Delivery Request (Loadify ↔ XDrive) ────────────────────────────────────
-
-export type DeliveryRequestStatus =
-  | 'draft'
-  | 'submitted'
-  | 'in_review'
-  | 'quoted'
-  | 'accepted'
-  | 'in_transit'
-  | 'delivered'
-  | 'cancelled';
-
-export interface DeliveryRequest {
-  /** Locally-generated UUID used as a stable key */
-  id: string;
-  listingId: string;
-  listingTitle: string;
-  sellerId: string;
-  sellerName?: string;
-  buyerName: string;
-  buyerEmail: string;
-  pickupPostcode: string;
-  dropoffPostcode: string;
-  palletCount?: string;
-  weight?: string;
-  itemType?: string;
-  category?: string;
-  quantity?: string;
-  status: DeliveryRequestStatus;
-  /** Always 'loadify-market' for requests originating here */
-  source: string;
-  /** ISO timestamp */
-  createdAt: string;
-  /** Optional reference returned by XDrive */
-  xdriveRef?: string;
 }

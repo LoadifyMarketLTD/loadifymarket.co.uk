@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom';
-import { Truck, Package, Sparkles } from 'lucide-react';
+import { Tag, Package, Sparkles } from 'lucide-react';
 
 export default function CinematicCategoryPanels() {
   const categories = [
     {
-      title: 'Logistics Loads',
-      description: 'Post loads, find drivers, streamline transport',
-      icon: Truck,
-      link: '/catalog?listingType=logistics',
+      title: 'Clearance & Deals',
+      description: 'End-of-line stock, returns and discounted items from UK sellers',
+      icon: Tag,
+      link: '/catalog?type=clearance',
       bgGradient: 'from-slate-800 to-slate-900',
       iconColor: 'text-gold-400',
     },
