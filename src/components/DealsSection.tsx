@@ -57,7 +57,7 @@ const DealsSection = () => {
               Browse the Marketplace
             </h2>
             <p className="mt-1 text-sm text-[#64748B]">
-              Explore wholesale stock, bulk lots and listings from independent UK sellers
+              Explore products across all categories from independent UK sellers
             </p>
           </div>
           <Link

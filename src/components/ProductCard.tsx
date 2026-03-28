@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Heart, Package, Truck, Sparkles, Eye, MapPin, Star, CheckCircle2, Tag } from 'lucide-react';
+import { Heart, Package, Sparkles, Eye, MapPin, Star, CheckCircle2, Tag } from 'lucide-react';
 import { useWishlist } from '../lib/useWishlist';
 import { getCategoryFallbackImage } from '../lib/categoryImages';
 import VerificationBadge from './VerificationBadge';
@@ -21,7 +21,6 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const getTypeInfo = () => {
     switch (product.type) {
-      case 'logistics': return { icon: Truck, label: 'Logistics', color: 'bg-slate-600' };
       case 'pallet':    return { icon: Package, label: 'Pallet Deal', color: 'bg-[#1E3A5F]' };
       case 'lot':       return { icon: Package, label: 'Bulk Lot', color: 'bg-[#1E3A5F]' };
       case 'wholesale': return { icon: Package, label: 'Wholesale', color: 'bg-[#1E3A5F]' };

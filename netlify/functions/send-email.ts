@@ -12,7 +12,7 @@ sgMail.setApiKey(sendgridApiKey!);
 
 // Templates that public (unauthenticated) users may trigger directly.
 // All other templates require the X-Internal-Secret header.
-const PUBLIC_TEMPLATES = new Set(['contact_enquiry', 'transport_quote_request']);
+const PUBLIC_TEMPLATES = new Set(['contact_enquiry']);
 
 const supabase =
   process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -26,7 +26,7 @@ const supabase =
 interface EmailRequest {
   to: string;
   subject: string;
-  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'transport_quote_request' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry' | 'admin_new_buyer' | 'admin_new_seller' | 'admin_seller_active' | 'seller_welcome' | 'seller_account_active' | 'buyer_welcome' | 'resend_verification';
+  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry' | 'admin_new_buyer' | 'admin_new_seller' | 'admin_seller_active' | 'seller_welcome' | 'seller_account_active' | 'buyer_welcome' | 'resend_verification';
   data: Record<string, unknown>;
 }
 
@@ -250,35 +250,6 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         </div>
         <p>Our team will review this dispute and work to resolve it as quickly as possible.</p>
         <p>Expected response time: 2-3 business days.</p>
-      `;
-      break;
-
-    case 'transport_quote_request':
-      content = `
-        <h2 style="color: #243b53;">New Transport Quote Request</h2>
-        <p>A new delivery request has been submitted from <strong>Loadify Market</strong>.</p>
-        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Reference:</strong> ${escapeHtml(data.requestId || '')}</p>
-          <p style="margin: 8px 0 0 0;"><strong>Contact:</strong> ${escapeHtml(data.fullName || '')} — ${escapeHtml(data.email || '')} — ${escapeHtml(data.phone || '')}</p>
-          ${data.companyName ? `<p style="margin: 8px 0 0 0;"><strong>Company:</strong> ${escapeHtml(data.companyName)}</p>` : ''}
-        </div>
-        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Item:</strong> ${escapeHtml(data.itemType || '')}</p>
-          ${data.listingTitle ? `<p style="margin: 8px 0 0 0;"><strong>Listing:</strong> ${escapeHtml(data.listingTitle)} (ID: ${escapeHtml(data.listingId || '')})</p>` : ''}
-          ${data.sellerName ? `<p style="margin: 8px 0 0 0;"><strong>Seller:</strong> ${escapeHtml(data.sellerName)} (ID: ${escapeHtml(data.sellerId || '')})</p>` : ''}
-          <p style="margin: 8px 0 0 0;"><strong>Pallets / Items:</strong> ${escapeHtml(data.palletCount || '')}</p>
-          ${data.weight ? `<p style="margin: 8px 0 0 0;"><strong>Weight:</strong> ${escapeHtml(data.weight)}</p>` : ''}
-          ${data.dimensions ? `<p style="margin: 8px 0 0 0;"><strong>Dimensions:</strong> ${escapeHtml(data.dimensions)}</p>` : ''}
-          ${data.quantity ? `<p style="margin: 8px 0 0 0;"><strong>Quantity:</strong> ${escapeHtml(data.quantity)}</p>` : ''}
-        </div>
-        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Pickup Postcode:</strong> ${escapeHtml(data.pickupPostcode || '')}</p>
-          <p style="margin: 8px 0 0 0;"><strong>Dropoff Postcode:</strong> ${escapeHtml(data.dropoffPostcode || '')}</p>
-          <p style="margin: 8px 0 0 0;"><strong>Collection Date:</strong> ${escapeHtml(data.collectionDate || '')}</p>
-        </div>
-        ${data.deliveryNotes ? `<p><strong>Delivery Notes:</strong> ${escapeHtml(data.deliveryNotes)}</p>` : ''}
-        ${data.listingReference ? `<p><strong>Listing Reference:</strong> ${escapeHtml(data.listingReference)}</p>` : ''}
-        <p style="color: #888; font-size: 12px;">Source: ${escapeHtml(data.source || 'loadify-market')}</p>
       `;
       break;
 

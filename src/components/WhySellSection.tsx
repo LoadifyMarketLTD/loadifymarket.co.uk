@@ -5,21 +5,21 @@ import { Link } from "react-router-dom";
 const benefits = [
   {
     icon: Users,
-    title: "Real Buyers, Not Browsers",
+    title: "Real Buyers, Every Day",
     description:
-      "Buyers on Loadify are registered businesses looking to purchase wholesale, clearance or overstock — not casual shoppers.",
+      "Buyers on Loadify are registered users actively searching for products across all categories — from everyday retail to bulk lots.",
   },
   {
     icon: TrendingUp,
-    title: "Shift Stock Faster",
+    title: "Sell Any Product Faster",
     description:
-      "List pallets, bulk lots or clearance lines and get them in front of active buyers within minutes.",
+      "List any physical product and get it in front of active buyers within minutes — retail items, bulk lots, clearance lines or anything in between.",
   },
   {
     icon: Package,
-    title: "Any Stock, Any Volume",
+    title: "Any Product, Any Volume",
     description:
-      "From single pallets to full container loads — returns, overstock, end-of-line, liquidation. List it and let buyers find you.",
+      "Whether you're selling a single item or a full container of stock, Loadify gives every listing the same visibility to buyers.",
   },
   {
     icon: PoundSterling,
@@ -39,10 +39,10 @@ const WhySellSection = () => {
             For Sellers
           </span>
           <h2 className="mt-3 text-3xl sm:text-4xl font-display font-bold text-foreground">
-            Your Stock Deserves Real Buyers
+            List Your Products. Reach Real Buyers.
           </h2>
           <p className="mt-4 text-muted-foreground text-lg leading-relaxed">
-            Stop sitting on dead stock. Loadify connects you with registered UK businesses ready to buy wholesale, clearance and overstock.
+            Loadify gives every seller — from independent traders to established businesses — a platform to reach buyers across the UK.
           </p>
         </div>
 

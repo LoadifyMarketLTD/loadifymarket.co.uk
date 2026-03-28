@@ -335,12 +335,12 @@ const BuyerSettings = () => {
             </div>
             <div>
               <Label className="text-xs">Default Delivery Address</Label>
-              <Select defaultValue="warehouse">
+              <Select defaultValue="home">
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="warehouse">Main Warehouse — E16 2AA</SelectItem>
-                  <SelectItem value="home">Home Office — NW3 4TG</SelectItem>
-                  <SelectItem value="north">North Depot — M17 1SN</SelectItem>
+                  <SelectItem value="home">Home Address</SelectItem>
+                  <SelectItem value="work">Work Address</SelectItem>
+                  <SelectItem value="other">Other Address</SelectItem>
                 </SelectContent>
               </Select>
             </div>

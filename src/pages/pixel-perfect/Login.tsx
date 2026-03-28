@@ -66,10 +66,10 @@ const Login = () => {
             </span>
           </div>
           <h2 className="font-display text-2xl font-bold text-primary-foreground">
-            The UK Wholesale Marketplace
+            The UK Multi-Category Marketplace
           </h2>
           <p className="text-primary-foreground/70 text-lg leading-relaxed">
-            A trusted platform connecting buyers and sellers of wholesale, clearance and overstock goods across the UK.
+            A trusted platform connecting buyers and sellers of physical goods across all categories in the UK.
           </p>
           <div className="grid grid-cols-3 gap-4 pt-4">
             {[
@@ -99,7 +99,7 @@ const Login = () => {
 
           <div className="space-y-2 text-center">
             <h1 className="font-display text-3xl font-bold text-foreground">Welcome back</h1>
-            <p className="text-muted-foreground">Sign in to access your wholesale dashboard</p>
+            <p className="text-muted-foreground">Sign in to access your account</p>
           </div>
 
           {/* Social buttons */}

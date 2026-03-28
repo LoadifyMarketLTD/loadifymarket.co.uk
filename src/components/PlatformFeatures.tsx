@@ -7,7 +7,7 @@ const buyerBenefits = [
     icon: Search,
     color: "text-[#2563EB] bg-blue-50",
     title: "Browse 500+ Listings",
-    desc: "Find wholesale lots, clearance stock and pallets from registered UK sellers — all in one place.",
+    desc: "Find products across all categories from registered UK sellers — retail, wholesale, clearance, handmade and more.",
   },
   {
     icon: ShieldCheck,
@@ -40,7 +40,7 @@ const sellerBenefits = [
     icon: Users,
     color: "text-emerald-600 bg-emerald-50",
     title: "Reach Real UK Buyers",
-    desc: "Access a growing base of registered buyers actively searching for wholesale and clearance stock.",
+    desc: "Access a growing base of registered buyers actively searching for products across all categories.",
   },
   {
     icon: Banknote,
@@ -63,13 +63,13 @@ const PlatformFeatures = () => {
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="text-xs font-semibold uppercase tracking-wider text-[#2563EB]">
-            Built for UK Trade
+            Built for UK Buyers &amp; Sellers
           </span>
           <h2 className="mt-2 text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
             Everything You Need — Whether You Buy or Sell
           </h2>
           <p className="mt-2 text-sm text-[#64748B]">
-            Loadify Market is the UK's trusted B2B marketplace for wholesale, clearance and returns stock.
+            Loadify Market is the UK's trusted multi-category marketplace for physical goods.
           </p>
         </div>
 
@@ -83,7 +83,7 @@ const PlatformFeatures = () => {
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-[#2563EB]">For Buyers</p>
-                <h3 className="text-lg font-display font-bold text-[#0F172A]">Find the Stock You Need</h3>
+                <h3 className="text-lg font-display font-bold text-[#0F172A]">Find What You're Looking For</h3>
               </div>
             </div>
 
@@ -120,7 +120,7 @@ const PlatformFeatures = () => {
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">For Sellers</p>
-                <h3 className="text-lg font-display font-bold text-white">Sell Your Stock Faster</h3>
+                <h3 className="text-lg font-display font-bold text-white">Sell Your Products</h3>
               </div>
             </div>
 

@@ -1,8 +1,8 @@
 # Loadify Market
 
-**UK online services marketplace** operated by XDrive Logistics Ltd (Co. No: 13171804, VAT: GB375949535).
+**UK multi-category physical goods marketplace**, operated by XDrive Logistics Ltd (Co. No: 13171804, VAT: GB375949535).
 
-Buyers discover, compare and book **services** — transport, logistics, freight, warehousing, equipment hire and more — from verified sellers. No physical products, no depot.
+Independent UK sellers list and sell physical products across all consumer goods categories. The platform does not own inventory, hold stock, or operate a depot — sellers manage their own stock and fulfil orders directly. Buyers browse, purchase via Stripe, and receive orders from sellers with full shipment tracking.
 
 ---
 
@@ -22,26 +22,50 @@ Buyers discover, compare and book **services** — transport, logistics, freight
 ## ✨ Features
 
 ### Buyers
-- Browse and search service listings by category, price, location type
-- Submit a Request for Quote (RFQ) and receive competitive offers from sellers
-- Secure checkout via Stripe (GBP)
-- In-order messaging with sellers
-- Order tracking and review system
-- Wishlist and saved searches
+- Browse and search physical product listings by category, condition, and price range
+- Purchase directly via Stripe Checkout (GBP)
+- Request a bulk quote (RFQ) — submit product name, quantity, destination, and budget; seller replies by email
+- Direct messaging with sellers, linked to products or orders
+- Order tracking via courier name and tracking number (shipment event log)
+- Post-delivery reviews (verified purchase — requires a delivered order)
+- Wishlist, saved searches, and recently viewed products
+- File returns and raise disputes on delivered orders
 
 ### Sellers
-- Service listing management (draft → active lifecycle)
-- Order management dashboard (requested → accepted → in_progress → completed)
-- Stripe Connect Express payout onboarding
-- Quote submission for buyer RFQs
-- Reviews and ratings
+- List physical products across all supported categories, with optional listing attributes including condition (new, used, refurbished), stock quantity, weight, dimensions, and pallet or lot-specific fields
+- Seller account lifecycle: `draft` → `submitted` → `active` → `suspended` (admin-approved)
+- Order management dashboard — status progression: `paid` → `packed` → `shipped` → `delivered`
+- Shipment creation with courier name, tracking number, and dispatch date
+- Respond to buyer RFQ requests via the quote inbox
+- Stripe Connect Express onboarding for weekly GBP payouts
+- Manage returns and respond to disputes
+- Pause account (deactivates all listings) or delete seller account
 
 ### Admin
-- Seller verification and approval workflow
-- Listing moderation
-- User management
-- Dispute resolution
-- Analytics and reporting
+- Seller approval and suspension workflow
+- Product listing moderation (approve, deactivate, review flagged listings)
+- Platform-wide order and user management
+- Dispute resolution with refund amount control
+- Support ticket inbox
+- Platform analytics overview
+
+---
+
+## 💰 Business Model
+
+The platform charges a **7% commission** on each completed transaction, deducted before the seller's payout is processed via Stripe Connect. The platform acts solely as an intermediary — it does not own products, hold inventory, or operate a fulfilment depot. Sellers are responsible for stock management and order fulfilment.
+
+> **Launch promotion:** 0% commission on all transactions until 1 July 2026. The standard 7% rate resumes automatically after that date.
+
+All prices are in **GBP**. VAT is calculated and displayed separately (flat-rate scheme, `GB375949535`). Sellers receive weekly payouts via Stripe Connect Express.
+
+---
+
+## 📦 Product Categories
+
+The marketplace covers 15 top-level consumer goods categories, each with subcategories:
+
+Clothing · Shoes · Jewellery · Media & Electronics · Accessories · Toys · Health & Beauty · Pets · Memorabilia · Adult · Food & Drink · Office Supplies · Home & Garden · Sports & Outdoors · Mixed Job Lots
 
 ---
 
@@ -50,7 +74,7 @@ Buyers discover, compare and book **services** — transport, logistics, freight
 - **Node.js 20+** and npm
 - **Supabase account** (free tier works for development)
 - **Stripe account** (test mode available — no real payments needed in development)
-- **SendGrid account** (optional — transactional email)
+- **SendGrid account** (optional — transactional email for shipment notifications)
 
 ---
 
@@ -69,9 +93,9 @@ cp .env.example .env
 # 3. Initialise database
 # In Supabase SQL Editor, run migrations in order:
 #   supabase/00_consolidated_schema.sql   ← full baseline schema
-#   supabase/10_rls_policies.sql          ← Row-Level Security
-#   supabase/200_services_marketplace.sql ← services, RFQ, messaging tables
-#   (and any higher-numbered migrations)
+#   supabase/10_rls_policies.sql          ← Row-Level Security policies
+#   supabase/210_seller_auto_activation.sql ← seller lifecycle
+#   (then any higher-numbered migrations in ascending order)
 
 # 4. Start dev server (hot reload)
 npm run dev
@@ -120,22 +144,27 @@ netlify dev          # Starts frontend + Netlify Functions at http://localhost:8
 ```
 ├── src/
 │   ├── pages/pixel-perfect/   # Full-page React components
-│   │   ├── seller/            # /seller/* seller dashboard
-│   │   ├── buyer/             # /dashboard/* buyer dashboard
-│   │   └── admin/             # /admin/* admin panel
-│   ├── components/
-│   │   └── ErrorBoundary.tsx  # Global error boundary
+│   │   ├── seller/            # Seller dashboard pages — served at both /seller/* (shadcn sidebar layout)
+│   │   │                      #   and /pp/seller/* (pixel-perfect standalone shell)
+│   │   ├── buyer/             # Buyer dashboard pages — served at both /dashboard/* and /pp/buyer/*
+│   │   └── admin/             # Admin panel pages — served at both /admin/* and /pp/admin/*
+│   ├── components/            # Shared UI components
 │   └── lib/
 │       ├── supabase.ts        # Supabase client
-│       └── errorTracking.ts   # Client-side error reporting
+│       └── safeStorage.ts     # Safe localStorage wrapper (mobile private mode safe)
 ├── netlify/functions/         # Serverless API handlers
 │   ├── register.ts            # User registration
-│   ├── create-checkout.ts     # Stripe Checkout session
-│   ├── stripe-webhook.ts      # Stripe event handler
-│   ├── connect-onboard.ts     # Stripe Connect onboarding
+│   ├── create-checkout.ts     # Stripe Checkout session creation
+│   ├── stripe-webhook.ts      # Stripe event handler (orders + Connect)
+│   ├── connect-onboard.ts     # Stripe Connect Express onboarding
+│   ├── create-shipment.ts     # Shipment creation and update
+│   ├── track-shipment.ts      # Shipment tracking lookup
+│   ├── generate-invoice.ts    # Invoice PDF generation
 │   └── send-email.ts          # SendGrid transactional email
-├── supabase/                  # SQL migrations (numbered)
-│   └── 200_services_marketplace.sql  # Services, RFQ, messaging
+├── supabase/                  # SQL migrations (numbered, run in ascending order)
+│   ├── 00_consolidated_schema.sql
+│   ├── 10_rls_policies.sql
+│   └── ...
 ├── docs/
 │   ├── ARCHITECTURE.md        # System architecture
 │   └── openapi.yaml           # API reference
@@ -161,9 +190,9 @@ The project deploys to Netlify automatically via the configuration in `netlify.t
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Supabase service role key (functions only) |
 | `STRIPE_SECRET_KEY` | ✅ | Stripe secret key |
 | `VITE_STRIPE_PUBLISHABLE_KEY` | ✅ | Stripe publishable key |
-| `STRIPE_WEBHOOK_SECRET` | ✅ | Stripe webhook signing secret |
-| `STRIPE_CONNECT_WEBHOOK_SECRET` | ✅ | Stripe Connect webhook secret |
-| `SENDGRID_API_KEY` | Optional | SendGrid API key for emails |
+| `STRIPE_WEBHOOK_SECRET` | ✅ | Stripe standard webhook signing secret |
+| `STRIPE_CONNECT_WEBHOOK_SECRET` | ✅ | Stripe Connect webhook signing secret |
+| `SENDGRID_API_KEY` | Optional | SendGrid API key for shipment emails |
 | `VITE_SUPPORT_EMAIL` | Optional | Support email address |
 
 For detailed instructions see [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md).
@@ -172,11 +201,12 @@ For detailed instructions see [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md).
 
 ## 🔐 Security
 
-- Row-Level Security (RLS) on every PostgreSQL table.
-- All payments processed by Stripe (PCI-DSS Level 1) — card details never stored on our servers.
-- Stripe webhook signature verification on every event.
-- Supabase JWT with short-lived access tokens + refresh tokens.
-- Rate limiting on registration, email, and error-reporting endpoints.
+- Row-Level Security (RLS) enforced on every PostgreSQL table.
+- All payments processed by Stripe (PCI-DSS Level 1) — card details are never stored on our servers.
+- Stripe webhook signature verification on every inbound event.
+- Both the standard account webhook and the Stripe Connect webhook share a single endpoint, each verified with its own signing secret.
+- Supabase JWT with short-lived access tokens and refresh tokens.
+- Rate limiting on registration, Stripe Connect onboarding, email, and error-reporting endpoints.
 - Content-Security-Policy with violation reporting.
 
 ---
@@ -188,7 +218,7 @@ After running the seed scripts:
 | Role | Email | Password |
 |---|---|---|
 | Buyer | buyer@test.com | test1234 |
-| Seller (approved) | seller@test.com | test1234 |
+| Seller (active) | seller@test.com | test1234 |
 | Admin | admin@loadifymarket.co.uk | test1234 |
 
 **Stripe test cards:**
