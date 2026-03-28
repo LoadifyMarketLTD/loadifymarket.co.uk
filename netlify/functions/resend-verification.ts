@@ -140,26 +140,42 @@ export const handler: Handler = async (event) => {
       : {}),
   };
 
-  const emailRes = await fetch(`${appUrl}/.netlify/functions/send-email`, {
-    method: 'POST',
-    headers: internalHeaders,
-    body: JSON.stringify({
-      to: targetUser.email,
-      subject: 'Your Loadify Market sign-in link',
-      template: 'resend_verification',
-      data: {
-        userName: targetFullName,
-        actionLink,
-      },
-    }),
-  });
-
-  if (!emailRes.ok) {
-    const errText = await emailRes.text().catch(() => '');
-    console.error('resend-verification: send-email failed:', emailRes.status, errText);
+  let emailRes: Response;
+  try {
+    emailRes = await fetch(`${appUrl}/.netlify/functions/send-email`, {
+      method: 'POST',
+      headers: internalHeaders,
+      body: JSON.stringify({
+        to: targetUser.email,
+        subject: 'Your Loadify Market sign-in link',
+        template: 'resend_verification',
+        data: {
+          userName: targetFullName,
+          actionLink,
+        },
+      }),
+    });
+  } catch (fetchErr) {
+    console.error('resend-verification: fetch to send-email threw:', fetchErr);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to send verification email' }),
+      body: JSON.stringify({ error: 'Failed to reach email service' }),
+    };
+  }
+
+  if (!emailRes.ok) {
+    let underlyingError = 'Failed to send verification email';
+    try {
+      const errText = await emailRes.text();
+      const errJson = JSON.parse(errText);
+      if (errJson.error) underlyingError = errJson.error;
+    } catch {
+      // ignore parse error – keep generic message
+    }
+    console.error('resend-verification: send-email failed:', emailRes.status, underlyingError);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: underlyingError }),
     };
   }
 
