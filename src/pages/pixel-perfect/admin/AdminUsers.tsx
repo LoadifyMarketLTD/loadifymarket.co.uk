@@ -15,6 +15,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase";
+import { toast } from "@/hooks/use-toast";
 
 interface User {
   id: string;
@@ -87,6 +88,7 @@ const AdminUsers = () => {
       if (error) throw error;
       setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, isActive: !currentlyActive } : u));
       if (selected?.id === userId) setSelected((s) => s ? { ...s, isActive: !currentlyActive } : s);
+      toast({ title: currentlyActive ? "User suspended" : "User reactivated" });
     } catch (err: unknown) {
       setError((err as Error).message || "Failed to update user");
     } finally {

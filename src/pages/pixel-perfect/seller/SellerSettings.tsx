@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
+import { safeLocalStorage } from "@/lib/safeStorage";
 
 const SHIPPING_STORAGE_KEY = "loadify_seller_shipping_defaults";
 
@@ -39,10 +40,12 @@ const SellerSettings = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [notifications, setNotifications] = useState<typeof defaultNotifications>(defaultNotifications);
   const [shipping, setShipping] = useState(() => {
-    try {
-      const raw = localStorage.getItem(SHIPPING_STORAGE_KEY);
-      if (raw) return { ...defaultShipping, ...(JSON.parse(raw) as Partial<typeof defaultShipping>) };
-    } catch { /* ignore */ }
+    const raw = safeLocalStorage.getItem(SHIPPING_STORAGE_KEY);
+    if (raw) {
+      try {
+        return { ...defaultShipping, ...(JSON.parse(raw) as Partial<typeof defaultShipping>) };
+      } catch { /* ignore malformed data */ }
+    }
     return defaultShipping;
   });
   const [currentPassword, setCurrentPassword] = useState("");
@@ -99,11 +102,7 @@ const SellerSettings = () => {
       );
 
       // Persist shipping defaults to localStorage (no DB column for these UI prefs)
-      try {
-        localStorage.setItem(SHIPPING_STORAGE_KEY, JSON.stringify(shipping));
-      } catch {
-        // Silently ignore storage errors (private/incognito mode, quota exceeded).
-      }
+      safeLocalStorage.setItem(SHIPPING_STORAGE_KEY, JSON.stringify(shipping));
 
       // Change password if the user has filled in the password fields
       if (newPassword || currentPassword) {

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { toast } from "@/hooks/use-toast";
 
 interface Notification {
   id: string;
@@ -64,25 +65,36 @@ const SellerNotifications = () => {
   }, [user?.id]);
 
   const markAsRead = async (id: string) => {
-    await supabase
-      .from("notifications")
-      .update({ isRead: true, readAt: new Date().toISOString() })
-      .eq("id", id);
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
+    try {
+      const { error } = await supabase
+        .from("notifications")
+        .update({ isRead: true, readAt: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
+    } catch {
+      toast({ title: "Failed to mark notification as read", variant: "destructive" });
+    }
   };
 
   const markAllAsRead = async () => {
     if (!user?.id) return;
     setMarkingAll(true);
-    await supabase
-      .from("notifications")
-      .update({ isRead: true, readAt: new Date().toISOString() })
-      .eq("userId", user.id)
-      .eq("isRead", false);
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    setMarkingAll(false);
+    try {
+      const { error } = await supabase
+        .from("notifications")
+        .update({ isRead: true, readAt: new Date().toISOString() })
+        .eq("userId", user.id)
+        .eq("isRead", false);
+      if (error) throw error;
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch {
+      toast({ title: "Failed to mark all as read", variant: "destructive" });
+    } finally {
+      setMarkingAll(false);
+    }
   };
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
