@@ -59,8 +59,20 @@ export const handler: Handler = async (event) => {
 
   const internalSecret = process.env.NETLIFY_INTERNAL_SECRET;
   const providedSecret = event.headers['x-internal-secret'];
+  // When NETLIFY_INTERNAL_SECRET is not configured we fail-open so that
+  // server-to-server calls (register, resend-verification, stripe-webhook …)
+  // still work in environments where the secret has not been set.
+  // When it IS configured the provided header value must match.
+  if (!internalSecret || internalSecret.length === 0) {
+    console.warn(
+      'send-email: NETLIFY_INTERNAL_SECRET is not configured – all server-side calls are being accepted. ' +
+      'Set this variable in production to enforce internal-call authentication.',
+    );
+  }
   const isInternalCall =
-    internalSecret && internalSecret.length > 0 && providedSecret === internalSecret;
+    !internalSecret ||
+    internalSecret.length === 0 ||
+    providedSecret === internalSecret;
 
   if (!isInternalCall && !PUBLIC_TEMPLATES.has(template)) {
     return {
