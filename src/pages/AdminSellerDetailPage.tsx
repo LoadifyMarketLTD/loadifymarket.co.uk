@@ -203,7 +203,12 @@ export default function AdminSellerDetailPage() {
   };
 
   const resendVerificationEmail = async () => {
-    if (!id || !adminUser?.id) return;
+    if (!id || !adminUser?.id) {
+      setResendStatus('error');
+      setResendMessage('Admin session not found. Please refresh the page and try again.');
+      setTimeout(() => setResendStatus('idle'), 5000);
+      return;
+    }
     setResendStatus('sending');
     setResendMessage('');
     try {
@@ -219,8 +224,21 @@ export default function AdminSellerDetailPage() {
         },
         body: JSON.stringify({ userId: id }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to send');
+      let json: { error?: string; message?: string; success?: boolean } = {};
+      try {
+        json = await res.json();
+      } catch {
+        // Non-JSON body (e.g. unhandled Netlify 500) – keep empty json
+      }
+      if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error('Your session has expired. Please sign in again.');
+        }
+        if (res.status === 403) {
+          throw new Error('Permission denied – admin access required.');
+        }
+        throw new Error(json.error || `Request failed (${res.status}). Please try again.`);
+      }
       setResendStatus('success');
       setResendMessage(json.message || 'Verification email sent');
     } catch (err) {
@@ -260,7 +278,7 @@ export default function AdminSellerDetailPage() {
             <ShieldAlert className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-gray-800 mb-2">Seller Not Found</h2>
             <p className="text-gray-500 mb-6">This seller does not exist or was deleted.</p>
-            <button onClick={() => navigate('/admin/sellers')} className="btn-primary">
+            <button onClick={() => navigate(-1)} className="btn-primary">
               Back to Sellers
             </button>
           </div>
@@ -281,7 +299,7 @@ export default function AdminSellerDetailPage() {
 
         {/* Back link */}
         <button
-          onClick={() => navigate('/admin/sellers')}
+          onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 text-gray-600 hover:text-navy-800 transition-colors mb-6 text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
