@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  Bell, Shield, Globe, Eye, EyeOff, Save, Key, Trash2, Loader2
+  Bell, Shield, Globe, Eye, EyeOff, Save, Trash2, Loader2, Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -150,6 +150,66 @@ const BuyerSettings = () => {
     }
   };
 
+  const handleDownloadData = async () => {
+    if (!user) return;
+    try {
+      const [profileRes, ordersRes, notifRes] = await Promise.all([
+        supabase.from("buyer_profiles").select("*").eq("userId", user.id).maybeSingle(),
+        supabase.from("orders").select("id, orderNumber, total, status, createdAt").eq("buyerId", user.id).order("createdAt", { ascending: false }),
+        supabase.from("notification_settings").select("*").eq("userId", user.id).maybeSingle(),
+      ]);
+
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        account: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          createdAt: user.createdAt,
+        },
+        profile: profileRes.data ?? {},
+        notificationSettings: notifRes.data ?? {},
+        orders: ordersRes.data ?? [],
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `loadify-account-data-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "Data exported", description: "Your account data has been downloaded." });
+    } catch {
+      toast({ title: "Export failed", description: "Unable to export your data. Please try again.", variant: "destructive" });
+    }
+  };
+
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    if (deleteConfirm.trim().toLowerCase() !== "delete") {
+      toast({ title: "Confirmation required", description: "Type DELETE to confirm account deletion.", variant: "destructive" });
+      return;
+    }
+    setDeletingAccount(true);
+    try {
+      // Soft-delete: mark user as inactive and sign out.
+      // Hard deletion requires a server-side admin call; soft-delete
+      // immediately disables the account and clears the session.
+      await supabase.from("users").update({ isActive: false }).eq("id", user.id);
+      await supabase.auth.signOut();
+      toast({ title: "Account deactivated", description: "Your account has been deactivated. Contact support to restore it." });
+    } catch {
+      toast({ title: "Deletion failed", description: "Unable to delete your account. Please contact support.", variant: "destructive" });
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6 max-w-[900px]">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -238,17 +298,9 @@ const BuyerSettings = () => {
             onClick={handleChangePassword}
             disabled={savingPassword || !currentPassword || !newPassword || !confirmPassword}
           >
-            {savingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Key className="mr-2 h-4 w-4" />}
+            {savingPassword ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Shield className="mr-2 h-4 w-4" />}
             Update Password
           </Button>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">Two-Factor Authentication</p>
-              <p className="text-xs text-muted-foreground">Add an extra layer of security to your account</p>
-            </div>
-            <Button variant="outline" size="sm"><Key className="mr-2 h-3.5 w-3.5" /> Enable 2FA</Button>
-          </div>
         </CardContent>
       </Card>
 
@@ -313,23 +365,42 @@ const BuyerSettings = () => {
           <CardTitle className="text-base text-destructive">Danger Zone</CardTitle>
           <CardDescription>Irreversible actions for your account.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-foreground">Download My Data</p>
-              <p className="text-xs text-muted-foreground">Export all your account data as a CSV file</p>
+              <p className="text-xs text-muted-foreground">Export all your account data as a JSON file</p>
             </div>
-            <Button variant="outline" size="sm">Export</Button>
+            <Button variant="outline" size="sm" onClick={handleDownloadData}>
+              <Download className="h-3.5 w-3.5 mr-1" /> Export
+            </Button>
           </div>
           <Separator />
-          <div className="flex items-center justify-between">
+          <div className="space-y-3">
             <div>
               <p className="text-sm font-medium text-foreground">Delete Account</p>
-              <p className="text-xs text-muted-foreground">Permanently delete your account and all associated data</p>
+              <p className="text-xs text-muted-foreground">
+                Deactivate your account. Type <strong>DELETE</strong> below to confirm.
+              </p>
             </div>
-            <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
-              <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
-            </Button>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Type DELETE to confirm"
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                className="h-8 text-sm max-w-[200px]"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={handleDeleteAccount}
+                disabled={deletingAccount || deleteConfirm.trim().toLowerCase() !== "delete"}
+              >
+                {deletingAccount ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 mr-1" />}
+                Delete
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

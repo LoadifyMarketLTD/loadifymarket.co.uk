@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User, CartItem } from '../types';
+import { safeLocalStorage } from '../lib/safeStorage';
 
 interface AuthState {
   user: User | null;
@@ -119,7 +120,7 @@ export const useCartStore = create<CartState>()(
     }),
     {
       name: 'loadify-cart',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => safeLocalStorage),
       partialize: (state) => ({
         items: state.items,
         savedForLater: state.savedForLater,

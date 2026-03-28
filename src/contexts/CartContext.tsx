@@ -31,7 +31,11 @@ function loadCart(): CartItem[] {
 }
 
 function saveCart(items: CartItem[]) {
-  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  } catch {
+    // Silently ignore storage errors (private/incognito mode, quota exceeded).
+  }
 }
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {

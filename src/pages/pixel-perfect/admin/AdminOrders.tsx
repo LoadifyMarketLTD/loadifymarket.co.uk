@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ShoppingCart, Search, Filter, Eye, Loader2 } from "lucide-react";
+import { ShoppingCart, Search, Eye, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -220,7 +220,6 @@ const AdminOrders = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search orders..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10" />
         </div>
-        <Button variant="outline" size="default"><Filter className="mr-2 h-4 w-4" /> Filters</Button>
       </div>
 
       <Tabs defaultValue="all">

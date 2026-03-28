@@ -94,6 +94,37 @@ describe('register handler – request validation', () => {
     expect(JSON.parse(res.body as string).error).toMatch(/at least 6/i);
   });
 
+  it('returns 429 when rate limit is exceeded', async () => {
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({
+        from: vi.fn(() => ({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn().mockResolvedValue({
+                  data: { id: 'rl-row', attempts: 10 },
+                  error: null,
+                }),
+              })),
+            })),
+          })),
+        })),
+      })),
+    }));
+    const eventWithIp = makeEvent({
+      email: 'a@b.com',
+      password: 'secret123',
+      firstName: 'Jane',
+      lastName: 'Doe',
+      role: 'buyer',
+    });
+    eventWithIp.headers = { 'x-forwarded-for': '1.2.3.4' };
+    const { handler } = await import('../register');
+    const res = await handler(eventWithIp, {} as never);
+    expect(res.statusCode).toBe(429);
+    expect(JSON.parse(res.body as string).error).toMatch(/too many/i);
+  });
+
   it('returns 409 on duplicate-email error from Supabase', async () => {
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({

@@ -1,5 +1,7 @@
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit } from './_shared/rateLimiter';
+import { getClientIp } from './_shared/getClientIp';
 
 /**
  * POST /.netlify/functions/register
@@ -81,6 +83,27 @@ export const handler: Handler = async (event) => {
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+  // ── Rate limiting: 10 registration attempts per IP per hour ──────────────
+  const ip = getClientIp(event);
+  if (ip) {
+    const rl = await checkRateLimit({
+      supabase,
+      tableName: 'register_rate_limits',
+      identifier: ip,
+      windowMinutes: 60,
+      maxAttempts: 10,
+    });
+    if (rl.exceeded) {
+      return {
+        statusCode: 429,
+        body: JSON.stringify({
+          error: 'Too many sign-up attempts. Please try again later.',
+        }),
+      };
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   // ── Create auth user via Admin API ─────────────────────────────────────────
   // email_confirm: true  →  account is immediately active; no confirmation
   // email is sent, so Supabase's built-in mailer rate limit is never hit.
@@ -113,7 +136,7 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 429,
         body: JSON.stringify({
-          error: 'Too many sign-up attempts. Please wait a few minutes and try again.',
+          error: 'Registration is temporarily unavailable due to high demand. Please try again in a few minutes.',
         }),
       };
     }

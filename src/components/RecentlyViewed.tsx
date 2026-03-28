@@ -98,12 +98,17 @@ export default function RecentlyViewed({ currentProductId, maxProducts = 8 }: Re
   }, [fetchRecentlyViewed]);
 
   const getOrCreateSessionId = (): string => {
-    let sessionId = localStorage.getItem('sessionId');
-    if (!sessionId) {
-      sessionId = `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('sessionId', sessionId);
+    try {
+      let sessionId = localStorage.getItem('sessionId');
+      if (!sessionId) {
+        sessionId = `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('sessionId', sessionId);
+      }
+      return sessionId;
+    } catch {
+      // Private/incognito mode — return a transient ID without persisting it.
+      return `guest-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
-    return sessionId;
   };
 
   if (loading) {

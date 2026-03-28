@@ -26,7 +26,7 @@ async function getAuthUser(
   event: HandlerEvent,
   adminClient: ReturnType<typeof createClient>,
 ) {
-  const authHeader = event.headers['authorization'];
+  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
   }

@@ -59,37 +59,40 @@ const SellerGuidelinesPage = lazy(() => import('./pages/SellerGuidelinesPage'));
 const SellerSetupPage = lazy(() => import('./pages/pixel-perfect/seller/SellerSetupPage'));
 
 // ─── Pixel-perfect dashboard shells ──────────────────────────────────────────
-const PPSellerShell    = lazy(() => import('./pages/pixel-perfect/seller/SellerShell'));
-const PPSellerDashboard = lazy(() => import('./pages/pixel-perfect/seller/SellerDashboard'));
-const PPSellerProducts  = lazy(() => import('./pages/pixel-perfect/seller/SellerProducts'));
-const PPSellerOrders    = lazy(() => import('./pages/pixel-perfect/seller/SellerOrders'));
-const PPSellerShipments = lazy(() => import('./pages/pixel-perfect/seller/SellerShipments'));
-const PPSellerReturns   = lazy(() => import('./pages/pixel-perfect/seller/SellerReturns'));
-const PPSellerRFQ       = lazy(() => import('./pages/pixel-perfect/seller/SellerRFQ'));
-const PPSellerProfile   = lazy(() => import('./pages/pixel-perfect/seller/SellerProfile'));
-const PPSellerSettings  = lazy(() => import('./pages/pixel-perfect/seller/SellerSettings'));
-const PPSellerReviews   = lazy(() => import('./pages/pixel-perfect/seller/SellerReviewsPage'));
+const PPSellerShell         = lazy(() => import('./pages/pixel-perfect/seller/SellerShell'));
+const PPSellerDashboard     = lazy(() => import('./pages/pixel-perfect/seller/SellerDashboard'));
+const PPSellerProducts      = lazy(() => import('./pages/pixel-perfect/seller/SellerProducts'));
+const PPSellerOrders        = lazy(() => import('./pages/pixel-perfect/seller/SellerOrders'));
+const PPSellerShipments     = lazy(() => import('./pages/pixel-perfect/seller/SellerShipments'));
+const PPSellerReturns       = lazy(() => import('./pages/pixel-perfect/seller/SellerReturns'));
+const PPSellerRFQ           = lazy(() => import('./pages/pixel-perfect/seller/SellerRFQ'));
+const PPSellerProfile       = lazy(() => import('./pages/pixel-perfect/seller/SellerProfile'));
+const PPSellerSettings      = lazy(() => import('./pages/pixel-perfect/seller/SellerSettings'));
+const PPSellerReviews       = lazy(() => import('./pages/pixel-perfect/seller/SellerReviewsPage'));
+const PPSellerNotifications = lazy(() => import('./pages/pixel-perfect/seller/SellerNotifications'));
 
 const PPBuyerShell     = lazy(() => import('./pages/pixel-perfect/buyer/BuyerShell'));
-const PPBuyerDashboard = lazy(() => import('./pages/pixel-perfect/buyer/BuyerDashboard'));
-const PPBuyerOrders    = lazy(() => import('./pages/pixel-perfect/buyer/BuyerOrders'));
-const PPBuyerAddresses = lazy(() => import('./pages/pixel-perfect/buyer/BuyerAddresses'));
-const PPBuyerPayments  = lazy(() => import('./pages/pixel-perfect/buyer/BuyerPayments'));
-const PPBuyerReviews   = lazy(() => import('./pages/pixel-perfect/buyer/BuyerReviews'));
-const PPBuyerProfile   = lazy(() => import('./pages/pixel-perfect/buyer/BuyerProfile'));
-const PPBuyerSettings  = lazy(() => import('./pages/pixel-perfect/buyer/BuyerSettings'));
-const PPBuyerWishlist  = lazy(() => import('./pages/pixel-perfect/buyer/BuyerWishlist'));
+const PPBuyerDashboard     = lazy(() => import('./pages/pixel-perfect/buyer/BuyerDashboard'));
+const PPBuyerOrders        = lazy(() => import('./pages/pixel-perfect/buyer/BuyerOrders'));
+const PPBuyerAddresses     = lazy(() => import('./pages/pixel-perfect/buyer/BuyerAddresses'));
+const PPBuyerPayments      = lazy(() => import('./pages/pixel-perfect/buyer/BuyerPayments'));
+const PPBuyerReviews       = lazy(() => import('./pages/pixel-perfect/buyer/BuyerReviews'));
+const PPBuyerProfile       = lazy(() => import('./pages/pixel-perfect/buyer/BuyerProfile'));
+const PPBuyerSettings      = lazy(() => import('./pages/pixel-perfect/buyer/BuyerSettings'));
+const PPBuyerWishlist      = lazy(() => import('./pages/pixel-perfect/buyer/BuyerWishlist'));
+const PPBuyerNotifications = lazy(() => import('./pages/pixel-perfect/buyer/BuyerNotifications'));
 
-const PPAdminShell      = lazy(() => import('./pages/pixel-perfect/admin/AdminShell'));
-const PPAdminDashboard  = lazy(() => import('./pages/pixel-perfect/admin/AdminDashboard'));
-const PPAdminUsers      = lazy(() => import('./pages/pixel-perfect/admin/AdminUsers'));
-const PPAdminApprovals  = lazy(() => import('./pages/pixel-perfect/admin/AdminApprovals'));
-const PPAdminProducts   = lazy(() => import('./pages/pixel-perfect/admin/AdminProducts'));
-const PPAdminOrders     = lazy(() => import('./pages/pixel-perfect/admin/AdminOrders'));
-const PPAdminFlagged    = lazy(() => import('./pages/pixel-perfect/admin/AdminFlagged'));
-const PPAdminReports    = lazy(() => import('./pages/pixel-perfect/admin/AdminReports'));
-const PPAdminSupport    = lazy(() => import('./pages/pixel-perfect/admin/AdminSupport'));
-const PPAdminSettings   = lazy(() => import('./pages/pixel-perfect/admin/AdminSettings'));
+const PPAdminShell          = lazy(() => import('./pages/pixel-perfect/admin/AdminShell'));
+const PPAdminDashboard      = lazy(() => import('./pages/pixel-perfect/admin/AdminDashboard'));
+const PPAdminUsers          = lazy(() => import('./pages/pixel-perfect/admin/AdminUsers'));
+const PPAdminApprovals      = lazy(() => import('./pages/pixel-perfect/admin/AdminApprovals'));
+const PPAdminProducts       = lazy(() => import('./pages/pixel-perfect/admin/AdminProducts'));
+const PPAdminOrders         = lazy(() => import('./pages/pixel-perfect/admin/AdminOrders'));
+const PPAdminFlagged        = lazy(() => import('./pages/pixel-perfect/admin/AdminFlagged'));
+const PPAdminReports        = lazy(() => import('./pages/pixel-perfect/admin/AdminReports'));
+const PPAdminSupport        = lazy(() => import('./pages/pixel-perfect/admin/AdminSupport'));
+const PPAdminSettings       = lazy(() => import('./pages/pixel-perfect/admin/AdminSettings'));
+const PPAdminNotifications  = lazy(() => import('./pages/pixel-perfect/admin/AdminNotifications'));
 
 // Loading component
 function PageLoader() {
@@ -253,6 +256,7 @@ function App() {
           <Route path="reviews" element={<Suspense fallback={<PageLoader />}><PPSellerReviews /></Suspense>} />
           <Route path="profile" element={<Suspense fallback={<PageLoader />}><PPSellerProfile /></Suspense>} />
           <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPSellerSettings /></Suspense>} />
+          <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPSellerNotifications /></Suspense>} />
         </Route>
 
         {/* /pp/buyer – RequireAuth */}
@@ -269,6 +273,7 @@ function App() {
           <Route path="reviews" element={<Suspense fallback={<PageLoader />}><PPBuyerReviews /></Suspense>} />
           <Route path="profile" element={<Suspense fallback={<PageLoader />}><PPBuyerProfile /></Suspense>} />
           <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPBuyerSettings /></Suspense>} />
+          <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPBuyerNotifications /></Suspense>} />
         </Route>
 
         {/* /pp/admin – RequireAdmin */}
@@ -286,6 +291,7 @@ function App() {
           <Route path="reports" element={<Suspense fallback={<PageLoader />}><PPAdminReports /></Suspense>} />
           <Route path="support" element={<Suspense fallback={<PageLoader />}><PPAdminSupport /></Suspense>} />
           <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPAdminSettings /></Suspense>} />
+          <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPAdminNotifications /></Suspense>} />
         </Route>
 
         {/* ── Standalone functional pages (no pixel-perfect equivalent yet) ─────── */}
@@ -354,6 +360,7 @@ function App() {
           <Route path="reviews" element={<Suspense fallback={<PageLoader />}><PPSellerReviews /></Suspense>} />
           <Route path="profile" element={<Suspense fallback={<PageLoader />}><PPSellerProfile /></Suspense>} />
           <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPSellerSettings /></Suspense>} />
+          <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPSellerNotifications /></Suspense>} />
         </Route>
 
         {/* ── /admin/* — AdminLayout (shadcn sidebar, /admin/* nav links) ────────── */}
@@ -371,6 +378,7 @@ function App() {
           <Route path="reports" element={<Suspense fallback={<PageLoader />}><PPAdminReports /></Suspense>} />
           <Route path="support" element={<Suspense fallback={<PageLoader />}><PPAdminSupport /></Suspense>} />
           <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPAdminSettings /></Suspense>} />
+          <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPAdminNotifications /></Suspense>} />
         </Route>
 
         {/* ── /dashboard/* — BuyerLayout (shadcn sidebar, /dashboard/* nav links) ── */}
@@ -387,6 +395,7 @@ function App() {
           <Route path="reviews" element={<Suspense fallback={<PageLoader />}><PPBuyerReviews /></Suspense>} />
           <Route path="profile" element={<Suspense fallback={<PageLoader />}><PPBuyerProfile /></Suspense>} />
           <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPBuyerSettings /></Suspense>} />
+          <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPBuyerNotifications /></Suspense>} />
         </Route>
         <Route path="shop" element={<Navigate to="/catalog" replace />} />
         <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />

@@ -37,7 +37,7 @@ const Header = () => {
     const { supabase } = await import('@/lib/supabase');
     await supabase.auth.signOut();
     logout();
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   return (
