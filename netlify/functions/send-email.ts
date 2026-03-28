@@ -61,10 +61,12 @@ export const handler: Handler = async (event) => {
   const internalSecret = process.env.NETLIFY_INTERNAL_SECRET;
   const providedSecret = event.headers['x-internal-secret'];
   // NETLIFY_DEV is set to 'true' by `netlify dev` when running locally.
-  // Only fail-open in that context so developers don't need to configure the
+  // CONTEXT is set to 'production' by Netlify in live deployments.
+  // Only fail-open in local dev so developers don't need to configure the
   // secret just to test locally.  In every other environment (staging,
   // production, deploy-preview) the secret MUST be present and correct.
-  const isLocalDev = process.env.NETLIFY_DEV === 'true';
+  const isLocalDev =
+    process.env.NETLIFY_DEV === 'true' && process.env.CONTEXT !== 'production';
 
   if (!internalSecret || internalSecret.length === 0) {
     if (isLocalDev) {

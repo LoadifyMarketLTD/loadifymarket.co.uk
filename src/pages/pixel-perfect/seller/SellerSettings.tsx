@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Bell, Shield, CreditCard, Truck,
-  Eye, EyeOff, Save, Key, ExternalLink, CheckCircle, AlertCircle, Loader2
+  Eye, EyeOff, Save, ExternalLink, CheckCircle, AlertCircle, Loader2, Pause, Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -185,6 +185,51 @@ const SellerSettings = () => {
     }
   };
 
+  const [pauseLoading, setPauseLoading] = useState(false);
+  const [deleteSellerLoading, setDeleteSellerLoading] = useState(false);
+  const [deleteSellerConfirm, setDeleteSellerConfirm] = useState("");
+
+  const handlePauseAccount = async () => {
+    if (!user) return;
+    setPauseLoading(true);
+    try {
+      // Set all seller's active products to inactive (hides them from marketplace).
+      // sellerStatus remains 'active' so the seller can un-pause later from admin.
+      await supabase
+        .from("products")
+        .update({ isActive: false })
+        .eq("sellerId", user.id)
+        .eq("isActive", true);
+      toast({
+        title: "Account paused",
+        description: "All your listings have been hidden. Contact support to resume selling.",
+      });
+    } catch {
+      toast({ title: "Failed to pause account", description: "Please try again.", variant: "destructive" });
+    } finally {
+      setPauseLoading(false);
+    }
+  };
+
+  const handleDeleteSellerAccount = async () => {
+    if (!user) return;
+    if (deleteSellerConfirm.trim().toLowerCase() !== "delete") {
+      toast({ title: "Confirmation required", description: "Type DELETE to confirm account deletion.", variant: "destructive" });
+      return;
+    }
+    setDeleteSellerLoading(true);
+    try {
+      // Soft-delete: set user as inactive and sign out.
+      await supabase.from("users").update({ isActive: false }).eq("id", user.id);
+      await supabase.auth.signOut();
+      toast({ title: "Account deactivated", description: "Your seller account has been deactivated. Contact support to restore it." });
+    } catch {
+      toast({ title: "Deletion failed", description: "Unable to delete your account. Please contact support.", variant: "destructive" });
+    } finally {
+      setDeleteSellerLoading(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6 max-w-[900px]">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -250,14 +295,6 @@ const SellerSettings = () => {
               <Label className="text-xs">Confirm New Password</Label>
               <Input type="password" placeholder="••••••••" className="mt-1" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
             </div>
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">Two-Factor Authentication</p>
-              <p className="text-xs text-muted-foreground">Add an extra layer of security to your account</p>
-            </div>
-            <Button variant="outline" size="sm"><Key className="mr-2 h-3.5 w-3.5" /> Enable 2FA</Button>
           </div>
         </CardContent>
       </Card>
@@ -389,15 +426,42 @@ const SellerSettings = () => {
               <p className="text-sm font-medium text-foreground">Pause Seller Account</p>
               <p className="text-xs text-muted-foreground">Temporarily hide all your listings from the marketplace</p>
             </div>
-            <Button variant="outline" size="sm">Pause</Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePauseAccount}
+              disabled={pauseLoading}
+            >
+              {pauseLoading ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Pause className="h-3.5 w-3.5 mr-1" />}
+              Pause
+            </Button>
           </div>
           <Separator />
-          <div className="flex items-center justify-between">
+          <div className="space-y-3">
             <div>
               <p className="text-sm font-medium text-foreground">Delete Seller Account</p>
-              <p className="text-xs text-muted-foreground">Permanently remove your seller account and all listings</p>
+              <p className="text-xs text-muted-foreground">
+                Deactivate your seller account. Type <strong>DELETE</strong> below to confirm.
+              </p>
             </div>
-            <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">Delete</Button>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Type DELETE to confirm"
+                value={deleteSellerConfirm}
+                onChange={(e) => setDeleteSellerConfirm(e.target.value)}
+                className="h-8 text-sm max-w-[200px]"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={handleDeleteSellerAccount}
+                disabled={deleteSellerLoading || deleteSellerConfirm.trim().toLowerCase() !== "delete"}
+              >
+                {deleteSellerLoading ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Trash2 className="h-3.5 w-3.5 mr-1" />}
+                Delete
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

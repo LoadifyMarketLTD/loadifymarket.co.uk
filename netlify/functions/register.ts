@@ -97,7 +97,7 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 429,
         body: JSON.stringify({
-          error: 'Too many sign-up attempts from this location. Please wait up to an hour and try again.',
+          error: 'Too many sign-up attempts. Please try again later.',
         }),
       };
     }
@@ -136,7 +136,7 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 429,
         body: JSON.stringify({
-          error: 'Too many sign-up attempts from this location. Please wait up to an hour and try again.',
+          error: 'Too many sign-up attempts. Please try again later.',
         }),
       };
     }
