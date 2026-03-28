@@ -1,6 +1,7 @@
 import { Handler, HandlerEvent } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { getClientIp } from './_shared/getClientIp';
 
 /**
  * POST /.netlify/functions/resend-verification
@@ -30,7 +31,8 @@ async function getAuthUser(
     return null;
   }
   const token = authHeader.substring(7);
-  const { data: { user }, error } = await adminClient.auth.getUser(token);
+  const { data, error } = await adminClient.auth.getUser(token);
+  const user = data?.user;
   if (error || !user) return null;
 
   const { data: userData } = await adminClient
@@ -63,9 +65,7 @@ export const handler: Handler = async (event) => {
   });
 
   // ── Rate limiting: 10 verification resend requests per IP per hour ────────
-  const ip =
-    event.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-    event.headers['client-ip'];
+  const ip = getClientIp(event);
   if (ip) {
     const rl = await checkRateLimit({
       supabase: adminClient,

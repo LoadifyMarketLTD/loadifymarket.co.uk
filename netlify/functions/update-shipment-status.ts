@@ -129,6 +129,14 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    // Only sellers and admins may update shipment status.
+    if (user.role !== 'seller' && user.role !== 'admin') {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: 'Forbidden – seller or admin role required' }),
+      };
+    }
+
     // Get shipment ID from path
     const pathParts = event.path.split('/');
     const shipmentId = pathParts[pathParts.length - 2]; // .../shipments/:id/status

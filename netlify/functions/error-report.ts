@@ -1,5 +1,6 @@
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { getClientIp } from './_shared/getClientIp';
 
 /**
  * POST /.netlify/functions/error-report
@@ -51,10 +52,7 @@ export const handler: Handler = async (event) => {
     return { statusCode: 204, body: '' };
   }
 
-  const ip =
-    event.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-    event.headers['client-ip'] ||
-    'unknown';
+  const ip = getClientIp(event) ?? 'unknown';
 
   // ── IP-based rate limiting ────────────────────────────────────────────────
   if (supabase) {

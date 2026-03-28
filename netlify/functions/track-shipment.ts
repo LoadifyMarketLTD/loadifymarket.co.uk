@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { Handler } from '@netlify/functions';
+import { checkRateLimit } from './_shared/rateLimiter';
+import { getClientIp } from './_shared/getClientIp';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -27,6 +29,25 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Method not allowed' }),
     };
   }
+
+  // ── Rate limiting: 20 tracking requests per IP per 15 minutes ────────────
+  const ip = getClientIp(event);
+  if (ip) {
+    const rl = await checkRateLimit({
+      supabase,
+      tableName: 'track_shipment_rate_limits',
+      identifier: ip,
+      windowMinutes: 15,
+      maxAttempts: 20,
+    });
+    if (rl.exceeded) {
+      return {
+        statusCode: 429,
+        body: JSON.stringify({ error: 'Too many requests. Please try again later.' }),
+      };
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   try {
     const params = event.queryStringParameters || {};

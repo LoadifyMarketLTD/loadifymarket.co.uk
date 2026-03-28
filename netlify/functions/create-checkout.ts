@@ -78,8 +78,11 @@ export const handler: Handler = async (event) => {
 
   // 5a. If an Authorization header is present, verify the token and ensure
   //     buyerId matches the authenticated user to prevent order spoofing.
-  let verifiedBuyerId = buyerId ?? '';
-  const authHeader = event.headers.authorization || event.headers.Authorization;
+  //     When no token is provided the buyerId from the request body is NOT
+  //     trusted — we set it to '' so unauthenticated callers cannot claim
+  //     ownership of any user account.
+  let verifiedBuyerId = '';
+  const authHeader = event.headers['authorization'];
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.substring(7);
     const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);

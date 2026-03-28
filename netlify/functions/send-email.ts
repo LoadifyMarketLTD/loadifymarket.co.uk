@@ -2,6 +2,7 @@ import sgMail from '@sendgrid/mail';
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { getClientIp } from './_shared/getClientIp';
 
 const sendgridApiKey = process.env.SENDGRID_API_KEY;
 if (!sendgridApiKey) {
@@ -84,9 +85,7 @@ export const handler: Handler = async (event) => {
 
   // ── Rate limiting: 20 emails per IP per 15 minutes ───────────────────────
   if (supabase) {
-    const ip =
-      event.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-      event.headers['client-ip'];
+    const ip = getClientIp(event);
 
     if (ip) {
       const rl = await checkRateLimit({
