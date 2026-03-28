@@ -59,7 +59,7 @@ const Signup = () => {
         ? "Your seller account has been created. Sign in to complete your setup and start selling."
         : "Your account is ready. Sign in to get started.";
       toast({ title: "Account created!", description });
-      navigate("/login");
+      navigate("/login", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {

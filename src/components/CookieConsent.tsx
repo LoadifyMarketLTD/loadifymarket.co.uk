@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Cookie, ChevronDown, ChevronUp } from "lucide-react";
+import { safeLocalStorage } from "@/lib/safeStorage";
 
 type CookiePreferences = {
   essential: boolean; // always true
@@ -12,8 +13,8 @@ type CookiePreferences = {
 const COOKIE_CONSENT_KEY = "loadify_cookie_consent";
 
 const getStoredConsent = (): CookiePreferences | null => {
+  const stored = safeLocalStorage.getItem(COOKIE_CONSENT_KEY);
   try {
-    const stored = localStorage.getItem(COOKIE_CONSENT_KEY);
     return stored ? JSON.parse(stored) : null;
   } catch {
     return null;
@@ -21,11 +22,7 @@ const getStoredConsent = (): CookiePreferences | null => {
 };
 
 const storeConsent = (prefs: CookiePreferences) => {
-  try {
-    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(prefs));
-  } catch {
-    // Silently ignore storage errors (private/incognito mode, quota exceeded).
-  }
+  safeLocalStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(prefs));
 };
 
 const CookieConsent = () => {

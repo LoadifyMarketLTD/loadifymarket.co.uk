@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import type { Product } from "@/components/catalog/ProductCard";
+import { safeLocalStorage } from "@/lib/safeStorage";
 
 export interface CartItem {
   product: Product;
@@ -22,8 +23,8 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 const CART_STORAGE_KEY = "loadify_cart";
 
 function loadCart(): CartItem[] {
+  const stored = safeLocalStorage.getItem(CART_STORAGE_KEY);
   try {
-    const stored = localStorage.getItem(CART_STORAGE_KEY);
     return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
@@ -31,11 +32,7 @@ function loadCart(): CartItem[] {
 }
 
 function saveCart(items: CartItem[]) {
-  try {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    // Silently ignore storage errors (private/incognito mode, quota exceeded).
-  }
+  safeLocalStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
 }
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {

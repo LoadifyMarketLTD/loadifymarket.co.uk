@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { MapPin, Home, Building2, Save, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { useToast } from "@/hooks/use-toast";
 
 interface AddressData {
   name?: string;
@@ -40,9 +41,14 @@ const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
 
   const handleSave = async () => {
     setSaving(true);
-    await onSave(type, form);
-    setSaving(false);
-    setEditing(false);
+    try {
+      await onSave(type, form);
+      setEditing(false);
+    } catch {
+      // Error toast is shown by the parent handler; keep edit mode open so the user can retry.
+    } finally {
+      setSaving(false);
+    }
   };
 
   const hasData = data.line1 || data.city || data.postcode;
@@ -131,6 +137,7 @@ const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
 
 const BuyerAddresses = () => {
   const { user } = useAuthStore();
+  const { toast } = useToast();
   const [shippingAddress, setShippingAddress] = useState<AddressData>(emptyAddress());
   const [billingAddress, setBillingAddress] = useState<AddressData>(emptyAddress());
   const [loading, setLoading] = useState(true);
@@ -153,6 +160,7 @@ const BuyerAddresses = () => {
         }
       } catch (err) {
         console.error("Error fetching addresses:", err);
+        toast({ title: "Failed to load addresses", description: "Please refresh the page.", variant: "destructive" });
       } finally {
         setLoading(false);
       }
@@ -163,11 +171,19 @@ const BuyerAddresses = () => {
   const handleSave = async (type: "shipping" | "billing", data: AddressData) => {
     if (!user) return;
     const field = type === "shipping" ? "shippingAddress" : "billingAddress";
-    await supabase
-      .from("buyer_profiles")
-      .upsert({ userId: user.id, [field]: data }, { onConflict: "userId" });
-    if (type === "shipping") setShippingAddress(data);
-    else setBillingAddress(data);
+    try {
+      const { error } = await supabase
+        .from("buyer_profiles")
+        .upsert({ userId: user.id, [field]: data }, { onConflict: "userId" });
+      if (error) throw error;
+      if (type === "shipping") setShippingAddress(data);
+      else setBillingAddress(data);
+      toast({ title: "Address saved" });
+    } catch (err) {
+      console.error("Error saving address:", err);
+      toast({ title: "Failed to save address", description: "Please try again.", variant: "destructive" });
+      throw err;
+    }
   };
 
   return (

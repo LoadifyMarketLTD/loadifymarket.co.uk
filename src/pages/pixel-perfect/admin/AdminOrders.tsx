@@ -15,6 +15,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import { toast } from "@/hooks/use-toast";
 
 interface Order {
   id: string;
@@ -55,6 +56,7 @@ const AdminOrders = () => {
       if (updateError) throw updateError;
       setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status: newStatus } : o));
       setSelected((s) => s && s.id === id ? { ...s, status: newStatus } : s);
+      toast({ title: "Order status updated" });
     } catch (err: unknown) {
       setError((err as Error).message || "Failed to update order status");
     } finally {
