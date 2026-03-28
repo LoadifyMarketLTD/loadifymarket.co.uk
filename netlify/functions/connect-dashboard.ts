@@ -45,6 +45,16 @@ export const handler: Handler = async (event) => {
     return { statusCode: 401, body: JSON.stringify({ error: 'Invalid or expired token' }) };
   }
 
+  // Only sellers may access the Express dashboard.
+  const { data: userRow } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single<{ role: string }>();
+  if (userRow?.role !== 'seller') {
+    return { statusCode: 403, body: JSON.stringify({ error: 'Seller account required' }) };
+  }
+
   try {
     const { data: profile } = await supabase
       .from('seller_profiles')

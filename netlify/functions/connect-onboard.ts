@@ -50,6 +50,16 @@ export const handler: Handler = async (event) => {
     return { statusCode: 401, body: JSON.stringify({ error: 'Invalid or expired token' }) };
   }
 
+  // Only sellers may initiate Connect onboarding.
+  const { data: userRow } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', user.id)
+    .single<{ role: string }>();
+  if (userRow?.role !== 'seller') {
+    return { statusCode: 403, body: JSON.stringify({ error: 'Seller account required' }) };
+  }
+
   const sellerId = user.id;
 
   // ── Rate limiting: 5 onboarding link requests per seller per hour ─────────

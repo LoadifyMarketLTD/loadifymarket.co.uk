@@ -207,10 +207,17 @@ export default function AdminSellerDetailPage() {
     setResendStatus('sending');
     setResendMessage('');
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Your session has expired. Please sign in again.');
+      }
       const res = await fetch('/.netlify/functions/resend-verification', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: id, adminId: adminUser.id }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ userId: id }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to send');

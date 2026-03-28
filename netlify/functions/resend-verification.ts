@@ -1,6 +1,7 @@
-import { Handler } from '@netlify/functions';
+import { Handler, HandlerEvent } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { getClientIp } from './_shared/getClientIp';
 
 /**
  * POST /.netlify/functions/resend-verification
@@ -14,11 +15,34 @@ import { checkRateLimit } from './_shared/rateLimiter';
  *   SUPABASE_SERVICE_ROLE_KEY
  *
  * Request body (JSON):
- *   { userId: string, adminId: string }
+ *   { userId: string }
  *
- * The caller must be an authenticated admin — we verify this by checking
- * public.users.role for the adminId supplied.
+ * The caller must be an authenticated admin — verified via the
+ * Authorization: Bearer <token> header (Supabase session token).
  */
+
+// Verify the caller's JWT and return their public.users row, or null.
+async function getAuthUser(
+  event: HandlerEvent,
+  adminClient: ReturnType<typeof createClient>,
+) {
+  const authHeader = event.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+  const token = authHeader.substring(7);
+  const { data, error } = await adminClient.auth.getUser(token);
+  const user = data?.user;
+  if (error || !user) return null;
+
+  const { data: userData } = await adminClient
+    .from('users')
+    .select('id, role')
+    .eq('id', user.id)
+    .single();
+
+  return userData ?? null;
+}
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -41,9 +65,7 @@ export const handler: Handler = async (event) => {
   });
 
   // ── Rate limiting: 10 verification resend requests per IP per hour ────────
-  const ip =
-    event.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-    event.headers['client-ip'];
+  const ip = getClientIp(event);
   if (ip) {
     const rl = await checkRateLimit({
       supabase: adminClient,
@@ -61,32 +83,27 @@ export const handler: Handler = async (event) => {
   }
   // ─────────────────────────────────────────────────────────────────────────
 
-  let body: { userId?: string; adminId?: string };
+  // ── JWT authentication ───────────────────────────────────────────────────
+  const caller = await getAuthUser(event, adminClient);
+  if (!caller) {
+    return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
+  }
+  if (caller.role !== 'admin' && caller.role !== 'owner') {
+    return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden – admin role required' }) };
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
+  let body: { userId?: string };
   try {
     body = JSON.parse(event.body || '{}');
   } catch {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body' }) };
   }
 
-  const { userId, adminId } = body;
+  const { userId } = body;
 
-  if (!userId || !adminId) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'userId and adminId are required' }) };
-  }
-
-  // Verify that the caller is an admin or owner
-  const { data: adminUser, error: adminErr } = await adminClient
-    .from('users')
-    .select('role')
-    .eq('id', adminId)
-    .single();
-
-  if (adminErr || !adminUser) {
-    return { statusCode: 403, body: JSON.stringify({ error: 'Admin user not found' }) };
-  }
-
-  if (adminUser.role !== 'admin' && adminUser.role !== 'owner') {
-    return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden – admin role required' }) };
+  if (!userId) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
   }
 
   // Look up the target user's email and name
@@ -119,7 +136,7 @@ export const handler: Handler = async (event) => {
     console.error('resend-verification generateLink error:', linkErr);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: linkErr?.message || 'Failed to generate verification link' }),
+      body: JSON.stringify({ error: 'Failed to generate verification link' }),
     };
   }
 
