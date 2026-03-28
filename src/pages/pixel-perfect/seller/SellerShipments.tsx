@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Truck, Search, Filter, MapPin, Clock, Package, CheckCircle2 } from "lucide-react";
+import { Truck, Search, MapPin, Clock, Package, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -161,7 +161,6 @@ const SellerShipments = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search shipments or tracking..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10" />
         </div>
-        <Button variant="outline" size="default"><Filter className="mr-2 h-4 w-4" /> Filters</Button>
       </div>
 
       {/* Tabs */}

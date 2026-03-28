@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, Search, Filter, Clock, CheckCircle2, MessageSquare, Send } from "lucide-react";
+import { FileText, Search, Clock, CheckCircle2, MessageSquare, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -173,7 +173,6 @@ const SellerRFQ = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input placeholder="Search quotes..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10" />
         </div>
-        <Button variant="outline" size="default"><Filter className="mr-2 h-4 w-4" /> Filters</Button>
       </div>
 
       {/* Tabs */}

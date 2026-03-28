@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import {
   Settings, Globe, Database, Save, Key,
-  Eye, EyeOff, Trash2, RefreshCw, Loader2,
+  Eye, EyeOff, RefreshCw, Loader2, CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -31,6 +30,17 @@ const AdminSettings = () => {
   const [features, setFeatures] = useState<Features>(DEFAULT_FEATURES);
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [cacheCleared, setCacheCleared] = useState(false);
+
+  const handleClearCache = () => {
+    try {
+      sessionStorage.clear();
+    } catch {
+      // Ignore — session storage may not be available
+    }
+    setCacheCleared(true);
+    setTimeout(() => setCacheCleared(false), 3000);
+  };
 
   // Load persisted settings from platform_settings on mount
   useEffect(() => {
@@ -214,41 +224,11 @@ const AdminSettings = () => {
               <p className="text-sm font-medium text-foreground">Clear Application Cache</p>
               <p className="text-xs text-muted-foreground">Remove cached data to force fresh queries</p>
             </div>
-            <Button variant="outline" size="sm"><RefreshCw className="h-3.5 w-3.5 mr-1" /> Clear Cache</Button>
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">Database Backup</p>
-              <p className="text-xs text-muted-foreground">Last backup: 19 Mar 2026 at 03:00 UTC</p>
-            </div>
-            <Button variant="outline" size="sm">Run Backup</Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Danger Zone */}
-      <Card className="border-destructive/30">
-        <CardHeader>
-          <CardTitle className="text-base text-destructive">Danger Zone</CardTitle>
-          <CardDescription>Critical platform operations.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">Reset All User Sessions</p>
-              <p className="text-xs text-muted-foreground">Force all users to re-authenticate</p>
-            </div>
-            <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">Reset</Button>
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">Purge All Data</p>
-              <p className="text-xs text-muted-foreground">⚠️ This will permanently delete all marketplace data</p>
-            </div>
-            <Button variant="outline" size="sm" className="text-destructive border-destructive/30 hover:bg-destructive/10">
-              <Trash2 className="h-3.5 w-3.5 mr-1" /> Purge
+            <Button variant="outline" size="sm" onClick={handleClearCache} disabled={cacheCleared}>
+              {cacheCleared
+                ? <><CheckCircle2 className="h-3.5 w-3.5 mr-1 text-emerald-600" /> Cleared</>
+                : <><RefreshCw className="h-3.5 w-3.5 mr-1" /> Clear Cache</>
+              }
             </Button>
           </div>
         </CardContent>

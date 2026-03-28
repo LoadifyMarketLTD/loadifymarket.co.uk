@@ -136,7 +136,7 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 429,
         body: JSON.stringify({
-          error: 'Too many sign-up attempts. Please try again later.',
+          error: 'Registration is temporarily unavailable due to high demand. Please try again in a few minutes.',
         }),
       };
     }

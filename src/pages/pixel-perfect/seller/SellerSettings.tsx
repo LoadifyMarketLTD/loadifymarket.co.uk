@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Bell, Shield, CreditCard, Truck,
-  Eye, EyeOff, Save, ExternalLink, CheckCircle, AlertCircle, Loader2, Pause, Trash2
+  Eye, EyeOff, Save, ExternalLink, CheckCircle, AlertCircle, Loader2, Pause, Play, Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -186,26 +186,70 @@ const SellerSettings = () => {
   };
 
   const [pauseLoading, setPauseLoading] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [deleteSellerLoading, setDeleteSellerLoading] = useState(false);
   const [deleteSellerConfirm, setDeleteSellerConfirm] = useState("");
+
+  // Detect paused state on mount: seller is effectively paused if they have no active products.
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("sellerId", user.id)
+      .eq("isActive", true)
+      .then(({ count }) => {
+        // If seller has 0 active products we assume they paused (could also be no listings).
+        // We only flip to "paused" state if they already have products in the DB.
+        supabase
+          .from("products")
+          .select("id", { count: "exact", head: true })
+          .eq("sellerId", user.id)
+          .then(({ count: total }) => {
+            if ((total ?? 0) > 0 && (count ?? 0) === 0) {
+              setIsPaused(true);
+            }
+          });
+      });
+  }, [user?.id]);
 
   const handlePauseAccount = async () => {
     if (!user) return;
     setPauseLoading(true);
     try {
-      // Set all seller's active products to inactive (hides them from marketplace).
-      // sellerStatus remains 'active' so the seller can un-pause later from admin.
       await supabase
         .from("products")
         .update({ isActive: false })
         .eq("sellerId", user.id)
         .eq("isActive", true);
+      setIsPaused(true);
       toast({
         title: "Account paused",
-        description: "All your listings have been hidden. Contact support to resume selling.",
+        description: "All your listings are now hidden from the marketplace. Click Resume to re-enable them.",
       });
     } catch {
       toast({ title: "Failed to pause account", description: "Please try again.", variant: "destructive" });
+    } finally {
+      setPauseLoading(false);
+    }
+  };
+
+  const handleResumeAccount = async () => {
+    if (!user) return;
+    setPauseLoading(true);
+    try {
+      await supabase
+        .from("products")
+        .update({ isActive: true })
+        .eq("sellerId", user.id)
+        .eq("isActive", false);
+      setIsPaused(false);
+      toast({
+        title: "Account resumed",
+        description: "All your listings are now visible on the marketplace.",
+      });
+    } catch {
+      toast({ title: "Failed to resume account", description: "Please try again.", variant: "destructive" });
     } finally {
       setPauseLoading(false);
     }
@@ -423,17 +467,26 @@ const SellerSettings = () => {
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-foreground">Pause Seller Account</p>
-              <p className="text-xs text-muted-foreground">Temporarily hide all your listings from the marketplace</p>
+              <p className="text-sm font-medium text-foreground">{isPaused ? "Resume Seller Account" : "Pause Seller Account"}</p>
+              <p className="text-xs text-muted-foreground">
+                {isPaused
+                  ? "Re-enable all your listings on the marketplace"
+                  : "Temporarily hide all your listings from the marketplace"}
+              </p>
             </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={handlePauseAccount}
+              onClick={isPaused ? handleResumeAccount : handlePauseAccount}
               disabled={pauseLoading}
             >
-              {pauseLoading ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Pause className="h-3.5 w-3.5 mr-1" />}
-              Pause
+              {pauseLoading
+                ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                : isPaused
+                  ? <Play className="h-3.5 w-3.5 mr-1" />
+                  : <Pause className="h-3.5 w-3.5 mr-1" />
+              }
+              {isPaused ? "Resume" : "Pause"}
             </Button>
           </div>
           <Separator />
