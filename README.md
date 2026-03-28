@@ -1,8 +1,8 @@
 # Loadify Market
 
-**UK multi-seller ecommerce marketplace for wholesale, clearance, pallet, and job-lot stock**, operated by XDrive Logistics Ltd (Co. No: 13171804, VAT: GB375949535).
+**UK multi-category physical goods marketplace**, operated by XDrive Logistics Ltd (Co. No: 13171804, VAT: GB375949535).
 
-Independent UK sellers list physical stock — individual products, mixed job lots, full pallets, and clearance lines — across consumer goods categories. Buyers browse, purchase directly via Stripe, and receive their orders from sellers with full shipment tracking.
+Independent UK sellers list and sell physical products across all consumer goods categories. The platform does not own inventory, hold stock, or operate a depot — sellers manage their own stock and fulfil orders directly. Buyers browse, purchase via Stripe, and receive orders from sellers with full shipment tracking.
 
 ---
 
@@ -32,8 +32,7 @@ Independent UK sellers list physical stock — individual products, mixed job lo
 - File returns and raise disputes on delivered orders
 
 ### Sellers
-- List physical stock with listing types: individual product, pallet, mixed lot, or clearance line
-- Set condition (new, used, refurbished), stock quantity, weight, dimensions, and pallet-specific fields
+- List physical products across all supported categories, with optional listing attributes including condition (new, used, refurbished), stock quantity, weight, dimensions, and pallet or lot-specific fields
 - Seller account lifecycle: `draft` → `submitted` → `active` → `suspended` (admin-approved)
 - Order management dashboard — status progression: `paid` → `packed` → `shipped` → `delivered`
 - Shipment creation with courier name, tracking number, and dispatch date
@@ -54,7 +53,7 @@ Independent UK sellers list physical stock — individual products, mixed job lo
 
 ## 💰 Business Model
 
-The platform charges a **7% commission** on each completed transaction, deducted before the seller's payout is processed via Stripe Connect.
+The platform charges a **7% commission** on each completed transaction, deducted before the seller's payout is processed via Stripe Connect. The platform acts solely as an intermediary — it does not own products, hold inventory, or operate a fulfilment depot. Sellers are responsible for stock management and order fulfilment.
 
 > **Launch promotion:** 0% commission on all transactions until 1 July 2026. The standard 7% rate resumes automatically after that date.
 
