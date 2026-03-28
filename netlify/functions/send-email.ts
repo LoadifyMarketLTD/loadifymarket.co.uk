@@ -60,20 +60,32 @@ export const handler: Handler = async (event) => {
 
   const internalSecret = process.env.NETLIFY_INTERNAL_SECRET;
   const providedSecret = event.headers['x-internal-secret'];
-  // When NETLIFY_INTERNAL_SECRET is not configured we fail-open so that
-  // server-to-server calls (register, resend-verification, stripe-webhook …)
-  // still work in environments where the secret has not been set.
-  // When it IS configured the provided header value must match.
+  // NETLIFY_DEV is set to 'true' by `netlify dev` when running locally.
+  // Only fail-open in that context so developers don't need to configure the
+  // secret just to test locally.  In every other environment (staging,
+  // production, deploy-preview) the secret MUST be present and correct.
+  const isLocalDev = process.env.NETLIFY_DEV === 'true';
+
   if (!internalSecret || internalSecret.length === 0) {
-    console.warn(
-      'send-email: NETLIFY_INTERNAL_SECRET is not configured – all server-side calls are being accepted. ' +
-      'Set this variable in production to enforce internal-call authentication.',
-    );
+    if (isLocalDev) {
+      console.warn(
+        'send-email: NETLIFY_INTERNAL_SECRET is not configured – accepting all ' +
+        'server-side calls in local dev. Set this variable before deploying.',
+      );
+    } else {
+      console.error(
+        'send-email: NETLIFY_INTERNAL_SECRET is not configured. ' +
+        'Add this environment variable in the Netlify dashboard.',
+      );
+    }
   }
+
+  // A call is considered internal when:
+  //   a) running in local dev with no secret configured (dev convenience), OR
+  //   b) the caller presents the correct x-internal-secret header value.
   const isInternalCall =
-    !internalSecret ||
-    internalSecret.length === 0 ||
-    providedSecret === internalSecret;
+    (isLocalDev && (!internalSecret || internalSecret.length === 0)) ||
+    (internalSecret && internalSecret.length > 0 && providedSecret === internalSecret);
 
   if (!isInternalCall && !PUBLIC_TEMPLATES.has(template)) {
     return {
