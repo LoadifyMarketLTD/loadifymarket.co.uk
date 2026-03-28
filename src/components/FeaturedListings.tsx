@@ -1,124 +1,76 @@
 import { Link } from "react-router-dom";
 import React, { useState, useCallback } from "react";
-import { Star, ArrowRight, Eye, X } from "lucide-react";
+import { ArrowRight, Eye, X } from "lucide-react";
 
 const FILTER_TABS = [
   { key: "all",         label: "All"           },
-  { key: "new",         label: "New Arrivals"  },
-  { key: "best",        label: "Best in Category" },
-  { key: "flash",       label: "Flash Sale"    },
   { key: "electronics", label: "Electronics"   },
   { key: "fashion",     label: "Fashion"       },
+  { key: "beauty",      label: "Beauty"        },
+  { key: "home",        label: "Home & Kitchen" },
+  { key: "tools",       label: "Tools & DIY"   },
 ];
 
 const featuredListings = [
   {
     id: "1",
     img: "/images/featured/earbuds.webp",
-    title: "Wireless Earbuds",
-    seller: "TechDeals UK",
-    price: "£49.99",
-    stars: 4,
-    reviews: 124,
+    title: "Electronics & Audio",
     category: "Electronics",
     filterKey: "electronics",
   },
   {
     id: "2",
     img: "/images/featured/toolbox.webp",
-    title: "Professional Tool Set",
-    seller: "ToolMaster Pro",
-    price: "£79.99",
-    stars: 5,
-    reviews: 88,
+    title: "Tools & DIY Supplies",
     category: "Tools & DIY",
-    filterKey: "best",
+    filterKey: "tools",
   },
   {
     id: "3",
     img: "/images/products/handbag.webp",
-    title: "Designer Handbag",
-    seller: "StyleHub London",
-    price: "£129.99",
-    stars: 5,
-    reviews: 214,
+    title: "Fashion Accessories",
     category: "Fashion",
     filterKey: "fashion",
   },
   {
     id: "4",
     img: "/images/products/smartwatch.webp",
-    title: "Smart Fitness Watch",
-    seller: "UrbanGear Co.",
-    price: "£89.99",
-    stars: 4,
-    reviews: 309,
+    title: "Wearables & Gadgets",
     category: "Electronics",
     filterKey: "electronics",
   },
   {
     id: "5",
     img: "/images/featured/skincare2.webp",
-    title: "Skincare Gift Set",
-    seller: "GlowBeauty UK",
-    price: "£34.99",
-    stars: 4,
-    reviews: 176,
+    title: "Beauty & Skincare",
     category: "Beauty",
-    filterKey: "new",
+    filterKey: "beauty",
   },
   {
     id: "6",
     img: "/images/featured/chair.webp",
-    title: "Contemporary Lounge Chair",
-    seller: "HomeStyle Direct",
-    price: "£349.00",
-    stars: 4,
-    reviews: 53,
+    title: "Home & Furniture",
     category: "Home & Kitchen",
-    filterKey: "best",
+    filterKey: "home",
   },
   {
     id: "7",
     img: "/images/categories/electronics.webp",
-    title: "Consumer Electronics Bundle",
-    seller: "TechWorld UK",
-    price: "£79.99",
-    stars: 4,
-    reviews: 98,
+    title: "Consumer Electronics",
     category: "Electronics",
     filterKey: "electronics",
   },
   {
     id: "8",
     img: "/images/products/headphones.webp",
-    title: "Professional Studio Headphones",
-    seller: "AudioElite UK",
-    price: "£149.99",
-    stars: 5,
-    reviews: 431,
+    title: "Audio & Headphones",
     category: "Electronics",
     filterKey: "electronics",
   },
 ];
 
 type Listing = (typeof featuredListings)[0];
-
-function StarRow({ count, small = false }: { count: number; small?: boolean }) {
-  return (
-    <div className="flex gap-0.5" role="img" aria-label={`${count} out of 5 stars`}>
-      {[1, 2, 3, 4, 5].map((n) => (
-        <Star
-          key={n}
-          aria-hidden="true"
-          className={`${small ? "h-2.5 w-2.5" : "h-3 w-3"} ${
-            n <= count ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"
-          }`}
-        />
-      ))}
-    </div>
-  );
-}
 
 function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void }) {
   const handleBackdropClick = useCallback(
@@ -162,28 +114,23 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
           <p className="text-xs font-semibold text-[#2563EB] uppercase tracking-wide mb-1">
             {item.category}
           </p>
-          <h3 id="quick-view-title" className="text-xl font-extrabold text-[#0F172A] mb-1">
+          <h3 id="quick-view-title" className="text-xl font-extrabold text-[#0F172A] mb-4">
             {item.title}
           </h3>
-          <p className="text-xs text-[#64748B] mb-3">by {item.seller}</p>
-          <div className="flex items-center gap-2 mb-4">
-            <StarRow count={item.stars} />
-            <span className="text-sm text-[#64748B]">({item.reviews} reviews)</span>
-          </div>
           <div className="flex gap-3">
             <Link
               to="/catalog"
               onClick={onClose}
               className="flex-1 text-center bg-[#2563EB] text-white font-semibold py-2.5 rounded-xl hover:bg-[#1D4ED8] transition-all text-sm"
             >
-              View Details
+              Explore Listings
             </Link>
             <Link
               to="/register"
               onClick={onClose}
               className="flex-1 text-center border-2 border-[#2563EB] text-[#2563EB] font-semibold py-2.5 rounded-xl hover:bg-blue-50 transition-all text-sm"
             >
-              Buy Now
+              Browse Marketplace
             </Link>
           </div>
         </div>
@@ -222,7 +169,7 @@ const FeaturedListings = () => {
             </Link>
           </div>
           <p className="text-sm text-[#64748B] mb-6">
-            Discover the best products from independent UK sellers
+            Explore what sellers will be offering across the marketplace
           </p>
 
           {/* Filter pills */}
@@ -286,14 +233,10 @@ const FeaturedListings = () => {
                 </div>
                 <div className="p-3 flex-1 flex flex-col gap-1">
                   <p className="text-xs font-semibold text-[#2563EB] uppercase tracking-wide">{item.category}</p>
-                  <p className="text-sm font-bold text-[#0F172A] line-clamp-2 leading-snug">
+                  <p className="text-sm font-bold text-[#0F172A] line-clamp-2 leading-snug flex-1">
                     {item.title}
                   </p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <StarRow count={item.stars} small />
-                    <span className="text-[10px] text-[#64748B]">({item.reviews})</span>
-                  </div>
-                  <p className="text-[10px] text-[#64748B] truncate">{item.seller}</p>
+                  <span className="text-[10px] font-semibold text-[#2563EB] mt-auto">Explore →</span>
                 </div>
               </Link>
             ))}
