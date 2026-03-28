@@ -77,7 +77,7 @@ const Signup = () => {
   const strength = passwordStrength(formData.password);
 
   const sellerBullets = [
-    "Reach thousands of UK wholesale buyers",
+    "Reach thousands of UK buyers across all categories",
     "Automatic activation — complete setup and connect Stripe",
     "Secure payments via Stripe — no hidden fees",
   ];
@@ -101,12 +101,12 @@ const Signup = () => {
             </span>
           </div>
           <h2 className="font-display text-2xl font-bold text-primary-foreground">
-            {isSeller ? "Sell on Loadify Market" : "Join the UK Wholesale Marketplace"}
+            {isSeller ? "Sell on Loadify Market" : "Join the UK Marketplace"}
           </h2>
           <p className="text-primary-foreground/70 text-lg leading-relaxed">
             {isSeller
-              ? "Set up your seller account and start reaching thousands of UK wholesale buyers."
-              : "Create your free account to start buying or selling wholesale, clearance and overstock goods."}
+              ? "Set up your seller account and start reaching thousands of UK buyers."
+              : "Create your free account to buy or sell physical goods across all categories."}
           </p>
 
           <div className="space-y-4 pt-4 text-left">
@@ -142,7 +142,7 @@ const Signup = () => {
             <p className="text-muted-foreground">
               {isSeller
                 ? "Create your account and complete seller setup to start listing products."
-                : "Get started with wholesale trading today"}
+                : "Get started on Loadify Market today"}
             </p>
           </div>
 

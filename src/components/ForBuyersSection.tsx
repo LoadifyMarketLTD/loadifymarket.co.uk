@@ -5,9 +5,9 @@ import { Link } from "react-router-dom";
 const benefits = [
   {
     icon: Search,
-    title: "Discover Independent Suppliers",
+    title: "Discover Independent Sellers",
     description:
-      "Browse thousands of listings from registered UK sellers — wholesale lots, clearance lines, pallets and returns — all in one marketplace.",
+      "Browse thousands of listings from registered UK sellers across all categories — retail items, wholesale lots, clearance lines, handmade goods and more.",
   },
   {
     icon: ShieldCheck,
@@ -39,10 +39,10 @@ const ForBuyersSection = () => {
             For Buyers
           </span>
           <h2 className="mt-3 text-3xl sm:text-4xl font-display font-bold text-foreground">
-            Find Suppliers You Can Trust
+            Find Products You Can Trust
           </h2>
           <p className="mt-4 text-muted-foreground text-lg leading-relaxed">
-            Loadify connects you with independent UK sellers offering wholesale, clearance and returns stock — all on one platform.
+            Loadify connects you with independent UK sellers offering physical goods across all categories — all on one platform.
           </p>
         </div>
 

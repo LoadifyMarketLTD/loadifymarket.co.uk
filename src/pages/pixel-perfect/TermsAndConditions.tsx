@@ -19,7 +19,7 @@ const TermsAndConditions = () => {
           <p>By accessing or using our Platform, you agree to be bound by these Terms. If you do not agree, please do not use the Platform.</p>
 
           <h2>1. About Our Platform</h2>
-          <p>Loadify Market is an online marketplace that connects independent buyers and sellers of wholesale, clearance, overstock and liquidation goods. We do not own, manufacture or sell any products listed on the Platform. Sellers are solely responsible for their listings, product descriptions, pricing and fulfilment.</p>
+          <p>Loadify Market is a UK-based multi-category online marketplace for physical goods that connects independent buyers and sellers. We do not own, manufacture or sell any products listed on the Platform. Sellers are solely responsible for their listings, product descriptions, pricing and fulfilment.</p>
 
           <h2>2. Account Registration</h2>
           <p>To use certain features of the Platform, you must create an account. You agree to:</p>
