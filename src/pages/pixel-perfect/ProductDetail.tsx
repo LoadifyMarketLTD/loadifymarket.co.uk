@@ -196,12 +196,12 @@ const ProductDetail = () => {
       <main className="pt-20 pb-16">
         <div className="container mx-auto px-4">
           {(() => {
-            const isClearance = navState.flow === "clearance";
+            const isClearance = navState.flow === "clearance" || navState.flow === "deals";
             const sectionLabel = isClearance
-              ? (navState.fromLabel ?? "Clearance")
+              ? (navState.fromLabel ?? "Deals")
               : "Catalog";
             const sectionPath = isClearance
-              ? (navState.from ?? "/clearance")
+              ? (navState.from ?? "/deals")
               : "/catalog";
             // Category slug: prefer what was passed from CategoryPage, fall back to DB-derived
             const catSlug = navState.categorySlug ?? productCategorySlug;

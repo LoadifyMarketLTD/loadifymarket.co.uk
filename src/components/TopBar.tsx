@@ -5,10 +5,10 @@ const TopBar = () => (
     <div className="container mx-auto px-4 flex items-center justify-between">
       {/* Tagline — progressive disclosure: more detail as viewport widens */}
       <span className="text-[11px] text-blue-200 hidden xl:block">
-        🇬🇧 UK's #1 B2B Wholesale Marketplace — Registered Sellers, Secure Checkout
+        🇬🇧 UK Multi-Category Marketplace — Registered Sellers, Secure Checkout
       </span>
       <span className="text-[11px] text-blue-200 hidden sm:block xl:hidden">
-        🇬🇧 UK B2B Wholesale Marketplace
+        🇬🇧 UK Multi-Category Marketplace
       </span>
       <span className="text-[11px] text-blue-200 sm:hidden">🇬🇧 Loadify Market</span>
 

@@ -167,7 +167,7 @@ export default function SavedSearches() {
                 value={newQuery}
                 onChange={(e) => setNewQuery(e.target.value)}
                 className="input-field"
-                placeholder="e.g., laptop clearance"
+                placeholder="e.g., laptop, blue dress"
                 required
               />
             </div>

@@ -13,7 +13,7 @@ const buyerSteps = [
     icon: Search,
     step: "02",
     title: "Find What You Need",
-    description: "Search and browse products from independent UK sellers across all categories — retail, wholesale, clearance and more.",
+    description: "Search and browse products from independent UK sellers across all categories — electronics, fashion, home, and more.",
   },
   {
     icon: PoundSterling,
@@ -34,7 +34,7 @@ const sellerSteps = [
     icon: PackagePlus,
     step: "02",
     title: "List Your Products",
-    description: "Upload your products with photos and pricing. List any physical goods — retail, wholesale, clearance or anything else. Buyers see them instantly.",
+    description: "Upload your products with photos and pricing. List any physical goods — single items, multi-quantity or anything else. Buyers see them instantly.",
   },
   {
     icon: PoundSterling,

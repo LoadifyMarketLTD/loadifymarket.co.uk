@@ -31,7 +31,7 @@ const SellerTerms = () => {
           <ul>
             <li>Only list products you legally own or are authorised to sell</li>
             <li>Provide accurate, complete and non-misleading descriptions, images and pricing</li>
-            <li>Clearly state product condition (new, refurbished, returns, clearance, etc.)</li>
+            <li>Clearly state product condition (new, used, refurbished, etc.)</li>
             <li>Set fair and transparent shipping costs</li>
             <li>Comply with all applicable UK laws including product safety, trading standards and consumer protection regulations</li>
           </ul>

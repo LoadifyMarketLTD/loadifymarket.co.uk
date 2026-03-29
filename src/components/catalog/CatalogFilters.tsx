@@ -17,10 +17,9 @@ const categories = [
   "Office & Stationery",
   "Baby & Nursery",
   "Jewellery & Watches",
-  "Mixed Lots",
-  "Customer Returns",
-  "Overstock",
-  "Clearance Deals",
+  "Handmade & Crafts",
+  "Books & Media",
+  "Pet Supplies",
 ];
 
 const conditions = ["New", "Like New", "Mixed", "Unchecked"];

@@ -128,7 +128,7 @@ const Navbar = () => {
             )}
           </div>
 
-          <Link to="/clearance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Deals</Link>
+          <Link to="/deals" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Deals</Link>
           <Link to="/contact" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
         </div>
 
@@ -246,7 +246,7 @@ const Navbar = () => {
             )}
           </div>
 
-          <Link to="/clearance" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-muted-foreground">Deals</Link>
+          <Link to="/deals" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-muted-foreground">Deals</Link>
           <Link to="/contact" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-muted-foreground">Contact</Link>
           <div className="flex gap-2 pt-2 border-t border-border mt-2">
             {user ? (

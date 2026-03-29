@@ -4,18 +4,18 @@ import { Tag, Package, Sparkles } from 'lucide-react';
 export default function CinematicCategoryPanels() {
   const categories = [
     {
-      title: 'Clearance & Deals',
-      description: 'End-of-line products, returns and discounted items from UK sellers',
+      title: 'Deals & Offers',
+      description: 'Discounted items and special offers from UK sellers',
       icon: Tag,
-      link: '/catalog?type=clearance',
+      link: '/deals',
       bgGradient: 'from-slate-800 to-slate-900',
       iconColor: 'text-gold-400',
     },
     {
-      title: 'Pallets & Wholesale',
-      description: 'Buy wholesale products in bulk from registered UK sellers',
+      title: 'Home & Garden',
+      description: 'Browse home essentials and garden products from UK sellers',
       icon: Package,
-      link: '/catalog?listingType=wholesale',
+      link: '/catalog?category=home-garden',
       bgGradient: 'from-gray-800 to-gray-900',
       iconColor: 'text-gold-400',
     },

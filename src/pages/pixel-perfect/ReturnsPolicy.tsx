@@ -54,8 +54,8 @@ const ReturnsPolicy = () => {
           <h2>7. Disputes</h2>
           <p>If you are unable to resolve a return or refund issue directly with a seller, you may contact Loadify Market support. We will review the case and may mediate at our discretion. Our decision is final in cases where we facilitate dispute resolution.</p>
 
-          <h2>8. Wholesale &amp; Bulk Orders</h2>
-          <p>Pallet and bulk orders may be subject to different return terms as agreed between buyer and seller. These transactions are often B2B and may not carry the same statutory consumer rights. Please confirm return terms before placing large orders.</p>
+          <h2>8. Large &amp; B2B Orders</h2>
+          <p>Large or multi-item orders may be subject to different return terms as agreed between buyer and seller. B2B transactions may not carry the same statutory consumer rights. Please confirm return terms with the seller before placing large orders.</p>
 
           <h2>9. Contact</h2>
           <p>For returns-related queries, please contact the seller directly. For Platform support:</p>

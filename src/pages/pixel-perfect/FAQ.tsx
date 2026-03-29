@@ -17,9 +17,9 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
         question: "What is Loadify Market?",
         answer: (
           <>
-            Loadify Market is a UK-based multi-category marketplace for physical goods.
-            Independent sellers list and manage their own inventory — covering retail items,
-            wholesale products, clearance lines, pallets, job lots and more — while buyers browse,
+            Loadify Market is a UK-based multi-category online marketplace.
+            Independent sellers list and manage their own inventory — covering electronics,
+            fashion, home & garden, toys, handmade goods and more — while buyers browse,
             compare and purchase directly from sellers. We are operated by{" "}
             <strong>XDrive Logistics Ltd</strong> (Co. No: 13171804), registered in England
             and Wales.

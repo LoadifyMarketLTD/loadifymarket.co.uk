@@ -28,7 +28,7 @@ function pad(n: number) {
 }
 
 interface CountdownBannerProps {
-  /** "homepage" = full-width strip below hero; "inline" = compact version for /clearance; "hero" = replaces pill badge in HeroSection */
+  /** "homepage" = full-width strip below hero; "inline" = compact version for /deals; "hero" = replaces pill badge in HeroSection */
   variant?: "homepage" | "inline" | "hero";
 }
 

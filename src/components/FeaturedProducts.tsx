@@ -59,8 +59,8 @@ const PRODUCTS = [
   {
     id: "fp-10",
     img: "/images/products/sample-listing.webp",
-    title: "Clearance & Bulk Lots",
-    category: "Electronics",
+    title: "Sports & Outdoors",
+    category: "Sports & Outdoors",
   },
   {
     id: "fp-11",

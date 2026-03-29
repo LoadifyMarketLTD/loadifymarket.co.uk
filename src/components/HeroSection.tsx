@@ -261,7 +261,7 @@ const HeroSection = () => {
             Buy &amp; Sell Products Across the UK — All in One Marketplace
           </h1>
           <p className="lfy-hero-subtext">
-            Browse products from independent sellers across multiple categories — from everyday items to wholesale and clearance deals.
+            Browse products from independent sellers across multiple categories — from everyday items to electronics, fashion, home and garden.
           </p>
           <div className="lfy-hero-cta">
             <Link to="/catalog">

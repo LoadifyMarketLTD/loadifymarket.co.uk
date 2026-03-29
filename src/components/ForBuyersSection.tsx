@@ -7,7 +7,7 @@ const benefits = [
     icon: Search,
     title: "Discover Independent Sellers",
     description:
-      "Browse thousands of listings from registered UK sellers across all categories — retail items, wholesale lots, clearance lines, handmade goods and more.",
+      "Browse thousands of listings from registered UK sellers across all categories — electronics, fashion, home & garden, handmade goods and more.",
   },
   {
     icon: ShieldCheck,
