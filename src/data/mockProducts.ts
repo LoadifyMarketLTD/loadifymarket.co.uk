@@ -8,9 +8,7 @@ import toysImg from "@/assets/categories/toys.jpg";
 import toolsImg from "@/assets/categories/tools.jpg";
 import sportsImg from "@/assets/categories/sports.jpg";
 import babyImg from "@/assets/categories/baby.jpg";
-import mixedPalletsImg from "@/assets/categories/mixed-pallets.jpg";
 import returnsImg from "@/assets/categories/returns.jpg";
-import overstockImg from "@/assets/categories/overstock.jpg";
 
 export const mockProducts: Product[] = [
   // price: 0 is a placeholder — these are sample/demo listings only.
@@ -50,7 +48,7 @@ export const mockProducts: Product[] = [
   {
     id: "3",
     title: "Sample listing — Health & Beauty",
-    image: returnsImg,
+    image: healthBeautyImg,
     price: 0,
     category: "Health & Beauty",
     subcategory: "Skincare",
@@ -114,7 +112,7 @@ export const mockProducts: Product[] = [
   {
     id: "7",
     title: "Sample listing — Mixed Lots",
-    image: mixedPalletsImg,
+    image: returnsImg,
     price: 0,
     category: "Mixed Lots",
     subcategory: "Mixed Lots",
@@ -178,7 +176,7 @@ export const mockProducts: Product[] = [
   {
     id: "11",
     title: "Sample listing — Sports & Outdoors",
-    image: overstockImg,
+    image: sportsImg,
     price: 0,
     category: "Sports & Outdoors",
     subcategory: "General",
