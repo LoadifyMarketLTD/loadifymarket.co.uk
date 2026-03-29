@@ -49,7 +49,15 @@ export default function ProductCard({ product }: ProductCardProps) {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
           decoding="async"
-          onError={(e) => { const img = e.target as HTMLImageElement; if (img.src !== window.location.origin + '/images/placeholder-product.jpg') img.src = '/images/placeholder-product.jpg'; }}
+          onError={(e) => {
+            const img = e.target as HTMLImageElement;
+            if (img.src.endsWith('.webp')) {
+              img.src = img.src.replace('.webp', '.jpg');
+              return;
+            }
+            // No placeholders — hide image if jpg also fails
+            img.style.display = 'none';
+          }}
         />
 
         {/* Wishlist button */}
