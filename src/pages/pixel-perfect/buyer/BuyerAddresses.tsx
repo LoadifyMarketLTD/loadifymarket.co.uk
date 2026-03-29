@@ -166,7 +166,7 @@ const BuyerAddresses = () => {
       }
     };
     fetchProfile();
-  }, [user]);
+  }, [user, toast]);
 
   const handleSave = async (type: "shipping" | "billing", data: AddressData) => {
     if (!user) return;

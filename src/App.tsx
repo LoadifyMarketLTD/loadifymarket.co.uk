@@ -245,6 +245,9 @@ function App() {
         <Route path="forgot-password" element={<Suspense fallback={<PageLoader />}><PPForgotPassword /></Suspense>} />
         <Route path="reset-password" element={<Suspense fallback={<PageLoader />}><PPResetPassword /></Suspense>} />
 
+        {/* /pp — pixel-perfect homepage (preview/alternate root) */}
+        <Route path="pp" element={<Suspense fallback={<PageLoader />}><PixelPerfectIndex /></Suspense>} />
+
         {/* ── Pixel-perfect dashboard routes (own shell with sidebar) ──────────── */}
         {/* /pp/seller – RequireSeller */}
         <Route path="pp/seller" element={
