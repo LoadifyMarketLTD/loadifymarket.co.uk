@@ -3,12 +3,13 @@ import React, { useState, useCallback } from "react";
 import { ArrowRight, Eye, X } from "lucide-react";
 
 const FILTER_TABS = [
-  { key: "all",         label: "All"           },
-  { key: "electronics", label: "Electronics"   },
-  { key: "fashion",     label: "Fashion"       },
-  { key: "beauty",      label: "Beauty"        },
-  { key: "home",        label: "Home & Kitchen" },
-  { key: "tools",       label: "Tools & DIY"   },
+  { key: "all",         label: "All"              },
+  { key: "electronics", label: "Electronics"      },
+  { key: "fashion",     label: "Fashion"          },
+  { key: "beauty",      label: "Beauty"           },
+  { key: "home",        label: "Home & Kitchen"   },
+  { key: "tools",       label: "Tools & DIY"      },
+  { key: "health",      label: "Health & Wellness" },
 ];
 
 const featuredListings = [
