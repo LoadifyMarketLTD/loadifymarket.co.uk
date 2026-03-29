@@ -8,7 +8,7 @@ const CATEGORIES = [
     subtitle: "Phones, laptops, accessories & smart home",
     cta: "Browse Electronics",
     href: "/category/electronics",
-    img: "/images/products/laptop.webp",
+    img: "/images/categories/electronics.webp",
     gradient: "from-[#0F172A]/70 via-[#1e3a5f]/50 to-transparent",
     accentColor: "bg-blue-600",
   },

@@ -11,7 +11,7 @@ const CATEGORIES = [
   {
     slug: "electronics",
     label: "Electronics",
-    img: "/images/products/laptop.webp",
+    img: "/images/categories/electronics.webp",
     deals: false,
   },
   {
