@@ -9,7 +9,7 @@ import type { Product } from '../types';
 export type CategoryImageProduct = Pick<Product, 'categoryId' | 'type'>;
 
 /** Shared storage image for bulk-type categories and the default fallback. */
-const WAREHOUSE_IMAGE = '/images/products/toolset.jpg';
+const WAREHOUSE_IMAGE = '/images/products/toolset.jpeg';
 
 /**
  * Local fallback images keyed by category ID.
@@ -23,18 +23,18 @@ const CATEGORY_IMAGES: Record<string, string> = {
   'cat-electronics':    '/images/categories/electronics.jpg',
   'cat-clothing':       '/images/categories/fashion.jpg',
   'cat-shoes':          '/images/categories/fashion.jpg',
-  'cat-jewellery':      '/images/products/handbag.jpg',
-  'cat-accessories':    '/images/products/handbag.jpg',
+  'cat-jewellery':      '/images/products/handbag.jpeg',
+  'cat-accessories':    '/images/products/handbag.jpeg',
   'cat-toys':           '/images/categories/toys-games.jpg',
   'cat-health-beauty':  '/images/categories/beauty.jpg',
   'cat-pets':           '/images/categories/health-wellness.jpg',
-  'cat-memorabilia':    '/images/products/sample-listing.jpg',
+  'cat-memorabilia':    '/images/products/sample-listing.jpeg',
   'cat-mixed-lots':     WAREHOUSE_IMAGE,
   'cat-food-drink':     '/images/categories/food-drink.jpg',
   'cat-office':         '/images/categories/office-supplies.jpg',
   'cat-home-garden':    '/images/categories/home-kitchen.jpg',
   'cat-sports-outdoors': '/images/categories/sports.jpg',
-  'cat-adult':          '/images/products/sample-listing.jpg',
+  'cat-adult':          '/images/products/sample-listing.jpeg',
 };
 
 /**
@@ -42,7 +42,7 @@ const CATEGORY_IMAGES: Record<string, string> = {
  * image is defined (or when `categoryId` is absent).
  */
 const TYPE_IMAGES: Record<string, string> = {
-  handmade:  '/images/products/sample-listing.jpg',
+  handmade:  '/images/products/sample-listing.jpeg',
   logistics: '/images/categories/automotive.jpg',
   pallet:    WAREHOUSE_IMAGE,
   lot:       WAREHOUSE_IMAGE,

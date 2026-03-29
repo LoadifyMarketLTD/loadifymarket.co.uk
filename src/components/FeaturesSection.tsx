@@ -18,7 +18,7 @@ const features = [
       "Seller profiles & ratings",
     ],
     cta: { label: "Browse Marketplace", to: "/catalog" },
-    img: "/images/products/laptop.jpg",
+    img: "/images/products/laptop.jpeg",
   },
   {
     icon: ShieldCheck,
@@ -36,7 +36,7 @@ const features = [
       "Real-time messaging with sellers",
     ],
     cta: { label: "How It Works", to: "/catalog" },
-    img: "/images/products/smartwatch.jpg",
+    img: "/images/products/smartwatch.jpeg",
   },
   {
     icon: BarChart3,
@@ -54,7 +54,7 @@ const features = [
       "Fast Stripe payouts",
     ],
     cta: { label: "Start Selling", to: "/signup" },
-    img: "/images/products/headphones.jpg",
+    img: "/images/products/headphones.jpeg",
   },
 ];
 
