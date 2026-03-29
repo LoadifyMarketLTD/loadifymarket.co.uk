@@ -60,20 +60,16 @@ const Home = () => {
           </div>
 
           <div className="hidden md:flex justify-center">
-            <div className="rounded-2xl border bg-white p-6 shadow-xl w-full max-w-md">
-              <div className="h-64 flex flex-col gap-4">
-                <div className="h-10 bg-slate-100 rounded-lg" />
-                <div className="grid grid-cols-3 gap-3 flex-1">
-                  <div className="bg-slate-100 rounded-xl" />
-                  <div className="bg-slate-100 rounded-xl" />
-                  <div className="bg-slate-100 rounded-xl" />
-                  <div className="bg-slate-100 rounded-xl" />
-                  <div className="bg-slate-100 rounded-xl" />
-                  <div className="bg-slate-100 rounded-xl" />
-                </div>
-                <div className="h-8 bg-slate-100 rounded-lg" />
-              </div>
-            </div>
+            {/* Hero image — replace src with a local path once the file is
+                placed at public/hero-devices.png for self-hosted delivery. */}
+            <img
+              src="https://github.com/user-attachments/assets/072da9d3-3d98-4a0b-b930-e3e08901ae78"
+              alt="Loadify Market — shop on any device"
+              width={672}
+              height={448}
+              className="w-full max-w-lg rounded-2xl shadow-xl object-cover"
+              loading="eager"
+            />
           </div>
         </div>
       </section>
