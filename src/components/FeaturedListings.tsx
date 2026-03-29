@@ -55,7 +55,7 @@ const featuredListings = [
   },
   {
     id: "6",
-    img: "/images/products/office-chair.webp",
+    img: "/images/featured/chair.webp",
     title: "Ergonomic Office Chair",
     category: "Home & Kitchen",
     filterKey: "home",
