@@ -7,6 +7,9 @@ import RequireAuth from './components/auth/RequireAuth';
 import RequireAdmin from './components/auth/RequireAdmin';
 import RequireSeller from './components/auth/RequireSeller';
 
+// ─── Homepage ─────────────────────────────────────────────────────────────────
+const Home                 = lazy(() => import('./pages/Home'));
+
 // ─── Pixel-perfect pages — standalone (include own Navbar + Footer) ───────────
 const PixelPerfectIndex    = lazy(() => import('./pages/pixel-perfect/Index'));
 const PPCatalog            = lazy(() => import('./pages/pixel-perfect/Catalog'));
@@ -208,7 +211,7 @@ function App() {
     <CartProvider>
       <Routes>
         {/* ── Pixel-perfect standalone pages (own Navbar + Footer) ─────────────── */}
-        <Route path="/" element={<Suspense fallback={<PageLoader />}><PixelPerfectIndex /></Suspense>} />
+        <Route path="/" element={<Suspense fallback={<PageLoader />}><Home /></Suspense>} />
         <Route path="catalog" element={<Suspense fallback={<PageLoader />}><PPCatalog /></Suspense>} />
         <Route path="category/:slug" element={<Suspense fallback={<PageLoader />}><PPCategoryPage /></Suspense>} />
         {/* /categories/:slug — canonical plural alias */}
@@ -241,6 +244,9 @@ function App() {
         <Route path="signup" element={<Suspense fallback={<PageLoader />}><PPSignup /></Suspense>} />
         <Route path="forgot-password" element={<Suspense fallback={<PageLoader />}><PPForgotPassword /></Suspense>} />
         <Route path="reset-password" element={<Suspense fallback={<PageLoader />}><PPResetPassword /></Suspense>} />
+
+        {/* /pp — pixel-perfect homepage (preview/alternate root) */}
+        <Route path="pp" element={<Suspense fallback={<PageLoader />}><PixelPerfectIndex /></Suspense>} />
 
         {/* ── Pixel-perfect dashboard routes (own shell with sidebar) ──────────── */}
         {/* /pp/seller – RequireSeller */}

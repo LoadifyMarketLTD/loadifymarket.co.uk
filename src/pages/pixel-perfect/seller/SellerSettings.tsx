@@ -39,15 +39,7 @@ const SellerSettings = () => {
   const { user } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [notifications, setNotifications] = useState<typeof defaultNotifications>(defaultNotifications);
-  const [shipping, setShipping] = useState(() => {
-    const raw = safeLocalStorage.getItem(SHIPPING_STORAGE_KEY);
-    if (raw) {
-      try {
-        return { ...defaultShipping, ...(JSON.parse(raw) as Partial<typeof defaultShipping>) };
-      } catch { /* ignore malformed data */ }
-    }
-    return defaultShipping;
-  });
+  const [shipping, setShipping] = useState<typeof defaultShipping>(defaultShipping);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -58,23 +50,42 @@ const SellerSettings = () => {
   const [connectError, setConnectError] = useState("");
   const [dashboardLoading, setDashboardLoading] = useState(false);
 
-      // Load notification prefs from DB on mount
+  // Load notification prefs and shipping defaults from DB on mount
   // Mapping: orderAlerts→orderConfirmation, returnAlerts→shippingUpdates, marketingEmails→promotionalEmails
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await supabase
-        .from("notification_settings")
-        .select("orderConfirmation, shippingUpdates, promotionalEmails")
-        .eq("userId", user.id)
-        .maybeSingle();
-      if (data) {
+      const [{ data: notifData }, { data: profileData }] = await Promise.all([
+        supabase
+          .from("notification_settings")
+          .select("orderConfirmation, shippingUpdates, promotionalEmails")
+          .eq("userId", user.id)
+          .maybeSingle(),
+        supabase
+          .from("seller_profiles")
+          .select("shippingDefaults")
+          .eq("userId", user.id)
+          .maybeSingle(),
+      ]);
+      if (notifData) {
         setNotifications((prev) => ({
           ...prev,
-          orderAlerts: data.orderConfirmation ?? prev.orderAlerts,
-          returnAlerts: data.shippingUpdates ?? prev.returnAlerts,
-          marketingEmails: data.promotionalEmails ?? prev.marketingEmails,
+          orderAlerts: notifData.orderConfirmation ?? prev.orderAlerts,
+          returnAlerts: notifData.shippingUpdates ?? prev.returnAlerts,
+          marketingEmails: notifData.promotionalEmails ?? prev.marketingEmails,
         }));
+      }
+      // Load shipping defaults: prefer DB, fall back to localStorage
+      const dbShipping = profileData?.shippingDefaults as Partial<typeof defaultShipping> | null;
+      if (dbShipping && typeof dbShipping === "object") {
+        setShipping({ ...defaultShipping, ...dbShipping });
+      } else {
+        const raw = safeLocalStorage.getItem(SHIPPING_STORAGE_KEY);
+        if (raw) {
+          try {
+            setShipping({ ...defaultShipping, ...(JSON.parse(raw) as Partial<typeof defaultShipping>) });
+          } catch { /* ignore malformed data */ }
+        }
       }
     };
     load();
@@ -101,7 +112,12 @@ const SellerSettings = () => {
         { onConflict: "userId" }
       );
 
-      // Persist shipping defaults to localStorage (no DB column for these UI prefs)
+      // Persist shipping defaults to DB (seller_profiles.shippingDefaults) and localStorage as fallback
+      const { error: shippingError } = await supabase
+        .from("seller_profiles")
+        .update({ shippingDefaults: shipping })
+        .eq("userId", user.id);
+      if (shippingError) throw shippingError;
       safeLocalStorage.setItem(SHIPPING_STORAGE_KEY, JSON.stringify(shipping));
 
       // Change password if the user has filled in the password fields

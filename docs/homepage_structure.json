@@ -1,0 +1,292 @@
+{
+  "meta": {
+    "title": "Loadify Market — UK's Premium Marketplace for Independent Sellers",
+    "description": "Shop from verified UK sellers on Loadify Market. Secure Stripe payments, buyer protection, and UK-based support.",
+    "ogImage": "/og-image.jpg",
+    "canonical": "https://loadifymarket.co.uk/"
+  },
+  "sections": [
+    {
+      "id": "hero",
+      "type": "hero",
+      "layout": "split-left",
+      "background": {
+        "type": "image",
+        "src": "/hero-marketplace.png",
+        "overlay": "linear-gradient(to right, rgba(13,13,13,0.85) 40%, transparent 100%)",
+        "futurePlaceholder": "looping WebM/MP4 video (8s, muted, autoplay)"
+      },
+      "content": {
+        "eyebrow": null,
+        "headline": "The UK's Premium Marketplace\nfor Independent Sellers",
+        "subheadline": "Discover curated products from verified UK sellers.\nShop with confidence. Sell with ease.",
+        "ctas": [
+          {
+            "label": "Shop Now",
+            "href": "/products",
+            "variant": "primary",
+            "style": "gold-filled"
+          },
+          {
+            "label": "Start Selling",
+            "href": "/register?role=seller",
+            "variant": "secondary",
+            "style": "outlined-white"
+          }
+        ],
+        "trustStrip": [
+          { "icon": "lock", "text": "Stripe Secured" },
+          { "icon": "check-circle", "text": "Verified Sellers" },
+          { "icon": "flag-uk", "text": "UK-Based Support" }
+        ]
+      }
+    },
+    {
+      "id": "usp-strip",
+      "type": "usp",
+      "layout": "3-column",
+      "background": "#FFFFFF",
+      "content": {
+        "headline": "Why shop on Loadify Market?",
+        "pillars": [
+          {
+            "icon": "lock",
+            "heading": "Secure Stripe Payments",
+            "body": "Every transaction is processed through Stripe — the payment platform trusted by millions of UK businesses."
+          },
+          {
+            "icon": "check-badge",
+            "heading": "Verified UK Sellers",
+            "body": "Every seller on Loadify Market is reviewed and approved before listing. You know who you're buying from."
+          },
+          {
+            "icon": "support",
+            "heading": "Real UK Support",
+            "body": "Our support team is based in the UK. Got a question? We respond within 24 hours — weekdays."
+          }
+        ]
+      }
+    },
+    {
+      "id": "trending",
+      "type": "product-carousel",
+      "layout": "horizontal-scroll",
+      "background": "#F5F5F5",
+      "content": {
+        "headline": "Trending in the UK 🇬🇧",
+        "subheadline": "What buyers are ordering this week",
+        "dataSource": "most-ordered-7-days",
+        "limit": 6,
+        "cardType": "product",
+        "cta": {
+          "label": "View All Trending",
+          "href": "/products?sort=trending"
+        }
+      }
+    },
+    {
+      "id": "categories",
+      "type": "category-grid",
+      "layout": "4-column-grid",
+      "background": "#0D0D0D",
+      "content": {
+        "headline": "Shop by Category",
+        "categories": [
+          {
+            "name": "Electronics",
+            "href": "/products?category=electronics",
+            "image": "/electronics-category.png"
+          },
+          {
+            "name": "Fashion",
+            "href": "/products?category=fashion",
+            "image": ""
+          },
+          {
+            "name": "Home & Kitchen",
+            "href": "/products?category=home-kitchen",
+            "image": "/home-kitchen-category.png"
+          },
+          {
+            "name": "Tools & DIY",
+            "href": "/products?category=tools-diy",
+            "image": ""
+          },
+          {
+            "name": "Health & Wellness",
+            "href": "/products?category=health-wellness",
+            "image": "/images/categories/health-wellness.jpeg"
+          },
+          {
+            "name": "Sports & Outdoors",
+            "href": "/products?category=sports",
+            "image": "/images/categories/sports.jpeg"
+          },
+          {
+            "name": "Beauty",
+            "href": "/products?category=beauty",
+            "image": "/images/categories/beauty.jpeg"
+          },
+          {
+            "name": "Toys & Games",
+            "href": "/products?category=toys-games",
+            "image": "/images/categories/toys-games.jpeg"
+          }
+        ],
+        "cta": {
+          "label": "Browse All Categories",
+          "href": "/products"
+        }
+      }
+    },
+    {
+      "id": "featured-sellers",
+      "type": "seller-carousel",
+      "layout": "horizontal-scroll",
+      "background": "#FFFFFF",
+      "content": {
+        "headline": "Featured UK Sellers",
+        "subheadline": "Independent sellers. Verified quality. Real reviews.",
+        "dataSource": "top-rated-approved-sellers",
+        "limit": 4,
+        "cardType": "seller",
+        "cta": {
+          "label": "Meet All Sellers",
+          "href": "/sellers"
+        }
+      }
+    },
+    {
+      "id": "buyer-protection",
+      "type": "trust",
+      "layout": "3-column",
+      "background": "#C9A86A",
+      "content": {
+        "eyebrow": "Your peace of mind, guaranteed",
+        "headline": "Shop Protected on Loadify Market",
+        "guarantees": [
+          {
+            "icon": "credit-card",
+            "heading": "Secure Checkout",
+            "body": "Every payment is encrypted and processed through Stripe. Your card details are never stored on our servers."
+          },
+          {
+            "icon": "package",
+            "heading": "Buyer Protection",
+            "body": "If your order doesn't arrive or isn't as described, we'll work to get your money back."
+          },
+          {
+            "icon": "chat",
+            "heading": "48-Hour Dispute Resolution",
+            "body": "Open a dispute in one click. Our team reviews every case within 48 working hours."
+          }
+        ]
+      }
+    },
+    {
+      "id": "sell-on-loadify",
+      "type": "seller-cta",
+      "layout": "split-right",
+      "background": "#0D0D0D",
+      "content": {
+        "eyebrow": "For UK Sellers",
+        "headline": "Reach Thousands of UK Buyers",
+        "subheadline": "Join a growing community of verified independent sellers. No upfront fees. No hidden costs. Just sales.",
+        "benefits": [
+          { "icon": "package", "heading": "Easy Listing", "body": "List products in under 5 minutes." },
+          { "icon": "currency-pound", "heading": "Fast Payouts", "body": "Payments processed weekly via Stripe." },
+          { "icon": "flag-uk", "heading": "UK Seller Support", "body": "Dedicated onboarding and ongoing support." }
+        ],
+        "ctas": [
+          {
+            "label": "Start Selling Free",
+            "href": "/register?role=seller",
+            "variant": "primary",
+            "style": "gold-filled"
+          },
+          {
+            "label": "See Pricing",
+            "href": "/pricing",
+            "variant": "secondary",
+            "style": "outlined-white"
+          }
+        ]
+      }
+    },
+    {
+      "id": "newsletter",
+      "type": "newsletter",
+      "layout": "centered",
+      "background": "#F5F5F5",
+      "content": {
+        "headline": "Get the best of Loadify Market, weekly.",
+        "subheadline": "New arrivals, trending products, and exclusive deals — straight to your inbox.",
+        "inputPlaceholder": "Enter your email address",
+        "ctaLabel": "Subscribe",
+        "disclaimer": "No spam. Unsubscribe any time."
+      }
+    },
+    {
+      "id": "footer",
+      "type": "footer",
+      "layout": "5-column",
+      "background": "#0D0D0D",
+      "content": {
+        "brand": {
+          "logo": "/branding/loadify-logo-on-navy.svg",
+          "tagline": "The UK's Premium Marketplace for Independent Sellers.",
+          "socials": [
+            { "platform": "facebook", "href": "https://www.facebook.com/profile.php?id=61583570176707" },
+            { "platform": "instagram", "href": "https://www.instagram.com/loadifymarket/" },
+            { "platform": "linkedin", "href": "https://www.linkedin.com/company/loadify-market/" }
+          ]
+        },
+        "columns": [
+          {
+            "heading": "Shop",
+            "links": [
+              { "label": "All Products", "href": "/products" },
+              { "label": "New Arrivals", "href": "/products?sort=newest" },
+              { "label": "Trending Now", "href": "/products?sort=trending" },
+              { "label": "Weekly Deals", "href": "/deals" }
+            ]
+          },
+          {
+            "heading": "Sell",
+            "links": [
+              { "label": "Become a Seller", "href": "/register?role=seller" },
+              { "label": "Seller Dashboard", "href": "/seller/dashboard" },
+              { "label": "Pricing & Fees", "href": "/pricing" },
+              { "label": "Seller Guide", "href": "/seller/guide" }
+            ]
+          },
+          {
+            "heading": "Help",
+            "links": [
+              { "label": "Contact Us", "href": "/contact" },
+              { "label": "Returns & Refunds", "href": "/returns" },
+              { "label": "Buyer Protection", "href": "/buyer-protection" },
+              { "label": "FAQs", "href": "/faq" }
+            ]
+          },
+          {
+            "heading": "Company",
+            "links": [
+              { "label": "About Us", "href": "/about" },
+              { "label": "Blog", "href": "/blog" },
+              { "label": "Careers", "href": "/careers" },
+              { "label": "Privacy Policy", "href": "/privacy" },
+              { "label": "Terms & Conditions", "href": "/terms" },
+              { "label": "Cookie Policy", "href": "/cookies" }
+            ]
+          }
+        ],
+        "bottomBar": {
+          "copyright": "© 2026 Loadify Market · Operated by XDrive Logistics Ltd · Company No: 13171804 · VAT: GB375949535",
+          "paymentIcons": ["visa", "mastercard", "amex", "stripe"],
+          "sslBadge": true
+        }
+      }
+    }
+  ]
+}
