@@ -148,7 +148,15 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const body: UpdateStatusRequest = JSON.parse(event.body || '{}');
+    let body: UpdateStatusRequest;
+    try {
+      body = JSON.parse(event.body || '{}') as UpdateStatusRequest;
+    } catch {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid JSON in request body' }),
+      };
+    }
     const { status, message } = body;
 
     if (!status) {

@@ -10,6 +10,7 @@ import ProductCard from "@/components/catalog/ProductCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 import type { Product } from "@/components/catalog/ProductCard";
 import { supabase } from "@/lib/supabase";
 import { adaptProducts } from "@/lib/productAdapter";
@@ -141,6 +142,7 @@ const Deals = () => {
       setProducts(adaptProducts(mapped as unknown as DBProduct[]));
     } catch (err) {
       console.error("Error fetching deals:", err);
+      toast({ title: "Could not load deals", description: "Please try refreshing the page.", variant: "destructive" });
     } finally {
       setLoading(false);
     }

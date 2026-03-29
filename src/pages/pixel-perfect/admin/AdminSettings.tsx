@@ -47,6 +47,7 @@ const AdminSettings = () => {
   const [showKey, setShowKey] = useState(false);
   const [features, setFeatures] = useState<Features>(DEFAULT_FEATURES);
   const [config, setConfig] = useState<PlatformConfig>(DEFAULT_CONFIG);
+  const [settingsLoading, setSettingsLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [cacheCleared, setCacheCleared] = useState(false);
@@ -64,35 +65,41 @@ const AdminSettings = () => {
   // Load persisted settings from platform_settings on mount
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
-        .from("platform_settings")
-        .select("key, value")
-        .in("key", ["feature_flags", "maintenance_mode", "platform_config"]);
-      if (!data) return;
-      const featureFlagsRow = data.find((r) => r.key === "feature_flags");
-      const maintenanceRow = data.find((r) => r.key === "maintenance_mode");
-      const configRow = data.find((r) => r.key === "platform_config");
-      setFeatures((prev) => {
-        let next = { ...prev };
-        if (featureFlagsRow?.value && typeof featureFlagsRow.value === "object") {
-          next = { ...next, ...(featureFlagsRow.value as Partial<Features>) };
+      try {
+        const { data } = await supabase
+          .from("platform_settings")
+          .select("key, value")
+          .in("key", ["feature_flags", "maintenance_mode", "platform_config"]);
+        if (!data) return;
+        const featureFlagsRow = data.find((r) => r.key === "feature_flags");
+        const maintenanceRow = data.find((r) => r.key === "maintenance_mode");
+        const configRow = data.find((r) => r.key === "platform_config");
+        setFeatures((prev) => {
+          let next = { ...prev };
+          if (featureFlagsRow?.value && typeof featureFlagsRow.value === "object") {
+            next = { ...next, ...(featureFlagsRow.value as Partial<Features>) };
+          }
+          if (maintenanceRow?.value !== undefined) {
+            next = { ...next, maintenanceMode: maintenanceRow.value === true || maintenanceRow.value === "true" };
+          }
+          return next;
+        });
+        if (configRow?.value && typeof configRow.value === "object") {
+          const stored = configRow.value as Partial<Record<string, unknown>>;
+          setConfig((prev) => ({
+            ...prev,
+            platformName: typeof stored.platformName === "string" ? stored.platformName : prev.platformName,
+            supportEmail: typeof stored.supportEmail === "string" ? stored.supportEmail : prev.supportEmail,
+            defaultCurrency: typeof stored.defaultCurrency === "string" ? stored.defaultCurrency : prev.defaultCurrency,
+            commissionRate: typeof stored.commissionRate === "number" ? stored.commissionRate : prev.commissionRate,
+            maxUploadSizeMb: typeof stored.maxUploadSizeMb === "number" ? stored.maxUploadSizeMb : prev.maxUploadSizeMb,
+            productsPerPage: typeof stored.productsPerPage === "number" ? stored.productsPerPage : prev.productsPerPage,
+          }));
         }
-        if (maintenanceRow?.value !== undefined) {
-          next = { ...next, maintenanceMode: maintenanceRow.value === true || maintenanceRow.value === "true" };
-        }
-        return next;
-      });
-      if (configRow?.value && typeof configRow.value === "object") {
-        const stored = configRow.value as Partial<Record<string, unknown>>;
-        setConfig((prev) => ({
-          ...prev,
-          platformName: typeof stored.platformName === "string" ? stored.platformName : prev.platformName,
-          supportEmail: typeof stored.supportEmail === "string" ? stored.supportEmail : prev.supportEmail,
-          defaultCurrency: typeof stored.defaultCurrency === "string" ? stored.defaultCurrency : prev.defaultCurrency,
-          commissionRate: typeof stored.commissionRate === "number" ? stored.commissionRate : prev.commissionRate,
-          maxUploadSizeMb: typeof stored.maxUploadSizeMb === "number" ? stored.maxUploadSizeMb : prev.maxUploadSizeMb,
-          productsPerPage: typeof stored.productsPerPage === "number" ? stored.productsPerPage : prev.productsPerPage,
-        }));
+      } catch (err) {
+        console.error("Failed to load platform settings:", err);
+      } finally {
+        setSettingsLoading(false);
       }
     };
     load();
@@ -142,9 +149,9 @@ const AdminSettings = () => {
           {saveMsg && (
             <p className={`text-xs ${saveMsg.ok ? "text-emerald-600" : "text-destructive"}`}>{saveMsg.text}</p>
           )}
-          <Button size="sm" onClick={handleSave} disabled={saveLoading}>
+          <Button size="sm" onClick={handleSave} disabled={saveLoading || settingsLoading}>
             {saveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Save Settings
+            {settingsLoading ? "Loading…" : "Save Settings"}
           </Button>
         </div>
       </div>
@@ -256,7 +263,7 @@ const AdminSettings = () => {
             <div>
               <Label className="text-xs">Stripe Secret Key</Label>
               <div className="relative mt-1">
-                <Input type={showKey ? "text" : "password"} defaultValue="sk_live_••••••••••••••••••••" readOnly />
+                <Input type={showKey ? "text" : "password"} value="Configured via environment variable" readOnly className="text-muted-foreground" />
                 <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowKey(!showKey)}>
                   {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -264,11 +271,11 @@ const AdminSettings = () => {
             </div>
             <div>
               <Label className="text-xs">Supabase URL</Label>
-              <Input defaultValue="https://••••••••.supabase.co" className="mt-1" readOnly />
+              <Input value="Configured via environment variable" className="mt-1 text-muted-foreground" readOnly />
             </div>
             <div>
               <Label className="text-xs">SendGrid API Key</Label>
-              <Input type="password" defaultValue="SG.••••••••••••" className="mt-1" readOnly />
+              <Input type="password" value="Configured via environment variable" className="mt-1 text-muted-foreground" readOnly />
             </div>
           </div>
           <div className="rounded-lg bg-muted/50 border border-border p-3">

@@ -8,6 +8,7 @@ import CatalogFilters from "@/components/catalog/CatalogFilters";
 import CatalogHeader from "@/components/catalog/CatalogHeader";
 import ProductCard from "@/components/catalog/ProductCard";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
 import type { Product } from "@/components/catalog/ProductCard";
 import { supabase } from "@/lib/supabase";
 import { adaptProducts } from "@/lib/productAdapter";
@@ -79,6 +80,7 @@ const Catalog = () => {
         }
       } catch (err) {
         console.error("categories fetch failed:", err);
+        toast({ title: "Could not load categories", description: "Category filters may be unavailable.", variant: "destructive" });
       }
     })();
   }, []);
@@ -146,6 +148,7 @@ const Catalog = () => {
       setProducts(adaptProducts(mapped as unknown as DBProduct[]));
     } catch (err) {
       console.error("Error fetching catalog products:", err);
+      toast({ title: "Could not load products", description: "Please try refreshing the page.", variant: "destructive" });
     } finally {
       setLoading(false);
     }

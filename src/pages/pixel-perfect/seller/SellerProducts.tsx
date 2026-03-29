@@ -42,13 +42,19 @@ const SellerProducts = () => {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await supabase
-        .from("products")
-        .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, views")
-        .eq("sellerId", user.id)
-        .order("createdAt", { ascending: false });
-      setProducts(data ?? []);
-      setLoading(false);
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, views")
+          .eq("sellerId", user.id)
+          .order("createdAt", { ascending: false });
+        if (error) throw error;
+        setProducts(data ?? []);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, [user]);

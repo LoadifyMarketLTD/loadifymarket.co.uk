@@ -79,7 +79,15 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const body: CreateShipmentRequest = JSON.parse(event.body || '{}');
+    let body: CreateShipmentRequest;
+    try {
+      body = JSON.parse(event.body || '{}') as CreateShipmentRequest;
+    } catch {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid JSON in request body' }),
+      };
+    }
     const { order_id, courier_name, tracking_number, dispatched_at, shipping_method, shipping_cost } = body;
 
     if (!order_id) {

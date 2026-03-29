@@ -66,7 +66,10 @@ export const handler: Handler = async (event) => {
       .single();
 
     if (orderError || !order) {
-      throw new Error('Order not found');
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: 'Order not found' }),
+      };
     }
 
     // ── Authorization check ──────────────────────────────────────────────────
