@@ -59,17 +59,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Preload LCP hero image — WebP for modern browsers, served from /public.
-         fetchpriority="high" tells the preload scanner this is the most critical
-         resource. type="image/webp" lets browsers that do not support WebP skip
-         this preload and rely on the <picture> fallback in HeroSection instead. -->
-    <link
-      rel="preload"
-      as="image"
-      href="/hero.webp"
-      type="image/webp"
-      fetchpriority="high"
-    />
-    <!-- Google Fonts — loaded asynchronously to avoid blocking first render.
+        <!-- Google Fonts — loaded asynchronously to avoid blocking first render.
          The preload link converts itself to a stylesheet once the resource is
          fetched, which avoids the "preloaded but not used" browser warning that
          the separate preload + media="print" two-link pattern can trigger.

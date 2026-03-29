@@ -9,7 +9,7 @@ const CATEGORIES = [
     icon: Cpu,
     color: "bg-blue-50 text-blue-600",
     border: "border-blue-100",
-    img: "/images/categories/electronics.webp",
+    img: "/images/categories/electronics.jpeg",
   },
   {
     slug: "fashion",
@@ -17,7 +17,7 @@ const CATEGORIES = [
     icon: Shirt,
     color: "bg-pink-50 text-pink-600",
     border: "border-pink-100",
-    img: "/images/categories/fashion.webp",
+    img: "/images/categories/fashion.jpeg",
   },
   {
     slug: "home-kitchen",
@@ -25,7 +25,7 @@ const CATEGORIES = [
     icon: Home,
     color: "bg-amber-50 text-amber-600",
     border: "border-amber-100",
-    img: "/images/categories/home-kitchen.webp",
+    img: "/images/categories/home-kitchen.jpeg",
   },
   {
     slug: "beauty",
@@ -33,7 +33,7 @@ const CATEGORIES = [
     icon: Sparkles,
     color: "bg-rose-50 text-rose-600",
     border: "border-rose-100",
-    img: "/images/categories/beauty.webp",
+    img: "/images/categories/beauty.jpeg",
   },
   {
     slug: "tools-diy",
@@ -41,7 +41,7 @@ const CATEGORIES = [
     icon: Wrench,
     color: "bg-orange-50 text-orange-600",
     border: "border-orange-100",
-    img: "/images/categories/tools-diy.webp",
+    img: "/images/categories/tools-diy.jpeg",
   },
   {
     slug: "toys-games",
@@ -49,7 +49,7 @@ const CATEGORIES = [
     icon: Gamepad2,
     color: "bg-violet-50 text-violet-600",
     border: "border-violet-100",
-    img: "/images/categories/toys-games.webp",
+    img: "/images/categories/toys-games.jpeg",
   },
   {
     slug: "health-wellness",
@@ -57,7 +57,7 @@ const CATEGORIES = [
     icon: Heart,
     color: "bg-teal-50 text-teal-600",
     border: "border-teal-100",
-    img: "/images/categories/health-wellness.webp",
+    img: "/images/categories/health-wellness.jpeg",
   },
   {
     slug: "automotive",
@@ -65,7 +65,7 @@ const CATEGORIES = [
     icon: Car,
     color: "bg-slate-50 text-slate-600",
     border: "border-slate-200",
-    img: "/images/categories/automotive.webp",
+    img: "/images/categories/automotive.jpeg",
   },
   {
     slug: "office-supplies",
@@ -73,7 +73,7 @@ const CATEGORIES = [
     icon: Briefcase,
     color: "bg-indigo-50 text-indigo-600",
     border: "border-indigo-100",
-    img: "/images/categories/office-supplies.webp",
+    img: "/images/categories/office-supplies.jpeg",
   },
 ];
 
@@ -103,14 +103,7 @@ function CategoryTile({ slug, label, icon: Icon, color, border, img }: Category)
             loading="lazy"
             decoding="async"
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-            onError={(e) => {
-              const el = e.target as HTMLImageElement;
-              if (el.src.endsWith(".webp")) {
-                el.src = el.src.replace(".webp", ".jpg");
-              } else {
-                setImgFailed(true);
-              }
-            }}
+            onError={() => setImgFailed(true)}
           />
         )}
       </div>

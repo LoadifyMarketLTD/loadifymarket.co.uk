@@ -50,13 +50,8 @@ export default function ProductCard({ product }: ProductCardProps) {
           loading="lazy"
           decoding="async"
           onError={(e) => {
-            const img = e.target as HTMLImageElement;
-            if (img.src.endsWith('.webp')) {
-              img.src = img.src.replace(/\.webp$/, '.jpg');
-              return;
-            }
-            // No placeholders — hide image if jpg also fails
-            img.style.display = 'none';
+            // Hide image if it fails to load — no placeholders
+            (e.target as HTMLImageElement).style.display = 'none';
           }}
         />
 

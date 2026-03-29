@@ -8,7 +8,7 @@ const CATEGORIES = [
     subtitle: "Phones, laptops, accessories & smart home",
     cta: "Browse Electronics",
     href: "/category/electronics",
-    img: "/images/categories/electronics.webp",
+    img: "/images/categories/electronics.jpeg",
     gradient: "from-[#0F172A]/70 via-[#1e3a5f]/50 to-transparent",
     accentColor: "bg-blue-600",
   },
@@ -18,7 +18,7 @@ const CATEGORIES = [
     subtitle: "Clothing, shoes, bags & accessories",
     cta: "Browse Fashion",
     href: "/category/fashion",
-    img: "/images/categories/fashion.webp",
+    img: "/images/categories/fashion.jpeg",
     gradient: "from-[#3b1a4a]/70 via-pink-900/50 to-transparent",
     accentColor: "bg-pink-600",
   },
@@ -28,7 +28,7 @@ const CATEGORIES = [
     subtitle: "Skincare, fragrances & wellness products",
     cta: "Browse Beauty",
     href: "/category/beauty",
-    img: "/images/categories/beauty.webp",
+    img: "/images/categories/beauty.jpeg",
     gradient: "from-[#4a1a2a]/70 via-rose-900/50 to-transparent",
     accentColor: "bg-rose-600",
   },
@@ -38,7 +38,7 @@ const CATEGORIES = [
     subtitle: "Lighting, storage, cookware & décor",
     cta: "Browse Home",
     href: "/category/home-kitchen",
-    img: "/images/categories/home-kitchen.webp",
+    img: "/images/categories/home-kitchen.jpeg",
     gradient: "from-[#3b2a0a]/70 via-amber-900/50 to-transparent",
     accentColor: "bg-amber-600",
   },
@@ -89,12 +89,7 @@ const DealsSection = () => {
                   decoding="async"
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   onError={(e) => {
-                    const el = e.target as HTMLImageElement;
-                    if (el.src.endsWith(".webp")) {
-                      el.src = el.src.replace(".webp", ".jpg");
-                    } else {
-                      el.src = "/images/placeholder-product.jpg";
-                    }
+                    (e.target as HTMLImageElement).src = "/images/placeholder-product.jpg";
                   }}
                 />
 

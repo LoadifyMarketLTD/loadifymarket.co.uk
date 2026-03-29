@@ -80,9 +80,7 @@ const CTASection = () => (
           <div className="relative w-full max-w-[480px]">
             {/* Ambient glow */}
             <div className="absolute inset-0 bg-amber-500/10 rounded-3xl blur-3xl" />
-            <picture>
-              <source srcSet="/hero.webp" type="image/webp" />
-              <img
+            <img
                 src="/hero.jpeg"
                 alt="Products available on Loadify Market"
                 width="960"
@@ -90,7 +88,6 @@ const CTASection = () => (
                 loading="lazy"
                 className="relative w-full object-contain drop-shadow-2xl"
               />
-            </picture>
           </div>
         </div>
 

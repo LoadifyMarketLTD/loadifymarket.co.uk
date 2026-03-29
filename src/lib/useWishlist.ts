@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from './supabase';
 import { useAuthStore } from '../store';
+import { toast } from '@/components/ui/use-toast';
 
 export function useWishlist() {
   const { user } = useAuthStore();
@@ -36,7 +37,7 @@ export function useWishlist() {
 
   const toggleWishlist = useCallback(async (productId: string) => {
     if (!user) {
-      alert('Please login to add items to your wishlist');
+      toast({ title: 'Sign in required', description: 'Please log in to save items to your wishlist.', variant: 'destructive' });
       return false;
     }
 
@@ -77,7 +78,7 @@ export function useWishlist() {
       return wasAdded;
     } catch (error) {
       console.error('Error toggling wishlist:', error);
-      alert('Failed to update wishlist');
+      toast({ title: 'Wishlist error', description: 'Failed to update your wishlist. Please try again.', variant: 'destructive' });
       return null;
     } finally {
       setLoading(false);
