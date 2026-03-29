@@ -124,8 +124,7 @@ const HeroSection = () => {
             {!expired && (
               <div className="absolute top-6 right-6 z-10">
                 <div
-                  className={
-                    "
+                  className={`
                     w-[200px]
                     rounded-2xl
                     bg-white/90
@@ -133,7 +132,7 @@ const HeroSection = () => {
                     shadow-lg
                     px-4 py-3
                     flex flex-col items-end gap-1.5
-                  "
+                  `}
                 >
                   {/* Top pill */}
                   <div className="text-amber-900 font-bold text-[11px] px-3 py-1 rounded-xl bg-amber-300/70 whitespace-nowrap">
@@ -175,8 +174,7 @@ const HeroSection = () => {
             {!expired && (
               <div className="absolute top-3 right-3 z-10">
                 <div
-                  className={
-                    "
+                  className={`
                     w-[150px]
                     rounded-xl
                     bg-white/90
@@ -184,7 +182,7 @@ const HeroSection = () => {
                     shadow-md
                     px-3 py-2.5
                     flex flex-col items-end gap-1
-                  "
+                  `}
                 >
                   <div className="text-amber-900 font-bold text-[10px] px-2.5 py-0.5 rounded-lg bg-amber-300/70 whitespace-nowrap">
                     0% Fees Until July 1
@@ -247,7 +245,8 @@ const HeroSection = () => {
           </div>
         </div>
       )}
-    </>;
-};
+    </>
+  );
+}
 
 export default HeroSection;
