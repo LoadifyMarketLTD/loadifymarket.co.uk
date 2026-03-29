@@ -9,84 +9,84 @@ import { ArrowRight } from "lucide-react";
 const PRODUCTS = [
   {
     id: "fp-1",
-    img: "/images/products/headphones.webp",
+    img: "/images/products/headphones.jpg",
     title: "Wireless Noise-Cancelling Headphones",
     category: "Electronics",
     href: "/category/electronics",
   },
   {
     id: "fp-2",
-    img: "/images/products/laptop.webp",
+    img: "/images/products/laptop.jpg",
     title: "15.6\" Laptop Computer",
     category: "Electronics",
     href: "/category/electronics",
   },
   {
     id: "fp-3",
-    img: "/images/products/smartwatch.webp",
+    img: "/images/products/smartwatch.jpg",
     title: "Men's Digital Smartwatch",
     category: "Electronics",
     href: "/category/electronics",
   },
   {
     id: "fp-4",
-    img: "/images/products/handbag.webp",
+    img: "/images/products/handbag.jpg",
     title: "Women's Leather Handbag",
     category: "Fashion",
     href: "/category/fashion",
   },
   {
     id: "fp-5",
-    img: "/images/products/skincare.webp",
+    img: "/images/products/skincare.jpg",
     title: "Luxury Skincare Bundle",
     category: "Beauty",
     href: "/category/beauty",
   },
   {
     id: "fp-6",
-    img: "/images/products/toolset.webp",
+    img: "/images/products/toolset.jpg",
     title: "Professional Hand Tool Set",
     category: "Tools & DIY",
     href: "/category/tools-diy",
   },
   {
     id: "fp-7",
-    img: "/images/categories/home-kitchen.webp",
+    img: "/images/categories/home-kitchen.jpg",
     title: "Home & Kitchen Essentials",
     category: "Home & Kitchen",
     href: "/category/home-kitchen",
   },
   {
     id: "fp-8",
-    img: "/images/categories/health-wellness.webp",
+    img: "/images/categories/health-wellness.jpg",
     title: "Fitness & Wellness Bundle",
     category: "Health & Wellness",
     href: "/category/health-wellness",
   },
   {
     id: "fp-9",
-    img: "/images/categories/toys-games.webp",
+    img: "/images/categories/toys-games.jpg",
     title: "Children's Educational Games",
     category: "Toys & Games",
     href: "/category/toys-games",
   },
   {
     id: "fp-10",
-    img: "/images/categories/automotive.webp",
+    img: "/images/categories/automotive.jpg",
     title: "Car & Van Accessories Kit",
     category: "Automotive",
     href: "/category/automotive",
   },
   {
     id: "fp-11",
-    img: "/images/categories/office-supplies.webp",
+    img: "/images/categories/office-supplies.jpg",
     title: "Office & Desk Supplies Set",
     category: "Office Supplies",
     href: "/category/office-supplies",
   },
   {
     id: "fp-12",
-    img: "/images/categories/fashion.webp",
+    img: "/images/categories/fashion.jpg",
     title: "Men's & Women's Clothing",
     category: "Fashion",
     href: "/category/fashion",
@@ -136,12 +136,7 @@ const FeaturedProducts = () => {
                   decoding="async"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
-                    const el = e.target as HTMLImageElement;
-                    if (el.src.endsWith(".webp")) {
-                      el.src = el.src.replace(".webp", ".jpg");
-                    } else {
-                      el.src = "/images/placeholder-product.jpg";
-                    }
+                    (e.target as HTMLImageElement).src = "/images/placeholder-product.jpg";
                   }}
                 />
                 {/* Hover CTA overlay */}

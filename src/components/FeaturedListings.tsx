@@ -15,7 +15,7 @@ const FILTER_TABS = [
 const featuredListings = [
   {
     id: "1",
-    img: "/images/featured/earbuds.webp",
+    img: "/images/featured/earbuds.jpg",
     title: "Wireless Earbuds Pro",
     category: "Electronics",
     filterKey: "electronics",
@@ -23,7 +23,7 @@ const featuredListings = [
   },
   {
     id: "2",
-    img: "/images/featured/toolbox.webp",
+    img: "/images/featured/toolbox.jpg",
     title: "Heavy-Duty Toolbox Set",
     category: "Tools & DIY",
     filterKey: "tools",
@@ -31,7 +31,7 @@ const featuredListings = [
   },
   {
     id: "3",
-    img: "/images/categories/fashion.webp",
+    img: "/images/categories/fashion.jpg",
     title: "Women's Summer Dress Collection",
     category: "Fashion",
     filterKey: "fashion",
@@ -39,7 +39,7 @@ const featuredListings = [
   },
   {
     id: "4",
-    img: "/images/categories/beauty.webp",
+    img: "/images/categories/beauty.jpg",
     title: "Premium Beauty & Skincare",
     category: "Beauty",
     filterKey: "beauty",
@@ -47,7 +47,7 @@ const featuredListings = [
   },
   {
     id: "5",
-    img: "/images/featured/skincare2.webp",
+    img: "/images/featured/skincare2.jpg",
     title: "Natural Face Serum Set",
     category: "Beauty",
     filterKey: "beauty",
@@ -55,7 +55,7 @@ const featuredListings = [
   },
   {
     id: "6",
-    img: "/images/products/office-chair.webp",
+    img: "/images/products/office-chair.jpg",
     title: "Ergonomic Office Chair",
     category: "Home & Kitchen",
     filterKey: "home",
@@ -63,7 +63,7 @@ const featuredListings = [
   },
   {
     id: "7",
-    img: "/images/categories/health-wellness.webp",
+    img: "/images/categories/health-wellness.jpg",
     title: "Yoga Mat & Fitness Accessories",
     category: "Health & Wellness",
     filterKey: "health",
@@ -71,7 +71,7 @@ const featuredListings = [
   },
   {
     id: "8",
-    img: "/images/categories/tools-diy.webp",
+    img: "/images/categories/tools-diy.jpg",
     title: "Power Drill & Bit Set",
     category: "Tools & DIY",
     filterKey: "tools",
@@ -105,10 +105,7 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
             alt={item.title}
             className="w-full h-64 object-cover"
             onError={(e) => {
-              const el = e.target as HTMLImageElement;
-              if (el.src.endsWith(".webp")) {
-                el.src = el.src.replace(".webp", ".jpg");
-              }
+              (e.target as HTMLImageElement).src = "/images/placeholder-product.jpg";
             }}
           />
           <button
@@ -220,10 +217,7 @@ const FeaturedListings = () => {
                     height="300"
                     className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-300"
                     onError={(e) => {
-                      const el = e.target as HTMLImageElement;
-                      if (el.src.endsWith(".webp")) {
-                        el.src = el.src.replace(".webp", ".jpg");
-                      }
+                      (e.target as HTMLImageElement).src = "/images/placeholder-product.jpg";
                     }}
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-all duration-300 flex items-center justify-center">

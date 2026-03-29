@@ -102,10 +102,8 @@ const HeroSection = () => {
 
           {/* ── RIGHT: Hero image (desktop) ──────────────────────────────── */}
           <div className="hidden lg:block lg:w-[48%] relative overflow-hidden">
-            {/* LCP image — WebP first, JPEG fallback */}
-            <picture>
-              <source srcSet="/hero.webp" type="image/webp" />
-              <img
+            {/* LCP image */}
+            <img
                 src="/hero.jpeg"
                 alt=""
                 aria-hidden="true"
@@ -115,7 +113,6 @@ const HeroSection = () => {
                 width="960"
                 height="720"
               />
-            </picture>
 
             {/* Left-edge fade — smooth blend from white left column into image */}
             <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-white to-transparent pointer-events-none" />
@@ -157,9 +154,7 @@ const HeroSection = () => {
 
           {/* ── Mobile: small accent image strip below text ───────────────── */}
           <div className="lg:hidden h-52 overflow-hidden relative">
-            <picture>
-              <source srcSet="/hero.webp" type="image/webp" />
-              <img
+            <img
                 src="/hero.jpeg"
                 alt=""
                 aria-hidden="true"
@@ -168,7 +163,6 @@ const HeroSection = () => {
                 width="960"
                 height="416"
               />
-            </picture>
 
             {/* ── Mobile countdown (same structure, ~30% smaller) ─────────── */}
             {!expired && (

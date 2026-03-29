@@ -11,31 +11,31 @@ const CATEGORIES = [
   {
     slug: "electronics",
     label: "Electronics",
-    img: "/images/categories/electronics.webp",
+    img: "/images/categories/electronics.jpg",
     deals: false,
   },
   {
     slug: "fashion",
     label: "Fashion",
-    img: "/images/categories/fashion.webp",
+    img: "/images/categories/fashion.jpg",
     deals: false,
   },
   {
     slug: "home-kitchen",
     label: "Home & Garden",
-    img: "/images/categories/home-kitchen.webp",
+    img: "/images/categories/home-kitchen.jpg",
     deals: false,
   },
   {
     slug: "beauty",
     label: "Beauty & Health",
-    img: "/images/categories/beauty.webp",
+    img: "/images/categories/beauty.jpg",
     deals: false,
   },
   {
     slug: "automotive",
     label: "Automotive",
-    img: "/images/categories/automotive.webp",
+    img: "/images/categories/automotive.jpg",
     deals: false,
   },
   {
@@ -88,10 +88,7 @@ const CategoryGrid = () => (
                   decoding="async"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
-                    const el = e.target as HTMLImageElement;
-                    if (el.src.endsWith(".webp")) {
-                      el.src = el.src.replace(".webp", ".jpg");
-                    }
+                    (e.target as HTMLImageElement).src = "/images/placeholder-product.jpg";
                   }}
                 />
               )}
