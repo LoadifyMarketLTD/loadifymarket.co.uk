@@ -7,6 +7,9 @@ import RequireAuth from './components/auth/RequireAuth';
 import RequireAdmin from './components/auth/RequireAdmin';
 import RequireSeller from './components/auth/RequireSeller';
 
+// ─── Homepage ─────────────────────────────────────────────────────────────────
+const Home                 = lazy(() => import('./pages/Home'));
+
 // ─── Pixel-perfect pages — standalone (include own Navbar + Footer) ───────────
 const PixelPerfectIndex    = lazy(() => import('./pages/pixel-perfect/Index'));
 const PPCatalog            = lazy(() => import('./pages/pixel-perfect/Catalog'));
@@ -208,7 +211,7 @@ function App() {
     <CartProvider>
       <Routes>
         {/* ── Pixel-perfect standalone pages (own Navbar + Footer) ─────────────── */}
-        <Route path="/" element={<Suspense fallback={<PageLoader />}><PixelPerfectIndex /></Suspense>} />
+        <Route path="/" element={<Suspense fallback={<PageLoader />}><Home /></Suspense>} />
         <Route path="catalog" element={<Suspense fallback={<PageLoader />}><PPCatalog /></Suspense>} />
         <Route path="category/:slug" element={<Suspense fallback={<PageLoader />}><PPCategoryPage /></Suspense>} />
         {/* /categories/:slug — canonical plural alias */}
