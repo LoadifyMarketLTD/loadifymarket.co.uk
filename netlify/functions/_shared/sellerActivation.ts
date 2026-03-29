@@ -81,11 +81,17 @@ export interface ActivationResult {
  *
  * Safe to call multiple times — only writes to the DB when the status changes.
  * Returns null if the seller profile cannot be found.
+ *
+ * @param liveStripeConnectStatus - When provided, this live value is used instead
+ *   of the DB-stored stripeConnectStatus. Pass this from connect-status.ts so the
+ *   activation decision always reflects the freshly-fetched Stripe state, even if
+ *   the preceding DB write hasn't been committed yet or failed silently.
  */
 export async function tryAutoActivateSeller(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: SupabaseClient<any>,
   sellerId: string,
+  liveStripeConnectStatus?: string,
 ): Promise<ActivationResult | null> {
   const { data: profile, error } = await supabase
     .from('seller_profiles')
@@ -105,7 +111,11 @@ export async function tryAutoActivateSeller(
   }
 
   const profileComplete = isProfileComplete(profile);
-  const stripeActive = profile.stripeConnectStatus === 'active';
+  // Use the caller-supplied live value when available so we don't depend on a
+  // DB read that might reflect a stale stripeConnectStatus (e.g., when the
+  // preceding update hasn't committed yet, or failed silently).
+  const effectiveStripeConnectStatus = liveStripeConnectStatus ?? profile.stripeConnectStatus;
+  const stripeActive = effectiveStripeConnectStatus === 'active';
   const newStatus = deriveSellerStatus(
     profile.sellerStatus,
     profileComplete,
