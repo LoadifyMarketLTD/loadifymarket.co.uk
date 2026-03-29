@@ -13,9 +13,9 @@ const HERO_IMAGE = "/hero-marketplace.png";
 // ─── Category tiles ──────────────────────────────────────────────────────────
 const CATEGORY_IMAGES: Record<string, string> = {
   "Electronics":    "/electronics-category.png",
-  "Fashion":        "", // prompt: handbag, heels, sunglasses, jewellery, hat…
+  "Fashion":        "/images/categories/fashion.jpeg",
   "Home & Kitchen": "/home-kitchen-category.png",
-  "Tools & DIY":    "", // prompt: cordless drill, hammer, screwdriver set…
+  "Tools & DIY":    "/images/categories/tools-diy.jpeg",
 };
 
 // ─── Featured listing cards ───────────────────────────────────────────────────
