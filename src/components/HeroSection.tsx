@@ -1,46 +1,18 @@
+// HeroSection.tsx
 import React from 'react';
-import './HeroSection.css';
 
 const HeroSection = () => {
-    const targetDate = new Date('2026-06-30T23:00:00Z');
-    const [timeLeft, setTimeLeft] = React.useState(calculateTimeLeft());
-
-    React.useEffect(() => {
-        const interval = setInterval(() => {
-            setTimeLeft(calculateTimeLeft());
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []);
-
-    function calculateTimeLeft() {
-        const now = new Date();
-        const difference = targetDate - now;
-        let days = Math.floor(difference / (1000 * 60 * 60 * 24));
-        let hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        let minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-        return { days, hours, minutes };
-    }
-
     return (
-        <div className="hero-section">
-            <img src="/path/to/your/hero-image.jpg" alt="Hero" className="hero-image" />
-            <div className="hero-content">
-                <h1>Your Headline Here</h1>
-                <p>Your subtext here.</p>
-                <div className="cta-buttons">
-                    <button className="cta-button">Call to Action 1</button>
-                    <button className="cta-button">Call to Action 2</button>
-                </div>
-                <div className="countdown-card top-right">
-                    <span className="pill">0% Fees Until July 1</span>
-                    <span className="label">Offer ends in</span>
-                    <span className="countdown">{timeLeft.days} : {timeLeft.hours} : {timeLeft.minutes}</span>
-                </div>
+        <div className="bg-gray-100 flex flex-col md:flex-row justify-between items-center p-5">
+            <div className="flex-1 p-5">
+                <h1 className="text-3xl font-bold text-gray-800">Your Premium Countdown</h1>
+                <p className="mt-3 text-gray-600">Don’t miss out on exclusive offers!</p>
             </div>
-            <div className="mobile-variant top-right">
-                <span className="pill">0% Fees Until July 1</span>
-                <span className="label">Offer ends in</span>
-                <span className="countdown">{timeLeft.days} : {timeLeft.hours} : {timeLeft.minutes}</span>
+            <div className="flex-1 flex items-center justify-center p-5">
+                <div className="bg-white shadow-lg rounded-lg p-5">
+                    <h2 className="text-xl font-semibold text-gray-800">Countdown Timer</h2>
+                    <div className="mt-3 font-bold text-2xl text-red-600">00:10:00</div>
+                </div>
             </div>
         </div>
     );
