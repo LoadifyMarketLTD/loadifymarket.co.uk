@@ -121,20 +121,32 @@ export const handler: Handler = async (event) => {
     }
 
     // Persist the refreshed status so the dashboard doesn't need to poll Stripe.
-    await supabase
+    const { error: stripeStatusUpdateError } = await supabase
       .from('seller_profiles')
       .update({ stripeConnectStatus })
       .eq('userId', user.id);
+
+    if (stripeStatusUpdateError) {
+      // Non-fatal: log and continue. tryAutoActivateSeller will use the live
+      // stripeConnectStatus value passed below, so activation still proceeds.
+      console.warn(
+        'connect-status: failed to persist stripeConnectStatus for',
+        user.id,
+        stripeStatusUpdateError.message,
+      );
+    }
 
     // ── Auto-activation check ──────────────────────────────────────────────
     // After updating stripeConnectStatus, re-evaluate whether the seller now
     // meets all activation conditions.  tryAutoActivateSeller only writes to
     // the DB when the derived status differs from the stored one.
+    // Pass the live stripeConnectStatus so activation doesn't depend on the DB
+    // having persisted the preceding update (guards against silent failures).
     let sellerStatus: string | null = null;
     let profileComplete = false;
     try {
       const { tryAutoActivateSeller } = await import('./_shared/sellerActivation');
-      const result = await tryAutoActivateSeller(supabase, user.id);
+      const result = await tryAutoActivateSeller(supabase, user.id, stripeConnectStatus);
       if (result) {
         sellerStatus = result.sellerStatus;
         profileComplete = result.profileComplete;
