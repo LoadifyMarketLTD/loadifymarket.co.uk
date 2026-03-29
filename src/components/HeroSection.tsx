@@ -1,38 +1,47 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import './HeroSection.css';
 
 const HeroSection = () => {
-    const [timeRemaining, setTimeRemaining] = useState(0);
+    const targetDate = new Date('2026-06-30T23:00:00Z');
+    const [timeLeft, setTimeLeft] = React.useState(calculateTimeLeft());
 
-    const calculateTimeRemaining = () => {
-        const endDate = new Date('2026-07-01T00:00:00Z'); // July 1, 2026 00:00:00 UTC
-        const now = new Date();
-        const timeLeft = endDate.getTime() - now.getTime();
-        setTimeRemaining(timeLeft > 0 ? timeLeft : 0);
-    };
-
-    useEffect(() => {
-        calculateTimeRemaining();
-        const timer = setInterval(calculateTimeRemaining, 1000);
-        return () => clearInterval(timer);
+    React.useEffect(() => {
+        const interval = setInterval(() => {
+            setTimeLeft(calculateTimeLeft());
+        }, 1000);
+        return () => clearInterval(interval);
     }, []);
 
-    const formatTimeRemaining = (milliseconds) => {
-        const totalSeconds = Math.floor(milliseconds / 1000);
-        const days = Math.floor(totalSeconds / (3600 * 24));
-        const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-        return `${days} : ${hours.toString().padStart(2, '0')} : ${minutes.toString().padStart(2, '0')}`;
-    };
+    function calculateTimeLeft() {
+        const now = new Date();
+        const difference = targetDate - now;
+        let days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        let hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        let minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        return { days, hours, minutes };
+    }
 
     return (
         <div className="hero-section">
-            <div className="premium-card" style={{ position: 'absolute', top: '10px', right: '10px', padding: '20px', backgroundColor: 'white', borderRadius: '5px', boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)' }}>
-                <h3>0% Fees Until July 1</h3>
-                <p>Offer ends in</p>
-                <h4>{formatTimeRemaining(timeRemaining)}</h4>
+            <img src="/path/to/your/hero-image.jpg" alt="Hero" className="hero-image" />
+            <div className="hero-content">
+                <h1>Your Headline Here</h1>
+                <p>Your subtext here.</p>
+                <div className="cta-buttons">
+                    <button className="cta-button">Call to Action 1</button>
+                    <button className="cta-button">Call to Action 2</button>
+                </div>
+                <div className="countdown-card top-right">
+                    <span className="pill">0% Fees Until July 1</span>
+                    <span className="label">Offer ends in</span>
+                    <span className="countdown">{timeLeft.days} : {timeLeft.hours} : {timeLeft.minutes}</span>
+                </div>
             </div>
-            {/* Other Hero Section content */}
+            <div className="mobile-variant top-right">
+                <span className="pill">0% Fees Until July 1</span>
+                <span className="label">Offer ends in</span>
+                <span className="countdown">{timeLeft.days} : {timeLeft.hours} : {timeLeft.minutes}</span>
+            </div>
         </div>
     );
 };
