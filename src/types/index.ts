@@ -91,6 +91,13 @@ export interface SellerProfile {
   profileCompleteness?: number;
   marketplaceRole?: MarketplaceRole;
   paymentBehaviour?: PaymentBehaviour;
+  // Shipping preferences (migration 260)
+  shippingDefaults?: {
+    carrier?: string;
+    dispatchTime?: string;
+    originPostcode?: string;
+    freeShippingThreshold?: string;
+  };
 }
 
 export interface Address {
