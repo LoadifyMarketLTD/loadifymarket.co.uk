@@ -74,7 +74,7 @@ const HeroSection = () => {
               </p>
 
               {/* CTA buttons */}
-              <div className="flex flex-wrap gap-3 mb-8">
+              <div className="flex flex-wrap gap-3 mb-4">
                 <Link to="/catalog">
                   <button className="h-12 px-8 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-white font-bold text-base rounded-full shadow-md transition-all hover:-translate-y-0.5">
                     Browse Marketplace
@@ -87,6 +87,14 @@ const HeroSection = () => {
                   Start Selling →
                 </button>
               </div>
+
+              {/* Sign-in link for returning users */}
+              <p className="text-sm text-[#64748B] mb-8">
+                Already have an account?{" "}
+                <Link to="/login" className="font-semibold text-[#2563EB] hover:underline">
+                  Sign In →
+                </Link>
+              </p>
 
               {/* Trust bullets */}
               <div className="flex flex-col gap-2.5">

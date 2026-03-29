@@ -14,6 +14,9 @@ import {
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import type { Shipment } from "@/types/shipping";
+import type { User } from "@/types";
+
+type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 
 interface ShipmentRow extends Shipment {
   orders?: {
@@ -69,7 +72,7 @@ const SellerShipments = () => {
             .select("id, firstName, lastName")
             .in("id", uniqueBuyerIds);
           const names: Record<string, string> = {};
-          (buyers ?? []).forEach((buyer: { id: string; firstName?: string; lastName?: string }) => {
+          (buyers ?? []).forEach((buyer: BuyerData) => {
             const name = [buyer.firstName, buyer.lastName].filter(Boolean).join(" ").trim();
             names[buyer.id] = name || "Customer";
           });

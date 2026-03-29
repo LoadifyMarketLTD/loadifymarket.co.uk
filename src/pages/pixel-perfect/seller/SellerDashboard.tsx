@@ -7,6 +7,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import type { User } from "@/types";
+
+type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 
 interface DashboardStats {
   totalRevenue: number;
@@ -114,7 +117,7 @@ const SellerDashboard = () => {
             .from("users")
             .select("id, firstName, lastName")
             .in("id", recentBuyerIds);
-          (buyers ?? []).forEach((b: { id: string; firstName?: string; lastName?: string }) => {
+          (buyers ?? []).forEach((b: BuyerData) => {
             const name = [b.firstName, b.lastName].filter(Boolean).join(" ").trim();
             buyerNames[b.id] = name || "Customer";
           });
