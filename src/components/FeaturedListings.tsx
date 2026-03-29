@@ -3,79 +3,92 @@ import React, { useState, useCallback } from "react";
 import { ArrowRight, Eye, X } from "lucide-react";
 
 const FILTER_TABS = [
-  { key: "all",         label: "All"              },
-  { key: "electronics", label: "Electronics"      },
-  { key: "fashion",     label: "Fashion"          },
-  { key: "beauty",      label: "Beauty"           },
-  { key: "home",        label: "Home & Kitchen"   },
-  { key: "tools",       label: "Tools & DIY"      },
+  { key: "all",         label: "All"               },
+  { key: "electronics", label: "Electronics"       },
+  { key: "fashion",     label: "Fashion"           },
+  { key: "beauty",      label: "Beauty"            },
+  { key: "home",        label: "Home & Kitchen"    },
+  { key: "tools",       label: "Tools & DIY"       },
   { key: "health",      label: "Health & Wellness" },
 ];
 
+/**
+ * Cards in this section use /images/featured/ and select /images/categories/ images.
+ * Images from /images/products/ are reserved for FeaturedProducts to avoid duplication.
+ * Every card is clearly labelled "Sample listing" — per spec Section 6.
+ */
 const featuredListings = [
   {
     id: "1",
     img: "/images/featured/earbuds.webp",
-    title: "Electronics & Audio",
+    title: "Wireless Earbuds Pro",
     category: "Electronics",
     filterKey: "electronics",
     href: "/category/electronics",
+    label: "Sample listing",
   },
   {
     id: "2",
     img: "/images/featured/toolbox.webp",
-    title: "Tools & DIY Supplies",
+    title: "Heavy-Duty Toolbox Set",
     category: "Tools & DIY",
     filterKey: "tools",
     href: "/category/tools-diy",
+    label: "Sample listing",
   },
   {
     id: "3",
-    img: "/images/products/handbag.webp",
-    title: "Fashion Accessories",
+    img: "/images/categories/fashion.webp",
+    title: "Women's Summer Dress Collection",
     category: "Fashion",
     filterKey: "fashion",
     href: "/category/fashion",
+    label: "Sample listing",
   },
   {
     id: "4",
-    img: "/images/products/smartwatch.webp",
-    title: "Wearables & Gadgets",
+    img: "/images/categories/electronics.webp",
+    title: "Smart Home Gadgets Bundle",
     category: "Electronics",
     filterKey: "electronics",
     href: "/category/electronics",
+    label: "Sample listing",
   },
   {
     id: "5",
     img: "/images/featured/skincare2.webp",
-    title: "Beauty & Skincare",
+    title: "Natural Face Serum Set",
     category: "Beauty",
     filterKey: "beauty",
     href: "/category/beauty",
+    label: "Sample listing",
   },
   {
     id: "6",
     img: "/images/featured/chair.webp",
-    title: "Home & Furniture",
+    title: "Ergonomic Office Chair",
     category: "Home & Kitchen",
     filterKey: "home",
     href: "/category/home-kitchen",
+    label: "Sample listing",
   },
   {
     id: "7",
     img: "/images/categories/health-wellness.webp",
-    title: "Health & Wellness",
+    title: "Yoga Mat & Fitness Accessories",
     category: "Health & Wellness",
     filterKey: "health",
     href: "/category/health-wellness",
+    label: "Sample listing",
   },
   {
     id: "8",
-    img: "/images/products/headphones.webp",
-    title: "Audio & Headphones",
-    category: "Electronics",
-    filterKey: "electronics",
-    href: "/category/electronics",
+    img: "/images/categories/tools-diy.webp",
+    title: "Power Drill & Bit Set",
+    category: "Tools & DIY",
+    filterKey: "tools",
+    href: "/category/tools-diy",
+    label: "Sample listing",
   },
 ];
 
@@ -135,7 +148,7 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
               Explore Listings
             </Link>
             <Link
-              to="/register"
+              to="/signup"
               onClick={onClose}
               className="flex-1 text-center border-2 border-[#2563EB] text-[#2563EB] font-semibold py-2.5 rounded-xl hover:bg-blue-50 transition-all text-sm"
             >
@@ -178,7 +191,7 @@ const FeaturedListings = () => {
             </Link>
           </div>
           <p className="text-sm text-[#64748B] mb-6">
-            Explore what sellers will be offering across the marketplace
+            Example marketplace listings for preview purposes
           </p>
 
           {/* Filter pills */}
@@ -226,6 +239,10 @@ const FeaturedListings = () => {
                       }
                     }}
                   />
+                  {/* "Sample listing" badge — top-left of each card image */}
+                  <span className="absolute top-2 left-2 bg-white/90 text-[#64748B] text-[9px] font-semibold px-2 py-0.5 rounded-full border border-gray-200 shadow-sm backdrop-blur-sm">
+                    {item.label}
+                  </span>
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-all duration-300 flex items-center justify-center">
                     <button
                       type="button"

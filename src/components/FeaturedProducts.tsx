@@ -1,48 +1,53 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
+/**
+ * Each card maps ONE image to ONE specific product title and ONE category.
+ * Images from /images/products/ and select /images/categories/ are kept here;
+ * /images/featured/ images are reserved for FeaturedListings to avoid duplication.
+ */
 const PRODUCTS = [
   {
     id: "fp-1",
     img: "/images/products/headphones.webp",
-    title: "Electronics & Audio",
+    title: "Wireless Noise-Cancelling Headphones",
     category: "Electronics",
     href: "/category/electronics",
   },
   {
     id: "fp-2",
-    img: "/images/categories/fashion.webp",
-    title: "Fashion & Apparel",
+    img: "/images/products/laptop.webp",
+    title: "15.6\" Laptop Computer",
+    category: "Electronics",
+    href: "/category/electronics",
+  },
+  {
+    id: "fp-3",
+    img: "/images/products/smartwatch.webp",
+    title: "Men's Digital Smartwatch",
+    category: "Electronics",
+    href: "/category/electronics",
+  },
+  {
+    id: "fp-4",
+    img: "/images/products/handbag.webp",
+    title: "Women's Leather Handbag",
     category: "Fashion",
     href: "/category/fashion",
   },
   {
-    id: "fp-3",
+    id: "fp-5",
     img: "/images/products/skincare.webp",
-    title: "Beauty & Skincare",
+    title: "Luxury Skincare Bundle",
     category: "Beauty",
     href: "/category/beauty",
   },
   {
-    id: "fp-4",
-    img: "/images/products/smartwatch.webp",
-    title: "Wearables & Gadgets",
-    category: "Electronics",
-    href: "/category/electronics",
-  },
-  {
-    id: "fp-5",
-    img: "/images/products/laptop.webp",
-    title: "Laptops & Computers",
-    category: "Electronics",
-    href: "/category/electronics",
-  },
-  {
     id: "fp-6",
-    img: "/images/categories/health-wellness.webp",
-    title: "Health & Wellness",
-    category: "Health & Wellness",
-    href: "/category/health-wellness",
+    img: "/images/products/toolset.webp",
+    title: "Professional Hand Tool Set",
+    category: "Tools & DIY",
+    href: "/category/tools-diy",
   },
   {
     id: "fp-7",
@@ -53,38 +58,38 @@ const PRODUCTS = [
   },
   {
     id: "fp-8",
-    img: "/images/products/handbag.webp",
-    title: "Bags & Accessories",
-    category: "Fashion",
-    href: "/category/fashion",
+    img: "/images/categories/health-wellness.webp",
+    title: "Fitness & Wellness Bundle",
+    category: "Health & Wellness",
+    href: "/category/health-wellness",
   },
   {
     id: "fp-9",
-    img: "/images/products/toolset.webp",
-    title: "Tools & DIY Supplies",
-    category: "Tools & DIY",
-    href: "/category/tools-diy",
+    img: "/images/categories/toys-games.webp",
+    title: "Children's Educational Games",
+    category: "Toys & Games",
+    href: "/category/toys-games",
   },
   {
     id: "fp-10",
     img: "/images/categories/automotive.webp",
-    title: "Automotive & Accessories",
+    title: "Car & Van Accessories Kit",
     category: "Automotive",
     href: "/category/automotive",
   },
   {
     id: "fp-11",
-    img: "/images/categories/toys-games.webp",
-    title: "Toys & Games",
-    category: "Toys & Games",
-    href: "/category/toys-games",
+    img: "/images/categories/office-supplies.webp",
+    title: "Office & Desk Supplies Set",
+    category: "Office Supplies",
+    href: "/category/office-supplies",
   },
   {
     id: "fp-12",
-    img: "/images/featured/chair.webp",
-    title: "Home Furniture & Decor",
-    category: "Home & Kitchen",
-    href: "/category/home-kitchen",
+    img: "/images/categories/fashion.webp",
+    title: "Men's & Women's Clothing",
+    category: "Fashion",
+    href: "/category/fashion",
   },
 ];
 
@@ -101,7 +106,7 @@ const FeaturedProducts = () => {
               Browse the Marketplace
             </h2>
             <p className="mt-1 text-sm text-[#64748B]">
-              Explore categories from independent UK sellers
+              Products listed by independent UK sellers across all categories
             </p>
           </div>
           <Link
@@ -150,6 +155,7 @@ const FeaturedProducts = () => {
               <div className="p-3 flex-1 flex flex-col gap-1.5">
                 <p className="text-[10px] font-semibold text-[#2563EB] uppercase tracking-wide">{product.category}</p>
                 <p className="text-sm font-bold text-[#0F172A] line-clamp-2 leading-snug flex-1">{product.title}</p>
+                <p className="text-[10px] text-[#94A3B8] font-medium">Independent Seller</p>
               </div>
             </Link>
           ))}
