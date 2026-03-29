@@ -30,10 +30,10 @@ const CATEGORY_IMAGES: Record<string, string> = {
   'cat-pets':           '/images/categories/health-wellness.jpg',
   'cat-memorabilia':    '/images/products/sample-listing.jpg',
   'cat-mixed-lots':     WAREHOUSE_IMAGE,
-  'cat-food-drink':     '/images/categories/health-wellness.jpg',
+  'cat-food-drink':     '/images/categories/food-drink.jpg',
   'cat-office':         '/images/categories/office-supplies.jpg',
   'cat-home-garden':    '/images/categories/home-kitchen.jpg',
-  'cat-sports-outdoors': '/images/categories/health-wellness.jpg',
+  'cat-sports-outdoors': '/images/categories/sports.jpg',
   'cat-adult':          '/images/products/sample-listing.jpg',
 };
 
