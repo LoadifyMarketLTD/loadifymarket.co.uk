@@ -7,72 +7,84 @@ const PRODUCTS = [
     img: "/images/products/headphones.webp",
     title: "Electronics & Audio",
     category: "Electronics",
+    href: "/category/electronics",
   },
   {
     id: "fp-2",
     img: "/images/categories/fashion.webp",
     title: "Fashion & Apparel",
     category: "Fashion",
+    href: "/category/fashion",
   },
   {
     id: "fp-3",
     img: "/images/products/skincare.webp",
     title: "Beauty & Skincare",
     category: "Beauty",
+    href: "/category/beauty",
   },
   {
     id: "fp-4",
     img: "/images/products/smartwatch.webp",
     title: "Wearables & Gadgets",
     category: "Electronics",
+    href: "/category/electronics",
   },
   {
     id: "fp-5",
     img: "/images/products/laptop.webp",
     title: "Laptops & Computers",
     category: "Electronics",
+    href: "/category/electronics",
   },
   {
     id: "fp-6",
-    img: "/images/featured/skincare2.webp",
-    title: "Health & Beauty Products",
-    category: "Beauty",
+    img: "/images/categories/health-wellness.webp",
+    title: "Health & Wellness",
+    category: "Health & Wellness",
+    href: "/category/health-wellness",
   },
   {
     id: "fp-7",
     img: "/images/categories/home-kitchen.webp",
     title: "Home & Kitchen Essentials",
     category: "Home & Kitchen",
+    href: "/category/home-kitchen",
   },
   {
     id: "fp-8",
     img: "/images/products/handbag.webp",
     title: "Bags & Accessories",
     category: "Fashion",
+    href: "/category/fashion",
   },
   {
     id: "fp-9",
     img: "/images/products/toolset.webp",
     title: "Tools & DIY Supplies",
     category: "Tools & DIY",
+    href: "/category/tools-diy",
   },
   {
     id: "fp-10",
-    img: "/images/products/sample-listing.webp",
-    title: "Sports & Outdoors",
-    category: "Sports & Outdoors",
+    img: "/images/categories/automotive.webp",
+    title: "Automotive & Accessories",
+    category: "Automotive",
+    href: "/category/automotive",
   },
   {
     id: "fp-11",
     img: "/images/categories/toys-games.webp",
     title: "Toys & Games",
     category: "Toys & Games",
+    href: "/category/toys-games",
   },
   {
     id: "fp-12",
     img: "/images/featured/chair.webp",
     title: "Home Furniture & Decor",
     category: "Home & Kitchen",
+    href: "/category/home-kitchen",
   },
 ];
 
@@ -105,7 +117,7 @@ const FeaturedProducts = () => {
           {PRODUCTS.map((product) => (
             <Link
               key={product.id}
-              to="/catalog"
+              to={product.href}
               className="group bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col"
             >
               {/* Image */}

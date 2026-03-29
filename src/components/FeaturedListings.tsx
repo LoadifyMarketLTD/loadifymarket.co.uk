@@ -18,6 +18,7 @@ const featuredListings = [
     title: "Electronics & Audio",
     category: "Electronics",
     filterKey: "electronics",
+    href: "/category/electronics",
   },
   {
     id: "2",
@@ -25,6 +26,7 @@ const featuredListings = [
     title: "Tools & DIY Supplies",
     category: "Tools & DIY",
     filterKey: "tools",
+    href: "/category/tools-diy",
   },
   {
     id: "3",
@@ -32,6 +34,7 @@ const featuredListings = [
     title: "Fashion Accessories",
     category: "Fashion",
     filterKey: "fashion",
+    href: "/category/fashion",
   },
   {
     id: "4",
@@ -39,6 +42,7 @@ const featuredListings = [
     title: "Wearables & Gadgets",
     category: "Electronics",
     filterKey: "electronics",
+    href: "/category/electronics",
   },
   {
     id: "5",
@@ -46,6 +50,7 @@ const featuredListings = [
     title: "Beauty & Skincare",
     category: "Beauty",
     filterKey: "beauty",
+    href: "/category/beauty",
   },
   {
     id: "6",
@@ -53,13 +58,15 @@ const featuredListings = [
     title: "Home & Furniture",
     category: "Home & Kitchen",
     filterKey: "home",
+    href: "/category/home-kitchen",
   },
   {
     id: "7",
-    img: "/images/categories/electronics.webp",
-    title: "Consumer Electronics",
-    category: "Electronics",
-    filterKey: "electronics",
+    img: "/images/categories/health-wellness.webp",
+    title: "Health & Wellness",
+    category: "Health & Wellness",
+    filterKey: "health",
+    href: "/category/health-wellness",
   },
   {
     id: "8",
@@ -67,6 +74,7 @@ const featuredListings = [
     title: "Audio & Headphones",
     category: "Electronics",
     filterKey: "electronics",
+    href: "/category/electronics",
   },
 ];
 
@@ -119,7 +127,7 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
           </h3>
           <div className="flex gap-3">
             <Link
-              to="/catalog"
+              to={item.href}
               onClick={onClose}
               className="flex-1 text-center bg-[#2563EB] text-white font-semibold py-2.5 rounded-xl hover:bg-[#1D4ED8] transition-all text-sm"
             >
@@ -199,7 +207,7 @@ const FeaturedListings = () => {
             {visibleListings.map((item) => (
               <Link
                 key={item.id}
-                to="/catalog"
+                to={item.href}
                 className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col"
               >
                 <div className="relative overflow-hidden w-full">

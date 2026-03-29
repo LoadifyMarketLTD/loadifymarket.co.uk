@@ -36,7 +36,7 @@ const features = [
       "Real-time messaging with sellers",
     ],
     cta: { label: "How It Works", to: "/catalog" },
-    img: "/images/products/office-chair.webp",
+    img: "/images/products/smartwatch.webp",
   },
   {
     icon: BarChart3,
