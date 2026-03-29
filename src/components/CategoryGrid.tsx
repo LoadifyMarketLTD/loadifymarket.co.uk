@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Cpu, Shirt, Home, Wrench, Gamepad2, Sparkles, Heart, Car } from "lucide-react";
 import electronicsImg from "@/assets/categories/electronics.webp";
 import fashionImg from "@/assets/categories/clothing.webp";
-import homeImg from "@/assets/categories/home.webp";
 import toolsImg from "@/assets/categories/tools.webp";
 import toysImg from "@/assets/categories/toys.webp";
 import healthImg from "@/assets/categories/health-beauty.webp";
@@ -44,7 +43,7 @@ const categories = [
     slug: "home-kitchen",
     label: "Home & Kitchen",
     count: "1,100+",
-    img: homeImg,
+    img: "/images/categories/home-kitchen.webp",
     icon: Home,
     overlay: "from-[#3b2a0a]/75 via-amber-900/50 to-transparent",
     colSpan: "lg:col-span-2",

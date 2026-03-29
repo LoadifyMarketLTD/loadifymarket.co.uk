@@ -12,11 +12,6 @@ const FILTER_TABS = [
   { key: "health",      label: "Health & Wellness" },
 ];
 
-/**
- * Cards in this section use /images/featured/ and select /images/categories/ images.
- * Images from /images/products/ are reserved for FeaturedProducts to avoid duplication.
- * Every card is clearly labelled "Sample listing" — per spec Section 6.
- */
 const featuredListings = [
   {
     id: "1",
@@ -25,7 +20,6 @@ const featuredListings = [
     category: "Electronics",
     filterKey: "electronics",
     href: "/category/electronics",
-    label: "Sample listing",
   },
   {
     id: "2",
@@ -34,7 +28,6 @@ const featuredListings = [
     category: "Tools & DIY",
     filterKey: "tools",
     href: "/category/tools-diy",
-    label: "Sample listing",
   },
   {
     id: "3",
@@ -43,16 +36,14 @@ const featuredListings = [
     category: "Fashion",
     filterKey: "fashion",
     href: "/category/fashion",
-    label: "Sample listing",
   },
   {
     id: "4",
-    img: "/images/categories/electronics.webp",
-    title: "Smart Home Gadgets Bundle",
-    category: "Electronics",
-    filterKey: "electronics",
-    href: "/category/electronics",
-    label: "Sample listing",
+    img: "/images/categories/beauty.webp",
+    title: "Premium Beauty & Skincare",
+    category: "Beauty",
+    filterKey: "beauty",
+    href: "/category/beauty",
   },
   {
     id: "5",
@@ -61,7 +52,6 @@ const featuredListings = [
     category: "Beauty",
     filterKey: "beauty",
     href: "/category/beauty",
-    label: "Sample listing",
   },
   {
     id: "6",
@@ -70,7 +60,6 @@ const featuredListings = [
     category: "Home & Kitchen",
     filterKey: "home",
     href: "/category/home-kitchen",
-    label: "Sample listing",
   },
   {
     id: "7",
@@ -79,7 +68,6 @@ const featuredListings = [
     category: "Health & Wellness",
     filterKey: "health",
     href: "/category/health-wellness",
-    label: "Sample listing",
   },
   {
     id: "8",
@@ -88,7 +76,6 @@ const featuredListings = [
     category: "Tools & DIY",
     filterKey: "tools",
     href: "/category/tools-diy",
-    label: "Sample listing",
   },
 ];
 
@@ -191,7 +178,7 @@ const FeaturedListings = () => {
             </Link>
           </div>
           <p className="text-sm text-[#64748B] mb-6">
-            Example marketplace listings for preview purposes
+            Products listed by independent UK sellers across all categories
           </p>
 
           {/* Filter pills */}
@@ -239,10 +226,6 @@ const FeaturedListings = () => {
                       }
                     }}
                   />
-                  {/* "Sample listing" badge — top-left of each card image */}
-                  <span className="absolute top-2 left-2 bg-white/90 text-[#64748B] text-[9px] font-semibold px-2 py-0.5 rounded-full border border-gray-200 shadow-sm backdrop-blur-sm">
-                    {item.label}
-                  </span>
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-all duration-300 flex items-center justify-center">
                     <button
                       type="button"
