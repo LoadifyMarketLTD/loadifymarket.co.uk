@@ -62,16 +62,16 @@ const SellerShipments = () => {
         setShipments(rows);
 
         // Resolve buyer names via secondary query
-        const ids = [...new Set(rows.map((s) => s.buyer_id).filter(Boolean))];
-        if (ids.length > 0) {
+        const uniqueBuyerIds = [...new Set(rows.map((s) => s.buyer_id).filter(Boolean))];
+        if (uniqueBuyerIds.length > 0) {
           const { data: buyers } = await supabase
             .from("users")
             .select("id, firstName, lastName")
-            .in("id", ids);
+            .in("id", uniqueBuyerIds);
           const names: Record<string, string> = {};
-          (buyers ?? []).forEach((b: { id: string; firstName?: string; lastName?: string }) => {
-            const name = [b.firstName, b.lastName].filter(Boolean).join(" ").trim();
-            names[b.id] = name || "Customer";
+          (buyers ?? []).forEach((buyer: { id: string; firstName?: string; lastName?: string }) => {
+            const name = [buyer.firstName, buyer.lastName].filter(Boolean).join(" ").trim();
+            names[buyer.id] = name || "Customer";
           });
           setBuyerNames(names);
         }

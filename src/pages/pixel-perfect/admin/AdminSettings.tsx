@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
 type FeatureKey = "sellerRegistration" | "buyerRegistration" | "rfqSystem" | "reviewSystem" | "maintenanceMode" | "autoApproveProducts";
@@ -98,6 +99,7 @@ const AdminSettings = () => {
         }
       } catch (err) {
         console.error("Failed to load platform settings:", err);
+        toast({ title: "Could not load settings", description: "Using defaults. Please try refreshing.", variant: "destructive" });
       } finally {
         setSettingsLoading(false);
       }
