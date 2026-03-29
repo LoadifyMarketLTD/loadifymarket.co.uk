@@ -8,13 +8,13 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 // ─── Hero ────────────────────────────────────────────────────────────────────
-const HERO_IMAGE = "https://github.com/user-attachments/assets/bf6a8f51-4e1b-43a3-9ec0-3cdc972d7f30";
+const HERO_IMAGE = "/hero-marketplace.png";
 
 // ─── Category tiles ──────────────────────────────────────────────────────────
 const CATEGORY_IMAGES: Record<string, string> = {
-  "Electronics":    "https://github.com/user-attachments/assets/4c2485a1-d174-4a5f-b4e5-a3668d43a04e",
+  "Electronics":    "/electronics-category.png",
   "Fashion":        "", // prompt: handbag, heels, sunglasses, jewellery, hat…
-  "Home & Kitchen": "https://github.com/user-attachments/assets/49a1b981-42c6-450d-bfc1-66c2aebfd04a",
+  "Home & Kitchen": "/home-kitchen-category.png",
   "Tools & DIY":    "", // prompt: cordless drill, hammer, screwdriver set…
 };
 
