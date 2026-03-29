@@ -9,7 +9,7 @@ const CATEGORIES = [
     icon: Cpu,
     color: "bg-blue-50 text-blue-600",
     border: "border-blue-100",
-    img: "/images/categories/electronics.webp",
+    img: "/images/products/laptop.webp",
   },
   {
     slug: "fashion",

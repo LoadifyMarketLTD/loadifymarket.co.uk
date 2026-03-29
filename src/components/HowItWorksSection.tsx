@@ -1,115 +1,98 @@
-import { UserPlus, Search, PackagePlus, PoundSterling, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Monitor, ShoppingCart, Lock, BadgeCheck, Package, Star, ChevronRight } from "lucide-react";
 
-const buyerSteps = [
+/**
+ * How It Works — single horizontal 6-step flow.
+ * Matches reference: gold numbered circles, step icons, chevron arrows,
+ * light grey background, centred title + subtitle.
+ */
+
+const STEPS = [
   {
-    icon: UserPlus,
-    step: "01",
-    title: "Create a Free Account",
-    description: "Sign up in under 2 minutes. Browse the marketplace as a registered buyer.",
+    num: 1,
+    icon: Monitor,
+    title: "Browse Products",
+    desc: "Explore a marketplace of UK sellers",
   },
   {
-    icon: Search,
-    step: "02",
-    title: "Find What You Need",
-    description: "Search and browse products from independent UK sellers across all categories — electronics, fashion, home, and more.",
+    num: 2,
+    icon: ShoppingCart,
+    title: "Add to Cart",
+    desc: "Select items and review your order",
   },
   {
-    icon: PoundSterling,
-    step: "03",
-    title: "Buy & Get It Delivered",
-    description: "Purchase securely via Stripe. Arrange delivery directly with the seller.",
+    num: 3,
+    icon: Lock,
+    title: "Secure Checkout",
+    desc: "Pay safely via Stripe",
+  },
+  {
+    num: 4,
+    icon: BadgeCheck,
+    title: "Order Confirmed",
+    desc: "Receive instant order confirmation",
+  },
+  {
+    num: 5,
+    icon: Package,
+    title: "Shipped by Seller",
+    desc: "Track your delivery",
+  },
+  {
+    num: 6,
+    icon: Star,
+    title: "Review & Rate",
+    desc: "Share your experience",
   },
 ];
 
-const sellerSteps = [
-  {
-    icon: UserPlus,
-    step: "01",
-    title: "Sign Up & Complete Setup",
-    description: "Create your free seller account, complete your profile and connect a Stripe account to start selling.",
-  },
-  {
-    icon: PackagePlus,
-    step: "02",
-    title: "List Your Products",
-    description: "Upload your products with photos and pricing. List any physical goods — single items, multi-quantity or anything else. Buyers see them instantly.",
-  },
-  {
-    icon: PoundSterling,
-    step: "03",
-    title: "Sell & Get Paid",
-    description: "Buyers purchase your products. Payments are processed securely via Stripe with fast payouts.",
-  },
-];
+const HowItWorksSection = () => (
+  <section className="bg-[#F8F9FB] py-14 px-4 sm:px-6">
+    <div className="max-w-[1280px] mx-auto">
 
-const StepRow = ({ title, steps }: { title: string; steps: typeof buyerSteps }) => (
-  <div>
-    <h3 className="text-center font-display text-lg font-semibold text-[#2563EB] mb-6">{title}</h3>
-    <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-      {steps.map((item, i) => (
-        <div key={item.step} className="relative text-center group">
-          {i < steps.length - 1 && (
-            <div className="hidden md:block absolute top-8 left-[60%] w-[80%] h-px border-t-2 border-dashed border-gray-200" />
-          )}
-          <div className="relative inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#2563EB] text-white mb-4 shadow-md group-hover:scale-105 transition-transform">
-            <item.icon className="h-7 w-7" />
-            <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center">
-              {item.step}
-            </span>
-          </div>
-          <h4 className="font-display text-base font-semibold text-[#0F172A] mb-1.5">{item.title}</h4>
-          <p className="text-sm text-[#64748B] max-w-[260px] mx-auto leading-relaxed">{item.description}</p>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-const HowItWorksSection = () => {
-  return (
-    <section id="how-it-works" className="py-16 bg-[#F5F7FB]">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#2563EB]">
-            How It Works
-          </span>
-          <h2 className="mt-3 text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
-            Simple for Buyers. Simple for Sellers.
-          </h2>
-          <p className="mt-3 text-[#64748B]">
-            Whether you're buying or selling, get started in 3 easy steps.
-          </p>
-        </div>
-
-        <div className="space-y-10">
-          <StepRow title="For Buyers" steps={buyerSteps} />
-          <StepRow title="For Sellers" steps={sellerSteps} />
-        </div>
-
-        {/* CTA */}
-        <div className="flex flex-wrap justify-center gap-4 mt-10">
-          <Link to="/catalog">
-            <Button
-              size="lg"
-              className="h-12 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-base px-8 rounded-xl shadow-md"
-            >
-              Browse Marketplace <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
-          <Link to="/signup">
-            <Button
-              size="lg"
-              className="h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-base px-8 rounded-xl shadow-md"
-            >
-              Create Seller Account <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
-        </div>
+      {/* Header */}
+      <div className="text-center mb-10">
+        <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#0F172A] mb-2">
+          How It Works
+        </h2>
+        <p className="text-sm text-[#64748B]">Simple steps from browsing to delivery.</p>
       </div>
-    </section>
-  );
-};
+
+      {/* Steps row */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0">
+        {STEPS.map((step, idx) => (
+          <div key={step.num} className="flex sm:flex-col items-center sm:items-center gap-4 sm:gap-0 flex-1">
+
+            {/* Step cell */}
+            <div className="flex flex-col items-center text-center flex-1">
+              {/* Gold number badge */}
+              <span className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 text-white text-xs font-bold flex items-center justify-center shadow mb-3">
+                {step.num}
+              </span>
+
+              {/* Icon */}
+              <div className="w-12 h-12 rounded-xl bg-white shadow-sm border border-gray-100 flex items-center justify-center mb-3">
+                <step.icon className="h-6 w-6 text-[#334155]" aria-hidden="true" />
+              </div>
+
+              {/* Text */}
+              <p className="text-xs font-bold text-[#0F172A] mb-1 leading-tight">{step.title}</p>
+              <p className="text-[10px] text-[#94A3B8] leading-snug max-w-[90px]">{step.desc}</p>
+            </div>
+
+            {/* Chevron connector (not after last) */}
+            {idx < STEPS.length - 1 && (
+              <ChevronRight
+                className="hidden sm:block h-5 w-5 text-[#CBD5E1] shrink-0 sm:mt-[-28px]"
+                aria-hidden="true"
+              />
+            )}
+
+          </div>
+        ))}
+      </div>
+
+    </div>
+  </section>
+);
 
 export default HowItWorksSection;

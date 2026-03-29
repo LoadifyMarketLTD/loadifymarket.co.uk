@@ -3,70 +3,79 @@ import React, { useState, useCallback } from "react";
 import { ArrowRight, Eye, X } from "lucide-react";
 
 const FILTER_TABS = [
-  { key: "all",         label: "All"           },
-  { key: "electronics", label: "Electronics"   },
-  { key: "fashion",     label: "Fashion"       },
-  { key: "beauty",      label: "Beauty"        },
-  { key: "home",        label: "Home & Kitchen" },
-  { key: "tools",       label: "Tools & DIY"   },
+  { key: "all",         label: "All"               },
+  { key: "electronics", label: "Electronics"       },
+  { key: "fashion",     label: "Fashion"           },
+  { key: "beauty",      label: "Beauty"            },
+  { key: "home",        label: "Home & Kitchen"    },
+  { key: "tools",       label: "Tools & DIY"       },
+  { key: "health",      label: "Health & Wellness" },
 ];
 
 const featuredListings = [
   {
     id: "1",
     img: "/images/featured/earbuds.webp",
-    title: "Electronics & Audio",
+    title: "Wireless Earbuds Pro",
     category: "Electronics",
     filterKey: "electronics",
+    href: "/category/electronics",
   },
   {
     id: "2",
     img: "/images/featured/toolbox.webp",
-    title: "Tools & DIY Supplies",
+    title: "Heavy-Duty Toolbox Set",
     category: "Tools & DIY",
     filterKey: "tools",
+    href: "/category/tools-diy",
   },
   {
     id: "3",
-    img: "/images/products/handbag.webp",
-    title: "Fashion Accessories",
+    img: "/images/categories/fashion.webp",
+    title: "Women's Summer Dress Collection",
     category: "Fashion",
     filterKey: "fashion",
+    href: "/category/fashion",
   },
   {
     id: "4",
-    img: "/images/products/smartwatch.webp",
-    title: "Wearables & Gadgets",
-    category: "Electronics",
-    filterKey: "electronics",
+    img: "/images/categories/beauty.webp",
+    title: "Premium Beauty & Skincare",
+    category: "Beauty",
+    filterKey: "beauty",
+    href: "/category/beauty",
   },
   {
     id: "5",
     img: "/images/featured/skincare2.webp",
-    title: "Beauty & Skincare",
+    title: "Natural Face Serum Set",
     category: "Beauty",
     filterKey: "beauty",
+    href: "/category/beauty",
   },
   {
     id: "6",
     img: "/images/featured/chair.webp",
-    title: "Home & Furniture",
+    title: "Ergonomic Office Chair",
     category: "Home & Kitchen",
     filterKey: "home",
+    href: "/category/home-kitchen",
   },
   {
     id: "7",
-    img: "/images/categories/electronics.webp",
-    title: "Consumer Electronics",
-    category: "Electronics",
-    filterKey: "electronics",
+    img: "/images/categories/health-wellness.webp",
+    title: "Yoga Mat & Fitness Accessories",
+    category: "Health & Wellness",
+    filterKey: "health",
+    href: "/category/health-wellness",
   },
   {
     id: "8",
-    img: "/images/products/headphones.webp",
-    title: "Audio & Headphones",
-    category: "Electronics",
-    filterKey: "electronics",
+    img: "/images/categories/tools-diy.webp",
+    title: "Power Drill & Bit Set",
+    category: "Tools & DIY",
+    filterKey: "tools",
+    href: "/category/tools-diy",
   },
 ];
 
@@ -119,14 +128,14 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
           </h3>
           <div className="flex gap-3">
             <Link
-              to="/catalog"
+              to={item.href}
               onClick={onClose}
               className="flex-1 text-center bg-[#2563EB] text-white font-semibold py-2.5 rounded-xl hover:bg-[#1D4ED8] transition-all text-sm"
             >
               Explore Listings
             </Link>
             <Link
-              to="/register"
+              to="/signup"
               onClick={onClose}
               className="flex-1 text-center border-2 border-[#2563EB] text-[#2563EB] font-semibold py-2.5 rounded-xl hover:bg-blue-50 transition-all text-sm"
             >
@@ -169,7 +178,7 @@ const FeaturedListings = () => {
             </Link>
           </div>
           <p className="text-sm text-[#64748B] mb-6">
-            Explore what sellers will be offering across the marketplace
+            Products listed by independent UK sellers across all categories
           </p>
 
           {/* Filter pills */}
@@ -199,7 +208,7 @@ const FeaturedListings = () => {
             {visibleListings.map((item) => (
               <Link
                 key={item.id}
-                to="/catalog"
+                to={item.href}
                 className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col"
               >
                 <div className="relative overflow-hidden w-full">

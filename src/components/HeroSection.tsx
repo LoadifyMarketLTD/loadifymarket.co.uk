@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { X } from "lucide-react";
+import { ShieldCheck, Users, LayoutGrid, X } from "lucide-react";
 
 /* ── Countdown target: July 1 2026 00:00:00 BST = June 30 23:00:00 UTC ── */
 const TARGET_TIME = new Date("2026-06-30T23:00:00Z").getTime();
@@ -19,6 +19,12 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
+const TRUST_BULLETS = [
+  { icon: ShieldCheck, text: "Secure payments via Stripe",        color: "text-emerald-500" },
+  { icon: Users,       text: "Independent sellers across the UK", color: "text-[#2563EB]"   },
+  { icon: LayoutGrid,  text: "Multi-category marketplace",        color: "text-violet-500"  },
+];
+
 const HeroSection = () => {
   const [time, setTime] = useState(getTimeLeft);
   const [roleModalOpen, setRoleModalOpen] = useState(false);
@@ -29,7 +35,7 @@ const HeroSection = () => {
     // does not compete with LCP painting or inflate INP on low-end devices.
     // Falls back to immediate start in environments without requestIdleCallback.
     const startTimer = () => { id = setInterval(() => setTime(getTimeLeft()), 1000); };
-    if ('requestIdleCallback' in window) {
+    if ("requestIdleCallback" in window) {
       const handle = window.requestIdleCallback(startTimer);
       return () => { window.cancelIdleCallback(handle); if (id !== undefined) clearInterval(id); };
     }
@@ -42,242 +48,127 @@ const HeroSection = () => {
 
   return (
     <>
-      {/* scoped styles — kept inside this file so HeroSection is self-contained */}
-      <style>{`
-        .lfy-hero {
-          position: relative;
-          height: 100vh;
-          min-height: 600px;
-          overflow: hidden;
-        }
-        .lfy-hero-bg {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center right;
-          z-index: 0;
-        }
+      {/* ── 2-column hero ─────────────────────────────────────────────────── */}
+      <section
+        className="bg-white overflow-hidden"
+        aria-label="Hero banner"
+      >
+        <div className="flex flex-col lg:flex-row min-h-[540px] lg:min-h-[600px]">
 
-        /* ── Badge + countdown block — upper-center / slightly-right sky ── */
-        .lfy-hero-promo {
-          position: absolute;
-          top: 7%;
-          left: 55%;
-          transform: translateX(-50%);
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-          z-index: 3;
-        }
-        .lfy-hero-badge {
-          background: #FEF3C7;
-          color: #92400E;
-          font-size: 1.125rem;
-          font-weight: 800;
-          padding: 10px 28px;
-          border-radius: 999px;
-          box-shadow: 0 2px 12px rgba(0,0,0,0.22);
-          white-space: nowrap;
-          letter-spacing: 0.01em;
-        }
-        .lfy-hero-promo-label {
-          font-size: 0.75rem;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: #0A2239;
-          opacity: 0.7;
-          margin-bottom: -4px;
-        }
-        .lfy-hero-countdown-card {
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border-radius: 18px;
-          border: 1.5px solid rgba(255,255,255,0.9);
-          box-shadow: 0 8px 32px rgba(0,0,0,0.22);
-          padding: 18px 32px 14px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 6px;
-          min-width: 280px;
-        }
-        .lfy-hero-countdown {
-          color: #0A2239;
-          font-size: 2.25rem;
-          font-weight: 800;
-          font-variant-numeric: tabular-nums;
-          white-space: nowrap;
-          letter-spacing: 0.06em;
-          line-height: 1;
-        }
-        .lfy-hero-countdown-sub {
-          font-size: 0.6875rem;
-          font-weight: 600;
-          color: #64748b;
-          letter-spacing: 0.04em;
-          white-space: nowrap;
-        }
+          {/* ── LEFT: Text / CTA ─────────────────────────────────────────── */}
+          <div className="flex-1 flex flex-col justify-center px-6 sm:px-10 lg:px-0 py-12 lg:py-20">
+            {/* Constrains the text to ~640 px max and right-aligns it toward the split */}
+            <div className="w-full max-w-[580px] mx-auto lg:ml-auto lg:mr-0 lg:pr-14 xl:pr-20">
 
-        /* ── Left text block — left sky area ── */
-        .lfy-hero-text {
-          position: absolute;
-          top: 8%;
-          left: 0;
-          width: 44%;
-          padding: 0 24px 0 52px;
-          z-index: 2;
-          display: flex;
-          flex-direction: column;
-        }
-        .lfy-hero-headline {
-          font-size: clamp(1.875rem, 3vw, 2.875rem);
-          font-weight: 800;
-          color: #0A2239;
-          line-height: 1.15;
-          max-width: 500px;
-          margin-bottom: 16px;
-          text-shadow: 0 1px 6px rgba(255,255,255,0.7);
-        }
-        .lfy-hero-subtext {
-          font-size: 1.0625rem;
-          line-height: 1.65;
-          color: #1e293b;
-          font-weight: 500;
-          max-width: 420px;
-          margin-bottom: 34px;
-          text-shadow: 0 1px 4px rgba(255,255,255,0.55);
-        }
-        .lfy-hero-cta {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-          align-items: center;
-        }
-        .lfy-btn-primary {
-          background: #15803d;
-          color: #ffffff;
-          font-weight: 700;
-          font-size: 0.9375rem;
-          padding: 13px 32px;
-          border-radius: 10px;
-          border: none;
-          cursor: pointer;
-          box-shadow: 0 4px 16px rgba(21,128,61,0.45);
-          transition: background 0.15s ease, transform 0.1s ease;
-          white-space: nowrap;
-        }
-        .lfy-btn-primary:hover {
-          background: #14532d;
-          transform: translateY(-1px);
-        }
-        .lfy-btn-secondary {
-          background: rgba(255,255,255,0.88);
-          color: #0A2239;
-          font-weight: 700;
-          font-size: 0.9375rem;
-          padding: 12px 30px;
-          border-radius: 10px;
-          border: 2px solid rgba(10,34,57,0.55);
-          cursor: pointer;
-          transition: background 0.15s ease, color 0.15s ease;
-          white-space: nowrap;
-        }
-        .lfy-btn-secondary:hover {
-          background: #0A2239;
-          color: #ffffff;
-        }
-
-        /* Mobile */
-        @media (max-width: 768px) {
-          .lfy-hero-promo {
-            top: 6%;
-            left: 50%;
-            transform: translateX(-50%);
-          }
-          .lfy-hero-countdown-card {
-            min-width: 220px;
-            padding: 14px 20px 10px;
-          }
-          .lfy-hero-countdown {
-            font-size: 1.625rem;
-          }
-          .lfy-hero-badge {
-            font-size: 0.9375rem;
-            padding: 8px 18px;
-          }
-          .lfy-hero-text {
-            top: auto;
-            bottom: 6%;
-            width: 90%;
-            padding: 0 20px;
-          }
-          .lfy-hero-headline {
-            font-size: 1.5rem;
-          }
-        }
-      `}</style>
-
-      <section className="lfy-hero" aria-label="Hero banner">
-        {/* LCP image — served as explicit <img> so browsers can discover and
-            prioritise it via the preload scanner. WebP (smaller) for modern
-            browsers; JPEG as fallback. fetchPriority="high" + loading="eager" +
-            decoding="sync" eliminate any scheduling or decode delay for LCP. */}
-        <picture>
-          <source srcSet="/hero.webp" type="image/webp" />
-          <img
-            src="/hero.jpeg"
-            alt=""
-            aria-hidden="true"
-            className="lfy-hero-bg"
-            fetchPriority="high"
-            loading="eager"
-            width="1536"
-            height="1024"
-          />
-        </picture>
-
-        {/* Badge + countdown — top center / slightly right sky area */}
-        {!expired && (
-          <div className="lfy-hero-promo">
-            <span className="lfy-hero-badge">🎉 0% Fees Until July 1</span>
-            <div className="lfy-hero-countdown-card">
-              <span className="lfy-hero-promo-label">Offer ends in</span>
-              <span className="lfy-hero-countdown">
-                {pad(time.days)}d&nbsp;{pad(time.hours)}h&nbsp;{pad(time.minutes)}m&nbsp;{pad(time.seconds)}s
+              {/* Platform badge */}
+              <span className="inline-flex items-center gap-1.5 bg-blue-50 text-[#2563EB] text-xs font-bold px-3 py-1.5 rounded-full mb-6">
+                🇬🇧 UK Multi-Category Marketplace
               </span>
-              <span className="lfy-hero-countdown-sub">days · hours · minutes · seconds</span>
+
+              {/* Headline */}
+              <h1 className="text-4xl sm:text-5xl font-display font-extrabold text-[#0F172A] leading-tight tracking-tight mb-4">
+                Buy &amp; Sell Products<br />
+                <span className="text-[#2563EB]">Across the UK</span>
+              </h1>
+
+              {/* Subheadline */}
+              <p className="text-lg text-[#475569] leading-relaxed mb-2">
+                From electronics to fashion — discover trusted UK sellers in one place.
+              </p>
+              <p className="text-sm font-semibold text-[#64748B] mb-8">
+                Businesses and individuals can sell on Loadify Market.
+              </p>
+
+              {/* CTA buttons */}
+              <div className="flex flex-wrap gap-3 mb-8">
+                <Link to="/catalog">
+                  <button className="h-12 px-8 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-white font-bold text-base rounded-full shadow-md transition-all hover:-translate-y-0.5">
+                    Browse Marketplace
+                  </button>
+                </Link>
+                <button
+                  className="h-12 px-8 border-2 border-[#0F172A] text-[#0F172A] hover:bg-[#0F172A] hover:text-white font-bold text-base rounded-full transition-all hover:-translate-y-0.5 bg-transparent"
+                  onClick={() => setRoleModalOpen(true)}
+                >
+                  Start Selling →
+                </button>
+              </div>
+
+              {/* Trust bullets */}
+              <div className="flex flex-col gap-2.5">
+                {TRUST_BULLETS.map(({ icon: Icon, text, color }) => (
+                  <div key={text} className="flex items-center gap-2 text-sm font-medium text-[#334155]">
+                    <Icon className={`h-4 w-4 ${color} shrink-0`} aria-hidden="true" />
+                    {text}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        )}
 
-        {/* Left text block — left sky area */}
-        <div className="lfy-hero-text">
-          <h1 className="lfy-hero-headline">
-            Buy &amp; Sell Products Across the UK — All in One Marketplace
-          </h1>
-          <p className="lfy-hero-subtext">
-            Browse products from independent sellers across multiple categories — from everyday items to electronics, fashion, home and garden.
-          </p>
-          <div className="lfy-hero-cta">
-            <Link to="/catalog">
-              <button className="lfy-btn-primary">
-                Browse Marketplace
-              </button>
-            </Link>
-            <button
-              className="lfy-btn-secondary"
-              onClick={() => setRoleModalOpen(true)}
-            >
-              Start Selling
-            </button>
+          {/* ── RIGHT: Hero image (desktop) ──────────────────────────────── */}
+          <div className="hidden lg:block lg:w-[48%] relative overflow-hidden">
+            {/* LCP image — WebP first, JPEG fallback */}
+            <picture>
+              <source srcSet="/hero.webp" type="image/webp" />
+              <img
+                src="/hero.jpeg"
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-cover object-center"
+                fetchPriority="high"
+                loading="eager"
+                width="960"
+                height="720"
+              />
+            </picture>
+
+            {/* Left-edge fade — smooth blend from white left column into image */}
+            <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-white to-transparent pointer-events-none" />
+
+            {/* Badge + countdown — top-right of the image */}
+            {!expired && (
+              <div className="absolute top-6 right-6 flex flex-col items-end gap-2.5 z-10">
+                <span className="bg-amber-400 text-amber-900 font-bold text-sm px-4 py-2 rounded-xl shadow-lg whitespace-nowrap">
+                  🎉 0% Fees Until July 1
+                </span>
+                <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl px-5 py-3.5 flex flex-col items-center gap-1">
+                  <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Offer ends in</span>
+                  <span
+                    className="text-2xl font-extrabold text-[#0F172A] tabular-nums whitespace-nowrap"
+                    aria-live="off"
+                  >
+                    {pad(time.days)}d&nbsp;{pad(time.hours)}h&nbsp;{pad(time.minutes)}m
+                  </span>
+                  <span className="text-[10px] text-[#94A3B8]">days · hours · minutes</span>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
 
+          {/* ── Mobile: small accent image strip below text ───────────────── */}
+          <div className="lg:hidden h-52 overflow-hidden relative">
+            <picture>
+              <source srcSet="/hero.webp" type="image/webp" />
+              <img
+                src="/hero.jpeg"
+                alt=""
+                aria-hidden="true"
+                className="w-full h-full object-cover object-top"
+                loading="lazy"
+                width="960"
+                height="416"
+              />
+            </picture>
+            {/* Mobile badge */}
+            {!expired && (
+              <div className="absolute top-3 right-3 bg-amber-400 text-amber-900 font-bold text-xs px-3 py-1.5 rounded-lg shadow">
+                🎉 0% Fees Until July 1
+              </div>
+            )}
+          </div>
+
+        </div>
       </section>
 
       {/* ── Role selection modal ──────────────────────────────────────────── */}
@@ -305,7 +196,7 @@ const HeroSection = () => {
             </p>
             <div className="flex flex-col gap-3">
               <Link to="/signup" onClick={() => setRoleModalOpen(false)}>
-                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-[#15803d] hover:bg-green-50 rounded-xl p-4 cursor-pointer transition-all">
+                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-[#2563EB] hover:bg-blue-50 rounded-xl p-4 cursor-pointer transition-all">
                   <span className="text-2xl">🛒</span>
                   <div>
                     <p className="font-semibold text-[#0A2239]">I'm a Buyer</p>
@@ -314,7 +205,7 @@ const HeroSection = () => {
                 </div>
               </Link>
               <Link to="/signup?type=seller" onClick={() => setRoleModalOpen(false)}>
-                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-[#15803d] hover:bg-green-50 rounded-xl p-4 cursor-pointer transition-all">
+                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-emerald-500 hover:bg-emerald-50 rounded-xl p-4 cursor-pointer transition-all">
                   <span className="text-2xl">🏪</span>
                   <div>
                     <p className="font-semibold text-[#0A2239]">I'm a Seller</p>
