@@ -1,8 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SellerSidebar } from "@/components/seller/SellerSidebar";
 import { Outlet } from "react-router-dom";
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import NotificationBell from "@/components/NotificationBell";
 
@@ -17,10 +15,6 @@ const SellerLayout = () => {
           <header className="h-14 flex items-center justify-between border-b border-border px-4 bg-card/50 backdrop-blur-sm shrink-0">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
-              <div className="hidden sm:block relative w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search products, orders..." className="pl-9 h-9 bg-muted/50 border-0" />
-              </div>
             </div>
 
             <div className="flex items-center gap-2">

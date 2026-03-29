@@ -16,6 +16,15 @@ import { supabase } from "@/lib/supabase";
 type FeatureKey = "sellerRegistration" | "buyerRegistration" | "rfqSystem" | "reviewSystem" | "maintenanceMode" | "autoApproveProducts";
 type Features = Record<FeatureKey, boolean>;
 
+interface PlatformConfig {
+  platformName: string;
+  supportEmail: string;
+  defaultCurrency: string;
+  commissionRate: number;
+  maxUploadSizeMb: number;
+  productsPerPage: number;
+}
+
 const DEFAULT_FEATURES: Features = {
   sellerRegistration: true,
   buyerRegistration: true,
@@ -25,9 +34,19 @@ const DEFAULT_FEATURES: Features = {
   autoApproveProducts: false,
 };
 
+const DEFAULT_CONFIG: PlatformConfig = {
+  platformName: "Loadify Market",
+  supportEmail: "loadifymarket.co.uk@gmail.com",
+  defaultCurrency: "gbp",
+  commissionRate: 8,
+  maxUploadSizeMb: 10,
+  productsPerPage: 24,
+};
+
 const AdminSettings = () => {
   const [showKey, setShowKey] = useState(false);
   const [features, setFeatures] = useState<Features>(DEFAULT_FEATURES);
+  const [config, setConfig] = useState<PlatformConfig>(DEFAULT_CONFIG);
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [cacheCleared, setCacheCleared] = useState(false);
@@ -48,10 +67,11 @@ const AdminSettings = () => {
       const { data } = await supabase
         .from("platform_settings")
         .select("key, value")
-        .in("key", ["feature_flags", "maintenance_mode"]);
+        .in("key", ["feature_flags", "maintenance_mode", "platform_config"]);
       if (!data) return;
       const featureFlagsRow = data.find((r) => r.key === "feature_flags");
       const maintenanceRow = data.find((r) => r.key === "maintenance_mode");
+      const configRow = data.find((r) => r.key === "platform_config");
       setFeatures((prev) => {
         let next = { ...prev };
         if (featureFlagsRow?.value && typeof featureFlagsRow.value === "object") {
@@ -62,6 +82,18 @@ const AdminSettings = () => {
         }
         return next;
       });
+      if (configRow?.value && typeof configRow.value === "object") {
+        const stored = configRow.value as Partial<Record<string, unknown>>;
+        setConfig((prev) => ({
+          ...prev,
+          platformName: typeof stored.platformName === "string" ? stored.platformName : prev.platformName,
+          supportEmail: typeof stored.supportEmail === "string" ? stored.supportEmail : prev.supportEmail,
+          defaultCurrency: typeof stored.defaultCurrency === "string" ? stored.defaultCurrency : prev.defaultCurrency,
+          commissionRate: typeof stored.commissionRate === "number" ? stored.commissionRate : prev.commissionRate,
+          maxUploadSizeMb: typeof stored.maxUploadSizeMb === "number" ? stored.maxUploadSizeMb : prev.maxUploadSizeMb,
+          productsPerPage: typeof stored.productsPerPage === "number" ? stored.productsPerPage : prev.productsPerPage,
+        }));
+      }
     };
     load();
   }, []);
@@ -81,6 +113,10 @@ const AdminSettings = () => {
         ),
         supabase.from("platform_settings").upsert(
           { key: "maintenance_mode", value: maintenanceMode },
+          { onConflict: "key" }
+        ),
+        supabase.from("platform_settings").upsert(
+          { key: "platform_config", value: config },
           { onConflict: "key" }
         ),
       ];
@@ -148,15 +184,23 @@ const AdminSettings = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-xs">Platform Name</Label>
-              <Input defaultValue="Loadify Market" className="mt-1" />
+              <Input
+                className="mt-1"
+                value={config.platformName}
+                onChange={(e) => setConfig((c) => ({ ...c, platformName: e.target.value }))}
+              />
             </div>
             <div>
               <Label className="text-xs">Support Email</Label>
-              <Input defaultValue="loadifymarket.co.uk@gmail.com" className="mt-1" />
+              <Input
+                className="mt-1"
+                value={config.supportEmail}
+                onChange={(e) => setConfig((c) => ({ ...c, supportEmail: e.target.value }))}
+              />
             </div>
             <div>
               <Label className="text-xs">Default Currency</Label>
-              <Select defaultValue="gbp">
+              <Select value={config.defaultCurrency} onValueChange={(v) => setConfig((c) => ({ ...c, defaultCurrency: v }))}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="gbp">GBP (£)</SelectItem>
@@ -166,16 +210,36 @@ const AdminSettings = () => {
               </Select>
             </div>
             <div>
-              <Label className="text-xs">Commission Rate</Label>
-              <Input defaultValue="8%" className="mt-1" />
+              <Label className="text-xs">Commission Rate (%)</Label>
+              <Input
+                className="mt-1"
+                type="number"
+                min="0"
+                max="100"
+                step="0.5"
+                value={config.commissionRate}
+                onChange={(e) => setConfig((c) => ({ ...c, commissionRate: parseFloat(e.target.value) || 0 }))}
+              />
             </div>
             <div>
               <Label className="text-xs">Max Upload Size (MB)</Label>
-              <Input defaultValue="10" type="number" className="mt-1" />
+              <Input
+                className="mt-1"
+                type="number"
+                min="1"
+                value={config.maxUploadSizeMb}
+                onChange={(e) => setConfig((c) => ({ ...c, maxUploadSizeMb: parseInt(e.target.value, 10) || 1 }))}
+              />
             </div>
             <div>
               <Label className="text-xs">Products per Page</Label>
-              <Input defaultValue="24" type="number" className="mt-1" />
+              <Input
+                className="mt-1"
+                type="number"
+                min="1"
+                value={config.productsPerPage}
+                onChange={(e) => setConfig((c) => ({ ...c, productsPerPage: parseInt(e.target.value, 10) || 1 }))}
+              />
             </div>
           </div>
         </CardContent>
