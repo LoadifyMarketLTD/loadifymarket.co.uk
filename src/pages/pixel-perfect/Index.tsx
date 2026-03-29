@@ -1,15 +1,20 @@
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
+import CategorySlider from "@/components/CategorySlider";
+import FeaturedProducts from "@/components/FeaturedProducts";
+import DealsSection from "@/components/DealsSection";
 import TrustStrip from "@/components/TrustStrip";
+import PaymentTrustSection from "@/components/PaymentTrustSection";
 import CategoryGrid from "@/components/CategoryGrid";
 import FeaturedListings from "@/components/FeaturedListings";
 import FeaturesSection from "@/components/FeaturesSection";
 import HowItWorks from "@/components/HowItWorks";
+import PlatformFeatures from "@/components/PlatformFeatures";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import LazySection from "@/components/LazySection";
-import { Info, Building2 } from "lucide-react";
+import { Info } from "lucide-react";
 
 export default function PixelPerfectIndex() {
   return (
@@ -19,69 +24,47 @@ export default function PixelPerfectIndex() {
       {/* spacer: 40px top bar + 64px header row + 48px category nav */}
       <div className="pt-[152px]" />
       <main>
-        {/* SECTION 3 — Hero */}
         <HeroSection />
-
-        {/* SECTION 4 — Trust Bar */}
+        {/* Category strip — horizontal scroll, icon + label per category */}
+        <CategorySlider />
+        {/* Featured products grid — 4 columns, 12 products */}
+        <FeaturedProducts />
+        {/* Deals / promo banner cards */}
+        <DealsSection />
         <TrustStrip />
-
-        {/* SECTION 5 — Category Grid */}
+        {/* Marketplace disclaimer — visible on homepage as required */}
+        <div className="bg-blue-50 border-y border-blue-100">
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-2 text-center">
+            <Info className="h-4 w-4 text-blue-500 shrink-0" aria-hidden="true" />
+            <p className="text-xs sm:text-sm text-blue-700 font-medium">
+              Loadify Market does not hold or sell inventory. All products are listed, managed, and fulfilled by independent sellers.
+            </p>
+          </div>
+        </div>
+        <PaymentTrustSection />
         <LazySection>
           <CategoryGrid />
         </LazySection>
-
-        {/* SECTION 6 — Featured Listings */}
+        {/* Below-fold sections: deferred with IntersectionObserver to reduce
+            the initial DOM node count from ~1,200 down toward the recommended
+            maximum of 800 elements. Components mount only when the user
+            scrolls near them (rootMargin keeps a 300 px look-ahead). */}
         <LazySection>
           <FeaturedListings />
         </LazySection>
-
-        {/* SECTION 7 — Why Choose Loadify Market */}
         <LazySection>
           <FeaturesSection />
         </LazySection>
-
-        {/* SECTION 8 — How It Works */}
         <LazySection>
           <HowItWorks />
         </LazySection>
-
-        {/* SECTION 9 — Seller CTA Block */}
+        <LazySection>
+          <PlatformFeatures />
+        </LazySection>
         <LazySection>
           <CTASection />
         </LazySection>
-
-        {/* SECTION 10 — Marketplace Disclaimer / Legal Clarity */}
-        <div className="bg-slate-50 border-y border-slate-200 py-8">
-          <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
-            <div className="flex flex-col sm:flex-row sm:items-start gap-6">
-              <div className="flex items-start gap-3 flex-1">
-                <Info className="h-5 w-5 text-[#2563EB] shrink-0 mt-0.5" aria-hidden="true" />
-                <div>
-                  <p className="text-sm font-semibold text-[#0F172A] mb-1">
-                    Marketplace Notice
-                  </p>
-                  <p className="text-sm text-[#475569] leading-relaxed">
-                    Loadify Market does not hold or sell inventory. All products are listed, managed, and fulfilled by independent sellers.
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 flex-1">
-                <Building2 className="h-5 w-5 text-[#64748B] shrink-0 mt-0.5" aria-hidden="true" />
-                <div>
-                  <p className="text-sm font-semibold text-[#0F172A] mb-1">
-                    Legal Operator
-                  </p>
-                  <p className="text-sm text-[#475569] leading-relaxed">
-                    Loadify Market is operated by XDrive Logistics Ltd (UK). Company No: 13171804.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </main>
-
-      {/* SECTION 11 — Footer */}
       <LazySection>
         <Footer />
       </LazySection>

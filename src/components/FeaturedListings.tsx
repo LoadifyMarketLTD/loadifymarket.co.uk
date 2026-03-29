@@ -168,11 +168,8 @@ const FeaturedListings = () => {
               View All <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <p className="text-sm text-[#64748B] mb-2">
-            Sample marketplace listings across categories
-          </p>
-          <p className="text-xs text-[#94A3B8] italic mb-6">
-            Example marketplace listings for preview purposes
+          <p className="text-sm text-[#64748B] mb-6">
+            Explore what sellers will be offering across the marketplace
           </p>
 
           {/* Filter pills */}
@@ -239,10 +236,7 @@ const FeaturedListings = () => {
                   <p className="text-sm font-bold text-[#0F172A] line-clamp-2 leading-snug flex-1">
                     {item.title}
                   </p>
-                  <div className="flex items-center justify-between mt-auto">
-                    <span className="text-[10px] text-[#94A3B8] italic">Sample listing</span>
-                    <span className="text-[10px] font-semibold text-[#2563EB]">Explore →</span>
-                  </div>
+                  <span className="text-[10px] font-semibold text-[#2563EB] mt-auto">Explore →</span>
                 </div>
               </Link>
             ))}
