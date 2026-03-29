@@ -73,7 +73,7 @@ const HeroSection = () => {
 
               {/* Subheadline */}
               <p className="text-lg text-[#475569] leading-relaxed mb-2">
-                Browse products across multiple categories — from everyday retail to wholesale, clearance, pallets and job lots.
+                From electronics to fashion — discover trusted UK sellers in one place.
               </p>
               <p className="text-sm font-semibold text-[#64748B] mb-8">
                 Businesses and individuals can sell on Loadify Market.
@@ -82,15 +82,15 @@ const HeroSection = () => {
               {/* CTA buttons */}
               <div className="flex flex-wrap gap-3 mb-8">
                 <Link to="/catalog">
-                  <button className="h-12 px-8 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-base rounded-xl shadow-md transition-all hover:-translate-y-0.5">
+                  <button className="h-12 px-8 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-white font-bold text-base rounded-full shadow-md transition-all hover:-translate-y-0.5">
                     Browse Marketplace
                   </button>
                 </Link>
                 <button
-                  className="h-12 px-8 border-2 border-[#0F172A] text-[#0F172A] hover:bg-[#0F172A] hover:text-white font-bold text-base rounded-xl transition-all hover:-translate-y-0.5 bg-transparent"
+                  className="h-12 px-8 border-2 border-[#0F172A] text-[#0F172A] hover:bg-[#0F172A] hover:text-white font-bold text-base rounded-full transition-all hover:-translate-y-0.5 bg-transparent"
                   onClick={() => setRoleModalOpen(true)}
                 >
-                  Start Selling
+                  Start Selling →
                 </button>
               </div>
 

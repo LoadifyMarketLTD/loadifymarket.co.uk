@@ -1,81 +1,102 @@
-import { ArrowRight, Warehouse, LayoutGrid, CreditCard, List } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const SELLER_BULLETS = [
-  { icon: Warehouse,   text: "No warehouse required" },
-  { icon: List,        text: "Manage your own listings" },
-  { icon: CreditCard,  text: "Secure payments via Stripe" },
-  { icon: LayoutGrid,  text: "Sell across multiple categories" },
+/**
+ * Seller CTA — full-width dark navy section.
+ * Left: "Start selling in three simple steps" + numbered bullets + gold CTA.
+ * Right: product composition hero image.
+ * Matches reference design exactly.
+ */
+
+const STEPS = [
+  {
+    num: 1,
+    title: "Create your account",
+    desc: "Sign up and complete your seller profile",
+  },
+  {
+    num: 2,
+    title: "List your products",
+    desc: "Add images, price and details",
+  },
+  {
+    num: 3,
+    title: "Get paid",
+    desc: "Receive payments securely via Stripe",
+  },
 ];
 
-const CTASection = () => {
-  return (
-    <section id="start-selling" className="py-16 bg-[#F5F7FB]">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
-        <div className="relative overflow-hidden rounded-3xl bg-[#0F172A] p-10 sm:p-16">
-          {/* Decorative blobs */}
-          <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-[#2563EB]/20 blur-3xl pointer-events-none" />
-          {/* Dot pattern */}
-          <div
-            className="absolute inset-0 opacity-[0.05] pointer-events-none"
-            style={{
-              backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
-              backgroundSize: "28px 28px",
-            }}
-          />
+const CTASection = () => (
+  <section
+    id="start-selling"
+    className="relative overflow-hidden bg-gradient-to-br from-[#0a1628] via-[#0e1e3a] to-[#091220]"
+  >
+    {/* Subtle dot texture */}
+    <div
+      className="absolute inset-0 opacity-[0.04] pointer-events-none"
+      style={{
+        backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+        backgroundSize: "24px 24px",
+      }}
+    />
 
-          <div className="relative max-w-3xl mx-auto">
-            <div className="text-center mb-8">
-              <span className="inline-block text-xs font-semibold uppercase tracking-widest text-emerald-400 mb-3">
-                Sell on Loadify Market
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-display font-bold text-white leading-tight mb-3">
-                Start Selling on Loadify Market
-              </h2>
-              <p className="text-blue-200 text-lg max-w-xl mx-auto">
-                From independent sellers to established businesses — reach UK buyers through one marketplace.
-              </p>
-            </div>
+    <div className="relative max-w-[1280px] mx-auto px-4 sm:px-6 py-16 sm:py-20">
+      <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
 
-            {/* Bullets */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8 max-w-lg mx-auto">
-              {SELLER_BULLETS.map(({ icon: Icon, text }) => (
-                <div key={text} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-3">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
-                    <Icon className="h-4 w-4 text-emerald-400" aria-hidden="true" />
-                  </div>
-                  <span className="text-sm font-medium text-white">{text}</span>
+        {/* ── LEFT: Text block ─────────────────────────────────────── */}
+        <div className="flex-1 max-w-[520px]">
+          <h2 className="text-3xl sm:text-4xl font-display font-bold text-white leading-tight mb-3">
+            Start selling in three simple steps
+          </h2>
+          <p className="text-blue-200 text-base mb-8">
+            Join thousands of UK businesses and individuals selling on Loadify Market.
+          </p>
+
+          {/* Numbered steps */}
+          <div className="flex flex-col gap-4 mb-10">
+            {STEPS.map((step) => (
+              <div key={step.num} className="flex items-start gap-4">
+                <span className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 shadow">
+                  {step.num}
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-white">{step.title}</p>
+                  <p className="text-xs text-blue-300">{step.desc}</p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+          </div>
 
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/signup?type=seller">
-                <Button
-                  size="lg"
-                  className="h-12 bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-base px-8 rounded-xl shadow-lg"
-                >
-                  Start Selling <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/seller-guidelines">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="h-12 border-2 border-white/30 text-white font-bold text-base px-8 rounded-xl hover:bg-white/10 bg-transparent"
-                >
-                  Learn More
-                </Button>
-              </Link>
-            </div>
+          {/* Gold CTA */}
+          <Link to="/signup?type=seller">
+            <button className="inline-flex items-center gap-2 h-12 px-8 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-white font-bold text-sm rounded-full shadow-lg transition-all hover:-translate-y-0.5">
+              Start Selling Today <ArrowRight className="h-4 w-4" />
+            </button>
+          </Link>
+        </div>
+
+        {/* ── RIGHT: Product composition image ─────────────────────── */}
+        <div className="flex-1 flex items-center justify-center lg:justify-end">
+          <div className="relative w-full max-w-[480px]">
+            {/* Ambient glow */}
+            <div className="absolute inset-0 bg-amber-500/10 rounded-3xl blur-3xl" />
+            <picture>
+              <source srcSet="/hero.webp" type="image/webp" />
+              <img
+                src="/hero.jpeg"
+                alt="Products available on Loadify Market"
+                width="960"
+                height="720"
+                loading="lazy"
+                className="relative w-full object-contain drop-shadow-2xl"
+              />
+            </picture>
           </div>
         </div>
+
       </div>
-    </section>
-  );
-};
+    </div>
+  </section>
+);
 
 export default CTASection;
