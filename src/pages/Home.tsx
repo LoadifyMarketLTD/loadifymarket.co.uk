@@ -1,4 +1,27 @@
 // src/pages/Home.tsx
+//
+// IMAGE SWAP GUIDE — replace the empty `image` strings below with the
+// generated image URLs (or local public/ paths) when they become available.
+// Each slot maps to one of the AI-generated cinematic product photos.
+
+// ─── Hero ────────────────────────────────────────────────────────────────────
+const HERO_IMAGE = "https://github.com/user-attachments/assets/ee430825-8d41-48cc-9eb0-0bda5068e190";
+
+// ─── Category tiles (swap empty string → image URL when generated) ───────────
+const CATEGORY_IMAGES: Record<string, string> = {
+  "Electronics":    "", // prompt: laptop, phone, tablet, headphones, camera…
+  "Fashion":        "", // prompt: handbag, heels, sunglasses, jewellery, hat…
+  "Home & Kitchen": "", // prompt: coffee maker, mug, bowl, utensils, lamp…
+  "Tools & DIY":    "", // prompt: cordless drill, hammer, screwdriver set…
+};
+
+// ─── Featured listing cards (swap empty string → image URL when generated) ───
+const LISTING_IMAGES: string[] = [
+  "", // #1 — cardboard shipping box, soft glow inside
+  "", // #2 — compact smart gadget box / accessory case
+  "", // #3 — medium home accessory box / lifestyle packaging
+  "", // #4 — clearance / mixed stock flat-lay
+];
 
 const Home = () => {
   const features = [
@@ -9,17 +32,17 @@ const Home = () => {
   ];
 
   const categories = [
-    "Electronics",
-    "Fashion",
-    "Home & Kitchen",
-    "Tools & DIY",
+    { name: "Electronics",    slug: "electronics" },
+    { name: "Fashion",        slug: "fashion" },
+    { name: "Home & Kitchen", slug: "home-kitchen" },
+    { name: "Tools & DIY",    slug: "tools-diy" },
   ];
 
   const exampleListings = [
-    "Sample Listing",
-    "Brand Collection",
-    "Wholesale Bundle",
-    "Clearance Stock",
+    { name: "Sample Listing",    image: LISTING_IMAGES[0] },
+    { name: "Brand Collection",  image: LISTING_IMAGES[1] },
+    { name: "Wholesale Bundle",  image: LISTING_IMAGES[2] },
+    { name: "Clearance Stock",   image: LISTING_IMAGES[3] },
   ];
 
   return (
@@ -60,10 +83,10 @@ const Home = () => {
           </div>
 
           <div className="hidden md:flex justify-center">
-            {/* Hero image — replace src with a local path once the file is
-                placed at public/hero-devices.png for self-hosted delivery. */}
+            {/* Hero image — self-host by placing file at public/hero-devices.jpg
+                and updating HERO_IMAGE at the top of this file. */}
             <img
-              src="https://github.com/user-attachments/assets/072da9d3-3d98-4a0b-b930-e3e08901ae78"
+              src={HERO_IMAGE}
               alt="Loadify Market — shop on any device"
               width={672}
               height={448}
@@ -96,17 +119,32 @@ const Home = () => {
           </h2>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {categories.map((cat) => (
-              <div
-                key={cat}
-                className="rounded-xl overflow-hidden bg-white shadow hover:shadow-lg transition"
-              >
-                <div className="h-32 bg-slate-200 flex items-center justify-center text-slate-500 text-sm">
-                  Category Preview
-                </div>
-                <div className="p-4 font-semibold text-slate-800">{cat}</div>
-              </div>
-            ))}
+            {categories.map(({ name, slug }) => {
+              const img = CATEGORY_IMAGES[name];
+              return (
+                <a
+                  key={name}
+                  href={`/catalog?category=${slug}`}
+                  className="rounded-xl overflow-hidden bg-white shadow hover:shadow-lg transition"
+                >
+                  {img ? (
+                    <img
+                      src={img}
+                      alt={name}
+                      width={400}
+                      height={128}
+                      className="h-32 w-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="h-32 bg-slate-200 flex items-center justify-center text-slate-500 text-sm">
+                      {name}
+                    </div>
+                  )}
+                  <div className="p-4 font-semibold text-slate-800">{name}</div>
+                </a>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -119,15 +157,26 @@ const Home = () => {
           </h2>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {exampleListings.map((item) => (
+            {exampleListings.map(({ name, image }) => (
               <div
-                key={item}
+                key={name}
                 className="rounded-xl overflow-hidden bg-white shadow hover:shadow-lg transition"
               >
-                <div className="h-40 bg-slate-200 flex items-center justify-center text-slate-500 text-sm">
-                  Listing Preview
-                </div>
-                <div className="p-4 font-semibold text-slate-800">{item}</div>
+                {image ? (
+                  <img
+                    src={image}
+                    alt={name}
+                    width={400}
+                    height={160}
+                    className="h-40 w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="h-40 bg-slate-200 flex items-center justify-center text-slate-500 text-sm">
+                    Listing Preview
+                  </div>
+                )}
+                <div className="p-4 font-semibold text-slate-800">{name}</div>
               </div>
             ))}
           </div>
