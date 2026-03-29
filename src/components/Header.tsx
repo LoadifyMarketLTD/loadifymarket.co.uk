@@ -185,7 +185,7 @@ const Header = () => {
           </form>
 
           <Link to="/catalog" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-[#334155]">All Categories</Link>
-          <Link to="/clearance" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-[#334155]">Deals</Link>
+          <Link to="/deals" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-[#334155]">Deals</Link>
 
           <div className="flex gap-2 pt-2 border-t border-gray-100">
             {user ? (

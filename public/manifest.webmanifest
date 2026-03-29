@@ -1,7 +1,7 @@
 {
   "name": "Loadify Market - UK Marketplace",
   "short_name": "Loadify Market",
-  "description": "UK marketplace for products, bulk lots, pallets and B2B wholesale.",
+  "description": "UK multi-category online marketplace connecting buyers and sellers.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0A0A0A",

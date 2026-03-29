@@ -210,7 +210,7 @@ export const updatePageMeta = (config: SEOConfig) => {
 export const pageSEO = {
   home: {
     title: 'Loadify Market — UK Multi-Category Marketplace for Physical Goods',
-    description: 'UK marketplace where businesses and individuals buy and sell physical products. Browse independent sellers across retail, wholesale, clearance and more.',
+    description: 'UK marketplace where buyers and sellers connect across multiple categories. Browse independent sellers across electronics, fashion, home, and more.',
     canonical: 'https://loadifymarket.co.uk',
   },
   catalog: {

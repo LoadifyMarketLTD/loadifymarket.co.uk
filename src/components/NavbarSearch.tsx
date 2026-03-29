@@ -8,8 +8,8 @@ const categories = [
   "Electronics & Technology", "Clothing & Apparel", "Home & Garden",
   "Health & Beauty", "Toys & Games", "Food & Drink", "Tools & DIY",
   "Sports & Leisure", "Automotive", "Office & Stationery",
-  "Baby & Nursery", "Jewellery & Watches", "Mixed Lots",
-  "Customer Returns", "Overstock", "Clearance & Bargains",
+  "Baby & Nursery", "Jewellery & Watches", "Handmade & Crafts",
+  "Books & Media", "Pet Supplies",
 ];
 
 interface SearchProduct {

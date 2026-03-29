@@ -7,7 +7,7 @@ const buyerBenefits = [
     icon: Search,
     color: "text-[#2563EB] bg-blue-50",
     title: "Browse 500+ Listings",
-    desc: "Find products across all categories from registered UK sellers — retail, wholesale, clearance, handmade and more.",
+    desc: "Find products across all categories from registered UK sellers — electronics, fashion, home & garden, handmade and more.",
   },
   {
     icon: ShieldCheck,

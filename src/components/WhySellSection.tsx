@@ -7,13 +7,13 @@ const benefits = [
     icon: Users,
     title: "Real Buyers, Every Day",
     description:
-      "Buyers on Loadify are registered users actively searching for products across all categories — from everyday retail to bulk lots.",
+      "Buyers on Loadify are registered users actively searching for products across all categories — from everyday items to specialist goods.",
   },
   {
     icon: TrendingUp,
     title: "Sell Any Product Faster",
     description:
-      "List any physical product and get it in front of active buyers within minutes — retail items, bulk lots, clearance lines or anything in between.",
+      "List any physical product and get it in front of active buyers within minutes — single items, multi-quantity listings or anything in between.",
   },
   {
     icon: Package,

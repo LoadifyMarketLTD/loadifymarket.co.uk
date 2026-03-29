@@ -14,7 +14,7 @@ const AboutUs = () => {
             About Loadify Market
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed mb-10">
-            Loadify Market is the UK's trusted multi-category marketplace for physical goods. Independent sellers list and manage their own inventory — covering retail items, wholesale products, clearance lines, pallets, job lots and more — while buyers browse, compare and purchase directly from sellers, all in one place.
+            Loadify Market is the UK's trusted multi-category online marketplace. Independent sellers list and manage their own inventory across electronics, fashion, home & garden, toys, handmade goods and more — while buyers browse, compare and purchase directly from sellers, all in one place.
           </p>
 
           <div className="space-y-8">
@@ -34,7 +34,7 @@ const AboutUs = () => {
                 Our Mission
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                To create the most efficient and trusted marketplace for physical goods in the UK — connecting independent sellers with buyers across retail, wholesale, clearance, pallets, job lots and every category in between.
+                To create the most efficient and trusted marketplace for physical goods in the UK — connecting independent sellers with buyers across every product category.
               </p>
             </section>
 
@@ -44,7 +44,7 @@ const AboutUs = () => {
                 Who Uses Loadify
               </h2>
               <ul className="text-muted-foreground space-y-2">
-                <li>• <strong className="text-foreground">Sellers</strong> — Independent UK businesses and individuals listing physical products across any category: retail goods, wholesale products, clearance lines, pallets, handmade items and more.</li>
+                <li>• <strong className="text-foreground">Sellers</strong> — Independent UK businesses and individuals listing physical products across any category: electronics, fashion, home & garden, handmade items and more.</li>
                 <li>• <strong className="text-foreground">Buyers</strong> — Consumers, retailers, resellers and businesses looking for physical goods at competitive prices across a wide range of categories.</li>
               </ul>
             </section>
@@ -65,7 +65,7 @@ const AboutUs = () => {
                 UK-Focused
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                Loadify Market is built for UK buyers and sellers. All sellers are UK-based, and we support delivery across the United Kingdom. Our platform is designed for the UK physical goods market — from everyday retail to wholesale pallets.
+                Loadify Market is built for UK buyers and sellers. All sellers are UK-based, and we support delivery across the United Kingdom. Our platform is designed for the UK physical goods market — from everyday items to specialist and niche products.
               </p>
             </section>
           </div>

@@ -51,14 +51,13 @@ export interface SearchResults {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 export const RELATED_SEARCHES: Record<string, string[]> = {
-  phone:       ['phone accessories', 'iphone', 'samsung phone', 'phone pallet'],
-  laptop:      ['laptop accessories', 'gaming laptop', 'laptop pallet', 'refurbished laptop'],
-  clothing:    ['mens clothing', 'womens clothing', 'clothing pallet', 'mixed lot clothing'],
-  electronics: ['electronics pallet', 'mixed electronics', 'refurbished electronics', 'tech bundle'],
-  tools:       ['power tools', 'hand tools', 'tools pallet', 'garden tools'],
-  furniture:   ['flat pack furniture', 'office furniture', 'furniture lot', 'home furniture'],
-  toys:        ['toys pallet', 'kids toys', 'educational toys', 'toy bundle'],
-  pallet:      ['electronics pallet', 'clothing pallet', 'mixed pallet', 'amazon returns pallet'],
+  phone:       ['phone accessories', 'iphone', 'samsung phone', 'phone case'],
+  laptop:      ['laptop accessories', 'gaming laptop', 'laptop stand', 'refurbished laptop'],
+  clothing:    ['mens clothing', 'womens clothing', 'kids clothing', 'fashion accessories'],
+  electronics: ['smart home', 'mixed electronics', 'refurbished electronics', 'tech bundle'],
+  tools:       ['power tools', 'hand tools', 'tool kit', 'garden tools'],
+  furniture:   ['flat pack furniture', 'office furniture', 'home decor', 'home furniture'],
+  toys:        ['kids toys', 'educational toys', 'toy bundle', 'outdoor toys'],
 };
 
 /** Returns related searches for a given query. */

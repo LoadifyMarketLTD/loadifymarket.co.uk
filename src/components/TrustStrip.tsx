@@ -17,7 +17,7 @@ const benefits = [
     icon: ShieldCheck,
     color: "text-amber-600 bg-amber-50",
     title: "Multi-Category Marketplace",
-    description: "Retail, wholesale, clearance, pallets, job lots and more.",
+    description: "Electronics, fashion, home & garden, toys, sports and many more categories.",
   },
   {
     icon: Lock,

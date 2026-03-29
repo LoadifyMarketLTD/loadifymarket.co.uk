@@ -28,7 +28,7 @@ const ShippingPolicy = () => {
             <li>Item weight and dimensions</li>
             <li>Delivery destination</li>
             <li>Shipping method selected</li>
-            <li>Whether the order is a pallet/bulk shipment</li>
+            <li>Whether the order is a large or oversized item</li>
           </ul>
           <p>Shipping costs are displayed at checkout before you confirm your order.</p>
 
@@ -37,16 +37,16 @@ const ShippingPolicy = () => {
           <ul>
             <li><strong>Standard delivery:</strong> 3–7 business days</li>
             <li><strong>Express delivery:</strong> 1–3 business days</li>
-            <li><strong>Pallet delivery:</strong> 5–10 business days (dependent on carrier and location)</li>
+            <li><strong>Freight / large item delivery:</strong> 5–10 business days (dependent on carrier and location)</li>
             <li><strong>Collection:</strong> Available from some sellers — arranged directly</li>
           </ul>
           <p>These are estimates only. Actual delivery times may vary due to stock availability, carrier schedules and external factors.</p>
 
-          <h2>5. Pallet &amp; Large Item Deliveries</h2>
-          <p>For pallet and large item orders:</p>
+          <h2>5. Large Item &amp; Freight Deliveries</h2>
+          <p>For large item and freight orders:</p>
           <ul>
             <li>Delivery is typically kerbside unless otherwise agreed</li>
-            <li>The buyer is responsible for having adequate means to receive and unload pallets</li>
+            <li>The buyer is responsible for having adequate means to receive and unload large items</li>
             <li>Specific delivery arrangements should be confirmed with the seller before purchase</li>
             <li>Additional charges may apply for tail-lift delivery or specific time slots</li>
           </ul>

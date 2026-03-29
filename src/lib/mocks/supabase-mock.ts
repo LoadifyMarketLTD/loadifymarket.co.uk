@@ -169,11 +169,11 @@ const initializeMockData = () => {
     updatedAt: new Date().toISOString(),
   });
 
-  // Amazon Returns lots (type: lot) — fills Amazon Returns section
+  // Mixed lot products (type: lot)
   mockStorage.products.set('product-6', {
     id: 'product-6',
-    title: 'Amazon Returns Pallet — Electronics Mixed',
-    description: 'Unsorted Amazon customer returns, electronics and accessories',
+    title: 'Mixed Electronics Bundle — Various Brands',
+    description: 'Mixed electronics and accessories bundle, various brands',
     price: 499.00,
     type: 'lot',
     condition: 'used',
@@ -193,8 +193,8 @@ const initializeMockData = () => {
 
   mockStorage.products.set('product-7', {
     id: 'product-7',
-    title: 'Amazon Customer Returns — Household & Kitchen',
-    description: 'Mixed household and kitchen returns pallet, wide variety of items',
+    title: 'Mixed Household & Kitchen Bundle',
+    description: 'Mixed household and kitchen products, wide variety of items',
     price: 320.00,
     type: 'lot',
     condition: 'used',
@@ -235,8 +235,8 @@ const initializeMockData = () => {
 
   mockStorage.products.set('product-9', {
     id: 'product-9',
-    title: 'Trade Returns — Tools & Garden Mixed Pallet',
-    description: 'Trade quality tools and garden returns pallet, major retailer',
+    title: 'Trade Lot — Tools & Garden Bundle',
+    description: 'Trade quality tools and garden products bundle, major retailer',
     price: 650.00,
     type: 'lot',
     condition: 'used',
@@ -481,12 +481,12 @@ const initializeMockData = () => {
   // Sample RFQ requests for demo
   mockStorage.rfq_requests.set('rfq-1', {
     id: 'rfq-1',
-    product_name: 'Electronics Pallet - Grade A',
-    quantity: '5 pallets',
+    product_name: 'Electronics Bundle - Grade A',
+    quantity: '5 units',
     destination_country: 'United Kingdom',
     estimated_budget: '£6,000 – £8,000',
     buyer_email: 'buyer1@example.com',
-    message: 'Looking for regular supply of Grade A electronics pallets. Can you provide samples?',
+    message: 'Looking for regular supply of Grade A electronics. Can you provide samples?',
     status: 'pending',
     created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
   });

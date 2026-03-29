@@ -21,10 +21,10 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const getTypeInfo = () => {
     switch (product.type) {
-      case 'pallet':    return { icon: Package, label: 'Pallet Deal', color: 'bg-[#1E3A5F]' };
-      case 'lot':       return { icon: Package, label: 'Bulk Lot', color: 'bg-[#1E3A5F]' };
-      case 'wholesale': return { icon: Package, label: 'Wholesale', color: 'bg-[#1E3A5F]' };
-      case 'clearance': return { icon: Tag, label: 'Clearance', color: 'bg-red-600' };
+      case 'pallet':    return { icon: Package, label: 'Multi-Unit', color: 'bg-[#1E3A5F]' };
+      case 'lot':       return { icon: Package, label: 'Bundle', color: 'bg-[#1E3A5F]' };
+      case 'wholesale': return { icon: Package, label: 'Trade Price', color: 'bg-[#1E3A5F]' };
+      case 'clearance': return { icon: Tag, label: 'Special Offer', color: 'bg-red-600' };
       case 'handmade':  return { icon: Sparkles, label: 'Handmade', color: 'bg-fuchsia-600' };
       case 'retail':    return { icon: Package, label: 'Single Item', color: 'bg-emerald-600' };
       case 'product':   return { icon: Package, label: 'Single Item', color: 'bg-emerald-600' };

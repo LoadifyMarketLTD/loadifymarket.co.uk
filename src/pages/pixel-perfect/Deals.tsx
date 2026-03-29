@@ -16,7 +16,7 @@ import { adaptProducts } from "@/lib/productAdapter";
 import type { DBProduct } from "@/lib/productAdapter";
 const heroWarehouse = "/images/categories/clearance.jpg";
 
-// Deal types that appear on this page (maps to DB product `type` column)
+// Deal types shown on this page (maps to DB product `type` column)
 const DEALS_TYPES = ["lot", "clearance", "pallet", "wholesale"];
 
 // Product select — category joins only; seller data fetched separately
@@ -45,16 +45,15 @@ async function fetchSellerMap(
 const dealSubSections = [
   {
     icon: Package,
-    label: "Mixed Lots & Pallets",
-    description: "Sellers list mixed merchandise pallets — browse and buy directly from them.",
-    types: ["lot", "pallet"],
+    label: "Multi-Item Listings",
+    description: "Sellers listing multiple items or product bundles — browse and buy directly from them.",
+    types: ["lot"],
   },
   {
     icon: RotateCcw,
-    label: "Customer Returns",
-    description: "Sellers offering graded and unchecked customer return products.",
-    types: ["lot"],
-    condition: "returns_stock",
+    label: "Special Offers",
+    description: "Sellers offering products at reduced prices and end-of-line deals.",
+    types: ["clearance", "lot"],
   },
   {
     icon: Layers,
@@ -64,8 +63,8 @@ const dealSubSections = [
   },
   {
     icon: TrendingDown,
-    label: "Clearance & Flash Deals",
-    description: "Time-limited clearance listings from sellers looking to move products fast.",
+    label: "Flash Deals",
+    description: "Time-limited offers from sellers looking to move products fast.",
     types: ["clearance"],
   },
 ];
@@ -213,7 +212,7 @@ const Deals = () => {
               <BreadcrumbNav
                 items={[
                   { label: "Home", to: "/" },
-                  { label: "Clearance" },
+                  { label: "Deals" },
                 ]}
                 showBack={false}
               />
@@ -225,10 +224,10 @@ const Deals = () => {
                 <span className="text-xs font-semibold uppercase tracking-wider">Marketplace Section</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-display font-bold text-foreground drop-shadow-md mb-3">
-                Pallets, Clearance &amp; Bulk Deals
+                Deals &amp; Special Offers
               </h1>
               <p className="text-foreground text-base font-semibold leading-relaxed drop-shadow-sm mb-2">
-                Browse thousands of listings from UK sellers or list your own products today.
+                Browse discounted listings from UK sellers or list your own products today.
               </p>
               <p className="text-sm text-foreground font-medium drop-shadow-sm mb-5">
                 This is a marketplace section where sellers list products and buyers connect directly.
@@ -292,7 +291,7 @@ const Deals = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
               <div className="flex items-start gap-3">
                 <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">1</span>
-                <p className="text-muted-foreground"><strong className="text-foreground">Sellers list</strong> their pallets, clearance, or bulk products on the platform.</p>
+                <p className="text-muted-foreground"><strong className="text-foreground">Sellers list</strong> their products on the platform with special pricing or offers.</p>
               </div>
               <div className="flex items-start gap-3">
                 <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">2</span>
@@ -401,7 +400,7 @@ const Deals = () => {
                   }
                 >
                   {filteredProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} linkState={{ flow: "clearance", from: "/clearance", fromLabel: "Clearance" }} />
+                    <ProductCard key={product.id} product={product} linkState={{ flow: "deals", from: "/deals", fromLabel: "Deals" }} />
                   ))}
                 </div>
               )}
@@ -411,7 +410,7 @@ const Deals = () => {
           {/* Bottom CTA */}
           <div className="mt-12 text-center bg-card rounded-xl border border-border p-8">
             <h3 className="font-display text-xl font-bold text-foreground mb-2">
-              Have pallets, clearance, or bulk products to sell?
+              Have products to sell on the marketplace?
             </h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-lg mx-auto">
               List your products on Loadify Market and reach thousands of buyers across the UK.

@@ -464,7 +464,7 @@ export default function ProductFormPage() {
                   onChange={(e) => handleChange('title', e.target.value)}
                   disabled={hasActiveOrders}
                   className={`input-field ${hasActiveOrders ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''} ${errors.title ? 'border-red-400' : ''}`}
-                  placeholder="e.g., 100x Mixed Electronics Pallet — Amazon Returns"
+                  placeholder="e.g., 100x Mixed Electronics Bundle — Various Brands"
                 />
                 <FieldError msg={errors.title} />
               </div>
@@ -510,10 +510,10 @@ export default function ProductFormPage() {
                     <option value="product">Single Item</option>
                     <option value="retail">Retail Product</option>
                     <option value="handmade">Handmade / Artisan</option>
-                    <option value="clearance">Clearance</option>
-                    <option value="pallet">Pallet Deal</option>
-                    <option value="lot">Bulk Lot</option>
-                    <option value="wholesale">Wholesale</option>
+                    <option value="clearance">Special Offer / Discounted</option>
+                    <option value="pallet">Multi-Unit Listing</option>
+                    <option value="lot">Bundle / Mixed Lot</option>
+                    <option value="wholesale">Trade / Wholesale Price</option>
                   </select>
                 </div>
 

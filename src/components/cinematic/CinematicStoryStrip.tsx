@@ -7,7 +7,7 @@ export default function CinematicStoryStrip() {
       id: 1,
       icon: Search,
       title: 'Browse & Discover',
-      description: 'Search products, bulk lots, and pallet deals across all categories',
+      description: 'Search products across all categories from independent UK sellers',
       link: '/shop',
     },
     {
