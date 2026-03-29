@@ -1,14 +1,14 @@
 import type { Product } from "@/components/catalog/ProductCard";
 
-import electronicsImg from "@/assets/categories/electronics.jpg";
-import clothingImg from "@/assets/categories/clothing.jpg";
-import homeImg from "@/assets/categories/home.jpg";
-import healthBeautyImg from "@/assets/categories/health-beauty.jpg";
-import toysImg from "@/assets/categories/toys.jpg";
-import toolsImg from "@/assets/categories/tools.jpg";
-import sportsImg from "@/assets/categories/sports.jpg";
-import babyImg from "@/assets/categories/baby.jpg";
-import returnsImg from "@/assets/categories/returns.jpg";
+import electronicsImg from "@/assets/categories/electronics.jpeg";
+import clothingImg from "@/assets/categories/clothing.jpeg";
+import homeImg from "@/assets/categories/home.jpeg";
+import healthBeautyImg from "@/assets/categories/health-beauty.jpeg";
+import toysImg from "@/assets/categories/toys.jpeg";
+import toolsImg from "@/assets/categories/tools.jpeg";
+import sportsImg from "@/assets/categories/sports.jpeg";
+import babyImg from "@/assets/categories/baby.jpeg";
+import returnsImg from "@/assets/categories/returns.jpeg";
 
 export const mockProducts: Product[] = [
   // price: 0 is a placeholder — these are sample/demo listings only.

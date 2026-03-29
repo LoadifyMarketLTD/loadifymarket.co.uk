@@ -51,7 +51,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Electronics",
     slug: "electronics",
     description: "Smartphones, laptops, tablets, audio, smart home and gaming gear",
-    image: "/images/categories/electronics.jpg",
+    image: "/images/categories/electronics.jpeg",
     featured: true,
     subcategories: [
       { name: "Smartphones",  slug: "smartphones"  },
@@ -70,7 +70,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Fashion",
     slug: "fashion",
     description: "Clothing, shoes, bags and accessories for every style",
-    image: "/images/categories/fashion.jpg",
+    image: "/images/categories/fashion.jpeg",
     featured: true,
     subcategories: [
       { name: "Women's Clothing", slug: "womens-clothing" },
@@ -88,7 +88,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Home & Kitchen",
     slug: "home-kitchen",
     description: "Appliances, cookware, storage, decor and furniture",
-    image: "/images/categories/home-kitchen.jpg",
+    image: "/images/categories/home-kitchen.jpeg",
     featured: true,
     subcategories: [
       { name: "Small Appliances", slug: "small-appliances" },
@@ -106,7 +106,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Beauty",
     slug: "beauty",
     description: "Skincare, haircare, makeup, fragrance and beauty tools",
-    image: "/images/categories/beauty.jpg",
+    image: "/images/categories/beauty.jpeg",
     featured: true,
     subcategories: [
       { name: "Skincare",     slug: "skincare"     },
@@ -123,7 +123,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Tools & DIY",
     slug: "tools-diy",
     description: "Power tools, hand tools, hardware and workshop essentials",
-    image: "/images/categories/tools-diy.jpg",
+    image: "/images/categories/tools-diy.jpeg",
     featured: true,
     subcategories: [
       { name: "Power Tools",       slug: "power-tools"       },
@@ -141,7 +141,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Toys & Games",
     slug: "toys-games",
     description: "Educational toys, board games, outdoor play and gifts for all ages",
-    image: "/images/categories/toys-games.jpg",
+    image: "/images/categories/toys-games.jpeg",
     featured: true,
     subcategories: [
       { name: "Educational Toys", slug: "educational-toys" },
@@ -158,7 +158,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Health & Wellness",
     slug: "health-wellness",
     description: "Personal care, fitness accessories, wellness devices and supplements",
-    image: "/images/categories/health-wellness.jpg",
+    image: "/images/categories/health-wellness.jpeg",
     featured: false,
     subcategories: [
       { name: "Personal Care",        slug: "personal-care"        },
@@ -175,7 +175,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Automotive",
     slug: "automotive",
     description: "Car accessories, cleaning kits, interior accessories and lighting",
-    image: "/images/categories/automotive.jpg",
+    image: "/images/categories/automotive.jpeg",
     featured: false,
     subcategories: [
       { name: "Car Accessories",      slug: "car-accessories"      },
@@ -192,7 +192,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Office Supplies",
     slug: "office-supplies",
     description: "Desk accessories, stationery, office storage and business essentials",
-    image: "/images/categories/office-supplies.jpg",
+    image: "/images/categories/office-supplies.jpeg",
     featured: false,
     subcategories: [
       { name: "Desk Accessories",    slug: "desk-accessories"    },

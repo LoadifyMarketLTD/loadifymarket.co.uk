@@ -15,7 +15,7 @@ const FILTER_TABS = [
 const featuredListings = [
   {
     id: "1",
-    img: "/images/featured/earbuds.jpg",
+    img: "/images/products/earbuds.jpeg",
     title: "Wireless Earbuds Pro",
     category: "Electronics",
     filterKey: "electronics",
@@ -23,7 +23,7 @@ const featuredListings = [
   },
   {
     id: "2",
-    img: "/images/featured/toolbox.jpg",
+    img: "/images/products/toolbox.jpeg",
     title: "Heavy-Duty Toolbox Set",
     category: "Tools & DIY",
     filterKey: "tools",
@@ -31,7 +31,7 @@ const featuredListings = [
   },
   {
     id: "3",
-    img: "/images/categories/fashion.jpg",
+    img: "/images/products/dress-collection.jpeg",
     title: "Women's Summer Dress Collection",
     category: "Fashion",
     filterKey: "fashion",
@@ -39,7 +39,7 @@ const featuredListings = [
   },
   {
     id: "4",
-    img: "/images/categories/beauty.jpg",
+    img: "/images/products/beauty-skincare.jpeg",
     title: "Premium Beauty & Skincare",
     category: "Beauty",
     filterKey: "beauty",
@@ -47,7 +47,7 @@ const featuredListings = [
   },
   {
     id: "5",
-    img: "/images/featured/skincare2.jpg",
+    img: "/images/products/skincare2.jpeg",
     title: "Natural Face Serum Set",
     category: "Beauty",
     filterKey: "beauty",
@@ -63,7 +63,7 @@ const featuredListings = [
   },
   {
     id: "7",
-    img: "/images/categories/health-wellness.jpg",
+    img: "/images/products/yoga-mat.jpeg",
     title: "Yoga Mat & Fitness Accessories",
     category: "Health & Wellness",
     filterKey: "health",
@@ -71,7 +71,7 @@ const featuredListings = [
   },
   {
     id: "8",
-    img: "/images/categories/tools-diy.jpg",
+    img: "/images/products/power-drill.jpeg",
     title: "Power Drill & Bit Set",
     category: "Tools & DIY",
     filterKey: "tools",

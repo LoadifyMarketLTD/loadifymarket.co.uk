@@ -11,31 +11,31 @@ const CATEGORIES = [
   {
     slug: "electronics",
     label: "Electronics",
-    img: "/images/categories/electronics.jpg",
+    img: "/images/categories/electronics.jpeg",
     deals: false,
   },
   {
     slug: "fashion",
     label: "Fashion",
-    img: "/images/categories/fashion.jpg",
+    img: "/images/categories/fashion.jpeg",
     deals: false,
   },
   {
     slug: "home-kitchen",
     label: "Home & Garden",
-    img: "/images/categories/home-kitchen.jpg",
+    img: "/images/categories/home-kitchen.jpeg",
     deals: false,
   },
   {
     slug: "beauty",
     label: "Beauty & Health",
-    img: "/images/categories/beauty.jpg",
+    img: "/images/categories/beauty.jpeg",
     deals: false,
   },
   {
     slug: "automotive",
     label: "Automotive",
-    img: "/images/categories/automotive.jpg",
+    img: "/images/categories/automotive.jpeg",
     deals: false,
   },
   {
