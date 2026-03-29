@@ -71,7 +71,7 @@ const featuredListings = [
   },
   {
     id: "8",
-    img: "/images/categories/tools-diy.webp",
+    img: "/images/products/toolset.webp",
     title: "Power Drill & Bit Set",
     category: "Tools & DIY",
     filterKey: "tools",
