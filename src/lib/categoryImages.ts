@@ -50,7 +50,7 @@ const TYPE_IMAGES: Record<string, string> = {
   clearance: WAREHOUSE_IMAGE,
 };
 
-/** Generic warehouse image shown when neither category nor type has a mapping. */
+/** Generic fallback image shown when neither category nor type has a mapping. */
 const DEFAULT_IMAGE = WAREHOUSE_IMAGE;
 
 /**
@@ -60,7 +60,7 @@ const DEFAULT_IMAGE = WAREHOUSE_IMAGE;
  * Resolution order:
  * 1. Category-specific image (via `product.categoryId`)
  * 2. Product-type image (via `product.type`)
- * 3. Generic warehouse / pallet image
+ * 3. Generic fallback image
  */
 export function getCategoryFallbackImage(product: CategoryImageProduct): string {
   return (
