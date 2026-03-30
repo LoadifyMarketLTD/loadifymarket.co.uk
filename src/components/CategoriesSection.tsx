@@ -87,9 +87,7 @@ const CategoriesSection = () => {
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       loading="lazy"
                       onError={(e) => {
-                        const img = e.target as HTMLImageElement;
-                        if (!img.src.includes("placeholder"))
-                          img.src = "/images/placeholder-product.jpg";
+                        (e.target as HTMLImageElement).style.display = 'none';
                       }}
                     />
                   </div>

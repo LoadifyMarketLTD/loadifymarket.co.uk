@@ -14,6 +14,7 @@
  */
 
 import type { Product as UIProduct } from "@/components/catalog/ProductCard";
+import { categoryImages, DEFAULT_CATEGORY_IMAGE } from "@/data/categoryImages";
 
 /** Shape of a product row from Supabase with optional joined category and seller data */
 export interface DBProduct {
@@ -84,7 +85,7 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
   const image =
     Array.isArray(dbProduct.images) && dbProduct.images.length > 0
       ? dbProduct.images[0]
-      : "/placeholder-product.jpg";
+      : categoryImages[cat?.slug ?? ""] ?? DEFAULT_CATEGORY_IMAGE;
 
   const condition: UIProduct["condition"] =
     DB_TO_UI_CONDITION[dbProduct.condition] ?? "Mixed";

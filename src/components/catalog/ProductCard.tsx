@@ -38,7 +38,7 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
           alt={product.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
-          onError={(e) => { const img = e.target as HTMLImageElement; if (img.src !== window.location.origin + '/images/placeholder-product.jpg') img.src = '/images/placeholder-product.jpg'; }}
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
         <div className={`absolute top-3 right-3 text-xs font-medium px-2 py-1 rounded-full border ${conditionColor[product.condition] || ""}`}>
           {product.condition}
