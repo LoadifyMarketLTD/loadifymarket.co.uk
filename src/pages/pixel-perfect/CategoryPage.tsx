@@ -9,6 +9,7 @@ import CatalogHeader from "@/components/catalog/CatalogHeader";
 import ProductCard from "@/components/catalog/ProductCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
 import type { Product } from "@/components/catalog/ProductCard";
 import { supabase } from "@/lib/supabase";
 import { adaptProducts } from "@/lib/productAdapter";
@@ -70,6 +71,7 @@ const CategoryPage = () => {
           if (data) setCategoryId(data.id as string);
         } catch (err) {
           console.error("category id lookup failed:", err);
+          toast({ title: "Could not load category", description: "Please try refreshing the page.", variant: "destructive" });
         }
       })();
     }
@@ -161,6 +163,7 @@ const CategoryPage = () => {
       setProducts(adaptProducts(mapped as unknown as DBProduct[]));
     } catch (err) {
       console.error("Error fetching category products:", err);
+      toast({ title: "Could not load products", description: "Please try refreshing the page.", variant: "destructive" });
     } finally {
       setLoading(false);
     }

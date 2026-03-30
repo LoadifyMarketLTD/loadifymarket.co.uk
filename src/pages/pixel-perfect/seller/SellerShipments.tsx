@@ -14,6 +14,9 @@ import {
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import type { Shipment } from "@/types/shipping";
+import type { User } from "@/types";
+
+type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 
 interface ShipmentRow extends Shipment {
   orders?: {
@@ -44,6 +47,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 const SellerShipments = () => {
   const { user } = useAuthStore();
   const [shipments, setShipments] = useState<ShipmentRow[]>([]);
+  const [buyerNames, setBuyerNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<ShipmentRow | null>(null);
@@ -51,13 +55,32 @@ const SellerShipments = () => {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await supabase
-        .from("shipments")
-        .select(`*, orders(orderNumber, products(title))`)
-        .eq("seller_id", user.id)
-        .order("created_at", { ascending: false });
-      setShipments((data ?? []) as ShipmentRow[]);
-      setLoading(false);
+      try {
+        const { data } = await supabase
+          .from("shipments")
+          .select(`*, orders(orderNumber, products(title))`)
+          .eq("seller_id", user.id)
+          .order("created_at", { ascending: false });
+        const rows = (data ?? []) as ShipmentRow[];
+        setShipments(rows);
+
+        // Resolve buyer names via secondary query
+        const uniqueBuyerIds = [...new Set(rows.map((s) => s.buyer_id).filter(Boolean))];
+        if (uniqueBuyerIds.length > 0) {
+          const { data: buyers } = await supabase
+            .from("users")
+            .select("id, firstName, lastName")
+            .in("id", uniqueBuyerIds);
+          const names: Record<string, string> = {};
+          (buyers ?? []).forEach((buyer: BuyerData) => {
+            const name = [buyer.firstName, buyer.lastName].filter(Boolean).join(" ").trim();
+            names[buyer.id] = name || "Customer";
+          });
+          setBuyerNames(names);
+        }
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, [user]);
@@ -111,7 +134,7 @@ const SellerShipments = () => {
                 <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">
                   {s.orders?.orderNumber ?? s.order_id.slice(0, 8)}
                 </TableCell>
-                <TableCell className="text-sm">Customer</TableCell>
+                <TableCell className="text-sm">{buyerNames[s.buyer_id] ?? "Customer"}</TableCell>
                 <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{s.courier_name ?? "—"}</TableCell>
                 <TableCell className="hidden lg:table-cell text-xs text-muted-foreground font-mono">{s.tracking_number ?? "—"}</TableCell>
                 <TableCell>

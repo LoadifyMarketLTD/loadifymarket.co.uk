@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import type { User } from "@/types";
+
+type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 
 interface Order {
   id: string;
@@ -55,7 +58,7 @@ const SellerOrders = () => {
           .from("users")
           .select("id, firstName, lastName")
           .in("id", buyerIds);
-        (buyers ?? []).forEach((b: { id: string; firstName?: string; lastName?: string }) => {
+        (buyers ?? []).forEach((b: BuyerData) => {
           const name = [b.firstName, b.lastName].filter(Boolean).join(" ").trim();
           buyerNames[b.id] = name || "Customer";
         });

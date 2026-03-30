@@ -7,6 +7,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import type { User } from "@/types";
+
+type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 
 interface DashboardStats {
   totalRevenue: number;
@@ -95,23 +98,37 @@ const SellerDashboard = () => {
         const productsListed = products.filter((p) => p.isActive).length;
         const lowStockItems = products.filter((p) => p.stockQuantity !== null && p.stockQuantity > 0 && p.stockQuantity <= 5).length;
 
-        const buyerIds = new Set(orders.map((o) => o.buyerId).filter(Boolean));
+        const uniqueBuyerIds = [...new Set(orders.map((o) => o.buyerId).filter(Boolean))];
         setStats({
           totalRevenue,
           activeOrders,
           productsListed,
-          totalCustomers: buyerIds.size,
+          totalCustomers: uniqueBuyerIds.length,
           pendingShipments: orders.filter((o) => o.status === "paid" || o.status === "packed").length,
           lowStockItems,
           sellerRating: profileRes.data?.rating ?? 0,
         });
 
+        // Resolve buyer names for recent orders
+        const buyerNames: Record<string, string> = {};
+        const recentBuyerIds = [...new Set(orders.slice(0, 5).map((o) => o.buyerId).filter(Boolean))];
+        if (recentBuyerIds.length > 0) {
+          const { data: buyers } = await supabase
+            .from("users")
+            .select("id, firstName, lastName")
+            .in("id", recentBuyerIds);
+          (buyers ?? []).forEach((b: BuyerData) => {
+            const name = [b.firstName, b.lastName].filter(Boolean).join(" ").trim();
+            buyerNames[b.id] = name || "Customer";
+          });
+        }
+
         // Recent orders (show last 5 only)
         setRecentOrders(
           orders.slice(0, 5).map((o) => ({
             id: o.id,
-                        orderNumber: o.orderNumber,
-            buyerName: "Customer",
+            orderNumber: o.orderNumber,
+            buyerName: buyerNames[o.buyerId] ?? "Customer",
             total: o.total,
             status: o.status,
             createdAt: o.createdAt,

@@ -123,7 +123,15 @@ export const handler: Handler = async (event) => {
       };
     } else if (event.httpMethod === 'PUT') {
       // Confirm upload and save public URL
-      const body = JSON.parse(event.body || '{}');
+      let body: { filePath?: string };
+      try {
+        body = JSON.parse(event.body || '{}') as { filePath?: string };
+      } catch {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'Invalid JSON in request body' }),
+        };
+      }
       const { filePath } = body;
 
       if (!filePath) {

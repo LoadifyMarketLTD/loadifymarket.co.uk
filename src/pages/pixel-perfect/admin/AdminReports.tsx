@@ -81,7 +81,7 @@ const AdminReports = () => {
             supabase
               .from("seller_profiles")
               .select("userId", { count: "exact", head: true })
-              .eq("isApproved", true),
+              .eq("sellerStatus", "active"),
             supabase
               .from("seller_profiles")
               .select("userId, storeName, businessName, rating, totalSales")

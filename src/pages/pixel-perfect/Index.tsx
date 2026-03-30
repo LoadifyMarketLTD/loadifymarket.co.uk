@@ -9,6 +9,7 @@ import PaymentTrustSection from "@/components/PaymentTrustSection";
 import CategoryGrid from "@/components/CategoryGrid";
 import FeaturedListings from "@/components/FeaturedListings";
 import FeaturesSection from "@/components/FeaturesSection";
+import SellerJourneySection from "@/components/SellerJourneySection";
 import HowItWorks from "@/components/HowItWorks";
 import PlatformFeatures from "@/components/PlatformFeatures";
 import CTASection from "@/components/CTASection";
@@ -54,6 +55,10 @@ export default function PixelPerfectIndex() {
         </LazySection>
         <LazySection>
           <FeaturesSection />
+        </LazySection>
+        {/* Seller onboarding transparency — real 5-step activation flow */}
+        <LazySection>
+          <SellerJourneySection />
         </LazySection>
         <LazySection>
           <HowItWorks />

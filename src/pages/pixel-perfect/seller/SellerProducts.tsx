@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Package, Plus, Search, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 
@@ -42,13 +43,20 @@ const SellerProducts = () => {
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await supabase
-        .from("products")
-        .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, views")
-        .eq("sellerId", user.id)
-        .order("createdAt", { ascending: false });
-      setProducts(data ?? []);
-      setLoading(false);
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, views")
+          .eq("sellerId", user.id)
+          .order("createdAt", { ascending: false });
+        if (error) throw error;
+        setProducts(data ?? []);
+      } catch (err) {
+        console.error("Error fetching products:", err);
+        toast({ title: "Could not load products", description: "Please try refreshing the page.", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, [user]);
