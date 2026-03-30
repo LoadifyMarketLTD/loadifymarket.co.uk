@@ -81,7 +81,7 @@ const CTASection = () => (
             {/* Ambient glow */}
             <div className="absolute inset-0 bg-amber-500/10 rounded-3xl blur-3xl" />
             <img
-                src="/hero.jpeg"
+                src="/hero-marketplace.png"
                 alt="Products available on Loadify Market"
                 width="960"
                 height="720"

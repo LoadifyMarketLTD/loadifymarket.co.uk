@@ -112,7 +112,7 @@ const HeroSection = () => {
           <div className="hidden lg:block lg:w-[48%] relative overflow-hidden">
             {/* LCP image */}
             <img
-                src="/hero.jpeg"
+                src="/hero-marketplace.png"
                 alt=""
                 aria-hidden="true"
                 className="absolute inset-0 w-full h-full object-cover object-center"
@@ -163,7 +163,7 @@ const HeroSection = () => {
           {/* ── Mobile: small accent image strip below text ───────────────── */}
           <div className="lg:hidden h-52 overflow-hidden relative">
             <img
-                src="/hero.jpeg"
+                src="/hero-marketplace.png"
                 alt=""
                 aria-hidden="true"
                 className="w-full h-full object-cover object-top"
