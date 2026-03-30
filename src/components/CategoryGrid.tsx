@@ -11,31 +11,31 @@ const CATEGORIES = [
   {
     slug: "electronics",
     label: "Electronics",
-    img: "/images/categories/electronics.jpeg",
+    img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
     deals: false,
   },
   {
     slug: "fashion",
     label: "Fashion",
-    img: "/images/categories/fashion.jpeg",
+    img: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80",
     deals: false,
   },
   {
     slug: "home-kitchen",
     label: "Home & Garden",
-    img: "/images/categories/home-kitchen.jpeg",
+    img: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80",
     deals: false,
   },
   {
     slug: "beauty",
     label: "Beauty & Health",
-    img: "/images/categories/beauty.jpeg",
+    img: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80",
     deals: false,
   },
   {
     slug: "automotive",
     label: "Automotive",
-    img: "/images/categories/automotive.jpeg",
+    img: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=80",
     deals: false,
   },
   {
@@ -88,7 +88,7 @@ const CategoryGrid = () => (
                   decoding="async"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/images/placeholder-product.jpg";
+                    (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />
               )}

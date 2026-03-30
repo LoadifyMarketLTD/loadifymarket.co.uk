@@ -9,7 +9,7 @@ const CATEGORIES = [
     icon: Cpu,
     color: "bg-blue-50 text-blue-600",
     border: "border-blue-100",
-    img: "/images/categories/electronics.jpeg",
+    img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
   },
   {
     slug: "fashion",
@@ -17,7 +17,7 @@ const CATEGORIES = [
     icon: Shirt,
     color: "bg-pink-50 text-pink-600",
     border: "border-pink-100",
-    img: "/images/categories/fashion.jpeg",
+    img: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80",
   },
   {
     slug: "home-kitchen",
@@ -25,7 +25,7 @@ const CATEGORIES = [
     icon: Home,
     color: "bg-amber-50 text-amber-600",
     border: "border-amber-100",
-    img: "/images/categories/home-kitchen.jpeg",
+    img: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80",
   },
   {
     slug: "beauty",
@@ -33,7 +33,7 @@ const CATEGORIES = [
     icon: Sparkles,
     color: "bg-rose-50 text-rose-600",
     border: "border-rose-100",
-    img: "/images/categories/beauty.jpeg",
+    img: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80",
   },
   {
     slug: "tools-diy",
@@ -41,7 +41,7 @@ const CATEGORIES = [
     icon: Wrench,
     color: "bg-orange-50 text-orange-600",
     border: "border-orange-100",
-    img: "/images/categories/tools-diy.jpeg",
+    img: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=800&q=80",
   },
   {
     slug: "toys-games",
@@ -49,7 +49,7 @@ const CATEGORIES = [
     icon: Gamepad2,
     color: "bg-violet-50 text-violet-600",
     border: "border-violet-100",
-    img: "/images/categories/toys-games.jpeg",
+    img: "https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=800&q=80",
   },
   {
     slug: "health-wellness",
@@ -57,7 +57,7 @@ const CATEGORIES = [
     icon: Heart,
     color: "bg-teal-50 text-teal-600",
     border: "border-teal-100",
-    img: "/images/categories/health-wellness.jpeg",
+    img: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80",
   },
   {
     slug: "automotive",
@@ -65,7 +65,7 @@ const CATEGORIES = [
     icon: Car,
     color: "bg-slate-50 text-slate-600",
     border: "border-slate-200",
-    img: "/images/categories/automotive.jpeg",
+    img: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=80",
   },
   {
     slug: "office-supplies",
@@ -73,7 +73,7 @@ const CATEGORIES = [
     icon: Briefcase,
     color: "bg-indigo-50 text-indigo-600",
     border: "border-indigo-100",
-    img: "/images/categories/office-supplies.jpeg",
+    img: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80",
   },
 ];
 
