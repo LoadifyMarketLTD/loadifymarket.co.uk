@@ -51,7 +51,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Electronics",
     slug: "electronics",
     description: "Smartphones, laptops, tablets, audio, smart home and gaming gear",
-    image: "/images/categories/electronics.jpeg",
+    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
     featured: true,
     subcategories: [
       { name: "Smartphones",  slug: "smartphones"  },
@@ -70,7 +70,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Fashion",
     slug: "fashion",
     description: "Clothing, shoes, bags and accessories for every style",
-    image: "/images/categories/fashion.jpeg",
+    image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80",
     featured: true,
     subcategories: [
       { name: "Women's Clothing", slug: "womens-clothing" },
@@ -88,7 +88,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Home & Kitchen",
     slug: "home-kitchen",
     description: "Appliances, cookware, storage, decor and furniture",
-    image: "/images/categories/home-kitchen.jpeg",
+    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80",
     featured: true,
     subcategories: [
       { name: "Small Appliances", slug: "small-appliances" },
@@ -106,7 +106,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Beauty",
     slug: "beauty",
     description: "Skincare, haircare, makeup, fragrance and beauty tools",
-    image: "/images/categories/beauty.jpeg",
+    image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80",
     featured: true,
     subcategories: [
       { name: "Skincare",     slug: "skincare"     },
@@ -123,7 +123,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Tools & DIY",
     slug: "tools-diy",
     description: "Power tools, hand tools, hardware and workshop essentials",
-    image: "/images/categories/tools-diy.jpeg",
+    image: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=800&q=80",
     featured: true,
     subcategories: [
       { name: "Power Tools",       slug: "power-tools"       },
@@ -141,7 +141,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Toys & Games",
     slug: "toys-games",
     description: "Educational toys, board games, outdoor play and gifts for all ages",
-    image: "/images/categories/toys-games.jpeg",
+    image: "https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=800&q=80",
     featured: true,
     subcategories: [
       { name: "Educational Toys", slug: "educational-toys" },
@@ -158,7 +158,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Health & Wellness",
     slug: "health-wellness",
     description: "Personal care, fitness accessories, wellness devices and supplements",
-    image: "/images/categories/health-wellness.jpeg",
+    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80",
     featured: false,
     subcategories: [
       { name: "Personal Care",        slug: "personal-care"        },
@@ -175,7 +175,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Automotive",
     slug: "automotive",
     description: "Car accessories, cleaning kits, interior accessories and lighting",
-    image: "/images/categories/automotive.jpeg",
+    image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=80",
     featured: false,
     subcategories: [
       { name: "Car Accessories",      slug: "car-accessories"      },
@@ -192,7 +192,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Office Supplies",
     slug: "office-supplies",
     description: "Desk accessories, stationery, office storage and business essentials",
-    image: "/images/categories/office-supplies.jpeg",
+    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80",
     featured: false,
     subcategories: [
       { name: "Desk Accessories",    slug: "desk-accessories"    },

@@ -9,17 +9,17 @@
  * To add or change a category image, update this file only.
  */
 
-/** Category images keyed by URL slug */
+/** Category images keyed by URL slug — real product photos from Unsplash CDN */
 export const categoryImages: Record<string, string> = {
-  electronics:       "/images/categories/electronics.jpeg",
-  fashion:           "/images/categories/fashion.jpeg",
-  "home-kitchen":    "/images/categories/home-kitchen.jpeg",
-  beauty:            "/images/categories/beauty.jpeg",
-  "tools-diy":       "/images/categories/tools-diy.jpeg",
-  "toys-games":      "/images/categories/toys-games.jpeg",
-  "health-wellness": "/images/categories/health-wellness.jpeg",
-  automotive:        "/images/categories/automotive.jpeg",
-  "office-supplies": "/images/categories/office-supplies.jpeg",
+  electronics:       "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
+  fashion:           "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80",
+  "home-kitchen":    "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80",
+  beauty:            "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80",
+  "tools-diy":       "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=800&q=80",
+  "toys-games":      "https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=800&q=80",
+  "health-wellness": "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80",
+  automotive:        "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=80",
+  "office-supplies": "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80",
 };
 
 /** Category images keyed by database category ID */
@@ -32,7 +32,8 @@ export const categoryImageById: Record<string, string> = {
   "cat-toys":           categoryImages["toys-games"],
   "cat-health-beauty":  categoryImages.beauty,
   "cat-pets":           categoryImages["health-wellness"],
-  // Collectibles/memorabilia: no dedicated image; electronics is the closest match
+  // Collectibles/memorabilia: maps to electronics as a neutral, non-misleading visual
+  // until a dedicated memorabilia image is added
   "cat-memorabilia":    categoryImages.electronics,
   // Mixed lots: broad home/household representation
   "cat-mixed-lots":     categoryImages["home-kitchen"],
@@ -40,7 +41,8 @@ export const categoryImageById: Record<string, string> = {
   "cat-office":         categoryImages["office-supplies"],
   "cat-home-garden":    categoryImages["home-kitchen"],
   "cat-sports-outdoors": categoryImages["health-wellness"],
-  // Adult category: fashion/apparel is the nearest available visual
+  // Adult category: maps to fashion as a neutral fallback; no explicit adult category image
+  // is served — update this mapping when a suitable image is added
   "cat-adult":          categoryImages.fashion,
 };
 

@@ -3,90 +3,89 @@ import { ArrowRight } from "lucide-react";
 
 /**
  * Each card maps ONE image to ONE specific product title and ONE category.
- * Images from /images/products/ and select /images/categories/ are kept here;
- * /images/featured/ images are reserved for FeaturedListings to avoid duplication.
+ * All images are served from Unsplash CDN — one unique real product photo per card.
  */
 const PRODUCTS = [
   {
     id: "fp-1",
-    img: "/images/products/headphones.jpeg",
+    img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
     title: "Wireless Noise-Cancelling Headphones",
     category: "Electronics",
     href: "/category/electronics",
   },
   {
     id: "fp-2",
-    img: "/images/products/laptop.jpeg",
+    img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
     title: "15.6\" Laptop Computer",
     category: "Electronics",
     href: "/category/electronics",
   },
   {
     id: "fp-3",
-    img: "/images/products/smartwatch.jpeg",
+    img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80",
     title: "Men's Digital Smartwatch",
     category: "Electronics",
     href: "/category/electronics",
   },
   {
     id: "fp-4",
-    img: "/images/products/handbag.jpeg",
+    img: "https://images.unsplash.com/photo-1548036161-4b99f9ce9f16?auto=format&fit=crop&w=800&q=80",
     title: "Women's Leather Handbag",
     category: "Fashion",
     href: "/category/fashion",
   },
   {
     id: "fp-5",
-    img: "/images/products/skincare.jpeg",
+    img: "https://images.unsplash.com/photo-1571781926291-522cb5c4ea0a?auto=format&fit=crop&w=800&q=80",
     title: "Luxury Skincare Bundle",
     category: "Beauty",
     href: "/category/beauty",
   },
   {
     id: "fp-6",
-    img: "/images/products/toolset.jpeg",
+    img: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=800&q=80",
     title: "Professional Hand Tool Set",
     category: "Tools & DIY",
     href: "/category/tools-diy",
   },
   {
     id: "fp-7",
-    img: "/images/products/home-kitchen.jpeg",
+    img: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80",
     title: "Home & Kitchen Essentials",
     category: "Home & Kitchen",
     href: "/category/home-kitchen",
   },
   {
     id: "fp-8",
-    img: "/images/products/health-wellness.jpeg",
+    img: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80",
     title: "Fitness & Wellness Bundle",
     category: "Health & Wellness",
     href: "/category/health-wellness",
   },
   {
     id: "fp-9",
-    img: "/images/products/toys-games.jpeg",
+    img: "https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=800&q=80",
     title: "Children's Educational Games",
     category: "Toys & Games",
     href: "/category/toys-games",
   },
   {
     id: "fp-10",
-    img: "/images/products/automotive.jpeg",
+    img: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=80",
     title: "Car & Van Accessories Kit",
     category: "Automotive",
     href: "/category/automotive",
   },
   {
     id: "fp-11",
-    img: "/images/products/office-supplies.jpeg",
+    img: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80",
     title: "Office & Desk Supplies Set",
     category: "Office Supplies",
     href: "/category/office-supplies",
   },
   {
     id: "fp-12",
-    img: "/images/products/clothing.jpeg",
+    img: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
     title: "Men's & Women's Clothing",
     category: "Fashion",
     href: "/category/fashion",

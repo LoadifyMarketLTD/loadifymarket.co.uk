@@ -15,7 +15,7 @@ const FILTER_TABS = [
 const featuredListings = [
   {
     id: "1",
-    img: "/images/products/earbuds.jpeg",
+    img: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=800&q=80",
     title: "Wireless Earbuds Pro",
     category: "Electronics",
     filterKey: "electronics",
@@ -23,7 +23,7 @@ const featuredListings = [
   },
   {
     id: "2",
-    img: "/images/products/toolbox.jpeg",
+    img: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80",
     title: "Heavy-Duty Toolbox Set",
     category: "Tools & DIY",
     filterKey: "tools",
@@ -31,7 +31,7 @@ const featuredListings = [
   },
   {
     id: "3",
-    img: "/images/products/dress-collection.jpeg",
+    img: "https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?auto=format&fit=crop&w=800&q=80",
     title: "Women's Summer Dress Collection",
     category: "Fashion",
     filterKey: "fashion",
@@ -39,7 +39,7 @@ const featuredListings = [
   },
   {
     id: "4",
-    img: "/images/products/beauty-skincare.jpeg",
+    img: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80",
     title: "Premium Beauty & Skincare",
     category: "Beauty",
     filterKey: "beauty",
@@ -47,7 +47,7 @@ const featuredListings = [
   },
   {
     id: "5",
-    img: "/images/products/skincare2.jpeg",
+    img: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80",
     title: "Natural Face Serum Set",
     category: "Beauty",
     filterKey: "beauty",
@@ -55,7 +55,7 @@ const featuredListings = [
   },
   {
     id: "6",
-    img: "/images/products/office-chair.jpeg",
+    img: "https://images.unsplash.com/photo-1505843513577-22bb7d21e455?auto=format&fit=crop&w=800&q=80",
     title: "Ergonomic Office Chair",
     category: "Home & Kitchen",
     filterKey: "home",
@@ -63,7 +63,7 @@ const featuredListings = [
   },
   {
     id: "7",
-    img: "/images/products/yoga-mat.jpeg",
+    img: "https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?auto=format&fit=crop&w=800&q=80",
     title: "Yoga Mat & Fitness Accessories",
     category: "Health & Wellness",
     filterKey: "health",
@@ -71,7 +71,7 @@ const featuredListings = [
   },
   {
     id: "8",
-    img: "/images/products/power-drill.jpeg",
+    img: "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?auto=format&fit=crop&w=800&q=80",
     title: "Power Drill & Bit Set",
     category: "Tools & DIY",
     filterKey: "tools",
