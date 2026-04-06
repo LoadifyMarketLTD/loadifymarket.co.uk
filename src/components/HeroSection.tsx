@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { ShieldCheck, Users, LayoutGrid, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ShieldCheck, Users, LayoutGrid } from "lucide-react";
+import { useAuthStore } from "@/store";
 
 /**
  * Countdown target: UK midnight at start of July 1, 2026 (Europe/London).
@@ -46,7 +47,8 @@ const BULLETS = [
 
 const HeroSection = () => {
   const [time, setTime] = useState(getTimeLeft);
-  const [roleModalOpen, setRoleModalOpen] = useState(false);
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
 
   useEffect(() => {
     const id = setInterval(() => setTime(getTimeLeft()), 1000);
@@ -61,7 +63,7 @@ const HeroSection = () => {
     <>
       {/* ══════════════════════════════════════════════════════════════
           HERO
-          hero-marketplace.png as CSS background — warehouse + product
+          hero-marketplace.jpg as CSS background — warehouse + product
           photography fills the full section naturally.
           Left gradient overlay ensures white text stays readable.
           No artificial dark backgrounds, no dot grids, no glows.
@@ -70,7 +72,7 @@ const HeroSection = () => {
         className="relative overflow-hidden"
         aria-label="Hero banner"
         style={{
-          backgroundImage: "url('/hero-marketplace.png')",
+          backgroundImage: "url('/hero-marketplace.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center center",
           backgroundRepeat: "no-repeat",
@@ -145,7 +147,7 @@ const HeroSection = () => {
 
             {/* CTA buttons */}
             <div className="flex flex-wrap gap-3 mb-9">
-              {/* Primary — green gradient pill */}
+              {/* Primary — green gradient pill, auth-aware navigation */}
               <button
                 className="inline-flex items-center justify-center font-bold rounded-full transition-all duration-200 hover:brightness-110 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#22C55E] focus-visible:outline-offset-2"
                 style={{
@@ -156,9 +158,9 @@ const HeroSection = () => {
                   color: "#fff",
                   background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
                   boxShadow: "0 2px 16px rgba(34,197,94,0.45)",
+                  cursor: "pointer",
                 }}
-                onClick={() => setRoleModalOpen(true)}
-                aria-haspopup="dialog"
+                onClick={() => navigate(user ? "/seller" : "/signup?type=seller")}
               >
                 Start Selling →
               </button>
@@ -175,6 +177,7 @@ const HeroSection = () => {
                     color: "rgba(255,255,255,0.90)",
                     background: "rgba(255,255,255,0.06)",
                     borderColor: "rgba(255,255,255,0.40)",
+                    cursor: "pointer",
                   }}
                 >
                   Browse Products →
@@ -257,54 +260,6 @@ const HeroSection = () => {
           </div>
         )}
       </section>
-
-      {/* ══ Role selection modal ════════════════════════════════════ */}
-      {roleModalOpen && (
-        <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => setRoleModalOpen(false)}
-        >
-          <div
-            className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="join-modal-title"
-          >
-            <button
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors"
-              onClick={() => setRoleModalOpen(false)}
-              aria-label="Close"
-            >
-              <X size={20} />
-            </button>
-            <h2 id="join-modal-title" className="text-xl font-bold text-[#0A2239] mb-1 text-center">
-              Join Loadify Market
-            </h2>
-            <p className="text-sm text-gray-500 mb-6 text-center">How would you like to get started?</p>
-            <div className="flex flex-col gap-3">
-              <Link to="/signup" onClick={() => setRoleModalOpen(false)}>
-                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-[#7C3AED] hover:bg-purple-50 rounded-xl p-4 cursor-pointer transition-all">
-                  <span className="text-2xl" aria-hidden="true">🛒</span>
-                  <div>
-                    <p className="font-semibold text-[#0A2239]">I'm a Buyer</p>
-                    <p className="text-xs text-gray-500">Browse and buy products</p>
-                  </div>
-                </div>
-              </Link>
-              <Link to="/signup?type=seller" onClick={() => setRoleModalOpen(false)}>
-                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-[#22C55E] hover:bg-green-50 rounded-xl p-4 cursor-pointer transition-all">
-                  <span className="text-2xl" aria-hidden="true">🏪</span>
-                  <div>
-                    <p className="font-semibold text-[#0A2239]">I'm a Seller</p>
-                    <p className="text-xs text-gray-500">List and sell your products</p>
-                  </div>
-                </div>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };
