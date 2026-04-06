@@ -63,7 +63,7 @@ const HeroSection = () => {
     <>
       {/* ══════════════════════════════════════════════════════════════
           HERO
-          hero-marketplace.jpg as CSS background — warehouse + product
+          hero-final.jpg as CSS background — warehouse + product
           photography fills the full section naturally.
           Left gradient overlay ensures white text stays readable.
           No artificial dark backgrounds, no dot grids, no glows.
@@ -72,7 +72,7 @@ const HeroSection = () => {
         className="relative overflow-hidden"
         aria-label="Hero — warehouse and product photography showing the Loadify Market platform"
         style={{
-          backgroundImage: "url('/hero-marketplace.jpg')",
+          backgroundImage: "url('/hero-final.jpg?v=2')",
           backgroundSize: "cover",
           backgroundPosition: "center center",
           backgroundRepeat: "no-repeat",
