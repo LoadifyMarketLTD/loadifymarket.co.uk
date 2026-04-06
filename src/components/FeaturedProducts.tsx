@@ -2,9 +2,9 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
 /**
- * Browse the Marketplace — dark navy premium cinematic section.
- * 3 featured product cards with prices on desktop, single column mobile.
- * Connects visually from the Hero dark background.
+ * Browse the Marketplace — dark navy premium section.
+ * 3 featured product cards, centered header, centered CTA below.
+ * Matches approved mockup: ELECTRONICS label + title + price on each card.
  */
 const SHOWCASE = [
   {
@@ -36,7 +36,7 @@ const SHOWCASE = [
 const FeaturedProducts = () => {
   return (
     <section
-      className="relative overflow-hidden py-12 px-4 sm:px-6 min-h-[85vh] flex flex-col justify-center"
+      className="relative overflow-hidden py-12 px-4 sm:px-6"
       style={{
         background: "linear-gradient(135deg, #0a1628 0%, #0e1e3a 60%, #091220 100%)",
       }}
@@ -50,36 +50,28 @@ const FeaturedProducts = () => {
         }}
       />
 
-      <div className="relative max-w-[1280px] mx-auto">
-        {/* Header */}
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
-              Marketplace Preview
-            </span>
-            <h2 className="mt-1.5 text-2xl sm:text-3xl font-display font-bold text-white">
-              Browse the Marketplace
-            </h2>
-            <p className="mt-1 text-sm text-white/50">
-              Products listed by independent UK sellers across all categories
-            </p>
-          </div>
-          <Link
-            to="/catalog"
-            className="hidden sm:inline-flex items-center gap-2 h-10 px-5 bg-[#22C55E] hover:bg-[#16A34A] text-white text-sm font-bold rounded-full shadow transition-all duration-200 hover:-translate-y-0.5"
-          >
-            View Marketplace <ArrowRight className="h-4 w-4" />
-          </Link>
+      <div className="relative max-w-7xl mx-auto">
+        {/* Centered header */}
+        <div className="text-center mb-8">
+          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+            Marketplace Preview
+          </span>
+          <h2 className="mt-2 text-2xl sm:text-3xl font-display font-bold text-white">
+            Browse the Marketplace
+          </h2>
+          <p className="mt-2 text-sm text-white/50">
+            Products listed by independent UK sellers across all categories.
+          </p>
         </div>
 
-        {/* 3 product showcase cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        {/* 3 product cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {SHOWCASE.map((item) => (
             <Link
               key={item.id}
               to={item.href}
               className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300"
-              style={{ minHeight: "300px" }}
+              style={{ minHeight: "280px" }}
             >
               <img
                 src={item.img}
@@ -94,11 +86,10 @@ const FeaturedProducts = () => {
                 }}
               />
               {/* Dark gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/92 via-[#0a1628]/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/95 via-[#0a1628]/30 to-transparent" />
               {/* Hover ring glow */}
               <div className="absolute inset-0 ring-1 ring-inset ring-white/0 group-hover:ring-[#22C55E]/30 rounded-2xl transition-all duration-300" />
-
-              {/* Content */}
+              {/* Content overlay */}
               <div className="absolute bottom-0 left-0 right-0 p-5">
                 <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
                   {item.category}
@@ -112,11 +103,11 @@ const FeaturedProducts = () => {
           ))}
         </div>
 
-        {/* Mobile CTA */}
-        <div className="mt-6 flex justify-center sm:hidden">
+        {/* Centered CTA below cards */}
+        <div className="mt-8 flex justify-center">
           <Link
             to="/catalog"
-            className="inline-flex items-center gap-2 h-11 px-6 bg-[#22C55E] hover:bg-[#16A34A] text-white text-sm font-bold rounded-full shadow transition-all"
+            className="inline-flex items-center gap-2 h-11 px-8 bg-[#22C55E] hover:bg-[#16A34A] text-white text-sm font-bold rounded-full shadow transition-all duration-200 hover:-translate-y-0.5"
           >
             View Marketplace <ArrowRight className="h-4 w-4" />
           </Link>
@@ -127,3 +118,4 @@ const FeaturedProducts = () => {
 };
 
 export default FeaturedProducts;
+

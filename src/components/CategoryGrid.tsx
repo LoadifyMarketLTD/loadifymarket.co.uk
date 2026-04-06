@@ -120,32 +120,36 @@ const CategoryGrid = () => (
         ))}
       </div>
 
-      {/* 4 featured product cards */}
+      {/* 4 featured product cards — image top, price + name below */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {FEATURED_PRODUCTS.map((item) => (
           <Link
             key={item.id}
             to={item.href}
-            className="group relative overflow-hidden rounded-2xl shadow-sm hover:shadow-xl hover:scale-[1.05] hover:-translate-y-0.5 transition-all duration-300"
-            style={{ aspectRatio: "4/3" }}
+            className="group block rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:scale-[1.03] hover:-translate-y-0.5 transition-all duration-300"
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
           >
-            <img
-              src={item.img}
-              alt={item.title}
-              width="800"
-              height="600"
-              loading="lazy"
-              decoding="async"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/90 via-[#0a1628]/35 to-transparent" />
-            <div className="absolute inset-0 ring-1 ring-inset ring-white/0 group-hover:ring-[#22C55E]/30 rounded-2xl transition-all duration-300" />
-            <div className="absolute bottom-0 left-0 right-0 p-3">
-              <p className="text-sm font-bold text-white/90">{item.price}</p>
-              <p className="text-xs text-white/65 leading-tight line-clamp-1">{item.title}</p>
+            <div className="relative overflow-hidden" style={{ aspectRatio: "4/3" }}>
+              <img
+                src={item.img}
+                alt={item.title}
+                width="800"
+                height="600"
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
+              <div className="absolute inset-0 ring-1 ring-inset ring-white/0 group-hover:ring-[#22C55E]/20 transition-all duration-300" />
+            </div>
+            <div className="px-3 py-2.5">
+              <p className="text-sm font-bold text-white/90 leading-none">{item.price}</p>
+              <p className="text-xs text-white/55 leading-snug mt-0.5 line-clamp-1">{item.title}</p>
             </div>
           </Link>
         ))}
