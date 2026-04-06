@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { buildSrcSet } from "@/lib/imageOptimization";
 
 /**
  * Each card maps ONE image to ONE specific product title and ONE category.
