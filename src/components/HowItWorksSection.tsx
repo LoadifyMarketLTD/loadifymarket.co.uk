@@ -64,8 +64,8 @@ const HowItWorksSection = () => (
 
             {/* Step cell */}
             <div className="flex flex-col items-center text-center flex-1">
-              {/* Gold number badge */}
-              <span className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 text-white text-xs font-bold flex items-center justify-center shadow mb-3">
+              {/* Green number badge */}
+              <span className="w-8 h-8 rounded-full bg-[#22C55E] text-white text-xs font-bold flex items-center justify-center shadow mb-3">
                 {step.num}
               </span>
 

@@ -28,7 +28,7 @@ function pad2(n: number) {
 
 const TRUST_BULLETS = [
   { icon: ShieldCheck, text: "Secure payments via Stripe", color: "text-emerald-500" },
-  { icon: Users, text: "Independent sellers across the UK", color: "text-[#2563EB]" },
+  { icon: Users, text: "Independent sellers across the UK", color: "text-[#7C3AED]" },
   { icon: LayoutGrid, text: "Multi-category marketplace", color: "text-violet-500" },
 ];
 
@@ -54,7 +54,7 @@ const HeroSection = () => {
             {/* Constrains the text to ~640 px max and right-aligns it toward the split */}
             <div className="w-full max-w-[580px] mx-auto lg:ml-auto lg:mr-0 lg:pr-14 xl:pr-20">
               {/* Platform badge */}
-              <span className="inline-flex items-center gap-1.5 bg-blue-50 text-[#2563EB] text-xs font-bold px-3 py-1.5 rounded-full mb-6">
+              <span className="inline-flex items-center gap-1.5 bg-green-50 text-[#16A34A] text-xs font-bold px-3 py-1.5 rounded-full mb-6">
                 🇬🇧 UK Multi-Category Marketplace
               </span>
 
@@ -62,7 +62,7 @@ const HeroSection = () => {
               <h1 className="text-4xl sm:text-5xl font-display font-extrabold text-[#0F172A] leading-tight tracking-tight mb-4">
                 Buy &amp; Sell Products
                 <br />
-                <span className="text-[#2563EB]">Across the UK</span>
+                <span className="text-[#7C3AED]">Across the UK</span>
               </h1>
 
               {/* Subheadline */}
@@ -76,12 +76,12 @@ const HeroSection = () => {
               {/* CTA buttons */}
               <div className="flex flex-wrap gap-3 mb-4">
                 <Link to="/catalog">
-                  <button className="h-12 px-8 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-white font-bold text-base rounded-full shadow-md transition-all hover:-translate-y-0.5">
+                  <button className="h-12 px-8 bg-[#22C55E] hover:bg-[#16A34A] text-white font-bold text-base rounded-full shadow-md transition-all hover:-translate-y-0.5">
                     Browse Marketplace
                   </button>
                 </Link>
                 <button
-                  className="h-12 px-8 border-2 border-[#0F172A] text-[#0F172A] hover:bg-[#0F172A] hover:text-white font-bold text-base rounded-full transition-all hover:-translate-y-0.5 bg-transparent"
+                  className="h-12 px-8 border-2 border-[#7C3AED] text-[#7C3AED] hover:bg-[#7C3AED] hover:text-white font-bold text-base rounded-full transition-all hover:-translate-y-0.5 bg-transparent"
                   onClick={() => setRoleModalOpen(true)}
                 >
                   Start Selling →
@@ -91,7 +91,7 @@ const HeroSection = () => {
               {/* Sign-in link for returning users */}
               <p className="text-sm text-[#64748B] mb-8">
                 Already have an account?{" "}
-                <Link to="/login" className="font-semibold text-[#2563EB] hover:underline">
+                <Link to="/login" className="font-semibold text-[#7C3AED] hover:underline">
                   Sign In →
                 </Link>
               </p>
@@ -226,7 +226,7 @@ const HeroSection = () => {
             <p className="text-sm text-gray-500 mb-6 text-center">How would you like to get started?</p>
             <div className="flex flex-col gap-3">
               <Link to="/signup" onClick={() => setRoleModalOpen(false)}>
-                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-[#2563EB] hover:bg-blue-50 rounded-xl p-4 cursor-pointer transition-all">
+                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-[#7C3AED] hover:bg-purple-50 rounded-xl p-4 cursor-pointer transition-all">
                   <span className="text-2xl">🛒</span>
                   <div>
                     <p className="font-semibold text-[#0A2239]">I'm a Buyer</p>

@@ -306,7 +306,7 @@ export default function SellerShipmentForm({ orderId, existingShipment, onClose,
               <button
                 onClick={handleUpdateStatus}
                 disabled={loading}
-                className="w-full bg-blue-600 text-gray-900 py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                className="w-full bg-[#22C55E] text-white py-2 px-4 rounded-lg hover:bg-[#16A34A] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? 'Updating...' : 'Update Status'}
               </button>

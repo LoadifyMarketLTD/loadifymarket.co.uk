@@ -117,7 +117,7 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
           </button>
         </div>
         <div className="p-6">
-          <p className="text-xs font-semibold text-[#2563EB] uppercase tracking-wide mb-1">
+          <p className="text-xs font-semibold text-[#7C3AED] uppercase tracking-wide mb-1">
             {item.category}
           </p>
           <h3 id="quick-view-title" className="text-xl font-extrabold text-[#0F172A] mb-4">
@@ -127,14 +127,14 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
             <Link
               to={item.href}
               onClick={onClose}
-              className="flex-1 text-center bg-[#2563EB] text-white font-semibold py-2.5 rounded-xl hover:bg-[#1D4ED8] transition-all text-sm"
+              className="flex-1 text-center bg-[#22C55E] text-white font-semibold py-2.5 rounded-xl hover:bg-[#16A34A] transition-all text-sm"
             >
               Explore Listings
             </Link>
             <Link
               to="/signup"
               onClick={onClose}
-              className="flex-1 text-center border-2 border-[#2563EB] text-[#2563EB] font-semibold py-2.5 rounded-xl hover:bg-blue-50 transition-all text-sm"
+              className="flex-1 text-center border-2 border-[#7C3AED] text-[#7C3AED] font-semibold py-2.5 rounded-xl hover:bg-purple-50 transition-all text-sm"
             >
               Browse Marketplace
             </Link>
@@ -165,11 +165,11 @@ const FeaturedListings = () => {
           {/* Section header */}
           <div className="flex items-start justify-between mb-1">
             <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
-              Featured <span className="text-[#2563EB]">Listings</span>
+              Featured <span className="text-[#7C3AED]">Listings</span>
             </h2>
             <Link
               to="/catalog"
-              className="text-sm font-medium text-[#2563EB] hover:underline flex items-center gap-1 mt-1"
+              className="text-sm font-medium text-[#7C3AED] hover:underline flex items-center gap-1 mt-1"
             >
               View All <ArrowRight className="h-3.5 w-3.5" />
             </Link>
@@ -191,8 +191,8 @@ const FeaturedListings = () => {
                 aria-pressed={activeFilter === tab.key}
                 className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 ${
                   activeFilter === tab.key
-                    ? "bg-[#2563EB] text-white border-[#2563EB] shadow-sm"
-                    : "bg-white text-[#334155] border-gray-200 hover:border-[#2563EB] hover:text-[#2563EB]"
+                    ? "bg-[#22C55E] text-white border-[#22C55E] shadow-sm"
+                    : "bg-white text-[#334155] border-gray-200 hover:border-[#22C55E] hover:text-[#16A34A]"
                 }`}
               >
                 {tab.label}
@@ -235,11 +235,11 @@ const FeaturedListings = () => {
                   </div>
                 </div>
                 <div className="p-3 flex-1 flex flex-col gap-1">
-                  <p className="text-xs font-semibold text-[#2563EB] uppercase tracking-wide">{item.category}</p>
+                  <p className="text-xs font-semibold text-[#7C3AED] uppercase tracking-wide">{item.category}</p>
                   <p className="text-sm font-bold text-[#0F172A] line-clamp-2 leading-snug flex-1">
                     {item.title}
                   </p>
-                  <span className="text-[10px] font-semibold text-[#2563EB] mt-auto">Explore →</span>
+                  <span className="text-[10px] font-semibold text-[#7C3AED] mt-auto">Explore →</span>
                 </div>
               </Link>
             ))}

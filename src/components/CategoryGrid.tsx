@@ -69,14 +69,14 @@ const CategoryGrid = () => (
             <div className="overflow-hidden aspect-[4/3] bg-gray-50">
               {cat.deals ? (
                 /* Deals: gold gradient tile with package icon */
-                <div className="w-full h-full bg-gradient-to-br from-amber-400 via-yellow-300 to-amber-500 flex items-center justify-center relative">
+                <div className="w-full h-full bg-gradient-to-br from-emerald-400 via-green-300 to-emerald-500 flex items-center justify-center relative">
                   <div className="absolute inset-0 opacity-20"
                     style={{
                       backgroundImage: "radial-gradient(circle, white 1.5px, transparent 1.5px)",
                       backgroundSize: "20px 20px",
                     }}
                   />
-                  <Package className="h-14 w-14 text-amber-800/70 drop-shadow" aria-hidden="true" />
+                  <Package className="h-14 w-14 text-emerald-800/70 drop-shadow" aria-hidden="true" />
                 </div>
               ) : (
                 <img
@@ -96,7 +96,7 @@ const CategoryGrid = () => (
 
             {/* Label */}
             <div className="py-3 px-2 text-center">
-              <p className="text-sm font-semibold text-[#0F172A] group-hover:text-[#2563EB] transition-colors">
+              <p className="text-sm font-semibold text-[#0F172A] group-hover:text-[#7C3AED] transition-colors">
                 {cat.label}
               </p>
             </div>

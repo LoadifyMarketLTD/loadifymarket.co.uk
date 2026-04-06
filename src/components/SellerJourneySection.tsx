@@ -14,13 +14,13 @@ import { Link } from "react-router-dom";
 const STEPS = [
   {
     icon: UserPlus,
-    iconBg: "bg-blue-50",
-    iconColor: "text-[#2563EB]",
+    iconBg: "bg-green-50",
+    iconColor: "text-[#22C55E]",
     num: "01",
     title: "Create Your Seller Account",
     desc: "Register with your email and choose the Seller account type. No upfront fees.",
     badge: "Free to register",
-    badgeColor: "bg-blue-50 text-[#2563EB]",
+    badgeColor: "bg-green-50 text-[#16A34A]",
   },
   {
     icon: ClipboardList,
@@ -126,7 +126,7 @@ const SellerJourneySection = () => (
       {/* CTA row */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
         <Link to="/signup?type=seller">
-          <button className="inline-flex items-center gap-2 h-12 px-8 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-white font-bold text-sm rounded-full shadow-md transition-all hover:-translate-y-0.5">
+          <button className="inline-flex items-center gap-2 h-12 px-8 bg-[#22C55E] hover:bg-[#16A34A] text-white font-bold text-sm rounded-full shadow-md transition-all hover:-translate-y-0.5">
             Start Your Seller Journey <ArrowRight className="h-4 w-4" />
           </button>
         </Link>

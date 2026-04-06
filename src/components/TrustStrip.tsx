@@ -3,7 +3,7 @@ import { ShieldCheck, CreditCard, Store, Lock } from "lucide-react";
 const benefits = [
   {
     icon: CreditCard,
-    color: "text-[#2563EB] bg-blue-50",
+    color: "text-[#7C3AED] bg-purple-50",
     title: "Secure Payments via Stripe",
     description: "Every transaction is processed securely through Stripe.",
   },

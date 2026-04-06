@@ -114,7 +114,7 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
 
   const getRatingColor = (rating: number) => {
     if (rating >= 4.5) return 'text-green-600';
-    if (rating >= 4.0) return 'text-blue-600';
+    if (rating >= 4.0) return 'text-[#22C55E]';
     if (rating >= 3.5) return 'text-yellow-600';
     return 'text-orange-600';
   };
@@ -194,7 +194,7 @@ export default function SellerPerformance({ sellerId, compact = false }: SellerP
       {/* Performance Metrics */}
       <div className="grid grid-cols-2 gap-4">
         <div className="flex items-start gap-3">
-          <Package className="w-5 h-5 text-blue-600 mt-1 flex-shrink-0" />
+          <Package className="w-5 h-5 text-[#7C3AED] mt-1 flex-shrink-0" />
           <div>
             <p className="text-sm text-gray-500">Total Sales</p>
             <p className="font-semibold text-lg">{stats.totalSales}</p>

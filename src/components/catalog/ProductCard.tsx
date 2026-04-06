@@ -23,7 +23,7 @@ export interface Product {
 
 const conditionColor: Record<string, string> = {
   New: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
-  "Like New": "bg-blue-500/10 text-blue-700 border-blue-200",
+  "Like New": "bg-violet-500/10 text-violet-700 border-violet-200",
   Mixed: "bg-amber-500/10 text-amber-700 border-amber-200",
   Unchecked: "bg-purple-500/10 text-purple-700 border-purple-200",
 };

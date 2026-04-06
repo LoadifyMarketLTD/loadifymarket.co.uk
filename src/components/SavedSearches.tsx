@@ -155,7 +155,7 @@ export default function SavedSearches() {
       </div>
 
       {showAddForm && (
-        <form onSubmit={handleAddSearch} className="card bg-blue-50">
+        <form onSubmit={handleAddSearch} className="card bg-purple-50">
           <h3 className="font-semibold mb-4">Save a New Search</h3>
           <div className="space-y-4">
             <div>
@@ -260,7 +260,7 @@ export default function SavedSearches() {
                     }
                   >
                     {search.emailNotifications ? (
-                      <Bell className="w-5 h-5 text-blue-600" />
+                      <Bell className="w-5 h-5 text-[#7C3AED]" />
                     ) : (
                       <BellOff className="w-5 h-5 text-gray-400" />
                     )}

@@ -10,7 +10,7 @@ const CATEGORIES = [
     href: "/category/electronics",
     img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
     gradient: "from-[#0F172A]/70 via-[#1e3a5f]/50 to-transparent",
-    accentColor: "bg-blue-600",
+    accentColor: "bg-violet-600",
   },
   {
     id: "cat-fashion",
@@ -52,7 +52,7 @@ const DealsSection = () => {
         {/* Section header */}
         <div className="flex items-end justify-between mb-6">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#2563EB]">Shop by Category</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">Shop by Category</span>
             <h2 className="mt-1 text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
               Browse the Marketplace
             </h2>
@@ -62,7 +62,7 @@ const DealsSection = () => {
           </div>
           <Link
             to="/catalog"
-            className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+            className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-[#7C3AED] hover:text-[#5B21B6] transition-colors"
           >
             View All <ArrowRight className="h-4 w-4" />
           </Link>
@@ -107,7 +107,7 @@ const DealsSection = () => {
                     {cat.title}
                   </h3>
                   <p className="text-sm text-white/80 mb-3 line-clamp-1">{cat.subtitle}</p>
-                  <span className="inline-flex items-center gap-1.5 bg-white text-[#0F172A] text-xs font-bold px-4 py-2 rounded-full group-hover:bg-[#2563EB] group-hover:text-white transition-all duration-200 shadow">
+                  <span className="inline-flex items-center gap-1.5 bg-white text-[#0F172A] text-xs font-bold px-4 py-2 rounded-full group-hover:bg-[#22C55E] group-hover:text-white transition-all duration-200 shadow">
                     {cat.cta} <ArrowRight className="h-3.5 w-3.5" />
                   </span>
                 </div>
