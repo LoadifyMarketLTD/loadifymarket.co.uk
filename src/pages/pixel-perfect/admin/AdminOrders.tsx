@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -28,13 +27,13 @@ interface Order {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  paid: { label: "Paid", className: "bg-blue-500/15 text-blue-700 border-blue-200" },
-  packed: { label: "Packed", className: "bg-amber-500/15 text-amber-700 border-amber-200" },
-  shipped: { label: "Shipped", className: "bg-purple-500/15 text-purple-700 border-purple-200" },
-  delivered: { label: "Delivered", className: "bg-emerald-500/15 text-emerald-700 border-emerald-200" },
-  cancelled: { label: "Cancelled", className: "bg-muted text-muted-foreground" },
-  refunded: { label: "Refunded", className: "bg-muted text-muted-foreground" },
-  disputed: { label: "Disputed", className: "bg-red-500/15 text-red-700 border-red-200" },
+  paid: { label: "Paid", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
+  packed: { label: "Packed", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
+  shipped: { label: "Shipped", className: "border-purple-500/30 text-purple-400 bg-purple-500/10" },
+  delivered: { label: "Delivered", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+  cancelled: { label: "Cancelled", className: "border-white/10 text-slate-400" },
+  refunded: { label: "Refunded", className: "border-white/10 text-slate-400" },
+  disputed: { label: "Disputed", className: "border-red-500/30 text-red-400 bg-red-500/10" },
 };
 
 const AdminOrders = () => {
@@ -140,42 +139,42 @@ const AdminOrders = () => {
   const renderTable = (data: Order[]) => (
     <Table>
       <TableHeader>
-        <TableRow>
-          <TableHead>Order</TableHead>
-          <TableHead>Buyer</TableHead>
-          <TableHead className="hidden sm:table-cell">Product</TableHead>
-          <TableHead>Total</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="hidden sm:table-cell">Date</TableHead>
-          <TableHead className="text-right">Action</TableHead>
+        <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Order</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Buyer</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Product</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Total</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Status</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Date</TableHead>
+          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Action</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
             <TableCell colSpan={7} className="text-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+              <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(255,255,255,0.3)" }} />
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+            <TableCell colSpan={7} className="text-center py-8" style={{ color: "rgba(255,255,255,0.3)" }}>
               <ShoppingCart className="h-8 w-8 mx-auto mb-2 opacity-40" />No orders found.
             </TableCell>
           </TableRow>
         ) : (
           data.map((o) => {
-            const cfg = statusConfig[o.status] ?? { label: o.status, className: "bg-muted text-muted-foreground" };
+            const cfg = statusConfig[o.status] ?? { label: o.status, className: "border-white/10 text-slate-400" };
             return (
-              <TableRow key={o.id}>
-                <TableCell className="font-medium text-sm">{o.orderNumber}</TableCell>
-                <TableCell className="text-sm">{o.buyer}</TableCell>
-                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground max-w-[180px] truncate">{o.product}</TableCell>
-                <TableCell className="text-sm font-semibold text-foreground">£{o.total.toLocaleString()}</TableCell>
+              <TableRow key={o.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                <TableCell className="font-medium text-sm text-white">{o.orderNumber}</TableCell>
+                <TableCell className="text-sm text-white">{o.buyer}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs max-w-[180px] truncate" style={{ color: "rgba(255,255,255,0.45)" }}>{o.product}</TableCell>
+                <TableCell className="text-sm font-semibold text-white">£{o.total.toLocaleString()}</TableCell>
                 <TableCell><Badge variant="outline" className={cfg.className}>{cfg.label}</Badge></TableCell>
-                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{o.date}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{o.date}</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelected(o)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10" onClick={() => setSelected(o)}>
                     <Eye className="h-4 w-4" />
                   </Button>
                 </TableCell>
@@ -188,53 +187,75 @@ const AdminOrders = () => {
   );
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Order Management</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+    <div className="p-6 space-y-6" style={{ background: "#0A0B1A", minHeight: "100%" }}>
+      <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Order Management</h1>
+        <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>
           {orders.length} total orders · {byStatus("disputed").length} disputed
         </p>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-xl border p-4 text-sm" style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171" }}>
           {error}
         </div>
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Orders", count: orders.length, value: `£${totalValue.toLocaleString()}` },
-          { label: "Active", count: activeOrders.length, value: "In progress" },
-          { label: "Delivered", count: byStatus("delivered").length, value: "Completed" },
-          { label: "Disputed", count: byStatus("disputed").length, value: "Needs attention" },
+          { label: "Total Orders", count: orders.length, value: `£${totalValue.toLocaleString()}`, color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
+          { label: "Active", count: activeOrders.length, value: "In progress", color: "#60A5FA", bg: "rgba(96,165,250,0.12)" },
+          { label: "Delivered", count: byStatus("delivered").length, value: "Completed", color: "#A78BFA", bg: "rgba(167,139,250,0.12)" },
+          { label: "Disputed", count: byStatus("disputed").length, value: "Needs attention", color: "#F87171", bg: "rgba(248,113,113,0.12)" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card rounded-xl border border-border p-5 space-y-1">
-            <div className="font-display text-2xl font-bold text-foreground">{stat.count}</div>
-            <p className="text-xs text-muted-foreground">{stat.label}</p>
-            <p className="text-xs text-primary">{stat.value}</p>
+          <div
+            key={stat.label}
+            className="rounded-2xl p-5"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: stat.bg }}>
+              <ShoppingCart className="h-5 w-5" style={{ color: stat.color }} />
+            </div>
+            <div className="text-3xl font-bold text-white">{stat.count}</div>
+            <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(255,255,255,0.45)" }}>{stat.label}</p>
+            <p className="text-xs mt-0.5" style={{ color: stat.color, opacity: 0.8 }}>{stat.value}</p>
           </div>
         ))}
       </div>
 
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search orders..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(255,255,255,0.3)" }} />
+          <Input
+            placeholder="Search orders..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 h-10"
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+          />
         </div>
       </div>
 
       <Tabs defaultValue="all">
-        <TabsList>
-          <TabsTrigger value="all">All <Badge variant="secondary" className="ml-2 text-xs">{filtered.length}</Badge></TabsTrigger>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="delivered">Delivered</TabsTrigger>
-          <TabsTrigger value="disputed">Disputed</TabsTrigger>
+        <TabsList style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <TabsTrigger value="all" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">All <Badge variant="outline" className="ml-2 text-xs border-white/20 text-white/60">{filtered.length}</Badge></TabsTrigger>
+          <TabsTrigger value="active" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Active</TabsTrigger>
+          <TabsTrigger value="delivered" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Delivered</TabsTrigger>
+          <TabsTrigger value="disputed" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Disputed</TabsTrigger>
         </TabsList>
-        <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
-        <TabsContent value="active"><Card><CardContent className="pt-4">{renderTable(activeOrders.filter((o) => o.status !== "delivered"))}</CardContent></Card></TabsContent>
-        <TabsContent value="delivered"><Card><CardContent className="pt-4">{renderTable(byStatus("delivered"))}</CardContent></Card></TabsContent>
-        <TabsContent value="disputed"><Card><CardContent className="pt-4">{renderTable(byStatus("disputed"))}</CardContent></Card></TabsContent>
+        {(["all", "active", "delivered", "disputed"] as const).map((tab) => (
+          <TabsContent key={tab} value={tab}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+              <div className="px-2 py-2">
+                {renderTable(
+                  tab === "all" ? filtered :
+                  tab === "active" ? activeOrders.filter((o) => o.status !== "delivered") :
+                  byStatus(tab)
+                )}
+              </div>
+            </div>
+          </TabsContent>
+        ))}
       </Tabs>
 
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
@@ -246,18 +267,18 @@ const AdminOrders = () => {
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-muted-foreground">Buyer</span><p className="font-medium text-foreground">{selected.buyer}</p></div>
-                <div><span className="text-muted-foreground">Product</span><p className="font-medium text-foreground">{selected.product}</p></div>
-                <div><span className="text-muted-foreground">Total</span><p className="font-semibold text-foreground">£{selected.total.toLocaleString()}</p></div>
-                <div><span className="text-muted-foreground">Date</span><p className="font-medium text-foreground">{selected.date}</p></div>
-                <div><span className="text-muted-foreground">Status</span>
-                  <p><Badge variant="outline" className={(statusConfig[selected.status] ?? { className: "bg-muted text-muted-foreground" }).className}>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Buyer</span><p className="font-medium text-white">{selected.buyer}</p></div>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Product</span><p className="font-medium text-white">{selected.product}</p></div>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Total</span><p className="font-semibold text-white">£{selected.total.toLocaleString()}</p></div>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Date</span><p className="font-medium text-white">{selected.date}</p></div>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Status</span>
+                  <p><Badge variant="outline" className={(statusConfig[selected.status] ?? { className: "border-white/10 text-slate-400" }).className}>
                     {(statusConfig[selected.status] ?? { label: selected.status }).label}
                   </Badge></p>
                 </div>
               </div>
-              <div className="space-y-2 pt-2 border-t border-border">
-                <p className="text-xs font-semibold text-muted-foreground">UPDATE STATUS</p>
+              <div className="space-y-2 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.4)" }}>UPDATE STATUS</p>
                 <div className="flex items-center gap-2">
                   <Select
                     value={selected.status}
@@ -277,7 +298,7 @@ const AdminOrders = () => {
                       <SelectItem value="disputed">Disputed</SelectItem>
                     </SelectContent>
                   </Select>
-                  {actionLoading === selected.id && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                  {actionLoading === selected.id && <Loader2 className="h-4 w-4 animate-spin" style={{ color: "rgba(255,255,255,0.3)" }} />}
                 </div>
               </div>
             </div>

@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -172,45 +171,45 @@ const AdminProducts = () => {
   const renderTable = (data: Product[]) => (
     <Table>
       <TableHeader>
-        <TableRow>
-          <TableHead>Product</TableHead>
-          <TableHead className="hidden sm:table-cell">Seller</TableHead>
-          <TableHead>Price</TableHead>
-          <TableHead className="hidden md:table-cell">Stock</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
+        <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Product</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Seller</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Price</TableHead>
+          <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Stock</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Status</TableHead>
+          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
             <TableCell colSpan={6} className="text-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+              <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(255,255,255,0.3)" }} />
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+            <TableCell colSpan={6} className="text-center py-8" style={{ color: "rgba(255,255,255,0.3)" }}>
               <Package className="h-8 w-8 mx-auto mb-2 opacity-40" />No products found.
             </TableCell>
           </TableRow>
         ) : (
           data.map((p) => (
-            <TableRow key={p.id}>
+            <TableRow key={p.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
               <TableCell className="max-w-[250px]">
-                <p className="text-sm font-medium text-foreground truncate">{p.title}</p>
-                <p className="text-xs text-muted-foreground">{p.createdAt}</p>
+                <p className="text-sm font-medium text-white truncate">{p.title}</p>
+                <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{p.createdAt}</p>
               </TableCell>
-              <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{p.seller}</TableCell>
-              <TableCell className="text-sm font-semibold text-foreground">£{p.price.toLocaleString()}</TableCell>
-              <TableCell className="hidden md:table-cell text-sm text-muted-foreground">{p.stockQuantity}</TableCell>
+              <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{p.seller}</TableCell>
+              <TableCell className="text-sm font-semibold text-white">£{p.price.toLocaleString()}</TableCell>
+              <TableCell className="hidden md:table-cell text-sm" style={{ color: "rgba(255,255,255,0.45)" }}>{p.stockQuantity}</TableCell>
               <TableCell>
                 <Badge
                   variant="outline"
                   className={
                     p.isActive
-                      ? "bg-emerald-500/15 text-emerald-700 border-emerald-200"
-                      : "bg-muted text-muted-foreground"
+                      ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
+                      : "border-white/10 text-slate-400"
                   }
                 >
                   {p.isActive ? "Active" : "Inactive"}
@@ -219,7 +218,7 @@ const AdminProducts = () => {
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" disabled={actionLoading === p.id}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10" disabled={actionLoading === p.id}>
                       {actionLoading === p.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
@@ -251,36 +250,48 @@ const AdminProducts = () => {
   );
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Product Moderation</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+    <div className="p-6 space-y-6" style={{ background: "#0A0B1A", minHeight: "100%" }}>
+      <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Product Moderation</h1>
+        <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>
           {products.length} total listings · {activeProducts.length} active · {inactiveProducts.length} inactive
         </p>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-xl border p-4 text-sm" style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171" }}>
           {error}
         </div>
       )}
 
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search products or sellers..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(255,255,255,0.3)" }} />
+          <Input
+            placeholder="Search products or sellers..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 h-10"
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+          />
         </div>
       </div>
 
       <Tabs defaultValue="all">
-        <TabsList>
-          <TabsTrigger value="all">All <Badge variant="secondary" className="ml-2 text-xs">{filtered.length}</Badge></TabsTrigger>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="inactive">Inactive</TabsTrigger>
+        <TabsList style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <TabsTrigger value="all" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">All <Badge variant="outline" className="ml-2 text-xs border-white/20 text-white/60">{filtered.length}</Badge></TabsTrigger>
+          <TabsTrigger value="active" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Active</TabsTrigger>
+          <TabsTrigger value="inactive" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Inactive</TabsTrigger>
         </TabsList>
-        <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
-        <TabsContent value="active"><Card><CardContent className="pt-4">{renderTable(activeProducts)}</CardContent></Card></TabsContent>
-        <TabsContent value="inactive"><Card><CardContent className="pt-4">{renderTable(inactiveProducts)}</CardContent></Card></TabsContent>
+        {(["all", "active", "inactive"] as const).map((tab) => (
+          <TabsContent key={tab} value={tab}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+              <div className="px-2 py-2">
+                {renderTable(tab === "all" ? filtered : tab === "active" ? activeProducts : inactiveProducts)}
+              </div>
+            </div>
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );

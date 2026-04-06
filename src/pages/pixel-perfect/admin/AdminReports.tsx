@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -164,27 +163,34 @@ const AdminReports = () => {
   }, []);
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="p-6 space-y-6" style={{ background: "#0A0B1A", minHeight: "100%" }}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Reports & Analytics</h1>
-          <p className="text-muted-foreground text-sm mt-1">Platform performance overview and insights.</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Reports & Analytics</h1>
+          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>Platform performance overview and insights.</p>
         </div>
         <div className="flex gap-2">
           <Select defaultValue="all">
-            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[140px]" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All time</SelectItem>
               <SelectItem value="7d">Last 7 days</SelectItem>
               <SelectItem value="30d">Last 30 days</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="default" onClick={handleExport} disabled={loading}><Download className="mr-2 h-4 w-4" /> Export</Button>
+          <Button
+            size="default"
+            onClick={handleExport}
+            disabled={loading}
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+          >
+            <Download className="mr-2 h-4 w-4" /> Export
+          </Button>
         </div>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-xl border p-4 text-sm" style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171" }}>
           {error}
         </div>
       )}
@@ -193,94 +199,112 @@ const AdminReports = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => (
-              <Card key={i}>
-                <CardContent className="p-5 flex items-center justify-center h-28">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </CardContent>
-              </Card>
+              <div
+                key={i}
+                className="rounded-2xl p-5 flex items-center justify-center h-28"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+              >
+                <Loader2 className="h-6 w-6 animate-spin" style={{ color: "rgba(255,255,255,0.3)" }} />
+              </div>
             ))
           : kpis.map((k) => (
-              <Card key={k.label}>
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <k.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <span className={`text-xs font-medium flex items-center gap-1 ${k.up ? "text-emerald-600" : "text-destructive"}`}>
-                      {k.up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                      {k.change}
-                    </span>
+              <div
+                key={k.label}
+                className="rounded-2xl p-5"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(34,197,94,0.12)" }}>
+                    <k.icon className="h-5 w-5" style={{ color: "#22C55E" }} />
                   </div>
-                  <p className="text-2xl font-bold text-foreground mt-3">{k.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{k.label} · {k.period}</p>
-                </CardContent>
-              </Card>
+                  <span className="text-xs font-medium flex items-center gap-1" style={{ color: k.up ? "#22C55E" : "#F87171" }}>
+                    {k.up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                    {k.change}
+                  </span>
+                </div>
+                <p className="text-3xl font-bold text-white mt-3">{k.value}</p>
+                <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>{k.label} · {k.period}</p>
+              </div>
             ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Order Breakdown */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Order Breakdown</CardTitle>
-            <CardDescription>Orders by status</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}
+        >
+          <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+            <h2 className="text-sm font-semibold text-white">Order Breakdown</h2>
+            <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>Orders by status</p>
+          </div>
+          <div className="px-6 py-4">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <Loader2 className="h-6 w-6 animate-spin" style={{ color: "rgba(255,255,255,0.3)" }} />
               </div>
             ) : orderBreakdown.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">No order data yet.</p>
+              <p className="text-sm text-center py-6" style={{ color: "rgba(255,255,255,0.3)" }}>No order data yet.</p>
             ) : (
               <div className="space-y-3">
                 {orderBreakdown.map((o) => (
-                  <div key={o.status} className="flex items-center justify-between rounded-lg border border-border p-3">
+                  <div
+                    key={o.status}
+                    className="flex items-center justify-between rounded-xl p-3"
+                    style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)" }}
+                  >
                     <div className="flex items-center gap-3">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-foreground capitalize">{o.status}</span>
+                      <Calendar className="h-4 w-4" style={{ color: "rgba(255,255,255,0.3)" }} />
+                      <span className="text-sm font-medium text-white capitalize">{o.status}</span>
                     </div>
-                    <Badge variant="secondary" className="text-xs">{o.count} orders</Badge>
+                    <Badge variant="outline" className="text-xs border-white/20 text-white/60">{o.count} orders</Badge>
                   </div>
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Top Sellers */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Top Sellers</CardTitle>
-            <CardDescription>By total sales volume</CardDescription>
-          </CardHeader>
-          <CardContent>
+        <div
+          className="rounded-2xl overflow-hidden"
+          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}
+        >
+          <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+            <h2 className="text-sm font-semibold text-white">Top Sellers</h2>
+            <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>By total sales volume</p>
+          </div>
+          <div className="px-6 py-4">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <Loader2 className="h-6 w-6 animate-spin" style={{ color: "rgba(255,255,255,0.3)" }} />
               </div>
             ) : topSellers.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">No seller data yet.</p>
+              <p className="text-sm text-center py-6" style={{ color: "rgba(255,255,255,0.3)" }}>No seller data yet.</p>
             ) : (
               <div className="space-y-3">
                 {topSellers.map((s, i) => (
-                  <div key={s.name} className="flex items-center gap-3 rounded-lg border border-border p-3">
-                    <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0">
+                  <div
+                    key={s.name}
+                    className="flex items-center gap-3 rounded-xl p-3"
+                    style={{ border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)" }}
+                  >
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }}>
                       {i + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{s.name}</p>
-                      <p className="text-xs text-muted-foreground">⭐ {s.rating.toFixed(1)} rating</p>
+                      <p className="text-sm font-medium text-white truncate">{s.name}</p>
+                      <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>⭐ {s.rating.toFixed(1)} rating</p>
                     </div>
-                    <span className="text-sm font-semibold text-foreground shrink-0">
+                    <span className="text-sm font-semibold text-white shrink-0">
                       {s.totalSales} sales
                     </span>
                   </div>
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -31,18 +30,18 @@ interface Ticket {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  open: { label: "Open", className: "bg-blue-500/15 text-blue-700 border-blue-200" },
-  in_progress: { label: "In Progress", className: "bg-amber-500/15 text-amber-700 border-amber-200" },
-  waiting_customer: { label: "Waiting", className: "bg-purple-500/15 text-purple-700 border-purple-200" },
-  resolved: { label: "Resolved", className: "bg-emerald-500/15 text-emerald-700 border-emerald-200" },
-  closed: { label: "Closed", className: "bg-muted text-muted-foreground" },
+  open: { label: "Open", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
+  in_progress: { label: "In Progress", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
+  waiting_customer: { label: "Waiting", className: "border-purple-500/30 text-purple-400 bg-purple-500/10" },
+  resolved: { label: "Resolved", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+  closed: { label: "Closed", className: "border-white/10 text-slate-400" },
 };
 
 const priorityConfig: Record<string, { label: string; className: string }> = {
-  low: { label: "Low", className: "bg-muted text-muted-foreground" },
-  medium: { label: "Medium", className: "bg-blue-500/10 text-blue-700" },
-  high: { label: "High", className: "bg-amber-500/10 text-amber-700" },
-  urgent: { label: "Urgent", className: "bg-red-500/10 text-red-700" },
+  low: { label: "Low", className: "border-white/10 text-slate-400" },
+  medium: { label: "Medium", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
+  high: { label: "High", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
+  urgent: { label: "Urgent", className: "border-red-500/30 text-red-400 bg-red-500/10" },
 };
 
 const AdminSupport = () => {
@@ -179,52 +178,52 @@ const AdminSupport = () => {
   const renderTable = (data: Ticket[]) => (
     <Table>
       <TableHeader>
-        <TableRow>
-          <TableHead>Ticket</TableHead>
-          <TableHead>User</TableHead>
-          <TableHead className="hidden sm:table-cell">Category</TableHead>
-          <TableHead>Priority</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="hidden sm:table-cell">Updated</TableHead>
-          <TableHead className="text-right">Action</TableHead>
+        <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Ticket</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>User</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Category</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Priority</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Status</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Updated</TableHead>
+          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Action</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
             <TableCell colSpan={7} className="text-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+              <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(255,255,255,0.3)" }} />
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+            <TableCell colSpan={7} className="text-center py-8" style={{ color: "rgba(255,255,255,0.3)" }}>
               <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-40" />No tickets found.
             </TableCell>
           </TableRow>
         ) : (
           data.map((t) => {
-            const priCfg = priorityConfig[t.priority] ?? { label: t.priority, className: "bg-muted text-muted-foreground" };
-            const stCfg = statusConfig[t.status] ?? { label: t.status, className: "bg-muted text-muted-foreground" };
+            const priCfg = priorityConfig[t.priority] ?? { label: t.priority, className: "border-white/10 text-slate-400" };
+            const stCfg = statusConfig[t.status] ?? { label: t.status, className: "border-white/10 text-slate-400" };
             return (
-              <TableRow key={t.id}>
+              <TableRow key={t.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                 <TableCell>
-                  <p className="text-sm font-medium text-foreground">{t.id.slice(0, 8).toUpperCase()}</p>
-                  <p className="text-xs text-muted-foreground max-w-[200px] truncate">{t.subject}</p>
+                  <p className="text-sm font-medium text-white">{t.id.slice(0, 8).toUpperCase()}</p>
+                  <p className="text-xs max-w-[200px] truncate" style={{ color: "rgba(255,255,255,0.45)" }}>{t.subject}</p>
                 </TableCell>
                 <TableCell>
-                  <p className="text-sm">{t.userName}</p>
-                  <p className="text-xs text-muted-foreground">{t.userEmail}</p>
+                  <p className="text-sm text-white">{t.userName}</p>
+                  <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{t.userEmail}</p>
                 </TableCell>
-                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{t.category}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{t.category}</TableCell>
                 <TableCell><Badge variant="outline" className={priCfg.className}>{priCfg.label}</Badge></TableCell>
                 <TableCell><Badge variant="outline" className={stCfg.className}>{stCfg.label}</Badge></TableCell>
-                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{t.updatedAt}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{t.updatedAt}</TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-xs"
+                    className="text-xs text-slate-400 hover:text-white hover:bg-white/10"
                     onClick={() => setSelected(t)}
                   >
                     View
@@ -239,55 +238,75 @@ const AdminSupport = () => {
   );
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Support Tickets</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+    <div className="p-6 space-y-6" style={{ background: "#0A0B1A", minHeight: "100%" }}>
+      <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Support Tickets</h1>
+        <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>
           {tickets.length} total · {openTickets.length} open
         </p>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-xl border p-4 text-sm" style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171" }}>
           {error}
         </div>
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Open", count: byStatus("open").length, icon: AlertCircle, color: "text-blue-600 bg-blue-500/10" },
-          { label: "In Progress", count: byStatus("in_progress").length, icon: Clock, color: "text-amber-600 bg-amber-500/10" },
-          { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "text-emerald-600 bg-emerald-500/10" },
-          { label: "Urgent", count: urgentOpen.length, icon: AlertCircle, color: "text-red-600 bg-red-500/10" },
+          { label: "Open", count: byStatus("open").length, icon: AlertCircle, color: "#60A5FA", bg: "rgba(96,165,250,0.12)" },
+          { label: "In Progress", count: byStatus("in_progress").length, icon: Clock, color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
+          { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
+          { label: "Urgent", count: urgentOpen.length, icon: AlertCircle, color: "#F87171", bg: "rgba(248,113,113,0.12)" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card rounded-xl border border-border p-5 space-y-2">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}>
-              <stat.icon className="h-5 w-5" />
+          <div
+            key={stat.label}
+            className="rounded-2xl p-5"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: stat.bg }}>
+              <stat.icon className="h-5 w-5" style={{ color: stat.color }} />
             </div>
-            <div className="font-display text-2xl font-bold text-foreground">{stat.count}</div>
-            <p className="text-xs text-muted-foreground">{stat.label}</p>
+            <div className="text-3xl font-bold text-white">{stat.count}</div>
+            <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(255,255,255,0.45)" }}>{stat.label}</p>
           </div>
         ))}
       </div>
 
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search tickets..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(255,255,255,0.3)" }} />
+          <Input
+            placeholder="Search tickets..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 h-10"
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+          />
         </div>
       </div>
 
       <Tabs defaultValue="open">
-        <TabsList>
-          <TabsTrigger value="open">
-            Open <Badge variant="secondary" className="ml-2 text-xs">{openTickets.length}</Badge>
+        <TabsList style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <TabsTrigger value="open" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">
+            Open <Badge variant="outline" className="ml-2 text-xs border-white/20 text-white/60">{openTickets.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="resolved">Resolved</TabsTrigger>
-          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="resolved" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Resolved</TabsTrigger>
+          <TabsTrigger value="all" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">All</TabsTrigger>
         </TabsList>
-        <TabsContent value="open"><Card><CardContent className="pt-4">{renderTable(openTickets)}</CardContent></Card></TabsContent>
-        <TabsContent value="resolved"><Card><CardContent className="pt-4">{renderTable(filtered.filter((t) => ["resolved", "closed"].includes(t.status)))}</CardContent></Card></TabsContent>
-        <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
+        {(["open", "resolved", "all"] as const).map((tab) => (
+          <TabsContent key={tab} value={tab}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+              <div className="px-2 py-2">
+                {renderTable(
+                  tab === "open" ? openTickets :
+                  tab === "resolved" ? filtered.filter((t) => ["resolved", "closed"].includes(t.status)) :
+                  filtered
+                )}
+              </div>
+            </div>
+          </TabsContent>
+        ))}
       </Tabs>
 
       <Dialog open={!!selected} onOpenChange={(open) => { if (!open) { setSelected(null); setReplyText(""); setReplyMsg(null); } }}>
@@ -299,25 +318,25 @@ const AdminSupport = () => {
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-muted-foreground">User</span><p className="font-medium text-foreground">{selected.userName}</p></div>
-                <div><span className="text-muted-foreground">Email</span><p className="font-medium text-foreground">{selected.userEmail}</p></div>
-                <div><span className="text-muted-foreground">Priority</span>
-                  <p><Badge variant="outline" className={(priorityConfig[selected.priority] ?? { className: "bg-muted text-muted-foreground" }).className}>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>User</span><p className="font-medium text-white">{selected.userName}</p></div>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Email</span><p className="font-medium text-white">{selected.userEmail}</p></div>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Priority</span>
+                  <p><Badge variant="outline" className={(priorityConfig[selected.priority] ?? { className: "border-white/10 text-slate-400" }).className}>
                     {(priorityConfig[selected.priority] ?? { label: selected.priority }).label}
                   </Badge></p>
                 </div>
-                <div><span className="text-muted-foreground">Status</span>
-                  <p><Badge variant="outline" className={(statusConfig[selected.status] ?? { className: "bg-muted text-muted-foreground" }).className}>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Status</span>
+                  <p><Badge variant="outline" className={(statusConfig[selected.status] ?? { className: "border-white/10 text-slate-400" }).className}>
                     {(statusConfig[selected.status] ?? { label: selected.status }).label}
                   </Badge></p>
                 </div>
-                <div><span className="text-muted-foreground">Created</span><p className="font-medium text-foreground">{selected.createdAt}</p></div>
-                <div><span className="text-muted-foreground">Updated</span><p className="font-medium text-foreground">{selected.updatedAt}</p></div>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Created</span><p className="font-medium text-white">{selected.createdAt}</p></div>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Updated</span><p className="font-medium text-white">{selected.updatedAt}</p></div>
               </div>
 
               {["open", "in_progress", "waiting_customer"].includes(selected.status) && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground">UPDATE STATUS</p>
+                  <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.4)" }}>UPDATE STATUS</p>
                   <div className="flex items-center gap-2">
                     <Select
                       defaultValue={selected.status}
@@ -335,14 +354,14 @@ const AdminSupport = () => {
                         <SelectItem value="closed">Closed</SelectItem>
                       </SelectContent>
                     </Select>
-                    {actionLoading === selected.id && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                    {actionLoading === selected.id && <Loader2 className="h-4 w-4 animate-spin" style={{ color: "rgba(255,255,255,0.3)" }} />}
                   </div>
                 </div>
               )}
 
               {/* Admin reply */}
-              <div className="space-y-2 pt-2 border-t border-border">
-                <p className="text-xs font-semibold text-muted-foreground">SEND REPLY</p>
+              <div className="space-y-2 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.4)" }}>SEND REPLY</p>
                 <Textarea
                   placeholder="Type your reply..."
                   rows={3}
@@ -352,7 +371,7 @@ const AdminSupport = () => {
                   className="resize-none text-sm"
                 />
                 {replyMsg && (
-                  <p className={`text-xs ${replyMsg.ok ? "text-emerald-600" : "text-destructive"}`}>{replyMsg.text}</p>
+                  <p className={`text-xs ${replyMsg.ok ? "text-emerald-400" : "text-red-400"}`}>{replyMsg.text}</p>
                 )}
               </div>
             </div>
