@@ -115,7 +115,7 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
               onClick={onClose}
               className="flex-1 text-center bg-[#22C55E] hover:bg-[#16A34A] text-white font-semibold py-2.5 rounded-full transition-all text-sm"
             >
-              Explore Listings
+              Explore Category
             </Link>
             <Link
               to="/catalog"
@@ -123,7 +123,7 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
               className="flex-1 text-center border text-white/80 font-semibold py-2.5 rounded-full hover:border-white/40 transition-all text-sm"
               style={{ borderColor: "rgba(255,255,255,0.15)" }}
             >
-              Browse All
+              All Listings
             </Link>
           </div>
         </div>
