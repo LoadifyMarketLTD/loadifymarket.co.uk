@@ -184,7 +184,7 @@ export default function ProductQA({ productId, sellerId }: ProductQAProps) {
 
       {!user && !showAskForm && (
         <div className="card bg-purple-50 border-purple-200">
-          <p className="text-sm text-blue-800">
+          <p className="text-sm text-[#5B21B6]">
             <a href="/login" className="font-medium underline">
               Sign in
             </a>{' '}

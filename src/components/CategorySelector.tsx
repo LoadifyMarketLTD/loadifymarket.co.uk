@@ -13,7 +13,7 @@ interface CategorySelectorProps {
 /** Shared Tailwind classes for each option row. */
 const optionBase =
   'w-full flex items-center justify-between rounded-md text-base text-left transition-colors hover:bg-purple-50 px-3.5 py-2.5';
-const optionSelected = 'bg-blue-100 text-blue-800 font-medium';
+const optionSelected = 'bg-purple-100 text-[#5B21B6] font-medium';
 const optionDefault = 'text-gray-700';
 
 /** Shared Tailwind classes for the scrollable panel. */
