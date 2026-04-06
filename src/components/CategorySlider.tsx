@@ -118,7 +118,7 @@ function CategoryTile({ slug, label, icon: Icon, color, border, img }: Category)
 const CategorySlider = () => {
   return (
     <section
-      className="border-b py-4 px-4 sm:px-6"
+      className="border-b py-10 px-4 sm:px-6"
       style={{
         background: "linear-gradient(180deg, #0a1628 0%, #0d1d36 100%)",
         borderColor: "rgba(255,255,255,0.07)",

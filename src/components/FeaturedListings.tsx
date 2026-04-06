@@ -148,7 +148,7 @@ const FeaturedListings = () => {
       )}
 
       <section
-        className="relative overflow-hidden py-12 px-4 sm:px-6"
+        className="relative overflow-hidden py-12 px-4 sm:px-6 min-h-[85vh] flex flex-col justify-center"
         style={{
           background: "linear-gradient(135deg, #0a1628 0%, #0e1e3a 60%, #091220 100%)",
         }}

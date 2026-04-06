@@ -3,19 +3,16 @@ import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import CategorySlider from "@/components/CategorySlider";
 import FeaturedProducts from "@/components/FeaturedProducts";
-import DealsSection from "@/components/DealsSection";
 import TrustStrip from "@/components/TrustStrip";
-import PaymentTrustSection from "@/components/PaymentTrustSection";
 import CategoryGrid from "@/components/CategoryGrid";
 import FeaturedListings from "@/components/FeaturedListings";
-import FeaturesSection from "@/components/FeaturesSection";
 import SellerJourneySection from "@/components/SellerJourneySection";
+import FeaturesSection from "@/components/FeaturesSection";
 import HowItWorks from "@/components/HowItWorks";
 import PlatformFeatures from "@/components/PlatformFeatures";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 import LazySection from "@/components/LazySection";
-import { Info } from "lucide-react";
 
 export default function PixelPerfectIndex() {
   return (
@@ -28,37 +25,25 @@ export default function PixelPerfectIndex() {
         <HeroSection />
         {/* Category strip — horizontal scroll, icon + label per category */}
         <CategorySlider />
-        {/* Featured products grid — 4 columns, 12 products */}
+        {/* Featured products — dark cinematic showcase */}
         <FeaturedProducts />
-        {/* Deals / promo banner cards */}
-        <DealsSection />
+        {/* Trust strip — light transition */}
         <TrustStrip />
-        {/* Marketplace disclaimer — visible on homepage as required */}
-        <div className="bg-purple-50 border-y border-purple-100">
-          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-2 text-center">
-            <Info className="h-4 w-4 text-[#7C3AED] shrink-0" aria-hidden="true" />
-            <p className="text-xs sm:text-sm text-[#5B21B6] font-medium">
-              Loadify Market does not hold or sell inventory. All products are listed, managed, and fulfilled by independent sellers.
-            </p>
-          </div>
-        </div>
-        <PaymentTrustSection />
+        {/* Below-fold sections deferred with IntersectionObserver to reduce
+            initial DOM size. Components mount only when the user scrolls
+            near them (rootMargin keeps a 300 px look-ahead). */}
         <LazySection>
           <CategoryGrid />
         </LazySection>
-        {/* Below-fold sections: deferred with IntersectionObserver to reduce
-            the initial DOM node count from ~1,200 down toward the recommended
-            maximum of 800 elements. Components mount only when the user
-            scrolls near them (rootMargin keeps a 300 px look-ahead). */}
         <LazySection>
           <FeaturedListings />
         </LazySection>
-        <LazySection>
-          <FeaturesSection />
-        </LazySection>
-        {/* Seller onboarding transparency — real 5-step activation flow */}
+        {/* Seller onboarding — visually continues FeaturedListings dark block */}
         <LazySection>
           <SellerJourneySection />
+        </LazySection>
+        <LazySection>
+          <FeaturesSection />
         </LazySection>
         <LazySection>
           <HowItWorks />

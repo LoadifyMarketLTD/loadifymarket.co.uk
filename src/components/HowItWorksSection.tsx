@@ -45,7 +45,7 @@ const STEPS = [
 ];
 
 const HowItWorksSection = () => (
-  <section className="bg-[#F8F9FC] py-10 px-4 sm:px-6">
+  <section className="bg-[#F8F9FC] py-10 px-4 sm:px-6 min-h-[75vh] flex flex-col justify-center">
     <div className="max-w-[1280px] mx-auto">
 
       {/* Header */}

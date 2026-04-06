@@ -33,7 +33,7 @@ const SHOWCASE = [
 const FeaturedProducts = () => {
   return (
     <section
-      className="relative overflow-hidden py-12 px-4 sm:px-6"
+      className="relative overflow-hidden py-12 px-4 sm:px-6 min-h-[85vh] flex flex-col justify-center"
       style={{
         background: "linear-gradient(135deg, #0a1628 0%, #0e1e3a 60%, #091220 100%)",
       }}
@@ -75,7 +75,7 @@ const FeaturedProducts = () => {
             <Link
               key={cat.id}
               to={cat.href}
-              className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
+              className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300"
               style={{ minHeight: "300px" }}
             >
               <img

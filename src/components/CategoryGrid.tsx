@@ -40,7 +40,7 @@ const CATEGORIES = [
 ];
 
 const CategoryGrid = () => (
-  <section className="bg-[#F8F9FC] py-10 px-4 sm:px-6">
+  <section className="bg-[#F8F9FC] py-10 px-4 sm:px-6 min-h-[85vh] flex flex-col justify-center">
     <div className="max-w-[1280px] mx-auto">
 
       {/* Header */}
@@ -67,7 +67,7 @@ const CategoryGrid = () => (
           <Link
             key={cat.slug}
             to={`/category/${cat.slug}`}
-            className="group relative overflow-hidden rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
+            className="group relative overflow-hidden rounded-2xl shadow-sm hover:shadow-xl hover:scale-[1.05] hover:-translate-y-0.5 transition-all duration-300"
             style={{ aspectRatio: "4/3" }}
           >
             <img

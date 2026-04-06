@@ -60,7 +60,7 @@ const features = [
 
 const FeaturesSection = () => {
   return (
-    <section id="features" className="bg-white py-12 px-4 sm:px-6">
+    <section id="features" className="bg-white py-12 px-4 sm:px-6 min-h-[80vh] flex flex-col justify-center">
       <div className="max-w-[1280px] mx-auto">
 
         {/* Section header */}
