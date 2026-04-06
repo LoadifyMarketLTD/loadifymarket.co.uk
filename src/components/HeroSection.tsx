@@ -48,7 +48,7 @@ const HeroSection = () => {
       className="relative overflow-hidden"
       aria-label="Hero — sell online, grow your business with Loadify Market"
       style={{
-        backgroundImage: "url('/hero-marketplace.jpg')",
+        backgroundImage: "url('/hero-final.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center center",
         backgroundRepeat: "no-repeat",
