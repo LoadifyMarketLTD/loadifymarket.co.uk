@@ -95,7 +95,7 @@ const Navbar = () => {
                         <span className={`inline-flex h-7 w-7 items-center justify-center rounded-lg ${cat.accentBg}`}>
                           <Icon className={`h-3.5 w-3.5 ${cat.iconColor}`} />
                         </span>
-                        <span className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                        <span className="text-sm font-semibold text-gray-900 group-hover:text-[#7C3AED] transition-colors">
                           {cat.label}
                         </span>
                       </Link>
@@ -104,7 +104,7 @@ const Navbar = () => {
                           <li key={sub}>
                             <Link
                               to={`/category/${cat.slug}`}
-                              className="text-xs text-gray-500 hover:text-blue-600 transition-colors"
+                              className="text-xs text-gray-500 hover:text-[#7C3AED] transition-colors"
                               onClick={() => setCategoriesOpen(false)}
                             >
                               {sub}
@@ -118,7 +118,7 @@ const Navbar = () => {
                 <div className="col-span-3 border-t border-gray-100 pt-3 mt-1">
                   <Link
                     to="/catalog"
-                    className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                    className="text-sm font-medium text-[#7C3AED] hover:text-[#5B21B6] transition-colors"
                     onClick={() => setCategoriesOpen(false)}
                   >
                     Browse all categories →
@@ -223,7 +223,7 @@ const Navbar = () => {
                           <Link
                             to={`/category/${cat.slug}`}
                             onClick={() => setMobileOpen(false)}
-                            className="block py-1 text-sm text-blue-600 font-medium"
+                            className="block py-1 text-sm text-[#7C3AED] font-medium"
                           >
                             All {cat.label}
                           </Link>

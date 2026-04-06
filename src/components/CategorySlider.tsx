@@ -7,8 +7,8 @@ const CATEGORIES = [
     slug: "electronics",
     label: "Electronics",
     icon: Cpu,
-    color: "bg-blue-50 text-blue-600",
-    border: "border-blue-100",
+    color: "bg-purple-50 text-purple-600",
+    border: "border-purple-100",
     img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
   },
   {
@@ -107,7 +107,7 @@ function CategoryTile({ slug, label, icon: Icon, color, border, img }: Category)
           />
         )}
       </div>
-      <span className="text-[11px] font-semibold text-[#334155] text-center leading-tight max-w-[72px] group-hover:text-[#2563EB] transition-colors">
+      <span className="text-[11px] font-semibold text-[#334155] text-center leading-tight max-w-[72px] group-hover:text-[#7C3AED] transition-colors">
         {label}
       </span>
     </Link>
@@ -123,7 +123,7 @@ const CategorySlider = () => {
           <h2 className="text-base font-bold text-[#0F172A]">Shop by Category</h2>
           <Link
             to="/catalog"
-            className="flex items-center gap-1 text-xs font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+            className="flex items-center gap-1 text-xs font-semibold text-[#7C3AED] hover:text-[#5B21B6] transition-colors"
           >
             All Categories <ArrowRight className="h-3.5 w-3.5" />
           </Link>

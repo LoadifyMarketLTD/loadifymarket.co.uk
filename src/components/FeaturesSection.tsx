@@ -4,11 +4,11 @@ import { Link } from "react-router-dom";
 const features = [
   {
     icon: Search,
-    iconBg: "bg-blue-50",
-    iconColor: "text-[#2563EB]",
-    accent: "border-t-[#2563EB]",
+    iconBg: "bg-purple-50",
+    iconColor: "text-[#7C3AED]",
+    accent: "border-t-[#7C3AED]",
     tag: "For Buyers",
-    tagColor: "text-[#2563EB] bg-blue-50",
+    tagColor: "text-[#7C3AED] bg-purple-50",
     title: "Browse & Discover",
     description:
       "Explore thousands of products across 9 categories — electronics, fashion, beauty, home goods, tools and more — all from independent UK sellers in one place.",
@@ -65,7 +65,7 @@ const FeaturesSection = () => {
 
         {/* Section header */}
         <div className="text-center max-w-xl mx-auto mb-10">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#2563EB]">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">
             Platform Features
           </span>
           <h2 className="mt-2 text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
@@ -117,7 +117,7 @@ const FeaturesSection = () => {
                 <ul className="space-y-2 mt-auto">
                   {f.bullets.map((b) => (
                     <li key={b} className="flex items-center gap-2 text-sm text-[#334155]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB] shrink-0" aria-hidden="true" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E] shrink-0" aria-hidden="true" />
                       {b}
                     </li>
                   ))}
@@ -125,7 +125,7 @@ const FeaturesSection = () => {
 
                 <Link
                   to={f.cta.to}
-                  className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors group/link"
+                  className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-[#7C3AED] hover:text-[#5B21B6] transition-colors group/link"
                 >
                   {f.cta.label}
                   <ArrowRight className="h-4 w-4 group-hover/link:translate-x-0.5 transition-transform" aria-hidden="true" />

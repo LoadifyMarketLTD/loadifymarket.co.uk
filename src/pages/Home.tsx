@@ -64,10 +64,10 @@ export default function Home() {
         <TrustStrip />
 
         {/* Marketplace disclaimer — visible above the fold as required */}
-        <div className="bg-blue-50 border-y border-blue-100">
+        <div className="bg-purple-50 border-y border-purple-100">
           <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-center gap-2 text-center">
-            <Info className="h-4 w-4 text-blue-500 shrink-0" aria-hidden="true" />
-            <p className="text-xs sm:text-sm text-blue-700 font-medium">
+            <Info className="h-4 w-4 text-[#7C3AED] shrink-0" aria-hidden="true" />
+            <p className="text-xs sm:text-sm text-[#5B21B6] font-medium">
               Loadify Market does not hold or sell inventory. All products are listed, managed, and fulfilled by independent sellers.
             </p>
           </div>

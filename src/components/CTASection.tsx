@@ -48,7 +48,7 @@ const CTASection = () => (
           <h2 className="text-3xl sm:text-4xl font-display font-bold text-white leading-tight mb-3">
             Start selling in three simple steps
           </h2>
-          <p className="text-blue-200 text-base mb-8">
+          <p className="text-gray-300 text-base mb-8">
             Join thousands of UK businesses and individuals selling on Loadify Market.
           </p>
 
@@ -56,20 +56,20 @@ const CTASection = () => (
           <div className="flex flex-col gap-4 mb-10">
             {STEPS.map((step) => (
               <div key={step.num} className="flex items-start gap-4">
-                <span className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 shadow">
+                <span className="w-7 h-7 rounded-full bg-[#22C55E] text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 shadow">
                   {step.num}
                 </span>
                 <div>
                   <p className="text-sm font-bold text-white">{step.title}</p>
-                  <p className="text-xs text-blue-300">{step.desc}</p>
+                  <p className="text-xs text-gray-400">{step.desc}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Gold CTA */}
+          {/* Green CTA */}
           <Link to="/signup?type=seller">
-            <button className="inline-flex items-center gap-2 h-12 px-8 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-white font-bold text-sm rounded-full shadow-lg transition-all hover:-translate-y-0.5">
+            <button className="inline-flex items-center gap-2 h-12 px-8 bg-[#22C55E] hover:bg-[#16A34A] text-white font-bold text-sm rounded-full shadow-lg transition-all hover:-translate-y-0.5">
               Start Selling Today <ArrowRight className="h-4 w-4" />
             </button>
           </Link>
@@ -79,9 +79,9 @@ const CTASection = () => (
         <div className="flex-1 flex items-center justify-center lg:justify-end">
           <div className="relative w-full max-w-[480px]">
             {/* Ambient glow */}
-            <div className="absolute inset-0 bg-amber-500/10 rounded-3xl blur-3xl" />
+            <div className="absolute inset-0 bg-green-500/10 rounded-3xl blur-3xl" />
             <img
-                src="/hero-marketplace.png"
+                src="/hero-final.jpg?v=2"
                 alt="Products available on Loadify Market"
                 width="960"
                 height="720"

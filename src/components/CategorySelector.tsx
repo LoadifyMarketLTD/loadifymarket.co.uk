@@ -12,8 +12,8 @@ interface CategorySelectorProps {
 
 /** Shared Tailwind classes for each option row. */
 const optionBase =
-  'w-full flex items-center justify-between rounded-md text-base text-left transition-colors hover:bg-blue-50 px-3.5 py-2.5';
-const optionSelected = 'bg-blue-100 text-blue-800 font-medium';
+  'w-full flex items-center justify-between rounded-md text-base text-left transition-colors hover:bg-purple-50 px-3.5 py-2.5';
+const optionSelected = 'bg-purple-100 text-[#5B21B6] font-medium';
 const optionDefault = 'text-gray-700';
 
 /** Shared Tailwind classes for the scrollable panel. */
@@ -161,7 +161,7 @@ export default function CategorySelector({
                         className={`${optionBase} ${isSelected ? optionSelected : optionDefault}`}
                       >
                         {category.name}
-                        {isSelected && <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />}
+                        {isSelected && <Check className="w-4 h-4 text-[#7C3AED] flex-shrink-0" />}
                       </button>
                     </li>
                   );
@@ -210,7 +210,7 @@ export default function CategorySelector({
                   >
                     None
                     {!selectedSubcategoryId && (
-                      <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-[#7C3AED] flex-shrink-0" />
                     )}
                   </button>
                 </li>
@@ -228,7 +228,7 @@ export default function CategorySelector({
                         className={`${optionBase} ${isSelected ? optionSelected : optionDefault}`}
                       >
                         {category.name}
-                        {isSelected && <Check className="w-4 h-4 text-blue-600 flex-shrink-0" />}
+                        {isSelected && <Check className="w-4 h-4 text-[#7C3AED] flex-shrink-0" />}
                       </button>
                     </li>
                   );

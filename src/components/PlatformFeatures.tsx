@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 const buyerBenefits = [
   {
     icon: Search,
-    color: "text-[#2563EB] bg-blue-50",
+    color: "text-[#7C3AED] bg-purple-50",
     title: "Browse 500+ Listings",
     desc: "Find products across all categories from registered UK sellers — electronics, fashion, home & garden, handmade and more.",
   },
@@ -32,7 +32,7 @@ const buyerBenefits = [
 const sellerBenefits = [
   {
     icon: PackagePlus,
-    color: "text-[#2563EB] bg-blue-50",
+    color: "text-[#22C55E] bg-green-50",
     title: "List for Free",
     desc: "Create your seller account and list your first products at zero cost — no setup fees.",
   },
@@ -62,7 +62,7 @@ const PlatformFeatures = () => {
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#2563EB]">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">
             Built for UK Buyers &amp; Sellers
           </span>
           <h2 className="mt-2 text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
@@ -78,11 +78,11 @@ const PlatformFeatures = () => {
           {/* For Buyers */}
           <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col gap-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-                <Search className="h-5 w-5 text-[#2563EB]" />
+              <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
+                <Search className="h-5 w-5 text-[#7C3AED]" />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#2563EB]">For Buyers</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">For Buyers</p>
                 <h3 className="text-lg font-display font-bold text-[#0F172A]">Find What You're Looking For</h3>
               </div>
             </div>
@@ -104,7 +104,7 @@ const PlatformFeatures = () => {
             <div className="mt-auto pt-2">
               <Link to="/catalog">
                 <Button
-                  className="w-full h-12 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold rounded-xl"
+                  className="w-full h-12 bg-[#22C55E] hover:bg-[#16A34A] text-white font-semibold rounded-xl"
                 >
                   Browse Marketplace <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>

@@ -63,8 +63,8 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
   electronics: {
     subtitle: 'Smartphones, laptops, tablets, audio, smart home and gaming gear from independent UK sellers',
     icon: Cpu,
-    iconColor: 'text-blue-600',
-    accentBg: 'bg-blue-600/10',
+    iconColor: 'text-violet-600',
+    accentBg: 'bg-violet-600/10',
     chips: [
       { label: 'All Electronics' },
       { label: 'Smartphones',   searchTerm: 'smartphone mobile phone iphone android' },

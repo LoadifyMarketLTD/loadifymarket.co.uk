@@ -100,7 +100,7 @@ const FeaturedProducts = () => {
         {/* Section header */}
         <div className="flex items-end justify-between mb-6">
           <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#2563EB]">Marketplace Preview</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">Marketplace Preview</span>
             <h2 className="mt-1 text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
               Browse the Marketplace
             </h2>
@@ -110,7 +110,7 @@ const FeaturedProducts = () => {
           </div>
           <Link
             to="/catalog"
-            className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
+            className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-[#7C3AED] hover:text-[#5B21B6] transition-colors"
           >
             View Marketplace <ArrowRight className="h-4 w-4" />
           </Link>
@@ -139,7 +139,7 @@ const FeaturedProducts = () => {
                   }}
                 />
                 {/* Hover CTA overlay */}
-                <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-[#2563EB] text-white text-[11px] font-semibold py-2 flex items-center justify-center gap-1.5">
+                <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-[#22C55E] text-white text-[11px] font-semibold py-2 flex items-center justify-center gap-1.5">
                   <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                   Browse Listings
                 </div>
@@ -147,7 +147,7 @@ const FeaturedProducts = () => {
 
               {/* Info */}
               <div className="p-3 flex-1 flex flex-col gap-1.5">
-                <p className="text-[10px] font-semibold text-[#2563EB] uppercase tracking-wide">{product.category}</p>
+                <p className="text-[10px] font-semibold text-[#7C3AED] uppercase tracking-wide">{product.category}</p>
                 <p className="text-sm font-bold text-[#0F172A] line-clamp-2 leading-snug flex-1">{product.title}</p>
                 <p className="text-[10px] text-[#94A3B8] font-medium">Independent Seller</p>
               </div>

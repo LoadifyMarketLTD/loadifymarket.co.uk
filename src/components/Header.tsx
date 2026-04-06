@@ -50,7 +50,7 @@ const Header = () => {
         <Link to="/" aria-label="Loadify Market — Home" className="flex items-center gap-2 shrink-0">
           <img src={logo} alt="" aria-hidden="true" className="h-8 w-8" />
           <span className="font-display text-lg font-bold text-[#0F172A] whitespace-nowrap hidden sm:block">
-            Loadify <span className="text-[#2563EB]">Market</span>
+            Loadify <span className="text-[#22C55E]">Market</span>
           </span>
         </Link>
 
@@ -64,11 +64,11 @@ const Header = () => {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search products, categories, sellers..."
               aria-label="Search marketplace"
-              className="w-full h-12 pl-11 pr-28 bg-[#F1F5F9] border border-[#E2E8F0] rounded-xl text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
+              className="w-full h-12 pl-11 pr-28 bg-[#F1F5F9] border border-[#E2E8F0] rounded-xl text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#22C55E] focus:ring-2 focus:ring-[#22C55E]/20 transition-all"
             />
             <button
               type="submit"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 px-5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold rounded-lg transition-colors"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 px-5 bg-[#22C55E] hover:bg-[#16A34A] text-white text-sm font-semibold rounded-lg transition-colors"
             >
               Search
             </button>
@@ -84,7 +84,7 @@ const Header = () => {
           >
             <ShoppingCart className="h-5 w-5" />
             {cartCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-[#2563EB] text-white text-[10px] font-bold flex items-center justify-center px-0.5">
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-[#22C55E] text-white text-[10px] font-bold flex items-center justify-center px-0.5">
                 {cartCount}
               </span>
             )}
@@ -108,7 +108,7 @@ const Header = () => {
               </Button>
               <Button
                 size="sm"
-                className="h-9 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold px-5 rounded-lg"
+                className="h-9 bg-[#22C55E] hover:bg-[#16A34A] text-white font-semibold px-5 rounded-lg"
                 asChild
               >
                 <Link to="/signup">Get Started</Link>
@@ -134,7 +134,7 @@ const Header = () => {
           <div className="flex items-center gap-0.5 h-12">
             <Link
               to="/catalog"
-              className="shrink-0 text-sm font-bold text-[#0F172A] hover:text-[#2563EB] hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+              className="shrink-0 text-sm font-bold text-[#0F172A] hover:text-[#7C3AED] hover:bg-purple-50 px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
             >
               All Categories
             </Link>
@@ -145,7 +145,7 @@ const Header = () => {
                 <Link
                   key={cat.slug}
                   to={`/category/${cat.slug}`}
-                  className="flex items-center gap-1.5 shrink-0 text-sm font-semibold text-[#334155] hover:text-[#2563EB] hover:bg-blue-50 px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1.5 shrink-0 text-sm font-semibold text-[#334155] hover:text-[#7C3AED] hover:bg-purple-50 px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap"
                 >
                   <Icon className={`h-4 w-4 ${cat.iconColor}`} aria-hidden="true" />
                   {cat.label}
@@ -155,7 +155,7 @@ const Header = () => {
             <span className="w-px h-5 bg-gray-200 mx-1.5 shrink-0" aria-hidden="true" />
             <Link
               to="/catalog"
-              className="shrink-0 text-sm font-semibold text-[#2563EB] hover:text-[#1D4ED8] hover:bg-blue-50 px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap"
+              className="shrink-0 text-sm font-semibold text-[#7C3AED] hover:text-[#5B21B6] hover:bg-purple-50 px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap"
             >
               More →
             </Link>
@@ -174,11 +174,11 @@ const Header = () => {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search products..."
               aria-label="Search marketplace"
-              className="w-full h-10 pl-9 pr-20 bg-[#F1F5F9] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:border-[#2563EB]"
+              className="w-full h-10 pl-9 pr-20 bg-[#F1F5F9] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:border-[#22C55E]"
             />
             <button
               type="submit"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 px-3 bg-[#2563EB] text-white text-xs font-semibold rounded-lg"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 px-3 bg-[#22C55E] text-white text-xs font-semibold rounded-lg"
             >
               Search
             </button>
@@ -202,7 +202,7 @@ const Header = () => {
                 <Button variant="ghost" size="sm" className="flex-1" asChild>
                   <Link to="/login" onClick={() => setMobileOpen(false)}>Sign In</Link>
                 </Button>
-                <Button size="sm" className="flex-1 bg-[#2563EB] hover:bg-[#1D4ED8] text-white" asChild>
+                <Button size="sm" className="flex-1 bg-[#22C55E] hover:bg-[#16A34A] text-white" asChild>
                   <Link to="/signup" onClick={() => setMobileOpen(false)}>Get Started</Link>
                 </Button>
               </>

@@ -63,7 +63,7 @@ const CountdownBanner = ({ variant = "homepage" }: CountdownBannerProps) => {
               key={d.label}
               className="flex flex-col items-center bg-white border border-slate-200 shadow-sm rounded-xl px-4 py-4 sm:px-4 sm:py-4 lg:py-5"
             >
-              <span className="font-display text-4xl sm:text-4xl lg:text-5xl font-extrabold tabular-nums text-[#2563EB] leading-none">
+              <span className="font-display text-4xl sm:text-4xl lg:text-5xl font-extrabold tabular-nums text-[#22C55E] leading-none">
                 {pad(d.value)}
               </span>
               <span className="text-[10px] sm:text-[11px] font-bold text-[#94A3B8] uppercase tracking-widest mt-2 leading-none">
