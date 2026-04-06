@@ -7,24 +7,41 @@ import NotificationBell from "@/components/NotificationBell";
 const AdminLayout = () => {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen flex w-full" style={{ background: "#0A0B1A" }}>
         <AdminSidebar />
 
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center justify-between border-b border-border px-4 bg-card/50 backdrop-blur-sm shrink-0">
+          <header
+            className="h-14 flex items-center justify-between px-5 shrink-0"
+            style={{
+              background: "rgba(15,16,35,0.95)",
+              borderBottom: "1px solid rgba(255,255,255,0.07)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+              <SidebarTrigger className="text-slate-400 hover:text-white transition-colors" />
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <NotificationBell href="/admin/notifications" />
-              <Button variant="outline" size="sm" className="text-xs hidden sm:inline-flex" asChild>
-                <a href="/" target="_blank" rel="noreferrer">View Storefront</a>
+              <Button
+                size="sm"
+                className="text-xs hidden sm:inline-flex font-medium transition-all"
+                style={{
+                  background: "linear-gradient(135deg, #22C55E 0%, #16A34A 100%)",
+                  color: "#fff",
+                  border: "none",
+                  boxShadow: "0 0 12px rgba(34,197,94,0.25)",
+                }}
+                asChild
+              >
+                <a href="/" target="_blank" rel="noreferrer">View Storefront ↗</a>
               </Button>
             </div>
           </header>
 
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto" style={{ background: "#0A0B1A" }}>
             <Outlet />
           </main>
         </div>
