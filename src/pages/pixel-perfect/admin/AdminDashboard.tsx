@@ -131,6 +131,13 @@ const AdminDashboard = () => {
       : []),
   ];
 
+  const cardIconTheme: Record<string, { color: string; bg: string }> = {
+    "Total Users":       { color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
+    "Total Products":    { color: "#7C3AED", bg: "rgba(124,58,237,0.12)" },
+    "Total Orders":      { color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
+    "Setup Incomplete":  { color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
+  };
+
   return (
     <div className="p-6 space-y-7" style={{ background: "#0A0B1A", minHeight: "100%" }}>
       <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
@@ -151,10 +158,8 @@ const AdminDashboard = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statsCards.map((s, i) => {
-          const isGreen = s.up;
-          const iconColors = ["#22C55E", "#7C3AED", "#22C55E", "#F59E0B"];
-          const iconBgColors = ["rgba(34,197,94,0.12)", "rgba(124,58,237,0.12)", "rgba(34,197,94,0.12)", "rgba(245,158,11,0.12)"];
+        {statsCards.map((s) => {
+          const theme = cardIconTheme[s.label] ?? { color: "#22C55E", bg: "rgba(34,197,94,0.12)" };
           return (
             <div
               key={s.label}
@@ -168,19 +173,19 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between mb-4">
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ background: iconBgColors[i] }}
+                  style={{ background: theme.bg }}
                 >
                   {loading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" style={{ color: iconColors[i] }} />
+                    <Loader2 className="h-5 w-5 animate-spin" style={{ color: theme.color }} />
                   ) : (
-                    <s.icon className="h-5 w-5" style={{ color: iconColors[i] }} />
+                    <s.icon className="h-5 w-5" style={{ color: theme.color }} />
                   )}
                 </div>
                 <span
                   className="text-xs font-medium flex items-center gap-1"
-                  style={{ color: isGreen ? "#22C55E" : "#F59E0B" }}
+                  style={{ color: s.up ? "#22C55E" : "#F59E0B" }}
                 >
-                  {isGreen
+                  {s.up
                     ? <TrendingUp className="h-3 w-3" />
                     : <AlertTriangle className="h-3 w-3" />}
                   {s.change}

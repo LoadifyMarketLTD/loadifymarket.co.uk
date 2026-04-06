@@ -194,7 +194,7 @@ export function AdminSidebar() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white truncate">{displayName}</p>
-              <p className="text-[11px] truncate" style={{ color: "#22C55E" }}>Administrator</p>
+              <p className="text-[11px] truncate capitalize" style={{ color: "#22C55E" }}>{user?.role ?? "admin"}</p>
             </div>
             <button
               onClick={handleLogout}

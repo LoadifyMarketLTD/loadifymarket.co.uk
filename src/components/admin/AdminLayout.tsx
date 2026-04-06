@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { ArrowUpRight } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 
 const AdminLayout = () => {
@@ -36,7 +37,9 @@ const AdminLayout = () => {
                 }}
                 asChild
               >
-                <a href="/" target="_blank" rel="noreferrer">View Storefront ↗</a>
+                <a href="/" target="_blank" rel="noreferrer" aria-label="View Storefront (opens in new tab)">
+                  View Storefront <ArrowUpRight className="h-3.5 w-3.5 ml-1 inline" aria-hidden="true" />
+                </a>
               </Button>
             </div>
           </header>
