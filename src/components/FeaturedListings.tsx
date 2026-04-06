@@ -3,13 +3,12 @@ import React, { useState, useCallback } from "react";
 import { ArrowRight, Eye, X } from "lucide-react";
 
 const FILTER_TABS = [
-  { key: "all",         label: "All"               },
-  { key: "electronics", label: "Electronics"       },
-  { key: "fashion",     label: "Fashion"           },
-  { key: "beauty",      label: "Beauty"            },
-  { key: "home",        label: "Home & Kitchen"    },
-  { key: "tools",       label: "Tools & DIY"       },
-  { key: "health",      label: "Health & Wellness" },
+  { key: "all",         label: "All"           },
+  { key: "electronics", label: "Electronics"   },
+  { key: "fashion",     label: "Fashion"       },
+  { key: "beauty",      label: "Beauty"        },
+  { key: "home",        label: "Home"          },
+  { key: "tools",       label: "Tools & DIY"   },
 ];
 
 const featuredListings = [
@@ -47,14 +46,6 @@ const featuredListings = [
   },
   {
     id: "5",
-    img: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80",
-    title: "Natural Face Serum Set",
-    category: "Beauty",
-    filterKey: "beauty",
-    href: "/category/beauty",
-  },
-  {
-    id: "6",
     img: "https://images.unsplash.com/photo-1505843513577-22bb7d21e455?auto=format&fit=crop&w=800&q=80",
     title: "Ergonomic Office Chair",
     category: "Home & Kitchen",
@@ -62,20 +53,12 @@ const featuredListings = [
     href: "/category/home-kitchen",
   },
   {
-    id: "7",
+    id: "6",
     img: "https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?auto=format&fit=crop&w=800&q=80",
     title: "Yoga Mat & Fitness Accessories",
     category: "Health & Wellness",
     filterKey: "health",
     href: "/category/health-wellness",
-  },
-  {
-    id: "8",
-    img: "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?auto=format&fit=crop&w=800&q=80",
-    title: "Power Drill & Bit Set",
-    category: "Tools & DIY",
-    filterKey: "tools",
-    href: "/category/tools-diy",
   },
 ];
 
@@ -95,48 +78,52 @@ function QuickViewModal({ item, onClose }: { item: Listing; onClose: () => void 
       aria-modal="true"
       aria-labelledby="quick-view-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backdropFilter: "blur(5px)", backgroundColor: "rgba(0,0,0,0.45)" }}
+      style={{ backdropFilter: "blur(6px)", backgroundColor: "rgba(0,0,0,0.65)" }}
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+      <div
+        className="rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border"
+        style={{ background: "#0d1d36", borderColor: "rgba(255,255,255,0.10)" }}
+      >
         <div className="relative">
           <img
             src={item.img}
             alt={item.title}
-            className="w-full h-64 object-cover"
+            className="w-full h-56 object-cover"
             onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
+              (e.target as HTMLImageElement).style.display = "none";
             }}
           />
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 bg-white/90 hover:bg-white text-gray-700 rounded-full w-8 h-8 flex items-center justify-center shadow transition-all"
+            className="absolute top-3 right-3 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center shadow transition-all"
             aria-label="Close quick view"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
         <div className="p-6">
-          <p className="text-xs font-semibold text-[#7C3AED] uppercase tracking-wide mb-1">
+          <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wide mb-1">
             {item.category}
           </p>
-          <h3 id="quick-view-title" className="text-xl font-extrabold text-[#0F172A] mb-4">
+          <h3 id="quick-view-title" className="text-xl font-extrabold text-white mb-4">
             {item.title}
           </h3>
           <div className="flex gap-3">
             <Link
               to={item.href}
               onClick={onClose}
-              className="flex-1 text-center bg-[#22C55E] text-white font-semibold py-2.5 rounded-xl hover:bg-[#16A34A] transition-all text-sm"
+              className="flex-1 text-center bg-[#22C55E] hover:bg-[#16A34A] text-white font-semibold py-2.5 rounded-full transition-all text-sm"
             >
               Explore Listings
             </Link>
             <Link
-              to="/signup"
+              to="/catalog"
               onClick={onClose}
-              className="flex-1 text-center border-2 border-[#7C3AED] text-[#7C3AED] font-semibold py-2.5 rounded-xl hover:bg-purple-50 transition-all text-sm"
+              className="flex-1 text-center border text-white/80 font-semibold py-2.5 rounded-full hover:border-white/40 transition-all text-sm"
+              style={{ borderColor: "rgba(255,255,255,0.15)" }}
             >
-              Browse Marketplace
+              Browse All
             </Link>
           </div>
         </div>
@@ -160,27 +147,46 @@ const FeaturedListings = () => {
         <QuickViewModal item={quickViewItem} onClose={() => setQuickViewItem(null)} />
       )}
 
-      <section className="bg-white py-12 px-4 sm:px-6">
-        <div className="max-w-[1280px] mx-auto">
-          {/* Section header */}
-          <div className="flex items-start justify-between mb-1">
-            <h2 className="text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
-              Featured <span className="text-[#7C3AED]">Listings</span>
-            </h2>
+      <section
+        className="relative overflow-hidden py-12 px-4 sm:px-6"
+        style={{
+          background: "linear-gradient(135deg, #0a1628 0%, #0e1e3a 60%, #091220 100%)",
+        }}
+      >
+        {/* Subtle dot texture */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+          }}
+        />
+
+        <div className="relative max-w-[1280px] mx-auto">
+          {/* Header */}
+          <div className="flex items-start justify-between mb-5">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                Curated Selection
+              </span>
+              <h2 className="mt-1.5 text-2xl sm:text-3xl font-display font-bold text-white">
+                Featured <span className="text-[#22C55E]">Listings</span>
+              </h2>
+              <p className="mt-1 text-sm text-white/50">
+                Products listed by independent UK sellers
+              </p>
+            </div>
             <Link
               to="/catalog"
-              className="text-sm font-medium text-[#7C3AED] hover:underline flex items-center gap-1 mt-1"
+              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition-colors mt-1"
             >
               View All <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
-          <p className="text-sm text-[#64748B] mb-6">
-            Products listed by independent UK sellers across all categories
-          </p>
 
           {/* Filter pills */}
           <div
-            className="flex flex-wrap gap-2 mb-8"
+            className="flex flex-wrap gap-2 mb-6"
             role="group"
             aria-label="Filter listings by category"
           >
@@ -192,57 +198,75 @@ const FeaturedListings = () => {
                 className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all duration-200 ${
                   activeFilter === tab.key
                     ? "bg-[#22C55E] text-white border-[#22C55E] shadow-sm"
-                    : "bg-white text-[#334155] border-gray-200 hover:border-[#22C55E] hover:text-[#16A34A]"
+                    : "text-white/60 hover:text-white hover:border-white/25 transition-colors"
                 }`}
+                style={
+                  activeFilter !== tab.key
+                    ? { background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.10)" }
+                    : undefined
+                }
               >
                 {tab.label}
               </button>
             ))}
           </div>
 
-          {/* Product grid: 4-column */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {visibleListings.map((item) => (
+          {/* Product grid: 3-column, max 6 items */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {visibleListings.slice(0, 6).map((item) => (
               <Link
                 key={item.id}
                 to={item.href}
-                className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col"
+                className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
               >
                 <div className="relative overflow-hidden w-full">
                   <img
                     src={item.img}
                     alt={item.title}
                     loading="lazy"
-                    width="400"
-                    height="300"
-                    className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-300"
+                    width="800"
+                    height="600"
+                    className="w-full aspect-[4/3] object-cover group-hover:scale-105 transition-transform duration-500"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
+                      (e.target as HTMLImageElement).style.display = "none";
                     }}
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-all duration-300 flex items-center justify-center">
-                    <button
-                      type="button"
-                      aria-label={`Quick view ${item.title}`}
-                      className="opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white text-[#0F172A] text-[10px] font-semibold px-2.5 py-1 rounded-full shadow flex items-center gap-1"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setQuickViewItem(item);
-                      }}
-                    >
-                      <Eye className="h-3 w-3" aria-hidden="true" /> Quick View
-                    </button>
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/90 via-[#0a1628]/15 to-transparent" />
+                  {/* Quick view button */}
+                  <button
+                    type="button"
+                    aria-label={`Quick view ${item.title}`}
+                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-black/50 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow flex items-center gap-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setQuickViewItem(item);
+                    }}
+                  >
+                    <Eye className="h-3 w-3" aria-hidden="true" /> Quick View
+                  </button>
+                  {/* Content overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wide mb-1">
+                      {item.category}
+                    </p>
+                    <p className="text-sm font-bold text-white line-clamp-2 leading-snug">
+                      {item.title}
+                    </p>
                   </div>
-                </div>
-                <div className="p-3 flex-1 flex flex-col gap-1">
-                  <p className="text-xs font-semibold text-[#7C3AED] uppercase tracking-wide">{item.category}</p>
-                  <p className="text-sm font-bold text-[#0F172A] line-clamp-2 leading-snug flex-1">
-                    {item.title}
-                  </p>
-                  <span className="text-[10px] font-semibold text-[#7C3AED] mt-auto">Explore →</span>
                 </div>
               </Link>
             ))}
+          </div>
+
+          {/* Mobile view all */}
+          <div className="mt-6 flex justify-center sm:hidden">
+            <Link
+              to="/catalog"
+              className="inline-flex items-center gap-2 h-11 px-6 bg-[#22C55E] hover:bg-[#16A34A] text-white text-sm font-bold rounded-full"
+            >
+              View All Listings <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </section>
