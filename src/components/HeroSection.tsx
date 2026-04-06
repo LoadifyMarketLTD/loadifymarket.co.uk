@@ -160,7 +160,7 @@ const HeroSection = () => {
                   boxShadow: "0 2px 16px rgba(34,197,94,0.45)",
                   cursor: "pointer",
                 }}
-                onClick={() => navigate(user ? "/seller" : "/signup?type=seller")}
+                onClick={() => navigate(user ? "/dashboard/seller" : "/register?role=seller")}
                 aria-label="Start selling on Loadify Market"
               >
                 Start Selling →
