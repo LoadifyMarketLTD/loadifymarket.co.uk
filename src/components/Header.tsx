@@ -50,7 +50,7 @@ const Header = () => {
         <Link to="/" aria-label="Loadify Market — Home" className="flex items-center gap-2 shrink-0">
           <img src={logo} alt="" aria-hidden="true" className="h-8 w-8" />
           <span className="font-display text-lg font-bold text-[#0F172A] whitespace-nowrap hidden sm:block">
-            Loadify <span className="text-[#7C3AED]">Market</span>
+            Loadify <span className="text-[#22C55E]">Market</span>
           </span>
         </Link>
 

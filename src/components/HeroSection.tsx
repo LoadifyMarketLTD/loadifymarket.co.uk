@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, Users, LayoutGrid, X } from "lucide-react";
+import { ShieldCheck, Store, LayoutGrid, X } from "lucide-react";
 
 /**
  * Countdown target: UK midnight at start of July 1, 2026 (Europe/London).
  * July 1 is in BST (UTC+1), so UK midnight == 2026-06-30T23:00:00Z.
- *
  * LOCKED per instruction.
  */
 const TARGET_TIME = new Date("2026-06-30T23:00:00Z").getTime();
@@ -15,8 +14,8 @@ type TimeLeft = { days: number; hours: number; minutes: number; seconds: number 
 function getTimeLeft(): TimeLeft {
   const diff = Math.max(0, TARGET_TIME - Date.now());
   return {
-    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-    hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+    days:    Math.floor(diff / (1000 * 60 * 60 * 24)),
+    hours:   Math.floor((diff / (1000 * 60 * 60)) % 24),
     minutes: Math.floor((diff / (1000 * 60)) % 60),
     seconds: Math.floor((diff / 1000) % 60),
   };
@@ -26,194 +25,274 @@ function pad2(n: number) {
   return String(n).padStart(2, "0");
 }
 
-const TRUST_BULLETS = [
-  { icon: ShieldCheck, text: "Secure payments via Stripe", color: "text-emerald-500" },
-  { icon: Users, text: "Independent sellers across the UK", color: "text-[#7C3AED]" },
-  { icon: LayoutGrid, text: "Multi-category marketplace", color: "text-violet-500" },
+const TRUST_ITEMS = [
+  { icon: ShieldCheck, text: "Secure payments via Stripe" },
+  { icon: Store,       text: "Independent UK sellers"    },
+  { icon: LayoutGrid,  text: "Multi-category marketplace" },
 ];
 
+const BULLETS = [
+  "Reach UK Buyers",
+  "Sell Any Product",
+  "Get Paid Fast with Stripe",
+];
+
+/* ─── inline animation helpers ──────────────────────────────────────────── */
+function fadeUp(delay = 0): React.CSSProperties {
+  return {
+    animation: `fadeInUp 0.75s ease-out ${delay}s both`,
+  };
+}
+
 const HeroSection = () => {
-  const [time, setTime] = useState(getTimeLeft);
+  const [time, setTime]               = useState(getTimeLeft);
   const [roleModalOpen, setRoleModalOpen] = useState(false);
 
   useEffect(() => {
-    // Live updates; no hardcoded values.
     const id = setInterval(() => setTime(getTimeLeft()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  const expired = time.days === 0 && time.hours === 0 && time.minutes === 0 && time.seconds === 0;
+  const expired =
+    time.days === 0 && time.hours === 0 &&
+    time.minutes === 0 && time.seconds === 0;
 
   return (
     <>
-      {/* ── 2-column hero ─────────────────────────────────────────────────── */}
-      <section className="bg-white overflow-hidden" aria-label="Hero banner">
-        <div className="flex flex-col lg:flex-row min-h-[540px] lg:min-h-[600px]">
-          {/* ── LEFT: Text / CTA ─────────────────────────────────────────── */}
-          <div className="flex-1 flex flex-col justify-center px-6 sm:px-10 lg:px-0 py-12 lg:py-20">
-            {/* Constrains the text to ~640 px max and right-aligns it toward the split */}
-            <div className="w-full max-w-[580px] mx-auto lg:ml-auto lg:mr-0 lg:pr-14 xl:pr-20">
-              {/* Platform badge */}
-              <span className="inline-flex items-center gap-1.5 bg-green-50 text-[#16A34A] text-xs font-bold px-3 py-1.5 rounded-full mb-6">
+      {/* ══════════════════════════════════════════════════════════════
+          HERO SECTION
+          Two-column: dark left content | right hero visual
+      ══════════════════════════════════════════════════════════════ */}
+      <section
+        className="relative overflow-hidden bg-[#0A0B1A]"
+        aria-label="Hero banner"
+      >
+        {/* Subtle dot-grid texture */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.028]"
+          style={{
+            backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+          }}
+        />
+
+        {/* Radial glow — left green, right purple */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse 55% 55% at 15% 55%, rgba(34,197,94,0.07) 0%, transparent 70%), " +
+              "radial-gradient(ellipse 50% 60% at 85% 45%, rgba(124,58,237,0.07) 0%, transparent 70%)",
+          }}
+        />
+
+        {/* ── Main two-column layout ──────────────────────────────── */}
+        <div className="relative z-10 max-w-[1280px] mx-auto px-6 sm:px-10 lg:px-14 xl:px-20 flex flex-col lg:flex-row items-center gap-0">
+
+          {/* ══ LEFT COLUMN: content ══════════════════════════════ */}
+          <div className="flex-1 flex flex-col justify-center py-14 sm:py-20 lg:py-24 max-w-[560px] lg:max-w-none lg:pr-10 xl:pr-16">
+
+            {/* ── Badge ── */}
+            <div style={fadeUp(0.05)}>
+              <span className="inline-flex items-center gap-2 border border-white/20 text-white/70 text-[11px] font-semibold uppercase tracking-widest px-4 py-2 rounded-full mb-7">
                 🇬🇧 UK Multi-Category Marketplace
               </span>
+            </div>
 
-              {/* Headline */}
-              <h1 className="text-4xl sm:text-5xl font-display font-extrabold text-[#0F172A] leading-tight tracking-tight mb-4">
-                Buy &amp; Sell Products
-                <br />
-                <span className="text-[#7C3AED]">Across the UK</span>
-              </h1>
-
-              {/* Subheadline */}
-              <p className="text-lg text-[#475569] leading-relaxed mb-2">
-                From electronics to fashion — discover trusted UK sellers in one place.
-              </p>
-              <p className="text-sm font-semibold text-[#64748B] mb-8">
-                Businesses and individuals can sell on Loadify Market.
-              </p>
-
-              {/* CTA buttons */}
-              <div className="flex flex-wrap gap-3 mb-4">
-                <Link to="/catalog">
-                  <button className="h-12 px-8 bg-[#22C55E] hover:bg-[#16A34A] text-white font-bold text-base rounded-full shadow-md transition-all hover:-translate-y-0.5">
-                    Browse Marketplace
-                  </button>
-                </Link>
-                <button
-                  className="h-12 px-8 border-2 border-[#7C3AED] text-[#7C3AED] hover:bg-[#7C3AED] hover:text-white font-bold text-base rounded-full transition-all hover:-translate-y-0.5 bg-transparent"
-                  onClick={() => setRoleModalOpen(true)}
+            {/* ── Headline ── */}
+            <div style={fadeUp(0.15)}>
+              <h1 className="font-display font-extrabold leading-[0.97] tracking-tight mb-5">
+                <span
+                  className="block text-white"
+                  style={{ fontSize: "clamp(2.4rem, 5.8vw, 4.25rem)" }}
                 >
-                  Start Selling →
-                </button>
-              </div>
+                  SELL ONLINE,
+                </span>
+                <span
+                  className="block"
+                  style={{
+                    fontSize: "clamp(2.4rem, 5.8vw, 4.25rem)",
+                    color: "#22C55E",
+                  }}
+                >
+                  GROW YOUR
+                </span>
+                <span
+                  className="block text-white"
+                  style={{ fontSize: "clamp(2.4rem, 5.8vw, 4.25rem)" }}
+                >
+                  BUSINESS.
+                </span>
+              </h1>
+            </div>
 
-              {/* Sign-in link for returning users */}
-              <p className="text-sm text-[#64748B] mb-8">
-                Already have an account?{" "}
-                <Link to="/login" className="font-semibold text-[#7C3AED] hover:underline">
-                  Sign In →
-                </Link>
+            {/* ── Sub-headline ── */}
+            <div style={fadeUp(0.25)}>
+              <p className="text-base sm:text-lg text-white/55 leading-relaxed mb-7 max-w-[460px]">
+                Reach UK buyers, list products across multiple categories, and get paid securely with Stripe.
               </p>
+            </div>
 
-              {/* Trust bullets */}
-              <div className="flex flex-col gap-2.5">
-                {TRUST_BULLETS.map(({ icon: Icon, text, color }) => (
-                  <div key={text} className="flex items-center gap-2 text-sm font-medium text-[#334155]">
-                    <Icon className={`h-4 w-4 ${color} shrink-0`} aria-hidden="true" />
-                    {text}
-                  </div>
-                ))}
+            {/* ── Checkmark bullets ── */}
+            <ul style={fadeUp(0.32)} className="flex flex-col gap-2.5 mb-9" role="list">
+              {BULLETS.map((item) => (
+                <li key={item} className="flex items-center gap-3 text-sm sm:text-[0.9375rem] font-medium text-white/80">
+                  <span
+                    aria-hidden="true"
+                    className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full shrink-0"
+                    style={{ background: "#22C55E" }}
+                  >
+                    <svg className="w-[10px] h-[10px]" viewBox="0 0 12 12" fill="none">
+                      <path
+                        d="M2 6.2l2.8 2.8 5.2-5.2"
+                        stroke="#fff"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+
+            {/* ── CTA buttons ── */}
+            <div style={fadeUp(0.42)} className="flex flex-wrap gap-3 mb-9">
+              {/* Primary — green gradient */}
+              <button
+                className="inline-flex items-center justify-center h-[52px] px-9 text-white font-bold text-[0.9375rem] rounded-full transition-all duration-200 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#22C55E] focus-visible:outline-offset-2"
+                style={{
+                  background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
+                  boxShadow: "0 4px 20px rgba(34,197,94,0.35)",
+                }}
+                onClick={() => setRoleModalOpen(true)}
+                aria-haspopup="dialog"
+              >
+                Start Selling →
+              </button>
+
+              {/* Secondary — translucent outline */}
+              <Link to="/catalog">
+                <button
+                  className="inline-flex items-center justify-center h-[52px] px-9 font-bold text-[0.9375rem] text-white/85 rounded-full border border-white/25 bg-white/5 hover:bg-white/10 hover:border-white/40 hover:-translate-y-0.5 transition-all duration-200"
+                >
+                  Browse Products →
+                </button>
+              </Link>
+            </div>
+
+            {/* ── Trust strip ── */}
+            <div style={fadeUp(0.5)} className="flex flex-wrap gap-x-6 gap-y-2">
+              {TRUST_ITEMS.map(({ icon: Icon, text }) => (
+                <div key={text} className="flex items-center gap-2 text-[11px] text-white/40">
+                  <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  {text}
+                </div>
+              ))}
+            </div>
+
+          </div>
+
+          {/* ══ RIGHT COLUMN: hero visual ══════════════════════════ */}
+          <div
+            className="w-full lg:flex-1 lg:self-stretch relative overflow-hidden"
+            style={fadeUp(0.3)}
+          >
+            {/* Desktop: full-height image anchored to section */}
+            <div className="hidden lg:block absolute inset-0">
+              {/* Left-edge blend into dark bg */}
+              <div
+                className="absolute inset-y-0 left-0 z-10 w-28 xl:w-36 pointer-events-none"
+                style={{
+                  background: "linear-gradient(90deg, #0A0B1A 0%, transparent 100%)",
+                }}
+              />
+              <img
+                src="/hero-marketplace.png"
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-cover object-left-top"
+                fetchPriority="high"
+                loading="eager"
+                width="1536"
+                height="1024"
+              />
+            </div>
+
+            {/* Mobile: natural height image */}
+            <div className="lg:hidden relative h-[260px] sm:h-[320px]">
+              <div
+                className="absolute inset-y-0 left-0 z-10 w-16 pointer-events-none"
+                style={{
+                  background: "linear-gradient(90deg, #0A0B1A 0%, transparent 100%)",
+                }}
+              />
+              <div
+                className="absolute bottom-0 left-0 right-0 z-10 h-16 pointer-events-none"
+                style={{
+                  background: "linear-gradient(to top, #0A0B1A 0%, transparent 100%)",
+                }}
+              />
+              <img
+                src="/hero-marketplace.png"
+                alt=""
+                aria-hidden="true"
+                className="w-full h-full object-cover object-left-top"
+                loading="lazy"
+                width="1536"
+                height="1024"
+              />
+            </div>
+
+            {/* Spacer so the desktop column has min height */}
+            <div className="hidden lg:block" style={{ minHeight: "calc(100vh - 152px)" }} />
+          </div>
+
+        </div>
+
+        {/* ── Countdown widget (LOCKED) ──────────────────────────── */}
+        {!expired && (
+          <div className="absolute top-6 right-6 z-20 hidden sm:block">
+            <div
+              className="w-[196px] rounded-2xl backdrop-blur-md border border-white/12 px-4 py-3 flex flex-col items-end gap-1.5"
+              style={{ background: "rgba(10,11,26,0.72)" }}
+            >
+              <span
+                className="text-[10.5px] font-bold px-3 py-1 rounded-xl border whitespace-nowrap"
+                style={{
+                  color: "#86efac",
+                  background: "rgba(34,197,94,0.15)",
+                  borderColor: "rgba(34,197,94,0.30)",
+                }}
+              >
+                0% Fees Until July 1
+              </span>
+              <span className="text-[10px] font-medium text-white/40">Offer ends in</span>
+              <div className="flex items-baseline gap-2 tabular-nums text-white">
+                <span className="font-display font-extrabold text-2xl leading-none">{pad2(time.days)}</span>
+                <span className="text-xs text-white/30">:</span>
+                <span className="font-display font-extrabold text-xl leading-none">{pad2(time.hours)}</span>
+                <span className="text-xs text-white/30">:</span>
+                <span className="font-display font-extrabold text-xl leading-none">{pad2(time.minutes)}</span>
               </div>
             </div>
           </div>
-
-          {/* ── RIGHT: Hero image (desktop) ──────────────────────────────── */}
-          <div className="hidden lg:block lg:w-[48%] relative overflow-hidden">
-            {/* LCP image */}
-            <img
-                src="/hero-marketplace.png"
-                alt=""
-                aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-cover object-center"
-                fetchPriority="high"
-                loading="eager"
-                width="960"
-                height="720"
-              />
-
-            {/* Left-edge fade — smooth blend from white left column into image */}
-            <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-white to-transparent pointer-events-none" />
-
-            {/* ── Countdown (LOCKED position + UI) ───────────────────────── */}
-            {!expired && (
-              <div className="absolute top-6 right-6 z-10">
-                <div
-                  className={`
-                    w-[200px]
-                    rounded-2xl
-                    bg-white/90
-                    backdrop-blur-md
-                    shadow-lg
-                    px-4 py-3
-                    flex flex-col items-end gap-1.5
-                  `}
-                >
-                  {/* Top pill */}
-                  <div className="text-amber-900 font-bold text-[11px] px-3 py-1 rounded-xl bg-amber-300/70 whitespace-nowrap">
-                    0% Fees Until July 1
-                  </div>
-
-                  {/* Label */}
-                  <div className="text-[10px] font-medium text-[#64748B]">Offer ends in</div>
-
-                  {/* DD : HH : MM */}
-                  <div className="flex items-baseline justify-end gap-2 tabular-nums whitespace-nowrap text-[#0F172A]">
-                    <span className="font-display font-extrabold text-2xl leading-none">{pad2(time.days)}</span>
-                    <span className="text-xs font-semibold text-[#64748B] leading-none">:</span>
-                    <span className="font-display font-extrabold text-xl leading-none">{pad2(time.hours)}</span>
-                    <span className="text-xs font-semibold text-[#64748B] leading-none">:</span>
-                    <span className="font-display font-extrabold text-xl leading-none">{pad2(time.minutes)}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* ── Mobile: small accent image strip below text ───────────────── */}
-          <div className="lg:hidden h-52 overflow-hidden relative">
-            <img
-                src="/hero-marketplace.png"
-                alt=""
-                aria-hidden="true"
-                className="w-full h-full object-cover object-top"
-                loading="lazy"
-                width="960"
-                height="416"
-              />
-
-            {/* ── Mobile countdown (same structure, ~30% smaller) ─────────── */}
-            {!expired && (
-              <div className="absolute top-3 right-3 z-10">
-                <div
-                  className={`
-                    w-[150px]
-                    rounded-xl
-                    bg-white/90
-                    backdrop-blur-md
-                    shadow-md
-                    px-3 py-2.5
-                    flex flex-col items-end gap-1
-                  `}
-                >
-                  <div className="text-amber-900 font-bold text-[10px] px-2.5 py-0.5 rounded-lg bg-amber-300/70 whitespace-nowrap">
-                    0% Fees Until July 1
-                  </div>
-                  <div className="text-[9px] font-medium text-[#64748B]">Offer ends in</div>
-
-                  <div className="flex items-baseline justify-end gap-1.5 tabular-nums whitespace-nowrap text-[#0F172A]">
-                    <span className="font-display font-extrabold text-lg leading-none">{pad2(time.days)}</span>
-                    <span className="text-[10px] font-semibold text-[#64748B] leading-none">:</span>
-                    <span className="font-display font-extrabold text-base leading-none">{pad2(time.hours)}</span>
-                    <span className="text-[10px] font-semibold text-[#64748B] leading-none">:</span>
-                    <span className="font-display font-extrabold text-base leading-none">{pad2(time.minutes)}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        )}
       </section>
 
-      {/* ── Role selection modal ──────────────────────────────────────────── */}
+      {/* ══ Role selection modal ════════════════════════════════════ */}
       {roleModalOpen && (
         <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm"
           onClick={() => setRoleModalOpen(false)}
         >
           <div
             className="relative bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm mx-4"
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="join-modal-title"
           >
             <button
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors"
@@ -222,12 +301,14 @@ const HeroSection = () => {
             >
               <X size={20} />
             </button>
-            <h2 className="text-xl font-bold text-[#0A2239] mb-1 text-center">Join Loadify Market</h2>
+            <h2 id="join-modal-title" className="text-xl font-bold text-[#0A2239] mb-1 text-center">
+              Join Loadify Market
+            </h2>
             <p className="text-sm text-gray-500 mb-6 text-center">How would you like to get started?</p>
             <div className="flex flex-col gap-3">
               <Link to="/signup" onClick={() => setRoleModalOpen(false)}>
                 <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-[#7C3AED] hover:bg-purple-50 rounded-xl p-4 cursor-pointer transition-all">
-                  <span className="text-2xl">🛒</span>
+                  <span className="text-2xl" aria-hidden="true">🛒</span>
                   <div>
                     <p className="font-semibold text-[#0A2239]">I'm a Buyer</p>
                     <p className="text-xs text-gray-500">Browse and buy products</p>
@@ -235,8 +316,8 @@ const HeroSection = () => {
                 </div>
               </Link>
               <Link to="/signup?type=seller" onClick={() => setRoleModalOpen(false)}>
-                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-emerald-500 hover:bg-emerald-50 rounded-xl p-4 cursor-pointer transition-all">
-                  <span className="text-2xl">🏪</span>
+                <div className="flex items-center gap-4 border-2 border-gray-200 hover:border-[#22C55E] hover:bg-green-50 rounded-xl p-4 cursor-pointer transition-all">
+                  <span className="text-2xl" aria-hidden="true">🏪</span>
                   <div>
                     <p className="font-semibold text-[#0A2239]">I'm a Seller</p>
                     <p className="text-xs text-gray-500">List and sell your products</p>
@@ -249,6 +330,6 @@ const HeroSection = () => {
       )}
     </>
   );
-}
+};
 
 export default HeroSection;
