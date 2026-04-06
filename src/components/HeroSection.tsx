@@ -62,10 +62,10 @@ const HeroSection = () => {
         <button
           style={{
             position: "absolute",
-            left: 96,
-            bottom: 118,
-            width: 210,
-            height: 58,
+            left: 52,
+            top: 549,
+            width: 238,
+            height: 54,
             borderRadius: 9999,
             background: "transparent",
             border: "none",
@@ -88,9 +88,9 @@ const HeroSection = () => {
           style={{
             position: "absolute",
             left: 328,
-            bottom: 118,
-            width: 238,
-            height: 58,
+            top: 549,
+            width: 225,
+            height: 54,
             borderRadius: 9999,
             background: "transparent",
             border: "none",
