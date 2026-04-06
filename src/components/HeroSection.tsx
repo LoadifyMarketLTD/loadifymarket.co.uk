@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store";
 
 /**
@@ -55,25 +55,75 @@ const HeroSection = () => {
         minHeight: `clamp(520px, calc(100vh - ${HEADER_HEIGHT_PX}px), 800px)`,
       }}
     >
-      {/* ── CTA buttons overlaid on the image's built-in button area ── */}
-      <div
-        className="absolute z-10 flex flex-wrap gap-4"
-        style={{
-          left: "clamp(24px, 6vw, 80px)",
-          bottom: "clamp(80px, 16%, 140px)",
-        }}
-      >
-        {/* Primary — green gradient pill, auth-aware navigation */}
+      {/* ── Invisible click zones aligned over the image's built-in buttons ── */}
+      {/* Desktop: positioned using pixel values matching the hero-final.jpg button locations */}
+      <div className="absolute z-10 hidden sm:block" style={{ left: 0, bottom: 0, right: 0, top: 0, pointerEvents: "none" }}>
+        {/* Start Selling — invisible click zone */}
         <button
-          className="inline-flex items-center justify-center font-bold rounded-full transition-all duration-200 hover:brightness-110 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#22C55E] focus-visible:outline-offset-2"
           style={{
-            height: 52,
-            paddingLeft: 32,
-            paddingRight: 32,
-            fontSize: "0.9375rem",
+            position: "absolute",
+            left: 96,
+            bottom: 118,
+            width: 210,
+            height: 58,
+            borderRadius: 9999,
+            background: "transparent",
+            border: "none",
+            boxShadow: "none",
+            color: "transparent",
+            fontSize: 0,
+            padding: 0,
+            outline: "none",
+            cursor: "pointer",
+            pointerEvents: "auto",
+          }}
+          onClick={() => navigate(user ? "/dashboard/seller" : "/register?role=seller")}
+          aria-label="Start selling on Loadify Market"
+        >
+          Start Selling
+        </button>
+
+        {/* Browse Products — invisible click zone */}
+        <button
+          style={{
+            position: "absolute",
+            left: 328,
+            bottom: 118,
+            width: 238,
+            height: 58,
+            borderRadius: 9999,
+            background: "transparent",
+            border: "none",
+            boxShadow: "none",
+            color: "transparent",
+            fontSize: 0,
+            padding: 0,
+            outline: "none",
+            cursor: "pointer",
+            pointerEvents: "auto",
+          }}
+          onClick={() => navigate("/catalog")}
+          aria-label="Browse products on Loadify Market"
+        >
+          Browse Products
+        </button>
+      </div>
+
+      {/* Mobile fallback — visible buttons below image area when pixel positioning won't align */}
+      <div
+        className="absolute z-10 flex flex-wrap gap-3 sm:hidden"
+        style={{ left: "clamp(16px, 5vw, 48px)", bottom: "clamp(24px, 8%, 64px)" }}
+      >
+        <button
+          className="inline-flex items-center justify-center font-bold rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#22C55E] focus-visible:outline-offset-2"
+          style={{
+            height: 48,
+            paddingLeft: 24,
+            paddingRight: 24,
+            fontSize: "0.875rem",
             color: "#fff",
             background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
-            boxShadow: "0 2px 16px rgba(34,197,94,0.45)",
+            boxShadow: "0 2px 12px rgba(34,197,94,0.45)",
             cursor: "pointer",
           }}
           onClick={() => navigate(user ? "/dashboard/seller" : "/register?role=seller")}
@@ -81,25 +131,23 @@ const HeroSection = () => {
         >
           Start Selling →
         </button>
-
-        {/* Secondary — white outline pill */}
-        <Link to="/catalog">
-          <button
-            className="inline-flex items-center justify-center font-bold rounded-full border transition-all duration-200 hover:bg-white/10 hover:-translate-y-0.5"
-            style={{
-              height: 52,
-              paddingLeft: 32,
-              paddingRight: 32,
-              fontSize: "0.9375rem",
-              color: "rgba(255,255,255,0.90)",
-              background: "rgba(255,255,255,0.06)",
-              borderColor: "rgba(255,255,255,0.40)",
-              cursor: "pointer",
-            }}
-          >
-            Browse Products →
-          </button>
-        </Link>
+        <button
+          className="inline-flex items-center justify-center font-bold rounded-full border"
+          style={{
+            height: 48,
+            paddingLeft: 24,
+            paddingRight: 24,
+            fontSize: "0.875rem",
+            color: "rgba(255,255,255,0.90)",
+            background: "rgba(255,255,255,0.06)",
+            borderColor: "rgba(255,255,255,0.40)",
+            cursor: "pointer",
+          }}
+          onClick={() => navigate("/catalog")}
+          aria-label="Browse products on Loadify Market"
+        >
+          Browse Products →
+        </button>
       </div>
 
       {/* ── Countdown widget (position + content LOCKED) ────────── */}
