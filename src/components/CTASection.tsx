@@ -69,7 +69,7 @@ const CTASection = () => (
 
           {/* Green CTA */}
           <Link to="/signup?type=seller">
-            <button className="inline-flex items-center gap-2 h-12 px-8 bg-[#22C55E] hover:bg-[#16A34A] text-white font-bold text-sm rounded-full shadow-lg transition-all hover:-translate-y-0.5">
+            <button className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-400 to-green-500 text-black font-bold text-sm rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(0,255,150,0.4)]">
               Start Selling Today <ArrowRight className="h-4 w-4" />
             </button>
           </Link>

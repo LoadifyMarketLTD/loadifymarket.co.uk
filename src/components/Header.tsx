@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, ShoppingCart, User, Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,17 +8,30 @@ import { useAuthStore } from "@/store";
 import CATEGORY_CONFIG from "@/lib/category-config";
 
 /**
- * Marketplace-style header used exclusively on the homepage (pixel-perfect/Index.tsx).
+ * Marketplace-style header used on the homepage.
  * Layout: fixed below TopBar (top-10).
  * Row 1 (h-16): Logo | Prominent search bar | Cart + auth actions
  * Row 2 (h-10, desktop only): Category quick-links
+ *
+ * Transparency behaviour:
+ *   - At top of page: bg-transparent, no border/shadow — floats over the
+ *     dark hero area seamlessly.
+ *   - After 10px scroll: bg-[#0A1930]/90 backdrop-blur-md appears for
+ *     readability over scrolled content.
  */
 const Header = () => {
   const [query, setQuery] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const { cartCount } = useCart();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const dashboardPath =
     user?.role === "seller" ? "/pp/seller" :
@@ -41,7 +54,15 @@ const Header = () => {
   };
 
   return (
-    <header className="fixed top-10 left-0 right-0 z-40 bg-white border-b border-gray-200 shadow-sm" style={{ willChange: 'transform' }}>
+    <header
+      className={[
+        "fixed top-10 left-0 right-0 z-40 transition-all duration-300",
+        scrolled
+          ? "bg-[#0A1930]/90 backdrop-blur-md border-b border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
+          : "bg-transparent border-b border-transparent",
+      ].join(" ")}
+      style={{ willChange: "transform" }}
+    >
 
       {/* ── Row 1: Logo | Search | Actions ─────────────────────────────── */}
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
@@ -49,7 +70,7 @@ const Header = () => {
         {/* Logo */}
         <Link to="/" aria-label="Loadify Market — Home" className="flex items-center gap-2 shrink-0">
           <img src={logo} alt="" aria-hidden="true" className="h-8 w-8" />
-          <span className="font-display text-lg font-bold text-[#0F172A] whitespace-nowrap hidden sm:block">
+          <span className="font-display text-lg font-bold text-white whitespace-nowrap hidden sm:block">
             Loadify <span className="text-[#22C55E]">Market</span>
           </span>
         </Link>
@@ -57,14 +78,14 @@ const Header = () => {
         {/* Prominent search bar (center) */}
         <form onSubmit={handleSearch} className="flex-1 max-w-2xl mx-auto">
           <div className="relative flex items-center">
-            <Search className="absolute left-4 h-5 w-5 text-[#94A3B8] pointer-events-none" aria-hidden="true" />
+            <Search className="absolute left-4 h-5 w-5 text-white/40 pointer-events-none" aria-hidden="true" />
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search products, categories, sellers..."
               aria-label="Search marketplace"
-              className="w-full h-12 pl-11 pr-28 bg-[#F1F5F9] border border-[#E2E8F0] rounded-xl text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#22C55E] focus:ring-2 focus:ring-[#22C55E]/20 transition-all"
+              className="w-full h-12 pl-11 pr-28 bg-white/10 border border-white/20 rounded-xl text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all"
             />
             <button
               type="submit"
@@ -79,7 +100,7 @@ const Header = () => {
         <div className="hidden lg:flex items-center gap-2 shrink-0">
           <Link
             to="/cart"
-            className="relative p-2 text-[#64748B] hover:text-[#0F172A] transition-colors"
+            className="relative p-2 text-white/80 hover:text-green-400 transition-colors"
             aria-label="Shopping cart"
           >
             <ShoppingCart className="h-5 w-5" />
@@ -92,23 +113,23 @@ const Header = () => {
 
           {user ? (
             <>
-              <Button variant="ghost" size="sm" className="text-[#334155] font-medium" asChild>
+              <Button variant="ghost" size="sm" className="text-white/80 hover:text-green-400 hover:bg-white/10 font-medium" asChild>
                 <Link to={dashboardPath}>
                   <User className="h-4 w-4 mr-1" aria-hidden="true" /> Dashboard
                 </Link>
               </Button>
-              <Button variant="ghost" size="sm" className="text-[#334155] font-medium" onClick={handleLogout}>
+              <Button variant="ghost" size="sm" className="text-white/80 hover:text-green-400 hover:bg-white/10 font-medium" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-1" aria-hidden="true" /> Sign Out
               </Button>
             </>
           ) : (
             <>
-              <Button variant="ghost" size="sm" className="text-[#334155] font-medium" asChild>
+              <Button variant="ghost" size="sm" className="text-white/80 hover:text-green-400 hover:bg-white/10 font-medium" asChild>
                 <Link to="/login">Sign In</Link>
               </Button>
               <Button
                 size="sm"
-                className="h-9 bg-[#22C55E] hover:bg-[#16A34A] text-white font-semibold px-5 rounded-lg"
+                className="h-9 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-300 hover:to-green-400 text-black font-semibold px-5 rounded-full shadow-lg hover:shadow-green-400/30 transition-all duration-300"
                 asChild
               >
                 <Link to="/signup">Get Started</Link>
@@ -119,7 +140,7 @@ const Header = () => {
 
         {/* Mobile menu toggle */}
         <button
-          className="lg:hidden p-2 text-[#334155]"
+          className="lg:hidden p-2 text-white/80 hover:text-green-400 transition-colors"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
           aria-expanded={mobileOpen}
@@ -129,33 +150,33 @@ const Header = () => {
       </div>
 
       {/* ── Row 2: Category quick-links (desktop only) ─────────────────── */}
-      <nav aria-label="Category navigation" className="hidden lg:block border-t border-gray-100">
+      <nav aria-label="Category navigation" className="hidden lg:block border-t border-white/10">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
           <div className="flex items-center gap-0.5 h-12">
             <Link
               to="/catalog"
-              className="shrink-0 text-sm font-bold text-[#0F172A] hover:text-[#7C3AED] hover:bg-purple-50 px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+              className="shrink-0 text-sm font-bold text-white hover:text-green-400 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
             >
               All Categories
             </Link>
-            <span className="w-px h-5 bg-gray-200 mx-1.5 shrink-0" aria-hidden="true" />
+            <span className="w-px h-5 bg-white/10 mx-1.5 shrink-0" aria-hidden="true" />
             {CATEGORY_CONFIG.slice(0, 6).map((cat) => {
               const Icon = cat.icon;
               return (
                 <Link
                   key={cat.slug}
                   to={`/category/${cat.slug}`}
-                  className="flex items-center gap-1.5 shrink-0 text-sm font-semibold text-[#334155] hover:text-[#7C3AED] hover:bg-purple-50 px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1.5 shrink-0 text-sm font-semibold text-white/70 hover:text-green-400 hover:bg-white/10 px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap"
                 >
-                  <Icon className={`h-4 w-4 ${cat.iconColor}`} aria-hidden="true" />
+                  <Icon className="h-4 w-4 text-white/50" aria-hidden="true" />
                   {cat.label}
                 </Link>
               );
             })}
-            <span className="w-px h-5 bg-gray-200 mx-1.5 shrink-0" aria-hidden="true" />
+            <span className="w-px h-5 bg-white/10 mx-1.5 shrink-0" aria-hidden="true" />
             <Link
               to="/catalog"
-              className="shrink-0 text-sm font-semibold text-[#7C3AED] hover:text-[#5B21B6] hover:bg-purple-50 px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap"
+              className="shrink-0 text-sm font-semibold text-green-400 hover:text-green-300 hover:bg-white/10 px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap"
             >
               More →
             </Link>
@@ -165,16 +186,16 @@ const Header = () => {
 
       {/* ── Mobile menu ────────────────────────────────────────────────── */}
       {mobileOpen && (
-        <div className="lg:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-2 shadow-lg">
+        <div className="lg:hidden bg-[#0A1930]/95 backdrop-blur-md border-t border-white/10 px-4 py-4 space-y-2 shadow-lg">
           <form onSubmit={handleSearch} className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94A3B8]" aria-hidden="true" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" aria-hidden="true" />
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search products..."
               aria-label="Search marketplace"
-              className="w-full h-10 pl-9 pr-20 bg-[#F1F5F9] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:border-[#22C55E]"
+              className="w-full h-10 pl-9 pr-20 bg-white/10 border border-white/20 rounded-xl text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-green-400"
             />
             <button
               type="submit"
@@ -184,25 +205,25 @@ const Header = () => {
             </button>
           </form>
 
-          <Link to="/catalog" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-[#334155]">All Categories</Link>
-          <Link to="/deals" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-[#334155]">Deals</Link>
+          <Link to="/catalog" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-white/80 hover:text-green-400 transition-colors">All Categories</Link>
+          <Link to="/deals" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-white/80 hover:text-green-400 transition-colors">Deals</Link>
 
-          <div className="flex gap-2 pt-2 border-t border-gray-100">
+          <div className="flex gap-2 pt-2 border-t border-white/10">
             {user ? (
               <>
-                <Button variant="ghost" size="sm" className="flex-1" asChild>
+                <Button variant="ghost" size="sm" className="flex-1 text-white/80 hover:text-green-400 hover:bg-white/10" asChild>
                   <Link to={dashboardPath} onClick={() => setMobileOpen(false)}>Dashboard</Link>
                 </Button>
-                <Button size="sm" variant="outline" className="flex-1" onClick={() => { setMobileOpen(false); handleLogout(); }}>
+                <Button size="sm" variant="outline" className="flex-1 border-white/20 text-white/80 hover:bg-white/10" onClick={() => { setMobileOpen(false); handleLogout(); }}>
                   Sign Out
                 </Button>
               </>
             ) : (
               <>
-                <Button variant="ghost" size="sm" className="flex-1" asChild>
+                <Button variant="ghost" size="sm" className="flex-1 text-white/80 hover:text-green-400 hover:bg-white/10" asChild>
                   <Link to="/login" onClick={() => setMobileOpen(false)}>Sign In</Link>
                 </Button>
-                <Button size="sm" className="flex-1 bg-[#22C55E] hover:bg-[#16A34A] text-white" asChild>
+                <Button size="sm" className="flex-1 bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold" asChild>
                   <Link to="/signup" onClick={() => setMobileOpen(false)}>Get Started</Link>
                 </Button>
               </>

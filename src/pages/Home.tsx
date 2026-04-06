@@ -37,7 +37,7 @@ import LazySection from "@/components/LazySection";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#F5F7FB] font-sans antialiased">
+    <div className="min-h-screen bg-[#0A1930] font-sans antialiased">
       <TopBar />
       <Header />
       {/* spacer: 40px top bar + 64px header row + 48px category nav */}
