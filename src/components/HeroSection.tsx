@@ -70,7 +70,7 @@ const HeroSection = () => {
       ══════════════════════════════════════════════════════════════ */}
       <section
         className="relative overflow-hidden"
-        aria-label="Hero banner"
+        aria-label="Hero — warehouse and product photography showing the Loadify Market platform"
         style={{
           backgroundImage: "url('/hero-marketplace.jpg')",
           backgroundSize: "cover",
@@ -127,7 +127,7 @@ const HeroSection = () => {
             </p>
 
             {/* Checkmark bullets */}
-            <ul className="flex flex-col gap-3 mb-9" role="list">
+            <ul className="flex flex-col gap-3 mb-9">
               {BULLETS.map((item) => (
                 <li key={item} className="flex items-center gap-3 text-sm sm:text-base font-medium" style={{ color: "rgba(255,255,255,0.88)" }}>
                   {/* Filled green circle tick */}
@@ -161,6 +161,7 @@ const HeroSection = () => {
                   cursor: "pointer",
                 }}
                 onClick={() => navigate(user ? "/seller" : "/signup?type=seller")}
+                aria-label="Start selling on Loadify Market"
               >
                 Start Selling →
               </button>
