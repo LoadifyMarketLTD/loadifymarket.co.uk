@@ -58,10 +58,10 @@ const sellerBenefits = [
 
 const PlatformFeatures = () => {
   return (
-    <section className="py-16 bg-[#F5F7FB]">
+    <section className="py-10 bg-[#F5F7FB] min-h-[75vh] flex flex-col justify-center">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-10">
+        <div className="text-center max-w-2xl mx-auto mb-8">
           <span className="text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">
             Built for UK Buyers &amp; Sellers
           </span>
@@ -74,9 +74,9 @@ const PlatformFeatures = () => {
         </div>
 
         {/* Two-column comparison */}
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid lg:grid-cols-2 gap-5">
           {/* For Buyers */}
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col gap-6">
+          <div className="bg-white rounded-3xl p-7 shadow-md border border-gray-100 flex flex-col gap-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
                 <Search className="h-5 w-5 text-[#7C3AED]" />
@@ -87,7 +87,7 @@ const PlatformFeatures = () => {
               </div>
             </div>
 
-            <ul className="space-y-4">
+            <ul className="space-y-3.5">
               {buyerBenefits.map((b) => (
                 <li key={b.title} className="flex items-start gap-3">
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${b.color}`}>
@@ -101,10 +101,10 @@ const PlatformFeatures = () => {
               ))}
             </ul>
 
-            <div className="mt-auto pt-2">
+            <div className="mt-auto pt-1">
               <Link to="/catalog">
                 <Button
-                  className="w-full h-12 bg-[#22C55E] hover:bg-[#16A34A] text-white font-semibold rounded-xl"
+                  className="w-full h-11 bg-[#22C55E] hover:bg-[#16A34A] text-white font-semibold rounded-full"
                 >
                   Browse Marketplace <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -113,7 +113,7 @@ const PlatformFeatures = () => {
           </div>
 
           {/* For Sellers */}
-          <div className="bg-[#0F172A] rounded-3xl p-8 shadow-sm flex flex-col gap-6">
+          <div className="bg-[#0F172A] rounded-3xl p-7 shadow-md flex flex-col gap-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
                 <PackagePlus className="h-5 w-5 text-emerald-400" />
@@ -124,7 +124,7 @@ const PlatformFeatures = () => {
               </div>
             </div>
 
-            <ul className="space-y-4">
+            <ul className="space-y-3.5">
               {sellerBenefits.map((b) => (
                 <li key={b.title} className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
@@ -132,16 +132,16 @@ const PlatformFeatures = () => {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-white">{b.title}</p>
-                    <p className="text-xs text-white/60 mt-0.5 leading-snug">{b.desc}</p>
+                    <p className="text-xs text-white/55 mt-0.5 leading-snug">{b.desc}</p>
                   </div>
                 </li>
               ))}
             </ul>
 
-            <div className="mt-auto pt-2">
+            <div className="mt-auto pt-1">
               <Link to="/signup">
                 <Button
-                  className="w-full h-12 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold rounded-xl"
+                  className="w-full h-11 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold rounded-full"
                 >
                   Start Selling Today <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -151,7 +151,7 @@ const PlatformFeatures = () => {
         </div>
 
         {/* Trust stats bar */}
-        <div className="mt-6 bg-white rounded-2xl border border-gray-100 shadow-sm py-5 px-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+        <div className="mt-5 bg-white rounded-2xl border border-gray-100 shadow-sm py-4 px-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           {[
             { value: "500+", label: "Active Listings" },
             { value: "120+", label: "Registered Sellers" },

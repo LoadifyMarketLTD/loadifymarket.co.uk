@@ -79,7 +79,7 @@ const CATEGORIES = [
 
 type Category = (typeof CATEGORIES)[0];
 
-function CategoryTile({ slug, label, icon: Icon, color, border, img }: Category) {
+function CategoryTile({ slug, label, icon: Icon, color, img }: Category) {
   const [imgFailed, setImgFailed] = useState(false);
 
   return (
@@ -88,11 +88,12 @@ function CategoryTile({ slug, label, icon: Icon, color, border, img }: Category)
       className="flex flex-col items-center gap-2 shrink-0 group"
     >
       <div
-        className={`w-16 h-16 rounded-2xl border ${border} overflow-hidden shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5 transition-all duration-200 bg-white flex items-center justify-center`}
+        className="w-14 h-14 rounded-2xl overflow-hidden group-hover:shadow-[0_0_0_2px_rgba(34,197,94,0.4)] group-hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center"
+        style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.10)" }}
       >
         {imgFailed ? (
           <div className={`w-full h-full flex items-center justify-center ${color}`}>
-            <Icon className="h-7 w-7" aria-hidden="true" />
+            <Icon className="h-6 w-6" aria-hidden="true" />
           </div>
         ) : (
           <img
@@ -107,7 +108,7 @@ function CategoryTile({ slug, label, icon: Icon, color, border, img }: Category)
           />
         )}
       </div>
-      <span className="text-[11px] font-semibold text-[#334155] text-center leading-tight max-w-[72px] group-hover:text-[#7C3AED] transition-colors">
+      <span className="text-[11px] font-semibold text-white/70 group-hover:text-[#22C55E] text-center leading-tight max-w-[72px] transition-colors">
         {label}
       </span>
     </Link>
@@ -116,14 +117,20 @@ function CategoryTile({ slug, label, icon: Icon, color, border, img }: Category)
 
 const CategorySlider = () => {
   return (
-    <section className="bg-white border-b border-slate-100 py-5 px-4 sm:px-6">
+    <section
+      className="border-b py-10 px-4 sm:px-6"
+      style={{
+        background: "linear-gradient(180deg, #0a1628 0%, #0d1d36 100%)",
+        borderColor: "rgba(255,255,255,0.07)",
+      }}
+    >
       <div className="max-w-[1280px] mx-auto">
 
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold text-[#0F172A]">Shop by Category</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-bold text-white/80">Shop by Category</h2>
           <Link
             to="/catalog"
-            className="flex items-center gap-1 text-xs font-semibold text-[#7C3AED] hover:text-[#5B21B6] transition-colors"
+            className="flex items-center gap-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
           >
             All Categories <ArrowRight className="h-3.5 w-3.5" />
           </Link>
@@ -131,7 +138,7 @@ const CategorySlider = () => {
 
         {/* Horizontally scrollable strip */}
         <div
-          className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
+          className="flex gap-4 overflow-x-auto pb-1 scrollbar-hide"
           role="list"
           aria-label="Browse product categories"
         >

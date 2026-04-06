@@ -81,7 +81,7 @@ const Footer = () => {
       </div>
 
       {/* Main footer links */}
-      <div className="bg-foreground py-12">
+      <div className="bg-foreground py-8">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
             {/* About */}

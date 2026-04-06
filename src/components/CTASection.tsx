@@ -40,8 +40,8 @@ const CTASection = () => (
       }}
     />
 
-    <div className="relative max-w-[1280px] mx-auto px-4 sm:px-6 py-16 sm:py-20">
-      <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+    <div className="relative max-w-[1280px] mx-auto px-4 sm:px-6 py-12 min-h-[60vh] flex items-center">
+      <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-14">
 
         {/* ── LEFT: Text block ─────────────────────────────────────── */}
         <div className="flex-1 max-w-[520px]">
