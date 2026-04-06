@@ -3,30 +3,33 @@ import { ArrowRight } from "lucide-react";
 
 /**
  * Browse the Marketplace — dark navy premium cinematic section.
- * 3 curated category showcase cards on desktop, single column mobile.
+ * 3 featured product cards with prices on desktop, single column mobile.
  * Connects visually from the Hero dark background.
  */
 const SHOWCASE = [
   {
-    id: "sc-electronics",
-    title: "Electronics & Tech",
-    subtitle: "Phones, laptops, audio & smart home",
+    id: "sc-headphones",
+    category: "Electronics",
+    title: "Wireless Headphones",
+    price: "£99.00",
+    img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?fm=webp&fit=crop&w=800&q=80",
+    href: "/category/electronics",
+  },
+  {
+    id: "sc-laptop",
+    category: "Electronics",
+    title: "15.6\" Laptop Computer",
+    price: "£799.00",
     img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?fm=webp&fit=crop&w=800&q=80",
     href: "/category/electronics",
   },
   {
-    id: "sc-fashion",
-    title: "Fashion & Apparel",
-    subtitle: "Clothing, footwear, bags & accessories",
-    img: "https://images.unsplash.com/photo-1483985988355-763728e1935b?fm=webp&fit=crop&w=800&q=80",
-    href: "/category/fashion",
-  },
-  {
-    id: "sc-home",
-    title: "Home & Kitchen",
-    subtitle: "Décor, cookware, storage & more",
-    img: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?fm=webp&fit=crop&w=800&q=80",
-    href: "/category/home-kitchen",
+    id: "sc-watch",
+    category: "Electronics",
+    title: "Digital Smartwatch",
+    price: "£149.00",
+    img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?fm=webp&fit=crop&w=800&q=80",
+    href: "/category/electronics",
   },
 ];
 
@@ -69,18 +72,18 @@ const FeaturedProducts = () => {
           </Link>
         </div>
 
-        {/* 3 cinematic showcase cards */}
+        {/* 3 product showcase cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {SHOWCASE.map((cat) => (
+          {SHOWCASE.map((item) => (
             <Link
-              key={cat.id}
-              to={cat.href}
+              key={item.id}
+              to={item.href}
               className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300"
               style={{ minHeight: "300px" }}
             >
               <img
-                src={cat.img}
-                alt={cat.title}
+                src={item.img}
+                alt={item.title}
                 width="800"
                 height="600"
                 loading="lazy"
@@ -97,13 +100,13 @@ const FeaturedProducts = () => {
 
               {/* Content */}
               <div className="absolute bottom-0 left-0 right-0 p-5">
-                <h3 className="text-lg font-extrabold text-white leading-snug mb-1">
-                  {cat.title}
+                <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
+                  {item.category}
+                </p>
+                <h3 className="text-base font-extrabold text-white leading-snug mb-1">
+                  {item.title}
                 </h3>
-                <p className="text-sm text-white/65 mb-4 line-clamp-1">{cat.subtitle}</p>
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#22C55E]/20 border border-[#22C55E]/40 group-hover:bg-[#22C55E] group-hover:border-[#22C55E] px-4 py-2 rounded-full transition-all duration-200">
-                  Browse <ArrowRight className="h-3.5 w-3.5" />
-                </span>
+                <p className="text-sm font-bold text-white/90">{item.price}</p>
               </div>
             </Link>
           ))}

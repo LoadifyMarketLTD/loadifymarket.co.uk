@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
 /**
- * Shop by Category — 3×2 premium grid with full-bleed image overlays.
- * Light premium background between the dark sections.
+ * Shop by Category — dark navy section with 3 top category cards + 4 featured product cards below.
+ * Matches the dark theme of the surrounding sections.
  */
 
 const CATEGORIES = [
@@ -22,47 +22,70 @@ const CATEGORIES = [
     label: "Home & Garden",
     img: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80",
   },
+];
+
+const FEATURED_PRODUCTS = [
   {
-    slug: "beauty",
-    label: "Beauty & Health",
+    id: "fp-1",
+    title: "Wireless Earbuds Pro",
+    price: "£39.90",
+    img: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=800&q=80",
+    href: "/category/electronics",
+  },
+  {
+    id: "fp-2",
+    title: "Heavy-Duty Toolbox Set",
+    price: "£89.00",
+    img: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80",
+    href: "/category/tools-diy",
+  },
+  {
+    id: "fp-3",
+    title: "Summer Dress Collection",
+    price: "£45.00",
+    img: "https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?auto=format&fit=crop&w=800&q=80",
+    href: "/category/fashion",
+  },
+  {
+    id: "fp-4",
+    title: "Luxury Skincare Bundle",
+    price: "£35.00",
     img: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    slug: "automotive",
-    label: "Automotive",
-    img: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    slug: "tools-diy",
-    label: "Tools & DIY",
-    img: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=800&q=80",
+    href: "/category/beauty",
   },
 ];
 
 const CategoryGrid = () => (
-  <section className="bg-[#F8F9FC] py-10 px-4 sm:px-6 min-h-[85vh] flex flex-col justify-center">
-    <div className="max-w-[1280px] mx-auto">
+  <section
+    className="relative overflow-hidden py-12 px-4 sm:px-6 min-h-[85vh] flex flex-col justify-center"
+    style={{
+      background: "linear-gradient(135deg, #0a1628 0%, #0e1e3a 60%, #091220 100%)",
+    }}
+  >
+    {/* Subtle dot texture */}
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px)",
+        backgroundSize: "28px 28px",
+      }}
+    />
+
+    <div className="relative max-w-[1280px] mx-auto">
 
       {/* Header */}
-      <div className="flex items-end justify-between mb-6">
-        <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">
-            Browse Sections
-          </span>
-          <h2 className="mt-1.5 text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
-            Shop by Category
-          </h2>
-        </div>
-        <Link
-          to="/catalog"
-          className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-[#7C3AED] hover:text-[#5B21B6] transition-colors"
-        >
-          All Categories <ArrowRight className="h-4 w-4" />
-        </Link>
+      <div className="text-center mb-6">
+        <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+          Browse Sections
+        </span>
+        <h2 className="mt-1.5 text-2xl sm:text-3xl font-display font-bold text-white">
+          Shop by Category
+        </h2>
+        <p className="mt-1 text-sm text-white/50">Explore top categories.</p>
       </div>
 
-      {/* 3×2 premium image-overlay grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      {/* 3 top category cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
         {CATEGORIES.map((cat) => (
           <Link
             key={cat.slug}
@@ -82,10 +105,10 @@ const CategoryGrid = () => (
                 (e.target as HTMLImageElement).style.display = "none";
               }}
             />
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/90 via-[#0F172A]/30 to-transparent" />
+            {/* Darker gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/90 via-[#0a1628]/35 to-transparent" />
             {/* Hover ring */}
-            <div className="absolute inset-0 ring-1 ring-inset ring-white/0 group-hover:ring-white/20 rounded-2xl transition-all duration-300" />
+            <div className="absolute inset-0 ring-1 ring-inset ring-white/0 group-hover:ring-[#22C55E]/30 rounded-2xl transition-all duration-300" />
             {/* Label */}
             <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
               <p className="text-sm font-bold text-white leading-tight">{cat.label}</p>
@@ -95,6 +118,47 @@ const CategoryGrid = () => (
             </div>
           </Link>
         ))}
+      </div>
+
+      {/* 4 featured product cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        {FEATURED_PRODUCTS.map((item) => (
+          <Link
+            key={item.id}
+            to={item.href}
+            className="group relative overflow-hidden rounded-2xl shadow-sm hover:shadow-xl hover:scale-[1.05] hover:-translate-y-0.5 transition-all duration-300"
+            style={{ aspectRatio: "4/3" }}
+          >
+            <img
+              src={item.img}
+              alt={item.title}
+              width="800"
+              height="600"
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/90 via-[#0a1628]/35 to-transparent" />
+            <div className="absolute inset-0 ring-1 ring-inset ring-white/0 group-hover:ring-[#22C55E]/30 rounded-2xl transition-all duration-300" />
+            <div className="absolute bottom-0 left-0 right-0 p-3">
+              <p className="text-sm font-bold text-white/90">{item.price}</p>
+              <p className="text-xs text-white/65 leading-tight line-clamp-1">{item.title}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Centred CTA */}
+      <div className="flex justify-center">
+        <Link
+          to="/catalog"
+          className="inline-flex items-center gap-2 h-11 px-7 bg-[#22C55E] hover:bg-[#16A34A] text-white text-sm font-bold rounded-full shadow transition-all duration-200 hover:-translate-y-0.5"
+        >
+          Browse All Categories <ArrowRight className="h-4 w-4" />
+        </Link>
       </div>
 
     </div>
