@@ -45,18 +45,35 @@ const STEPS = [
 ];
 
 const HowItWorksSection = () => (
-  <section className="bg-[#F8F9FC] py-10 px-4 sm:px-6 min-h-[75vh] flex flex-col justify-center">
-    <div className="max-w-[1280px] mx-auto">
+  <section
+    className="relative overflow-hidden min-h-[80vh] flex flex-col justify-center px-4 sm:px-6 py-16"
+    style={{ background: "linear-gradient(to bottom, #0A1930, #0F2A4A, #081426)" }}
+  >
+    {/* Ambient glow */}
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{ background: "radial-gradient(circle at 50% 70%, rgba(0,255,150,0.06), transparent 50%)" }}
+    />
+    {/* Dot texture */}
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px)",
+        backgroundSize: "28px 28px",
+      }}
+    />
+
+    <div className="relative max-w-[1280px] mx-auto w-full">
 
       {/* Header */}
-      <div className="text-center mb-8">
-        <span className="text-xs font-semibold uppercase tracking-wider text-[#7C3AED]">
+      <div className="text-center mb-10">
+        <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
           For Buyers
         </span>
-        <h2 className="mt-2 text-2xl sm:text-3xl font-display font-bold text-[#0F172A]">
+        <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold text-white">
           How It Works
         </h2>
-        <p className="mt-1.5 text-sm text-[#64748B]">Simple steps from browsing to delivery.</p>
+        <p className="mt-2 text-sm text-white/70">Simple steps from browsing to delivery.</p>
       </div>
 
       {/* Steps row */}
@@ -72,19 +89,19 @@ const HowItWorksSection = () => (
               </span>
 
               {/* Icon box */}
-              <div className="w-11 h-11 rounded-xl bg-white shadow-sm border border-gray-100 flex items-center justify-center mb-2.5">
-                <step.icon className="h-5 w-5 text-[#334155]" aria-hidden="true" />
+              <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex items-center justify-center mb-2.5">
+                <step.icon className="h-5 w-5 text-white/80" aria-hidden="true" />
               </div>
 
               {/* Text */}
-              <p className="text-xs font-bold text-[#0F172A] mb-0.5 leading-tight">{step.title}</p>
-              <p className="text-[10px] text-[#94A3B8] leading-snug max-w-[88px]">{step.desc}</p>
+              <p className="text-xs font-bold text-white mb-0.5 leading-tight">{step.title}</p>
+              <p className="text-[10px] text-white/50 leading-snug max-w-[88px]">{step.desc}</p>
             </div>
 
             {/* Chevron connector (not after last) */}
             {idx < STEPS.length - 1 && (
               <ChevronRight
-                className="hidden sm:block h-4 w-4 text-[#CBD5E1] shrink-0 sm:mt-[-20px]"
+                className="hidden sm:block h-4 w-4 text-white/20 shrink-0 sm:mt-[-20px]"
                 aria-hidden="true"
               />
             )}

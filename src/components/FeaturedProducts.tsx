@@ -2,85 +2,80 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
 /**
- * Browse the Marketplace — dark navy premium cinematic section.
- * 3 curated category showcase cards on desktop, single column mobile.
- * Connects visually from the Hero dark background.
+ * Browse the Marketplace — dark navy premium section.
+ * 3 featured product cards, centered header, centered CTA below.
+ * No prices displayed — demo visuals only.
  */
 const SHOWCASE = [
   {
-    id: "sc-electronics",
-    title: "Electronics & Tech",
-    subtitle: "Phones, laptops, audio & smart home",
+    id: "sc-headphones",
+    category: "Electronics",
+    title: "Wireless Headphones",
+    img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?fm=webp&fit=crop&w=800&q=80",
+    href: "/category/electronics",
+  },
+  {
+    id: "sc-laptop",
+    category: "Electronics",
+    title: "15.6\" Laptop Computer",
     img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?fm=webp&fit=crop&w=800&q=80",
     href: "/category/electronics",
   },
   {
-    id: "sc-fashion",
-    title: "Fashion & Apparel",
-    subtitle: "Clothing, footwear, bags & accessories",
-    img: "https://images.unsplash.com/photo-1483985988355-763728e1935b?fm=webp&fit=crop&w=800&q=80",
-    href: "/category/fashion",
-  },
-  {
-    id: "sc-home",
-    title: "Home & Kitchen",
-    subtitle: "Décor, cookware, storage & more",
-    img: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?fm=webp&fit=crop&w=800&q=80",
-    href: "/category/home-kitchen",
+    id: "sc-watch",
+    category: "Electronics",
+    title: "Digital Smartwatch",
+    img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?fm=webp&fit=crop&w=800&q=80",
+    href: "/category/electronics",
   },
 ];
 
 const FeaturedProducts = () => {
   return (
     <section
-      className="relative overflow-hidden py-12 px-4 sm:px-6 min-h-[85vh] flex flex-col justify-center"
-      style={{
-        background: "linear-gradient(135deg, #0a1628 0%, #0e1e3a 60%, #091220 100%)",
-      }}
+      className="relative overflow-hidden min-h-[80vh] flex items-center px-4 sm:px-6 py-16"
+      style={{ background: "linear-gradient(to bottom, #0A1930, #0F2A4A, #081426)" }}
     >
-      {/* Subtle dot texture */}
+      {/* Ambient glow */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "radial-gradient(circle at 30% 20%, rgba(0,255,150,0.08), transparent 40%)" }}
+      />
+      {/* Dot texture */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px)",
           backgroundSize: "28px 28px",
         }}
       />
 
-      <div className="relative max-w-[1280px] mx-auto">
-        {/* Header */}
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
-              Marketplace Preview
-            </span>
-            <h2 className="mt-1.5 text-2xl sm:text-3xl font-display font-bold text-white">
-              Browse the Marketplace
-            </h2>
-            <p className="mt-1 text-sm text-white/50">
-              Products listed by independent UK sellers across all categories
-            </p>
-          </div>
-          <Link
-            to="/catalog"
-            className="hidden sm:inline-flex items-center gap-2 h-10 px-5 bg-[#22C55E] hover:bg-[#16A34A] text-white text-sm font-bold rounded-full shadow transition-all duration-200 hover:-translate-y-0.5"
-          >
-            View Marketplace <ArrowRight className="h-4 w-4" />
-          </Link>
+      <div className="relative w-full max-w-7xl mx-auto">
+        {/* Centered header */}
+        <div className="text-center mb-10">
+          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+            Marketplace Preview
+          </span>
+          <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold text-white">
+            Browse the Marketplace
+          </h2>
+          <p className="mt-2 text-sm text-white/70">
+            Products listed by independent UK sellers across all categories.
+          </p>
         </div>
 
-        {/* 3 cinematic showcase cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {SHOWCASE.map((cat) => (
+        {/* 3 product cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {SHOWCASE.map((item) => (
             <Link
-              key={cat.id}
-              to={cat.href}
-              className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300"
-              style={{ minHeight: "300px" }}
+              key={item.id}
+              to={item.href}
+              className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)]"
+              style={{ minHeight: "280px" }}
             >
               <img
-                src={cat.img}
-                alt={cat.title}
+                src={item.img}
+                alt={item.title}
                 width="800"
                 height="600"
                 loading="lazy"
@@ -91,29 +86,25 @@ const FeaturedProducts = () => {
                 }}
               />
               {/* Dark gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/92 via-[#0a1628]/30 to-transparent" />
-              {/* Hover ring glow */}
-              <div className="absolute inset-0 ring-1 ring-inset ring-white/0 group-hover:ring-[#22C55E]/30 rounded-2xl transition-all duration-300" />
-
-              {/* Content */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              {/* Content overlay */}
               <div className="absolute bottom-0 left-0 right-0 p-5">
-                <h3 className="text-lg font-extrabold text-white leading-snug mb-1">
-                  {cat.title}
+                <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
+                  {item.category}
+                </p>
+                <h3 className="text-base font-extrabold text-white leading-snug">
+                  {item.title}
                 </h3>
-                <p className="text-sm text-white/65 mb-4 line-clamp-1">{cat.subtitle}</p>
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#22C55E]/20 border border-[#22C55E]/40 group-hover:bg-[#22C55E] group-hover:border-[#22C55E] px-4 py-2 rounded-full transition-all duration-200">
-                  Browse <ArrowRight className="h-3.5 w-3.5" />
-                </span>
               </div>
             </Link>
           ))}
         </div>
 
-        {/* Mobile CTA */}
-        <div className="mt-6 flex justify-center sm:hidden">
+        {/* Centered CTA below cards */}
+        <div className="mt-10 flex justify-center">
           <Link
             to="/catalog"
-            className="inline-flex items-center gap-2 h-11 px-6 bg-[#22C55E] hover:bg-[#16A34A] text-white text-sm font-bold rounded-full shadow transition-all"
+            className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(0,255,150,0.4)]"
           >
             View Marketplace <ArrowRight className="h-4 w-4" />
           </Link>
@@ -124,3 +115,4 @@ const FeaturedProducts = () => {
 };
 
 export default FeaturedProducts;
+
