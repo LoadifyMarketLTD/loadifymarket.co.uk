@@ -28,28 +28,24 @@ const FEATURED_PRODUCTS = [
   {
     id: "fp-1",
     title: "Wireless Earbuds Pro",
-    price: "£39.90",
     img: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=800&q=80",
     href: "/category/electronics",
   },
   {
     id: "fp-2",
     title: "Heavy-Duty Toolbox Set",
-    price: "£89.00",
     img: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80",
     href: "/category/tools-diy",
   },
   {
     id: "fp-3",
     title: "Summer Dress Collection",
-    price: "£45.00",
     img: "https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?auto=format&fit=crop&w=800&q=80",
     href: "/category/fashion",
   },
   {
     id: "fp-4",
     title: "Luxury Skincare Bundle",
-    price: "£35.00",
     img: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80",
     href: "/category/beauty",
   },
@@ -148,8 +144,7 @@ const CategoryGrid = () => (
               <div className="absolute inset-0 ring-1 ring-inset ring-white/0 group-hover:ring-[#22C55E]/20 transition-all duration-300" />
             </div>
             <div className="px-3 py-2.5">
-              <p className="text-sm font-bold text-white/90 leading-none">{item.price}</p>
-              <p className="text-xs text-white/55 leading-snug mt-0.5 line-clamp-1">{item.title}</p>
+              <p className="text-xs font-semibold text-white/80 leading-snug line-clamp-1">{item.title}</p>
             </div>
           </Link>
         ))}

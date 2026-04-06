@@ -4,14 +4,13 @@ import { ArrowRight } from "lucide-react";
 /**
  * Browse the Marketplace — dark navy premium section.
  * 3 featured product cards, centered header, centered CTA below.
- * Matches approved mockup: ELECTRONICS label + title + price on each card.
+ * No prices displayed — demo visuals only.
  */
 const SHOWCASE = [
   {
     id: "sc-headphones",
     category: "Electronics",
     title: "Wireless Headphones",
-    price: "£99.00",
     img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?fm=webp&fit=crop&w=800&q=80",
     href: "/category/electronics",
   },
@@ -19,7 +18,6 @@ const SHOWCASE = [
     id: "sc-laptop",
     category: "Electronics",
     title: "15.6\" Laptop Computer",
-    price: "£799.00",
     img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?fm=webp&fit=crop&w=800&q=80",
     href: "/category/electronics",
   },
@@ -27,7 +25,6 @@ const SHOWCASE = [
     id: "sc-watch",
     category: "Electronics",
     title: "Digital Smartwatch",
-    price: "£149.00",
     img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?fm=webp&fit=crop&w=800&q=80",
     href: "/category/electronics",
   },
@@ -94,10 +91,9 @@ const FeaturedProducts = () => {
                 <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
                   {item.category}
                 </p>
-                <h3 className="text-base font-extrabold text-white leading-snug mb-1">
+                <h3 className="text-base font-extrabold text-white leading-snug">
                   {item.title}
                 </h3>
-                <p className="text-sm font-bold text-white/90">{item.price}</p>
               </div>
             </Link>
           ))}
