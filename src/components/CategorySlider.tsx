@@ -79,7 +79,7 @@ const CATEGORIES = [
 
 type Category = (typeof CATEGORIES)[0];
 
-function CategoryTile({ slug, label, icon: Icon, color, border, img }: Category) {
+function CategoryTile({ slug, label, icon: Icon, color, img }: Category) {
   const [imgFailed, setImgFailed] = useState(false);
 
   return (
