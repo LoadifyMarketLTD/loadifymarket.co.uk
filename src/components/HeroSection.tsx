@@ -10,10 +10,10 @@ import { useAuthStore } from "@/store";
 const TARGET_TIME = new Date("2026-06-30T23:00:00Z").getTime();
 
 /**
- * Combined height of fixed TopBar (40px) + Header row (64px) + Header category nav (48px).
+ * Combined height of fixed Header row (64px) + Header category nav (48px).
  * Used to size the hero so it fills the visible viewport below the fixed headers.
  */
-const HEADER_HEIGHT_PX = 152;
+const HEADER_HEIGHT_PX = 112;
 
 type TimeLeft = { days: number; hours: number; minutes: number; seconds: number };
 

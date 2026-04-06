@@ -4,7 +4,7 @@
  * Canonical homepage for Loadify Market.
  * Section order matches approved mockup:
  *
- *  1. TopBar + Header (fixed, pt-[152px] spacer to clear them)
+ *  1. Header (fixed, pt-[112px] spacer to clear it)
  *  2. Hero
  *  3. Category slider
  *  4. Trust strip
@@ -19,7 +19,6 @@
  * 13. Footer
  */
 
-import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import CategorySlider from "@/components/CategorySlider";
@@ -38,10 +37,9 @@ import LazySection from "@/components/LazySection";
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#0A1930] font-sans antialiased">
-      <TopBar />
       <Header />
-      {/* spacer: 40px top bar + 64px header row + 48px category nav */}
-      <div className="pt-[152px]" />
+      {/* spacer: 64px header row + 48px category nav */}
+      <div className="pt-[112px]" />
       <main>
         <HeroSection />
 

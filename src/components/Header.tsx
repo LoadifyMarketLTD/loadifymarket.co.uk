@@ -9,7 +9,7 @@ import CATEGORY_CONFIG from "@/lib/category-config";
 
 /**
  * Marketplace-style header used on the homepage.
- * Layout: fixed below TopBar (top-10).
+ * Layout: fixed at top-0.
  * Row 1 (h-16): Logo | Prominent search bar | Cart + auth actions
  * Row 2 (h-10, desktop only): Category quick-links
  *
@@ -18,6 +18,10 @@ import CATEGORY_CONFIG from "@/lib/category-config";
  *     dark hero area seamlessly.
  *   - After 10px scroll: bg-[#0A1930]/90 backdrop-blur-md appears for
  *     readability over scrolled content.
+ *
+ * Auth CTA logic:
+ *   - Guest: Sign In → /login | Start Selling (green) → /signup?type=seller
+ *   - Logged in: Dashboard → role dashboard | Sign Out | Start Selling (green) → /pp/seller
  */
 const Header = () => {
   const [query, setQuery] = useState("");
@@ -56,7 +60,7 @@ const Header = () => {
   return (
     <header
       className={[
-        "fixed top-10 left-0 right-0 z-40 transition-all duration-300",
+        "fixed top-0 left-0 right-0 z-40 transition-all duration-300",
         scrolled
           ? "bg-[#0A1930]/90 backdrop-blur-md border-b border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
           : "bg-transparent border-b border-transparent",
@@ -121,6 +125,13 @@ const Header = () => {
               <Button variant="ghost" size="sm" className="text-white/80 hover:text-green-400 hover:bg-white/10 font-medium" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-1" aria-hidden="true" /> Sign Out
               </Button>
+              <Button
+                size="sm"
+                className="h-9 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-300 hover:to-green-400 text-black font-semibold px-5 rounded-full shadow-lg hover:shadow-green-400/30 transition-all duration-300"
+                asChild
+              >
+                <Link to="/pp/seller">Start Selling</Link>
+              </Button>
             </>
           ) : (
             <>
@@ -132,7 +143,7 @@ const Header = () => {
                 className="h-9 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-300 hover:to-green-400 text-black font-semibold px-5 rounded-full shadow-lg hover:shadow-green-400/30 transition-all duration-300"
                 asChild
               >
-                <Link to="/signup">Get Started</Link>
+                <Link to="/signup?type=seller">Start Selling</Link>
               </Button>
             </>
           )}
@@ -217,6 +228,9 @@ const Header = () => {
                 <Button size="sm" variant="outline" className="flex-1 border-white/20 text-white/80 hover:bg-white/10" onClick={() => { setMobileOpen(false); handleLogout(); }}>
                   Sign Out
                 </Button>
+                <Button size="sm" className="flex-1 bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold" asChild>
+                  <Link to="/pp/seller" onClick={() => setMobileOpen(false)}>Start Selling</Link>
+                </Button>
               </>
             ) : (
               <>
@@ -224,7 +238,7 @@ const Header = () => {
                   <Link to="/login" onClick={() => setMobileOpen(false)}>Sign In</Link>
                 </Button>
                 <Button size="sm" className="flex-1 bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold" asChild>
-                  <Link to="/signup" onClick={() => setMobileOpen(false)}>Get Started</Link>
+                  <Link to="/signup?type=seller" onClick={() => setMobileOpen(false)}>Start Selling</Link>
                 </Button>
               </>
             )}

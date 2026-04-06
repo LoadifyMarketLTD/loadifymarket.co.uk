@@ -1,4 +1,3 @@
-import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import CategorySlider from "@/components/CategorySlider";
@@ -17,10 +16,9 @@ import LazySection from "@/components/LazySection";
 export default function PixelPerfectIndex() {
   return (
     <div className="min-h-screen bg-[#F5F7FB] font-sans antialiased">
-      <TopBar />
       <Header />
-      {/* spacer: 40px top bar + 64px header row + 48px category nav */}
-      <div className="pt-[152px]" />
+      {/* spacer: 64px header row + 48px category nav */}
+      <div className="pt-[112px]" />
       <main>
         <HeroSection />
         {/* Category strip — horizontal scroll, icon + label per category */}
