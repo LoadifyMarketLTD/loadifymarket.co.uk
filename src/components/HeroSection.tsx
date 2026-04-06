@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, Store, LayoutGrid, X } from "lucide-react";
+import { ShieldCheck, Users, LayoutGrid, X } from "lucide-react";
 
 /**
  * Countdown target: UK midnight at start of July 1, 2026 (Europe/London).
@@ -8,6 +8,12 @@ import { ShieldCheck, Store, LayoutGrid, X } from "lucide-react";
  * LOCKED per instruction.
  */
 const TARGET_TIME = new Date("2026-06-30T23:00:00Z").getTime();
+
+/**
+ * Combined height of fixed TopBar (40px) + Header row (64px) + Header category nav (48px).
+ * Used to size the hero so it fills the visible viewport below the fixed headers.
+ */
+const HEADER_HEIGHT_PX = 152;
 
 type TimeLeft = { days: number; hours: number; minutes: number; seconds: number };
 
@@ -25,9 +31,12 @@ function pad2(n: number) { return String(n).padStart(2, "0"); }
 
 const TRUST_ITEMS = [
   { icon: ShieldCheck, text: "Secure Payments via Stripe" },
-  { icon: Store,       text: "Independent UK Sellers"     },
+  { icon: Users,       text: "Independent UK Sellers"     },
   { icon: LayoutGrid,  text: "Over 20 Categories"         },
 ];
+
+/** Avatar stack colours — brand-purple and brand-green variants */
+const AVATAR_COLORS = ["#a855f7", "#22c55e", "#818cf8", "#34d399", "#c084fc"] as const;
 
 const BULLETS = [
   "Reach UK Buyers",
@@ -65,7 +74,7 @@ const HeroSection = () => {
           backgroundSize: "cover",
           backgroundPosition: "center center",
           backgroundRepeat: "no-repeat",
-          minHeight: "clamp(520px, calc(100vh - 152px), 800px)",
+          minHeight: `clamp(520px, calc(100vh - ${HEADER_HEIGHT_PX}px), 800px)`,
         }}
       >
         {/* ── Left-side gradient overlay — dark left → transparent right
@@ -191,7 +200,7 @@ const HeroSection = () => {
               <div className="flex items-center gap-3">
                 {/* Avatar stack */}
                 <div className="flex -space-x-2" aria-hidden="true">
-                  {["#a855f7","#22c55e","#818cf8","#34d399","#c084fc"].map((bg, i) => (
+                  {AVATAR_COLORS.map((bg, i) => (
                     <div
                       key={i}
                       className="rounded-full border-2"
