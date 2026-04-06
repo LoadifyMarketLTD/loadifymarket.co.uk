@@ -38,8 +38,9 @@ const ForgotPassword = () => {
         <div className="relative z-10 max-w-md text-center space-y-6">
           <div className="flex items-center justify-center gap-3 mb-8">
             <img src={logo} alt="Loadify Market" className="h-12 w-12" />
-            <span className="font-display text-3xl font-bold text-primary-foreground">
-              Loadify <span className="text-accent">Market</span>
+            <span className="flex flex-col leading-tight">
+              <span className="font-display text-3xl font-bold text-primary-foreground">Loadify</span>
+              <span className="font-display text-2xl font-bold text-accent">Market</span>
             </span>
           </div>
           <h2 className="font-display text-2xl font-bold text-primary-foreground">
@@ -69,8 +70,9 @@ const ForgotPassword = () => {
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-4">
             <img src={logo} alt="Loadify Market" className="h-9 w-9" />
-            <span className="font-display text-xl font-bold text-foreground">
-              Loadify <span className="text-primary">Market</span>
+            <span className="flex flex-col leading-tight">
+              <span className="font-display text-xl font-bold text-foreground">Loadify</span>
+              <span className="font-display text-base font-bold text-primary">Market</span>
             </span>
           </div>
 
