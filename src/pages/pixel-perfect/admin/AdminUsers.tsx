@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -27,14 +26,14 @@ interface User {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  active: { label: "Active", className: "bg-emerald-500/15 text-emerald-700 border-emerald-200" },
-  inactive: { label: "Suspended", className: "bg-red-500/15 text-red-700 border-red-200" },
+  active: { label: "Active", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+  inactive: { label: "Suspended", className: "border-red-500/30 text-red-400 bg-red-500/10" },
 };
 
 const roleConfig: Record<string, { label: string; className: string }> = {
-  buyer: { label: "Buyer", className: "bg-blue-500/10 text-blue-700" },
-  seller: { label: "Seller", className: "bg-purple-500/10 text-purple-700" },
-  admin: { label: "Admin", className: "bg-destructive/10 text-destructive" },
+  buyer: { label: "Buyer", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
+  seller: { label: "Seller", className: "border-purple-500/30 text-purple-400 bg-purple-500/10" },
+  admin: { label: "Admin", className: "border-red-500/30 text-red-400 bg-red-500/10" },
 };
 
 const AdminUsers = () => {
@@ -108,51 +107,51 @@ const AdminUsers = () => {
   const renderTable = (data: User[]) => (
     <Table>
       <TableHeader>
-        <TableRow>
-          <TableHead>User</TableHead>
-          <TableHead>Role</TableHead>
-          <TableHead className="hidden sm:table-cell">Joined</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
+        <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>User</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Role</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Joined</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Status</TableHead>
+          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
             <TableCell colSpan={5} className="text-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+              <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(255,255,255,0.3)" }} />
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+            <TableCell colSpan={5} className="text-center py-8" style={{ color: "rgba(255,255,255,0.3)" }}>
               <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />No users found.
             </TableCell>
           </TableRow>
         ) : (
           data.map((u) => {
-            const roleCfg = roleConfig[u.role] ?? { label: u.role, className: "bg-muted text-muted-foreground" };
+            const roleCfg = roleConfig[u.role] ?? { label: u.role, className: "border-white/10 text-slate-400" };
             const statusKey = u.isActive ? "active" : "inactive";
             return (
-              <TableRow key={u.id}>
+              <TableRow key={u.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }}>
                       {u.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-foreground">{u.name}</p>
-                      <p className="text-xs text-muted-foreground">{u.email}</p>
+                      <p className="text-sm font-medium text-white">{u.name}</p>
+                      <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{u.email}</p>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell><Badge variant="outline" className={roleCfg.className}>{roleCfg.label}</Badge></TableCell>
-                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{u.createdAt}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{u.createdAt}</TableCell>
                 <TableCell><Badge variant="outline" className={statusConfig[statusKey].className}>{statusConfig[statusKey].label}</Badge></TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" disabled={actionLoading === u.id}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10" disabled={actionLoading === u.id}>
                         {actionLoading === u.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
@@ -185,57 +184,73 @@ const AdminUsers = () => {
   );
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">User Management</h1>
-          <p className="text-muted-foreground text-sm mt-1">{users.length} registered users</p>
-        </div>
+    <div className="p-6 space-y-6" style={{ background: "#0A0B1A", minHeight: "100%" }}>
+      <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <h1 className="text-2xl font-bold text-white tracking-tight">User Management</h1>
+        <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>{users.length} registered users</p>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-xl border p-4 text-sm" style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171" }}>
           {error}
         </div>
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Users", count: users.length, color: "text-primary bg-primary/10" },
-          { label: "Buyers", count: users.filter((u) => u.role === "buyer").length, color: "text-blue-600 bg-blue-500/10" },
-          { label: "Sellers", count: users.filter((u) => u.role === "seller").length, color: "text-purple-600 bg-purple-500/10" },
-          { label: "Suspended", count: users.filter((u) => !u.isActive).length, color: "text-red-600 bg-red-500/10" },
+          { label: "Total Users", count: users.length, color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
+          { label: "Buyers", count: users.filter((u) => u.role === "buyer").length, color: "#60A5FA", bg: "rgba(96,165,250,0.12)" },
+          { label: "Sellers", count: users.filter((u) => u.role === "seller").length, color: "#A78BFA", bg: "rgba(167,139,250,0.12)" },
+          { label: "Suspended", count: users.filter((u) => !u.isActive).length, color: "#F87171", bg: "rgba(248,113,113,0.12)" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card rounded-xl border border-border p-5 space-y-2">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}>
-              <Users className="h-5 w-5" />
+          <div
+            key={stat.label}
+            className="rounded-2xl p-5"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: stat.bg }}>
+              <Users className="h-5 w-5" style={{ color: stat.color }} />
             </div>
-            <div className="font-display text-2xl font-bold text-foreground">{stat.count}</div>
-            <p className="text-xs text-muted-foreground">{stat.label}</p>
+            <div className="text-3xl font-bold text-white">{stat.count}</div>
+            <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(255,255,255,0.45)" }}>{stat.label}</p>
           </div>
         ))}
       </div>
 
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search users..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(255,255,255,0.3)" }} />
+          <Input
+            placeholder="Search users..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 h-10"
+            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+          />
         </div>
       </div>
 
       <Tabs defaultValue="all">
-        <TabsList>
-          <TabsTrigger value="all">All <Badge variant="secondary" className="ml-2 text-xs">{filtered.length}</Badge></TabsTrigger>
-          <TabsTrigger value="buyer">Buyers</TabsTrigger>
-          <TabsTrigger value="seller">Sellers</TabsTrigger>
-          <TabsTrigger value="admin">Admins</TabsTrigger>
-          <TabsTrigger value="suspended">Suspended</TabsTrigger>
+        <TabsList style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <TabsTrigger value="all" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">All <Badge variant="outline" className="ml-2 text-xs border-white/20 text-white/60">{filtered.length}</Badge></TabsTrigger>
+          <TabsTrigger value="buyer" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Buyers</TabsTrigger>
+          <TabsTrigger value="seller" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Sellers</TabsTrigger>
+          <TabsTrigger value="admin" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Admins</TabsTrigger>
+          <TabsTrigger value="suspended" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Suspended</TabsTrigger>
         </TabsList>
-        <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
-        <TabsContent value="buyer"><Card><CardContent className="pt-4">{renderTable(byRole("buyer"))}</CardContent></Card></TabsContent>
-        <TabsContent value="seller"><Card><CardContent className="pt-4">{renderTable(byRole("seller"))}</CardContent></Card></TabsContent>
-        <TabsContent value="admin"><Card><CardContent className="pt-4">{renderTable(byRole("admin"))}</CardContent></Card></TabsContent>
-        <TabsContent value="suspended"><Card><CardContent className="pt-4">{renderTable(suspended)}</CardContent></Card></TabsContent>
+        {(["all", "buyer", "seller", "admin", "suspended"] as const).map((tab) => (
+          <TabsContent key={tab} value={tab}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+              <div className="px-2 py-2">
+                {renderTable(
+                  tab === "all" ? filtered :
+                  tab === "suspended" ? suspended :
+                  byRole(tab)
+                )}
+              </div>
+            </div>
+          </TabsContent>
+        ))}
       </Tabs>
 
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
@@ -247,9 +262,9 @@ const AdminUsers = () => {
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-muted-foreground">Role</span><p className="font-medium text-foreground capitalize">{selected.role}</p></div>
-                <div><span className="text-muted-foreground">Status</span><p className="font-medium text-foreground capitalize">{selected.isActive ? "Active" : "Suspended"}</p></div>
-                <div><span className="text-muted-foreground">Joined</span><p className="font-medium text-foreground">{selected.createdAt}</p></div>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Role</span><p className="font-medium text-white capitalize">{selected.role}</p></div>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Status</span><p className="font-medium text-white capitalize">{selected.isActive ? "Active" : "Suspended"}</p></div>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Joined</span><p className="font-medium text-white">{selected.createdAt}</p></div>
               </div>
               <div className="flex justify-end">
                 {selected.isActive ? (
