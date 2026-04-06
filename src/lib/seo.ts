@@ -55,7 +55,7 @@ export const generateOrganizationSchema = () => {
     name: 'Loadify Market Ltd',
     legalName: 'Loadify Market Ltd',
     url: 'https://loadifymarket.co.uk',
-    logo: 'https://loadifymarket.co.uk/logo.png',
+    logo: 'https://loadifymarket.co.uk/favicon.svg',
     foundingDate: '2025',
     contactPoint: {
       '@type': 'ContactPoint',

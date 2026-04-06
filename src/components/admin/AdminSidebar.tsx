@@ -4,7 +4,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
-import logo from "@/assets/loadify-logo.png";
+import logo from "@/assets/loadify-logo.svg";
 import { useAuthStore } from "@/store";
 import { supabase } from "@/lib/supabase";
 
