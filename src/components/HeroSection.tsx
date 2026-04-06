@@ -21,14 +21,12 @@ function getTimeLeft(): TimeLeft {
   };
 }
 
-function pad2(n: number) {
-  return String(n).padStart(2, "0");
-}
+function pad2(n: number) { return String(n).padStart(2, "0"); }
 
 const TRUST_ITEMS = [
-  { icon: ShieldCheck, text: "Secure payments via Stripe" },
-  { icon: Store,       text: "Independent UK sellers"    },
-  { icon: LayoutGrid,  text: "Multi-category marketplace" },
+  { icon: ShieldCheck, text: "Secure Payments via Stripe" },
+  { icon: Store,       text: "Independent UK Sellers"     },
+  { icon: LayoutGrid,  text: "Over 20 Categories"         },
 ];
 
 const BULLETS = [
@@ -37,15 +35,8 @@ const BULLETS = [
   "Get Paid Fast with Stripe",
 ];
 
-/* ─── inline animation helpers ──────────────────────────────────────────── */
-function fadeUp(delay = 0): React.CSSProperties {
-  return {
-    animation: `fadeInUp 0.75s ease-out ${delay}s both`,
-  };
-}
-
 const HeroSection = () => {
-  const [time, setTime]               = useState(getTimeLeft);
+  const [time, setTime] = useState(getTimeLeft);
   const [roleModalOpen, setRoleModalOpen] = useState(false);
 
   useEffect(() => {
@@ -60,96 +51,82 @@ const HeroSection = () => {
   return (
     <>
       {/* ══════════════════════════════════════════════════════════════
-          HERO SECTION
-          Two-column: dark left content | right hero visual
+          HERO
+          hero-marketplace.png as CSS background — warehouse + product
+          photography fills the full section naturally.
+          Left gradient overlay ensures white text stays readable.
+          No artificial dark backgrounds, no dot grids, no glows.
       ══════════════════════════════════════════════════════════════ */}
       <section
-        className="relative overflow-hidden bg-[#0A0B1A]"
+        className="relative overflow-hidden"
         aria-label="Hero banner"
+        style={{
+          backgroundImage: "url('/hero-marketplace.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center center",
+          backgroundRepeat: "no-repeat",
+          minHeight: "clamp(520px, calc(100vh - 152px), 800px)",
+        }}
       >
-        {/* Subtle dot-grid texture */}
+        {/* ── Left-side gradient overlay — dark left → transparent right
+            Makes white text readable against the image without hiding
+            the product photography on the right.                    ── */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.028]"
-          style={{
-            backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-          }}
-        />
-
-        {/* Radial glow — left green, right purple */}
-        <div
-          className="absolute inset-0 pointer-events-none"
+          className="absolute inset-0 pointer-events-none hidden lg:block"
           style={{
             background:
-              "radial-gradient(ellipse 55% 55% at 15% 55%, rgba(34,197,94,0.07) 0%, transparent 70%), " +
-              "radial-gradient(ellipse 50% 60% at 85% 45%, rgba(124,58,237,0.07) 0%, transparent 70%)",
+              "linear-gradient(90deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.72) 28%, rgba(0,0,0,0.40) 52%, rgba(0,0,0,0.08) 72%, transparent 90%)",
           }}
         />
+        {/* Mobile overlay: covers full width since text spans the whole screen */}
+        <div
+          className="absolute inset-0 pointer-events-none lg:hidden"
+          style={{ background: "rgba(0,0,0,0.70)" }}
+        />
 
-        {/* ── Main two-column layout ──────────────────────────────── */}
-        <div className="relative z-10 max-w-[1280px] mx-auto px-6 sm:px-10 lg:px-14 xl:px-20 flex flex-col lg:flex-row items-center gap-0">
+        {/* Mobile: extra bottom fade so content doesn't clash with image edge */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none lg:hidden"
+          style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)" }}
+        />
 
-          {/* ══ LEFT COLUMN: content ══════════════════════════════ */}
-          <div className="flex-1 flex flex-col justify-center py-14 sm:py-20 lg:py-24 max-w-[560px] lg:max-w-none lg:pr-10 xl:pr-16">
+        {/* ── Content column (left-anchored) ──────────────────────── */}
+        <div className="relative z-10 w-full max-w-[1280px] mx-auto px-6 sm:px-10 lg:px-14 xl:px-20">
+          <div
+            className="flex flex-col justify-center py-14 sm:py-20 lg:py-24 w-full lg:max-w-[52%] xl:max-w-[48%]"
+          >
+            {/* Badge */}
+            <span className="inline-flex items-center gap-2 border border-white/30 text-white/80 text-[11px] font-semibold uppercase tracking-widest px-4 py-2 rounded-full mb-7 w-fit">
+              🇬🇧 UK Multi-Category Marketplace
+            </span>
 
-            {/* ── Badge ── */}
-            <div style={fadeUp(0.05)}>
-              <span className="inline-flex items-center gap-2 border border-white/20 text-white/70 text-[11px] font-semibold uppercase tracking-widest px-4 py-2 rounded-full mb-7">
-                🇬🇧 UK Multi-Category Marketplace
-              </span>
-            </div>
+            {/* Headline */}
+            <h1
+              className="font-display font-extrabold leading-[0.96] tracking-tight mb-5"
+              style={{ fontSize: "clamp(2.5rem, 5.5vw, 4.25rem)" }}
+            >
+              <span className="block text-white">SELL ONLINE,</span>
+              <span className="block" style={{ color: "#22C55E" }}>GROW YOUR</span>
+              <span className="block text-white">BUSINESS.</span>
+            </h1>
 
-            {/* ── Headline ── */}
-            <div style={fadeUp(0.15)}>
-              <h1 className="font-display font-extrabold leading-[0.97] tracking-tight mb-5">
-                <span
-                  className="block text-white"
-                  style={{ fontSize: "clamp(2.4rem, 5.8vw, 4.25rem)" }}
-                >
-                  SELL ONLINE,
-                </span>
-                <span
-                  className="block"
-                  style={{
-                    fontSize: "clamp(2.4rem, 5.8vw, 4.25rem)",
-                    color: "#22C55E",
-                  }}
-                >
-                  GROW YOUR
-                </span>
-                <span
-                  className="block text-white"
-                  style={{ fontSize: "clamp(2.4rem, 5.8vw, 4.25rem)" }}
-                >
-                  BUSINESS.
-                </span>
-              </h1>
-            </div>
+            {/* Sub-headline */}
+            <p className="text-base sm:text-lg leading-relaxed mb-8 max-w-[440px]" style={{ color: "rgba(255,255,255,0.70)" }}>
+              Join thousands of UK sellers already reaching more customers every day.
+            </p>
 
-            {/* ── Sub-headline ── */}
-            <div style={fadeUp(0.25)}>
-              <p className="text-base sm:text-lg text-white/55 leading-relaxed mb-7 max-w-[460px]">
-                Reach UK buyers, list products across multiple categories, and get paid securely with Stripe.
-              </p>
-            </div>
-
-            {/* ── Checkmark bullets ── */}
-            <ul style={fadeUp(0.32)} className="flex flex-col gap-2.5 mb-9" role="list">
+            {/* Checkmark bullets */}
+            <ul className="flex flex-col gap-3 mb-9" role="list">
               {BULLETS.map((item) => (
-                <li key={item} className="flex items-center gap-3 text-sm sm:text-[0.9375rem] font-medium text-white/80">
+                <li key={item} className="flex items-center gap-3 text-sm sm:text-base font-medium" style={{ color: "rgba(255,255,255,0.88)" }}>
+                  {/* Filled green circle tick */}
                   <span
                     aria-hidden="true"
-                    className="inline-flex items-center justify-center w-[20px] h-[20px] rounded-full shrink-0"
-                    style={{ background: "#22C55E" }}
+                    className="inline-flex items-center justify-center shrink-0 rounded-full"
+                    style={{ width: 22, height: 22, background: "#22C55E" }}
                   >
-                    <svg className="w-[10px] h-[10px]" viewBox="0 0 12 12" fill="none">
-                      <path
-                        d="M2 6.2l2.8 2.8 5.2-5.2"
-                        stroke="#fff"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6.2l2.8 2.8 5.2-5.2" stroke="#fff" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </span>
                   {item}
@@ -157,14 +134,19 @@ const HeroSection = () => {
               ))}
             </ul>
 
-            {/* ── CTA buttons ── */}
-            <div style={fadeUp(0.42)} className="flex flex-wrap gap-3 mb-9">
-              {/* Primary — green gradient */}
+            {/* CTA buttons */}
+            <div className="flex flex-wrap gap-3 mb-9">
+              {/* Primary — green gradient pill */}
               <button
-                className="inline-flex items-center justify-center h-[52px] px-9 text-white font-bold text-[0.9375rem] rounded-full transition-all duration-200 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#22C55E] focus-visible:outline-offset-2"
+                className="inline-flex items-center justify-center font-bold rounded-full transition-all duration-200 hover:brightness-110 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#22C55E] focus-visible:outline-offset-2"
                 style={{
-                  background: "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)",
-                  boxShadow: "0 4px 20px rgba(34,197,94,0.35)",
+                  height: 52,
+                  paddingLeft: 32,
+                  paddingRight: 32,
+                  fontSize: "0.9375rem",
+                  color: "#fff",
+                  background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
+                  boxShadow: "0 2px 16px rgba(34,197,94,0.45)",
                 }}
                 onClick={() => setRoleModalOpen(true)}
                 aria-haspopup="dialog"
@@ -172,108 +154,94 @@ const HeroSection = () => {
                 Start Selling →
               </button>
 
-              {/* Secondary — translucent outline */}
+              {/* Secondary — white outline pill */}
               <Link to="/catalog">
                 <button
-                  className="inline-flex items-center justify-center h-[52px] px-9 font-bold text-[0.9375rem] text-white/85 rounded-full border border-white/25 bg-white/5 hover:bg-white/10 hover:border-white/40 hover:-translate-y-0.5 transition-all duration-200"
+                  className="inline-flex items-center justify-center font-bold rounded-full border transition-all duration-200 hover:bg-white/10 hover:-translate-y-0.5"
+                  style={{
+                    height: 52,
+                    paddingLeft: 32,
+                    paddingRight: 32,
+                    fontSize: "0.9375rem",
+                    color: "rgba(255,255,255,0.90)",
+                    background: "rgba(255,255,255,0.06)",
+                    borderColor: "rgba(255,255,255,0.40)",
+                  }}
                 >
                   Browse Products →
                 </button>
               </Link>
             </div>
 
-            {/* ── Trust strip ── */}
-            <div style={fadeUp(0.5)} className="flex flex-wrap gap-x-6 gap-y-2">
+            {/* Trust strip */}
+            <div className="flex flex-wrap gap-x-6 gap-y-2 mb-7">
               {TRUST_ITEMS.map(({ icon: Icon, text }) => (
-                <div key={text} className="flex items-center gap-2 text-[11px] text-white/40">
+                <div key={text} className="flex items-center gap-2" style={{ fontSize: "0.6875rem", color: "rgba(255,255,255,0.50)" }}>
                   <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   {text}
                 </div>
               ))}
             </div>
 
-          </div>
-
-          {/* ══ RIGHT COLUMN: hero visual ══════════════════════════ */}
-          <div
-            className="w-full lg:flex-1 lg:self-stretch relative overflow-hidden"
-            style={fadeUp(0.3)}
-          >
-            {/* Desktop: full-height image anchored to section */}
-            <div className="hidden lg:block absolute inset-0">
-              {/* Left-edge blend into dark bg */}
-              <div
-                className="absolute inset-y-0 left-0 z-10 w-28 xl:w-36 pointer-events-none"
-                style={{
-                  background: "linear-gradient(90deg, #0A0B1A 0%, transparent 100%)",
-                }}
-              />
-              <img
-                src="/hero-marketplace.png"
-                alt=""
-                aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-cover object-left-top"
-                fetchPriority="high"
-                loading="eager"
-                width="1536"
-                height="1024"
-              />
+            {/* Social proof */}
+            <div>
+              <p className="mb-2" style={{ fontSize: "0.6875rem", color: "rgba(255,255,255,0.38)" }}>
+                Trusted by sellers across the United Kingdom
+              </p>
+              <div className="flex items-center gap-3">
+                {/* Avatar stack */}
+                <div className="flex -space-x-2" aria-hidden="true">
+                  {["#a855f7","#22c55e","#818cf8","#34d399","#c084fc"].map((bg, i) => (
+                    <div
+                      key={i}
+                      className="rounded-full border-2"
+                      style={{
+                        width: 28, height: 28,
+                        background: `radial-gradient(circle at 35% 35%, rgba(255,255,255,0.4) 0%, ${bg} 100%)`,
+                        borderColor: "rgba(0,0,0,0.40)",
+                      }}
+                    />
+                  ))}
+                </div>
+                <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.48)" }}>
+                  <span style={{ color: "rgba(255,255,255,0.75)", fontWeight: 700 }}>10,000+</span>
+                  {"  "}⭐⭐⭐⭐⭐{"  "}Rated 4.5/5 by Sellers
+                </p>
+              </div>
             </div>
-
-            {/* Mobile: natural height image */}
-            <div className="lg:hidden relative h-[260px] sm:h-[320px]">
-              <div
-                className="absolute inset-y-0 left-0 z-10 w-16 pointer-events-none"
-                style={{
-                  background: "linear-gradient(90deg, #0A0B1A 0%, transparent 100%)",
-                }}
-              />
-              <div
-                className="absolute bottom-0 left-0 right-0 z-10 h-16 pointer-events-none"
-                style={{
-                  background: "linear-gradient(to top, #0A0B1A 0%, transparent 100%)",
-                }}
-              />
-              <img
-                src="/hero-marketplace.png"
-                alt=""
-                aria-hidden="true"
-                className="w-full h-full object-cover object-left-top"
-                loading="lazy"
-                width="1536"
-                height="1024"
-              />
-            </div>
-
-            {/* Spacer so the desktop column has min height */}
-            <div className="hidden lg:block" style={{ minHeight: "calc(100vh - 152px)" }} />
           </div>
-
         </div>
 
-        {/* ── Countdown widget (LOCKED) ──────────────────────────── */}
+        {/* ── Countdown widget (position + content LOCKED) ────────── */}
         {!expired && (
           <div className="absolute top-6 right-6 z-20 hidden sm:block">
             <div
-              className="w-[196px] rounded-2xl backdrop-blur-md border border-white/12 px-4 py-3 flex flex-col items-end gap-1.5"
-              style={{ background: "rgba(10,11,26,0.72)" }}
+              className="w-[192px] rounded-2xl border px-4 py-3 flex flex-col items-end gap-1.5"
+              style={{
+                background: "rgba(0,0,0,0.52)",
+                backdropFilter: "blur(10px)",
+                WebkitBackdropFilter: "blur(10px)",
+                borderColor: "rgba(255,255,255,0.12)",
+              }}
             >
               <span
                 className="text-[10.5px] font-bold px-3 py-1 rounded-xl border whitespace-nowrap"
                 style={{
                   color: "#86efac",
-                  background: "rgba(34,197,94,0.15)",
-                  borderColor: "rgba(34,197,94,0.30)",
+                  background: "rgba(34,197,94,0.18)",
+                  borderColor: "rgba(34,197,94,0.32)",
                 }}
               >
                 0% Fees Until July 1
               </span>
-              <span className="text-[10px] font-medium text-white/40">Offer ends in</span>
-              <div className="flex items-baseline gap-2 tabular-nums text-white">
+              <span className="text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.40)" }}>
+                Offer ends in
+              </span>
+              <div className="flex items-baseline gap-1.5 tabular-nums" style={{ color: "#fff" }}>
                 <span className="font-display font-extrabold text-2xl leading-none">{pad2(time.days)}</span>
-                <span className="text-xs text-white/30">:</span>
+                <span className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>:</span>
                 <span className="font-display font-extrabold text-xl leading-none">{pad2(time.hours)}</span>
-                <span className="text-xs text-white/30">:</span>
+                <span className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>:</span>
                 <span className="font-display font-extrabold text-xl leading-none">{pad2(time.minutes)}</span>
               </div>
             </div>
