@@ -1,14 +1,26 @@
-<svg width="320" height="140" viewBox="0 0 320 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Loadify Market">
-  <g transform="translate(160,18)">
-    <g transform="translate(-40,0)">
-      <polygon points="40,0 70,30 40,60 10,30" fill="none" stroke="#1E3A5F" stroke-width="4" stroke-linejoin="round"/>
-      <polygon points="40,10 60,30 40,50 20,30" fill="none" stroke="#F4C400" stroke-width="2" stroke-linejoin="round"/>
-    </g>
-    <text x="0" y="92" text-anchor="middle"
-      font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
-      font-size="28" font-weight="800" fill="#152D4A" letter-spacing="3">LOADIFY</text>
-    <text x="0" y="116" text-anchor="middle"
-      font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif"
-      font-size="12" font-weight="700" fill="#F4C400" letter-spacing="8">MARKET</text>
+<svg width="320" height="64" viewBox="0 0 320 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Loadify Market" fill="none">
+  <!-- Cart icon (48x48, vertically centred in 64px height → offset y=8) -->
+  <g transform="translate(8,8)">
+    <!-- Handle bar -->
+    <path d="M 5,30 L 5,9 C 5,7.3 6.3,6 8,6 L 16,6"
+          stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Cart basket -->
+    <path d="M 14,6 L 44,6 L 42,28 L 10,28 Z"
+          stroke="#7C3AED" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <!-- Inner horizontal lines (green) -->
+    <line x1="15" y1="12" x2="43" y2="12" stroke="#22C55E" stroke-width="2" stroke-linecap="round"/>
+    <line x1="14" y1="18" x2="42" y2="18" stroke="#22C55E" stroke-width="2" stroke-linecap="round"/>
+    <line x1="13" y1="23" x2="41.5" y2="23" stroke="#22C55E" stroke-width="2" stroke-linecap="round"/>
+    <!-- Wheels -->
+    <circle cx="17" cy="36" r="4.5" stroke="#7C3AED" stroke-width="2.5"/>
+    <circle cx="35" cy="36" r="4.5" stroke="#7C3AED" stroke-width="2.5"/>
   </g>
+  <!-- "Loadify" (white) -->
+  <text x="70" y="34"
+    font-family="Inter, system-ui, -apple-system, sans-serif"
+    font-size="24" font-weight="700" fill="#FFFFFF" dominant-baseline="middle">Loadify</text>
+  <!-- "Market" (green) -->
+  <text x="185" y="34"
+    font-family="Inter, system-ui, -apple-system, sans-serif"
+    font-size="24" font-weight="700" fill="#22C55E" dominant-baseline="middle">Market</text>
 </svg>

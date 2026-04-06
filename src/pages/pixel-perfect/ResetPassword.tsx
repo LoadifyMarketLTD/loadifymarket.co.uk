@@ -4,7 +4,7 @@ import { Lock, Eye, EyeOff, CheckCircle2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import logo from "@/assets/loadify-logo.png";
+import logo from "@/assets/loadify-logo.svg";
 import { supabase } from "@/lib/supabase";
 
 const ResetPassword = () => {
