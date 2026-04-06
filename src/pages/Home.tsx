@@ -7,14 +7,14 @@
  *  1. TopBar + Header (fixed, pt-[152px] spacer to clear them)
  *  2. Hero — Browse Marketplace · Start Selling · Sign In
  *  3. Category slider
- *  4. Featured products (Browse the Marketplace)
- *  5. Trust strip
- *  6. Category grid (Shop by Category)
- *  7. Featured listings (tabbed)
- *  8. Seller Journey — transparent 5-step onboarding flow
- *  9. Why Choose — platform features
- * 10. How It Works — buyer purchase flow
- * 11. Platform Features comparison (buyer vs seller)
+ *  4. Trust strip
+ *  5. Category grid (Shop by Category)
+ *  6. Featured listings (tabbed)
+ *  7. Seller Journey — transparent 5-step onboarding flow
+ *  8. Why Choose — platform features
+ *  9. How It Works — buyer purchase flow
+ * 10. Platform Features comparison (buyer vs seller)
+ * 11. Featured products (Browse the Marketplace)
  * 12. CTA — Start Selling Today
  * 13. Footer
  */
@@ -48,10 +48,7 @@ export default function Home() {
         {/* Category strip — horizontal scroll, icon + label per category */}
         <CategorySlider />
 
-        {/* Featured products — dark cinematic showcase */}
-        <FeaturedProducts />
-
-        {/* Trust strip — light transition */}
+        {/* Trust strip — credibility before visual browsing */}
         <TrustStrip />
 
         {/* Below-fold sections deferred with IntersectionObserver to reduce
@@ -61,6 +58,7 @@ export default function Home() {
           <CategoryGrid />
         </LazySection>
 
+        {/* Dark block: FeaturedListings + SellerJourneySection share same dark bg */}
         <LazySection>
           <FeaturedListings />
         </LazySection>
@@ -80,6 +78,11 @@ export default function Home() {
 
         <LazySection>
           <PlatformFeatures />
+        </LazySection>
+
+        {/* Featured products — now user is ready to browse */}
+        <LazySection>
+          <FeaturedProducts />
         </LazySection>
 
         <LazySection>

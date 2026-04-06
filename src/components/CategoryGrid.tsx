@@ -83,7 +83,7 @@ const CategoryGrid = () => (
               }}
             />
             {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/80 via-[#0F172A]/15 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/90 via-[#0F172A]/30 to-transparent" />
             {/* Hover ring */}
             <div className="absolute inset-0 ring-1 ring-inset ring-white/0 group-hover:ring-white/20 rounded-2xl transition-all duration-300" />
             {/* Label */}

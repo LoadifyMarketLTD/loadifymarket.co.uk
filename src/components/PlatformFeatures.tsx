@@ -58,7 +58,7 @@ const sellerBenefits = [
 
 const PlatformFeatures = () => {
   return (
-    <section className="py-10 bg-[#F5F7FB] min-h-[75vh] flex flex-col justify-center">
+    <section className="py-10 bg-[#F5F7FB] min-h-[80vh] flex flex-col justify-center">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-8">

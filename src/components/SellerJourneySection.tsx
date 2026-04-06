@@ -62,7 +62,7 @@ const STEPS = [
 
 const SellerJourneySection = () => (
   <section
-    className="relative overflow-hidden pt-0 pb-10 px-4 sm:px-6 min-h-[70vh] flex flex-col justify-center"
+    className="relative overflow-hidden pt-0 pb-10 px-4 sm:px-6 min-h-[80vh] flex flex-col justify-center"
     id="how-to-sell"
     style={{
       background: "linear-gradient(135deg, #0a1628 0%, #0d1d36 60%, #091220 100%)",
