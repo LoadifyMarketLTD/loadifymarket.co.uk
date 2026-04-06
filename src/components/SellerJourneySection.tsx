@@ -37,16 +37,19 @@ const STEPS = [
 const SellerJourneySection = () => (
   <section
     id="how-to-sell"
-    className="relative overflow-hidden py-12 px-4 sm:px-6"
-    style={{
-      background: "linear-gradient(135deg, #060e1f 0%, #0a1628 60%, #06101e 100%)",
-    }}
+    className="relative overflow-hidden min-h-[80vh] flex items-center px-4 sm:px-6 py-16"
+    style={{ background: "linear-gradient(to bottom, #0F2A4A, #081426, #0A1930)" }}
   >
-    {/* Subtle dot texture */}
+    {/* Ambient glow */}
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{ background: "radial-gradient(circle at 50% 50%, rgba(0,255,150,0.07), transparent 50%)" }}
+    />
+    {/* Dot texture */}
     <div
       className="absolute inset-0 pointer-events-none"
       style={{
-        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px)",
+        backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px)",
         backgroundSize: "28px 28px",
       }}
     />
@@ -57,30 +60,26 @@ const SellerJourneySection = () => (
       style={{ background: "rgba(255,255,255,0.07)" }}
     />
 
-    <div className="relative max-w-7xl mx-auto">
+    <div className="relative w-full max-w-7xl mx-auto">
       {/* Centered header */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-10">
         <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
           For Sellers
         </span>
-        <h2 className="mt-2 text-2xl sm:text-3xl font-display font-bold text-white">
+        <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold text-white">
           How Selling on Loadify Market Works
         </h2>
-        <p className="mt-2 text-sm text-white/50">
+        <p className="mt-2 text-sm text-white/70">
           A simple step-by-step guide to start selling.
         </p>
       </div>
 
       {/* 3 horizontal step cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
         {STEPS.map((step) => (
           <div
             key={step.id}
-            className="flex items-center gap-4 rounded-2xl px-5 py-4 transition-all duration-200 hover:border-white/15"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-            }}
+            className="flex items-center gap-4 rounded-2xl px-5 py-5 bg-white/5 backdrop-blur-md border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:border-white/20 hover:shadow-[0_20px_60px_rgba(0,255,150,0.1)]"
           >
             {/* Icon badge */}
             <div
@@ -92,7 +91,7 @@ const SellerJourneySection = () => (
             {/* Text */}
             <div>
               <p className="text-sm font-bold text-white leading-snug">{step.title}</p>
-              <p className="text-xs text-white/50 mt-0.5">{step.desc}</p>
+              <p className="text-xs text-white/60 mt-0.5">{step.desc}</p>
             </div>
           </div>
         ))}
@@ -101,7 +100,7 @@ const SellerJourneySection = () => (
       {/* Prominent centered CTA */}
       <div className="flex justify-center">
         <Link to="/signup?type=seller">
-          <button className="inline-flex items-center gap-2 h-12 px-10 bg-[#22C55E] hover:bg-[#16A34A] text-white font-bold text-sm rounded-full shadow-lg shadow-[#22C55E]/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[#22C55E]/40">
+          <button className="inline-flex items-center gap-2 px-10 py-3.5 bg-gradient-to-r from-green-400 to-green-500 text-black font-bold text-sm rounded-full shadow-lg shadow-green-500/30 transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(0,255,150,0.4)]">
             Start Selling Today <ArrowRight className="h-4 w-4" />
           </button>
         </Link>
