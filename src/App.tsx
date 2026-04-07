@@ -11,7 +11,7 @@ import RequireSeller from './components/auth/RequireSeller';
 // ─── Homepage ─────────────────────────────────────────────────────────────────
 const Home                 = lazy(() => import('./pages/Home'));
 
-// ─── Pixel-perfect pages — standalone (include own Navbar + Footer) ───────────
+// ─── Pixel-perfect pages — standalone (include own Header + Footer) ───────────
 
 const PPCatalog            = lazy(() => import('./pages/pixel-perfect/Catalog'));
 const PPCategoryPage       = lazy(() => import('./pages/pixel-perfect/CategoryPage'));
@@ -211,7 +211,7 @@ function App() {
   return (
     <CartProvider>
       <Routes>
-        {/* ── Pixel-perfect standalone pages (own Navbar + Footer) ─────────────── */}
+        {/* ── Pixel-perfect standalone pages (own Header + Footer) ─────────────── */}
         <Route path="/" element={<Suspense fallback={<PageLoader />}><Home /></Suspense>} />
         <Route path="catalog" element={<Suspense fallback={<PageLoader />}><PPCatalog /></Suspense>} />
         <Route path="category/:slug" element={<Suspense fallback={<PageLoader />}><PPCategoryPage /></Suspense>} />
