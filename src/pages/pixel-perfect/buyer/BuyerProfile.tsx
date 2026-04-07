@@ -93,7 +93,7 @@ const BuyerProfile = () => {
       }
     };
     fetchProfile();
-  }, [user, toast]);
+  }, [user]);
 
   const updateField = (field: keyof FormState, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
