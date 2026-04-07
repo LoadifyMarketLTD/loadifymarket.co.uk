@@ -74,8 +74,9 @@ const Header = () => {
         {/* Logo */}
         <Link to="/" aria-label="Loadify Market — Home" className="flex items-center gap-2 shrink-0">
           <img src={logo} alt="" aria-hidden="true" className="h-8 w-8" />
-          <span className="font-display text-lg font-bold text-white whitespace-nowrap hidden sm:block">
-            Loadify <span className="text-[#22C55E]">Market</span>
+          <span className="hidden sm:flex flex-col leading-tight">
+            <span className="font-display text-base font-bold text-white">Loadify</span>
+            <span className="font-display text-sm font-bold text-[#22C55E]">Market</span>
           </span>
         </Link>
 

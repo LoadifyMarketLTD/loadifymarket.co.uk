@@ -18,7 +18,7 @@ const WHY_CARDS = [
   {
     id: "wc-secure",
     title: "Safe & Secure",
-    desc: "Stripe-powered checkout. Transparent 7% commission. Sellers verified by our team.",
+    desc: "Stripe-powered checkout. 0% commission until 31 August, then 7%. Sellers verified by our team.",
     img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80",
     href: "/catalog",
   },

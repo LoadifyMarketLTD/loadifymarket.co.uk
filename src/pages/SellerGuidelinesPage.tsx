@@ -27,7 +27,7 @@ const GUIDELINES = [
     icon: CreditCard,
     title: 'Pricing & Fees',
     description:
-      'Prices must reflect the true cost of goods. A 7% marketplace commission applies to all completed sales. All transactions must be processed through the Loadify Market payment system.',
+      'Prices must reflect the true cost of goods. A 7% marketplace commission applies to all completed sales (0% during the launch promotion until 31 August 2026). All transactions must be processed through the Loadify Market payment system.',
   },
   {
     icon: BadgeCheck,

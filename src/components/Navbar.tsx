@@ -54,8 +54,9 @@ const Navbar = () => {
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
         <Link to="/" aria-label="Loadify Market — Home" className="flex items-center gap-2">
           <img src={logo} alt="" aria-hidden="true" className="h-9 w-9" />
-          <span className="font-display text-xl font-bold tracking-tight text-foreground whitespace-nowrap">
-            Loadify <span className="text-primary">Market</span>
+          <span className="flex flex-col leading-tight">
+            <span className="font-display text-base font-bold tracking-tight text-foreground">Loadify</span>
+            <span className="font-display text-sm font-bold text-primary">Market</span>
           </span>
         </Link>
 

@@ -3,15 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store";
 
 /**
- * Countdown target: UK midnight at start of July 1, 2026 (Europe/London).
- * July 1 is in BST (UTC+1), so UK midnight == 2026-06-30T23:00:00Z.
- * LOCKED per instruction.
+ * Countdown target: 31 August 2026 23:59:59 Europe/London (BST = UTC+1).
+ * BST is UTC+1, so 23:59:59 BST == 2026-08-31T22:59:59Z.
+ * Must match ZERO_COMMISSION_PROMO_END_UTC in stripe-webhook.ts exactly.
  */
-const TARGET_TIME = new Date("2026-06-30T23:00:00Z").getTime();
+const TARGET_TIME = new Date("2026-08-31T22:59:59Z").getTime();
 
 /**
  * Combined height of fixed Header row (64px) + Header category nav (48px).
- * Used to size the hero so it fills the visible viewport below the fixed headers.
  */
 const HEADER_HEIGHT_PX = 112;
 
@@ -28,6 +27,18 @@ function getTimeLeft(): TimeLeft {
 }
 
 function pad2(n: number) { return String(n).padStart(2, "0"); }
+
+const BULLETS = [
+  "Reach UK Buyers",
+  "Sell Any Product",
+  "Get Paid Fast with Stripe",
+];
+
+const TRUST_ITEMS = [
+  { icon: "🔒", label: "Secure Payments via Stripe" },
+  { icon: "🇬🇧", label: "Independent UK Sellers" },
+  { icon: "🏷️", label: "Over 20 Categories" },
+];
 
 const HeroSection = () => {
   const [time, setTime] = useState(getTimeLeft);
@@ -48,139 +59,228 @@ const HeroSection = () => {
       className="relative overflow-hidden"
       aria-label="Hero — sell online, grow your business with Loadify Market"
       style={{
-        backgroundImage: "url('/hero-final.jpg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center center",
-        backgroundRepeat: "no-repeat",
-        minHeight: `clamp(520px, calc(100vh - ${HEADER_HEIGHT_PX}px), 800px)`,
+        background: "#0A1930",
+        minHeight: `clamp(520px, calc(100vh - ${HEADER_HEIGHT_PX}px), 820px)`,
       }}
     >
-      {/* ── Invisible click zones aligned over the image's built-in buttons ── */}
-      {/* Desktop: positioned using pixel values matching the hero-final.jpg button locations */}
-      <div className="absolute z-10 hidden sm:block" style={{ left: 0, bottom: 0, right: 0, top: 0, pointerEvents: "none" }}>
-        {/* Start Selling — invisible click zone */}
-        <button
-          style={{
-            position: "absolute",
-            left: 52,
-            top: 549,
-            width: 238,
-            height: 54,
-            borderRadius: 9999,
-            background: "transparent",
-            border: "none",
-            boxShadow: "none",
-            color: "transparent",
-            fontSize: 0,
-            padding: 0,
-            outline: "none",
-            cursor: "pointer",
-            pointerEvents: "auto",
-          }}
-          onClick={() => navigate(user ? "/dashboard/seller" : "/register?role=seller")}
-          aria-label="Start selling on Loadify Market"
-        >
-          Start Selling
-        </button>
+      {/*
+       * ── HERO IMAGE — right-anchored ──────────────────────────────────────
+       * The source hero.jpeg has text composited into its left ~40%.
+       * By positioning the img to cover only the RIGHT 68% of the container
+       * (with object-position: right center) the baked-in text is cropped off
+       * the left edge while the laptop / phone / warehouse fills the right side.
+       */}
+      <img
+        src="/hero.jpeg"
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: "68%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "right center",
+          zIndex: 0,
+        }}
+      />
 
-        {/* Browse Products — invisible click zone */}
-        <button
-          style={{
-            position: "absolute",
-            left: 328,
-            top: 549,
-            width: 225,
-            height: 54,
-            borderRadius: 9999,
-            background: "transparent",
-            border: "none",
-            boxShadow: "none",
-            color: "transparent",
-            fontSize: 0,
-            padding: 0,
-            outline: "none",
-            cursor: "pointer",
-            pointerEvents: "auto",
-          }}
-          onClick={() => navigate("/catalog")}
-          aria-label="Browse products on Loadify Market"
-        >
-          Browse Products
-        </button>
-      </div>
-
-      {/* Mobile fallback — visible buttons below image area when pixel positioning won't align */}
+      {/* ── Blend gradient — smooth dark→image transition ────────────────── */}
       <div
-        className="absolute z-10 flex flex-wrap gap-3 sm:hidden"
-        style={{ left: "clamp(16px, 5vw, 48px)", bottom: "clamp(24px, 8%, 64px)" }}
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(to right, #0A1930 0%, #0A1930 28%, rgba(10,25,48,0.85) 42%, rgba(10,25,48,0.20) 58%, transparent 70%)",
+          zIndex: 1,
+        }}
+      />
+
+      {/* ── LEFT SIDE HTML OVERLAY ─────────────────────────────────────────── */}
+      <div
+        className="absolute z-10 flex flex-col"
+        style={{
+          left: "clamp(24px, 5.5vw, 88px)",
+          top: "50%",
+          transform: "translateY(-50%)",
+          maxWidth: 540,
+          width: "clamp(280px, 44vw, 540px)",
+        }}
       >
-        <button
-          className="inline-flex items-center justify-center font-bold rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#22C55E] focus-visible:outline-offset-2"
+        {/* Heading */}
+        <h1
+          className="leading-[1.05] tracking-tight"
           style={{
-            height: 48,
-            paddingLeft: 24,
-            paddingRight: 24,
-            fontSize: "0.875rem",
-            color: "#fff",
-            background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
-            boxShadow: "0 2px 12px rgba(34,197,94,0.45)",
-            cursor: "pointer",
+            fontWeight: 900,
+            fontSize: "clamp(2.25rem, 5vw, 4rem)",
+            color: "#ffffff",
           }}
-          onClick={() => navigate(user ? "/dashboard/seller" : "/register?role=seller")}
-          aria-label="Start selling on Loadify Market"
         >
-          Start Selling →
-        </button>
-        <button
-          className="inline-flex items-center justify-center font-bold rounded-full border"
+          Sell Online,{" "}
+          <br />
+          <span style={{ color: "#22C55E" }}>Grow Your Business.</span>
+        </h1>
+
+        {/* Paragraph */}
+        <p
+          className="mt-5"
           style={{
-            height: 48,
-            paddingLeft: 24,
-            paddingRight: 24,
-            fontSize: "0.875rem",
-            color: "rgba(255,255,255,0.90)",
-            background: "rgba(255,255,255,0.06)",
-            borderColor: "rgba(255,255,255,0.40)",
-            cursor: "pointer",
+            fontSize: "clamp(0.9375rem, 1.4vw, 1.125rem)",
+            color: "rgba(255,255,255,0.72)",
+            lineHeight: 1.65,
+            maxWidth: 480,
           }}
-          onClick={() => navigate("/catalog")}
-          aria-label="Browse products on Loadify Market"
         >
-          Browse Products →
-        </button>
+          Join thousands of UK sellers already reaching more customers every day.
+        </p>
+
+        {/* Checklist */}
+        <ul className="mt-6 flex flex-col gap-3" aria-label="Key benefits">
+          {BULLETS.map((text) => (
+            <li key={text} className="flex items-center gap-3">
+              <svg
+                width="20" height="20" viewBox="0 0 20 20"
+                fill="none" aria-hidden="true" style={{ flexShrink: 0 }}
+              >
+                <circle cx="10" cy="10" r="10" fill="rgba(34,197,94,0.20)" />
+                <path
+                  d="M6 10.5l3 3 5-5.5"
+                  stroke="#22C55E" strokeWidth="2"
+                  strokeLinecap="round" strokeLinejoin="round"
+                />
+              </svg>
+              <span style={{ fontSize: "1rem", color: "rgba(255,255,255,0.90)", fontWeight: 500 }}>
+                {text}
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        {/* CTA Buttons */}
+        <div className="mt-8 flex flex-wrap gap-4">
+          <button
+            className="inline-flex items-center justify-center font-bold rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]"
+            style={{
+              height: 58,
+              paddingLeft: 36,
+              paddingRight: 36,
+              fontSize: "1rem",
+              color: "#fff",
+              background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
+              boxShadow: "0 4px 20px rgba(34,197,94,0.45)",
+              cursor: "pointer",
+              border: "none",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1.08)";
+              (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 8px 28px rgba(34,197,94,0.55)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.filter = "";
+              (e.currentTarget as HTMLButtonElement).style.transform = "";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 20px rgba(34,197,94,0.45)";
+            }}
+            onClick={() => navigate(user ? "/dashboard/seller" : "/register?role=seller")}
+            aria-label="Start selling on Loadify Market"
+          >
+            Start Selling →
+          </button>
+
+          <button
+            className="inline-flex items-center justify-center font-semibold rounded-full border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            style={{
+              height: 58,
+              paddingLeft: 36,
+              paddingRight: 36,
+              fontSize: "1rem",
+              color: "rgba(255,255,255,0.90)",
+              background: "rgba(255,255,255,0.08)",
+              borderColor: "rgba(255,255,255,0.35)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.14)";
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.60)";
+              (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)";
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.35)";
+              (e.currentTarget as HTMLButtonElement).style.transform = "";
+            }}
+            onClick={() => navigate("/catalog")}
+            aria-label="Browse products on Loadify Market"
+          >
+            Browse Products
+          </button>
+        </div>
+
+        {/* Trust mini-features */}
+        <div
+          className="mt-8 flex flex-wrap gap-x-5 gap-y-2"
+          aria-label="Trust indicators"
+        >
+          {TRUST_ITEMS.map(({ icon, label }) => (
+            <div key={label} className="flex items-center gap-1.5">
+              <span style={{ fontSize: "0.9rem" }} aria-hidden="true">{icon}</span>
+              <span style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.55)", fontWeight: 500 }}>
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* ── Countdown widget (position + content LOCKED) ────────── */}
+      {/* ── Countdown widget — aligned with upper headline region ── */}
       {!expired && (
-        <div className="absolute top-6 right-6 z-20 hidden sm:block">
+        <div
+          className="absolute z-20 hidden sm:block"
+          style={{ top: "26%", left: "52%", transform: "translate(-50%, -50%)" }}
+        >
           <div
-            className="w-[192px] rounded-2xl border px-4 py-3 flex flex-col items-end gap-1.5"
+            className="flex flex-col items-center gap-2"
             style={{
-              background: "rgba(0,0,0,0.52)",
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
-              borderColor: "rgba(255,255,255,0.12)",
+              width: 360,
+              minHeight: 132,
+              padding: "18px 24px",
+              borderRadius: 20,
+              background: "rgba(18,18,18,0.78)",
+              backdropFilter: "blur(14px)",
+              WebkitBackdropFilter: "blur(14px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "0 24px 70px rgba(0,0,0,0.45)",
             }}
           >
             <span
-              className="text-[10.5px] font-bold px-3 py-1 rounded-xl border whitespace-nowrap"
+              className="font-bold px-3 py-1 rounded-xl border whitespace-nowrap"
               style={{
+                fontSize: 14,
+                fontWeight: 700,
                 color: "#86efac",
                 background: "rgba(34,197,94,0.18)",
                 borderColor: "rgba(34,197,94,0.32)",
               }}
             >
-              0% Fees Until July 1
+              0% Fees Until 31 August
             </span>
-            <span className="text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.40)" }}>
+            <span style={{ fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.9)" }}>
               Offer ends in
             </span>
-            <div className="flex items-baseline gap-1.5 tabular-nums" style={{ color: "#fff" }}>
-              <span className="font-display font-extrabold text-2xl leading-none">{pad2(time.days)}</span>
-              <span className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>:</span>
-              <span className="font-display font-extrabold text-xl leading-none">{pad2(time.hours)}</span>
-              <span className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>:</span>
-              <span className="font-display font-extrabold text-xl leading-none">{pad2(time.minutes)}</span>
+            <div className="flex items-baseline gap-1 tabular-nums" style={{ color: "#fff" }}>
+              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(time.days)}</span>
+              <span style={{ fontSize: 16, color: "rgba(255,255,255,0.4)" }}>d</span>
+              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(time.hours)}</span>
+              <span style={{ fontSize: 16, color: "rgba(255,255,255,0.4)" }}>h</span>
+              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(time.minutes)}</span>
+              <span style={{ fontSize: 16, color: "rgba(255,255,255,0.4)" }}>m</span>
+              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(time.seconds)}</span>
+              <span style={{ fontSize: 16, color: "rgba(255,255,255,0.4)" }}>s</span>
             </div>
           </div>
         </div>

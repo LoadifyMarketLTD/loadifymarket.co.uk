@@ -39,8 +39,9 @@ const Footer = () => {
         <div className="container mx-auto px-4 py-5 flex flex-col md:flex-row items-center justify-between gap-4">
           <Link to="/" className="flex items-center gap-2">
             <img src={logo} alt="Loadify Market" className="h-8 w-8" />
-            <span className="font-display text-lg font-bold text-background">
-              Loadify Market
+            <span className="flex flex-col leading-tight">
+              <span className="font-display text-base font-bold text-background">Loadify</span>
+              <span className="font-display text-sm font-bold text-[#22C55E]">Market</span>
             </span>
           </Link>
           <div className="flex flex-wrap items-center justify-center gap-5 text-sm text-background/70">
