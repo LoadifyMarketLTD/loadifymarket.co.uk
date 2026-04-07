@@ -334,17 +334,6 @@ const BuyerSettings = () => {
               </Select>
             </div>
             <div>
-              <Label className="text-xs">Default Delivery Address</Label>
-              <Select defaultValue="home">
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="home">Home Address</SelectItem>
-                  <SelectItem value="work">Work Address</SelectItem>
-                  <SelectItem value="other">Other Address</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
               <Label className="text-xs">Order Display</Label>
               <Select value={prefs.orderDisplay} onValueChange={(v) => setPrefs((p) => ({ ...p, orderDisplay: v }))}>
                 <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>

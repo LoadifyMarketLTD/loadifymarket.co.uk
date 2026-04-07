@@ -116,6 +116,8 @@ const BuyerOrders = () => {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8"
+                  title={["shipped", "delivered"].includes(o.status) ? "Track shipment" : "Tracking not yet available"}
+                  disabled={!["shipped", "delivered"].includes(o.status)}
                   onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}
                 >
                   <Eye className="h-4 w-4" />

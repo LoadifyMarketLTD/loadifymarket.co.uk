@@ -1,18 +1,23 @@
-import { useState, useEffect } from "react";
-import { Truck, Search, MapPin, Clock, Package, CheckCircle2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Truck, Search, MapPin, Clock, Package, CheckCircle2, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { toast } from "@/hooks/use-toast";
 import type { Shipment } from "@/types/shipping";
 import type { User } from "@/types";
 
@@ -52,38 +57,87 @@ const SellerShipments = () => {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<ShipmentRow | null>(null);
 
-  useEffect(() => {
-    if (!user) return;
-    const load = async () => {
-      try {
-        const { data } = await supabase
-          .from("shipments")
-          .select(`*, orders(orderNumber, products(title))`)
-          .eq("seller_id", user.id)
-          .order("created_at", { ascending: false });
-        const rows = (data ?? []) as ShipmentRow[];
-        setShipments(rows);
+  // Create Shipment dialog state
+  const [createOpen, setCreateOpen] = useState(false);
+  const [sellerOrders, setSellerOrders] = useState<{ id: string; orderNumber: string; status: string }[]>([]);
+  const [createForm, setCreateForm] = useState({ orderId: "", courierName: "", trackingNumber: "", dispatchedAt: "" });
+  const [creating, setCreating] = useState(false);
 
-        // Resolve buyer names via secondary query
-        const uniqueBuyerIds = [...new Set(rows.map((s) => s.buyer_id).filter(Boolean))];
-        if (uniqueBuyerIds.length > 0) {
-          const { data: buyers } = await supabase
-            .from("users")
-            .select("id, firstName, lastName")
-            .in("id", uniqueBuyerIds);
-          const names: Record<string, string> = {};
-          (buyers ?? []).forEach((buyer: BuyerData) => {
-            const name = [buyer.firstName, buyer.lastName].filter(Boolean).join(" ").trim();
-            names[buyer.id] = name || "Customer";
-          });
-          setBuyerNames(names);
-        }
-      } finally {
-        setLoading(false);
+  const loadShipments = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from("shipments")
+        .select(`*, orders(orderNumber, products(title))`)
+        .eq("seller_id", user.id)
+        .order("created_at", { ascending: false });
+      const rows = (data ?? []) as ShipmentRow[];
+      setShipments(rows);
+
+      // Resolve buyer names via secondary query
+      const uniqueBuyerIds = [...new Set(rows.map((s) => s.buyer_id).filter(Boolean))];
+      if (uniqueBuyerIds.length > 0) {
+        const { data: buyers } = await supabase
+          .from("users")
+          .select("id, firstName, lastName")
+          .in("id", uniqueBuyerIds);
+        const names: Record<string, string> = {};
+        (buyers ?? []).forEach((buyer: BuyerData) => {
+          const name = [buyer.firstName, buyer.lastName].filter(Boolean).join(" ").trim();
+          names[buyer.id] = name || "Customer";
+        });
+        setBuyerNames(names);
       }
-    };
-    load();
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
+
+  useEffect(() => { loadShipments(); }, [loadShipments]);
+
+  // Load seller's orders when the create dialog opens
+  const handleOpenCreate = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("orders")
+      .select("id, orderNumber, status")
+      .eq("sellerId", user.id)
+      .order("createdAt", { ascending: false });
+    setSellerOrders((data ?? []) as { id: string; orderNumber: string; status: string }[]);
+    setCreateForm({ orderId: "", courierName: "", trackingNumber: "", dispatchedAt: "" });
+    setCreateOpen(true);
+  };
+
+  const handleCreateShipment = async () => {
+    if (!createForm.orderId) return;
+    setCreating(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+
+      const payload: Record<string, unknown> = { order_id: createForm.orderId };
+      if (createForm.courierName.trim()) payload.courier_name = createForm.courierName.trim();
+      if (createForm.trackingNumber.trim()) payload.tracking_number = createForm.trackingNumber.trim();
+      if (createForm.dispatchedAt) payload.dispatched_at = new Date(createForm.dispatchedAt).toISOString();
+
+      const res = await fetch("/.netlify/functions/create-shipment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Failed to create shipment");
+
+      toast({ title: "Shipment created", description: "The shipment has been logged successfully." });
+      setCreateOpen(false);
+      await loadShipments();
+    } catch (err) {
+      toast({ title: "Failed to create shipment", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const filtered = shipments.filter((s) => {
     const q = search.toLowerCase();
@@ -153,11 +207,16 @@ const SellerShipments = () => {
 
   return (
     <div className="p-6 space-y-6 max-w-[1200px]">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-foreground">Shipments</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {loading ? "Loading…" : `${shipments.length} shipments · ${activeShipments.length} active`}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Shipments</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {loading ? "Loading…" : `${shipments.length} shipments · ${activeShipments.length} active`}
+          </p>
+        </div>
+        <Button size="sm" onClick={handleOpenCreate}>
+          <Plus className="mr-2 h-4 w-4" /> Log Shipment
+        </Button>
       </div>
 
       {/* Stats */}
@@ -232,6 +291,72 @@ const SellerShipments = () => {
             </DialogContent>
           );
         })()}
+      </Dialog>
+
+      {/* Create Shipment Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-primary" /> Log Shipment
+            </DialogTitle>
+            <DialogDescription>Record a new shipment for one of your orders.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-xs">Order *</Label>
+              <Select value={createForm.orderId} onValueChange={(v) => setCreateForm((f) => ({ ...f, orderId: v }))}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select an order…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sellerOrders.length === 0 ? (
+                    <SelectItem value="_none" disabled>No orders found</SelectItem>
+                  ) : (
+                    sellerOrders.map((o) => (
+                      <SelectItem key={o.id} value={o.id}>
+                        {o.orderNumber || o.id.slice(0, 8).toUpperCase()} — {o.status}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Carrier / Courier</Label>
+              <Input
+                className="mt-1"
+                placeholder="e.g. Royal Mail, DPD, UPS"
+                value={createForm.courierName}
+                onChange={(e) => setCreateForm((f) => ({ ...f, courierName: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Tracking Number</Label>
+              <Input
+                className="mt-1"
+                placeholder="e.g. JD000123456789"
+                value={createForm.trackingNumber}
+                onChange={(e) => setCreateForm((f) => ({ ...f, trackingNumber: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">Dispatch Date (optional)</Label>
+              <Input
+                type="date"
+                className="mt-1"
+                value={createForm.dispatchedAt}
+                onChange={(e) => setCreateForm((f) => ({ ...f, dispatchedAt: e.target.value }))}
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>Cancel</Button>
+            <Button onClick={handleCreateShipment} disabled={!createForm.orderId || creating}>
+              {creating ? <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Creating…</> : "Create Shipment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </div>
   );

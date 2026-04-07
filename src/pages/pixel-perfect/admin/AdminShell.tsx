@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 const navItems = [
   { to: "/pp/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/pp/admin/users", label: "Users", icon: Users },
-  { to: "/pp/admin/approvals", label: "Seller Approvals", icon: ShieldCheck },
+  { to: "/pp/admin/approvals", label: "Sellers", icon: ShieldCheck },
   { to: "/pp/admin/products", label: "Products", icon: Package },
   { to: "/pp/admin/orders", label: "Orders", icon: ShoppingBag },
   { to: "/pp/admin/flagged", label: "Flagged / Reports", icon: Flag },

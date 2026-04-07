@@ -1,19 +1,18 @@
 import { useState, useEffect } from "react";
-import { UserCircle, MapPin, Camera, Save, Calendar, ShoppingBag, Star } from "lucide-react";
+import { UserCircle, MapPin, Save, Calendar, ShoppingBag, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { useToast } from "@/hooks/use-toast";
 
 interface FormState {
   firstName: string;
   lastName: string;
   email: string;
-  bio: string;
   shippingLine1: string;
   shippingLine2: string;
   shippingCity: string;
@@ -23,16 +22,15 @@ interface FormState {
 
 const BuyerProfile = () => {
   const { user } = useAuthStore();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saveMsg, setSaveMsg] = useState("");
   const [totalOrders, setTotalOrders] = useState(0);
   const [memberSince, setMemberSince] = useState("—");
   const [form, setForm] = useState<FormState>({
     firstName: "",
     lastName: "",
     email: "",
-    bio: "",
     shippingLine1: "",
     shippingLine2: "",
     shippingCity: "",
@@ -88,8 +86,8 @@ const BuyerProfile = () => {
           }));
         }
         setTotalOrders(ordersRes.count ?? 0);
-      } catch (err) {
-        console.error("Error fetching profile:", err);
+      } catch {
+        toast({ title: "Failed to load profile", description: "Please refresh the page.", variant: "destructive" });
       } finally {
         setLoading(false);
       }
@@ -125,11 +123,9 @@ const BuyerProfile = () => {
             { onConflict: "userId" }
           ),
       ]);
-      setSaveMsg("Profile saved successfully.");
-      setTimeout(() => setSaveMsg(""), 3000);
-    } catch (err) {
-      console.error("Error saving profile:", err);
-      setSaveMsg("Failed to save. Please try again.");
+      toast({ title: "Profile saved", description: "Your profile has been updated." });
+    } catch {
+      toast({ title: "Failed to save profile", description: "Please try again.", variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -148,23 +144,13 @@ const BuyerProfile = () => {
           <Save className="mr-2 h-4 w-4" />{saving ? "Saving…" : "Save Changes"}
         </Button>
       </div>
-      {saveMsg && (
-        <p className={`text-sm font-medium ${saveMsg.startsWith("Failed") ? "text-destructive" : "text-emerald-600"}`}>
-          {saveMsg}
-        </p>
-      )}
 
       {/* Profile Header */}
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start gap-5">
-            <div className="relative group">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground text-2xl font-bold">
-                {loading ? "…" : initials}
-              </div>
-              <button className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Camera className="h-5 w-5 text-white" />
-              </button>
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground text-2xl font-bold shrink-0">
+              {loading ? "…" : initials}
             </div>
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
@@ -203,10 +189,6 @@ const BuyerProfile = () => {
               <Input type="email" value={form.email} disabled className="mt-1" />
               <p className="text-xs text-muted-foreground mt-1">Email cannot be changed here.</p>
             </div>
-          </div>
-          <div>
-            <Label className="text-xs">Bio / About</Label>
-            <Textarea value={form.bio} onChange={(e) => updateField("bio", e.target.value)} rows={3} className="mt-1" />
           </div>
         </CardContent>
       </Card>

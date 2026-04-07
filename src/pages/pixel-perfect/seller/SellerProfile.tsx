@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Building2, MapPin, Mail, Star,
-  ShieldCheck, Camera, Save, Package, Calendar
+  ShieldCheck, Save, Package, Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileForm {
   businessName: string;
@@ -42,9 +43,9 @@ const defaultForm: ProfileForm = {
 
 const SellerProfile = () => {
   const { user } = useAuthStore();
+  const { toast } = useToast();
   const [form, setForm] = useState<ProfileForm>(defaultForm);
   const [saving, setSaving] = useState(false);
-  const [saveMsg, setSaveMsg] = useState("");
   const [stats, setStats] = useState({ rating: 0, totalSales: 0, memberSince: "" });
   const [storeSlug, setStoreSlug] = useState("");
   const [sellerStatus, setSellerStatus] = useState<string>("draft");
@@ -60,7 +61,7 @@ const SellerProfile = () => {
           .maybeSingle(),
         supabase
           .from("seller_stores")
-          .select("storeSlug, storeName")
+          .select("storeSlug, storeName, storeDescription")
           .eq("userId", user.id)
           .maybeSingle(),
       ]);
@@ -79,7 +80,7 @@ const SellerProfile = () => {
         address: addr.address ?? "",
         city: addr.city ?? "",
         postcode: addr.postcode ?? "",
-        bio: "",
+        bio: storeRes.data?.storeDescription ?? "",
       });
       setStats({
         rating: p?.rating ?? 0,
@@ -98,7 +99,6 @@ const SellerProfile = () => {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    setSaveMsg("");
     try {
       const nameParts = form.contactName.trim().split(" ");
       const firstName = nameParts[0] ?? "";
@@ -113,8 +113,12 @@ const SellerProfile = () => {
           contactPhone: form.phone,
           businessAddress: { address: form.address, city: form.city, postcode: form.postcode },
         }).eq("userId", user.id),
+        supabase.from("seller_stores").upsert(
+          { userId: user.id, storeDescription: form.bio },
+          { onConflict: "userId" }
+        ),
       ]);
-      setSaveMsg("Profile saved.");
+      toast({ title: "Profile saved", description: "Your seller profile has been updated." });
 
       // Trigger activation re-check after profile update.
       // connect-status evaluates profile completeness + Stripe readiness
@@ -129,7 +133,7 @@ const SellerProfile = () => {
         }
       });
     } catch {
-      setSaveMsg("Failed to save. Please try again.");
+      toast({ title: "Failed to save profile", description: "Please try again.", variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -146,23 +150,17 @@ const SellerProfile = () => {
           <Save className="mr-2 h-4 w-4" /> {saving ? "Saving…" : "Save Changes"}
         </Button>
       </div>
-      {saveMsg && <p className="text-sm text-muted-foreground">{saveMsg}</p>}
 
       {/* Profile Header Card */}
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start gap-5">
-            <div className="relative group">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-hero flex items-center justify-center text-primary-foreground text-2xl font-bold">
-                {form.businessName
-                  ? form.businessName.slice(0, 2).toUpperCase()
-                  : form.contactName
-                  ? form.contactName.split(" ").filter((n: string) => n.length > 0).map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
-                    : "??"}
-              </div>
-              <button className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Camera className="h-5 w-5 text-white" />
-              </button>
+            <div className="w-20 h-20 rounded-2xl bg-gradient-hero flex items-center justify-center text-primary-foreground text-2xl font-bold shrink-0">
+              {form.businessName
+                ? form.businessName.slice(0, 2).toUpperCase()
+                : form.contactName
+                ? form.contactName.split(" ").filter((n: string) => n.length > 0).map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
+                  : "??"}
             </div>
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
