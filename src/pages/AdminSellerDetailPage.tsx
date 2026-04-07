@@ -695,55 +695,13 @@ export default function AdminSellerDetailPage() {
               </div>
             </div>
 
-            {/* Commission */}
-            <div className="card">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Commission Rate</h2>
-              {editingCommission ? (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Commission (%)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      value={commissionValue}
-                      onChange={(e) => setCommissionValue(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-800"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={saveCommission}
-                      disabled={actionLoading}
-                      className="btn-primary text-sm flex-1"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingCommission(false);
-                        setCommissionValue(String(profile.commission ?? DEFAULT_COMMISSION_RATE));
-                      }}
-                      className="btn-outline text-sm flex-1"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-navy-800">{profile.commission}%</span>
-                  <button
-                    onClick={() => setEditingCommission(true)}
-                    className="btn-outline flex items-center gap-1 text-sm"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                    Edit
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* Commission Rate
+                NOTE: Per-seller commission overrides are stored in seller_profiles.commission
+                but are NOT yet applied by the payment webhook (stripe-webhook.ts), which
+                always uses the global promo rate (0% until 31 Aug 2026, then 7%).
+                This section is hidden to avoid misleading admins until per-seller
+                commission override logic is implemented in the webhook.
+            */}
 
             {/* Stripe Connect / Payout */}
             <div className="card">
