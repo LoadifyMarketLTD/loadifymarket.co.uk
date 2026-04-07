@@ -147,3 +147,7 @@
     page-break-inside: avoid;
   }
 }
+
+section {
+  scroll-margin-top: 80px;
+}

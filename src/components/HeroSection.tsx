@@ -160,7 +160,7 @@ const HeroSection = () => {
             onClick={() => navigate(user ? "/pp/seller" : "/signup?type=seller")}
             aria-label="Start selling on Loadify Market"
           >
-            Start Selling →
+            Start Selling in Minutes →
           </button>
 
           <button

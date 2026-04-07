@@ -128,8 +128,9 @@ const FeaturedProducts = () => {
                     Sample Listing
                   </p>
                   <h3 className="text-base font-extrabold text-white/60 leading-snug">
-                    Coming Soon
+                    Sample Listing
                   </h3>
+                  <span className="text-xs text-white/50">Live Preview</span>
                 </div>
               </div>
             ))}

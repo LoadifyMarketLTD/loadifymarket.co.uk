@@ -5,19 +5,22 @@
  * Section order:
  *
  *  1. Header (fixed, pt-[112px] spacer to clear it)
- *  2. Hero
- *  3. Trust/Benefits strip — immediately under hero
- *  4. Marketplace block (single shared wrapper)
- *     4a. Category slider
- *     4b. Browse the Marketplace (FeaturedProducts)
- *     4c. Shop by Category (CategoryGrid)
- *     4d. Featured Listings — 3 feature image cards
- *  5. Why Choose Loadify Market (FeaturesSection)
- *  6. Why + How block (single shared wrapper)
- *     6a. Platform Features — buyer vs seller
- *     6b. How It Works — buyer flow
- *  7. Seller Journey CTA
- *  8. Footer
+ *  2. UrgencyBar — 0% commission banner
+ *  3. Hero
+ *  4. SocialProof strip — stats under hero
+ *  5. Trust/Benefits strip
+ *  6. Marketplace block (single shared wrapper)
+ *     6a. Category slider → MicroCTA
+ *     6b. Browse the Marketplace (FeaturedProducts) → MicroCTA
+ *     6c. Shop by Category (CategoryGrid)
+ *     6d. Featured Listings — 3 feature image cards
+ *  7. Why Choose Loadify Market (FeaturesSection)
+ *  8. Why + How block (single shared wrapper)
+ *     8a. Platform Features — buyer vs seller → MicroCTA
+ *     8b. How It Works — buyer flow
+ *  9. Seller Journey CTA
+ * 10. Footer
+ * 11. StickyCTA — mobile-only fixed bottom button
  */
 
 import Header from "@/components/Header";
@@ -33,6 +36,10 @@ import HowItWorks from "@/components/HowItWorks";
 import SellerJourneySection from "@/components/SellerJourneySection";
 import Footer from "@/components/Footer";
 import LazySection from "@/components/LazySection";
+import UrgencyBar from "@/components/UrgencyBar";
+import SocialProof from "@/components/SocialProof";
+import MicroCTA from "@/components/ui/MicroCTA";
+import StickyCTA from "@/components/StickyCTA";
 
 export default function Home() {
   return (
@@ -40,38 +47,48 @@ export default function Home() {
       <Header />
       {/* spacer: 64px header row + 48px category nav */}
       <div className="pt-[112px]" />
+
+      {/* Urgency bar — immediately below header */}
+      <UrgencyBar />
+
       <main>
         {/* 1 — Hero */}
         <HeroSection />
 
-        {/* 2 — Trust/Benefits — immediately below hero */}
+        {/* 2 — Social proof stats — immediately under hero */}
+        <SocialProof />
+
+        {/* 3 — Trust/Benefits */}
         <TrustStrip />
 
-        {/* 3 — Marketplace block: all discovery content in one shared wrapper */}
+        {/* 4 — Marketplace block: all discovery content in one shared wrapper */}
         <LazySection>
           <div>
             <CategorySlider />
+            <MicroCTA text="Explore All Categories" link="/catalog" />
             <FeaturedProducts />
+            <MicroCTA text="Browse All Listings" link="/catalog" />
             <CategoryGrid />
             <FeaturedListings />
           </div>
         </LazySection>
 
-        {/* 4 — Why Choose Loadify Market */}
+        {/* 5 — Why Choose Loadify Market */}
         <LazySection>
           <FeaturesSection />
         </LazySection>
 
-        {/* 5 — Why + How block: platform features + buyer flow in one shared wrapper */}
+        {/* 6 — Why + How block: platform features + buyer flow in one shared wrapper */}
         <LazySection>
           <div>
             <PlatformFeatures />
+            <MicroCTA text="Start Selling Today" link="/register" />
             <div className="h-px bg-white/10 w-full" />
             <HowItWorks />
           </div>
         </LazySection>
 
-        {/* 6 — Seller Journey CTA */}
+        {/* 7 — Seller Journey CTA */}
         <LazySection>
           <SellerJourneySection />
         </LazySection>
@@ -80,6 +97,9 @@ export default function Home() {
       <LazySection>
         <Footer />
       </LazySection>
+
+      {/* Mobile-only sticky CTA */}
+      <StickyCTA />
     </div>
   );
 }
