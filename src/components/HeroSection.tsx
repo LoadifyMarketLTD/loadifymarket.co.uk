@@ -241,7 +241,7 @@ const HeroSection = () => {
       {!expired && (
         <div
           className="absolute z-20 hidden sm:block"
-          style={{ top: "37%", left: "52%", transform: "translate(-50%, -50%)" }}
+          style={{ top: "26%", left: "52%", transform: "translate(-50%, -50%)" }}
         >
           <div
             className="flex flex-col items-center gap-2"
