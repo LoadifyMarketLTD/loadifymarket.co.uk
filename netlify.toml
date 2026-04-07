@@ -8,6 +8,16 @@
 [functions]
   node_bundler = "esbuild"
 
+# ─── Edge Functions ───────────────────────────────────────────────────────────
+# security-headers runs at the Netlify edge (Deno runtime) and adds
+# Strict-Transport-Security and Permissions-Policy to every HTML response.
+# The edge function also has in-source config (config.path = '/*'), but the
+# explicit registration below ensures it is always active regardless of
+# Netlify CLI version.
+[[edge_functions]]
+  function = "security-headers"
+  path = "/*"
+
 # ─── Security Headers (applied to all responses) ─────────────────────────────
 [[headers]]
   for = "/*"

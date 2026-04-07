@@ -20,7 +20,6 @@ import {
   ShieldAlert,
   BarChart2,
   ExternalLink,
-  Edit2,
   RefreshCcw,
   Send,
 } from 'lucide-react';import { formatDistanceToNow } from 'date-fns';
@@ -43,8 +42,6 @@ export default function AdminSellerDetailPage() {
   const [data, setData] = useState<SellerDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [editingCommission, setEditingCommission] = useState(false);
-  const [commissionValue, setCommissionValue] = useState('');
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [resendMessage, setResendMessage] = useState('');
 
@@ -97,7 +94,6 @@ export default function AdminSellerDetailPage() {
         store: storeData || null,
         products: productsData || [],
       });
-      setCommissionValue(String(profile.commission ?? DEFAULT_COMMISSION_RATE));
     } catch (err) {
       console.error('Error fetching seller detail:', err);
     } finally {
@@ -174,29 +170,6 @@ export default function AdminSellerDetailPage() {
       await fetchSeller();
     } catch (err) {
       console.error('Error unblocking user:', err);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const saveCommission = async () => {
-    if (!id) return;
-    const parsed = parseFloat(commissionValue);
-    if (isNaN(parsed) || parsed < 0 || parsed > 100) {
-      alert('Commission must be a number between 0 and 100');
-      return;
-    }
-    setActionLoading(true);
-    try {
-      const { error } = await supabase
-        .from('seller_profiles')
-        .update({ commission: parsed })
-        .eq('userId', id);
-      if (error) throw error;
-      setEditingCommission(false);
-      await fetchSeller();
-    } catch (err) {
-      console.error('Error saving commission:', err);
     } finally {
       setActionLoading(false);
     }
@@ -695,55 +668,13 @@ export default function AdminSellerDetailPage() {
               </div>
             </div>
 
-            {/* Commission */}
-            <div className="card">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Commission Rate</h2>
-              {editingCommission ? (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Commission (%)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.1"
-                      value={commissionValue}
-                      onChange={(e) => setCommissionValue(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-navy-800"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={saveCommission}
-                      disabled={actionLoading}
-                      className="btn-primary text-sm flex-1"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingCommission(false);
-                        setCommissionValue(String(profile.commission ?? DEFAULT_COMMISSION_RATE));
-                      }}
-                      className="btn-outline text-sm flex-1"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-navy-800">{profile.commission}%</span>
-                  <button
-                    onClick={() => setEditingCommission(true)}
-                    className="btn-outline flex items-center gap-1 text-sm"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" />
-                    Edit
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* Commission Rate
+                NOTE: Per-seller commission overrides are stored in seller_profiles.commission
+                but are NOT yet applied by the payment webhook (stripe-webhook.ts), which
+                always uses the global promo rate (0% until 31 Aug 2026, then 7%).
+                This section is hidden to avoid misleading admins until per-seller
+                commission override logic is implemented in the webhook.
+            */}
 
             {/* Stripe Connect / Payout */}
             <div className="card">

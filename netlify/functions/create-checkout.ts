@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { randomUUID } from 'crypto';
 import type { Handler } from '@netlify/functions';
 
 interface CheckoutItem {
@@ -147,15 +148,28 @@ export const handler: Handler = async (event) => {
       siteUrl = 'http://localhost:8888';
     }
 
+    // Generate a transferGroup identifier before creating the session so it
+    // can be stored in session metadata. The webhook (stripe-webhook.ts) reads
+    // metadata.transferGroup to set transfer_group on Connect transfers,
+    // linking all seller payouts from this checkout back to one originating
+    // payment for Stripe compliance auditing.
+    const transferGroup = randomUUID();
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
       line_items: lineItems,
       success_url: `${siteUrl}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/cart`,
+      payment_intent_data: {
+        // Associate the payment intent with the same transferGroup so all
+        // Connect transfers for this order are grouped in the Stripe Dashboard.
+        transfer_group: transferGroup,
+      },
       metadata: {
         buyerId: verifiedBuyerId,
         productIds: productIds.join(','),
+        transferGroup,
       },
     });
 

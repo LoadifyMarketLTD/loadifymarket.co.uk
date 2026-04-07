@@ -202,7 +202,7 @@ const Deals = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <main className="pt-20 pb-16">
+      <main className="pt-16 pb-16">
         {/* Hero section */}
         <div className="relative border-b border-border overflow-hidden">
           <div className="absolute inset-0">

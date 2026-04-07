@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, lazy, Suspense } from 'react';
 import { useAuthStore } from './store';
 import { CartProvider } from './contexts/CartContext';
+import CookieConsent from './components/CookieConsent';
 
 import RequireAuth from './components/auth/RequireAuth';
 import RequireAdmin from './components/auth/RequireAdmin';
@@ -413,6 +414,10 @@ function App() {
         {/* ── Wildcard — pixel-perfect 404 ─────────────────────────────────────── */}
         <Route path="*" element={<Suspense fallback={<PageLoader />}><PPNotFound /></Suspense>} />
       </Routes>
+      {/* Cookie consent banner — rendered once globally, outside the router tree
+          so it persists across route changes. Self-manages visibility via
+          localStorage (key: loadify_cookie_consent). */}
+      <CookieConsent />
     </CartProvider>
   );
 }

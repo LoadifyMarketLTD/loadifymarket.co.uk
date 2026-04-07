@@ -3,8 +3,8 @@ import { ArrowRight, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
-// Target: 1 July 2026 23:59:59 BST (= 22:59:59 UTC)
-const TARGET_TIME = new Date("2026-07-01T22:59:59Z").getTime();
+// Target: 31 August 2026 23:59:59 BST (= 22:59:59 UTC). Must match ZERO_COMMISSION_PROMO_END_UTC in stripe-webhook.ts.
+const TARGET_TIME = new Date("2026-08-31T22:59:59Z").getTime();
 
 interface TimeLeft {
   days: number;

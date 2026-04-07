@@ -24,7 +24,7 @@ const Cart = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="pt-24 pb-16">
+        <main className="pt-16 pb-16">
           <div className="container mx-auto px-4">
             <div className="max-w-md mx-auto text-center space-y-6 py-20">
               <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto">
@@ -51,7 +51,7 @@ const Cart = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <main className="pt-20 pb-16">
+      <main className="pt-16 pb-16">
         <div className="container mx-auto px-4">
           <BreadcrumbNav
             items={[

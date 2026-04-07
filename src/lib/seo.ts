@@ -1,6 +1,7 @@
 /**
- * SEO Utilities for Loadify Market Ltd
- * Provides functions for generating meta tags, structured data, and SEO optimization
+ * SEO Utilities for Loadify Market
+ * Provides functions for generating meta tags, structured data, and SEO optimization.
+ * Brand: Loadify Market — Legal entity: XDrive Logistics Ltd
  */
 
 export interface SEOConfig {
@@ -34,7 +35,7 @@ export const generateMetaTags = (config: SEOConfig): string => {
     <meta property="og:title" content="${title}">
     <meta property="og:description" content="${description}">
     <meta property="og:image" content="${image}">
-    <meta property="og:site_name" content="Loadify Market Ltd">
+    <meta property="og:site_name" content="Loadify Market">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
@@ -52,8 +53,9 @@ export const generateOrganizationSchema = () => {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Loadify Market Ltd',
-    legalName: 'Loadify Market Ltd',
+    name: 'Loadify Market',
+    alternateName: 'Loadify Market',
+    legalName: 'XDrive Logistics Ltd',
     url: 'https://loadifymarket.co.uk',
     logo: 'https://loadifymarket.co.uk/favicon.svg',
     foundingDate: '2025',
@@ -98,7 +100,7 @@ export const generateProductSchema = (product: {
     sku: product.id,
     brand: {
       '@type': 'Brand',
-      name: 'Loadify Market Ltd',
+      name: 'Loadify Market',
     },
     offers: {
       '@type': 'Offer',
@@ -116,7 +118,7 @@ export const generateProductSchema = (product: {
         : 'https://schema.org/UsedCondition',
       seller: {
         '@type': 'Organization',
-        name: 'Loadify Market Ltd',
+        name: 'Loadify Market',
       },
     },
     aggregateRating: product.averageRating ? {
@@ -144,11 +146,11 @@ export const generateWebsiteSchema = () => {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Loadify Market Ltd',
+    name: 'Loadify Market',
     url: 'https://loadifymarket.co.uk',
     potentialAction: {
       '@type': 'SearchAction',
-      target: 'https://loadifymarket.co.uk/catalog?search={search_term_string}',
+      target: 'https://loadifymarket.co.uk/catalog?q={search_term_string}',
       'query-input': 'required name=search_term_string',
     },
   };

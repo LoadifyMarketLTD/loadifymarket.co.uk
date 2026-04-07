@@ -156,7 +156,7 @@ const Checkout = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="pt-24 pb-16">
+        <main className="pt-16 pb-16">
           <div className="container mx-auto px-4 text-center py-20">
             <h1 className="font-display text-2xl font-bold text-foreground mb-4">Your cart is empty</h1>
             <p className="text-muted-foreground mb-6">Add some items before checking out.</p>
@@ -176,7 +176,7 @@ const Checkout = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <main className="pt-20 pb-16">
+      <main className="pt-16 pb-16">
         <div className="container mx-auto px-4">
           <BreadcrumbNav
             items={[
