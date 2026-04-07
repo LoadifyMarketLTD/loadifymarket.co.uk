@@ -59,21 +59,42 @@ const HeroSection = () => {
       className="relative overflow-hidden"
       aria-label="Hero — sell online, grow your business with Loadify Market"
       style={{
-        backgroundImage: "url('/hero.jpeg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center right",
-        backgroundRepeat: "no-repeat",
+        background: "#0A1930",
         minHeight: `clamp(520px, calc(100vh - ${HEADER_HEIGHT_PX}px), 820px)`,
       }}
     >
-      {/* ── Dark gradient mask — covers image's baked-in left text ─────── */}
+      {/*
+       * ── HERO IMAGE — right-anchored ──────────────────────────────────────
+       * The source hero.jpeg has text composited into its left ~40%.
+       * By positioning the img to cover only the RIGHT 68% of the container
+       * (with object-position: right center) the baked-in text is cropped off
+       * the left edge while the laptop / phone / warehouse fills the right side.
+       */}
+      <img
+        src="/hero.jpeg"
+        alt=""
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: "68%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "right center",
+          zIndex: 0,
+        }}
+      />
+
+      {/* ── Blend gradient — smooth dark→image transition ────────────────── */}
       <div
         aria-hidden="true"
         style={{
           position: "absolute",
           inset: 0,
           background:
-            "linear-gradient(to right, rgba(10,25,48,0.98) 0%, rgba(10,25,48,0.97) 38%, rgba(10,25,48,0.82) 55%, rgba(10,25,48,0.25) 68%, transparent 78%)",
+            "linear-gradient(to right, #0A1930 0%, #0A1930 28%, rgba(10,25,48,0.85) 42%, rgba(10,25,48,0.20) 58%, transparent 70%)",
           zIndex: 1,
         }}
       />
