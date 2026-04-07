@@ -11,6 +11,7 @@ import {
 import { Search, Package, Eye } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { toast } from "@/hooks/use-toast";
 
 interface OrderRow {
   id: string;
@@ -52,6 +53,7 @@ const BuyerOrders = () => {
         setOrders((data as unknown as OrderRow[]) || []);
       } catch (err) {
         console.error("Error fetching orders:", err);
+        toast({ title: "Failed to load orders", description: "Please refresh the page.", variant: "destructive" });
       } finally {
         setLoading(false);
       }

@@ -53,7 +53,7 @@ const BuyerProfile = () => {
             .from("buyer_profiles")
             .select("shippingAddress, billingAddress")
             .eq("userId", user.id)
-            .single(),
+            .maybeSingle(),
           supabase
             .from("orders")
             .select("id", { count: "exact", head: true })
