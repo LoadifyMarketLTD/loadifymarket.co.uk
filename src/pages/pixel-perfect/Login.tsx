@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import logo from "@/assets/loadify-logo.svg";
-import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 
 const Login = () => {
@@ -34,6 +33,7 @@ const Login = () => {
     setError("");
     setLoading(true);
     try {
+      const { supabase } = await import("@/lib/supabase");
       const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
       if (authError) throw authError;
       const nextUrl = searchParams.get("next");
