@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Package, Search, Truck, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import type { ShipmentEvent } from '../types/shipping';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 interface TrackingData {
   order: {
@@ -114,7 +116,10 @@ export default function TrackOrderPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-white flex flex-col">
+      <Header forceOpaque />
+      <main className="flex-1 pt-16 lg:pt-[104px] pb-16">
+      <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-navy-800 mb-2">Track Your Order</h1>
         <p className="text-gray-600">Enter your order number to track your shipment</p>
@@ -307,6 +312,9 @@ export default function TrackOrderPage() {
           )}
         </div>
       )}
+      </div>
+      </main>
+      <Footer />
     </div>
   );
 }

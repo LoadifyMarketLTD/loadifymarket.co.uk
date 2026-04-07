@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Package, Truck, CheckCircle, Clock, MapPin } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 interface ShipmentEvent {
   id: string;
@@ -143,7 +145,10 @@ export default function TrackingPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-white flex flex-col">
+      <Header forceOpaque />
+      <main className="flex-1 pt-16 lg:pt-[104px] pb-16">
+      <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Track Your Order</h1>
 
       {/* Tracking Form */}
@@ -268,6 +273,9 @@ export default function TrackingPage() {
           </p>
         </div>
       )}
+      </div>
+      </main>
+      <Footer />
     </div>
   );
 }

@@ -1,24 +1,12 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store";
 import { PROMO_END_UTC } from "@/lib/promoDeadline";
+import { useCountdown } from "@/hooks/use-countdown";
 
 /**
  * Combined height of fixed Header row (64px) + Header category nav (48px).
  */
 const HEADER_HEIGHT_PX = 112;
-
-type TimeLeft = { days: number; hours: number; minutes: number; seconds: number };
-
-function getTimeLeft(): TimeLeft {
-  const diff = Math.max(0, PROMO_END_UTC - Date.now());
-  return {
-    days:    Math.floor(diff / (1000 * 60 * 60 * 24)),
-    hours:   Math.floor((diff / (1000 * 60 * 60)) % 24),
-    minutes: Math.floor((diff / (1000 * 60)) % 60),
-    seconds: Math.floor((diff / 1000) % 60),
-  };
-}
 
 function pad2(n: number) { return String(n).padStart(2, "0"); }
 
@@ -35,18 +23,9 @@ const TRUST_ITEMS = [
 ];
 
 const HeroSection = () => {
-  const [time, setTime] = useState(getTimeLeft);
+  const { days, hours, minutes, seconds, expired } = useCountdown(PROMO_END_UTC);
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-
-  useEffect(() => {
-    const id = setInterval(() => setTime(getTimeLeft()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const expired =
-    time.days === 0 && time.hours === 0 &&
-    time.minutes === 0 && time.seconds === 0;
 
   return (
     <section
@@ -229,6 +208,44 @@ const HeroSection = () => {
             </div>
           ))}
         </div>
+
+        {/* Mobile-only countdown strip (hidden on sm+ where the floating card takes over) */}
+        {!expired && (
+          <div
+            className="mt-6 flex items-center gap-3 sm:hidden"
+            style={{
+              padding: "12px 16px",
+              borderRadius: 14,
+              background: "rgba(18,18,18,0.78)",
+              backdropFilter: "blur(14px)",
+              WebkitBackdropFilter: "blur(14px)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            <span
+              className="shrink-0 font-bold px-2 py-0.5 rounded-lg border whitespace-nowrap"
+              style={{
+                fontSize: 11,
+                color: "#86efac",
+                background: "rgba(34,197,94,0.18)",
+                borderColor: "rgba(34,197,94,0.32)",
+              }}
+            >
+              0% Fees
+            </span>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>ends in</span>
+            <div className="flex items-baseline gap-0.5 tabular-nums" style={{ color: "#fff" }}>
+              <span style={{ fontSize: 18, fontWeight: 800, lineHeight: 1 }}>{pad2(days)}</span>
+              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>d </span>
+              <span style={{ fontSize: 18, fontWeight: 800, lineHeight: 1 }}>{pad2(hours)}</span>
+              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>h </span>
+              <span style={{ fontSize: 18, fontWeight: 800, lineHeight: 1 }}>{pad2(minutes)}</span>
+              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>m </span>
+              <span style={{ fontSize: 18, fontWeight: 800, lineHeight: 1 }}>{pad2(seconds)}</span>
+              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>s</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Countdown widget — aligned with upper headline region ── */}
@@ -267,13 +284,13 @@ const HeroSection = () => {
               Offer ends in
             </span>
             <div className="flex items-baseline gap-1 tabular-nums" style={{ color: "#fff" }}>
-              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(time.days)}</span>
+              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(days)}</span>
               <span style={{ fontSize: 16, color: "rgba(255,255,255,0.4)" }}>d</span>
-              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(time.hours)}</span>
+              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(hours)}</span>
               <span style={{ fontSize: 16, color: "rgba(255,255,255,0.4)" }}>h</span>
-              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(time.minutes)}</span>
+              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(minutes)}</span>
               <span style={{ fontSize: 16, color: "rgba(255,255,255,0.4)" }}>m</span>
-              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(time.seconds)}</span>
+              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(seconds)}</span>
               <span style={{ fontSize: 16, color: "rgba(255,255,255,0.4)" }}>s</span>
             </div>
           </div>

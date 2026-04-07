@@ -9,6 +9,8 @@ import {
   Star,
   MessageCircle,
 } from 'lucide-react';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const GUIDELINES = [
   {
@@ -64,6 +66,8 @@ const GUIDELINES = [
 export default function SellerGuidelinesPage() {
   return (
     <div className="bg-white min-h-screen">
+      <Header forceOpaque />
+      <main className="pt-16 lg:pt-[104px]">
       {/* Hero */}
       <section className="bg-white border-b border-gray-200 py-12">
         <div className="container-market text-center">
@@ -85,7 +89,7 @@ export default function SellerGuidelinesPage() {
             </Link>
             <Link
               to="/pricing"
-              className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-[#1E3A5F] font-semibold px-6 py-3 rounded transition-colors"
+              className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-6 py-3 rounded transition-colors"
             >
               View Fees &amp; Pricing
             </Link>
@@ -169,13 +173,15 @@ export default function SellerGuidelinesPage() {
             </Link>
             <Link
               to="/contact"
-              className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-[#1E3A5F] font-semibold px-6 py-3 rounded transition-colors"
+              className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-6 py-3 rounded transition-colors"
             >
               Contact Us
             </Link>
           </div>
         </div>
       </section>
+      </main>
+      <Footer />
     </div>
   );
 }
