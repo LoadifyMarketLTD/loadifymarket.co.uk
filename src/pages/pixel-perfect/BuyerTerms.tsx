@@ -1,11 +1,11 @@
-import Navbar from "@/components/Navbar";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 
 const BuyerTerms = () => {
   return (
     <div className="min-h-screen">
-      <Navbar />
+      <Header forceOpaque />
       <main className="pt-16 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Buyer Terms" }]} backTo="/" />

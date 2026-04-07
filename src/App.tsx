@@ -12,7 +12,7 @@ import RequireSeller from './components/auth/RequireSeller';
 const Home                 = lazy(() => import('./pages/Home'));
 
 // ─── Pixel-perfect pages — standalone (include own Navbar + Footer) ───────────
-const PixelPerfectIndex    = lazy(() => import('./pages/pixel-perfect/Index'));
+
 const PPCatalog            = lazy(() => import('./pages/pixel-perfect/Catalog'));
 const PPCategoryPage       = lazy(() => import('./pages/pixel-perfect/CategoryPage'));
 const PPProductDetail      = lazy(() => import('./pages/pixel-perfect/ProductDetail'));
@@ -247,7 +247,7 @@ function App() {
         <Route path="reset-password" element={<Suspense fallback={<PageLoader />}><PPResetPassword /></Suspense>} />
 
         {/* /pp — pixel-perfect homepage (preview/alternate root) */}
-        <Route path="pp" element={<Suspense fallback={<PageLoader />}><PixelPerfectIndex /></Suspense>} />
+        <Route path="pp" element={<Navigate to="/" replace />} />
 
         {/* ── Pixel-perfect dashboard routes (own shell with sidebar) ──────────── */}
         {/* /pp/seller – RequireSeller */}

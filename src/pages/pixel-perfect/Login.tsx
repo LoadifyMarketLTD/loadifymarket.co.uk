@@ -23,9 +23,9 @@ const Login = () => {
     if (user) {
       const nextUrl = searchParams.get("next");
       if (nextUrl) navigate(nextUrl, { replace: true });
-      else if (user.role === "seller") navigate("/seller", { replace: true });
-      else if (user.role === "admin" || user.role === "owner") navigate("/admin", { replace: true });
-      else navigate("/dashboard", { replace: true });
+      else if (user.role === "seller") navigate("/pp/seller", { replace: true });
+      else if (user.role === "admin" || user.role === "owner") navigate("/pp/admin", { replace: true });
+      else navigate("/pp/buyer", { replace: true });
     }
   }, [user, searchParams, navigate]);
 
@@ -38,12 +38,12 @@ const Login = () => {
       if (authError) throw authError;
       const nextUrl = searchParams.get("next");
       if (nextUrl) { navigate(nextUrl, { replace: true }); return; }
-      let redirectTo = "/dashboard";
+      let redirectTo = "/pp/buyer";
       if (data.user) {
         const { data: profile, error: profileError } = await supabase.from("users").select("role").eq("id", data.user.id).single();
-        if (profileError) console.warn("Could not fetch user role, defaulting to /dashboard:", profileError.message);
-        if (profile?.role === "seller") redirectTo = "/seller";
-        else if (profile?.role === "admin" || profile?.role === "owner") redirectTo = "/admin";
+        if (profileError) console.warn("Could not fetch user role, defaulting to /pp/buyer:", profileError.message);
+        if (profile?.role === "seller") redirectTo = "/pp/seller";
+        else if (profile?.role === "admin" || profile?.role === "owner") redirectTo = "/pp/admin";
       }
       navigate(redirectTo, { replace: true });
     } catch (err) {
@@ -57,7 +57,7 @@ const Login = () => {
     <div className="min-h-screen flex">
       {/* Left — branding panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-hero relative items-center justify-center p-12">
-        <div className="absolute inset-0 bg-[url('/placeholder.svg')] opacity-5 bg-cover" />
+        <div className="absolute inset-0 opacity-5" style={{backgroundImage:"radial-gradient(circle,rgba(255,255,255,0.9) 1px,transparent 1px)",backgroundSize:"24px 24px"}} />
         <div className="relative z-10 max-w-md text-center space-y-6">
           <div className="flex items-center justify-center gap-3 mb-8">
             <img src={logo} alt="Loadify Market" className="h-12 w-12" />

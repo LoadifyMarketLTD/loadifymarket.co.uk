@@ -197,13 +197,15 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   // ── Idempotency guard ──────────────────────────────────────────────────────
   // The primary idempotency guarantee comes from the stripe_events table INSERT
   // with a UNIQUE constraint on event_id performed in the main handler.
-  // We add a secondary check against payment_sessions using an atomic INSERT
-  // (rather than SELECT-then-INSERT) to eliminate the race condition between
-  // concurrent webhook deliveries for the same Stripe event.
+  // We add a secondary check: if this session already has a 'completed'
+  // payment_sessions record, skip. (The 'pending' record is written by
+  // create-checkout.ts before the customer is redirected to Stripe, so we must
+  // filter by status='completed' to avoid false-positive skips.)
   const sessionCheckResult = await supabase!
     .from('payment_sessions')
     .select('id')
     .eq('stripeSessionId', session.id)
+    .eq('status', 'completed')
     .maybeSingle();
 
   if (sessionCheckResult.data) {
@@ -212,9 +214,25 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
   // ──────────────────────────────────────────────────────────────────────────
 
-  const metadata = session.metadata!;
+  // ── Fetch pre-populated order data from payment_sessions ──────────────────
+  // create-checkout.ts writes a 'pending' record with all order details before
+  // redirecting the customer to Stripe, avoiding Stripe's 500-char metadata
+  // limit and ensuring sellerId / price integrity (values come from the DB).
+  const { data: pendingSession, error: pendingError } = await supabase!
+    .from('payment_sessions')
+    .select('id, metadata')
+    .eq('stripeSessionId', session.id)
+    .eq('status', 'pending')
+    .maybeSingle();
 
-  // CartItem interface — matches what create-checkout serialises into metadata
+  if (pendingError || !pendingSession) {
+    throw new Error(
+      `No pending payment_sessions record found for Stripe session ${session.id}. ` +
+      'This may indicate create-checkout did not complete successfully.'
+    );
+  }
+
+  // CartItem interface — matches the shape written by create-checkout.ts
   interface CartItem {
     productId: string;
     sellerId: string;
@@ -223,11 +241,25 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     title: string;
   }
 
-  const items: CartItem[] = JSON.parse(metadata.items);
-  const shippingAddress = JSON.parse(metadata.shippingAddress);
-  const billingAddress = JSON.parse(metadata.billingAddress);
+  interface OrderData {
+    items: CartItem[];
+    shippingAddress: Record<string, string>;
+    billingAddress: Record<string, string>;
+    subtotal: number;
+    shippingAmount: number;
+    shippingMethod: string;
+    total: number;
+    buyerId: string;
+    transferGroup: string;
+  }
 
-  if (items.length === 0) throw new Error('Checkout metadata contains no items');
+  const orderData = pendingSession.metadata as OrderData;
+  const items: CartItem[] = orderData.items;
+  const shippingAddress = orderData.shippingAddress;
+  const billingAddress = orderData.billingAddress;
+  const transferGroup = orderData.transferGroup;
+
+  if (!items?.length) throw new Error('Order data contains no items');
 
   // ── Split items by seller ──────────────────────────────────────────────────
   // The marketplace model requires one order per seller so each seller only
@@ -242,8 +274,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const VAT_RATE = 0.20;
   // Dynamic commission rate: 0% during the promo period, 7% after 31 August 2026.
   const COMMISSION_RATE = getCommissionRate();
-  const totalShipping = parseFloat(metadata.shippingAmount || '0');
-  const totalSubtotal = parseFloat(metadata.subtotal);
+  const totalShipping = orderData.shippingAmount ?? 0;
+  const totalSubtotal = orderData.subtotal;
 
   let firstOrderId: string | null = null;
 
@@ -270,7 +302,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       .from('orders')
       .insert([
         {
-          buyerId: metadata.buyerId || null,
+          buyerId: orderData.buyerId || null,
           sellerId,
           productId: primaryItem.productId,
           quantity: sellerItems.reduce((sum, i) => sum + i.quantity, 0),
@@ -282,7 +314,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
           status: 'paid',
           shippingAddress,
           billingAddress,
-          shippingMethod: metadata.shippingMethod || 'Standard',
+          shippingMethod: orderData.shippingMethod || 'Standard',
         },
       ])
       .select()
@@ -392,12 +424,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     ) {
       const netSellerAmount = sellerGrandTotal - sellerCommission;
       try {
-        if (!metadata.transferGroup) {
+        if (!transferGroup) {
           // transferGroup is set by create-checkout.ts for all sessions created
           // after the Connect activation. Missing means the order was placed
           // before the code was deployed — proceed without it but log for audit.
           console.warn(
-            `stripe-webhook: transferGroup missing from session ${session.id} metadata — ` +
+            `stripe-webhook: transferGroup missing from order data for session ${session.id} — ` +
             'transfer will proceed without transfer_group (legacy order before Connect activation)'
           );
         }
@@ -408,7 +440,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
           destination: sellerConnectProfile.stripeAccountId,
           // Link this transfer to the originating payment so Stripe can
           // properly associate payouts with the charge in its Dashboard.
-          ...(metadata.transferGroup ? { transfer_group: metadata.transferGroup } : {}),
+          ...(transferGroup ? { transfer_group: transferGroup } : {}),
           metadata: { orderId: order.id, sellerId },
         });
 
@@ -466,19 +498,17 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     }
   }
 
-  // Record ONE payment session (stripeSessionId is UNIQUE) linked to the first order.
-  await supabase!.from('payment_sessions').insert([
-    {
+  // Mark the pre-populated payment_sessions record as completed now that all
+  // orders have been created. Also record the payment intent and order link.
+  await supabase!
+    .from('payment_sessions')
+    .update({
       orderId: firstOrderId,
-      userId: metadata.buyerId || null,
-      stripeSessionId: session.id,
       stripePaymentIntent: session.payment_intent as string,
-      amount: parseFloat(metadata.total),
-      currency: 'GBP',
+      amount: orderData.total,
       status: 'completed',
-      metadata: session,
-    },
-  ]);
+    })
+    .eq('id', pendingSession.id);
 
   // Send buyer confirmation email (async, don't wait)
   const sellerCount = sellerGroups.size;
@@ -497,7 +527,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         customerName: 'Customer',
         orderNumber: firstOrderId ?? 'unknown',
         orderDate: new Date().toLocaleDateString('en-GB'),
-        total: parseFloat(metadata.total),
+        total: orderData.total,
         items: (items as CartItem[]).map((item) => ({
           title: item.title,
           quantity: item.quantity,

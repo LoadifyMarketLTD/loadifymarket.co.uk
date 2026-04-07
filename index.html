@@ -58,20 +58,18 @@
     <!-- Preconnect to Supabase (API/auth requests fire immediately on load) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Preload LCP hero image — WebP for modern browsers, served from /public.
-        <!-- Google Fonts — loaded asynchronously to avoid blocking first render.
-         The preload link converts itself to a stylesheet once the resource is
-         fetched, which avoids the "preloaded but not used" browser warning that
-         the separate preload + media="print" two-link pattern can trigger.
-         The <noscript> fallback covers JS-disabled environments. -->
+    <!-- Google Fonts: Inter + Space Grotesk — loaded asynchronously to avoid blocking first render.
+         The preload link converts itself to a stylesheet once the resource is fetched,
+         avoiding the "preloaded but not used" browser warning.
+         The noscript fallback covers JS-disabled environments. -->
     <link
       rel="preload"
       as="style"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap"
       onload="this.onload=null;this.rel='stylesheet'"
     />
     <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" />
     </noscript>
 
     <!-- Structured Data - Organization -->

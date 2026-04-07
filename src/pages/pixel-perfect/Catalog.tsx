@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { X } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
-import Navbar from "@/components/Navbar";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import CatalogFilters from "@/components/catalog/CatalogFilters";
@@ -210,9 +210,9 @@ const Catalog = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <Header forceOpaque />
 
-      <main className="pt-16 pb-16">
+      <main className="pt-16 lg:pt-[104px] pb-16">
         <div className="container mx-auto px-4">
           <BreadcrumbNav
             items={[
