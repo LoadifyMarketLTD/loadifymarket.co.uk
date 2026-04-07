@@ -6,6 +6,7 @@ import { BRAND } from '../constants/brand';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { supabase } from '../lib/supabase';
+import { toast } from '../hooks/use-toast';
 
 export default function OrderSuccessPage() {
   const [searchParams] = useSearchParams();
@@ -32,7 +33,8 @@ export default function OrderSuccessPage() {
         .maybeSingle();
 
       if (!data) {
-        // No completed order found — redirect buyer away from the success page
+        // No completed order found — notify the user and redirect
+        toast({ title: "Order not found", description: "We could not verify your order. Please check your orders page or contact support.", variant: "destructive" });
         navigate('/catalog', { replace: true });
         return;
       }

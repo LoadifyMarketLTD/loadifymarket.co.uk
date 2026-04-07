@@ -95,7 +95,7 @@ const BuyerOrders = () => {
   const handleReturnSubmit = async () => {
     if (!returnOrder || !user || !returnReason || !returnDescription.trim()) return;
     if (!returnOrder.sellerId) {
-      toast({ title: "Cannot submit return", description: "Seller information is missing for this order.", variant: "destructive" });
+      toast({ title: "Cannot submit return", description: "Seller information is unavailable for this order. Please contact support for assistance.", variant: "destructive" });
       return;
     }
     setReturnLoading(true);
