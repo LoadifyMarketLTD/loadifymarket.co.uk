@@ -367,9 +367,9 @@ const BuyerSettings = () => {
           <Separator />
           <div className="space-y-3">
             <div>
-              <p className="text-sm font-medium text-foreground">Delete Account</p>
+              <p className="text-sm font-medium text-foreground">Deactivate Account</p>
               <p className="text-xs text-muted-foreground">
-                Deactivate your account. Type <strong>DELETE</strong> below to confirm.
+                This will deactivate your account and sign you out immediately. Your access will be removed, but your data is retained according to our data retention policy. To request permanent deletion or restore your account, contact support. Type <strong>DELETE</strong> to confirm.
               </p>
             </div>
             <div className="flex gap-2">

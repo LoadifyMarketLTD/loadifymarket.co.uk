@@ -11,7 +11,6 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import type { Return } from "@/types";
@@ -33,7 +32,6 @@ const SellerReturns = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Return | null>(null);
-  const [responseText, setResponseText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -130,7 +128,7 @@ const SellerReturns = () => {
                 </TableCell>
                 <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{formatDate(r.createdAt)}</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setSelected(r); setResponseText(""); }}>
+                  <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setSelected(r); }}>
                     {r.status === "requested" ? "Review" : "View"}
                   </Button>
                 </TableCell>
@@ -221,17 +219,6 @@ const SellerReturns = () => {
                 <div className="rounded-lg bg-muted/50 border border-border p-3">
                   <p className="text-xs font-semibold text-muted-foreground mb-1">BUYER NOTES</p>
                   <p className="text-sm text-foreground">{selected.description}</p>
-                </div>
-              )}
-              {selected.status === "requested" && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Internal Notes (optional)</p>
-                  <Textarea
-                    placeholder="Add notes about this return..."
-                    value={responseText}
-                    onChange={(e) => setResponseText(e.target.value)}
-                    rows={3}
-                  />
                 </div>
               )}
             </div>

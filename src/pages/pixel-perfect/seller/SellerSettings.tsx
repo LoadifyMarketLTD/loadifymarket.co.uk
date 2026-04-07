@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import {
   Bell, Shield, CreditCard, Truck,
-  Eye, EyeOff, Save, ExternalLink, CheckCircle, AlertCircle, Loader2, Pause, Play, Trash2
+  Eye, EyeOff, Save, ExternalLink, CheckCircle, AlertCircle, Loader2, Pause, Play, Trash2,
+  XCircle, Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,10 +24,7 @@ const PAUSE_STORAGE_PREFIX = "loadify_seller_paused_";
 const defaultNotifications = {
   orderAlerts: true,
   returnAlerts: true,
-  rfqAlerts: true,
-  reviewAlerts: false,
   marketingEmails: false,
-  weeklyReport: true,
 };
 
 const defaultShipping = {
@@ -50,8 +48,9 @@ const SellerSettings = () => {
   const [connectLoading, setConnectLoading] = useState(false);
   const [connectError, setConnectError] = useState("");
   const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [stripeConnectStatus, setStripeConnectStatus] = useState<"active" | "pending" | "restricted" | null>(null);
 
-  // Load notification prefs and shipping defaults from DB on mount
+  // Load notification prefs, shipping defaults, and Stripe status from DB on mount
   // Mapping: orderAlerts→orderConfirmation, returnAlerts→shippingUpdates, marketingEmails→promotionalEmails
   useEffect(() => {
     if (!user) return;
@@ -64,7 +63,7 @@ const SellerSettings = () => {
           .maybeSingle(),
         supabase
           .from("seller_profiles")
-          .select("shippingDefaults")
+          .select("shippingDefaults, stripeConnectStatus")
           .eq("userId", user.id)
           .maybeSingle(),
       ]);
@@ -75,6 +74,12 @@ const SellerSettings = () => {
           returnAlerts: notifData.shippingUpdates ?? prev.returnAlerts,
           marketingEmails: notifData.promotionalEmails ?? prev.marketingEmails,
         }));
+      }
+      // Load Stripe Connect status
+      if (profileData?.stripeConnectStatus) {
+        setStripeConnectStatus(
+          profileData.stripeConnectStatus as "active" | "pending" | "restricted"
+        );
       }
       // Load shipping defaults: prefer DB, fall back to localStorage
       const dbShipping = profileData?.shippingDefaults as Partial<typeof defaultShipping> | null;
@@ -299,9 +304,6 @@ const SellerSettings = () => {
           {[
             { key: "orderAlerts" as const, label: "New Order Alerts", desc: "Get notified when a buyer places an order" },
             { key: "returnAlerts" as const, label: "Return Requests", desc: "Alerts when a buyer requests a return" },
-            { key: "rfqAlerts" as const, label: "Quote Requests (RFQ)", desc: "Notifications for new quote requests" },
-            { key: "reviewAlerts" as const, label: "New Reviews", desc: "Get notified when a buyer leaves a review" },
-            { key: "weeklyReport" as const, label: "Weekly Sales Report", desc: "Receive a weekly summary of your performance" },
             { key: "marketingEmails" as const, label: "Marketing & Promotions", desc: "Tips, featured opportunities, and marketplace news" },
           ].map((item) => (
             <div key={item.key} className="flex items-center justify-between">
@@ -419,7 +421,29 @@ const SellerSettings = () => {
                 <CreditCard className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-semibold text-foreground">Stripe Connect</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold text-foreground">Stripe Connect</p>
+                  {stripeConnectStatus === "active" && (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700">
+                      <CheckCircle className="h-3 w-3" /> Connected
+                    </span>
+                  )}
+                  {stripeConnectStatus === "pending" && (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700">
+                      <Clock className="h-3 w-3" /> Onboarding Incomplete
+                    </span>
+                  )}
+                  {stripeConnectStatus === "restricted" && (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-red-500/10 text-red-700">
+                      <XCircle className="h-3 w-3" /> Restricted
+                    </span>
+                  )}
+                  {!stripeConnectStatus && (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                      Not Connected
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   Payouts are sent automatically after order completion via Stripe Connect Express. Weekly payouts every Friday.
                 </p>
@@ -494,9 +518,9 @@ const SellerSettings = () => {
           <Separator />
           <div className="space-y-3">
             <div>
-              <p className="text-sm font-medium text-foreground">Delete Seller Account</p>
+              <p className="text-sm font-medium text-foreground">Deactivate Seller Account</p>
               <p className="text-xs text-muted-foreground">
-                Deactivate your seller account. Type <strong>DELETE</strong> below to confirm.
+                This will deactivate your seller account and sign you out immediately. Your listings will be hidden and access removed, but your data is retained according to our data retention policy. To request permanent deletion or restore your account, contact support. Type <strong>DELETE</strong> to confirm.
               </p>
             </div>
             <div className="flex gap-2">
