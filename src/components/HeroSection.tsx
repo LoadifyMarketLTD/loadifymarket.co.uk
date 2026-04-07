@@ -66,6 +66,18 @@ const HeroSection = () => {
         minHeight: `clamp(520px, calc(100vh - ${HEADER_HEIGHT_PX}px), 820px)`,
       }}
     >
+      {/* ── Dark gradient mask — covers image's baked-in left text ─────── */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(to right, rgba(10,25,48,0.98) 0%, rgba(10,25,48,0.97) 38%, rgba(10,25,48,0.82) 55%, rgba(10,25,48,0.25) 68%, transparent 78%)",
+          zIndex: 1,
+        }}
+      />
+
       {/* ── LEFT SIDE HTML OVERLAY ─────────────────────────────────────────── */}
       <div
         className="absolute z-10 flex flex-col"
