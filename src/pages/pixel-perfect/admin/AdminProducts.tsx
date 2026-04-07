@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, Search, Eye, Ban, CheckCircle2, MoreHorizontal, Loader2 } from "lucide-react";
+import { Package, Search, Eye, Ban, CheckCircle2, MoreHorizontal, Loader2, ShieldCheck, ShieldX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ interface Product {
   price: number;
   stockQuantity: number;
   isActive: boolean;
+  isApproved: boolean;
   createdAt: string;
 }
 
@@ -29,6 +30,7 @@ type ProductRow = {
   price: number | null;
   stockQuantity: number | null;
   isActive: boolean | null;
+  isApproved: boolean | null;
   createdAt: string | null;
   sellerId: string | null;
 };
@@ -61,7 +63,7 @@ const AdminProducts = () => {
       // 1) Fetch products first (include sellerId)
       const { data: productsData, error: productsError } = await supabase
         .from("products")
-        .select("id,title,price,stockQuantity,isActive,createdAt,sellerId")
+        .select("id,title,price,stockQuantity,isActive,isApproved,createdAt,sellerId")
         .order("createdAt", { ascending: false })
         .limit(200);
 
@@ -126,6 +128,7 @@ const AdminProducts = () => {
           price: p.price ?? 0,
           stockQuantity: p.stockQuantity ?? 0,
           isActive: p.isActive ?? true,
+          isApproved: p.isApproved ?? false,
           createdAt: p.createdAt
             ? new Date(p.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
             : "—",
@@ -159,6 +162,23 @@ const AdminProducts = () => {
     }
   };
 
+  const toggleApprove = async (id: string, currentApproved: boolean) => {
+    setActionLoading(id);
+    setError(null);
+    try {
+      const { error } = await supabase
+        .from("products")
+        .update({ isApproved: !currentApproved })
+        .eq("id", id);
+      if (error) throw error;
+      setProducts((prev) => prev.map((p) => p.id === id ? { ...p, isApproved: !currentApproved } : p));
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to update approval status");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const filtered = products.filter(
     (p) =>
       p.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -177,19 +197,20 @@ const AdminProducts = () => {
           <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Price</TableHead>
           <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Stock</TableHead>
           <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Status</TableHead>
+          <TableHead className="hidden lg:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Approved</TableHead>
           <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
-            <TableCell colSpan={6} className="text-center py-8">
+            <TableCell colSpan={7} className="text-center py-8">
               <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(255,255,255,0.3)" }} />
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={6} className="text-center py-8" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <TableCell colSpan={7} className="text-center py-8" style={{ color: "rgba(255,255,255,0.3)" }}>
               <Package className="h-8 w-8 mx-auto mb-2 opacity-40" />No products found.
             </TableCell>
           </TableRow>
@@ -215,6 +236,18 @@ const AdminProducts = () => {
                   {p.isActive ? "Active" : "Inactive"}
                 </Badge>
               </TableCell>
+              <TableCell className="hidden lg:table-cell">
+                <Badge
+                  variant="outline"
+                  className={
+                    p.isApproved
+                      ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
+                      : "border-amber-500/30 text-amber-400 bg-amber-500/10"
+                  }
+                >
+                  {p.isApproved ? "Approved" : "Pending"}
+                </Badge>
+              </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -230,6 +263,15 @@ const AdminProducts = () => {
                     <DropdownMenuItem onClick={() => navigate(`/product/${p.id}`)}>
                       <Eye className="h-3.5 w-3.5 mr-2" /> View Listing
                     </DropdownMenuItem>
+                    {p.isApproved ? (
+                      <DropdownMenuItem onClick={() => toggleApprove(p.id, p.isApproved)} className="text-amber-500">
+                        <ShieldX className="h-3.5 w-3.5 mr-2" /> Revoke Approval
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={() => toggleApprove(p.id, p.isApproved)} className="text-emerald-500">
+                        <ShieldCheck className="h-3.5 w-3.5 mr-2" /> Approve
+                      </DropdownMenuItem>
+                    )}
                     {p.isActive ? (
                       <DropdownMenuItem onClick={() => toggleActive(p.id, p.isActive)} className="text-destructive">
                         <Ban className="h-3.5 w-3.5 mr-2" /> Deactivate
@@ -254,7 +296,7 @@ const AdminProducts = () => {
       <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <h1 className="text-2xl font-bold text-white tracking-tight">Product Moderation</h1>
         <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>
-          {products.length} total listings · {activeProducts.length} active · {inactiveProducts.length} inactive
+          {products.length} total listings · {activeProducts.length} active · {inactiveProducts.length} inactive · {products.filter(p => !p.isApproved).length} pending approval
         </p>
       </div>
 

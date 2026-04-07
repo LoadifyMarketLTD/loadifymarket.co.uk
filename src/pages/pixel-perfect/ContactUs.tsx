@@ -9,10 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { BRAND } from "@/constants/brand";
 import { formatPhoneNumber } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store";
 
 const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || BRAND.supportEmail;
 
 const ContactUs = () => {
+  const { user } = useAuthStore();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -50,6 +53,19 @@ const ContactUs = () => {
       });
 
       if (!res.ok) throw new Error("Submit failed");
+
+      // Create a support ticket so the enquiry appears in the admin support queue
+      await supabase.from("support_tickets").insert({
+        userId: user?.id ?? null,
+        guestEmail: user ? null : formData.email,
+        guestName: user ? null : formData.name,
+        subject: formData.subject || "Contact Form Enquiry",
+        category: "general",
+        priority: "normal",
+        status: "open",
+      }).then(({ error }) => {
+        if (error) console.warn("Support ticket insert failed (non-fatal):", error.message);
+      });
 
       setFormData({ name: "", email: "", subject: "", message: "", "bot-field": "" });
       setStatus("success");

@@ -496,6 +496,26 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         }),
       }).catch(err => console.error('Seller email send failed:', err));
     }
+
+    // Insert in-app notification for seller — fire-and-forget, non-blocking
+    supabase!.from('notifications').insert({
+      userId: sellerId,
+      type: 'order',
+      title: 'New order received',
+      message: `Order ${confirmedOrderNumber} has been placed. Total: £${sellerGrandTotal.toFixed(2)}`,
+      link: '/pp/seller/orders',
+    }).catch((err: unknown) => console.warn('Seller notification insert failed (non-fatal):', err));
+  }
+
+  // Insert in-app notification for buyer — fire-and-forget, non-blocking
+  if (orderData.buyerId) {
+    supabase!.from('notifications').insert({
+      userId: orderData.buyerId,
+      type: 'order',
+      title: 'Order confirmed',
+      message: `Your order has been placed successfully. We'll notify you when it ships.`,
+      link: '/pp/buyer/orders',
+    }).catch((err: unknown) => console.warn('Buyer notification insert failed (non-fatal):', err));
   }
 
   // Mark the pre-populated payment_sessions record as completed now that all
