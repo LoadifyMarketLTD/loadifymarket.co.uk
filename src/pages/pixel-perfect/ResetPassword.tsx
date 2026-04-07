@@ -93,7 +93,7 @@ const ResetPassword = () => {
     <div className="min-h-screen flex">
       {/* Left — branding panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-hero relative items-center justify-center p-12">
-        <div className="absolute inset-0 bg-[url('/placeholder.svg')] opacity-5 bg-cover" />
+        <div className="absolute inset-0 opacity-5" style={{backgroundImage:"radial-gradient(circle,rgba(255,255,255,0.9) 1px,transparent 1px)",backgroundSize:"24px 24px"}} />
         <div className="relative z-10 max-w-md text-center space-y-6">
           <div className="flex items-center justify-center gap-3 mb-8">
             <img src={logo} alt="Loadify Market" className="h-12 w-12" />

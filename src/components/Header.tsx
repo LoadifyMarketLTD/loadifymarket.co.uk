@@ -23,7 +23,27 @@ import CATEGORY_CONFIG from "@/lib/category-config";
  *   - Guest: Sign In → /login | Start Selling (green) → /signup?type=seller
  *   - Logged in: Dashboard → role dashboard | Sign Out | Start Selling (green) → /pp/seller
  */
-const Header = () => {
+/**
+ * Marketplace-style header — used on every page of the site.
+ * Layout: fixed at top-0.
+ * Row 1 (h-16): Logo | Prominent search bar | Cart + auth actions
+ * Row 2 (h-10, desktop only): Category quick-links
+ *
+ * Transparency behaviour:
+ *   - Homepage (default): transparent at top, becomes opaque after 10px scroll.
+ *   - Inner pages: pass `forceOpaque` to always render the opaque dark-navy
+ *     background from the first paint (no hero behind it).
+ *
+ * Auth CTA logic:
+ *   - Guest: Sign In → /login | Start Selling (green) → /signup?type=seller
+ *   - Logged in: Dashboard → role dashboard | Sign Out | Start Selling (green) → /pp/seller
+ */
+interface HeaderProps {
+  /** When true the header is always opaque (use on every non-homepage page). */
+  forceOpaque?: boolean;
+}
+
+const Header = ({ forceOpaque = false }: HeaderProps) => {
   const [query, setQuery] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -36,6 +56,8 @@ const Header = () => {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const opaque = forceOpaque || scrolled;
 
   const dashboardPath =
     user?.role === "seller" ? "/pp/seller" :
@@ -61,7 +83,7 @@ const Header = () => {
     <header
       className={[
         "fixed top-0 left-0 right-0 z-40 transition-all duration-300",
-        scrolled
+        opaque
           ? "bg-[#0A1930]/90 backdrop-blur-md border-b border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
           : "bg-transparent border-b border-transparent",
       ].join(" ")}

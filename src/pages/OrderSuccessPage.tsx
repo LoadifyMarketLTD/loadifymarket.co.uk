@@ -1,31 +1,23 @@
 import { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle, ShoppingBag, ArrowRight, Package, Shield, Truck, Star } from 'lucide-react';
-import { useCartStore } from '../store';
 import { useCart } from '../contexts/CartContext';
 import { BRAND } from '../constants/brand';
 
 export default function OrderSuccessPage() {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
-  const { clearCart: clearZustandCart } = useCartStore();
-  const { clearCart: clearContextCart } = useCart();
+  const { clearCart } = useCart();
 
   useEffect(() => {
-    // Clear both cart stores after successful payment.
-    // The pixel-perfect public checkout uses CartContext (key: loadify_cart).
-    // Protected/legacy pages use the Zustand store (key: loadify-cart).
-    // Clearing both ensures the cart is always empty after a successful payment
-    // regardless of which store the user's session was using.
-    clearZustandCart();
-    clearContextCart();
+    clearCart();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center py-12 px-4">
       <div className="w-full max-w-lg">
-        <div className="bg-white border border-gray-200 rounded-xl p-6 p-10 text-center">
+        <div className="bg-white border border-gray-200 rounded-xl p-10 text-center">
           {/* Success Icon */}
           <div className="flex items-center justify-center mb-6">
             <div className="w-20 h-20 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center">

@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import { ArrowRight, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-
-// Target: 31 August 2026 23:59:59 BST (= 22:59:59 UTC). Must match ZERO_COMMISSION_PROMO_END_UTC in stripe-webhook.ts.
-const TARGET_TIME = new Date("2026-08-31T22:59:59Z").getTime();
+import { PROMO_END_UTC } from "@/lib/promoDeadline";
 
 interface TimeLeft {
   days: number;
@@ -14,7 +12,7 @@ interface TimeLeft {
 }
 
 function getTimeLeft(): TimeLeft {
-  const diff = Math.max(0, TARGET_TIME - Date.now());
+  const diff = Math.max(0, PROMO_END_UTC - Date.now());
   return {
     days: Math.floor(diff / (1000 * 60 * 60 * 24)),
     hours: Math.floor((diff / (1000 * 60 * 60)) % 24),

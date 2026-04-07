@@ -1,36 +1,38 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+
+interface ShowcaseProduct {
+  id: string;
+  title: string;
+  price: number;
+  images: string[] | null;
+  category: { name: string; slug: string } | null;
+  slug: string | null;
+}
 
 /**
  * Browse the Marketplace — dark navy premium section.
- * 3 featured product cards, centered header, centered CTA below.
- * No prices displayed — demo visuals only.
+ * Fetches up to 3 active, approved products from the DB.
+ * Falls back to the catalog page if no products are available.
  */
-const SHOWCASE = [
-  {
-    id: "sc-headphones",
-    category: "Electronics",
-    title: "Wireless Headphones",
-    img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?fm=webp&fit=crop&w=800&q=80",
-    href: "/category/electronics",
-  },
-  {
-    id: "sc-laptop",
-    category: "Electronics",
-    title: "15.6\" Laptop Computer",
-    img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?fm=webp&fit=crop&w=800&q=80",
-    href: "/category/electronics",
-  },
-  {
-    id: "sc-watch",
-    category: "Electronics",
-    title: "Digital Smartwatch",
-    img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?fm=webp&fit=crop&w=800&q=80",
-    href: "/category/electronics",
-  },
-];
-
 const FeaturedProducts = () => {
+  const [products, setProducts] = useState<ShowcaseProduct[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("products")
+      .select("id, title, price, images, slug, category:categories!categoryId(name, slug)")
+      .eq("isActive", true)
+      .eq("isApproved", true)
+      .order("createdAt", { ascending: false })
+      .limit(3)
+      .then(({ data, error }) => {
+        if (!error && data) setProducts(data as unknown as ShowcaseProduct[]);
+      });
+  }, []);
+
   return (
     <section
       className="relative overflow-hidden min-h-[80vh] flex items-center px-4 sm:px-6 py-16"
@@ -65,40 +67,76 @@ const FeaturedProducts = () => {
         </div>
 
         {/* 3 product cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {SHOWCASE.map((item) => (
-            <Link
-              key={item.id}
-              to={item.href}
-              className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)]"
-              style={{ minHeight: "280px" }}
-            >
-              <img
-                src={item.img}
-                alt={item.title}
-                width="800"
-                height="600"
-                loading="lazy"
-                decoding="async"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-              {/* Dark gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              {/* Content overlay */}
-              <div className="absolute bottom-0 left-0 right-0 p-5">
-                <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
-                  {item.category}
-                </p>
-                <h3 className="text-base font-extrabold text-white leading-snug">
-                  {item.title}
-                </h3>
+        {products.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {products.map((item) => {
+              const img = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null;
+              const href = item.slug ? `/product/${item.slug}` : `/product/${item.id}`;
+              const categoryName = item.category?.name ?? "Product";
+              return (
+                <Link
+                  key={item.id}
+                  to={href}
+                  className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)]"
+                  style={{ minHeight: "280px" }}
+                >
+                  {img ? (
+                    <img
+                      src={img}
+                      alt={item.title}
+                      width="800"
+                      height="600"
+                      loading="lazy"
+                      decoding="async"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/10" />
+                  )}
+                  {/* Dark gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  {/* Content overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-5">
+                    <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
+                      {categoryName}
+                    </p>
+                    <h3 className="text-base font-extrabold text-white leading-snug">
+                      {item.title}
+                    </h3>
+                    <p className="mt-1 text-sm font-semibold text-emerald-300">
+                      £{item.price.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          /* Placeholder shown before sellers go live — keeps the section present */
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {[1, 2, 3].map((n) => (
+              <div
+                key={n}
+                className="rounded-2xl bg-white/5 border border-white/10"
+                style={{ minHeight: "280px" }}
+              >
+                <div className="h-full flex items-end p-5">
+                  <div>
+                    <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
+                      Sample Listing
+                    </p>
+                    <h3 className="text-base font-extrabold text-white/40 leading-snug">
+                      Coming Soon
+                    </h3>
+                  </div>
+                </div>
               </div>
-            </Link>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Centered CTA below cards */}
         <div className="mt-10 flex justify-center">
@@ -115,4 +153,3 @@ const FeaturedProducts = () => {
 };
 
 export default FeaturedProducts;
-

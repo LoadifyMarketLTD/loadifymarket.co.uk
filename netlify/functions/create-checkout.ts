@@ -16,6 +16,9 @@ interface CheckoutBody {
   buyerId: string;
   shippingAddress: Record<string, string>;
   billingAddress: Record<string, string>;
+  shippingAmount?: number;
+  shippingMethod?: string;
+  guestEmail?: string;
 }
 
 interface DBProduct {
@@ -70,10 +73,18 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
   }
 
-  const { items, buyerId, shippingAddress, billingAddress } = body;
+  const {
+    items,
+    buyerId,
+    shippingAddress,
+    billingAddress,
+    shippingAmount: rawShippingAmount,
+    shippingMethod,
+  } = body;
   if (!items?.length || !shippingAddress || !billingAddress) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
   }
+  const shippingAmount = typeof rawShippingAmount === 'number' ? rawShippingAmount : 0;
 
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
@@ -118,6 +129,24 @@ export const handler: Handler = async (event) => {
       };
     }
   }
+
+  // Build enriched items — sellerId and price come from the DB to prevent
+  // client-side price/seller tampering. These are stored in payment_sessions
+  // metadata so the webhook can create orders without relying on Stripe's 500-
+  // character-per-value metadata limit.
+  const enrichedItems = items.map((item) => {
+    const dbProduct = productMap.get(item.productId) as DBProduct;
+    return {
+      productId: item.productId,
+      sellerId: dbProduct.sellerId,
+      quantity: item.quantity,
+      price: dbProduct.price,
+      title: item.title,
+    };
+  });
+
+  const subtotal = enrichedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const total = subtotal + shippingAmount;
 
   // 6. Create Stripe checkout session
   try {
@@ -172,6 +201,43 @@ export const handler: Handler = async (event) => {
         transferGroup,
       },
     });
+
+    // Pre-populate payment_sessions with all order details so the webhook can
+    // create orders without parsing Stripe session metadata (which is capped at
+    // 500 characters per value and cannot hold a full items JSON for larger carts).
+    // The webhook reads this record by stripeSessionId and updates status to
+    // 'completed' once orders are created.
+    const { error: sessionInsertError } = await supabase
+      .from('payment_sessions')
+      .insert({
+        stripeSessionId: session.id,
+        userId: verifiedBuyerId || null,
+        status: 'pending',
+        amount: total,
+        currency: 'GBP',
+        metadata: {
+          items: enrichedItems,
+          shippingAddress,
+          billingAddress,
+          subtotal,
+          shippingAmount,
+          shippingMethod: shippingMethod ?? 'Standard',
+          total,
+          buyerId: verifiedBuyerId,
+          transferGroup,
+        },
+      });
+
+    if (sessionInsertError) {
+      // If we cannot persist the order data the webhook will have nothing to
+      // work with — abort so the customer is not charged for an unrecoverable
+      // order. Stripe will not charge until the browser completes the redirect.
+      console.error('Failed to pre-insert payment_sessions record:', sessionInsertError);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Order initialisation failed. Please try again.' }),
+      };
+    }
 
     return {
       statusCode: 200,

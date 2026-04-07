@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { XCircle, ArrowLeft, RefreshCw, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Navbar from '@/components/Navbar';
+import Header from "@/components/Header";
 import Footer from '@/components/Footer';
 
 const CheckoutError = () => {
@@ -23,7 +23,7 @@ const CheckoutError = () => {
 
   return (
     <div className="min-h-screen">
-      <Navbar />
+      <Header forceOpaque />
       <main className="pt-16 pb-20 flex items-center justify-center">
         <div className="w-full max-w-lg px-4">
           <div className="bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm">

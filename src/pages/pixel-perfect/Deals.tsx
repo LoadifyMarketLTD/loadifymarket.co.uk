@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { X, Package, Tag, RotateCcw, Layers, TrendingDown, ArrowRight } from "lucide-react";
-import Navbar from "@/components/Navbar";
+import Header from "@/components/Header";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import Footer from "@/components/Footer";
 import CountdownBanner from "@/components/CountdownBanner";
@@ -200,9 +200,9 @@ const Deals = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <Header forceOpaque />
 
-      <main className="pt-16 pb-16">
+      <main className="pt-16 lg:pt-[104px] pb-16">
         {/* Hero section */}
         <div className="relative border-b border-border overflow-hidden">
           <div className="absolute inset-0">

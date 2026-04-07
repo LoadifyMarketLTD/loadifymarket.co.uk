@@ -7,7 +7,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Navbar from "@/components/Navbar";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
@@ -155,8 +155,8 @@ const Checkout = () => {
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="pt-16 pb-16">
+        <Header forceOpaque />
+        <main className="pt-16 lg:pt-[104px] pb-16">
           <div className="container mx-auto px-4 text-center py-20">
             <h1 className="font-display text-2xl font-bold text-foreground mb-4">Your cart is empty</h1>
             <p className="text-muted-foreground mb-6">Add some items before checking out.</p>
@@ -174,9 +174,9 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <Header forceOpaque />
 
-      <main className="pt-16 pb-16">
+      <main className="pt-16 lg:pt-[104px] pb-16">
         <div className="container mx-auto px-4">
           <BreadcrumbNav
             items={[

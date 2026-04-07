@@ -1,13 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store";
-
-/**
- * Countdown target: 31 August 2026 23:59:59 Europe/London (BST = UTC+1).
- * BST is UTC+1, so 23:59:59 BST == 2026-08-31T22:59:59Z.
- * Must match ZERO_COMMISSION_PROMO_END_UTC in stripe-webhook.ts exactly.
- */
-const TARGET_TIME = new Date("2026-08-31T22:59:59Z").getTime();
+import { PROMO_END_UTC } from "@/lib/promoDeadline";
 
 /**
  * Combined height of fixed Header row (64px) + Header category nav (48px).
@@ -17,7 +11,7 @@ const HEADER_HEIGHT_PX = 112;
 type TimeLeft = { days: number; hours: number; minutes: number; seconds: number };
 
 function getTimeLeft(): TimeLeft {
-  const diff = Math.max(0, TARGET_TIME - Date.now());
+  const diff = Math.max(0, PROMO_END_UTC - Date.now());
   return {
     days:    Math.floor(diff / (1000 * 60 * 60 * 24)),
     hours:   Math.floor((diff / (1000 * 60 * 60)) % 24),
