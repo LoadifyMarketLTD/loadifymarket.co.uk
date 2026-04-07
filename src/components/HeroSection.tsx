@@ -237,26 +237,29 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* ── Countdown widget — positioned in visual gap between left text and laptop ── */}
+      {/* ── Countdown widget — centered in gap between left text and laptop ── */}
       {!expired && (
         <div
           className="absolute z-20 hidden sm:block"
-          style={{ top: "20%", left: "64%" }}
+          style={{ top: "50%", left: "55%", transform: "translate(-50%, -50%)" }}
         >
           <div
-            className="rounded-2xl border px-4 py-3 flex flex-col items-center gap-1.5"
+            className="flex flex-col items-center gap-2"
             style={{
-              width: 210,
-              background: "rgba(0,0,0,0.55)",
+              width: 340,
+              padding: "18px 22px",
+              borderRadius: 18,
+              background: "rgba(20,20,20,0.75)",
               backdropFilter: "blur(12px)",
               WebkitBackdropFilter: "blur(12px)",
-              borderColor: "rgba(255,255,255,0.12)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.40)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
             }}
           >
             <span
-              className="text-[10.5px] font-bold px-3 py-1 rounded-xl border whitespace-nowrap"
+              className="font-bold px-3 py-1 rounded-xl border whitespace-nowrap"
               style={{
+                fontSize: 14,
                 color: "#86efac",
                 background: "rgba(34,197,94,0.18)",
                 borderColor: "rgba(34,197,94,0.32)",
@@ -264,18 +267,18 @@ const HeroSection = () => {
             >
               0% Fees Until 31 August
             </span>
-            <span className="text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.40)" }}>
+            <span className="font-medium" style={{ fontSize: 13, color: "rgba(255,255,255,0.45)" }}>
               Offer ends in
             </span>
             <div className="flex items-baseline gap-1 tabular-nums" style={{ color: "#fff" }}>
-              <span className="font-display font-extrabold text-2xl leading-none">{pad2(time.days)}</span>
-              <span className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>d</span>
-              <span className="font-display font-extrabold text-xl leading-none">{pad2(time.hours)}</span>
-              <span className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>h</span>
-              <span className="font-display font-extrabold text-xl leading-none">{pad2(time.minutes)}</span>
-              <span className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>m</span>
-              <span className="font-display font-extrabold text-xl leading-none">{pad2(time.seconds)}</span>
-              <span className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>s</span>
+              <span className="font-display font-extrabold leading-none" style={{ fontSize: 28 }}>{pad2(time.days)}</span>
+              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>d</span>
+              <span className="font-display font-extrabold leading-none" style={{ fontSize: 28 }}>{pad2(time.hours)}</span>
+              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>h</span>
+              <span className="font-display font-extrabold leading-none" style={{ fontSize: 28 }}>{pad2(time.minutes)}</span>
+              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>m</span>
+              <span className="font-display font-extrabold leading-none" style={{ fontSize: 28 }}>{pad2(time.seconds)}</span>
+              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.35)" }}>s</span>
             </div>
           </div>
         </div>
