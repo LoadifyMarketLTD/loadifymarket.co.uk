@@ -20,7 +20,6 @@ import {
   ShieldAlert,
   BarChart2,
   ExternalLink,
-  Edit2,
   RefreshCcw,
   Send,
 } from 'lucide-react';import { formatDistanceToNow } from 'date-fns';
@@ -43,8 +42,6 @@ export default function AdminSellerDetailPage() {
   const [data, setData] = useState<SellerDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [editingCommission, setEditingCommission] = useState(false);
-  const [commissionValue, setCommissionValue] = useState('');
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [resendMessage, setResendMessage] = useState('');
 
@@ -97,7 +94,6 @@ export default function AdminSellerDetailPage() {
         store: storeData || null,
         products: productsData || [],
       });
-      setCommissionValue(String(profile.commission ?? DEFAULT_COMMISSION_RATE));
     } catch (err) {
       console.error('Error fetching seller detail:', err);
     } finally {
@@ -174,29 +170,6 @@ export default function AdminSellerDetailPage() {
       await fetchSeller();
     } catch (err) {
       console.error('Error unblocking user:', err);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const saveCommission = async () => {
-    if (!id) return;
-    const parsed = parseFloat(commissionValue);
-    if (isNaN(parsed) || parsed < 0 || parsed > 100) {
-      alert('Commission must be a number between 0 and 100');
-      return;
-    }
-    setActionLoading(true);
-    try {
-      const { error } = await supabase
-        .from('seller_profiles')
-        .update({ commission: parsed })
-        .eq('userId', id);
-      if (error) throw error;
-      setEditingCommission(false);
-      await fetchSeller();
-    } catch (err) {
-      console.error('Error saving commission:', err);
     } finally {
       setActionLoading(false);
     }
