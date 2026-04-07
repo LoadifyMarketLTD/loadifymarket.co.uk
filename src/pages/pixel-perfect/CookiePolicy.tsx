@@ -6,7 +6,7 @@ const CookiePolicy = () => {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <main className="pt-20 pb-20">
+      <main className="pt-16 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Cookie Policy" }]} backTo="/" />
         </div>

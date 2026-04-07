@@ -24,7 +24,7 @@ const CheckoutError = () => {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <main className="pt-20 pb-20 flex items-center justify-center">
+      <main className="pt-16 pb-20 flex items-center justify-center">
         <div className="w-full max-w-lg px-4">
           <div className="bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm">
             {/* Error Icon */}

@@ -155,7 +155,7 @@ const ProductDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="pt-20 pb-16">
+        <main className="pt-16 pb-16">
           <div className="container mx-auto px-4">
             <div className="grid lg:grid-cols-[1fr_420px] gap-8 animate-pulse">
               <div className="space-y-8">
@@ -178,7 +178,7 @@ const ProductDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="pt-24 text-center">
+        <div className="pt-16 text-center">
           <h1 className="text-2xl font-display font-bold text-foreground">Product Not Found</h1>
           <Link to="/catalog" className="text-primary hover:underline mt-4 inline-block">
             ← Back to Catalog
@@ -193,7 +193,7 @@ const ProductDetail = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <main className="pt-20 pb-16">
+      <main className="pt-16 pb-16">
         <div className="container mx-auto px-4">
           {(() => {
             const isClearance = navState.flow === "clearance" || navState.flow === "deals";

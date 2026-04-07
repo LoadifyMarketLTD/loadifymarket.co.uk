@@ -61,7 +61,7 @@ const ContactUs = () => {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <main className="pt-20 pb-20">
+      <main className="pt-16 pb-20">
         <div className="container mx-auto px-4 max-w-5xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Contact Us" }]} backTo="/" />
           <h1 className="text-3xl sm:text-4xl font-display font-bold text-foreground mb-4">

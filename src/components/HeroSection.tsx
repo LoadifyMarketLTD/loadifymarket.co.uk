@@ -184,7 +184,7 @@ const HeroSection = () => {
               (e.currentTarget as HTMLButtonElement).style.transform = "";
               (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 20px rgba(34,197,94,0.45)";
             }}
-            onClick={() => navigate(user ? "/dashboard/seller" : "/register?role=seller")}
+            onClick={() => navigate(user ? "/pp/seller" : "/signup?type=seller")}
             aria-label="Start selling on Loadify Market"
           >
             Start Selling →
