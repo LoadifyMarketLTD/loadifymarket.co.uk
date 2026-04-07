@@ -5,11 +5,10 @@
  * │  SINGLE SOURCE OF TRUTH for all categories and subcategories             │
  * │                                                                          │
  * │  Used by:                                                                │
- * │  • Navbar / mega-menu  (src/components/Navbar.tsx)                      │
+ * │  • Header / mega-menu  (src/components/Header.tsx)                      │
  * │  • Homepage category cards  (src/pages/pixel-perfect/Index.tsx)         │
  * │  • Category pages  (src/pages/pixel-perfect/CategoryPage.tsx)           │
  * │  • Category search config  (src/lib/category-config.ts)                 │
- * │  • Product filtering / mock data                                         │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
  * Order is intentional — keep it consistent across the whole app.
