@@ -138,7 +138,7 @@ const BuyerDashboard = () => {
               <CardDescription>Your latest purchases</CardDescription>
             </div>
             <Button variant="outline" size="sm" className="text-xs" asChild>
-              <Link to="/dashboard/orders">
+              <Link to="/pp/buyer/orders">
                 View All <ArrowUpRight className="h-3 w-3 ml-1" />
               </Link>
             </Button>
@@ -183,7 +183,7 @@ const BuyerDashboard = () => {
               <CardDescription>Saved for later</CardDescription>
             </div>
             <Button variant="outline" size="sm" className="text-xs" asChild>
-              <Link to="/dashboard/wishlist">
+              <Link to="/pp/buyer/wishlist">
                 View All <ArrowUpRight className="h-3 w-3 ml-1" />
               </Link>
             </Button>

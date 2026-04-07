@@ -8,9 +8,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Search, Package, Eye } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Search, Package, Eye, RotateCcw } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { toast } from "@/hooks/use-toast";
 
 interface OrderRow {
   id: string;
@@ -18,6 +27,7 @@ interface OrderRow {
   total: number;
   status: string;
   createdAt: string;
+  sellerId: string | null;
   products: { title: string } | null;
 }
 
@@ -31,12 +41,26 @@ const statusColor: Record<string, string> = {
   refunded: "bg-destructive/15 text-destructive border-destructive/20",
 };
 
+const RETURN_REASONS = [
+  { value: "damaged", label: "Item arrived damaged" },
+  { value: "wrong_item", label: "Wrong item received" },
+  { value: "not_as_described", label: "Not as described" },
+  { value: "changed_mind", label: "Changed my mind" },
+  { value: "other", label: "Other" },
+];
+
 const BuyerOrders = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+
+  // Return request dialog state
+  const [returnOrder, setReturnOrder] = useState<OrderRow | null>(null);
+  const [returnReason, setReturnReason] = useState("");
+  const [returnDescription, setReturnDescription] = useState("");
+  const [returnLoading, setReturnLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -45,13 +69,14 @@ const BuyerOrders = () => {
       try {
         const { data, error } = await supabase
           .from("orders")
-          .select("id, orderNumber, total, status, createdAt, products(title)")
+          .select("id, orderNumber, total, status, createdAt, sellerId, products(title)")
           .eq("buyerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
         setOrders((data as unknown as OrderRow[]) || []);
       } catch (err) {
         console.error("Error fetching orders:", err);
+        toast({ title: "Failed to load orders", description: "Please refresh the page.", variant: "destructive" });
       } finally {
         setLoading(false);
       }
@@ -67,6 +92,34 @@ const BuyerOrders = () => {
 
   const byStatus = (status: string) => filtered.filter((o) => o.status === status);
 
+  const handleReturnSubmit = async () => {
+    if (!returnOrder || !user || !returnReason || !returnDescription.trim()) return;
+    if (!returnOrder.sellerId) {
+      toast({ title: "Cannot submit return", description: "Seller information is unavailable for this order. Please contact support for assistance.", variant: "destructive" });
+      return;
+    }
+    setReturnLoading(true);
+    try {
+      const { error } = await supabase.from("returns").insert({
+        orderId: returnOrder.id,
+        buyerId: user.id,
+        sellerId: returnOrder.sellerId,
+        reason: returnReason,
+        description: returnDescription.trim(),
+        status: "requested",
+      });
+      if (error) throw error;
+      toast({ title: "Return requested", description: "Your return request has been submitted. We'll be in touch shortly." });
+      setReturnOrder(null);
+      setReturnReason("");
+      setReturnDescription("");
+    } catch (err) {
+      toast({ title: "Failed to submit return", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setReturnLoading(false);
+    }
+  };
+
   const renderTable = (data: OrderRow[]) => (
     <Table>
       <TableHeader>
@@ -76,7 +129,7 @@ const BuyerOrders = () => {
           <TableHead>Date</TableHead>
           <TableHead>Total</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead className="text-right">Action</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -112,16 +165,32 @@ const BuyerOrders = () => {
                 <Badge variant="outline" className={statusColor[o.status] ?? ""}>{o.status}</Badge>
               </TableCell>
               <TableCell className="text-right">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  title={["shipped", "delivered"].includes(o.status) ? "Track shipment" : "Tracking not yet available"}
-                  disabled={!["shipped", "delivered"].includes(o.status)}
-                  onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    title={["shipped", "delivered"].includes(o.status) ? "Track shipment" : "Tracking not yet available"}
+                    disabled={!["shipped", "delivered"].includes(o.status)}
+                    onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    title={o.status === "delivered" ? "Request return" : "Returns available after delivery"}
+                    disabled={o.status !== "delivered"}
+                    onClick={() => {
+                      setReturnOrder(o);
+                      setReturnReason("");
+                      setReturnDescription("");
+                    }}
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))
@@ -160,6 +229,54 @@ const BuyerOrders = () => {
         <TabsContent value="shipped"><Card><CardContent className="pt-4">{renderTable(byStatus("shipped"))}</CardContent></Card></TabsContent>
         <TabsContent value="delivered"><Card><CardContent className="pt-4">{renderTable(byStatus("delivered"))}</CardContent></Card></TabsContent>
       </Tabs>
+
+      {/* Return Request Dialog */}
+      <Dialog open={!!returnOrder} onOpenChange={(open) => { if (!open) setReturnOrder(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Request a Return</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Order: <span className="font-medium text-foreground">{returnOrder?.orderNumber || returnOrder?.id?.slice(0, 8).toUpperCase()}</span>
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="return-reason">Reason for Return</Label>
+              <Select value={returnReason} onValueChange={setReturnReason}>
+                <SelectTrigger id="return-reason">
+                  <SelectValue placeholder="Select a reason…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RETURN_REASONS.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="return-description">Description</Label>
+              <Textarea
+                id="return-description"
+                placeholder="Please describe the issue in detail…"
+                value={returnDescription}
+                onChange={(e) => setReturnDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReturnOrder(null)} disabled={returnLoading}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleReturnSubmit}
+              disabled={returnLoading || !returnReason || !returnDescription.trim()}
+            >
+              {returnLoading ? "Submitting…" : "Submit Return Request"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

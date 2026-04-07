@@ -36,6 +36,20 @@ const Login = () => {
       const { supabase } = await import("@/lib/supabase");
       const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
       if (authError) throw authError;
+
+      // Check if the account has been blocked by an admin
+      if (data.user) {
+        const { data: userRow } = await supabase
+          .from("users")
+          .select("isActive")
+          .eq("id", data.user.id)
+          .single();
+        if (userRow && userRow.isActive === false) {
+          await supabase.auth.signOut();
+          throw new Error("Your account has been suspended. Please contact support.");
+        }
+      }
+
       const nextUrl = searchParams.get("next");
       if (nextUrl) { navigate(nextUrl, { replace: true }); return; }
       let redirectTo = "/pp/buyer";

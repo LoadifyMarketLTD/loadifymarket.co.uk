@@ -270,6 +270,19 @@ export default function ProductFormPage() {
       const isAdmin = user.role === 'admin' || user.role === 'owner';
       const specs = buildSpecs();
 
+      // Read autoApproveProducts flag from platform settings
+      let autoApprove = false;
+      try {
+        const { data: settingsRows } = await supabase
+          .from("platform_settings")
+          .select("key,value")
+          .eq("key", "feature_flags")
+          .maybeSingle();
+        autoApprove = (settingsRows?.value as Record<string, boolean> | null)?.autoApproveProducts ?? false;
+      } catch {
+        // Non-fatal: default to false (require manual approval)
+      }
+
       const productData = {
         sellerId: user.id,
         title: formData.title,
@@ -294,7 +307,7 @@ export default function ProductFormPage() {
           ? formData.palletInfo
           : null,
         isActive: publishMode,
-        isApproved: false, // Requires admin approval
+        isApproved: isAdmin ? true : autoApprove, // Admin always approved; sellers depend on flag
       };
 
       // Save or update shipping methods helper

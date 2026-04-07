@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShoppingCart, Search, Filter } from "lucide-react";
+import { ShoppingCart, Search, Filter, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { toast } from "@/hooks/use-toast";
 import type { User } from "@/types";
 
 type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
@@ -37,6 +41,7 @@ const SellerOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -84,6 +89,26 @@ const SellerOrders = () => {
       o.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
       o.buyerName.toLowerCase().includes(search.toLowerCase())
   );
+
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    setActionLoading(orderId);
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: newStatus })
+        .eq("id", orderId)
+        .eq("sellerId", user!.id);
+      if (error) throw error;
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+      );
+      toast({ title: "Order updated", description: `Status changed to ${newStatus}.` });
+    } catch (err) {
+      toast({ title: "Update failed", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   return (
     <div className="p-6 space-y-6 max-w-[1200px]">
@@ -147,14 +172,47 @@ const SellerOrders = () => {
                     </td>
                     <td className="p-4 text-sm text-muted-foreground">{formatDate(o.createdAt)}</td>
                     <td className="p-4 text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-xs"
-                        onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}
-                      >
-                        View
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs"
+                          onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}
+                        >
+                          View
+                        </Button>
+                        {["paid", "packed", "shipped"].includes(o.status) && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs gap-1"
+                                disabled={actionLoading === o.id}
+                              >
+                                Update <ChevronDown className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {o.status === "paid" && (
+                                <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "packed")}>
+                                  Mark as Packed
+                                </DropdownMenuItem>
+                              )}
+                              {(o.status === "paid" || o.status === "packed") && (
+                                <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>
+                                  Mark as Shipped
+                                </DropdownMenuItem>
+                              )}
+                              {o.status === "shipped" && (
+                                <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "delivered")}>
+                                  Mark as Delivered
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

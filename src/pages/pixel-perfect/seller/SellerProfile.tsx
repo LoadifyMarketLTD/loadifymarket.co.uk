@@ -18,7 +18,6 @@ interface ProfileForm {
   contactName: string;
   email: string;
   phone: string;
-  website: string;
   companyNumber: string;
   vatNumber: string;
   address: string;
@@ -32,7 +31,6 @@ const defaultForm: ProfileForm = {
   contactName: "",
   email: "",
   phone: "",
-  website: "",
   companyNumber: "",
   vatNumber: "",
   address: "",
@@ -74,7 +72,6 @@ const SellerProfile = () => {
         contactName: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
         email: user.email ?? "",
         phone: p?.contactPhone ?? "",
-        website: storeRes.data?.storeSlug ? `loadifymarket.co.uk/store/${storeRes.data.storeSlug}` : "",
         companyNumber: p?.companyRegistrationNumber ?? "",
         vatNumber: p?.vatNumber ?? "",
         address: addr.address ?? "",
@@ -240,10 +237,6 @@ const SellerProfile = () => {
             <div>
               <Label className="text-xs">Phone</Label>
               <Input value={form.phone} onChange={(e) => updateField("phone", e.target.value)} className="mt-1" />
-            </div>
-            <div className="sm:col-span-2">
-              <Label className="text-xs">Website</Label>
-              <Input value={form.website} onChange={(e) => updateField("website", e.target.value)} className="mt-1" />
             </div>
           </div>
         </CardContent>

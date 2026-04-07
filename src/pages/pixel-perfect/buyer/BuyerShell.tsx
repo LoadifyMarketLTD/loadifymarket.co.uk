@@ -65,11 +65,11 @@ const SidebarContent = ({ displayName, onNavClick, onLogout }: SidebarContentPro
     </nav>
     <div className="p-3 border-t border-border space-y-1">
       <NavLink
-        to="/dashboard"
+        to="/"
         className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
       >
         <LayoutDashboard className="h-4 w-4 shrink-0" />
-        <span>Classic Dashboard</span>
+        <span>Marketplace</span>
       </NavLink>
       <button
         onClick={onLogout}

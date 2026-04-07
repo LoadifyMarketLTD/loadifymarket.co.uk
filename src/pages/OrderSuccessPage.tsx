@@ -1,20 +1,61 @@
-import { useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, ShoppingBag, ArrowRight, Package, Shield, Truck, Star } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { BRAND } from '../constants/brand';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { supabase } from '../lib/supabase';
+import { toast } from '../hooks/use-toast';
 
 export default function OrderSuccessPage() {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
   const { clearCart } = useCart();
+  const navigate = useNavigate();
+  const [verified, setVerified] = useState<boolean | null>(null);
 
   useEffect(() => {
     clearCart();
+
+    if (!sessionId) {
+      setVerified(false);
+      return;
+    }
+
+    // Verify that the order was actually created in the database
+    const verifyOrder = async () => {
+      const { data } = await supabase
+        .from('payment_sessions')
+        .select('id, status')
+        .eq('stripeSessionId', sessionId)
+        .eq('status', 'completed')
+        .maybeSingle();
+
+      if (!data) {
+        // No completed order found — notify the user and redirect
+        toast({ title: "Order not found", description: "We could not verify your order. Please check your orders page or contact support.", variant: "destructive" });
+        navigate('/catalog', { replace: true });
+        return;
+      }
+      setVerified(true);
+    };
+
+    verifyOrder();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Show nothing while we verify — navigation will happen if order not found
+  if (verified === null) {
+    return (
+      <div className="min-h-screen bg-[#0A1930] flex flex-col">
+        <Header forceOpaque />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0A1930] flex flex-col">

@@ -149,6 +149,12 @@ function App() {
             .single()
             .then(({ data, error }) => {
               if (data) {
+                // Blocked users must not be rehydrated — sign them out immediately.
+                if (data.isActive === false) {
+                  supabase.auth.signOut();
+                  setUser(null);
+                  return;
+                }
                 setUser(data);
               } else {
                 if (error) {
@@ -182,6 +188,12 @@ function App() {
             .single()
             .then(({ data, error }) => {
               if (data) {
+                // Blocked users must not be rehydrated — sign them out immediately.
+                if (data.isActive === false) {
+                  supabase.auth.signOut();
+                  setUser(null);
+                  return;
+                }
                 setUser(data);
               } else {
                 if (error) {

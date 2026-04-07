@@ -63,12 +63,13 @@ const SellerDashboard = () => {
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [balance, setBalance] = useState<{ availableAmount: number; totalEarned: number } | null>(null);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
       try {
-        const [productsRes, allOrdersRes, profileRes] = await Promise.all([
+        const [productsRes, allOrdersRes, profileRes, balanceRes] = await Promise.all([
           supabase
             .from("products")
             .select("id, title, views, addToCartCount, stockQuantity, isActive")
@@ -82,6 +83,11 @@ const SellerDashboard = () => {
             .from("seller_profiles")
             .select("rating")
             .eq("userId", user.id)
+            .maybeSingle(),
+          supabase
+            .from("seller_balance")
+            .select("availableAmount, totalEarned")
+            .eq("sellerId", user.id)
             .maybeSingle(),
         ]);
 
@@ -148,6 +154,13 @@ const SellerDashboard = () => {
             revenue: 0,
           }))
         );
+
+        if (balanceRes.data) {
+          setBalance({
+            availableAmount: (balanceRes.data as { availableAmount: number; totalEarned: number }).availableAmount ?? 0,
+            totalEarned: (balanceRes.data as { availableAmount: number; totalEarned: number }).totalEarned ?? 0,
+          });
+        }
       } finally {
         setLoading(false);
       }
@@ -244,6 +257,26 @@ const SellerDashboard = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Two-column section */}
+      {balance && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-card rounded-xl border border-border p-5 space-y-1">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">Available Balance</p>
+            <p className="font-display text-2xl font-bold text-foreground">
+              £{balance.availableAmount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            <p className="text-xs text-muted-foreground">Ready for payout</p>
+          </div>
+          <div className="bg-card rounded-xl border border-border p-5 space-y-1">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Earned</p>
+            <p className="font-display text-2xl font-bold text-foreground">
+              £{balance.totalEarned.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            <p className="text-xs text-muted-foreground">All time</p>
+          </div>
         </div>
       )}
 
