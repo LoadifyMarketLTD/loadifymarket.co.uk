@@ -10,10 +10,9 @@
  *  4. SocialProof strip — stats under hero
  *  5. Trust/Benefits strip
  *  6. Marketplace block (single shared wrapper)
- *     6a. Category slider → MicroCTA
- *     6b. Browse the Marketplace (FeaturedProducts) → MicroCTA
- *     6c. Shop by Category (CategoryGrid)
- *     6d. Featured Listings — 3 feature image cards
+ *     6a. Browse the Marketplace (FeaturedProducts) → MicroCTA
+ *     6b. Shop by Category (CategoryGrid)
+ *     6c. Featured Listings — 3 feature image cards
  *  7. Why Choose Loadify Market (FeaturesSection)
  *  8. Why + How block (single shared wrapper)
  *     8a. Platform Features — buyer vs seller → MicroCTA
@@ -26,7 +25,6 @@
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
-import CategorySlider from "@/components/CategorySlider";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import CategoryGrid from "@/components/CategoryGrid";
 import FeaturedListings from "@/components/FeaturedListings";
@@ -64,8 +62,6 @@ export default function Home() {
         {/* 4 — Marketplace block: all discovery content in one shared wrapper */}
         <LazySection>
           <div>
-            <CategorySlider />
-            <MicroCTA text="Explore All Categories" link="/catalog" />
             <FeaturedProducts />
             <MicroCTA text="Browse All Listings" link="/catalog" />
             <CategoryGrid />
