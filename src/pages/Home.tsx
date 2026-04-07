@@ -7,17 +7,17 @@
  *  1. Header (fixed, pt-[112px] spacer to clear it)
  *  2. Hero
  *  3. Trust/Benefits strip — immediately under hero
- *  4. Marketplace block
+ *  4. Marketplace block (single shared wrapper)
  *     4a. Category slider
  *     4b. Browse the Marketplace (FeaturedProducts)
  *     4c. Shop by Category (CategoryGrid)
  *     4d. Featured Listings — 3 feature image cards
- *  5. Why + How block
- *     5a. Why Choose Loadify Market (FeaturesSection)
- *     5b. Platform Features — buyer vs seller
- *     5c. How It Works — buyer flow
- *  6. Seller Journey CTA
- *  7. Footer
+ *  5. Why Choose Loadify Market (FeaturesSection)
+ *  6. Why + How block (single shared wrapper)
+ *     6a. Platform Features — buyer vs seller
+ *     6b. How It Works — buyer flow
+ *  7. Seller Journey CTA
+ *  8. Footer
  */
 
 import Header from "@/components/Header";
@@ -47,37 +47,31 @@ export default function Home() {
         {/* 2 — Trust/Benefits — immediately below hero */}
         <TrustStrip />
 
-        {/* 3 — Marketplace block: categories → products → grid → featured */}
+        {/* 3 — Marketplace block: all discovery content in one shared wrapper */}
         <LazySection>
-          <CategorySlider />
+          <div>
+            <CategorySlider />
+            <FeaturedProducts />
+            <CategoryGrid />
+            <FeaturedListings />
+          </div>
         </LazySection>
 
-        <LazySection>
-          <FeaturedProducts />
-        </LazySection>
-
-        <LazySection>
-          <CategoryGrid />
-        </LazySection>
-
-        <LazySection>
-          <FeaturedListings />
-        </LazySection>
-
-        {/* 4 — Why + How block */}
+        {/* 4 — Why Choose Loadify Market */}
         <LazySection>
           <FeaturesSection />
         </LazySection>
 
+        {/* 5 — Why + How block: platform features + buyer flow in one shared wrapper */}
         <LazySection>
-          <PlatformFeatures />
+          <div>
+            <PlatformFeatures />
+            <div className="h-px bg-white/10 w-full" />
+            <HowItWorks />
+          </div>
         </LazySection>
 
-        <LazySection>
-          <HowItWorks />
-        </LazySection>
-
-        {/* 5 — Seller Journey CTA */}
+        {/* 6 — Seller Journey CTA */}
         <LazySection>
           <SellerJourneySection />
         </LazySection>
