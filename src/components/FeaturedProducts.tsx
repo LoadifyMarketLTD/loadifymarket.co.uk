@@ -28,8 +28,8 @@ const FeaturedProducts = () => {
       .eq("isApproved", true)
       .order("createdAt", { ascending: false })
       .limit(3)
-      .then(({ data }) => {
-        if (data) setProducts(data as unknown as ShowcaseProduct[]);
+      .then(({ data, error }) => {
+        if (!error && data) setProducts(data as unknown as ShowcaseProduct[]);
       });
   }, []);
 

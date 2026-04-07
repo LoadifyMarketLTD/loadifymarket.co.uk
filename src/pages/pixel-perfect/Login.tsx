@@ -41,7 +41,7 @@ const Login = () => {
       let redirectTo = "/pp/buyer";
       if (data.user) {
         const { data: profile, error: profileError } = await supabase.from("users").select("role").eq("id", data.user.id).single();
-        if (profileError) console.warn("Could not fetch user role, defaulting to /pp/buyer:", profileError.message);
+        if (profileError) console.warn("Could not fetch user role; redirecting to buyer dashboard as fallback:", profileError.message);
         if (profile?.role === "seller") redirectTo = "/pp/seller";
         else if (profile?.role === "admin" || profile?.role === "owner") redirectTo = "/pp/admin";
       }
