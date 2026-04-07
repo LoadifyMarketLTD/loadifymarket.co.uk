@@ -106,7 +106,8 @@ const AdminNotifications = () => {
             <Bell className="h-5 w-5 text-primary" /> Notifications
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
+            Your personal admin notification inbox.{" "}
+            {unreadCount > 0 ? `${unreadCount} unread` : "All caught up."}
           </p>
         </div>
         {unreadCount > 0 && (
