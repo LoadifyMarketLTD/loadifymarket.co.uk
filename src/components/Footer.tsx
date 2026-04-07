@@ -90,14 +90,16 @@ const Footer = () => {
               <h4 className="font-display font-semibold text-accent text-sm uppercase tracking-wider mb-4">
                 About Loadify Market
               </h4>
-              <p className="text-sm text-background/60 leading-relaxed mb-4">
-                An open UK marketplace platform where individuals and businesses can buy and sell products across all categories.
+              <p className="text-sm text-background/60 leading-relaxed mb-3">
+                An open UK marketplace connecting buyers and sellers across all categories.
               </p>
-              <div className="text-xs text-background/40 space-y-1.5">
-                <p className="font-semibold text-background/60">Operated by</p>
-                <p className="font-semibold text-background/70">XDrive Logistics Ltd</p>
-                <p>Co. No: 13171804</p>
-                <p>VAT: GB375949535</p>
+              <p className="text-xs text-background/55 leading-relaxed mb-3">
+                Loadify Market is operated by{' '}
+                <span className="font-semibold text-background/75">XDrive Logistics Ltd</span>,
+                the legal entity responsible for this platform, its services, payments, and marketplace operations.
+              </p>
+              <div className="text-xs text-background/40 space-y-1">
+                <p>Co. No: 13171804 &nbsp;·&nbsp; VAT: GB375949535</p>
               </div>
               <div className="mt-4 space-y-2 text-xs text-background/50">
                 <p className="flex items-start gap-1.5">
@@ -199,7 +201,7 @@ const Footer = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="text-xs text-background/40 text-center md:text-left">
-              <p>© 2026 Loadify Market. All rights reserved.</p>
+              <p>© 2026 Loadify Market. Operated by XDrive Logistics Ltd. All rights reserved.</p>
               <p className="mt-1">
                 Loadify Market does not hold inventory. All products are listed and fulfilled by independent sellers. The platform connects buyers and sellers and processes payments as an intermediary — it does not own, stock, or dispatch any products. Sellers are solely responsible for their listings, pricing and fulfilment.
               </p>
