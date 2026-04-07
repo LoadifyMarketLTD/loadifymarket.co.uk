@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store";
 
 /**
- * Countdown target: UK midnight at start of July 1, 2026 (Europe/London).
- * July 1 is in BST (UTC+1), so UK midnight == 2026-06-30T23:00:00Z.
- * LOCKED per instruction.
+ * Countdown target: 31 August 2026 23:59:59 Europe/London (BST = UTC+1).
+ * BST is UTC+1, so 23:59:59 BST == 2026-08-31T22:59:59Z.
+ * Must match ZERO_COMMISSION_PROMO_END_UTC in stripe-webhook.ts exactly.
  */
-const TARGET_TIME = new Date("2026-06-30T23:00:00Z").getTime();
+const TARGET_TIME = new Date("2026-08-31T22:59:59Z").getTime();
 
 /**
  * Combined height of fixed Header row (64px) + Header category nav (48px).
@@ -237,16 +237,21 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* ── Countdown widget (position + content LOCKED) ────────── */}
+      {/* ── Countdown widget — positioned in visual gap between left text and laptop ── */}
       {!expired && (
-        <div className="absolute top-6 right-6 z-20 hidden sm:block">
+        <div
+          className="absolute z-20 hidden sm:block"
+          style={{ top: "20%", left: "64%" }}
+        >
           <div
-            className="w-[192px] rounded-2xl border px-4 py-3 flex flex-col items-end gap-1.5"
+            className="rounded-2xl border px-4 py-3 flex flex-col items-center gap-1.5"
             style={{
-              background: "rgba(0,0,0,0.52)",
-              backdropFilter: "blur(10px)",
-              WebkitBackdropFilter: "blur(10px)",
+              width: 210,
+              background: "rgba(0,0,0,0.55)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
               borderColor: "rgba(255,255,255,0.12)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.40)",
             }}
           >
             <span
@@ -257,17 +262,20 @@ const HeroSection = () => {
                 borderColor: "rgba(34,197,94,0.32)",
               }}
             >
-              0% Fees Until July 1
+              0% Fees Until 31 August
             </span>
             <span className="text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.40)" }}>
               Offer ends in
             </span>
-            <div className="flex items-baseline gap-1.5 tabular-nums" style={{ color: "#fff" }}>
+            <div className="flex items-baseline gap-1 tabular-nums" style={{ color: "#fff" }}>
               <span className="font-display font-extrabold text-2xl leading-none">{pad2(time.days)}</span>
-              <span className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>:</span>
+              <span className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>d</span>
               <span className="font-display font-extrabold text-xl leading-none">{pad2(time.hours)}</span>
-              <span className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>:</span>
+              <span className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>h</span>
               <span className="font-display font-extrabold text-xl leading-none">{pad2(time.minutes)}</span>
+              <span className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>m</span>
+              <span className="font-display font-extrabold text-xl leading-none">{pad2(time.seconds)}</span>
+              <span className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>s</span>
             </div>
           </div>
         </div>
