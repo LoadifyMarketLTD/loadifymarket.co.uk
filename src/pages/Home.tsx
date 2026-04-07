@@ -2,35 +2,35 @@
  * src/pages/Home.tsx — root "/" route
  *
  * Canonical homepage for Loadify Market.
- * Section order matches approved mockup:
+ * Section order:
  *
  *  1. Header (fixed, pt-[112px] spacer to clear it)
  *  2. Hero
- *  3. Category slider
- *  4. Trust strip
- *  5. Browse the Marketplace (FeaturedProducts)
- *  6. Shop by Category (CategoryGrid)
- *  7. Featured Listings — 3 feature image cards
- *  8. Why Choose Loadify Market — same visual weight
- *  9. How Selling Works — 3 step cards + CTA
- * 10. How It Works — buyer flow
- * 11. Platform Features — buyer vs seller
- * 12. CTA — Start Selling Today
- * 13. Footer
+ *  3. Trust/Benefits strip — immediately under hero
+ *  4. Marketplace block
+ *     4a. Category slider
+ *     4b. Browse the Marketplace (FeaturedProducts)
+ *     4c. Shop by Category (CategoryGrid)
+ *     4d. Featured Listings — 3 feature image cards
+ *  5. Why + How block
+ *     5a. Why Choose Loadify Market (FeaturesSection)
+ *     5b. Platform Features — buyer vs seller
+ *     5c. How It Works — buyer flow
+ *  6. Seller Journey CTA
+ *  7. Footer
  */
 
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
-import CategorySlider from "@/components/CategorySlider";
 import TrustStrip from "@/components/TrustStrip";
+import CategorySlider from "@/components/CategorySlider";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import CategoryGrid from "@/components/CategoryGrid";
 import FeaturedListings from "@/components/FeaturedListings";
 import FeaturesSection from "@/components/FeaturesSection";
-import SellerJourneySection from "@/components/SellerJourneySection";
-import HowItWorks from "@/components/HowItWorks";
 import PlatformFeatures from "@/components/PlatformFeatures";
-import CTASection from "@/components/CTASection";
+import HowItWorks from "@/components/HowItWorks";
+import SellerJourneySection from "@/components/SellerJourneySection";
 import Footer from "@/components/Footer";
 import LazySection from "@/components/LazySection";
 
@@ -41,41 +41,32 @@ export default function Home() {
       {/* spacer: 64px header row + 48px category nav */}
       <div className="pt-[112px]" />
       <main>
+        {/* 1 — Hero */}
         <HeroSection />
 
-        {/* Category strip — horizontal scroll, icon + label per category */}
-        <CategorySlider />
-
-        {/* Trust strip — credibility before visual browsing */}
+        {/* 2 — Trust/Benefits — immediately below hero */}
         <TrustStrip />
 
-        {/* Browse the Marketplace — 3 product cards with prices */}
+        {/* 3 — Marketplace block: categories → products → grid → featured */}
+        <LazySection>
+          <CategorySlider />
+        </LazySection>
+
         <LazySection>
           <FeaturedProducts />
         </LazySection>
 
-        {/* Shop by Category — 3 large category cards + 4 product cards */}
         <LazySection>
           <CategoryGrid />
         </LazySection>
 
-        {/* Featured Listings — 3 wide feature image cards */}
         <LazySection>
           <FeaturedListings />
         </LazySection>
 
-        {/* Why Choose — same visual weight as Featured Listings */}
+        {/* 4 — Why + How block */}
         <LazySection>
           <FeaturesSection />
-        </LazySection>
-
-        {/* How Selling Works — 3 step cards + Start Selling Today CTA */}
-        <LazySection>
-          <SellerJourneySection />
-        </LazySection>
-
-        <LazySection>
-          <HowItWorks />
         </LazySection>
 
         <LazySection>
@@ -83,7 +74,12 @@ export default function Home() {
         </LazySection>
 
         <LazySection>
-          <CTASection />
+          <HowItWorks />
+        </LazySection>
+
+        {/* 5 — Seller Journey CTA */}
+        <LazySection>
+          <SellerJourneySection />
         </LazySection>
       </main>
 

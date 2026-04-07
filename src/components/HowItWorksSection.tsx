@@ -46,7 +46,7 @@ const STEPS = [
 
 const HowItWorksSection = () => (
   <section
-    className="relative overflow-hidden min-h-[80vh] flex flex-col justify-center px-4 sm:px-6 py-16"
+    className="relative overflow-hidden px-4 sm:px-6 py-16 lg:py-20"
     style={{ background: "linear-gradient(to bottom, #0A1930, #0F2A4A, #081426)" }}
   >
     {/* Ambient glow */}
