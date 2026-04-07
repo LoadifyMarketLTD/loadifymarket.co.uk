@@ -37,7 +37,7 @@ const STEPS = [
 const SellerJourneySection = () => (
   <section
     id="how-to-sell"
-    className="relative overflow-hidden min-h-[80vh] flex items-center px-4 sm:px-6 py-16"
+    className="relative overflow-hidden px-4 sm:px-6 py-12 lg:py-16"
     style={{ background: "linear-gradient(to bottom, #0F2A4A, #081426, #0A1930)" }}
   >
     {/* Ambient glow */}

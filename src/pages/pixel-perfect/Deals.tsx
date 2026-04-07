@@ -246,7 +246,7 @@ const Deals = () => {
                   </Button>
                 </Link>
               </div>
-              <CountdownBanner variant="inline" />
+              <CountdownBanner />
             </div>
           </div>
         </div>

@@ -8,6 +8,8 @@ import RoleBadge from '../components/RoleBadge';
 import PaymentBehaviourBadge from '../components/PaymentBehaviourBadge';
 import ProductCard from '../components/ProductCard';
 import BreadcrumbNav from '../components/BreadcrumbNav';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 import { formatDistanceToNow } from 'date-fns';
 
 interface SellerData extends SellerProfile {
@@ -98,34 +100,44 @@ export default function SellerPublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="bg-[#F8F9FA] min-h-screen pt-24 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Loading seller profile...</p>
+      <div className="bg-[#F8F9FA] min-h-screen flex flex-col">
+        <Header forceOpaque />
+        <div className="flex-1 pt-16 lg:pt-[104px] flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-12 h-12 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-500">Loading seller profile...</p>
+          </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   if (!seller) {
     return (
-      <div className="bg-[#F8F9FA] min-h-screen pt-24">
-        <div className="container-cinematic py-12">
-          <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-16">
-            <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Seller not found</h2>
-            <p className="text-gray-500 mb-6">The seller profile you're looking for doesn't exist.</p>
-            <Link to="/catalog" className="btn-primary">
-              Browse Products
-            </Link>
+      <div className="bg-[#F8F9FA] min-h-screen flex flex-col">
+        <Header forceOpaque />
+        <main className="flex-1 pt-16 lg:pt-[104px]">
+          <div className="container-cinematic py-12">
+            <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-16">
+              <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Seller not found</h2>
+              <p className="text-gray-500 mb-6">The seller profile you're looking for doesn't exist.</p>
+              <Link to="/catalog" className="btn-primary">
+                Browse Products
+              </Link>
+            </div>
           </div>
-        </div>
+        </main>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="bg-[#F8F9FA] min-h-screen pt-24">
+    <div className="bg-[#F8F9FA] min-h-screen flex flex-col">
+      <Header forceOpaque />
+      <main className="flex-1 pt-16 lg:pt-[104px]">
       {/* Breadcrumb */}
       <div className="container-cinematic py-4">
         <BreadcrumbNav
@@ -286,6 +298,8 @@ export default function SellerPublicProfilePage() {
           </div>
         )}
       </div>
+      </main>
+      <Footer />
     </div>
   );
 }

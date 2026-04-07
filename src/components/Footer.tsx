@@ -128,7 +128,7 @@ const Footer = () => {
                 <FooterLink to="/category/fashion">Fashion</FooterLink>
                 <FooterLink to="/category/home-kitchen">Home &amp; Kitchen</FooterLink>
                 <FooterLink to="/catalog">All Categories</FooterLink>
-                <FooterLink to="/dashboard/orders">Track Order</FooterLink>
+                <FooterLink to="/track-order">Track Order</FooterLink>
                 <FooterLink to="/faq">Help &amp; FAQ</FooterLink>
               </ul>
             </div>

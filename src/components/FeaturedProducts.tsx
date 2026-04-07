@@ -35,7 +35,7 @@ const FeaturedProducts = () => {
 
   return (
     <section
-      className="relative overflow-hidden min-h-[80vh] flex items-center px-4 sm:px-6 py-16"
+      className="relative overflow-hidden px-4 sm:px-6 py-16 lg:py-20"
       style={{ background: "linear-gradient(to bottom, #0A1930, #0F2A4A, #081426)" }}
     >
       {/* Ambient glow */}
@@ -120,18 +120,17 @@ const FeaturedProducts = () => {
             {[1, 2, 3].map((n) => (
               <div
                 key={n}
-                className="rounded-2xl bg-white/5 border border-white/10"
-                style={{ minHeight: "280px" }}
+                className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 h-[220px] flex flex-col justify-end"
               >
-                <div className="h-full flex items-end p-5">
-                  <div>
-                    <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
-                      Sample Listing
-                    </p>
-                    <h3 className="text-base font-extrabold text-white/40 leading-snug">
-                      Coming Soon
-                    </h3>
-                  </div>
+                <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+                <div className="relative p-5">
+                  <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
+                    Sample Listing
+                  </p>
+                  <h3 className="text-base font-extrabold text-white/60 leading-snug">
+                    Sample Listing
+                  </h3>
+                  <span className="text-xs text-white/50">Live Preview</span>
                 </div>
               </div>
             ))}

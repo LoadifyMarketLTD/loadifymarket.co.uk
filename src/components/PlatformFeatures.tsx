@@ -67,7 +67,7 @@ const sellerBenefits = [
 const PlatformFeatures = () => {
   return (
     <section
-      className="relative overflow-hidden min-h-[80vh] flex flex-col justify-center px-4 sm:px-6 py-16"
+      className="relative overflow-hidden px-4 sm:px-6 py-16 lg:py-20"
       style={{ background: "linear-gradient(to bottom, #081426, #0A1930, #0F2A4A)" }}
     >
       {/* Ambient glow */}
