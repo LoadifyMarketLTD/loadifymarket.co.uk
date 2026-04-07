@@ -265,12 +265,14 @@ export default function AdminSellerDetailPage() {
   const inactiveProducts  = products.filter((p) => p.isApproved && !p.isActive);
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen flex flex-col">
+      <Header forceOpaque />
+      <main className="flex-1 pt-16 lg:pt-[104px]">
       <div className="container mx-auto px-4 py-8">
 
         {/* Back link */}
         <button
-          onClick={() => navigate('/admin/sellers')}
+          onClick={() => navigate('/pp/admin/approvals')}
           className="inline-flex items-center gap-2 text-gray-600 hover:text-navy-800 transition-colors mb-6 text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -736,6 +738,8 @@ export default function AdminSellerDetailPage() {
           </div>
         </div>
       </div>
+      </main>
+      <Footer />
     </div>
   );
 }
