@@ -30,6 +30,12 @@ interface OrderBreakdown {
   count: number;
 }
 
+const periodLabel: Record<string, string> = {
+  all: "All time",
+  "7d": "Last 7 days",
+  "30d": "Last 30 days",
+};
+
 const AdminReports = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,12 +43,6 @@ const AdminReports = () => {
   const [topSellers, setTopSellers] = useState<TopSeller[]>([]);
   const [orderBreakdown, setOrderBreakdown] = useState<OrderBreakdown[]>([]);
   const [period, setPeriod] = useState<"all" | "7d" | "30d">("all");
-
-  const periodLabel: Record<string, string> = {
-    all: "All time",
-    "7d": "Last 7 days",
-    "30d": "Last 30 days",
-  };
 
   const handleExport = () => {
     const rows: string[][] = [
