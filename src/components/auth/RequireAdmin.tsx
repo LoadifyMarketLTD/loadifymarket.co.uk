@@ -9,7 +9,7 @@ interface Props {
 }
 
 /**
- * Route guard that requires admin or owner role.
+ * Route guard that requires the admin role.
  * Unauthenticated users are redirected to /login.
  * Authenticated non-admin users see a 403 message instead of the page.
  */

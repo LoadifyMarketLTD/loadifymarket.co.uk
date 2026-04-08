@@ -19,20 +19,12 @@ describe('hasAdminAccess', () => {
     expect(hasAdminAccess(makeUser('admin'))).toBe(true);
   });
 
-  it('returns true for owner role', () => {
-    expect(hasAdminAccess(makeUser('owner'))).toBe(true);
-  });
-
   it('returns false for buyer role', () => {
     expect(hasAdminAccess(makeUser('buyer'))).toBe(false);
   });
 
   it('returns false for seller role', () => {
     expect(hasAdminAccess(makeUser('seller'))).toBe(false);
-  });
-
-  it('returns false for guest role', () => {
-    expect(hasAdminAccess(makeUser('guest'))).toBe(false);
   });
 
   it('returns false for null user', () => {
@@ -49,20 +41,12 @@ describe('hasSellerAccess', () => {
     expect(hasSellerAccess(makeUser('seller'))).toBe(true);
   });
 
-  it('returns true for admin role', () => {
-    expect(hasSellerAccess(makeUser('admin'))).toBe(true);
-  });
-
-  it('returns true for owner role', () => {
-    expect(hasSellerAccess(makeUser('owner'))).toBe(true);
+  it('returns false for admin role (admin uses hasAdminAccess instead)', () => {
+    expect(hasSellerAccess(makeUser('admin'))).toBe(false);
   });
 
   it('returns false for buyer role', () => {
     expect(hasSellerAccess(makeUser('buyer'))).toBe(false);
-  });
-
-  it('returns false for guest role', () => {
-    expect(hasSellerAccess(makeUser('guest'))).toBe(false);
   });
 
   it('returns false for null user', () => {

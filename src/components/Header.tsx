@@ -61,7 +61,7 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
 
   const dashboardPath =
     user?.role === "seller" ? "/pp/seller" :
-    user?.role === "admin" || user?.role === "owner" ? "/pp/admin" :
+    user?.role === "admin" ? "/pp/admin" :
     "/pp/buyer";
 
   const handleSearch = (e: React.FormEvent) => {
@@ -172,13 +172,13 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
               <Button variant="ghost" size="sm" className="text-white/80 hover:text-green-400 hover:bg-white/10 font-medium" asChild>
                 <Link to={dashboardPath}>
                   <LayoutDashboard className="h-4 w-4 mr-1" aria-hidden="true" />
-                  {user.role === "admin" || user.role === "owner" ? "Admin Hub" : "Dashboard"}
+                  {user.role === "admin" ? "Admin Hub" : "Dashboard"}
                 </Link>
               </Button>
               <Button variant="ghost" size="sm" className="text-white/80 hover:text-green-400 hover:bg-white/10 font-medium" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-1" aria-hidden="true" /> Sign Out
               </Button>
-              {user.role !== "admin" && user.role !== "owner" && (
+              {user.role !== "admin" && (
                 <Button
                   size="sm"
                   className="h-9 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-300 hover:to-green-400 text-black font-semibold px-5 rounded-full shadow-lg hover:shadow-green-400/30 transition-all duration-300"
@@ -299,13 +299,13 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
               <>
                 <Button variant="ghost" size="sm" className="flex-1 text-white/80 hover:text-green-400 hover:bg-white/10" asChild>
                   <Link to={dashboardPath} onClick={() => setMobileOpen(false)}>
-                    {user.role === "admin" || user.role === "owner" ? "Admin Hub" : "Dashboard"}
+                    {user.role === "admin" ? "Admin Hub" : "Dashboard"}
                   </Link>
                 </Button>
                 <Button size="sm" variant="outline" className="flex-1 border-white/20 text-white/80 hover:bg-white/10" onClick={() => { setMobileOpen(false); handleLogout(); }}>
                   Sign Out
                 </Button>
-                {user.role !== "admin" && user.role !== "owner" && (
+                {user.role !== "admin" && (
                   <Button size="sm" className="flex-1 bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold" asChild>
                     <Link to="/pp/seller" onClick={() => setMobileOpen(false)}>Start Selling</Link>
                   </Button>

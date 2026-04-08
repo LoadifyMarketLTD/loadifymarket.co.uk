@@ -17,7 +17,6 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
-import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
 
 interface User {
@@ -56,7 +55,6 @@ const roleConfig: Record<string, { label: string; className: string }> = {
   buyer: { label: "Buyer", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
   seller: { label: "Seller", className: "border-purple-500/30 text-purple-400 bg-purple-500/10" },
   admin: { label: "Admin", className: "border-red-500/30 text-red-400 bg-red-500/10" },
-  owner: { label: "Owner", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
 };
 
 const stripeStatusConfig: Record<string, { label: string; className: string }> = {
@@ -73,8 +71,6 @@ const sellerStatusConfig: Record<string, { label: string; className: string }> =
 };
 
 const AdminUsers = () => {
-  const { user: currentUser } = useAuthStore();
-  const isOwner = currentUser?.role === 'owner';
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -202,9 +198,9 @@ const AdminUsers = () => {
   }, []);
 
   const toggleBlock = async (userId: string, currentlyActive: boolean, targetRole: string) => {
-    // Owner accounts are protected — they can never be suspended through the UI.
-    if (targetRole === 'owner') {
-      toast({ title: "Protected account", description: "Owner accounts cannot be suspended.", variant: "destructive" });
+    // Admin accounts are protected — they can never be suspended through the UI.
+    if (targetRole === 'admin') {
+      toast({ title: "Protected account", description: "Admin accounts cannot be suspended.", variant: "destructive" });
       return;
     }
     setActionLoading(userId);
@@ -228,15 +224,10 @@ const AdminUsers = () => {
   };
 
   const changeRole = async (userId: string, newRole: string, currentRole: string) => {
-    // Owner role is protected — it cannot be changed through the admin UI.
-    // To transfer ownership, update the DB directly.
-    if (currentRole === 'owner') {
-      toast({ title: "Protected account", description: "Owner role cannot be changed through the admin UI.", variant: "destructive" });
-      return;
-    }
-    // Nobody can assign the owner role through the dropdown either.
-    if (newRole === 'owner') {
-      toast({ title: "Not allowed", description: "The owner role cannot be assigned here.", variant: "destructive" });
+    // Admin role is protected — it cannot be changed through the admin UI.
+    // To demote an admin, update the DB directly.
+    if (currentRole === 'admin') {
+      toast({ title: "Protected account", description: "Admin role cannot be changed through the admin UI.", variant: "destructive" });
       return;
     }
     setRoleChanging(true);
@@ -325,7 +316,7 @@ const AdminUsers = () => {
                       <DropdownMenuItem onClick={() => openDetail(u)}>
                         <Eye className="h-3.5 w-3.5 mr-2" /> View Details
                       </DropdownMenuItem>
-                      {u.role === 'owner' ? (
+                      {u.role === 'admin' ? (
                         <DropdownMenuItem disabled>
                           <Lock className="h-3.5 w-3.5 mr-2" /> Protected Account
                         </DropdownMenuItem>
@@ -516,11 +507,11 @@ const AdminUsers = () => {
                 {/* ── Admin actions ─────────────────────────────────────────── */}
                 <section>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Admin Actions</h3>
-                  {detail.role === 'owner' ? (
-                    /* Owner accounts are fully protected — no destructive actions */
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 rounded-lg border border-amber-500/20 bg-amber-500/5">
-                      <Lock className="h-4 w-4 text-amber-500 shrink-0" />
-                      <span>Owner accounts are protected. No actions can be performed through this UI.</span>
+                  {detail.role === 'admin' ? (
+                    /* Admin accounts are fully protected — no destructive actions */
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 rounded-lg border border-red-500/20 bg-red-500/5">
+                      <Lock className="h-4 w-4 text-red-500 shrink-0" />
+                      <span>Admin accounts are protected. No actions can be performed through this UI.</span>
                     </div>
                   ) : (
                     <div className="flex flex-wrap gap-3">
@@ -552,7 +543,7 @@ const AdminUsers = () => {
                         <Select
                           value={detail.role}
                           onValueChange={(val) => changeRole(detail.id, val, detail.role)}
-                          disabled={roleChanging || !isOwner && detail.role === 'admin'}
+                          disabled={roleChanging || detail.role === 'admin'}
                         >
                           <SelectTrigger className="h-9 w-36 text-sm">
                             <SelectValue />
