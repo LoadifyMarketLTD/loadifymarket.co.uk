@@ -177,4 +177,11 @@ section {
   .min-h-screen-safe {
     min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   }
+
+  /* Combined utility: base 0.75rem (py-3) top padding plus the status-bar
+     safe-area inset. Use on mobile app-shell headers so content clears the
+     Android / iOS status bar without duplicating the calc() in every file. */
+  .pt-header-safe {
+    padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  }
 }
