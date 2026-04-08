@@ -1,9 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store';
+import { hasAdminAccess, hasSellerAccess } from './lib/roleUtils';
 import { CartProvider } from './contexts/CartContext';
 import CookieConsent from './components/CookieConsent';
-import { hasAdminAccess } from './lib/roleUtils';
 
 import RequireAuth from './components/auth/RequireAuth';
 import RequireAdmin from './components/auth/RequireAdmin';
@@ -107,6 +107,20 @@ function PageLoader() {
       </div>
     </div>
   );
+}
+
+/**
+ * Role-aware /dashboard redirect.
+ * Sellers → /pp/seller, admins/owners → /pp/admin, everyone else → /pp/buyer.
+ * While auth is still loading, wait before redirecting to avoid a flash to the
+ * wrong dashboard.
+ */
+function DashboardRedirect() {
+  const { user, isLoading } = useAuthStore();
+  if (isLoading) return <PageLoader />;
+  if (user && hasAdminAccess(user)) return <Navigate to="/pp/admin" replace />;
+  if (user && hasSellerAccess(user)) return <Navigate to="/pp/seller" replace />;
+  return <Navigate to="/pp/buyer" replace />;
 }
 
 /**
@@ -417,7 +431,7 @@ function App() {
         {/* ── Legacy routes → redirect to canonical /pp/* equivalents ──────────── */}
         <Route path="seller" element={<Navigate to="/pp/seller" replace />} />
         <Route path="admin" element={<Navigate to="/pp/admin" replace />} />
-        <Route path="dashboard" element={<Navigate to="/pp/buyer" replace />} />
+        <Route path="dashboard" element={<DashboardRedirect />} />
         <Route path="shop" element={<Navigate to="/catalog" replace />} />
         <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />
         <Route path="seller-dashboard" element={<Navigate to="/pp/seller" replace />} />

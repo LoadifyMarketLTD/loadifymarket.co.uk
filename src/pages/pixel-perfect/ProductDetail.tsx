@@ -75,6 +75,7 @@ const ProductDetail = () => {
   const [related, setRelated] = useState<Product[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [sellerListingCount, setSellerListingCount] = useState(0);
+  const [productSellerId, setProductSellerId] = useState<string | null>(null);
   const [productCategorySlug, setProductCategorySlug] = useState<string | null>(null);
   const [sellerStoreSlug, setSellerStoreSlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,6 +124,7 @@ const ProductDetail = () => {
         // Step 5: Adapt to UI shape
         const adapted = adaptProduct(normalised);
         setProduct(adapted);
+        setProductSellerId(data.sellerId ?? null);
 
         // Capture category slug for breadcrumb link
         const rawCat = Array.isArray(data.category) ? data.category[0] : data.category;
@@ -306,6 +308,7 @@ const ProductDetail = () => {
                     unitCount={product.unitCount}
                     views={product.views}
                     listed={product.listed}
+                    sellerId={productSellerId}
                   />
                 </div>
 

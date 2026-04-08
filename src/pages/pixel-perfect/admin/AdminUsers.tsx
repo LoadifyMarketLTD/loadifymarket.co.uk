@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users, Search, ShieldCheck, Ban, MoreHorizontal, Eye, Loader2 } from "lucide-react";
+import { Users, Search, ShieldCheck, Ban, MoreHorizontal, Eye, Loader2, ExternalLink, Package, ShoppingBag, Flag, CreditCard, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,9 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 
@@ -25,6 +28,24 @@ interface User {
   createdAt: string;
 }
 
+interface UserDetail extends User {
+  /** ISO timestamp for display */
+  createdAtRaw: string;
+  phone?: string | null;
+  // Seller-specific
+  sellerStatus?: string | null;
+  stripeConnectStatus?: string | null;
+  stripeAccountId?: string | null;
+  storeName?: string | null;
+  businessName?: string | null;
+  sellerRating?: number | null;
+  totalSales?: number | null;
+  // Counts
+  listingsCount: number;
+  ordersCount: number;
+  reportsCount: number;
+}
+
 const statusConfig: Record<string, { label: string; className: string }> = {
   active: { label: "Active", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
   inactive: { label: "Suspended", className: "border-red-500/30 text-red-400 bg-red-500/10" },
@@ -34,6 +55,20 @@ const roleConfig: Record<string, { label: string; className: string }> = {
   buyer: { label: "Buyer", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
   seller: { label: "Seller", className: "border-purple-500/30 text-purple-400 bg-purple-500/10" },
   admin: { label: "Admin", className: "border-red-500/30 text-red-400 bg-red-500/10" },
+  owner: { label: "Owner", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
+};
+
+const stripeStatusConfig: Record<string, { label: string; className: string }> = {
+  active:     { label: "Active",      className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+  pending:    { label: "Pending",     className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
+  restricted: { label: "Restricted",  className: "border-red-500/30 text-red-400 bg-red-500/10" },
+};
+
+const sellerStatusConfig: Record<string, { label: string; className: string }> = {
+  active:    { label: "Active",      className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+  submitted: { label: "Submitted",   className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
+  draft:     { label: "Draft",       className: "border-slate-500/30 text-slate-400 bg-slate-500/10" },
+  suspended: { label: "Suspended",   className: "border-red-500/30 text-red-400 bg-red-500/10" },
 };
 
 const AdminUsers = () => {
@@ -43,6 +78,9 @@ const AdminUsers = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<User | null>(null);
+  const [detail, setDetail] = useState<UserDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [roleChanging, setRoleChanging] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -50,7 +88,7 @@ const AdminUsers = () => {
     try {
       const { data, error: queryError } = await supabase
         .from("users")
-        .select("id, email, firstName, lastName, role, isActive, createdAt")
+        .select("id, email, firstName, lastName, role, isActive, createdAt, phone")
         .order("createdAt", { ascending: false });
 
       if (queryError) throw queryError;
@@ -69,12 +107,96 @@ const AdminUsers = () => {
       setUsers(mapped);
     } catch (err: unknown) {
       setError((err as Error).message || "Failed to load users");
+      toast({ title: "Failed to load users", description: (err as Error).message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+  /** When a user row is selected, load the full expanded detail view. */
+  const openDetail = useCallback(async (u: User) => {
+    setSelected(u);
+    setDetail(null);
+    setDetailLoading(true);
+
+    try {
+      // Fetch full user row for phone
+      const { data: fullUser } = await supabase
+        .from("users")
+        .select("id, email, firstName, lastName, role, isActive, createdAt, phone")
+        .eq("id", u.id)
+        .single<{ id: string; email: string; firstName?: string; lastName?: string; role: string; isActive: boolean; createdAt: string; phone?: string }>();
+
+      const createdAtRaw = fullUser?.createdAt
+        ? new Date(fullUser.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+        : "—";
+
+      // Parallel: seller profile, listings count, orders count, reports count
+      const [sellerRes, listingsRes, buyerOrdersRes, sellerOrdersRes, reportsRes] = await Promise.all([
+        // Seller profile (only matters for sellers)
+        supabase
+          .from("seller_profiles")
+          .select("sellerStatus, stripeConnectStatus, stripeAccountId, storeName, businessName, rating, totalSales")
+          .eq("userId", u.id)
+          .maybeSingle<{
+            sellerStatus: string;
+            stripeConnectStatus: string | null;
+            stripeAccountId: string | null;
+            storeName: string | null;
+            businessName: string | null;
+            rating: number;
+            totalSales: number;
+          }>(),
+        // Listings (as seller)
+        supabase
+          .from("products")
+          .select("id", { count: "exact", head: true })
+          .eq("sellerId", u.id),
+        // Orders as buyer
+        supabase
+          .from("orders")
+          .select("id", { count: "exact", head: true })
+          .eq("buyerId", u.id),
+        // Orders as seller
+        supabase
+          .from("orders")
+          .select("id", { count: "exact", head: true })
+          .eq("sellerId", u.id),
+        // Reports submitted by this user
+        supabase
+          .from("reported_listings")
+          .select("id", { count: "exact", head: true })
+          .eq("reportedBy", u.id),
+      ]);
+
+      const sp = sellerRes.data;
+      const listingsCount = listingsRes.count ?? 0;
+      const ordersCount = (buyerOrdersRes.count ?? 0) + (sellerOrdersRes.count ?? 0);
+      const reportsCount = reportsRes.count ?? 0;
+
+      setDetail({
+        ...u,
+        createdAtRaw,
+        phone: fullUser?.phone ?? null,
+        sellerStatus: sp?.sellerStatus ?? null,
+        stripeConnectStatus: sp?.stripeConnectStatus ?? null,
+        stripeAccountId: sp?.stripeAccountId ?? null,
+        storeName: sp?.storeName ?? null,
+        businessName: sp?.businessName ?? null,
+        sellerRating: sp?.rating ?? null,
+        totalSales: sp?.totalSales ?? null,
+        listingsCount,
+        ordersCount,
+        reportsCount,
+      });
+    } catch (err) {
+      toast({ title: "Failed to load user details", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
 
   const toggleBlock = async (userId: string, currentlyActive: boolean) => {
     setActionLoading(userId);
@@ -87,11 +209,32 @@ const AdminUsers = () => {
       if (error) throw error;
       setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, isActive: !currentlyActive } : u));
       if (selected?.id === userId) setSelected((s) => s ? { ...s, isActive: !currentlyActive } : s);
+      if (detail?.id === userId) setDetail((d) => d ? { ...d, isActive: !currentlyActive } : d);
       toast({ title: currentlyActive ? "User suspended" : "User reactivated" });
     } catch (err: unknown) {
       setError((err as Error).message || "Failed to update user");
+      toast({ title: "Failed to update user", description: (err as Error).message, variant: "destructive" });
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const changeRole = async (userId: string, newRole: string) => {
+    setRoleChanging(true);
+    try {
+      const { error } = await supabase
+        .from("users")
+        .update({ role: newRole })
+        .eq("id", userId);
+      if (error) throw error;
+      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, role: newRole } : u));
+      if (selected?.id === userId) setSelected((s) => s ? { ...s, role: newRole } : s);
+      if (detail?.id === userId) setDetail((d) => d ? { ...d, role: newRole } : d);
+      toast({ title: "Role updated", description: `User role changed to ${newRole}.` });
+    } catch (err: unknown) {
+      toast({ title: "Failed to change role", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setRoleChanging(false);
     }
   };
 
@@ -160,7 +303,7 @@ const AdminUsers = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setSelected(u)}>
+                      <DropdownMenuItem onClick={() => openDetail(u)}>
                         <Eye className="h-3.5 w-3.5 mr-2" /> View Details
                       </DropdownMenuItem>
                       {u.isActive ? (
@@ -253,40 +396,159 @@ const AdminUsers = () => {
         ))}
       </Tabs>
 
-      <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
+      {/* ── Expanded User Detail Dialog ─────────────────────────────────────── */}
+      <Dialog open={!!selected} onOpenChange={(open) => { if (!open) { setSelected(null); setDetail(null); } }}>
         {selected && (
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{selected.name}</DialogTitle>
-              <DialogDescription>{selected.email}</DialogDescription>
+              <DialogTitle className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }}>
+                  {selected.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                </div>
+                {selected.name}
+              </DialogTitle>
+              <DialogDescription className="font-mono text-xs">{selected.email}</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-2">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Role</span><p className="font-medium text-white capitalize">{selected.role}</p></div>
-                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Status</span><p className="font-medium text-white capitalize">{selected.isActive ? "Active" : "Suspended"}</p></div>
-                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Joined</span><p className="font-medium text-white">{selected.createdAt}</p></div>
+
+            {detailLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-              <div className="flex justify-end">
-                {selected.isActive ? (
-                  <Button
-                    variant="destructive"
-                    onClick={() => toggleBlock(selected.id, selected.isActive)}
-                    disabled={actionLoading === selected.id}
-                  >
-                    {actionLoading === selected.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Ban className="h-4 w-4 mr-1" />}
-                    Suspend User
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={() => toggleBlock(selected.id, selected.isActive)}
-                    disabled={actionLoading === selected.id}
-                  >
-                    {actionLoading === selected.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-1" />}
-                    Unsuspend User
-                  </Button>
+            ) : detail ? (
+              <div className="space-y-6 pt-2">
+                {/* ── Core identity ─────────────────────────────────────────── */}
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Account Details</h3>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                    <DetailRow label="User ID">
+                      <span className="font-mono text-xs break-all">{detail.id}</span>
+                    </DetailRow>
+                    <DetailRow label="Status">
+                      <Badge variant="outline" className={statusConfig[detail.isActive ? "active" : "inactive"].className}>
+                        {detail.isActive ? "Active" : "Suspended"}
+                      </Badge>
+                    </DetailRow>
+                    <DetailRow label="Role">
+                      <Badge variant="outline" className={(roleConfig[detail.role] ?? roleConfig.buyer).className}>
+                        {(roleConfig[detail.role] ?? { label: detail.role }).label}
+                      </Badge>
+                    </DetailRow>
+                    <DetailRow label="Joined">{detail.createdAtRaw}</DetailRow>
+                    {detail.phone && <DetailRow label="Phone">{detail.phone}</DetailRow>}
+                  </div>
+                </section>
+
+                {/* ── Activity counts ───────────────────────────────────────── */}
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Activity</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    <StatCard icon={<Package className="h-4 w-4" />} label="Listings" value={detail.listingsCount} color="#A78BFA" />
+                    <StatCard icon={<ShoppingBag className="h-4 w-4" />} label="Orders" value={detail.ordersCount} color="#60A5FA" />
+                    <StatCard icon={<Flag className="h-4 w-4" />} label="Reports Filed" value={detail.reportsCount} color="#F87171" />
+                  </div>
+                </section>
+
+                {/* ── Seller profile (only shown for sellers) ───────────────── */}
+                {(detail.role === "seller" || detail.sellerStatus) && (
+                  <section>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Seller Profile</h3>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                      {(detail.storeName || detail.businessName) && (
+                        <DetailRow label="Store / Business">
+                          {detail.storeName || detail.businessName}
+                        </DetailRow>
+                      )}
+                      {detail.sellerStatus && (
+                        <DetailRow label="Seller Status">
+                          <Badge variant="outline" className={(sellerStatusConfig[detail.sellerStatus] ?? sellerStatusConfig.draft).className}>
+                            {(sellerStatusConfig[detail.sellerStatus] ?? { label: detail.sellerStatus }).label}
+                          </Badge>
+                        </DetailRow>
+                      )}
+                      <DetailRow label="Stripe Account">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          {detail.stripeAccountId ? (
+                            <div className="flex items-center gap-1.5">
+                              <Badge variant="outline" className={(stripeStatusConfig[detail.stripeConnectStatus ?? ""] ?? stripeStatusConfig.pending).className}>
+                                {(stripeStatusConfig[detail.stripeConnectStatus ?? ""] ?? { label: detail.stripeConnectStatus ?? "Unknown" }).label}
+                              </Badge>
+                              <span className="font-mono text-xs text-muted-foreground truncate max-w-[120px]">{detail.stripeAccountId}</span>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">Not connected</span>
+                          )}
+                        </div>
+                      </DetailRow>
+                      {detail.sellerRating !== null && detail.sellerRating !== undefined && (
+                        <DetailRow label="Rating">{Number(detail.sellerRating).toFixed(2)} ★</DetailRow>
+                      )}
+                      {detail.totalSales !== null && detail.totalSales !== undefined && (
+                        <DetailRow label="Total Sales">{detail.totalSales}</DetailRow>
+                      )}
+                    </div>
+                  </section>
                 )}
+
+                {/* ── Admin actions ─────────────────────────────────────────── */}
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Admin Actions</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {/* Suspend / Reactivate */}
+                    {detail.isActive ? (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => toggleBlock(detail.id, detail.isActive)}
+                        disabled={actionLoading === detail.id}
+                      >
+                        {actionLoading === detail.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Ban className="h-4 w-4 mr-1" />}
+                        Suspend User
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => toggleBlock(detail.id, detail.isActive)}
+                        disabled={actionLoading === detail.id}
+                      >
+                        {actionLoading === detail.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-1" />}
+                        Reactivate User
+                      </Button>
+                    )}
+
+                    {/* Change Role */}
+                    <div className="flex items-center gap-2">
+                      <UserCog className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <Select
+                        value={detail.role}
+                        onValueChange={(val) => changeRole(detail.id, val)}
+                        disabled={roleChanging}
+                      >
+                        <SelectTrigger className="h-9 w-36 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="buyer">Buyer</SelectItem>
+                          <SelectItem value="seller">Seller</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {roleChanging && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                    </div>
+
+                    {/* Admin seller detail page link (if seller) */}
+                    {detail.role === "seller" && (
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={`/admin/sellers/${detail.id}`} target="_blank" rel="noreferrer">
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          Full Seller Record
+                        </a>
+                      </Button>
+                    )}
+                  </div>
+                </section>
               </div>
-            </div>
+            ) : null}
           </DialogContent>
         )}
       </Dialog>
@@ -294,4 +556,28 @@ const AdminUsers = () => {
   );
 };
 
+/** Small helper: label + value row for the detail grid */
+function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
+      <div className="text-sm font-medium text-foreground">{children}</div>
+    </div>
+  );
+}
+
+/** Small stat card for activity counts */
+function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
+  return (
+    <div className="rounded-xl p-4 flex flex-col gap-2" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${color}20`, color }}>
+        {icon}
+      </div>
+      <div className="text-2xl font-bold text-white">{value}</div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
 export default AdminUsers;
+

@@ -15,11 +15,13 @@ interface Product {
   stockQuantity: number;
   stockStatus: string;
   isActive: boolean;
+  isApproved: boolean;
   views: number;
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   active: { label: "Active", className: "bg-emerald-500/10 text-emerald-700" },
+  pending_review: { label: "Pending Review", className: "bg-amber-500/10 text-amber-700" },
   out_of_stock: { label: "Out of Stock", className: "bg-red-500/10 text-red-700" },
   low_stock: { label: "Low Stock", className: "bg-amber-500/10 text-amber-700" },
   draft: { label: "Draft", className: "bg-muted text-muted-foreground" },
@@ -27,6 +29,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 
 function deriveStatus(p: Product): string {
   if (!p.isActive) return "draft";
+  if (!p.isApproved) return "pending_review";
   if (p.stockQuantity === 0) return "out_of_stock";
   if (p.stockQuantity <= 5) return "low_stock";
   return "active";
@@ -46,7 +49,7 @@ const SellerProducts = () => {
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, views")
+          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views")
           .eq("sellerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
@@ -93,7 +96,7 @@ const SellerProducts = () => {
           />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {(["all", "active", "draft", "low_stock", "out_of_stock"] as const).map((s) => (
+          {(["all", "active", "pending_review", "draft", "low_stock", "out_of_stock"] as const).map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}

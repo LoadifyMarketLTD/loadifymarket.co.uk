@@ -66,6 +66,13 @@ const SellerReturns = () => {
     try {
       const { error: dbError } = await supabase.from("returns").update({ status: "approved" }).eq("id", selected.id);
       if (dbError) { setError(dbError.message); return; }
+      // Notify buyer that their return was approved
+      await supabase.from("notifications").insert({
+        userId: selected.buyerId,
+        type: "return",
+        title: "Return approved",
+        message: `Your return request for order ${selected.orderId.slice(0, 8).toUpperCase()} has been approved.`,
+      });
       await load();
       setSelected(null);
     } finally {
@@ -80,6 +87,13 @@ const SellerReturns = () => {
     try {
       const { error: dbError } = await supabase.from("returns").update({ status: "rejected" }).eq("id", selected.id);
       if (dbError) { setError(dbError.message); return; }
+      // Notify buyer that their return was rejected
+      await supabase.from("notifications").insert({
+        userId: selected.buyerId,
+        type: "return",
+        title: "Return rejected",
+        message: `Your return request for order ${selected.orderId.slice(0, 8).toUpperCase()} has been rejected. Please contact support if you have questions.`,
+      });
       await load();
       setSelected(null);
     } finally {

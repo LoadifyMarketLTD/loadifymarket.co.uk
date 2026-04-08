@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 import { hasAdminAccess, hasSellerAccess } from '../../lib/roleUtils';
@@ -30,16 +30,14 @@ const CardShell = ({ children }: { children: ReactNode }) => (
  *   unauthenticated  → redirect to /login
  *   admins/owners    → bypass seller status check (full access)
  *
- * When the seller's stored status is 'submitted', this guard attempts an
- * activation check (via the connect-status Netlify function) in case the
- * seller completed all requirements but never revisited the setup page. If
- * the check promotes them to 'active', they proceed immediately without
- * having to navigate to /seller/setup first.
+ * When the seller's stored status is 'draft' or 'submitted', this guard
+ * attempts a recheck-activation call in case the seller completed all
+ * requirements but the DB value is stale. If the check promotes them to
+ * 'active', they proceed immediately without navigating to /seller/setup.
  */
 export default function RequireSeller({ children }: Props) {
   const { user, isLoading } = useAuthStore();
   const [fetchState, setFetchState] = useState<FetchState>('loading');
-  const activationAttempted = useRef(false);
 
   useEffect(() => {
     if (!user || user.role !== 'seller') return;
@@ -51,60 +49,76 @@ export default function RequireSeller({ children }: Props) {
     let cancelled = false;
 
     const checkStatus = async () => {
+      const { supabase } = await import('../../lib/supabase');
+
+      // Step 1: Read the persisted sellerStatus from the DB.
+      const { data, error } = await supabase
+        .from('seller_profiles')
+        .select('sellerStatus')
+        .eq('userId', user.id)
+        .single<{ sellerStatus: string }>();
+
+      if (cancelled) return;
+
+      if (error) {
+        console.warn('RequireSeller: failed to fetch sellerStatus', error.message);
+        setFetchState('error');
+        return;
+      }
+
+      const dbStatus = (data?.sellerStatus ?? 'draft') as FetchState;
+
+      // Step 2: If status is already active or suspended, use it directly — no
+      // need for an extra network round-trip.
+      if (dbStatus === 'active' || dbStatus === 'suspended') {
+        setFetchState(dbStatus);
+        return;
+      }
+
+      // Step 3: Status is draft or submitted — the DB value may be stale.
+      // This happens when:
+      //   a) Stripe became active after the profile was already complete, or
+      //   b) The profile was completed after Stripe was already active, but
+      //      the recheck-activation call after SellerProfile.save() failed
+      //      (network blip, cold-start, token expiry).
+      //
+      // Call recheck-activation to re-evaluate all conditions server-side.
+      // Only redirect to /seller/setup if the re-evaluation ALSO returns non-active.
+      // This ensures sellers who genuinely meet all conditions are not blocked.
       try {
-        const { supabase } = await import('../../lib/supabase');
-        const { data, error } = await supabase
-          .from('seller_profiles')
-          .select('sellerStatus')
-          .eq('userId', user.id)
-          .single<{ sellerStatus: string }>();
-
-        if (cancelled) return;
-        if (error) {
-          console.warn('RequireSeller: failed to fetch sellerStatus', error.message);
-          setFetchState('error');
-          return;
-        }
-
-        const status = (data?.sellerStatus ?? 'draft') as FetchState;
-
-        // For sellers who are 'submitted' (profile complete but Stripe not yet
-        // confirmed), trigger a live connect-status check. This auto-promotes
-        // sellers who completed all requirements but never revisited setup.
-        if (status === 'submitted' && !activationAttempted.current) {
-          activationAttempted.current = true;
-          try {
-            const session = await supabase.auth.getSession();
-            const token = session.data.session?.access_token;
-            if (token) {
-              const res = await fetch('/.netlify/functions/connect-status', {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              if (res.ok && !cancelled) {
-                const result = await res.json() as { sellerStatus?: string };
-                if (result.sellerStatus === 'active') {
-                  setFetchState('active');
-                  return;
-                }
-              }
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (token) {
+          const res = await fetch('/.netlify/functions/recheck-activation', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const recheckData = await res.json() as { sellerStatus?: string };
+            if (cancelled) return;
+            const recheckStatus = recheckData.sellerStatus as FetchState | undefined;
+            if (recheckStatus) {
+              setFetchState(recheckStatus);
+              return;
             }
-          } catch {
-            // Non-fatal — fall through to the DB-derived status
           }
         }
+      } catch (err) {
+        // Non-fatal — fall through and use the DB status.
+        console.warn('RequireSeller: recheck-activation failed (non-fatal)', err);
+      }
 
-        if (!cancelled) {
-          setFetchState(status === 'active' ? 'active' : status);
-        }
-      } catch (err: unknown) {
-        if (cancelled) return;
+      if (cancelled) return;
+      // Fall back to the DB status if the recheck did not return a value.
+      setFetchState(dbStatus);
+    };
+
+    checkStatus().catch((err: unknown) => {
+      if (!cancelled) {
         console.warn('RequireSeller: unexpected error', err);
         setFetchState('error');
       }
-    };
-
-    checkStatus();
+    });
     return () => {
       cancelled = true;
     };

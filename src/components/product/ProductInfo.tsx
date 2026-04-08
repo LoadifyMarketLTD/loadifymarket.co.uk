@@ -22,6 +22,8 @@ interface ProductInfoProps {
   views: number;
   listed: string;
   product: Product;
+  /** The seller's user ID — used to detect if the logged-in user owns this product */
+  sellerId?: string | null;
 }
 
 const conditionColor: Record<string, string> = {
@@ -41,13 +43,16 @@ const ProductInfo = ({
   views,
   listed,
   product,
+  sellerId,
 }: ProductInfoProps) => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const isOwner = !!user && !!product.sellerId && user.id === product.sellerId;
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  // True when the logged-in user is the seller/owner of this product
+  const isOwner = !!(user && sellerId && user.id === sellerId);
 
   // Check if this product is already in the user's wishlist
   useEffect(() => {
@@ -186,7 +191,7 @@ const ProductInfo = ({
         </div>
       </div>
 
-      {/* CTA buttons */}
+      {/* CTA buttons — owner sees management actions; buyers see purchase actions */}
       {isOwner ? (
         <div className="flex flex-col sm:flex-row gap-3">
           <Link to={`/seller/products/${product.id}/edit`} className="flex-1">

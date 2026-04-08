@@ -30,10 +30,10 @@ export interface DBProduct {
   rating: number;
   reviewCount: number;
   createdAt: string;
-  type?: string;
-  specifications?: Record<string, unknown> | null;
   /** The seller's user ID — passed through to the UI for owner-awareness */
   sellerId?: string;
+  type?: string;
+  specifications?: Record<string, unknown> | null;
   // Joined from categories table (PostgREST embeds as object or array)
   category?: { name: string; slug: string } | Array<{ name: string; slug: string }> | null;
   subcategory?: { name: string; slug: string } | Array<{ name: string; slug: string }> | null;
@@ -123,13 +123,13 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
     condition,
     location: specLocation,
     seller: sellerName,
+    sellerId: dbProduct.sellerId,
     sellerVerified,
     unitCount: dbProduct.stockQuantity > 0 ? dbProduct.stockQuantity : 1,
     rating,
     reviewCount: dbProduct.reviewCount ?? 0,
     views: dbProduct.views ?? 0,
     listed: formatRelativeTime(dbProduct.createdAt),
-    sellerId: dbProduct.sellerId,
   };
 }
 
