@@ -14,11 +14,10 @@ const Cart = () => {
   const [promoApplied, setPromoApplied] = useState(false);
 
   const discount = promoApplied ? Math.round(subtotal * 0.1) : 0;
-  const shipping = subtotal > 2000 ? 0 : 149;
   // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
   // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
   const vat = Math.round((subtotal - discount) / 6);
-  const total = subtotal - discount + shipping;
+  const total = subtotal - discount;
 
   if (cartItems.length === 0) {
     return (
@@ -185,14 +184,8 @@ const Cart = () => {
                     </div>
                   )}
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Shipping</span>
-                    <span className="font-medium text-foreground">
-                      {shipping === 0 ? (
-                        <span className="text-primary">Free</span>
-                      ) : (
-                        `£${shipping}`
-                      )}
-                    </span>
+                    <span className="text-muted-foreground">Delivery</span>
+                    <span className="font-medium text-muted-foreground italic">Set by seller</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">VAT (20%)</span>
@@ -247,7 +240,7 @@ const Cart = () => {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Truck className="h-4 w-4 text-primary shrink-0" />
-                  <span>Free shipping on orders over £2,000</span>
+                  <span>Delivery is set by the seller</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
