@@ -4,6 +4,7 @@ import { useAuthStore } from './store';
 import { hasAdminAccess, hasSellerAccess } from './lib/roleUtils';
 import { CartProvider } from './contexts/CartContext';
 import CookieConsent from './components/CookieConsent';
+import { hasAdminAccess } from './lib/roleUtils';
 
 import RequireAuth from './components/auth/RequireAuth';
 import RequireAdmin from './components/auth/RequireAdmin';
