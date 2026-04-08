@@ -128,6 +128,18 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({ error: `Item "${item.title}" is no longer available` }),
       };
     }
+    if (typeof dbProduct.stockQuantity === 'number' && dbProduct.stockQuantity <= 0) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: `Item "${item.title}" is out of stock` }),
+      };
+    }
+    if (typeof dbProduct.stockQuantity === 'number' && item.quantity > dbProduct.stockQuantity) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: `Only ${dbProduct.stockQuantity} unit(s) of "${item.title}" are available` }),
+      };
+    }
   }
 
   // Build enriched items — sellerId and price come from the DB to prevent

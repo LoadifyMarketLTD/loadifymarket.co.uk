@@ -32,21 +32,55 @@ const supabase = process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_R
 // ── 0% Commission Promotion ───────────────────────────────────────────────────
 // The platform charges 0% commission on all transactions until
 // 31 August 2026 23:59:59 BST (= 22:59:59 UTC). After that date the normal
-// 7% commission rate resumes automatically without any manual intervention.
+// configured commission rate resumes automatically without any manual intervention.
 //
 // Exported so the unit test can reference the exact deadline value.
 export const ZERO_COMMISSION_PROMO_END_UTC = new Date('2026-08-31T22:59:59Z').getTime();
 
+/** Default post-promo commission rate used as a fallback if DB read fails. */
+export const DEFAULT_COMMISSION_RATE = 0.07;
+
 /**
  * Returns the effective commission rate for the current moment.
- *   - 0    during the promotion  (now < ZERO_COMMISSION_PROMO_END_UTC)
- *   - 0.07 once the promotion ends (now >= ZERO_COMMISSION_PROMO_END_UTC)
+ *   - 0          during the promotion  (now < ZERO_COMMISSION_PROMO_END_UTC)
+ *   - configuredRate (or DEFAULT_COMMISSION_RATE) once the promotion ends
  *
  * Exported for unit testing — use vi.useFakeTimers / vi.setSystemTime to
  * pin Date.now() to a specific point in time when testing.
+ *
+ * @param configuredRate - The commission rate from platform_settings (as a
+ *   fraction, e.g. 0.07 for 7%). When omitted the DEFAULT_COMMISSION_RATE is used.
  */
-export function getCommissionRate(): number {
-  return Date.now() < ZERO_COMMISSION_PROMO_END_UTC ? 0 : 0.07;
+export function getCommissionRate(configuredRate?: number): number {
+  if (Date.now() < ZERO_COMMISSION_PROMO_END_UTC) return 0;
+  return typeof configuredRate === 'number' && configuredRate >= 0 ? configuredRate : DEFAULT_COMMISSION_RATE;
+}
+
+/**
+ * Reads the platform-configured commission rate from platform_settings.
+ * Returns null when the setting is absent or unreadable (caller should fall
+ * back to DEFAULT_COMMISSION_RATE). The admin stores commissionRate as a
+ * percentage (e.g. 7 = 7%), so we divide by 100 before returning.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchConfiguredCommissionRate(sb: import('@supabase/supabase-js').SupabaseClient<any>): Promise<number | null> {
+  try {
+    const { data } = await sb
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'platform_config')
+      .maybeSingle<{ value: unknown }>();
+    if (!data?.value) return null;
+    const val = typeof data.value === 'object' && data.value !== null
+      ? (data.value as Record<string, unknown>)
+      : null;
+    const raw = val?.commissionRate;
+    if (typeof raw !== 'number' || raw < 0) return null;
+    // Admin stores as percentage (e.g. 7 for 7%); convert to fraction
+    return raw / 100;
+  } catch {
+    return null;
+  }
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -272,8 +306,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   const VAT_RATE = 0.20;
-  // Dynamic commission rate: 0% during the promo period, 7% after 31 August 2026.
-  const COMMISSION_RATE = getCommissionRate();
+  // Dynamic commission rate: 0% during the promo period, admin-configured rate after.
+  // Read from platform_settings for live admin control; fall back to DEFAULT_COMMISSION_RATE.
+  const configuredRate = await fetchConfiguredCommissionRate(supabase);
+  const COMMISSION_RATE = getCommissionRate(configuredRate ?? undefined);
   const totalShipping = orderData.shippingAmount ?? 0;
   const totalSubtotal = orderData.subtotal;
 

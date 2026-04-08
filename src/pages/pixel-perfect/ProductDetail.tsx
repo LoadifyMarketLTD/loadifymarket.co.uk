@@ -77,6 +77,7 @@ const ProductDetail = () => {
   const [sellerListingCount, setSellerListingCount] = useState(0);
   const [productSellerId, setProductSellerId] = useState<string | null>(null);
   const [productCategorySlug, setProductCategorySlug] = useState<string | null>(null);
+  const [sellerStoreSlug, setSellerStoreSlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -111,12 +112,13 @@ const ProductDetail = () => {
         // Step 2 & 3: Fetch seller info separately
         const sellerMap = await fetchSellerMap(data.sellerId ? [data.sellerId] : []);
 
-        // Step 4: Merge
+        // Step 4: Merge — include sellerId so owner-awareness works on the UI
         const normalised = {
           ...data,
           category: Array.isArray(data.category) ? data.category[0] : data.category,
           subcategory: Array.isArray(data.subcategory) ? data.subcategory[0] : data.subcategory,
           seller: sellerMap.get(data.sellerId) ?? null,
+          sellerId: data.sellerId as string | undefined,
         } as unknown as DBProduct;
 
         // Step 5: Adapt to UI shape
@@ -161,15 +163,24 @@ const ProductDetail = () => {
           }
         }
 
-        // Fetch seller's active listing count
+        // Fetch seller's active listing count and store slug
         if (data.sellerId) {
-          const { count } = await supabase
-            .from("products")
-            .select("id", { count: "exact", head: true })
-            .eq("sellerId", data.sellerId)
-            .eq("isActive", true)
-            .eq("isApproved", true);
-          setSellerListingCount(count ?? 0);
+          const [countRes, storeRes] = await Promise.all([
+            supabase
+              .from("products")
+              .select("id", { count: "exact", head: true })
+              .eq("sellerId", data.sellerId)
+              .eq("isActive", true)
+              .eq("isApproved", true),
+            supabase
+              .from("seller_stores")
+              .select("storeSlug")
+              .eq("userId", data.sellerId)
+              .eq("isActive", true)
+              .maybeSingle(),
+          ]);
+          setSellerListingCount(countRes.count ?? 0);
+          setSellerStoreSlug((storeRes.data as { storeSlug?: string } | null)?.storeSlug ?? null);
         }
       } catch (err) {
         console.error("Error fetching product:", err);
@@ -344,7 +355,7 @@ const ProductDetail = () => {
                   rating={product.rating}
                   location={product.location}
                   totalListings={sellerListingCount}
-                  sellerId={productSellerId}
+                  storeSlug={sellerStoreSlug}
                 />
 
                 {/* Report Listing */}

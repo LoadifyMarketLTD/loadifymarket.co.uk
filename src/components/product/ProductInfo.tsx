@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight, Package, MapPin, Clock, Eye, Tag,
-  Truck, ShieldCheck, ShoppingCart, Heart, Pencil, LayoutDashboard
+  Truck, ShieldCheck, ShoppingCart, Heart, Settings
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import type { Product } from "@/components/catalog/ProductCard";
@@ -48,6 +48,7 @@ const ProductInfo = ({
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const isOwner = !!user && !!product.sellerId && user.id === product.sellerId;
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
@@ -194,27 +195,19 @@ const ProductInfo = ({
       {/* CTA buttons — owner sees management actions; buyers see purchase actions */}
       {isOwner ? (
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button
-            size="lg"
-            className="flex-1 bg-gradient-hero text-primary-foreground font-semibold text-base hover:opacity-90 transition-opacity"
-            asChild
-          >
-            <Link to={`/seller/products/${product.id}/edit`}>
-              <Pencil className="mr-2 h-5 w-5" />
-              Edit Product
-            </Link>
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="flex-1 text-base"
-            asChild
-          >
-            <Link to="/pp/seller/products">
-              <LayoutDashboard className="mr-2 h-5 w-5" />
-              Manage Listings
-            </Link>
-          </Button>
+          <Link to={`/seller/products/${product.id}/edit`} className="flex-1">
+            <Button
+              size="lg"
+              className="w-full bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
+            >
+              <Settings className="mr-2 h-5 w-5" /> Manage This Listing
+            </Button>
+          </Link>
+          <Link to="/pp/seller/products" className="shrink-0">
+            <Button size="lg" variant="outline" className="w-full text-base">
+              All My Listings
+            </Button>
+          </Link>
         </div>
       ) : (
         <div className="flex flex-col sm:flex-row gap-3">

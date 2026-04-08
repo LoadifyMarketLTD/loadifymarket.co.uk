@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Product, SellerProfile, SellerStore } from '../types';
-import { Store, Package, MapPin, Mail, Phone, MessageCircle, ArrowRight, Calendar, LayoutDashboard, Pencil } from 'lucide-react';
+import { Store, Package, MapPin, Mail, Phone, MessageCircle, ArrowRight, Calendar, Settings } from 'lucide-react';
 import VerificationBadge from '../components/VerificationBadge';
 import RoleBadge from '../components/RoleBadge';
 import PaymentBehaviourBadge from '../components/PaymentBehaviourBadge';
@@ -261,32 +261,23 @@ export default function SellerPublicProfilePage() {
               {/* Seller CTAs */}
               <div className="flex flex-wrap gap-3">
                 {user?.id === seller.userId ? (
-                  // Owner: show seller management actions
                   <>
                     <Link
-                      to="/pp/seller"
+                      to="/pp/seller/profile"
                       className="btn-primary inline-flex items-center gap-2 text-sm"
                     >
-                      <LayoutDashboard className="w-4 h-4" />
-                      Seller Dashboard
-                    </Link>
-                    <Link
-                      to="/pp/seller/profile"
-                      className="btn-glass inline-flex items-center gap-2 text-sm"
-                    >
-                      <Pencil className="w-4 h-4" />
+                      <Settings className="w-4 h-4" />
                       Edit Store Profile
                     </Link>
                     <Link
                       to="/pp/seller/products"
                       className="btn-glass inline-flex items-center gap-2 text-sm"
                     >
-                      <ArrowRight className="w-4 h-4" />
+                      <Package className="w-4 h-4" />
                       Manage Listings
                     </Link>
                   </>
                 ) : (
-                  // Buyer / guest: show public contact actions
                   <>
                     <Link
                       to="/messages"

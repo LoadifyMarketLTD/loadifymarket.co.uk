@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Flag, Search, Eye, CheckCircle2, Ban, AlertTriangle, MoreHorizontal, Loader2 } from "lucide-react";
+import { Flag, Search, Eye, CheckCircle2, Ban, AlertTriangle, MoreHorizontal, Loader2, ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +11,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase";
+import { toast } from "@/hooks/use-toast";
 
 interface FlaggedItem {
   id: string;
@@ -105,6 +106,31 @@ const AdminFlagged = () => {
     }
   };
 
+  const deactivateProduct = async (item: FlaggedItem) => {
+    setActionLoading(item.id);
+    setError(null);
+    try {
+      const { error: productError } = await supabase
+        .from("products")
+        .update({ isActive: false })
+        .eq("id", item.productId);
+      if (productError) throw productError;
+      // Also resolve the report
+      await supabase
+        .from("reported_listings")
+        .update({ status: "resolved" })
+        .eq("id", item.id);
+      setItems((prev) => prev.map((i) => i.id === item.id ? { ...i, status: "resolved" } : i));
+      if (selected?.id === item.id) setSelected((s) => s ? { ...s, status: "resolved" } : s);
+      toast({ title: "Product deactivated", description: `"${item.productTitle}" has been deactivated and the report resolved.` });
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to deactivate product");
+      toast({ title: "Error", description: "Failed to deactivate product.", variant: "destructive" });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const filtered = items.filter(
     (f) =>
       f.productTitle.toLowerCase().includes(search.toLowerCase()) ||
@@ -183,6 +209,13 @@ const AdminFlagged = () => {
                         <Ban className="h-3.5 w-3.5 mr-2" /> Dismiss
                       </DropdownMenuItem>
                     )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-red-400 focus:text-red-400"
+                      onClick={() => deactivateProduct(f)}
+                    >
+                      <ShieldOff className="h-3.5 w-3.5 mr-2" /> Deactivate Product
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -283,6 +316,16 @@ const AdminFlagged = () => {
                 <p className="text-xs font-semibold mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>DETAILS</p>
                 <p className="text-sm text-white">{selected.description}</p>
               </div>
+              {selected.productId && (
+                <a
+                  href={`/product/${selected.productId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 underline"
+                >
+                  <Eye className="h-3.5 w-3.5" /> View product listing (new tab)
+                </a>
+              )}
             </div>
             {selected.status === "pending" && (
               <DialogFooter className="flex gap-2">
@@ -295,11 +338,19 @@ const AdminFlagged = () => {
                   Dismiss
                 </Button>
                 <Button
+                  variant="destructive"
+                  onClick={() => deactivateProduct(selected)}
+                  disabled={actionLoading === selected.id}
+                >
+                  {actionLoading === selected.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ShieldOff className="h-4 w-4 mr-1" />}
+                  Deactivate Product
+                </Button>
+                <Button
                   onClick={() => updateStatus(selected.id, "resolved")}
                   disabled={actionLoading === selected.id}
                 >
                   {actionLoading === selected.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
-                  Resolve
+                  Resolve (No Action)
                 </Button>
               </DialogFooter>
             )}

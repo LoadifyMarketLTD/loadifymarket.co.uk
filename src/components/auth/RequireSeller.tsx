@@ -29,6 +29,11 @@ const CardShell = ({ children }: { children: ReactNode }) => (
  *   non-sellers      → show "seller account required" prompt
  *   unauthenticated  → redirect to /login
  *   admins/owners    → bypass seller status check (full access)
+ *
+ * When the seller's stored status is 'draft' or 'submitted', this guard
+ * attempts a recheck-activation call in case the seller completed all
+ * requirements but the DB value is stale. If the check promotes them to
+ * 'active', they proceed immediately without navigating to /seller/setup.
  */
 export default function RequireSeller({ children }: Props) {
   const { user, isLoading } = useAuthStore();
@@ -114,7 +119,6 @@ export default function RequireSeller({ children }: Props) {
         setFetchState('error');
       }
     });
-
     return () => {
       cancelled = true;
     };
