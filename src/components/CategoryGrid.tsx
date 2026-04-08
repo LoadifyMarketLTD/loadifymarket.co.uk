@@ -146,7 +146,7 @@ const CategoryGrid = () => (
         ))}
       </div>
 
-      {/* Centred CTA — compact on mobile */}
+      {/* Centered CTA — compact on mobile */}
       <div className="flex justify-center">
         <Link
           to="/catalog"

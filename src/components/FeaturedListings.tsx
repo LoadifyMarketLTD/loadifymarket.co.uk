@@ -95,7 +95,7 @@ const FeaturedListings = () => (
         ))}
       </div>
 
-      {/* Centred CTA — compact on mobile */}
+      {/* Centered CTA — compact on mobile */}
       <div className="mt-4 sm:mt-10 flex justify-center">
         <Link
           to="/catalog"
