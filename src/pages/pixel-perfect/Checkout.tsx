@@ -79,7 +79,11 @@ const Checkout = () => {
     if (shippingError) setShippingError(null);
   };
 
-  const shipping = subtotal > 2000 ? 0 : 149;
+  const shipping =
+    subtotal > 2000 ? 0 :
+    subtotal > 500 ? 49.99 :
+    subtotal > 200 ? 29.99 :
+    subtotal > 50 ? 14.99 : 9.99;
   // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
   // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
   const vat = Math.round(subtotal / 6);
