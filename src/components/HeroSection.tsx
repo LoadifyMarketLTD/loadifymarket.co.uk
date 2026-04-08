@@ -25,11 +25,12 @@ const HeroSection = () => {
 
   return (
     <section
-      className="relative overflow-hidden min-h-[calc(100dvh-4rem)] sm:min-h-[calc(100dvh-7rem)]"
+      className="relative overflow-hidden sm:min-h-[calc(100dvh-7rem)]"
       aria-label="Hero — sell online, grow your business with Loadify Market"
       style={{ background: "#0A1930" }}
     >
-      {/* min-height: 4rem=64px mobile (header row only); 7rem=112px desktop (header + category nav) */}
+      {/* min-height: none on mobile (content-driven height prevents large empty space)
+          7rem=112px desktop (header row + category nav) fills the viewport on sm+ */}
       {/*
        * ── HERO IMAGE — right-anchored ──────────────────────────────────────
        * The source hero.jpeg has text composited into its left ~40%.
@@ -93,7 +94,7 @@ const HeroSection = () => {
           // Size: full-width on mobile, auto (content-width) on desktop
           "w-full sm:w-auto sm:min-w-[280px]",
           // Spacing: padded on mobile, zero on desktop (section handles it via positioning)
-          "px-5 py-10 sm:px-0 sm:py-0",
+          "px-5 py-8 sm:px-0 sm:py-0",
           // Desktop centering: top-1/2 + -translate-y-1/2 vertically centers the overlay
           "sm:top-1/2 sm:-translate-y-1/2",
           // Desktop horizontal offset via clamp (responsive left position)
@@ -129,7 +130,7 @@ const HeroSection = () => {
         </p>
 
         {/* Checklist */}
-        <ul className="mt-6 flex flex-col gap-3" aria-label="Key benefits">
+        <ul className="mt-5 flex flex-col gap-2.5 sm:gap-3" aria-label="Key benefits">
           {BULLETS.map((text) => (
             <li key={text} className="flex items-center gap-3">
               <svg
@@ -151,7 +152,7 @@ const HeroSection = () => {
         </ul>
 
         {/* CTA Buttons — stacked on mobile, inline on sm+ */}
-        <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
           <button
             className="w-full sm:w-auto inline-flex items-center justify-center font-bold rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]"
             style={{
@@ -214,7 +215,7 @@ const HeroSection = () => {
 
         {/* Trust mini-features */}
         <div
-          className="mt-8 flex flex-wrap gap-x-5 gap-y-2"
+          className="mt-5 sm:mt-8 flex flex-wrap gap-x-4 gap-y-2"
           aria-label="Trust indicators"
         >
           {TRUST_ITEMS.map(({ icon, label }) => (
@@ -230,7 +231,7 @@ const HeroSection = () => {
         {/* Mobile-only countdown strip (hidden on sm+ where the floating card takes over) */}
         {!expired && (
           <div
-            className="mt-6 flex items-center gap-3 sm:hidden"
+            className="mt-5 flex items-center gap-3 sm:hidden"
             style={{
               padding: "12px 16px",
               borderRadius: 14,

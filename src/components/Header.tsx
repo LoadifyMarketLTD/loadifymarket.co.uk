@@ -87,7 +87,13 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
           ? "bg-[#0A1930]/90 backdrop-blur-md border-b border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
           : "bg-transparent border-b border-transparent",
       ].join(" ")}
-      style={{ willChange: "transform" }}
+      style={{
+        willChange: "transform",
+        /* In Capacitor edge-to-edge mode (Android 15 / iOS) the fixed header sits
+           behind the system status bar. Adding safe-area-inset-top as top padding
+           pushes the header's content rows below the status bar icons. */
+        paddingTop: "env(safe-area-inset-top, 0px)",
+      }}
     >
 
       {/* ── Row 1: Logo | Search | Actions ─────────────────────────────── */}
@@ -112,7 +118,7 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search products, categories, sellers..."
               aria-label="Search marketplace"
-              className="w-full h-10 sm:h-12 pl-8 sm:pl-11 pr-16 sm:pr-28 bg-white/10 border border-white/20 rounded-xl text-xs sm:text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all"
+              className="w-full h-10 sm:h-12 pl-8 sm:pl-11 pr-10 sm:pr-28 bg-white/10 border border-white/20 rounded-xl text-xs sm:text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all"
             />
             <button
               type="submit"

@@ -102,6 +102,9 @@
     overflow-x: hidden;
     /* Ensure full-width on all devices */
     min-width: 320px;
+    /* Push body content below Android/iOS status bar in Capacitor / PWA edge-to-edge mode.
+       In a normal browser env(safe-area-inset-top) resolves to 0px, so there is no effect. */
+    padding-top: env(safe-area-inset-top, 0px);
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);

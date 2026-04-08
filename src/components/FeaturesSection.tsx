@@ -34,7 +34,7 @@ const WHY_CARDS = [
 const FeaturesSection = () => (
   <section
     id="features"
-    className="relative overflow-hidden px-4 sm:px-6 py-16 lg:py-20"
+    className="relative overflow-hidden px-4 sm:px-6 py-10 sm:py-16 lg:py-20"
     style={{ background: "linear-gradient(to bottom, #081426, #0A1930, #0F2A4A)" }}
   >
     {/* Ambient glow */}
@@ -71,8 +71,7 @@ const FeaturesSection = () => (
           <Link
             key={card.id}
             to={card.href}
-            className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)]"
-            style={{ minHeight: "260px" }}
+            className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)] min-h-[160px] sm:min-h-[260px]"
           >
             <img
               src={card.img}
