@@ -2,7 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Package, ShoppingCart, Truck, FileText,
   RotateCcw, Star, Settings, UserCircle, ChevronRight, Store,
-  LogOut, Menu,
+  LogOut, Menu, Bell,
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -19,6 +19,7 @@ const navItems = [
   { to: "/pp/seller/reviews", label: "Reviews", icon: Star },
   { to: "/pp/seller/profile", label: "Profile", icon: UserCircle },
   { to: "/pp/seller/settings", label: "Settings", icon: Settings },
+  { to: "/pp/seller/notifications", label: "Notifications", icon: Bell },
 ];
 
 /** The 4 most important pages shown in the mobile bottom tab bar */

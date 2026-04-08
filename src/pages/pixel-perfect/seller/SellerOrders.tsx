@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ShoppingCart, Search, Filter, ChevronDown } from "lucide-react";
+import { ShoppingCart, Search, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -129,9 +129,6 @@ const SellerOrders = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Button variant="outline" size="default">
-          <Filter className="mr-2 h-4 w-4" /> Filters
-        </Button>
       </div>
 
       <div className="bg-card rounded-xl border border-border overflow-hidden">
