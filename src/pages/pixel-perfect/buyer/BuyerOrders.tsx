@@ -100,6 +100,19 @@ const BuyerOrders = () => {
     }
     setReturnLoading(true);
     try {
+      // Prevent duplicate open returns for the same order
+      const { data: existing } = await supabase
+        .from("returns")
+        .select("id")
+        .eq("orderId", returnOrder.id)
+        .neq("status", "rejected")
+        .maybeSingle();
+      if (existing) {
+        toast({ title: "Return already submitted", description: "A return request for this order is already open or in progress.", variant: "destructive" });
+        setReturnOrder(null);
+        return;
+      }
+
       const { error } = await supabase.from("returns").insert({
         orderId: returnOrder.id,
         buyerId: user.id,
