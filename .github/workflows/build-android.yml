@@ -28,6 +28,8 @@ jobs:
       contents: read
 
     env:
+      # Opt into Node.js 24 for all JavaScript actions (avoids Node.js 20 deprecation warnings).
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       # Stub env vars so Vite doesn't fail at build time.
       # Real values are only needed at runtime inside the WebView.
       VITE_SUPABASE_URL: https://placeholder.supabase.co
