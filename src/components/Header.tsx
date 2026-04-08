@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, ShoppingCart, User, Menu, X, LogOut, Package, ShoppingBag, Heart, LayoutDashboard } from "lucide-react";
+import { Search, ShoppingCart, Menu, X, LogOut, Package, ShoppingBag, Heart, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/loadify-logo.svg";
 import { useCart } from "@/contexts/CartContext";
