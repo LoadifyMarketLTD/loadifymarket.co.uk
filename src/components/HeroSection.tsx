@@ -27,10 +27,9 @@ const HeroSection = () => {
     <section
       className="relative overflow-hidden min-h-[calc(100dvh-4rem)] sm:min-h-[calc(100dvh-7rem)]"
       aria-label="Hero — sell online, grow your business with Loadify Market"
-      style={{
-        background: "#0A1930",
-      }}
+      style={{ background: "#0A1930" }}
     >
+      {/* min-height: 4rem=64px mobile (header row only); 7rem=112px desktop (header + category nav) */}
       {/*
        * ── HERO IMAGE — right-anchored ──────────────────────────────────────
        * The source hero.jpeg has text composited into its left ~40%.
@@ -88,7 +87,18 @@ const HeroSection = () => {
        * w-full on mobile (which caused text to be constrained to 280px on a 390px screen).
        */}
       <div
-        className="relative sm:absolute z-10 flex flex-col w-full sm:w-auto sm:min-w-[280px] px-5 py-10 sm:px-0 sm:py-0 sm:top-1/2 sm:-translate-y-1/2 sm:[left:clamp(24px,5.5vw,88px)]"
+        className={[
+          // Position: relative flow on mobile, absolute overlay on desktop
+          "relative sm:absolute z-10 flex flex-col",
+          // Size: full-width on mobile, auto (content-width) on desktop
+          "w-full sm:w-auto sm:min-w-[280px]",
+          // Spacing: padded on mobile, zero on desktop (section handles it via positioning)
+          "px-5 py-10 sm:px-0 sm:py-0",
+          // Desktop centering: top-1/2 + -translate-y-1/2 vertically centers the overlay
+          "sm:top-1/2 sm:-translate-y-1/2",
+          // Desktop horizontal offset via clamp (responsive left position)
+          "sm:[left:clamp(24px,5.5vw,88px)]",
+        ].join(" ")}
         style={{ maxWidth: 540 }}
       >
         {/* Heading */}
