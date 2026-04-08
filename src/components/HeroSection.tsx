@@ -102,7 +102,7 @@ const HeroSection = () => {
         ].join(" ")}
         style={{ maxWidth: 540 }}
       >
-        {/* Heading */}
+        {/* Heading — always visible for SEO */}
         <h1
           className="leading-[1.05] tracking-tight"
           style={{
@@ -116,9 +116,9 @@ const HeroSection = () => {
           <span style={{ color: "#22C55E" }}>Grow Your Business.</span>
         </h1>
 
-        {/* Paragraph */}
+        {/* Paragraph — hidden on mobile (hero is below fold; saves vertical space) */}
         <p
-          className="mt-5"
+          className="mt-5 hidden sm:block"
           style={{
             fontSize: "clamp(0.9375rem, 1.4vw, 1.125rem)",
             color: "rgba(255,255,255,0.72)",
@@ -129,8 +129,8 @@ const HeroSection = () => {
           Now open for UK sellers. Be among the first to grow on Loadify with 0% commission during launch.
         </p>
 
-        {/* Checklist */}
-        <ul className="mt-5 flex flex-col gap-2.5 sm:gap-3" aria-label="Key benefits">
+        {/* Checklist — hidden on mobile */}
+        <ul className="mt-5 hidden sm:flex flex-col gap-2.5 sm:gap-3" aria-label="Key benefits">
           {BULLETS.map((text) => (
             <li key={text} className="flex items-center gap-3">
               <svg
@@ -151,8 +151,8 @@ const HeroSection = () => {
           ))}
         </ul>
 
-        {/* CTA Buttons — stacked on mobile, inline on sm+ */}
-        <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
+        {/* CTA Buttons — hidden on mobile (hero is below fold; Quick Actions cover this) */}
+        <div className="mt-6 sm:mt-8 hidden sm:flex flex-col sm:flex-row gap-3 sm:gap-4">
           <button
             className="w-full sm:w-auto inline-flex items-center justify-center font-bold rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]"
             style={{
@@ -213,9 +213,9 @@ const HeroSection = () => {
           </button>
         </div>
 
-        {/* Trust mini-features */}
+        {/* Trust mini-features — hidden on mobile */}
         <div
-          className="mt-5 sm:mt-8 flex flex-wrap gap-x-4 gap-y-2"
+          className="mt-5 sm:mt-8 hidden sm:flex flex-wrap gap-x-4 gap-y-2"
           aria-label="Trust indicators"
         >
           {TRUST_ITEMS.map(({ icon, label }) => (
