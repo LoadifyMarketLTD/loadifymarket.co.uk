@@ -14,6 +14,7 @@ export interface Product {
   condition: "New" | "Like New" | "Mixed" | "Unchecked";
   location: string;
   seller: string;
+  /** Seller's user ID — used for owner-awareness CTAs */
   sellerId?: string;
   sellerVerified: boolean;
   unitCount: number;
@@ -21,8 +22,6 @@ export interface Product {
   reviewCount?: number;
   views: number;
   listed: string;
-  /** Seller's user ID — used for owner-awareness CTAs */
-  sellerId?: string;
 }
 
 const conditionColor: Record<string, string> = {
