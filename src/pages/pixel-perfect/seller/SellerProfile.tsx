@@ -203,7 +203,7 @@ const SellerProfile = () => {
               <div className="flex flex-wrap gap-1.5 mt-1">
                 {storeSlug && (
                   <a
-                    href={`/seller/${storeSlug}`}
+                    href={`/seller/${encodeURIComponent(storeSlug)}`}
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
