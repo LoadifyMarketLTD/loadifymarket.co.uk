@@ -525,6 +525,15 @@ function App() {
           </RequireAuth>
         } />
 
+        {/* Seller: Profile edit — accessible with RequireAuth only (not RequireSeller)
+            so that draft/submitted sellers can fill their profile from the setup wizard
+            without being bounced back to /seller/setup by the RequireSeller guard. */}
+        <Route path="seller/profile" element={
+          <RequireAuth>
+            <Suspense fallback={<PageLoader />}><PPSellerProfile /></Suspense>
+          </RequireAuth>
+        } />
+
         {/* Public: Seller Public Profile — no pixel-perfect equivalent yet */}
         <Route path="seller/:slug" element={<Suspense fallback={<PageLoader />}><SellerPublicProfilePage /></Suspense>} />
 

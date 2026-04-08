@@ -48,6 +48,9 @@ export function isProfileComplete(
 /**
  * Derives the canonical seller status from the current state.
  * 'suspended' is sticky — only admin can lift it.
+ * 'active' is also sticky — once a seller is live, a transient Stripe
+ * restriction (e.g. a routine account.updated event) must not demote them.
+ * Only admin suspension can downgrade an active seller.
  */
 export function deriveSellerStatus(
   currentStatus: string,
@@ -55,6 +58,7 @@ export function deriveSellerStatus(
   stripeActive: boolean,
 ): 'draft' | 'submitted' | 'active' | 'suspended' {
   if (currentStatus === 'suspended') return 'suspended';
+  if (currentStatus === 'active') return 'active';
   if (profileComplete && stripeActive) return 'active';
   if (profileComplete) return 'submitted';
   return 'draft';
