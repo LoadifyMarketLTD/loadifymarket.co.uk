@@ -1,4 +1,4 @@
-export type UserRole = 'buyer' | 'seller' | 'admin';
+export type UserRole = 'buyer' | 'seller' | 'admin' | 'owner';
 
 // Marketplace roles for sellers/users
 export type MarketplaceRole = 'carrier' | 'broker' | 'seller' | null;

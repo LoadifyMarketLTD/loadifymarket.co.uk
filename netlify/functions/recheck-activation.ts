@@ -44,12 +44,32 @@ export const handler: Handler = async (event) => {
     return { statusCode: 401, body: JSON.stringify({ error: 'Invalid or expired token' }) };
   }
 
-  // Only sellers may trigger activation re-evaluation.
+  // Resolve the caller's role from the users table.
   const { data: userRow } = await supabase
     .from('users')
     .select('role')
     .eq('id', user.id)
     .single<{ role: string }>();
+
+  // Admin / owner accounts bypass the entire seller activation pipeline.
+  // They are never blocked by seller setup requirements and always appear
+  // as "active" from the perspective of RequireSeller.
+  if (userRow?.role === 'admin' || userRow?.role === 'owner') {
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        ok: true,
+        sellerStatus: 'active',
+        profileComplete: true,
+        stripeConnected: true,
+        chargesEnabled: true,
+        payoutsEnabled: true,
+        changed: false,
+      }),
+    };
+  }
+
+  // Non-seller, non-admin accounts have no seller profile to evaluate.
   if (userRow?.role !== 'seller') {
     return { statusCode: 403, body: JSON.stringify({ error: 'Seller account required' }) };
   }

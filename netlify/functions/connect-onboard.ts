@@ -11,8 +11,8 @@ import { checkRateLimit } from './_shared/rateLimiter';
  * seller's browser to that URL to complete Stripe's hosted onboarding flow.
  *
  * After completion Stripe redirects to:
- *   return_url  → /seller?tab=payouts&connect=success
- *   refresh_url → /seller?tab=payouts&connect=refresh  (link expired / back btn)
+ *   return_url  → /seller/setup?connect=success
+ *   refresh_url → /seller/setup?connect=refresh  (link expired / back btn)
  *
  * Requires: Authorization: Bearer <supabase-jwt>
  */
@@ -160,8 +160,8 @@ export const handler: Handler = async (event) => {
 
     const accountLink = await stripe.accountLinks.create({
       account: stripeAccountId,
-      refresh_url: `${appUrl}/seller?tab=payouts&connect=refresh`,
-      return_url: `${appUrl}/seller?tab=payouts&connect=success`,
+      refresh_url: `${appUrl}/seller/setup?connect=refresh`,
+      return_url: `${appUrl}/seller/setup?connect=success`,
       type: 'account_onboarding',
     });
 

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store';
-import { hasAdminAccess, hasSellerAccess } from '../../lib/roleUtils';
+import { hasSellerAccess, hasAdminAccess } from '../../lib/roleUtils';
 import RequireAuth from './RequireAuth';
 
 interface Props {
@@ -52,6 +52,9 @@ export default function RequireSeller({ children }: Props) {
   });
 
   useEffect(() => {
+    // Only run the seller status check for actual seller accounts.
+    // Admins/owners bypass via hasSellerAccess in the render tree below.
+    if (!user || user.role !== 'seller') return;
     // Admins bypass all seller checks — no DB status lookup needed.
     if (hasAdminAccess(user ?? null)) {
       setFetchState('active');
@@ -147,7 +150,7 @@ export default function RequireSeller({ children }: Props) {
   }, [user]);
 
   const sellerFetchInProgress =
-    hasSellerAccess(user ?? null) && !hasAdminAccess(user ?? null) && fetchState === 'loading';
+    user?.role === 'seller' && fetchState === 'loading';
   const loading = isLoading || sellerFetchInProgress;
 
   return (
