@@ -19,7 +19,6 @@ import { toast } from "@/hooks/use-toast";
 import { safeLocalStorage } from "@/lib/safeStorage";
 
 const SHIPPING_STORAGE_KEY = "loadify_seller_shipping_defaults";
-const PAUSE_STORAGE_PREFIX = "loadify_seller_paused_";
 
 const defaultNotifications = {
   orderAlerts: true,
@@ -211,23 +210,33 @@ const SellerSettings = () => {
   const [deleteSellerLoading, setDeleteSellerLoading] = useState(false);
   const [deleteSellerConfirm, setDeleteSellerConfirm] = useState("");
 
-  // Detect paused state on mount from localStorage — set only by an explicit Pause/Resume action.
+  // Read paused state from DB on mount.
   useEffect(() => {
     if (!user?.id) return;
-    const stored = safeLocalStorage.getItem(`${PAUSE_STORAGE_PREFIX}${user.id}`);
-    setIsPaused(stored === "true");
+    supabase
+      .from("seller_profiles")
+      .select("isPaused")
+      .eq("userId", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) setIsPaused(data.isPaused ?? false);
+      });
   }, [user?.id]);
 
   const handlePauseAccount = async () => {
     if (!user) return;
     setPauseLoading(true);
     try {
+      const { error: profileError } = await supabase
+        .from("seller_profiles")
+        .update({ isPaused: true })
+        .eq("userId", user.id);
+      if (profileError) throw profileError;
       await supabase
         .from("products")
         .update({ isActive: false })
         .eq("sellerId", user.id)
         .eq("isActive", true);
-      safeLocalStorage.setItem(`${PAUSE_STORAGE_PREFIX}${user.id}`, "true");
       setIsPaused(true);
       toast({
         title: "Account paused",
@@ -244,12 +253,16 @@ const SellerSettings = () => {
     if (!user) return;
     setPauseLoading(true);
     try {
+      const { error: profileError } = await supabase
+        .from("seller_profiles")
+        .update({ isPaused: false })
+        .eq("userId", user.id);
+      if (profileError) throw profileError;
       await supabase
         .from("products")
         .update({ isActive: true })
         .eq("sellerId", user.id)
         .eq("isActive", false);
-      safeLocalStorage.removeItem(`${PAUSE_STORAGE_PREFIX}${user.id}`);
       setIsPaused(false);
       toast({
         title: "Account resumed",
