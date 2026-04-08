@@ -19,6 +19,14 @@ const navItems = [
   { to: "/pp/buyer/settings", label: "Settings", icon: Settings },
 ];
 
+/** The 4 most important buyer pages shown in the mobile bottom tab bar */
+const mobileTabItems = [
+  { to: "/pp/buyer", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/pp/buyer/orders", label: "Orders", icon: ShoppingBag },
+  { to: "/pp/buyer/wishlist", label: "Wishlist", icon: Heart },
+  { to: "/pp/buyer/settings", label: "Settings", icon: Settings },
+];
+
 interface SidebarContentProps {
   displayName: string;
   onNavClick: () => void;
@@ -118,10 +126,46 @@ const BuyerShell = () => {
           </Button>
           <span className="font-semibold text-foreground text-sm">Buyer Hub</span>
         </header>
-        <main className="flex-1 overflow-y-auto">
+        {/* Page content — add bottom padding on mobile so content isn't hidden behind tab bar */}
+        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
           <Outlet />
         </main>
       </div>
+
+      {/* Mobile bottom tab bar */}
+      <nav
+        aria-label="Buyer navigation"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border flex items-center"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        {mobileTabItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            className={({ isActive }) =>
+              `flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium transition-colors ${
+                isActive ? "text-primary" : "text-muted-foreground"
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <item.icon className={`h-5 w-5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                <span>{item.label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+        <button
+          className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium text-muted-foreground"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="More navigation options"
+        >
+          <Menu className="h-5 w-5" />
+          <span>More</span>
+        </button>
+      </nav>
     </div>
   );
 };

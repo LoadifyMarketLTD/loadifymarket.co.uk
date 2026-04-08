@@ -140,7 +140,7 @@ const AdminSettings = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-[900px]" style={{ background: "#0A0B1A", minHeight: "100%" }}>
+    <div className="p-4 sm:p-6 space-y-6 max-w-[900px]" style={{ background: "#0A0B1A", minHeight: "100%" }}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">System Settings</h1>
