@@ -316,6 +316,16 @@ const AdminFlagged = () => {
                 <p className="text-xs font-semibold mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>DETAILS</p>
                 <p className="text-sm text-white">{selected.description}</p>
               </div>
+              {selected.productId && (
+                <a
+                  href={`/product/${selected.productId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 underline"
+                >
+                  <Eye className="h-3.5 w-3.5" /> View product listing (new tab)
+                </a>
+              )}
             </div>
             {selected.status === "pending" && (
               <DialogFooter className="flex gap-2">
