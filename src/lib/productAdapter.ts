@@ -32,6 +32,8 @@ export interface DBProduct {
   createdAt: string;
   type?: string;
   specifications?: Record<string, unknown> | null;
+  /** The seller's user ID — passed through to the UI for owner-awareness */
+  sellerId?: string;
   // Joined from categories table (PostgREST embeds as object or array)
   category?: { name: string; slug: string } | Array<{ name: string; slug: string }> | null;
   subcategory?: { name: string; slug: string } | Array<{ name: string; slug: string }> | null;
@@ -127,6 +129,7 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
     reviewCount: dbProduct.reviewCount ?? 0,
     views: dbProduct.views ?? 0,
     listed: formatRelativeTime(dbProduct.createdAt),
+    sellerId: dbProduct.sellerId,
   };
 }
 
