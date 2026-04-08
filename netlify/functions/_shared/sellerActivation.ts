@@ -63,6 +63,8 @@ export function deriveSellerStatus(
 export interface ActivationResult {
   sellerStatus: 'draft' | 'submitted' | 'active' | 'suspended';
   profileComplete: boolean;
+  /** true if the seller has a stripeAccountId (connected, not necessarily fully active) */
+  stripeConnected: boolean;
   stripeActive: boolean;
   /** true if sellerStatus was updated in this call */
   changed: boolean;
@@ -150,5 +152,5 @@ export async function tryAutoActivateSeller(
     );
   }
 
-  return { sellerStatus: newStatus, profileComplete, stripeActive, changed, firstActivation };
+  return { sellerStatus: newStatus, profileComplete, stripeConnected: !!profile.stripeAccountId, stripeActive, changed, firstActivation };
 }

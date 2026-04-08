@@ -113,9 +113,14 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 200,
       body: JSON.stringify({
+        ok: true,
         sellerStatus: result.sellerStatus,
         profileComplete: result.profileComplete,
-        stripeActive: result.stripeActive,
+        stripeConnected: result.stripeConnected,
+        // chargesEnabled / payoutsEnabled are both true when stripeActive is true,
+        // since stripeActive === (charges_enabled && payouts_enabled) per connect-status.
+        chargesEnabled: result.stripeActive,
+        payoutsEnabled: result.stripeActive,
         changed: result.changed,
       }),
     };

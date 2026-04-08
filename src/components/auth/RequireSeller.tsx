@@ -130,8 +130,14 @@ export default function RequireSeller({ children }: Props) {
 
   return (
     <RequireAuth>
-      {/* Not a seller (or admin/owner who bypasses) — show account-type prompt */}
-      {!loading && user && !hasSellerAccess(user) ? (
+      {/* While the seller status async check is in progress, show a neutral spinner.
+          This prevents dashboard content from flashing briefly before a redirect to
+          /seller/setup fires when the seller's status is draft or submitted. */}
+      {loading ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800" />
+        </div>
+      ) : user && !hasSellerAccess(user) ? (
         <CardShell>
           <p className="text-5xl mb-4">🏪</p>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Seller Account Required</h2>
@@ -148,7 +154,24 @@ export default function RequireSeller({ children }: Props) {
             </Link>
           </div>
         </CardShell>
-      ) : !loading && fetchState === 'suspended' ? (
+      ) : user && !hasSellerAccess(user) ? (
+        <CardShell>
+          <p className="text-5xl mb-4">🏪</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Seller Account Required</h2>
+          <p className="text-gray-500 mb-6">
+            You need a seller account to access this page. Sign up as a seller to start
+            listing products on Loadify Market.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/signup?type=seller" className="btn-primary">
+              Create Seller Account
+            </Link>
+            <Link to="/dashboard" className="btn-secondary">
+              Back to Dashboard
+            </Link>
+          </div>
+        </CardShell>
+      ) : fetchState === 'suspended' ? (
         /* Suspended — show notice, do not redirect */
         <CardShell>
           <p className="text-5xl mb-4">🚫</p>
@@ -166,10 +189,10 @@ export default function RequireSeller({ children }: Props) {
             </Link>
           </div>
         </CardShell>
-      ) : !loading && (fetchState === 'draft' || fetchState === 'submitted') ? (
+      ) : fetchState === 'draft' || fetchState === 'submitted' ? (
         /* Setup incomplete — redirect to the seller setup page */
         <Navigate to="/seller/setup" replace />
-      ) : !loading && fetchState === 'error' ? (
+      ) : fetchState === 'error' ? (
         <CardShell>
           <p className="text-5xl mb-4">⚠️</p>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Unable to Verify Access</h2>
