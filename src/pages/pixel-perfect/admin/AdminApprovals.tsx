@@ -9,7 +9,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, Eye, Building2, Mail, Calendar, Loader2, ExternalLink,
-  ShieldOff, RefreshCw, Zap,
+  ShieldOff, RefreshCw, Zap, CheckCircle,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -124,9 +124,9 @@ const AdminSellerManagement = () => {
     setActionLoading(userId);
     setError(null);
     try {
-      // Reactivation sets status back to 'submitted' (profile may be complete but
-      // Stripe may not be active). tryAutoActivateSeller will re-evaluate and
-      // promote to 'active' automatically if all conditions are met.
+      // Reactivation lifts a suspension back to 'submitted'. If Stripe is already
+      // active, the seller's next connect-status poll will promote them to 'active'
+      // automatically. Use handleActivate instead to force-activate immediately.
       const { error } = await supabase
         .from("seller_profiles")
         .update({ sellerStatus: "submitted" })
@@ -140,6 +140,32 @@ const AdminSellerManagement = () => {
       }
     } catch (err: unknown) {
       setError((err as Error).message || "Failed to reactivate seller");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Force-activates a seller whose Stripe is confirmed active but sellerStatus
+  // is still stuck at 'submitted' or 'draft'. The DB trigger
+  // sync_seller_approval_from_status automatically sets activatedAt and
+  // isApproved when sellerStatus transitions to 'active'.
+  const handleActivate = async (userId: string) => {
+    setActionLoading(userId);
+    setError(null);
+    try {
+      const { error } = await supabase
+        .from("seller_profiles")
+        .update({ sellerStatus: "active" })
+        .eq("userId", userId);
+      if (error) throw error;
+      setSellers((prev) => prev.map((s) =>
+        s.userId === userId ? { ...s, sellerStatus: "active" } : s
+      ));
+      if (selectedSeller?.userId === userId) {
+        setSelectedSeller((s) => s ? { ...s, sellerStatus: "active" } : s);
+      }
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to activate seller");
     } finally {
       setActionLoading(null);
     }
@@ -214,6 +240,20 @@ const AdminSellerManagement = () => {
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10" onClick={() => setSelectedSeller(s)}>
                     <Eye className="h-4 w-4" />
                   </Button>
+                  {/* Force-activate: shown when Stripe is active but seller is stuck in draft/submitted */}
+                  {s.stripeConnectStatus === "active" && s.sellerStatus !== "active" && s.sellerStatus !== "suspended" && (
+                    <Button
+                      variant="ghost" size="icon"
+                      className="h-8 w-8 text-emerald-400 hover:bg-emerald-500/10"
+                      onClick={() => handleActivate(s.userId)}
+                      disabled={actionLoading === s.userId}
+                      title="Force activate (Stripe is ready)"
+                    >
+                      {actionLoading === s.userId
+                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                        : <CheckCircle className="h-4 w-4" />}
+                    </Button>
+                  )}
                   {s.sellerStatus !== "suspended" ? (
                     <Button
                       variant="ghost" size="icon"
@@ -229,10 +269,10 @@ const AdminSellerManagement = () => {
                   ) : (
                     <Button
                       variant="ghost" size="icon"
-                      className="h-8 w-8 text-emerald-400 hover:bg-emerald-500/10"
+                      className="h-8 w-8 text-amber-400 hover:bg-amber-500/10"
                       onClick={() => handleReactivate(s.userId)}
                       disabled={actionLoading === s.userId}
-                      title="Reactivate seller"
+                      title="Lift suspension (returns to submitted)"
                     >
                       {actionLoading === s.userId
                         ? <Loader2 className="h-4 w-4 animate-spin" />
@@ -369,6 +409,19 @@ const AdminSellerManagement = () => {
             </div>
 
             <DialogFooter className="gap-2">
+              {/* Force-activate when Stripe is confirmed ready but status is stuck */}
+              {selectedSeller.stripeConnectStatus === "active" && selectedSeller.sellerStatus !== "active" && selectedSeller.sellerStatus !== "suspended" && (
+                <Button
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={() => handleActivate(selectedSeller.userId)}
+                  disabled={actionLoading === selectedSeller.userId}
+                >
+                  {actionLoading === selectedSeller.userId
+                    ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    : <CheckCircle className="h-4 w-4 mr-1" />}
+                  Activate Seller
+                </Button>
+              )}
               {selectedSeller.sellerStatus !== "suspended" ? (
                 <Button
                   variant="destructive"
@@ -382,14 +435,14 @@ const AdminSellerManagement = () => {
                 </Button>
               ) : (
                 <Button
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  variant="outline"
                   onClick={() => handleReactivate(selectedSeller.userId)}
                   disabled={actionLoading === selectedSeller.userId}
                 >
                   {actionLoading === selectedSeller.userId
                     ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                     : <RefreshCw className="h-4 w-4 mr-1" />}
-                  Reactivate Seller
+                  Lift Suspension
                 </Button>
               )}
             </DialogFooter>
