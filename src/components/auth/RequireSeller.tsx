@@ -42,31 +42,79 @@ export default function RequireSeller({ children }: Props) {
       return;
     }
     let cancelled = false;
-    import('../../lib/supabase')
-      .then(({ supabase }) =>
-        Promise.resolve(
-          supabase
-            .from('seller_profiles')
-            .select('sellerStatus')
-            .eq('userId', user.id)
-            .single<{ sellerStatus: string }>(),
-        ),
-      )
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        if (error) {
-          console.warn('RequireSeller: failed to fetch sellerStatus', error.message);
-          setFetchState('error');
-          return;
+
+    const checkStatus = async () => {
+      const { supabase } = await import('../../lib/supabase');
+
+      // Step 1: Read the persisted sellerStatus from the DB.
+      const { data, error } = await supabase
+        .from('seller_profiles')
+        .select('sellerStatus')
+        .eq('userId', user.id)
+        .single<{ sellerStatus: string }>();
+
+      if (cancelled) return;
+
+      if (error) {
+        console.warn('RequireSeller: failed to fetch sellerStatus', error.message);
+        setFetchState('error');
+        return;
+      }
+
+      const dbStatus = (data?.sellerStatus ?? 'draft') as FetchState;
+
+      // Step 2: If status is already active or suspended, use it directly — no
+      // need for an extra network round-trip.
+      if (dbStatus === 'active' || dbStatus === 'suspended') {
+        setFetchState(dbStatus);
+        return;
+      }
+
+      // Step 3: Status is draft or submitted — the DB value may be stale.
+      // This happens when:
+      //   a) Stripe became active after the profile was already complete, or
+      //   b) The profile was completed after Stripe was already active, but
+      //      the recheck-activation call after SellerProfile.save() failed
+      //      (network blip, cold-start, token expiry).
+      //
+      // Call recheck-activation to re-evaluate all conditions server-side.
+      // Only redirect to /seller/setup if the re-evaluation ALSO returns non-active.
+      // This ensures sellers who genuinely meet all conditions are not blocked.
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (token) {
+          const res = await fetch('/.netlify/functions/recheck-activation', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const recheckData = await res.json() as { sellerStatus?: string };
+            if (cancelled) return;
+            const recheckStatus = recheckData.sellerStatus as FetchState | undefined;
+            if (recheckStatus) {
+              setFetchState(recheckStatus);
+              return;
+            }
+          }
         }
-        const status = (data?.sellerStatus ?? 'draft') as FetchState;
-        setFetchState(status === 'active' ? 'active' : status);
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
+      } catch (err) {
+        // Non-fatal — fall through and use the DB status.
+        console.warn('RequireSeller: recheck-activation failed (non-fatal)', err);
+      }
+
+      if (cancelled) return;
+      // Fall back to the DB status if the recheck did not return a value.
+      setFetchState(dbStatus);
+    };
+
+    checkStatus().catch((err: unknown) => {
+      if (!cancelled) {
         console.warn('RequireSeller: unexpected error', err);
         setFetchState('error');
-      });
+      }
+    });
+
     return () => {
       cancelled = true;
     };
