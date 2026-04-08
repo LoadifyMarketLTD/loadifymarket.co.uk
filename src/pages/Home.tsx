@@ -19,7 +19,6 @@
  *     8b. How It Works — buyer flow
  *  9. Seller Journey CTA
  * 10. Footer
- * 11. StickyCTA — mobile-only fixed bottom button
  */
 
 import Header from "@/components/Header";
@@ -37,7 +36,6 @@ import LazySection from "@/components/LazySection";
 import UrgencyBar from "@/components/UrgencyBar";
 import SocialProof from "@/components/SocialProof";
 import MicroCTA from "@/components/ui/MicroCTA";
-import StickyCTA from "@/components/StickyCTA";
 
 export default function Home() {
   return (
@@ -93,9 +91,6 @@ export default function Home() {
       <LazySection>
         <Footer />
       </LazySection>
-
-      {/* Mobile-only sticky CTA */}
-      <StickyCTA />
     </div>
   );
 }
