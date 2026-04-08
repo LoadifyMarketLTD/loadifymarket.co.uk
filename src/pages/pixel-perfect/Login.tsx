@@ -23,7 +23,7 @@ const Login = () => {
       const nextUrl = searchParams.get("next");
       if (nextUrl) navigate(nextUrl, { replace: true });
       else if (user.role === "seller") navigate("/pp/seller", { replace: true });
-      else if (user.role === "admin" || user.role === "owner") navigate("/pp/admin", { replace: true });
+      else if (user.role === "admin") navigate("/pp/admin", { replace: true });
       else navigate("/pp/buyer", { replace: true });
     }
   }, [user, searchParams, navigate]);
@@ -57,7 +57,7 @@ const Login = () => {
         const { data: profile, error: profileError } = await supabase.from("users").select("role").eq("id", data.user.id).single();
         if (profileError) console.warn("Could not fetch user role; redirecting to buyer dashboard as fallback:", profileError.message);
         if (profile?.role === "seller") redirectTo = "/pp/seller";
-        else if (profile?.role === "admin" || profile?.role === "owner") redirectTo = "/pp/admin";
+        else if (profile?.role === "admin") redirectTo = "/pp/admin";
       }
       navigate(redirectTo, { replace: true });
     } catch (err) {

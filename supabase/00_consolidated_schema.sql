@@ -55,19 +55,20 @@ BEGIN
   RETURN EXISTS (
     SELECT 1 FROM users
     WHERE id = auth.uid()
-      AND role IN ('admin','owner')
+      AND role = 'admin'
       AND "isActive" = TRUE
   );
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
+-- Alias kept for compatibility; identical to is_admin_or_owner().
 CREATE OR REPLACE FUNCTION is_owner()
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM users
     WHERE id = auth.uid()
-      AND role = 'owner'
+      AND role = 'admin'
       AND "isActive" = TRUE
   );
 END;
@@ -79,7 +80,7 @@ BEGIN
   RETURN EXISTS (
     SELECT 1 FROM users
     WHERE id = auth.uid()
-      AND role IN ('seller','admin','owner')
+      AND role = 'seller'
       AND "isActive" = TRUE
   );
 END;

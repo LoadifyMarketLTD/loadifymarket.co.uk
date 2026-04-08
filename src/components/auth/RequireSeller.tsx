@@ -23,12 +23,12 @@ const CardShell = ({ children }: { children: ReactNode }) => (
  * Route guard for seller-only pages.
  *
  * Access rules:
- *   active sellers   → render children
- *   draft/submitted  → redirect to /seller/setup (complete setup first)
- *   suspended        → show suspension notice (no redirect)
- *   non-sellers      → show "seller account required" prompt
- *   unauthenticated  → redirect to /login
- *   admins/owners    → bypass seller status check (full access)
+ *   admins         → bypass all seller checks (full access)
+ *   active sellers → render children
+ *   draft/submitted → redirect to /seller/setup (complete setup first)
+ *   suspended       → show suspension notice (no redirect)
+ *   non-sellers     → show "seller account required" prompt
+ *   unauthenticated → redirect to /login
  *
  * When the seller's stored status is 'draft' or 'submitted', this guard
  * attempts a recheck-activation call in case the seller completed all
@@ -40,12 +40,15 @@ export default function RequireSeller({ children }: Props) {
   const [fetchState, setFetchState] = useState<FetchState>('loading');
 
   useEffect(() => {
-    if (!user || user.role !== 'seller') return;
-    // Admins/owners bypass the seller status check entirely.
-    if (hasAdminAccess(user)) {
+    // Admins bypass all seller checks — no DB status lookup needed.
+    if (hasAdminAccess(user ?? null)) {
       setFetchState('active');
       return;
     }
+
+    // Only run the seller status check for users with the 'seller' role.
+    if (!user || !hasSellerAccess(user)) return;
+
     let cancelled = false;
 
     const checkStatus = async () => {
@@ -76,15 +79,7 @@ export default function RequireSeller({ children }: Props) {
       }
 
       // Step 3: Status is draft or submitted — the DB value may be stale.
-      // This happens when:
-      //   a) Stripe became active after the profile was already complete, or
-      //   b) The profile was completed after Stripe was already active, but
-      //      the recheck-activation call after SellerProfile.save() failed
-      //      (network blip, cold-start, token expiry).
-      //
       // Call recheck-activation to re-evaluate all conditions server-side.
-      // Only redirect to /seller/setup if the re-evaluation ALSO returns non-active.
-      // This ensures sellers who genuinely meet all conditions are not blocked.
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token;
@@ -125,7 +120,7 @@ export default function RequireSeller({ children }: Props) {
   }, [user]);
 
   const sellerFetchInProgress =
-    user?.role === 'seller' && !hasAdminAccess(user) && fetchState === 'loading';
+    hasSellerAccess(user ?? null) && !hasAdminAccess(user ?? null) && fetchState === 'loading';
   const loading = isLoading || sellerFetchInProgress;
 
   return (
@@ -137,8 +132,8 @@ export default function RequireSeller({ children }: Props) {
         <div className="flex items-center justify-center min-h-screen">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800" />
         </div>
-      ) : user && !hasSellerAccess(user) ? (
-        /* Not a seller (and not admin/owner who bypasses) — show account-type prompt */
+      ) : user && !hasSellerAccess(user) && !hasAdminAccess(user) ? (
+        /* Not a seller and not admin — show account-type prompt */
         <CardShell>
           <p className="text-5xl mb-4">🏪</p>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Seller Account Required</h2>

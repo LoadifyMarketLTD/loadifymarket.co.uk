@@ -8,6 +8,7 @@ import CookieConsent from './components/CookieConsent';
 import RequireAuth from './components/auth/RequireAuth';
 import RequireAdmin from './components/auth/RequireAdmin';
 import RequireSeller from './components/auth/RequireSeller';
+import RequireBuyer from './components/auth/RequireBuyer';
 
 // ─── Homepage ─────────────────────────────────────────────────────────────────
 const Home                 = lazy(() => import('./pages/Home'));
@@ -111,15 +112,17 @@ function PageLoader() {
 
 /**
  * Role-aware /dashboard redirect.
- * Sellers → /pp/seller, admins/owners → /pp/admin, everyone else → /pp/buyer.
+ * admins  → /pp/admin
+ * sellers → /pp/seller
+ * buyers  → /pp/buyer
  * While auth is still loading, wait before redirecting to avoid a flash to the
- * wrong dashboard.
+ * wrong dashboard. Unauthenticated users are sent to /login via RequireAuth.
  */
 function DashboardRedirect() {
   const { user, isLoading } = useAuthStore();
   if (isLoading) return <PageLoader />;
-  if (user && hasAdminAccess(user)) return <Navigate to="/pp/admin" replace />;
-  if (user && hasSellerAccess(user)) return <Navigate to="/pp/seller" replace />;
+  if (user?.role === 'admin') return <Navigate to="/pp/admin" replace />;
+  if (user?.role === 'seller') return <Navigate to="/pp/seller" replace />;
   return <Navigate to="/pp/buyer" replace />;
 }
 
@@ -343,11 +346,11 @@ function App() {
           <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPSellerNotifications /></Suspense>} />
         </Route>
 
-        {/* /pp/buyer – RequireAuth */}
+        {/* /pp/buyer – RequireBuyer (buyer role only; sellers→/pp/seller, admins→/pp/admin) */}
         <Route path="pp/buyer" element={
-          <RequireAuth>
+          <RequireBuyer>
             <Suspense fallback={<PageLoader />}><PPBuyerShell /></Suspense>
-          </RequireAuth>
+          </RequireBuyer>
         }>
           <Route index element={<Suspense fallback={<PageLoader />}><PPBuyerDashboard /></Suspense>} />
           <Route path="orders" element={<Suspense fallback={<PageLoader />}><PPBuyerOrders /></Suspense>} />
