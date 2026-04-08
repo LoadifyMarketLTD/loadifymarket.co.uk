@@ -41,8 +41,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#0A1930] font-sans antialiased">
       <Header />
-      {/* spacer: mobile = 64px header row only; desktop lg+ = 64px + 48px category nav */}
-      <div className="pt-16 lg:pt-[112px]" />
+      {/* spacer: clears fixed header — see .pt-header-spacer in index.css */}
+      <div className="pt-header-spacer" />
 
       {/* Urgency bar — immediately below header */}
       <UrgencyBar />

@@ -87,13 +87,7 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
           ? "bg-[#0A1930]/90 backdrop-blur-md border-b border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
           : "bg-transparent border-b border-transparent",
       ].join(" ")}
-      style={{
-        willChange: "transform",
-        /* In Capacitor edge-to-edge mode (Android 15 / iOS) the fixed header sits
-           behind the system status bar. Adding safe-area-inset-top as top padding
-           pushes the header's content rows below the status bar icons. */
-        paddingTop: "env(safe-area-inset-top, 0px)",
-      }}
+      style={{ willChange: "transform", paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
 
       {/* ── Row 1: Logo | Search | Actions ─────────────────────────────── */}

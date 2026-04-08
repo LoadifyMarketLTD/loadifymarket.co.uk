@@ -102,9 +102,6 @@
     overflow-x: hidden;
     /* Ensure full-width on all devices */
     min-width: 320px;
-    /* Push body content below Android/iOS status bar in Capacitor / PWA edge-to-edge mode.
-       In a normal browser env(safe-area-inset-top) resolves to 0px, so there is no effect. */
-    padding-top: env(safe-area-inset-top, 0px);
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
@@ -160,4 +157,23 @@
 
 section {
   scroll-margin-top: 80px;
+}
+
+/* ── Safe-area spacer utilities (Capacitor / notch phones) ──────────────────
+ * pt-header-spacer: clears the fixed public Header on all devices.
+ *   Mobile  (<1024px): 4rem header row + env(safe-area-inset-top) for the
+ *           Android/iOS status bar that sits INSIDE the header padding.
+ *           Resolves to exactly 4rem (64px) in a normal desktop browser.
+ *   Desktop (≥1024px): 7rem = 64px header row + 48px category-nav row.
+ * Use this class on the spacer div in Home.tsx (and any other page that
+ * uses the transparent-on-scroll public Header without forceOpaque).       */
+@layer utilities {
+  .pt-header-spacer {
+    padding-top: calc(4rem + env(safe-area-inset-top, 0px));
+  }
+  @media (min-width: 1024px) {
+    .pt-header-spacer {
+      padding-top: 7rem; /* 112px — header row (64) + category nav (48) */
+    }
+  }
 }
