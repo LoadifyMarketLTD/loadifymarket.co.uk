@@ -77,7 +77,7 @@ const Signup = () => {
   const strength = passwordStrength(formData.password);
 
   const sellerBullets = [
-    "Reach thousands of UK buyers across all categories",
+    "Reach UK buyers across all categories",
     "Automatic activation — complete setup and connect Stripe",
     "Secure payments via Stripe — no hidden fees",
   ];
@@ -106,7 +106,7 @@ const Signup = () => {
           </h2>
           <p className="text-primary-foreground/70 text-lg leading-relaxed">
             {isSeller
-              ? "Set up your seller account and start reaching thousands of UK buyers."
+              ? "Set up your seller account and start reaching UK buyers."
               : "Create your free account to buy or sell physical goods across all categories."}
           </p>
 

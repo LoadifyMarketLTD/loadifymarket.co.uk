@@ -23,7 +23,7 @@ const Footer = () => {
               Find what you need — or sell what you don't
             </p>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Browse thousands of listings from registered sellers across the UK, or start selling today.
+              Browse listings from registered sellers across the UK, or start selling today.
             </p>
           </div>
           <Link to="/catalog" className="shrink-0">

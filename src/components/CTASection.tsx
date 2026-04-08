@@ -49,7 +49,7 @@ const CTASection = () => (
             Start selling in three simple steps
           </h2>
           <p className="text-gray-300 text-base mb-8">
-            Join thousands of UK businesses and individuals selling on Loadify Market.
+            Join UK businesses and individuals selling on Loadify Market.
           </p>
 
           {/* Numbered steps */}

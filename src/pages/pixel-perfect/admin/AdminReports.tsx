@@ -36,6 +36,13 @@ const AdminReports = () => {
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [topSellers, setTopSellers] = useState<TopSeller[]>([]);
   const [orderBreakdown, setOrderBreakdown] = useState<OrderBreakdown[]>([]);
+  const [period, setPeriod] = useState<"all" | "7d" | "30d">("all");
+
+  const periodLabel: Record<string, string> = {
+    all: "All time",
+    "7d": "Last 7 days",
+    "30d": "Last 30 days",
+  };
 
   const handleExport = () => {
     const rows: string[][] = [
@@ -72,11 +79,33 @@ const AdminReports = () => {
       setLoading(true);
       setError(null);
       try {
+        // Compute the ISO timestamp cutoff for the selected period
+        let since: string | null = null;
+        if (period === "7d") {
+          const d = new Date();
+          d.setDate(d.getDate() - 7);
+          since = d.toISOString();
+        } else if (period === "30d") {
+          const d = new Date();
+          d.setDate(d.getDate() - 30);
+          since = d.toISOString();
+        }
+
+        const periodText = periodLabel[period];
+
+        // Build period-filtered order queries
+        let ordersQuery = supabase.from("orders").select("total");
+        let allOrdersQuery = supabase.from("orders").select("status");
+        if (since) {
+          ordersQuery = ordersQuery.gte("createdAt", since);
+          allOrdersQuery = allOrdersQuery.gte("createdAt", since);
+        }
+
         const [usersRes, productsRes, ordersRes, approvedSellersRes, topSellersRes, allOrdersRes] =
           await Promise.all([
             supabase.from("users").select("id", { count: "exact", head: true }),
             supabase.from("products").select("id", { count: "exact", head: true }).eq("isActive", true),
-            supabase.from("orders").select("total"),
+            ordersQuery,
             supabase
               .from("seller_profiles")
               .select("userId", { count: "exact", head: true })
@@ -87,7 +116,7 @@ const AdminReports = () => {
               .gt("rating", 0)
               .order("totalSales", { ascending: false })
               .limit(5),
-            supabase.from("orders").select("status"),
+            allOrdersQuery,
           ]);
 
         const totalRevenue = (ordersRes.data || []).reduce((sum: number, o) => sum + (o.total ?? 0), 0);
@@ -113,18 +142,18 @@ const AdminReports = () => {
           {
             label: "Total Revenue",
             value: `£${totalRevenue.toLocaleString()}`,
-            change: "From all orders",
+            change: "From orders",
             up: true,
             icon: ShoppingCart,
-            period: "All time",
+            period: periodText,
           },
           {
             label: "Total Orders",
             value: totalOrders.toLocaleString(),
-            change: "All time",
+            change: "Orders placed",
             up: true,
             icon: ShoppingCart,
-            period: "Platform-wide",
+            period: periodText,
           },
           {
             label: "Active Sellers",
@@ -160,7 +189,7 @@ const AdminReports = () => {
     };
 
     fetchReports();
-  }, []);
+  }, [period]);
 
   return (
     <div className="p-6 space-y-6" style={{ background: "#0A0B1A", minHeight: "100%" }}>
@@ -170,7 +199,7 @@ const AdminReports = () => {
           <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>Platform performance overview and insights.</p>
         </div>
         <div className="flex gap-2">
-          <Select defaultValue="all">
+          <Select value={period} onValueChange={(v) => setPeriod(v as "all" | "7d" | "30d")}>
             <SelectTrigger className="w-[140px]" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All time</SelectItem>

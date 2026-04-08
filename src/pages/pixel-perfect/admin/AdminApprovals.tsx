@@ -145,6 +145,28 @@ const AdminSellerManagement = () => {
     }
   };
 
+  const handleForceActivate = async (userId: string) => {
+    setActionLoading(userId);
+    setError(null);
+    try {
+      const { error } = await supabase
+        .from("seller_profiles")
+        .update({ sellerStatus: "active" })
+        .eq("userId", userId);
+      if (error) throw error;
+      setSellers((prev) => prev.map((s) =>
+        s.userId === userId ? { ...s, sellerStatus: "active" } : s
+      ));
+      if (selectedSeller?.userId === userId) {
+        setSelectedSeller((s) => s ? { ...s, sellerStatus: "active" } : s);
+      }
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to activate seller");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const filtered = sellers.filter(
     (s) =>
       s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -370,16 +392,31 @@ const AdminSellerManagement = () => {
 
             <DialogFooter className="gap-2">
               {selectedSeller.sellerStatus !== "suspended" ? (
-                <Button
-                  variant="destructive"
-                  onClick={() => handleSuspend(selectedSeller.userId)}
-                  disabled={actionLoading === selectedSeller.userId}
-                >
-                  {actionLoading === selectedSeller.userId
-                    ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                    : <ShieldOff className="h-4 w-4 mr-1" />}
-                  Suspend Seller
-                </Button>
+                <>
+                  {selectedSeller.sellerStatus !== "active" && (
+                    <Button
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                      onClick={() => handleForceActivate(selectedSeller.userId)}
+                      disabled={actionLoading === selectedSeller.userId}
+                      title="Bypass auto-activation checks and activate this seller immediately"
+                    >
+                      {actionLoading === selectedSeller.userId
+                        ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                        : <Zap className="h-4 w-4 mr-1" />}
+                      Force Activate
+                    </Button>
+                  )}
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleSuspend(selectedSeller.userId)}
+                    disabled={actionLoading === selectedSeller.userId}
+                  >
+                    {actionLoading === selectedSeller.userId
+                      ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                      : <ShieldOff className="h-4 w-4 mr-1" />}
+                    Suspend Seller
+                  </Button>
+                </>
               ) : (
                 <Button
                   className="bg-emerald-600 hover:bg-emerald-700 text-white"

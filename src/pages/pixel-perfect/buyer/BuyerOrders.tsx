@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, Package, Eye, RotateCcw } from "lucide-react";
+import { Search, Package, Eye, RotateCcw, AlertTriangle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
@@ -49,6 +49,15 @@ const RETURN_REASONS = [
   { value: "other", label: "Other" },
 ];
 
+const DISPUTE_REASONS: { value: string; label: string }[] = [
+  { value: "item_not_received", label: "Item not received" },
+  { value: "not_as_described", label: "Not as described" },
+  { value: "item_damaged", label: "Item arrived damaged" },
+  { value: "defective_product", label: "Defective product" },
+  { value: "seller_not_responding", label: "Seller not responding" },
+  { value: "other", label: "Other" },
+];
+
 const BuyerOrders = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -61,6 +70,13 @@ const BuyerOrders = () => {
   const [returnReason, setReturnReason] = useState("");
   const [returnDescription, setReturnDescription] = useState("");
   const [returnLoading, setReturnLoading] = useState(false);
+
+  // Dispute dialog state
+  const [disputeOrder, setDisputeOrder] = useState<OrderRow | null>(null);
+  const [disputeSubject, setDisputeSubject] = useState("");
+  const [disputeReason, setDisputeReason] = useState("");
+  const [disputeDescription, setDisputeDescription] = useState("");
+  const [disputeLoading, setDisputeLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -117,6 +133,36 @@ const BuyerOrders = () => {
       toast({ title: "Failed to submit return", description: (err as Error).message, variant: "destructive" });
     } finally {
       setReturnLoading(false);
+    }
+  };
+
+  const handleDisputeSubmit = async () => {
+    if (!disputeOrder || !user || !disputeSubject.trim() || !disputeReason || !disputeDescription.trim()) return;
+    if (!disputeOrder.sellerId) {
+      toast({ title: "Cannot open dispute", description: "Seller information is unavailable. Please contact support.", variant: "destructive" });
+      return;
+    }
+    setDisputeLoading(true);
+    try {
+      const { error } = await supabase.from("disputes").insert({
+        orderId: disputeOrder.id,
+        buyerId: user.id,
+        sellerId: disputeOrder.sellerId,
+        subject: disputeSubject.trim(),
+        description: disputeDescription.trim(),
+        protectionReason: disputeReason,
+        status: "open",
+      });
+      if (error) throw error;
+      toast({ title: "Dispute opened", description: "Your dispute has been submitted. We'll review it and contact you within 48 hours." });
+      setDisputeOrder(null);
+      setDisputeSubject("");
+      setDisputeReason("");
+      setDisputeDescription("");
+    } catch (err) {
+      toast({ title: "Failed to open dispute", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setDisputeLoading(false);
     }
   };
 
@@ -189,6 +235,21 @@ const BuyerOrders = () => {
                     }}
                   >
                     <RotateCcw className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-amber-600"
+                    title={["paid", "packed", "shipped", "delivered"].includes(o.status) ? "Open dispute" : "Disputes available after payment"}
+                    disabled={!["paid", "packed", "shipped", "delivered"].includes(o.status)}
+                    onClick={() => {
+                      setDisputeOrder(o);
+                      setDisputeSubject("");
+                      setDisputeReason("");
+                      setDisputeDescription("");
+                    }}
+                  >
+                    <AlertTriangle className="h-4 w-4" />
                   </Button>
                 </div>
               </TableCell>
@@ -273,6 +334,64 @@ const BuyerOrders = () => {
               disabled={returnLoading || !returnReason || !returnDescription.trim()}
             >
               {returnLoading ? "Submitting…" : "Submit Return Request"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dispute Dialog */}
+      <Dialog open={!!disputeOrder} onOpenChange={(open) => { if (!open) setDisputeOrder(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Open a Dispute</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Order: <span className="font-medium text-foreground">{disputeOrder?.orderNumber || disputeOrder?.id?.slice(0, 8).toUpperCase()}</span>
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="dispute-subject">Subject</Label>
+              <input
+                id="dispute-subject"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                placeholder="Brief summary of the issue"
+                value={disputeSubject}
+                onChange={(e) => setDisputeSubject(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dispute-reason">Reason</Label>
+              <Select value={disputeReason} onValueChange={setDisputeReason}>
+                <SelectTrigger id="dispute-reason">
+                  <SelectValue placeholder="Select a reason…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DISPUTE_REASONS.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dispute-description">Description</Label>
+              <Textarea
+                id="dispute-description"
+                placeholder="Please describe the problem in detail…"
+                value={disputeDescription}
+                onChange={(e) => setDisputeDescription(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDisputeOrder(null)} disabled={disputeLoading}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDisputeSubmit}
+              disabled={disputeLoading || !disputeSubject.trim() || !disputeReason || !disputeDescription.trim()}
+            >
+              {disputeLoading ? "Submitting…" : "Open Dispute"}
             </Button>
           </DialogFooter>
         </DialogContent>

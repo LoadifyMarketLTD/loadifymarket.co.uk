@@ -1,23 +1,18 @@
 import { Link } from "react-router-dom";
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, ShieldCheck, Truck, Tag } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, ShieldCheck, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
-import { useState } from "react";
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, subtotal } = useCart();
-  const [promoCode, setPromoCode] = useState("");
-  const [promoApplied, setPromoApplied] = useState(false);
 
-  const discount = promoApplied ? Math.round(subtotal * 0.1) : 0;
   // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
   // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
-  const vat = Math.round((subtotal - discount) / 6);
-  const total = subtotal - discount;
+  const vat = Math.round(subtotal / 6);
+  const total = subtotal;
 
   if (cartItems.length === 0) {
     return (
@@ -177,12 +172,6 @@ const Cart = () => {
                     <span className="text-muted-foreground">Subtotal ({cartItems.reduce((s, i) => s + i.quantity, 0)} items)</span>
                     <span className="font-medium text-foreground">£{subtotal.toLocaleString()}</span>
                   </div>
-                  {discount > 0 && (
-                    <div className="flex items-center justify-between text-primary">
-                      <span>Promo discount (10%)</span>
-                      <span className="font-medium">-£{discount.toLocaleString()}</span>
-                    </div>
-                  )}
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Delivery</span>
                     <span className="font-medium text-muted-foreground italic">Set by seller</span>
@@ -195,34 +184,6 @@ const Cart = () => {
                     <span className="font-display font-semibold text-foreground">Total</span>
                     <span className="font-display text-xl font-bold text-foreground">£{total.toLocaleString()}</span>
                   </div>
-                </div>
-
-                {/* Promo Code */}
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Tag className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Promo code"
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
-                        className="pl-9 h-10"
-                      />
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        if (promoCode.trim()) setPromoApplied(true);
-                      }}
-                      disabled={promoApplied}
-                      className="shrink-0"
-                    >
-                      {promoApplied ? "Applied ✓" : "Apply"}
-                    </Button>
-                  </div>
-                  {promoApplied && (
-                    <p className="text-xs text-primary">Promo code applied! 10% discount.</p>
-                  )}
                 </div>
 
                 <Link to="/checkout">
