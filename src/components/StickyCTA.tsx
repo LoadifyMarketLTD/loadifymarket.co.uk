@@ -7,7 +7,7 @@ export default function StickyCTA() {
         to="/register"
         className="bg-green-500 text-black px-6 py-3 rounded-full shadow-lg font-semibold"
       >
-        Start Selling
+        Join the Launch
       </Link>
     </div>
   );

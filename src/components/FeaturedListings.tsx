@@ -11,7 +11,7 @@ const CARDS = [
   {
     id: "fl-browse",
     title: "Browse & Discover",
-    desc: "Explore thousands of products from independent UK sellers across 9 categories.",
+    desc: "Explore products from independent UK sellers across multiple categories.",
     img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
     href: "/catalog",
   },
