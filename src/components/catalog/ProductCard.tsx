@@ -1,6 +1,7 @@
-import { MapPin, Package, Star, Eye } from "lucide-react";
+import { MapPin, Package, Star, Eye, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useAuthStore } from "@/store";
 
 export interface Product {
   id: string;
@@ -13,6 +14,7 @@ export interface Product {
   condition: "New" | "Like New" | "Mixed" | "Unchecked";
   location: string;
   seller: string;
+  sellerId?: string;
   sellerVerified: boolean;
   unitCount: number;
   rating: number;
@@ -29,6 +31,9 @@ const conditionColor: Record<string, string> = {
 };
 
 const ProductCard = ({ product, linkState }: { product: Product; linkState?: Record<string, unknown> }) => {
+  const { user } = useAuthStore();
+  const isOwner = !!(user && product.sellerId && user.id === product.sellerId);
+
   return (
     <div className="group bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-elevated transition-all duration-300 overflow-hidden">
       {/* Image */}
@@ -88,11 +93,20 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
           </div>
         </div>
 
-        <Link to={`/product/${product.id}`} state={linkState ?? undefined}>
-          <Button className="w-full bg-gradient-hero text-primary-foreground hover:opacity-90 transition-opacity text-sm" size="sm">
-            View Details
-          </Button>
-        </Link>
+        {isOwner ? (
+          <Link to={`/seller/products/${product.id}/edit`} state={linkState ?? undefined}>
+            <Button className="w-full bg-gradient-hero text-primary-foreground hover:opacity-90 transition-opacity text-sm" size="sm">
+              <Pencil className="mr-1.5 h-3.5 w-3.5" />
+              Edit Listing
+            </Button>
+          </Link>
+        ) : (
+          <Link to={`/product/${product.id}`} state={linkState ?? undefined}>
+            <Button className="w-full bg-gradient-hero text-primary-foreground hover:opacity-90 transition-opacity text-sm" size="sm">
+              View Details
+            </Button>
+          </Link>
+        )}
       </div>
     </div>
   );

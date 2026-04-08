@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight, Package, MapPin, Clock, Eye, Tag,
-  Truck, ShieldCheck, ShoppingCart, Heart
+  Truck, ShieldCheck, ShoppingCart, Heart, Pencil, LayoutDashboard
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import type { Product } from "@/components/catalog/ProductCard";
 import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import PaymentMethodBadges from "@/components/PaymentMethodBadges";
@@ -22,6 +22,8 @@ interface ProductInfoProps {
   views: number;
   listed: string;
   product: Product;
+  /** The seller's user ID — used to detect if the logged-in user owns this product */
+  sellerId?: string | null;
 }
 
 const conditionColor: Record<string, string> = {
@@ -41,12 +43,16 @@ const ProductInfo = ({
   views,
   listed,
   product,
+  sellerId,
 }: ProductInfoProps) => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+
+  // True when the logged-in user is the seller/owner of this product
+  const isOwner = !!(user && sellerId && user.id === sellerId);
 
   // Check if this product is already in the user's wishlist
   useEffect(() => {
@@ -185,35 +191,61 @@ const ProductInfo = ({
         </div>
       </div>
 
-      {/* CTA buttons */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <Button
-          size="lg"
-          className="flex-1 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
-          onClick={handleBuyNow}
-        >
-          Buy Now <ArrowRight className="ml-2 h-5 w-5" />
-        </Button>
-        <Button
-          size="lg"
-          variant="outline"
-          className="flex-1 text-base"
-          onClick={handleAddToCart}
-        >
-          <ShoppingCart className="mr-2 h-5 w-5" />
-          Add to Cart
-        </Button>
-        <Button
-          size="lg"
-          variant="outline"
-          className={`shrink-0 ${isWishlisted ? "text-rose-500 border-rose-300 hover:bg-rose-50" : ""}`}
-          onClick={handleToggleWishlist}
-          disabled={wishlistLoading}
-          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-        >
-          <Heart className={`h-5 w-5 ${isWishlisted ? "fill-rose-500" : ""}`} />
-        </Button>
-      </div>
+      {/* CTA buttons — owner sees management actions; buyers see purchase actions */}
+      {isOwner ? (
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button
+            size="lg"
+            className="flex-1 bg-gradient-hero text-primary-foreground font-semibold text-base hover:opacity-90 transition-opacity"
+            asChild
+          >
+            <Link to={`/seller/products/${product.id}/edit`}>
+              <Pencil className="mr-2 h-5 w-5" />
+              Edit Product
+            </Link>
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="flex-1 text-base"
+            asChild
+          >
+            <Link to="/pp/seller/products">
+              <LayoutDashboard className="mr-2 h-5 w-5" />
+              Manage Listings
+            </Link>
+          </Button>
+        </div>
+      ) : (
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button
+            size="lg"
+            className="flex-1 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
+            onClick={handleBuyNow}
+          >
+            Buy Now <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="flex-1 text-base"
+            onClick={handleAddToCart}
+          >
+            <ShoppingCart className="mr-2 h-5 w-5" />
+            Add to Cart
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className={`shrink-0 ${isWishlisted ? "text-rose-500 border-rose-300 hover:bg-rose-50" : ""}`}
+            onClick={handleToggleWishlist}
+            disabled={wishlistLoading}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            <Heart className={`h-5 w-5 ${isWishlisted ? "fill-rose-500" : ""}`} />
+          </Button>
+        </div>
+      )}
 
       {/* Accepted payment methods */}
       <PaymentMethodBadges size="sm" />

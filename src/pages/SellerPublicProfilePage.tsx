@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Product, SellerProfile, SellerStore } from '../types';
-import { Store, Package, MapPin, Mail, Phone, MessageCircle, ArrowRight, Calendar } from 'lucide-react';
+import { Store, Package, MapPin, Mail, Phone, MessageCircle, ArrowRight, Calendar, LayoutDashboard, Pencil } from 'lucide-react';
 import VerificationBadge from '../components/VerificationBadge';
 import RoleBadge from '../components/RoleBadge';
 import PaymentBehaviourBadge from '../components/PaymentBehaviourBadge';
@@ -11,6 +11,7 @@ import BreadcrumbNav from '../components/BreadcrumbNav';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuthStore } from '../store';
 
 interface SellerData extends SellerProfile {
   createdAt?: string;
@@ -19,6 +20,7 @@ interface SellerData extends SellerProfile {
 
 export default function SellerPublicProfilePage() {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuthStore();
   const [seller, setSeller] = useState<SellerData | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -258,20 +260,50 @@ export default function SellerPublicProfilePage() {
 
               {/* Seller CTAs */}
               <div className="flex flex-wrap gap-3">
-                <Link
-                  to="/messages"
-                  className="btn-primary inline-flex items-center gap-2 text-sm"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  Contact Seller
-                </Link>
-                <Link
-                  to={`/catalog?seller=${seller.userId}`}
-                  className="btn-glass inline-flex items-center gap-2 text-sm"
-                >
-                  <ArrowRight className="w-4 h-4" />
-                  Browse All Listings
-                </Link>
+                {user?.id === seller.userId ? (
+                  // Owner: show seller management actions
+                  <>
+                    <Link
+                      to="/pp/seller"
+                      className="btn-primary inline-flex items-center gap-2 text-sm"
+                    >
+                      <LayoutDashboard className="w-4 h-4" />
+                      Seller Dashboard
+                    </Link>
+                    <Link
+                      to="/pp/seller/profile"
+                      className="btn-glass inline-flex items-center gap-2 text-sm"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      Edit Store Profile
+                    </Link>
+                    <Link
+                      to="/pp/seller/products"
+                      className="btn-glass inline-flex items-center gap-2 text-sm"
+                    >
+                      <ArrowRight className="w-4 h-4" />
+                      Manage Listings
+                    </Link>
+                  </>
+                ) : (
+                  // Buyer / guest: show public contact actions
+                  <>
+                    <Link
+                      to="/messages"
+                      className="btn-primary inline-flex items-center gap-2 text-sm"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      Contact Seller
+                    </Link>
+                    <Link
+                      to={`/catalog?seller=${seller.userId}`}
+                      className="btn-glass inline-flex items-center gap-2 text-sm"
+                    >
+                      <ArrowRight className="w-4 h-4" />
+                      Browse All Listings
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
-import { ShieldCheck, Star, MapPin, Package, ExternalLink } from "lucide-react";
+import { ShieldCheck, Star, MapPin, Package, ExternalLink, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useAuthStore } from "@/store";
 
 interface SellerCardProps {
   name: string;
@@ -8,9 +9,14 @@ interface SellerCardProps {
   rating: number;
   location: string;
   totalListings: number;
+  /** The seller's user ID — used to detect if the logged-in user is the store owner */
+  sellerId?: string | null;
 }
 
-const SellerCard = ({ name, verified, rating, location, totalListings }: SellerCardProps) => {
+const SellerCard = ({ name, verified, rating, location, totalListings, sellerId }: SellerCardProps) => {
+  const { user } = useAuthStore();
+  const isOwner = !!(user && sellerId && user.id === sellerId);
+
   return (
     <div className="bg-card rounded-xl border border-border p-5 space-y-4">
       <div className="flex items-center justify-between">
@@ -48,11 +54,27 @@ const SellerCard = ({ name, verified, rating, location, totalListings }: SellerC
         {totalListings} active listings
       </div>
 
-      <Link to={`/catalog?seller=${encodeURIComponent(name)}`}>
-        <Button variant="outline" size="sm" className="w-full text-sm">
-          View Seller Profile <ExternalLink className="ml-2 h-3.5 w-3.5" />
-        </Button>
-      </Link>
+      {isOwner ? (
+        <div className="flex flex-col gap-2">
+          <Link to="/pp/seller">
+            <Button variant="default" size="sm" className="w-full text-sm bg-gradient-hero text-primary-foreground">
+              <LayoutDashboard className="mr-2 h-3.5 w-3.5" />
+              Seller Dashboard
+            </Button>
+          </Link>
+          <Link to="/pp/seller/products">
+            <Button variant="outline" size="sm" className="w-full text-sm">
+              Manage Listings <ExternalLink className="ml-2 h-3.5 w-3.5" />
+            </Button>
+          </Link>
+        </div>
+      ) : (
+        <Link to={`/catalog?seller=${encodeURIComponent(name)}`}>
+          <Button variant="outline" size="sm" className="w-full text-sm">
+            View Seller Profile <ExternalLink className="ml-2 h-3.5 w-3.5" />
+          </Button>
+        </Link>
+      )}
     </div>
   );
 };
