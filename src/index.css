@@ -159,15 +159,38 @@ section {
   scroll-margin-top: 80px;
 }
 
-/* ── Safe-area spacer utilities (Capacitor / notch phones) ──────────────────
- * pt-header-spacer: clears the fixed public Header on all devices.
- *   Mobile  (<1024px): 4rem header row + env(safe-area-inset-top) for the
- *           Android/iOS status bar that sits INSIDE the header padding.
- *           Resolves to exactly 4rem (64px) in a normal desktop browser.
- *   Desktop (≥1024px): 7rem = 64px header row + 48px category-nav row.
- * Use this class on the spacer div in Home.tsx (and any other page that
- * uses the transparent-on-scroll public Header without forceOpaque).       */
+/* ── Safe-area inset utilities (Capacitor / notch phones) ─────────────────── */
+/* Use these on any fixed/sticky element that must clear the OS status bar or
+   bottom navigation bar.  In a browser the env() values resolve to 0.          */
 @layer utilities {
+  /* Padding helpers */
+  .pt-safe  { padding-top:    env(safe-area-inset-top,    0px); }
+  .pr-safe  { padding-right:  env(safe-area-inset-right,  0px); }
+  .pb-safe  { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .pl-safe  { padding-left:   env(safe-area-inset-left,   0px); }
+
+  /* Margin helpers (for absolute/fixed children that need to push down) */
+  .mt-safe  { margin-top:    env(safe-area-inset-top,    0px); }
+  .mb-safe  { margin-bottom: env(safe-area-inset-bottom, 0px); }
+
+  /* Min-height helper so full-screen containers clear the status bar */
+  .min-h-screen-safe {
+    min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Combined utility: base 0.75rem (py-3) top padding plus the status-bar
+     safe-area inset. Use on mobile app-shell headers so content clears the
+     Android / iOS status bar without duplicating the calc() in every file. */
+  .pt-header-safe {
+    padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  }
+
+  /* pt-header-spacer: clears the fixed public Header on all viewports.
+   *   Mobile  (<1024px): 4rem header row + safe-area-inset-top (status bar).
+   *           Resolves to exactly 4rem (64px) in a normal desktop browser.
+   *   Desktop (≥1024px): 7rem = 64px header row + 48px category-nav row.
+   * Use on the spacer div below <Header /> on the homepage and any page
+   * that uses the transparent-on-scroll public Header without forceOpaque. */
   .pt-header-spacer {
     padding-top: calc(4rem + env(safe-area-inset-top, 0px));
   }
