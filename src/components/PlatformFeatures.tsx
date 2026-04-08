@@ -7,7 +7,7 @@ const buyerBenefits = [
     icon: Search,
     iconBg: "rgba(124,58,237,0.20)",
     iconColor: "#A78BFA",
-    title: "Browse 500+ Listings",
+    title: "Browse Marketplace Listings",
     desc: "Find products across all categories from registered UK sellers — electronics, fashion, home & garden, handmade and more.",
   },
   {
@@ -186,10 +186,10 @@ const PlatformFeatures = () => {
         {/* Trust stats bar */}
         <div className="mt-5 rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.3)] py-4 px-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           {[
-            { value: "500+", label: "Active Listings" },
-            { value: "120+", label: "Registered Sellers" },
+            { value: "UK", label: "Marketplace" },
+            { value: "Early", label: "Seller Launch" },
             { value: "9", label: "Categories" },
-            { value: "UK-Wide", label: "Delivery Support" },
+            { value: "24/7", label: "Access" },
           ].map((s) => (
             <div key={s.label}>
               <p className="text-xl sm:text-2xl font-extrabold text-white">{s.value}</p>

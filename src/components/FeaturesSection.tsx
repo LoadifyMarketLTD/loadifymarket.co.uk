@@ -11,7 +11,7 @@ const WHY_CARDS = [
   {
     id: "wc-browse",
     title: "Browse & Discover",
-    desc: "500+ live listings updated daily across 9 categories. Smart search with filters.",
+    desc: "Browse curated listings across multiple categories with simple search and filters.",
     img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
     href: "/catalog",
   },

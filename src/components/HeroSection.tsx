@@ -12,7 +12,7 @@ function pad2(n: number) { return String(n).padStart(2, "0"); }
 
 const BULLETS = [
   "Reach UK Buyers",
-  "Sell Any Product",
+  "Launch Without Upfront Costs",
   "Get Paid Fast with Stripe",
 ];
 
@@ -67,7 +67,7 @@ const HeroSection = () => {
           position: "absolute",
           inset: 0,
           background:
-            "linear-gradient(to right, #0A1930 0%, #0A1930 28%, rgba(10,25,48,0.85) 42%, rgba(10,25,48,0.20) 58%, transparent 70%)",
+            "linear-gradient(to right, #0A1930 0%, #0A1930 32%, rgba(10,25,48,0.90) 45%, rgba(10,25,48,0.25) 62%, transparent 72%)",
           zIndex: 1,
         }}
       />
@@ -107,7 +107,7 @@ const HeroSection = () => {
             maxWidth: 480,
           }}
         >
-          Join thousands of UK sellers already reaching more customers every day.
+          Now open for UK sellers. Be among the first to grow on Loadify with 0% commission during launch.
         </p>
 
         {/* Checklist */}
