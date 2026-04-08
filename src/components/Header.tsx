@@ -96,29 +96,31 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
         {/* Logo */}
         <Link to="/" aria-label="Loadify Market — Home" className="flex items-center gap-2 shrink-0">
           <img src={logo} alt="" aria-hidden="true" className="h-8 w-8" />
-          <span className="hidden sm:flex flex-col leading-tight">
+          <span className="flex flex-col leading-tight">
             <span className="font-display text-base font-bold text-white">Loadify</span>
-            <span className="font-display text-sm font-bold text-[#22C55E]">Market</span>
+            <span className="hidden sm:block font-display text-sm font-bold text-[#22C55E]">Market</span>
           </span>
         </Link>
 
         {/* Prominent search bar (center) */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-2xl mx-auto">
+        <form onSubmit={handleSearch} className="flex-1 max-w-2xl mx-auto min-w-0">
           <div className="relative flex items-center">
-            <Search className="absolute left-4 h-5 w-5 text-white/40 pointer-events-none" aria-hidden="true" />
+            <Search className="absolute left-3 h-4 w-4 sm:left-4 sm:h-5 sm:w-5 text-white/40 pointer-events-none" aria-hidden="true" />
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search products, categories, sellers..."
+              placeholder="Search products..."
               aria-label="Search marketplace"
-              className="w-full h-12 pl-11 pr-28 bg-white/10 border border-white/20 rounded-xl text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all"
+              className="w-full h-10 sm:h-12 pl-8 sm:pl-11 pr-16 sm:pr-28 bg-white/10 border border-white/20 rounded-xl text-xs sm:text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all"
             />
             <button
               type="submit"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-9 px-5 bg-[#22C55E] hover:bg-[#16A34A] text-white text-sm font-semibold rounded-lg transition-colors"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 sm:h-9 px-2.5 sm:px-5 bg-[#22C55E] hover:bg-[#16A34A] text-white text-xs sm:text-sm font-semibold rounded-lg transition-colors"
+              aria-label="Search"
             >
-              Search
+              <span className="hidden sm:inline">Search</span>
+              <Search className="sm:hidden h-3.5 w-3.5" aria-hidden="true" />
             </button>
           </div>
         </form>

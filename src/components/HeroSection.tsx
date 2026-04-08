@@ -3,10 +3,6 @@ import { useAuthStore } from "@/store";
 import { PROMO_END_UTC } from "@/lib/promoDeadline";
 import { useCountdown } from "@/hooks/use-countdown";
 
-/**
- * Combined height of fixed Header row (64px) + Header category nav (48px).
- */
-const HEADER_HEIGHT_PX = 112;
 
 function pad2(n: number) { return String(n).padStart(2, "0"); }
 
@@ -29,11 +25,10 @@ const HeroSection = () => {
 
   return (
     <section
-      className="relative overflow-hidden"
+      className="relative overflow-hidden min-h-[calc(100dvh-4rem)] sm:min-h-[calc(100dvh-7rem)]"
       aria-label="Hero — sell online, grow your business with Loadify Market"
       style={{
         background: "#0A1930",
-        minHeight: `clamp(520px, calc(100vh - ${HEADER_HEIGHT_PX}px), 820px)`,
       }}
     >
       {/*
@@ -86,16 +81,15 @@ const HeroSection = () => {
       />
 
       {/* ── LEFT SIDE HTML OVERLAY ─────────────────────────────────────────── */}
-      {/* Mobile: relative/padded flow; sm+: absolute positioned */}
+      {/*
+       * Mobile (<sm): position relative, full width, padded — no translateY tricks.
+       * Desktop (sm+): position absolute, left/top/transform handle vertical centering.
+       * Keeping these as separate Tailwind sm: classes avoids inline-style overriding
+       * w-full on mobile (which caused text to be constrained to 280px on a 390px screen).
+       */}
       <div
-        className="relative sm:absolute z-10 flex flex-col w-full sm:w-auto px-5 py-10 sm:px-0 sm:py-0"
-        style={{
-          left: "clamp(24px, 5.5vw, 88px)",
-          top: "50%",
-          transform: "translateY(-50%)",
-          maxWidth: 540,
-          width: "clamp(280px, 44vw, 540px)",
-        }}
+        className="relative sm:absolute z-10 flex flex-col w-full sm:w-auto sm:min-w-[280px] px-5 py-10 sm:px-0 sm:py-0 sm:top-1/2 sm:-translate-y-1/2 sm:[left:clamp(24px,5.5vw,88px)]"
+        style={{ maxWidth: 540 }}
       >
         {/* Heading */}
         <h1
