@@ -117,18 +117,35 @@ const SellerProfile = () => {
       ]);
       toast({ title: "Profile saved", description: "Your seller profile has been updated." });
 
-      // Trigger activation re-check after profile update.
-      // connect-status evaluates profile completeness + Stripe readiness
-      // and updates sellerStatus automatically if all conditions are now met.
-      supabase.auth.getSession().then(({ data: sessionData }) => {
+      // Re-evaluate activation using persisted DB data (no Stripe API call needed).
+      // If stripeConnectStatus is already 'active' and the profile is now complete,
+      // the seller will be promoted to 'active' automatically.
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token;
         if (token) {
-          fetch("/.netlify/functions/connect-status", {
+          const res = await fetch("/.netlify/functions/recheck-activation", {
             method: "POST",
             headers: { Authorization: `Bearer ${token}` },
-          }).catch(() => { /* non-fatal */ });
+          });
+          if (res.ok) {
+            const data = await res.json() as { sellerStatus?: string };
+            if (data.sellerStatus) {
+              setSellerStatus(data.sellerStatus);
+              if (data.sellerStatus === "active") {
+                toast({
+                  title: "Your store is now live! 🎉",
+                  description: "Your seller account has been activated. Redirecting to your dashboard…",
+                });
+                setTimeout(() => window.location.replace("/pp/seller"), 1800);
+              }
+            }
+          }
         }
-      });
+      } catch {
+        // Non-fatal — activation will be re-evaluated the next time the seller
+        // visits their setup page or the seller dashboard.
+      }
     } catch {
       toast({ title: "Failed to save profile", description: "Please try again.", variant: "destructive" });
     } finally {
