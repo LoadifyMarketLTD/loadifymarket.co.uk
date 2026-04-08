@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users, Search, ShieldCheck, Ban, MoreHorizontal, Eye, Loader2, ExternalLink, Package, ShoppingBag, Flag, CreditCard, UserCog } from "lucide-react";
+import { Users, Search, ShieldCheck, Ban, MoreHorizontal, Eye, Loader2, ExternalLink, Package, ShoppingBag, Flag, CreditCard, UserCog, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
 
 interface User {
@@ -72,6 +73,8 @@ const sellerStatusConfig: Record<string, { label: string; className: string }> =
 };
 
 const AdminUsers = () => {
+  const { user: currentUser } = useAuthStore();
+  const isOwner = currentUser?.role === 'owner';
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -198,7 +201,12 @@ const AdminUsers = () => {
     }
   }, []);
 
-  const toggleBlock = async (userId: string, currentlyActive: boolean) => {
+  const toggleBlock = async (userId: string, currentlyActive: boolean, targetRole: string) => {
+    // Owner accounts are protected — they can never be suspended through the UI.
+    if (targetRole === 'owner') {
+      toast({ title: "Protected account", description: "Owner accounts cannot be suspended.", variant: "destructive" });
+      return;
+    }
     setActionLoading(userId);
     setError(null);
     try {
@@ -219,7 +227,18 @@ const AdminUsers = () => {
     }
   };
 
-  const changeRole = async (userId: string, newRole: string) => {
+  const changeRole = async (userId: string, newRole: string, currentRole: string) => {
+    // Owner role is protected — it cannot be changed through the admin UI.
+    // To transfer ownership, update the DB directly.
+    if (currentRole === 'owner') {
+      toast({ title: "Protected account", description: "Owner role cannot be changed through the admin UI.", variant: "destructive" });
+      return;
+    }
+    // Nobody can assign the owner role through the dropdown either.
+    if (newRole === 'owner') {
+      toast({ title: "Not allowed", description: "The owner role cannot be assigned here.", variant: "destructive" });
+      return;
+    }
     setRoleChanging(true);
     try {
       const { error } = await supabase
@@ -306,12 +325,16 @@ const AdminUsers = () => {
                       <DropdownMenuItem onClick={() => openDetail(u)}>
                         <Eye className="h-3.5 w-3.5 mr-2" /> View Details
                       </DropdownMenuItem>
-                      {u.isActive ? (
-                        <DropdownMenuItem className="text-destructive" onClick={() => toggleBlock(u.id, u.isActive)}>
+                      {u.role === 'owner' ? (
+                        <DropdownMenuItem disabled>
+                          <Lock className="h-3.5 w-3.5 mr-2" /> Protected Account
+                        </DropdownMenuItem>
+                      ) : u.isActive ? (
+                        <DropdownMenuItem className="text-destructive" onClick={() => toggleBlock(u.id, u.isActive, u.role)}>
                           <Ban className="h-3.5 w-3.5 mr-2" /> Suspend User
                         </DropdownMenuItem>
                       ) : (
-                        <DropdownMenuItem onClick={() => toggleBlock(u.id, u.isActive)}>
+                        <DropdownMenuItem onClick={() => toggleBlock(u.id, u.isActive, u.role)}>
                           <ShieldCheck className="h-3.5 w-3.5 mr-2" /> Unsuspend User
                         </DropdownMenuItem>
                       )}
@@ -493,59 +516,67 @@ const AdminUsers = () => {
                 {/* ── Admin actions ─────────────────────────────────────────── */}
                 <section>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Admin Actions</h3>
-                  <div className="flex flex-wrap gap-3">
-                    {/* Suspend / Reactivate */}
-                    {detail.isActive ? (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => toggleBlock(detail.id, detail.isActive)}
-                        disabled={actionLoading === detail.id}
-                      >
-                        {actionLoading === detail.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Ban className="h-4 w-4 mr-1" />}
-                        Suspend User
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        onClick={() => toggleBlock(detail.id, detail.isActive)}
-                        disabled={actionLoading === detail.id}
-                      >
-                        {actionLoading === detail.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-1" />}
-                        Reactivate User
-                      </Button>
-                    )}
-
-                    {/* Change Role */}
-                    <div className="flex items-center gap-2">
-                      <UserCog className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <Select
-                        value={detail.role}
-                        onValueChange={(val) => changeRole(detail.id, val)}
-                        disabled={roleChanging}
-                      >
-                        <SelectTrigger className="h-9 w-36 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="buyer">Buyer</SelectItem>
-                          <SelectItem value="seller">Seller</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {roleChanging && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                  {detail.role === 'owner' ? (
+                    /* Owner accounts are fully protected — no destructive actions */
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 rounded-lg border border-amber-500/20 bg-amber-500/5">
+                      <Lock className="h-4 w-4 text-amber-500 shrink-0" />
+                      <span>Owner accounts are protected. No actions can be performed through this UI.</span>
                     </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-3">
+                      {/* Suspend / Reactivate */}
+                      {detail.isActive ? (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => toggleBlock(detail.id, detail.isActive, detail.role)}
+                          disabled={actionLoading === detail.id}
+                        >
+                          {actionLoading === detail.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Ban className="h-4 w-4 mr-1" />}
+                          Suspend User
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => toggleBlock(detail.id, detail.isActive, detail.role)}
+                          disabled={actionLoading === detail.id}
+                        >
+                          {actionLoading === detail.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-1" />}
+                          Reactivate User
+                        </Button>
+                      )}
 
-                    {/* Admin seller detail page link (if seller) */}
-                    {detail.role === "seller" && (
-                      <Button variant="outline" size="sm" asChild>
-                        <a href={`/admin/sellers/${detail.id}`} target="_blank" rel="noreferrer">
-                          <ExternalLink className="h-4 w-4 mr-1" />
-                          Full Seller Record
-                        </a>
-                      </Button>
-                    )}
-                  </div>
+                      {/* Change Role — only for non-owner accounts; owner cannot be assigned via this UI */}
+                      <div className="flex items-center gap-2">
+                        <UserCog className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <Select
+                          value={detail.role}
+                          onValueChange={(val) => changeRole(detail.id, val, detail.role)}
+                          disabled={roleChanging || !isOwner && detail.role === 'admin'}
+                        >
+                          <SelectTrigger className="h-9 w-36 text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="buyer">Buyer</SelectItem>
+                            <SelectItem value="seller">Seller</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {roleChanging && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                      </div>
+
+                      {/* Admin seller detail page link (if seller) */}
+                      {detail.role === "seller" && (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={`/admin/sellers/${detail.id}`} target="_blank" rel="noreferrer">
+                            <ExternalLink className="h-4 w-4 mr-1" />
+                            Full Seller Record
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </section>
               </div>
             ) : null}

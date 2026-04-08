@@ -106,8 +106,14 @@ const SellerSetupPage = () => {
 
         if (token) {
           if (profile.stripeConnectStatus === "active") {
-            // Fast path: Stripe already confirmed active in DB — no need to re-fetch
-            // from Stripe. Just re-evaluate activation from persisted state.
+            // DB confirms Stripe is fully active — set charges/payouts from the
+            // persisted DB value BEFORE attempting the backend call. This way the
+            // checklist stays correct even if the function call fails or returns
+            // a non-ok status (cold start, 404, network blip, etc.).
+            chargesEnabled = true;
+            payoutsEnabled = true;
+            // Re-evaluate sellerStatus server-side in case the profile was just
+            // completed while Stripe was already active (legacy stuck state).
             try {
               const res = await fetch("/.netlify/functions/recheck-activation", {
                 method: "POST",
@@ -118,12 +124,9 @@ const SellerSetupPage = () => {
                 if (data.sellerStatus) {
                   profile.sellerStatus = data.sellerStatus;
                 }
-                // Stripe is known active, so reflect that in display fields.
-                chargesEnabled = true;
-                payoutsEnabled = true;
               }
             } catch {
-              // Non-fatal — use cached DB values
+              // Non-fatal — sellerStatus falls back to the cached DB value
             }
           } else {
             // Stripe status not yet confirmed active: fetch live state from Stripe
@@ -177,7 +180,7 @@ const SellerSetupPage = () => {
   // Redirect active sellers to the seller dashboard
   useEffect(() => {
     if (status?.sellerStatus === "active") {
-      const timer = setTimeout(() => navigate("/seller", { replace: true }), 1500);
+      const timer = setTimeout(() => navigate("/pp/seller", { replace: true }), 1500);
       return () => clearTimeout(timer);
     }
   }, [status, navigate]);
@@ -259,7 +262,7 @@ const SellerSetupPage = () => {
               <p className="font-semibold text-emerald-700">Your seller account is active!</p>
               <p className="text-sm text-emerald-600">Redirecting you to your seller dashboard…</p>
               <Button asChild className="bg-gradient-hero text-primary-foreground">
-                <Link to="/seller">
+                <Link to="/pp/seller">
                   Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
