@@ -286,7 +286,7 @@ const AdminFlagged = () => {
         {(["pending", "resolved", "all"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
             <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
-              <div className="px-2 py-2">
+              <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(tab === "all" ? filtered : byStatus(tab))}
               </div>
             </div>

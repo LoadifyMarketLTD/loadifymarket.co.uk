@@ -252,9 +252,9 @@ const SellerShipments = () => {
           <TabsTrigger value="active">Active</TabsTrigger>
           <TabsTrigger value="delivered">Delivered</TabsTrigger>
         </TabsList>
-        <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
-        <TabsContent value="active"><Card><CardContent className="pt-4">{renderTable(activeShipments)}</CardContent></Card></TabsContent>
-        <TabsContent value="delivered"><Card><CardContent className="pt-4">{renderTable(byStatus("delivered"))}</CardContent></Card></TabsContent>
+        <TabsContent value="all"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(filtered)}</div></CardContent></Card></TabsContent>
+        <TabsContent value="active"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(activeShipments)}</div></CardContent></Card></TabsContent>
+        <TabsContent value="delivered"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("delivered"))}</div></CardContent></Card></TabsContent>
       </Tabs>
 
       {/* Tracking Dialog */}

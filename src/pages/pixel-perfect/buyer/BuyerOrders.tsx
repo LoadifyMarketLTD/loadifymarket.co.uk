@@ -285,10 +285,10 @@ const BuyerOrders = () => {
           <TabsTrigger value="delivered">Delivered</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
-        <TabsContent value="processing"><Card><CardContent className="pt-4">{renderTable(filtered.filter((o) => ["pending","paid","packed"].includes(o.status)))}</CardContent></Card></TabsContent>
-        <TabsContent value="shipped"><Card><CardContent className="pt-4">{renderTable(byStatus("shipped"))}</CardContent></Card></TabsContent>
-        <TabsContent value="delivered"><Card><CardContent className="pt-4">{renderTable(byStatus("delivered"))}</CardContent></Card></TabsContent>
+        <TabsContent value="all"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(filtered)}</div></CardContent></Card></TabsContent>
+        <TabsContent value="processing"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(filtered.filter((o) => ["pending","paid","packed"].includes(o.status)))}</div></CardContent></Card></TabsContent>
+        <TabsContent value="shipped"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("shipped"))}</div></CardContent></Card></TabsContent>
+        <TabsContent value="delivered"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("delivered"))}</div></CardContent></Card></TabsContent>
       </Tabs>
 
       {/* Return Request Dialog */}
