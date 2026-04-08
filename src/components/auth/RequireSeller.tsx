@@ -23,65 +23,93 @@ const CardShell = ({ children }: { children: ReactNode }) => (
  * Route guard for seller-only pages.
  *
  * Access rules:
- *   active sellers   → render children
- *   draft/submitted  → redirect to /seller/setup (complete setup first)
- *   suspended        → show suspension notice (no redirect)
- *   non-sellers      → show "seller account required" prompt
- *   unauthenticated  → redirect to /login
- *   admins/owners    → bypass seller status check (full access)
+ *   admins         → bypass all seller checks (full access)
+ *   active sellers → render children
+ *   draft/submitted → redirect to /seller/setup (complete setup first)
+ *   suspended       → show suspension notice (no redirect)
+ *   non-sellers     → show "seller account required" prompt
+ *   unauthenticated → redirect to /login
  *
- * When the seller's stored status is 'draft' or 'submitted', this guard
- * attempts a recheck-activation call in case the seller completed all
- * requirements but the DB value is stale. If the check promotes them to
- * 'active', they proceed immediately without navigating to /seller/setup.
+ * Fast-path: if the user's sellerStatus is already cached in the auth store
+ * (populated at login time by App.tsx), active/suspended sellers skip the DB
+ * round-trip entirely — no spinner on subsequent page navigations.
+ *
+ * Slow-path: if the cached status is draft/submitted (or missing), the guard
+ * calls recheck-activation to re-evaluate all conditions server-side in case
+ * the seller just completed their setup and the DB value is stale.
  */
 export default function RequireSeller({ children }: Props) {
   const { user, isLoading } = useAuthStore();
-  const [fetchState, setFetchState] = useState<FetchState>('loading');
+
+  // Seed the initial state from the auth-store cache so active/suspended
+  // sellers never see the spinner on the first render after a navigation.
+  const [fetchState, setFetchState] = useState<FetchState>(() => {
+    if (!user) return 'loading';
+    if (hasAdminAccess(user)) return 'active';
+    const cached = user.sellerStatus;
+    if (cached === 'active' || cached === 'suspended') return cached;
+    return 'loading';
+  });
 
   useEffect(() => {
     // Only run the seller status check for actual seller accounts.
     // Admins/owners bypass via hasSellerAccess in the render tree below.
     if (!user || user.role !== 'seller') return;
+    // Admins bypass all seller checks — no DB status lookup needed.
+    if (hasAdminAccess(user ?? null)) {
+      setFetchState('active');
+      return;
+    }
+
+    // Only run the seller status check for users with the 'seller' role.
+    if (!user || !hasSellerAccess(user)) return;
+
+    // Fast path: if sellerStatus is already cached in the auth store as a
+    // deterministic value, use it immediately — no DB round-trip needed.
+    const cached = user.sellerStatus;
+    if (cached === 'active' || cached === 'suspended') {
+      setFetchState(cached);
+      return;
+    }
+
     let cancelled = false;
 
     const checkStatus = async () => {
       const { supabase } = await import('../../lib/supabase');
 
-      // Step 1: Read the persisted sellerStatus from the DB.
-      const { data, error } = await supabase
-        .from('seller_profiles')
-        .select('sellerStatus')
-        .eq('userId', user.id)
-        .single<{ sellerStatus: string }>();
+      let dbStatus: FetchState;
 
-      if (cancelled) return;
+      if (cached === 'draft' || cached === 'submitted') {
+        // Status is cached as draft/submitted — skip the DB round-trip and
+        // jump straight to the recheck-activation call.
+        dbStatus = cached;
+      } else {
+        // Step 1: Read the persisted sellerStatus from the DB (cache miss).
+        const { data, error } = await supabase
+          .from('seller_profiles')
+          .select('sellerStatus')
+          .eq('userId', user.id)
+          .single<{ sellerStatus: string }>();
 
-      if (error) {
-        console.warn('RequireSeller: failed to fetch sellerStatus', error.message);
-        setFetchState('error');
-        return;
+        if (cancelled) return;
+
+        if (error) {
+          console.warn('RequireSeller: failed to fetch sellerStatus', error.message);
+          setFetchState('error');
+          return;
+        }
+
+        dbStatus = (data?.sellerStatus ?? 'draft') as FetchState;
+
+        // Active or suspended from DB — use it directly, no recheck needed.
+        if (dbStatus === 'active' || dbStatus === 'suspended') {
+          setFetchState(dbStatus);
+          return;
+        }
       }
 
-      const dbStatus = (data?.sellerStatus ?? 'draft') as FetchState;
-
-      // Step 2: If status is already active or suspended, use it directly — no
-      // need for an extra network round-trip.
-      if (dbStatus === 'active' || dbStatus === 'suspended') {
-        setFetchState(dbStatus);
-        return;
-      }
-
-      // Step 3: Status is draft or submitted — the DB value may be stale.
-      // This happens when:
-      //   a) Stripe became active after the profile was already complete, or
-      //   b) The profile was completed after Stripe was already active, but
-      //      the recheck-activation call after SellerProfile.save() failed
-      //      (network blip, cold-start, token expiry).
-      //
+      // Step 2: Status is draft or submitted — the DB value may be stale.
       // Call recheck-activation to re-evaluate all conditions server-side.
-      // Only redirect to /seller/setup if the re-evaluation ALSO returns non-active.
-      // This ensures sellers who genuinely meet all conditions are not blocked.
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token;
@@ -106,7 +134,7 @@ export default function RequireSeller({ children }: Props) {
       }
 
       if (cancelled) return;
-      // Fall back to the DB status if the recheck did not return a value.
+      // Fall back to the DB/cached status if the recheck did not return a value.
       setFetchState(dbStatus);
     };
 
@@ -134,8 +162,8 @@ export default function RequireSeller({ children }: Props) {
         <div className="flex items-center justify-center min-h-screen">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800" />
         </div>
-      ) : user && !hasSellerAccess(user) ? (
-        /* Not a seller (and not admin/owner who bypasses) — show account-type prompt */
+      ) : user && !hasSellerAccess(user) && !hasAdminAccess(user) ? (
+        /* Not a seller and not admin — show account-type prompt */
         <CardShell>
           <p className="text-5xl mb-4">🏪</p>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Seller Account Required</h2>

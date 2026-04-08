@@ -55,19 +55,20 @@ BEGIN
   RETURN EXISTS (
     SELECT 1 FROM users
     WHERE id = auth.uid()
-      AND role IN ('admin','owner')
+      AND role = 'admin'
       AND "isActive" = TRUE
   );
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
+-- Alias kept for compatibility; identical to is_admin_or_owner().
 CREATE OR REPLACE FUNCTION is_owner()
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM users
     WHERE id = auth.uid()
-      AND role = 'owner'
+      AND role = 'admin'
       AND "isActive" = TRUE
   );
 END;
@@ -79,7 +80,7 @@ BEGIN
   RETURN EXISTS (
     SELECT 1 FROM users
     WHERE id = auth.uid()
-      AND role IN ('seller','admin','owner')
+      AND role = 'seller'
       AND "isActive" = TRUE
   );
 END;
@@ -93,7 +94,7 @@ CREATE TABLE IF NOT EXISTS users (
   id                UUID        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email             TEXT        UNIQUE NOT NULL,
   role              TEXT        NOT NULL DEFAULT 'buyer'
-                      CHECK (role IN ('guest','buyer','seller','admin','owner')),
+                      CHECK (role IN ('buyer','seller','admin')),
   "marketplaceRole" TEXT        CHECK ("marketplaceRole" IN ('carrier','broker','seller')),
   "firstName"       TEXT,
   "lastName"        TEXT,
@@ -228,7 +229,7 @@ CREATE TRIGGER trg_seller_verifications_updatedAt BEFORE UPDATE ON seller_verifi
 CREATE OR REPLACE FUNCTION handle_new_user_profile()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF NEW.role IN ('buyer','guest') THEN
+  IF NEW.role = 'buyer' THEN
     INSERT INTO buyer_profiles ("userId") VALUES (NEW.id) ON CONFLICT DO NOTHING;
   ELSIF NEW.role = 'seller' THEN
     INSERT INTO seller_profiles ("userId") VALUES (NEW.id) ON CONFLICT DO NOTHING;
@@ -769,7 +770,7 @@ CREATE TABLE IF NOT EXISTS dispute_messages (
   id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
   "disputeId" UUID        NOT NULL REFERENCES disputes(id) ON DELETE CASCADE,
   "userId"    UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  "userRole"  TEXT        CHECK ("userRole" IN ('buyer','seller','admin','owner')),
+  "userRole"  TEXT        CHECK ("userRole" IN ('buyer','seller','admin')),
   message     TEXT        NOT NULL CHECK (length(trim(message)) > 0),
   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -1722,10 +1723,11 @@ GRANT INSERT ON public.coupon_usage      TO anon;
 GRANT INSERT ON public.product_analytics TO anon;
 
 -- ──────────────────────────────────────────────────────────────
--- OWNER SETUP
--- Run this after the owner registers via Supabase Auth:
+-- ADMIN SETUP
+-- The platform uses three roles: buyer, seller, admin.
+-- To grant admin access to the platform owner, run:
 --
---   UPDATE users SET role = 'owner'
+--   UPDATE users SET role = 'admin'
 --   WHERE email = 'loadifymarket.co.uk@gmail.com';
 --
 -- ──────────────────────────────────────────────────────────────

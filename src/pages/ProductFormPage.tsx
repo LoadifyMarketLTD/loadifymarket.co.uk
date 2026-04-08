@@ -107,7 +107,7 @@ export default function ProductFormPage() {
       if (error) throw error;
 
       // Ownership check — only the seller who created the product (or admin/owner) may edit it.
-      if (data.sellerId !== user?.id && user?.role !== 'admin' && user?.role !== 'owner') {
+      if (data.sellerId !== user?.id && user?.role !== 'admin') {
         alert('You do not have permission to edit this product.');
         navigate('/seller');
         return;
@@ -267,7 +267,7 @@ export default function ProductFormPage() {
 
       // When critical fields are locked (orders exist) and the user is a seller,
       // only allow non-critical fields to be updated.
-      const isAdmin = user.role === 'admin' || user.role === 'owner';
+      const isAdmin = user.role === 'admin';
       const specs = buildSpecs();
 
       // Read autoApproveProducts flag from platform settings

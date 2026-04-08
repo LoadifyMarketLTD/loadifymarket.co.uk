@@ -1,4 +1,4 @@
-export type UserRole = 'guest' | 'buyer' | 'seller' | 'admin' | 'owner';
+export type UserRole = 'buyer' | 'seller' | 'admin';
 
 // Marketplace roles for sellers/users
 export type MarketplaceRole = 'carrier' | 'broker' | 'seller' | null;
@@ -28,6 +28,8 @@ export interface User {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Cached from seller_profiles at login time. Only set for role==='seller'. */
+  sellerStatus?: SellerStatus;
 }
 
 export interface BuyerProfile {
