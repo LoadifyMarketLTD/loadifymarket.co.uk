@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store';
-import { hasAdminAccess, hasSellerAccess } from './lib/roleUtils';
+import { hasAdminAccess } from './lib/roleUtils';
 import { CartProvider } from './contexts/CartContext';
 import CookieConsent from './components/CookieConsent';
 

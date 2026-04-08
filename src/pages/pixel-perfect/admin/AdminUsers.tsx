@@ -17,7 +17,6 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
-import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
 
 interface User {
@@ -72,7 +71,6 @@ const sellerStatusConfig: Record<string, { label: string; className: string }> =
 };
 
 const AdminUsers = () => {
-  const { user: currentUser } = useAuthStore();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
