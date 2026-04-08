@@ -171,6 +171,10 @@ const AdminSellerManagement = () => {
     }
   };
 
+  /** True when the seller's Stripe is confirmed active but their account is stuck before activation. */
+  const canForceActivate = (s: Pick<Seller, "stripeConnectStatus" | "sellerStatus">) =>
+    s.stripeConnectStatus === "active" && s.sellerStatus !== "active" && s.sellerStatus !== "suspended";
+
   const filtered = sellers.filter(
     (s) =>
       s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -241,7 +245,7 @@ const AdminSellerManagement = () => {
                     <Eye className="h-4 w-4" />
                   </Button>
                   {/* Force-activate: shown when Stripe is active but seller is stuck in draft/submitted */}
-                  {s.stripeConnectStatus === "active" && s.sellerStatus !== "active" && s.sellerStatus !== "suspended" && (
+                  {canForceActivate(s) && (
                     <Button
                       variant="ghost" size="icon"
                       className="h-8 w-8 text-emerald-400 hover:bg-emerald-500/10"
@@ -410,7 +414,7 @@ const AdminSellerManagement = () => {
 
             <DialogFooter className="gap-2">
               {/* Force-activate when Stripe is confirmed ready but status is stuck */}
-              {selectedSeller.stripeConnectStatus === "active" && selectedSeller.sellerStatus !== "active" && selectedSeller.sellerStatus !== "suspended" && (
+              {canForceActivate(selectedSeller) && (
                 <Button
                   className="bg-emerald-600 hover:bg-emerald-700 text-white"
                   onClick={() => handleActivate(selectedSeller.userId)}
