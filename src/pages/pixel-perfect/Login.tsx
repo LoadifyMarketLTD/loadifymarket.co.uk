@@ -69,7 +69,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left — branding panel */}
+      {/* Left — branding panel (desktop only) */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-hero relative items-center justify-center p-12">
         <div className="absolute inset-0 opacity-5" style={{backgroundImage:"radial-gradient(circle,rgba(255,255,255,0.9) 1px,transparent 1px)",backgroundSize:"24px 24px"}} />
         <div className="relative z-10 max-w-md text-center space-y-6">
@@ -101,11 +101,13 @@ const Login = () => {
         </div>
       </div>
 
-      {/* Right — form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-background">
-        <div className="w-full max-w-md space-y-8">
+      {/* Right — form (full-width on mobile, half-width on desktop) */}
+      {/* pt-safe pushes the card below the Android status bar / iOS notch */}
+      <div className="flex-1 flex flex-col bg-background pt-safe">
+        <div className="flex-1 flex items-center justify-center px-5 py-8 sm:p-12">
+        <div className="w-full max-w-md space-y-6">
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center justify-center gap-2 mb-4">
+          <div className="lg:hidden flex items-center justify-center gap-2 mb-2">
             <img src={logo} alt="Loadify Market" className="h-9 w-9" />
             <span className="flex flex-col leading-tight">
               <span className="font-display text-xl font-bold text-foreground">Loadify</span>
@@ -197,12 +199,13 @@ const Login = () => {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-muted-foreground pb-safe">
             Don't have an account?{" "}
             <Link to="/signup" className="text-primary font-medium hover:underline">
               Create account
             </Link>
           </p>
+        </div>
         </div>
       </div>
     </div>

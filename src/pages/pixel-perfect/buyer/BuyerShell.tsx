@@ -120,7 +120,7 @@ const BuyerShell = () => {
         </div>
       )}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-card shrink-0">
+        <header className="lg:hidden flex items-center gap-3 px-4 pt-header-safe pb-3 border-b border-border bg-card shrink-0">
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
