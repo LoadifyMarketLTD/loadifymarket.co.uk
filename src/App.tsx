@@ -211,6 +211,9 @@ function App() {
           data['sellerStatus'] = status;
         }
       }
+      // Always remove the raw join array — it is a Supabase query artefact and
+      // must not appear on the User object regardless of whether a row was found
+      // (e.g. buyers/admins have no seller_profiles row so the array is empty).
       delete data['seller_profiles'];
     }
 

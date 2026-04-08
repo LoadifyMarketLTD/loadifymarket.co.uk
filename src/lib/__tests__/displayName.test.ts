@@ -24,10 +24,6 @@ describe('getDisplayName', () => {
     expect(getDisplayName(makeUser({ role: 'admin' }))).toBe('Loadify Market Admin');
   });
 
-  it('returns "Loadify Market Admin" for admin role (previously owner)', () => {
-    expect(getDisplayName(makeUser({ role: 'admin' }))).toBe('Loadify Market Admin');
-  });
-
   it('prefers storeName over businessName', () => {
     const profile = { storeName: 'My Store', businessName: 'My Business' };
     expect(getDisplayName(makeUser({ role: 'seller' }), profile)).toBe('My Store');
