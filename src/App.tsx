@@ -199,6 +199,21 @@ function App() {
       };
     }
 
+    // Lift the joined seller_profiles row (if any) into a flat sellerStatus field
+    // on the user object, and remove the raw join array.  This is called after
+    // every users query so RequireSeller can use the cached value immediately
+    // without an extra DB round-trip on every seller-page navigation.
+    function normalizeSellerStatus(data: Record<string, unknown>): void {
+      const sp = data['seller_profiles'];
+      if (Array.isArray(sp) && sp.length > 0) {
+        const status = (sp[0] as Record<string, unknown>)['sellerStatus'];
+        if (typeof status === 'string') {
+          data['sellerStatus'] = status;
+        }
+      }
+      delete data['seller_profiles'];
+    }
+
     // Defer supabase import so vendor-supabase.js is not in the critical-path
     // bundle — it loads after the initial render, shaving ~37 KiB from the
     // bytes parsed before first paint.
@@ -208,10 +223,11 @@ function App() {
       // Check active session
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session?.user) {
-          // Fetch user profile with role
+          // Fetch user profile with role, plus sellerStatus from seller_profiles
+          // so RequireSeller can skip its own DB round-trip for active sellers.
           supabase
             .from('users')
-            .select('*')
+            .select('*, seller_profiles(sellerStatus)')
             .eq('id', session.user.id)
             .single()
             .then(({ data, error }) => {
@@ -222,6 +238,7 @@ function App() {
                   setUser(null);
                   return;
                 }
+                normalizeSellerStatus(data as unknown as Record<string, unknown>);
                 setUser(data);
               } else {
                 if (error) {
@@ -250,7 +267,7 @@ function App() {
         if (session?.user) {
           supabase
             .from('users')
-            .select('*')
+            .select('*, seller_profiles(sellerStatus)')
             .eq('id', session.user.id)
             .single()
             .then(({ data, error }) => {
@@ -261,6 +278,7 @@ function App() {
                   setUser(null);
                   return;
                 }
+                normalizeSellerStatus(data as unknown as Record<string, unknown>);
                 setUser(data);
               } else {
                 if (error) {

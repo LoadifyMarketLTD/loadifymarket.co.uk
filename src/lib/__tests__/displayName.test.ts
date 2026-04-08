@@ -24,8 +24,8 @@ describe('getDisplayName', () => {
     expect(getDisplayName(makeUser({ role: 'admin' }))).toBe('Loadify Market Admin');
   });
 
-  it('returns "Loadify Market Admin" for owner role', () => {
-    expect(getDisplayName(makeUser({ role: 'owner' }))).toBe('Loadify Market Admin');
+  it('returns "Loadify Market Admin" for admin role (previously owner)', () => {
+    expect(getDisplayName(makeUser({ role: 'admin' }))).toBe('Loadify Market Admin');
   });
 
   it('prefers storeName over businessName', () => {

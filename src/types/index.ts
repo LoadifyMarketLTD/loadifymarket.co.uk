@@ -28,6 +28,8 @@ export interface User {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Cached from seller_profiles at login time. Only set for role==='seller'. */
+  sellerStatus?: SellerStatus;
 }
 
 export interface BuyerProfile {
