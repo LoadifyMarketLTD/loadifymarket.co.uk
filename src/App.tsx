@@ -188,31 +188,86 @@ function App() {
   // and the app is brought to the foreground with the URL as the payload.
   // This listener extracts the path and routes it inside the React WebView so
   // the order-success page opens in-app rather than in Chrome.
+  //
+  // It also handles Supabase email-auth deep links (password reset, email
+  // confirmation) which carry a token_hash / access_token in the URL fragment
+  // or query params.  When detected, we exchange the tokens with Supabase so
+  // the session is established before React Router navigates to the path.
   useEffect(() => {
     if (!isCapacitorNative) return;
 
-    let removeListener: (() => void) | undefined;
+    let removeUrlListener: (() => void) | undefined;
+    let removeStateListener: (() => void) | undefined;
 
     import('@capacitor/app').then(({ App: CapApp }) => {
-      CapApp.addListener('appUrlOpen', (event: { url: string }) => {
+      // Handle deep links — route them inside the WebView.
+      CapApp.addListener('appUrlOpen', async (event: { url: string }) => {
         try {
           const url = new URL(event.url);
           // Only handle loadifymarket.co.uk URLs — ignore all others.
           if (url.hostname !== 'loadifymarket.co.uk') return;
+
+          // Check for Supabase auth tokens in the URL (password-reset,
+          // email-confirmation, magic-link flows).  Supabase sends these as
+          // either fragment params (#access_token=…&refresh_token=…) or query
+          // params (?token_hash=…&type=…).  Exchange them so the session is set
+          // before the React route renders.
+          const hash = new URLSearchParams(url.hash.slice(1));
+          const query = url.searchParams;
+          const accessToken  = hash.get('access_token')  ?? query.get('access_token');
+          const refreshToken = hash.get('refresh_token') ?? query.get('refresh_token');
+          const tokenHash    = query.get('token_hash');
+          const type         = hash.get('type') ?? query.get('type');
+
+          if (accessToken && refreshToken) {
+            // OAuth / magic-link: tokens are directly in the URL.
+            const { supabase } = await import('./lib/supabase');
+            await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+          } else if (tokenHash && type) {
+            // Email OTP (password reset, email confirmation) — exchange hash.
+            // token_hash deep links always use an EmailOtpType ('recovery',
+            // 'signup', 'magiclink', etc.) — cast is safe here.
+            const { supabase } = await import('./lib/supabase');
+            await supabase.auth.verifyOtp({
+              token_hash: tokenHash,
+              type: type as import('@supabase/supabase-js').EmailOtpType,
+            });
+          }
+
           const path = url.pathname + url.search + url.hash;
           navigate(path, { replace: true });
         } catch {
-          // Malformed URL — ignore silently.
+          // Malformed URL or auth exchange failure — ignore silently.
         }
       }).then((handle) => {
-        removeListener = () => void handle.remove();
+        removeUrlListener = () => void handle.remove();
+      });
+
+      // Refresh the Supabase session whenever the app comes back to the
+      // foreground.  The access token may have expired while the app was
+      // backgrounded; autoRefreshToken only runs while the WebView is active,
+      // so an explicit refresh-on-resume prevents a stale-token window.
+      CapApp.addListener('appStateChange', async ({ isActive }: { isActive: boolean }) => {
+        if (!isActive) return;
+        try {
+          const { supabase } = await import('./lib/supabase');
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            await supabase.auth.refreshSession();
+          }
+        } catch {
+          // Network error while app is coming to foreground — ignore.
+        }
+      }).then((handle) => {
+        removeStateListener = () => void handle.remove();
       });
     }).catch(() => {
       // @capacitor/app not available in web build — ignore.
     });
 
     return () => {
-      removeListener?.();
+      removeUrlListener?.();
+      removeStateListener?.();
     };
   }, [navigate]);
 

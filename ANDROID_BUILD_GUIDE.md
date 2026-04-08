@@ -1,6 +1,29 @@
 # Android Build Guide — Loadify Market
 
-## Overview
+## ⚠️ CRITICAL: Required GitHub Secrets Before Every Build
+
+> **Authentication will be completely broken in the APK if these secrets are missing.**
+
+`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are Vite build-time substitutions.
+They are **baked into the JavaScript bundle** at `npm run build` time and **cannot** be
+injected at runtime or changed after the APK is built.
+
+**Previous builds shipped with placeholder values (`https://placeholder.supabase.co`
+/ `placeholder-anon-key`) — every auth call silently failed because the credentials
+pointed at a non-existent Supabase instance.**
+
+### Required repository secrets (Settings → Secrets and variables → Actions)
+
+| Secret name | Value |
+|---|---|
+| `VITE_SUPABASE_URL` | Your Supabase project URL (e.g. `https://xxxx.supabase.co`) |
+| `VITE_SUPABASE_ANON_KEY` | Your Supabase project `anon` key |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (`pk_live_…`) |
+
+The CI workflow now **fails the build immediately** if any of these are missing,
+so a broken APK can never be built by accident.
+
+---
 
 The Loadify Market Android app is a Capacitor wrapper around the existing web app.
 The web app is the source of truth. The Android project in `android/` wraps the

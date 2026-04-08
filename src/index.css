@@ -158,3 +158,23 @@
 section {
   scroll-margin-top: 80px;
 }
+
+/* ── Safe-area inset utilities (Capacitor / notch phones) ─────────────────── */
+/* Use these on any fixed/sticky element that must clear the OS status bar or
+   bottom navigation bar.  In a browser the env() values resolve to 0.          */
+@layer utilities {
+  /* Padding helpers */
+  .pt-safe  { padding-top:    env(safe-area-inset-top,    0px); }
+  .pr-safe  { padding-right:  env(safe-area-inset-right,  0px); }
+  .pb-safe  { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .pl-safe  { padding-left:   env(safe-area-inset-left,   0px); }
+
+  /* Margin helpers (for absolute/fixed children that need to push down) */
+  .mt-safe  { margin-top:    env(safe-area-inset-top,    0px); }
+  .mb-safe  { margin-bottom: env(safe-area-inset-bottom, 0px); }
+
+  /* Min-height helper so full-screen containers clear the status bar */
+  .min-h-screen-safe {
+    min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+}

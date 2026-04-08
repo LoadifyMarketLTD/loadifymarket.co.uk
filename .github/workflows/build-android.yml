@@ -30,11 +30,14 @@ jobs:
     env:
       # Opt into Node.js 24 for all JavaScript actions (avoids Node.js 20 deprecation warnings).
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      # Stub env vars so Vite doesn't fail at build time.
-      # Real values are only needed at runtime inside the WebView.
-      VITE_SUPABASE_URL: https://placeholder.supabase.co
-      VITE_SUPABASE_ANON_KEY: placeholder-anon-key
-      VITE_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
+      # VITE_* variables are baked into the JavaScript bundle by Vite at build
+      # time. Using placeholder values here means every APK ships with wrong
+      # credentials — all auth calls fail at runtime. Always supply real values
+      # via repository secrets (Settings → Secrets and variables → Actions).
+      # Required secrets: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
       # Keystore filename used consistently across decode + build steps.
       RELEASE_KEYSTORE_FILENAME: loadify-release.keystore
 
@@ -50,6 +53,26 @@ jobs:
 
       - name: Install JS dependencies
         run: npm ci
+
+      # ── Guard: require real Supabase credentials ─────────────────────────────
+      # VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are baked into the bundle at
+      # build time. If they are missing the APK will contain wrong credentials and
+      # all authentication will fail at runtime. Fail the build early so the
+      # problem is obvious rather than shipping a broken APK.
+      - name: Verify required secrets are set
+        run: |
+          missing=()
+          [ -z "$VITE_SUPABASE_URL" ]      && missing+=("VITE_SUPABASE_URL")
+          [ -z "$VITE_SUPABASE_ANON_KEY" ] && missing+=("VITE_SUPABASE_ANON_KEY")
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "ERROR: The following required secrets are not set:"
+            for s in "${missing[@]}"; do echo "  - $s"; done
+            echo ""
+            echo "Add them under: GitHub repo → Settings → Secrets and variables → Actions"
+            echo "Without these, the APK will have broken authentication."
+            exit 1
+          fi
+          echo "All required secrets are present."
 
       # ── Build web assets ─────────────────────────────────────────────────────
       - name: Build web app
