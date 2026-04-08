@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store';
-import { hasAdminAccess, hasSellerAccess } from '../../lib/roleUtils';
+import { hasSellerAccess } from '../../lib/roleUtils';
 import RequireAuth from './RequireAuth';
 
 interface Props {
@@ -40,12 +40,9 @@ export default function RequireSeller({ children }: Props) {
   const [fetchState, setFetchState] = useState<FetchState>('loading');
 
   useEffect(() => {
+    // Only run the seller status check for actual seller accounts.
+    // Admins/owners bypass via hasSellerAccess in the render tree below.
     if (!user || user.role !== 'seller') return;
-    // Admins/owners bypass the seller status check entirely.
-    if (hasAdminAccess(user)) {
-      setFetchState('active');
-      return;
-    }
     let cancelled = false;
 
     const checkStatus = async () => {
@@ -125,7 +122,7 @@ export default function RequireSeller({ children }: Props) {
   }, [user]);
 
   const sellerFetchInProgress =
-    user?.role === 'seller' && !hasAdminAccess(user) && fetchState === 'loading';
+    user?.role === 'seller' && fetchState === 'loading';
   const loading = isLoading || sellerFetchInProgress;
 
   return (

@@ -666,7 +666,7 @@ async function handleConnectAccountUpdated(account: Stripe.Account) {
   try {
     const { tryAutoActivateSeller } = await import('./_shared/sellerActivation');
     const sellerId = (updated[0] as { userId: string }).userId;
-    const result = await tryAutoActivateSeller(supabase!, sellerId);
+    const result = await tryAutoActivateSeller(supabase!, sellerId, stripeConnectStatus);
 
     if (result?.firstActivation) {
       // Send notifications — fire-and-forget, non-blocking.
