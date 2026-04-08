@@ -6,7 +6,7 @@ import type { User } from '../types';
  * Admins bypass ALL restrictions on the platform.
  */
 export function hasAdminAccess(user: User | null | undefined): boolean {
-  return user?.role === 'admin';
+  return user?.role === 'admin' || user?.role === 'owner';
 }
 
 /**

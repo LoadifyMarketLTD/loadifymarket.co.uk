@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store';
-import { hasSellerAccess } from '../../lib/roleUtils';
+import { hasSellerAccess, hasAdminAccess } from '../../lib/roleUtils';
 import RequireAuth from './RequireAuth';
 
 interface Props {

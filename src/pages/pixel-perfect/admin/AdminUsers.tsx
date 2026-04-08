@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
+import { useAuthStore } from "@/store";
 
 interface User {
   id: string;
@@ -55,6 +56,7 @@ const roleConfig: Record<string, { label: string; className: string }> = {
   buyer: { label: "Buyer", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
   seller: { label: "Seller", className: "border-purple-500/30 text-purple-400 bg-purple-500/10" },
   admin: { label: "Admin", className: "border-red-500/30 text-red-400 bg-red-500/10" },
+  owner: { label: "Owner", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
 };
 
 const stripeStatusConfig: Record<string, { label: string; className: string }> = {
@@ -71,6 +73,8 @@ const sellerStatusConfig: Record<string, { label: string; className: string }> =
 };
 
 const AdminUsers = () => {
+  const { user: currentUser } = useAuthStore();
+  const isOwner = currentUser?.role === 'owner';
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
