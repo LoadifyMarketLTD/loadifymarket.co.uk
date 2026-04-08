@@ -75,7 +75,51 @@ npx cap open android
 
 ---
 
-## Release Build (when ready for Play Store)
+## CI / GitHub Actions — Signed Release APK
+
+The `Build Android APK` workflow now produces a **signed release APK** instead of a debug build, eliminating antivirus false-positive warnings caused by the generic debug keystore.
+
+### Required GitHub repository secrets
+
+Add these four secrets in **Settings → Secrets and variables → Actions**:
+
+| Secret name | Value |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | Base64-encoded release keystore file (see below) |
+| `ANDROID_KEYSTORE_PASSWORD` | Keystore store password |
+| `ANDROID_KEY_ALIAS` | Key alias inside the keystore (e.g. `loadify-key`) |
+| `ANDROID_KEY_PASSWORD` | Key password |
+
+### Step 1: Generate a release keystore (one-time, keep it safe)
+
+```bash
+keytool -genkey -v \
+  -keystore loadify-release.keystore \
+  -alias loadify-key \
+  -keyalg RSA -keysize 2048 \
+  -validity 10000
+```
+
+### Step 2: Base64-encode the keystore for the secret
+
+```bash
+base64 -w 0 loadify-release.keystore
+# → paste the full output as the ANDROID_KEYSTORE_BASE64 secret value
+```
+
+### Step 3: Add all four secrets to the repository
+
+Navigate to: **GitHub repo → Settings → Secrets and variables → Actions → New repository secret**
+
+### Step 4: Re-run the workflow
+
+The next CI run will produce `loadify-market-release-apk` — a properly signed APK that is not flagged by antivirus software.
+
+> **Security:** Never commit the `.keystore` file to the repository. It is written to a temporary path during CI and is not uploaded or persisted.
+
+---
+
+
 
 ### Step 1: Generate a keystore (once only — store it securely)
 ```bash
