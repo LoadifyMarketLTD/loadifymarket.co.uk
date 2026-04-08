@@ -218,7 +218,11 @@ const SellerSettings = () => {
       .select("isPaused")
       .eq("userId", user.id)
       .single()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          toast({ title: "Could not load account status", description: "Please refresh the page.", variant: "destructive" });
+          return;
+        }
         if (data) setIsPaused(data.isPaused ?? false);
       });
   }, [user?.id]);
@@ -232,11 +236,19 @@ const SellerSettings = () => {
         .update({ isPaused: true })
         .eq("userId", user.id);
       if (profileError) throw profileError;
-      await supabase
+      const { error: productsError } = await supabase
         .from("products")
         .update({ isActive: false })
         .eq("sellerId", user.id)
         .eq("isActive", true);
+      if (productsError) {
+        // Roll back the profile flag so both sides stay consistent.
+        await supabase
+          .from("seller_profiles")
+          .update({ isPaused: false })
+          .eq("userId", user.id);
+        throw productsError;
+      }
       setIsPaused(true);
       toast({
         title: "Account paused",
@@ -258,11 +270,19 @@ const SellerSettings = () => {
         .update({ isPaused: false })
         .eq("userId", user.id);
       if (profileError) throw profileError;
-      await supabase
+      const { error: productsError } = await supabase
         .from("products")
         .update({ isActive: true })
         .eq("sellerId", user.id)
         .eq("isActive", false);
+      if (productsError) {
+        // Roll back the profile flag so both sides stay consistent.
+        await supabase
+          .from("seller_profiles")
+          .update({ isPaused: true })
+          .eq("userId", user.id);
+        throw productsError;
+      }
       setIsPaused(false);
       toast({
         title: "Account resumed",
