@@ -415,7 +415,7 @@ const Deals = () => {
               Have products to sell on the marketplace?
             </h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-lg mx-auto">
-              List your products on Loadify Market and reach thousands of buyers across the UK.
+              List your products on Loadify Market and reach buyers across the UK.
               Free to create an account — you only pay when you sell.
             </p>
             <Link to="/signup">

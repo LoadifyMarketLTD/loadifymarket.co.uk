@@ -1,6 +1,7 @@
-import { MapPin, Package, Star, Eye } from "lucide-react";
+import { MapPin, Package, Star, Eye, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useAuthStore } from "@/store";
 
 export interface Product {
   id: string;
@@ -19,6 +20,8 @@ export interface Product {
   reviewCount?: number;
   views: number;
   listed: string;
+  /** Seller's user ID — used for owner-awareness CTAs */
+  sellerId?: string;
 }
 
 const conditionColor: Record<string, string> = {
@@ -29,6 +32,9 @@ const conditionColor: Record<string, string> = {
 };
 
 const ProductCard = ({ product, linkState }: { product: Product; linkState?: Record<string, unknown> }) => {
+  const { user } = useAuthStore();
+  const isOwner = !!user && !!product.sellerId && user.id === product.sellerId;
+
   return (
     <div className="group bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-elevated transition-all duration-300 overflow-hidden">
       {/* Image */}
@@ -43,6 +49,13 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
         <div className={`absolute top-3 right-3 text-xs font-medium px-2 py-1 rounded-full border ${conditionColor[product.condition] || ""}`}>
           {product.condition}
         </div>
+        {isOwner && (
+          <div className="absolute top-3 left-3">
+            <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/90 text-primary-foreground">
+              Your Listing
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -88,11 +101,19 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
           </div>
         </div>
 
-        <Link to={`/product/${product.id}`} state={linkState ?? undefined}>
-          <Button className="w-full bg-gradient-hero text-primary-foreground hover:opacity-90 transition-opacity text-sm" size="sm">
-            View Details
-          </Button>
-        </Link>
+        {isOwner ? (
+          <Link to={`/seller/products/${product.id}/edit`}>
+            <Button variant="outline" className="w-full text-sm" size="sm">
+              <Settings className="mr-1.5 h-3.5 w-3.5" /> Manage Listing
+            </Button>
+          </Link>
+        ) : (
+          <Link to={`/product/${product.id}`} state={linkState ?? undefined}>
+            <Button className="w-full bg-gradient-hero text-primary-foreground hover:opacity-90 transition-opacity text-sm" size="sm">
+              View Details
+            </Button>
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Package, ShoppingCart, PoundSterling, TrendingUp, ArrowUpRight,
-  ArrowDownRight, Eye, Users, Star, Truck, Clock
+  ArrowDownRight, Eye, Users, Star, Truck, Clock, Send, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import type { User } from "@/types";
+import { toast } from "@/hooks/use-toast";
 
 type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 
@@ -64,6 +65,7 @@ const SellerDashboard = () => {
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState<{ availableAmount: number; totalEarned: number } | null>(null);
+  const [payoutLoading, setPayoutLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -168,6 +170,24 @@ const SellerDashboard = () => {
     load();
   }, [user]);
 
+  const handleRequestPayout = async () => {
+    if (!balance || balance.availableAmount <= 0) {
+      toast({ title: "No available balance", description: "You have no funds available for payout.", variant: "destructive" });
+      return;
+    }
+    setPayoutLoading(true);
+    try {
+      const { error } = await supabase.rpc("request_payout", { p_amount: balance.availableAmount });
+      if (error) throw error;
+      toast({ title: "Payout requested", description: `A payout of £${balance.availableAmount.toFixed(2)} has been requested. It will be reviewed within 1–2 business days.` });
+      setBalance((b) => b ? { ...b, availableAmount: 0 } : b);
+    } catch (err: unknown) {
+      toast({ title: "Payout failed", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setPayoutLoading(false);
+    }
+  };
+
   const displayName = user?.firstName ?? "Seller";
 
   const statsCards = stats
@@ -263,12 +283,26 @@ const SellerDashboard = () => {
       {/* Two-column section */}
       {balance && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-card rounded-xl border border-border p-5 space-y-1">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Available Balance</p>
-            <p className="font-display text-2xl font-bold text-foreground">
-              £{balance.availableAmount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </p>
-            <p className="text-xs text-muted-foreground">Ready for payout</p>
+          <div className="bg-card rounded-xl border border-border p-5 space-y-3">
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Available Balance</p>
+              <p className="font-display text-2xl font-bold text-foreground">
+                £{balance.availableAmount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+              <p className="text-xs text-muted-foreground">Ready for payout</p>
+            </div>
+            <Button
+              size="sm"
+              className="w-full"
+              onClick={handleRequestPayout}
+              disabled={payoutLoading || balance.availableAmount <= 0}
+            >
+              {payoutLoading ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Requesting…</>
+              ) : (
+                <><Send className="mr-2 h-4 w-4" /> Request Payout</>
+              )}
+            </Button>
           </div>
           <div className="bg-card rounded-xl border border-border p-5 space-y-1">
             <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Earned</p>

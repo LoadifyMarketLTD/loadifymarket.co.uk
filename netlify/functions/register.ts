@@ -104,6 +104,35 @@ export const handler: Handler = async (event) => {
   }
   // ─────────────────────────────────────────────────────────────────────────
 
+  // ── Feature-flag guard ────────────────────────────────────────────────────
+  // Check platform_settings.feature_flags before allowing registration.
+  // AdminSettings saves sellerRegistration / buyerRegistration flags here.
+  try {
+    const { data: flagRow } = await supabase
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'feature_flags')
+      .maybeSingle();
+    if (flagRow?.value && typeof flagRow.value === 'object') {
+      const flags = flagRow.value as Record<string, boolean>;
+      if (role === 'seller' && flags.sellerRegistration === false) {
+        return {
+          statusCode: 403,
+          body: JSON.stringify({ error: 'Seller registration is temporarily disabled. Please try again later.' }),
+        };
+      }
+      if (role === 'buyer' && flags.buyerRegistration === false) {
+        return {
+          statusCode: 403,
+          body: JSON.stringify({ error: 'Buyer registration is temporarily disabled. Please try again later.' }),
+        };
+      }
+    }
+  } catch {
+    // Non-fatal — if settings cannot be read, allow registration to proceed.
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   // ── Create auth user via Admin API ─────────────────────────────────────────
   // email_confirm: true  →  account is immediately active; no confirmation
   // email is sent, so Supabase's built-in mailer rate limit is never hit.

@@ -8,9 +8,11 @@ interface SellerCardProps {
   rating: number;
   location: string;
   totalListings: number;
+  /** The seller's store slug — used to link to the public seller profile page */
+  storeSlug?: string | null;
 }
 
-const SellerCard = ({ name, verified, rating, location, totalListings }: SellerCardProps) => {
+const SellerCard = ({ name, verified, rating, location, totalListings, storeSlug }: SellerCardProps) => {
   return (
     <div className="bg-card rounded-xl border border-border p-5 space-y-4">
       <div className="flex items-center justify-between">
@@ -48,11 +50,17 @@ const SellerCard = ({ name, verified, rating, location, totalListings }: SellerC
         {totalListings} active listings
       </div>
 
-      <Link to={`/catalog?seller=${encodeURIComponent(name)}`}>
-        <Button variant="outline" size="sm" className="w-full text-sm">
-          View Seller Profile <ExternalLink className="ml-2 h-3.5 w-3.5" />
+      {storeSlug ? (
+        <Link to={`/seller/${storeSlug}`}>
+          <Button variant="outline" size="sm" className="w-full text-sm">
+            View Seller Profile <ExternalLink className="ml-2 h-3.5 w-3.5" />
+          </Button>
+        </Link>
+      ) : (
+        <Button variant="outline" size="sm" className="w-full text-sm" disabled>
+          Profile unavailable
         </Button>
-      </Link>
+      )}
     </div>
   );
 };

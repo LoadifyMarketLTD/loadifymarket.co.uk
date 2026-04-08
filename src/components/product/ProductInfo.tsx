@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight, Package, MapPin, Clock, Eye, Tag,
-  Truck, ShieldCheck, ShoppingCart, Heart
+  Truck, ShieldCheck, ShoppingCart, Heart, Settings
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import type { Product } from "@/components/catalog/ProductCard";
 import { toast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import PaymentMethodBadges from "@/components/PaymentMethodBadges";
@@ -45,6 +45,7 @@ const ProductInfo = ({
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const isOwner = !!user && !!product.sellerId && user.id === product.sellerId;
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
@@ -186,34 +187,52 @@ const ProductInfo = ({
       </div>
 
       {/* CTA buttons */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <Button
-          size="lg"
-          className="flex-1 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
-          onClick={handleBuyNow}
-        >
-          Buy Now <ArrowRight className="ml-2 h-5 w-5" />
-        </Button>
-        <Button
-          size="lg"
-          variant="outline"
-          className="flex-1 text-base"
-          onClick={handleAddToCart}
-        >
-          <ShoppingCart className="mr-2 h-5 w-5" />
-          Add to Cart
-        </Button>
-        <Button
-          size="lg"
-          variant="outline"
-          className={`shrink-0 ${isWishlisted ? "text-rose-500 border-rose-300 hover:bg-rose-50" : ""}`}
-          onClick={handleToggleWishlist}
-          disabled={wishlistLoading}
-          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-        >
-          <Heart className={`h-5 w-5 ${isWishlisted ? "fill-rose-500" : ""}`} />
-        </Button>
-      </div>
+      {isOwner ? (
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link to={`/seller/products/${product.id}/edit`} className="flex-1">
+            <Button
+              size="lg"
+              className="w-full bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
+            >
+              <Settings className="mr-2 h-5 w-5" /> Manage This Listing
+            </Button>
+          </Link>
+          <Link to="/pp/seller/products" className="shrink-0">
+            <Button size="lg" variant="outline" className="w-full text-base">
+              All My Listings
+            </Button>
+          </Link>
+        </div>
+      ) : (
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button
+            size="lg"
+            className="flex-1 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
+            onClick={handleBuyNow}
+          >
+            Buy Now <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="flex-1 text-base"
+            onClick={handleAddToCart}
+          >
+            <ShoppingCart className="mr-2 h-5 w-5" />
+            Add to Cart
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className={`shrink-0 ${isWishlisted ? "text-rose-500 border-rose-300 hover:bg-rose-50" : ""}`}
+            onClick={handleToggleWishlist}
+            disabled={wishlistLoading}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            <Heart className={`h-5 w-5 ${isWishlisted ? "fill-rose-500" : ""}`} />
+          </Button>
+        </div>
+      )}
 
       {/* Accepted payment methods */}
       <PaymentMethodBadges size="sm" />

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { MessageSquare, Search, Clock, CheckCircle2, AlertCircle, Loader2, Send } from "lucide-react";
+import { MessageSquare, Search, Clock, CheckCircle2, AlertCircle, Loader2, Send, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { toast } from "@/hooks/use-toast";
 
 interface Ticket {
   id: string;
@@ -28,6 +29,24 @@ interface Ticket {
   createdAt: string;
   updatedAt: string;
 }
+
+interface DisputeRow {
+  id: string;
+  orderId: string;
+  buyerName: string;
+  subject: string;
+  protectionReason: string;
+  description: string;
+  status: string;
+  createdAt: string;
+}
+
+const disputeStatusConfig: Record<string, { label: string; className: string }> = {
+  open:        { label: "Open", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
+  under_review:{ label: "Under Review", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
+  resolved:    { label: "Resolved", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+  closed:      { label: "Closed", className: "border-white/10 text-slate-400" },
+};
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   open: { label: "Open", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
@@ -55,6 +74,12 @@ const AdminSupport = () => {
   const [replyText, setReplyText] = useState("");
   const [replySending, setReplySending] = useState(false);
   const [replyMsg, setReplyMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
+  // Disputes state
+  const [disputes, setDisputes] = useState<DisputeRow[]>([]);
+  const [disputeLoading, setDisputeLoading] = useState(true);
+  const [selectedDispute, setSelectedDispute] = useState<DisputeRow | null>(null);
+  const [disputeActionLoading, setDisputeActionLoading] = useState<string | null>(null);
 
   const fetchTickets = useCallback(async () => {
     setLoading(true);
@@ -175,6 +200,68 @@ const AdminSupport = () => {
   const openTickets = filtered.filter((t) => ["open", "in_progress", "waiting_customer"].includes(t.status));
   const urgentOpen = tickets.filter((t) => t.priority === "urgent" && ["open", "in_progress"].includes(t.status));
 
+  // ── Disputes ────────────────────────────────────────────────────────────────
+  const fetchDisputes = useCallback(async () => {
+    setDisputeLoading(true);
+    try {
+      const { data, error: queryError } = await supabase
+        .from("disputes")
+        .select("id, orderId, buyerId, subject, protectionReason, description, status, createdAt")
+        .order("createdAt", { ascending: false });
+      if (queryError) throw queryError;
+
+      const rows = data || [];
+      const buyerIds = [...new Set(rows.map((r: { buyerId: string }) => r.buyerId).filter(Boolean))];
+      const buyerInfo: Record<string, string> = {};
+      if (buyerIds.length > 0) {
+        const { data: users } = await supabase
+          .from("users")
+          .select("id, firstName, lastName")
+          .in("id", buyerIds);
+        (users ?? []).forEach((u: { id: string; firstName?: string; lastName?: string }) => {
+          buyerInfo[u.id] = [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || "Buyer";
+        });
+      }
+
+      setDisputes(rows.map((r: { id: string; orderId: string; buyerId: string; subject: string; protectionReason: string; description: string; status: string; createdAt: string }) => ({
+        id: r.id,
+        orderId: r.orderId ?? "—",
+        buyerName: buyerInfo[r.buyerId] ?? r.buyerId?.slice(0, 8).toUpperCase() ?? "—",
+        subject: r.subject ?? "—",
+        protectionReason: r.protectionReason ?? "—",
+        description: r.description ?? "—",
+        status: r.status ?? "open",
+        createdAt: r.createdAt
+          ? new Date(r.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+          : "—",
+      })));
+    } catch (err: unknown) {
+      toast({ title: "Failed to load disputes", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setDisputeLoading(false);
+    }
+  }, []);
+
+  const updateDisputeStatus = async (id: string, newStatus: string) => {
+    setDisputeActionLoading(id);
+    try {
+      const { error } = await supabase
+        .from("disputes")
+        .update({ status: newStatus })
+        .eq("id", id);
+      if (error) throw error;
+      setDisputes((prev) => prev.map((d) => d.id === id ? { ...d, status: newStatus } : d));
+      if (selectedDispute?.id === id) setSelectedDispute((d) => d ? { ...d, status: newStatus } : d);
+    } catch (err: unknown) {
+      toast({ title: "Failed to update dispute", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setDisputeActionLoading(null);
+    }
+  };
+
+  useEffect(() => { fetchDisputes(); }, [fetchDisputes]);
+  // ────────────────────────────────────────────────────────────────────────────
+
   const renderTable = (data: Ticket[]) => (
     <Table>
       <TableHeader>
@@ -292,7 +379,15 @@ const AdminSupport = () => {
             Open <Badge variant="outline" className="ml-2 text-xs border-white/20 text-white/60">{openTickets.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="resolved" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Resolved</TabsTrigger>
-          <TabsTrigger value="all" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">All</TabsTrigger>
+          <TabsTrigger value="all" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">All Tickets</TabsTrigger>
+          <TabsTrigger value="disputes" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">
+            Disputes
+            {disputes.filter((d) => d.status === "open").length > 0 && (
+              <Badge variant="outline" className="ml-2 text-xs border-red-500/30 text-red-400 bg-red-500/10">
+                {disputes.filter((d) => d.status === "open").length}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
         {(["open", "resolved", "all"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
@@ -307,6 +402,65 @@ const AdminSupport = () => {
             </div>
           </TabsContent>
         ))}
+        <TabsContent value="disputes">
+          <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+            <Table>
+              <TableHeader>
+                <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>ID</TableHead>
+                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Buyer</TableHead>
+                  <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Subject</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Reason</TableHead>
+                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Status</TableHead>
+                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Date</TableHead>
+                  <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {disputeLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(255,255,255,0.3)" }} />
+                    </TableCell>
+                  </TableRow>
+                ) : disputes.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8" style={{ color: "rgba(255,255,255,0.3)" }}>
+                      <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-40" />No disputes found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  disputes.map((d) => {
+                    const stCfg = disputeStatusConfig[d.status] ?? { label: d.status, className: "border-white/10 text-slate-400" };
+                    return (
+                      <TableRow key={d.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                        <TableCell>
+                          <p className="text-sm font-medium text-white">{d.id.slice(0, 8).toUpperCase()}</p>
+                          <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Order: {d.orderId.slice(0, 8).toUpperCase()}</p>
+                        </TableCell>
+                        <TableCell className="text-sm text-white">{d.buyerName}</TableCell>
+                        <TableCell className="hidden sm:table-cell text-xs max-w-[200px] truncate" style={{ color: "rgba(255,255,255,0.7)" }}>{d.subject}</TableCell>
+                        <TableCell className="hidden md:table-cell text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>{d.protectionReason.replace(/_/g, " ")}</TableCell>
+                        <TableCell><Badge variant="outline" className={stCfg.className}>{stCfg.label}</Badge></TableCell>
+                        <TableCell className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{d.createdAt}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs text-slate-400 hover:text-white hover:bg-white/10"
+                            onClick={() => setSelectedDispute(d)}
+                          >
+                            Review
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
       </Tabs>
 
       <Dialog open={!!selected} onOpenChange={(open) => { if (!open) { setSelected(null); setReplyText(""); setReplyMsg(null); } }}>
@@ -405,6 +559,72 @@ const AdminSupport = () => {
               >
                 {replySending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />}
                 Send Reply
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+
+      {/* Dispute Detail Dialog */}
+      <Dialog open={!!selectedDispute} onOpenChange={(open) => { if (!open) setSelectedDispute(null); }}>
+        {selectedDispute && (
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Dispute — {selectedDispute.id.slice(0, 8).toUpperCase()}</DialogTitle>
+              <DialogDescription>{selectedDispute.buyerName} · {selectedDispute.createdAt}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Buyer</span><p className="font-medium text-white">{selectedDispute.buyerName}</p></div>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Order</span><p className="font-medium text-white">{selectedDispute.orderId.slice(0, 8).toUpperCase()}</p></div>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Reason</span><p className="font-medium text-white">{selectedDispute.protectionReason.replace(/_/g, " ")}</p></div>
+                <div><span style={{ color: "rgba(255,255,255,0.4)" }}>Status</span>
+                  <p><Badge variant="outline" className={(disputeStatusConfig[selectedDispute.status] ?? { className: "border-white/10 text-slate-400" }).className}>
+                    {(disputeStatusConfig[selectedDispute.status] ?? { label: selectedDispute.status }).label}
+                  </Badge></p>
+                </div>
+              </div>
+              <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <p className="text-xs font-semibold mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>SUBJECT</p>
+                <p className="text-sm font-medium text-white mb-3">{selectedDispute.subject}</p>
+                <p className="text-xs font-semibold mb-1" style={{ color: "rgba(255,255,255,0.4)" }}>DESCRIPTION</p>
+                <p className="text-sm text-white">{selectedDispute.description}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.4)" }}>UPDATE STATUS</p>
+                <Select
+                  value={selectedDispute.status}
+                  onValueChange={(val) => updateDisputeStatus(selectedDispute.id, val)}
+                  disabled={disputeActionLoading === selectedDispute.id}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">Open</SelectItem>
+                    <SelectItem value="under_review">Under Review</SelectItem>
+                    <SelectItem value="resolved">Resolved</SelectItem>
+                    <SelectItem value="closed">Closed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              {disputeActionLoading === selectedDispute.id && (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" style={{ color: "rgba(255,255,255,0.4)" }} />
+              )}
+              <Button
+                variant="outline"
+                onClick={() => updateDisputeStatus(selectedDispute.id, "under_review")}
+                disabled={disputeActionLoading === selectedDispute.id || selectedDispute.status === "under_review"}
+              >
+                Mark Under Review
+              </Button>
+              <Button
+                onClick={() => updateDisputeStatus(selectedDispute.id, "resolved")}
+                disabled={disputeActionLoading === selectedDispute.id || selectedDispute.status === "resolved"}
+              >
+                <CheckCircle2 className="h-4 w-4 mr-1" /> Resolve
               </Button>
             </DialogFooter>
           </DialogContent>

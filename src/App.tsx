@@ -1,8 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store';
 import { CartProvider } from './contexts/CartContext';
 import CookieConsent from './components/CookieConsent';
+import { hasAdminAccess } from './lib/roleUtils';
 
 import RequireAuth from './components/auth/RequireAuth';
 import RequireAdmin from './components/auth/RequireAdmin';
@@ -106,6 +107,55 @@ function PageLoader() {
       </div>
     </div>
   );
+}
+
+/**
+ * Renders a maintenance-mode page for non-admin visitors.
+ * Reads `platform_settings.maintenance_mode` once on mount.
+ * Admins/owners always bypass so they can access the admin hub.
+ */
+function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuthStore();
+  const [maintenanceMode, setMaintenanceMode] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    import('./lib/supabase').then(({ supabase }) => {
+      supabase
+        .from('platform_settings')
+        .select('value')
+        .eq('key', 'maintenance_mode')
+        .maybeSingle()
+        .then(({ data }) => {
+          const val = data?.value;
+          setMaintenanceMode(val === true || val === 'true');
+        }, () => setMaintenanceMode(false));
+    });
+  }, []);
+
+  // While loading auth or the maintenance flag, render normally (avoids flash)
+  if (isLoading || maintenanceMode === null) return <>{children}</>;
+  // Admins/owners always bypass maintenance mode
+  if (maintenanceMode && user && hasAdminAccess(user)) return <>{children}</>;
+  // If maintenance is on and user is not admin, show maintenance screen
+  if (maintenanceMode) {
+    return (
+      <div className="min-h-screen bg-[#0A1930] flex items-center justify-center px-6">
+        <div className="text-center max-w-lg">
+          <div className="text-6xl mb-6">🔧</div>
+          <h1 className="text-3xl font-bold text-white mb-3">We're under maintenance</h1>
+          <p className="text-white/60 text-base mb-6">
+            Loadify Market is currently undergoing scheduled maintenance. We'll be back shortly.
+            Thank you for your patience.
+          </p>
+          <p className="text-white/40 text-sm">
+            If you are an admin, please{' '}
+            <a href="/login" className="text-blue-400 underline">sign in</a> to access the platform.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return <>{children}</>;
 }
 
 
@@ -220,9 +270,10 @@ function App() {
 
   return (
     <CartProvider>
-      <Routes>
-        {/* ── Pixel-perfect standalone pages (own Header + Footer) ─────────────── */}
-        <Route path="/" element={<Suspense fallback={<PageLoader />}><Home /></Suspense>} />
+      <MaintenanceModeGate>
+        <Routes>
+          {/* ── Pixel-perfect standalone pages (own Header + Footer) ─────────────── */}
+          <Route path="/" element={<Suspense fallback={<PageLoader />}><Home /></Suspense>} />
         <Route path="catalog" element={<Suspense fallback={<PageLoader />}><PPCatalog /></Suspense>} />
         <Route path="category/:slug" element={<Suspense fallback={<PageLoader />}><PPCategoryPage /></Suspense>} />
         {/* /categories/:slug — canonical plural alias */}
@@ -374,7 +425,8 @@ function App() {
 
         {/* ── Wildcard — pixel-perfect 404 ─────────────────────────────────────── */}
         <Route path="*" element={<Suspense fallback={<PageLoader />}><PPNotFound /></Suspense>} />
-      </Routes>
+        </Routes>
+      </MaintenanceModeGate>
       {/* Cookie consent banner — rendered once globally, outside the router tree
           so it persists across route changes. Self-manages visibility via
           localStorage (key: loadify_cookie_consent). */}

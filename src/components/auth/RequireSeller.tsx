@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 import { hasAdminAccess, hasSellerAccess } from '../../lib/roleUtils';
@@ -29,10 +29,17 @@ const CardShell = ({ children }: { children: ReactNode }) => (
  *   non-sellers      → show "seller account required" prompt
  *   unauthenticated  → redirect to /login
  *   admins/owners    → bypass seller status check (full access)
+ *
+ * When the seller's stored status is 'submitted', this guard attempts an
+ * activation check (via the connect-status Netlify function) in case the
+ * seller completed all requirements but never revisited the setup page. If
+ * the check promotes them to 'active', they proceed immediately without
+ * having to navigate to /seller/setup first.
  */
 export default function RequireSeller({ children }: Props) {
   const { user, isLoading } = useAuthStore();
   const [fetchState, setFetchState] = useState<FetchState>('loading');
+  const activationAttempted = useRef(false);
 
   useEffect(() => {
     if (!user || user.role !== 'seller') return;
@@ -42,31 +49,62 @@ export default function RequireSeller({ children }: Props) {
       return;
     }
     let cancelled = false;
-    import('../../lib/supabase')
-      .then(({ supabase }) =>
-        Promise.resolve(
-          supabase
-            .from('seller_profiles')
-            .select('sellerStatus')
-            .eq('userId', user.id)
-            .single<{ sellerStatus: string }>(),
-        ),
-      )
-      .then(({ data, error }) => {
+
+    const checkStatus = async () => {
+      try {
+        const { supabase } = await import('../../lib/supabase');
+        const { data, error } = await supabase
+          .from('seller_profiles')
+          .select('sellerStatus')
+          .eq('userId', user.id)
+          .single<{ sellerStatus: string }>();
+
         if (cancelled) return;
         if (error) {
           console.warn('RequireSeller: failed to fetch sellerStatus', error.message);
           setFetchState('error');
           return;
         }
+
         const status = (data?.sellerStatus ?? 'draft') as FetchState;
-        setFetchState(status === 'active' ? 'active' : status);
-      })
-      .catch((err: unknown) => {
+
+        // For sellers who are 'submitted' (profile complete but Stripe not yet
+        // confirmed), trigger a live connect-status check. This auto-promotes
+        // sellers who completed all requirements but never revisited setup.
+        if (status === 'submitted' && !activationAttempted.current) {
+          activationAttempted.current = true;
+          try {
+            const session = await supabase.auth.getSession();
+            const token = session.data.session?.access_token;
+            if (token) {
+              const res = await fetch('/.netlify/functions/connect-status', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              if (res.ok && !cancelled) {
+                const result = await res.json() as { sellerStatus?: string };
+                if (result.sellerStatus === 'active') {
+                  setFetchState('active');
+                  return;
+                }
+              }
+            }
+          } catch {
+            // Non-fatal — fall through to the DB-derived status
+          }
+        }
+
+        if (!cancelled) {
+          setFetchState(status === 'active' ? 'active' : status);
+        }
+      } catch (err: unknown) {
         if (cancelled) return;
         console.warn('RequireSeller: unexpected error', err);
         setFetchState('error');
-      });
+      }
+    };
+
+    checkStatus();
     return () => {
       cancelled = true;
     };
