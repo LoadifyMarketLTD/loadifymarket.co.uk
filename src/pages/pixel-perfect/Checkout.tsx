@@ -79,15 +79,10 @@ const Checkout = () => {
     if (shippingError) setShippingError(null);
   };
 
-  const shipping =
-    subtotal > 2000 ? 0 :
-    subtotal > 500 ? 49.99 :
-    subtotal > 200 ? 29.99 :
-    subtotal > 50 ? 14.99 : 9.99;
   // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
   // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
   const vat = Math.round(subtotal / 6);
-  const total = subtotal + shipping;
+  const total = subtotal;
 
   // ── Submit to Stripe via Netlify function ──────────────────────────────────
   const handlePlaceOrder = async () => {
@@ -117,8 +112,8 @@ const Checkout = () => {
         items,
         buyerId: user?.id ?? "",
         guestEmail: !user ? shippingData.email : undefined,
-        shippingAmount: shipping,
-        shippingMethod: "Standard",
+        shippingAmount: 0,
+        shippingMethod: "Seller arranged",
         shippingAddress: address,
         billingAddress: address,
       };
@@ -483,8 +478,8 @@ const Checkout = () => {
                     <span className="text-foreground font-medium">£{subtotal.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Shipping</span>
-                    <span className="text-foreground font-medium">{shipping === 0 ? <span className="text-primary">Free</span> : `£${shipping}`}</span>
+                    <span className="text-muted-foreground">Delivery</span>
+                    <span className="text-muted-foreground italic">Set by seller</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">VAT (20%)</span>
@@ -509,7 +504,7 @@ const Checkout = () => {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Truck className="h-4 w-4 text-primary shrink-0" />
-                  Free shipping over £2,000
+                  Delivery is set by the seller
                 </div>
               </div>
             </div>
