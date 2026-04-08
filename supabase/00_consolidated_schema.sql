@@ -156,6 +156,7 @@ CREATE TABLE IF NOT EXISTS seller_profiles (
   "sellerStatus"              TEXT         NOT NULL DEFAULT 'draft'
                                 CHECK ("sellerStatus" IN ('draft', 'submitted', 'active', 'suspended')),
   "activatedAt"               TIMESTAMPTZ,
+  "isPaused"                  BOOLEAN      NOT NULL DEFAULT FALSE,
   "createdAt"                 TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   "updatedAt"                 TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
