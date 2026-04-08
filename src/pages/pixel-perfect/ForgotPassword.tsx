@@ -18,8 +18,12 @@ const ForgotPassword = () => {
     setError("");
     setLoading(true);
     try {
+      // Use the production URL explicitly so the reset link works whether the
+      // user requested it from the web browser or from the Android app (where
+      // window.location.origin resolves to the Capacitor internal scheme, not
+      // the live domain).
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `https://loadifymarket.co.uk/reset-password`,
       });
       if (resetError) throw resetError;
       setSubmitted(true);
