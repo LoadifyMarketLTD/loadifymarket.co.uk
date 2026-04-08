@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, ShoppingCart, User, Menu, X, LogOut } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, LogOut, Package, ShoppingBag, Heart, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/loadify-logo.svg";
 import { useCart } from "@/contexts/CartContext";
@@ -140,21 +140,53 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
 
           {user ? (
             <>
+              {/* Role-specific quick links (desktop) */}
+              {(user.role === "seller") && (
+                <>
+                  <Button variant="ghost" size="sm" className="text-white/70 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex" asChild>
+                    <Link to="/pp/seller/products">
+                      <Package className="h-4 w-4 mr-1" aria-hidden="true" /> My Products
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-white/70 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex" asChild>
+                    <Link to="/pp/seller/orders">
+                      <ShoppingBag className="h-4 w-4 mr-1" aria-hidden="true" /> Orders
+                    </Link>
+                  </Button>
+                </>
+              )}
+              {(user.role === "buyer") && (
+                <>
+                  <Button variant="ghost" size="sm" className="text-white/70 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex" asChild>
+                    <Link to="/pp/buyer/orders">
+                      <ShoppingBag className="h-4 w-4 mr-1" aria-hidden="true" /> Orders
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" className="text-white/70 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex" asChild>
+                    <Link to="/pp/buyer/wishlist">
+                      <Heart className="h-4 w-4 mr-1" aria-hidden="true" /> Wishlist
+                    </Link>
+                  </Button>
+                </>
+              )}
               <Button variant="ghost" size="sm" className="text-white/80 hover:text-green-400 hover:bg-white/10 font-medium" asChild>
                 <Link to={dashboardPath}>
-                  <User className="h-4 w-4 mr-1" aria-hidden="true" /> Dashboard
+                  <LayoutDashboard className="h-4 w-4 mr-1" aria-hidden="true" />
+                  {user.role === "admin" || user.role === "owner" ? "Admin Hub" : "Dashboard"}
                 </Link>
               </Button>
               <Button variant="ghost" size="sm" className="text-white/80 hover:text-green-400 hover:bg-white/10 font-medium" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-1" aria-hidden="true" /> Sign Out
               </Button>
-              <Button
-                size="sm"
-                className="h-9 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-300 hover:to-green-400 text-black font-semibold px-5 rounded-full shadow-lg hover:shadow-green-400/30 transition-all duration-300"
-                asChild
-              >
-                <Link to="/pp/seller">Start Selling</Link>
-              </Button>
+              {user.role !== "admin" && user.role !== "owner" && (
+                <Button
+                  size="sm"
+                  className="h-9 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-300 hover:to-green-400 text-black font-semibold px-5 rounded-full shadow-lg hover:shadow-green-400/30 transition-all duration-300"
+                  asChild
+                >
+                  <Link to="/pp/seller">Start Selling</Link>
+                </Button>
+              )}
             </>
           ) : (
             <>
@@ -241,19 +273,43 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
 
           <Link to="/catalog" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-white/80 hover:text-green-400 transition-colors">All Categories</Link>
           <Link to="/deals" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-white/80 hover:text-green-400 transition-colors">Deals</Link>
+          {user?.role === "seller" && (
+            <>
+              <Link to="/pp/seller/products" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm font-medium text-white/80 hover:text-green-400 transition-colors">
+                <Package className="h-4 w-4" /> My Products
+              </Link>
+              <Link to="/pp/seller/orders" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm font-medium text-white/80 hover:text-green-400 transition-colors">
+                <ShoppingBag className="h-4 w-4" /> Orders
+              </Link>
+            </>
+          )}
+          {user?.role === "buyer" && (
+            <>
+              <Link to="/pp/buyer/orders" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm font-medium text-white/80 hover:text-green-400 transition-colors">
+                <ShoppingBag className="h-4 w-4" /> My Orders
+              </Link>
+              <Link to="/pp/buyer/wishlist" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm font-medium text-white/80 hover:text-green-400 transition-colors">
+                <Heart className="h-4 w-4" /> Wishlist
+              </Link>
+            </>
+          )}
 
           <div className="flex gap-2 pt-2 border-t border-white/10">
             {user ? (
               <>
                 <Button variant="ghost" size="sm" className="flex-1 text-white/80 hover:text-green-400 hover:bg-white/10" asChild>
-                  <Link to={dashboardPath} onClick={() => setMobileOpen(false)}>Dashboard</Link>
+                  <Link to={dashboardPath} onClick={() => setMobileOpen(false)}>
+                    {user.role === "admin" || user.role === "owner" ? "Admin Hub" : "Dashboard"}
+                  </Link>
                 </Button>
                 <Button size="sm" variant="outline" className="flex-1 border-white/20 text-white/80 hover:bg-white/10" onClick={() => { setMobileOpen(false); handleLogout(); }}>
                   Sign Out
                 </Button>
-                <Button size="sm" className="flex-1 bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold" asChild>
-                  <Link to="/pp/seller" onClick={() => setMobileOpen(false)}>Start Selling</Link>
-                </Button>
+                {user.role !== "admin" && user.role !== "owner" && (
+                  <Button size="sm" className="flex-1 bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold" asChild>
+                    <Link to="/pp/seller" onClick={() => setMobileOpen(false)}>Start Selling</Link>
+                  </Button>
+                )}
               </>
             ) : (
               <>
