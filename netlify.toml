@@ -95,6 +95,17 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# ─── Android App Links verification file ─────────────────────────────────────
+# Must be served as application/json with HTTP 200 (no redirects, no HTML).
+# Google's Digital Asset Links verifier re-fetches this on every install, so
+# no-store prevents stale cached versions being served after the SHA-256 is updated.
+[[headers]]
+  for = "/.well-known/assetlinks.json"
+  [headers.values]
+    Content-Type = "application/json"
+    Cache-Control = "no-store"
+    Access-Control-Allow-Origin = "*"
+
 # ─── Cache: PWA manifest ─────────────────────────────────────────────────────
 [[headers]]
   for = "/manifest.webmanifest"

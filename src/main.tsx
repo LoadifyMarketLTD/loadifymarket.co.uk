@@ -67,10 +67,11 @@ if (import.meta.env.DEV) {
   });
 }
 
+import { isCapacitorNative } from "./lib/capacitor.ts";
+
 // Register service worker for PWA support — skip inside Capacitor Android/iOS
 // shell where assets are served locally and the SW provides no benefit but
 // can interfere with the Capacitor WebView's own asset resolution.
-const isCapacitorNative = typeof window !== 'undefined' && 'Capacitor' in window;
 if (!isCapacitorNative && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then(

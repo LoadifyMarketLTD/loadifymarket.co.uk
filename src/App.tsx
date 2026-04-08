@@ -1,9 +1,10 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store';
 import { hasAdminAccess, hasSellerAccess } from './lib/roleUtils';
 import { CartProvider } from './contexts/CartContext';
 import CookieConsent from './components/CookieConsent';
+import { isCapacitorNative } from './lib/capacitor';
 
 import RequireAuth from './components/auth/RequireAuth';
 import RequireAdmin from './components/auth/RequireAdmin';
@@ -175,6 +176,42 @@ function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
 
 function App() {
   const { setUser, setLoading } = useAuthStore();
+  const navigate = useNavigate();
+
+  // ── Android App Links deep link handler ─────────────────────────────────────
+  // When the user completes a Stripe payment, Stripe redirects to
+  // https://loadifymarket.co.uk/order-success. On Android, this URL is
+  // intercepted by the OS (via the intent filter + assetlinks.json verification)
+  // and the app is brought to the foreground with the URL as the payload.
+  // This listener extracts the path and routes it inside the React WebView so
+  // the order-success page opens in-app rather than in Chrome.
+  useEffect(() => {
+    if (!isCapacitorNative) return;
+
+    let removeListener: (() => void) | undefined;
+
+    import('@capacitor/app').then(({ App: CapApp }) => {
+      CapApp.addListener('appUrlOpen', (event: { url: string }) => {
+        try {
+          const url = new URL(event.url);
+          // Only handle loadifymarket.co.uk URLs — ignore all others.
+          if (url.hostname !== 'loadifymarket.co.uk') return;
+          const path = url.pathname + url.search + url.hash;
+          navigate(path, { replace: true });
+        } catch {
+          // Malformed URL — ignore silently.
+        }
+      }).then((handle) => {
+        removeListener = () => void handle.remove();
+      });
+    }).catch(() => {
+      // @capacitor/app not available in web build — ignore.
+    });
+
+    return () => {
+      removeListener?.();
+    };
+  }, [navigate]);
 
   useEffect(() => {
     // Build a minimal User object from Supabase auth session metadata when the
