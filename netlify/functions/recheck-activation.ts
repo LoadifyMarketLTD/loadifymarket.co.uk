@@ -127,5 +127,4 @@ export const handler: Handler = async (event) => {
         error: error instanceof Error ? error.message : 'Activation check failed',
       }),
     };
-  }
-};
+  }};

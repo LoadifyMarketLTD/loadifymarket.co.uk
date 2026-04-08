@@ -100,51 +100,53 @@ const SellerSetupPage = () => {
       let payoutsEnabled = false;
       let stripeConnectStatus: string | null = profile.stripeConnectStatus ?? null;
 
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
+      if (profile.stripeConnectStatus === "active" || profile.stripeAccountId) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
 
-      if (token) {
-        // Fast path: Stripe already confirmed active in DB — no need to re-fetch
-        // from Stripe. Just re-evaluate activation from persisted state.
-        if (profile.stripeConnectStatus === "active") {
-          try {
-            const res = await fetch("/.netlify/functions/recheck-activation", {
-              method: "POST",
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            if (res.ok) {
-              const data = await res.json();
-              if (data.sellerStatus) {
-                profile.sellerStatus = data.sellerStatus;
+        if (token) {
+          if (profile.stripeConnectStatus === "active") {
+            // Fast path: Stripe already confirmed active in DB — no need to re-fetch
+            // from Stripe. Just re-evaluate activation from persisted state.
+            try {
+              const res = await fetch("/.netlify/functions/recheck-activation", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              if (res.ok) {
+                const data = await res.json();
+                if (data.sellerStatus) {
+                  profile.sellerStatus = data.sellerStatus;
+                }
+                // Stripe is known active, so reflect that in display fields.
+                chargesEnabled = true;
+                payoutsEnabled = true;
               }
-              // Stripe is known active, so reflect that in display fields.
-              chargesEnabled = true;
-              payoutsEnabled = true;
+            } catch {
+              // Non-fatal — use cached DB values
             }
-          } catch {
-            // Non-fatal — use cached DB values
-          }
-        } else if (profile.stripeAccountId) {
-          // Stripe status not yet confirmed active: fetch live state from Stripe
-          // via connect-status so we can show accurate charges/payouts flags and
-          // potentially transition stripeConnectStatus to 'active'.
-          try {
-            const res = await fetch("/.netlify/functions/connect-status", {
-              method: "POST",
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            if (res.ok) {
-              const data = await res.json();
-              stripeConnectStatus = data.stripeConnectStatus ?? stripeConnectStatus;
-              chargesEnabled = data.chargesEnabled ?? false;
-              payoutsEnabled = data.payoutsEnabled ?? false;
-              // Use server-computed sellerStatus if returned
-              if (data.sellerStatus) {
-                profile.sellerStatus = data.sellerStatus;
+          } else {
+            // Stripe status not yet confirmed active: fetch live state from Stripe
+            // via connect-status so we can show accurate charges/payouts flags and
+            // potentially transition stripeConnectStatus to 'active'.
+            try {
+              const res = await fetch("/.netlify/functions/connect-status", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              if (res.ok) {
+                const data = await res.json();
+                stripeConnectStatus = data.stripeConnectStatus ?? stripeConnectStatus;
+                chargesEnabled = data.chargesEnabled ?? false;
+                payoutsEnabled = data.payoutsEnabled ?? false;
+                // Use server-computed sellerStatus if returned
+                if (data.sellerStatus) {
+                  profile.sellerStatus = data.sellerStatus;
+                }
               }
+            } catch {
+              // Non-fatal — use cached values
             }
-          } catch {
-            // Non-fatal — use cached values
           }
         }
       }

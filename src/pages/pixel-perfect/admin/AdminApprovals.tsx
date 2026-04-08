@@ -125,8 +125,8 @@ const AdminSellerManagement = () => {
     setError(null);
     try {
       // Reactivation lifts a suspension back to 'submitted'. If Stripe is already
-      // active, the seller's next connect-status poll will promote them to 'active'
-      // automatically. Use handleActivate instead to force-activate immediately.
+      // active, the seller's next visit to /seller/setup will call recheck-activation
+      // and promote them to 'active' automatically. Use handleActivate to force-activate immediately.
       const { error } = await supabase
         .from("seller_profiles")
         .update({ sellerStatus: "submitted" })
