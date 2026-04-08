@@ -69,7 +69,7 @@ const SellerProducts = () => {
     .filter((p) => statusFilter === "all" || deriveStatus(p) === statusFilter);
 
   return (
-    <div className="p-6 space-y-6 max-w-[1200px]">
+    <div className="p-4 sm:p-6 space-y-6 max-w-[1200px]">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Products</h1>
@@ -112,9 +112,52 @@ const SellerProducts = () => {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table (desktop) + Card list (mobile) */}
       <div className="bg-card rounded-xl border border-border overflow-hidden">
-        <div className="overflow-x-auto">
+
+        {/* ── Mobile: card list ─────────────────────────────────── */}
+        <div className="sm:hidden divide-y divide-border">
+          {loading ? (
+            <div className="p-8 text-center text-muted-foreground text-sm">Loading products…</div>
+          ) : filtered.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground text-sm">
+              <Package className="h-8 w-8 mx-auto mb-2 opacity-40" />
+              {search ? "No products match your search." : "No products yet. Add your first product!"}
+            </div>
+          ) : (
+            filtered.map((p) => {
+              const status = deriveStatus(p);
+              const s = statusConfig[status];
+              return (
+                <div key={p.id} className="flex items-center gap-3 p-4">
+                  <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                    <Package className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{p.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm font-bold text-foreground">£{p.price.toLocaleString()}</span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${s.className}`}>{s.label}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">Stock: {p.stockQuantity} · Views: {p.views ?? 0}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0 h-9 w-9 p-0"
+                    aria-label="Edit product"
+                    onClick={() => navigate(`/seller/products/${p.id}/edit`)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* ── Desktop: table ────────────────────────────────────── */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/30">
@@ -177,6 +220,7 @@ const SellerProducts = () => {
             </tbody>
           </table>
         </div>
+
       </div>
     </div>
   );

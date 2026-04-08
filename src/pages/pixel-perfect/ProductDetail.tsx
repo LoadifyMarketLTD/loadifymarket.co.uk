@@ -287,52 +287,15 @@ const ProductDetail = () => {
             );
           })()}
 
-          {/* Main content */}
-          <div className="grid lg:grid-cols-[1fr_420px] gap-8">
-            {/* Left: Gallery + Description */}
-            <div className="space-y-8">
+          {/* Main content — mobile: Gallery → Info → Desc/Reviews  |  desktop: 2-column grid */}
+          <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[1fr_420px]">
+            {/* Gallery — first on both mobile and desktop */}
+            <div className="order-1 lg:col-start-1 lg:row-start-1">
               <ProductGallery images={galleryImages} title={product.title} />
-
-              {/* Description */}
-              <div className="bg-card rounded-xl border border-border p-6 space-y-4">
-                <h2 className="font-display text-lg font-semibold text-foreground">Description</h2>
-                <div className="text-sm text-muted-foreground leading-relaxed space-y-3">
-                  <p>
-                    This {product.condition.toLowerCase()} condition lot includes {product.unitCount}{" "}
-                    {product.unitCount === 1 ? "lot" : "lots"} of {product.category.toLowerCase()} items.
-                    {product.location ? ` Located in ${product.location}, available for collection or delivery UK-wide.` : "Available for UK-wide delivery."}
-                  </p>
-                  <p>
-                    All items have been sourced from reputable UK retailers and brands. Ideal for
-                    resellers, market traders, online sellers, and wholesale buyers looking for
-                    quality products at below-retail prices.
-                  </p>
-                  <h3 className="font-display text-sm font-semibold text-foreground pt-2">What's Included</h3>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Mixed brands and product types within {product.subcategory}</li>
-                    <li>Detailed manifest available upon request</li>
-                    <li>Condition: {product.condition}</li>
-                    <li>All items are UK sourced with full traceability</li>
-                  </ul>
-                  <h3 className="font-display text-sm font-semibold text-foreground pt-2">Shipping & Collection</h3>
-                  <ul className="list-disc list-inside space-y-1">
-                    {product.location && <li>Collection available from {product.location}</li>}
-                    <li>UK mainland delivery available (quote on request)</li>
-                    <li>Items are securely packaged and ready for dispatch</li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Reviews */}
-              <ProductReviews
-                productId={id ?? ""}
-                productRating={product.rating ?? 0}
-                reviewCount={product.reviewCount ?? 0}
-              />
             </div>
 
-            {/* Right: Info + Seller */}
-            <div className="space-y-6">
+            {/* Info + Seller — second on mobile (above desc/reviews), right column on desktop */}
+            <div className="order-2 lg:col-start-2 lg:row-start-1 lg:row-span-2 space-y-6">
               <div className="lg:sticky lg:top-24 space-y-6">
                 <div className="bg-card rounded-xl border border-border p-6">
                   <ProductInfo
@@ -369,6 +332,46 @@ const ProductDetail = () => {
                   </button>
                 )}
               </div>
+            </div>
+
+            {/* Description + Reviews — third on mobile, below gallery on desktop */}
+            <div className="order-3 lg:col-start-1 lg:row-start-2 space-y-8">
+              {/* Description */}
+              <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+                <h2 className="font-display text-lg font-semibold text-foreground">Description</h2>
+                <div className="text-sm text-muted-foreground leading-relaxed space-y-3">
+                  <p>
+                    This {product.condition.toLowerCase()} condition lot includes {product.unitCount}{" "}
+                    {product.unitCount === 1 ? "lot" : "lots"} of {product.category.toLowerCase()} items.
+                    {product.location ? ` Located in ${product.location}, available for collection or delivery UK-wide.` : "Available for UK-wide delivery."}
+                  </p>
+                  <p>
+                    All items have been sourced from reputable UK retailers and brands. Ideal for
+                    resellers, market traders, online sellers, and wholesale buyers looking for
+                    quality products at below-retail prices.
+                  </p>
+                  <h3 className="font-display text-sm font-semibold text-foreground pt-2">What's Included</h3>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Mixed brands and product types within {product.subcategory}</li>
+                    <li>Detailed manifest available upon request</li>
+                    <li>Condition: {product.condition}</li>
+                    <li>All items are UK sourced with full traceability</li>
+                  </ul>
+                  <h3 className="font-display text-sm font-semibold text-foreground pt-2">Shipping & Collection</h3>
+                  <ul className="list-disc list-inside space-y-1">
+                    {product.location && <li>Collection available from {product.location}</li>}
+                    <li>UK mainland delivery available (quote on request)</li>
+                    <li>Items are securely packaged and ready for dispatch</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Reviews */}
+              <ProductReviews
+                productId={id ?? ""}
+                productRating={product.rating ?? 0}
+                reviewCount={product.reviewCount ?? 0}
+              />
             </div>
           </div>
 

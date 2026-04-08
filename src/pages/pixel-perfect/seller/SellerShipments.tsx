@@ -243,7 +243,7 @@ const SellerShipments = () => {
   );
 
   return (
-    <div className="p-6 space-y-6 max-w-[1200px]">
+    <div className="p-4 sm:p-6 space-y-6 max-w-[1200px]">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Shipments</h1>
@@ -289,9 +289,9 @@ const SellerShipments = () => {
           <TabsTrigger value="active">Active</TabsTrigger>
           <TabsTrigger value="delivered">Delivered</TabsTrigger>
         </TabsList>
-        <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
-        <TabsContent value="active"><Card><CardContent className="pt-4">{renderTable(activeShipments)}</CardContent></Card></TabsContent>
-        <TabsContent value="delivered"><Card><CardContent className="pt-4">{renderTable(byStatus("delivered"))}</CardContent></Card></TabsContent>
+        <TabsContent value="all"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(filtered)}</div></CardContent></Card></TabsContent>
+        <TabsContent value="active"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(activeShipments)}</div></CardContent></Card></TabsContent>
+        <TabsContent value="delivered"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("delivered"))}</div></CardContent></Card></TabsContent>
       </Tabs>
 
       {/* Tracking Dialog */}

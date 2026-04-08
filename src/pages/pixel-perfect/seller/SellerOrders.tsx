@@ -111,7 +111,7 @@ const SellerOrders = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-[1200px]">
+    <div className="p-4 sm:p-6 space-y-6 max-w-[1200px]">
       <div>
         <h1 className="font-display text-2xl font-bold text-foreground">Orders</h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -135,7 +135,80 @@ const SellerOrders = () => {
       </div>
 
       <div className="bg-card rounded-xl border border-border overflow-hidden">
-        <div className="overflow-x-auto">
+
+        {/* ── Mobile: card list ─────────────────────────────────── */}
+        <div className="sm:hidden divide-y divide-border">
+          {loading ? (
+            <div className="p-8 text-center text-muted-foreground text-sm">Loading orders…</div>
+          ) : filtered.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground text-sm">
+              <ShoppingCart className="h-8 w-8 mx-auto mb-2 opacity-40" />
+              {search ? "No orders match your search." : "No orders yet."}
+            </div>
+          ) : (
+            filtered.map((o) => (
+              <div key={o.id} className="p-4 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-semibold text-foreground truncate">{o.orderNumber}</span>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full capitalize shrink-0 ${statusColors[o.status] ?? "bg-muted text-muted-foreground"}`}>
+                    {o.status}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{o.buyerName}</span>
+                  <span className="text-sm font-bold text-foreground">£{o.total.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-xs text-muted-foreground">{formatDate(o.createdAt)}</span>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => navigate(`/tracking/${o.orderNumber || o.id}`)}
+                    >
+                      View
+                    </Button>
+                    {["paid", "packed", "shipped"].includes(o.status) && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs gap-1"
+                            disabled={actionLoading === o.id}
+                          >
+                            Update <ChevronDown className="h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {o.status === "paid" && (
+                            <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "packed")}>
+                              Mark as Packed
+                            </DropdownMenuItem>
+                          )}
+                          {(o.status === "paid" || o.status === "packed") && (
+                            <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>
+                              Mark as Shipped
+                            </DropdownMenuItem>
+                          )}
+                          {o.status === "shipped" && (
+                            <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "delivered")}>
+                              Mark as Delivered
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* ── Desktop: table ────────────────────────────────────── */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/30">
@@ -220,6 +293,7 @@ const SellerOrders = () => {
             </tbody>
           </table>
         </div>
+
       </div>
     </div>
   );

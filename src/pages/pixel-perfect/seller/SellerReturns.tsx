@@ -155,7 +155,7 @@ const SellerReturns = () => {
   );
 
   return (
-    <div className="p-6 space-y-6 max-w-[1200px]">
+    <div className="p-4 sm:p-6 space-y-6 max-w-[1200px]">
       <div>
         <h1 className="font-display text-2xl font-bold text-foreground">Returns</h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -197,10 +197,10 @@ const SellerReturns = () => {
           <TabsTrigger value="approved">In Progress</TabsTrigger>
           <TabsTrigger value="completed">Completed</TabsTrigger>
         </TabsList>
-        <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
-        <TabsContent value="requested"><Card><CardContent className="pt-4">{renderTable(byStatus("requested"))}</CardContent></Card></TabsContent>
-        <TabsContent value="approved"><Card><CardContent className="pt-4">{renderTable(byStatus("approved"))}</CardContent></Card></TabsContent>
-        <TabsContent value="completed"><Card><CardContent className="pt-4">{renderTable(byStatus("completed"))}</CardContent></Card></TabsContent>
+        <TabsContent value="all"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(filtered)}</div></CardContent></Card></TabsContent>
+        <TabsContent value="requested"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("requested"))}</div></CardContent></Card></TabsContent>
+        <TabsContent value="approved"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("approved"))}</div></CardContent></Card></TabsContent>
+        <TabsContent value="completed"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("completed"))}</div></CardContent></Card></TabsContent>
       </Tabs>
 
       {/* Return Detail Dialog */}

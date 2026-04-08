@@ -61,8 +61,10 @@ const HeroSection = () => {
       />
 
       {/* ── Blend gradient — smooth dark→image transition ────────────────── */}
+      {/* Desktop: partial gradient revealing hero image on right */}
       <div
         aria-hidden="true"
+        className="hidden sm:block"
         style={{
           position: "absolute",
           inset: 0,
@@ -71,10 +73,22 @@ const HeroSection = () => {
           zIndex: 1,
         }}
       />
+      {/* Mobile (<sm): full dark overlay so text is always readable over hero image */}
+      <div
+        aria-hidden="true"
+        className="sm:hidden"
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(10,25,48,0.82)",
+          zIndex: 1,
+        }}
+      />
 
       {/* ── LEFT SIDE HTML OVERLAY ─────────────────────────────────────────── */}
+      {/* Mobile: relative/padded flow; sm+: absolute positioned */}
       <div
-        className="absolute z-10 flex flex-col"
+        className="relative sm:absolute z-10 flex flex-col w-full sm:w-auto px-5 py-10 sm:px-0 sm:py-0"
         style={{
           left: "clamp(24px, 5.5vw, 88px)",
           top: "50%",
@@ -132,15 +146,15 @@ const HeroSection = () => {
           ))}
         </ul>
 
-        {/* CTA Buttons */}
-        <div className="mt-8 flex flex-wrap gap-4">
+        {/* CTA Buttons — stacked on mobile, inline on sm+ */}
+        <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
           <button
-            className="inline-flex items-center justify-center font-bold rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]"
+            className="w-full sm:w-auto inline-flex items-center justify-center font-bold rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]"
             style={{
-              height: 58,
-              paddingLeft: 36,
-              paddingRight: 36,
-              fontSize: "1rem",
+              height: 52,
+              paddingLeft: 32,
+              paddingRight: 32,
+              fontSize: "0.9375rem",
               color: "#fff",
               background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
               boxShadow: "0 4px 20px rgba(34,197,94,0.45)",
@@ -164,12 +178,12 @@ const HeroSection = () => {
           </button>
 
           <button
-            className="inline-flex items-center justify-center font-semibold rounded-full border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="w-full sm:w-auto inline-flex items-center justify-center font-semibold rounded-full border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             style={{
-              height: 58,
-              paddingLeft: 36,
-              paddingRight: 36,
-              fontSize: "1rem",
+              height: 52,
+              paddingLeft: 32,
+              paddingRight: 32,
+              fontSize: "0.9375rem",
               color: "rgba(255,255,255,0.90)",
               background: "rgba(255,255,255,0.08)",
               borderColor: "rgba(255,255,255,0.35)",
@@ -190,7 +204,7 @@ const HeroSection = () => {
             onClick={() => navigate("/catalog")}
             aria-label="Browse products on Loadify Market"
           >
-            Browse Products
+            Browse Marketplace
           </button>
         </div>
 

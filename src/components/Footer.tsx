@@ -2,6 +2,12 @@ import { ArrowRight, CheckCircle2, ShieldCheck, Truck, MapPin, Mail, Phone } fro
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import logo from "@/assets/loadify-logo.svg";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const FooterLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
   <li>
@@ -10,6 +16,70 @@ const FooterLink = ({ to, children }: { to: string; children: React.ReactNode })
     </Link>
   </li>
 );
+
+const FOOTER_SECTIONS = [
+  {
+    id: "buyers",
+    title: "For Buyers",
+    links: [
+      { to: "/catalog", label: "Browse Marketplace" },
+      { to: "/category/electronics", label: "Electronics" },
+      { to: "/category/fashion", label: "Fashion" },
+      { to: "/category/home-kitchen", label: "Home & Kitchen" },
+      { to: "/catalog", label: "All Categories" },
+      { to: "/track-order", label: "Track Order" },
+      { to: "/faq", label: "Help & FAQ" },
+    ],
+  },
+  {
+    id: "sellers",
+    title: "For Sellers",
+    links: [
+      { to: "/signup", label: "Start Selling" },
+      { to: "/pp/seller", label: "Seller Dashboard" },
+      { to: "/pp/seller/products", label: "List a Product" },
+      { to: "/seller-terms", label: "Seller Fees & Pricing" },
+      { to: "/seller-guidelines", label: "Seller Guidelines" },
+      { to: "/#how-it-works", label: "How It Works" },
+      { to: "/contact", label: "Partner With Us" },
+    ],
+  },
+  {
+    id: "marketplace",
+    title: "Marketplace",
+    links: [
+      { to: "/buyer-terms", label: "Buyer Terms" },
+      { to: "/catalog", label: "Browse Sellers" },
+      { to: "/shipping", label: "Shipping & Delivery" },
+      { to: "/returns", label: "Returns & Refunds" },
+      { to: "/contact", label: "Report a Problem" },
+    ],
+  },
+  {
+    id: "company",
+    title: "Company",
+    links: [
+      { to: "/about", label: "About Us" },
+      { to: "/contact", label: "Contact Us" },
+      { to: "/contact", label: "Help & Support" },
+    ],
+  },
+  {
+    id: "legal",
+    title: "Legal",
+    links: [
+      { to: "/terms", label: "Terms & Conditions" },
+      { to: "/privacy", label: "Privacy Policy" },
+      { to: "/cookies", label: "Cookie Policy" },
+      { to: "/disclaimer", label: "Disclaimer" },
+      { to: "/acceptable-use-policy", label: "Acceptable Use Policy" },
+      { to: "/returns", label: "Returns Policy" },
+      { to: "/shipping", label: "Shipping Policy" },
+      { to: "/buyer-terms", label: "Buyer Terms" },
+      { to: "/seller-terms", label: "Seller Terms" },
+    ],
+  },
+];
 
 
 const Footer = () => {
@@ -84,9 +154,66 @@ const Footer = () => {
       {/* Main footer links */}
       <div className="bg-foreground py-8">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
+
+          {/* ── Mobile: accordion ────────────────────────────────────── */}
+          <div className="md:hidden">
+            {/* About block — always visible on mobile */}
+            <div className="pb-6 mb-2 border-b border-background/10">
+              <p className="text-sm text-background/60 leading-relaxed mb-3">
+                An open UK marketplace connecting buyers and sellers across all categories.
+              </p>
+              <p className="text-xs text-background/55 leading-relaxed mb-3">
+                Loadify Market is operated by{" "}
+                <span className="font-semibold text-background/75">XDrive Logistics Ltd</span>,
+                the legal entity responsible for this platform.
+              </p>
+              <div className="text-xs text-background/40 space-y-1 mb-3">
+                <p>Co. No: 13171804 &nbsp;·&nbsp; VAT: GB375949535</p>
+              </div>
+              <div className="space-y-1.5 text-xs text-background/50">
+                <p className="flex items-start gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-accent shrink-0 mt-0.5" />
+                  101 Cornelian Street, Blackburn BB1 9QL, UK
+                </p>
+                <p className="flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5 text-accent shrink-0" />
+                  loadifymarket.co.uk@gmail.com
+                </p>
+                <p className="flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5 text-accent shrink-0" />
+                  +44 7423 272138
+                </p>
+              </div>
+            </div>
+
+            <Accordion type="multiple" className="w-full">
+              {FOOTER_SECTIONS.map((section) => (
+                <AccordionItem
+                  key={section.id}
+                  value={section.id}
+                  className="border-b border-background/10"
+                >
+                  <AccordionTrigger className="text-sm font-semibold text-accent uppercase tracking-wider py-3 hover:no-underline">
+                    {section.title}
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="space-y-2.5 text-sm text-background/60 pb-2">
+                      {section.links.map((link) => (
+                        <FooterLink key={link.to + link.label} to={link.to}>
+                          {link.label}
+                        </FooterLink>
+                      ))}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+
+          {/* ── Desktop: grid ─────────────────────────────────────────── */}
+          <div className="hidden md:grid grid-cols-3 lg:grid-cols-6 gap-8">
             {/* About */}
-            <div className="col-span-2 md:col-span-1 lg:col-span-1">
+            <div className="col-span-1 lg:col-span-1">
               <h4 className="font-display font-semibold text-accent text-sm uppercase tracking-wider mb-4">
                 About Loadify Market
               </h4>
@@ -193,6 +320,7 @@ const Footer = () => {
               </ul>
             </div>
           </div>
+
         </div>
       </div>
 

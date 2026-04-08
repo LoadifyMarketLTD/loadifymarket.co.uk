@@ -30,7 +30,7 @@ interface OrderBreakdown {
   count: number;
 }
 
-const periodLabel: Record<string, string> = {
+const periodLabel: Record<"all" | "7d" | "30d", string> = {
   all: "All time",
   "7d": "Last 7 days",
   "30d": "Last 30 days",
@@ -192,7 +192,7 @@ const AdminReports = () => {
   }, [period]);
 
   return (
-    <div className="p-6 space-y-6" style={{ background: "#0A0B1A", minHeight: "100%" }}>
+    <div className="p-4 sm:p-6 space-y-6" style={{ background: "#0A0B1A", minHeight: "100%" }}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Reports & Analytics</h1>

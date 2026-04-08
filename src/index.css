@@ -92,9 +92,16 @@
   * {
     @apply border-border;
   }
+  /* Prevent any overflowing element from creating horizontal page scroll on mobile */
+  html {
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    overflow-x: hidden;
+    /* Ensure full-width on all devices */
+    min-width: 320px;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);

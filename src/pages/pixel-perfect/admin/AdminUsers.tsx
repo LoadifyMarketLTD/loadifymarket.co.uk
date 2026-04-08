@@ -327,7 +327,7 @@ const AdminUsers = () => {
   );
 
   return (
-    <div className="p-6 space-y-6" style={{ background: "#0A0B1A", minHeight: "100%" }}>
+    <div className="p-4 sm:p-6 space-y-6" style={{ background: "#0A0B1A", minHeight: "100%" }}>
       <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <h1 className="text-2xl font-bold text-white tracking-tight">User Management</h1>
         <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>{users.length} registered users</p>
@@ -384,7 +384,7 @@ const AdminUsers = () => {
         {(["all", "buyer", "seller", "admin", "suspended"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
             <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
-              <div className="px-2 py-2">
+              <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(
                   tab === "all" ? filtered :
                   tab === "suspended" ? suspended :

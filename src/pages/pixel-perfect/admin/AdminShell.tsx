@@ -20,6 +20,14 @@ const navItems = [
   { to: "/pp/admin/settings", label: "Settings", icon: Settings },
 ];
 
+/** The 4 most important admin pages shown in the mobile bottom tab bar */
+const mobileTabItems = [
+  { to: "/pp/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/pp/admin/approvals", label: "Sellers", icon: ShieldCheck },
+  { to: "/pp/admin/orders", label: "Orders", icon: ShoppingBag },
+  { to: "/pp/admin/settings", label: "Settings", icon: Settings },
+];
+
 interface SidebarContentProps {
   displayName: string;
   onNavClick: () => void;
@@ -119,10 +127,46 @@ const AdminShell = () => {
           </Button>
           <span className="font-semibold text-foreground text-sm">Admin Hub</span>
         </header>
-        <main className="flex-1 overflow-y-auto">
+        {/* Page content — add bottom padding on mobile so content isn't hidden behind tab bar */}
+        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
           <Outlet />
         </main>
       </div>
+
+      {/* Mobile bottom tab bar */}
+      <nav
+        aria-label="Admin navigation"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border flex items-center"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        {mobileTabItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            className={({ isActive }) =>
+              `flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium transition-colors ${
+                isActive ? "text-primary" : "text-muted-foreground"
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <item.icon className={`h-5 w-5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                <span>{item.label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+        <button
+          className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5 text-[10px] font-medium text-muted-foreground"
+          onClick={() => setSidebarOpen(true)}
+          aria-label="More navigation options"
+        >
+          <Menu className="h-5 w-5" />
+          <span>More</span>
+        </button>
+      </nav>
     </div>
   );
 };
