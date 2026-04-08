@@ -38,3 +38,11 @@ docs/lighthouse/latest.report.json
 
 # Netlify
 .netlify/
+
+# Android / Capacitor build outputs — do NOT commit APKs or Gradle caches
+android/.gradle/
+android/app/build/
+android/build/
+# .keystore files must never be committed
+*.keystore
+*.jks
