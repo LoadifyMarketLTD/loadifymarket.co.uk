@@ -14,6 +14,7 @@ export interface Product {
   condition: "New" | "Like New" | "Mixed" | "Unchecked";
   location: string;
   seller: string;
+  sellerId?: string;
   sellerVerified: boolean;
   unitCount: number;
   rating: number;

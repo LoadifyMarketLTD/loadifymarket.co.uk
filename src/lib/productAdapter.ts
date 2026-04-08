@@ -30,6 +30,7 @@ export interface DBProduct {
   rating: number;
   reviewCount: number;
   createdAt: string;
+  sellerId?: string;
   type?: string;
   specifications?: Record<string, unknown> | null;
   /** The seller's user ID — passed through to the UI for owner-awareness */
@@ -123,6 +124,7 @@ export function adaptProduct(dbProduct: DBProduct): UIProduct {
     condition,
     location: specLocation,
     seller: sellerName,
+    sellerId: dbProduct.sellerId,
     sellerVerified,
     unitCount: dbProduct.stockQuantity > 0 ? dbProduct.stockQuantity : 1,
     rating,

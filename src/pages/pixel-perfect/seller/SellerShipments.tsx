@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Truck, Search, MapPin, Clock, Package, CheckCircle2, Plus, Loader2 } from "lucide-react";
+import { Truck, Search, MapPin, Clock, Package, CheckCircle2, Plus, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +62,8 @@ const SellerShipments = () => {
   const [sellerOrders, setSellerOrders] = useState<{ id: string; orderNumber: string; status: string }[]>([]);
   const [createForm, setCreateForm] = useState({ orderId: "", courierName: "", trackingNumber: "", dispatchedAt: "" });
   const [creating, setCreating] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string>("");
 
   const loadShipments = useCallback(async () => {
     if (!user) return;
@@ -136,6 +138,41 @@ const SellerShipments = () => {
       toast({ title: "Failed to create shipment", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleUpdateStatus = async (shipment: ShipmentRow, newStatus: string) => {
+    if (!newStatus || newStatus === shipment.status) return;
+    setUpdatingStatus(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+
+      const res = await fetch(`/.netlify/functions/update-shipment-status/${shipment.id}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      const json = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Failed to update status");
+
+      // Notify buyer about the status change
+      await supabase.from("notifications").insert({
+        userId: shipment.buyer_id,
+        type: "shipment",
+        title: "Shipment update",
+        message: `Your shipment ${shipment.id.slice(0, 8).toUpperCase()} status has been updated to: ${newStatus}.`,
+      });
+
+      toast({ title: "Status updated", description: `Shipment marked as ${newStatus}.` });
+      setPendingStatus("");
+      setSelected(null);
+      await loadShipments();
+    } catch (err) {
+      toast({ title: "Failed to update status", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
@@ -258,7 +295,7 @@ const SellerShipments = () => {
       </Tabs>
 
       {/* Tracking Dialog */}
-      <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
+      <Dialog open={!!selected} onOpenChange={(open) => { if (!open) { setSelected(null); setPendingStatus(""); } }}>
         {selected && (() => {
           const displayStatus = mapStatus(selected.status);
           const sc = statusConfig[displayStatus];
@@ -286,6 +323,33 @@ const SellerShipments = () => {
                 <div className="rounded-lg bg-muted/50 border border-border p-3">
                   <p className="text-xs font-semibold text-muted-foreground mb-1">SHIPMENT CREATED</p>
                   <p className="text-sm text-foreground flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {new Date(selected.created_at).toLocaleString("en-GB")}</p>
+                </div>
+                {/* Status update */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Update Status</Label>
+                  <div className="flex gap-2">
+                    <Select value={pendingStatus} onValueChange={setPendingStatus}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Select new status…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Pending">Pending</SelectItem>
+                        <SelectItem value="Processing">Processing</SelectItem>
+                        <SelectItem value="Dispatched">Dispatched</SelectItem>
+                        <SelectItem value="In Transit">In Transit</SelectItem>
+                        <SelectItem value="Out for Delivery">Out for Delivery</SelectItem>
+                        <SelectItem value="Delivered">Delivered</SelectItem>
+                        <SelectItem value="Delivery Failed">Delivery Failed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="sm"
+                      disabled={!pendingStatus || pendingStatus === selected.status || updatingStatus}
+                      onClick={() => handleUpdateStatus(selected, pendingStatus)}
+                    >
+                      {updatingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </DialogContent>
