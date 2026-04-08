@@ -174,7 +174,7 @@ const ProductInfo = ({
       <div className="flex flex-wrap gap-4 py-3 border-y border-border">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <ShieldCheck className="h-4 w-4 text-primary" />
-          Buyer Protection
+          Dispute Support Available
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Truck className="h-4 w-4 text-primary" />
