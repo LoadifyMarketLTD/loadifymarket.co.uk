@@ -48,7 +48,6 @@ const ProductInfo = ({
   const { addToCart } = useCart();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const isOwner = !!user && !!product.sellerId && user.id === product.sellerId;
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
