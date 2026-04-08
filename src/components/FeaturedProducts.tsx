@@ -53,8 +53,8 @@ const FeaturedProducts = () => {
       />
 
       <div className="relative w-full max-w-7xl mx-auto">
-        {/* Centered header */}
-        <div className="text-center mb-10">
+        {/* Section header — hidden on mobile (go straight to products, Amazon-style) */}
+        <div className="hidden sm:block text-center mb-10">
           <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
             Marketplace Preview
           </span>
@@ -66,9 +66,9 @@ const FeaturedProducts = () => {
           </p>
         </div>
 
-        {/* 3 product cards */}
+        {/* 3 product cards — 2-col on mobile for Amazon-style density */}
         {products.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6">
             {products.map((item) => {
               const img = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null;
               const href = item.slug ? `/product/${item.slug}` : `/product/${item.id}`;
@@ -77,7 +77,7 @@ const FeaturedProducts = () => {
                 <Link
                   key={item.id}
                   to={href}
-                  className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)] min-h-[160px] sm:min-h-[280px]"
+                  className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)] min-h-[140px] sm:min-h-[280px]"
                 >
                   {img ? (
                     <img
@@ -97,15 +97,15 @@ const FeaturedProducts = () => {
                   )}
                   {/* Dark gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  {/* Content overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-5">
-                    <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
+                  {/* Content overlay — compact on mobile */}
+                  <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-5">
+                    <p className="text-[9px] sm:text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-0.5 sm:mb-1 line-clamp-1">
                       {categoryName}
                     </p>
-                    <h3 className="text-base font-extrabold text-white leading-snug">
+                    <h3 className="text-xs sm:text-base font-extrabold text-white leading-snug line-clamp-2">
                       {item.title}
                     </h3>
-                    <p className="mt-1 text-sm font-semibold text-emerald-300">
+                    <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm font-semibold text-emerald-300">
                       £{item.price.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                   </div>
@@ -115,18 +115,18 @@ const FeaturedProducts = () => {
           </div>
         ) : (
           /* Placeholder shown before sellers go live — keeps the section present */
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6">
             {[1, 2, 3].map((n) => (
               <div
                 key={n}
-                className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 min-h-[120px] sm:h-[220px] flex flex-col justify-end"
+                className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 min-h-[140px] sm:h-[220px] flex flex-col justify-end"
               >
                 <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-                <div className="relative p-5">
-                  <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
+                <div className="relative p-3 sm:p-5">
+                  <p className="text-[9px] sm:text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
                     Sample Listing
                   </p>
-                  <h3 className="text-base font-extrabold text-white/60 leading-snug">
+                  <h3 className="text-xs sm:text-base font-extrabold text-white/60 leading-snug">
                     Sample Listing
                   </h3>
                   <span className="text-xs text-white/50">Live Preview</span>
@@ -136,11 +136,11 @@ const FeaturedProducts = () => {
           </div>
         )}
 
-        {/* Centered CTA below cards */}
-        <div className="mt-10 flex justify-center">
+        {/* Centred CTA — compact on mobile */}
+        <div className="mt-4 sm:mt-10 flex justify-center">
           <Link
             to="/catalog"
-            className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(0,255,150,0.4)]"
+            className="inline-flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-green-400 to-green-500 text-black text-sm sm:text-base font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(0,255,150,0.4)]"
           >
             View Marketplace <ArrowRight className="h-4 w-4" />
           </Link>

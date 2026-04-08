@@ -72,8 +72,8 @@ const CategoryGrid = () => (
 
     <div className="relative w-full max-w-[1280px] mx-auto">
 
-      {/* Header */}
-      <div className="text-center mb-8">
+      {/* Section header — hidden on mobile (go straight to tiles, Amazon-style) */}
+      <div className="hidden sm:block text-center mb-8">
         <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
           Browse Sections
         </span>
@@ -146,11 +146,11 @@ const CategoryGrid = () => (
         ))}
       </div>
 
-      {/* Centred CTA */}
+      {/* Centred CTA — compact on mobile */}
       <div className="flex justify-center">
         <Link
           to="/catalog"
-          className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(0,255,150,0.4)]"
+          className="inline-flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-green-400 to-green-500 text-black text-sm sm:text-base font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(0,255,150,0.4)]"
         >
           Browse All Categories <ArrowRight className="h-4 w-4" />
         </Link>
