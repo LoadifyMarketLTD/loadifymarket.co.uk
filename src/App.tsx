@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store';
 import { hasAdminAccess } from './lib/roleUtils';
@@ -54,7 +54,6 @@ const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
 const SellerPublicProfilePage = lazy(() => import('./pages/SellerPublicProfilePage'));
 // AdminSellerDetailPage: admin seller detail view — no pixel-perfect equivalent yet
 const AdminSellerDetailPage = lazy(() => import('./pages/AdminSellerDetailPage'));
-// TrackingPage redirects to /track-order
 const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
 // Legal pages without pixel-perfect equivalents
 const AcceptableUsePolicyPage = lazy(() => import('./pages/legal/AcceptableUsePolicyPage'));
@@ -124,6 +123,15 @@ function DashboardRedirect() {
   if (user?.role === 'admin') return <Navigate to="/pp/admin" replace />;
   if (user?.role === 'seller') return <Navigate to="/pp/seller" replace />;
   return <Navigate to="/pp/buyer" replace />;
+}
+
+/**
+ * Preserves the :orderNumber param when redirecting legacy /tracking/:orderNumber
+ * links to the canonical /track-order?orderNumber= page.
+ */
+function TrackingRedirect() {
+  const { orderNumber } = useParams<{ orderNumber: string }>();
+  return <Navigate to={`/track-order${orderNumber ? `?orderNumber=${encodeURIComponent(orderNumber)}` : ''}`} replace />;
 }
 
 /**
@@ -544,7 +552,7 @@ function App() {
         } />
 
         {/* Public: Order Tracking — no pixel-perfect equivalent yet */}
-        <Route path="tracking/:orderNumber" element={<Navigate to="/track-order" replace />} />
+        <Route path="tracking/:orderNumber" element={<TrackingRedirect />} />
         <Route path="track-order" element={<Suspense fallback={<PageLoader />}><TrackOrderPage /></Suspense>} />
         <Route path="track" element={<Navigate to="/track-order" replace />} />
 
