@@ -33,6 +33,7 @@ const PPBuyerTerms         = lazy(() => import('./pages/pixel-perfect/BuyerTerms
 const PPSellerTerms        = lazy(() => import('./pages/pixel-perfect/SellerTerms'));
 const PPDisclaimer         = lazy(() => import('./pages/pixel-perfect/Disclaimer'));
 const PPFAQ                = lazy(() => import('./pages/pixel-perfect/FAQ'));
+const PPWholesaleInfo      = lazy(() => import('./pages/pixel-perfect/WholesaleInfo'));
 const PPCheckoutError      = lazy(() => import('./pages/pixel-perfect/CheckoutError'));
 const PPNotFound           = lazy(() => import('./pages/pixel-perfect/NotFound'));
 
@@ -429,6 +430,7 @@ function App() {
         <Route path="seller-terms" element={<Suspense fallback={<PageLoader />}><PPSellerTerms /></Suspense>} />
         <Route path="disclaimer" element={<Suspense fallback={<PageLoader />}><PPDisclaimer /></Suspense>} />
         <Route path="faq" element={<Suspense fallback={<PageLoader />}><PPFAQ /></Suspense>} />
+        <Route path="wholesale-info" element={<Suspense fallback={<PageLoader />}><PPWholesaleInfo /></Suspense>} />
 
         {/* ── Pixel-perfect auth pages (standalone full-page designs) ──────────── */}
         <Route path="login" element={<Suspense fallback={<PageLoader />}><PPLogin /></Suspense>} />
