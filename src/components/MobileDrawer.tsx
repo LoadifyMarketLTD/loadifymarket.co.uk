@@ -24,7 +24,7 @@ interface MainScreenProps {
   onLogout: () => void;
   onClose: () => void;
   onCategorySelect: (slug: string) => void;
-  closeBtnRef?: React.RefObject<HTMLButtonElement | null>;
+  closeBtnRef: React.RefObject<HTMLButtonElement | null>;
 }
 
 interface CategoryScreenProps {
@@ -75,10 +75,10 @@ const MainScreen = ({
       {/* Divider */}
       <div className="h-px bg-white/10 mx-4" />
 
-      {/* CTA Cards */}
+      {/* Quick Actions */}
       <div className="pt-4">
         <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-widest text-white/40">
-          Quick Browse
+          Quick Actions
         </p>
         <DrawerCTACards onClose={onClose} />
       </div>
@@ -112,24 +112,30 @@ const MainScreen = ({
       {/* Divider */}
       <div className="h-px bg-white/10 mx-4 mt-2" />
 
-      {/* Secondary links */}
-      <div className="flex px-4 py-3 gap-1">
+      {/* Footer links */}
+      <nav aria-label="Support links" className="flex flex-col py-2">
         <Link
-          to="/catalog"
+          to="/wholesale-info"
           onClick={onClose}
-          className="flex-1 h-11 flex items-center justify-center text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.07] rounded-lg transition-colors"
+          className="px-4 h-11 flex items-center text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.07] transition-colors"
         >
-          All Listings
+          UK Wholesale Information and Support
         </Link>
-        <div className="w-px bg-white/10 self-stretch" />
         <Link
-          to="/deals"
+          to="/blog"
           onClick={onClose}
-          className="flex-1 h-11 flex items-center justify-center text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.07] rounded-lg transition-colors"
+          className="px-4 h-11 flex items-center text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.07] transition-colors"
         >
-          Deals
+          Blog
         </Link>
-      </div>
+        <Link
+          to="/about"
+          onClick={onClose}
+          className="px-4 h-11 flex items-center text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.07] transition-colors"
+        >
+          About Us
+        </Link>
+      </nav>
 
       {/* Safe-area spacer for iOS */}
       <div style={{ height: "env(safe-area-inset-bottom, 16px)" }} />
@@ -248,7 +254,7 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
         aria-hidden="true"
       />
 
-      {/* Drawer panel */}
+      {/* Drawer panel — slides from LEFT */}
       <div
         className={[
           "fixed top-0 left-0 z-[9999] h-[100dvh] w-[85vw] max-w-[340px]",
