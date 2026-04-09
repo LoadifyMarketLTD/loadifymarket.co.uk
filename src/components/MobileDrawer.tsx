@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { X, ArrowLeft, ChevronRight } from "lucide-react";
-import CATEGORY_CONFIG, { getCategoryConfig } from "@/lib/category-config";
+import CATEGORY_TREE, { getDrawerCategory } from "@/data/category-tree";
 import DrawerAccountBlock from "@/components/mobile/DrawerAccountBlock";
 import DrawerCTACards from "@/components/mobile/DrawerCTACards";
 import logo from "@/assets/loadify-logo.svg";
@@ -32,6 +32,14 @@ interface CategoryScreenProps {
   onBack: () => void;
   onClose: () => void;
 }
+
+// ── Footer links (inside drawer) ──────────────────────────────────────────────
+
+const FOOTER_LINKS = [
+  { label: "UK Wholesale Information and Support", href: "/wholesale-support" },
+  { label: "Blog",                                  href: "/blog"             },
+  { label: "About Us",                              href: "/about"            },
+] as const;
 
 // ── Main screen (Level 1) ─────────────────────────────────────────────────────
 
@@ -75,7 +83,7 @@ const MainScreen = ({
       {/* Divider */}
       <div className="h-px bg-white/10 mx-4" />
 
-      {/* CTA Cards */}
+      {/* Quick-action block */}
       <div className="pt-4">
         <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-widest text-white/40">
           Quick Browse
@@ -86,50 +94,41 @@ const MainScreen = ({
       {/* Divider */}
       <div className="h-px bg-white/10 mx-4" />
 
-      {/* Categories */}
+      {/* Main category list */}
       <p className="px-4 pt-4 pb-2 text-[11px] font-bold uppercase tracking-widest text-white/40">
         Browse Categories
       </p>
       <nav aria-label="Product categories">
-        {CATEGORY_CONFIG.map((cat) => {
-          const Icon = cat.icon;
-          return (
-            <button
-              key={cat.slug}
-              onClick={() => onCategorySelect(cat.slug)}
-              className="w-full flex items-center gap-3 px-4 h-[52px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.05]"
-            >
-              <Icon className={`h-[18px] w-[18px] shrink-0 ${cat.iconColor}`} aria-hidden="true" />
-              <span className="text-[15px] font-semibold text-white/90 flex-1 text-left">
-                {cat.label}
-              </span>
-              <ChevronRight className="h-4 w-4 text-white/30 shrink-0" aria-hidden="true" />
-            </button>
-          );
-        })}
+        {CATEGORY_TREE.map((cat) => (
+          <button
+            key={cat.slug}
+            onClick={() => onCategorySelect(cat.slug)}
+            className="w-full flex items-center gap-3 px-4 h-[52px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.05]"
+          >
+            <span className="text-[15px] font-semibold text-white/90 flex-1 text-left">
+              {cat.label}
+            </span>
+            <ChevronRight className="h-4 w-4 text-white/30 shrink-0" aria-hidden="true" />
+          </button>
+        ))}
       </nav>
 
       {/* Divider */}
       <div className="h-px bg-white/10 mx-4 mt-2" />
 
-      {/* Secondary links */}
-      <div className="flex px-4 py-3 gap-1">
-        <Link
-          to="/catalog"
-          onClick={onClose}
-          className="flex-1 h-11 flex items-center justify-center text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.07] rounded-lg transition-colors"
-        >
-          All Listings
-        </Link>
-        <div className="w-px bg-white/10 self-stretch" />
-        <Link
-          to="/deals"
-          onClick={onClose}
-          className="flex-1 h-11 flex items-center justify-center text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.07] rounded-lg transition-colors"
-        >
-          Deals
-        </Link>
-      </div>
+      {/* Footer links */}
+      <nav aria-label="Site links" className="py-3">
+        {FOOTER_LINKS.map(({ label, href }) => (
+          <Link
+            key={label}
+            to={href}
+            onClick={onClose}
+            className="flex items-center px-4 h-11 text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.07] transition-colors"
+          >
+            {label}
+          </Link>
+        ))}
+      </nav>
 
       {/* Safe-area spacer for iOS */}
       <div style={{ height: "env(safe-area-inset-bottom, 16px)" }} />
@@ -140,12 +139,8 @@ const MainScreen = ({
 // ── Category sub-screen (Level 2) ─────────────────────────────────────────────
 
 const CategoryScreen = ({ categorySlug, onBack, onClose }: CategoryScreenProps) => {
-  const config = getCategoryConfig(categorySlug);
-  if (!config) return null;
-
-  const subcategories = config.chips.filter(
-    (chip) => chip.searchTerm !== undefined
-  );
+  const cat = getDrawerCategory(categorySlug);
+  if (!cat) return null;
 
   return (
     <div className="flex flex-col h-full">
@@ -158,33 +153,33 @@ const CategoryScreen = ({ categorySlug, onBack, onClose }: CategoryScreenProps) 
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <span className="text-[15px] font-semibold text-white/90">{config.label}</span>
+        <span className="text-[15px] font-semibold text-white/90">{cat.label}</span>
       </div>
 
       {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto">
         {/* View All row */}
         <Link
-          to={`/category/${config.slug}`}
+          to={`/category/${cat.slug}`}
           onClick={onClose}
           className="flex items-center gap-2 px-4 h-14 border-b border-white/10 hover:bg-white/[0.07] active:bg-white/10 transition-colors"
         >
           <span className="text-[15px] font-semibold text-[#22C55E]">
-            View All {config.label}
+            View All {cat.label}
           </span>
           <ChevronRight className="h-4 w-4 text-[#22C55E]/60 ml-auto" aria-hidden="true" />
         </Link>
 
         {/* Subcategory rows */}
-        <nav aria-label={`${config.label} subcategories`}>
-          {subcategories.map((chip) => (
+        <nav aria-label={`${cat.label} subcategories`}>
+          {cat.subcategories.map((sub) => (
             <Link
-              key={chip.label}
-              to={`/catalog?q=${encodeURIComponent(chip.searchTerm ?? "")}`}
+              key={sub.label}
+              to={`/catalog?q=${encodeURIComponent(sub.searchTerm)}`}
               onClick={onClose}
               className="flex items-center px-6 h-12 text-sm font-medium text-white/75 hover:text-green-400 hover:bg-white/[0.07] border-b border-white/[0.05] transition-colors"
             >
-              {chip.label}
+              {sub.label}
             </Link>
           ))}
         </nav>
@@ -208,8 +203,6 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
       const t = setTimeout(() => setActiveCategory(null), 300);
       return () => clearTimeout(t);
     }
-
-    console.log("DRAWER OPEN");
 
     // Focus close button when drawer opens
     const focusTimer = setTimeout(() => closeBtnRef.current?.focus(), 50);
@@ -250,7 +243,7 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
         aria-hidden="true"
       />
 
-      {/* Drawer panel */}
+      {/* Drawer panel — slides from LEFT */}
       <div
         className={[
           "fixed top-0 left-0 z-[9999] h-[100dvh] w-[85vw] max-w-[340px]",

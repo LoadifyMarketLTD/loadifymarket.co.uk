@@ -94,6 +94,16 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
       {/* ── Row 1: Logo | Search | Actions ─────────────────────────────── */}
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
 
+        {/* Mobile menu toggle — LEFT of logo */}
+        <button
+          className="lg:hidden relative z-[100] p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-md flex items-center justify-center transition-colors shrink-0"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open menu"
+          aria-expanded={mobileOpen}
+        >
+          <Menu size={22} />
+        </button>
+
         {/* Logo */}
         <Link to="/" aria-label="Loadify Market — Home" className="flex items-center gap-2 shrink-0">
           <img src={logo} alt="" aria-hidden="true" className="h-8 w-8" />
@@ -220,16 +230,6 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
             </span>
           )}
         </Link>
-
-        {/* Mobile menu toggle */}
-        <button
-          className="lg:hidden relative z-[100] p-2 bg-red-500 text-white rounded-md flex items-center justify-center"
-          onClick={() => { console.log("HAMBURGER CLICKED"); setMobileOpen(true); }}
-          aria-label="Open menu"
-          aria-expanded={mobileOpen}
-        >
-          <Menu size={22} />
-        </button>
       </div>
 
       {/* ── Row 2: Category quick-links (desktop only) ─────────────────── */}
