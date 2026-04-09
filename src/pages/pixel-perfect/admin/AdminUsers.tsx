@@ -56,7 +56,6 @@ const roleConfig: Record<string, { label: string; className: string }> = {
   buyer: { label: "Buyer", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
   seller: { label: "Seller", className: "border-purple-500/30 text-purple-400 bg-purple-500/10" },
   admin: { label: "Admin", className: "border-red-500/30 text-red-400 bg-red-500/10" },
-  owner: { label: "Owner", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
 };
 
 const stripeStatusConfig: Record<string, { label: string; className: string }> = {
@@ -74,7 +73,6 @@ const sellerStatusConfig: Record<string, { label: string; className: string }> =
 
 const AdminUsers = () => {
   const { user: currentUser } = useAuthStore();
-  const isOwner = currentUser?.role === 'owner';
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -207,11 +205,6 @@ const AdminUsers = () => {
       toast({ title: "Protected account", description: "Admin accounts cannot be suspended.", variant: "destructive" });
       return;
     }
-    // Admin accounts can only be suspended by the owner — not by other admins.
-    if (targetRole === 'admin' && !isOwner) {
-      toast({ title: "Not allowed", description: "Only the account owner can suspend an admin account.", variant: "destructive" });
-      return;
-    }
     setActionLoading(userId);
     setError(null);
     try {
@@ -237,11 +230,6 @@ const AdminUsers = () => {
     // To demote an admin, update the DB directly.
     if (currentRole === 'admin') {
       toast({ title: "Protected account", description: "Admin role cannot be changed through the admin UI.", variant: "destructive" });
-      return;
-    }
-    // Only the account owner may promote users to admin — preventing privilege escalation.
-    if (newRole === 'admin' && !isOwner) {
-      toast({ title: "Not allowed", description: "Only the account owner can grant admin privileges.", variant: "destructive" });
       return;
     }
     setRoleChanging(true);
@@ -529,14 +517,13 @@ const AdminUsers = () => {
                     </div>
                   ) : (
                     <div className="flex flex-wrap gap-3">
-                      {/* Suspend / Reactivate — admin accounts require owner privileges */}
+                      {/* Suspend / Reactivate */}
                       {detail.isActive ? (
                         <Button
                           variant="destructive"
                           size="sm"
                           onClick={() => toggleBlock(detail.id, detail.isActive, detail.role)}
-                          disabled={actionLoading === detail.id || (detail.role === 'admin' && !isOwner)}
-                          title={detail.role === 'admin' && !isOwner ? 'Only the account owner can suspend an admin account' : undefined}
+                          disabled={actionLoading === detail.id}
                         >
                           {actionLoading === detail.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Ban className="h-4 w-4 mr-1" />}
                           Suspend User
@@ -545,21 +532,20 @@ const AdminUsers = () => {
                         <Button
                           size="sm"
                           onClick={() => toggleBlock(detail.id, detail.isActive, detail.role)}
-                          disabled={actionLoading === detail.id || (detail.role === 'admin' && !isOwner)}
-                          title={detail.role === 'admin' && !isOwner ? 'Only the account owner can reactivate an admin account' : undefined}
+                          disabled={actionLoading === detail.id}
                         >
                           {actionLoading === detail.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-1" />}
                           Reactivate User
                         </Button>
                       )}
 
-                      {/* Change Role — owner: any non-owner role; admin: buyer/seller only */}
+                      {/* Change Role */}
                       <div className="flex items-center gap-2">
                         <UserCog className="h-4 w-4 text-muted-foreground shrink-0" />
                         <Select
                           value={detail.role}
                           onValueChange={(val) => changeRole(detail.id, val, detail.role)}
-                          disabled={roleChanging || (!isOwner && detail.role === 'admin')}
+                          disabled={roleChanging}
                         >
                           <SelectTrigger className="h-9 w-36 text-sm">
                             <SelectValue />
@@ -567,8 +553,7 @@ const AdminUsers = () => {
                           <SelectContent>
                             <SelectItem value="buyer">Buyer</SelectItem>
                             <SelectItem value="seller">Seller</SelectItem>
-                            {/* Admin option only visible to owners — prevents privilege escalation */}
-                            {isOwner && <SelectItem value="admin">Admin</SelectItem>}
+                            <SelectItem value="admin">Admin</SelectItem>
                           </SelectContent>
                         </Select>
                         {roleChanging && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}

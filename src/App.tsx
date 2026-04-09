@@ -54,8 +54,7 @@ const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
 const SellerPublicProfilePage = lazy(() => import('./pages/SellerPublicProfilePage'));
 // AdminSellerDetailPage: admin seller detail view — no pixel-perfect equivalent yet
 const AdminSellerDetailPage = lazy(() => import('./pages/AdminSellerDetailPage'));
-// TrackingPage / TrackOrderPage: order tracking — no pixel-perfect equivalent yet
-const TrackingPage = lazy(() => import('./pages/TrackingPage'));
+// TrackingPage redirects to /track-order
 const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
 // Legal pages without pixel-perfect equivalents
 const AcceptableUsePolicyPage = lazy(() => import('./pages/legal/AcceptableUsePolicyPage'));
@@ -130,7 +129,7 @@ function DashboardRedirect() {
 /**
  * Renders a maintenance-mode page for non-admin visitors.
  * Reads `platform_settings.maintenance_mode` once on mount.
- * Admins/owners always bypass so they can access the admin hub.
+ * Admins always bypass so they can access the admin hub.
  */
 function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuthStore();
@@ -152,7 +151,7 @@ function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
 
   // While loading auth or the maintenance flag, render normally (avoids flash)
   if (isLoading || maintenanceMode === null) return <>{children}</>;
-  // Admins/owners always bypass maintenance mode
+  // Admins always bypass maintenance mode
   if (maintenanceMode && user && hasAdminAccess(user)) return <>{children}</>;
   // If maintenance is on and user is not admin, show maintenance screen
   if (maintenanceMode) {
@@ -545,7 +544,7 @@ function App() {
         } />
 
         {/* Public: Order Tracking — no pixel-perfect equivalent yet */}
-        <Route path="tracking/:orderNumber" element={<Suspense fallback={<PageLoader />}><TrackingPage /></Suspense>} />
+        <Route path="tracking/:orderNumber" element={<Navigate to="/track-order" replace />} />
         <Route path="track-order" element={<Suspense fallback={<PageLoader />}><TrackOrderPage /></Suspense>} />
         <Route path="track" element={<Navigate to="/track-order" replace />} />
 
