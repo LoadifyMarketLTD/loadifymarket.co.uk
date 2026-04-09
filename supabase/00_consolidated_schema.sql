@@ -50,41 +50,67 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION is_admin_or_owner()
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN
+LANGUAGE plpgsql STABLE SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 FROM users
+    SELECT 1 FROM public.users
     WHERE id = auth.uid()
       AND role = 'admin'
       AND "isActive" = TRUE
   );
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$;
 
 -- Alias kept for compatibility; identical to is_admin_or_owner().
 CREATE OR REPLACE FUNCTION is_owner()
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN
+LANGUAGE plpgsql STABLE SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 FROM users
+    SELECT 1 FROM public.users
     WHERE id = auth.uid()
       AND role = 'admin'
       AND "isActive" = TRUE
   );
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$;
 
 CREATE OR REPLACE FUNCTION is_seller()
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN
+LANGUAGE plpgsql STABLE SECURITY DEFINER
+SET search_path = ''
+AS $$
 BEGIN
   RETURN EXISTS (
-    SELECT 1 FROM users
+    SELECT 1 FROM public.users
     WHERE id = auth.uid()
       AND role = 'seller'
       AND "isActive" = TRUE
   );
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+$$;
+
+-- Checks whether the calling user owns a product.
+-- SECURITY DEFINER so that it bypasses the products RLS policy when
+-- called from product_shipping policies, preventing recursive RLS
+-- evaluation ("infinite recursion detected in policy for relation products").
+CREATE OR REPLACE FUNCTION owns_product(p_product_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM   public.products
+    WHERE  id         = p_product_id
+      AND  "sellerId" = (SELECT auth.uid())
+  );
+$$;
 
 -- ──────────────────────────────────────────────────────────────
 -- SECTION 2: USERS & PROFILES
@@ -1343,19 +1369,33 @@ CREATE POLICY "categories_select" ON categories FOR SELECT USING (TRUE);
 CREATE POLICY "categories_manage" ON categories FOR ALL
   USING (is_admin_or_owner()) WITH CHECK (is_admin_or_owner());
 -- PRODUCTS
--- (select auth.uid()) used instead of bare auth.uid() — evaluated once per query, not per row.
+-- (SELECT auth.uid()) used instead of bare auth.uid() — evaluated once per query, not per row.
 CREATE POLICY "products_select" ON products FOR SELECT
   USING (
     ("isActive" = TRUE AND "isApproved" = TRUE)
-    OR (select auth.uid()) = "sellerId"
+    OR (SELECT auth.uid()) = "sellerId"
     OR is_admin_or_owner()
   );
 CREATE POLICY "products_insert" ON products FOR INSERT
-  WITH CHECK ((select auth.uid()) = "sellerId" AND is_seller());
+  WITH CHECK (
+    (SELECT auth.uid()) = "sellerId"
+    AND is_seller()
+  );
+-- Explicit WITH CHECK mirrors USING so both old-row and new-row are validated.
 CREATE POLICY "products_update" ON products FOR UPDATE
-  USING ((select auth.uid()) = "sellerId" OR is_admin_or_owner());
+  USING (
+    (SELECT auth.uid()) = "sellerId"
+    OR is_admin_or_owner()
+  )
+  WITH CHECK (
+    (SELECT auth.uid()) = "sellerId"
+    OR is_admin_or_owner()
+  );
 CREATE POLICY "products_delete" ON products FOR DELETE
-  USING ((select auth.uid()) = "sellerId" OR is_admin_or_owner());
+  USING (
+    (SELECT auth.uid()) = "sellerId"
+    OR is_admin_or_owner()
+  );
 -- PRODUCT ANALYTICS
 CREATE POLICY "product_analytics_all" ON product_analytics FOR ALL USING (TRUE) WITH CHECK (TRUE);
 -- RECENTLY VIEWED
@@ -1654,14 +1694,41 @@ CREATE POLICY shipping_rates_public_read    ON shipping_rates    FOR SELECT USIN
 DROP POLICY IF EXISTS product_shipping_auth_read    ON product_shipping;
 CREATE POLICY product_shipping_auth_read    ON product_shipping  FOR SELECT TO authenticated USING (TRUE);
 
+-- owns_product() is SECURITY DEFINER so it checks ownership without re-entering
+-- the products RLS evaluation stack (prevents infinite recursion on products).
 DROP POLICY IF EXISTS product_shipping_auth_insert  ON product_shipping;
-CREATE POLICY product_shipping_auth_insert  ON product_shipping  FOR INSERT TO authenticated WITH CHECK (TRUE);
+CREATE POLICY product_shipping_auth_insert
+  ON product_shipping
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    owns_product(product_id)
+    OR is_admin_or_owner()
+  );
 
 DROP POLICY IF EXISTS product_shipping_auth_update  ON product_shipping;
-CREATE POLICY product_shipping_auth_update  ON product_shipping  FOR UPDATE TO authenticated USING (TRUE) WITH CHECK (TRUE);
+CREATE POLICY product_shipping_auth_update
+  ON product_shipping
+  FOR UPDATE
+  TO authenticated
+  USING (
+    owns_product(product_id)
+    OR is_admin_or_owner()
+  )
+  WITH CHECK (
+    owns_product(product_id)
+    OR is_admin_or_owner()
+  );
 
 DROP POLICY IF EXISTS product_shipping_auth_delete  ON product_shipping;
-CREATE POLICY product_shipping_auth_delete  ON product_shipping  FOR DELETE TO authenticated USING (TRUE);
+CREATE POLICY product_shipping_auth_delete
+  ON product_shipping
+  FOR DELETE
+  TO authenticated
+  USING (
+    owns_product(product_id)
+    OR is_admin_or_owner()
+  );
 
 -- Seed shipping methods
 INSERT INTO shipping_methods (name, courier, tracking, active) VALUES
