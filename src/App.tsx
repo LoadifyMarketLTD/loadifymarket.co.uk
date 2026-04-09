@@ -40,6 +40,7 @@ const PPNotFound           = lazy(() => import('./pages/pixel-perfect/NotFound')
 // ─── Pixel-perfect auth pages — standalone (full-page designs) ───────────────
 const PPLogin              = lazy(() => import('./pages/pixel-perfect/Login'));
 const PPSignup             = lazy(() => import('./pages/pixel-perfect/Signup'));
+const PPTradeAccount       = lazy(() => import('./pages/pixel-perfect/TradeAccount'));
 const PPForgotPassword     = lazy(() => import('./pages/pixel-perfect/ForgotPassword'));
 const PPResetPassword      = lazy(() => import('./pages/pixel-perfect/ResetPassword'));
 
@@ -437,6 +438,7 @@ function App() {
         <Route path="login" element={<Suspense fallback={<PageLoader />}><PPLogin /></Suspense>} />
         <Route path="register" element={<Suspense fallback={<PageLoader />}><PPSignup /></Suspense>} />
         <Route path="signup" element={<Suspense fallback={<PageLoader />}><PPSignup /></Suspense>} />
+        <Route path="trade-account" element={<Suspense fallback={<PageLoader />}><PPTradeAccount /></Suspense>} />
         <Route path="forgot-password" element={<Suspense fallback={<PageLoader />}><PPForgotPassword /></Suspense>} />
         <Route path="reset-password" element={<Suspense fallback={<PageLoader />}><PPResetPassword /></Suspense>} />
 
