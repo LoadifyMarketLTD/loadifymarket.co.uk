@@ -726,7 +726,7 @@ export default function ProductFormPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
                   <input
-                    type="text" inputMode="decimal" step="0.1" min="0"
+                    type="text" inputMode="decimal"
                     value={formData.dimensions.height}
                     onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, height: normalizeDecimal(e.target.value) } }))}
                     className="input-field"
@@ -736,7 +736,7 @@ export default function ProductFormPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
                   <input
-                    type="text" inputMode="decimal" step="0.01" min="0"
+                    type="text" inputMode="decimal"
                     value={formData.weight}
                     onChange={(e) => handleChange('weight', normalizeDecimal(e.target.value))}
                     className="input-field"
