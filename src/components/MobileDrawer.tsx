@@ -24,7 +24,7 @@ interface MainScreenProps {
   onLogout: () => void;
   onClose: () => void;
   onCategorySelect: (slug: string) => void;
-  closeBtnRef?: React.RefObject<HTMLButtonElement>;
+  closeBtnRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
 interface CategoryScreenProps {
