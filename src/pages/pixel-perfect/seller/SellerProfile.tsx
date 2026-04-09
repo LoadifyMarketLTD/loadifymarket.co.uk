@@ -204,7 +204,7 @@ const SellerProfile = () => {
                 {storeSlug && <Badge variant="secondary" className="text-xs">{storeSlug}</Badge>}
                 {storeSlug && (
                   <a
-                    href={`/seller/${storeSlug}`}
+                    href={`/seller/${encodeURIComponent(storeSlug)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
