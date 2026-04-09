@@ -175,7 +175,7 @@ const CategoryScreen = ({ categorySlug, onSubcategorySelect, onBack, onClose }: 
       <div className="flex-1 overflow-y-auto">
         {/* View All row */}
         <Link
-          to={`/catalog?category=${cat.slug}`}
+          to={`/catalog?l1=${cat.slug}`}
           onClick={onClose}
           className="flex items-center gap-2 px-4 h-14 border-b border-white/10 hover:bg-white/[0.07] active:bg-white/10 transition-colors"
         >
@@ -236,7 +236,7 @@ const SubcategoryScreen = ({ categorySlug, subcategorySlug, onBack, onClose }: S
       <div className="flex-1 overflow-y-auto">
         {/* View All row */}
         <Link
-          to={`/catalog?category=${cat.slug}-${sub.slug}`}
+          to={`/catalog?l1=${cat.slug}&l2=${sub.slug}`}
           onClick={onClose}
           className="flex items-center gap-2 px-4 h-14 border-b border-white/10 hover:bg-white/[0.07] active:bg-white/10 transition-colors"
         >
@@ -251,7 +251,7 @@ const SubcategoryScreen = ({ categorySlug, subcategorySlug, onBack, onClose }: S
           {sub.items.map((item) => (
             <Link
               key={item.slug}
-              to={`/catalog?category=${cat.slug}-${sub.slug}-${item.slug}`}
+              to={`/catalog?l1=${cat.slug}&l2=${sub.slug}&l3=${item.slug}`}
               onClick={onClose}
               className="flex items-center px-6 h-12 text-sm font-medium text-white/75 hover:text-green-400 hover:bg-white/[0.07] border-b border-white/[0.05] transition-colors"
             >
