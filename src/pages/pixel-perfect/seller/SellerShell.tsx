@@ -17,6 +17,7 @@ const navItems = [
   { to: "/pp/seller/returns", label: "Returns", icon: RotateCcw },
   { to: "/pp/seller/rfq", label: "RFQ / Quotes", icon: FileText },
   { to: "/pp/seller/reviews", label: "Reviews", icon: Star },
+  { to: "/pp/seller/notifications", label: "Notifications", icon: Bell },
   { to: "/pp/seller/profile", label: "Profile", icon: UserCircle },
   { to: "/pp/seller/settings", label: "Settings", icon: Settings },
   { to: "/pp/seller/notifications", label: "Notifications", icon: Bell },

@@ -3,10 +3,6 @@ import { useAuthStore } from "@/store";
 import { PROMO_END_UTC } from "@/lib/promoDeadline";
 import { useCountdown } from "@/hooks/use-countdown";
 
-/**
- * Combined height of fixed Header row (64px) + Header category nav (48px).
- */
-const HEADER_HEIGHT_PX = 112;
 
 function pad2(n: number) { return String(n).padStart(2, "0"); }
 
@@ -29,13 +25,12 @@ const HeroSection = () => {
 
   return (
     <section
-      className="relative overflow-hidden"
+      className="relative overflow-hidden sm:min-h-[calc(100dvh-7rem)]"
       aria-label="Hero — sell online, grow your business with Loadify Market"
-      style={{
-        background: "#0A1930",
-        minHeight: `clamp(520px, calc(100vh - ${HEADER_HEIGHT_PX}px), 820px)`,
-      }}
+      style={{ background: "#0A1930" }}
     >
+      {/* min-height: none on mobile (content-driven height prevents large empty space)
+          7rem=112px desktop (header row + category nav) fills the viewport on sm+ */}
       {/*
        * ── HERO IMAGE — right-anchored ──────────────────────────────────────
        * The source hero.jpeg has text composited into its left ~40%.
@@ -86,18 +81,28 @@ const HeroSection = () => {
       />
 
       {/* ── LEFT SIDE HTML OVERLAY ─────────────────────────────────────────── */}
-      {/* Mobile: relative/padded flow; sm+: absolute positioned */}
+      {/*
+       * Mobile (<sm): position relative, full width, padded — no translateY tricks.
+       * Desktop (sm+): position absolute, left/top/transform handle vertical centering.
+       * Keeping these as separate Tailwind sm: classes avoids inline-style overriding
+       * w-full on mobile (which caused text to be constrained to 280px on a 390px screen).
+       */}
       <div
-        className="relative sm:absolute z-10 flex flex-col w-full sm:w-auto px-5 py-10 sm:px-0 sm:py-0"
-        style={{
-          left: "clamp(24px, 5.5vw, 88px)",
-          top: "50%",
-          transform: "translateY(-50%)",
-          maxWidth: 540,
-          width: "clamp(280px, 44vw, 540px)",
-        }}
+        className={[
+          // Position: relative flow on mobile, absolute overlay on desktop
+          "relative sm:absolute z-10 flex flex-col",
+          // Size: full-width on mobile, auto (content-width) on desktop
+          "w-full sm:w-auto sm:min-w-[280px]",
+          // Spacing: padded on mobile, zero on desktop (section handles it via positioning)
+          "px-5 py-8 sm:px-0 sm:py-0",
+          // Desktop centering: top-1/2 + -translate-y-1/2 vertically centers the overlay
+          "sm:top-1/2 sm:-translate-y-1/2",
+          // Desktop horizontal offset via clamp (responsive left position)
+          "sm:[left:clamp(24px,5.5vw,88px)]",
+        ].join(" ")}
+        style={{ maxWidth: 540 }}
       >
-        {/* Heading */}
+        {/* Heading — always visible for SEO */}
         <h1
           className="leading-[1.05] tracking-tight"
           style={{
@@ -111,9 +116,9 @@ const HeroSection = () => {
           <span style={{ color: "#22C55E" }}>Grow Your Business.</span>
         </h1>
 
-        {/* Paragraph */}
+        {/* Paragraph — hidden on mobile (hero is below fold; saves vertical space) */}
         <p
-          className="mt-5"
+          className="mt-5 hidden sm:block"
           style={{
             fontSize: "clamp(0.9375rem, 1.4vw, 1.125rem)",
             color: "rgba(255,255,255,0.72)",
@@ -124,8 +129,8 @@ const HeroSection = () => {
           Now open for UK sellers. Be among the first to grow on Loadify with 0% commission during launch.
         </p>
 
-        {/* Checklist */}
-        <ul className="mt-6 flex flex-col gap-3" aria-label="Key benefits">
+        {/* Checklist — hidden on mobile */}
+        <ul className="mt-5 hidden sm:flex flex-col gap-2.5 sm:gap-3" aria-label="Key benefits">
           {BULLETS.map((text) => (
             <li key={text} className="flex items-center gap-3">
               <svg
@@ -146,8 +151,8 @@ const HeroSection = () => {
           ))}
         </ul>
 
-        {/* CTA Buttons — stacked on mobile, inline on sm+ */}
-        <div className="mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
+        {/* CTA Buttons — hidden on mobile (hero is below fold; Quick Actions cover this) */}
+        <div className="mt-6 sm:mt-8 hidden sm:flex flex-col sm:flex-row gap-3 sm:gap-4">
           <button
             className="w-full sm:w-auto inline-flex items-center justify-center font-bold rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]"
             style={{
@@ -208,9 +213,9 @@ const HeroSection = () => {
           </button>
         </div>
 
-        {/* Trust mini-features */}
+        {/* Trust mini-features — hidden on mobile */}
         <div
-          className="mt-8 flex flex-wrap gap-x-5 gap-y-2"
+          className="mt-5 sm:mt-8 hidden sm:flex flex-wrap gap-x-4 gap-y-2"
           aria-label="Trust indicators"
         >
           {TRUST_ITEMS.map(({ icon, label }) => (
@@ -226,7 +231,7 @@ const HeroSection = () => {
         {/* Mobile-only countdown strip (hidden on sm+ where the floating card takes over) */}
         {!expired && (
           <div
-            className="mt-6 flex items-center gap-3 sm:hidden"
+            className="mt-5 flex items-center gap-3 sm:hidden"
             style={{
               padding: "12px 16px",
               borderRadius: 14,

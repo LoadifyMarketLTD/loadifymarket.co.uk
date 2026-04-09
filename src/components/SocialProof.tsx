@@ -1,6 +1,6 @@
 export default function SocialProof() {
   return (
-    <div className="py-8 flex justify-center gap-10 text-center text-sm text-white/60">
+    <div className="py-6 sm:py-8 flex justify-center gap-6 sm:gap-10 text-center text-sm text-white/60">
       <div>
         <div className="text-green-400 text-lg font-semibold">Now Open</div>
         For UK Sellers

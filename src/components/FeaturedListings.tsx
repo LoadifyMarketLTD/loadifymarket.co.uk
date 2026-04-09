@@ -33,7 +33,7 @@ const CARDS = [
 
 const FeaturedListings = () => (
   <section
-    className="relative overflow-hidden px-4 sm:px-6 py-16 lg:py-20"
+    className="relative overflow-hidden px-4 sm:px-6 py-4 sm:py-16 lg:py-20"
     style={{ background: "linear-gradient(to bottom, #0F2A4A, #0A1930, #081426)" }}
   >
     {/* Ambient glow */}
@@ -51,8 +51,8 @@ const FeaturedListings = () => (
     />
 
     <div className="relative w-full max-w-7xl mx-auto">
-      {/* Centered header */}
-      <div className="text-center mb-10">
+      {/* Section header — hidden on mobile (go straight to cards, Amazon-style) */}
+      <div className="hidden sm:block text-center mb-10">
         <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
           Curated Selection
         </span>
@@ -62,14 +62,13 @@ const FeaturedListings = () => (
         <p className="mt-2 text-sm text-white/70">Products from UK sellers you'll love</p>
       </div>
 
-      {/* 3 wide image-overlay cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      {/* 3 image-overlay cards — 2-col on mobile for Amazon-style density */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6">
         {CARDS.map((card) => (
           <Link
             key={card.id}
             to={card.href}
-            className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)]"
-            style={{ minHeight: "260px" }}
+            className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)] min-h-[160px] sm:min-h-[260px]"
           >
             <img
               src={card.img}
@@ -84,23 +83,23 @@ const FeaturedListings = () => (
               }}
             />
             {/* Dark gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-            {/* Content */}
-            <div className="absolute bottom-0 left-0 right-0 p-5">
-              <h3 className="text-base font-extrabold text-white leading-snug mb-1">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+            {/* Content — compact on mobile */}
+            <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-5">
+              <h3 className="text-sm sm:text-base font-extrabold text-white leading-snug mb-0.5 sm:mb-1 line-clamp-2 drop-shadow-sm">
                 {card.title}
               </h3>
-              <p className="text-xs text-white/70 leading-relaxed">{card.desc}</p>
+              <p className="hidden sm:block text-xs text-white/70 leading-relaxed">{card.desc}</p>
             </div>
           </Link>
         ))}
       </div>
 
-      {/* Centered CTA */}
-      <div className="mt-10 flex justify-center">
+      {/* Centered CTA — compact on mobile */}
+      <div className="mt-4 sm:mt-10 flex justify-center">
         <Link
           to="/catalog"
-          className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(0,255,150,0.4)]"
+          className="inline-flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-green-400 to-green-500 text-black text-sm sm:text-base font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(0,255,150,0.4)]"
         >
           View All Listings <ArrowRight className="h-4 w-4" />
         </Link>

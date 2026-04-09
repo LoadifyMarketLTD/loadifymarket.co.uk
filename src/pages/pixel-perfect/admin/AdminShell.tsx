@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, ShoppingBag, Flag, BarChart3,
-  MessageSquare, Settings, ShieldCheck, ChevronRight, LogOut, Menu,
+  MessageSquare, Settings, ShieldCheck, ChevronRight, LogOut, Menu, Bell,
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -17,6 +17,7 @@ const navItems = [
   { to: "/pp/admin/flagged", label: "Flagged / Reports", icon: Flag },
   { to: "/pp/admin/reports", label: "Analytics", icon: BarChart3 },
   { to: "/pp/admin/support", label: "Support", icon: MessageSquare },
+  { to: "/pp/admin/notifications", label: "Notifications", icon: Bell },
   { to: "/pp/admin/settings", label: "Settings", icon: Settings },
 ];
 

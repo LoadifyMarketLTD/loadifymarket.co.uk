@@ -1,25 +1,31 @@
 /**
  * src/pages/Home.tsx — root "/" route
  *
- * Canonical homepage for Loadify Market.
- * Section order:
+ * Mobile-first marketplace layout (desktop keeps the traditional hero-first order
+ * via CSS flex ordering — no duplicate DOM nodes, no hidden content).
  *
- *  1. Header (fixed, pt-[112px] spacer to clear it)
- *  2. UrgencyBar — 0% commission banner
- *  3. Hero
- *  4. SocialProof strip — stats under hero
- *  5. Trust/Benefits strip
- *  6. Marketplace block (single shared wrapper)
- *     6a. Browse the Marketplace (FeaturedProducts) → MicroCTA
- *     6b. Shop by Category (CategoryGrid)
- *     6c. Featured Listings — 3 feature image cards
- *  7. Why Choose Loadify Market (FeaturesSection)
- *  8. Why + How block (single shared wrapper)
- *     8a. Platform Features — buyer vs seller → MicroCTA
- *     8b. How It Works — buyer flow
- *  9. Seller Journey CTA
- * 10. Footer
+ * Mobile order  (< lg):
+ *  1. Header spacer + UrgencyBar
+ *  2. Quick Actions  — 2×2 action grid (Browse, Sell, Orders, Account)
+ *  3. Categories     — CategoryGrid   (moved up)
+ *  4. Products       — FeaturedProducts + FeaturedListings  (moved up)
+ *  5. Trust strip    — TrustStrip (compact)
+ *  6. Hero / Social  — minimised, below the fold
+ *  7. Deferred sections (FeaturesSection, PlatformFeatures, HowItWorks, SellerJourney, Footer)
+ *
+ * Desktop order  (≥ lg):
+ *  Hero → SocialProof → TrustStrip → FeaturedProducts → CategoryGrid
+ *  → FeaturedListings → FeaturesSection → PlatformFeatures → HowItWorks
+ *  → SellerJourneySection → Footer  (identical to previous behaviour)
  */
+
+import { Link } from "react-router-dom";
+import {
+  ShoppingBag,
+  Store,
+  Package,
+  UserCircle,
+} from "lucide-react";
 
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
@@ -37,60 +43,135 @@ import UrgencyBar from "@/components/UrgencyBar";
 import SocialProof from "@/components/SocialProof";
 import MicroCTA from "@/components/ui/MicroCTA";
 
+/* ── Quick Actions — mobile-only 2×2 grid ───────────────────────────────── */
+const QUICK_ACTIONS = [
+  {
+    icon: ShoppingBag,
+    label: "Browse Marketplace",
+    to: "/catalog",
+    iconBg: "bg-emerald-500/20",
+    iconColor: "text-emerald-400",
+    cardBorder: "border-emerald-500/25",
+  },
+  {
+    icon: Store,
+    label: "Start Selling",
+    to: "/signup?type=seller",
+    iconBg: "bg-emerald-500/20",
+    iconColor: "text-emerald-400",
+    cardBorder: "border-emerald-500/25",
+  },
+  {
+    icon: Package,
+    label: "My Orders",
+    to: "/pp/buyer/orders",
+    iconBg: "bg-blue-500/20",
+    iconColor: "text-blue-400",
+    cardBorder: "border-white/[0.12]",
+  },
+  {
+    icon: UserCircle,
+    label: "My Account",
+    to: "/pp/buyer",
+    iconBg: "bg-blue-500/20",
+    iconColor: "text-blue-400",
+    cardBorder: "border-white/[0.12]",
+  },
+] as const;
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#0A1930] font-sans antialiased">
       <Header />
-      {/* spacer: 64px header row + 48px category nav */}
-      <div className="pt-[112px]" />
+      {/* spacer: clears fixed header — see .pt-header-spacer in index.css */}
+      <div className="pt-header-spacer" />
 
       {/* Urgency bar — immediately below header */}
       <UrgencyBar />
 
-      <main>
-        {/* 1 — Hero */}
-        <HeroSection />
+      {/*
+       * flex-col lets us use CSS `order-*` to reorder sections between
+       * mobile and desktop WITHOUT duplicating DOM nodes.
+       */}
+      <main className="flex flex-col">
 
-        {/* 2 — Social proof stats — immediately under hero */}
-        <SocialProof />
-
-        {/* 3 — Trust/Benefits */}
-        <TrustStrip />
-
-        {/* 4 — Marketplace block: all discovery content in one shared wrapper */}
-        <LazySection>
-          <div>
-            <FeaturedProducts />
-            <MicroCTA text="Browse All Listings" link="/catalog" />
-            <CategoryGrid />
-            <FeaturedListings />
+        {/* ── 1. Quick Actions ── mobile-only, always first ──────────────── */}
+        <section
+          aria-label="Quick actions"
+          className="order-1 lg:hidden px-4 py-4 border-b border-white/[0.12]"
+        >
+          <div className="grid grid-cols-2 gap-3">
+            {QUICK_ACTIONS.map(({ icon: Icon, label, to, iconBg, iconColor, cardBorder }) => (
+              <Link
+                key={to}
+                to={to}
+                className={`flex items-center gap-3 px-3.5 py-3.5 rounded-xl bg-white/[0.07] border ${cardBorder} hover:bg-white/[0.12] hover:border-white/30 active:scale-95 transition-all duration-150`}
+              >
+                <span className={`shrink-0 w-9 h-9 rounded-lg ${iconBg} flex items-center justify-center`}>
+                  <Icon className={`h-5 w-5 ${iconColor}`} aria-hidden="true" />
+                </span>
+                <span className="text-sm font-semibold text-white leading-tight">{label}</span>
+              </Link>
+            ))}
           </div>
-        </LazySection>
+        </section>
 
-        {/* 5 — Why Choose Loadify Market */}
-        <LazySection>
-          <FeaturesSection />
-        </LazySection>
+        {/* ── 2. Hero + SocialProof ─────────────────────────────────────────
+         *   Mobile: order-5  → below products (minimised, still SEO-present)
+         *   Desktop: order-0  → first (traditional hero layout)               */}
+        <div className="order-5 lg:order-[0]">
+          <HeroSection />
+          <SocialProof />
+        </div>
 
-        {/* 6 — Why + How block: platform features + buyer flow in one shared wrapper */}
-        <LazySection>
-          <div>
-            <PlatformFeatures />
-            <MicroCTA text="Start Selling Today" link="/register" />
-            <div className="h-px bg-white/10 w-full" />
-            <HowItWorks />
-          </div>
-        </LazySection>
+        {/* ── 3. Categories ─────────────────────────────────────────────────
+         *   Mobile: order-2  → immediately after Quick Actions
+         *   Desktop: order-2  → after TrustStrip                              */}
+        <div className="order-2 lg:order-2">
+          <CategoryGrid />
+        </div>
 
-        {/* 7 — Seller Journey CTA */}
-        <LazySection>
-          <SellerJourneySection />
-        </LazySection>
+        {/* ── 4. Products + Listings ────────────────────────────────────────
+         *   Mobile: order-3  → immediately after categories
+         *   Desktop: order-3  → same                                          */}
+        <div className="order-3 lg:order-3">
+          <FeaturedProducts />
+          <MicroCTA text="Browse All Listings" link="/catalog" />
+          <FeaturedListings />
+        </div>
+
+        {/* ── 5. Trust Strip ────────────────────────────────────────────────
+         *   Mobile: order-4  → compact row after products
+         *   Desktop: order-1  → directly after hero                           */}
+        <div className="order-4 lg:order-1">
+          <TrustStrip />
+        </div>
+
+        {/* ── 6–9. Deferred lower sections (both viewports) ─────────────── */}
+        <div className="order-6">
+          <LazySection>
+            <FeaturesSection />
+          </LazySection>
+
+          <LazySection>
+            <div>
+              <PlatformFeatures />
+              <MicroCTA text="Start Selling Today" link="/register" />
+              <div className="h-px bg-white/10 w-full" />
+              <HowItWorks />
+            </div>
+          </LazySection>
+
+          <LazySection>
+            <SellerJourneySection />
+          </LazySection>
+
+          <LazySection>
+            <Footer />
+          </LazySection>
+        </div>
+
       </main>
-
-      <LazySection>
-        <Footer />
-      </LazySection>
     </div>
   );
 }
