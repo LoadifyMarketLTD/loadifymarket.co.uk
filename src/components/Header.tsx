@@ -5,39 +5,19 @@ import { Button } from "@/components/ui/button";
 import logo from "@/assets/loadify-logo.svg";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
-import CATEGORY_CONFIG from "@/lib/category-config";
+import { CATEGORY_TREE } from "@/data/category-tree";
 import MobileDrawer from "@/components/MobileDrawer";
 
 /**
- * Marketplace-style header used on the homepage.
- * Layout: fixed at top-0.
- * Row 1 (h-16): Logo | Prominent search bar | Cart + auth actions
- * Row 2 (h-10, desktop only): Category quick-links
- *
- * Transparency behaviour:
- *   - At top of page: bg-transparent, no border/shadow — floats over the
- *     dark hero area seamlessly.
- *   - After 10px scroll: bg-[#0A1930]/90 backdrop-blur-md appears for
- *     readability over scrolled content.
- *
- * Auth CTA logic:
- *   - Guest: Sign In → /login | Start Selling (green) → /signup?type=seller
- *   - Logged in: Dashboard → role dashboard | Sign Out | Start Selling (green) → /pp/seller
- */
-/**
  * Marketplace-style header — used on every page of the site.
  * Layout: fixed at top-0.
- * Row 1 (h-16): Logo | Prominent search bar | Cart + auth actions
- * Row 2 (h-10, desktop only): Category quick-links
+ * Row 1 (h-16): Hamburger (mobile, LEFT) | Logo | Search | Cart + auth actions
+ * Row 2 (h-12, desktop only): Category quick-links
  *
  * Transparency behaviour:
  *   - Homepage (default): transparent at top, becomes opaque after 10px scroll.
  *   - Inner pages: pass `forceOpaque` to always render the opaque dark-navy
  *     background from the first paint (no hero behind it).
- *
- * Auth CTA logic:
- *   - Guest: Sign In → /login | Start Selling (green) → /signup?type=seller
- *   - Logged in: Dashboard → role dashboard | Sign Out | Start Selling (green) → /pp/seller
  */
 interface HeaderProps {
   /** When true the header is always opaque (use on every non-homepage page). */
@@ -91,17 +71,18 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
       style={{ willChange: "transform", paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
 
-      {/* ── Row 1: Hamburger | Logo | Search | Actions ──────────────────── */}
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
+      {/* ── Row 1: Hamburger (mobile) | Logo | Search | Actions ─────────── */}
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
 
-        {/* Hamburger — visible on ALL screen sizes (opens the nav drawer) */}
+        {/* Hamburger — LEFT side, all screen sizes */}
         <button
-          className="relative z-[100] p-2 -ml-1 text-white/80 hover:text-green-400 transition-colors shrink-0"
+          className="p-2 text-white/90 hover:text-green-400 hover:bg-white/10 rounded-lg transition-colors shrink-0"
           onClick={() => setMobileOpen(true)}
           aria-label="Open navigation menu"
           aria-expanded={mobileOpen}
+          aria-controls="mobile-navigation"
         >
-          <Menu size={22} />
+          <Menu size={22} aria-hidden="true" />
         </button>
 
         {/* Logo */}
@@ -136,6 +117,20 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
           </div>
         </form>
 
+        {/* Mobile cart icon */}
+        <Link
+          to="/cart"
+          className="lg:hidden relative p-2 text-white/80 hover:text-green-400 transition-colors shrink-0"
+          aria-label="Shopping cart"
+        >
+          <ShoppingCart className="h-5 w-5" />
+          {cartCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-[#22C55E] text-white text-[10px] font-bold flex items-center justify-center px-0.5">
+              {cartCount}
+            </span>
+          )}
+        </Link>
+
         {/* Right actions (desktop) */}
         <div className="hidden lg:flex items-center gap-2 shrink-0">
           <Link
@@ -153,7 +148,6 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
 
           {user ? (
             <>
-              {/* Role-specific quick links (desktop) */}
               {(user.role === "seller") && (
                 <>
                   <Button variant="ghost" size="sm" className="text-white/70 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex" asChild>
@@ -216,43 +210,28 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
             </>
           )}
         </div>
-
-        {/* Mobile cart icon */}
-        <Link
-          to="/cart"
-          className="lg:hidden relative p-2 text-white/80 hover:text-green-400 transition-colors"
-          aria-label="Shopping cart"
-        >
-          <ShoppingCart className="h-5 w-5" />
-          {cartCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-[#22C55E] text-white text-[10px] font-bold flex items-center justify-center px-0.5">
-              {cartCount}
-            </span>
-          )}
-        </Link>
       </div>
 
-      {/* ── Row 2: Category quick-links (desktop only) ─────────────────── */}
-      <nav aria-label="Category navigation" className="hidden lg:block border-t border-white/10">
+      {/* ── Row 2: Category quick-links ────────────────────────────────── */}
+      <nav aria-label="Category navigation" className="border-t border-white/10">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
-          <div className="flex items-center gap-0.5 h-12">
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="shrink-0 text-sm font-bold text-white hover:text-green-400 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
+          <div className="flex items-center gap-0.5 h-12 overflow-x-auto scrollbar-none">
+            <Link
+              to="/catalog"
+              className="shrink-0 text-sm font-bold text-white hover:text-green-400 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
             >
-              <Menu className="h-4 w-4" aria-hidden="true" />
               All Categories
-            </button>
+            </Link>
             <span className="w-px h-5 bg-white/10 mx-1.5 shrink-0" aria-hidden="true" />
-            {CATEGORY_CONFIG.slice(0, 6).map((cat) => {
+            {CATEGORY_TREE.slice(0, 8).map((cat) => {
               const Icon = cat.icon;
               return (
                 <Link
                   key={cat.slug}
-                  to={`/category/${cat.slug}`}
-                  className="flex items-center gap-1.5 shrink-0 text-sm font-semibold text-white/70 hover:text-green-400 hover:bg-white/10 px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap"
+                  to={`/catalog?l1=${cat.slug}`}
+                  className="flex items-center gap-1.5 shrink-0 text-sm font-semibold text-white/70 hover:text-green-400 hover:bg-white/10 px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
                 >
-                  <Icon className="h-4 w-4 text-white/50" aria-hidden="true" />
+                  <Icon className={`h-4 w-4 ${cat.iconColor}`} aria-hidden="true" />
                   {cat.label}
                 </Link>
               );
@@ -268,7 +247,7 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
         </div>
       </nav>
 
-      {/* ── Navigation drawer (mobile + desktop) ────────────────────────── */}
+      {/* ── Mobile drawer (renders via portal) ─────────────────────────── */}
       <MobileDrawer
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}

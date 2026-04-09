@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { X, ArrowLeft, ChevronRight, Info, BookOpen, Users } from "lucide-react";
-import CATEGORY_CONFIG, { getCategoryConfig } from "@/lib/category-config";
+import { X, ArrowLeft, ChevronRight } from "lucide-react";
+import { CATEGORY_TREE, getL1Category, getL2Category } from "@/data/category-tree";
 import DrawerAccountBlock from "@/components/mobile/DrawerAccountBlock";
 import DrawerCTACards from "@/components/mobile/DrawerCTACards";
 import logo from "@/assets/loadify-logo.svg";
@@ -24,11 +24,19 @@ interface MainScreenProps {
   onLogout: () => void;
   onClose: () => void;
   onCategorySelect: (slug: string) => void;
-  closeBtnRef?: React.RefObject<HTMLButtonElement | null>;
+  closeBtnRef: React.RefObject<HTMLButtonElement | null>;
 }
 
 interface CategoryScreenProps {
   categorySlug: string;
+  onSubcategorySelect: (slug: string) => void;
+  onBack: () => void;
+  onClose: () => void;
+}
+
+interface SubcategoryScreenProps {
+  categorySlug: string;
+  subcategorySlug: string;
   onBack: () => void;
   onClose: () => void;
 }
@@ -75,10 +83,10 @@ const MainScreen = ({
       {/* Divider */}
       <div className="h-px bg-white/10 mx-4" />
 
-      {/* CTA Cards */}
+      {/* Quick Actions */}
       <div className="pt-4">
         <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-widest text-white/40">
-          Quick Browse
+          Quick Actions
         </p>
         <DrawerCTACards onClose={onClose} />
       </div>
@@ -91,7 +99,7 @@ const MainScreen = ({
         Browse Categories
       </p>
       <nav aria-label="Product categories">
-        {CATEGORY_CONFIG.map((cat) => {
+        {CATEGORY_TREE.map((cat) => {
           const Icon = cat.icon;
           return (
             <button
@@ -112,58 +120,30 @@ const MainScreen = ({
       {/* Divider */}
       <div className="h-px bg-white/10 mx-4 mt-2" />
 
-      {/* Quick links row */}
-      <div className="flex px-4 py-3 gap-1">
-        <Link
-          to="/catalog"
-          onClick={onClose}
-          className="flex-1 h-11 flex items-center justify-center text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.07] rounded-lg transition-colors"
-        >
-          All Listings
-        </Link>
-        <div className="w-px bg-white/10 self-stretch" />
-        <Link
-          to="/deals"
-          onClick={onClose}
-          className="flex-1 h-11 flex items-center justify-center text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.07] rounded-lg transition-colors"
-        >
-          Deals
-        </Link>
-      </div>
-
-      {/* Divider */}
-      <div className="h-px bg-white/10 mx-4" />
-
-      {/* Footer info links */}
-      <div className="py-3">
-        <p className="px-4 pb-1 text-[11px] font-bold uppercase tracking-widest text-white/40">
-          Information & Support
-        </p>
+      {/* Footer links */}
+      <nav aria-label="Support links" className="flex flex-col py-2">
         <Link
           to="/wholesale-info"
           onClick={onClose}
-          className="flex items-center gap-3 px-4 h-11 hover:bg-white/[0.07] transition-colors"
+          className="px-4 h-11 flex items-center text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.07] transition-colors"
         >
-          <Info className="h-4 w-4 text-white/40 shrink-0" aria-hidden="true" />
-          <span className="text-sm text-white/70 hover:text-white">UK Wholesale Information & Support</span>
+          UK Wholesale Information and Support
         </Link>
         <Link
           to="/blog"
           onClick={onClose}
-          className="flex items-center gap-3 px-4 h-11 hover:bg-white/[0.07] transition-colors"
+          className="px-4 h-11 flex items-center text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.07] transition-colors"
         >
-          <BookOpen className="h-4 w-4 text-white/40 shrink-0" aria-hidden="true" />
-          <span className="text-sm text-white/70 hover:text-white">Blog</span>
+          Blog
         </Link>
         <Link
           to="/about"
           onClick={onClose}
-          className="flex items-center gap-3 px-4 h-11 hover:bg-white/[0.07] transition-colors"
+          className="px-4 h-11 flex items-center text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.07] transition-colors"
         >
-          <Users className="h-4 w-4 text-white/40 shrink-0" aria-hidden="true" />
-          <span className="text-sm text-white/70 hover:text-white">About Us</span>
+          About Us
         </Link>
-      </div>
+      </nav>
 
       {/* Safe-area spacer for iOS */}
       <div style={{ height: "env(safe-area-inset-bottom, 16px)" }} />
@@ -171,14 +151,11 @@ const MainScreen = ({
   </div>
 );
 
-// ── Category sub-screen (Level 2) ─────────────────────────────────────────────
+// ── Category screen (Level 2) ─────────────────────────────────────────────────
 
-const CategoryScreen = ({ categorySlug, onBack, onClose }: CategoryScreenProps) => {
-  const config = getCategoryConfig(categorySlug);
-  if (!config) return null;
-
-  // All chips except the first "View All" chip
-  const subcategoryChips = config.chips.slice(1);
+const CategoryScreen = ({ categorySlug, onSubcategorySelect, onBack, onClose }: CategoryScreenProps) => {
+  const cat = getL1Category(categorySlug);
+  if (!cat) return null;
 
   return (
     <div className="flex flex-col h-full">
@@ -191,37 +168,94 @@ const CategoryScreen = ({ categorySlug, onBack, onClose }: CategoryScreenProps) 
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <span className="text-[15px] font-semibold text-white/90">{config.label}</span>
+        <span className="text-[15px] font-semibold text-white/90">{cat.label}</span>
       </div>
 
       {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto">
         {/* View All row */}
         <Link
-          to={`/category/${config.slug}`}
+          to={`/catalog?l1=${cat.slug}`}
           onClick={onClose}
           className="flex items-center gap-2 px-4 h-14 border-b border-white/10 hover:bg-white/[0.07] active:bg-white/10 transition-colors"
         >
           <span className="text-[15px] font-semibold text-[#22C55E]">
-            View All {config.label}
+            View All {cat.label}
           </span>
           <ChevronRight className="h-4 w-4 text-[#22C55E]/60 ml-auto" aria-hidden="true" />
         </Link>
 
-        {/* Subcategory rows — link to /category/:slug?sub=:subSlug */}
-        <nav aria-label={`${config.label} subcategories`}>
-          {subcategoryChips.map((chip) => (
+        {/* L2 subcategory rows */}
+        <nav aria-label={`${cat.label} subcategories`}>
+          {cat.subcategories.map((sub) => (
+            <button
+              key={sub.slug}
+              onClick={() => onSubcategorySelect(sub.slug)}
+              className="w-full flex items-center px-4 h-[52px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.05]"
+            >
+              <span className="text-[15px] font-medium text-white/80 flex-1 text-left">
+                {sub.label}
+              </span>
+              <ChevronRight className="h-4 w-4 text-white/30 shrink-0" aria-hidden="true" />
+            </button>
+          ))}
+        </nav>
+
+        {/* Safe-area spacer for iOS */}
+        <div style={{ height: "env(safe-area-inset-bottom, 16px)" }} />
+      </div>
+    </div>
+  );
+};
+
+// ── Subcategory screen (Level 3) ──────────────────────────────────────────────
+
+const SubcategoryScreen = ({ categorySlug, subcategorySlug, onBack, onClose }: SubcategoryScreenProps) => {
+  const cat = getL1Category(categorySlug);
+  const sub = getL2Category(categorySlug, subcategorySlug);
+  if (!cat || !sub) return null;
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header bar */}
+      <div className="h-14 px-4 flex items-center gap-3 border-b border-white/10 shrink-0">
+        <button
+          onClick={onBack}
+          className="p-2 -ml-2 text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+          aria-label={`Back to ${cat.label}`}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <div className="flex flex-col min-w-0">
+          <span className="text-[11px] text-white/40 truncate">{cat.label}</span>
+          <span className="text-[15px] font-semibold text-white/90 truncate">{sub.label}</span>
+        </div>
+      </div>
+
+      {/* Scrollable body */}
+      <div className="flex-1 overflow-y-auto">
+        {/* View All row */}
+        <Link
+          to={`/catalog?l1=${cat.slug}&l2=${sub.slug}`}
+          onClick={onClose}
+          className="flex items-center gap-2 px-4 h-14 border-b border-white/10 hover:bg-white/[0.07] active:bg-white/10 transition-colors"
+        >
+          <span className="text-[15px] font-semibold text-[#22C55E]">
+            View All {sub.label}
+          </span>
+          <ChevronRight className="h-4 w-4 text-[#22C55E]/60 ml-auto" aria-hidden="true" />
+        </Link>
+
+        {/* L3 item rows */}
+        <nav aria-label={`${sub.label} categories`}>
+          {sub.items.map((item) => (
             <Link
-              key={chip.label}
-              to={
-                chip.subSlug
-                  ? `/category/${config.slug}?sub=${chip.subSlug}`
-                  : `/catalog?q=${encodeURIComponent(chip.searchTerm ?? "")}`
-              }
+              key={item.slug}
+              to={`/catalog?l1=${cat.slug}&l2=${sub.slug}&l3=${item.slug}`}
               onClick={onClose}
               className="flex items-center px-6 h-12 text-sm font-medium text-white/75 hover:text-green-400 hover:bg-white/[0.07] border-b border-white/[0.05] transition-colors"
             >
-              {chip.label}
+              {item.label}
             </Link>
           ))}
         </nav>
@@ -237,12 +271,16 @@ const CategoryScreen = ({ categorySlug, onBack, onClose }: CategoryScreenProps) 
 
 const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDrawerProps) => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeSubcategory, setActiveSubcategory] = useState<string | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Reset sub-screen and handle focus / Escape key
+  // Reset sub-screens and handle focus / Escape key
   useEffect(() => {
     if (!open) {
-      const t = setTimeout(() => setActiveCategory(null), 300);
+      const t = setTimeout(() => {
+        setActiveCategory(null);
+        setActiveSubcategory(null);
+      }, 300);
       return () => clearTimeout(t);
     }
 
@@ -273,9 +311,35 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
     };
   }, [open]);
 
+  const handleCategorySelect = (slug: string) => {
+    setActiveSubcategory(null);
+    setActiveCategory(slug);
+  };
+
+  const handleSubcategorySelect = (slug: string) => {
+    setActiveSubcategory(slug);
+  };
+
+  const handleBackToMain = () => {
+    setActiveCategory(null);
+    setActiveSubcategory(null);
+  };
+
+  const handleBackToCategory = () => {
+    setActiveSubcategory(null);
+  };
+
+  // Determine which screen to render
+  const screen =
+    activeCategory === null
+      ? "main"
+      : activeSubcategory === null
+      ? "category"
+      : "subcategory";
+
   return createPortal(
     <>
-      {/* Backdrop overlay — all screen sizes */}
+      {/* Backdrop overlay */}
       <div
         className={[
           "fixed inset-0 z-[9998] bg-black/60 transition-opacity duration-300",
@@ -285,10 +349,10 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
         aria-hidden="true"
       />
 
-      {/* Drawer panel — all screen sizes */}
+      {/* Drawer panel — slides from LEFT */}
       <div
         className={[
-          "fixed top-0 left-0 z-[9999] h-[100dvh] w-[85vw] max-w-[360px]",
+          "fixed top-0 left-0 z-[9999] h-[100dvh] w-[85vw] max-w-[380px]",
           "bg-[#0A1930] border-r border-white/10 shadow-2xl flex flex-col",
           "transition-transform duration-300 ease-in-out",
           open ? "translate-x-0" : "-translate-x-full",
@@ -298,19 +362,29 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
         aria-label="Navigation menu"
         style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
-        {activeCategory === null ? (
+        {screen === "main" && (
           <MainScreen
             user={user}
             dashboardPath={dashboardPath}
             onLogout={onLogout}
             onClose={onClose}
-            onCategorySelect={setActiveCategory}
+            onCategorySelect={handleCategorySelect}
             closeBtnRef={closeBtnRef}
           />
-        ) : (
+        )}
+        {screen === "category" && activeCategory !== null && (
           <CategoryScreen
             categorySlug={activeCategory}
-            onBack={() => setActiveCategory(null)}
+            onSubcategorySelect={handleSubcategorySelect}
+            onBack={handleBackToMain}
+            onClose={onClose}
+          />
+        )}
+        {screen === "subcategory" && activeCategory !== null && activeSubcategory !== null && (
+          <SubcategoryScreen
+            categorySlug={activeCategory}
+            subcategorySlug={activeSubcategory}
+            onBack={handleBackToCategory}
             onClose={onClose}
           />
         )}
