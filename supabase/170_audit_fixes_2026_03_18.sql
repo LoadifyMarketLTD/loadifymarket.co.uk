@@ -58,7 +58,7 @@ CREATE POLICY "seller_profiles_select" ON seller_profiles
   FOR SELECT
   USING (
     auth.uid() = "userId"
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 
 -- ════════════════════════════════════════════════════════════════
@@ -91,8 +91,8 @@ COMMENT ON TABLE stripe_events IS
 -- Enable RLS — only service role (webhook) and admins write
 ALTER TABLE stripe_events ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "stripe_events_admin_read"  ON stripe_events FOR SELECT USING (is_admin_or_owner());
-CREATE POLICY "stripe_events_admin_write" ON stripe_events FOR ALL   USING (is_admin_or_owner()) WITH CHECK (is_admin_or_owner());
+CREATE POLICY "stripe_events_admin_read"  ON stripe_events FOR SELECT USING (is_admin());
+CREATE POLICY "stripe_events_admin_write" ON stripe_events FOR ALL   USING (is_admin()) WITH CHECK (is_admin());
 
 -- ════════════════════════════════════════════════════════════════
 -- 4. ATOMIC STOCK DECREMENT — overselling guard

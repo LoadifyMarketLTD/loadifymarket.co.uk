@@ -51,10 +51,10 @@ export const handler: Handler = async (event) => {
     .eq('id', user.id)
     .single<{ role: string }>();
 
-  // Admin / owner accounts bypass the entire seller activation pipeline.
+  // Admin accounts bypass the entire seller activation pipeline.
   // They are never blocked by seller setup requirements and always appear
   // as "active" from the perspective of RequireSeller.
-  if (userRow?.role === 'admin' || userRow?.role === 'owner') {
+  if (userRow?.role === 'admin') {
     return {
       statusCode: 200,
       body: JSON.stringify({

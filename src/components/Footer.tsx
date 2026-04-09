@@ -23,6 +23,7 @@ const FOOTER_SECTIONS = [
     title: "For Buyers",
     links: [
       { to: "/catalog", label: "Browse Marketplace" },
+      { to: "/trade-account", label: "Trade Account" },
       { to: "/category/health-beauty", label: "Health & Beauty" },
       { to: "/category/wholesale-clothing", label: "Wholesale Clothing" },
       { to: "/category/kitchenware", label: "Kitchenware" },

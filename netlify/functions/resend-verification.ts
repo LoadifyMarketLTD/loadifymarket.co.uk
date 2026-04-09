@@ -88,7 +88,7 @@ export const handler: Handler = async (event) => {
     if (!caller) {
       return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
     }
-    if (caller.role !== 'admin' && caller.role !== 'owner') {
+    if (caller.role !== 'admin') {
       return { statusCode: 403, body: JSON.stringify({ error: 'Forbidden – admin role required' }) };
     }
     // ─────────────────────────────────────────────────────────────────────────

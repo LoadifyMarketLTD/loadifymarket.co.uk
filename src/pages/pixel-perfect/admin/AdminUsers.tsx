@@ -200,9 +200,14 @@ const AdminUsers = () => {
   }, []);
 
   const toggleBlock = async (userId: string, currentlyActive: boolean, targetRole: string) => {
-    // Admin accounts are protected — they can never be suspended through the UI.
-    if (targetRole === 'admin') {
-      toast({ title: "Protected account", description: "Admin accounts cannot be suspended.", variant: "destructive" });
+    // Prevent an admin from suspending their own account.
+    if (userId === currentUser?.id) {
+      toast({ title: "Not allowed", description: "You cannot suspend your own account.", variant: "destructive" });
+      return;
+    }
+    // Safety guard — direct DB access is required to re-enable a suspended admin.
+    if (targetRole === 'admin' && !currentlyActive) {
+      toast({ title: "Use DB console", description: "Reactivating an admin account requires direct database access.", variant: "destructive" });
       return;
     }
     setActionLoading(userId);
@@ -226,10 +231,14 @@ const AdminUsers = () => {
   };
 
   const changeRole = async (userId: string, newRole: string, currentRole: string) => {
-    // Admin role is protected — it cannot be changed through the admin UI.
-    // To demote an admin, update the DB directly.
-    if (currentRole === 'admin') {
-      toast({ title: "Protected account", description: "Admin role cannot be changed through the admin UI.", variant: "destructive" });
+    // Prevent an admin from changing their own role (self-lockout protection).
+    if (userId === currentUser?.id) {
+      toast({ title: "Not allowed", description: "You cannot change your own role.", variant: "destructive" });
+      return;
+    }
+    // Changing away from admin requires direct DB access for safety.
+    if (currentRole === 'admin' && newRole !== 'admin') {
+      toast({ title: "Use DB console", description: "Demoting an admin account requires direct database access.", variant: "destructive" });
       return;
     }
     setRoleChanging(true);
@@ -509,11 +518,11 @@ const AdminUsers = () => {
                 {/* ── Admin actions ─────────────────────────────────────────── */}
                 <section>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Admin Actions</h3>
-                  {detail.role === 'admin' ? (
-                    /* Admin accounts are fully protected — no destructive actions */
+                  {detail.role === 'admin' && detail.id === currentUser?.id ? (
+                    /* Cannot act on your own admin account */
                     <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 rounded-lg border border-red-500/20 bg-red-500/5">
                       <Lock className="h-4 w-4 text-red-500 shrink-0" />
-                      <span>Admin accounts are protected. No actions can be performed through this UI.</span>
+                      <span>You cannot modify your own account through this UI.</span>
                     </div>
                   ) : (
                     <div className="flex flex-wrap gap-3">

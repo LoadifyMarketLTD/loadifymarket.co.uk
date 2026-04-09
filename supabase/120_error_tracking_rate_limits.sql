@@ -95,7 +95,7 @@ CREATE POLICY "admin_read_csp_reports"
     EXISTS (
       SELECT 1 FROM users u
       WHERE u.id = auth.uid()
-        AND u.role IN ('admin', 'owner')
+        AND u.role IN ('admin')
     )
   );
 
@@ -105,6 +105,6 @@ CREATE POLICY "admin_read_error_reports"
     EXISTS (
       SELECT 1 FROM users u
       WHERE u.id = auth.uid()
-        AND u.role IN ('admin', 'owner')
+        AND u.role IN ('admin')
     )
   );

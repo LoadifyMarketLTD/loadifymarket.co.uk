@@ -58,12 +58,12 @@ CREATE POLICY "product_analytics_insert"
 CREATE POLICY "product_analytics_update"
   ON product_analytics
   FOR UPDATE
-  USING (is_admin_or_owner());
+  USING (is_admin());
 
 CREATE POLICY "product_analytics_delete"
   ON product_analytics
   FOR DELETE
-  USING (is_admin_or_owner());
+  USING (is_admin());
 
 -- ── 3. product_shipping ──────────────────────────────────────────────────────
 -- Insert / update / delete require the authenticated user to own the product.
@@ -82,7 +82,7 @@ CREATE POLICY product_shipping_auth_insert
       WHERE products.id = product_shipping.product_id
         AND products."sellerId" = auth.uid()
     )
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 
 CREATE POLICY product_shipping_auth_update
@@ -95,7 +95,7 @@ CREATE POLICY product_shipping_auth_update
       WHERE products.id = product_shipping.product_id
         AND products."sellerId" = auth.uid()
     )
-    OR is_admin_or_owner()
+    OR is_admin()
   )
   WITH CHECK (
     EXISTS (
@@ -103,7 +103,7 @@ CREATE POLICY product_shipping_auth_update
       WHERE products.id = product_shipping.product_id
         AND products."sellerId" = auth.uid()
     )
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 
 CREATE POLICY product_shipping_auth_delete
@@ -116,5 +116,5 @@ CREATE POLICY product_shipping_auth_delete
       WHERE products.id = product_shipping.product_id
         AND products."sellerId" = auth.uid()
     )
-    OR is_admin_or_owner()
+    OR is_admin()
   );

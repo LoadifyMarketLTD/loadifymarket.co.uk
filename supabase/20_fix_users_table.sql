@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS users (
   id                UUID        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email             TEXT        UNIQUE NOT NULL,
   role              TEXT        NOT NULL DEFAULT 'buyer'
-                      CHECK (role IN ('guest','buyer','seller','admin','owner')),
+                      CHECK (role IN ('buyer','seller','admin')),
   "marketplaceRole" TEXT        CHECK ("marketplaceRole" IN ('carrier','broker','seller')),
   "firstName"       TEXT,
   "lastName"        TEXT,
@@ -184,7 +184,7 @@ END $$;
 CREATE OR REPLACE FUNCTION handle_new_user_profile()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF NEW.role IN ('buyer','guest') THEN
+  IF NEW.role = 'buyer' THEN
     INSERT INTO buyer_profiles ("userId") VALUES (NEW.id) ON CONFLICT DO NOTHING;
   ELSIF NEW.role = 'seller' THEN
     INSERT INTO seller_profiles ("userId") VALUES (NEW.id) ON CONFLICT DO NOTHING;
@@ -214,11 +214,11 @@ ALTER TABLE seller_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE seller_stores   ENABLE ROW LEVEL SECURITY;
 
 -- Helper functions (no-ops if they already exist)
-CREATE OR REPLACE FUNCTION is_admin_or_owner()
+CREATE OR REPLACE FUNCTION is_admin()
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
     SELECT 1 FROM users
-    WHERE id = auth.uid() AND role IN ('admin','owner')
+    WHERE id = auth.uid() AND role = 'admin'
   );
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
@@ -232,21 +232,21 @@ BEGIN
   DROP POLICY IF EXISTS "users_delete" ON users;
 
   CREATE POLICY "users_select" ON users FOR SELECT
-    USING (auth.uid() = id OR is_admin_or_owner());
+    USING (auth.uid() = id OR is_admin());
   CREATE POLICY "users_update" ON users FOR UPDATE
-    USING (auth.uid() = id OR is_admin_or_owner());
+    USING (auth.uid() = id OR is_admin());
   -- Allow unauthenticated inserts so signUp can write the profile row
   -- before email confirmation (session may be null at that point).
   CREATE POLICY "users_insert" ON users FOR INSERT
     WITH CHECK (TRUE);
   CREATE POLICY "users_delete" ON users FOR DELETE
-    USING (is_admin_or_owner());
+    USING (is_admin());
 
   -- buyer_profiles
   DROP POLICY IF EXISTS "buyer_profiles_all" ON buyer_profiles;
   CREATE POLICY "buyer_profiles_all" ON buyer_profiles FOR ALL
-    USING (auth.uid() = "userId" OR is_admin_or_owner())
-    WITH CHECK (auth.uid() = "userId" OR is_admin_or_owner());
+    USING (auth.uid() = "userId" OR is_admin())
+    WITH CHECK (auth.uid() = "userId" OR is_admin());
 
   -- seller_profiles
   DROP POLICY IF EXISTS "seller_profiles_select" ON seller_profiles;
@@ -255,20 +255,20 @@ BEGIN
   DROP POLICY IF EXISTS "seller_profiles_delete" ON seller_profiles;
   CREATE POLICY "seller_profiles_select" ON seller_profiles FOR SELECT USING (TRUE);
   CREATE POLICY "seller_profiles_update" ON seller_profiles FOR UPDATE
-    USING (auth.uid() = "userId" OR is_admin_or_owner());
+    USING (auth.uid() = "userId" OR is_admin());
   CREATE POLICY "seller_profiles_insert" ON seller_profiles FOR INSERT
-    WITH CHECK (auth.uid() = "userId" OR is_admin_or_owner());
+    WITH CHECK (auth.uid() = "userId" OR is_admin());
   CREATE POLICY "seller_profiles_delete" ON seller_profiles FOR DELETE
-    USING (is_admin_or_owner());
+    USING (is_admin());
 
   -- seller_stores
   DROP POLICY IF EXISTS "seller_stores_select" ON seller_stores;
   DROP POLICY IF EXISTS "seller_stores_manage" ON seller_stores;
   CREATE POLICY "seller_stores_select" ON seller_stores FOR SELECT
-    USING ("isActive" = TRUE OR auth.uid() = "userId" OR is_admin_or_owner());
+    USING ("isActive" = TRUE OR auth.uid() = "userId" OR is_admin());
   CREATE POLICY "seller_stores_manage" ON seller_stores FOR ALL
-    USING (auth.uid() = "userId" OR is_admin_or_owner())
-    WITH CHECK (auth.uid() = "userId" OR is_admin_or_owner());
+    USING (auth.uid() = "userId" OR is_admin())
+    WITH CHECK (auth.uid() = "userId" OR is_admin());
 END $$;
 
 -- ──────────────────────────────────────────────────────────────

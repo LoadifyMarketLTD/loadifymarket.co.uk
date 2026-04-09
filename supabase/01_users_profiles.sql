@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
   id                UUID        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email             TEXT        UNIQUE NOT NULL,
   role              TEXT        NOT NULL DEFAULT 'buyer'
-                      CHECK (role IN ('guest','buyer','seller','admin','owner')),
+                      CHECK (role IN ('buyer','seller','admin')),
   "marketplaceRole" TEXT        CHECK ("marketplaceRole" IN ('carrier','broker','seller')),
   "firstName"       TEXT,
   "lastName"        TEXT,
@@ -142,7 +142,7 @@ CREATE TRIGGER trg_seller_verifications_updatedAt BEFORE UPDATE ON seller_verifi
 CREATE OR REPLACE FUNCTION handle_new_user_profile()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF NEW.role IN ('buyer','guest') THEN
+  IF NEW.role = 'buyer' THEN
     INSERT INTO buyer_profiles ("userId") VALUES (NEW.id) ON CONFLICT DO NOTHING;
   ELSIF NEW.role = 'seller' THEN
     INSERT INTO seller_profiles ("userId") VALUES (NEW.id) ON CONFLICT DO NOTHING;

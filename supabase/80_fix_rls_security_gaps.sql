@@ -40,7 +40,7 @@ CREATE POLICY "order_items_insert" ON order_items
       WHERE o.id = "orderId"
         AND (o."buyerId" = auth.uid() OR o."sellerId" = auth.uid())
     )
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 
 -- ── 2. Tighten payment_sessions writes ───────────────────────────────────────
@@ -50,5 +50,5 @@ DROP POLICY IF EXISTS "payment_sessions_write" ON payment_sessions;
 -- Admin/owner access (needed for back-office operations)
 CREATE POLICY "payment_sessions_admin_write" ON payment_sessions
   FOR ALL
-  USING (is_admin_or_owner())
-  WITH CHECK (is_admin_or_owner());
+  USING (is_admin())
+  WITH CHECK (is_admin());

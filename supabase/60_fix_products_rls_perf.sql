@@ -7,7 +7,7 @@
 --
 --   USING (("isActive" = TRUE AND "isApproved" = TRUE)
 --          OR auth.uid() = "sellerId"
---          OR is_admin_or_owner())
+--          OR is_admin())
 --
 -- The first clause requires NO auth call, so unauthenticated users can read
 -- any product where isActive=true AND isApproved=true.  The RLS policy was
@@ -39,7 +39,7 @@ CREATE POLICY "products_select" ON products FOR SELECT
   USING (
     ("isActive" = TRUE AND "isApproved" = TRUE)
     OR (select auth.uid()) = "sellerId"
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 
 -- Only the authenticated seller who owns the product may insert it.
@@ -48,8 +48,8 @@ CREATE POLICY "products_insert" ON products FOR INSERT
 
 -- Sellers may update their own products; admins/owner may update any product.
 CREATE POLICY "products_update" ON products FOR UPDATE
-  USING ((select auth.uid()) = "sellerId" OR is_admin_or_owner());
+  USING ((select auth.uid()) = "sellerId" OR is_admin());
 
 -- Sellers may delete their own products; admins/owner may delete any product.
 CREATE POLICY "products_delete" ON products FOR DELETE
-  USING ((select auth.uid()) = "sellerId" OR is_admin_or_owner());
+  USING ((select auth.uid()) = "sellerId" OR is_admin());
