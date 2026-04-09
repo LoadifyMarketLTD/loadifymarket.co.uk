@@ -342,7 +342,7 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
       {/* Backdrop overlay */}
       <div
         className={[
-          "fixed inset-0 z-[9998] bg-black/60 transition-opacity duration-300 lg:hidden",
+          "fixed inset-0 z-[9998] bg-black/60 transition-opacity duration-300",
           open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
         ].join(" ")}
         onClick={onClose}
@@ -352,9 +352,9 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
       {/* Drawer panel — slides from LEFT */}
       <div
         className={[
-          "fixed top-0 left-0 z-[9999] h-[100dvh] w-[85vw] max-w-[340px]",
+          "fixed top-0 left-0 z-[9999] h-[100dvh] w-[85vw] max-w-[380px]",
           "bg-[#0A1930] border-r border-white/10 shadow-2xl flex flex-col",
-          "transition-transform duration-300 ease-in-out lg:hidden",
+          "transition-transform duration-300 ease-in-out",
           open ? "translate-x-0" : "-translate-x-full",
         ].join(" ")}
         role="dialog"

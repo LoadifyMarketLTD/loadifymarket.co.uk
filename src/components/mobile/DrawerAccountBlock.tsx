@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { ShoppingBag, MessageSquare, LifeBuoy, LayoutDashboard, LogOut } from "lucide-react";
 import type { User } from "@/types";
 
 interface DrawerAccountBlockProps {
@@ -17,8 +18,14 @@ const DrawerAccountBlock = ({
 }: DrawerAccountBlockProps) => {
   if (user) {
     const initial = user.firstName?.[0]?.toUpperCase() ?? user.email?.[0]?.toUpperCase() ?? "U";
+    const ordersPath =
+      user.role === "seller" ? "/pp/seller/orders" :
+      user.role === "admin"  ? "/pp/admin"          :
+      "/pp/buyer/orders";
+
     return (
       <div className="p-4 space-y-3">
+        {/* Avatar + name */}
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-green-500/20 border border-green-400/40 flex items-center justify-center text-green-400 font-bold text-sm shrink-0">
             {initial}
@@ -27,40 +34,69 @@ const DrawerAccountBlock = ({
             Hi, {user.firstName ?? "there"}
           </span>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="flex-1 h-11 text-white/80 hover:text-green-400 hover:bg-white/10 font-medium"
-            asChild
+
+        {/* Primary links */}
+        <div className="space-y-0.5">
+          <Link
+            to={dashboardPath}
+            onClick={onClose}
+            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-white/80 hover:text-green-400 hover:bg-white/[0.07] transition-colors"
           >
-            <Link to={dashboardPath} onClick={onClose}>
-              {user.role === "admin" ? "Admin Hub" : "Dashboard"}
-            </Link>
-          </Button>
+            <LayoutDashboard className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
+            {user.role === "admin" ? "Admin Hub" : "My Account"}
+          </Link>
+          <Link
+            to={ordersPath}
+            onClick={onClose}
+            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-white/80 hover:text-green-400 hover:bg-white/[0.07] transition-colors"
+          >
+            <ShoppingBag className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
+            Orders
+          </Link>
+          <Link
+            to="/pp/buyer/messages"
+            onClick={onClose}
+            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-white/80 hover:text-green-400 hover:bg-white/[0.07] transition-colors"
+          >
+            <MessageSquare className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
+            Messages
+          </Link>
+          <Link
+            to="/contact"
+            onClick={onClose}
+            className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-white/80 hover:text-green-400 hover:bg-white/[0.07] transition-colors"
+          >
+            <LifeBuoy className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
+            Support
+          </Link>
+        </div>
+
+        {/* Action row */}
+        <div className="flex gap-2 pt-1">
+          {user.role !== "admin" && (
+            <Button
+              size="sm"
+              className="flex-1 h-10 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-300 hover:to-green-400 text-black font-semibold rounded-full shadow-lg transition-all duration-300"
+              asChild
+            >
+              <Link to="/pp/seller" onClick={onClose}>
+                Start Selling
+              </Link>
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 h-11 border-white/20 text-white/80 hover:bg-white/10 hover:text-white bg-transparent font-medium"
+            className="flex-1 h-10 border-white/20 text-white/80 hover:bg-white/10 hover:text-white bg-transparent font-medium rounded-full"
             onClick={() => {
               onClose();
               onLogout();
             }}
           >
+            <LogOut className="h-4 w-4 mr-1.5" aria-hidden="true" />
             Sign Out
           </Button>
         </div>
-        {user.role !== "admin" && (
-          <Button
-            size="sm"
-            className="w-full h-11 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-300 hover:to-green-400 text-black font-semibold rounded-full shadow-lg transition-all duration-300"
-            asChild
-          >
-            <Link to="/pp/seller" onClick={onClose}>
-              Start Selling
-            </Link>
-          </Button>
-        )}
       </div>
     );
   }
