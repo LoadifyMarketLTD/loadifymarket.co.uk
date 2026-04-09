@@ -231,7 +231,7 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
                   to={`/catalog?l1=${cat.slug}`}
                   className="flex items-center gap-1.5 shrink-0 text-sm font-semibold text-white/70 hover:text-green-400 hover:bg-white/10 px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
                 >
-                  <Icon className={`h-4 w-4 ${cat.iconColor} opacity-80`} aria-hidden="true" />
+                  <Icon className={`h-4 w-4 ${cat.iconColor}`} aria-hidden="true" />
                   {cat.label}
                 </Link>
               );

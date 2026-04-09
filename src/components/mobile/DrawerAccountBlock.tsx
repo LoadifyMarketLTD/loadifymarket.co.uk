@@ -18,9 +18,9 @@ const DrawerAccountBlock = ({
 }: DrawerAccountBlockProps) => {
   if (user) {
     const initial = user.firstName?.[0]?.toUpperCase() ?? user.email?.[0]?.toUpperCase() ?? "U";
-    const ordersPath =
+    const ordersHref =
       user.role === "seller" ? "/pp/seller/orders" :
-      user.role === "admin"  ? "/pp/admin"          :
+      user.role === "admin"  ? "/pp/admin/orders"  :
       "/pp/buyer/orders";
 
     return (
@@ -46,7 +46,7 @@ const DrawerAccountBlock = ({
             {user.role === "admin" ? "Admin Hub" : "My Account"}
           </Link>
           <Link
-            to={ordersPath}
+            to={ordersHref}
             onClick={onClose}
             className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-white/80 hover:text-green-400 hover:bg-white/[0.07] transition-colors"
           >
