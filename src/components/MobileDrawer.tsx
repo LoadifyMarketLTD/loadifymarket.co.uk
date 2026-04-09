@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { X, ArrowLeft, ChevronRight } from "lucide-react";
-import { CATEGORY_TREE, getL1Category, getL2Category } from "@/data/category-tree";
+import CATEGORY_CONFIG, { getCategoryConfig } from "@/lib/category-config";
 import DrawerAccountBlock from "@/components/mobile/DrawerAccountBlock";
 import DrawerCTACards from "@/components/mobile/DrawerCTACards";
 import logo from "@/assets/loadify-logo.svg";
@@ -29,14 +29,6 @@ interface MainScreenProps {
 
 interface CategoryScreenProps {
   categorySlug: string;
-  onSubcategorySelect: (slug: string) => void;
-  onBack: () => void;
-  onClose: () => void;
-}
-
-interface SubcategoryScreenProps {
-  categorySlug: string;
-  subcategorySlug: string;
   onBack: () => void;
   onClose: () => void;
 }
@@ -99,7 +91,7 @@ const MainScreen = ({
         Browse Categories
       </p>
       <nav aria-label="Product categories">
-        {CATEGORY_TREE.map((cat) => {
+        {CATEGORY_CONFIG.map((cat) => {
           const Icon = cat.icon;
           return (
             <button
@@ -153,8 +145,8 @@ const MainScreen = ({
 
 // ── Category screen (Level 2) ─────────────────────────────────────────────────
 
-const CategoryScreen = ({ categorySlug, onSubcategorySelect, onBack, onClose }: CategoryScreenProps) => {
-  const cat = getL1Category(categorySlug);
+const CategoryScreen = ({ categorySlug, onBack, onClose }: CategoryScreenProps) => {
+  const cat = getCategoryConfig(categorySlug);
   if (!cat) return null;
 
   return (
@@ -175,7 +167,7 @@ const CategoryScreen = ({ categorySlug, onSubcategorySelect, onBack, onClose }: 
       <div className="flex-1 overflow-y-auto">
         {/* View All row */}
         <Link
-          to={`/catalog?l1=${cat.slug}`}
+          to={`/category/${cat.slug}`}
           onClick={onClose}
           className="flex items-center gap-2 px-4 h-14 border-b border-white/10 hover:bg-white/[0.07] active:bg-white/10 transition-colors"
         >
@@ -185,77 +177,18 @@ const CategoryScreen = ({ categorySlug, onSubcategorySelect, onBack, onClose }: 
           <ChevronRight className="h-4 w-4 text-[#22C55E]/60 ml-auto" aria-hidden="true" />
         </Link>
 
-        {/* L2 subcategory rows */}
+        {/* Chip rows — direct links */}
         <nav aria-label={`${cat.label} subcategories`}>
-          {cat.subcategories.map((sub) => (
-            <button
-              key={sub.slug}
-              onClick={() => onSubcategorySelect(sub.slug)}
-              className="w-full flex items-center px-4 h-[52px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.05]"
+          {cat.chips.map((chip) => (
+            <Link
+              key={chip.label}
+              to={`/category/${cat.slug}${chip.subSlug ? `?sub=${chip.subSlug}` : ''}`}
+              onClick={onClose}
+              className="flex items-center px-4 h-[52px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.05]"
             >
               <span className="text-[15px] font-medium text-white/80 flex-1 text-left">
-                {sub.label}
+                {chip.label}
               </span>
-              <ChevronRight className="h-4 w-4 text-white/30 shrink-0" aria-hidden="true" />
-            </button>
-          ))}
-        </nav>
-
-        {/* Safe-area spacer for iOS */}
-        <div style={{ height: "env(safe-area-inset-bottom, 16px)" }} />
-      </div>
-    </div>
-  );
-};
-
-// ── Subcategory screen (Level 3) ──────────────────────────────────────────────
-
-const SubcategoryScreen = ({ categorySlug, subcategorySlug, onBack, onClose }: SubcategoryScreenProps) => {
-  const cat = getL1Category(categorySlug);
-  const sub = getL2Category(categorySlug, subcategorySlug);
-  if (!cat || !sub) return null;
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Header bar */}
-      <div className="h-14 px-4 flex items-center gap-3 border-b border-white/10 shrink-0">
-        <button
-          onClick={onBack}
-          className="p-2 -ml-2 text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10"
-          aria-label={`Back to ${cat.label}`}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="flex flex-col min-w-0">
-          <span className="text-[11px] text-white/40 truncate">{cat.label}</span>
-          <span className="text-[15px] font-semibold text-white/90 truncate">{sub.label}</span>
-        </div>
-      </div>
-
-      {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto">
-        {/* View All row */}
-        <Link
-          to={`/catalog?l1=${cat.slug}&l2=${sub.slug}`}
-          onClick={onClose}
-          className="flex items-center gap-2 px-4 h-14 border-b border-white/10 hover:bg-white/[0.07] active:bg-white/10 transition-colors"
-        >
-          <span className="text-[15px] font-semibold text-[#22C55E]">
-            View All {sub.label}
-          </span>
-          <ChevronRight className="h-4 w-4 text-[#22C55E]/60 ml-auto" aria-hidden="true" />
-        </Link>
-
-        {/* L3 item rows */}
-        <nav aria-label={`${sub.label} categories`}>
-          {sub.items.map((item) => (
-            <Link
-              key={item.slug}
-              to={`/catalog?l1=${cat.slug}&l2=${sub.slug}&l3=${item.slug}`}
-              onClick={onClose}
-              className="flex items-center px-6 h-12 text-sm font-medium text-white/75 hover:text-green-400 hover:bg-white/[0.07] border-b border-white/[0.05] transition-colors"
-            >
-              {item.label}
             </Link>
           ))}
         </nav>
@@ -271,7 +204,6 @@ const SubcategoryScreen = ({ categorySlug, subcategorySlug, onBack, onClose }: S
 
 const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDrawerProps) => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [activeSubcategory, setActiveSubcategory] = useState<string | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
   // Reset sub-screens and handle focus / Escape key
@@ -279,7 +211,6 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
     if (!open) {
       const t = setTimeout(() => {
         setActiveCategory(null);
-        setActiveSubcategory(null);
       }, 300);
       return () => clearTimeout(t);
     }
@@ -312,30 +243,14 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
   }, [open]);
 
   const handleCategorySelect = (slug: string) => {
-    setActiveSubcategory(null);
     setActiveCategory(slug);
-  };
-
-  const handleSubcategorySelect = (slug: string) => {
-    setActiveSubcategory(slug);
   };
 
   const handleBackToMain = () => {
     setActiveCategory(null);
-    setActiveSubcategory(null);
   };
 
-  const handleBackToCategory = () => {
-    setActiveSubcategory(null);
-  };
-
-  // Determine which screen to render
-  const screen =
-    activeCategory === null
-      ? "main"
-      : activeSubcategory === null
-      ? "category"
-      : "subcategory";
+  const screen = activeCategory === null ? "main" : "category";
 
   return createPortal(
     <>
@@ -375,16 +290,7 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
         {screen === "category" && activeCategory !== null && (
           <CategoryScreen
             categorySlug={activeCategory}
-            onSubcategorySelect={handleSubcategorySelect}
             onBack={handleBackToMain}
-            onClose={onClose}
-          />
-        )}
-        {screen === "subcategory" && activeCategory !== null && activeSubcategory !== null && (
-          <SubcategoryScreen
-            categorySlug={activeCategory}
-            subcategorySlug={activeSubcategory}
-            onBack={handleBackToCategory}
             onClose={onClose}
           />
         )}

@@ -64,6 +64,7 @@ const SellerShipments = () => {
   const [creating, setCreating] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
+  const [podUploading, setPodUploading] = useState(false);
 
   const loadShipments = useCallback(async () => {
     if (!user) return;
@@ -173,6 +174,30 @@ const SellerShipments = () => {
       toast({ title: "Failed to update status", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  const handlePodUpload = async (file: File, shipmentId: string) => {
+    setPodUploading(true);
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('shipmentId', shipmentId);
+      const res = await fetch('/.netlify/functions/upload-proof-of-delivery', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      setShipments((prev) => prev.map((s) => s.id === shipmentId ? { ...s, proof_of_delivery_url: data.url } : s));
+      if (selected?.id === shipmentId) setSelected((s) => s ? { ...s, proof_of_delivery_url: data.url } : s);
+      toast({ title: 'Proof of delivery uploaded' });
+    } catch (err) {
+      toast({ title: 'Upload failed', description: (err as Error).message, variant: 'destructive' });
+    } finally {
+      setPodUploading(false);
     }
   };
 
@@ -314,12 +339,28 @@ const SellerShipments = () => {
                   <div><span className="text-muted-foreground">Order</span><p className="font-medium text-foreground">{selected.orders?.orderNumber ?? selected.order_id.slice(0, 8)}</p></div>
                   <div><span className="text-muted-foreground">Dispatched</span><p className="font-medium text-foreground">{selected.dispatched_at ? new Date(selected.dispatched_at).toLocaleDateString("en-GB") : "—"}</p></div>
                 </div>
-                {selected.proof_of_delivery_url && (
-                  <div className="rounded-lg bg-muted/50 border border-border p-3">
-                    <p className="text-xs font-semibold text-muted-foreground mb-1">PROOF OF DELIVERY</p>
-                    <a href={selected.proof_of_delivery_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">View document</a>
+                <div className="rounded-lg bg-muted/50 border border-border p-3">
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">PROOF OF DELIVERY</p>
+                    {selected.proof_of_delivery_url ? (
+                      <a href={selected.proof_of_delivery_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">View document</a>
+                    ) : (
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          className="sr-only"
+                          disabled={podUploading}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handlePodUpload(file, selected.id);
+                          }}
+                        />
+                        <Button size="sm" variant="outline" disabled={podUploading} asChild>
+                          <span>{podUploading ? 'Uploading...' : 'Upload POD'}</span>
+                        </Button>
+                      </label>
+                    )}
                   </div>
-                )}
                 <div className="rounded-lg bg-muted/50 border border-border p-3">
                   <p className="text-xs font-semibold text-muted-foreground mb-1">SHIPMENT CREATED</p>
                   <p className="text-sm text-foreground flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {new Date(selected.created_at).toLocaleString("en-GB")}</p>
