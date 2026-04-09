@@ -49,7 +49,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION is_admin_or_owner()
+CREATE OR REPLACE FUNCTION is_admin()
 RETURNS BOOLEAN
 LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = ''
@@ -64,19 +64,15 @@ BEGIN
 END;
 $$;
 
--- Alias kept for compatibility; identical to is_admin_or_owner().
+-- Backward-compat alias: is_owner() was the old name; removed from role model.
+-- Any policy still calling is_owner() will correctly defer to is_admin().
 CREATE OR REPLACE FUNCTION is_owner()
 RETURNS BOOLEAN
 LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.users
-    WHERE id = auth.uid()
-      AND role = 'admin'
-      AND "isActive" = TRUE
-  );
+  RETURN is_admin();
 END;
 $$;
 
@@ -1336,45 +1332,45 @@ ALTER TABLE saved_searches          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE promoted_listings       ENABLE ROW LEVEL SECURITY;
 
 -- USERS
-CREATE POLICY "users_select" ON users FOR SELECT USING (auth.uid() = id OR is_admin_or_owner());
-CREATE POLICY "users_update" ON users FOR UPDATE USING (auth.uid() = id OR is_admin_or_owner());
+CREATE POLICY "users_select" ON users FOR SELECT USING (auth.uid() = id OR is_admin());
+CREATE POLICY "users_update" ON users FOR UPDATE USING (auth.uid() = id OR is_admin());
 CREATE POLICY "users_insert" ON users FOR INSERT WITH CHECK (TRUE);
-CREATE POLICY "users_delete" ON users FOR DELETE USING (is_admin_or_owner());
+CREATE POLICY "users_delete" ON users FOR DELETE USING (is_admin());
 -- BUYER PROFILES
 CREATE POLICY "buyer_profiles_all" ON buyer_profiles FOR ALL
-  USING (auth.uid() = "userId" OR is_admin_or_owner())
-  WITH CHECK (auth.uid() = "userId" OR is_admin_or_owner());
+  USING (auth.uid() = "userId" OR is_admin())
+  WITH CHECK (auth.uid() = "userId" OR is_admin());
 -- SELLER PROFILES
 CREATE POLICY "seller_profiles_select" ON seller_profiles FOR SELECT USING (TRUE);
 CREATE POLICY "seller_profiles_update" ON seller_profiles FOR UPDATE
-  USING (auth.uid() = "userId" OR is_admin_or_owner());
+  USING (auth.uid() = "userId" OR is_admin());
 CREATE POLICY "seller_profiles_insert" ON seller_profiles FOR INSERT
-  WITH CHECK (auth.uid() = "userId" OR is_admin_or_owner());
-CREATE POLICY "seller_profiles_delete" ON seller_profiles FOR DELETE USING (is_admin_or_owner());
+  WITH CHECK (auth.uid() = "userId" OR is_admin());
+CREATE POLICY "seller_profiles_delete" ON seller_profiles FOR DELETE USING (is_admin());
 -- SELLER STORES
 CREATE POLICY "seller_stores_select" ON seller_stores FOR SELECT
-  USING ("isActive" = TRUE OR auth.uid() = "userId" OR is_admin_or_owner());
+  USING ("isActive" = TRUE OR auth.uid() = "userId" OR is_admin());
 CREATE POLICY "seller_stores_manage" ON seller_stores FOR ALL
-  USING (auth.uid() = "userId" OR is_admin_or_owner())
-  WITH CHECK (auth.uid() = "userId" OR is_admin_or_owner());
+  USING (auth.uid() = "userId" OR is_admin())
+  WITH CHECK (auth.uid() = "userId" OR is_admin());
 -- SELLER VERIFICATIONS
 CREATE POLICY "seller_verifications_select" ON seller_verifications FOR SELECT
-  USING (auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING (auth.uid() = "sellerId" OR is_admin());
 CREATE POLICY "seller_verifications_insert" ON seller_verifications FOR INSERT
-  WITH CHECK (auth.uid() = "sellerId" OR is_admin_or_owner());
+  WITH CHECK (auth.uid() = "sellerId" OR is_admin());
 CREATE POLICY "seller_verifications_update" ON seller_verifications FOR UPDATE
-  USING (is_admin_or_owner());
+  USING (is_admin());
 -- CATEGORIES
 CREATE POLICY "categories_select" ON categories FOR SELECT USING (TRUE);
 CREATE POLICY "categories_manage" ON categories FOR ALL
-  USING (is_admin_or_owner()) WITH CHECK (is_admin_or_owner());
+  USING (is_admin()) WITH CHECK (is_admin());
 -- PRODUCTS
 -- (SELECT auth.uid()) used instead of bare auth.uid() — evaluated once per query, not per row.
 CREATE POLICY "products_select" ON products FOR SELECT
   USING (
     ("isActive" = TRUE AND "isApproved" = TRUE)
     OR (SELECT auth.uid()) = "sellerId"
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 CREATE POLICY "products_insert" ON products FOR INSERT
   WITH CHECK (
@@ -1385,16 +1381,16 @@ CREATE POLICY "products_insert" ON products FOR INSERT
 CREATE POLICY "products_update" ON products FOR UPDATE
   USING (
     (SELECT auth.uid()) = "sellerId"
-    OR is_admin_or_owner()
+    OR is_admin()
   )
   WITH CHECK (
     (SELECT auth.uid()) = "sellerId"
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 CREATE POLICY "products_delete" ON products FOR DELETE
   USING (
     (SELECT auth.uid()) = "sellerId"
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 -- PRODUCT ANALYTICS
 CREATE POLICY "product_analytics_all" ON product_analytics FOR ALL USING (TRUE) WITH CHECK (TRUE);
@@ -1405,73 +1401,73 @@ CREATE POLICY "recently_viewed_insert" ON recently_viewed FOR INSERT WITH CHECK 
 CREATE POLICY "recently_viewed_delete" ON recently_viewed FOR DELETE USING (auth.uid() = "userId");
 -- FEATURED LISTINGS
 CREATE POLICY "featured_listings_select" ON featured_listings FOR SELECT
-  USING ("isActive" = TRUE OR is_admin_or_owner());
+  USING ("isActive" = TRUE OR is_admin());
 CREATE POLICY "featured_listings_manage" ON featured_listings FOR ALL
-  USING (is_admin_or_owner()) WITH CHECK (is_admin_or_owner());
+  USING (is_admin()) WITH CHECK (is_admin());
 -- BANNERS
-CREATE POLICY "banners_select" ON banners FOR SELECT USING ("isActive" = TRUE OR is_admin_or_owner());
+CREATE POLICY "banners_select" ON banners FOR SELECT USING ("isActive" = TRUE OR is_admin());
 CREATE POLICY "banners_manage" ON banners FOR ALL
-  USING (is_admin_or_owner()) WITH CHECK (is_admin_or_owner());
+  USING (is_admin()) WITH CHECK (is_admin());
 -- CARTS
 CREATE POLICY "carts_own" ON carts FOR ALL
-  USING (auth.uid() = "userId" OR is_admin_or_owner())
-  WITH CHECK (auth.uid() = "userId" OR is_admin_or_owner());
+  USING (auth.uid() = "userId" OR is_admin())
+  WITH CHECK (auth.uid() = "userId" OR is_admin());
 -- CART ITEMS
 CREATE POLICY "cart_items_own" ON cart_items FOR ALL
-  USING (EXISTS(SELECT 1 FROM carts c WHERE c.id="cartId" AND c."userId"=auth.uid()) OR is_admin_or_owner())
-  WITH CHECK (EXISTS(SELECT 1 FROM carts c WHERE c.id="cartId" AND c."userId"=auth.uid()) OR is_admin_or_owner());
+  USING (EXISTS(SELECT 1 FROM carts c WHERE c.id="cartId" AND c."userId"=auth.uid()) OR is_admin())
+  WITH CHECK (EXISTS(SELECT 1 FROM carts c WHERE c.id="cartId" AND c."userId"=auth.uid()) OR is_admin());
 -- ORDERS
 CREATE POLICY "orders_select" ON orders FOR SELECT
-  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin());
 CREATE POLICY "orders_insert" ON orders FOR INSERT
-  WITH CHECK (auth.uid() = "buyerId" OR is_admin_or_owner());
+  WITH CHECK (auth.uid() = "buyerId" OR is_admin());
 CREATE POLICY "orders_update" ON orders FOR UPDATE
-  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin_or_owner());
-CREATE POLICY "orders_delete" ON orders FOR DELETE USING (is_admin_or_owner());
+  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin());
+CREATE POLICY "orders_delete" ON orders FOR DELETE USING (is_admin());
 -- ORDER ITEMS
 CREATE POLICY "order_items_select" ON order_items FOR SELECT
   USING (EXISTS(SELECT 1 FROM orders o WHERE o.id="orderId"
-                AND(o."buyerId"=auth.uid() OR o."sellerId"=auth.uid())) OR is_admin_or_owner());
+                AND(o."buyerId"=auth.uid() OR o."sellerId"=auth.uid())) OR is_admin());
 -- Only the buyer/seller of the parent order (or admin/owner) may insert items.
 -- The stripe-webhook uses the service role key which bypasses RLS.
 CREATE POLICY "order_items_insert" ON order_items FOR INSERT
   WITH CHECK (
     EXISTS (SELECT 1 FROM orders o WHERE o.id="orderId"
             AND (o."buyerId"=auth.uid() OR o."sellerId"=auth.uid()))
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 -- PAYMENT SESSIONS
 CREATE POLICY "payment_sessions_select" ON payment_sessions FOR SELECT
-  USING (auth.uid() = "userId" OR is_admin_or_owner());
+  USING (auth.uid() = "userId" OR is_admin());
 -- Write operations are handled by the service role (webhook) or admin only.
 CREATE POLICY "payment_sessions_admin_write" ON payment_sessions FOR ALL
-  USING (is_admin_or_owner()) WITH CHECK (is_admin_or_owner());
+  USING (is_admin()) WITH CHECK (is_admin());
 -- PAYOUTS
 CREATE POLICY "payouts_seller_select" ON payouts FOR SELECT
-  USING (auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING (auth.uid() = "sellerId" OR is_admin());
 CREATE POLICY "payouts_admin_manage" ON payouts FOR ALL
-  USING (is_admin_or_owner()) WITH CHECK (is_admin_or_owner());
+  USING (is_admin()) WITH CHECK (is_admin());
 -- COUPONS
 CREATE POLICY "coupons_select" ON coupons FOR SELECT
-  USING ("isActive" = TRUE OR auth.uid() = "createdBy" OR is_admin_or_owner());
+  USING ("isActive" = TRUE OR auth.uid() = "createdBy" OR is_admin());
 CREATE POLICY "coupons_insert" ON coupons FOR INSERT WITH CHECK (is_seller());
 CREATE POLICY "coupons_update" ON coupons FOR UPDATE
-  USING (auth.uid() = "createdBy" OR is_admin_or_owner());
+  USING (auth.uid() = "createdBy" OR is_admin());
 CREATE POLICY "coupons_delete" ON coupons FOR DELETE
-  USING (auth.uid() = "createdBy" OR is_admin_or_owner());
+  USING (auth.uid() = "createdBy" OR is_admin());
 -- COUPON USAGE
 CREATE POLICY "coupon_usage_select" ON coupon_usage FOR SELECT
-  USING (auth.uid() = "userId" OR is_admin_or_owner());
+  USING (auth.uid() = "userId" OR is_admin());
 CREATE POLICY "coupon_usage_insert" ON coupon_usage FOR INSERT WITH CHECK (TRUE);
 -- REVIEWS
 CREATE POLICY "reviews_select" ON reviews FOR SELECT
-  USING (status = 'published' OR auth.uid() = "userId" OR is_admin_or_owner());
+  USING (status = 'published' OR auth.uid() = "userId" OR is_admin());
 CREATE POLICY "reviews_insert" ON reviews FOR INSERT WITH CHECK (auth.uid() = "userId");
 CREATE POLICY "reviews_update" ON reviews FOR UPDATE
   USING (auth.uid() = "userId"
     OR EXISTS(SELECT 1 FROM products p WHERE p.id="productId" AND p."sellerId"=auth.uid())
-    OR is_admin_or_owner());
-CREATE POLICY "reviews_delete" ON reviews FOR DELETE USING (is_admin_or_owner());
+    OR is_admin());
+CREATE POLICY "reviews_delete" ON reviews FOR DELETE USING (is_admin());
 -- PRODUCT QUESTIONS
 CREATE POLICY "product_questions_select" ON product_questions FOR SELECT USING (TRUE);
 CREATE POLICY "product_questions_insert" ON product_questions FOR INSERT
@@ -1479,149 +1475,149 @@ CREATE POLICY "product_questions_insert" ON product_questions FOR INSERT
 CREATE POLICY "product_questions_update" ON product_questions FOR UPDATE
   USING (auth.uid() = "userId"
     OR EXISTS(SELECT 1 FROM products p WHERE p.id="productId" AND p."sellerId"=auth.uid())
-    OR is_admin_or_owner());
+    OR is_admin());
 CREATE POLICY "product_questions_delete" ON product_questions FOR DELETE
-  USING (auth.uid() = "userId" OR is_admin_or_owner());
+  USING (auth.uid() = "userId" OR is_admin());
 -- PRODUCT OFFERS
 CREATE POLICY "product_offers_select" ON product_offers FOR SELECT
-  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin());
 CREATE POLICY "product_offers_insert" ON product_offers FOR INSERT WITH CHECK (auth.uid() = "buyerId");
 CREATE POLICY "product_offers_update" ON product_offers FOR UPDATE
-  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin());
 -- RETURNS
 CREATE POLICY "returns_select" ON returns FOR SELECT
-  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin());
 CREATE POLICY "returns_insert" ON returns FOR INSERT WITH CHECK (auth.uid() = "buyerId");
 CREATE POLICY "returns_update" ON returns FOR UPDATE
-  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin());
 -- DISPUTES
 CREATE POLICY "disputes_select" ON disputes FOR SELECT
-  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin());
 CREATE POLICY "disputes_insert" ON disputes FOR INSERT WITH CHECK (auth.uid() = "buyerId");
 CREATE POLICY "disputes_update" ON disputes FOR UPDATE
-  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin());
 -- DISPUTE MESSAGES
 CREATE POLICY "dispute_messages_select" ON dispute_messages FOR SELECT
   USING (EXISTS(SELECT 1 FROM disputes d WHERE d.id="disputeId"
-                AND(d."buyerId"=auth.uid() OR d."sellerId"=auth.uid())) OR is_admin_or_owner());
+                AND(d."buyerId"=auth.uid() OR d."sellerId"=auth.uid())) OR is_admin());
 CREATE POLICY "dispute_messages_insert" ON dispute_messages FOR INSERT
   WITH CHECK (auth.uid() = "userId" AND (
     EXISTS(SELECT 1 FROM disputes d WHERE d.id="disputeId"
            AND(d."buyerId"=auth.uid() OR d."sellerId"=auth.uid()))
-    OR is_admin_or_owner()
+    OR is_admin()
   ));
 -- CONVERSATIONS
 CREATE POLICY "conversations_select" ON conversations FOR SELECT
-  USING (auth.uid() = "user1Id" OR auth.uid() = "user2Id" OR is_admin_or_owner());
+  USING (auth.uid() = "user1Id" OR auth.uid() = "user2Id" OR is_admin());
 CREATE POLICY "conversations_insert" ON conversations FOR INSERT
   WITH CHECK (auth.uid() = "user1Id" OR auth.uid() = "user2Id");
 CREATE POLICY "conversations_update" ON conversations FOR UPDATE
-  USING (auth.uid() = "user1Id" OR auth.uid() = "user2Id" OR is_admin_or_owner());
+  USING (auth.uid() = "user1Id" OR auth.uid() = "user2Id" OR is_admin());
 -- MESSAGES
 CREATE POLICY "messages_select" ON messages FOR SELECT
-  USING (auth.uid() = "senderId" OR auth.uid() = "receiverId" OR is_admin_or_owner());
+  USING (auth.uid() = "senderId" OR auth.uid() = "receiverId" OR is_admin());
 CREATE POLICY "messages_insert" ON messages FOR INSERT WITH CHECK (auth.uid() = "senderId");
 CREATE POLICY "messages_update" ON messages FOR UPDATE
-  USING (auth.uid() = "receiverId" OR is_admin_or_owner());
+  USING (auth.uid() = "receiverId" OR is_admin());
 -- DELIVERY REQUESTS
 CREATE POLICY "delivery_requests_select" ON delivery_requests FOR SELECT
-  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin());
 CREATE POLICY "delivery_requests_insert" ON delivery_requests FOR INSERT WITH CHECK (TRUE);
 CREATE POLICY "delivery_requests_update" ON delivery_requests FOR UPDATE
-  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin());
 -- TRANSPORT QUOTES
 CREATE POLICY "transport_quotes_select" ON transport_quotes FOR SELECT
   USING (EXISTS(SELECT 1 FROM delivery_requests dr WHERE dr.id="deliveryRequestId"
                 AND(dr."buyerId"=auth.uid() OR dr."sellerId"=auth.uid()))
-         OR auth.uid() = "carrierId" OR is_admin_or_owner());
+         OR auth.uid() = "carrierId" OR is_admin());
 CREATE POLICY "transport_quotes_insert" ON transport_quotes FOR INSERT
-  WITH CHECK (auth.uid() = "carrierId" OR is_admin_or_owner());
+  WITH CHECK (auth.uid() = "carrierId" OR is_admin());
 CREATE POLICY "transport_quotes_update" ON transport_quotes FOR UPDATE
-  USING (auth.uid() = "carrierId" OR is_admin_or_owner());
+  USING (auth.uid() = "carrierId" OR is_admin());
 -- SHIPMENTS (snake_case columns)
 CREATE POLICY "shipments_select" ON shipments FOR SELECT
-  USING (auth.uid() = seller_id OR auth.uid() = buyer_id OR is_admin_or_owner());
+  USING (auth.uid() = seller_id OR auth.uid() = buyer_id OR is_admin());
 CREATE POLICY "shipments_insert" ON shipments FOR INSERT
-  WITH CHECK (auth.uid() = seller_id OR is_admin_or_owner());
+  WITH CHECK (auth.uid() = seller_id OR is_admin());
 CREATE POLICY "shipments_update" ON shipments FOR UPDATE
-  USING (auth.uid() = seller_id OR is_admin_or_owner());
+  USING (auth.uid() = seller_id OR is_admin());
 -- SHIPMENT EVENTS (snake_case columns)
 CREATE POLICY "shipment_events_select" ON shipment_events FOR SELECT
   USING (EXISTS(SELECT 1 FROM shipments s WHERE s.id=shipment_id
-                AND(s.buyer_id=auth.uid() OR s.seller_id=auth.uid())) OR is_admin_or_owner());
+                AND(s.buyer_id=auth.uid() OR s.seller_id=auth.uid())) OR is_admin());
 CREATE POLICY "shipment_events_insert" ON shipment_events FOR INSERT
   WITH CHECK (EXISTS(SELECT 1 FROM shipments s WHERE s.id=shipment_id AND s.seller_id=auth.uid())
-              OR is_admin_or_owner());
+              OR is_admin());
 -- RFQ REQUESTS
 CREATE POLICY "rfq_requests_insert" ON rfq_requests FOR INSERT WITH CHECK (TRUE);
 CREATE POLICY "rfq_requests_select" ON rfq_requests FOR SELECT
-  USING (auth.uid() = "buyerId" OR is_seller() OR is_admin_or_owner());
+  USING (auth.uid() = "buyerId" OR is_seller() OR is_admin());
 CREATE POLICY "rfq_requests_update" ON rfq_requests FOR UPDATE
-  USING (is_seller() OR is_admin_or_owner());
+  USING (is_seller() OR is_admin());
 -- RFQ RESPONSES
 CREATE POLICY "rfq_responses_select" ON rfq_responses FOR SELECT
   USING (auth.uid() = "sellerId"
     OR EXISTS(SELECT 1 FROM rfq_requests r WHERE r.id="rfqId" AND r."buyerId"=auth.uid())
-    OR is_admin_or_owner());
+    OR is_admin());
 CREATE POLICY "rfq_responses_insert" ON rfq_responses FOR INSERT
   WITH CHECK (auth.uid() = "sellerId" AND is_seller());
 CREATE POLICY "rfq_responses_update" ON rfq_responses FOR UPDATE
-  USING (auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING (auth.uid() = "sellerId" OR is_admin());
 -- REPORTED LISTINGS
 CREATE POLICY "reported_listings_select" ON reported_listings FOR SELECT
-  USING (auth.uid() = "reportedBy" OR is_admin_or_owner());
+  USING (auth.uid() = "reportedBy" OR is_admin());
 CREATE POLICY "reported_listings_insert" ON reported_listings FOR INSERT
   WITH CHECK (auth.uid() = "reportedBy");
 CREATE POLICY "reported_listings_update" ON reported_listings FOR UPDATE
-  USING (is_admin_or_owner());
+  USING (is_admin());
 -- ADMIN ACTIONS
-CREATE POLICY "admin_actions_select" ON admin_actions FOR SELECT USING (is_admin_or_owner());
-CREATE POLICY "admin_actions_insert" ON admin_actions FOR INSERT WITH CHECK (is_admin_or_owner());
+CREATE POLICY "admin_actions_select" ON admin_actions FOR SELECT USING (is_admin());
+CREATE POLICY "admin_actions_insert" ON admin_actions FOR INSERT WITH CHECK (is_admin());
 -- AUDIT LOGS
-CREATE POLICY "audit_logs_select" ON audit_logs FOR SELECT USING (is_admin_or_owner());
+CREATE POLICY "audit_logs_select" ON audit_logs FOR SELECT USING (is_admin());
 -- SUPPORT TICKETS
 CREATE POLICY "support_tickets_select" ON support_tickets FOR SELECT
-  USING (auth.uid() = "userId" OR is_admin_or_owner());
+  USING (auth.uid() = "userId" OR is_admin());
 CREATE POLICY "support_tickets_insert" ON support_tickets FOR INSERT WITH CHECK (TRUE);
 CREATE POLICY "support_tickets_update" ON support_tickets FOR UPDATE
-  USING (auth.uid() = "userId" OR is_admin_or_owner());
+  USING (auth.uid() = "userId" OR is_admin());
 -- SUPPORT TICKET MESSAGES
 CREATE POLICY "ticket_messages_select" ON support_ticket_messages FOR SELECT
   USING (EXISTS(SELECT 1 FROM support_tickets t WHERE t.id="ticketId"
-                AND(t."userId"=auth.uid() OR is_admin_or_owner())));
+                AND(t."userId"=auth.uid() OR is_admin())));
 CREATE POLICY "ticket_messages_insert" ON support_ticket_messages FOR INSERT
   WITH CHECK (EXISTS(SELECT 1 FROM support_tickets t WHERE t.id="ticketId"
-                     AND(t."userId"=auth.uid() OR is_admin_or_owner())));
+                     AND(t."userId"=auth.uid() OR is_admin())));
 -- PLATFORM SETTINGS
 CREATE POLICY "platform_settings_select" ON platform_settings FOR SELECT USING (TRUE);
 CREATE POLICY "platform_settings_manage" ON platform_settings FOR ALL
-  USING (is_admin_or_owner()) WITH CHECK (is_admin_or_owner());
+  USING (is_admin()) WITH CHECK (is_admin());
 -- NOTIFICATIONS
 CREATE POLICY "notifications_select" ON notifications FOR SELECT
-  USING (auth.uid() = "userId" OR is_admin_or_owner());
+  USING (auth.uid() = "userId" OR is_admin());
 CREATE POLICY "notifications_insert" ON notifications FOR INSERT WITH CHECK (TRUE);
 CREATE POLICY "notifications_update" ON notifications FOR UPDATE USING (auth.uid() = "userId");
 CREATE POLICY "notifications_delete" ON notifications FOR DELETE
-  USING (auth.uid() = "userId" OR is_admin_or_owner());
+  USING (auth.uid() = "userId" OR is_admin());
 -- NOTIFICATION SETTINGS
 CREATE POLICY "notification_settings_all" ON notification_settings FOR ALL
-  USING (auth.uid() = "userId" OR is_admin_or_owner())
-  WITH CHECK (auth.uid() = "userId" OR is_admin_or_owner());
+  USING (auth.uid() = "userId" OR is_admin())
+  WITH CHECK (auth.uid() = "userId" OR is_admin());
 -- WISHLISTS
 CREATE POLICY "wishlists_all" ON wishlists FOR ALL
-  USING (auth.uid() = "userId" OR is_admin_or_owner())
-  WITH CHECK (auth.uid() = "userId" OR is_admin_or_owner());
+  USING (auth.uid() = "userId" OR is_admin())
+  WITH CHECK (auth.uid() = "userId" OR is_admin());
 -- SAVED SEARCHES
 CREATE POLICY "saved_searches_all" ON saved_searches FOR ALL
-  USING (auth.uid() = "userId" OR is_admin_or_owner())
-  WITH CHECK (auth.uid() = "userId" OR is_admin_or_owner());
+  USING (auth.uid() = "userId" OR is_admin())
+  WITH CHECK (auth.uid() = "userId" OR is_admin());
 -- PROMOTED LISTINGS
 CREATE POLICY "promoted_listings_select" ON promoted_listings FOR SELECT
-  USING (status = 'active' OR auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING (status = 'active' OR auth.uid() = "sellerId" OR is_admin());
 CREATE POLICY "promoted_listings_insert" ON promoted_listings FOR INSERT
   WITH CHECK (auth.uid() = "sellerId");
 CREATE POLICY "promoted_listings_update" ON promoted_listings FOR UPDATE
-  USING (auth.uid() = "sellerId" OR is_admin_or_owner());
+  USING (auth.uid() = "sellerId" OR is_admin());
 
 -- ──────────────────────────────────────────────────────────────
 -- SEED: CATEGORIES
@@ -1703,7 +1699,7 @@ CREATE POLICY product_shipping_auth_insert
   TO authenticated
   WITH CHECK (
     owns_product(product_id)
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 
 DROP POLICY IF EXISTS product_shipping_auth_update  ON product_shipping;
@@ -1713,11 +1709,11 @@ CREATE POLICY product_shipping_auth_update
   TO authenticated
   USING (
     owns_product(product_id)
-    OR is_admin_or_owner()
+    OR is_admin()
   )
   WITH CHECK (
     owns_product(product_id)
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 
 DROP POLICY IF EXISTS product_shipping_auth_delete  ON product_shipping;
@@ -1727,7 +1723,7 @@ CREATE POLICY product_shipping_auth_delete
   TO authenticated
   USING (
     owns_product(product_id)
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 
 -- Seed shipping methods

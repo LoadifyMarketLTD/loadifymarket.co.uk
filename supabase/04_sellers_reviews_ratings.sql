@@ -172,7 +172,7 @@ CREATE TABLE IF NOT EXISTS dispute_messages (
   id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
   "disputeId" UUID        NOT NULL REFERENCES disputes(id) ON DELETE CASCADE,
   "userId"    UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  "userRole"  TEXT        CHECK ("userRole" IN ('buyer','seller','admin','owner')),
+  "userRole"  TEXT        CHECK ("userRole" IN ('buyer','seller','admin')),
   message     TEXT        NOT NULL CHECK (length(trim(message)) > 0),
   "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

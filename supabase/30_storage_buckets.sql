@@ -88,7 +88,7 @@ CREATE POLICY "product_images_update" ON storage.objects
     AND auth.role() = 'authenticated'
     AND (
       (storage.foldername(name))[2] = auth.uid()::text
-      OR is_admin_or_owner()
+      OR is_admin()
     )
   );
 
@@ -101,7 +101,7 @@ CREATE POLICY "product_images_delete" ON storage.objects
     AND auth.role() = 'authenticated'
     AND (
       (storage.foldername(name))[2] = auth.uid()::text
-      OR is_admin_or_owner()
+      OR is_admin()
     )
   );
 
@@ -131,7 +131,7 @@ CREATE POLICY "pod_insert" ON storage.objects
   WITH CHECK (
     bucket_id = 'proof-of-delivery'
     AND auth.role() = 'authenticated'
-    AND is_admin_or_owner()
+    AND is_admin()
   );
 
 DROP POLICY IF EXISTS "pod_delete" ON storage.objects;
@@ -139,5 +139,5 @@ CREATE POLICY "pod_delete" ON storage.objects
   FOR DELETE
   USING (
     bucket_id = 'proof-of-delivery'
-    AND is_admin_or_owner()
+    AND is_admin()
   );

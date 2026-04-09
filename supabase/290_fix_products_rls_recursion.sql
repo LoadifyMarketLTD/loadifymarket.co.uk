@@ -33,7 +33,7 @@
 --      duplicate policy state in the live database) and adds an
 --      explicit WITH CHECK clause to products_update for clarity.
 --
---   3. Harden is_seller(), is_admin_or_owner(), and is_owner() with
+--   3. Harden is_seller(), is_admin(), and is_owner() with
 --      SET search_path = '' to prevent search-path injection and
 --      satisfy the Supabase security linter.
 --
@@ -42,7 +42,7 @@
 
 -- ── 1. Harden existing helper functions ──────────────────────────────────────
 
-CREATE OR REPLACE FUNCTION is_admin_or_owner()
+CREATE OR REPLACE FUNCTION is_admin()
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 STABLE
@@ -60,6 +60,7 @@ END;
 $$;
 
 -- Alias kept for backward compatibility.
+-- Backward-compat alias: is_owner() delegates to is_admin().
 CREATE OR REPLACE FUNCTION is_owner()
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -68,12 +69,7 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.users
-    WHERE id = auth.uid()
-      AND role = 'admin'
-      AND "isActive" = TRUE
-  );
+  RETURN is_admin();
 END;
 $$;
 
@@ -130,7 +126,7 @@ CREATE POLICY "products_select" ON public.products
   USING (
     ("isActive" = TRUE AND "isApproved" = TRUE)
     OR (SELECT auth.uid()) = "sellerId"
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 
 -- Only the authenticated seller who owns the product may insert it.
@@ -147,11 +143,11 @@ CREATE POLICY "products_update" ON public.products
   FOR UPDATE
   USING (
     (SELECT auth.uid()) = "sellerId"
-    OR is_admin_or_owner()
+    OR is_admin()
   )
   WITH CHECK (
     (SELECT auth.uid()) = "sellerId"
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 
 -- Sellers may delete their own products; admins may delete any product.
@@ -159,7 +155,7 @@ CREATE POLICY "products_delete" ON public.products
   FOR DELETE
   USING (
     (SELECT auth.uid()) = "sellerId"
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 
 -- ── 4. Recreate product_shipping policies using owns_product() ───────────────
@@ -177,7 +173,7 @@ CREATE POLICY product_shipping_auth_insert
   TO authenticated
   WITH CHECK (
     owns_product(product_id)
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 
 CREATE POLICY product_shipping_auth_update
@@ -186,11 +182,11 @@ CREATE POLICY product_shipping_auth_update
   TO authenticated
   USING (
     owns_product(product_id)
-    OR is_admin_or_owner()
+    OR is_admin()
   )
   WITH CHECK (
     owns_product(product_id)
-    OR is_admin_or_owner()
+    OR is_admin()
   );
 
 CREATE POLICY product_shipping_auth_delete
@@ -199,5 +195,5 @@ CREATE POLICY product_shipping_auth_delete
   TO authenticated
   USING (
     owns_product(product_id)
-    OR is_admin_or_owner()
+    OR is_admin()
   );

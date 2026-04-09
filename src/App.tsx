@@ -133,7 +133,7 @@ function DashboardRedirect() {
 /**
  * Renders a maintenance-mode page for non-admin visitors.
  * Reads `platform_settings.maintenance_mode` once on mount.
- * Admins/owners always bypass so they can access the admin hub.
+ * Admins always bypass so they can access the admin hub.
  */
 function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuthStore();
@@ -155,7 +155,7 @@ function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
 
   // While loading auth or the maintenance flag, render normally (avoids flash)
   if (isLoading || maintenanceMode === null) return <>{children}</>;
-  // Admins/owners always bypass maintenance mode
+  // Admins always bypass maintenance mode
   if (maintenanceMode && user && hasAdminAccess(user)) return <>{children}</>;
   // If maintenance is on and user is not admin, show maintenance screen
   if (maintenanceMode) {

@@ -1,4 +1,4 @@
-export type UserRole = 'buyer' | 'seller' | 'admin' | 'owner';
+export type UserRole = 'buyer' | 'seller' | 'admin';
 
 // Marketplace roles for sellers/users
 export type MarketplaceRole = 'carrier' | 'broker' | 'seller' | null;
@@ -11,7 +11,7 @@ export type PaymentBehaviour = 'pays_on_time' | 'sometimes_late' | 'repeated_del
  *   draft     → signed up; setup not yet complete
  *   submitted → profile complete; Stripe not yet fully ready
  *   active    → profile complete AND Stripe ready (auto-set)
- *   suspended → manually suspended by admin/owner
+ *   suspended → manually suspended by admin
  */
 export type SellerStatus = 'draft' | 'submitted' | 'active' | 'suspended';
 

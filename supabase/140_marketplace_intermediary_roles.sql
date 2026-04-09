@@ -1,8 +1,8 @@
--- Migration 140: Marketplace Intermediary Model — Role Support & Owner Assignment
+-- Migration 140: Marketplace Intermediary Model — Role Support & Admin Assignment
 -- Loadify Market is operated by XDrive Logistics Ltd (marketplace intermediary only)
 -- This migration ensures:
---   1. The users.role constraint supports all required roles: buyer, seller, admin, owner
---   2. The owner account (loadifymarket.co.uk@gmail.com) is assigned the 'owner' role
+--   1. The users.role constraint supports all required roles: buyer, seller, admin
+--   2. The platform admin account (loadifymarket.co.uk@gmail.com) is assigned the admin role
 -- 
 -- The platform does NOT sell, buy, or act as merchant of record.
 -- All transactions are between buyers and sellers.
@@ -16,19 +16,19 @@ BEGIN
   ALTER TABLE public.users
     DROP CONSTRAINT IF EXISTS users_role_check;
 
-  -- Recreate with full set of roles
+  -- Recreate with the final 3-role set
   ALTER TABLE public.users
     ADD CONSTRAINT users_role_check
-    CHECK (role IN ('guest', 'buyer', 'seller', 'admin', 'owner'));
+    CHECK (role IN ('buyer', 'seller', 'admin'));
 
-  RAISE NOTICE 'Role constraint updated: guest, buyer, seller, admin, owner all supported.';
+  RAISE NOTICE 'Role constraint updated: buyer, seller, admin supported.';
 EXCEPTION
   WHEN OTHERS THEN
     RAISE NOTICE 'Role constraint update skipped: %', SQLERRM;
 END;
 $$;
 
--- Step 2: Assign 'owner' role to the primary owner account.
+-- Step 2: Ensure the platform admin account has the admin role.
 -- Uses auth.users to look up the email, then updates public.users.
 -- This is idempotent — safe to run multiple times.
 DO $$
@@ -42,23 +42,23 @@ BEGIN
 
   IF v_user_id IS NOT NULL THEN
     UPDATE public.users
-    SET role = 'owner'
+    SET role = 'admin'
     WHERE id = v_user_id
-      AND role != 'owner';
+      AND role != 'admin';
 
     IF FOUND THEN
-      RAISE NOTICE 'Owner role assigned to loadifymarket.co.uk@gmail.com (id: %)', v_user_id;
+      RAISE NOTICE 'Admin role assigned to loadifymarket.co.uk@gmail.com (id: %)', v_user_id;
     ELSE
-      RAISE NOTICE 'Owner account already has owner role or does not exist in public.users';
+      RAISE NOTICE 'Admin account already has admin role or does not exist in public.users';
     END IF;
   ELSE
-    RAISE NOTICE 'Owner auth account (loadifymarket.co.uk@gmail.com) not found — skipping role assignment';
+    RAISE NOTICE 'Admin auth account (loadifymarket.co.uk@gmail.com) not found — skipping role assignment';
   END IF;
 END;
 $$;
 
--- Step 3: Ensure is_admin_or_owner() and is_seller() helpers exist (idempotent).
-CREATE OR REPLACE FUNCTION public.is_admin_or_owner()
+-- Step 3: Ensure is_admin() and is_seller() helpers exist (idempotent).
+CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN
 LANGUAGE sql
 STABLE
@@ -67,7 +67,7 @@ AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.users
     WHERE id = (SELECT auth.uid())
-      AND role IN ('admin', 'owner')
+      AND role IN ('admin')
   );
 $$;
 
@@ -80,6 +80,6 @@ AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.users
     WHERE id = (SELECT auth.uid())
-      AND role IN ('seller', 'admin', 'owner')
+      AND role IN ('seller', 'admin')
   );
 $$;
