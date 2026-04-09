@@ -76,9 +76,15 @@ const AdminSettings = () => {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
-      const json = await res.json() as { configured?: boolean; message?: string; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Check failed");
-      setStripeConnectStatus({ configured: json.configured ?? false, message: json.message ?? "Unknown" });
+      const json: unknown = await res.json();
+      const isObj = json !== null && typeof json === "object";
+      const error = isObj ? (json as Record<string, unknown>).error : undefined;
+      if (!res.ok) throw new Error(typeof error === "string" ? error : "Check failed");
+      const configured = isObj ? Boolean((json as Record<string, unknown>).configured) : false;
+      const message = isObj && typeof (json as Record<string, unknown>).message === "string"
+        ? String((json as Record<string, unknown>).message)
+        : "Unknown";
+      setStripeConnectStatus({ configured, message });
     } catch (err) {
       setStripeConnectStatus({ configured: false, message: err instanceof Error ? err.message : "Check failed" });
     } finally {

@@ -89,6 +89,7 @@ export default function SellerPublicProfilePage() {
           },
         }));
 
+        // Supabase returns untyped data — cast follows the same pattern as Catalog.tsx
         setProducts(adaptProducts(merged as unknown as DBProduct[]));
       } catch (error) {
         console.error('Error fetching seller profile:', error);

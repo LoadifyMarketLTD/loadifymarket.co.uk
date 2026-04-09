@@ -158,12 +158,15 @@ const SellerShipments = () => {
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-      const json = await res.json() as { error?: string };
+      const json = await res.json() as { error?: string; url?: string };
       if (!res.ok) throw new Error(json.error ?? "Upload failed");
 
       toast({ title: "Proof of delivery uploaded" });
       await loadShipments();
-      setSelected((prev) => prev && prev.id === shipmentId ? { ...prev, proof_of_delivery_url: (json as Record<string, string>).url ?? prev.proof_of_delivery_url } : prev);
+      if (json.url) {
+        const podUrl = json.url;
+        setSelected((prev) => (prev && prev.id === shipmentId ? { ...prev, proof_of_delivery_url: podUrl } : prev));
+      }
     } catch (err) {
       toast({ title: "Upload failed", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
     } finally {
@@ -171,7 +174,8 @@ const SellerShipments = () => {
     }
   };
 
-  const handleUpdateStatus = async (shipment: ShipmentRow, newStatus: string) => {    if (!newStatus || newStatus === shipment.status) return;
+  const handleUpdateStatus = async (shipment: ShipmentRow, newStatus: string) => {
+    if (!newStatus || newStatus === shipment.status) return;
     setUpdatingStatus(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
