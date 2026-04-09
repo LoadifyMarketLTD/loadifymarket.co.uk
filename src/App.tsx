@@ -135,14 +135,6 @@ function TrackingRedirect() {
   return <Navigate to={`/track-order${orderNumber ? `?orderNumber=${encodeURIComponent(orderNumber)}` : ''}`} replace />;
 }
 
-/**
- * Preserves the :orderNumber param when redirecting legacy /tracking/:orderNumber
- * links to the canonical /track-order?orderNumber= page.
- */
-function TrackingRedirect() {
-  const { orderNumber } = useParams<{ orderNumber: string }>();
-  return <Navigate to={`/track-order${orderNumber ? `?orderNumber=${encodeURIComponent(orderNumber)}` : ''}`} replace />;
-}
 
 /**
  * Renders a maintenance-mode page for non-admin visitors.
