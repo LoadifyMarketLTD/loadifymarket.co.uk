@@ -33,13 +33,6 @@ interface CategoryScreenProps {
   onClose: () => void;
 }
 
-interface SubcategoryScreenProps {
-  categorySlug: string;
-  subcategorySlug: string;
-  onBack: () => void;
-  onClose: () => void;
-}
-
 // ── Main screen (Level 1) ─────────────────────────────────────────────────────
 
 const MainScreen = ({
