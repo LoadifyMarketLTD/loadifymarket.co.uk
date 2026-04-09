@@ -58,56 +58,61 @@
     # so they can be monitored without disrupting users.
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com wss://*.supabase.co; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; report-uri /.netlify/functions/csp-report"
 
-# ─── No caching for all resources ────────────────────────────────────────────
+# ─── Cache headers ────────────────────────────────────────────────────────────
+# Vite outputs content-hashed filenames in /assets/ (e.g. index-bPeGMmBf.js).
+# These never change for the same content, so we can cache them aggressively.
 [[headers]]
   for = "/assets/*"
   [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    Cache-Control = "public, max-age=31536000, immutable"
 
+# HTML entry point must always be revalidated (SPA root, changes on deploy)
 [[headers]]
   for = "/*.html"
   [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    Cache-Control = "no-cache, no-store, must-revalidate"
 
+# Static images — cache for 7 days (long enough to benefit repeat visitors,
+# short enough to pick up any image replacements)
 [[headers]]
   for = "/images/*"
   [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800"
 
 [[headers]]
   for = "/images/**"
   [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800"
 
 [[headers]]
   for = "/*.jpg"
   [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800"
 
 [[headers]]
   for = "/*.jpeg"
   [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800"
 
 [[headers]]
   for = "/*.png"
   [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800"
 
 [[headers]]
   for = "/*.webp"
   [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800"
 
 [[headers]]
   for = "/*.svg"
   [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800"
 
 [[headers]]
   for = "/payment-icons/*"
   [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800"
 
 # ─── Android App Links verification file ─────────────────────────────────────
 # Must be served as application/json with HTTP 200 (no redirects, no HTML).

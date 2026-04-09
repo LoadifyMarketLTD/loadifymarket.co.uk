@@ -32,27 +32,23 @@ $$ LANGUAGE plpgsql;
 
 -- ── Admin/Owner helper ──────────────────────────────────────────
 -- LANGUAGE plpgsql: table resolved at call time, not creation time
-CREATE OR REPLACE FUNCTION is_admin_or_owner()
+CREATE OR REPLACE FUNCTION is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM users
     WHERE id = auth.uid()
-      AND role IN ('admin','owner')
+      AND role IN ('admin')
       AND "isActive" = TRUE
   );
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
+-- Backward-compat alias: is_owner() was removed; delegates to is_admin().
 CREATE OR REPLACE FUNCTION is_owner()
 RETURNS BOOLEAN AS $$
 BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM users
-    WHERE id = auth.uid()
-      AND role = 'owner'
-      AND "isActive" = TRUE
-  );
+  RETURN is_admin();
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
@@ -62,7 +58,7 @@ BEGIN
   RETURN EXISTS (
     SELECT 1 FROM users
     WHERE id = auth.uid()
-      AND role IN ('seller','admin','owner')
+      AND role IN ('seller','admin')
       AND "isActive" = TRUE
   );
 END;

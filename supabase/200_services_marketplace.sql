@@ -213,7 +213,7 @@ CREATE POLICY services_seller_all ON services
 
 CREATE POLICY services_admin_all ON services
   FOR ALL USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('admin', 'owner'))
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('admin'))
   );
 
 -- service_attributes / service_media: inherit from parent service visibility
@@ -247,7 +247,7 @@ CREATE POLICY service_requests_buyer_own ON service_requests
 CREATE POLICY service_requests_seller_read ON service_requests
   FOR SELECT USING (
     status = 'open'
-    AND EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('seller', 'admin', 'owner'))
+    AND EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('seller', 'admin'))
   );
 
 -- service_quotes: seller owns; buyer can read quotes on their requests

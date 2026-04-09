@@ -66,7 +66,7 @@ DROP SEQUENCE IF EXISTS order_number_seq;
 
 DROP FUNCTION IF EXISTS update_updated_at_column()               CASCADE;
 DROP FUNCTION IF EXISTS update_updated_at_column_snake()         CASCADE;
-DROP FUNCTION IF EXISTS is_admin_or_owner()                      CASCADE;
+DROP FUNCTION IF EXISTS is_admin()                      CASCADE;
 DROP FUNCTION IF EXISTS is_owner()                               CASCADE;
 DROP FUNCTION IF EXISTS is_seller()                              CASCADE;
 DROP FUNCTION IF EXISTS handle_new_user_profile()                CASCADE;

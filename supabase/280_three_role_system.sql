@@ -37,8 +37,8 @@ ALTER TABLE dispute_messages DROP CONSTRAINT IF EXISTS dispute_messages_userRole
 ALTER TABLE dispute_messages ADD CONSTRAINT dispute_messages_userRole_check
   CHECK ("userRole" IN ('buyer', 'seller', 'admin'));
 
--- Step 5: Update is_admin_or_owner() to check only 'admin'
-CREATE OR REPLACE FUNCTION is_admin_or_owner()
+-- Step 5: Update is_admin() to check only 'admin'
+CREATE OR REPLACE FUNCTION is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
@@ -50,16 +50,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
--- Step 6: Update is_owner() alias to check only 'admin'
+-- Step 6: Keep is_owner() as a backward-compat alias that delegates to is_admin()
 CREATE OR REPLACE FUNCTION is_owner()
 RETURNS BOOLEAN AS $$
 BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM users
-    WHERE id = auth.uid()
-      AND role = 'admin'
-      AND "isActive" = TRUE
-  );
+  RETURN is_admin();
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 

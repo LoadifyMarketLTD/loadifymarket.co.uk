@@ -38,22 +38,33 @@ const HeroSection = () => {
        * (with object-position: right center) the baked-in text is cropped off
        * the left edge while the laptop / phone / warehouse fills the right side.
        */}
-      <img
-        src="/hero.jpeg"
-        alt=""
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: "68%",
-          height: "100%",
-          objectFit: "cover",
-          objectPosition: "right center",
-          zIndex: 0,
-        }}
-      />
+      <picture>
+        <source
+          type="image/webp"
+          srcSet="/hero-640.webp 640w, /hero.webp 1536w"
+          sizes="(max-width: 640px) 640px, 1536px"
+        />
+        <img
+          src="/hero.jpeg"
+          alt=""
+          aria-hidden="true"
+          width={1536}
+          height={1024}
+          fetchPriority="high"
+          decoding="async"
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: "68%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "right center",
+            zIndex: 0,
+          }}
+        />
+      </picture>
 
       {/* ── Blend gradient — smooth dark→image transition ────────────────── */}
       {/* Desktop: partial gradient revealing hero image on right */}

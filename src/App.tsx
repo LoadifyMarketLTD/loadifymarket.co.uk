@@ -40,6 +40,7 @@ const PPNotFound           = lazy(() => import('./pages/pixel-perfect/NotFound')
 // ─── Pixel-perfect auth pages — standalone (full-page designs) ───────────────
 const PPLogin              = lazy(() => import('./pages/pixel-perfect/Login'));
 const PPSignup             = lazy(() => import('./pages/pixel-perfect/Signup'));
+const PPTradeAccount       = lazy(() => import('./pages/pixel-perfect/TradeAccount'));
 const PPForgotPassword     = lazy(() => import('./pages/pixel-perfect/ForgotPassword'));
 const PPResetPassword      = lazy(() => import('./pages/pixel-perfect/ResetPassword'));
 
@@ -132,7 +133,7 @@ function DashboardRedirect() {
 /**
  * Renders a maintenance-mode page for non-admin visitors.
  * Reads `platform_settings.maintenance_mode` once on mount.
- * Admins/owners always bypass so they can access the admin hub.
+ * Admins always bypass so they can access the admin hub.
  */
 function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuthStore();
@@ -154,7 +155,7 @@ function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
 
   // While loading auth or the maintenance flag, render normally (avoids flash)
   if (isLoading || maintenanceMode === null) return <>{children}</>;
-  // Admins/owners always bypass maintenance mode
+  // Admins always bypass maintenance mode
   if (maintenanceMode && user && hasAdminAccess(user)) return <>{children}</>;
   // If maintenance is on and user is not admin, show maintenance screen
   if (maintenanceMode) {
@@ -437,6 +438,7 @@ function App() {
         <Route path="login" element={<Suspense fallback={<PageLoader />}><PPLogin /></Suspense>} />
         <Route path="register" element={<Suspense fallback={<PageLoader />}><PPSignup /></Suspense>} />
         <Route path="signup" element={<Suspense fallback={<PageLoader />}><PPSignup /></Suspense>} />
+        <Route path="trade-account" element={<Suspense fallback={<PageLoader />}><PPTradeAccount /></Suspense>} />
         <Route path="forgot-password" element={<Suspense fallback={<PageLoader />}><PPForgotPassword /></Suspense>} />
         <Route path="reset-password" element={<Suspense fallback={<PageLoader />}><PPResetPassword /></Suspense>} />
 

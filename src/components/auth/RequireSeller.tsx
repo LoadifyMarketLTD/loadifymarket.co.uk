@@ -53,9 +53,7 @@ export default function RequireSeller({ children }: Props) {
 
   useEffect(() => {
     // Only run the seller status check for actual seller accounts.
-    // Admins/owners bypass via hasSellerAccess in the render tree below.
     if (!user || user.role !== 'seller') return;
-    // Admins bypass all seller checks — no DB status lookup needed.
     if (hasAdminAccess(user ?? null)) {
       setFetchState('active');
       return;
