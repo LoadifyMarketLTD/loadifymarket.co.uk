@@ -16,7 +16,7 @@ const SUCCESS_REDIRECT_DELAY_MS = 1800;
 
 // Normalise a decimal number string entered by the user.
 // Accepts comma as a decimal separator (common in European locales, e.g. "39,99" → "39.99").
-const normalizeDecimal = (value: string): string => value.replace(',', '.');
+const normalizeDecimal = (value: string): string => value.replaceAll(',', '.');
 
 interface CustomSpec {
   key: string;
@@ -586,8 +586,6 @@ export default function ProductFormPage() {
                   <input
                     type="text"
                     inputMode="decimal"
-                    step="0.01"
-                    min="0.01"
                     value={formData.price}
                     onChange={(e) => handleChange('price', normalizeDecimal(e.target.value))}
                     disabled={hasActiveOrders}
@@ -605,8 +603,6 @@ export default function ProductFormPage() {
                   <input
                     type="text"
                     inputMode="decimal"
-                    step="0.01"
-                    min="0.01"
                     value={formData.salePrice}
                     onChange={(e) => handleChange('salePrice', normalizeDecimal(e.target.value))}
                     disabled={hasActiveOrders}
@@ -707,7 +703,7 @@ export default function ProductFormPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Length (cm)</label>
                   <input
-                    type="text" inputMode="decimal" step="0.1" min="0"
+                    type="text" inputMode="decimal"
                     value={formData.dimensions.length}
                     onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, length: normalizeDecimal(e.target.value) } }))}
                     className="input-field"
@@ -717,7 +713,7 @@ export default function ProductFormPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Width (cm)</label>
                   <input
-                    type="text" inputMode="decimal" step="0.1" min="0"
+                    type="text" inputMode="decimal"
                     value={formData.dimensions.width}
                     onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, width: normalizeDecimal(e.target.value) } }))}
                     className="input-field"
