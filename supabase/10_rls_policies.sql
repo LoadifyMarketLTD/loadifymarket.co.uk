@@ -500,11 +500,11 @@ INSERT INTO categories (id, name, slug, description, "order", "isActive") VALUES
   (uuid_generate_v4(), 'Logistics Jobs',      'logistics-jobs',     'Transport and haulage listings',            15, TRUE)
 ON CONFLICT (slug) DO NOTHING;
 
--- ── OWNER SETUP ──────────────────────────────────────────────────
--- Run this AFTER the owner has registered via Supabase Auth signup:
+-- ── ADMIN SETUP ──────────────────────────────────────────────────
+-- Run this AFTER the platform admin has registered via Supabase Auth:
 --
 -- UPDATE users
--- SET role = 
+-- SET role = 'admin'
 -- WHERE email = 'loadifymarket.co.uk@gmail.com';
 --
 -- Verify: SELECT id, email, role FROM users
