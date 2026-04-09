@@ -54,12 +54,12 @@ const DrawerAccountBlock = ({
             Orders
           </Link>
           <Link
-            to="/contact"
+            to={user.role === "seller" ? "/pp/seller/rfq" : "/contact"}
             onClick={onClose}
             className="flex items-center gap-3 px-2 h-10 rounded-lg text-sm font-medium text-white/80 hover:text-green-400 hover:bg-white/[0.07] transition-colors"
           >
             <MessageCircle className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
-            Messages
+            {user.role === "seller" ? "RFQ / Messages" : "Messages"}
           </Link>
           <Link
             to="/contact"
@@ -67,7 +67,7 @@ const DrawerAccountBlock = ({
             className="flex items-center gap-3 px-2 h-10 rounded-lg text-sm font-medium text-white/80 hover:text-green-400 hover:bg-white/[0.07] transition-colors"
           >
             <HelpCircle className="h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
-            Support Tickets
+            Contact Support
           </Link>
           <button
             onClick={() => { onClose(); onLogout(); }}

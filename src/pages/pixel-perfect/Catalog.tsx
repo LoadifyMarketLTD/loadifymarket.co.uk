@@ -156,10 +156,7 @@ const Catalog = () => {
           break;
       }
 
-      // When no special filter, apply price range and sort
-      if (!filterParam) {
-        // already handled in default case above
-      }
+      // When no special filter is active, price range and sort are handled above.
 
       const { data, error } = await query.limit(96);
       if (error) throw error;
