@@ -6,6 +6,7 @@ import logo from "@/assets/loadify-logo.svg";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
 import CATEGORY_CONFIG from "@/lib/category-config";
+import MobileDrawer from "@/components/MobileDrawer";
 
 /**
  * Marketplace-style header used on the homepage.
@@ -206,6 +207,20 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
           )}
         </div>
 
+        {/* Mobile cart icon */}
+        <Link
+          to="/cart"
+          className="lg:hidden relative p-2 text-white/80 hover:text-green-400 transition-colors"
+          aria-label="Shopping cart"
+        >
+          <ShoppingCart className="h-5 w-5" />
+          {cartCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-[#22C55E] text-white text-[10px] font-bold flex items-center justify-center px-0.5">
+              {cartCount}
+            </span>
+          )}
+        </Link>
+
         {/* Mobile menu toggle */}
         <button
           className="lg:hidden p-2 text-white/80 hover:text-green-400 transition-colors"
@@ -252,80 +267,14 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
         </div>
       </nav>
 
-      {/* ── Mobile menu ────────────────────────────────────────────────── */}
-      {mobileOpen && (
-        <div className="lg:hidden bg-[#0A1930]/95 backdrop-blur-md border-t border-white/10 px-4 py-4 space-y-2 shadow-lg">
-          <form onSubmit={handleSearch} className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" aria-hidden="true" />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search products..."
-              aria-label="Search marketplace"
-              className="w-full h-10 pl-9 pr-20 bg-white/10 border border-white/20 rounded-xl text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-green-400"
-            />
-            <button
-              type="submit"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 px-3 bg-[#22C55E] text-white text-xs font-semibold rounded-lg"
-            >
-              Search
-            </button>
-          </form>
-
-          <Link to="/catalog" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-white/80 hover:text-green-400 transition-colors">All Categories</Link>
-          <Link to="/deals" onClick={() => setMobileOpen(false)} className="block py-2 text-sm font-medium text-white/80 hover:text-green-400 transition-colors">Deals</Link>
-          {user?.role === "seller" && (
-            <>
-              <Link to="/pp/seller/products" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm font-medium text-white/80 hover:text-green-400 transition-colors">
-                <Package className="h-4 w-4" /> My Products
-              </Link>
-              <Link to="/pp/seller/orders" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm font-medium text-white/80 hover:text-green-400 transition-colors">
-                <ShoppingBag className="h-4 w-4" /> Orders
-              </Link>
-            </>
-          )}
-          {user?.role === "buyer" && (
-            <>
-              <Link to="/pp/buyer/orders" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm font-medium text-white/80 hover:text-green-400 transition-colors">
-                <ShoppingBag className="h-4 w-4" /> My Orders
-              </Link>
-              <Link to="/pp/buyer/wishlist" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 py-2 text-sm font-medium text-white/80 hover:text-green-400 transition-colors">
-                <Heart className="h-4 w-4" /> Wishlist
-              </Link>
-            </>
-          )}
-
-          <div className="flex gap-2 pt-2 border-t border-white/10">
-            {user ? (
-              <>
-                <Button variant="ghost" size="sm" className="flex-1 text-white/80 hover:text-green-400 hover:bg-white/10" asChild>
-                  <Link to={dashboardPath} onClick={() => setMobileOpen(false)}>
-                    {user.role === "admin" ? "Admin Hub" : "Dashboard"}
-                  </Link>
-                </Button>
-                <Button size="sm" variant="outline" className="flex-1 border-white/20 text-white/80 hover:bg-white/10" onClick={() => { setMobileOpen(false); handleLogout(); }}>
-                  Sign Out
-                </Button>
-                {user.role !== "admin" && (
-                  <Button size="sm" className="flex-1 bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold" asChild>
-                    <Link to="/pp/seller" onClick={() => setMobileOpen(false)}>Start Selling</Link>
-                  </Button>
-                )}
-              </>
-            ) : (
-              <>
-                <Button variant="ghost" size="sm" className="flex-1 text-white/80 hover:text-green-400 hover:bg-white/10" asChild>
-                  <Link to="/login" onClick={() => setMobileOpen(false)}>Sign In</Link>
-                </Button>
-                <Button size="sm" className="flex-1 bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold" asChild>
-                  <Link to="/signup?type=seller" onClick={() => setMobileOpen(false)}>Start Selling</Link>
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      {/* ── Mobile drawer ───────────────────────────────────────────────── */}
+      <MobileDrawer
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+        user={user}
+        dashboardPath={dashboardPath}
+        onLogout={handleLogout}
+      />
     </header>
   );
 };
