@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import type { Product, SellerProfile, SellerStore } from '../types';
+import type { SellerProfile, SellerStore } from '../types';
 import { Store, Package, MapPin, Mail, Phone, MessageCircle, ArrowRight, Calendar, Settings } from 'lucide-react';
 import VerificationBadge from '../components/VerificationBadge';
 import RoleBadge from '../components/RoleBadge';
 import PaymentBehaviourBadge from '../components/PaymentBehaviourBadge';
-import ProductCard from '../components/ProductCard';
+import ProductCard from '../components/catalog/ProductCard';
+import type { Product } from '../components/catalog/ProductCard';
+import { adaptProducts } from '../lib/productAdapter';
+import type { DBProduct } from '../lib/productAdapter';
 import BreadcrumbNav from '../components/BreadcrumbNav';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -63,10 +66,10 @@ export default function SellerPublicProfilePage() {
 
         setSeller(combinedData);
 
-        // Step 3: Fetch active products (base rows only — no seller embed)
+        // Step 3: Fetch active products with category joins
         const { data: rawProducts, error: productsError } = await supabase
           .from('products')
-          .select('*, store:seller_stores!left(storeSlug)')
+          .select('*, category:categories!categoryId(name, slug), subcategory:categories!subcategoryId(name, slug)')
           .eq('sellerId', storeData.userId)
           .eq('isActive', true)
           .eq('isApproved', true)
@@ -75,21 +78,18 @@ export default function SellerPublicProfilePage() {
 
         if (productsError) throw productsError;
 
-        // Step 4: Merge seller info into products
-        const transformedProducts = (rawProducts ?? []).map((product) => ({
+        // Step 4: Merge seller info and adapt to UI shape
+        const merged = (rawProducts ?? []).map((product) => ({
           ...product,
           seller: {
             businessName: profileData.businessName,
             isApproved: profileData.isApproved,
             rating: profileData.rating,
-            marketplaceRole: profileData.marketplaceRole,
-            paymentBehaviour: profileData.paymentBehaviour,
             userId: profileData.userId,
-            storeSlug: storeData.storeSlug,
           },
         }));
 
-        setProducts(transformedProducts);
+        setProducts(adaptProducts(merged as unknown as DBProduct[]));
       } catch (error) {
         console.error('Error fetching seller profile:', error);
       } finally {

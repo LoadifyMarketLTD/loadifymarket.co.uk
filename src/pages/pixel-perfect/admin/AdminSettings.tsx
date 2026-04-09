@@ -48,6 +48,8 @@ const AdminSettings = () => {
   const [features, setFeatures] = useState<Features>(DEFAULT_FEATURES);
   const [config, setConfig] = useState<PlatformConfig>(DEFAULT_CONFIG);
   const [settingsLoading, setSettingsLoading] = useState(true);
+  const [stripeConnectStatus, setStripeConnectStatus] = useState<{ configured: boolean; message: string } | null>(null);
+  const [checkingStripe, setCheckingStripe] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [cacheCleared, setCacheCleared] = useState(false);
@@ -60,6 +62,28 @@ const AdminSettings = () => {
     }
     setCacheCleared(true);
     setTimeout(() => setCacheCleared(false), 3000);
+  };
+
+  const handleCheckStripeConnect = async () => {
+    setCheckingStripe(true);
+    setStripeConnectStatus(null);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+
+      const res = await fetch("/.netlify/functions/connect-platform-check", {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json() as { configured?: boolean; message?: string; error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Check failed");
+      setStripeConnectStatus({ configured: json.configured ?? false, message: json.message ?? "Unknown" });
+    } catch (err) {
+      setStripeConnectStatus({ configured: false, message: err instanceof Error ? err.message : "Check failed" });
+    } finally {
+      setCheckingStripe(false);
+    }
   };
 
   // Load persisted settings from platform_settings on mount
@@ -323,6 +347,27 @@ const AdminSettings = () => {
           </div>
           <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>API keys are stored securely as environment variables. Contact your DevOps team to update them.</p>
+          </div>
+          <div className="rounded-xl p-3 space-y-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}>Stripe Connect Platform</p>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-xs text-white/60 hover:text-white"
+                onClick={handleCheckStripeConnect}
+                disabled={checkingStripe}
+              >
+                {checkingStripe ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}
+                Check status
+              </Button>
+            </div>
+            {stripeConnectStatus && (
+              <div className={`flex items-center gap-2 text-xs ${stripeConnectStatus.configured ? "text-emerald-400" : "text-red-400"}`}>
+                <CheckCircle2 className={`h-3.5 w-3.5 shrink-0 ${stripeConnectStatus.configured ? "text-emerald-400" : "text-red-400"}`} />
+                {stripeConnectStatus.message}
+              </div>
+            )}
           </div>
         </div>
       </div>

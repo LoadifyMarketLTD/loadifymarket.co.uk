@@ -22,27 +22,32 @@
 
   <!-- ── Category pages ────────────────────────────────────────────────── -->
   <url>
-    <loc>https://loadifymarket.co.uk/category/electronics</loc>
+    <loc>https://loadifymarket.co.uk/category/large-letter-items</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://loadifymarket.co.uk/category/home-garden</loc>
+    <loc>https://loadifymarket.co.uk/category/garden</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/diy</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://loadifymarket.co.uk/category/fashion</loc>
+    <loc>https://loadifymarket.co.uk/category/cleaning</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://loadifymarket.co.uk/category/tools-diy</loc>
+    <loc>https://loadifymarket.co.uk/category/party-gift</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://loadifymarket.co.uk/category/automotive</loc>
+    <loc>https://loadifymarket.co.uk/category/wholesale-pound-lines</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -52,44 +57,54 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://loadifymarket.co.uk/category/pets</loc>
+    <loc>https://loadifymarket.co.uk/category/leisure-hobbies</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://loadifymarket.co.uk/category/business-supplies</loc>
+    <loc>https://loadifymarket.co.uk/category/baby-supplies</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://loadifymarket.co.uk/category/wholesale</loc>
+    <loc>https://loadifymarket.co.uk/category/kitchenware</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://loadifymarket.co.uk/category/handmade</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://loadifymarket.co.uk/category/sports-outdoors</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://loadifymarket.co.uk/category/health-beauty</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://loadifymarket.co.uk/category/baby-kids</loc>
+    <loc>https://loadifymarket.co.uk/category/homeware</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/electrical</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/pet-supplies</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/stationery</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://loadifymarket.co.uk/category/food-drink</loc>
+    <loc>https://loadifymarket.co.uk/category/seasonal</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://loadifymarket.co.uk/category/wholesale-clothing</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
   </url>
 
   <!-- ── Auth ──────────────────────────────────────────────────────────── -->
