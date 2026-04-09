@@ -2,16 +2,11 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import CATEGORY_CONFIG from "@/lib/category-config";
+import type { CategoryConfig } from "@/lib/category-config";
 
-type CategoryTile = {
-  slug: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  img: string;
-};
+type CategoryTileProps = Pick<CategoryConfig, "slug" | "label" | "icon" | "iconColor" | "image">;
 
-function CategoryTileItem({ slug, label, icon: Icon, color, img }: CategoryTile) {
+function CategoryTile({ slug, label, icon: Icon, iconColor, image }: CategoryTileProps) {
   const [imgFailed, setImgFailed] = useState(false);
 
   return (
@@ -24,12 +19,12 @@ function CategoryTileItem({ slug, label, icon: Icon, color, img }: CategoryTile)
         style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.10)" }}
       >
         {imgFailed ? (
-          <div className={`w-full h-full flex items-center justify-center ${color}`}>
-            <Icon className="h-6 w-6" aria-hidden="true" />
+          <div className="w-full h-full flex items-center justify-center">
+            <Icon className={`h-6 w-6 ${iconColor}`} aria-hidden="true" />
           </div>
         ) : (
           <img
-            src={img}
+            src={image}
             alt={label}
             width="64"
             height="64"
@@ -76,12 +71,12 @@ const CategorySlider = () => {
         >
           {CATEGORY_CONFIG.map((cat) => (
             <div key={cat.slug} role="listitem">
-              <CategoryTileItem
+              <CategoryTile
                 slug={cat.slug}
                 label={cat.label}
                 icon={cat.icon}
-                color={`${cat.accentBg} ${cat.iconColor}`}
-                img={cat.image}
+                iconColor={cat.iconColor}
+                image={cat.image}
               />
             </div>
           ))}

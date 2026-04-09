@@ -2,6 +2,25 @@
   command = "npm ci && npm run build"
   publish = "dist"
 
+# ─── Force HTTPS ──────────────────────────────────────────────────────────────
+[[redirects]]
+  from = "http://loadifymarket.co.uk/*"
+  to = "https://loadifymarket.co.uk/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "http://www.loadifymarket.co.uk/*"
+  to = "https://loadifymarket.co.uk/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.loadifymarket.co.uk/*"
+  to = "https://loadifymarket.co.uk/:splat"
+  status = 301
+  force = true
+
 [build.environment]
   NODE_VERSION = "20"
 

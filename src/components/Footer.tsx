@@ -23,9 +23,9 @@ const FOOTER_SECTIONS = [
     title: "For Buyers",
     links: [
       { to: "/catalog", label: "Browse Marketplace" },
-      { to: "/category/electronics", label: "Electronics" },
-      { to: "/category/fashion", label: "Fashion" },
-      { to: "/category/home-kitchen", label: "Home & Kitchen" },
+      { to: "/category/health-beauty", label: "Health & Beauty" },
+      { to: "/category/wholesale-clothing", label: "Wholesale Clothing" },
+      { to: "/category/kitchenware", label: "Kitchenware" },
       { to: "/catalog", label: "All Categories" },
       { to: "/track-order", label: "Track Order" },
       { to: "/faq", label: "Help & FAQ" },
@@ -251,9 +251,9 @@ const Footer = () => {
               </h4>
               <ul className="space-y-2 text-sm text-background/60">
                 <FooterLink to="/catalog">Browse Marketplace</FooterLink>
-                <FooterLink to="/category/electronics">Electronics</FooterLink>
-                <FooterLink to="/category/fashion">Fashion</FooterLink>
-                <FooterLink to="/category/home-kitchen">Home &amp; Kitchen</FooterLink>
+                <FooterLink to="/category/health-beauty">Health &amp; Beauty</FooterLink>
+                <FooterLink to="/category/wholesale-clothing">Wholesale Clothing</FooterLink>
+                <FooterLink to="/category/kitchenware">Kitchenware</FooterLink>
                 <FooterLink to="/catalog">All Categories</FooterLink>
                 <FooterLink to="/track-order">Track Order</FooterLink>
                 <FooterLink to="/faq">Help &amp; FAQ</FooterLink>

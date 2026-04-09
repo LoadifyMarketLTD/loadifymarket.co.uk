@@ -1,64 +1,64 @@
 import { Link } from "react-router-dom";
-import { BadgePercent, RotateCcw, Trophy, Sparkles, Package, Archive, ShoppingBag, Store } from "lucide-react";
+import { Tag, RefreshCw, TrendingUp, Clock, Package, XCircle, ShoppingBag, Store } from "lucide-react";
 
 interface DrawerCTACardsProps {
   onClose: () => void;
 }
 
-const QUICK_ACTIONS = [
+const CTA_CARDS = [
   {
-    icon: BadgePercent,
+    icon: Tag,
     label: "Price Crunch",
-    route: "/catalog?type=price-crunch",
-    iconClass: "text-red-400",
+    route: "/catalog?filter=price-crunch",
+    iconClass: "text-green-400",
   },
   {
-    icon: RotateCcw,
+    icon: RefreshCw,
     label: "Back in Stock",
-    route: "/catalog?type=back-in-stock",
+    route: "/catalog?filter=back-in-stock",
     iconClass: "text-sky-400",
   },
   {
-    icon: Trophy,
+    icon: TrendingUp,
     label: "Best Sellers",
-    route: "/catalog?sort=bestsellers",
+    route: "/catalog?filter=best-sellers",
     iconClass: "text-amber-400",
   },
   {
-    icon: Sparkles,
+    icon: Clock,
     label: "Latest Products",
-    route: "/catalog?sort=newest",
+    route: "/catalog?filter=latest",
     iconClass: "text-violet-400",
   },
   {
     icon: Package,
     label: "Pallet Deals",
-    route: "/catalog?type=pallet-deals",
+    route: "/catalog?filter=pallet-deals",
     iconClass: "text-orange-400",
   },
   {
-    icon: Archive,
+    icon: XCircle,
     label: "Delisted",
-    route: "/catalog?type=delisted",
-    iconClass: "text-slate-400",
+    route: "/catalog?filter=delisted",
+    iconClass: "text-red-400",
   },
   {
     icon: ShoppingBag,
     label: "Multi Buy",
-    route: "/catalog?type=multi-buy",
-    iconClass: "text-green-400",
+    route: "/catalog?filter=multi-buy",
+    iconClass: "text-pink-400",
   },
   {
     icon: Store,
     label: "Shop by Brand",
-    route: "/catalog?view=brands",
-    iconClass: "text-pink-400",
+    route: "/catalog?filter=brand",
+    iconClass: "text-teal-400",
   },
 ] as const;
 
 const DrawerCTACards = ({ onClose }: DrawerCTACardsProps) => (
   <div className="px-4 pb-4 grid grid-cols-2 gap-2">
-    {QUICK_ACTIONS.map(({ icon: Icon, label, route, iconClass }) => (
+    {CTA_CARDS.map(({ icon: Icon, label, route, iconClass }) => (
       <Link
         key={label}
         to={route}

@@ -2,18 +2,18 @@
  * src/data/categories.ts
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │  SINGLE SOURCE OF TRUTH — CATEGORY TREE                                  │
+ * │  SINGLE SOURCE OF TRUTH for all categories and subcategories             │
  * │                                                                          │
  * │  Used by:                                                                │
- * │  • Mobile drawer (src/components/MobileDrawer.tsx)                      │
- * │  • Header category nav (src/components/Header.tsx)                      │
- * │  • Homepage category cards / slider                                      │
- * │  • Category pages (src/pages/pixel-perfect/CategoryPage.tsx)            │
- * │  • Category search config (src/lib/category-config.ts)                  │
- * │  • Seller upload / filters                                               │
+ * │  • Header / drawer nav  (src/components/Header.tsx)                     │
+ * │  • Mobile/desktop drawer  (src/components/MobileDrawer.tsx)             │
+ * │  • Homepage category cards  (src/pages/pixel-perfect/Index.tsx)         │
+ * │  • Category pages  (src/pages/pixel-perfect/CategoryPage.tsx)           │
+ * │  • Category search config  (src/lib/category-config.ts)                 │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
  * Order is intentional — keep it consistent across the whole app.
+ * 17 wholesale B2B categories matching the Loadify Market taxonomy.
  */
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -46,342 +46,343 @@ export interface Category {
 
 /** All 17 wholesale marketplace categories in approved display order. */
 export const CATEGORIES: readonly Category[] = [
-  // 1 ── Large Letter Items ──────────────────────────────────────────────────
+  // 1 ── Large Letter Items ───────────────────────────────────────────────────
   {
     id: 1,
     name: "Large Letter Items",
     slug: "large-letter-items",
-    description: "Books, cards, jewellery, phone accessories and more — all letterbox-friendly",
+    description: "Small, lightweight items ideal for postal and large-letter format shipping",
     image: "https://images.unsplash.com/photo-1586769852044-692d6e3703f0?auto=format&fit=crop&w=800&q=80",
     featured: true,
     subcategories: [
-      { name: "Books & Media",       slug: "books-media"        },
-      { name: "Greeting Cards",      slug: "greeting-cards"     },
-      { name: "Jewellery",           slug: "jewellery"          },
-      { name: "Phone Accessories",   slug: "phone-accessories"  },
-      { name: "Beauty Samples",      slug: "beauty-samples"     },
-      { name: "Art Prints",          slug: "art-prints"         },
+      { name: "Stationery & Cards",      slug: "stationery-cards"      },
+      { name: "Jewellery & Accessories", slug: "jewellery-accessories"  },
+      { name: "Phone Accessories",        slug: "phone-accessories"      },
+      { name: "Hair Accessories",         slug: "hair-accessories"       },
+      { name: "Small Gifts & Novelties",  slug: "small-gifts"            },
+      { name: "Keyrings & Badges",        slug: "keyrings-badges"        },
+      { name: "Beauty Accessories",       slug: "beauty-accessories"     },
+      { name: "Craft Supplies",           slug: "craft-supplies"         },
     ],
   },
 
-  // 2 ── Garden ──────────────────────────────────────────────────────────────
+  // 2 ── Garden ───────────────────────────────────────────────────────────────
   {
     id: 2,
     name: "Garden",
     slug: "garden",
-    description: "Garden tools, outdoor furniture, planting, pest control and more",
+    description: "Garden tools, outdoor furniture, planters, BBQ and garden décor",
     image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=800&q=80",
     featured: true,
     subcategories: [
-      { name: "Garden Tools",               slug: "garden-tools"               },
-      { name: "Planting & Growing",         slug: "planting-growing"           },
-      { name: "Decorative & Novelty",       slug: "decorative-novelty"         },
-      { name: "Outdoor Lighting",           slug: "outdoor-lighting"           },
-      { name: "Pest Killers & Deterrents",  slug: "pest-killers-deterrents"    },
-      { name: "Bird Feeders",               slug: "bird-feeders"               },
-      { name: "BBQ & Picnic",               slug: "bbq-picnic"                 },
-      { name: "Hoses & Watering",           slug: "hoses-watering"             },
-      { name: "Pegs & Clotheslines",        slug: "pegs-clotheslines"          },
-      { name: "Garden Wear",                slug: "garden-wear"                },
-      { name: "Shed & Garage Accessories",  slug: "shed-garage-accessories"    },
-      { name: "Twine & Garden Ties",        slug: "twine-garden-ties"          },
+      { name: "Garden Tools",           slug: "garden-tools"           },
+      { name: "Plant Pots & Planters",  slug: "plant-pots-planters"    },
+      { name: "Garden Furniture",       slug: "garden-furniture"       },
+      { name: "Outdoor Lighting",       slug: "outdoor-lighting"       },
+      { name: "BBQ & Outdoor Cooking",  slug: "bbq-outdoor-cooking"    },
+      { name: "Watering Equipment",     slug: "watering-equipment"     },
+      { name: "Garden Décor",           slug: "garden-decor"           },
+      { name: "Seeds & Bulbs",          slug: "seeds-bulbs"            },
     ],
   },
 
-  // 3 ── DIY ─────────────────────────────────────────────────────────────────
+  // 3 ── DIY ──────────────────────────────────────────────────────────────────
   {
     id: 3,
     name: "DIY",
     slug: "diy",
-    description: "Power tools, hand tools, hardware, fixings, plumbing and decorating",
+    description: "Power tools, hand tools, fixings, paint and home improvement supplies",
     image: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=800&q=80",
     featured: true,
     subcategories: [
-      { name: "Power Tools",          slug: "power-tools"       },
-      { name: "Hand Tools",           slug: "hand-tools"        },
-      { name: "Hardware & Fixings",   slug: "hardware-fixings"  },
-      { name: "Plumbing",             slug: "plumbing"          },
-      { name: "Electrical",           slug: "electrical"        },
-      { name: "Decorating & Painting",slug: "decorating-painting"},
-      { name: "Adhesives & Sealants", slug: "adhesives-sealants"},
-      { name: "Safety & PPE",         slug: "safety-ppe"        },
+      { name: "Power Tools",        slug: "power-tools"        },
+      { name: "Hand Tools",         slug: "hand-tools"         },
+      { name: "Fixings & Fastenings", slug: "fixings-fastenings" },
+      { name: "Safety Equipment",   slug: "safety-equipment"   },
+      { name: "Paint & Decorating", slug: "paint-decorating"   },
+      { name: "Plumbing",           slug: "plumbing"           },
+      { name: "Electrical Supplies",slug: "electrical-supplies"},
+      { name: "Storage Solutions",  slug: "storage-solutions"  },
     ],
   },
 
-  // 4 ── Cleaning ────────────────────────────────────────────────────────────
+  // 4 ── Cleaning ─────────────────────────────────────────────────────────────
   {
     id: 4,
     name: "Cleaning",
     slug: "cleaning",
-    description: "Surface cleaners, floor care, laundry, kitchen and bathroom cleaning",
+    description: "Cleaning products, mops, cloths, bin liners, disinfectants and laundry",
     image: "https://images.unsplash.com/photo-1563453392212-326f5e854473?auto=format&fit=crop&w=800&q=80",
-    featured: true,
+    featured: false,
     subcategories: [
-      { name: "Surface Cleaners",    slug: "surface-cleaners"   },
-      { name: "Floor Care",          slug: "floor-care"         },
-      { name: "Laundry Products",    slug: "laundry-products"   },
-      { name: "Kitchen Cleaning",    slug: "kitchen-cleaning"   },
-      { name: "Bathroom Cleaning",   slug: "bathroom-cleaning"  },
-      { name: "Cleaning Equipment",  slug: "cleaning-equipment" },
-      { name: "Disposable Gloves",   slug: "disposable-gloves"  },
-      { name: "Air Fresheners",      slug: "air-fresheners"     },
+      { name: "Cleaning Products",      slug: "cleaning-products"      },
+      { name: "Mops & Brushes",         slug: "mops-brushes"           },
+      { name: "Cloths & Sponges",       slug: "cloths-sponges"         },
+      { name: "Bin Liners & Bags",      slug: "bin-liners-bags"        },
+      { name: "Air Fresheners",         slug: "air-fresheners"         },
+      { name: "Disinfectants",          slug: "disinfectants"          },
+      { name: "Laundry Products",       slug: "laundry-products"       },
+      { name: "Household Essentials",   slug: "household-essentials"   },
     ],
   },
 
-  // 5 ── Party & Gift ────────────────────────────────────────────────────────
+  // 5 ── Party & Gift ─────────────────────────────────────────────────────────
   {
     id: 5,
     name: "Party & Gift",
     slug: "party-gift",
-    description: "Decorations, tableware, balloons, fancy dress and gift wrap",
-    image: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=800&q=80",
+    description: "Party supplies, balloons, decorations, gifting and tableware",
+    image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=800&q=80",
     featured: true,
     subcategories: [
-      { name: "Party Decorations",   slug: "party-decorations"  },
-      { name: "Balloons",            slug: "balloons"           },
-      { name: "Gift Wrap & Bags",    slug: "gift-wrap-bags"     },
-      { name: "Tableware",           slug: "tableware"          },
-      { name: "Banners & Bunting",   slug: "banners-bunting"    },
-      { name: "Candles & Holders",   slug: "candles-holders"    },
-      { name: "Fancy Dress",         slug: "fancy-dress"        },
-      { name: "Seasonal Decorations",slug: "seasonal-decorations"},
+      { name: "Party Supplies",         slug: "party-supplies"         },
+      { name: "Balloons & Decorations", slug: "balloons-decorations"   },
+      { name: "Gifting & Wrapping",     slug: "gifting-wrapping"       },
+      { name: "Candles & Holders",      slug: "candles-holders"        },
+      { name: "Novelty Gifts",          slug: "novelty-gifts"          },
+      { name: "Seasonal Gifts",         slug: "seasonal-gifts"         },
+      { name: "Tableware",              slug: "tableware"              },
+      { name: "Cards & Stationery",     slug: "cards-stationery"       },
     ],
   },
 
-  // 6 ── Wholesale Pound Lines ───────────────────────────────────────────────
+  // 6 ── Wholesale Pound Lines ────────────────────────────────────────────────
   {
     id: 6,
     name: "Wholesale Pound Lines",
     slug: "wholesale-pound-lines",
-    description: "High-volume pound line products: household, snacks, toiletries and more",
-    image: "https://images.unsplash.com/photo-1542601906897-ecd92e08d0c4?auto=format&fit=crop&w=800&q=80",
+    description: "High-volume pound-line products across all categories",
+    image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=800&q=80",
     featured: true,
     subcategories: [
-      { name: "Household",           slug: "household"          },
-      { name: "Stationery",          slug: "stationery"         },
-      { name: "Confectionery & Snacks", slug: "confectionery-snacks" },
-      { name: "Toiletries & Beauty", slug: "toiletries-beauty"  },
-      { name: "Toys & Games",        slug: "toys-games"         },
-      { name: "Seasonal Lines",      slug: "seasonal-lines"     },
+      { name: "Household Goods",   slug: "household-goods"   },
+      { name: "Health & Beauty",   slug: "health-beauty"     },
+      { name: "Stationery",        slug: "stationery"        },
+      { name: "Toys & Gifts",      slug: "toys-gifts"        },
+      { name: "Cleaning",          slug: "cleaning"          },
+      { name: "Food & Snacks",     slug: "food-snacks"       },
+      { name: "Seasonal Items",    slug: "seasonal-items"    },
+      { name: "Miscellaneous",     slug: "miscellaneous"     },
     ],
   },
 
-  // 7 ── Toys ────────────────────────────────────────────────────────────────
+  // 7 ── Toys ─────────────────────────────────────────────────────────────────
   {
     id: 7,
     name: "Toys",
     slug: "toys",
-    description: "Action figures, educational toys, outdoor play and arts & crafts",
+    description: "Action figures, educational toys, outdoor toys, board games and arts & crafts",
     image: "https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=800&q=80",
-    featured: true,
+    featured: false,
     subcategories: [
-      { name: "Action Figures",      slug: "action-figures"    },
-      { name: "Educational Toys",    slug: "educational-toys"  },
-      { name: "Outdoor Play",        slug: "outdoor-play"      },
-      { name: "Arts & Crafts",       slug: "arts-crafts"       },
-      { name: "Puzzles & Games",     slug: "puzzles-games"     },
-      { name: "Dolls & Accessories", slug: "dolls-accessories" },
-      { name: "Building Toys",       slug: "building-toys"     },
-      { name: "Baby Toys",           slug: "baby-toys"         },
+      { name: "Action Figures",      slug: "action-figures"     },
+      { name: "Educational Toys",    slug: "educational-toys"   },
+      { name: "Outdoor Toys",        slug: "outdoor-toys"       },
+      { name: "Board Games",         slug: "board-games"        },
+      { name: "Dolls & Accessories", slug: "dolls-accessories"  },
+      { name: "Baby Toys",           slug: "baby-toys"          },
+      { name: "Arts & Crafts",       slug: "arts-crafts"        },
+      { name: "Remote Control Toys", slug: "remote-control-toys"},
     ],
   },
 
-  // 8 ── Leisure & Hobbies ───────────────────────────────────────────────────
+  // 8 ── Leisure & Hobbies ────────────────────────────────────────────────────
   {
     id: 8,
     name: "Leisure & Hobbies",
     slug: "leisure-hobbies",
-    description: "Sports, camping, cycling, arts, music and travel accessories",
+    description: "Arts & crafts, sports, camping, puzzles and hobby equipment",
     image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80",
     featured: false,
     subcategories: [
-      { name: "Sports & Fitness",    slug: "sports-fitness"      },
-      { name: "Camping & Hiking",    slug: "camping-hiking"      },
-      { name: "Cycling",             slug: "cycling"             },
-      { name: "Water Sports",        slug: "water-sports"        },
-      { name: "Arts & Crafts",       slug: "arts-crafts"         },
-      { name: "Musical Instruments", slug: "musical-instruments" },
-      { name: "Photography",         slug: "photography"         },
-      { name: "Travel Accessories",  slug: "travel-accessories"  },
+      { name: "Arts & Crafts",         slug: "arts-crafts"          },
+      { name: "Puzzles & Games",        slug: "puzzles-games"        },
+      { name: "Sports & Fitness",       slug: "sports-fitness"       },
+      { name: "Camping & Outdoor",      slug: "camping-outdoor"      },
+      { name: "Photography",            slug: "photography"          },
+      { name: "Collecting",             slug: "collecting"           },
+      { name: "Musical Instruments",    slug: "musical-instruments"  },
+      { name: "Reading & Books",        slug: "reading-books"        },
     ],
   },
 
-  // 9 ── Baby Supplies ───────────────────────────────────────────────────────
+  // 9 ── Baby Supplies ────────────────────────────────────────────────────────
   {
     id: 9,
     name: "Baby Supplies",
     slug: "baby-supplies",
-    description: "Feeding, nursery, clothing, bath & changing and baby travel essentials",
+    description: "Baby clothing, feeding, nappies, nursery essentials and baby monitors",
     image: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=800&q=80",
     featured: false,
     subcategories: [
-      { name: "Feeding",             slug: "feeding"            },
-      { name: "Nursery",             slug: "nursery"            },
-      { name: "Clothing & Accessories", slug: "clothing-accessories" },
-      { name: "Bath & Changing",     slug: "bath-changing"      },
-      { name: "Travel & Safety",     slug: "travel-safety"      },
-      { name: "Toys & Development",  slug: "toys-development"   },
-      { name: "Health & Care",       slug: "health-care"        },
+      { name: "Baby Clothing",       slug: "baby-clothing"       },
+      { name: "Feeding & Nursing",   slug: "feeding-nursing"     },
+      { name: "Nappies & Changing",  slug: "nappies-changing"    },
+      { name: "Baby Toys",           slug: "baby-toys"           },
+      { name: "Baby Monitors",       slug: "baby-monitors"       },
+      { name: "Travel & Pushchairs", slug: "travel-pushchairs"   },
+      { name: "Nursery",             slug: "nursery"             },
+      { name: "Safety & Babyproofing", slug: "safety-babyproofing" },
     ],
   },
 
-  // 10 ── Kitchenware ────────────────────────────────────────────────────────
+  // 10 ── Kitchenware ─────────────────────────────────────────────────────────
   {
     id: 10,
     name: "Kitchenware",
     slug: "kitchenware",
-    description: "Cookware, bakeware, kitchen tools, tableware and kitchen appliances",
+    description: "Cookware, bakeware, kitchen tools, storage and small appliances",
     image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80",
-    featured: false,
+    featured: true,
     subcategories: [
-      { name: "Cookware",                 slug: "cookware"            },
-      { name: "Bakeware",                 slug: "bakeware"            },
-      { name: "Kitchen Tools & Gadgets",  slug: "kitchen-tools-gadgets" },
-      { name: "Tableware",                slug: "tableware"           },
-      { name: "Storage & Organisation",   slug: "storage-organisation"},
-      { name: "Kitchen Appliances",       slug: "kitchen-appliances"  },
-      { name: "Cutlery",                  slug: "cutlery"             },
-      { name: "Drinkware",                slug: "drinkware"           },
+      { name: "Cookware",             slug: "cookware"            },
+      { name: "Bakeware",             slug: "bakeware"            },
+      { name: "Kitchen Tools",        slug: "kitchen-tools"       },
+      { name: "Storage Containers",   slug: "storage-containers"  },
+      { name: "Cutlery & Flatware",   slug: "cutlery-flatware"    },
+      { name: "Drinkware",            slug: "drinkware"           },
+      { name: "Small Appliances",     slug: "small-appliances"    },
+      { name: "Kitchen Gadgets",      slug: "kitchen-gadgets"     },
     ],
   },
 
-  // 11 ── Health & Beauty ────────────────────────────────────────────────────
+  // 11 ── Health & Beauty ─────────────────────────────────────────────────────
   {
     id: 11,
     name: "Health & Beauty",
     slug: "health-beauty",
-    description: "Skincare, haircare, makeup, fragrance, personal care and supplements",
+    description: "Skincare, haircare, makeup, personal care, vitamins and fragrances",
     image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80",
-    featured: false,
+    featured: true,
     subcategories: [
-      { name: "Skincare",            slug: "skincare"           },
-      { name: "Haircare",            slug: "haircare"           },
-      { name: "Makeup & Cosmetics",  slug: "makeup-cosmetics"   },
-      { name: "Fragrance",           slug: "fragrance"          },
-      { name: "Personal Care",       slug: "personal-care"      },
-      { name: "Health Supplements",  slug: "health-supplements" },
-      { name: "Dental Care",         slug: "dental-care"        },
-      { name: "Eye Care",            slug: "eye-care"           },
+      { name: "Skincare",          slug: "skincare"          },
+      { name: "Haircare",          slug: "haircare"          },
+      { name: "Makeup & Cosmetics",slug: "makeup-cosmetics"  },
+      { name: "Personal Care",     slug: "personal-care"     },
+      { name: "Vitamins & Supplements", slug: "vitamins-supplements" },
+      { name: "Fragrances",        slug: "fragrances"        },
+      { name: "Medical Supplies",  slug: "medical-supplies"  },
+      { name: "Oral Care",         slug: "oral-care"         },
     ],
   },
 
-  // 12 ── Homeware ───────────────────────────────────────────────────────────
+  // 12 ── Homeware ────────────────────────────────────────────────────────────
   {
     id: 12,
     name: "Homeware",
     slug: "homeware",
-    description: "Bedding, curtains, rugs, cushions, towels and home accessories",
-    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80",
-    featured: false,
+    description: "Bedding, curtains, rugs, bathroom accessories and home décor",
+    image: "https://images.unsplash.com/photo-1484101403633-562f891dc89a?auto=format&fit=crop&w=800&q=80",
+    featured: true,
     subcategories: [
-      { name: "Bedding",             slug: "bedding"            },
-      { name: "Curtains & Blinds",   slug: "curtains-blinds"    },
-      { name: "Rugs & Mats",         slug: "rugs-mats"          },
-      { name: "Cushions & Throws",   slug: "cushions-throws"    },
-      { name: "Towels & Bath Linen", slug: "towels-bath-linen"  },
-      { name: "Home Fragrance",      slug: "home-fragrance"     },
-      { name: "Picture Frames",      slug: "picture-frames"     },
-      { name: "Clocks",              slug: "clocks"             },
+      { name: "Bedding & Pillows",        slug: "bedding-pillows"        },
+      { name: "Curtains & Blinds",        slug: "curtains-blinds"        },
+      { name: "Rugs & Flooring",          slug: "rugs-flooring"          },
+      { name: "Cushions & Throws",        slug: "cushions-throws"        },
+      { name: "Bathroom Accessories",     slug: "bathroom-accessories"   },
+      { name: "Picture Frames & Clocks",  slug: "picture-frames-clocks"  },
+      { name: "Candles & Home Fragrance", slug: "candles-home-fragrance" },
+      { name: "Home Décor",               slug: "home-decor"             },
     ],
   },
 
-  // 13 ── Electrical ─────────────────────────────────────────────────────────
+  // 13 ── Electrical ──────────────────────────────────────────────────────────
   {
     id: 13,
     name: "Electrical",
     slug: "electrical",
-    description: "Small appliances, lighting, TV & audio, computing and smart home",
+    description: "LED lighting, phone accessories, cables, smart home and audio",
     image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
     featured: false,
     subcategories: [
-      { name: "Small Appliances",    slug: "small-appliances"   },
-      { name: "Lighting",            slug: "lighting"           },
-      { name: "TV & Audio",          slug: "tv-audio"           },
-      { name: "Computing",           slug: "computing"          },
-      { name: "Smart Home",          slug: "smart-home"         },
-      { name: "Phone Accessories",   slug: "phone-accessories"  },
-      { name: "Batteries & Power",   slug: "batteries-power"    },
-      { name: "Cables & Adapters",   slug: "cables-adapters"    },
+      { name: "LED Lighting",          slug: "led-lighting"          },
+      { name: "Phone Accessories",     slug: "phone-accessories"     },
+      { name: "Cables & Adapters",     slug: "cables-adapters"       },
+      { name: "Smart Home",            slug: "smart-home"            },
+      { name: "Batteries",             slug: "batteries"             },
+      { name: "Audio",                 slug: "audio"                 },
+      { name: "Small Appliances",      slug: "small-appliances"      },
+      { name: "Computer Accessories",  slug: "computer-accessories"  },
     ],
   },
 
-  // 14 ── Pet Supplies ───────────────────────────────────────────────────────
+  // 14 ── Pet Supplies ────────────────────────────────────────────────────────
   {
     id: 14,
     name: "Pet Supplies",
     slug: "pet-supplies",
-    description: "Dog, cat, bird and small pet supplies, food, grooming and health",
-    image: "https://images.unsplash.com/photo-1548767797-d8c844163c4a?auto=format&fit=crop&w=800&q=80",
+    description: "Dog, cat, small animal, bird and fish supplies, food, toys and grooming",
+    image: "https://images.unsplash.com/photo-1450778869180-41d0601e046e?auto=format&fit=crop&w=800&q=80",
     featured: false,
     subcategories: [
-      { name: "Dog Supplies",        slug: "dog-supplies"       },
-      { name: "Cat Supplies",        slug: "cat-supplies"       },
-      { name: "Bird Supplies",       slug: "bird-supplies"      },
-      { name: "Fish & Aquatic",      slug: "fish-aquatic"       },
-      { name: "Small Pets",          slug: "small-pets"         },
-      { name: "Pet Food & Treats",   slug: "pet-food-treats"    },
-      { name: "Pet Grooming",        slug: "pet-grooming"       },
-      { name: "Pet Health",          slug: "pet-health"         },
+      { name: "Dog Supplies",         slug: "dog-supplies"         },
+      { name: "Cat Supplies",         slug: "cat-supplies"         },
+      { name: "Small Animal Supplies",slug: "small-animal-supplies"},
+      { name: "Bird Supplies",        slug: "bird-supplies"        },
+      { name: "Fish & Aquatics",      slug: "fish-aquatics"        },
+      { name: "Pet Food",             slug: "pet-food"             },
+      { name: "Pet Toys",             slug: "pet-toys"             },
+      { name: "Grooming",             slug: "grooming"             },
     ],
   },
 
-  // 15 ── Stationery ─────────────────────────────────────────────────────────
+  // 15 ── Stationery ──────────────────────────────────────────────────────────
   {
     id: 15,
     name: "Stationery",
     slug: "stationery",
-    description: "Pens, notebooks, art supplies, office essentials and craft materials",
+    description: "Pens, notebooks, office supplies, art materials and greeting cards",
     image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80",
     featured: false,
     subcategories: [
-      { name: "Pens & Pencils",      slug: "pens-pencils"       },
-      { name: "Notebooks & Pads",    slug: "notebooks-pads"     },
-      { name: "Filing & Storage",    slug: "filing-storage"     },
-      { name: "Art Supplies",        slug: "art-supplies"       },
-      { name: "Office Supplies",     slug: "office-supplies"    },
-      { name: "Craft Supplies",      slug: "craft-supplies"     },
-      { name: "Cards & Envelopes",   slug: "cards-envelopes"    },
-      { name: "Educational",         slug: "educational"        },
+      { name: "Pens & Pencils",    slug: "pens-pencils"    },
+      { name: "Notebooks & Journals", slug: "notebooks-journals" },
+      { name: "Office Supplies",   slug: "office-supplies" },
+      { name: "Art Supplies",      slug: "art-supplies"    },
+      { name: "Greeting Cards",    slug: "greeting-cards"  },
+      { name: "Gift Wrap",         slug: "gift-wrap"       },
+      { name: "Labels & Tags",     slug: "labels-tags"     },
+      { name: "Filing & Storage",  slug: "filing-storage"  },
     ],
   },
 
-  // 16 ── Seasonal ───────────────────────────────────────────────────────────
+  // 16 ── Seasonal ────────────────────────────────────────────────────────────
   {
     id: 16,
     name: "Seasonal",
     slug: "seasonal",
-    description: "Christmas, Easter, Halloween, summer and all seasonal occasions",
-    image: "https://images.unsplash.com/photo-1543589077-47d81606c1bf?auto=format&fit=crop&w=800&q=80",
+    description: "Christmas, Easter, Halloween, Valentine's and all seasonal ranges",
+    image: "https://images.unsplash.com/photo-1512389142860-9c449e58a543?auto=format&fit=crop&w=800&q=80",
     featured: false,
     subcategories: [
-      { name: "Christmas",           slug: "christmas"          },
-      { name: "Easter",              slug: "easter"             },
-      { name: "Halloween",           slug: "halloween"          },
-      { name: "Summer",              slug: "summer"             },
-      { name: "Back to School",      slug: "back-to-school"     },
-      { name: "Valentine's Day",     slug: "valentines-day"     },
-      { name: "Mother's Day",        slug: "mothers-day"        },
-      { name: "Father's Day",        slug: "fathers-day"        },
+      { name: "Christmas",       slug: "christmas"       },
+      { name: "Easter",          slug: "easter"          },
+      { name: "Halloween",       slug: "halloween"       },
+      { name: "Valentine's Day", slug: "valentines-day"  },
+      { name: "Summer",          slug: "summer"          },
+      { name: "Back to School",  slug: "back-to-school"  },
+      { name: "Spring",          slug: "spring"          },
+      { name: "Diwali & Eid",    slug: "diwali-eid"      },
     ],
   },
 
-  // 17 ── Wholesale Clothing ─────────────────────────────────────────────────
+  // 17 ── Wholesale Clothing ──────────────────────────────────────────────────
   {
     id: 17,
     name: "Wholesale Clothing",
     slug: "wholesale-clothing",
-    description: "Bulk men's, women's and children's clothing, footwear and accessories",
+    description: "Women's, men's and children's clothing, sportswear and underwear",
     image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80",
-    featured: false,
+    featured: true,
     subcategories: [
-      { name: "Men's",               slug: "mens"               },
-      { name: "Women's",             slug: "womens"             },
-      { name: "Children's",          slug: "childrens"          },
-      { name: "Footwear",            slug: "footwear"           },
-      { name: "Accessories",         slug: "accessories"        },
-      { name: "Sportswear",          slug: "sportswear"         },
-      { name: "Underwear & Socks",   slug: "underwear-socks"    },
-      { name: "Bags & Luggage",      slug: "bags-luggage"       },
+      { name: "Women's Clothing",  slug: "womens-clothing"  },
+      { name: "Men's Clothing",    slug: "mens-clothing"    },
+      { name: "Children's Clothing", slug: "childrens-clothing" },
+      { name: "Baby Clothing",     slug: "baby-clothing"    },
+      { name: "Sportswear",        slug: "sportswear"       },
+      { name: "Underwear & Socks", slug: "underwear-socks"  },
+      { name: "Accessories",       slug: "accessories"      },
+      { name: "Swimwear",          slug: "swimwear"         },
     ],
   },
 ];
