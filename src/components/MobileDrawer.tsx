@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { X, ArrowLeft, ChevronRight } from "lucide-react";
+import { X, ArrowLeft, ChevronRight, Info, BookOpen, Users } from "lucide-react";
 import CATEGORY_CONFIG, { getCategoryConfig } from "@/lib/category-config";
 import DrawerAccountBlock from "@/components/mobile/DrawerAccountBlock";
 import DrawerCTACards from "@/components/mobile/DrawerCTACards";
@@ -112,7 +112,7 @@ const MainScreen = ({
       {/* Divider */}
       <div className="h-px bg-white/10 mx-4 mt-2" />
 
-      {/* Secondary links */}
+      {/* Quick links row */}
       <div className="flex px-4 py-3 gap-1">
         <Link
           to="/catalog"
@@ -131,6 +131,40 @@ const MainScreen = ({
         </Link>
       </div>
 
+      {/* Divider */}
+      <div className="h-px bg-white/10 mx-4" />
+
+      {/* Footer info links */}
+      <div className="py-3">
+        <p className="px-4 pb-1 text-[11px] font-bold uppercase tracking-widest text-white/40">
+          Information & Support
+        </p>
+        <Link
+          to="/wholesale-info"
+          onClick={onClose}
+          className="flex items-center gap-3 px-4 h-11 hover:bg-white/[0.07] transition-colors"
+        >
+          <Info className="h-4 w-4 text-white/40 shrink-0" aria-hidden="true" />
+          <span className="text-sm text-white/70 hover:text-white">UK Wholesale Information & Support</span>
+        </Link>
+        <Link
+          to="/blog"
+          onClick={onClose}
+          className="flex items-center gap-3 px-4 h-11 hover:bg-white/[0.07] transition-colors"
+        >
+          <BookOpen className="h-4 w-4 text-white/40 shrink-0" aria-hidden="true" />
+          <span className="text-sm text-white/70 hover:text-white">Blog</span>
+        </Link>
+        <Link
+          to="/about"
+          onClick={onClose}
+          className="flex items-center gap-3 px-4 h-11 hover:bg-white/[0.07] transition-colors"
+        >
+          <Users className="h-4 w-4 text-white/40 shrink-0" aria-hidden="true" />
+          <span className="text-sm text-white/70 hover:text-white">About Us</span>
+        </Link>
+      </div>
+
       {/* Safe-area spacer for iOS */}
       <div style={{ height: "env(safe-area-inset-bottom, 16px)" }} />
     </div>
@@ -143,9 +177,8 @@ const CategoryScreen = ({ categorySlug, onBack, onClose }: CategoryScreenProps) 
   const config = getCategoryConfig(categorySlug);
   if (!config) return null;
 
-  const subcategories = config.chips.filter(
-    (chip) => chip.searchTerm !== undefined
-  );
+  // All chips except the first "View All" chip
+  const subcategoryChips = config.chips.slice(1);
 
   return (
     <div className="flex flex-col h-full">
@@ -175,12 +208,16 @@ const CategoryScreen = ({ categorySlug, onBack, onClose }: CategoryScreenProps) 
           <ChevronRight className="h-4 w-4 text-[#22C55E]/60 ml-auto" aria-hidden="true" />
         </Link>
 
-        {/* Subcategory rows */}
+        {/* Subcategory rows — link to /category/:slug?sub=:subSlug */}
         <nav aria-label={`${config.label} subcategories`}>
-          {subcategories.map((chip) => (
+          {subcategoryChips.map((chip) => (
             <Link
               key={chip.label}
-              to={`/catalog?q=${encodeURIComponent(chip.searchTerm ?? "")}`}
+              to={
+                chip.subSlug
+                  ? `/category/${config.slug}?sub=${chip.subSlug}`
+                  : `/catalog?q=${encodeURIComponent(chip.searchTerm ?? "")}`
+              }
               onClick={onClose}
               className="flex items-center px-6 h-12 text-sm font-medium text-white/75 hover:text-green-400 hover:bg-white/[0.07] border-b border-white/[0.05] transition-colors"
             >
@@ -238,22 +275,22 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
 
   return createPortal(
     <>
-      {/* Backdrop overlay */}
+      {/* Backdrop overlay — all screen sizes */}
       <div
         className={[
-          "fixed inset-0 z-[9998] bg-black/60 transition-opacity duration-300 lg:hidden",
+          "fixed inset-0 z-[9998] bg-black/60 transition-opacity duration-300",
           open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
         ].join(" ")}
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Drawer panel */}
+      {/* Drawer panel — all screen sizes */}
       <div
         className={[
-          "fixed top-0 left-0 z-[9999] h-[100dvh] w-[85vw] max-w-[340px]",
+          "fixed top-0 left-0 z-[9999] h-[100dvh] w-[85vw] max-w-[360px]",
           "bg-[#0A1930] border-r border-white/10 shadow-2xl flex flex-col",
-          "transition-transform duration-300 ease-in-out lg:hidden",
+          "transition-transform duration-300 ease-in-out",
           open ? "translate-x-0" : "-translate-x-full",
         ].join(" ")}
         role="dialog"

@@ -41,6 +41,7 @@ const Catalog = () => {
   const [searchParams] = useSearchParams();
   const queryParam = searchParams.get("q") || "";
   const categoryParam = searchParams.get("category") || "";
+  const filterParam = searchParams.get("filter") || "";
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -103,27 +104,61 @@ const Catalog = () => {
         query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%`);
       }
 
-      // Server-side price filter
-      if (priceRange[0] > 0) query = query.gte("price", priceRange[0]);
-      if (priceRange[1] < 10000) query = query.lte("price", priceRange[1]);
-
-      // Server-side sort
-      switch (sortBy) {
-        case "price-low":
+      // Quick-action filter from ?filter= param
+      switch (filterParam) {
+        case "price-crunch":
+          // Cheapest first
           query = query.order("price", { ascending: true });
           break;
-        case "price-high":
-          query = query.order("price", { ascending: false });
+        case "back-in-stock":
+          // Most recently updated
+          query = query.order("updatedAt", { ascending: false });
           break;
-        case "popular":
+        case "best-sellers":
           query = query.order("views", { ascending: false });
           break;
-        case "rating":
-          query = query.order("rating", { ascending: false });
-          break;
-        default:
+        case "latest":
           query = query.order("createdAt", { ascending: false });
           break;
+        case "pallet-deals":
+          query = query.eq("type", "pallet");
+          break;
+        case "multi-buy":
+          query = query.eq("type", "bulk");
+          break;
+        case "brand":
+          // Brand view — just show all, client can filter by seller name
+          query = query.order("createdAt", { ascending: false });
+          break;
+        default:
+          // Server-side price filter (only when no special filter)
+          if (priceRange[0] > 0) query = query.gte("price", priceRange[0]);
+          if (priceRange[1] < 10000) query = query.lte("price", priceRange[1]);
+
+          // Server-side sort
+          switch (sortBy) {
+            case "price-low":
+              query = query.order("price", { ascending: true });
+              break;
+            case "price-high":
+              query = query.order("price", { ascending: false });
+              break;
+            case "popular":
+              query = query.order("views", { ascending: false });
+              break;
+            case "rating":
+              query = query.order("rating", { ascending: false });
+              break;
+            default:
+              query = query.order("createdAt", { ascending: false });
+              break;
+          }
+          break;
+      }
+
+      // When no special filter, apply price range and sort
+      if (!filterParam) {
+        // already handled in default case above
       }
 
       const { data, error } = await query.limit(96);
@@ -152,7 +187,7 @@ const Catalog = () => {
     } finally {
       setLoading(false);
     }
-  }, [queryParam, priceRange, sortBy]);
+  }, [queryParam, priceRange, sortBy, filterParam]);
 
   useEffect(() => {
     fetchProducts();
@@ -236,6 +271,14 @@ const Catalog = () => {
             {queryParam.trim() && (
               <p className="text-sm text-muted-foreground mt-2">
                 Showing results for: <span className="font-medium text-foreground">"{queryParam}"</span>
+              </p>
+            )}
+            {filterParam && !queryParam.trim() && (
+              <p className="text-sm text-muted-foreground mt-2">
+                Showing:{" "}
+                <span className="font-medium text-foreground capitalize">
+                  {filterParam.replace(/-/g, " ")}
+                </span>
               </p>
             )}
           </div>

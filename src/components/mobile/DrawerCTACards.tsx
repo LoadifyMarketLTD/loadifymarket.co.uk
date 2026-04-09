@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Store, Sparkles, Star, Clock } from "lucide-react";
+import { Tag, RefreshCw, TrendingUp, Clock, Package, XCircle, ShoppingBag, Store } from "lucide-react";
 
 interface DrawerCTACardsProps {
   onClose: () => void;
@@ -7,28 +7,52 @@ interface DrawerCTACardsProps {
 
 const CTA_CARDS = [
   {
-    icon: Store,
-    label: "Browse Sellers",
-    route: "/catalog",
+    icon: Tag,
+    label: "Price Crunch",
+    route: "/catalog?filter=price-crunch",
     iconClass: "text-green-400",
   },
   {
-    icon: Sparkles,
-    label: "New Listings",
-    route: "/catalog?sort=newest",
-    iconClass: "text-violet-400",
+    icon: RefreshCw,
+    label: "Back in Stock",
+    route: "/catalog?filter=back-in-stock",
+    iconClass: "text-sky-400",
   },
   {
-    icon: Star,
-    label: "Best Rated",
-    route: "/catalog?sort=rating",
+    icon: TrendingUp,
+    label: "Best Sellers",
+    route: "/catalog?filter=best-sellers",
     iconClass: "text-amber-400",
   },
   {
     icon: Clock,
-    label: "Just Listed",
-    route: "/catalog?sort=newest",
-    iconClass: "text-sky-400",
+    label: "Latest Products",
+    route: "/catalog?filter=latest",
+    iconClass: "text-violet-400",
+  },
+  {
+    icon: Package,
+    label: "Pallet Deals",
+    route: "/catalog?filter=pallet-deals",
+    iconClass: "text-orange-400",
+  },
+  {
+    icon: XCircle,
+    label: "Delisted",
+    route: "/catalog?filter=delisted",
+    iconClass: "text-red-400",
+  },
+  {
+    icon: ShoppingBag,
+    label: "Multi Buy",
+    route: "/catalog?filter=multi-buy",
+    iconClass: "text-pink-400",
+  },
+  {
+    icon: Store,
+    label: "Shop by Brand",
+    route: "/catalog?filter=brand",
+    iconClass: "text-teal-400",
   },
 ] as const;
 

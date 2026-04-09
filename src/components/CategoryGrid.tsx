@@ -1,55 +1,25 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import CATEGORY_CONFIG from "@/lib/category-config";
 
 /**
- * Shop by Category — dark navy section with 3 top category cards + 4 featured product cards below.
- * Matches the dark theme of the surrounding sections.
+ * Shop by Category — dark navy section.
+ * 6 featured category cards using the same source of truth as the navigation drawer.
  */
 
-const CATEGORIES = [
-  {
-    slug: "electronics",
-    label: "Electronics",
-    img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    slug: "fashion",
-    label: "Fashion",
-    img: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    slug: "home-kitchen",
-    label: "Home & Garden",
-    img: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80",
-  },
+// Pick 6 featured-looking wholesale categories for the homepage grid
+const GRID_SLUGS = [
+  "health-beauty",
+  "wholesale-clothing",
+  "garden",
+  "kitchenware",
+  "toys",
+  "party-gift",
 ];
 
-const FEATURED_PRODUCTS = [
-  {
-    id: "fp-1",
-    title: "Wireless Earbuds Pro",
-    img: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&w=800&q=80",
-    href: "/category/electronics",
-  },
-  {
-    id: "fp-2",
-    title: "Heavy-Duty Toolbox Set",
-    img: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80",
-    href: "/category/tools-diy",
-  },
-  {
-    id: "fp-3",
-    title: "Summer Dress Collection",
-    img: "https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?auto=format&fit=crop&w=800&q=80",
-    href: "/category/fashion",
-  },
-  {
-    id: "fp-4",
-    title: "Luxury Skincare Bundle",
-    img: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80",
-    href: "/category/beauty",
-  },
-];
+const GRID_CATEGORIES = GRID_SLUGS
+  .map((slug) => CATEGORY_CONFIG.find((c) => c.slug === slug))
+  .filter(Boolean) as typeof CATEGORY_CONFIG[number][];
 
 const CategoryGrid = () => (
   <section
@@ -72,7 +42,7 @@ const CategoryGrid = () => (
 
     <div className="relative w-full max-w-[1280px] mx-auto">
 
-      {/* Section header — hidden on mobile (go straight to tiles, Amazon-style) */}
+      {/* Section header */}
       <div className="hidden sm:block text-center mb-8">
         <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
           Browse Sections
@@ -80,73 +50,52 @@ const CategoryGrid = () => (
         <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold text-white">
           Shop by Category
         </h2>
-        <p className="mt-2 text-sm text-white/70">Explore top categories.</p>
+        <p className="mt-2 text-sm text-white/70">Explore our wholesale categories.</p>
       </div>
 
-      {/* 3 top category cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
-        {CATEGORIES.map((cat) => (
-          <Link
-            key={cat.slug}
-            to={`/category/${cat.slug}`}
-            className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)]"
-            style={{ aspectRatio: "4/3" }}
-          >
-            <img
-              src={cat.img}
-              alt={cat.label}
-              width="800"
-              height="600"
-              loading="lazy"
-              decoding="async"
-              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
-            {/* Label */}
-            <div className="absolute bottom-0 left-0 right-0 p-3 flex items-end justify-between">
-              <p className="text-sm font-extrabold text-white leading-tight drop-shadow-sm">{cat.label}</p>
-              <span className="w-7 h-7 rounded-full bg-white/20 border border-white/30 group-hover:bg-[#22C55E] group-hover:border-[#22C55E] flex items-center justify-center transition-all duration-300 shrink-0">
-                <ArrowRight className="h-3.5 w-3.5 text-white" aria-hidden="true" />
-              </span>
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      {/* 4 featured product cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        {FEATURED_PRODUCTS.map((item) => (
-          <Link
-            key={item.id}
-            to={item.href}
-            className="group block rounded-2xl overflow-hidden bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)]"
-          >
-            <div className="relative overflow-hidden" style={{ aspectRatio: "4/3" }}>
+      {/* 6 category cards — 2 cols on mobile, 3 on sm+ */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+        {GRID_CATEGORIES.map((cat) => {
+          const Icon = cat.icon;
+          return (
+            <Link
+              key={cat.slug}
+              to={`/category/${cat.slug}`}
+              className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)]"
+              style={{ aspectRatio: "4/3" }}
+            >
               <img
-                src={item.img}
-                alt={item.title}
+                src={cat.image}
+                alt={cat.label}
                 width="800"
                 height="600"
                 loading="lazy"
                 decoding="async"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-            </div>
-            <div className="px-3 py-2.5 bg-[#0A1930]/80">
-              <p className="text-xs font-bold text-white leading-snug line-clamp-1">{item.title}</p>
-            </div>
-          </Link>
-        ))}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+              {/* Icon badge */}
+              <div className="absolute top-3 left-3">
+                <div className="w-8 h-8 rounded-lg bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center">
+                  <Icon className={`h-4 w-4 ${cat.iconColor}`} aria-hidden="true" />
+                </div>
+              </div>
+              {/* Label */}
+              <div className="absolute bottom-0 left-0 right-0 p-3 flex items-end justify-between">
+                <p className="text-sm font-extrabold text-white leading-tight drop-shadow-sm">{cat.label}</p>
+                <span className="w-7 h-7 rounded-full bg-white/20 border border-white/30 group-hover:bg-[#22C55E] group-hover:border-[#22C55E] flex items-center justify-center transition-all duration-300 shrink-0">
+                  <ArrowRight className="h-3.5 w-3.5 text-white" aria-hidden="true" />
+                </span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
 
-      {/* Centered CTA — compact on mobile */}
+      {/* Centered CTA */}
       <div className="flex justify-center">
         <Link
           to="/catalog"
@@ -161,4 +110,3 @@ const CategoryGrid = () => (
 );
 
 export default CategoryGrid;
-

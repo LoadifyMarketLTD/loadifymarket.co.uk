@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { X } from "lucide-react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
@@ -41,6 +41,8 @@ async function fetchSellerMap(
 
 const CategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
+  const subParam = searchParams.get("sub");
 
   const config = CATEGORY_CONFIG.find((c) => c.slug === slug);
 
@@ -48,13 +50,25 @@ const CategoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [categoryId, setCategoryId] = useState<string | null>(null);
 
-  const [activeChip, setActiveChip] = useState<number>(0);
+  // Pre-select chip based on ?sub= query param
+  const initialChip = useMemo(() => {
+    if (!config || !subParam) return 0;
+    const idx = config.chips.findIndex((chip) => chip.subSlug === subParam);
+    return idx >= 0 ? idx : 0;
+  }, [config, subParam]);
+
+  const [activeChip, setActiveChip] = useState<number>(initialChip);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [filtersVisible, setFiltersVisible] = useState(false);
+
+  // Sync chip if sub param changes (e.g. back/forward navigation)
+  useEffect(() => {
+    setActiveChip(initialChip);
+  }, [initialChip]);
 
   // ── Resolve category slug → UUID once on mount ────────────────────────────
   useEffect(() => {

@@ -1,85 +1,12 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import { Cpu, Shirt, Home, Wrench, Gamepad2, Sparkles, Heart, Car, Briefcase, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import CATEGORY_CONFIG from "@/lib/category-config";
+import type { CategoryConfig } from "@/lib/category-config";
 
-const CATEGORIES = [
-  {
-    slug: "electronics",
-    label: "Electronics",
-    icon: Cpu,
-    color: "bg-purple-50 text-purple-600",
-    border: "border-purple-100",
-    img: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    slug: "fashion",
-    label: "Fashion",
-    icon: Shirt,
-    color: "bg-pink-50 text-pink-600",
-    border: "border-pink-100",
-    img: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    slug: "home-kitchen",
-    label: "Home & Kitchen",
-    icon: Home,
-    color: "bg-amber-50 text-amber-600",
-    border: "border-amber-100",
-    img: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    slug: "beauty",
-    label: "Beauty",
-    icon: Sparkles,
-    color: "bg-rose-50 text-rose-600",
-    border: "border-rose-100",
-    img: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    slug: "tools-diy",
-    label: "Tools & DIY",
-    icon: Wrench,
-    color: "bg-orange-50 text-orange-600",
-    border: "border-orange-100",
-    img: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    slug: "toys-games",
-    label: "Toys & Games",
-    icon: Gamepad2,
-    color: "bg-violet-50 text-violet-600",
-    border: "border-violet-100",
-    img: "https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    slug: "health-wellness",
-    label: "Health & Wellness",
-    icon: Heart,
-    color: "bg-teal-50 text-teal-600",
-    border: "border-teal-100",
-    img: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    slug: "automotive",
-    label: "Automotive",
-    icon: Car,
-    color: "bg-slate-50 text-slate-600",
-    border: "border-slate-200",
-    img: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    slug: "office-supplies",
-    label: "Office Supplies",
-    icon: Briefcase,
-    color: "bg-indigo-50 text-indigo-600",
-    border: "border-indigo-100",
-    img: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80",
-  },
-];
+type CategoryTileProps = Pick<CategoryConfig, "slug" | "label" | "icon" | "iconColor" | "image">;
 
-type Category = (typeof CATEGORIES)[0];
-
-function CategoryTile({ slug, label, icon: Icon, color, img }: Category) {
+function CategoryTile({ slug, label, icon: Icon, iconColor, image }: CategoryTileProps) {
   const [imgFailed, setImgFailed] = useState(false);
 
   return (
@@ -92,12 +19,12 @@ function CategoryTile({ slug, label, icon: Icon, color, img }: Category) {
         style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.10)" }}
       >
         {imgFailed ? (
-          <div className={`w-full h-full flex items-center justify-center ${color}`}>
-            <Icon className="h-6 w-6" aria-hidden="true" />
+          <div className="w-full h-full flex items-center justify-center">
+            <Icon className={`h-6 w-6 ${iconColor}`} aria-hidden="true" />
           </div>
         ) : (
           <img
-            src={img}
+            src={image}
             alt={label}
             width="64"
             height="64"
@@ -142,9 +69,15 @@ const CategorySlider = () => {
           role="list"
           aria-label="Browse product categories"
         >
-          {CATEGORIES.map((cat) => (
+          {CATEGORY_CONFIG.map((cat) => (
             <div key={cat.slug} role="listitem">
-              <CategoryTile {...cat} />
+              <CategoryTile
+                slug={cat.slug}
+                label={cat.label}
+                icon={cat.icon}
+                iconColor={cat.iconColor}
+                image={cat.image}
+              />
             </div>
           ))}
         </div>
