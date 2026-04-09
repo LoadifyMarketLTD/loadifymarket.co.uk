@@ -14,6 +14,10 @@ const BULK_PRODUCT_TYPES: ProductType[] = ['pallet', 'lot', 'wholesale'];
 // Delay in ms before navigating away after a successful save
 const SUCCESS_REDIRECT_DELAY_MS = 1800;
 
+// Normalise a decimal number string entered by the user.
+// Accepts comma as a decimal separator (common in European locales, e.g. "39,99" → "39.99").
+const normalizeDecimal = (value: string): string => value.replace(',', '.');
+
 interface CustomSpec {
   key: string;
   value: string;
@@ -580,11 +584,12 @@ export default function ProductFormPage() {
                     Price (£) <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     step="0.01"
                     min="0.01"
                     value={formData.price}
-                    onChange={(e) => handleChange('price', e.target.value)}
+                    onChange={(e) => handleChange('price', normalizeDecimal(e.target.value))}
                     disabled={hasActiveOrders}
                     className={`input-field ${hasActiveOrders ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''} ${errors.price ? 'border-red-400' : ''}`}
                     placeholder="0.00"
@@ -598,11 +603,12 @@ export default function ProductFormPage() {
                     Sale / Discounted Price (£)
                   </label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     step="0.01"
                     min="0.01"
                     value={formData.salePrice}
-                    onChange={(e) => handleChange('salePrice', e.target.value)}
+                    onChange={(e) => handleChange('salePrice', normalizeDecimal(e.target.value))}
                     disabled={hasActiveOrders}
                     className={`input-field ${hasActiveOrders ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''} ${errors.salePrice ? 'border-red-400' : ''}`}
                     placeholder="Optional — leave blank if no discount"
@@ -701,9 +707,9 @@ export default function ProductFormPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Length (cm)</label>
                   <input
-                    type="number" step="0.1" min="0"
+                    type="text" inputMode="decimal" step="0.1" min="0"
                     value={formData.dimensions.length}
-                    onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, length: e.target.value } }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, length: normalizeDecimal(e.target.value) } }))}
                     className="input-field"
                     placeholder="0"
                   />
@@ -711,9 +717,9 @@ export default function ProductFormPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Width (cm)</label>
                   <input
-                    type="number" step="0.1" min="0"
+                    type="text" inputMode="decimal" step="0.1" min="0"
                     value={formData.dimensions.width}
-                    onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, width: e.target.value } }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, width: normalizeDecimal(e.target.value) } }))}
                     className="input-field"
                     placeholder="0"
                   />
@@ -721,9 +727,9 @@ export default function ProductFormPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
                   <input
-                    type="number" step="0.1" min="0"
+                    type="text" inputMode="decimal" step="0.1" min="0"
                     value={formData.dimensions.height}
-                    onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, height: e.target.value } }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, height: normalizeDecimal(e.target.value) } }))}
                     className="input-field"
                     placeholder="0"
                   />
@@ -731,9 +737,9 @@ export default function ProductFormPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
                   <input
-                    type="number" step="0.01" min="0"
+                    type="text" inputMode="decimal" step="0.01" min="0"
                     value={formData.weight}
-                    onChange={(e) => handleChange('weight', e.target.value)}
+                    onChange={(e) => handleChange('weight', normalizeDecimal(e.target.value))}
                     className="input-field"
                     placeholder="0"
                   />
