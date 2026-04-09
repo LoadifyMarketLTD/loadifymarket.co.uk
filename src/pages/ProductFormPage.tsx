@@ -288,7 +288,6 @@ export default function ProductFormPage() {
       }
 
       const productData = {
-        sellerId: user.id,
         title: formData.title,
         description: formData.description,
         type: formData.type,
@@ -344,16 +343,17 @@ export default function ProductFormPage() {
         await syncShipping(id);
         setSuccessMessage('Product updated. Critical fields were not changed as orders exist.');
       } else if (id) {
-        // Full update
+        // Full update — sellerId intentionally excluded: it never changes and re-sending it
+        // triggers FK re-validation against seller_profiles / seller_stores unnecessarily.
         const { error } = await supabase.from('products').update(productData).eq('id', id);
         if (error) throw error;
         await syncShipping(id);
         setSuccessMessage(publishMode ? 'Product updated and published.' : 'Draft saved successfully.');
       } else {
-        // Create new product
+        // Create new product — sellerId is required at INSERT and is validated by RLS
         const { data: inserted, error } = await supabase
           .from('products')
-          .insert([productData])
+          .insert([{ sellerId: user.id, ...productData }])
           .select('id')
           .single();
         if (error) throw error;
@@ -369,7 +369,10 @@ export default function ProductFormPage() {
       setTimeout(() => navigate('/seller'), SUCCESS_REDIRECT_DELAY_MS);
     } catch (error) {
       console.error('Error saving product:', error);
-      setErrors({ _form: 'Failed to save product. Please try again.' });
+      const msg =
+        (error as { message?: string })?.message ||
+        'An unexpected error occurred. Please try again.';
+      setErrors({ _form: `Failed to save product: ${msg}` });
     } finally {
       setSaving(false);
       setSavingDraft(false);
