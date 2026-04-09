@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, ShoppingCart, Menu, X, LogOut, Package, ShoppingBag, Heart, LayoutDashboard } from "lucide-react";
+import { Search, ShoppingCart, Menu, LogOut, Package, ShoppingBag, Heart, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/loadify-logo.svg";
 import { useCart } from "@/contexts/CartContext";
@@ -223,12 +223,12 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
 
         {/* Mobile menu toggle */}
         <button
-          className="lg:hidden p-2 text-white/80 hover:text-green-400 transition-colors"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          className="lg:hidden relative z-[100] p-2 text-white/80 hover:text-green-400 transition-colors"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open menu"
           aria-expanded={mobileOpen}
         >
-          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          <Menu size={22} />
         </button>
       </div>
 
