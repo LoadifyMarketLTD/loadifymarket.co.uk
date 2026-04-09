@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import logo from "@/assets/loadify-logo.svg";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
-import CATEGORY_CONFIG from "@/lib/category-config";
+import { CATEGORY_TREE } from "@/data/category-tree";
 import MobileDrawer from "@/components/MobileDrawer";
 
 /**
@@ -74,9 +74,9 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
       {/* ── Row 1: Hamburger (mobile) | Logo | Search | Actions ─────────── */}
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-3">
 
-        {/* Hamburger — LEFT side, mobile only */}
+        {/* Hamburger — LEFT side, all screen sizes */}
         <button
-          className="lg:hidden p-2 text-white/90 hover:text-green-400 hover:bg-white/10 rounded-lg transition-colors shrink-0"
+          className="p-2 text-white/90 hover:text-green-400 hover:bg-white/10 rounded-lg transition-colors shrink-0"
           onClick={() => setMobileOpen(true)}
           aria-label="Open navigation menu"
           aria-expanded={mobileOpen}
@@ -212,10 +212,10 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
         </div>
       </div>
 
-      {/* ── Row 2: Category quick-links (desktop only) ─────────────────── */}
-      <nav aria-label="Category navigation" className="hidden lg:block border-t border-white/10">
+      {/* ── Row 2: Category quick-links ────────────────────────────────── */}
+      <nav aria-label="Category navigation" className="border-t border-white/10">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
-          <div className="flex items-center gap-0.5 h-12">
+          <div className="flex items-center gap-0.5 h-12 overflow-x-auto scrollbar-none">
             <Link
               to="/catalog"
               className="shrink-0 text-sm font-bold text-white hover:text-green-400 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
@@ -223,15 +223,15 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
               All Categories
             </Link>
             <span className="w-px h-5 bg-white/10 mx-1.5 shrink-0" aria-hidden="true" />
-            {CATEGORY_CONFIG.slice(0, 8).map((cat) => {
+            {CATEGORY_TREE.slice(0, 8).map((cat) => {
               const Icon = cat.icon;
               return (
                 <Link
                   key={cat.slug}
-                  to={`/category/${cat.slug}`}
+                  to={`/catalog?l1=${cat.slug}`}
                   className="flex items-center gap-1.5 shrink-0 text-sm font-semibold text-white/70 hover:text-green-400 hover:bg-white/10 px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
                 >
-                  <Icon className="h-4 w-4 text-white/50" aria-hidden="true" />
+                  <Icon className={`h-4 w-4 ${cat.iconColor}`} aria-hidden="true" />
                   {cat.label}
                 </Link>
               );
