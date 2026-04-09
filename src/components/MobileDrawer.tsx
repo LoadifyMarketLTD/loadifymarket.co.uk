@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { X, ArrowLeft, ChevronRight } from "lucide-react";
 import CATEGORY_CONFIG, { getCategoryConfig } from "@/lib/category-config";
@@ -23,6 +24,7 @@ interface MainScreenProps {
   onLogout: () => void;
   onClose: () => void;
   onCategorySelect: (slug: string) => void;
+  closeBtnRef: React.RefObject<HTMLButtonElement | null>;
 }
 
 interface CategoryScreenProps {
@@ -39,6 +41,7 @@ const MainScreen = ({
   onLogout,
   onClose,
   onCategorySelect,
+  closeBtnRef,
 }: MainScreenProps) => (
   <div className="flex flex-col h-full">
     {/* Header bar */}
@@ -50,6 +53,7 @@ const MainScreen = ({
         </span>
       </Link>
       <button
+        ref={closeBtnRef}
         onClick={onClose}
         className="p-2 text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10"
         aria-label="Close menu"
@@ -71,10 +75,10 @@ const MainScreen = ({
       {/* Divider */}
       <div className="h-px bg-white/10 mx-4" />
 
-      {/* CTA Cards */}
+      {/* Quick Actions */}
       <div className="pt-4">
         <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-widest text-white/40">
-          Quick Browse
+          Quick Actions
         </p>
         <DrawerCTACards onClose={onClose} />
       </div>
@@ -108,24 +112,30 @@ const MainScreen = ({
       {/* Divider */}
       <div className="h-px bg-white/10 mx-4 mt-2" />
 
-      {/* Secondary links */}
-      <div className="flex px-4 py-3 gap-1">
+      {/* Footer links */}
+      <nav aria-label="Support links" className="flex flex-col py-2">
         <Link
-          to="/catalog"
+          to="/wholesale-info"
           onClick={onClose}
-          className="flex-1 h-11 flex items-center justify-center text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.07] rounded-lg transition-colors"
+          className="px-4 h-11 flex items-center text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.07] transition-colors"
         >
-          All Listings
+          UK Wholesale Information and Support
         </Link>
-        <div className="w-px bg-white/10 self-stretch" />
         <Link
-          to="/deals"
+          to="/blog"
           onClick={onClose}
-          className="flex-1 h-11 flex items-center justify-center text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.07] rounded-lg transition-colors"
+          className="px-4 h-11 flex items-center text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.07] transition-colors"
         >
-          Deals
+          Blog
         </Link>
-      </div>
+        <Link
+          to="/about"
+          onClick={onClose}
+          className="px-4 h-11 flex items-center text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.07] transition-colors"
+        >
+          About Us
+        </Link>
+      </nav>
 
       {/* Safe-area spacer for iOS */}
       <div style={{ height: "env(safe-area-inset-bottom, 16px)" }} />
@@ -232,22 +242,22 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
     };
   }, [open]);
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop overlay */}
       <div
         className={[
-          "fixed inset-0 z-40 bg-black/60 transition-opacity duration-300 lg:hidden",
+          "fixed inset-0 z-[9998] bg-black/60 transition-opacity duration-300 lg:hidden",
           open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
         ].join(" ")}
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Drawer panel */}
+      {/* Drawer panel — slides from LEFT */}
       <div
         className={[
-          "fixed top-0 left-0 z-50 h-full w-[85vw] max-w-[340px]",
+          "fixed top-0 left-0 z-[9999] h-[100dvh] w-[85vw] max-w-[340px]",
           "bg-[#0A1930] border-r border-white/10 shadow-2xl flex flex-col",
           "transition-transform duration-300 ease-in-out lg:hidden",
           open ? "translate-x-0" : "-translate-x-full",
@@ -264,6 +274,7 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
             onLogout={onLogout}
             onClose={onClose}
             onCategorySelect={setActiveCategory}
+            closeBtnRef={closeBtnRef}
           />
         ) : (
           <CategoryScreen
@@ -273,7 +284,8 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
           />
         )}
       </div>
-    </>
+    </>,
+    document.body
   );
 };
 

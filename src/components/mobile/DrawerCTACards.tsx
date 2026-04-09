@@ -1,40 +1,64 @@
 import { Link } from "react-router-dom";
-import { Store, Sparkles, Star, Clock } from "lucide-react";
+import { BadgePercent, RotateCcw, Trophy, Sparkles, Package, Archive, ShoppingBag, Store } from "lucide-react";
 
 interface DrawerCTACardsProps {
   onClose: () => void;
 }
 
-const CTA_CARDS = [
+const QUICK_ACTIONS = [
   {
-    icon: Store,
-    label: "Browse Sellers",
-    route: "/catalog",
-    iconClass: "text-green-400",
+    icon: BadgePercent,
+    label: "Price Crunch",
+    route: "/catalog?type=price-crunch",
+    iconClass: "text-red-400",
+  },
+  {
+    icon: RotateCcw,
+    label: "Back in Stock",
+    route: "/catalog?type=back-in-stock",
+    iconClass: "text-sky-400",
+  },
+  {
+    icon: Trophy,
+    label: "Best Sellers",
+    route: "/catalog?sort=bestsellers",
+    iconClass: "text-amber-400",
   },
   {
     icon: Sparkles,
-    label: "New Listings",
+    label: "Latest Products",
     route: "/catalog?sort=newest",
     iconClass: "text-violet-400",
   },
   {
-    icon: Star,
-    label: "Best Rated",
-    route: "/catalog?sort=rating",
-    iconClass: "text-amber-400",
+    icon: Package,
+    label: "Pallet Deals",
+    route: "/catalog?type=pallet-deals",
+    iconClass: "text-orange-400",
   },
   {
-    icon: Clock,
-    label: "Just Listed",
-    route: "/catalog?sort=newest",
-    iconClass: "text-sky-400",
+    icon: Archive,
+    label: "Delisted",
+    route: "/catalog?type=delisted",
+    iconClass: "text-slate-400",
+  },
+  {
+    icon: ShoppingBag,
+    label: "Multi Buy",
+    route: "/catalog?type=multi-buy",
+    iconClass: "text-green-400",
+  },
+  {
+    icon: Store,
+    label: "Shop by Brand",
+    route: "/catalog?view=brands",
+    iconClass: "text-pink-400",
   },
 ] as const;
 
 const DrawerCTACards = ({ onClose }: DrawerCTACardsProps) => (
   <div className="px-4 pb-4 grid grid-cols-2 gap-2">
-    {CTA_CARDS.map(({ icon: Icon, label, route, iconClass }) => (
+    {QUICK_ACTIONS.map(({ icon: Icon, label, route, iconClass }) => (
       <Link
         key={label}
         to={route}
