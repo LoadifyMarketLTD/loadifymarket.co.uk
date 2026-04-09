@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, Package, Eye, RotateCcw, AlertTriangle } from "lucide-react";
+import { Search, Package, Eye, RotateCcw, AlertTriangle, FileDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
@@ -77,6 +77,33 @@ const BuyerOrders = () => {
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeDescription, setDisputeDescription] = useState("");
   const [disputeLoading, setDisputeLoading] = useState(false);
+
+  const handleDownloadInvoice = async (orderId: string, orderNumber: string) => {
+    try {
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+      const res = await fetch('/.netlify/functions/generate-invoice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ orderId }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to generate invoice');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${orderNumber || orderId.slice(0, 8)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast({ title: 'Invoice download failed', description: (err as Error).message, variant: 'destructive' });
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -263,6 +290,15 @@ const BuyerOrders = () => {
                     }}
                   >
                     <AlertTriangle className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    title="Download invoice"
+                    onClick={() => handleDownloadInvoice(o.id, o.orderNumber)}
+                  >
+                    <FileDown className="h-4 w-4" />
                   </Button>
                 </div>
               </TableCell>

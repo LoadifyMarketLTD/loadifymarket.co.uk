@@ -6,10 +6,10 @@ import { Store, Package, MapPin, Mail, Phone, MessageCircle, ArrowRight, Calenda
 import VerificationBadge from '../components/VerificationBadge';
 import RoleBadge from '../components/RoleBadge';
 import PaymentBehaviourBadge from '../components/PaymentBehaviourBadge';
-import ProductCard from '../components/catalog/ProductCard';
-import type { Product } from '../components/catalog/ProductCard';
-import { adaptProducts } from '../lib/productAdapter';
-import type { DBProduct } from '../lib/productAdapter';
+import ProductCard from '@/components/catalog/ProductCard';
+import { adaptProducts } from '@/lib/productAdapter';
+import type { DBProduct } from '@/lib/productAdapter';
+import type { Product as CatalogProduct } from '@/components/catalog/ProductCard';
 import BreadcrumbNav from '../components/BreadcrumbNav';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -25,7 +25,7 @@ export default function SellerPublicProfilePage() {
   const { slug } = useParams<{ slug: string }>();
   const { user } = useAuthStore();
   const [seller, setSeller] = useState<SellerData | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -89,7 +89,6 @@ export default function SellerPublicProfilePage() {
           },
         }));
 
-        // Supabase returns untyped data — cast follows the same pattern as Catalog.tsx
         setProducts(adaptProducts(merged as unknown as DBProduct[]));
       } catch (error) {
         console.error('Error fetching seller profile:', error);

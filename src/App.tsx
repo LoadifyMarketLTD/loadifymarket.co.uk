@@ -136,6 +136,15 @@ function TrackingRedirect() {
 }
 
 /**
+ * Preserves the :orderNumber param when redirecting legacy /tracking/:orderNumber
+ * links to the canonical /track-order?orderNumber= page.
+ */
+function TrackingRedirect() {
+  const { orderNumber } = useParams<{ orderNumber: string }>();
+  return <Navigate to={`/track-order${orderNumber ? `?orderNumber=${encodeURIComponent(orderNumber)}` : ''}`} replace />;
+}
+
+/**
  * Renders a maintenance-mode page for non-admin visitors.
  * Reads `platform_settings.maintenance_mode` once on mount.
  * Admins always bypass so they can access the admin hub.
@@ -555,7 +564,7 @@ function App() {
           </RequireAdmin>
         } />
 
-        {/* Public: Order Tracking */}
+        {/* Public: Order Tracking — no pixel-perfect equivalent yet */}
         <Route path="tracking/:orderNumber" element={<TrackingRedirect />} />
         <Route path="track-order" element={<Suspense fallback={<PageLoader />}><TrackOrderPage /></Suspense>} />
         <Route path="track" element={<Navigate to="/track-order" replace />} />

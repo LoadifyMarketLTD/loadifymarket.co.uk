@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { X, ArrowLeft, ChevronRight } from "lucide-react";
-import CATEGORY_CONFIG from "@/lib/category-config";
+import CATEGORY_CONFIG, { getCategoryConfig } from "@/lib/category-config";
 import DrawerAccountBlock from "@/components/mobile/DrawerAccountBlock";
 import DrawerCTACards from "@/components/mobile/DrawerCTACards";
 import logo from "@/assets/loadify-logo.svg";
@@ -146,7 +146,7 @@ const MainScreen = ({
 // ── Category screen (Level 2 — shows chips as subcategory links) ──────────────
 
 const CategoryScreen = ({ categorySlug, onBack, onClose }: CategoryScreenProps) => {
-  const cat = CATEGORY_CONFIG.find((c) => c.slug === categorySlug);
+  const cat = getCategoryConfig(categorySlug);
   if (!cat) return null;
 
   return (
@@ -177,19 +177,18 @@ const CategoryScreen = ({ categorySlug, onBack, onClose }: CategoryScreenProps) 
           <ChevronRight className="h-4 w-4 text-[#22C55E]/60 ml-auto" aria-hidden="true" />
         </Link>
 
-        {/* Subcategory chip rows */}
+        {/* Chip rows — direct links */}
         <nav aria-label={`${cat.label} subcategories`}>
-          {cat.chips.filter((chip) => chip.subSlug).map((chip) => (
+          {cat.chips.map((chip) => (
             <Link
-              key={chip.subSlug}
-              to={`/category/${cat.slug}?sub=${chip.subSlug}`}
+              key={chip.label}
+              to={`/category/${cat.slug}${chip.subSlug ? `?sub=${chip.subSlug}` : ''}`}
               onClick={onClose}
               className="flex items-center px-4 h-[52px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.05]"
             >
               <span className="text-[15px] font-medium text-white/80 flex-1 text-left">
                 {chip.label}
               </span>
-              <ChevronRight className="h-4 w-4 text-white/30 shrink-0" aria-hidden="true" />
             </Link>
           ))}
         </nav>
