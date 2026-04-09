@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Building2, MapPin, Mail, Star,
-  ShieldCheck, Save, Package, Calendar
+  ShieldCheck, Save, Package, Calendar, ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -201,7 +201,16 @@ const SellerProfile = () => {
                 <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {stats.memberSince ? `Since ${stats.memberSince}` : ""}</span>
               </div>
               <div className="flex flex-wrap gap-1.5 mt-1">
-                {storeSlug && <Badge variant="secondary" className="text-xs">{storeSlug}</Badge>}
+                {storeSlug && (
+                  <a
+                    href={`/seller/${encodeURIComponent(storeSlug)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" /> View Public Store
+                  </a>
+                )}
               </div>
             </div>
           </div>
@@ -249,7 +258,8 @@ const SellerProfile = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-xs">Email</Label>
-              <Input type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} className="mt-1" />
+              <Input type="email" value={form.email} readOnly className="mt-1 bg-muted/50 cursor-default" />
+              <p className="text-[11px] text-muted-foreground mt-1">To change your email, contact support.</p>
             </div>
             <div>
               <Label className="text-xs">Phone</Label>
