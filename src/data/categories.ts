@@ -52,7 +52,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Large Letter Items",
     slug: "large-letter-items",
     description: "Small, lightweight items ideal for postal and large-letter format shipping",
-    image: "https://images.unsplash.com/photo-1586769852044-692d6e3703f0?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1586769852044-692d6e3703f0?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: true,
     subcategories: [
       { name: "Stationery & Cards",      slug: "stationery-cards"      },
@@ -72,7 +72,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Garden",
     slug: "garden",
     description: "Garden tools, outdoor furniture, planters, BBQ and garden décor",
-    image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: true,
     subcategories: [
       { name: "Garden Tools",           slug: "garden-tools"           },
@@ -92,7 +92,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "DIY",
     slug: "diy",
     description: "Power tools, hand tools, fixings, paint and home improvement supplies",
-    image: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: true,
     subcategories: [
       { name: "Power Tools",        slug: "power-tools"        },
@@ -112,7 +112,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Cleaning",
     slug: "cleaning",
     description: "Cleaning products, mops, cloths, bin liners, disinfectants and laundry",
-    image: "https://images.unsplash.com/photo-1563453392212-326f5e854473?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1563453392212-326f5e854473?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: false,
     subcategories: [
       { name: "Cleaning Products",      slug: "cleaning-products"      },
@@ -132,7 +132,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Party & Gift",
     slug: "party-gift",
     description: "Party supplies, balloons, decorations, gifting and tableware",
-    image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: true,
     subcategories: [
       { name: "Party Supplies",         slug: "party-supplies"         },
@@ -152,7 +152,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Wholesale Pound Lines",
     slug: "wholesale-pound-lines",
     description: "High-volume pound-line products across all categories",
-    image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: true,
     subcategories: [
       { name: "Household Goods",   slug: "household-goods"   },
@@ -172,7 +172,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Toys",
     slug: "toys",
     description: "Action figures, educational toys, outdoor toys, board games and arts & crafts",
-    image: "https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: false,
     subcategories: [
       { name: "Action Figures",      slug: "action-figures"     },
@@ -192,7 +192,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Leisure & Hobbies",
     slug: "leisure-hobbies",
     description: "Arts & crafts, sports, camping, puzzles and hobby equipment",
-    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: false,
     subcategories: [
       { name: "Arts & Crafts",         slug: "arts-crafts"          },
@@ -212,7 +212,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Baby Supplies",
     slug: "baby-supplies",
     description: "Baby clothing, feeding, nappies, nursery essentials and baby monitors",
-    image: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: false,
     subcategories: [
       { name: "Baby Clothing",       slug: "baby-clothing"       },
@@ -232,7 +232,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Kitchenware",
     slug: "kitchenware",
     description: "Cookware, bakeware, kitchen tools, storage and small appliances",
-    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: true,
     subcategories: [
       { name: "Cookware",             slug: "cookware"            },
@@ -252,7 +252,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Health & Beauty",
     slug: "health-beauty",
     description: "Skincare, haircare, makeup, personal care, vitamins and fragrances",
-    image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: true,
     subcategories: [
       { name: "Skincare",          slug: "skincare"          },
@@ -272,7 +272,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Homeware",
     slug: "homeware",
     description: "Bedding, curtains, rugs, bathroom accessories and home décor",
-    image: "https://images.unsplash.com/photo-1484101403633-562f891dc89a?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1484101403633-562f891dc89a?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: true,
     subcategories: [
       { name: "Bedding & Pillows",        slug: "bedding-pillows"        },
@@ -292,7 +292,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Electrical",
     slug: "electrical",
     description: "LED lighting, phone accessories, cables, smart home and audio",
-    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: false,
     subcategories: [
       { name: "LED Lighting",          slug: "led-lighting"          },
@@ -312,7 +312,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Pet Supplies",
     slug: "pet-supplies",
     description: "Dog, cat, small animal, bird and fish supplies, food, toys and grooming",
-    image: "https://images.unsplash.com/photo-1450778869180-41d0601e046e?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1450778869180-41d0601e046e?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: false,
     subcategories: [
       { name: "Dog Supplies",         slug: "dog-supplies"         },
@@ -332,7 +332,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Stationery",
     slug: "stationery",
     description: "Pens, notebooks, office supplies, art materials and greeting cards",
-    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: false,
     subcategories: [
       { name: "Pens & Pencils",    slug: "pens-pencils"    },
@@ -352,7 +352,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Seasonal",
     slug: "seasonal",
     description: "Christmas, Easter, Halloween, Valentine's and all seasonal ranges",
-    image: "https://images.unsplash.com/photo-1512389142860-9c449e58a543?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1512389142860-9c449e58a543?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: false,
     subcategories: [
       { name: "Christmas",       slug: "christmas"       },
@@ -372,7 +372,7 @@ export const CATEGORIES: readonly Category[] = [
     name: "Wholesale Clothing",
     slug: "wholesale-clothing",
     description: "Women's, men's and children's clothing, sportswear and underwear",
-    image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80",
+    image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=400&q=75&fm=webp",
     featured: true,
     subcategories: [
       { name: "Women's Clothing",  slug: "womens-clothing"  },
