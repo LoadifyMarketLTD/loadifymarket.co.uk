@@ -91,6 +91,7 @@ const PPBuyerNotifications = lazy(() => import('./pages/pixel-perfect/buyer/Buye
 const PPAdminShell          = lazy(() => import('./pages/pixel-perfect/admin/AdminShell'));
 const PPAdminDashboard      = lazy(() => import('./pages/pixel-perfect/admin/AdminDashboard'));
 const PPAdminUsers          = lazy(() => import('./pages/pixel-perfect/admin/AdminUsers'));
+const PPAdminBuyers         = lazy(() => import('./pages/pixel-perfect/admin/AdminBuyers'));
 const PPAdminApprovals      = lazy(() => import('./pages/pixel-perfect/admin/AdminApprovals'));
 const PPAdminProducts       = lazy(() => import('./pages/pixel-perfect/admin/AdminProducts'));
 const PPAdminOrders         = lazy(() => import('./pages/pixel-perfect/admin/AdminOrders'));
@@ -486,6 +487,7 @@ function App() {
         }>
           <Route index element={<Suspense fallback={<PageLoader />}><PPAdminDashboard /></Suspense>} />
           <Route path="users" element={<Suspense fallback={<PageLoader />}><PPAdminUsers /></Suspense>} />
+          <Route path="buyers" element={<Suspense fallback={<PageLoader />}><PPAdminBuyers /></Suspense>} />
           <Route path="approvals" element={<Suspense fallback={<PageLoader />}><PPAdminApprovals /></Suspense>} />
           <Route path="products" element={<Suspense fallback={<PageLoader />}><PPAdminProducts /></Suspense>} />
           <Route path="orders" element={<Suspense fallback={<PageLoader />}><PPAdminOrders /></Suspense>} />
