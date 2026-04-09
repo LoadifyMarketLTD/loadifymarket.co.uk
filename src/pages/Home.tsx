@@ -35,7 +35,7 @@ import CategoryGrid from "@/components/CategoryGrid";
 import FeaturedListings from "@/components/FeaturedListings";
 import FeaturesSection from "@/components/FeaturesSection";
 import PlatformFeatures from "@/components/PlatformFeatures";
-import HowItWorks from "@/components/HowItWorks";
+import HowItWorks from "@/components/HowItWorksSection";
 import SellerJourneySection from "@/components/SellerJourneySection";
 import Footer from "@/components/Footer";
 import LazySection from "@/components/LazySection";

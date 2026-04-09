@@ -64,7 +64,7 @@ const SellerShipments = () => {
   const [creating, setCreating] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
-  const [podUploading, setPodUploading] = useState(false);
+  const [uploadingPod, setUploadingPod] = useState(false);
 
   const loadShipments = useCallback(async () => {
     if (!user) return;
@@ -142,6 +142,38 @@ const SellerShipments = () => {
     }
   };
 
+  const handleUploadProofOfDelivery = async (shipmentId: string, file: File) => {
+    setUploadingPod(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("shipment_id", shipmentId);
+
+      const res = await fetch("/.netlify/functions/upload-proof-of-delivery", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const json = await res.json() as { error?: string; url?: string };
+      if (!res.ok) throw new Error(json.error ?? "Upload failed");
+
+      toast({ title: "Proof of delivery uploaded" });
+      await loadShipments();
+      if (json.url) {
+        const podUrl = json.url;
+        setSelected((prev) => (prev && prev.id === shipmentId ? { ...prev, proof_of_delivery_url: podUrl } : prev));
+      }
+    } catch (err) {
+      toast({ title: "Upload failed", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setUploadingPod(false);
+    }
+  };
+
   const handleUpdateStatus = async (shipment: ShipmentRow, newStatus: string) => {
     if (!newStatus || newStatus === shipment.status) return;
     setUpdatingStatus(true);
@@ -174,30 +206,6 @@ const SellerShipments = () => {
       toast({ title: "Failed to update status", description: err instanceof Error ? err.message : "Please try again.", variant: "destructive" });
     } finally {
       setUpdatingStatus(false);
-    }
-  };
-
-  const handlePodUpload = async (file: File, shipmentId: string) => {
-    setPodUploading(true);
-    try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('shipmentId', shipmentId);
-      const res = await fetch('/.netlify/functions/upload-proof-of-delivery', {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Upload failed');
-      setShipments((prev) => prev.map((s) => s.id === shipmentId ? { ...s, proof_of_delivery_url: data.url } : s));
-      if (selected?.id === shipmentId) setSelected((s) => s ? { ...s, proof_of_delivery_url: data.url } : s);
-      toast({ title: 'Proof of delivery uploaded' });
-    } catch (err) {
-      toast({ title: 'Upload failed', description: (err as Error).message, variant: 'destructive' });
-    } finally {
-      setPodUploading(false);
     }
   };
 
@@ -339,28 +347,30 @@ const SellerShipments = () => {
                   <div><span className="text-muted-foreground">Order</span><p className="font-medium text-foreground">{selected.orders?.orderNumber ?? selected.order_id.slice(0, 8)}</p></div>
                   <div><span className="text-muted-foreground">Dispatched</span><p className="font-medium text-foreground">{selected.dispatched_at ? new Date(selected.dispatched_at).toLocaleDateString("en-GB") : "—"}</p></div>
                 </div>
-                <div className="rounded-lg bg-muted/50 border border-border p-3">
-                    <p className="text-xs font-semibold text-muted-foreground mb-2">PROOF OF DELIVERY</p>
-                    {selected.proof_of_delivery_url ? (
-                      <a href={selected.proof_of_delivery_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">View document</a>
-                    ) : (
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="file"
-                          accept="image/*,application/pdf"
-                          className="sr-only"
-                          disabled={podUploading}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handlePodUpload(file, selected.id);
-                          }}
-                        />
-                        <Button size="sm" variant="outline" disabled={podUploading} asChild>
-                          <span>{podUploading ? 'Uploading...' : 'Upload POD'}</span>
-                        </Button>
-                      </label>
-                    )}
+                {selected.proof_of_delivery_url ? (
+                  <div className="rounded-lg bg-muted/50 border border-border p-3">
+                    <p className="text-xs font-semibold text-muted-foreground mb-1">PROOF OF DELIVERY</p>
+                    <a href={selected.proof_of_delivery_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">View document</a>
                   </div>
+                ) : (
+                  <div className="rounded-lg bg-muted/50 border border-border p-3">
+                    <p className="text-xs font-semibold text-muted-foreground mb-2">PROOF OF DELIVERY</p>
+                    <label className="block">
+                      <span className="sr-only">Upload proof of delivery</span>
+                      <input
+                        type="file"
+                        accept="image/*,.pdf"
+                        disabled={uploadingPod}
+                        className="block w-full text-xs text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadProofOfDelivery(selected.id, file);
+                        }}
+                      />
+                    </label>
+                    {uploadingPod && <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Uploading…</p>}
+                  </div>
+                )}
                 <div className="rounded-lg bg-muted/50 border border-border p-3">
                   <p className="text-xs font-semibold text-muted-foreground mb-1">SHIPMENT CREATED</p>
                   <p className="text-sm text-foreground flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {new Date(selected.created_at).toLocaleString("en-GB")}</p>

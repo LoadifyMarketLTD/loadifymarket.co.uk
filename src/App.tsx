@@ -56,6 +56,7 @@ const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
 const SellerPublicProfilePage = lazy(() => import('./pages/SellerPublicProfilePage'));
 // AdminSellerDetailPage: admin seller detail view — no pixel-perfect equivalent yet
 const AdminSellerDetailPage = lazy(() => import('./pages/AdminSellerDetailPage'));
+// TrackOrderPage: public-facing order tracking
 const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
 // Legal pages without pixel-perfect equivalents
 const AcceptableUsePolicyPage = lazy(() => import('./pages/legal/AcceptableUsePolicyPage'));
@@ -126,6 +127,12 @@ function DashboardRedirect() {
   if (user?.role === 'admin') return <Navigate to="/pp/admin" replace />;
   if (user?.role === 'seller') return <Navigate to="/pp/seller" replace />;
   return <Navigate to="/pp/buyer" replace />;
+}
+
+/** Redirects legacy /tracking/:orderNumber to /track-order?orderNumber=:orderNumber */
+function TrackingRedirect() {
+  const { orderNumber } = useParams<{ orderNumber: string }>();
+  return <Navigate to={`/track-order${orderNumber ? `?orderNumber=${encodeURIComponent(orderNumber)}` : ''}`} replace />;
 }
 
 /**

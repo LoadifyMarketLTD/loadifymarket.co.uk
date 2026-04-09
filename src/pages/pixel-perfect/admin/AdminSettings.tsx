@@ -48,11 +48,11 @@ const AdminSettings = () => {
   const [features, setFeatures] = useState<Features>(DEFAULT_FEATURES);
   const [config, setConfig] = useState<PlatformConfig>(DEFAULT_CONFIG);
   const [settingsLoading, setSettingsLoading] = useState(true);
+  const [stripeConnectStatus, setStripeConnectStatus] = useState<{ configured: boolean; message: string } | null>(null);
+  const [checkingStripe, setCheckingStripe] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [cacheCleared, setCacheCleared] = useState(false);
-  const [stripeCheckLoading, setStripeCheckLoading] = useState(false);
-  const [stripeConfigured, setStripeConfigured] = useState<boolean | null>(null);
 
   const handleClearCache = () => {
     try {
@@ -64,18 +64,31 @@ const AdminSettings = () => {
     setTimeout(() => setCacheCleared(false), 3000);
   };
 
-  const handleStripeCheck = async () => {
-    setStripeCheckLoading(true);
-    setStripeConfigured(null);
+  const handleCheckStripeConnect = async () => {
+    setCheckingStripe(true);
+    setStripeConnectStatus(null);
     try {
-      const res = await fetch('/.netlify/functions/connect-platform-check');
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Check failed');
-      setStripeConfigured(!!data.platformConfigured);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+
+      const res = await fetch("/.netlify/functions/connect-platform-check", {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json: unknown = await res.json();
+      const isObj = json !== null && typeof json === "object";
+      const error = isObj ? (json as Record<string, unknown>).error : undefined;
+      if (!res.ok) throw new Error(typeof error === "string" ? error : "Check failed");
+      const configured = isObj ? Boolean((json as Record<string, unknown>).configured) : false;
+      const message = isObj && typeof (json as Record<string, unknown>).message === "string"
+        ? String((json as Record<string, unknown>).message)
+        : "Unknown";
+      setStripeConnectStatus({ configured, message });
     } catch (err) {
-      toast({ title: 'Stripe check failed', description: (err as Error).message, variant: 'destructive' });
+      setStripeConnectStatus({ configured: false, message: err instanceof Error ? err.message : "Check failed" });
     } finally {
-      setStripeCheckLoading(false);
+      setCheckingStripe(false);
     }
   };
 
@@ -341,43 +354,27 @@ const AdminSettings = () => {
           <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>API keys are stored securely as environment variables. Contact your DevOps team to update them.</p>
           </div>
-        </div>
-      </div>
-
-      {/* Stripe Connect Platform */}
-      <div
-        className="rounded-2xl overflow-hidden"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}
-      >
-        <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Key className="h-4 w-4" style={{ color: "#22C55E" }} /> Stripe Connect Platform
-          </h2>
-        </div>
-        <div className="px-6 py-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-white">Check Platform Configuration</p>
-              <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>Verify Stripe Connect is correctly configured for payouts</p>
+          <div className="rounded-xl p-3 space-y-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}>Stripe Connect Platform</p>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-xs text-white/60 hover:text-white"
+                onClick={handleCheckStripeConnect}
+                disabled={checkingStripe}
+              >
+                {checkingStripe ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <RefreshCw className="h-3.5 w-3.5 mr-1.5" />}
+                Check status
+              </Button>
             </div>
-            <Button
-              size="sm"
-              onClick={handleStripeCheck}
-              disabled={stripeCheckLoading}
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
-            >
-              {stripeCheckLoading
-                ? <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Checking…</>
-                : <><RefreshCw className="h-3.5 w-3.5 mr-1" /> Check Now</>
-              }
-            </Button>
+            {stripeConnectStatus && (
+              <div className={`flex items-center gap-2 text-xs ${stripeConnectStatus.configured ? "text-emerald-400" : "text-red-400"}`}>
+                <CheckCircle2 className={`h-3.5 w-3.5 shrink-0 ${stripeConnectStatus.configured ? "text-emerald-400" : "text-red-400"}`} />
+                {stripeConnectStatus.message}
+              </div>
+            )}
           </div>
-          {stripeConfigured !== null && (
-            <div className={`flex items-center gap-2 text-sm p-2 rounded-lg ${stripeConfigured ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'}`}>
-              <CheckCircle2 className="h-4 w-4 shrink-0" />
-              {stripeConfigured ? 'Stripe Connect platform is configured.' : 'Stripe Connect platform is NOT configured.'}
-            </div>
-          )}
         </div>
       </div>
 

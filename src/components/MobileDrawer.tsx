@@ -143,7 +143,7 @@ const MainScreen = ({
   </div>
 );
 
-// ── Category screen (Level 2) ─────────────────────────────────────────────────
+// ── Category screen (Level 2 — shows chips as subcategory links) ──────────────
 
 const CategoryScreen = ({ categorySlug, onBack, onClose }: CategoryScreenProps) => {
   const cat = getCategoryConfig(categorySlug);
@@ -250,6 +250,7 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
     setActiveCategory(null);
   };
 
+  // Determine which screen to render
   const screen = activeCategory === null ? "main" : "category";
 
   return createPortal(
