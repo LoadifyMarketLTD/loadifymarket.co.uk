@@ -58,66 +58,59 @@
     # so they can be monitored without disrupting users.
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co https://api.stripe.com wss://*.supabase.co; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; form-action 'self'; report-uri /.netlify/functions/csp-report"
 
-# ─── Cache: static assets (immutable hashed filenames from Vite) ──────────────
+# ─── No caching for all resources ────────────────────────────────────────────
 [[headers]]
   for = "/assets/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "no-store, no-cache, must-revalidate"
 
-# ─── Cache: HTML — short duration, must revalidate ───────────────────────────
 [[headers]]
   for = "/*.html"
   [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+    Cache-Control = "no-store, no-cache, must-revalidate"
 
-# ─── Cache: images — 1 year (images are versioned by filename; originals kept alongside) ────
 [[headers]]
   for = "/images/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "no-store, no-cache, must-revalidate"
 
 [[headers]]
   for = "/images/**"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "no-store, no-cache, must-revalidate"
 
-# ─── Cache: root-level image files (hero, og-image, etc.) ───────────────────
 [[headers]]
   for = "/*.jpg"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "no-store, no-cache, must-revalidate"
 
 [[headers]]
   for = "/*.jpeg"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "no-store, no-cache, must-revalidate"
 
 [[headers]]
   for = "/*.png"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "no-store, no-cache, must-revalidate"
 
 [[headers]]
   for = "/*.webp"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "no-store, no-cache, must-revalidate"
 
-# ─── Cache: SVG icons / branding assets ──────────────────────────────────────
 [[headers]]
   for = "/*.svg"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "no-store, no-cache, must-revalidate"
 
-# ─── Cache: payment icons ─────────────────────────────────────────────────────
 [[headers]]
   for = "/payment-icons/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "no-store, no-cache, must-revalidate"
 
 # ─── Android App Links verification file ─────────────────────────────────────
 # Must be served as application/json with HTTP 200 (no redirects, no HTML).
-# Google's Digital Asset Links verifier re-fetches this on every install, so
-# no-store prevents stale cached versions being served after the SHA-256 is updated.
 [[headers]]
   for = "/.well-known/assetlinks.json"
   [headers.values]
@@ -125,22 +118,19 @@
     Cache-Control = "no-store"
     Access-Control-Allow-Origin = "*"
 
-# ─── Cache: PWA manifest ─────────────────────────────────────────────────────
 [[headers]]
   for = "/manifest.webmanifest"
   [headers.values]
-    Cache-Control = "public, max-age=86400"
+    Cache-Control = "no-store, no-cache, must-revalidate"
     Content-Type = "application/manifest+json"
 
-# ─── Cache: Service worker — no cache so updates are picked up immediately ───
 [[headers]]
   for = "/sw.js"
   [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+    Cache-Control = "no-store, no-cache, must-revalidate"
     Service-Worker-Allowed = "/"
 
-# ─── Cache: branding directory ───────────────────────────────────────────────
 [[headers]]
   for = "/branding/*"
   [headers.values]
-    Cache-Control = "public, max-age=604800"
+    Cache-Control = "no-store, no-cache, must-revalidate"
