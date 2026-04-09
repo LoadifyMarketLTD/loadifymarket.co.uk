@@ -223,12 +223,12 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
 
         {/* Mobile menu toggle */}
         <button
-          className="lg:hidden p-2 text-white/80 hover:text-green-400 transition-colors"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          className="lg:hidden relative z-[100] p-2 bg-red-500 text-white rounded-md flex items-center justify-center"
+          onClick={() => { console.log("HAMBURGER CLICKED"); setMobileOpen(true); }}
+          aria-label="Open menu"
           aria-expanded={mobileOpen}
         >
-          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+          <Menu size={22} />
         </button>
       </div>
 
