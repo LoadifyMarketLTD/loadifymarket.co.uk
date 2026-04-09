@@ -321,7 +321,7 @@ const SellerSetupPage = () => {
                     </p>
                   </div>
                   <Button asChild size="sm" variant="outline">
-                    <Link to="/pp/seller/profile">
+                    <Link to="/seller/profile">
                       Edit Profile <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                     </Link>
                   </Button>

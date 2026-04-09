@@ -20,6 +20,7 @@ const navItems = [
   { to: "/pp/seller/notifications", label: "Notifications", icon: Bell },
   { to: "/pp/seller/profile", label: "Profile", icon: UserCircle },
   { to: "/pp/seller/settings", label: "Settings", icon: Settings },
+  { to: "/pp/seller/notifications", label: "Notifications", icon: Bell },
 ];
 
 /** The 4 most important pages shown in the mobile bottom tab bar */
