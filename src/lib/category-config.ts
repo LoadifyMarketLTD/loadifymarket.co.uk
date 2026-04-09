@@ -5,7 +5,7 @@
  * UI-specific configuration needed by CategoryPage:
  * • Lucide icon component
  * • Tailwind accent colours
- * • Subcategory filter chips
+ * • Subcategory filter chips (with sub-page slugs)
  * • Empty-state copy
  * • Supabase product filter strategy
  *
@@ -14,15 +14,23 @@
  */
 
 import {
-  Cpu,
-  Shirt,
-  Home,
+  Mail,
+  Leaf,
   Wrench,
-  Car,
-  Gamepad2,
   Sparkles,
+  Gift,
+  Tag,
+  Gamepad2,
+  Palette,
   Heart,
-  Briefcase,
+  ChefHat,
+  Activity,
+  Home,
+  Zap,
+  PawPrint,
+  BookOpen,
+  Calendar,
+  Shirt,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import CATEGORIES from '@/data/categories';
@@ -31,6 +39,8 @@ import CATEGORIES from '@/data/categories';
 
 export interface CategoryChip {
   label: string;
+  /** URL-safe slug used for /category/:parentSlug?sub=:subSlug navigation */
+  subSlug?: string;
   searchTerm?: string;
   condition?: string;
 }
@@ -60,189 +70,378 @@ export interface CategoryConfig {
 type UIOverride = Omit<CategoryConfig, 'slug' | 'label' | 'title' | 'subcategories' | 'image'>;
 
 const UI_OVERRIDES: Record<string, UIOverride> = {
-  electronics: {
-    subtitle: 'Smartphones, laptops, tablets, audio, smart home and gaming gear from independent UK sellers',
-    icon: Cpu,
-    iconColor: 'text-violet-600',
-    accentBg: 'bg-violet-600/10',
+  'large-letter-items': {
+    subtitle: 'Small, lightweight items ideal for postal and large-letter format — keyrings, accessories, stationery & more',
+    icon: Mail,
+    iconColor: 'text-blue-400',
+    accentBg: 'bg-blue-400/10',
     chips: [
-      { label: 'All Electronics' },
-      { label: 'Smartphones',   searchTerm: 'smartphone mobile phone iphone android' },
-      { label: 'Laptops',       searchTerm: 'laptop notebook computer macbook' },
-      { label: 'Tablets',       searchTerm: 'tablet ipad android tablet' },
-      { label: 'Audio',         searchTerm: 'headphones earbuds speaker audio bluetooth' },
-      { label: 'Smart Home',    searchTerm: 'smart home alexa google nest wifi' },
-      { label: 'Gaming',        searchTerm: 'gaming console controller game xbox playstation' },
-      { label: 'Accessories',   searchTerm: 'electronics accessories cable charger case' },
+      { label: 'All Large Letter Items' },
+      { label: 'Stationery & Cards',      subSlug: 'stationery-cards',     searchTerm: 'stationery card greeting notepad pen' },
+      { label: 'Jewellery & Accessories', subSlug: 'jewellery-accessories', searchTerm: 'jewellery necklace bracelet ring earring accessory' },
+      { label: 'Phone Accessories',        subSlug: 'phone-accessories',     searchTerm: 'phone case screen protector cable charger holder' },
+      { label: 'Hair Accessories',         subSlug: 'hair-accessories',      searchTerm: 'hair clip band scrunchie comb bobby pin' },
+      { label: 'Small Gifts & Novelties',  subSlug: 'small-gifts',           searchTerm: 'small gift novelty magnet badge charm' },
+      { label: 'Keyrings & Badges',        subSlug: 'keyrings-badges',       searchTerm: 'keyring keychain badge fridge magnet' },
+      { label: 'Beauty Accessories',       subSlug: 'beauty-accessories',    searchTerm: 'makeup brush sponge mirror compact applicator' },
     ],
     emptyState: {
-      title: 'No Electronics found',
-      description: 'Try adjusting your search or filters. New electronics are listed every day.',
+      title: 'No Large Letter Items found',
+      description: 'Try adjusting your search or filters. New products are listed every day.',
     },
-    productFilter: { categorySlug: 'electronics' },
+    productFilter: { categorySlug: 'large-letter-items' },
   },
 
-  fashion: {
-    subtitle: 'Clothing, shoes, bags and accessories for women, men and everyone in between',
-    icon: Shirt,
-    iconColor: 'text-pink-500',
-    accentBg: 'bg-pink-500/10',
+  garden: {
+    subtitle: 'Garden tools, outdoor furniture, planters, BBQ equipment and garden décor for retail and trade',
+    icon: Leaf,
+    iconColor: 'text-green-500',
+    accentBg: 'bg-green-500/10',
     chips: [
-      { label: 'All Fashion' },
-      { label: "Women's Clothing", searchTerm: 'women clothing dress top skirt blouse' },
-      { label: "Men's Clothing",   searchTerm: 'men clothing shirt trousers jacket hoodie' },
-      { label: 'Shoes',            searchTerm: 'shoes trainers boots heels sandals footwear' },
-      { label: 'Bags',             searchTerm: 'bag handbag tote backpack purse' },
-      { label: 'Jewellery',        searchTerm: 'jewellery necklace bracelet ring earring' },
-      { label: 'Accessories',      searchTerm: 'fashion accessories scarf hat belt gloves' },
+      { label: 'All Garden' },
+      { label: 'Garden Tools',          subSlug: 'garden-tools',         searchTerm: 'garden spade fork hoe trowel rake pruner' },
+      { label: 'Plant Pots & Planters', subSlug: 'plant-pots-planters',  searchTerm: 'plant pot planter hanging basket window box' },
+      { label: 'Garden Furniture',      subSlug: 'garden-furniture',     searchTerm: 'garden chair table bench set swing hammock' },
+      { label: 'Outdoor Lighting',      subSlug: 'outdoor-lighting',     searchTerm: 'solar light stake lantern string fairy outdoor' },
+      { label: 'BBQ & Outdoor Cooking', subSlug: 'bbq-outdoor-cooking',  searchTerm: 'bbq grill charcoal smoker outdoor cooking set' },
+      { label: 'Watering Equipment',    subSlug: 'watering-equipment',   searchTerm: 'watering can hose reel spray nozzle dripper' },
+      { label: 'Garden Décor',          subSlug: 'garden-decor',         searchTerm: 'garden ornament windmill gnome bird feeder stone' },
     ],
     emptyState: {
-      title: 'No Fashion items found',
-      description: 'Try adjusting your search. New fashion items are added regularly.',
+      title: 'No Garden products found',
+      description: 'Try adjusting your search or filters. New garden items are listed regularly.',
     },
-    productFilter: { categorySlug: 'fashion' },
+    productFilter: { categorySlug: 'garden' },
   },
 
-  'home-kitchen': {
-    subtitle: 'Appliances, cookware, storage, home decor and furniture for every room',
-    icon: Home,
-    iconColor: 'text-emerald-600',
-    accentBg: 'bg-emerald-600/10',
-    chips: [
-      { label: 'All Home & Kitchen' },
-      { label: 'Small Appliances', searchTerm: 'small appliance kettle toaster microwave blender' },
-      { label: 'Kitchen Tools',    searchTerm: 'kitchen tools cookware pan pot utensil' },
-      { label: 'Storage',          searchTerm: 'storage box shelf organiser container basket' },
-      { label: 'Cleaning',         searchTerm: 'cleaning mop vacuum hoover brush cloth' },
-      { label: 'Home Decor',       searchTerm: 'home decor candle vase ornament cushion lamp' },
-      { label: 'Furniture',        searchTerm: 'furniture sofa chair table desk shelf unit' },
-    ],
-    emptyState: {
-      title: 'No Home & Kitchen products found',
-      description: 'Try adjusting your search or filters. New home and kitchen items are listed regularly.',
-    },
-    productFilter: { categorySlug: 'home-kitchen' },
-  },
-
-  beauty: {
-    subtitle: 'Skincare, haircare, makeup, fragrance and beauty tools from premium brands',
-    icon: Sparkles,
-    iconColor: 'text-rose-500',
-    accentBg: 'bg-rose-500/10',
-    chips: [
-      { label: 'All Beauty' },
-      { label: 'Skincare',     searchTerm: 'skincare moisturiser serum cleanser toner spf' },
-      { label: 'Haircare',     searchTerm: 'haircare shampoo conditioner hair dryer styling' },
-      { label: 'Makeup',       searchTerm: 'makeup foundation lipstick mascara eyeshadow blush' },
-      { label: 'Fragrance',    searchTerm: 'fragrance perfume cologne eau de toilette body mist' },
-      { label: 'Beauty Tools', searchTerm: 'beauty tools hair dryer straightener curler device' },
-    ],
-    emptyState: {
-      title: 'No Beauty products found',
-      description: 'Try adjusting your search. New beauty and skincare products are added regularly.',
-    },
-    productFilter: { categorySlug: 'beauty' },
-  },
-
-  'tools-diy': {
-    subtitle: 'Power tools, hand tools, hardware, workshop essentials and safety equipment',
+  diy: {
+    subtitle: 'Power tools, hand tools, fixings, paint, plumbing and home improvement supplies',
     icon: Wrench,
     iconColor: 'text-amber-600',
     accentBg: 'bg-amber-600/10',
     chips: [
-      { label: 'All Tools & DIY' },
-      { label: 'Power Tools',      searchTerm: 'power drill saw grinder sander jigsaw' },
-      { label: 'Hand Tools',       searchTerm: 'hand tool spanner wrench screwdriver hammer pliers' },
-      { label: 'Hardware',         searchTerm: 'hardware screw bolt nut fastener fixing anchor' },
-      { label: 'Workshop',         searchTerm: 'workshop workbench toolbox storage cabinet' },
-      { label: 'Electrical',       searchTerm: 'electrical wire cable socket switch fuse' },
-      { label: 'Safety Equipment', searchTerm: 'safety gloves goggles helmet mask ppe' },
+      { label: 'All DIY' },
+      { label: 'Power Tools',         subSlug: 'power-tools',         searchTerm: 'power drill saw grinder sander jigsaw router' },
+      { label: 'Hand Tools',          subSlug: 'hand-tools',          searchTerm: 'hand tool spanner wrench screwdriver hammer pliers' },
+      { label: 'Fixings & Fastenings',subSlug: 'fixings-fastenings',  searchTerm: 'screw bolt nut anchor rawl plug wall fixing' },
+      { label: 'Safety Equipment',    subSlug: 'safety-equipment',    searchTerm: 'safety gloves goggles helmet mask ppe hi-vis' },
+      { label: 'Paint & Decorating',  subSlug: 'paint-decorating',    searchTerm: 'paint roller brush masking tape primer filler' },
+      { label: 'Plumbing',            subSlug: 'plumbing',            searchTerm: 'plumbing pipe tap fitting valve sealant ptfe' },
+      { label: 'Electrical Supplies', subSlug: 'electrical-supplies', searchTerm: 'wire cable socket switch fuse conduit connector' },
     ],
     emptyState: {
-      title: 'No Tools & DIY products found',
+      title: 'No DIY products found',
       description: 'Try adjusting your search. New tools and hardware are listed regularly.',
     },
-    productFilter: { categorySlug: 'tools-diy' },
+    productFilter: { categorySlug: 'diy' },
   },
 
-  'toys-games': {
-    subtitle: 'Educational toys, board games, outdoor play and gifts for all ages',
+  cleaning: {
+    subtitle: 'Cleaning products, mops, cloths, bin liners, air fresheners, disinfectants and laundry',
+    icon: Sparkles,
+    iconColor: 'text-cyan-400',
+    accentBg: 'bg-cyan-400/10',
+    chips: [
+      { label: 'All Cleaning' },
+      { label: 'Cleaning Products',    subSlug: 'cleaning-products',    searchTerm: 'spray cleaner bleach bathroom kitchen surface' },
+      { label: 'Mops & Brushes',       subSlug: 'mops-brushes',         searchTerm: 'mop brush broom dustpan floor squeegee' },
+      { label: 'Cloths & Sponges',     subSlug: 'cloths-sponges',       searchTerm: 'cloth sponge microfibre wipe scour pad' },
+      { label: 'Bin Liners & Bags',    subSlug: 'bin-liners-bags',      searchTerm: 'bin liner bag refuse black rubbish waste' },
+      { label: 'Air Fresheners',       subSlug: 'air-fresheners',       searchTerm: 'air freshener spray plug-in reed diffuser car' },
+      { label: 'Disinfectants',        subSlug: 'disinfectants',        searchTerm: 'disinfectant antibacterial sanitiser hand gel wipes' },
+      { label: 'Laundry Products',     subSlug: 'laundry-products',     searchTerm: 'laundry detergent powder capsule fabric conditioner' },
+    ],
+    emptyState: {
+      title: 'No Cleaning products found',
+      description: 'Try adjusting your search. New cleaning products are listed regularly.',
+    },
+    productFilter: { categorySlug: 'cleaning' },
+  },
+
+  'party-gift': {
+    subtitle: 'Party supplies, balloons, decorations, gifting, tableware and seasonal gifts',
+    icon: Gift,
+    iconColor: 'text-pink-500',
+    accentBg: 'bg-pink-500/10',
+    chips: [
+      { label: 'All Party & Gift' },
+      { label: 'Party Supplies',         subSlug: 'party-supplies',         searchTerm: 'party banner bunting hat whistle popper streamer' },
+      { label: 'Balloons & Decorations', subSlug: 'balloons-decorations',   searchTerm: 'balloon foil latex helium decoration garland' },
+      { label: 'Gifting & Wrapping',     subSlug: 'gifting-wrapping',       searchTerm: 'gift wrap tissue paper ribbon bow bag box' },
+      { label: 'Candles & Holders',      subSlug: 'candles-holders',        searchTerm: 'candle tealight birthday holder lantern wax' },
+      { label: 'Novelty Gifts',          subSlug: 'novelty-gifts',          searchTerm: 'novelty gift fun gadget funny personalised' },
+      { label: 'Tableware',              subSlug: 'tableware',              searchTerm: 'plate cup napkin tablecloth disposable party' },
+      { label: 'Cards & Stationery',     subSlug: 'cards-stationery',       searchTerm: 'greeting card birthday christmas thank you note' },
+    ],
+    emptyState: {
+      title: 'No Party & Gift items found',
+      description: 'Try adjusting your search. New party and gift items are added regularly.',
+    },
+    productFilter: { categorySlug: 'party-gift' },
+  },
+
+  'wholesale-pound-lines': {
+    subtitle: 'High-volume wholesale pound-line products for retailers across all key categories',
+    icon: Tag,
+    iconColor: 'text-yellow-500',
+    accentBg: 'bg-yellow-500/10',
+    chips: [
+      { label: 'All Pound Lines' },
+      { label: 'Household Goods', subSlug: 'household-goods', searchTerm: 'household goods pound line budget value' },
+      { label: 'Health & Beauty', subSlug: 'health-beauty',   searchTerm: 'health beauty pound line shampoo cream' },
+      { label: 'Stationery',      subSlug: 'stationery',      searchTerm: 'stationery pen notepad pad pound line' },
+      { label: 'Toys & Gifts',    subSlug: 'toys-gifts',      searchTerm: 'toy gift puzzle game pound line' },
+      { label: 'Cleaning',        subSlug: 'cleaning',        searchTerm: 'cleaning spray cloth pound line' },
+      { label: 'Food & Snacks',   subSlug: 'food-snacks',     searchTerm: 'food snack sweet candy confectionery pound' },
+      { label: 'Seasonal Items',  subSlug: 'seasonal-items',  searchTerm: 'seasonal christmas easter halloween pound' },
+    ],
+    emptyState: {
+      title: 'No Wholesale Pound Lines found',
+      description: 'Try adjusting your search. New pound-line products are added regularly.',
+    },
+    productFilter: { categorySlug: 'wholesale-pound-lines' },
+  },
+
+  toys: {
+    subtitle: 'Action figures, educational toys, outdoor toys, board games, arts & crafts and remote control',
     icon: Gamepad2,
     iconColor: 'text-violet-500',
     accentBg: 'bg-violet-500/10',
     chips: [
-      { label: 'All Toys & Games' },
-      { label: 'Educational Toys', searchTerm: 'educational toy learning puzzle stem science' },
-      { label: 'Outdoor Toys',     searchTerm: 'outdoor toy trampoline scooter bike ride on' },
-      { label: 'Board Games',      searchTerm: 'board game card game chess checkers puzzle' },
-      { label: 'Action Figures',   searchTerm: 'action figure doll collectible superhero' },
-      { label: 'Baby Toys',        searchTerm: 'baby toy rattle teether activity mat sensory' },
+      { label: 'All Toys' },
+      { label: 'Action Figures',      subSlug: 'action-figures',      searchTerm: 'action figure superhero doll collectible character' },
+      { label: 'Educational Toys',    subSlug: 'educational-toys',    searchTerm: 'educational toy learning puzzle stem science' },
+      { label: 'Outdoor Toys',        subSlug: 'outdoor-toys',        searchTerm: 'outdoor toy trampoline scooter bike ride on ball' },
+      { label: 'Board Games',         subSlug: 'board-games',         searchTerm: 'board game card game chess checkers puzzle family' },
+      { label: 'Dolls & Accessories', subSlug: 'dolls-accessories',   searchTerm: 'doll barbie fashion toy accessories clothes' },
+      { label: 'Baby Toys',           subSlug: 'baby-toys',           searchTerm: 'baby toy rattle teether activity mat sensory soft' },
+      { label: 'Arts & Crafts',       subSlug: 'arts-crafts',         searchTerm: 'arts crafts paint glitter clay stickers felt set' },
     ],
     emptyState: {
-      title: 'No Toys & Games found',
-      description: 'Try adjusting your search. New toys and games are added regularly.',
+      title: 'No Toys found',
+      description: 'Try adjusting your search. New toys are added regularly.',
     },
-    productFilter: { categorySlug: 'toys-games' },
+    productFilter: { categorySlug: 'toys' },
   },
 
-  'health-wellness': {
-    subtitle: 'Personal care, fitness accessories, wellness devices and supplements',
+  'leisure-hobbies': {
+    subtitle: 'Arts & crafts, sports, camping, puzzles, photography, collecting and musical instruments',
+    icon: Palette,
+    iconColor: 'text-orange-400',
+    accentBg: 'bg-orange-400/10',
+    chips: [
+      { label: 'All Leisure & Hobbies' },
+      { label: 'Arts & Crafts',       subSlug: 'arts-crafts',        searchTerm: 'art craft paint canvas brush watercolour acrylic' },
+      { label: 'Puzzles & Games',     subSlug: 'puzzles-games',      searchTerm: 'puzzle jigsaw game strategy brain teaser' },
+      { label: 'Sports & Fitness',    subSlug: 'sports-fitness',     searchTerm: 'sport fitness yoga mat weight resistance exercise' },
+      { label: 'Camping & Outdoor',   subSlug: 'camping-outdoor',    searchTerm: 'camping tent sleeping bag torch hiking outdoor' },
+      { label: 'Photography',         subSlug: 'photography',        searchTerm: 'camera tripod lens photography accessory case' },
+      { label: 'Collecting',          subSlug: 'collecting',         searchTerm: 'collecting album sleeve display case coins stamps' },
+      { label: 'Musical Instruments', subSlug: 'musical-instruments',searchTerm: 'guitar ukulele drum keyboard harmonica instrument' },
+    ],
+    emptyState: {
+      title: 'No Leisure & Hobbies products found',
+      description: 'Try adjusting your search. New leisure and hobby products are added regularly.',
+    },
+    productFilter: { categorySlug: 'leisure-hobbies' },
+  },
+
+  'baby-supplies': {
+    subtitle: 'Baby clothing, feeding, nappies, nursery essentials, baby monitors and pushchairs',
     icon: Heart,
-    iconColor: 'text-red-500',
-    accentBg: 'bg-red-500/10',
+    iconColor: 'text-rose-400',
+    accentBg: 'bg-rose-400/10',
     chips: [
-      { label: 'All Health & Wellness' },
-      { label: 'Personal Care',       searchTerm: 'personal care electric toothbrush shaver razor trimmer' },
-      { label: 'Fitness Accessories', searchTerm: 'fitness yoga mat resistance band weight dumbbell' },
-      { label: 'Wellness Devices',    searchTerm: 'wellness blood pressure monitor thermometer pulse' },
-      { label: 'Supplements',         searchTerm: 'supplement protein vitamin mineral health nutrition' },
-      { label: 'Massagers',           searchTerm: 'massager massage gun foam roller percussion' },
+      { label: 'All Baby Supplies' },
+      { label: 'Baby Clothing',         subSlug: 'baby-clothing',       searchTerm: 'baby bodysuit romper sleepsuit vest grow outfit' },
+      { label: 'Feeding & Nursing',     subSlug: 'feeding-nursing',     searchTerm: 'bottle teat breast pump bib weaning spoon bowl' },
+      { label: 'Nappies & Changing',    subSlug: 'nappies-changing',    searchTerm: 'nappy nappies wipes changing mat cream powder' },
+      { label: 'Baby Toys',             subSlug: 'baby-toys',           searchTerm: 'baby toy rattle teether activity gym mobile' },
+      { label: 'Baby Monitors',         subSlug: 'baby-monitors',       searchTerm: 'baby monitor camera sensor audio video' },
+      { label: 'Travel & Pushchairs',   subSlug: 'travel-pushchairs',   searchTerm: 'pushchair pram buggy car seat travel cot' },
+      { label: 'Nursery',               subSlug: 'nursery',             searchTerm: 'cot bed moses basket night light projector mobile' },
     ],
     emptyState: {
-      title: 'No Health & Wellness products found',
-      description: 'Try adjusting your search. New health and wellness products are added regularly.',
+      title: 'No Baby Supplies found',
+      description: 'Try adjusting your search. New baby products are added regularly.',
     },
-    productFilter: { categorySlug: 'health-wellness' },
+    productFilter: { categorySlug: 'baby-supplies' },
   },
 
-  automotive: {
-    subtitle: 'Car accessories, cleaning kits, interior accessories and automotive lighting',
-    icon: Car,
-    iconColor: 'text-slate-600',
-    accentBg: 'bg-slate-600/10',
+  kitchenware: {
+    subtitle: 'Cookware, bakeware, kitchen tools, storage containers, cutlery and small appliances',
+    icon: ChefHat,
+    iconColor: 'text-emerald-500',
+    accentBg: 'bg-emerald-500/10',
     chips: [
-      { label: 'All Automotive' },
-      { label: 'Car Accessories',      searchTerm: 'car accessory phone holder dash cam parking sensor' },
-      { label: 'Cleaning Kits',        searchTerm: 'car cleaning kit polish wax shampoo tyre cleaner' },
-      { label: 'Interior Accessories', searchTerm: 'car interior seat cover mat organiser air freshener' },
-      { label: 'Tools',                searchTerm: 'automotive tool jack torque wrench jump starter' },
-      { label: 'Lighting',             searchTerm: 'car lighting led bulb strip ambient interior exterior' },
+      { label: 'All Kitchenware' },
+      { label: 'Cookware',            subSlug: 'cookware',           searchTerm: 'cookware pan pot frying saucepan wok non-stick' },
+      { label: 'Bakeware',            subSlug: 'bakeware',           searchTerm: 'bakeware tin tray mould loaf silicone cake baking' },
+      { label: 'Kitchen Tools',       subSlug: 'kitchen-tools',      searchTerm: 'kitchen tool spatula ladle peeler grater whisk' },
+      { label: 'Storage Containers',  subSlug: 'storage-containers', searchTerm: 'storage container lunch box jar canister tupperware' },
+      { label: 'Cutlery & Flatware',  subSlug: 'cutlery-flatware',   searchTerm: 'cutlery flatware knife fork spoon set stainless' },
+      { label: 'Drinkware',           subSlug: 'drinkware',          searchTerm: 'mug cup glass bottle travel flask tumbler' },
+      { label: 'Small Appliances',    subSlug: 'small-appliances',   searchTerm: 'kettle toaster blender juicer air fryer slow cooker' },
     ],
     emptyState: {
-      title: 'No Automotive products found',
-      description: 'Try adjusting your search. New automotive accessories are listed regularly.',
+      title: 'No Kitchenware found',
+      description: 'Try adjusting your search. New kitchen products are listed regularly.',
     },
-    productFilter: { categorySlug: 'automotive' },
+    productFilter: { categorySlug: 'kitchenware' },
   },
 
-  'office-supplies': {
-    subtitle: 'Desk accessories, stationery, office storage and business essentials',
-    icon: Briefcase,
-    iconColor: 'text-indigo-600',
-    accentBg: 'bg-indigo-600/10',
+  'health-beauty': {
+    subtitle: 'Skincare, haircare, makeup, personal care, vitamins, fragrances and oral care',
+    icon: Activity,
+    iconColor: 'text-rose-500',
+    accentBg: 'bg-rose-500/10',
     chips: [
-      { label: 'All Office Supplies' },
-      { label: 'Desk Accessories',    searchTerm: 'desk accessory monitor stand lamp pen holder' },
-      { label: 'Office Storage',      searchTerm: 'office storage file folder binder cabinet drawer' },
-      { label: 'Stationery',          searchTerm: 'stationery pen pencil notebook planner sticky note' },
-      { label: 'Printers & Ink',      searchTerm: 'printer ink toner cartridge paper scanner copier' },
-      { label: 'Business Essentials', searchTerm: 'business card lanyard id badge shredder binding' },
+      { label: 'All Health & Beauty' },
+      { label: 'Skincare',               subSlug: 'skincare',          searchTerm: 'skincare moisturiser serum cleanser toner face' },
+      { label: 'Haircare',               subSlug: 'haircare',          searchTerm: 'shampoo conditioner hair mask oil serum treatment' },
+      { label: 'Makeup & Cosmetics',     subSlug: 'makeup-cosmetics',  searchTerm: 'makeup foundation lipstick mascara eyeshadow blush' },
+      { label: 'Personal Care',          subSlug: 'personal-care',     searchTerm: 'razor shaver trimmer deodorant body wash shower' },
+      { label: 'Vitamins & Supplements', subSlug: 'vitamins-supplements', searchTerm: 'vitamin supplement capsule tablet mineral protein' },
+      { label: 'Fragrances',             subSlug: 'fragrances',        searchTerm: 'perfume aftershave cologne fragrance eau de toilette' },
+      { label: 'Oral Care',              subSlug: 'oral-care',         searchTerm: 'toothbrush toothpaste mouthwash floss dental care' },
     ],
     emptyState: {
-      title: 'No Office Supplies found',
-      description: 'Try adjusting your search. New office supplies are added regularly.',
+      title: 'No Health & Beauty products found',
+      description: 'Try adjusting your search. New health and beauty products are added regularly.',
     },
-    productFilter: { categorySlug: 'office-supplies' },
+    productFilter: { categorySlug: 'health-beauty' },
+  },
+
+  homeware: {
+    subtitle: 'Bedding, curtains, rugs, bathroom accessories, candles and home décor',
+    icon: Home,
+    iconColor: 'text-indigo-400',
+    accentBg: 'bg-indigo-400/10',
+    chips: [
+      { label: 'All Homeware' },
+      { label: 'Bedding & Pillows',         subSlug: 'bedding-pillows',        searchTerm: 'duvet pillow bed set sheet quilt cover blanket' },
+      { label: 'Curtains & Blinds',         subSlug: 'curtains-blinds',        searchTerm: 'curtain blind voile roller roman eyelet ring top' },
+      { label: 'Rugs & Flooring',           subSlug: 'rugs-flooring',          searchTerm: 'rug mat runner carpet non-slip bath' },
+      { label: 'Cushions & Throws',         subSlug: 'cushions-throws',        searchTerm: 'cushion throw pillow sofa decorative knitted' },
+      { label: 'Bathroom Accessories',      subSlug: 'bathroom-accessories',   searchTerm: 'bathroom accessory towel rail hook mirror cabinet' },
+      { label: 'Picture Frames & Clocks',   subSlug: 'picture-frames-clocks',  searchTerm: 'picture frame clock wall art canvas photo' },
+      { label: 'Candles & Home Fragrance',  subSlug: 'candles-home-fragrance', searchTerm: 'candle diffuser reed wax melt tealight holder' },
+    ],
+    emptyState: {
+      title: 'No Homeware found',
+      description: 'Try adjusting your search. New homeware is added regularly.',
+    },
+    productFilter: { categorySlug: 'homeware' },
+  },
+
+  electrical: {
+    subtitle: 'LED lighting, phone accessories, cables, smart home, audio and computer accessories',
+    icon: Zap,
+    iconColor: 'text-yellow-400',
+    accentBg: 'bg-yellow-400/10',
+    chips: [
+      { label: 'All Electrical' },
+      { label: 'LED Lighting',         subSlug: 'led-lighting',         searchTerm: 'led bulb strip light fitting downlight desk lamp' },
+      { label: 'Phone Accessories',    subSlug: 'phone-accessories',    searchTerm: 'phone case charger cable screen protector holder stand' },
+      { label: 'Cables & Adapters',    subSlug: 'cables-adapters',      searchTerm: 'cable usb hdmi adapter lead extension connector' },
+      { label: 'Smart Home',           subSlug: 'smart-home',           searchTerm: 'smart plug socket switch alexa google wifi controller' },
+      { label: 'Batteries',            subSlug: 'batteries',            searchTerm: 'battery aa aaa rechargeable alkaline lithium pack' },
+      { label: 'Audio',                subSlug: 'audio',                searchTerm: 'headphone earphone speaker bluetooth wireless audio' },
+      { label: 'Computer Accessories', subSlug: 'computer-accessories', searchTerm: 'mouse keyboard webcam usb hub monitor stand laptop' },
+    ],
+    emptyState: {
+      title: 'No Electrical products found',
+      description: 'Try adjusting your search. New electrical items are listed regularly.',
+    },
+    productFilter: { categorySlug: 'electrical' },
+  },
+
+  'pet-supplies': {
+    subtitle: 'Dog, cat, small animal, bird and fish supplies, food, toys and grooming products',
+    icon: PawPrint,
+    iconColor: 'text-amber-500',
+    accentBg: 'bg-amber-500/10',
+    chips: [
+      { label: 'All Pet Supplies' },
+      { label: 'Dog Supplies',          subSlug: 'dog-supplies',          searchTerm: 'dog lead collar harness bed bowl toy treat' },
+      { label: 'Cat Supplies',          subSlug: 'cat-supplies',          searchTerm: 'cat collar litter tray scratching post bed toy' },
+      { label: 'Small Animal Supplies', subSlug: 'small-animal-supplies', searchTerm: 'rabbit guinea pig hamster cage bedding food toy' },
+      { label: 'Bird Supplies',         subSlug: 'bird-supplies',         searchTerm: 'bird cage perch seed feeder bath bell toy' },
+      { label: 'Fish & Aquatics',       subSlug: 'fish-aquatics',         searchTerm: 'fish tank aquarium filter pump gravel ornament' },
+      { label: 'Pet Food',              subSlug: 'pet-food',              searchTerm: 'pet food dry wet kibble treat chew biscuit' },
+      { label: 'Grooming',              subSlug: 'grooming',              searchTerm: 'pet grooming brush comb shampoo nail clipper dryer' },
+    ],
+    emptyState: {
+      title: 'No Pet Supplies found',
+      description: 'Try adjusting your search. New pet products are listed regularly.',
+    },
+    productFilter: { categorySlug: 'pet-supplies' },
+  },
+
+  stationery: {
+    subtitle: 'Pens, notebooks, office supplies, art materials, greeting cards and gift wrap',
+    icon: BookOpen,
+    iconColor: 'text-teal-400',
+    accentBg: 'bg-teal-400/10',
+    chips: [
+      { label: 'All Stationery' },
+      { label: 'Pens & Pencils',       subSlug: 'pens-pencils',      searchTerm: 'pen pencil biro marker highlighter rollerball' },
+      { label: 'Notebooks & Journals', subSlug: 'notebooks-journals', searchTerm: 'notebook journal diary planner sketchbook ruled' },
+      { label: 'Office Supplies',      subSlug: 'office-supplies',    searchTerm: 'stapler hole punch scissors tape folder binder' },
+      { label: 'Art Supplies',         subSlug: 'art-supplies',       searchTerm: 'art paint brush canvas watercolour pastel sketch' },
+      { label: 'Greeting Cards',       subSlug: 'greeting-cards',     searchTerm: 'greeting card birthday christmas thank you occasion' },
+      { label: 'Gift Wrap',            subSlug: 'gift-wrap',          searchTerm: 'wrapping paper ribbon bow tag tissue kraft' },
+      { label: 'Filing & Storage',     subSlug: 'filing-storage',     searchTerm: 'file folder binder box archive lever arch' },
+    ],
+    emptyState: {
+      title: 'No Stationery found',
+      description: 'Try adjusting your search. New stationery products are added regularly.',
+    },
+    productFilter: { categorySlug: 'stationery' },
+  },
+
+  seasonal: {
+    subtitle: 'Christmas, Easter, Halloween, Valentine\'s, summer ranges and all seasonal stock',
+    icon: Calendar,
+    iconColor: 'text-red-400',
+    accentBg: 'bg-red-400/10',
+    chips: [
+      { label: 'All Seasonal' },
+      { label: 'Christmas',      subSlug: 'christmas',      searchTerm: 'christmas tree decoration bauble tinsel lights advent' },
+      { label: 'Easter',         subSlug: 'easter',         searchTerm: 'easter egg hunt bunny decoration basket spring' },
+      { label: 'Halloween',      subSlug: 'halloween',      searchTerm: 'halloween costume pumpkin decoration skull bat spider' },
+      { label: "Valentine's Day",subSlug: 'valentines-day', searchTerm: "valentines heart rose gift chocolate love card" },
+      { label: 'Summer',         subSlug: 'summer',         searchTerm: 'summer beach pool inflatable sun outdoor fun' },
+      { label: 'Back to School', subSlug: 'back-to-school', searchTerm: 'back school bag pencil case lunch box stationery' },
+      { label: 'Diwali & Eid',   subSlug: 'diwali-eid',    searchTerm: 'diwali eid decoration gift candle light celebration' },
+    ],
+    emptyState: {
+      title: 'No Seasonal products found',
+      description: 'Try adjusting your search. New seasonal stock is added regularly.',
+    },
+    productFilter: { categorySlug: 'seasonal' },
+  },
+
+  'wholesale-clothing': {
+    subtitle: 'Women\'s, men\'s and children\'s clothing, sportswear, underwear and accessories wholesale',
+    icon: Shirt,
+    iconColor: 'text-purple-400',
+    accentBg: 'bg-purple-400/10',
+    chips: [
+      { label: 'All Wholesale Clothing' },
+      { label: "Women's Clothing",   subSlug: 'womens-clothing',   searchTerm: "women clothing dress top blouse skirt jumper ladies" },
+      { label: "Men's Clothing",     subSlug: 'mens-clothing',     searchTerm: "men clothing shirt trousers jacket hoodie polo gents" },
+      { label: "Children's Clothing",subSlug: 'childrens-clothing',searchTerm: "children kids clothing school t-shirt leggings jogger" },
+      { label: 'Baby Clothing',      subSlug: 'baby-clothing',     searchTerm: 'baby bodysuit vest sleepsuit romper babygrow outfit' },
+      { label: 'Sportswear',         subSlug: 'sportswear',        searchTerm: 'sportswear gym legging jogger hoodie vest athletic' },
+      { label: 'Underwear & Socks',  subSlug: 'underwear-socks',   searchTerm: 'underwear briefs boxers socks tights underwear pack' },
+      { label: 'Accessories',        subSlug: 'accessories',       searchTerm: 'hat cap scarf gloves belt bag fashion accessory' },
+    ],
+    emptyState: {
+      title: 'No Wholesale Clothing found',
+      description: 'Try adjusting your search. New clothing is added regularly.',
+    },
+    productFilter: { categorySlug: 'wholesale-clothing' },
   },
 };
 

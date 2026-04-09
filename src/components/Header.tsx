@@ -91,8 +91,18 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
       style={{ willChange: "transform", paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
 
-      {/* ── Row 1: Logo | Search | Actions ─────────────────────────────── */}
+      {/* ── Row 1: Hamburger | Logo | Search | Actions ──────────────────── */}
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
+
+        {/* Hamburger — visible on ALL screen sizes (opens the nav drawer) */}
+        <button
+          className="relative z-[100] p-2 -ml-1 text-white/80 hover:text-green-400 transition-colors shrink-0"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open navigation menu"
+          aria-expanded={mobileOpen}
+        >
+          <Menu size={22} />
+        </button>
 
         {/* Logo */}
         <Link to="/" aria-label="Loadify Market — Home" className="flex items-center gap-2 shrink-0">
@@ -220,28 +230,19 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
             </span>
           )}
         </Link>
-
-        {/* Mobile menu toggle */}
-        <button
-          className="lg:hidden relative z-[100] p-2 text-white/80 hover:text-green-400 transition-colors"
-          onClick={() => setMobileOpen(true)}
-          aria-label="Open menu"
-          aria-expanded={mobileOpen}
-        >
-          <Menu size={22} />
-        </button>
       </div>
 
       {/* ── Row 2: Category quick-links (desktop only) ─────────────────── */}
       <nav aria-label="Category navigation" className="hidden lg:block border-t border-white/10">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
           <div className="flex items-center gap-0.5 h-12">
-            <Link
-              to="/catalog"
-              className="shrink-0 text-sm font-bold text-white hover:text-green-400 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="shrink-0 text-sm font-bold text-white hover:text-green-400 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
             >
+              <Menu className="h-4 w-4" aria-hidden="true" />
               All Categories
-            </Link>
+            </button>
             <span className="w-px h-5 bg-white/10 mx-1.5 shrink-0" aria-hidden="true" />
             {CATEGORY_CONFIG.slice(0, 6).map((cat) => {
               const Icon = cat.icon;
@@ -267,7 +268,7 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
         </div>
       </nav>
 
-      {/* ── Mobile drawer ───────────────────────────────────────────────── */}
+      {/* ── Navigation drawer (mobile + desktop) ────────────────────────── */}
       <MobileDrawer
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
