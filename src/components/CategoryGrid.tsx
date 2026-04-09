@@ -104,11 +104,11 @@ const CategoryGrid = () => (
                 (e.target as HTMLImageElement).style.display = "none";
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
             {/* Label */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
-              <p className="text-sm font-bold text-white leading-tight">{cat.label}</p>
-              <span className="w-7 h-7 rounded-full bg-white/10 border border-white/20 group-hover:bg-[#22C55E] group-hover:border-[#22C55E] flex items-center justify-center transition-all duration-300 shrink-0">
+            <div className="absolute bottom-0 left-0 right-0 p-3 flex items-end justify-between">
+              <p className="text-sm font-extrabold text-white leading-tight drop-shadow-sm">{cat.label}</p>
+              <span className="w-7 h-7 rounded-full bg-white/20 border border-white/30 group-hover:bg-[#22C55E] group-hover:border-[#22C55E] flex items-center justify-center transition-all duration-300 shrink-0">
                 <ArrowRight className="h-3.5 w-3.5 text-white" aria-hidden="true" />
               </span>
             </div>
@@ -137,10 +137,10 @@ const CategoryGrid = () => (
                   (e.target as HTMLImageElement).style.display = "none";
                 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
             </div>
-            <div className="px-3 py-2.5">
-              <p className="text-xs font-semibold text-white/80 leading-snug line-clamp-1">{item.title}</p>
+            <div className="px-3 py-2.5 bg-[#0A1930]/80">
+              <p className="text-xs font-bold text-white leading-snug line-clamp-1">{item.title}</p>
             </div>
           </Link>
         ))}

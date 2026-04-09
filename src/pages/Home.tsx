@@ -45,10 +45,38 @@ import MicroCTA from "@/components/ui/MicroCTA";
 
 /* ── Quick Actions — mobile-only 2×2 grid ───────────────────────────────── */
 const QUICK_ACTIONS = [
-  { icon: ShoppingBag, label: "Browse Marketplace", to: "/catalog",             color: "text-green-400" },
-  { icon: Store,       label: "Start Selling",       to: "/signup?type=seller",  color: "text-green-400" },
-  { icon: Package,     label: "My Orders",            to: "/pp/buyer/orders",     color: "text-white/70"  },
-  { icon: UserCircle,  label: "My Account",           to: "/pp/buyer",            color: "text-white/70"  },
+  {
+    icon: ShoppingBag,
+    label: "Browse Marketplace",
+    to: "/catalog",
+    iconBg: "bg-emerald-500/20",
+    iconColor: "text-emerald-400",
+    cardBorder: "border-emerald-500/25",
+  },
+  {
+    icon: Store,
+    label: "Start Selling",
+    to: "/signup?type=seller",
+    iconBg: "bg-emerald-500/20",
+    iconColor: "text-emerald-400",
+    cardBorder: "border-emerald-500/25",
+  },
+  {
+    icon: Package,
+    label: "My Orders",
+    to: "/pp/buyer/orders",
+    iconBg: "bg-blue-500/20",
+    iconColor: "text-blue-400",
+    cardBorder: "border-white/[0.12]",
+  },
+  {
+    icon: UserCircle,
+    label: "My Account",
+    to: "/pp/buyer",
+    iconBg: "bg-blue-500/20",
+    iconColor: "text-blue-400",
+    cardBorder: "border-white/[0.12]",
+  },
 ] as const;
 
 export default function Home() {
@@ -70,17 +98,19 @@ export default function Home() {
         {/* ── 1. Quick Actions ── mobile-only, always first ──────────────── */}
         <section
           aria-label="Quick actions"
-          className="order-1 lg:hidden px-4 py-4 border-b border-white/10"
+          className="order-1 lg:hidden px-4 py-4 border-b border-white/[0.12]"
         >
           <div className="grid grid-cols-2 gap-3">
-            {QUICK_ACTIONS.map(({ icon: Icon, label, to, color }) => (
+            {QUICK_ACTIONS.map(({ icon: Icon, label, to, iconBg, iconColor, cardBorder }) => (
               <Link
                 key={to}
                 to={to}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-colors"
+                className={`flex items-center gap-3 px-3.5 py-3.5 rounded-xl bg-white/[0.07] border ${cardBorder} hover:bg-white/[0.12] hover:border-white/30 active:scale-95 transition-all duration-150`}
               >
-                <Icon className={`h-5 w-5 shrink-0 ${color}`} aria-hidden="true" />
-                <span className="text-sm font-medium text-white/85 leading-tight">{label}</span>
+                <span className={`shrink-0 w-9 h-9 rounded-lg ${iconBg} flex items-center justify-center`}>
+                  <Icon className={`h-5 w-5 ${iconColor}`} aria-hidden="true" />
+                </span>
+                <span className="text-sm font-semibold text-white leading-tight">{label}</span>
               </Link>
             ))}
           </div>

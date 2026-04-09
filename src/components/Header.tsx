@@ -112,7 +112,7 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search products, categories, sellers..."
               aria-label="Search marketplace"
-              className="w-full h-10 sm:h-12 pl-8 sm:pl-11 pr-10 sm:pr-28 bg-white/10 border border-white/20 rounded-xl text-xs sm:text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all"
+              className="w-full h-10 sm:h-12 pl-8 sm:pl-11 pr-10 sm:pr-28 bg-white/[0.12] border border-white/30 rounded-xl text-xs sm:text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-all"
             />
             <button
               type="submit"

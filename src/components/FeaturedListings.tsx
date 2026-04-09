@@ -68,7 +68,7 @@ const FeaturedListings = () => (
           <Link
             key={card.id}
             to={card.href}
-            className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)] min-h-[140px] sm:min-h-[260px]"
+            className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)] min-h-[160px] sm:min-h-[260px]"
           >
             <img
               src={card.img}
@@ -83,10 +83,10 @@ const FeaturedListings = () => (
               }}
             />
             {/* Dark gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
             {/* Content — compact on mobile */}
             <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-5">
-              <h3 className="text-xs sm:text-base font-extrabold text-white leading-snug mb-0.5 sm:mb-1 line-clamp-2">
+              <h3 className="text-sm sm:text-base font-extrabold text-white leading-snug mb-0.5 sm:mb-1 line-clamp-2 drop-shadow-sm">
                 {card.title}
               </h3>
               <p className="hidden sm:block text-xs text-white/70 leading-relaxed">{card.desc}</p>

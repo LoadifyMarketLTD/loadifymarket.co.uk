@@ -77,7 +77,7 @@ const FeaturedProducts = () => {
                 <Link
                   key={item.id}
                   to={href}
-                  className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)] min-h-[140px] sm:min-h-[280px]"
+                  className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)] min-h-[160px] sm:min-h-[280px]"
                 >
                   {img ? (
                     <img
@@ -96,7 +96,7 @@ const FeaturedProducts = () => {
                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/10" />
                   )}
                   {/* Dark gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
                   {/* Content overlay — compact on mobile */}
                   <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-5">
                     <p className="text-[9px] sm:text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-0.5 sm:mb-1 line-clamp-1">
@@ -119,17 +119,17 @@ const FeaturedProducts = () => {
             {[1, 2, 3].map((n) => (
               <div
                 key={n}
-                className="relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 min-h-[140px] sm:h-[220px] flex flex-col justify-end"
+                className="relative overflow-hidden rounded-2xl bg-white/[0.06] border border-white/[0.12] min-h-[160px] sm:h-[220px] flex flex-col justify-end"
               >
                 <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
                 <div className="relative p-3 sm:p-5">
-                  <p className="text-[9px] sm:text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-1">
+                  <p className="text-[9px] sm:text-[10px] font-bold text-emerald-400/60 uppercase tracking-wider mb-1">
                     Sample Listing
                   </p>
-                  <h3 className="text-xs sm:text-base font-extrabold text-white/60 leading-snug">
+                  <h3 className="text-xs sm:text-base font-extrabold text-white/40 leading-snug">
                     Sample Listing
                   </h3>
-                  <span className="text-xs text-white/50">Live Preview</span>
+                  <span className="text-xs text-white/30">Live Preview</span>
                 </div>
               </div>
             ))}
