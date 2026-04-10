@@ -186,17 +186,13 @@ section {
   }
 
   /* pt-header-spacer: clears the fixed public Header on all viewports.
-   *   Mobile  (<1024px): 4rem header row + safe-area-inset-top (status bar).
-   *           Resolves to exactly 4rem (64px) in a normal desktop browser.
-   *   Desktop (≥1024px): 7rem = 64px header row + 48px category-nav row.
+   *   All viewports: 7rem = 64px header row (Row 1) + 48px category-nav row (Row 2).
+   *   Row 2 (category nav) is visible on ALL screen sizes so both rows must be
+   *   cleared on mobile and desktop alike.
+   *   Plus env(safe-area-inset-top) for iOS notch / Dynamic Island.
    * Use on the spacer div below <Header /> on the homepage and any page
    * that uses the transparent-on-scroll public Header without forceOpaque. */
   .pt-header-spacer {
-    padding-top: calc(4rem + env(safe-area-inset-top, 0px));
-  }
-  @media (min-width: 1024px) {
-    .pt-header-spacer {
-      padding-top: 7rem; /* 112px — header row (64) + category nav (48) */
-    }
+    padding-top: calc(7rem + env(safe-area-inset-top, 0px));
   }
 }

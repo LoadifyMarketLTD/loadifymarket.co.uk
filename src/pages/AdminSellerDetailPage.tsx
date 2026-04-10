@@ -208,7 +208,7 @@ export default function AdminSellerDetailPage() {
   if (!hasAdminAccess(adminUser)) {
     return (
       <MainLayout>
-        <main className="flex-1 pt-16 lg:pt-[104px]">
+        <main className="flex-1 pt-28">
           <div className="container mx-auto px-4 py-8">
             <div className="card text-center py-12">
               <p className="text-red-600">Access Denied: Admin only</p>
@@ -222,7 +222,7 @@ export default function AdminSellerDetailPage() {
   if (loading) {
     return (
       <MainLayout>
-        <div className="flex-1 pt-16 lg:pt-[104px] flex items-center justify-center">
+        <div className="flex-1 pt-28 flex items-center justify-center">
           <div className="text-center">
             <div className="w-10 h-10 border-2 border-navy-800 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-gray-500">Loading seller details...</p>
@@ -235,7 +235,7 @@ export default function AdminSellerDetailPage() {
   if (!data) {
     return (
       <MainLayout>
-        <main className="flex-1 pt-16 lg:pt-[104px]">
+        <main className="flex-1 pt-28">
           <div className="container mx-auto px-4 py-8">
             <div className="card text-center py-16">
               <ShieldAlert className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -259,7 +259,7 @@ export default function AdminSellerDetailPage() {
 
   return (
     <MainLayout>
-      <main className="flex-1 pt-16 lg:pt-[104px]">
+      <main className="flex-1 pt-28">
       <div className="container mx-auto px-4 py-8">
 
         {/* Back link */}
