@@ -29,7 +29,9 @@ export default function SEO({
   ogImage = DEFAULT_OG_IMAGE,
   robots = "index, follow",
 }: SEOProps) {
-  const fullTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
+  const fullTitle = title.endsWith(` | ${SITE_NAME}`) || title === SITE_NAME
+    ? title
+    : `${title} | ${SITE_NAME}`;
   const canonicalUrl = canonical
     ? canonical.startsWith("http")
       ? canonical

@@ -254,9 +254,7 @@ const ProductDetail = () => {
     <MainLayout>
       <SEO
         title={`${product.title} | Loadify Market`}
-        description={typeof product.description === "string" && product.description.length > 0
-          ? product.description.slice(0, 155)
-          : `Buy ${product.title} from verified UK sellers on Loadify Market.`}
+        description={`Buy ${product.title} from verified UK sellers on Loadify Market. ${product.category ? `Category: ${product.category}.` : ''}`}
         canonical={`/product/${product.id}`}
       />
       <main className="pt-16 lg:pt-[104px] pb-16">

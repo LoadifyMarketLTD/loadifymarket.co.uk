@@ -79,14 +79,20 @@
     <!-- Google Analytics 4
          VITE_GA_MEASUREMENT_ID is substituted by Vite at build time.
          Set VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX in Netlify environment variables.
-         When blank (local dev / CI stub build) these scripts load harmlessly but
-         fire no real events. -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_MEASUREMENT_ID%"></script>
+         The script is only injected when the measurement ID is non-empty. -->
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){window.dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', '%VITE_GA_MEASUREMENT_ID%');
+      (function () {
+        var id = '%VITE_GA_MEASUREMENT_ID%';
+        if (!id) return;
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { window.dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', id);
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
+        document.head.appendChild(s);
+      })();
     </script>
 
     <!-- Structured Data - Organization -->

@@ -22,8 +22,11 @@ export function trackEvent(eventName: string, params?: Record<string, unknown>):
     if (typeof window !== "undefined" && typeof window.gtag === "function") {
       window.gtag("event", eventName, params ?? {});
     }
-  } catch {
+  } catch (err) {
     // Never let analytics errors surface to the user.
+    if (import.meta.env.DEV) {
+      console.error("[analytics] trackEvent error:", err);
+    }
   }
 }
 
