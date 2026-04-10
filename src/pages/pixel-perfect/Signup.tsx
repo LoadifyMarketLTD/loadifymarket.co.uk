@@ -4,75 +4,55 @@ import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import MainLayout from "@/layouts/MainLayout";
 
-/* ─────────────────────────────────────────────────────────────────────────
-   Reusable input / label / select primitives
-───────────────────────────────────────────────────────────────────────── */
-interface FieldProps {
-  id: string;
-  label: string;
-  required?: boolean;
-  colSpan?: 1 | 2 | 3;
-  children: React.ReactNode;
-}
-
-const Field = ({ id, label, required = false, colSpan = 1, children }: FieldProps) => {
-  const spanClass =
-    colSpan === 2
-      ? "sm:col-span-2"
-      : colSpan === 3
-      ? "sm:col-span-2 lg:col-span-3"
-      : "";
-  return (
-    <div className={spanClass}>
-      <label
-        htmlFor={id}
-        className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1"
-      >
-        {label}
-        {required && <span className="text-red-500 ml-0.5">*</span>}
-      </label>
-      {children}
-    </div>
-  );
+/* ── Password strength ─────────────────────────────────────────────── */
+const getStrength = (pw: string) => {
+  if (!pw) return { label: "", pct: 0, color: "bg-gray-300" };
+  if (pw.length < 6) return { label: "Too short", pct: 20, color: "bg-red-500" };
+  if (pw.length < 8) return { label: "Weak", pct: 40, color: "bg-orange-400" };
+  const hasUpper = /[A-Z]/.test(pw);
+  const hasNum = /[0-9]/.test(pw);
+  const hasSpecial = /[^A-Za-z0-9]/.test(pw);
+  const score = [hasUpper, hasNum, hasSpecial].filter(Boolean).length;
+  if (score === 0) return { label: "Moderate", pct: 60, color: "bg-yellow-400" };
+  if (score === 1) return { label: "Good", pct: 75, color: "bg-lime-500" };
+  return { label: "Strong", pct: 100, color: "bg-green-600" };
 };
 
-const inputCls =
-  "w-full h-9 px-3 text-sm border border-gray-300 bg-white text-gray-900 rounded focus:outline-none focus:ring-2 focus:ring-[#22C55E]/30 focus:border-[#22C55E] transition-all placeholder:text-gray-400";
+/* ── Shared primitives ─────────────────────────────────────────────── */
+const lbl = "block text-[11px] font-semibold text-gray-700 uppercase tracking-wide mb-0.5";
+const req = <span className="text-red-600"> *</span>;
 
-const selectCls =
-  "w-full h-9 px-3 text-sm border border-gray-300 bg-white text-gray-900 rounded focus:outline-none focus:ring-2 focus:ring-[#22C55E]/30 focus:border-[#22C55E] transition-all appearance-none";
+/* Square/traditional input */
+const inputBase =
+  "block w-full h-[34px] border border-gray-400 bg-white text-gray-900 text-sm px-2 py-1 focus:outline-none focus:border-[#0d2240] focus:ring-0";
 
-/* ─────────────────────────────────────────────────────────────────────────
-   Section card wrapper
-───────────────────────────────────────────────────────────────────────── */
-interface SectionCardProps {
-  number: number;
-  title: string;
-  children: React.ReactNode;
-}
-
-const SectionCard = ({ number, title, children }: SectionCardProps) => (
-  <div className="mb-5 shadow-sm">
-    <div className="bg-[#0d2240] px-5 py-3 flex items-center gap-3">
-      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#22C55E] flex items-center justify-center text-white text-xs font-bold leading-none">
-        {number}
-      </span>
-      <h2 className="text-sm font-bold text-white uppercase tracking-wider">{title}</h2>
-    </div>
-    <div className="bg-white border border-t-0 border-gray-200 p-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-4">
-        {children}
-      </div>
-    </div>
+/* Select wrapper adds the caret manually */
+const SelectField = ({
+  id, name, value, onChange, required = false, children,
+}: {
+  id: string; name: string; value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  required?: boolean; children: React.ReactNode;
+}) => (
+  <div className="relative">
+    <select
+      id={id} name={name} value={value} onChange={onChange} required={required}
+      className={`${inputBase} appearance-none pr-6 cursor-pointer`}
+    >
+      {children}
+    </select>
+    <svg
+      className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500 pointer-events-none"
+      fill="none" viewBox="0 0 24 24" stroke="currentColor"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
   </div>
 );
 
-/* ─────────────────────────────────────────────────────────────────────────
-   Main component
-───────────────────────────────────────────────────────────────────────── */
+/* ── Main page ─────────────────────────────────────────────────────── */
 const Signup = () => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -81,75 +61,59 @@ const Signup = () => {
   const isSeller = searchParams.get("type") === "seller";
   const role: "buyer" | "seller" = isSeller ? "seller" : "buyer";
 
-  const [form, setForm] = useState({
-    // Section 1 — Personal & Business Details
-    title: "",
-    firstName: "",
-    lastName: "",
-    jobTitle: "",
-    companyName: "",
-    businessType: "",
-    vatNumber: "",
-    companyRegNo: "",
-    phone: "",
-    mobile: "",
-    website: "",
-    // Section 2 — Business Address
-    address1: "",
-    address2: "",
-    city: "",
-    county: "",
-    postcode: "",
-    country: "United Kingdom",
-    // Section 3 — Sign-in Credentials
-    email: "",
-    confirmEmail: "",
-    password: "",
-    confirmPassword: "",
+  const [f, setF] = useState({
+    /* Col 1 */
+    firstName: "", middleName: "", lastName: "", email: "",
+    newsletter: false, vatNumber: "", customerType: "", requestAssistance: false,
+    /* Col 2 */
+    company: "", phone: "", country: "United Kingdom",
+    postcode: "", streetAddress: "", city: "",
+    /* Col 3 */
+    password: "", confirmPassword: "", showPassword: false,
+    /* Bottom */
+    agreeTerms: false,
   });
 
-  const set = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const set = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    setF((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+    }));
+  };
+
+  const strength = getStrength(f.password);
+  const passwordsMatch = f.confirmPassword.length > 0 && f.password === f.confirmPassword;
+  const passwordsMismatch = f.confirmPassword.length > 0 && f.password !== f.confirmPassword;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (!form.firstName.trim() || !form.lastName.trim()) {
-      setError("First name and last name are required.");
-      return;
+    if (!f.firstName.trim() || !f.lastName.trim()) {
+      setError("First name and last name are required."); return;
     }
-    if (!form.companyName.trim()) {
-      setError("Company name is required.");
-      return;
+    if (!f.email.trim()) { setError("Email address is required."); return; }
+    if (!f.company.trim()) { setError("Company name is required."); return; }
+    if (f.password.length < 8) {
+      setError("Password must be at least 8 characters."); return;
     }
-    if (!form.email.trim()) {
-      setError("Email address is required.");
-      return;
+    if (f.password !== f.confirmPassword) {
+      setError("Passwords do not match."); return;
     }
-    if (form.email !== form.confirmEmail) {
-      setError("Email addresses do not match.");
-      return;
-    }
-    if (form.password.length < 8) {
-      setError("Password must be at least 8 characters.");
-      return;
-    }
-    if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match.");
-      return;
+    if (!f.agreeTerms) {
+      setError("You must agree to the Privacy Policy and Terms of Use."); return;
     }
 
     setLoading(true);
     try {
       const body: Record<string, string> = {
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
-        email: form.email.trim(),
-        password: form.password,
+        firstName: f.firstName.trim(),
+        lastName: f.lastName.trim(),
+        email: f.email.trim(),
+        password: f.password,
         role,
       };
-      if (form.companyName.trim()) body.storeName = form.companyName.trim();
+      if (f.company.trim()) body.storeName = f.company.trim();
 
       const res = await fetch("/.netlify/functions/register", {
         method: "POST",
@@ -160,16 +124,12 @@ const Signup = () => {
       if (!res.ok) throw new Error(json.error || "Registration failed");
 
       toast({
-        title: "Application submitted!",
-        description:
-          json.message ||
-          "Your trade account application has been received. Sign in to complete your setup.",
+        title: "Account created!",
+        description: json.message ?? "You can now sign in to your account.",
       });
       navigate("/login", { replace: true });
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Registration failed. Please try again."
-      );
+      setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -177,41 +137,18 @@ const Signup = () => {
 
   return (
     <MainLayout>
-      <div className="min-h-screen bg-[#f0f2f5] pt-28 pb-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* ── Full-page container — light grey, NO card ────────────── */}
+      <div className="bg-[#f0f2f5] pt-28 pb-14">
+        <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10">
 
-          {/* ── Page header ──────────────────────────────────────────── */}
-          <div className="mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
-              <div>
-                <h1
-                  className="text-2xl font-bold text-[#0d2240]"
-                  style={{ letterSpacing: "-0.02em" }}
-                >
-                  Create a Trade Account
-                </h1>
-                <p className="text-sm text-gray-500 mt-1">
-                  Complete all required fields below to apply for a wholesale trade account.
-                  Fields marked <span className="text-red-500 font-semibold">*</span> are mandatory.
-                </p>
-              </div>
-              <p className="text-sm text-gray-500 whitespace-nowrap">
-                Already have an account?{" "}
-                <Link
-                  to="/login"
-                  className="text-[#16A34A] font-semibold hover:underline"
-                >
-                  Sign in here
-                </Link>
-              </p>
-            </div>
-
-            {/* Account type toggle */}
-            <div className="mt-4 flex items-center gap-3">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Account Type:
-              </span>
-              <div className="flex rounded overflow-hidden border border-gray-300">
+          {/* ── PAGE TITLE BAR ─────────────────────────────────────── */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-0">
+            <div className="bg-[#0d2240] flex items-center gap-4 px-5 py-2.5 w-full">
+              <h1 className="text-white text-sm font-bold uppercase tracking-widest">
+                Create a {isSeller ? "Trade Supplier" : "Trade Buyer"} Account
+              </h1>
+              <div className="ml-auto flex items-center gap-0 text-xs">
+                {/* Account type toggle */}
                 <button
                   type="button"
                   onClick={() => {
@@ -219,13 +156,11 @@ const Signup = () => {
                     p.delete("type");
                     setSearchParams(p);
                   }}
-                  className={`px-4 py-1.5 text-xs font-semibold transition-colors ${
-                    !isSeller
-                      ? "bg-[#0d2240] text-white"
-                      : "bg-white text-gray-600 hover:bg-gray-50"
+                  className={`px-3 py-1 text-xs font-semibold border border-white/30 transition-colors ${
+                    !isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-white/60 hover:text-white"
                   }`}
                 >
-                  Buyer Account
+                  Buyer
                 </button>
                 <button
                   type="button"
@@ -234,288 +169,408 @@ const Signup = () => {
                     p.set("type", "seller");
                     setSearchParams(p);
                   }}
-                  className={`px-4 py-1.5 text-xs font-semibold transition-colors border-l border-gray-300 ${
-                    isSeller
-                      ? "bg-[#0d2240] text-white"
-                      : "bg-white text-gray-600 hover:bg-gray-50"
+                  className={`px-3 py-1 text-xs font-semibold border border-l-0 border-white/30 transition-colors ${
+                    isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-white/60 hover:text-white"
                   }`}
                 >
-                  Seller Account
+                  Seller / Supplier
                 </button>
+                <span className="text-white/40 text-xs ml-4 hidden sm:block">
+                  Already registered?{" "}
+                  <Link to="/login" className="text-[#4ade80] hover:underline font-semibold">
+                    Sign In
+                  </Link>
+                </span>
               </div>
             </div>
           </div>
 
-          {/* ── Error banner ─────────────────────────────────────────── */}
+          {/* ── ERROR BANNER ──────────────────────────────────────── */}
           {error && (
-            <div className="mb-5 flex items-start gap-3 rounded border border-red-200 bg-red-50 px-4 py-3">
-              <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
+            <div className="flex items-start gap-2 bg-red-50 border border-red-300 px-4 py-2.5 mt-0">
+              <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
               <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
 
           <form onSubmit={handleSubmit} noValidate>
 
-            {/* ═══ SECTION 1 — Personal & Business Details ══════════ */}
-            <SectionCard number={1} title="Personal &amp; Business Details">
+            {/* ═══════════════════════════════════════════════════════
+                MAIN GRID — 3 columns desktop, 2 tablet, 1 mobile
+            ════════════════════════════════════════════════════════ */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 bg-white border border-gray-300 border-t-0">
 
-              <Field id="title" label="Title">
-                <select id="title" name="title" value={form.title} onChange={set} className={selectCls}>
-                  <option value="">— Select —</option>
-                  <option>Mr</option>
-                  <option>Mrs</option>
-                  <option>Ms</option>
-                  <option>Miss</option>
-                  <option>Dr</option>
-                  <option>Prof</option>
-                </select>
-              </Field>
-
-              <Field id="firstName" label="First Name" required>
-                <input
-                  id="firstName" name="firstName" type="text" autoComplete="given-name"
-                  required placeholder="John"
-                  value={form.firstName} onChange={set} className={inputCls}
-                />
-              </Field>
-
-              <Field id="lastName" label="Last Name" required>
-                <input
-                  id="lastName" name="lastName" type="text" autoComplete="family-name"
-                  required placeholder="Smith"
-                  value={form.lastName} onChange={set} className={inputCls}
-                />
-              </Field>
-
-              <Field id="jobTitle" label="Job Title" required>
-                <input
-                  id="jobTitle" name="jobTitle" type="text"
-                  required placeholder="Procurement Manager"
-                  value={form.jobTitle} onChange={set} className={inputCls}
-                />
-              </Field>
-
-              <Field id="companyName" label="Company Name" required colSpan={2}>
-                <input
-                  id="companyName" name="companyName" type="text" autoComplete="organization"
-                  required placeholder="Acme Wholesale Ltd"
-                  value={form.companyName} onChange={set} className={inputCls}
-                />
-              </Field>
-
-              <Field id="businessType" label="Business Type" required>
-                <select
-                  id="businessType" name="businessType"
-                  required value={form.businessType} onChange={set} className={selectCls}
-                >
-                  <option value="">— Select —</option>
-                  <option>Sole Trader</option>
-                  <option>Limited Company (Ltd)</option>
-                  <option>Partnership</option>
-                  <option>LLP</option>
-                  <option>PLC</option>
-                  <option>Charity / Non-Profit</option>
-                  <option>Other</option>
-                </select>
-              </Field>
-
-              <Field id="vatNumber" label="VAT Number">
-                <input
-                  id="vatNumber" name="vatNumber" type="text"
-                  placeholder="GB123456789"
-                  value={form.vatNumber} onChange={set} className={inputCls}
-                />
-              </Field>
-
-              <Field id="companyRegNo" label="Company Reg. No.">
-                <input
-                  id="companyRegNo" name="companyRegNo" type="text"
-                  placeholder="12345678"
-                  value={form.companyRegNo} onChange={set} className={inputCls}
-                />
-              </Field>
-
-              <Field id="phone" label="Main Telephone" required>
-                <input
-                  id="phone" name="phone" type="tel" autoComplete="tel"
-                  required placeholder="+44 20 1234 5678"
-                  value={form.phone} onChange={set} className={inputCls}
-                />
-              </Field>
-
-              <Field id="mobile" label="Mobile Number">
-                <input
-                  id="mobile" name="mobile" type="tel"
-                  placeholder="+44 7700 900000"
-                  value={form.mobile} onChange={set} className={inputCls}
-                />
-              </Field>
-
-              <Field id="website" label="Website">
-                <input
-                  id="website" name="website" type="url"
-                  placeholder="https://www.yourcompany.co.uk"
-                  value={form.website} onChange={set} className={inputCls}
-                />
-              </Field>
-
-            </SectionCard>
-
-            {/* ═══ SECTION 2 — Business Address ════════════════════ */}
-            <SectionCard number={2} title="Business Address">
-
-              <Field id="address1" label="Address Line 1" required colSpan={2}>
-                <input
-                  id="address1" name="address1" type="text" autoComplete="address-line1"
-                  required placeholder="Unit 4, Trafalgar Industrial Estate"
-                  value={form.address1} onChange={set} className={inputCls}
-                />
-              </Field>
-
-              <Field id="address2" label="Address Line 2">
-                <input
-                  id="address2" name="address2" type="text" autoComplete="address-line2"
-                  placeholder="Pembroke Road"
-                  value={form.address2} onChange={set} className={inputCls}
-                />
-              </Field>
-
-              <Field id="city" label="Town / City" required>
-                <input
-                  id="city" name="city" type="text" autoComplete="address-level2"
-                  required placeholder="London"
-                  value={form.city} onChange={set} className={inputCls}
-                />
-              </Field>
-
-              <Field id="county" label="County / Region">
-                <input
-                  id="county" name="county" type="text" autoComplete="address-level1"
-                  placeholder="Greater London"
-                  value={form.county} onChange={set} className={inputCls}
-                />
-              </Field>
-
-              <Field id="postcode" label="Postcode" required>
-                <input
-                  id="postcode" name="postcode" type="text" autoComplete="postal-code"
-                  required placeholder="EC1A 1BB"
-                  value={form.postcode} onChange={set} className={inputCls}
-                />
-              </Field>
-
-              <Field id="country" label="Country" required>
-                <select
-                  id="country" name="country"
-                  required value={form.country} onChange={set} className={selectCls}
-                >
-                  <option>United Kingdom</option>
-                  <option>Republic of Ireland</option>
-                  <option>Channel Islands</option>
-                  <option>Isle of Man</option>
-                  <option>Other</option>
-                </select>
-              </Field>
-
-            </SectionCard>
-
-            {/* ═══ SECTION 3 — Sign-in Credentials ════════════════ */}
-            <SectionCard number={3} title="Sign-in Information">
-
-              <Field id="email" label="Email Address" required colSpan={2}>
-                <input
-                  id="email" name="email" type="email" autoComplete="email"
-                  required placeholder="john.smith@company.co.uk"
-                  value={form.email} onChange={set} className={inputCls}
-                />
-              </Field>
-
-              <Field id="confirmEmail" label="Confirm Email Address" required colSpan={2}>
-                <input
-                  id="confirmEmail" name="confirmEmail" type="email"
-                  required placeholder="Re-enter your email address"
-                  value={form.confirmEmail} onChange={set} className={inputCls}
-                />
-              </Field>
-
-              <Field id="password" label="Password" required>
-                <div className="relative">
-                  <input
-                    id="password" name="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    required placeholder="Minimum 8 characters"
-                    value={form.password} onChange={set}
-                    className={`${inputCls} pr-9`}
-                  />
-                  <button
-                    type="button"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
+              {/* ╔══════════════════════════════════════════════════╗
+                  ║  COLUMN 1 — Personal / Business Information      ║
+                  ╚══════════════════════════════════════════════════╝ */}
+              <div className="border-b md:border-b-0 md:border-r border-gray-300">
+                {/* Column header */}
+                <div className="bg-[#e6eaf0] border-b border-gray-300 px-4 py-2">
+                  <span className="text-[11px] font-bold text-[#0d2240] uppercase tracking-widest">
+                    Personal / Business Information
+                  </span>
                 </div>
-              </Field>
 
-              <Field id="confirmPassword" label="Confirm Password" required>
-                <div className="relative">
-                  <input
-                    id="confirmPassword" name="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    required placeholder="Re-enter your password"
-                    value={form.confirmPassword} onChange={set}
-                    className={`${inputCls} pr-9`}
-                  />
-                  <button
-                    type="button"
-                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
+                <div className="px-4 py-4 space-y-2.5">
+
+                  <div>
+                    <label htmlFor="firstName" className={lbl}>First Name{req}</label>
+                    <input
+                      id="firstName" name="firstName" type="text"
+                      autoComplete="given-name" required
+                      value={f.firstName} onChange={set} className={inputBase}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="middleName" className={lbl}>Middle Name / Initial</label>
+                    <input
+                      id="middleName" name="middleName" type="text"
+                      value={f.middleName} onChange={set} className={inputBase}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="lastName" className={lbl}>Last Name{req}</label>
+                    <input
+                      id="lastName" name="lastName" type="text"
+                      autoComplete="family-name" required
+                      value={f.lastName} onChange={set} className={inputBase}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="email" className={lbl}>Email Address{req}</label>
+                    <input
+                      id="email" name="email" type="email"
+                      autoComplete="email" required
+                      value={f.email} onChange={set} className={inputBase}
+                    />
+                  </div>
+
+                  {/* Newsletter checkbox */}
+                  <div className="flex items-start gap-2 py-0.5">
+                    <input
+                      id="newsletter" name="newsletter" type="checkbox"
+                      checked={f.newsletter} onChange={set}
+                      className="mt-0.5 h-3.5 w-3.5 border border-gray-400 cursor-pointer"
+                    />
+                    <label
+                      htmlFor="newsletter"
+                      className="text-[11px] text-gray-600 leading-snug cursor-pointer"
+                    >
+                      Subscribe to our trade newsletter for exclusive offers and updates
+                    </label>
+                  </div>
+
+                  <div>
+                    <label htmlFor="vatNumber" className={lbl}>Tax / VAT Number</label>
+                    <input
+                      id="vatNumber" name="vatNumber" type="text"
+                      placeholder="e.g. GB123456789"
+                      value={f.vatNumber} onChange={set} className={inputBase}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="customerType" className={lbl}>Customer Type{req}</label>
+                    <SelectField
+                      id="customerType" name="customerType" required
+                      value={f.customerType} onChange={set}
+                    >
+                      <option value="">— Please Select —</option>
+                      <option>Retailer</option>
+                      <option>Wholesaler / Distributor</option>
+                      <option>Online Seller</option>
+                      <option>Market Trader</option>
+                      <option>Sole Trader</option>
+                      <option>Limited Company</option>
+                      <option>Charity / Non-Profit</option>
+                      <option>Other</option>
+                    </SelectField>
+                  </div>
+
+                  {/* Assistance checkbox */}
+                  <div className="flex items-start gap-2 py-0.5">
+                    <input
+                      id="requestAssistance" name="requestAssistance" type="checkbox"
+                      checked={f.requestAssistance} onChange={set}
+                      className="mt-0.5 h-3.5 w-3.5 border border-gray-400 cursor-pointer"
+                    />
+                    <label
+                      htmlFor="requestAssistance"
+                      className="text-[11px] text-gray-600 leading-snug cursor-pointer"
+                    >
+                      I would like assistance setting up my account from the sales team
+                    </label>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* ╔══════════════════════════════════════════════════╗
+                  ║  COLUMN 2 — Address Information                  ║
+                  ╚══════════════════════════════════════════════════╝ */}
+              <div className="border-b md:border-b-0 md:border-r-0 lg:border-r border-gray-300">
+                {/* Column header */}
+                <div className="bg-[#e6eaf0] border-b border-gray-300 px-4 py-2">
+                  <span className="text-[11px] font-bold text-[#0d2240] uppercase tracking-widest">
+                    Address Information
+                  </span>
+                </div>
+
+                <div className="px-4 py-4 space-y-2.5">
+
+                  <div>
+                    <label htmlFor="company" className={lbl}>Company{req}</label>
+                    <input
+                      id="company" name="company" type="text"
+                      autoComplete="organization" required
+                      value={f.company} onChange={set} className={inputBase}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="phone" className={lbl}>Phone Number{req}</label>
+                    <input
+                      id="phone" name="phone" type="tel"
+                      autoComplete="tel" required
+                      value={f.phone} onChange={set} className={inputBase}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="country" className={lbl}>Country{req}</label>
+                    <SelectField
+                      id="country" name="country" required
+                      value={f.country} onChange={set}
+                    >
+                      <option>United Kingdom</option>
+                      <option>Republic of Ireland</option>
+                      <option>Channel Islands</option>
+                      <option>Isle of Man</option>
+                      <option>Other</option>
+                    </SelectField>
+                  </div>
+
+                  <div>
+                    <label htmlFor="postcode" className={lbl}>Zip / Postcode{req}</label>
+                    <div className="flex gap-0">
+                      <input
+                        id="postcode" name="postcode" type="text" required
+                        value={f.postcode} onChange={set}
+                        className={`${inputBase} flex-1`}
+                      />
+                      <button
+                        type="button"
+                        className="px-3 h-[34px] bg-[#0d2240] hover:bg-[#1a3a5c] text-white text-[11px] font-bold uppercase tracking-wide border border-[#0d2240] transition-colors whitespace-nowrap"
+                      >
+                        Find Address
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-0.5">
+                      Enter your postcode and click "Find Address" to auto-fill.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="streetAddress" className={lbl}>Street Address{req}</label>
+                    <input
+                      id="streetAddress" name="streetAddress" type="text"
+                      autoComplete="street-address" required
+                      value={f.streetAddress} onChange={set} className={inputBase}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="city" className={lbl}>City{req}</label>
+                    <input
+                      id="city" name="city" type="text"
+                      autoComplete="address-level2" required
+                      value={f.city} onChange={set} className={inputBase}
+                    />
+                  </div>
+
+                </div>
+              </div>
+
+              {/* ╔══════════════════════════════════════════════════╗
+                  ║  COLUMN 3 — Sign-in Information                  ║
+                  ╚══════════════════════════════════════════════════╝ */}
+              <div className="md:col-span-2 lg:col-span-1">
+                {/* Column header */}
+                <div className="bg-[#e6eaf0] border-b border-gray-300 px-4 py-2">
+                  <span className="text-[11px] font-bold text-[#0d2240] uppercase tracking-widest">
+                    Sign-in Information
+                  </span>
+                </div>
+
+                <div className="px-4 py-4 space-y-2.5">
+
+                  <div>
+                    <label htmlFor="password" className={lbl}>Password{req}</label>
+                    <div className="relative">
+                      <input
+                        id="password" name="password"
+                        type={showPw ? "text" : "password"}
+                        autoComplete="new-password" required
+                        value={f.password} onChange={set}
+                        className={`${inputBase} pr-8`}
+                      />
+                      <button
+                        type="button"
+                        aria-label={showPw ? "Hide password" : "Show password"}
+                        onClick={() => setShowPw((v) => !v)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
+                      >
+                        {showPw ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+
+                    {/* Strength bar */}
+                    {f.password.length > 0 && (
+                      <div className="mt-1.5 space-y-0.5">
+                        <div className="h-[3px] w-full bg-gray-200">
+                          <div
+                            className={`h-full transition-all duration-300 ${strength.color}`}
+                            style={{ width: `${strength.pct}%` }}
+                          />
+                        </div>
+                        <p className="text-[11px] text-gray-500">
+                          Password strength:{" "}
+                          <span className="font-semibold text-gray-700">{strength.label}</span>
+                        </p>
+                      </div>
                     )}
-                  </button>
+
+                    <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">
+                      Must be at least 8 characters. Use a combination of uppercase letters,
+                      numbers, and symbols for a stronger password.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="confirmPassword" className={lbl}>Confirm Password{req}</label>
+                    <input
+                      id="confirmPassword" name="confirmPassword"
+                      type={showPw ? "text" : "password"}
+                      autoComplete="new-password" required
+                      value={f.confirmPassword} onChange={set}
+                      className={`${inputBase} ${passwordsMismatch ? "border-red-500" : ""}`}
+                    />
+                    {passwordsMatch && (
+                      <p className="text-[11px] text-green-600 mt-0.5 font-medium">
+                        ✓ Passwords match
+                      </p>
+                    )}
+                    {passwordsMismatch && (
+                      <p className="text-[11px] text-red-500 mt-0.5">
+                        Passwords do not match
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Show Password checkbox */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      id="showPassword" type="checkbox"
+                      checked={showPw} onChange={() => setShowPw((v) => !v)}
+                      className="h-3.5 w-3.5 border border-gray-400 cursor-pointer"
+                    />
+                    <label
+                      htmlFor="showPassword"
+                      className="text-[11px] text-gray-600 cursor-pointer select-none"
+                    >
+                      Show Password
+                    </label>
+                  </div>
+
                 </div>
-              </Field>
+              </div>
 
-            </SectionCard>
-
-            {/* ── Terms + Submit ────────────────────────────────────── */}
-            <div className="bg-white border border-gray-200 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <p className="text-xs text-gray-500 leading-relaxed">
-                By creating an account you agree to our{" "}
-                <Link to="/terms" className="text-[#16A34A] hover:underline font-medium">
-                  Terms &amp; Conditions
-                </Link>{" "}
-                and{" "}
-                <Link to="/privacy" className="text-[#16A34A] hover:underline font-medium">
-                  Privacy Policy
-                </Link>
-                . All applications are subject to approval.{" "}
-                <span className="text-red-500">*</span> Mandatory fields.
-              </p>
-              <button
-                type="submit"
-                disabled={loading}
-                className="shrink-0 h-10 px-8 rounded text-sm font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{
-                  background: "linear-gradient(135deg, #15803D 0%, #22C55E 100%)",
-                  boxShadow: "0 2px 8px rgba(34,197,94,0.35)",
-                }}
-              >
-                {loading
-                  ? "Submitting Application…"
-                  : isSeller
-                  ? "Submit Seller Application"
-                  : "Create Buyer Account"}
-              </button>
             </div>
+            {/* end 3-col grid */}
+
+            {/* ════════════════════════════════════════════════════════
+                BOTTOM SECTION — reCAPTCHA · Terms · Submit
+            ════════════════════════════════════════════════════════ */}
+            <div className="bg-white border border-t-0 border-gray-300 px-5 py-4">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+
+                {/* Left: reCAPTCHA + Terms */}
+                <div className="flex flex-col gap-3">
+
+                  {/* reCAPTCHA placeholder */}
+                  <div className="flex items-center gap-3 border border-gray-300 bg-[#f9f9f9] px-3 py-2.5 w-[300px] max-w-full">
+                    <input
+                      type="checkbox" disabled
+                      className="h-5 w-5 border border-gray-400 bg-white cursor-not-allowed"
+                    />
+                    <span className="text-sm text-gray-700 flex-1">I'm not a robot</span>
+                    <div className="text-center ml-1">
+                      <svg viewBox="0 0 64 64" className="h-8 w-8 opacity-50" fill="none">
+                        <circle cx="32" cy="32" r="30" stroke="#4a90d9" strokeWidth="4"/>
+                        <path d="M32 14v18l10 10" stroke="#4a90d9" strokeWidth="4" strokeLinecap="round"/>
+                      </svg>
+                      <p className="text-[8px] text-gray-400 leading-none mt-0.5">reCAPTCHA</p>
+                      <p className="text-[7px] text-gray-300 leading-none">Privacy · Terms</p>
+                    </div>
+                  </div>
+
+                  {/* Mandatory terms checkbox */}
+                  <div className="flex items-start gap-2">
+                    <input
+                      id="agreeTerms" name="agreeTerms" type="checkbox"
+                      required checked={f.agreeTerms} onChange={set}
+                      className="mt-0.5 h-3.5 w-3.5 border border-gray-500 cursor-pointer"
+                    />
+                    <label
+                      htmlFor="agreeTerms"
+                      className="text-xs text-gray-700 leading-relaxed cursor-pointer max-w-lg"
+                    >
+                      <span className="text-red-600 font-bold">* </span>
+                      I have read and agree to the{" "}
+                      <Link to="/privacy" className="text-[#0d2240] underline hover:text-[#22C55E] font-medium">
+                        Privacy Policy
+                      </Link>{" "}
+                      and{" "}
+                      <Link to="/terms" className="text-[#0d2240] underline hover:text-[#22C55E] font-medium">
+                        Terms and Conditions of Use
+                      </Link>
+                      . I confirm that I am placing orders for business purposes only and that
+                      I am authorised to create this account on behalf of my organisation.
+                    </label>
+                  </div>
+
+                </div>
+
+                {/* Right: Submit + helper text */}
+                <div className="flex flex-col items-start lg:items-end gap-1.5 shrink-0">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-8 py-2.5 bg-[#0d2240] hover:bg-[#1a3a5c] text-white text-sm font-bold uppercase tracking-wider transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-[#0d2240]"
+                  >
+                    {loading
+                      ? "Creating Account…"
+                      : isSeller
+                      ? "Create Supplier Account"
+                      : "Create an Account"}
+                  </button>
+                  <p className="text-[11px] text-gray-500 lg:text-right leading-relaxed">
+                    Fields marked <span className="text-red-600 font-bold">*</span> are mandatory.
+                    <br />
+                    Already have an account?{" "}
+                    <Link to="/login" className="text-[#0d2240] underline hover:text-[#22C55E] font-semibold">
+                      Sign in here
+                    </Link>
+                    .
+                  </p>
+                </div>
+
+              </div>
+            </div>
+            {/* end bottom */}
 
           </form>
         </div>
