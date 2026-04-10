@@ -138,17 +138,25 @@ const Signup = () => {
   return (
     <MainLayout>
       {/* ── Full-page container — light grey, NO card ────────────── */}
-      <div className="bg-[#f0f2f5] pt-28 pb-14">
+      <div className="bg-[#e8eaed] pt-28 pb-10">
         <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10">
 
-          {/* ── PAGE TITLE BAR ─────────────────────────────────────── */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-0">
-            <div className="bg-[#0d2240] flex items-center gap-4 px-5 py-2.5 w-full">
-              <h1 className="text-white text-sm font-bold uppercase tracking-widest">
-                Create a {isSeller ? "Trade Supplier" : "Trade Buyer"} Account
-              </h1>
-              <div className="ml-auto flex items-center gap-0 text-xs">
-                {/* Account type toggle */}
+          {/* ══════════════════════════════════════════════════════════
+              PAGE HEADER — dominant B2B registration heading
+          ══════════════════════════════════════════════════════════ */}
+          <div className="mb-0">
+
+            {/* Primary heading bar */}
+            <div className="bg-[#0d2240] px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+              <div>
+                <h1 className="text-white text-xl font-black uppercase tracking-widest leading-tight">
+                  Business Account Registration
+                </h1>
+                <p className="text-white/60 text-[11px] uppercase tracking-widest mt-0.5">
+                  {isSeller ? "Trade Supplier Account — Loadify Market Wholesale Platform" : "Trade Buyer Account — Loadify Market Wholesale Platform"}
+                </p>
+              </div>
+              <div className="flex items-center gap-0 shrink-0">
                 <button
                   type="button"
                   onClick={() => {
@@ -156,8 +164,8 @@ const Signup = () => {
                     p.delete("type");
                     setSearchParams(p);
                   }}
-                  className={`px-3 py-1 text-xs font-semibold border border-white/30 transition-colors ${
-                    !isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-white/60 hover:text-white"
+                  className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-white/30 transition-colors ${
+                    !isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-white/50 hover:text-white"
                   }`}
                 >
                   Buyer
@@ -169,20 +177,37 @@ const Signup = () => {
                     p.set("type", "seller");
                     setSearchParams(p);
                   }}
-                  className={`px-3 py-1 text-xs font-semibold border border-l-0 border-white/30 transition-colors ${
-                    isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-white/60 hover:text-white"
+                  className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-l-0 border-white/30 transition-colors ${
+                    isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-white/50 hover:text-white"
                   }`}
                 >
-                  Seller / Supplier
+                  Supplier
                 </button>
-                <span className="text-white/40 text-xs ml-4 hidden sm:block">
-                  Already registered?{" "}
+                <span className="text-white/40 text-[11px] ml-4 hidden sm:block">
+                  Registered?{" "}
                   <Link to="/login" className="text-[#4ade80] hover:underline font-semibold">
                     Sign In
                   </Link>
                 </span>
               </div>
             </div>
+
+            {/* IMPORTANT notice bar — like reference */}
+            <div className="bg-[#fef3c7] border-l-4 border-[#d97706] px-5 py-2.5 flex items-start gap-3">
+              <span className="text-[#92400e] text-[11px] font-black uppercase tracking-widest shrink-0 mt-0.5">
+                Important:
+              </span>
+              <p className="text-[#78350f] text-[11px] leading-snug">
+                This registration is for <strong>trade and wholesale buyers/suppliers only</strong>.
+                All accounts are subject to approval. Personal consumer accounts are not permitted.
+                Fields marked <span className="text-red-700 font-bold">*</span> are mandatory.
+                Already have an account?{" "}
+                <Link to="/login" className="underline font-semibold hover:text-[#92400e]">
+                  Sign in here
+                </Link>.
+              </p>
+            </div>
+
           </div>
 
           {/* ── ERROR BANNER ──────────────────────────────────────── */}
@@ -198,20 +223,20 @@ const Signup = () => {
             {/* ═══════════════════════════════════════════════════════
                 MAIN GRID — 3 columns desktop, 2 tablet, 1 mobile
             ════════════════════════════════════════════════════════ */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 bg-white border border-gray-300 border-t-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border border-gray-400 border-t-0">
 
               {/* ╔══════════════════════════════════════════════════╗
                   ║  COLUMN 1 — Personal / Business Information      ║
                   ╚══════════════════════════════════════════════════╝ */}
-              <div className="border-b md:border-b-0 md:border-r border-gray-300">
+              <div className="bg-white border-b md:border-b-0 md:border-r border-gray-400">
                 {/* Column header */}
-                <div className="bg-[#e6eaf0] border-b border-gray-300 px-4 py-2">
-                  <span className="text-[11px] font-bold text-[#0d2240] uppercase tracking-widest">
+                <div className="bg-[#1e3a5f] border-b border-gray-400 px-4 py-2">
+                  <span className="text-[11px] font-black text-white uppercase tracking-widest">
                     Personal / Business Information
                   </span>
                 </div>
 
-                <div className="px-4 py-4 space-y-2.5">
+                <div className="px-4 py-3 space-y-2">
 
                   <div>
                     <label htmlFor="firstName" className={lbl}>First Name{req}</label>
@@ -311,15 +336,15 @@ const Signup = () => {
               {/* ╔══════════════════════════════════════════════════╗
                   ║  COLUMN 2 — Address Information                  ║
                   ╚══════════════════════════════════════════════════╝ */}
-              <div className="border-b md:border-b-0 md:border-r-0 lg:border-r border-gray-300">
+              <div className="bg-[#f4f5f7] border-b md:border-b-0 md:border-r-0 lg:border-r border-gray-400">
                 {/* Column header */}
-                <div className="bg-[#e6eaf0] border-b border-gray-300 px-4 py-2">
-                  <span className="text-[11px] font-bold text-[#0d2240] uppercase tracking-widest">
+                <div className="bg-[#1e3a5f] border-b border-gray-400 px-4 py-2">
+                  <span className="text-[11px] font-black text-white uppercase tracking-widest">
                     Address Information
                   </span>
                 </div>
 
-                <div className="px-4 py-4 space-y-2.5">
+                <div className="px-4 py-3 space-y-2">
 
                   <div>
                     <label htmlFor="company" className={lbl}>Company{req}</label>
@@ -363,7 +388,7 @@ const Signup = () => {
                       />
                       <button
                         type="button"
-                        className="px-3 h-[34px] bg-[#0d2240] hover:bg-[#1a3a5c] text-white text-[11px] font-bold uppercase tracking-wide border border-[#0d2240] transition-colors whitespace-nowrap"
+                        className="px-3 h-[34px] bg-[#0d2240] hover:bg-[#1a3a5c] text-white text-[11px] font-black uppercase tracking-wide border border-[#0d2240] transition-colors whitespace-nowrap"
                       >
                         Find Address
                       </button>
@@ -397,15 +422,15 @@ const Signup = () => {
               {/* ╔══════════════════════════════════════════════════╗
                   ║  COLUMN 3 — Sign-in Information                  ║
                   ╚══════════════════════════════════════════════════╝ */}
-              <div className="md:col-span-2 lg:col-span-1">
+              <div className="bg-white md:col-span-2 lg:col-span-1">
                 {/* Column header */}
-                <div className="bg-[#e6eaf0] border-b border-gray-300 px-4 py-2">
-                  <span className="text-[11px] font-bold text-[#0d2240] uppercase tracking-widest">
+                <div className="bg-[#1e3a5f] border-b border-gray-400 px-4 py-2">
+                  <span className="text-[11px] font-black text-white uppercase tracking-widest">
                     Sign-in Information
                   </span>
                 </div>
 
-                <div className="px-4 py-4 space-y-2.5">
+                <div className="px-4 py-3 space-y-2">
 
                   <div>
                     <label htmlFor="password" className={lbl}>Password{req}</label>
@@ -494,74 +519,90 @@ const Signup = () => {
             {/* ════════════════════════════════════════════════════════
                 BOTTOM SECTION — reCAPTCHA · Terms · Submit
             ════════════════════════════════════════════════════════ */}
-            <div className="bg-white border border-t-0 border-gray-300 px-5 py-4">
-              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div className="bg-[#f4f5f7] border border-t-4 border-t-[#0d2240] border-x-gray-400 border-b-gray-400">
+
+              {/* Section label */}
+              <div className="border-b border-gray-300 px-5 py-1.5 bg-[#e8eaed]">
+                <span className="text-[10px] font-black text-[#0d2240] uppercase tracking-widest">
+                  Step 3 of 3 — Confirm &amp; Submit Application
+                </span>
+              </div>
+
+              <div className="px-5 py-4 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
 
                 {/* Left: reCAPTCHA + Terms */}
                 <div className="flex flex-col gap-3">
 
                   {/* reCAPTCHA placeholder */}
-                  <div className="flex items-center gap-3 border border-gray-300 bg-[#f9f9f9] px-3 py-2.5 w-[300px] max-w-full">
-                    <input
-                      type="checkbox" disabled
-                      className="h-5 w-5 border border-gray-400 bg-white cursor-not-allowed"
-                    />
-                    <span className="text-sm text-gray-700 flex-1">I'm not a robot</span>
-                    <div className="text-center ml-1">
-                      <svg viewBox="0 0 64 64" className="h-8 w-8 opacity-50" fill="none">
-                        <circle cx="32" cy="32" r="30" stroke="#4a90d9" strokeWidth="4"/>
-                        <path d="M32 14v18l10 10" stroke="#4a90d9" strokeWidth="4" strokeLinecap="round"/>
-                      </svg>
-                      <p className="text-[8px] text-gray-400 leading-none mt-0.5">reCAPTCHA</p>
-                      <p className="text-[7px] text-gray-300 leading-none">Privacy · Terms</p>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Security Verification</p>
+                    <div className="flex items-center gap-3 border border-gray-400 bg-white px-3 py-2.5 w-[300px] max-w-full">
+                      <input
+                        type="checkbox" disabled
+                        className="h-5 w-5 border border-gray-400 bg-white cursor-not-allowed shrink-0"
+                      />
+                      <span className="text-sm text-gray-700 flex-1 font-medium">I'm not a robot</span>
+                      <div className="text-center ml-1 shrink-0">
+                        <svg viewBox="0 0 64 64" className="h-8 w-8 opacity-60" fill="none">
+                          <circle cx="32" cy="32" r="30" stroke="#4a90d9" strokeWidth="4"/>
+                          <path d="M32 14v18l10 10" stroke="#4a90d9" strokeWidth="4" strokeLinecap="round"/>
+                        </svg>
+                        <p className="text-[8px] text-gray-400 leading-none mt-0.5">reCAPTCHA</p>
+                        <p className="text-[7px] text-gray-300 leading-none">Privacy · Terms</p>
+                      </div>
                     </div>
                   </div>
 
                   {/* Mandatory terms checkbox */}
-                  <div className="flex items-start gap-2">
-                    <input
-                      id="agreeTerms" name="agreeTerms" type="checkbox"
-                      required checked={f.agreeTerms} onChange={set}
-                      className="mt-0.5 h-3.5 w-3.5 border border-gray-500 cursor-pointer"
-                    />
-                    <label
-                      htmlFor="agreeTerms"
-                      className="text-xs text-gray-700 leading-relaxed cursor-pointer max-w-lg"
-                    >
-                      <span className="text-red-600 font-bold">* </span>
-                      I have read and agree to the{" "}
-                      <Link to="/privacy" className="text-[#0d2240] underline hover:text-[#22C55E] font-medium">
-                        Privacy Policy
-                      </Link>{" "}
-                      and{" "}
-                      <Link to="/terms" className="text-[#0d2240] underline hover:text-[#22C55E] font-medium">
-                        Terms and Conditions of Use
-                      </Link>
-                      . I confirm that I am placing orders for business purposes only and that
-                      I am authorised to create this account on behalf of my organisation.
-                    </label>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Legal Agreement <span className="text-red-600">*</span></p>
+                    <div className="flex items-start gap-2 border border-gray-300 bg-white px-3 py-2.5 max-w-lg">
+                      <input
+                        id="agreeTerms" name="agreeTerms" type="checkbox"
+                        required checked={f.agreeTerms} onChange={set}
+                        className="mt-0.5 h-4 w-4 border-2 border-gray-500 cursor-pointer shrink-0"
+                      />
+                      <label
+                        htmlFor="agreeTerms"
+                        className="text-xs text-gray-700 leading-relaxed cursor-pointer"
+                      >
+                        <span className="text-red-600 font-bold">*</span>{" "}
+                        I have read and agree to the{" "}
+                        <Link to="/privacy" className="text-[#0d2240] underline font-semibold">
+                          Privacy Policy
+                        </Link>{" "}
+                        and{" "}
+                        <Link to="/terms" className="text-[#0d2240] underline font-semibold">
+                          Terms and Conditions of Use
+                        </Link>
+                        . I confirm I am registering for <strong>business use only</strong> and am
+                        authorised to create this account on behalf of my organisation.
+                      </label>
+                    </div>
                   </div>
 
                 </div>
 
-                {/* Right: Submit + helper text */}
-                <div className="flex flex-col items-start lg:items-end gap-1.5 shrink-0">
+                {/* Right: Submit */}
+                <div className="flex flex-col items-start lg:items-end gap-2 shrink-0">
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-8 py-2.5 bg-[#0d2240] hover:bg-[#1a3a5c] text-white text-sm font-bold uppercase tracking-wider transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-[#0d2240]"
+                    className="px-10 py-3 bg-[#0d2240] hover:bg-[#1a3a5c] text-white text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-2 border-[#0d2240] w-full lg:w-auto"
                   >
                     {loading
-                      ? "Creating Account…"
+                      ? "Submitting…"
                       : isSeller
-                      ? "Create Supplier Account"
-                      : "Create an Account"}
+                      ? "▶  Submit Supplier Application"
+                      : "▶  Create Business Account"}
                   </button>
-                  <p className="text-[11px] text-gray-500 lg:text-right leading-relaxed">
+                  <p className="text-[10px] text-gray-500 lg:text-right leading-relaxed">
                     Fields marked <span className="text-red-600 font-bold">*</span> are mandatory.
                     <br />
+                    You will receive a confirmation email once your application is reviewed.
+                    <br />
                     Already have an account?{" "}
-                    <Link to="/login" className="text-[#0d2240] underline hover:text-[#22C55E] font-semibold">
+                    <Link to="/login" className="text-[#0d2240] underline font-semibold">
                       Sign in here
                     </Link>
                     .
