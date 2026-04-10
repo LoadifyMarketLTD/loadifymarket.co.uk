@@ -76,7 +76,7 @@ const HeroSection = () => (
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5">
             {[
               "Trade accounts only",
-              "0% Commission Available Until 31 December 2026",
+              "0% Commission Until 31 December 2026",
               "Secure payments via Stripe",
             ].map((t) => (
               <span key={t} className="text-[11px] text-white/45 flex items-center gap-1.5">
