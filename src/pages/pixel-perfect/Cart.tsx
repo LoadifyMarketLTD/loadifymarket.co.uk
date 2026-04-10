@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
+import MainLayout from "@/layouts/MainLayout";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, ShieldCheck, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
 
@@ -16,8 +15,7 @@ const Cart = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header forceOpaque />
+      <MainLayout>
         <main className="pt-16 lg:pt-[104px] pb-16">
           <div className="container mx-auto px-4">
             <div className="max-w-md mx-auto text-center space-y-6 py-20">
@@ -36,14 +34,12 @@ const Cart = () => {
             </div>
           </div>
         </main>
-        <Footer />
-      </div>
+    </MainLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header forceOpaque />
+    <MainLayout>
 
       <main className="pt-16 lg:pt-[104px] pb-16">
         <div className="container mx-auto px-4">
@@ -213,8 +209,7 @@ const Cart = () => {
         </div>
       </main>
 
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

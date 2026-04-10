@@ -1,9 +1,9 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import MainLayout from "@/layouts/MainLayout";
 import { X, Package, Tag, RotateCcw, Layers, TrendingDown, ArrowRight } from "lucide-react";
-import Header from "@/components/Header";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
-import Footer from "@/components/Footer";
 import CountdownBanner from "@/components/CountdownBanner";
+import SEO from "@/components/SEO";
 import CatalogFilters from "@/components/catalog/CatalogFilters";
 import CatalogHeader from "@/components/catalog/CatalogHeader";
 import ProductCard from "@/components/catalog/ProductCard";
@@ -199,8 +199,8 @@ const Deals = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header forceOpaque />
+    <MainLayout>
+      <SEO title="Deals & Clearance | Loadify Market" description="Browse the latest deals, clearance lines, and discounted wholesale products on Loadify Market." canonical="/deals" />
 
       <main className="pt-16 lg:pt-[104px] pb-16">
         {/* Hero section */}
@@ -427,8 +427,7 @@ const Deals = () => {
         </div>
       </main>
 
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

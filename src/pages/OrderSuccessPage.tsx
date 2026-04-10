@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
+import MainLayout from "@/layouts/MainLayout";
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle, ShoppingBag, ArrowRight, Package, Shield, Truck, Star } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { BRAND } from '../constants/brand';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 import { supabase } from '../lib/supabase';
 import { toast } from '../hooks/use-toast';
 
@@ -48,18 +47,16 @@ export default function OrderSuccessPage() {
   // Show nothing while we verify — navigation will happen if order not found
   if (verified === null) {
     return (
-      <div className="min-h-screen bg-[#0A1930] flex flex-col">
-        <Header forceOpaque />
+      <MainLayout>
         <main className="flex-1 flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
         </main>
-      </div>
+      </MainLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0A1930] flex flex-col">
-      <Header forceOpaque />
+    <MainLayout>
       <main className="flex-1 pt-16 lg:pt-[104px] pb-20 px-4 flex items-start justify-center">
         <div className="w-full max-w-lg mt-10">
           <div className="bg-white/5 border border-white/10 backdrop-blur-sm rounded-xl p-10 text-center">
@@ -152,7 +149,6 @@ export default function OrderSuccessPage() {
           </div>
         </div>
       </main>
-      <Footer />
-    </div>
+    </MainLayout>
   );
 }

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import MainLayout from "@/layouts/MainLayout";
 import {
   BadgeCheck,
   ClipboardList,
@@ -9,8 +10,6 @@ import {
   Star,
   MessageCircle,
 } from 'lucide-react';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 
 const GUIDELINES = [
   {
@@ -65,8 +64,7 @@ const GUIDELINES = [
 
 export default function SellerGuidelinesPage() {
   return (
-    <div className="bg-white min-h-screen">
-      <Header forceOpaque />
+    <MainLayout>
       <main className="pt-16 lg:pt-[104px]">
       {/* Hero */}
       <section className="bg-white border-b border-gray-200 py-12">
@@ -181,7 +179,6 @@ export default function SellerGuidelinesPage() {
         </div>
       </section>
       </main>
-      <Footer />
-    </div>
+    </MainLayout>
   );
 }

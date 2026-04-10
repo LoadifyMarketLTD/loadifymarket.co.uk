@@ -1,7 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
+import MainLayout from "@/layouts/MainLayout";
 import { useEffect } from "react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 
 const NotFound = () => {
   const location = useLocation();
@@ -11,8 +10,7 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-[#0A1930] flex flex-col">
-      <Header forceOpaque />
+    <MainLayout>
       <main className="flex-1 flex items-center justify-center pt-16 lg:pt-[104px] pb-20 px-4">
         <div className="text-center">
           <p className="text-[#22C55E] font-bold text-lg mb-3 tracking-widest uppercase">404</p>
@@ -43,8 +41,7 @@ const NotFound = () => {
           </div>
         </div>
       </main>
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

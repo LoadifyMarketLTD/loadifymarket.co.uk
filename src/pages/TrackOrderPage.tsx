@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
+import MainLayout from "@/layouts/MainLayout";
 import { useSearchParams } from 'react-router-dom';
 import { Package, Search, Truck, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import type { ShipmentEvent } from '../types/shipping';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 
 interface TrackingData {
   order: {
@@ -116,8 +115,7 @@ export default function TrackOrderPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <Header forceOpaque />
+    <MainLayout>
       <main className="flex-1 pt-16 lg:pt-[104px] pb-16">
       <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="text-center mb-8">
@@ -314,7 +312,6 @@ export default function TrackOrderPage() {
       )}
       </div>
       </main>
-      <Footer />
-    </div>
+    </MainLayout>
   );
 }

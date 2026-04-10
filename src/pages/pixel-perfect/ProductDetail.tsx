@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation, Link } from "react-router-dom";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import ProductGallery from "@/components/product/ProductGallery";
 import ProductInfo from "@/components/product/ProductInfo";
@@ -24,6 +22,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Flag } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import MainLayout from "@/layouts/MainLayout";
+import SEO from "@/components/SEO";
 
 // Product select — category joins only; seller data fetched separately
 const PRODUCT_QUERY = `
@@ -195,8 +195,7 @@ const ProductDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header forceOpaque />
+      <MainLayout>
         <main className="pt-16 lg:pt-[104px] pb-16">
           <div className="container mx-auto px-4">
             <div className="grid lg:grid-cols-[1fr_420px] gap-8 animate-pulse">
@@ -211,23 +210,20 @@ const ProductDetail = () => {
             </div>
           </div>
         </main>
-        <Footer />
-      </div>
+      </MainLayout>
     );
   }
 
   if (notFound || !product) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header forceOpaque />
+      <MainLayout>
         <div className="pt-16 text-center">
           <h1 className="text-2xl font-display font-bold text-foreground">Product Not Found</h1>
           <Link to="/catalog" className="text-primary hover:underline mt-4 inline-block">
             ← Back to Catalog
           </Link>
         </div>
-        <Footer />
-      </div>
+      </MainLayout>
     );
   }
 
@@ -255,8 +251,12 @@ const ProductDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header forceOpaque />
+    <MainLayout>
+      <SEO
+        title={`${product.title} | Loadify Market`}
+        description={`Buy ${product.title} from verified UK sellers on Loadify Market. ${product.category ? `Category: ${product.category}.` : ''}`}
+        canonical={`/product/${product.id}`}
+      />
       <main className="pt-16 lg:pt-[104px] pb-16">
         <div className="container mx-auto px-4">
           {(() => {
@@ -440,8 +440,7 @@ const ProductDetail = () => {
         </DialogContent>
       </Dialog>
 
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

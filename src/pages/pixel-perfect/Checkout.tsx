@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import MainLayout from "@/layouts/MainLayout";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, CreditCard, MapPin, User, Phone, Mail,
@@ -7,8 +8,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
@@ -153,8 +152,7 @@ const Checkout = () => {
   // Redirect to cart if empty
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header forceOpaque />
+      <MainLayout>
         <main className="pt-16 lg:pt-[104px] pb-16">
           <div className="container mx-auto px-4 text-center py-20">
             <h1 className="font-display text-2xl font-bold text-foreground mb-4">Your cart is empty</h1>
@@ -166,14 +164,12 @@ const Checkout = () => {
             </Link>
           </div>
         </main>
-        <Footer />
-      </div>
+    </MainLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header forceOpaque />
+    <MainLayout>
 
       <main className="pt-16 lg:pt-[104px] pb-16">
         <div className="container mx-auto px-4">
@@ -512,8 +508,7 @@ const Checkout = () => {
         </div>
       </main>
 
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

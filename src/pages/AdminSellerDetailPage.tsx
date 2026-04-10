@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import MainLayout from "@/layouts/MainLayout";
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
@@ -24,8 +25,6 @@ import {
   Send,
 } from 'lucide-react';import { formatDistanceToNow } from 'date-fns';
 import RoleBadge from '../components/RoleBadge';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 
 const DEFAULT_COMMISSION_RATE = 7;
 
@@ -208,8 +207,7 @@ export default function AdminSellerDetailPage() {
 
   if (!hasAdminAccess(adminUser)) {
     return (
-      <div className="min-h-screen bg-white flex flex-col">
-        <Header forceOpaque />
+      <MainLayout>
         <main className="flex-1 pt-16 lg:pt-[104px]">
           <div className="container mx-auto px-4 py-8">
             <div className="card text-center py-12">
@@ -217,30 +215,26 @@ export default function AdminSellerDetailPage() {
             </div>
           </div>
         </main>
-        <Footer />
-      </div>
+    </MainLayout>
     );
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <Header forceOpaque />
+      <MainLayout>
         <div className="flex-1 pt-16 lg:pt-[104px] flex items-center justify-center">
           <div className="text-center">
             <div className="w-10 h-10 border-2 border-navy-800 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-gray-500">Loading seller details...</p>
           </div>
         </div>
-        <Footer />
-      </div>
+    </MainLayout>
     );
   }
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <Header forceOpaque />
+      <MainLayout>
         <main className="flex-1 pt-16 lg:pt-[104px]">
           <div className="container mx-auto px-4 py-8">
             <div className="card text-center py-16">
@@ -253,8 +247,7 @@ export default function AdminSellerDetailPage() {
             </div>
           </div>
         </main>
-        <Footer />
-      </div>
+    </MainLayout>
     );
   }
 
@@ -265,8 +258,7 @@ export default function AdminSellerDetailPage() {
   const inactiveProducts  = products.filter((p) => p.isApproved && !p.isActive);
 
   return (
-    <div className="bg-gray-50 min-h-screen flex flex-col">
-      <Header forceOpaque />
+    <MainLayout>
       <main className="flex-1 pt-16 lg:pt-[104px]">
       <div className="container mx-auto px-4 py-8">
 
@@ -739,7 +731,6 @@ export default function AdminSellerDetailPage() {
         </div>
       </div>
       </main>
-      <Footer />
-    </div>
+    </MainLayout>
   );
 }

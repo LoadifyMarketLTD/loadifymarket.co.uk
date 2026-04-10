@@ -1,11 +1,11 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
+import MainLayout from "@/layouts/MainLayout";
+import SEO from "@/components/SEO";
 
 const SellerTerms = () => {
   return (
-    <div className="min-h-screen">
-      <Header forceOpaque />
+    <MainLayout>
+      <SEO title="Seller Terms | Loadify Market" description="Read the specific terms and conditions that apply to sellers listing products on Loadify Market." canonical="/seller-terms" />
       <main className="pt-16 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Seller Terms" }]} backTo="/" />
@@ -102,8 +102,7 @@ const SellerTerms = () => {
           </ul>
         </div>
       </main>
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

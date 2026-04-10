@@ -1,11 +1,11 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
+import MainLayout from "@/layouts/MainLayout";
+import SEO from "@/components/SEO";
 
 const PrivacyPolicy = () => {
   return (
-    <div className="min-h-screen">
-      <Header forceOpaque />
+    <MainLayout>
+      <SEO title="Privacy Policy | Loadify Market" description="Understand how Loadify Market collects, uses, and protects your personal data in compliance with UK GDPR." canonical="/privacy" />
       <main className="pt-16 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Privacy Policy" }]} backTo="/" />
@@ -100,8 +100,7 @@ const PrivacyPolicy = () => {
           </ul>
         </div>
       </main>
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

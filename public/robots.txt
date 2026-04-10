@@ -1,4 +1,7 @@
 User-agent: *
 Allow: /
 
+# Disallow auth-gated dashboard routes — no SEO value and wastes crawl budget.
+Disallow: /pp/
+
 Sitemap: https://loadifymarket.co.uk/sitemap.xml
