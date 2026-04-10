@@ -15,12 +15,10 @@ interface Props {
  *
  * Access rules:
  *   buyers          → render children
- *   admins          → render children (inspection access — no automatic redirect)
+ *   admins          → redirect to /pp/admin
  *   sellers         → redirect to /pp/seller (their own dashboard)
  *   unauthenticated → redirect to /login
  *
- * Admin inspection access ensures admins can review buyer pages without being
- * automatically bounced to /pp/admin.
  */
 export default function RequireBuyer({ children }: Props) {
   const { user, isLoading } = useAuthStore();
@@ -44,8 +42,8 @@ export default function RequireBuyer({ children }: Props) {
 
   if (!user) return null;
 
-  // Admin can inspect buyer pages — no redirect
-  if (hasAdminAccess(user)) return <>{children}</>;
+  // Admin is redirected to admin dashboard
+  if (hasAdminAccess(user)) return <Navigate to="/pp/admin" replace />;
 
   // Seller is redirected to their own dashboard
   if (hasSellerAccess(user)) return <Navigate to="/pp/seller" replace />;
