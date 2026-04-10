@@ -105,7 +105,7 @@ export default function Home() {
         {/* ── 1. Quick Actions ── mobile-only, always first ──────────────── */}
         <section
           aria-label="Quick actions"
-          className="order-1 lg:hidden px-4 py-4 border-b border-white/[0.12]"
+          className="order-1 lg:hidden px-4 py-4 border-b border-white/[0.12] bg-[#0A1930]"
         >
           <div className="grid grid-cols-2 gap-3">
             {QUICK_ACTIONS.map(({ icon: Icon, label, to, iconBg, iconColor, cardBorder }) => (
