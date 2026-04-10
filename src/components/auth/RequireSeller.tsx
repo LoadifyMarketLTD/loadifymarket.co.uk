@@ -46,6 +46,9 @@ export default function RequireSeller({ children }: Props) {
   const [fetchState, setFetchState] = useState<FetchState>(() => {
     if (!user) return 'loading';
     if (hasAdminAccess(user)) return 'active';
+    // An active seller (role=seller, isActive=true) gets dashboard access unless
+    // explicitly suspended at the seller-profile level.
+    if (user.role === 'seller' && user.isActive && user.sellerStatus !== 'suspended') return 'active';
     const cached = user.sellerStatus;
     if (cached === 'active' || cached === 'suspended') return cached;
     return 'loading';
@@ -61,6 +64,13 @@ export default function RequireSeller({ children }: Props) {
 
     // Only run the seller status check for users with the 'seller' role.
     if (!user || !hasSellerAccess(user)) return;
+
+    // Active sellers (isActive=true) get access unless explicitly suspended.
+    // We do not gate on profile completion or Stripe Connect status here.
+    if (user.isActive && user.sellerStatus !== 'suspended') {
+      setFetchState('active');
+      return;
+    }
 
     // Fast path: if sellerStatus is already cached in the auth store as a
     // deterministic value, use it immediately — no DB round-trip needed.
