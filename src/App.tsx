@@ -352,6 +352,13 @@ function App() {
                   return;
                 }
                 normalizeSellerStatus(data as unknown as Record<string, unknown>);
+                // Always use the Supabase Auth session as the source of truth for
+                // isEmailVerified.  The custom users table value may be stale (e.g.
+                // the user confirmed their email but the DB row was never updated).
+                // This prevents a false isEmailVerified=false from appearing in the
+                // user object when the email IS actually confirmed in Supabase Auth.
+                (data as Record<string, unknown>).isEmailVerified =
+                  session.user.email_confirmed_at != null;
                 setUser(data);
               } else {
                 if (error) {
@@ -392,6 +399,9 @@ function App() {
                   return;
                 }
                 normalizeSellerStatus(data as unknown as Record<string, unknown>);
+                // Always derive isEmailVerified from Supabase Auth (source of truth).
+                (data as Record<string, unknown>).isEmailVerified =
+                  session.user.email_confirmed_at != null;
                 setUser(data);
               } else {
                 if (error) {
