@@ -13,9 +13,11 @@ interface ShowcaseProduct {
 }
 
 /**
- * Browse the Marketplace — dark navy premium section.
- * Fetches up to 6 active, approved products from the DB.
- * Shows nothing (launching-soon message) if no products are available yet.
+ * Latest Products — clean B2B product grid.
+ * White/grey background, bordered cards, no dark gradients or glow effects.
+ * Fetches up to 6 active, approved products from Supabase.
+ * Renders nothing during loading to prevent layout shift.
+ * Shows a "coming soon" state when no products are available yet.
  */
 const FeaturedProducts = () => {
   const [products, setProducts] = useState<ShowcaseProduct[]>([]);
@@ -35,29 +37,29 @@ const FeaturedProducts = () => {
       });
   }, []);
 
-  // Nothing to show yet — don't render hollow grid or placeholders
-  if (!loading && products.length === 0) {
+  if (loading) return null;
+
+  if (products.length === 0) {
     return (
-      <section
-        className="relative overflow-hidden px-4 sm:px-6 py-12 sm:py-16"
-        style={{ background: "linear-gradient(to bottom, #0A1930, #0F2A4A, #081426)" }}
-      >
-        <div className="relative w-full max-w-7xl mx-auto text-center">
-          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
-            Marketplace Preview
-          </span>
-          <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold text-white">
-            Browse the Marketplace
-          </h2>
-          <p className="mt-3 text-sm text-white/60 max-w-md mx-auto">
-            Products are being listed now. Be the first seller to go live.
-          </p>
-          <div className="mt-6 flex justify-center">
+      <section className="bg-white border-b border-gray-200" aria-label="Marketplace products">
+        <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[13px] font-black text-gray-900 uppercase tracking-widest">
+              Marketplace Products
+            </h2>
+          </div>
+          <div className="border border-gray-200 bg-[#f4f5f7] px-6 py-8 text-center">
+            <p className="text-sm text-gray-600 font-medium">
+              Products are being listed now.
+            </p>
+            <p className="text-xs text-gray-400 mt-1 mb-5">
+              Be the first trade supplier to go live on Loadify Market.
+            </p>
             <Link
-              to="/signup?type=seller"
-              className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(0,255,150,0.4)]"
+              to="/register?type=seller"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#0d2240] text-white text-xs font-bold uppercase tracking-wide hover:bg-[#1a3a5c] transition-colors"
             >
-              List Your Products <ArrowRight className="h-4 w-4" />
+              List Your Products <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>
@@ -65,82 +67,80 @@ const FeaturedProducts = () => {
     );
   }
 
-  // Still fetching — render nothing to avoid layout shift
-  if (loading) return null;
-
   return (
-    <section
-      className="relative overflow-hidden px-4 sm:px-6 py-4 sm:py-16 lg:py-20"
-      style={{ background: "linear-gradient(to bottom, #0A1930, #0F2A4A, #081426)" }}
-    >
-      {/* Ambient glow */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: "radial-gradient(circle at 30% 20%, rgba(0,255,150,0.08), transparent 40%)" }}
-      />
-      {/* Dot texture */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px)",
-          backgroundSize: "28px 28px",
-        }}
-      />
+    <section className="bg-white border-b border-gray-200" aria-label="Latest marketplace products">
+      <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
 
-      <div className="relative w-full max-w-7xl mx-auto">
-        {/* Section header — hidden on mobile */}
-        <div className="hidden sm:block text-center mb-10">
-          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
-            Marketplace Preview
-          </span>
-          <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold text-white">
-            Browse the Marketplace
-          </h2>
-          <p className="mt-2 text-sm text-white/70">
-            Products listed by independent UK sellers across all categories.
-          </p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-[13px] font-black text-gray-900 uppercase tracking-widest">
+              Latest Products
+            </h2>
+            <p className="text-[11px] text-gray-400 mt-0.5">
+              Recently listed by UK trade suppliers
+            </p>
+          </div>
+          <Link
+            to="/catalog"
+            className="text-[11px] font-bold text-[#0d2240] uppercase tracking-wide hover:underline flex items-center gap-1"
+          >
+            View All <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
 
-        {/* Product grid — 2-col on mobile, 3-col on sm+ */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6">
+        {/* Product grid — gap-px hairline borders */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px bg-gray-200">
           {products.map((item) => {
-            const img = Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null;
-            const href = item.slug ? `/product/${item.slug}` : `/product/${item.id}`;
-            const categoryName = item.category?.name ?? "Product";
+            const img =
+              Array.isArray(item.images) && item.images.length > 0
+                ? item.images[0]
+                : null;
+            const href = item.slug
+              ? `/product/${item.slug}`
+              : `/product/${item.id}`;
             return (
               <Link
                 key={item.id}
                 to={href}
-                className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_20px_60px_rgba(0,255,150,0.15)] min-h-[160px] sm:min-h-[280px]"
+                className="flex flex-col bg-white hover:bg-[#f8f9fb] transition-colors"
               >
-                {img ? (
-                  <img
-                    src={img}
-                    alt={item.title}
-                    width="800"
-                    height="600"
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/10" />
-                )}
-                {/* Dark gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
-                {/* Content overlay — compact on mobile */}
-                <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-5">
-                  <p className="text-[9px] sm:text-[10px] font-bold text-emerald-400 uppercase tracking-wider mb-0.5 sm:mb-1 line-clamp-1">
-                    {categoryName}
-                  </p>
-                  <h3 className="text-xs sm:text-base font-extrabold text-white leading-snug line-clamp-2">
+                {/* Square thumbnail */}
+                <div className="aspect-square bg-gray-50 overflow-hidden">
+                  {img ? (
+                    <img
+                      src={img}
+                      alt={item.title}
+                      width={400}
+                      height={400}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                      <span className="text-gray-300 text-xs">No image</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Product info */}
+                <div className="px-2.5 py-2.5 flex flex-col gap-0.5 flex-1">
+                  {item.category && (
+                    <span className="text-[10px] font-bold text-[#0d2240] uppercase tracking-wide line-clamp-1">
+                      {item.category.name}
+                    </span>
+                  )}
+                  <p className="text-xs font-semibold text-gray-800 leading-snug line-clamp-2 flex-1">
                     {item.title}
-                  </h3>
-                  <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm font-semibold text-emerald-300">
-                    £{item.price.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                  <p className="text-sm font-black text-[#0d2240] mt-0.5">
+                    £{item.price.toLocaleString("en-GB", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
                   </p>
                 </div>
               </Link>
@@ -148,15 +148,6 @@ const FeaturedProducts = () => {
           })}
         </div>
 
-        {/* Centered CTA — compact on mobile */}
-        <div className="mt-4 sm:mt-10 flex justify-center">
-          <Link
-            to="/catalog"
-            className="inline-flex items-center gap-2 px-6 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-green-400 to-green-500 text-black text-sm sm:text-base font-semibold rounded-full shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(0,255,150,0.4)]"
-          >
-            View Marketplace <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
       </div>
     </section>
   );
