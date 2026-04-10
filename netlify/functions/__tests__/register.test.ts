@@ -147,7 +147,7 @@ describe('register handler – request validation', () => {
     // The response body contains a generic message that does not confirm
     // whether the email was already registered.
     expect(res.statusCode).toBe(200);
-    expect(JSON.parse(res.body as string).error).toMatch(/not already registered/i);
+    expect(JSON.parse(res.body as string).error).toMatch(/not already in use/i);
   });
 
   it('returns 200 on successful registration', async () => {

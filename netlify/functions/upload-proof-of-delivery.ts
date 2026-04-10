@@ -108,7 +108,8 @@ export const handler: Handler = async (event) => {
       let requestBody: { contentType?: string; fileSize?: number } = {};
       try {
         requestBody = JSON.parse(event.body || '{}') as { contentType?: string; fileSize?: number };
-      } catch {
+      } catch (parseErr) {
+        console.warn('upload-proof-of-delivery: failed to parse request body:', (parseErr as Error).message);
         // body parse failure is non-fatal for POST — proceed with defaults
       }
 

@@ -182,7 +182,7 @@ export const handler: Handler = async (event) => {
       statusCode: isDuplicate ? 200 : 400,
       body: JSON.stringify({
         error: isDuplicate
-          ? 'If this email address is not already registered, your account has been created. Please check your inbox.'
+          ? "We've received your registration request. If this email address is not already in use, your account has been created. Please check your inbox."
           : authError.message,
       }),
     };
