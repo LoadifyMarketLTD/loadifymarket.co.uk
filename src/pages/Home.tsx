@@ -47,7 +47,7 @@ const HOW_IT_WORKS = [
 
 const SELLER_BENEFITS = [
   "Free to list",
-  "0% commission until Aug 2026",
+  "0% commission until 31 December 2026",
   "Fast Stripe payouts",
   "Seller dashboard included",
 ];
@@ -67,7 +67,7 @@ export default function Home() {
       {/* ── Announcement bar ─────────────────────────────────────────── */}
       <div className="bg-[#0d2240] border-b border-[#22C55E]/30 text-center py-1.5">
         <span className="text-[11px] font-semibold text-[#22C55E]">
-          🚀 0% commission for early trade sellers — until 31 August 2026
+          🚀 0% commission for early trade sellers — until 31 December 2026
         </span>
       </div>
 
@@ -158,7 +158,7 @@ export default function Home() {
                 </h2>
                 <p className="text-white/60 text-sm mt-1 max-w-[500px] leading-relaxed">
                   Register your trade business and list wholesale products. 0% commission
-                  until August 2026 — then a simple 7% on completed sales.
+                  until 31 December 2026 — then a simple 7% on completed sales.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5">
                   {SELLER_BENEFITS.map((t) => (

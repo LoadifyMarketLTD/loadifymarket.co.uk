@@ -31,9 +31,12 @@ const HeroSection = () => (
             className="text-white font-black uppercase tracking-tight leading-[1.05]"
             style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)" }}
           >
-            Buy &amp; Sell Wholesale Goods<br className="hidden sm:block" />
-            <span className="text-[#22C55E]"> from UK Trade Suppliers</span>
+            Sell Wholesale Products<br className="hidden sm:block" />
+            <span className="text-[#22C55E]"> Across the UK</span>
           </h1>
+          <p className="inline-block border border-white/25 text-white/80 text-[11px] font-semibold tracking-wide px-3 py-1 mt-3">
+            0% Commission Available Until 31 December 2026
+          </p>
           <p className="text-white/65 text-sm mt-3 leading-relaxed max-w-[500px]">
             A structured trade marketplace connecting wholesale buyers with verified UK
             suppliers across 17 product categories. Trade and business accounts only.
@@ -51,7 +54,7 @@ const HeroSection = () => (
               to="/register?type=seller"
               className="px-8 py-2.5 border-2 border-white/35 text-white text-sm font-bold uppercase tracking-wide hover:border-white hover:bg-white/[0.08] transition-colors text-center"
             >
-              Start Selling
+              Start Selling Now
             </Link>
           </div>
 
@@ -59,7 +62,7 @@ const HeroSection = () => (
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5">
             {[
               "Trade accounts only",
-              "0% commission until Aug 2026",
+              "0% Commission Available Until 31 December 2026",
               "Secure payments via Stripe",
             ].map((t) => (
               <span key={t} className="text-[11px] text-white/45 flex items-center gap-1.5">

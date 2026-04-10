@@ -50,7 +50,7 @@ const SellerTerms = () => {
           <p>Sellers may be subject to:</p>
           <ul>
             <li><strong>Listing fees:</strong> Charges for listing products on the Platform (if applicable)</li>
-            <li><strong>Commission:</strong> 7% of each successful sale (0% during the launch promotion period until 31 August 2026)</li>
+            <li><strong>Commission:</strong> 7% of each successful sale (0% during the launch promotion period until 31 December 2026)</li>
             <li><strong>Payment processing fees:</strong> Charged by our payment provider (Stripe)</li>
           </ul>
           <p>Current fee schedules are available in the Seller Dashboard. We reserve the right to update fees with 30 days' notice.</p>

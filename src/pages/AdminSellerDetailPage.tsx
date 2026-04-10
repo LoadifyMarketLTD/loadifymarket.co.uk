@@ -681,7 +681,7 @@ export default function AdminSellerDetailPage() {
             {/* Commission Rate
                 NOTE: Per-seller commission overrides are stored in seller_profiles.commission
                 but are NOT yet applied by the payment webhook (stripe-webhook.ts), which
-                always uses the global promo rate (0% until 31 Aug 2026, then 7%).
+                always uses the global promo rate (0% until 31 Dec 2026, then 7%).
                 This section is hidden to avoid misleading admins until per-seller
                 commission override logic is implemented in the webhook.
             */}
