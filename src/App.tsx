@@ -135,6 +135,11 @@ function TrackingRedirect() {
   return <Navigate to={`/track-order${orderNumber ? `?orderNumber=${encodeURIComponent(orderNumber)}` : ''}`} replace />;
 }
 
+function CategoryRedirect() {
+  const { slug } = useParams<{ slug: string }>();
+  return <Navigate to={`/category/${slug ?? ''}`} replace />;
+}
+
 
 /**
  * Renders a maintenance-mode page for non-admin visitors.
@@ -415,8 +420,8 @@ function App() {
           <Route path="/" element={<Suspense fallback={<PageLoader />}><Home /></Suspense>} />
         <Route path="catalog" element={<Suspense fallback={<PageLoader />}><PPCatalog /></Suspense>} />
         <Route path="category/:slug" element={<Suspense fallback={<PageLoader />}><PPCategoryPage /></Suspense>} />
-        {/* /categories/:slug — canonical plural alias */}
-        <Route path="categories/:slug" element={<Suspense fallback={<PageLoader />}><PPCategoryPage /></Suspense>} />
+        {/* /categories/:slug → 301-style redirect to canonical /category/:slug */}
+        <Route path="categories/:slug" element={<CategoryRedirect />} />
         <Route path="product/:id" element={<Suspense fallback={<PageLoader />}><PPProductDetail /></Suspense>} />
         <Route path="cart" element={<Suspense fallback={<PageLoader />}><PPCart /></Suspense>} />
         <Route path="checkout" element={<Suspense fallback={<PageLoader />}><PPCheckout /></Suspense>} />

@@ -1,8 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { X } from "lucide-react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import CatalogFilters from "@/components/catalog/CatalogFilters";
 import CatalogHeader from "@/components/catalog/CatalogHeader";
@@ -15,6 +13,8 @@ import { supabase } from "@/lib/supabase";
 import { adaptProducts } from "@/lib/productAdapter";
 import type { DBProduct } from "@/lib/productAdapter";
 import CATEGORY_CONFIG from "@/lib/category-config";
+import MainLayout from "@/layouts/MainLayout";
+import SEO from "@/components/SEO";
 
 // Product select — category joins only; seller data fetched separately
 const PRODUCT_QUERY = `
@@ -226,8 +226,11 @@ const CategoryPage = () => {
   // ── 404 state for unknown slugs ───────────────────────────────────────────
   if (!config) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header forceOpaque />
+      <MainLayout>
+        <SEO
+          title="Category Not Found | Loadify Market"
+          description="The category you're looking for doesn't exist. Browse all categories on Loadify Market."
+        />
         <main className="pt-16 lg:pt-[104px] pb-16">
           <div className="container mx-auto px-4 py-20 text-center">
             <p className="text-2xl font-display font-bold text-foreground mb-4">Category Not Found</p>
@@ -237,16 +240,19 @@ const CategoryPage = () => {
             </Button>
           </div>
         </main>
-        <Footer />
-      </div>
+      </MainLayout>
     );
   }
 
   const Icon = config.icon;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header forceOpaque />
+    <MainLayout>
+      <SEO
+        title={`${config.label} | Loadify Market`}
+        description={config.subtitle || `Browse ${config.label} products from verified UK sellers on Loadify Market.`}
+        canonical={`/category/${slug}`}
+      />
 
       <main className="pt-16 lg:pt-[104px] pb-16">
         <div className="container mx-auto px-4">
@@ -432,8 +438,7 @@ const CategoryPage = () => {
         </div>
       </main>
 
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

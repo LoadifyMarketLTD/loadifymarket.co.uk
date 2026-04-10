@@ -27,7 +27,6 @@ import {
   UserCircle,
 } from "lucide-react";
 
-import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
 import FeaturedProducts from "@/components/FeaturedProducts";
@@ -37,11 +36,12 @@ import FeaturesSection from "@/components/FeaturesSection";
 import PlatformFeatures from "@/components/PlatformFeatures";
 import HowItWorks from "@/components/HowItWorksSection";
 import SellerJourneySection from "@/components/SellerJourneySection";
-import Footer from "@/components/Footer";
 import LazySection from "@/components/LazySection";
 import UrgencyBar from "@/components/UrgencyBar";
 import SocialProof from "@/components/SocialProof";
 import MicroCTA from "@/components/ui/MicroCTA";
+import SEO from "@/components/SEO";
+import MainLayout from "@/layouts/MainLayout";
 
 /* ── Quick Actions — mobile-only 2×2 grid ───────────────────────────────── */
 const QUICK_ACTIONS = [
@@ -81,8 +81,12 @@ const QUICK_ACTIONS = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#0A1930] font-sans antialiased">
-      <Header />
+    <MainLayout forceOpaque={false}>
+      <SEO
+        title="Loadify Market | UK Multi-Category Marketplace for Buyers & Sellers"
+        description="Buy and sell wholesale products on Loadify Market — the UK's leading multi-vendor marketplace. Browse thousands of listings from verified UK sellers or start selling today."
+        canonical="/"
+      />
       {/* spacer: clears fixed header — see .pt-header-spacer in index.css */}
       <div className="pt-header-spacer" />
 
@@ -165,14 +169,10 @@ export default function Home() {
           <LazySection>
             <SellerJourneySection />
           </LazySection>
-
-          <LazySection>
-            <Footer />
-          </LazySection>
         </div>
 
       </main>
-    </div>
+    </MainLayout>
   );
 }
 

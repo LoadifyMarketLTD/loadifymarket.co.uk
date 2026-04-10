@@ -1,11 +1,13 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
+import SEO from "@/components/SEO";
 
 const TermsAndConditions = () => {
   return (
     <div className="min-h-screen">
       <Header forceOpaque />
+      <SEO title="Terms & Conditions | Loadify Market" description="Read the full terms and conditions for using Loadify Market — the UK's wholesale marketplace." canonical="/terms" />
       <main className="pt-16 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Terms & Conditions" }]} backTo="/" />

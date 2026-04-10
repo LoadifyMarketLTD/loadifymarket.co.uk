@@ -1,8 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { X } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import CatalogFilters from "@/components/catalog/CatalogFilters";
 import CatalogHeader from "@/components/catalog/CatalogHeader";
@@ -13,6 +11,8 @@ import type { Product } from "@/components/catalog/ProductCard";
 import { supabase } from "@/lib/supabase";
 import { adaptProducts } from "@/lib/productAdapter";
 import type { DBProduct } from "@/lib/productAdapter";
+import MainLayout from "@/layouts/MainLayout";
+import SEO from "@/components/SEO";
 
 // Product select — category joins only; seller data fetched separately
 const PRODUCT_QUERY = `
@@ -241,8 +241,12 @@ const Catalog = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header forceOpaque />
+    <MainLayout>
+      <SEO
+        title="Browse Products | Loadify Market"
+        description="Browse thousands of wholesale products from verified UK sellers. Filter by category, price, and condition on Loadify Market."
+        canonical="/catalog"
+      />
 
       <main className="pt-16 lg:pt-[104px] pb-16">
         <div className="container mx-auto px-4">
@@ -383,8 +387,7 @@ const Catalog = () => {
         </div>
       </main>
 
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

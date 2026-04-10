@@ -58,7 +58,7 @@ BEGIN
   RETURN EXISTS (
     SELECT 1 FROM users
     WHERE id = auth.uid()
-      AND role IN ('seller','admin')
+      AND role = 'seller'
       AND "isActive" = TRUE
   );
 END;
