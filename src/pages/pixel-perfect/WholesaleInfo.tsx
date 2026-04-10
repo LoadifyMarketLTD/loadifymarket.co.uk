@@ -15,7 +15,7 @@ import {
 const WholesaleInfo = () => {
   return (
     <MainLayout>
-      <main className="pt-16 pb-20">
+      <main className="pt-28 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav
             items={[

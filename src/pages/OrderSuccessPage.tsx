@@ -57,7 +57,7 @@ export default function OrderSuccessPage() {
 
   return (
     <MainLayout>
-      <main className="flex-1 pt-16 lg:pt-[104px] pb-20 px-4 flex items-start justify-center">
+      <main className="flex-1 pt-28 pb-20 px-4 flex items-start justify-center">
         <div className="w-full max-w-lg mt-10">
           <div className="bg-white/5 border border-white/10 backdrop-blur-sm rounded-xl p-10 text-center">
             {/* Success Icon */}

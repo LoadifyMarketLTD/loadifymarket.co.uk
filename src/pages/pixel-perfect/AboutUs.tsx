@@ -7,7 +7,7 @@ const AboutUs = () => {
   return (
     <MainLayout>
       <SEO title="About Us | Loadify Market" description="Learn about Loadify Market — the UK's wholesale marketplace connecting independent buyers and sellers." canonical="/about" />
-      <main className="pt-16 pb-20">
+      <main className="pt-28 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "About Us" }]} backTo="/" />
           <h1 className="text-3xl sm:text-4xl font-display font-bold text-foreground mb-6">
