@@ -291,7 +291,7 @@ function App() {
     // Build a minimal User object from Supabase auth session metadata when the
     // public.users table query fails or returns no row (e.g. the live database
     // hasn't had the 20_fix_users_table.sql migration applied yet).
-    function userFromSession(authUser: { id: string; email?: string | null; user_metadata?: Record<string, unknown> }): import('./types').User {
+    function userFromSession(authUser: { id: string; email?: string | null; user_metadata?: Record<string, unknown>; email_confirmed_at?: string | null }): import('./types').User {
       const meta = authUser.user_metadata || {};
       const strVal = (key: string) => (typeof meta[key] === 'string' ? (meta[key] as string) : undefined);
       return {
@@ -300,7 +300,9 @@ function App() {
         role: (strVal('role') as import('./types').UserRole) || 'buyer',
         firstName: strVal('first_name'),
         lastName: strVal('last_name'),
-        isEmailVerified: false,
+        // Derive from Supabase Auth state — email_confirmed_at is set when the
+        // email address has been confirmed, regardless of the custom users table.
+        isEmailVerified: authUser.email_confirmed_at != null,
         isActive: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
