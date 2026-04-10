@@ -180,11 +180,11 @@ export const handler: Handler = async (event) => {
 
     return {
       statusCode: isDuplicate ? 200 : 400,
-      body: JSON.stringify({
-        error: isDuplicate
-          ? "We've received your registration request. If this email address is not already in use, your account has been created. Please check your inbox."
-          : authError.message,
-      }),
+      body: JSON.stringify(
+        isDuplicate
+          ? { message: "We've received your registration request. If this email address is not already in use, your account has been created. Please check your inbox." }
+          : { error: authError.message }
+      ),
     };
   }
 

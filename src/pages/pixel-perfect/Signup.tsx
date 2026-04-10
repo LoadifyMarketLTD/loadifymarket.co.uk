@@ -53,11 +53,11 @@ const Signup = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const json = await res.json();
+      const json = await res.json() as { error?: string; message?: string };
       if (!res.ok) throw new Error(json.error || "Registration failed");
-      const description = isSeller
+      const description = json.message || (isSeller
         ? "Your seller account has been created. Sign in to complete your setup and start selling."
-        : "Your account is ready. Sign in to get started.";
+        : "Your account is ready. Sign in to get started.");
       toast({ title: "Account created!", description });
       navigate("/login", { replace: true });
     } catch (err) {

@@ -60,8 +60,17 @@ export const handler: Handler = async (event) => {
     return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Unauthorized' }) };
   }
 
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
+  if (!anonKey) {
+    return {
+      statusCode: 500,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: 'Server configuration error: VITE_SUPABASE_ANON_KEY not set' }),
+    };
+  }
+
   // Use anon client to verify token (getUser validates with Supabase auth server)
-  const anonClient = createClient(supabaseUrl, process.env.VITE_SUPABASE_ANON_KEY || supabaseServiceRoleKey);
+  const anonClient = createClient(supabaseUrl, anonKey);
   const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
   if (authError || !user) {
     return { statusCode: 401, headers: corsHeaders, body: JSON.stringify({ error: 'Invalid or expired token' }) };

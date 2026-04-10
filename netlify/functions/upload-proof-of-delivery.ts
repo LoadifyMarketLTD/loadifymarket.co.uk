@@ -105,6 +105,18 @@ export const handler: Handler = async (event) => {
       const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
       const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
+      // Extension map derived from ALLOWED_MIME_TYPES to keep a single source of truth.
+      const MIME_TO_EXT: Record<string, string> = {
+        'image/jpeg': 'jpg',
+        'image/jpg':  'jpg',
+        'image/png':  'png',
+        'image/webp': 'webp',
+      };
+      // Confirm the map covers every allowed type (compile-time parity check).
+      ALLOWED_MIME_TYPES.forEach((m) => {
+        if (!MIME_TO_EXT[m]) console.warn(`upload-proof-of-delivery: MIME_TO_EXT missing extension for ${m}`);
+      });
+
       let requestBody: { contentType?: string; fileSize?: number } = {};
       try {
         requestBody = JSON.parse(event.body || '{}') as { contentType?: string; fileSize?: number };
@@ -133,13 +145,7 @@ export const handler: Handler = async (event) => {
       }
 
       // Derive a safe file extension from the declared content type.
-      const extMap: Record<string, string> = {
-        'image/jpeg': 'jpg',
-        'image/jpg': 'jpg',
-        'image/png': 'png',
-        'image/webp': 'webp',
-      };
-      const ext = extMap[contentType.toLowerCase()] ?? 'jpg';
+      const ext = MIME_TO_EXT[contentType.toLowerCase()] ?? 'jpg';
       const fileName = `${shipmentId}-${Date.now()}.${ext}`;
       const filePath = `${shipmentId}/${fileName}`;
 
