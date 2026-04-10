@@ -29,7 +29,7 @@ const FeaturedProducts = () => {
       .eq("isActive", true)
       .eq("isApproved", true)
       .order("createdAt", { ascending: false })
-      .limit(6)
+      .limit(10)
       .then(({ data, error }) => {
         if (!error && data) setProducts(data as unknown as ShowcaseProduct[]);
         setLoading(false);
@@ -63,7 +63,7 @@ const FeaturedProducts = () => {
 
         {products.length > 0 ? (
           /* Product grid — gap-px hairline borders */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px bg-gray-200">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-gray-200">
             {products.map((item) => {
               const img =
                 Array.isArray(item.images) && item.images.length > 0

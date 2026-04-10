@@ -7,9 +7,9 @@
  * Section order:
  *  1. Announcement bar
  *  2. HeroSection        — compact navy hero + category quick panel
- *  3. TrustStrip         — white bar with 4 trust items
- *  4. CategoryGrid       — flat 17-category tile grid
- *  5. FeaturedProducts   — clean white product cards
+ *  3. FeaturedProducts   — real DB product cards (immediately under hero)
+ *  4. TrustStrip         — white bar with 4 trust items
+ *  5. CategoryGrid       — flat 17-category tile grid
  *  6. How It Works       — inline 3-step buyer guide
  *  7. Seller CTA banner  — navy strip, register as supplier
  */
@@ -76,14 +76,14 @@ export default function Home() {
         {/* ── 1. Hero ──────────────────────────────────────────────────── */}
         <HeroSection />
 
-        {/* ── 2. Trust bar ─────────────────────────────────────────────── */}
+        {/* ── 2. Real products — immediately under hero ────────────────── */}
+        <FeaturedProducts />
+
+        {/* ── 3. Trust bar ─────────────────────────────────────────────── */}
         <TrustStrip />
 
-        {/* ── 3. Category grid ─────────────────────────────────────────── */}
+        {/* ── 4. Category grid ─────────────────────────────────────────── */}
         <CategoryGrid />
-
-        {/* ── 4. Featured products ─────────────────────────────────────── */}
-        <FeaturedProducts />
 
         {/* ── 5. How It Works ──────────────────────────────────────────── */}
         <section className="bg-[#f4f5f7] border-b border-gray-200" aria-labelledby="how-heading">
