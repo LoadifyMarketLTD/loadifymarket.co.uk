@@ -1,22 +1,20 @@
 /**
  * src/pages/Home.tsx — root "/" route
  *
- * Mobile-first marketplace layout (desktop keeps the traditional hero-first order
- * via CSS flex ordering — no duplicate DOM nodes, no hidden content).
+ * Seller-first homepage for early-stage marketplace.
+ * Same section order on mobile and desktop (no CSS order-* reordering needed).
  *
- * Mobile order  (< lg):
- *  1. Header spacer + UrgencyBar
- *  2. Quick Actions  — 2×2 action grid (Browse, Sell, Orders, Account)
- *  3. Categories     — CategoryGrid   (moved up)
- *  4. Products       — FeaturedProducts + FeaturedListings  (moved up)
- *  5. Trust strip    — TrustStrip (compact)
- *  6. Hero / Social  — minimised, below the fold
- *  7. Deferred sections (FeaturesSection, PlatformFeatures, HowItWorks, SellerJourney, Footer)
- *
- * Desktop order  (≥ lg):
- *  Hero → SocialProof → TrustStrip → FeaturedProducts → CategoryGrid
- *  → FeaturedListings → FeaturesSection → PlatformFeatures → HowItWorks
- *  → SellerJourneySection → Footer  (identical to previous behaviour)
+ * Order:
+ *  1. UrgencyBar
+ *  2. Quick Actions  — mobile-only 2×2 grid
+ *  3. HeroSection
+ *  4. SellerJourneySection  — right after hero (seller-first priority)
+ *  5. TrustStrip
+ *  6. FeaturedProducts      — real products only, max 6, no placeholders
+ *  7. CategoryGrid          — navigation, not density proof
+ *  8. PlatformFeatures      — For Buyers / For Sellers comparison
+ *  9. HowItWorks            — simplified 3-step buyer flow
+ * 10. Final CTA
  */
 
 import { Link } from "react-router-dom";
@@ -31,14 +29,11 @@ import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import CategoryGrid from "@/components/CategoryGrid";
-import FeaturedListings from "@/components/FeaturedListings";
-import FeaturesSection from "@/components/FeaturesSection";
 import PlatformFeatures from "@/components/PlatformFeatures";
 import HowItWorks from "@/components/HowItWorksSection";
 import SellerJourneySection from "@/components/SellerJourneySection";
 import LazySection from "@/components/LazySection";
 import UrgencyBar from "@/components/UrgencyBar";
-import SocialProof from "@/components/SocialProof";
 import MicroCTA from "@/components/ui/MicroCTA";
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
@@ -93,16 +88,12 @@ export default function Home() {
       {/* Urgency bar — immediately below header */}
       <UrgencyBar />
 
-      {/*
-       * flex-col lets us use CSS `order-*` to reorder sections between
-       * mobile and desktop WITHOUT duplicating DOM nodes.
-       */}
       <main id="main-content" className="flex flex-col">
 
-        {/* ── 1. Quick Actions ── mobile-only, always first ──────────────── */}
+        {/* ── 1. Quick Actions — mobile-only ──────────────────────────────── */}
         <section
           aria-label="Quick actions"
-          className="order-1 lg:hidden px-4 py-4 border-b border-white/[0.12] bg-[#0A1930]"
+          className="lg:hidden px-4 py-4 border-b border-white/[0.12] bg-[#0A1930]"
         >
           <div className="grid grid-cols-2 gap-3">
             {QUICK_ACTIONS.map(({ icon: Icon, label, to, iconBg, iconColor, cardBorder }) => (
@@ -120,56 +111,32 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── 2. Hero + SocialProof ─────────────────────────────────────────
-         *   Mobile: order-5  → below products (minimised, still SEO-present)
-         *   Desktop: order-0  → first (traditional hero layout)               */}
-        <div className="order-5 lg:order-[0]">
-          <HeroSection />
-          <SocialProof />
-        </div>
+        {/* ── 2. Hero ─────────────────────────────────────────────────────── */}
+        <HeroSection />
 
-        {/* ── 3. Categories ─────────────────────────────────────────────────
-         *   Mobile: order-2  → immediately after Quick Actions
-         *   Desktop: order-2  → after TrustStrip                              */}
-        <div className="order-2 lg:order-2">
-          <CategoryGrid />
-        </div>
+        {/* ── 3. Seller Journey — right after hero (seller-first priority) ── */}
+        <SellerJourneySection />
 
-        {/* ── 4. Products + Listings ────────────────────────────────────────
-         *   Mobile: order-3  → immediately after categories
-         *   Desktop: order-3  → same                                          */}
-        <div className="order-3 lg:order-3">
-          <FeaturedProducts />
-          <MicroCTA text="Browse All Listings" link="/catalog" />
-          <FeaturedListings />
-        </div>
+        {/* ── 4. Trust Strip ──────────────────────────────────────────────── */}
+        <TrustStrip />
 
-        {/* ── 5. Trust Strip ────────────────────────────────────────────────
-         *   Mobile: order-4  → compact row after products
-         *   Desktop: order-1  → directly after hero                           */}
-        <div className="order-4 lg:order-1">
-          <TrustStrip />
-        </div>
+        {/* ── 5. Featured Products — real products only, max 6 ────────────── */}
+        <FeaturedProducts />
 
-        {/* ── 6–9. Deferred lower sections (both viewports) ─────────────── */}
-        <div className="order-6">
-          <LazySection>
-            <FeaturesSection />
-          </LazySection>
+        {/* ── 6. Categories — navigation ──────────────────────────────────── */}
+        <CategoryGrid />
 
-          <LazySection>
-            <div>
-              <PlatformFeatures />
-              <MicroCTA text="Start Selling Today" link="/register" />
-              <div className="h-px bg-white/10 w-full" />
-              <HowItWorks />
-            </div>
-          </LazySection>
+        {/* ── 7–8. Deferred below-fold sections ───────────────────────────── */}
+        <LazySection>
+          <PlatformFeatures />
+        </LazySection>
 
-          <LazySection>
-            <SellerJourneySection />
-          </LazySection>
-        </div>
+        <LazySection>
+          <HowItWorks />
+        </LazySection>
+
+        {/* ── 9. Final CTA ────────────────────────────────────────────────── */}
+        <MicroCTA text="Start Selling Today — 0% Commission" link="/signup?type=seller" />
 
       </main>
     </MainLayout>

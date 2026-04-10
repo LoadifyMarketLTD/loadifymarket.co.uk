@@ -1,46 +1,28 @@
-import { Monitor, ShoppingCart, Lock, BadgeCheck, Package, Star, ChevronRight } from "lucide-react";
+import { Search, CreditCard, Package, ChevronRight } from "lucide-react";
 
 /**
- * How It Works — compact 6-step horizontal buyer purchase flow.
- * Light premium background for visual contrast after dark sections.
+ * How It Works — compact 3-step buyer purchase flow.
+ * Kept intentionally short to avoid repeating detail already in PlatformFeatures.
  */
 
 const STEPS = [
   {
     num: 1,
-    icon: Monitor,
-    title: "Browse Products",
-    desc: "Explore UK sellers",
+    icon: Search,
+    title: "Browse & Discover",
+    desc: "Find products from UK sellers",
   },
   {
     num: 2,
-    icon: ShoppingCart,
-    title: "Add to Cart",
-    desc: "Select & review order",
-  },
-  {
-    num: 3,
-    icon: Lock,
+    icon: CreditCard,
     title: "Secure Checkout",
     desc: "Pay safely via Stripe",
   },
   {
-    num: 4,
-    icon: BadgeCheck,
-    title: "Order Confirmed",
-    desc: "Instant confirmation",
-  },
-  {
-    num: 5,
+    num: 3,
     icon: Package,
-    title: "Shipped by Seller",
-    desc: "Track your delivery",
-  },
-  {
-    num: 6,
-    icon: Star,
-    title: "Review & Rate",
-    desc: "Share your experience",
+    title: "Delivered to You",
+    desc: "Seller ships, you track",
   },
 ];
 
