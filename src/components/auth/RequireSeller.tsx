@@ -87,7 +87,7 @@ export default function RequireSeller({ children }: Props) {
           .from('seller_profiles')
           .select('sellerStatus')
           .eq('userId', user.id)
-          .single<{ sellerStatus: string }>();
+          .maybeSingle<{ sellerStatus: string }>();
 
         if (cancelled) return;
 
@@ -97,7 +97,9 @@ export default function RequireSeller({ children }: Props) {
           return;
         }
 
-        dbStatus = (data?.sellerStatus ?? 'draft') as FetchState;
+        // null means no seller_profiles row yet — treat as 'draft' so the
+        // seller is directed to complete their setup rather than seeing an error.
+        dbStatus = ((data?.sellerStatus) ?? 'draft') as FetchState;
 
         // Active or suspended from DB — use it directly, no recheck needed.
         if (dbStatus === 'active' || dbStatus === 'suspended') {
