@@ -343,7 +343,7 @@ function App() {
             .from('users')
             .select('*, seller_profiles(sellerStatus)')
             .eq('id', session.user.id)
-            .single()
+            .maybeSingle()
             .then(({ data, error }) => {
               if (data) {
                 // Blocked users must not be rehydrated — sign them out immediately.
@@ -363,12 +363,14 @@ function App() {
                 setUser(data);
               } else {
                 if (error) {
-                  // Table missing or row not found — still treat as logged in
-                  // using auth session metadata so the user isn't stuck logged-out.
+                  // Network/permission error — fall back to auth session metadata
+                  // so the user isn't stuck logged-out.
                   console.warn('users table query failed, falling back to auth session:', error.message);
                   setUser(userFromSession(session.user));
                 } else {
-                  setLoading(false);
+                  // No row found in users table yet (e.g. trigger lag after signup).
+                  // Fall back to auth session so the user can still navigate.
+                  setUser(userFromSession(session.user));
                 }
               }
             });
@@ -390,7 +392,7 @@ function App() {
             .from('users')
             .select('*, seller_profiles(sellerStatus)')
             .eq('id', session.user.id)
-            .single()
+            .maybeSingle()
             .then(({ data, error }) => {
               if (data) {
                 // Blocked users must not be rehydrated — sign them out immediately.
@@ -409,6 +411,7 @@ function App() {
                   console.warn('users table query failed, falling back to auth session:', error.message);
                   setUser(userFromSession(session.user));
                 } else {
+                  // Row not found — treat as signed-out.
                   setUser(null);
                 }
               }

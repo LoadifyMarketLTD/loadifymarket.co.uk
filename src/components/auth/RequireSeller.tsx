@@ -94,7 +94,7 @@ export default function RequireSeller({ children }: Props) {
     const checkStatus = async () => {
       const { supabase } = await import('../../lib/supabase');
 
-      let dbStatus: FetchState;
+      let dbStatus: FetchState = 'draft';
 
       if (cached === 'draft' || cached === 'submitted') {
         // Status is cached as draft/submitted — skip the DB round-trip and
@@ -106,22 +106,27 @@ export default function RequireSeller({ children }: Props) {
           .from('seller_profiles')
           .select('sellerStatus')
           .eq('userId', user.id)
-          .single<{ sellerStatus: string }>();
+          .maybeSingle<{ sellerStatus: string }>();
 
         if (cancelled) return;
 
         if (error) {
-          console.warn('RequireSeller: failed to fetch sellerStatus', error.message);
-          setFetchState('error');
-          return;
-        }
+          // DB query failed (network/RLS/transient error). Don't show the error
+          // screen yet — fall through to recheck-activation, which uses the
+          // service role and can verify status independently. If that also fails
+          // the guard will redirect to /seller/setup (safe default).
+          console.warn('RequireSeller: seller_profiles query failed, trying recheck', error.message);
+          // dbStatus stays 'draft' — recheck will override it if successful.
+        } else {
+          // null means no seller_profiles row yet — treat as 'draft' so the
+          // seller is directed to complete their setup rather than seeing an error.
+          dbStatus = ((data?.sellerStatus) ?? 'draft') as FetchState;
 
-        dbStatus = (data?.sellerStatus ?? 'draft') as FetchState;
-
-        // Active or suspended from DB — use it directly, no recheck needed.
-        if (dbStatus === 'active' || dbStatus === 'suspended') {
-          setFetchState(dbStatus);
-          return;
+          // Active or suspended from DB — use it directly, no recheck needed.
+          if (dbStatus === 'active' || dbStatus === 'suspended') {
+            setFetchState(dbStatus);
+            return;
+          }
         }
       }
 
