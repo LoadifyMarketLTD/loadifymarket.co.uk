@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import MainLayout from "@/layouts/MainLayout";
 import { X, Package, Tag, RotateCcw, Layers, TrendingDown, ArrowRight } from "lucide-react";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
-import CountdownBanner from "@/components/CountdownBanner";
 import SEO from "@/components/SEO";
 import CatalogFilters from "@/components/catalog/CatalogFilters";
 import CatalogHeader from "@/components/catalog/CatalogHeader";
@@ -246,7 +245,10 @@ const Deals = () => {
                   </Button>
                 </Link>
               </div>
-              <CountdownBanner />
+              <div className="flex items-center gap-1.5 text-xs text-[#22C55E] font-semibold mt-3">
+                <span className="w-4 h-4 rounded-full bg-[#22C55E]/20 flex items-center justify-center text-[10px]">✔</span>
+                0% Commission Until 31 December 2026
+              </div>
             </div>
           </div>
         </div>

@@ -58,6 +58,20 @@ const HeroSection = () => (
             </Link>
           </div>
 
+          {/* Seller trust bullets */}
+          <div className="mt-4 flex flex-col gap-2">
+            {[
+              "Reach UK wholesale buyers",
+              "No listing fees",
+              "Fast payouts with Stripe",
+            ].map((t) => (
+              <span key={t} className="text-[12px] text-white/70 flex items-center gap-2">
+                <span className="flex items-center justify-center w-4 h-4 rounded-full bg-[#22C55E]/20 text-[#22C55E] font-bold text-[10px] shrink-0">✔</span>
+                {t}
+              </span>
+            ))}
+          </div>
+
           {/* Trust tags */}
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5">
             {[

@@ -53,7 +53,7 @@ const sellerBenefits = [
     iconBg: "rgba(251,191,36,0.20)",
     iconColor: "#FCD34D",
     title: "Fast Stripe Payouts",
-    desc: "Payments processed securely via Stripe. 0% commission until 31 August, then 7% on completed sales with fast payouts.",
+    desc: "Payments processed securely via Stripe. 0% Commission until 31 December 2026, then 7% on completed sales with fast payouts.",
   },
   {
     icon: TrendingUp,

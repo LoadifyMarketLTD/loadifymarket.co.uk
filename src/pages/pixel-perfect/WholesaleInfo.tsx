@@ -99,8 +99,7 @@ const WholesaleInfo = () => {
                 <strong className="text-foreground">
                   7% marketplace commission
                 </strong>{" "}
-                applies to completed sales (0% during the launch promotion until 31 August
-                2026). There are no monthly fees or listing charges.
+                applies to completed sales (0% Commission during the launch promotion until 31 December 2026). There are no monthly fees or listing charges.
               </p>
             </section>
 

@@ -5,9 +5,18 @@ import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, ShieldCheck, T
 import { Button } from "@/components/ui/button";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
+import { useAuthStore } from "@/store";
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, subtotal } = useCart();
+  const { user } = useAuthStore();
+
+  // Detect any own-product items in cart (should not happen via normal UI, but guard edge cases)
+  const ownProductIds = user
+    ? cartItems
+        .filter((item) => item.product.sellerId && item.product.sellerId === user.id)
+        .map((item) => item.product.id)
+    : [];
 
   // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
   // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
@@ -75,6 +84,12 @@ const Cart = () => {
           </div>
 
           <div className="grid lg:grid-cols-[1fr_380px] gap-8">
+            {/* Own-product warning */}
+            {ownProductIds.length > 0 && (
+              <div className="lg:col-span-2 bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
+                <strong>Notice:</strong> You cannot purchase your own products. Please remove the highlighted items before checking out.
+              </div>
+            )}
             {/* Cart Items */}
             <div className="space-y-4">
               {cartItems.map((item) => {
@@ -82,11 +97,12 @@ const Cart = () => {
                 const itemDiscount = product.originalPrice
                   ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
                   : 0;
+                const isOwnProduct = ownProductIds.includes(product.id);
 
                 return (
                   <div
                     key={product.id}
-                    className="bg-card rounded-xl border border-border p-4 sm:p-5 flex gap-4 group hover:border-primary/20 hover:shadow-card transition-all"
+                    className={`bg-card rounded-xl border p-4 sm:p-5 flex gap-4 group transition-all ${isOwnProduct ? "border-amber-400 bg-amber-50/50" : "border-border hover:border-primary/20 hover:shadow-card"}`}
                   >
                     {/* Image */}
                     <Link to={`/product/${product.id}`} className="shrink-0">
