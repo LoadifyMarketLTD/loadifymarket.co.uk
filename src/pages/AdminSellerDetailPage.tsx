@@ -241,7 +241,7 @@ export default function AdminSellerDetailPage() {
               <ShieldAlert className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h2 className="text-xl font-bold text-gray-800 mb-2">Seller Not Found</h2>
               <p className="text-gray-500 mb-6">This seller does not exist or was deleted.</p>
-              <button onClick={() => navigate('/pp/admin/approvals')} className="btn-primary">
+              <button onClick={() => navigate('/admin/approvals')} className="btn-primary">
                 Back to Sellers
               </button>
             </div>
@@ -264,7 +264,7 @@ export default function AdminSellerDetailPage() {
 
         {/* Back link */}
         <button
-          onClick={() => navigate('/pp/admin/approvals')}
+          onClick={() => navigate('/admin/approvals')}
           className="inline-flex items-center gap-2 text-gray-600 hover:text-navy-800 transition-colors mb-6 text-sm"
         >
           <ArrowLeft className="w-4 h-4" />

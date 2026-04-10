@@ -846,7 +846,7 @@ export default function TradeAccount() {
                   { to: "/login", label: "Sign In" },
                   { to: "/signup", label: "Create Account" },
                   { to: "/trade-account", label: "Trade Account" },
-                  { to: "/pp/buyer/orders", label: "My Orders" },
+                  { to: "/buyer/orders", label: "My Orders" },
                   { to: "/catalog", label: "Browse Products" },
                   { to: "/track-order", label: "Track Order" },
                 ].map((link) => (

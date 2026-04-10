@@ -16,6 +16,7 @@
 
 import { Link } from "react-router-dom";
 import { Search, CreditCard, Package } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
@@ -55,6 +56,20 @@ const SELLER_BENEFITS = [
 export default function Home() {
   return (
     <MainLayout forceOpaque={true}>
+      {/* Preload the LCP hero image only on the homepage — avoids "preloaded but
+          not used" warnings on all other routes where hero.webp is never loaded. */}
+      <Helmet>
+        <link
+          rel="preload"
+          as="image"
+          href="/hero.webp"
+          type="image/webp"
+          // @ts-expect-error — imagesrcset/imagesizes are valid preload attrs not yet in React types
+          imagesrcset="/hero-640.webp 640w, /hero.webp 1536w"
+          imagesizes="(max-width: 640px) 640px, 1536px"
+          fetchpriority="high"
+        />
+      </Helmet>
       <SEO
         title="Loadify Market | UK Wholesale B2B Marketplace for Trade Buyers & Suppliers"
         description="Buy and sell wholesale goods on Loadify Market — the UK's B2B trade marketplace. Browse listings from verified UK suppliers or register your trade business today."

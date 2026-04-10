@@ -9,23 +9,23 @@ import { useAuthStore } from "@/store";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { to: "/pp/buyer", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/pp/buyer/orders", label: "My Orders", icon: ShoppingBag },
-  { to: "/pp/buyer/wishlist", label: "Wishlist", icon: Heart },
-  { to: "/pp/buyer/addresses", label: "Addresses", icon: MapPin },
-  { to: "/pp/buyer/payments", label: "Payments", icon: CreditCard },
-  { to: "/pp/buyer/reviews", label: "Reviews", icon: Star },
-  { to: "/pp/buyer/notifications", label: "Notifications", icon: Bell },
-  { to: "/pp/buyer/profile", label: "Profile", icon: UserCircle },
-  { to: "/pp/buyer/settings", label: "Settings", icon: Settings },
+  { to: "/buyer", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/buyer/orders", label: "My Orders", icon: ShoppingBag },
+  { to: "/buyer/wishlist", label: "Wishlist", icon: Heart },
+  { to: "/buyer/addresses", label: "Addresses", icon: MapPin },
+  { to: "/buyer/payments", label: "Payments", icon: CreditCard },
+  { to: "/buyer/reviews", label: "Reviews", icon: Star },
+  { to: "/buyer/notifications", label: "Notifications", icon: Bell },
+  { to: "/buyer/profile", label: "Profile", icon: UserCircle },
+  { to: "/buyer/settings", label: "Settings", icon: Settings },
 ];
 
 /** The 4 most important buyer pages shown in the mobile bottom tab bar */
 const mobileTabItems = [
-  { to: "/pp/buyer", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/pp/buyer/orders", label: "Orders", icon: ShoppingBag },
-  { to: "/pp/buyer/wishlist", label: "Wishlist", icon: Heart },
-  { to: "/pp/buyer/settings", label: "Settings", icon: Settings },
+  { to: "/buyer", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/buyer/orders", label: "Orders", icon: ShoppingBag },
+  { to: "/buyer/wishlist", label: "Wishlist", icon: Heart },
+  { to: "/buyer/settings", label: "Settings", icon: Settings },
 ];
 
 interface SidebarContentProps {

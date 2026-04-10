@@ -42,9 +42,9 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
   const opaque = forceOpaque || scrolled;
 
   const dashboardPath =
-    user?.role === "seller" ? "/pp/seller" :
-    user?.role === "admin" ? "/pp/admin" :
-    "/pp/buyer";
+    user?.role === "seller" ? "/seller" :
+    user?.role === "admin" ? "/admin" :
+    "/buyer";
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,12 +152,12 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
               {isActiveSellerAccess(user) && (
                 <>
                   <Button variant="ghost" size="sm" className="text-white/70 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex" asChild>
-                    <Link to="/pp/seller/products">
+                    <Link to="/seller/products">
                       <Package className="h-4 w-4 mr-1" aria-hidden="true" /> My Products
                     </Link>
                   </Button>
                   <Button variant="ghost" size="sm" className="text-white/70 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex" asChild>
-                    <Link to="/pp/seller/orders">
+                    <Link to="/seller/orders">
                       <ShoppingBag className="h-4 w-4 mr-1" aria-hidden="true" /> Orders
                     </Link>
                   </Button>
@@ -166,12 +166,12 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
               {(user.role === "buyer") && (
                 <>
                   <Button variant="ghost" size="sm" className="text-white/70 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex" asChild>
-                    <Link to="/pp/buyer/orders">
+                    <Link to="/buyer/orders">
                       <ShoppingBag className="h-4 w-4 mr-1" aria-hidden="true" /> Orders
                     </Link>
                   </Button>
                   <Button variant="ghost" size="sm" className="text-white/70 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex" asChild>
-                    <Link to="/pp/buyer/wishlist">
+                    <Link to="/buyer/wishlist">
                       <Heart className="h-4 w-4 mr-1" aria-hidden="true" /> Wishlist
                     </Link>
                   </Button>
@@ -192,7 +192,7 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
                   className="h-9 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-300 hover:to-green-400 text-black font-semibold px-5 rounded-full shadow-lg hover:shadow-green-400/30 transition-all duration-300"
                   asChild
                 >
-                  <Link to="/pp/seller">Start Selling</Link>
+                  <Link to="/seller">Start Selling</Link>
                 </Button>
               )}
             </>

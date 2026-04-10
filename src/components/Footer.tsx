@@ -37,8 +37,8 @@ const FOOTER_SECTIONS = [
     title: "For Sellers",
     links: [
       { to: "/signup", label: "Start Selling" },
-      { to: "/pp/seller", label: "Seller Dashboard" },
-      { to: "/pp/seller/products", label: "List a Product" },
+      { to: "/seller", label: "Seller Dashboard" },
+      { to: "/seller/products", label: "List a Product" },
       { to: "/seller-terms", label: "Seller Fees & Pricing" },
       { to: "/seller-guidelines", label: "Seller Guidelines" },
       { to: "/#how-it-works", label: "How It Works" },
@@ -268,8 +268,8 @@ const Footer = () => {
               </h4>
               <ul className="space-y-2 text-sm text-background/60">
                 <FooterLink to="/signup">Start Selling</FooterLink>
-                <FooterLink to="/pp/seller">Seller Dashboard</FooterLink>
-                <FooterLink to="/pp/seller/products">List a Product</FooterLink>
+                <FooterLink to="/seller">Seller Dashboard</FooterLink>
+                <FooterLink to="/seller/products">List a Product</FooterLink>
                 <FooterLink to="/seller-terms">Seller Fees &amp; Pricing</FooterLink>
                 <FooterLink to="/seller-guidelines">Seller Guidelines</FooterLink>
                 <FooterLink to="/#how-it-works">How It Works</FooterLink>

@@ -239,7 +239,7 @@ const SellerDashboard = () => {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" asChild>
-            <Link to="/pp/seller/products">View Products</Link>
+            <Link to="/seller/products">View Products</Link>
           </Button>
           <Button size="sm" className="bg-gradient-hero text-primary-foreground" asChild>
             <Link to="/seller/products/new">
@@ -321,7 +321,7 @@ const SellerDashboard = () => {
           <div className="flex items-center justify-between p-5 border-b border-border">
             <h2 className="font-display text-base font-semibold text-foreground">Recent Orders</h2>
             <Button variant="ghost" size="sm" className="text-xs text-primary" asChild>
-              <Link to="/pp/seller/orders">View All</Link>
+              <Link to="/seller/orders">View All</Link>
             </Button>
           </div>
           <div className="divide-y divide-border">
@@ -363,7 +363,7 @@ const SellerDashboard = () => {
             <div className="flex items-center justify-between p-5 border-b border-border">
               <h2 className="font-display text-base font-semibold text-foreground">Top Products</h2>
               <Button variant="ghost" size="sm" className="text-xs text-primary" asChild>
-                <Link to="/pp/seller/products">View All</Link>
+                <Link to="/seller/products">View All</Link>
               </Button>
             </div>
             <div className="divide-y divide-border">

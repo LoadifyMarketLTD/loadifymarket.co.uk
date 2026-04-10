@@ -15,11 +15,11 @@ interface Props {
  *
  * Access rules:
  *   buyers          → render children
- *   admins          → redirect to /pp/admin (their own dashboard)
- *   sellers         → redirect to /pp/seller (their own dashboard)
+ *   admins          → redirect to /admin (their own dashboard)
+ *   sellers         → redirect to /seller (their own dashboard)
  *   unauthenticated → redirect to /login
  *
- * Admins are redirected to /pp/admin rather than given silent access to the buyer
+ * Admins are redirected to /admin rather than given silent access to the buyer
  * shell — this prevents an admin from seeing "Buyer Hub" as their landing page
  * when role resolution fails upstream and the DashboardRedirect sends them here.
  */
@@ -46,10 +46,10 @@ export default function RequireBuyer({ children }: Props) {
   if (!user) return null;
 
   // Admin is redirected to their own dashboard — never show "Buyer Hub" to admins
-  if (hasAdminAccess(user)) return <Navigate to="/pp/admin" replace />;
+  if (hasAdminAccess(user)) return <Navigate to="/admin" replace />;
 
   // Seller is redirected to their own dashboard
-  if (hasSellerAccess(user)) return <Navigate to="/pp/seller" replace />;
+  if (hasSellerAccess(user)) return <Navigate to="/seller" replace />;
 
   // Buyer gets full access
   if (hasBuyerAccess(user)) return <>{children}</>;

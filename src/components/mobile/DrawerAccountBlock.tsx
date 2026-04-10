@@ -19,9 +19,9 @@ const DrawerAccountBlock = ({
   if (user) {
     const initial = user.firstName?.[0]?.toUpperCase() ?? user.email?.[0]?.toUpperCase() ?? "U";
     const ordersHref =
-      user.role === "seller" ? "/pp/seller/orders" :
-      user.role === "admin"  ? "/pp/admin/orders"  :
-      "/pp/buyer/orders";
+      user.role === "seller" ? "/seller/orders" :
+      user.role === "admin"  ? "/admin/orders"  :
+      "/buyer/orders";
 
     return (
       <div className="p-4 space-y-3">
@@ -54,7 +54,7 @@ const DrawerAccountBlock = ({
             Orders
           </Link>
           <Link
-            to="/pp/buyer/messages"
+            to="/buyer/messages"
             onClick={onClose}
             className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-white/80 hover:text-green-400 hover:bg-white/[0.07] transition-colors"
           >
@@ -79,7 +79,7 @@ const DrawerAccountBlock = ({
               className="flex-1 h-10 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-300 hover:to-green-400 text-black font-semibold rounded-full shadow-lg transition-all duration-300"
               asChild
             >
-              <Link to="/pp/seller" onClick={onClose}>
+              <Link to="/seller" onClick={onClose}>
                 Start Selling
               </Link>
             </Button>

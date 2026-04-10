@@ -50,9 +50,9 @@ const Login = () => {
     if (user) {
       const nextUrl = searchParams.get("next");
       if (nextUrl) navigate(nextUrl, { replace: true });
-      else if (user.role === "seller") navigate("/pp/seller", { replace: true });
-      else if (user.role === "admin") navigate("/pp/admin", { replace: true });
-      else navigate("/pp/buyer", { replace: true });
+      else if (user.role === "seller") navigate("/seller", { replace: true });
+      else if (user.role === "admin") navigate("/admin", { replace: true });
+      else navigate("/buyer", { replace: true });
     }
   }, [user, searchParams, navigate]);
 
@@ -81,16 +81,16 @@ const Login = () => {
       if (nextUrl) { navigate(nextUrl, { replace: true }); return; }
       // Default to /dashboard so DashboardRedirect (which waits for the correct
       // Zustand store state) handles role-based routing.  Avoid hardcoding
-      // /pp/buyer here — if the role query below fails, an admin would be
+      // /buyer here — if the role query below fails, an admin would be
       // incorrectly sent to the buyer hub.
       let redirectTo = "/dashboard";
       if (data.user) {
         const { data: profile, error: profileError } = await supabase
           .from("users").select("role").eq("id", data.user.id).single();
         if (profileError) console.warn("Could not fetch user role:", profileError.message);
-        if (profile?.role === "seller") redirectTo = "/pp/seller";
-        else if (profile?.role === "admin") redirectTo = "/pp/admin";
-        else if (profile?.role === "buyer") redirectTo = "/pp/buyer";
+        if (profile?.role === "seller") redirectTo = "/seller";
+        else if (profile?.role === "admin") redirectTo = "/admin";
+        else if (profile?.role === "buyer") redirectTo = "/buyer";
       }
       navigate(redirectTo, { replace: true });
     } catch (err) {

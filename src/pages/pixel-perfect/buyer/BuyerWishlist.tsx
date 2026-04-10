@@ -53,7 +53,7 @@ const BuyerWishlist = () => {
         .from("wishlists")
         .select("productIds")
         .eq("userId", user.id)
-        .single();
+        .maybeSingle();
 
       if (wishlistError && wishlistError.code !== "PGRST116") throw wishlistError;
 

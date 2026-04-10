@@ -181,7 +181,7 @@ const SellerSetupPage = () => {
   // Redirect active sellers to the seller dashboard
   useEffect(() => {
     if (status?.sellerStatus === "active") {
-      const timer = setTimeout(() => navigate("/pp/seller", { replace: true }), 1500);
+      const timer = setTimeout(() => navigate("/seller", { replace: true }), 1500);
       return () => clearTimeout(timer);
     }
   }, [status, navigate]);
@@ -189,8 +189,8 @@ const SellerSetupPage = () => {
   // Redirect non-sellers to their own dashboard.
   // RequireAuth is intentionally used at the route level (not RequireSeller) so that
   // draft/submitted sellers can complete onboarding, but buyers and admins must not land here.
-  if (user && hasAdminAccess(user)) return <Navigate to="/pp/admin" replace />;
-  if (user && user.role !== 'seller') return <Navigate to="/pp/buyer" replace />;
+  if (user && hasAdminAccess(user)) return <Navigate to="/admin" replace />;
+  if (user && user.role !== 'seller') return <Navigate to="/buyer" replace />;
 
   const handleConnectStripe = async () => {
     if (!user) return;
@@ -269,7 +269,7 @@ const SellerSetupPage = () => {
               <p className="font-semibold text-emerald-700">Your seller account is active!</p>
               <p className="text-sm text-emerald-600">Redirecting you to your seller dashboard…</p>
               <Button asChild className="bg-gradient-hero text-primary-foreground">
-                <Link to="/pp/seller">
+                <Link to="/seller">
                   Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
