@@ -1,12 +1,10 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
+import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 
 const BuyerTerms = () => {
   return (
-    <div className="min-h-screen">
-      <Header forceOpaque />
+    <MainLayout>
       <SEO title="Buyer Terms | Loadify Market" description="Read the specific terms and conditions that apply to buyers purchasing on Loadify Market." canonical="/buyer-terms" />
       <main className="pt-16 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
@@ -88,8 +86,7 @@ const BuyerTerms = () => {
           </ul>
         </div>
       </main>
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

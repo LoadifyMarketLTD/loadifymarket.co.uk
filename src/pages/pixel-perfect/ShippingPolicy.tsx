@@ -1,12 +1,10 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
+import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 
 const ShippingPolicy = () => {
   return (
-    <div className="min-h-screen">
-      <Header forceOpaque />
+    <MainLayout>
       <SEO title="Shipping Policy | Loadify Market" description="Learn about delivery options, timescales, and shipping policies for orders on Loadify Market." canonical="/shipping-policy" />
       <main className="pt-16 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
@@ -73,8 +71,7 @@ const ShippingPolicy = () => {
           </ul>
         </div>
       </main>
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

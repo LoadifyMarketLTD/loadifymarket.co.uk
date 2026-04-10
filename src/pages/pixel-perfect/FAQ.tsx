@@ -1,6 +1,5 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
+import MainLayout from "@/layouts/MainLayout";
 import { Link } from "react-router-dom";
 import { BRAND } from "@/constants/brand";
 import SEO from "@/components/SEO";
@@ -255,8 +254,7 @@ const FAQS: { section: string; items: FaqItem[] }[] = [
 
 const FAQ = () => {
   return (
-    <div className="min-h-screen">
-      <Header forceOpaque />
+    <MainLayout>
       <SEO title="FAQ | Loadify Market" description="Answers to the most common questions about buying and selling on Loadify Market." canonical="/faq" />
       <main className="pt-16 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
@@ -305,8 +303,7 @@ const FAQ = () => {
           </div>
         </div>
       </main>
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

@@ -1,13 +1,11 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
+import MainLayout from "@/layouts/MainLayout";
 import { Building2, Users, ShieldCheck, Truck, Globe } from "lucide-react";
 import SEO from "@/components/SEO";
 
 const AboutUs = () => {
   return (
-    <div className="min-h-screen">
-      <Header forceOpaque />
+    <MainLayout>
       <SEO title="About Us | Loadify Market" description="Learn about Loadify Market — the UK's wholesale marketplace connecting independent buyers and sellers." canonical="/about" />
       <main className="pt-16 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
@@ -85,8 +83,7 @@ const AboutUs = () => {
           </div>
         </div>
       </main>
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

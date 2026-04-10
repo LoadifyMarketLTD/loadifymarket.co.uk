@@ -1,8 +1,7 @@
 import { Link, useSearchParams } from 'react-router-dom';
+import MainLayout from "@/layouts/MainLayout";
 import { XCircle, ArrowLeft, RefreshCw, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Header from "@/components/Header";
-import Footer from '@/components/Footer';
 
 const CheckoutError = () => {
   const [searchParams] = useSearchParams();
@@ -22,8 +21,7 @@ const CheckoutError = () => {
   })();
 
   return (
-    <div className="min-h-screen">
-      <Header forceOpaque />
+    <MainLayout>
       <main className="pt-16 pb-20 flex items-center justify-center">
         <div className="w-full max-w-lg px-4">
           <div className="bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm">
@@ -73,8 +71,7 @@ const CheckoutError = () => {
           </div>
         </div>
       </main>
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

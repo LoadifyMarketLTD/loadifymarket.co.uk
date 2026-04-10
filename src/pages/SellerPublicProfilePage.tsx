@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import MainLayout from "@/layouts/MainLayout";
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { SellerProfile, SellerStore } from '../types';
@@ -11,8 +12,6 @@ import { adaptProducts } from '@/lib/productAdapter';
 import type { DBProduct } from '@/lib/productAdapter';
 import type { Product as CatalogProduct } from '@/components/catalog/ProductCard';
 import BreadcrumbNav from '../components/BreadcrumbNav';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '../store';
 
@@ -102,23 +101,20 @@ export default function SellerPublicProfilePage() {
 
   if (loading) {
     return (
-      <div className="bg-[#F8F9FA] min-h-screen flex flex-col">
-        <Header forceOpaque />
+      <MainLayout>
         <div className="flex-1 pt-16 lg:pt-[104px] flex items-center justify-center">
           <div className="text-center">
             <div className="w-12 h-12 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-gray-500">Loading seller profile...</p>
           </div>
         </div>
-        <Footer />
-      </div>
+    </MainLayout>
     );
   }
 
   if (!seller) {
     return (
-      <div className="bg-[#F8F9FA] min-h-screen flex flex-col">
-        <Header forceOpaque />
+      <MainLayout>
         <main className="flex-1 pt-16 lg:pt-[104px]">
           <div className="container-cinematic py-12">
             <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-16">
@@ -131,14 +127,12 @@ export default function SellerPublicProfilePage() {
             </div>
           </div>
         </main>
-        <Footer />
-      </div>
+    </MainLayout>
     );
   }
 
   return (
-    <div className="bg-[#F8F9FA] min-h-screen flex flex-col">
-      <Header forceOpaque />
+    <MainLayout>
       <main className="flex-1 pt-16 lg:pt-[104px]">
       {/* Breadcrumb */}
       <div className="container-cinematic py-4">
@@ -322,7 +316,6 @@ export default function SellerPublicProfilePage() {
         )}
       </div>
       </main>
-      <Footer />
-    </div>
+    </MainLayout>
   );
 }

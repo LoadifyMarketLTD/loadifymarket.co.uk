@@ -1,12 +1,10 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
+import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 
 const ReturnsPolicy = () => {
   return (
-    <div className="min-h-screen">
-      <Header forceOpaque />
+    <MainLayout>
       <SEO title="Returns Policy | Loadify Market" description="Understand the returns and refund process for purchases made on Loadify Market." canonical="/returns-policy" />
       <main className="pt-16 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
@@ -67,8 +65,7 @@ const ReturnsPolicy = () => {
           </ul>
         </div>
       </main>
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 

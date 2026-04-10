@@ -1,12 +1,10 @@
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
+import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 
 const Disclaimer = () => {
   return (
-    <div className="min-h-screen">
-      <Header forceOpaque />
+    <MainLayout>
       <SEO title="Disclaimer | Loadify Market" description="Read the disclaimer for Loadify Market covering liability, accuracy, and third-party content." canonical="/disclaimer" />
       <main className="pt-16 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
@@ -64,8 +62,7 @@ const Disclaimer = () => {
           </ul>
         </div>
       </main>
-      <Footer />
-    </div>
+    </MainLayout>
   );
 };
 
