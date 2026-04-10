@@ -1,333 +1,133 @@
-import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/store";
-import { PROMO_END_UTC } from "@/lib/promoDeadline";
-import { useCountdown } from "@/hooks/use-countdown";
+import { Link } from "react-router-dom";
+import CATEGORY_CONFIG from "@/lib/category-config";
 
-
-function pad2(n: number) { return String(n).padStart(2, "0"); }
-
-const BULLETS = [
-  "Reach UK Buyers",
-  "Launch Without Upfront Costs",
-  "Get Paid Fast with Stripe",
+const FEATURED_SLUGS = [
+  "health-beauty",
+  "wholesale-clothing",
+  "garden",
+  "kitchenware",
+  "toys",
+  "electrical",
 ];
 
-const TRUST_ITEMS = [
-  { icon: "🔒", label: "Secure Payments via Stripe" },
-  { icon: "🇬🇧", label: "Independent UK Sellers" },
-  { icon: "🏷️", label: "Over 20 Categories" },
-];
+const featuredCats = FEATURED_SLUGS
+  .map((s) => CATEGORY_CONFIG.find((c) => c.slug === s))
+  .filter(Boolean) as typeof CATEGORY_CONFIG[number][];
 
-const HeroSection = () => {
-  const { days, hours, minutes, seconds, expired } = useCountdown(PROMO_END_UTC);
-  const navigate = useNavigate();
-  const user = useAuthStore((s) => s.user);
+const HeroSection = () => (
+  <section
+    className="bg-[#0d2240]"
+    aria-label="Loadify Market — UK B2B wholesale marketplace"
+  >
+    <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8 lg:py-10">
+      <div className="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-10">
 
-  return (
-    <section
-      className="relative overflow-hidden sm:min-h-[calc(100dvh-7rem)]"
-      aria-label="Hero — sell online, grow your business with Loadify Market"
-      style={{ background: "#0A1930" }}
-    >
-      {/* min-height: none on mobile (content-driven height prevents large empty space)
-          7rem=112px desktop (header row + category nav) fills the viewport on sm+ */}
-      {/*
-       * ── HERO IMAGE — right-anchored ──────────────────────────────────────
-       * The source hero.jpeg has text composited into its left ~40%.
-       * By positioning the img to cover only the RIGHT 68% of the container
-       * (with object-position: right center) the baked-in text is cropped off
-       * the left edge while the laptop / phone / warehouse fills the right side.
-       */}
-      <picture>
-        <source
-          type="image/webp"
-          srcSet="/hero-640.webp 640w, /hero.webp 1536w"
-          sizes="(max-width: 640px) 640px, 1536px"
-        />
-        <img
-          src="/hero.jpeg"
-          alt=""
-          aria-hidden="true"
-          width={1536}
-          height={1024}
-          fetchPriority="high"
-          decoding="async"
-          style={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-            bottom: 0,
-            width: "68%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: "right center",
-            zIndex: 0,
-          }}
-        />
-      </picture>
-
-      {/* ── Blend gradient — smooth dark→image transition ────────────────── */}
-      {/* Desktop: partial gradient revealing hero image on right */}
-      <div
-        aria-hidden="true"
-        className="hidden sm:block"
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(to right, #0A1930 0%, #0A1930 32%, rgba(10,25,48,0.90) 45%, rgba(10,25,48,0.25) 62%, transparent 72%)",
-          zIndex: 1,
-        }}
-      />
-      {/* Mobile (<sm): full dark overlay so text is always readable over hero image */}
-      <div
-        aria-hidden="true"
-        className="sm:hidden"
-        style={{
-          position: "absolute",
-          inset: 0,
-          background: "rgba(10,25,48,0.82)",
-          zIndex: 1,
-        }}
-      />
-
-      {/* ── LEFT SIDE HTML OVERLAY ─────────────────────────────────────────── */}
-      {/*
-       * Mobile (<sm): position relative, full width, padded — no translateY tricks.
-       * Desktop (sm+): position absolute, left/top/transform handle vertical centering.
-       * Keeping these as separate Tailwind sm: classes avoids inline-style overriding
-       * w-full on mobile (which caused text to be constrained to 280px on a 390px screen).
-       */}
-      <div
-        className={[
-          // Position: relative flow on mobile, absolute overlay on desktop
-          "relative sm:absolute z-10 flex flex-col",
-          // Size: full-width on mobile, auto (content-width) on desktop
-          "w-full sm:w-auto sm:min-w-[280px]",
-          // Spacing: padded on mobile, zero on desktop (section handles it via positioning)
-          "px-5 py-8 sm:px-0 sm:py-0",
-          // Desktop centering: top-1/2 + -translate-y-1/2 vertically centers the overlay
-          "sm:top-1/2 sm:-translate-y-1/2",
-          // Desktop horizontal offset via clamp (responsive left position)
-          "sm:[left:clamp(24px,5.5vw,88px)]",
-        ].join(" ")}
-        style={{ maxWidth: 540 }}
-      >
-        {/* Heading — always visible for SEO */}
-        <h1
-          className="leading-[1.05] tracking-tight"
-          style={{
-            fontWeight: 900,
-            fontSize: "clamp(2.25rem, 5vw, 4rem)",
-            color: "#ffffff",
-          }}
-        >
-          Sell Online,{" "}
-          <br />
-          <span style={{ color: "#22C55E" }}>Grow Your Business.</span>
-        </h1>
-
-        {/* Paragraph — hidden on mobile (hero is below fold; saves vertical space) */}
-        <p
-          className="mt-5 hidden sm:block"
-          style={{
-            fontSize: "clamp(0.9375rem, 1.4vw, 1.125rem)",
-            color: "rgba(255,255,255,0.72)",
-            lineHeight: 1.65,
-            maxWidth: 480,
-          }}
-        >
-          Now open for UK sellers. Be among the first to grow on Loadify with 0% commission during launch.
-        </p>
-
-        {/* Checklist — hidden on mobile */}
-        <ul className="mt-5 hidden sm:flex flex-col gap-2.5 sm:gap-3" aria-label="Key benefits">
-          {BULLETS.map((text) => (
-            <li key={text} className="flex items-center gap-3">
-              <svg
-                width="20" height="20" viewBox="0 0 20 20"
-                fill="none" aria-hidden="true" style={{ flexShrink: 0 }}
-              >
-                <circle cx="10" cy="10" r="10" fill="rgba(34,197,94,0.20)" />
-                <path
-                  d="M6 10.5l3 3 5-5.5"
-                  stroke="#22C55E" strokeWidth="2"
-                  strokeLinecap="round" strokeLinejoin="round"
-                />
-              </svg>
-              <span style={{ fontSize: "1rem", color: "rgba(255,255,255,0.90)", fontWeight: 500 }}>
-                {text}
-              </span>
-            </li>
-          ))}
-        </ul>
-
-        {/* CTA Buttons — hidden on mobile (hero is below fold; Quick Actions cover this) */}
-        <div className="mt-6 sm:mt-8 hidden sm:flex flex-col sm:flex-row gap-3 sm:gap-4">
-          <button
-            className="w-full sm:w-auto inline-flex items-center justify-center font-bold rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22C55E]"
-            style={{
-              height: 52,
-              paddingLeft: 32,
-              paddingRight: 32,
-              fontSize: "0.9375rem",
-              color: "#fff",
-              background: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)",
-              boxShadow: "0 4px 20px rgba(34,197,94,0.45)",
-              cursor: "pointer",
-              border: "none",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1.08)";
-              (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 8px 28px rgba(34,197,94,0.55)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.filter = "";
-              (e.currentTarget as HTMLButtonElement).style.transform = "";
-              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 4px 20px rgba(34,197,94,0.45)";
-            }}
-            onClick={() => navigate(user ? "/pp/seller" : "/signup?type=seller")}
-            aria-label="Start selling on Loadify Market"
+        {/* ── Left: headline + sub-text + CTAs ────────────────────────── */}
+        <div className="flex-1">
+          <p className="inline-block bg-[#22C55E] text-[#0d2240] text-[10px] font-black uppercase tracking-[0.15em] px-2 py-0.5 mb-3">
+            UK Wholesale B2B Marketplace
+          </p>
+          <h1
+            className="text-white font-black uppercase tracking-tight leading-[1.05]"
+            style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)" }}
           >
-            Start Selling in Minutes →
-          </button>
+            Sell Wholesale Products<br className="hidden sm:block" />
+            <span className="text-[#22C55E]"> Across the UK</span>
+          </h1>
+          <p className="inline-block border border-white/25 text-white/80 text-[11px] font-semibold tracking-wide px-3 py-1 mt-3">
+            0% Commission Available Until 31 December 2026
+          </p>
+          <p className="text-white/65 text-sm mt-3 leading-relaxed max-w-[500px]">
+            A structured trade marketplace connecting wholesale buyers with verified UK
+            suppliers across 17 product categories. Trade and business accounts only.
+          </p>
 
-          <button
-            className="w-full sm:w-auto inline-flex items-center justify-center font-semibold rounded-full border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            style={{
-              height: 52,
-              paddingLeft: 32,
-              paddingRight: 32,
-              fontSize: "0.9375rem",
-              color: "rgba(255,255,255,0.90)",
-              background: "rgba(255,255,255,0.08)",
-              borderColor: "rgba(255,255,255,0.35)",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-              cursor: "pointer",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.14)";
-              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.60)";
-              (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)";
-              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.35)";
-              (e.currentTarget as HTMLButtonElement).style.transform = "";
-            }}
-            onClick={() => navigate("/catalog")}
-            aria-label="Browse products on Loadify Market"
-          >
-            Browse Marketplace
-          </button>
-        </div>
-
-        {/* Trust mini-features — hidden on mobile */}
-        <div
-          className="mt-5 sm:mt-8 hidden sm:flex flex-wrap gap-x-4 gap-y-2"
-          aria-label="Trust indicators"
-        >
-          {TRUST_ITEMS.map(({ icon, label }) => (
-            <div key={label} className="flex items-center gap-1.5">
-              <span style={{ fontSize: "0.9rem" }} aria-hidden="true">{icon}</span>
-              <span style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.55)", fontWeight: 500 }}>
-                {label}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* Mobile-only countdown strip (hidden on sm+ where the floating card takes over) */}
-        {!expired && (
-          <div
-            className="mt-5 flex items-center gap-3 sm:hidden"
-            style={{
-              padding: "12px 16px",
-              borderRadius: 14,
-              background: "rgba(18,18,18,0.78)",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
-              border: "1px solid rgba(255,255,255,0.08)",
-            }}
-          >
-            <span
-              className="shrink-0 font-bold px-2 py-0.5 rounded-lg border whitespace-nowrap"
-              style={{
-                fontSize: 11,
-                color: "#86efac",
-                background: "rgba(34,197,94,0.18)",
-                borderColor: "rgba(34,197,94,0.32)",
-              }}
+          {/* CTA buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 mt-6">
+            <Link
+              to="/catalog"
+              className="px-8 py-2.5 bg-[#22C55E] text-[#0d2240] text-sm font-black uppercase tracking-wide hover:bg-[#16a34a] transition-colors text-center"
             >
-              0% Fees
-            </span>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.7)" }}>ends in</span>
-            <div className="flex items-baseline gap-0.5 tabular-nums" style={{ color: "#fff" }}>
-              <span style={{ fontSize: 18, fontWeight: 800, lineHeight: 1 }}>{pad2(days)}</span>
-              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>d </span>
-              <span style={{ fontSize: 18, fontWeight: 800, lineHeight: 1 }}>{pad2(hours)}</span>
-              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>h </span>
-              <span style={{ fontSize: 18, fontWeight: 800, lineHeight: 1 }}>{pad2(minutes)}</span>
-              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>m </span>
-              <span style={{ fontSize: 18, fontWeight: 800, lineHeight: 1 }}>{pad2(seconds)}</span>
-              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.4)" }}>s</span>
-            </div>
+              Browse Marketplace
+            </Link>
+            <Link
+              to="/register?type=seller"
+              className="px-8 py-2.5 border-2 border-white/35 text-white text-sm font-bold uppercase tracking-wide hover:border-white hover:bg-white/[0.08] transition-colors text-center"
+            >
+              Start Selling Now
+            </Link>
           </div>
-        )}
+
+          {/* Seller trust bullets */}
+          <div className="mt-4 flex flex-col gap-2">
+            {[
+              "Reach UK wholesale buyers",
+              "No listing fees",
+              "Fast payouts with Stripe",
+            ].map((t) => (
+              <span key={t} className="text-[12px] text-white/70 flex items-center gap-2">
+                <span className="flex items-center justify-center w-4 h-4 rounded-full bg-[#22C55E]/20 text-[#22C55E] font-bold text-[10px] shrink-0">✔</span>
+                {t}
+              </span>
+            ))}
+          </div>
+
+          {/* Trust tags */}
+          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5">
+            {[
+              "Trade accounts only",
+              "0% Commission Until 31 December 2026",
+              "Secure payments via Stripe",
+            ].map((t) => (
+              <span key={t} className="text-[11px] text-white/45 flex items-center gap-1.5">
+                <span className="text-[#22C55E] font-bold">✓</span> {t}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Right: category quick-access panel (desktop only) ────────── */}
+        <aside
+          className="hidden lg:block lg:w-[320px] xl:w-[360px] shrink-0"
+          aria-label="Quick category access"
+        >
+          <div className="border border-white/20">
+            <div className="bg-white/5 px-4 py-2 border-b border-white/15">
+              <span className="text-[10px] font-black text-white/50 uppercase tracking-[0.15em]">
+                Browse Categories
+              </span>
+            </div>
+            <div className="divide-y divide-white/10">
+              {featuredCats.map((cat) => {
+                const Icon = cat.icon;
+                return (
+                  <Link
+                    key={cat.slug}
+                    to={`/category/${cat.slug}`}
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.08] transition-colors"
+                  >
+                    <Icon className={`h-3.5 w-3.5 shrink-0 ${cat.iconColor}`} aria-hidden="true" />
+                    <span className="text-[12px] text-white/80 font-medium flex-1">{cat.label}</span>
+                    <span className="text-white/30 text-sm">›</span>
+                  </Link>
+                );
+              })}
+            </div>
+            <Link
+              to="/catalog"
+              className="flex items-center justify-between px-4 py-2.5 border-t border-white/15 bg-white/5 hover:bg-white/10 transition-colors"
+            >
+              <span className="text-[11px] font-black text-[#22C55E] uppercase tracking-wide">
+                View All 17 Categories
+              </span>
+              <span className="text-[#22C55E] text-sm font-bold">→</span>
+            </Link>
+          </div>
+        </aside>
+
       </div>
-
-      {/* ── Countdown widget — aligned with upper headline region ── */}
-      {!expired && (
-        <div
-          className="absolute z-20 hidden sm:block"
-          style={{ top: "26%", left: "52%", transform: "translate(-50%, -50%)" }}
-        >
-          <div
-            className="flex flex-col items-center gap-2"
-            style={{
-              width: 360,
-              minHeight: 132,
-              padding: "18px 24px",
-              borderRadius: 20,
-              background: "rgba(18,18,18,0.78)",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              boxShadow: "0 24px 70px rgba(0,0,0,0.45)",
-            }}
-          >
-            <span
-              className="font-bold px-3 py-1 rounded-xl border whitespace-nowrap"
-              style={{
-                fontSize: 14,
-                fontWeight: 700,
-                color: "#86efac",
-                background: "rgba(34,197,94,0.18)",
-                borderColor: "rgba(34,197,94,0.32)",
-              }}
-            >
-              0% Fees Until 31 August
-            </span>
-            <span style={{ fontSize: 14, fontWeight: 500, color: "rgba(255,255,255,0.9)" }}>
-              Offer ends in
-            </span>
-            <div className="flex items-baseline gap-1 tabular-nums" style={{ color: "#fff" }}>
-              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(days)}</span>
-              <span style={{ fontSize: 16, color: "rgba(255,255,255,0.4)" }}>d</span>
-              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(hours)}</span>
-              <span style={{ fontSize: 16, color: "rgba(255,255,255,0.4)" }}>h</span>
-              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(minutes)}</span>
-              <span style={{ fontSize: 16, color: "rgba(255,255,255,0.4)" }}>m</span>
-              <span className="font-display" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, letterSpacing: "-0.02em" }}>{pad2(seconds)}</span>
-              <span style={{ fontSize: 16, color: "rgba(255,255,255,0.4)" }}>s</span>
-            </div>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-};
+    </div>
+  </section>
+);
 
 export default HeroSection;

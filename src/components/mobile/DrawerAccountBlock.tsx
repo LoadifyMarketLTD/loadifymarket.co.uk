@@ -73,7 +73,7 @@ const DrawerAccountBlock = ({
 
         {/* Action row */}
         <div className="flex gap-2 pt-1">
-          {user.role !== "admin" && (
+          {user.role !== "admin" && user.role !== "seller" && (
             <Button
               size="sm"
               className="flex-1 h-10 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-300 hover:to-green-400 text-black font-semibold rounded-full shadow-lg transition-all duration-300"

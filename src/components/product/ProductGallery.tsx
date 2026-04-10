@@ -15,7 +15,7 @@ const ProductGallery = ({ images, title }: ProductGalleryProps) => {
       <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-muted border border-border">
         <img
           src={images[activeIndex]}
-          alt={`${title} - image ${activeIndex + 1}`}
+          alt={title}
           className="w-full h-full object-cover"
         />
         {images.length > 1 && (

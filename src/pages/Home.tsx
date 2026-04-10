@@ -1,178 +1,188 @@
 /**
  * src/pages/Home.tsx — root "/" route
  *
- * Mobile-first marketplace layout (desktop keeps the traditional hero-first order
- * via CSS flex ordering — no duplicate DOM nodes, no hidden content).
+ * Stage 3: B2B wholesale marketplace homepage.
+ * Design: structured, business-first, no gradients or startup style.
  *
- * Mobile order  (< lg):
- *  1. Header spacer + UrgencyBar
- *  2. Quick Actions  — 2×2 action grid (Browse, Sell, Orders, Account)
- *  3. Categories     — CategoryGrid   (moved up)
- *  4. Products       — FeaturedProducts + FeaturedListings  (moved up)
- *  5. Trust strip    — TrustStrip (compact)
- *  6. Hero / Social  — minimised, below the fold
- *  7. Deferred sections (FeaturesSection, PlatformFeatures, HowItWorks, SellerJourney, Footer)
- *
- * Desktop order  (≥ lg):
- *  Hero → SocialProof → TrustStrip → FeaturedProducts → CategoryGrid
- *  → FeaturedListings → FeaturesSection → PlatformFeatures → HowItWorks
- *  → SellerJourneySection → Footer  (identical to previous behaviour)
+ * Section order:
+ *  1. Announcement bar
+ *  2. HeroSection        — compact navy hero + category quick panel
+ *  3. FeaturedProducts   — real DB product cards (immediately under hero)
+ *  4. TrustStrip         — white bar with 4 trust items
+ *  5. CategoryGrid       — flat 17-category tile grid
+ *  6. How It Works       — inline 3-step buyer guide
+ *  7. Seller CTA banner  — navy strip, register as supplier
  */
 
 import { Link } from "react-router-dom";
-import {
-  ShoppingBag,
-  Store,
-  Package,
-  UserCircle,
-} from "lucide-react";
+import { Search, CreditCard, Package } from "lucide-react";
 
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import CategoryGrid from "@/components/CategoryGrid";
-import FeaturedListings from "@/components/FeaturedListings";
-import FeaturesSection from "@/components/FeaturesSection";
-import PlatformFeatures from "@/components/PlatformFeatures";
-import HowItWorks from "@/components/HowItWorksSection";
-import SellerJourneySection from "@/components/SellerJourneySection";
-import LazySection from "@/components/LazySection";
-import UrgencyBar from "@/components/UrgencyBar";
-import SocialProof from "@/components/SocialProof";
-import MicroCTA from "@/components/ui/MicroCTA";
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
 
-/* ── Quick Actions — mobile-only 2×2 grid ───────────────────────────────── */
-const QUICK_ACTIONS = [
+const HOW_IT_WORKS = [
   {
-    icon: ShoppingBag,
-    label: "Browse Marketplace",
-    to: "/catalog",
-    iconBg: "bg-emerald-500/20",
-    iconColor: "text-emerald-400",
-    cardBorder: "border-emerald-500/25",
+    num: 1,
+    icon: Search,
+    title: "Browse & Discover",
+    desc: "Find wholesale products from verified UK trade suppliers across 17 categories.",
   },
   {
-    icon: Store,
-    label: "Start Selling",
-    to: "/signup?type=seller",
-    iconBg: "bg-emerald-500/20",
-    iconColor: "text-emerald-400",
-    cardBorder: "border-emerald-500/25",
+    num: 2,
+    icon: CreditCard,
+    title: "Secure Checkout",
+    desc: "Place orders securely via Stripe. All transactions are encrypted and protected.",
   },
   {
+    num: 3,
     icon: Package,
-    label: "My Orders",
-    to: "/pp/buyer/orders",
-    iconBg: "bg-blue-500/20",
-    iconColor: "text-blue-400",
-    cardBorder: "border-white/[0.12]",
+    title: "Delivered to You",
+    desc: "Seller ships directly to your address. Track progress from your buyer account.",
   },
-  {
-    icon: UserCircle,
-    label: "My Account",
-    to: "/pp/buyer",
-    iconBg: "bg-blue-500/20",
-    iconColor: "text-blue-400",
-    cardBorder: "border-white/[0.12]",
-  },
-] as const;
+];
+
+const SELLER_BENEFITS = [
+  "Free to list",
+  "0% Commission until 31 December 2026",
+  "Fast Stripe payouts",
+  "Seller dashboard included",
+];
 
 export default function Home() {
   return (
     <MainLayout forceOpaque={true}>
       <SEO
-        title="Loadify Market | UK Multi-Category Marketplace for Buyers & Sellers"
-        description="Buy and sell wholesale products on Loadify Market — the UK's leading multi-vendor marketplace. Browse thousands of listings from verified UK sellers or start selling today."
+        title="Loadify Market | UK Wholesale B2B Marketplace for Trade Buyers & Suppliers"
+        description="Buy and sell wholesale goods on Loadify Market — the UK's B2B trade marketplace. Browse listings from verified UK suppliers or register your trade business today."
         canonical="/"
       />
-      {/* spacer: clears fixed header — see .pt-header-spacer in index.css */}
+
+      {/* Clears fixed header — see .pt-header-spacer in index.css */}
       <div className="pt-header-spacer" />
 
-      {/* Urgency bar — immediately below header */}
-      <UrgencyBar />
+      {/* ── Announcement bar ─────────────────────────────────────────── */}
+      <div className="bg-[#0d2240] border-b border-[#22C55E]/30 text-center py-1.5">
+        <span className="text-[11px] font-semibold text-[#22C55E]">
+          🚀 0% Commission for early trade sellers — until 31 December 2026
+        </span>
+      </div>
 
-      {/*
-       * flex-col lets us use CSS `order-*` to reorder sections between
-       * mobile and desktop WITHOUT duplicating DOM nodes.
-       */}
-      <main id="main-content" className="flex flex-col">
+      <main id="main-content" className="bg-[#f4f5f7]">
 
-        {/* ── 1. Quick Actions ── mobile-only, always first ──────────────── */}
-        <section
-          aria-label="Quick actions"
-          className="order-1 lg:hidden px-4 py-4 border-b border-white/[0.12] bg-[#0A1930]"
-        >
-          <div className="grid grid-cols-2 gap-3">
-            {QUICK_ACTIONS.map(({ icon: Icon, label, to, iconBg, iconColor, cardBorder }) => (
-              <Link
-                key={to}
-                to={to}
-                className={`flex items-center gap-3 px-3.5 py-3.5 rounded-xl bg-white/[0.07] border ${cardBorder} hover:bg-white/[0.12] hover:border-white/30 active:scale-95 transition-all duration-150`}
+        {/* ── 1. Hero ──────────────────────────────────────────────────── */}
+        <HeroSection />
+
+        {/* ── 2. Real products — immediately under hero ────────────────── */}
+        <FeaturedProducts />
+
+        {/* ── 3. Trust bar ─────────────────────────────────────────────── */}
+        <TrustStrip />
+
+        {/* ── 4. Category grid ─────────────────────────────────────────── */}
+        <CategoryGrid />
+
+        {/* ── 5. How It Works ──────────────────────────────────────────── */}
+        <section className="bg-[#f4f5f7] border-b border-gray-200" aria-labelledby="how-heading">
+          <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-10">
+
+            <div className="mb-6">
+              <h2
+                id="how-heading"
+                className="text-[13px] font-black text-gray-900 uppercase tracking-widest"
               >
-                <span className={`shrink-0 w-9 h-9 rounded-lg ${iconBg} flex items-center justify-center`}>
-                  <Icon className={`h-5 w-5 ${iconColor}`} aria-hidden="true" />
-                </span>
-                <span className="text-sm font-semibold text-white leading-tight">{label}</span>
+                How It Works — For Buyers
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">
+                From browsing to delivery in three simple steps
+              </p>
+            </div>
+
+            {/* 3-step grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-gray-300">
+              {HOW_IT_WORKS.map((step) => {
+                const Icon = step.icon;
+                return (
+                  <div key={step.num} className="bg-white px-6 py-6 flex flex-col gap-4">
+                    {/* Step badge + icon row */}
+                    <div className="flex items-center gap-3">
+                      <span className="w-10 h-10 bg-[#0d2240] text-white text-base font-black flex items-center justify-center shrink-0">
+                        {step.num}
+                      </span>
+                      <span className="w-10 h-10 bg-[#f4f5f7] flex items-center justify-center shrink-0">
+                        <Icon className="h-5 w-5 text-[#0d2240]" aria-hidden="true" />
+                      </span>
+                    </div>
+                    {/* Text */}
+                    <div>
+                      <p className="text-sm font-black text-gray-900 uppercase tracking-wide mb-1.5">
+                        {step.title}
+                      </p>
+                      <p className="text-xs text-gray-500 leading-relaxed">{step.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* CTA row */}
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+              <Link
+                to="/catalog"
+                className="px-7 py-2.5 bg-[#0d2240] text-white text-xs font-black uppercase tracking-wide hover:bg-[#1a3a5c] transition-colors text-center"
+              >
+                Browse Marketplace
               </Link>
-            ))}
+              <Link
+                to="/register"
+                className="px-7 py-2.5 border border-[#0d2240] text-[#0d2240] text-xs font-black uppercase tracking-wide hover:bg-[#0d2240] hover:text-white transition-colors text-center"
+              >
+                Create Buyer Account
+              </Link>
+            </div>
+
           </div>
         </section>
 
-        {/* ── 2. Hero + SocialProof ─────────────────────────────────────────
-         *   Mobile: order-5  → below products (minimised, still SEO-present)
-         *   Desktop: order-0  → first (traditional hero layout)               */}
-        <div className="order-5 lg:order-[0]">
-          <HeroSection />
-          <SocialProof />
-        </div>
+        {/* ── 6. Seller CTA banner ─────────────────────────────────────── */}
+        <section className="bg-[#0d2240]" aria-label="Seller registration">
+          <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
 
-        {/* ── 3. Categories ─────────────────────────────────────────────────
-         *   Mobile: order-2  → immediately after Quick Actions
-         *   Desktop: order-2  → after TrustStrip                              */}
-        <div className="order-2 lg:order-2">
-          <CategoryGrid />
-        </div>
+              <div>
+                <h2 className="text-white text-xl font-black uppercase tracking-tight">
+                  Start Selling on Loadify Market
+                </h2>
+                <p className="text-white/60 text-sm mt-1 max-w-[500px] leading-relaxed">
+                   Register your trade business and list wholesale products. 0% Commission
+                  until 31 December 2026 — then a simple 7% on completed sales.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5">
+                  {SELLER_BENEFITS.map((t) => (
+                    <span key={t} className="text-[11px] text-white/45 flex items-center gap-1.5">
+                      <span className="text-[#22C55E] font-bold">✓</span> {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
 
-        {/* ── 4. Products + Listings ────────────────────────────────────────
-         *   Mobile: order-3  → immediately after categories
-         *   Desktop: order-3  → same                                          */}
-        <div className="order-3 lg:order-3">
-          <FeaturedProducts />
-          <MicroCTA text="Browse All Listings" link="/catalog" />
-          <FeaturedListings />
-        </div>
+              <div className="shrink-0">
+                <Link
+                  to="/register?type=seller"
+                  className="inline-block px-10 py-3 bg-[#22C55E] text-[#0d2240] text-sm font-black uppercase tracking-wide hover:bg-[#16a34a] transition-colors"
+                >
+                  Register as Supplier →
+                </Link>
+              </div>
 
-        {/* ── 5. Trust Strip ────────────────────────────────────────────────
-         *   Mobile: order-4  → compact row after products
-         *   Desktop: order-1  → directly after hero                           */}
-        <div className="order-4 lg:order-1">
-          <TrustStrip />
-        </div>
-
-        {/* ── 6–9. Deferred lower sections (both viewports) ─────────────── */}
-        <div className="order-6">
-          <LazySection>
-            <FeaturesSection />
-          </LazySection>
-
-          <LazySection>
-            <div>
-              <PlatformFeatures />
-              <MicroCTA text="Start Selling Today" link="/register" />
-              <div className="h-px bg-white/10 w-full" />
-              <HowItWorks />
             </div>
-          </LazySection>
-
-          <LazySection>
-            <SellerJourneySection />
-          </LazySection>
-        </div>
+          </div>
+        </section>
 
       </main>
     </MainLayout>
   );
 }
-

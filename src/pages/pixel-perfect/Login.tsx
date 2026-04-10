@@ -1,12 +1,40 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowLeft, ShieldCheck, CheckCircle2, Zap, Users } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import logo from "@/assets/loadify-logo.svg";
 import { useAuthStore } from "@/store";
+
+/* ── Left-panel trust stats ─────────────────────────────────────────── */
+const TRUST_STATS = [
+  { value: "500+", label: "Verified Sellers" },
+  { value: "0%",   label: "Commission Fee"   },
+  { value: "24/7", label: "UK Support"       },
+];
+
+/* ── Left-panel feature bullets ──────────────────────────────────────── */
+const FEATURES = [
+  { Icon: CheckCircle2, text: "Free to register as a buyer" },
+  { Icon: ShieldCheck,  text: "Secured payments via Stripe" },
+  { Icon: Zap,          text: "Same-day seller activation"  },
+  { Icon: Users,        text: "Growing UK seller community" },
+];
+
+/* ── Shared Google / Apple SVG logos ─────────────────────────────────── */
+const GoogleIcon = () => (
+  <svg className="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+  </svg>
+);
+
+const AppleIcon = () => (
+  <svg className="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+  </svg>
+);
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +65,6 @@ const Login = () => {
       const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password });
       if (authError) throw authError;
 
-      // Check if the account has been blocked by an admin
       if (data.user) {
         const { data: userRow } = await supabase
           .from("users")
@@ -54,8 +81,9 @@ const Login = () => {
       if (nextUrl) { navigate(nextUrl, { replace: true }); return; }
       let redirectTo = "/pp/buyer";
       if (data.user) {
-        const { data: profile, error: profileError } = await supabase.from("users").select("role").eq("id", data.user.id).single();
-        if (profileError) console.warn("Could not fetch user role; redirecting to buyer dashboard as fallback:", profileError.message);
+        const { data: profile, error: profileError } = await supabase
+          .from("users").select("role").eq("id", data.user.id).single();
+        if (profileError) console.warn("Could not fetch user role:", profileError.message);
         if (profile?.role === "seller") redirectTo = "/pp/seller";
         else if (profile?.role === "admin") redirectTo = "/pp/admin";
       }
@@ -68,146 +96,222 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left — branding panel (desktop only) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-hero relative items-center justify-center p-12">
-        <div className="absolute inset-0 opacity-5" style={{backgroundImage:"radial-gradient(circle,rgba(255,255,255,0.9) 1px,transparent 1px)",backgroundSize:"24px 24px"}} />
-        <div className="relative z-10 max-w-md text-center space-y-6">
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <img src={logo} alt="Loadify Market" className="h-12 w-12" />
-            <span className="flex flex-col leading-tight">
-              <span className="font-display text-3xl font-bold text-primary-foreground">Loadify</span>
-              <span className="font-display text-2xl font-bold text-accent">Market</span>
-            </span>
+    <div className="min-h-screen flex bg-[#f5f7fa]">
+
+      {/* ── LEFT — dark navy branding panel (desktop only) ─────────────── */}
+      <div className="hidden lg:flex lg:w-[44%] xl:w-[42%] bg-[#0A1930] relative flex-col items-center justify-center p-10 xl:p-14 overflow-hidden">
+        {/* Subtle dot-grid texture */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 opacity-[0.04]"
+          style={{ backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", backgroundSize: "28px 28px" }}
+        />
+        {/* Soft green glow */}
+        <div aria-hidden="true" className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[28rem] h-[28rem] bg-[#22C55E]/10 rounded-full blur-[100px] pointer-events-none" />
+
+        <div className="relative z-10 max-w-xs w-full space-y-8">
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="Loadify Market" className="h-11 w-11" />
+            <div className="flex flex-col leading-none">
+              <span className="text-[22px] font-bold text-white" style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif", letterSpacing: "-0.02em" }}>Loadify</span>
+              <span className="text-[20px] font-bold text-[#22C55E]" style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif", letterSpacing: "-0.02em" }}>Market</span>
+            </div>
           </div>
-          <h2 className="font-display text-2xl font-bold text-primary-foreground">
-            The UK Multi-Category Marketplace
-          </h2>
-          <p className="text-primary-foreground/70 text-lg leading-relaxed">
-            A trusted platform connecting buyers and sellers of physical goods across all categories in the UK.
-          </p>
-          <div className="grid grid-cols-3 gap-4 pt-4">
-            {[
-              { label: "Registered Sellers", value: "✓" },
-              { label: "Secure Payments", value: "✓" },
-              { label: "UK Businesses", value: "✓" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="font-display text-2xl font-bold text-accent">{stat.value}</div>
-                <div className="text-xs text-primary-foreground/60 mt-1">{stat.label}</div>
+
+          {/* Headline */}
+          <div className="space-y-3">
+            <h2 className="text-[26px] font-bold text-white leading-tight" style={{ letterSpacing: "-0.02em" }}>
+              The UK's Multi-Category Wholesale Marketplace
+            </h2>
+            <p className="text-white/55 text-[15px] leading-relaxed">
+              Connecting verified UK sellers with buyers across every category — secure, modern, and commission-free.
+            </p>
+          </div>
+
+          {/* Trust stats */}
+          <div className="grid grid-cols-3 gap-3">
+            {TRUST_STATS.map(({ value, label }) => (
+              <div key={label} className="rounded-xl bg-white/[0.05] border border-white/[0.08] p-3 text-center">
+                <div className="text-[22px] font-bold text-[#22C55E] leading-none">{value}</div>
+                <div className="text-white/45 text-[11px] mt-1.5 leading-tight">{label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Feature bullets */}
+          <div className="space-y-3">
+            {FEATURES.map(({ Icon, text }) => (
+              <div key={text} className="flex items-center gap-3">
+                <Icon className="h-4 w-4 text-[#22C55E] shrink-0" />
+                <span className="text-white/65 text-sm">{text}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Right — form (full-width on mobile, half-width on desktop) */}
-      {/* pt-safe pushes the card below the Android status bar / iOS notch */}
-      <div className="flex-1 flex flex-col bg-background pt-safe">
-        <div className="flex-1 flex items-center justify-center px-5 py-8 sm:p-12">
-        <div className="w-full max-w-md space-y-6">
+      {/* ── RIGHT — form panel ─────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col min-h-screen">
+
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-5 sm:px-8 py-4">
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center justify-center gap-2 mb-2">
-            <img src={logo} alt="Loadify Market" className="h-9 w-9" />
-            <span className="flex flex-col leading-tight">
-              <span className="font-display text-xl font-bold text-foreground">Loadify</span>
-              <span className="font-display text-base font-bold text-primary">Market</span>
+          <Link to="/" className="lg:hidden flex items-center gap-2">
+            <img src={logo} alt="Loadify Market" className="h-7 w-7" />
+            <span className="font-bold text-[15px] text-gray-800" style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}>
+              Loadify Market
             </span>
-          </div>
+          </Link>
+          <div className="hidden lg:block" />
+          <Link
+            to="/"
+            className="flex items-center gap-1.5 text-[13px] text-gray-400 hover:text-gray-700 transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to site
+          </Link>
+        </div>
 
-          <div className="space-y-2 text-center">
-            <h1 className="font-display text-3xl font-bold text-foreground">Welcome back</h1>
-            <p className="text-muted-foreground">Sign in to access your account</p>
-          </div>
+        {/* Centered form */}
+        <div className="flex-1 flex items-center justify-center px-4 py-6 sm:px-8">
+          <div className="w-full max-w-[400px]">
 
-          {/* Social buttons */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" className="h-11 gap-2" type="button" onClick={() => toast({ title: "Coming soon", description: "Google sign-in will be available after launch." })}>
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-              </svg>
-              Google
-            </Button>
-            <Button variant="outline" className="h-11 gap-2" type="button" onClick={() => toast({ title: "Coming soon", description: "Apple sign-in will be available after launch." })}>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-              </svg>
-              Apple
-            </Button>
-          </div>
+            {/* Form card */}
+            <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.07)] border border-gray-100 p-7 sm:p-8">
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">or continue with email</span>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="name@company.com"
-                  className="pl-10 h-11"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+              {/* Heading */}
+              <div className="mb-6">
+                <h1 className="text-[22px] font-bold text-gray-900 leading-tight" style={{ letterSpacing: "-0.02em" }}>
+                  Welcome back
+                </h1>
+                <p className="text-gray-400 text-sm mt-1">Sign in to your Loadify Market account</p>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  className="pl-10 pr-10 h-11"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+              {/* Social sign-in */}
+              <div className="grid grid-cols-2 gap-3 mb-5">
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => toast({ title: "Coming soon", description: "Google sign-in will be available after launch." })}
+                  className="flex items-center justify-center gap-2 h-10 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-[13px] font-medium text-gray-600 transition-colors"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  <GoogleIcon /> Google
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toast({ title: "Coming soon", description: "Apple sign-in will be available after launch." })}
+                  className="flex items-center justify-center gap-2 h-10 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-[13px] font-medium text-gray-600 transition-colors"
+                >
+                  <AppleIcon /> Apple
                 </button>
               </div>
+
+              {/* Divider */}
+              <div className="relative mb-5">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-100" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-white px-3 text-[11px] text-gray-400 uppercase tracking-wide">or continue with email</span>
+                </div>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-4">
+
+                {/* Email */}
+                <div className="space-y-1.5">
+                  <label htmlFor="login-email" className="block text-[13px] font-medium text-gray-700">
+                    Email address
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    <input
+                      id="login-email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      placeholder="name@company.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full h-11 pl-10 pr-3.5 rounded-lg border border-gray-200 bg-gray-50 text-[14px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#22C55E]/25 focus:border-[#22C55E] transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="login-password" className="block text-[13px] font-medium text-gray-700">
+                      Password
+                    </label>
+                    <Link to="/forgot-password" className="text-[12px] text-[#16A34A] hover:text-[#15803D] hover:underline transition-colors">
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                    <input
+                      id="login-password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      required
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full h-11 pl-10 pr-10 rounded-lg border border-gray-200 bg-gray-50 text-[14px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#22C55E]/25 focus:border-[#22C55E] transition-all"
+                    />
+                    <button
+                      type="button"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Error */}
+                {error && (
+                  <div className="flex items-start gap-2.5 rounded-lg bg-red-50 border border-red-200 px-3.5 py-3">
+                    <svg className="h-4 w-4 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <p className="text-[13px] text-red-600 leading-snug">{error}</p>
+                  </div>
+                )}
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-11 rounded-lg text-white text-[14px] font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    background: "linear-gradient(135deg, #16A34A 0%, #22C55E 100%)",
+                    boxShadow: "0 2px 12px rgba(34,197,94,0.35)",
+                  }}
+                >
+                  {loading ? "Signing in…" : "Sign In"}
+                </button>
+
+                {/* SSL trust */}
+                <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400">
+                  <ShieldCheck className="h-3.5 w-3.5 text-gray-400" />
+                  <span>Secured with 256-bit SSL encryption</span>
+                </div>
+
+              </form>
             </div>
 
-            {error && (
-              <p className="text-sm text-destructive text-center">{error}</p>
-            )}
-            <Button type="submit" disabled={loading} className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
-              {loading ? "Signing in…" : "Sign In"}
-            </Button>
-          </form>
-
-          <p className="text-center text-sm text-muted-foreground pb-safe">
-            Don't have an account?{" "}
-            <Link to="/signup" className="text-primary font-medium hover:underline">
-              Create account
-            </Link>
-          </p>
-        </div>
+            {/* Footer */}
+            <p className="text-center text-[13px] text-gray-500 mt-5">
+              Don't have an account?{" "}
+              <Link to="/signup" className="text-[#16A34A] font-semibold hover:text-[#15803D] hover:underline transition-colors">
+                Create account
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

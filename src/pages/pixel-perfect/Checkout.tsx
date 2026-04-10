@@ -89,6 +89,20 @@ const Checkout = () => {
     setIsSubmitting(true);
     setCheckoutError(null);
 
+    // Block purchase of own products
+    if (user) {
+      const ownProductInCart = cartItems.find(
+        (item) => item.product.sellerId && item.product.sellerId === user.id
+      );
+      if (ownProductInCart) {
+        setCheckoutError(
+          `You cannot purchase your own product "${ownProductInCart.product.title}". Please remove it from your cart.`
+        );
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     try {
       const address = {
         line1: shippingData.address1,

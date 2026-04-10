@@ -31,11 +31,11 @@ const supabase = process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_R
 
 // ── 0% Commission Promotion ───────────────────────────────────────────────────
 // The platform charges 0% commission on all transactions until
-// 31 August 2026 23:59:59 BST (= 22:59:59 UTC). After that date the normal
+// 31 December 2026 23:59:59 GMT (= 23:59:59 UTC). After that date the normal
 // configured commission rate resumes automatically without any manual intervention.
 //
 // Exported so the unit test can reference the exact deadline value.
-export const ZERO_COMMISSION_PROMO_END_UTC = new Date('2026-08-31T22:59:59Z').getTime();
+export const ZERO_COMMISSION_PROMO_END_UTC = new Date('2026-12-31T23:59:59Z').getTime();
 
 /** Default post-promo commission rate used as a fallback if DB read fails. */
 export const DEFAULT_COMMISSION_RATE = 0.07;
