@@ -1283,6 +1283,63 @@ CREATE TRIGGER trg_promoted_listings_updatedAt BEFORE UPDATE ON promoted_listing
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ──────────────────────────────────────────────────────────────
+-- SECTION 9b: STRIPE EVENTS (idempotent webhook processing)
+-- ──────────────────────────────────────────────────────────────
+-- Tracks every Stripe event that has been processed.
+-- The UNIQUE constraint on event_id prevents duplicate processing
+-- even if Stripe retries delivery of the same event.
+
+CREATE TABLE IF NOT EXISTS stripe_events (
+  id            UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id      TEXT         NOT NULL,
+  event_type    TEXT         NOT NULL,
+  livemode      BOOLEAN      NOT NULL DEFAULT FALSE,
+  processed_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  status        TEXT         NOT NULL DEFAULT 'processed',  -- processed | failed | skipped
+  error_message TEXT,
+  metadata      JSONB,
+  CONSTRAINT stripe_events_event_id_unique UNIQUE (event_id)
+);
+CREATE INDEX IF NOT EXISTS idx_stripe_events_event_id   ON stripe_events (event_id);
+CREATE INDEX IF NOT EXISTS idx_stripe_events_event_type ON stripe_events (event_type);
+CREATE INDEX IF NOT EXISTS idx_stripe_events_processed  ON stripe_events (processed_at DESC);
+
+COMMENT ON TABLE stripe_events IS
+  'Record of every Stripe webhook event processed. event_id is UNIQUE to prevent '
+  'duplicate order creation if Stripe retries delivery.';
+
+-- ──────────────────────────────────────────────────────────────
+-- SECTION 9c: SELLER PROFILES PUBLIC VIEW
+-- ──────────────────────────────────────────────────────────────
+-- Safe public projection of seller_profiles — excludes sensitive fields
+-- (commission, listingLimit, stripeAccountId, stripeConnectStatus, etc.)
+-- Public pages read this view instead of the base table.
+
+CREATE OR REPLACE VIEW seller_profiles_public AS
+SELECT
+  "userId",
+  "businessName",
+  "marketplaceRole",
+  "isApproved",
+  "verificationStatus",
+  rating,
+  "salesCount",
+  "totalSales",
+  "deliverySuccessRate",
+  "paymentBehaviour",
+  "businessAddress",
+  "contactPhone",
+  "createdAt"
+FROM seller_profiles;
+
+GRANT SELECT ON seller_profiles_public TO anon, authenticated;
+
+COMMENT ON VIEW seller_profiles_public IS
+  'Safe public projection of seller_profiles. PK is userId. '
+  'Excludes commission, listingLimit, stripeAccountId, stripeConnectStatus, '
+  'vatNumber, companyRegistrationNumber, disputeRate, and other sensitive fields.';
+
+-- ──────────────────────────────────────────────────────────────
 -- SECTION 10: ROW LEVEL SECURITY
 -- ──────────────────────────────────────────────────────────────
 
@@ -1330,6 +1387,7 @@ ALTER TABLE notification_settings   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wishlists               ENABLE ROW LEVEL SECURITY;
 ALTER TABLE saved_searches          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE promoted_listings       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stripe_events           ENABLE ROW LEVEL SECURITY;
 
 -- USERS
 CREATE POLICY "users_select" ON users FOR SELECT USING (auth.uid() = id OR is_admin());
@@ -1341,7 +1399,10 @@ CREATE POLICY "buyer_profiles_all" ON buyer_profiles FOR ALL
   USING (auth.uid() = "userId" OR is_admin())
   WITH CHECK (auth.uid() = "userId" OR is_admin());
 -- SELLER PROFILES
-CREATE POLICY "seller_profiles_select" ON seller_profiles FOR SELECT USING (TRUE);
+-- Full table access is restricted to the row owner or admin.
+-- Public pages read seller_profiles_public (the safe view) via anon/authenticated.
+CREATE POLICY "seller_profiles_select" ON seller_profiles FOR SELECT
+  USING (auth.uid() = "userId" OR is_admin());
 CREATE POLICY "seller_profiles_update" ON seller_profiles FOR UPDATE
   USING (auth.uid() = "userId" OR is_admin());
 CREATE POLICY "seller_profiles_insert" ON seller_profiles FOR INSERT
@@ -1618,6 +1679,10 @@ CREATE POLICY "promoted_listings_insert" ON promoted_listings FOR INSERT
   WITH CHECK (auth.uid() = "sellerId");
 CREATE POLICY "promoted_listings_update" ON promoted_listings FOR UPDATE
   USING (auth.uid() = "sellerId" OR is_admin());
+-- STRIPE EVENTS — service role (webhook) writes; admin reads
+CREATE POLICY "stripe_events_admin_read"  ON stripe_events FOR SELECT USING (is_admin());
+CREATE POLICY "stripe_events_admin_write" ON stripe_events FOR ALL
+  USING (is_admin()) WITH CHECK (is_admin());
 
 -- ──────────────────────────────────────────────────────────────
 -- SEED: CATEGORIES

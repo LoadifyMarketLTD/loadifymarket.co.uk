@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import MainLayout from "@/layouts/MainLayout";
+import SEO from "@/components/SEO";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, CreditCard, MapPin, User, Phone, Mail,
@@ -153,7 +154,13 @@ const Checkout = () => {
   if (cartItems.length === 0) {
     return (
       <MainLayout>
-        <main className="pt-28 pb-16">
+        <SEO
+          title="Checkout | Loadify Market"
+          description="Complete your purchase securely on Loadify Market."
+          canonical="/checkout"
+          robots="noindex,nofollow"
+        />
+        <main id="main-content" className="pt-28 pb-16">
           <div className="container mx-auto px-4 text-center py-20">
             <h1 className="font-display text-2xl font-bold text-foreground mb-4">Your cart is empty</h1>
             <p className="text-muted-foreground mb-6">Add some items before checking out.</p>
@@ -170,8 +177,13 @@ const Checkout = () => {
 
   return (
     <MainLayout>
-
-      <main className="pt-28 pb-16">
+      <SEO
+        title="Checkout | Loadify Market"
+        description="Complete your purchase securely on Loadify Market."
+        canonical="/checkout"
+        robots="noindex,nofollow"
+      />
+      <main id="main-content" className="pt-28 pb-16">
         <div className="container mx-auto px-4">
           <BreadcrumbNav
             items={[

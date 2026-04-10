@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
+import SEO from "@/components/SEO";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, ShieldCheck, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
@@ -16,7 +17,13 @@ const Cart = () => {
   if (cartItems.length === 0) {
     return (
       <MainLayout>
-        <main className="pt-28 pb-16">
+        <SEO
+          title="Shopping Cart | Loadify Market"
+          description="Review items in your Loadify Market shopping cart before checkout."
+          canonical="/cart"
+          robots="noindex,nofollow"
+        />
+        <main id="main-content" className="pt-28 pb-16">
           <div className="container mx-auto px-4">
             <div className="max-w-md mx-auto text-center space-y-6 py-20">
               <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto">
@@ -40,8 +47,13 @@ const Cart = () => {
 
   return (
     <MainLayout>
-
-      <main className="pt-28 pb-16">
+      <SEO
+        title="Shopping Cart | Loadify Market"
+        description="Review items in your Loadify Market shopping cart before checkout."
+        canonical="/cart"
+        robots="noindex,nofollow"
+      />
+      <main id="main-content" className="pt-28 pb-16">
         <div className="container mx-auto px-4">
           <BreadcrumbNav
             items={[

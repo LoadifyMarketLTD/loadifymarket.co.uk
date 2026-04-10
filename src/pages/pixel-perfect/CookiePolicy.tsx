@@ -6,7 +6,7 @@ const CookiePolicy = () => {
   return (
     <MainLayout>
       <SEO title="Cookie Policy | Loadify Market" description="Find out how Loadify Market uses cookies and how you can manage your cookie preferences." canonical="/cookies" />
-      <main className="pt-28 pb-20">
+      <main id="main-content" className="pt-28 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Cookie Policy" }]} backTo="/" />
         </div>

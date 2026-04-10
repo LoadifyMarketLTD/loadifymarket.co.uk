@@ -4,4 +4,13 @@ Allow: /
 # Disallow auth-gated dashboard routes — no SEO value and wastes crawl budget.
 Disallow: /pp/
 
+# Disallow transactional and auth-only pages — no SEO value.
+Disallow: /checkout
+Disallow: /cart
+Disallow: /order-success
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+
 Sitemap: https://loadifymarket.co.uk/sitemap.xml

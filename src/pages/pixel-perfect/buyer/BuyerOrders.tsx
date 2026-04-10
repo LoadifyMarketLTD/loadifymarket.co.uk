@@ -91,17 +91,25 @@ const BuyerOrders = () => {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Failed to generate invoice');
+        throw new Error((data as { error?: string }).error || 'Failed to generate invoice');
       }
-      const blob = await res.blob();
+      // The function returns an HTML page — open it in a new tab so the user
+      // can print or save as PDF using their browser's built-in print dialog.
+      const html = await res.text();
+      const blob = new Blob([html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `invoice-${orderNumber || orderId.slice(0, 8)}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const win = window.open(url, '_blank', 'noopener,noreferrer');
+      if (!win) {
+        // Fallback: download as .html if pop-up was blocked
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `invoice-${orderNumber || orderId.slice(0, 8)}.html`;
+        a.click();
+      }
+      // Revoke after a short delay to allow the new tab to fully load
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
     } catch (err) {
-      toast({ title: 'Invoice download failed', description: (err as Error).message, variant: 'destructive' });
+      toast({ title: 'Invoice generation failed', description: (err as Error).message, variant: 'destructive' });
     }
   };
 

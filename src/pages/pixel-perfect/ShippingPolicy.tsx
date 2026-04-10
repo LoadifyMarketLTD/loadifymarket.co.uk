@@ -6,7 +6,7 @@ const ShippingPolicy = () => {
   return (
     <MainLayout>
       <SEO title="Shipping Policy | Loadify Market" description="Learn about delivery options, timescales, and shipping policies for orders on Loadify Market." canonical="/shipping-policy" />
-      <main className="pt-28 pb-20">
+      <main id="main-content" className="pt-28 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Shipping Policy" }]} backTo="/" />
         </div>
