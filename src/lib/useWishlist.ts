@@ -21,9 +21,7 @@ export function useWishlist() {
         .eq('userId', user.id)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
+      if (error) throw error;
 
       const productIds = data?.productIds || [];
       const inWishlist = productIds.includes(productId);
