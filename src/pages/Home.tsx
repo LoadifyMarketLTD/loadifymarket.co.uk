@@ -81,6 +81,9 @@ const QUICK_ACTIONS = [
 
 export default function Home() {
   return (
+    // forceOpaque={false} — homepage uses a transparent header that transitions
+    // to opaque on scroll, giving a hero-section overlay effect.
+    // All other pages use the default forceOpaque={true}.
     <MainLayout forceOpaque={false}>
       <SEO
         title="Loadify Market | UK Multi-Category Marketplace for Buyers & Sellers"
