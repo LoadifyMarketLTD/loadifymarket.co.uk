@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams, Navigate } from "react-router-dom";
 import { CheckCircle2, XCircle, ArrowRight, RefreshCw, Loader2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { hasAdminAccess } from "@/lib/roleUtils";
 
 interface SetupStatus {
   sellerStatus: string;
@@ -184,6 +185,12 @@ const SellerSetupPage = () => {
       return () => clearTimeout(timer);
     }
   }, [status, navigate]);
+
+  // Redirect non-sellers to their own dashboard.
+  // RequireAuth is intentionally used at the route level (not RequireSeller) so that
+  // draft/submitted sellers can complete onboarding, but buyers and admins must not land here.
+  if (user && hasAdminAccess(user)) return <Navigate to="/pp/admin" replace />;
+  if (user && user.role !== 'seller') return <Navigate to="/pp/buyer" replace />;
 
   const handleConnectStripe = async () => {
     if (!user) return;

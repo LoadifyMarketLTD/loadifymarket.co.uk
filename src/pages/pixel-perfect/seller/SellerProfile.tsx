@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
 import {
   Building2, MapPin, Mail, Star,
   ShieldCheck, Save, Package, Calendar, ExternalLink
@@ -12,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { useToast } from "@/hooks/use-toast";
+import { hasAdminAccess } from "@/lib/roleUtils";
 
 interface ProfileForm {
   businessName: string;
@@ -89,6 +91,13 @@ const SellerProfile = () => {
     };
     load();
   }, [user]);
+
+  // Redirect non-sellers to their own dashboard.
+  // RequireAuth is intentionally used at the route level (not RequireSeller) so that
+  // draft/submitted sellers can edit their profile during onboarding, but buyers and
+  // admins must not land here.
+  if (user && hasAdminAccess(user)) return <Navigate to="/pp/admin" replace />;
+  if (user && user.role !== 'seller') return <Navigate to="/pp/buyer" replace />;
 
   const updateField = (field: keyof ProfileForm, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
