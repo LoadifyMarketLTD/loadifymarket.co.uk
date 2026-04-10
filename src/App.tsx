@@ -292,13 +292,28 @@ function App() {
     // Build a minimal User object from Supabase auth session metadata when the
     // public.users table query fails or returns no row (e.g. the live database
     // hasn't had the 20_fix_users_table.sql migration applied yet).
-    function userFromSession(authUser: { id: string; email?: string | null; user_metadata?: Record<string, unknown>; email_confirmed_at?: string | null }): import('./types').User {
+    function userFromSession(authUser: { id: string; email?: string | null; user_metadata?: Record<string, unknown>; app_metadata?: Record<string, unknown>; email_confirmed_at?: string | null }): import('./types').User {
       const meta = authUser.user_metadata || {};
+      // app_metadata is set server-side (e.g. by the Supabase Auth trigger) and
+      // is not modifiable by the client, making it more authoritative than
+      // user_metadata for the role field.
+      const appMeta = authUser.app_metadata || {};
       const strVal = (key: string) => (typeof meta[key] === 'string' ? (meta[key] as string) : undefined);
+      const strValApp = (key: string) => (typeof appMeta[key] === 'string' ? (appMeta[key] as string) : undefined);
+      // Prefer app_metadata.role over user_metadata.role; only fall back to
+      // 'buyer' as an absolute last resort — this prevents admins from being
+      // misidentified when the users table is temporarily unreachable.
+      const resolvedRole = ((strValApp('role') || strVal('role')) as import('./types').UserRole) || 'buyer';
+      console.warn(
+        `[Auth] userFromSession fallback for ${authUser.email ?? authUser.id}: ` +
+        `resolved role="${resolvedRole}" from auth metadata ` +
+        `(app_metadata.role="${String(appMeta['role'] ?? 'unset')}", user_metadata.role="${String(meta['role'] ?? 'unset')}"). ` +
+        `If the role is wrong, verify that public.users is reachable and the row exists.`
+      );
       return {
         id: authUser.id,
         email: authUser.email ?? '',
-        role: (strVal('role') as import('./types').UserRole) || 'buyer',
+        role: resolvedRole,
         firstName: strVal('first_name'),
         lastName: strVal('last_name'),
         // Derive from Supabase Auth state — email_confirmed_at is set when the
