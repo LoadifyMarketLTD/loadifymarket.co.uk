@@ -144,7 +144,7 @@ const Signup = () => {
           {/* ══════════════════════════════════════════════════════════
               PAGE HEADER — dominant B2B registration heading
           ══════════════════════════════════════════════════════════ */}
-          <div className="mb-0">
+          <div className="mb-3">
 
             {/* Primary heading bar */}
             <div className="bg-[#0d2240] px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
@@ -521,13 +521,6 @@ const Signup = () => {
             ════════════════════════════════════════════════════════ */}
             <div className="bg-[#f4f5f7] border border-t-4 border-t-[#0d2240] border-x-gray-400 border-b-gray-400">
 
-              {/* Section label */}
-              <div className="border-b border-gray-300 px-5 py-1.5 bg-[#e8eaed]">
-                <span className="text-[10px] font-black text-[#0d2240] uppercase tracking-widest">
-                  Step 3 of 3 — Confirm &amp; Submit Application
-                </span>
-              </div>
-
               <div className="px-5 py-4 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
 
                 {/* Left: reCAPTCHA + Terms */}
@@ -588,7 +581,7 @@ const Signup = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-10 py-3 bg-[#0d2240] hover:bg-[#1a3a5c] text-white text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-2 border-[#0d2240] w-full lg:w-auto"
+                    className="px-14 py-3 bg-[#0d2240] hover:bg-[#1a3a5c] text-white text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-2 border-[#0d2240] w-full lg:min-w-[280px]"
                   >
                     {loading
                       ? "Submitting…"
