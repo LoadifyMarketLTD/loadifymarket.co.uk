@@ -1,7 +1,7 @@
 /**
  * Unit tests for the dynamic commission-rate logic in stripe-webhook.ts.
  *
- * The platform runs a 0% commission promotion until 31 August 2026 23:59:59 BST.
+ * The platform runs a 0% commission promotion until 31 December 2026 23:59:59 GMT.
  * After that date the normal 7% rate must resume automatically.
  *
  * We use vi.useFakeTimers() + vi.setSystemTime() to pin Date.now() without
@@ -41,13 +41,13 @@ describe('getCommissionRate – 0% commission promotion', () => {
 
   it('returns 0.07 well after the promo has ended', () => {
     vi.useFakeTimers();
-    // 1 September 2026 00:00:00 UTC — one day after the deadline
-    vi.setSystemTime(new Date('2026-09-01T00:00:00Z').getTime());
+    // 1 January 2027 00:00:00 UTC — one day after the deadline
+    vi.setSystemTime(new Date('2027-01-01T00:00:00Z').getTime());
     expect(getCommissionRate()).toBe(0.07);
   });
 
-  it('PROMO_END deadline is 31 August 2026 22:59:59 UTC (= 23:59:59 BST)', () => {
+  it('PROMO_END deadline is 31 December 2026 23:59:59 UTC (= 23:59:59 GMT)', () => {
     const d = new Date(ZERO_COMMISSION_PROMO_END_UTC);
-    expect(d.toISOString()).toBe('2026-08-31T22:59:59.000Z');
+    expect(d.toISOString()).toBe('2026-12-31T23:59:59.000Z');
   });
 });
