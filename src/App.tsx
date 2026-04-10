@@ -403,34 +403,45 @@ function App() {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
-          supabase
-            .from('users')
-            .select('*, seller_profiles(sellerStatus)')
-            .eq('id', session.user.id)
-            .maybeSingle()
-            .then(({ data, error }) => {
-              if (data) {
-                // Blocked users must not be rehydrated — sign them out immediately.
-                if (data.isActive === false) {
-                  supabase.auth.signOut();
-                  setUser(null);
-                  return;
-                }
-                normalizeSellerStatus(data as unknown as Record<string, unknown>);
-                // Always derive isEmailVerified from Supabase Auth (source of truth).
-                (data as Record<string, unknown>).isEmailVerified =
-                  session.user.email_confirmed_at != null;
-                setUser(data);
-              } else {
-                if (error) {
-                  console.warn('users table query failed, falling back to auth session:', error.message);
-                  setUser(userFromSession(session.user));
-                } else {
-                  // Row not found — treat as signed-out.
-                  setUser(null);
-                }
+          // Signal to all route guards that profile loading is in progress.
+          // Without this, guards rendered immediately after login see
+          // isLoading=false + user=null (from the previous getSession() call
+          // that found no session) and redirect to /login before the profile
+          // fetch below completes — which ultimately lands everyone on /buyer.
+          setLoading(true);
+          (async () => {
+            const { data, error } = await supabase
+              .from('users')
+              .select('*, seller_profiles(sellerStatus)')
+              .eq('id', session.user.id)
+              .maybeSingle();
+            if (data) {
+              // Blocked users must not be rehydrated — sign them out immediately.
+              if (data.isActive === false) {
+                await supabase.auth.signOut();
+                setUser(null);
+                return;
               }
-            });
+              normalizeSellerStatus(data as unknown as Record<string, unknown>);
+              // Always derive isEmailVerified from Supabase Auth (source of truth).
+              (data as Record<string, unknown>).isEmailVerified =
+                session.user.email_confirmed_at != null;
+              setUser(data);
+            } else {
+              if (error) {
+                console.warn('users table query failed, falling back to auth session:', error.message);
+                setUser(userFromSession(session.user));
+              } else {
+                // Row not found — treat as signed-out.
+                setUser(null);
+              }
+            }
+          })().catch((err: unknown) => {
+            // Network error during profile fetch — unblock loading so the
+            // app does not hang on a spinner indefinitely.
+            console.error('[Auth] Profile fetch threw unexpectedly:', err);
+            setLoading(false);
+          });
         } else {
           setUser(null);
         }

@@ -52,7 +52,9 @@ const Login = () => {
       if (nextUrl) navigate(nextUrl, { replace: true });
       else if (user.role === "seller") navigate("/seller", { replace: true });
       else if (user.role === "admin") navigate("/admin", { replace: true });
-      else navigate("/buyer", { replace: true });
+      else if (user.role === "buyer") navigate("/buyer", { replace: true });
+      // For any other/unknown role value, do not navigate — wait for the
+      // Zustand store to receive a corrected profile from the DB query.
     }
   }, [user, searchParams, navigate]);
 
