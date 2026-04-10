@@ -39,22 +39,22 @@ const FeaturedProducts = () => {
   if (loading) return null;
 
   return (
-    <section className="bg-white border-b border-gray-200" aria-label="Marketplace products">
+    <section className="bg-[#0d2240] border-b border-[#1a3a5c]" aria-label="Marketplace products">
       <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
 
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-[13px] font-black text-gray-900 uppercase tracking-widest">
+            <h2 className="text-[13px] font-black text-white uppercase tracking-widest">
               Marketplace Products
             </h2>
-            <p className="text-[11px] text-gray-400 mt-0.5">
+            <p className="text-[11px] text-white/50 mt-0.5">
               Listed by verified UK trade suppliers
             </p>
           </div>
           {products.length > 0 && (
             <Link
               to="/catalog"
-              className="text-[11px] font-bold text-[#0d2240] uppercase tracking-wide hover:underline flex items-center gap-1"
+              className="text-[11px] font-bold text-[#22C55E] uppercase tracking-wide hover:underline flex items-center gap-1"
             >
               Browse All <ArrowRight className="h-3 w-3" />
             </Link>
@@ -123,17 +123,17 @@ const FeaturedProducts = () => {
           </div>
         ) : (
           /* Professional empty state — no fake listings */
-          <div className="border border-gray-200 bg-[#f4f5f7] px-6 py-10">
-            <p className="text-sm font-semibold text-gray-700">
+          <div className="border border-white/20 bg-white/5 px-6 py-10">
+            <p className="text-sm font-semibold text-white">
               No listings available yet.
             </p>
-            <p className="text-xs text-gray-500 mt-1.5 mb-6 max-w-md leading-relaxed">
+            <p className="text-xs text-white/60 mt-1.5 mb-6 max-w-md leading-relaxed">
               We are currently onboarding verified UK trade suppliers.
               Be among the first to list wholesale products on Loadify Market.
             </p>
             <Link
               to="/register?type=seller"
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#0d2240] text-white text-xs font-bold uppercase tracking-wide hover:bg-[#1a3a5c] transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#22C55E] text-[#0d2240] text-xs font-bold uppercase tracking-wide hover:bg-[#16a34a] transition-colors"
             >
               Register as Supplier <ArrowRight className="h-3.5 w-3.5" />
             </Link>
