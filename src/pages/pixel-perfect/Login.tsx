@@ -156,6 +156,7 @@ const Login = () => {
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="email"
                   placeholder="name@company.com"
                   className="pl-10 h-11"
                   value={email}
@@ -176,6 +177,7 @@ const Login = () => {
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
                   placeholder="••••••••"
                   className="pl-10 pr-10 h-11"
                   value={password}

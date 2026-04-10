@@ -99,8 +99,47 @@ export const handler: Handler = async (event) => {
     }
 
     if (event.httpMethod === 'POST') {
-      // Generate signed upload URL
-      const fileName = `${shipmentId}-${Date.now()}.jpg`;
+      // Validate content-type and file size before generating the signed URL.
+      // The client MUST send Content-Type and Content-Length headers in the
+      // request body JSON so the server can enforce policy before any upload.
+      const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
+      let requestBody: { contentType?: string; fileSize?: number } = {};
+      try {
+        requestBody = JSON.parse(event.body || '{}') as { contentType?: string; fileSize?: number };
+      } catch {
+        // body parse failure is non-fatal for POST — proceed with defaults
+      }
+
+      const contentType = requestBody.contentType ?? '';
+      const fileSize = typeof requestBody.fileSize === 'number' ? requestBody.fileSize : 0;
+
+      if (contentType && !ALLOWED_MIME_TYPES.includes(contentType.toLowerCase())) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({
+            error: `File type not allowed. Accepted types: ${ALLOWED_MIME_TYPES.join(', ')}`,
+          }),
+        };
+      }
+
+      if (fileSize > MAX_FILE_SIZE_BYTES) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'File too large. Maximum allowed size is 10 MB.' }),
+        };
+      }
+
+      // Derive a safe file extension from the declared content type.
+      const extMap: Record<string, string> = {
+        'image/jpeg': 'jpg',
+        'image/jpg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp',
+      };
+      const ext = extMap[contentType.toLowerCase()] ?? 'jpg';
+      const fileName = `${shipmentId}-${Date.now()}.${ext}`;
       const filePath = `${shipmentId}/${fileName}`;
 
       const { data: uploadData, error: uploadError } = await supabase

@@ -100,7 +100,7 @@ export default function Home() {
        * flex-col lets us use CSS `order-*` to reorder sections between
        * mobile and desktop WITHOUT duplicating DOM nodes.
        */}
-      <main className="flex flex-col">
+      <main id="main-content" className="flex flex-col">
 
         {/* ── 1. Quick Actions ── mobile-only, always first ──────────────── */}
         <section

@@ -48,7 +48,7 @@ export default function OrderSuccessPage() {
   if (verified === null) {
     return (
       <MainLayout>
-        <main className="flex-1 flex items-center justify-center">
+        <main id="main-content" className="flex-1 flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
         </main>
       </MainLayout>
@@ -57,7 +57,7 @@ export default function OrderSuccessPage() {
 
   return (
     <MainLayout>
-      <main className="flex-1 pt-28 pb-20 px-4 flex items-start justify-center">
+      <main id="main-content" className="flex-1 pt-28 pb-20 px-4 flex items-start justify-center">
         <div className="w-full max-w-lg mt-10">
           <div className="bg-white/5 border border-white/10 backdrop-blur-sm rounded-xl p-10 text-center">
             {/* Success Icon */}

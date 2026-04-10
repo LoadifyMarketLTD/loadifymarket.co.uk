@@ -6,7 +6,7 @@ const Disclaimer = () => {
   return (
     <MainLayout>
       <SEO title="Disclaimer | Loadify Market" description="Read the disclaimer for Loadify Market covering liability, accuracy, and third-party content." canonical="/disclaimer" />
-      <main className="pt-28 pb-20">
+      <main id="main-content" className="pt-28 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Disclaimer" }]} backTo="/" />
         </div>

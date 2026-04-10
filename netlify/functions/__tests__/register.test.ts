@@ -125,7 +125,7 @@ describe('register handler – request validation', () => {
     expect(JSON.parse(res.body as string).error).toMatch(/too many/i);
   });
 
-  it('returns 409 on duplicate-email error from Supabase', async () => {
+  it('returns 200 on duplicate-email error from Supabase (no enumeration)', async () => {
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({
         auth: {
@@ -143,8 +143,11 @@ describe('register handler – request validation', () => {
       makeEvent({ email: 'a@b.com', password: 'secret123', firstName: 'Jane', lastName: 'Doe', role: 'buyer' }),
       {} as never,
     );
-    expect(res.statusCode).toBe(409);
-    expect(JSON.parse(res.body as string).error).toMatch(/already exists/i);
+    // Returns 200 to prevent user enumeration (OWASP ASVS 2.7.4).
+    // The response body contains a generic message that does not confirm
+    // whether the email was already registered.
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(res.body as string).error).toMatch(/not already registered/i);
   });
 
   it('returns 200 on successful registration', async () => {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import MainLayout from "@/layouts/MainLayout";
+import SEO from "@/components/SEO";
 import { useSearchParams } from 'react-router-dom';
 import { Package, Search, Truck, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import type { ShipmentEvent } from '../types/shipping';
@@ -116,7 +117,12 @@ export default function TrackOrderPage() {
 
   return (
     <MainLayout>
-      <main className="flex-1 pt-28 pb-16">
+      <SEO
+        title="Track Your Order | Loadify Market"
+        description="Track the status and delivery progress of your Loadify Market order in real time."
+        canonical="/track-order"
+      />
+      <main id="main-content" className="flex-1 pt-28 pb-16">
       <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-navy-800 mb-2">Track Your Order</h1>

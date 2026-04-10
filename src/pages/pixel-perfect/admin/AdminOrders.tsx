@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ShoppingCart, Search, Eye, Loader2 } from "lucide-react";
+import { ShoppingCart, Search, Eye, Loader2, RotateCcw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +43,37 @@ const AdminOrders = () => {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Order | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [refundLoading, setRefundLoading] = useState(false);
+  const [refundError, setRefundError] = useState<string | null>(null);
+
+  const issueRefund = async (order: Order) => {
+    setRefundLoading(true);
+    setRefundError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+      const res = await fetch("/.netlify/functions/create-refund", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ orderId: order.id }),
+      });
+      const data = await res.json() as { success?: boolean; message?: string; error?: string };
+      if (!res.ok) throw new Error(data.error || "Refund failed");
+      setOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, status: "refunded" } : o));
+      setSelected((s) => s && s.id === order.id ? { ...s, status: "refunded" } : s);
+      toast({ title: "Refund issued", description: data.message });
+    } catch (err: unknown) {
+      const msg = (err as Error).message;
+      setRefundError(msg);
+      toast({ title: "Refund failed", description: msg, variant: "destructive" });
+    } finally {
+      setRefundLoading(false);
+    }
+  };
 
   const updateOrderStatus = async (id: string, newStatus: string) => {
     setActionLoading(id);
@@ -301,9 +332,36 @@ const AdminOrders = () => {
                   {actionLoading === selected.id && <Loader2 className="h-4 w-4 animate-spin" style={{ color: "rgba(255,255,255,0.3)" }} />}
                 </div>
               </div>
+              {["paid", "packed", "shipped", "delivered", "disputed"].includes(selected.status) && (
+                <div className="space-y-2 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                  <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.4)" }}>STRIPE REFUND</p>
+                  <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                    This will issue a real Stripe refund and mark the order as refunded.
+                  </p>
+                  {refundError && (
+                    <div className="flex items-center gap-2 text-xs text-red-400">
+                      <AlertCircle className="h-3 w-3 shrink-0" />
+                      <span>{refundError}</span>
+                    </div>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/60"
+                    disabled={refundLoading}
+                    onClick={() => issueRefund(selected)}
+                  >
+                    {refundLoading ? (
+                      <><Loader2 className="h-4 w-4 animate-spin mr-2" />Processing…</>
+                    ) : (
+                      <><RotateCcw className="h-4 w-4 mr-2" />Issue Stripe Refund</>
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setSelected(null)}>Close</Button>
+              <Button variant="outline" onClick={() => { setSelected(null); setRefundError(null); }}>Close</Button>
             </DialogFooter>
           </DialogContent>
         )}

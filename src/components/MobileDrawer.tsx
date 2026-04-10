@@ -205,6 +205,7 @@ const CategoryScreen = ({ categorySlug, onBack, onClose }: CategoryScreenProps) 
 const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDrawerProps) => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // Reset sub-screens and handle focus / Escape key
   useEffect(() => {
@@ -220,7 +221,32 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
 
     // Escape closes drawer
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      // Focus trap — keep Tab / Shift+Tab cycling within the panel
+      if (e.key === "Tab" && panelRef.current) {
+        const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (!first) return;
+
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last?.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first?.focus();
+          }
+        }
+      }
     };
     document.addEventListener("keydown", handleKey);
 
@@ -267,6 +293,7 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
 
       {/* Drawer panel — slides from LEFT */}
       <div
+        ref={panelRef}
         className={[
           "fixed top-0 left-0 z-[9999] h-[100dvh] w-[85vw] max-w-[380px]",
           "bg-[#0A1930] border-r border-white/10 shadow-2xl flex flex-col",

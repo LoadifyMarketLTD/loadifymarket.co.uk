@@ -65,7 +65,7 @@ const GUIDELINES = [
 export default function SellerGuidelinesPage() {
   return (
     <MainLayout>
-      <main className="pt-28">
+      <main id="main-content" className="pt-28">
       {/* Hero */}
       <section className="bg-white border-b border-gray-200 py-12">
         <div className="container-market text-center">

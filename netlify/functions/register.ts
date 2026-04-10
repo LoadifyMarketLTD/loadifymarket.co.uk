@@ -179,10 +179,10 @@ export const handler: Handler = async (event) => {
       authError.message.toLowerCase().includes('duplicate');
 
     return {
-      statusCode: isDuplicate ? 409 : 400,
+      statusCode: isDuplicate ? 200 : 400,
       body: JSON.stringify({
         error: isDuplicate
-          ? 'An account with this email address already exists.'
+          ? 'If this email address is not already registered, your account has been created. Please check your inbox.'
           : authError.message,
       }),
     };
