@@ -150,8 +150,8 @@ const CatalogFilters = ({
             className="mb-3"
           />
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>£{priceRange[0].toLocaleString()}</span>
-            <span>£{priceRange[1].toLocaleString()}</span>
+            <span>£{priceRange[0].toLocaleString("en-GB")}</span>
+            <span>£{priceRange[1].toLocaleString("en-GB")}</span>
           </div>
         </div>
       </FilterSection>

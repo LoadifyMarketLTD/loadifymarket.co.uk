@@ -34,7 +34,7 @@ const CatalogHeader = ({
           Browse Listings
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {totalResults.toLocaleString()} results found
+          {totalResults.toLocaleString()} {totalResults === 1 ? "result" : "results"} found
         </p>
       </div>
 

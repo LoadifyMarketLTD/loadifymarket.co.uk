@@ -47,7 +47,7 @@ const SellerCard = ({ name, verified, rating, location, totalListings, storeSlug
 
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <Package className="h-3.5 w-3.5" />
-        {totalListings} active listings
+        {totalListings} active {totalListings === 1 ? "listing" : "listings"}
       </div>
 
       {storeSlug ? (
