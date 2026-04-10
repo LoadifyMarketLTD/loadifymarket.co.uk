@@ -100,6 +100,7 @@ const PPAdminReports        = lazy(() => import('./pages/pixel-perfect/admin/Adm
 const PPAdminSupport        = lazy(() => import('./pages/pixel-perfect/admin/AdminSupport'));
 const PPAdminSettings       = lazy(() => import('./pages/pixel-perfect/admin/AdminSettings'));
 const PPAdminNotifications  = lazy(() => import('./pages/pixel-perfect/admin/AdminNotifications'));
+const PPAdminPayouts        = lazy(() => import('./pages/pixel-perfect/admin/AdminPayouts'));
 
 // Loading component
 function PageLoader() {
@@ -509,6 +510,7 @@ function App() {
           <Route path="support" element={<Suspense fallback={<PageLoader />}><PPAdminSupport /></Suspense>} />
           <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPAdminSettings /></Suspense>} />
           <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPAdminNotifications /></Suspense>} />
+          <Route path="payouts" element={<Suspense fallback={<PageLoader />}><PPAdminPayouts /></Suspense>} />
         </Route>
 
         {/* ── Standalone functional pages (no pixel-perfect equivalent yet) ─────── */}
