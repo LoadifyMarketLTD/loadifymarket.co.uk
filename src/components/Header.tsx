@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import logo from "@/assets/loadify-logo.svg";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
+import { isActiveSellerAccess } from "@/lib/roleUtils";
 import CATEGORY_CONFIG from "@/lib/category-config";
 import MobileDrawer from "@/components/MobileDrawer";
 
@@ -148,7 +149,7 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
 
           {user ? (
             <>
-              {(user.role === "seller") && (
+              {isActiveSellerAccess(user) && (
                 <>
                   <Button variant="ghost" size="sm" className="text-white/70 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex" asChild>
                     <Link to="/pp/seller/products">
