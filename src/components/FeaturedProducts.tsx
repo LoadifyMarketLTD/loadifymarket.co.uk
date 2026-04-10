@@ -36,7 +36,7 @@ const FeaturedProducts = () => {
       });
   }, []);
 
-  if (loading) return null;
+  if (loading) return <section className="bg-[#0d2240]" aria-label="Marketplace products" style={{ minHeight: "4rem" }} />;
 
   return (
     <section className="bg-[#0d2240] border-b border-[#1a3a5c]" aria-label="Marketplace products">
