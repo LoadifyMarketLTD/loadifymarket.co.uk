@@ -6,9 +6,9 @@ import { CartProvider } from './contexts/CartContext';
 import CookieConsent from './components/CookieConsent';
 import { isCapacitorNative } from './lib/capacitor';
 
-import RequireAuth from './components/auth/RequireAuth';
 import RequireAdmin from './components/auth/RequireAdmin';
 import RequireSeller from './components/auth/RequireSeller';
+import RequireSellerAny from './components/auth/RequireSellerAny';
 import RequireBuyer from './components/auth/RequireBuyer';
 
 // ─── Homepage ─────────────────────────────────────────────────────────────────
@@ -121,13 +121,14 @@ function PageLoader() {
  * sellers → /pp/seller
  * buyers  → /pp/buyer
  * While auth is still loading, wait before redirecting to avoid a flash to the
- * wrong dashboard. Unauthenticated users are sent to /login via RequireAuth.
+ * wrong dashboard. Unauthenticated users are sent to /login.
  */
 function DashboardRedirect() {
   const { user, isLoading } = useAuthStore();
   if (isLoading) return <PageLoader />;
-  if (user?.role === 'admin') return <Navigate to="/pp/admin" replace />;
-  if (user?.role === 'seller') return <Navigate to="/pp/seller" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role === 'admin') return <Navigate to="/pp/admin" replace />;
+  if (user.role === 'seller') return <Navigate to="/pp/seller" replace />;
   return <Navigate to="/pp/buyer" replace />;
 }
 
@@ -550,21 +551,23 @@ function App() {
           </RequireSeller>
         } />
 
-        {/* Seller: Setup page — accessible with RequireAuth only (not RequireSeller)
-            so that draft/submitted sellers can complete their onboarding here. */}
+        {/* Seller: Setup page — accessible by any seller (any status) and admins,
+            so that draft/submitted sellers can complete their onboarding here.
+            Buyers are blocked. */}
         <Route path="seller/setup" element={
-          <RequireAuth>
+          <RequireSellerAny>
             <Suspense fallback={<PageLoader />}><SellerSetupPage /></Suspense>
-          </RequireAuth>
+          </RequireSellerAny>
         } />
 
-        {/* Seller: Profile edit — accessible with RequireAuth only (not RequireSeller)
+        {/* Seller: Profile edit — accessible by any seller (any status) and admins,
             so that draft/submitted sellers can fill their profile from the setup wizard
-            without being bounced back to /seller/setup by the RequireSeller guard. */}
+            without being bounced back to /seller/setup by the RequireSeller guard.
+            Buyers are blocked. */}
         <Route path="seller/profile" element={
-          <RequireAuth>
+          <RequireSellerAny>
             <Suspense fallback={<PageLoader />}><PPSellerProfile /></Suspense>
-          </RequireAuth>
+          </RequireSellerAny>
         } />
 
         {/* Public: Seller Public Profile — no pixel-perfect equivalent yet */}

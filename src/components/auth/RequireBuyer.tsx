@@ -1,8 +1,8 @@
+import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store';
-import { hasAdminAccess, hasSellerAccess } from '../../lib/roleUtils';
-import RequireAuth from './RequireAuth';
+import { hasAdminAccess, hasSellerAccess, hasBuyerAccess } from '../../lib/roleUtils';
 
 interface Props {
   children: ReactNode;
@@ -10,28 +10,49 @@ interface Props {
 
 /**
  * Route guard for buyer-only pages.
+ * Self-contained: handles unauthenticated redirect, loading state, and role checks
+ * without wrapping RequireAuth.
  *
  * Access rules:
  *   buyers          → render children
+ *   admins          → render children (inspection access — no automatic redirect)
  *   sellers         → redirect to /pp/seller (their own dashboard)
- *   admins          → redirect to /pp/admin  (their own dashboard)
  *   unauthenticated → redirect to /login
  *
- * This ensures strict role separation: sellers and admins are never shown
- * buyer-only pages; they are sent to their correct dashboard instead.
+ * Admin inspection access ensures admins can review buyer pages without being
+ * automatically bounced to /pp/admin.
  */
 export default function RequireBuyer({ children }: Props) {
   const { user, isLoading } = useAuthStore();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  return (
-    <RequireAuth>
-      {!isLoading && user && hasAdminAccess(user) ? (
-        <Navigate to="/pp/admin" replace />
-      ) : !isLoading && user && hasSellerAccess(user) ? (
-        <Navigate to="/pp/seller" replace />
-      ) : (
-        <>{children}</>
-      )}
-    </RequireAuth>
-  );
+  useEffect(() => {
+    if (!isLoading && !user) {
+      const returnUrl = `${location.pathname}${location.search}`;
+      navigate(`/login?next=${encodeURIComponent(returnUrl)}`, { replace: true });
+    }
+  }, [user, isLoading, navigate, location]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800" />
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  // Admin can inspect buyer pages — no redirect
+  if (hasAdminAccess(user)) return <>{children}</>;
+
+  // Seller is redirected to their own dashboard
+  if (hasSellerAccess(user)) return <Navigate to="/pp/seller" replace />;
+
+  // Buyer gets full access
+  if (hasBuyerAccess(user)) return <>{children}</>;
+
+  // Any other authenticated user (unknown role) → login
+  return <Navigate to="/login" replace />;
 }

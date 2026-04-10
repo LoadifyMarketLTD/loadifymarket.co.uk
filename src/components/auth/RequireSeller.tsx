@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react';
 import { useState, useEffect } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 import { hasSellerAccess, hasAdminAccess } from '../../lib/roleUtils';
-import RequireAuth from './RequireAuth';
 
 interface Props {
   children: ReactNode;
@@ -40,6 +39,16 @@ const CardShell = ({ children }: { children: ReactNode }) => (
  */
 export default function RequireSeller({ children }: Props) {
   const { user, isLoading } = useAuthStore();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Redirect unauthenticated users to login
+  useEffect(() => {
+    if (!isLoading && !user) {
+      const returnUrl = `${location.pathname}${location.search}`;
+      navigate(`/login?next=${encodeURIComponent(returnUrl)}`, { replace: true });
+    }
+  }, [user, isLoading, navigate, location]);
 
   // Seed the initial state from the auth-store cache so active/suspended
   // sellers never see the spinner on the first render after a navigation.
@@ -162,7 +171,7 @@ export default function RequireSeller({ children }: Props) {
   const loading = isLoading || sellerFetchInProgress;
 
   return (
-    <RequireAuth>
+    <>
       {/* While the seller status async check is in progress, show a neutral spinner.
           This prevents dashboard content from flashing briefly before a redirect to
           /seller/setup fires when the seller's status is draft or submitted. */}
@@ -170,7 +179,7 @@ export default function RequireSeller({ children }: Props) {
         <div className="flex items-center justify-center min-h-screen">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800" />
         </div>
-      ) : user && !hasSellerAccess(user) && !hasAdminAccess(user) ? (
+      ) : !user ? null : user && !hasSellerAccess(user) && !hasAdminAccess(user) ? (
         /* Not a seller and not admin — show account-type prompt */
         <CardShell>
           <p className="text-5xl mb-4">🏪</p>
@@ -229,7 +238,7 @@ export default function RequireSeller({ children }: Props) {
       ) : (
         <>{children}</>
       )}
-    </RequireAuth>
+    </>
   );
 }
 
