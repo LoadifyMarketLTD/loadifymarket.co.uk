@@ -11,6 +11,8 @@ self.addEventListener('activate', (event) => {
     caches.keys()
       .then((cacheNames) => Promise.all(cacheNames.map((name) => caches.delete(name))))
       .then(() => self.registration.unregister())
-      .then(() => self.clients.claim())
+      .catch((error) => {
+        console.error('[sw] cleanup failed:', error);
+      })
   );
 });
