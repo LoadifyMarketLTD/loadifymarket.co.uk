@@ -292,15 +292,28 @@ function App() {
     // Build a minimal User object from Supabase auth session metadata when the
     // public.users table query fails or returns no row (e.g. the live database
     // hasn't had the 20_fix_users_table.sql migration applied yet).
-    function userFromSession(authUser: { id: string; email?: string | null; user_metadata?: Record<string, unknown>; email_confirmed_at?: string | null }): import('./types').User {
-      const meta = authUser.user_metadata || {};
-      const strVal = (key: string) => (typeof meta[key] === 'string' ? (meta[key] as string) : undefined);
+    function userFromSession(authUser: {
+      id: string;
+      email?: string | null;
+      user_metadata?: Record<string, unknown>;
+      app_metadata?: Record<string, unknown>;
+      email_confirmed_at?: string | null;
+    }): import('./types').User {
+      const userMeta = authUser.user_metadata || {};
+      const appMeta = authUser.app_metadata || {};
+      const strVal = (obj: Record<string, unknown>, key: string) =>
+        typeof obj[key] === 'string' ? (obj[key] as string) : undefined;
+      const candidateRole = strVal(appMeta, 'role') || strVal(userMeta, 'role');
+      const role: import('./types').UserRole =
+        candidateRole === 'admin' || candidateRole === 'seller' || candidateRole === 'buyer'
+          ? candidateRole
+          : 'buyer';
       return {
         id: authUser.id,
         email: authUser.email ?? '',
-        role: (strVal('role') as import('./types').UserRole) || 'buyer',
-        firstName: strVal('first_name'),
-        lastName: strVal('last_name'),
+        role,
+        firstName: strVal(userMeta, 'first_name'),
+        lastName: strVal(userMeta, 'last_name'),
         // Derive from Supabase Auth state — email_confirmed_at is set when the
         // email address has been confirmed, regardless of the custom users table.
         isEmailVerified: authUser.email_confirmed_at != null,
