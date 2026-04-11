@@ -401,6 +401,11 @@ function App() {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
+          // Signal loading before the async round-trip so route guards always
+          // see isLoading=true while the DB query is in flight.  Without this
+          // a guard can briefly observe isLoading=false + user=null during the
+          // SIGNED_IN event (e.g. right after login) and redirect to /login.
+          setLoading(true);
           supabase
             .from('users')
             .select('*, seller_profiles(sellerStatus)')
@@ -424,8 +429,12 @@ function App() {
                   console.warn('users table query failed, falling back to auth session:', error.message);
                   setUser(userFromSession(session.user));
                 } else {
-                  // Row not found — treat as signed-out.
-                  setUser(null);
+                  // Row not yet found — e.g. the DB insert trigger hasn't fired
+                  // yet on a fresh sign-up, or a transient query failure.  Fall
+                  // back to auth-session metadata so the user is not incorrectly
+                  // kicked back to the login page.  This is consistent with the
+                  // getSession() path above.
+                  setUser(userFromSession(session.user));
                 }
               }
             });
