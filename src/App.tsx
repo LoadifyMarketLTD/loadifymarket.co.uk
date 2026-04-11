@@ -292,15 +292,28 @@ function App() {
     // Build a minimal User object from Supabase auth session metadata when the
     // public.users table query fails or returns no row (e.g. the live database
     // hasn't had the 20_fix_users_table.sql migration applied yet).
-    function userFromSession(authUser: { id: string; email?: string | null; user_metadata?: Record<string, unknown>; email_confirmed_at?: string | null }): import('./types').User {
-      const meta = authUser.user_metadata || {};
-      const strVal = (key: string) => (typeof meta[key] === 'string' ? (meta[key] as string) : undefined);
+    function userFromSession(authUser: {
+      id: string;
+      email?: string | null;
+      user_metadata?: Record<string, unknown>;
+      app_metadata?: Record<string, unknown>;
+      email_confirmed_at?: string | null;
+    }): import('./types').User {
+      const userMeta = authUser.user_metadata || {};
+      const appMeta = authUser.app_metadata || {};
+      const strVal = (obj: Record<string, unknown>, key: string) =>
+        typeof obj[key] === 'string' ? (obj[key] as string) : undefined;
+      const candidateRole = strVal(appMeta, 'role') || strVal(userMeta, 'role');
+      const role: import('./types').UserRole =
+        candidateRole === 'admin' || candidateRole === 'seller' || candidateRole === 'buyer'
+          ? candidateRole
+          : 'buyer';
       return {
         id: authUser.id,
         email: authUser.email ?? '',
-        role: (strVal('role') as import('./types').UserRole) || 'buyer',
-        firstName: strVal('first_name'),
-        lastName: strVal('last_name'),
+        role,
+        firstName: strVal(userMeta, 'first_name'),
+        lastName: strVal(userMeta, 'last_name'),
         // Derive from Supabase Auth state — email_confirmed_at is set when the
         // email address has been confirmed, regardless of the custom users table.
         isEmailVerified: authUser.email_confirmed_at != null,
@@ -388,6 +401,11 @@ function App() {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
+          // Signal loading before the async round-trip so route guards always
+          // see isLoading=true while the DB query is in flight.  Without this
+          // a guard can briefly observe isLoading=false + user=null during the
+          // SIGNED_IN event (e.g. right after login) and redirect to /login.
+          setLoading(true);
           supabase
             .from('users')
             .select('*, seller_profiles(sellerStatus)')
@@ -411,8 +429,12 @@ function App() {
                   console.warn('users table query failed, falling back to auth session:', error.message);
                   setUser(userFromSession(session.user));
                 } else {
-                  // Row not found — treat as signed-out.
-                  setUser(null);
+                  // Row not yet found — e.g. the DB insert trigger hasn't fired
+                  // yet on a fresh sign-up, or a transient query failure.  Fall
+                  // back to auth-session metadata so the user is not incorrectly
+                  // kicked back to the login page.  This is consistent with the
+                  // getSession() path above.
+                  setUser(userFromSession(session.user));
                 }
               }
             });
