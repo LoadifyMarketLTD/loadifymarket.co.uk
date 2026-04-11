@@ -349,65 +349,22 @@ function App() {
     let cleanup: (() => void) | undefined;
 
     import('./lib/supabase').then(({ supabase }) => {
-      // Check active session
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user) {
-          // Fetch user profile with role, plus sellerStatus from seller_profiles
-          // so RequireSeller can skip its own DB round-trip for active sellers.
-          supabase
-            .from('users')
-            .select('*, seller_profiles(sellerStatus)')
-            .eq('id', session.user.id)
-            .maybeSingle()
-            .then(({ data, error }) => {
-              if (data) {
-                // Blocked users must not be rehydrated — sign them out immediately.
-                if (data.isActive === false) {
-                  supabase.auth.signOut();
-                  setUser(null);
-                  return;
-                }
-                normalizeSellerStatus(data as unknown as Record<string, unknown>);
-                // Always use the Supabase Auth session as the source of truth for
-                // isEmailVerified.  The custom users table value may be stale (e.g.
-                // the user confirmed their email but the DB row was never updated).
-                // This prevents a false isEmailVerified=false from appearing in the
-                // user object when the email IS actually confirmed in Supabase Auth.
-                (data as Record<string, unknown>).isEmailVerified =
-                  session.user.email_confirmed_at != null;
-                setUser(data);
-              } else {
-                if (error) {
-                  // Network/permission error — fall back to auth session metadata
-                  // so the user isn't stuck logged-out.
-                  console.warn('users table query failed, falling back to auth session:', error.message);
-                  setUser(userFromSession(session.user));
-                } else {
-                  // No row found in users table yet (e.g. trigger lag after signup).
-                  // Fall back to auth session so the user can still navigate.
-                  setUser(userFromSession(session.user));
-                }
-              }
-            });
-        } else {
-          setLoading(false);
-        }
-      }).catch((err: unknown) => {
-        // Network error or Supabase unreachable — unblock loading so the app is usable
-        console.error('[App] Auth initialization error:', err);
-        setLoading(false);
-      });
-
-      // Listen for auth changes
+      // Supabase JS v2 fires onAuthStateChange with an INITIAL_SESSION event
+      // synchronously when the subscription is created — this covers the
+      // page-load / existing-session path without needing a separate
+      // getSession() call.  Running both in parallel caused a last-write-wins
+      // race condition: if getSession()'s DB query returned null/error AFTER
+      // onAuthStateChange already wrote the correct role, it overwrote it with
+      // the userFromSession fallback (defaulting to role='buyer'), which is how
+      // an admin could end up seeing Buyer Hub on a page reload.
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
           // Signal to all route guards that profile loading is in progress.
           // Without this, guards rendered immediately after login see
-          // isLoading=false + user=null (from the previous getSession() call
-          // that found no session) and redirect to /login before the profile
-          // fetch below completes — which ultimately lands everyone on /buyer.
+          // isLoading=false + user=null and redirect to /login before the
+          // profile fetch below completes.
           setLoading(true);
           (async () => {
             const { data, error } = await supabase
