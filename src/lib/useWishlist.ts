@@ -19,11 +19,9 @@ export function useWishlist() {
         .from('wishlists')
         .select('productIds')
         .eq('userId', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
+      if (error) throw error;
 
       const productIds = data?.productIds || [];
       const inWishlist = productIds.includes(productId);
@@ -48,7 +46,7 @@ export function useWishlist() {
         .from('wishlists')
         .select('productIds')
         .eq('userId', user.id)
-        .single();
+        .maybeSingle();
 
       const currentProductIds = wishlistData?.productIds || [];
       let updatedProductIds: string[];

@@ -22,6 +22,7 @@ interface Props {
  * Admins are redirected to /admin rather than given silent access to the buyer
  * shell — this prevents an admin from seeing "Buyer Hub" as their landing page
  * when role resolution fails upstream and the DashboardRedirect sends them here.
+
  */
 export default function RequireBuyer({ children }: Props) {
   const { user, isLoading } = useAuthStore();

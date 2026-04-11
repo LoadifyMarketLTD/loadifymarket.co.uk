@@ -292,30 +292,28 @@ function App() {
     // Build a minimal User object from Supabase auth session metadata when the
     // public.users table query fails or returns no row (e.g. the live database
     // hasn't had the 20_fix_users_table.sql migration applied yet).
-    function userFromSession(authUser: { id: string; email?: string | null; user_metadata?: Record<string, unknown>; app_metadata?: Record<string, unknown>; email_confirmed_at?: string | null }): import('./types').User {
-      const meta = authUser.user_metadata || {};
-      // app_metadata is set server-side (e.g. by the Supabase Auth trigger) and
-      // is not modifiable by the client, making it more authoritative than
-      // user_metadata for the role field.
+    function userFromSession(authUser: {
+      id: string;
+      email?: string | null;
+      user_metadata?: Record<string, unknown>;
+      app_metadata?: Record<string, unknown>;
+      email_confirmed_at?: string | null;
+    }): import('./types').User {
+      const userMeta = authUser.user_metadata || {};
       const appMeta = authUser.app_metadata || {};
-      const strVal = (key: string) => (typeof meta[key] === 'string' ? (meta[key] as string) : undefined);
-      const strValApp = (key: string) => (typeof appMeta[key] === 'string' ? (appMeta[key] as string) : undefined);
-      // Prefer app_metadata.role over user_metadata.role; only fall back to
-      // 'buyer' as an absolute last resort — this prevents admins from being
-      // misidentified when the users table is temporarily unreachable.
-      const resolvedRole = ((strValApp('role') || strVal('role')) as import('./types').UserRole) || 'buyer';
-      console.warn(
-        `[Auth] userFromSession fallback for ${authUser.email ?? authUser.id}: ` +
-        `resolved role="${resolvedRole}" from auth metadata ` +
-        `(app_metadata.role="${String(appMeta['role'] ?? 'unset')}", user_metadata.role="${String(meta['role'] ?? 'unset')}"). ` +
-        `If the role is wrong, verify that public.users is reachable and the row exists.`
-      );
+      const strVal = (obj: Record<string, unknown>, key: string) =>
+        typeof obj[key] === 'string' ? (obj[key] as string) : undefined;
+      const candidateRole = strVal(appMeta, 'role') || strVal(userMeta, 'role');
+      const role: import('./types').UserRole =
+        candidateRole === 'admin' || candidateRole === 'seller' || candidateRole === 'buyer'
+          ? candidateRole
+          : 'buyer';
       return {
         id: authUser.id,
         email: authUser.email ?? '',
-        role: resolvedRole,
-        firstName: strVal('first_name'),
-        lastName: strVal('last_name'),
+        role,
+        firstName: strVal(userMeta, 'first_name'),
+        lastName: strVal(userMeta, 'last_name'),
         // Derive from Supabase Auth state — email_confirmed_at is set when the
         // email address has been confirmed, regardless of the custom users table.
         isEmailVerified: authUser.email_confirmed_at != null,
@@ -361,44 +359,49 @@ function App() {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
-          // Signal to all route guards that profile loading is in progress.
-          // Without this, guards rendered immediately after login see
-          // isLoading=false + user=null and redirect to /login before the
-          // profile fetch below completes.
+          // Signal loading before the async round-trip so route guards always
+          // see isLoading=true while the DB query is in flight.  Without this
+          // a guard can briefly observe isLoading=false + user=null during the
+          // SIGNED_IN event (e.g. right after login) and redirect to /login.
           setLoading(true);
-          (async () => {
-            const { data, error } = await supabase
+          void Promise.resolve(
+            supabase
               .from('users')
               .select('*, seller_profiles(sellerStatus)')
               .eq('id', session.user.id)
-              .maybeSingle();
-            if (data) {
-              // Blocked users must not be rehydrated — sign them out immediately.
-              if (data.isActive === false) {
-                await supabase.auth.signOut();
-                setUser(null);
-                return;
-              }
-              normalizeSellerStatus(data as unknown as Record<string, unknown>);
-              // Always derive isEmailVerified from Supabase Auth (source of truth).
-              (data as Record<string, unknown>).isEmailVerified =
-                session.user.email_confirmed_at != null;
-              setUser(data);
-            } else {
-              if (error) {
-                console.warn('users table query failed, falling back to auth session:', error.message);
-                setUser(userFromSession(session.user));
+              .maybeSingle()
+          ).then(({ data, error }) => {
+              if (data) {
+                // Blocked users must not be rehydrated — sign them out immediately.
+                if (data.isActive === false) {
+                  supabase.auth.signOut();
+                  setUser(null);
+                  return;
+                }
+                normalizeSellerStatus(data as unknown as Record<string, unknown>);
+                // Always derive isEmailVerified from Supabase Auth (source of truth).
+                (data as Record<string, unknown>).isEmailVerified =
+                  session.user.email_confirmed_at != null;
+                setUser(data);
               } else {
-                // Row not found — treat as signed-out.
-                setUser(null);
+                if (error) {
+                  console.warn('users table query failed, falling back to auth session:', error.message);
+                  setUser(userFromSession(session.user));
+                } else {
+                  // Row not yet found — e.g. the DB insert trigger hasn't fired
+                  // yet on a fresh sign-up, or a transient query failure.  Fall
+                  // back to auth-session metadata so the user is not incorrectly
+                  // kicked back to the login page.
+                  setUser(userFromSession(session.user));
+                }
               }
-            }
-          })().catch((err: unknown) => {
-            // Network error during profile fetch — unblock loading so the
-            // app does not hang on a spinner indefinitely.
-            console.error('[Auth] Profile fetch threw unexpectedly:', err);
-            setLoading(false);
-          });
+            })
+            .catch((err: unknown) => {
+              // Network error during profile fetch — unblock loading so the
+              // app does not hang on a spinner indefinitely.
+              console.error('[Auth] Profile fetch threw unexpectedly:', err);
+              setLoading(false);
+            });
         } else {
           setUser(null);
         }
