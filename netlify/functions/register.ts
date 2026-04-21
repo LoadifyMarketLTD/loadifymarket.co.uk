@@ -247,11 +247,13 @@ export const handler: Handler = async (event) => {
 
   // ── Admin notification email ──────────────────────────────────────────────
   // Fire-and-forget: a failure here must never block successful registration.
-  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+  // Fall back to the primary admin inbox when the env var is not configured.
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'loadifymarket.co.uk@gmail.com';
   const appUrl = process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
-  if (adminEmail) {
+  {
     const template = role === 'seller' ? 'admin_new_seller' : 'admin_new_buyer';
     const subject  = role === 'seller' ? 'Loadify: New Seller Registration' : 'Loadify: New Buyer Registration';
+    const effectiveStoreName = role === 'seller' ? (storeName?.trim() || `${firstName}'s Store`) : undefined;
     fetch(`${appUrl}/.netlify/functions/send-email`, {
       method: 'POST',
       headers: {
@@ -262,7 +264,12 @@ export const handler: Handler = async (event) => {
         to: adminEmail,
         subject,
         template,
-        data: { registeredAt: new Date().toLocaleString('en-GB') },
+        data: {
+          registeredAt: new Date().toLocaleString('en-GB'),
+          sellerEmail: email,
+          sellerName: `${firstName} ${lastName}`,
+          storeName: effectiveStoreName,
+        },
       }),
     }).catch((err: unknown) => console.warn('register: admin notification failed (non-fatal):', err));
   }
