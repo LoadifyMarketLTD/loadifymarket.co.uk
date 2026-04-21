@@ -123,7 +123,8 @@ const AdminBuyers = () => {
       const [ordersRes, reportsRes, wishlistRes] = await Promise.all([
         supabase.from("orders").select("id", { count: "exact", head: true }).eq("buyerId", u.id),
         supabase.from("reported_listings").select("id", { count: "exact", head: true }).eq("reportedBy", u.id),
-        supabase.from("wishlist_items").select("id", { count: "exact", head: true }).eq("userId", u.id),
+        // wishlists uses a denormalized array column (productIds UUID[]) per user — count via array length
+        supabase.from("wishlists").select("productIds").eq("userId", u.id).maybeSingle(),
       ]);
 
       setDetail({
@@ -132,7 +133,7 @@ const AdminBuyers = () => {
         phone: fullUser?.phone ?? null,
         ordersCount: ordersRes.count ?? 0,
         reportsCount: reportsRes.count ?? 0,
-        wishlistCount: wishlistRes.count ?? 0,
+        wishlistCount: (wishlistRes.data as { productIds?: string[] } | null)?.productIds?.length ?? 0,
       });
     } catch (err) {
       toast({ title: "Failed to load buyer details", description: (err as Error).message, variant: "destructive" });

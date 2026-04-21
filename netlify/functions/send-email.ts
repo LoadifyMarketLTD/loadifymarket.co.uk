@@ -316,7 +316,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
           <p style="margin: 10px 0 0 0;"><strong>Submitted:</strong> ${escapeHtml(data.submittedAt || new Date().toLocaleDateString('en-GB'))}</p>
         </div>
         <p>Please log in to the admin dashboard to review the submitted documents and approve or reject the verification.</p>
-        <a href="${process.env.URL}/admin/sellers" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Review Verification</a>
+        <a href="${process.env.URL}/admin/approvals" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Review Verification</a>
       `;
       break;
 

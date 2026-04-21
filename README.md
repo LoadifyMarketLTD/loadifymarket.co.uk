@@ -10,11 +10,8 @@ Independent UK sellers list and sell physical products across all consumer goods
 
 | Doc | Purpose |
 |---|---|
-| [COMPLETE_SETUP_GUIDE.md](./COMPLETE_SETUP_GUIDE.md) | Step-by-step installation and configuration |
 | [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | System architecture, domain model, data flow |
 | [docs/openapi.yaml](./docs/openapi.yaml) | API reference (OpenAPI 3.0) |
-| [DATABASE_SETUP_COMPLETE.md](./DATABASE_SETUP_COMPLETE.md) | Database initialisation guide |
-| [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | Netlify deployment instructions |
 | [docs/SHIPPING.md](./docs/SHIPPING.md) | Shipment and tracking system |
 
 ---
@@ -195,7 +192,7 @@ The project deploys to Netlify automatically via the configuration in `netlify.t
 | `SENDGRID_API_KEY` | Optional | SendGrid API key for shipment emails |
 | `VITE_SUPPORT_EMAIL` | Optional | Support email address |
 
-For detailed instructions see [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md).
+For detailed instructions see the [Netlify documentation](https://docs.netlify.com/configure-builds/environment-variables/).
 
 ---
 
