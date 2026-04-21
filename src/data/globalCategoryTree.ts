@@ -78,7 +78,7 @@ export const GLOBAL_CATEGORY_TREE: readonly GlobalCategoryNode[] = [
         children: [
           { name: 'Living Room Furniture', slug: 'living-room-furniture' },
           { name: 'Bedroom Furniture', slug: 'bedroom-furniture' },
-          { name: 'Office Furniture', slug: 'office-furniture' },
+          { name: 'Office Furniture', slug: 'home-office-furniture' },
         ],
       },
       {
@@ -355,17 +355,17 @@ export interface DynamicCategoryFilter {
 }
 
 export const DYNAMIC_FILTERS_BY_CATEGORY: Record<string, DynamicCategoryFilter[]> = {
-  'Mobile Phones': [
+  'mobile-phones': [
     { key: 'brand', label: 'Brand', options: ['Apple', 'Samsung', 'Google', 'Xiaomi', 'Other'] },
     { key: 'storage', label: 'Storage', options: ['64GB', '128GB', '256GB', '512GB', '1TB'] },
     { key: 'condition', label: 'Condition', options: ['new', 'used', 'refurbished'] },
   ],
-  Skates: [
+  skates: [
     { key: 'size', label: 'Size', options: ['UK 3', 'UK 4', 'UK 5', 'UK 6', 'UK 7', 'UK 8', 'UK 9'] },
     { key: 'type', label: 'Type', options: ['Inline', 'Quad', 'Ice'] },
     { key: 'condition', label: 'Condition', options: ['new', 'used', 'refurbished'] },
   ],
-  Televisions: [
+  televisions: [
     { key: 'brand', label: 'Brand', options: ['Samsung', 'LG', 'Sony', 'TCL', 'Hisense', 'Other'] },
     { key: 'size', label: 'Size', options: ['32"', '43"', '50"', '55"', '65"', '75"+'] },
     { key: 'smart_type', label: 'Smart Type', options: ['Android TV', 'Tizen', 'webOS', 'Roku', 'Non-Smart'] },

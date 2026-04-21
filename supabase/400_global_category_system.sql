@@ -196,7 +196,7 @@ WITH taxonomy(name, slug, parent_slug, lvl, sort_order) AS (
   ('Litter','litter','cat-supplies',3,2),
 
   ('Aquariums','aquariums','aquatics',3,1),
-  ('Filters','aquarium-filters','aquatics',3,2),
+  ('Aquarium Filters','aquarium-filters','aquatics',3,2),
 
   ('Pasta & Rice','pasta-rice','pantry',3,1),
   ('Canned Food','canned-food','pantry',3,2),
@@ -291,7 +291,13 @@ WHERE c.id = t.id;
 
 UPDATE categories
 SET level = 1
-WHERE level IS NULL OR level < 1;
+WHERE (level IS NULL OR level < 1)
+  AND "parentId" IS NULL;
+
+UPDATE categories
+SET level = 2
+WHERE (level IS NULL OR level < 1)
+  AND "parentId" IS NOT NULL;
 
 -- 5) Product assignment validation: category must exist and be active
 CREATE OR REPLACE FUNCTION validate_product_category_assignment()
@@ -305,8 +311,12 @@ BEGIN
   FROM categories
   WHERE id = NEW."categoryId";
 
-  IF category_active IS DISTINCT FROM TRUE THEN
-    RAISE EXCEPTION 'Invalid category assignment: category must exist and be active.';
+  IF category_active IS NULL THEN
+    RAISE EXCEPTION 'Invalid category assignment: category does not exist.';
+  END IF;
+
+  IF category_active = FALSE THEN
+    RAISE EXCEPTION 'Invalid category assignment: category is inactive.';
   END IF;
 
   IF NEW."subcategoryId" IS NOT NULL THEN

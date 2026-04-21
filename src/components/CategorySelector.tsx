@@ -55,6 +55,10 @@ export default function CategorySelector({
     () => new Map(categories.map((category) => [category.id, category])),
     [categories],
   );
+  const parentIdsWithChildren = useMemo(
+    () => new Set(categories.map((category) => resolveParentId(category)).filter(Boolean)),
+    [categories],
+  );
 
   const level1Categories = useMemo(
     () => categories.filter((category) => !resolveParentId(category)),
@@ -108,8 +112,10 @@ export default function CategorySelector({
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Main Category *</label>
+        <label htmlFor="main-category-select" className="block text-sm font-medium text-gray-700 mb-2">Main Category *</label>
         <select
+          id="main-category-select"
+          aria-label="Main category"
           value={selectedCategoryId}
           onChange={(e) => {
             setSelectedLevel2Id('');
@@ -129,13 +135,15 @@ export default function CategorySelector({
 
       {selectedCategoryId && level2Categories.length > 0 && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Subcategory</label>
+          <label htmlFor="subcategory-select" className="block text-sm font-medium text-gray-700 mb-2">Subcategory</label>
           <select
+            id="subcategory-select"
+            aria-label="Subcategory"
             value={selectedLevel2Id}
             onChange={(e) => {
               const value = e.target.value;
               setSelectedLevel2Id(value);
-              const hasChildren = categories.some((category) => resolveParentId(category) === value);
+              const hasChildren = parentIdsWithChildren.has(value);
               if (!onSubcategoryChange) return;
               onSubcategoryChange(hasChildren ? '' : value);
             }}
@@ -153,8 +161,10 @@ export default function CategorySelector({
 
       {selectedLevel2Id && level3Categories.length > 0 && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Nested Subcategory</label>
+          <label htmlFor="nested-subcategory-select" className="block text-sm font-medium text-gray-700 mb-2">Nested Subcategory</label>
           <select
+            id="nested-subcategory-select"
+            aria-label="Nested subcategory"
             value={selectedSubcategoryId || ''}
             onChange={(e) => {
               if (onSubcategoryChange) onSubcategoryChange(e.target.value);
@@ -172,11 +182,21 @@ export default function CategorySelector({
       )}
 
       {selectedCategory && (
-        <p className="text-xs text-gray-500">
-          Selected path: {selectedCategory.name}
-          {selectedLevel2Id ? ` → ${categoriesById.get(selectedLevel2Id)?.name ?? ''}` : ''}
-          {selectedSubcategory ? ` → ${selectedSubcategory.name}` : ''}
-        </p>
+        <nav aria-label="Category breadcrumb" className="text-xs text-gray-500">
+          <ol className="flex flex-wrap items-center gap-1">
+            <li>{selectedCategory.name}</li>
+            {selectedLevel2Id && (
+              <li>
+                <span aria-hidden="true">→</span> {categoriesById.get(selectedLevel2Id)?.name ?? ''}
+              </li>
+            )}
+            {selectedSubcategory && (
+              <li aria-current="location">
+                <span aria-hidden="true">→</span> {selectedSubcategory.name}
+              </li>
+            )}
+          </ol>
+        </nav>
       )}
     </div>
   );

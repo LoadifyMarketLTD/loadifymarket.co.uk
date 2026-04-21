@@ -38,7 +38,10 @@ const CategoryGrid = () => (
       {/* Tile grid — gap-px creates hairline borders between tiles */}
       <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-px bg-gray-200">
         {GLOBAL_CATEGORY_TREE.map((cat) => {
-          const sub = (cat.children ?? []).slice(0, 2).map((c) => c.name).join(" • ");
+          const children = cat.children ?? [];
+          const sub =
+            children.slice(0, 2).map((c) => c.name).join(" • ") +
+            (children.length > 2 ? " • ..." : "");
           return (
             <Link
               key={cat.slug}
