@@ -109,7 +109,7 @@ export const GLOBAL_CATEGORY_TREE: readonly GlobalCategoryNode[] = [
         name: 'Men\'s Clothing',
         slug: 'mens-clothing',
         children: [
-          { name: 'Tops', slug: 'mens-tops' },
+          { name: "Men's Tops", slug: 'mens-tops' },
           { name: 'Bottoms', slug: 'mens-bottoms' },
           { name: 'Outerwear', slug: 'mens-outerwear' },
         ],
@@ -119,7 +119,7 @@ export const GLOBAL_CATEGORY_TREE: readonly GlobalCategoryNode[] = [
         slug: 'womens-clothing',
         children: [
           { name: 'Dresses', slug: 'dresses' },
-          { name: 'Tops', slug: 'womens-tops' },
+          { name: "Women's Tops", slug: 'womens-tops' },
           { name: 'Outerwear', slug: 'womens-outerwear' },
         ],
       },
@@ -279,7 +279,7 @@ export const GLOBAL_CATEGORY_TREE: readonly GlobalCategoryNode[] = [
         slug: 'aquatics',
         children: [
           { name: 'Aquariums', slug: 'aquariums' },
-          { name: 'Filters', slug: 'aquarium-filters' },
+          { name: 'Aquarium Filters', slug: 'aquarium-filters' },
         ],
       },
     ],
