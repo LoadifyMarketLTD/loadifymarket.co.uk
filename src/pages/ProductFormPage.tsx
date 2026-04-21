@@ -15,8 +15,53 @@ const BULK_PRODUCT_TYPES: ProductType[] = ['pallet', 'lot', 'wholesale'];
 const SUCCESS_REDIRECT_DELAY_MS = 1800;
 
 // Normalise a decimal number string entered by the user.
-// Accepts comma as a decimal separator (common in European locales, e.g. "39,99" → "39.99").
-const normalizeDecimal = (value: string): string => value.replaceAll(',', '.');
+//
+// Handles both decimal-separator and thousands-separator ambiguity:
+//   "39,99"       → "39.99"  (European decimal comma)
+//   "13.150"      → "13150"  (European/ISO thousands period before 3 digits)
+//   "1,000.50"    → "1000.50" (UK/US thousands comma + decimal period)
+//   "1.000,50"    → "1000.50" (European thousands period + decimal comma)
+//   "1.000.000"   → "1000000" (multiple thousands periods)
+//   "1,000"       → "1000"   (thousands comma, no decimal part)
+//   "1.99"        → "1.99"   (regular decimal period — 2 digits, not 3)
+const normalizeDecimal = (value: string): string => {
+  const v = value.trim();
+  if (!v) return v;
+  const periodCount = (v.match(/\./g) ?? []).length;
+  const commaCount  = (v.match(/,/g)  ?? []).length;
+
+  if (periodCount > 0 && commaCount > 0) {
+    // Both separators present: the one that appears last is the decimal separator.
+    if (v.lastIndexOf(',') > v.lastIndexOf('.')) {
+      // European format: 1.000,50 → strip periods (thousands), replace comma with period
+      return v.replace(/\./g, '').replace(',', '.');
+    } else {
+      // UK/US format: 1,000.50 → strip commas (thousands), keep period
+      return v.replace(/,/g, '');
+    }
+  }
+
+  if (commaCount > 0) {
+    // Comma only: thousands separator if it matches \d{1,3}(,\d{3})+ pattern,
+    // otherwise treat as a decimal separator.
+    if (/^\d{1,3}(,\d{3})+$/.test(v)) return v.replace(/,/g, '');
+    return v.replace(',', '.');
+  }
+
+  if (periodCount > 1) {
+    // Multiple periods: all are thousands separators (e.g. 1.000.000 → 1000000)
+    return v.replace(/\./g, '');
+  }
+
+  if (periodCount === 1) {
+    // Single period: thousands separator when exactly 3 digits follow and no decimal
+    // digits after that (e.g. 13.150 → 13150). Otherwise it is a decimal point.
+    if (/^\d+\.\d{3}$/.test(v)) return v.replace('.', '');
+    return v;
+  }
+
+  return v;
+};
 
 interface CustomSpec {
   key: string;
@@ -53,6 +98,8 @@ export default function ProductFormPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [selectedShippingMethodIds, setSelectedShippingMethodIds] = useState<string[]>([]);
   const [dispatchTime, setDispatchTime] = useState('');
@@ -386,6 +433,23 @@ export default function ProductFormPage() {
 
   const handleSaveDraft = () => {
     saveProduct(false);
+  };
+
+  const deleteProduct = async () => {
+    if (!user || !id) return;
+    setDeleting(true);
+    try {
+      // product_shipping rows cascade-delete via FK ON DELETE CASCADE
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) throw error;
+      navigate('/seller/products');
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      setErrors({ _form: `Failed to delete product: ${(err as { message?: string })?.message ?? 'Unknown error'}` });
+      setShowDeleteConfirm(false);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -1054,6 +1118,47 @@ export default function ProductFormPage() {
                   </button>
                 </div>
               </div>
+
+              {/* ── Delete listing (existing products only) ───────────────── */}
+              {id && (
+                <div className="mt-6 pt-4 border-t border-gray-100">
+                  {showDeleteConfirm ? (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-sm font-medium text-red-800 mb-3">
+                        Permanently delete this listing? This cannot be undone.
+                      </p>
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={deleteProduct}
+                          disabled={deleting}
+                          className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {deleting ? 'Deleting…' : 'Yes, delete permanently'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowDeleteConfirm(false)}
+                          className="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      disabled={hasActiveOrders}
+                      title={hasActiveOrders ? 'Cannot delete — this product has active orders' : undefined}
+                      className="flex items-center gap-2 text-sm text-red-600 hover:text-red-800 font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      {hasActiveOrders ? 'Cannot delete — product has active orders' : 'Delete this listing'}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
           </form>

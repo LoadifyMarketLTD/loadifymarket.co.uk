@@ -94,7 +94,17 @@ const AdminStripeEvents = () => {
       if (qErr) throw qErr;
       setEvents((data ?? []) as StripeEvent[]);
     } catch (err: unknown) {
-      setError((err as Error).message || "Failed to load Stripe events");
+      const msg = (err as Error).message || "Failed to load Stripe events";
+      // Surface a friendly message when the table simply hasn't been created yet
+      // (migration 370_user_sync_stripe_events.sql needs to be applied).
+      if (msg.includes("stripe_events") && msg.includes("schema cache")) {
+        setError(
+          "The stripe_events table does not exist in this database. " +
+          "Run migration 370_user_sync_stripe_events.sql in the Supabase SQL Editor to create it."
+        );
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
