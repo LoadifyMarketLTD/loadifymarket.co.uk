@@ -51,59 +51,42 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION is_admin()
 RETURNS BOOLEAN
-LANGUAGE plpgsql STABLE SECURITY DEFINER
+LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
-BEGIN
-  -- Fast path: read app_metadata.role from the JWT.
-  -- Populated by trg_sync_role_to_auth_metadata (migration 340) and by the
-  -- handle_new_auth_user trigger (migration 370).  Does not require a
-  -- public.users row and cannot be blocked by RLS.
-  IF (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin' THEN
-    RETURN TRUE;
-  END IF;
-  -- DB fallback: direct lookup for sessions where app_metadata is not yet
-  -- populated (e.g. before migration 340 is applied or before the user
-  -- re-authenticates after a role change).
-  RETURN EXISTS (
-    SELECT 1 FROM public.users
-    WHERE id = auth.uid()
-      AND role = 'admin'
-      AND "isActive" = TRUE
-  );
-END;
+  SELECT
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+    OR EXISTS (
+      SELECT 1 FROM public.users
+      WHERE id = auth.uid()
+        AND role = 'admin'
+        AND "isActive" = TRUE
+    )
 $$;
 
 -- Backward-compat alias: is_owner() was the old name; removed from role model.
 -- Any policy still calling is_owner() will correctly defer to is_admin().
 CREATE OR REPLACE FUNCTION is_owner()
 RETURNS BOOLEAN
-LANGUAGE plpgsql STABLE SECURITY DEFINER
+LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
-BEGIN
-  RETURN is_admin();
-END;
+  SELECT is_admin()
 $$;
 
 CREATE OR REPLACE FUNCTION is_seller()
 RETURNS BOOLEAN
-LANGUAGE plpgsql STABLE SECURITY DEFINER
+LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
-BEGIN
-  -- Fast path: read app_metadata.role from the JWT.
-  IF (auth.jwt() -> 'app_metadata' ->> 'role') = 'seller' THEN
-    RETURN TRUE;
-  END IF;
-  -- DB fallback.
-  RETURN EXISTS (
-    SELECT 1 FROM public.users
-    WHERE id = auth.uid()
-      AND role = 'seller'
-      AND "isActive" = TRUE
-  );
-END;
+  SELECT
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'seller'
+    OR EXISTS (
+      SELECT 1 FROM public.users
+      WHERE id = auth.uid()
+        AND role = 'seller'
+        AND "isActive" = TRUE
+    )
 $$;
 
 -- Checks whether the calling user owns a product.

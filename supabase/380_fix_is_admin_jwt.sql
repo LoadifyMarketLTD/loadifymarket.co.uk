@@ -34,68 +34,58 @@
 
 
 -- ── 1. is_admin(): JWT fast-path + DB fallback ───────────────────────────────
+--
+-- Written as LANGUAGE sql (not plpgsql) so the body is a single SELECT
+-- expression with no IF / BEGIN / END.  This avoids a syntax error in the
+-- Supabase SQL editor which can misparse PL/pgSQL dollar-quoted blocks when
+-- it encounters semicolons inside $$ ... $$ and tries to split statements.
+--
+-- Logic: JWT app_metadata.role takes priority (no DB round-trip, no RLS).
+-- Falls back to a public.users lookup for sessions where app_metadata hasn't
+-- been populated yet (pre-migration-340 or before re-authentication).
 
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN
-LANGUAGE plpgsql STABLE SECURITY DEFINER
+LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
-BEGIN
-  -- Fast path: read app_metadata.role from the JWT.
-  -- Populated by trg_sync_role_to_auth_metadata (migration 340) and by the
-  -- handle_new_auth_user trigger (migration 370).  Does not require a
-  -- public.users row and cannot be blocked by RLS.
-  IF (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin' THEN
-    RETURN TRUE;
-  END IF;
-
-  -- DB fallback: direct lookup for sessions where app_metadata is not yet
-  -- populated (e.g. before migration 340 is applied or before the user
-  -- re-authenticates after a role change).
-  RETURN EXISTS (
-    SELECT 1 FROM public.users
-    WHERE id = auth.uid()
-      AND role = 'admin'
-      AND "isActive" = TRUE
-  );
-END;
+  SELECT
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+    OR EXISTS (
+      SELECT 1 FROM public.users
+      WHERE id = auth.uid()
+        AND role = 'admin'
+        AND "isActive" = TRUE
+    )
 $$;
 
 
--- ── 2. is_owner(): backward-compat alias (unchanged, delegates to is_admin) ──
+-- ── 2. is_owner(): backward-compat alias (delegates to is_admin) ─────────────
 
 CREATE OR REPLACE FUNCTION public.is_owner()
 RETURNS BOOLEAN
-LANGUAGE plpgsql STABLE SECURITY DEFINER
+LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
-BEGIN
-  RETURN public.is_admin();
-END;
+  SELECT public.is_admin()
 $$;
 
 
--- ── 3. is_seller(): same JWT fast-path + DB fallback pattern ─────────────────
+-- ── 3. is_seller(): same pattern as is_admin() ───────────────────────────────
 
 CREATE OR REPLACE FUNCTION public.is_seller()
 RETURNS BOOLEAN
-LANGUAGE plpgsql STABLE SECURITY DEFINER
+LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
-BEGIN
-  -- Fast path: JWT app_metadata.role.
-  IF (auth.jwt() -> 'app_metadata' ->> 'role') = 'seller' THEN
-    RETURN TRUE;
-  END IF;
-
-  -- DB fallback.
-  RETURN EXISTS (
-    SELECT 1 FROM public.users
-    WHERE id = auth.uid()
-      AND role = 'seller'
-      AND "isActive" = TRUE
-  );
-END;
+  SELECT
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'seller'
+    OR EXISTS (
+      SELECT 1 FROM public.users
+      WHERE id = auth.uid()
+        AND role = 'seller'
+        AND "isActive" = TRUE
+    )
 $$;
 
 
