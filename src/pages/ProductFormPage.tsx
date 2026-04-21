@@ -672,8 +672,7 @@ export default function ProductFormPage() {
                     inputMode="decimal"
                     value={formData.salePrice}
                     onChange={(e) => handleChange('salePrice', normalizeDecimal(e.target.value))}
-                    disabled={hasActiveOrders}
-                    className={`input-field ${hasActiveOrders ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''} ${errors.salePrice ? 'border-red-400' : ''}`}
+                    className={`input-field ${errors.salePrice ? 'border-red-400' : ''}`}
                     placeholder="Optional — leave blank if no discount"
                   />
                   <p className="text-xs text-gray-400 mt-1">Optional. Must be lower than the regular price.</p>
