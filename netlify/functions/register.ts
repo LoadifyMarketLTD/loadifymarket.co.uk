@@ -245,14 +245,18 @@ export const handler: Handler = async (event) => {
     );
     if (ssErr) console.warn('register: seller_stores upsert (non-fatal):', ssErr.message);
 
-    fetch(`${appUrl}/.netlify/functions/notify-new-seller`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email,
-        businessName: effectiveStoreName,
-      }),
-    }).catch((err: unknown) => console.warn('register: notify-new-seller failed (non-fatal):', err));
+    try {
+      await fetch(`${appUrl}/.netlify/functions/notify-new-seller`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          businessName: effectiveStoreName,
+        }),
+      });
+    } catch (err: unknown) {
+      console.warn('register: notify-new-seller failed (non-fatal):', err);
+    }
   }
   // ────────────────────────────────────────────────────────────────────────────
 
