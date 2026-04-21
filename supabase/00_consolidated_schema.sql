@@ -55,6 +55,16 @@ LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
+  -- Fast path: read app_metadata.role from the JWT.
+  -- Populated by trg_sync_role_to_auth_metadata (migration 340) and by the
+  -- handle_new_auth_user trigger (migration 370).  Does not require a
+  -- public.users row and cannot be blocked by RLS.
+  IF (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin' THEN
+    RETURN TRUE;
+  END IF;
+  -- DB fallback: direct lookup for sessions where app_metadata is not yet
+  -- populated (e.g. before migration 340 is applied or before the user
+  -- re-authenticates after a role change).
   RETURN EXISTS (
     SELECT 1 FROM public.users
     WHERE id = auth.uid()
@@ -82,6 +92,11 @@ LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
 BEGIN
+  -- Fast path: read app_metadata.role from the JWT.
+  IF (auth.jwt() -> 'app_metadata' ->> 'role') = 'seller' THEN
+    RETURN TRUE;
+  END IF;
+  -- DB fallback.
   RETURN EXISTS (
     SELECT 1 FROM public.users
     WHERE id = auth.uid()

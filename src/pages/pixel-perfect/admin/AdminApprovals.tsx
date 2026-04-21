@@ -54,6 +54,9 @@ const AdminSellerManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
+  // Tracks the raw count returned by the DB query (before any in-app filtering).
+  // null = not yet fetched, 0 = fetched but DB returned 0 rows (possible RLS block).
+  const [fetchedCount, setFetchedCount] = useState<number | null>(null);
 
   const fetchSellers = useCallback(async () => {
     setLoading(true);
@@ -89,8 +92,10 @@ const AdminSellerManagement = () => {
       });
 
       setSellers(combined);
+      setFetchedCount(combined.length);
     } catch (err: unknown) {
       setError((err as Error).message || "Failed to load sellers");
+      setFetchedCount(null);
     } finally {
       setLoading(false);
     }
@@ -213,7 +218,17 @@ const AdminSellerManagement = () => {
         ) : data.length === 0 ? (
           <TableRow>
             <TableCell colSpan={6} className="text-center py-8" style={{ color: "rgba(255,255,255,0.3)" }}>
-              No sellers found.
+              {sellers.length === 0 && fetchedCount === 0
+                ? (
+                  <span>
+                    No seller accounts returned by the database.{" "}
+                    <span style={{ color: "rgba(239,68,68,0.7)" }}>
+                      If sellers exist, apply migration 380 to fix admin read policies.
+                    </span>
+                  </span>
+                )
+                : "No sellers match the current filter."
+              }
             </TableCell>
           </TableRow>
         ) : (
