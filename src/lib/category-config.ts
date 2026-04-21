@@ -84,6 +84,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
       { label: 'Small Gifts & Novelties',  subSlug: 'small-gifts',           searchTerm: 'small gift novelty magnet badge charm' },
       { label: 'Keyrings & Badges',        subSlug: 'keyrings-badges',       searchTerm: 'keyring keychain badge fridge magnet' },
       { label: 'Beauty Accessories',       subSlug: 'beauty-accessories',    searchTerm: 'makeup brush sponge mirror compact applicator' },
+      { label: 'Craft Supplies',           subSlug: 'craft-supplies',        searchTerm: 'craft supply glitter foam sticker ribbon twine felt' },
     ],
     emptyState: {
       title: 'No Large Letter Items found',
@@ -106,6 +107,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
       { label: 'BBQ & Outdoor Cooking', subSlug: 'bbq-outdoor-cooking',  searchTerm: 'bbq grill charcoal smoker outdoor cooking set' },
       { label: 'Watering Equipment',    subSlug: 'watering-equipment',   searchTerm: 'watering can hose reel spray nozzle dripper' },
       { label: 'Garden Décor',          subSlug: 'garden-decor',         searchTerm: 'garden ornament windmill gnome bird feeder stone' },
+      { label: 'Seeds & Bulbs',         subSlug: 'seeds-bulbs',          searchTerm: 'seed bulb plug plant grow propagate sow' },
     ],
     emptyState: {
       title: 'No Garden products found',
@@ -128,6 +130,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
       { label: 'Paint & Decorating',  subSlug: 'paint-decorating',    searchTerm: 'paint roller brush masking tape primer filler' },
       { label: 'Plumbing',            subSlug: 'plumbing',            searchTerm: 'plumbing pipe tap fitting valve sealant ptfe' },
       { label: 'Electrical Supplies', subSlug: 'electrical-supplies', searchTerm: 'wire cable socket switch fuse conduit connector' },
+      { label: 'Storage Solutions',   subSlug: 'storage-solutions',   searchTerm: 'storage shelving unit box rail organiser rack cabinet' },
     ],
     emptyState: {
       title: 'No DIY products found',
@@ -171,6 +174,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
       { label: 'Gifting & Wrapping',     subSlug: 'gifting-wrapping',       searchTerm: 'gift wrap tissue paper ribbon bow bag box' },
       { label: 'Candles & Holders',      subSlug: 'candles-holders',        searchTerm: 'candle tealight birthday holder lantern wax' },
       { label: 'Novelty Gifts',          subSlug: 'novelty-gifts',          searchTerm: 'novelty gift fun gadget funny personalised' },
+      { label: 'Seasonal Gifts',         subSlug: 'seasonal-gifts',         searchTerm: 'seasonal gift christmas easter birthday hamper occasion' },
       { label: 'Tableware',              subSlug: 'tableware',              searchTerm: 'plate cup napkin tablecloth disposable party' },
       { label: 'Cards & Stationery',     subSlug: 'cards-stationery',       searchTerm: 'greeting card birthday christmas thank you note' },
     ],
@@ -224,6 +228,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
       { label: 'Dolls & Accessories', subSlug: 'dolls-accessories',   searchTerm: 'doll barbie fashion toy accessories clothes' },
       { label: 'Baby Toys',           subSlug: 'baby-toys',           searchTerm: 'baby toy rattle teether activity mat sensory soft' },
       { label: 'Arts & Crafts',       subSlug: 'arts-crafts',         searchTerm: 'arts crafts paint glitter clay stickers felt set' },
+      { label: 'Remote Control Toys', subSlug: 'remote-control-toys', searchTerm: 'remote control rc car truck drone boat helicopter' },
     ],
     emptyState: {
       title: 'No Toys found',
@@ -246,6 +251,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
       { label: 'Photography',         subSlug: 'photography',        searchTerm: 'camera tripod lens photography accessory case' },
       { label: 'Collecting',          subSlug: 'collecting',         searchTerm: 'collecting album sleeve display case coins stamps' },
       { label: 'Musical Instruments', subSlug: 'musical-instruments',searchTerm: 'guitar ukulele drum keyboard harmonica instrument' },
+      { label: 'Reading & Books',     subSlug: 'reading-books',      searchTerm: 'book reading novel fiction non-fiction guide magazine' },
     ],
     emptyState: {
       title: 'No Leisure & Hobbies products found',
@@ -268,6 +274,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
       { label: 'Baby Monitors',         subSlug: 'baby-monitors',       searchTerm: 'baby monitor camera sensor audio video' },
       { label: 'Travel & Pushchairs',   subSlug: 'travel-pushchairs',   searchTerm: 'pushchair pram buggy car seat travel cot' },
       { label: 'Nursery',               subSlug: 'nursery',             searchTerm: 'cot bed moses basket night light projector mobile' },
+      { label: 'Safety & Babyproofing', subSlug: 'safety-babyproofing', searchTerm: 'safety gate lock socket cover corner pad babyproof' },
     ],
     emptyState: {
       title: 'No Baby Supplies found',
@@ -290,6 +297,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
       { label: 'Cutlery & Flatware',  subSlug: 'cutlery-flatware',   searchTerm: 'cutlery flatware knife fork spoon set stainless' },
       { label: 'Drinkware',           subSlug: 'drinkware',          searchTerm: 'mug cup glass bottle travel flask tumbler' },
       { label: 'Small Appliances',    subSlug: 'small-appliances',   searchTerm: 'kettle toaster blender juicer air fryer slow cooker' },
+      { label: 'Kitchen Gadgets',     subSlug: 'kitchen-gadgets',    searchTerm: 'kitchen gadget garlic press tin opener mandoline grater slicer' },
     ],
     emptyState: {
       title: 'No Kitchenware found',
@@ -311,6 +319,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
       { label: 'Personal Care',          subSlug: 'personal-care',     searchTerm: 'razor shaver trimmer deodorant body wash shower' },
       { label: 'Vitamins & Supplements', subSlug: 'vitamins-supplements', searchTerm: 'vitamin supplement capsule tablet mineral protein' },
       { label: 'Fragrances',             subSlug: 'fragrances',        searchTerm: 'perfume aftershave cologne fragrance eau de toilette' },
+      { label: 'Medical Supplies',       subSlug: 'medical-supplies',  searchTerm: 'bandage plaster first aid thermometer test strip medical' },
       { label: 'Oral Care',              subSlug: 'oral-care',         searchTerm: 'toothbrush toothpaste mouthwash floss dental care' },
     ],
     emptyState: {
@@ -334,6 +343,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
       { label: 'Bathroom Accessories',      subSlug: 'bathroom-accessories',   searchTerm: 'bathroom accessory towel rail hook mirror cabinet' },
       { label: 'Picture Frames & Clocks',   subSlug: 'picture-frames-clocks',  searchTerm: 'picture frame clock wall art canvas photo' },
       { label: 'Candles & Home Fragrance',  subSlug: 'candles-home-fragrance', searchTerm: 'candle diffuser reed wax melt tealight holder' },
+      { label: 'Home Décor',               subSlug: 'home-decor',             searchTerm: 'home decor ornament vase frame mirror wall art decoration' },
     ],
     emptyState: {
       title: 'No Homeware found',
@@ -356,6 +366,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
       { label: 'Batteries',            subSlug: 'batteries',            searchTerm: 'battery aa aaa rechargeable alkaline lithium pack' },
       { label: 'Audio',                subSlug: 'audio',                searchTerm: 'headphone earphone speaker bluetooth wireless audio' },
       { label: 'Computer Accessories', subSlug: 'computer-accessories', searchTerm: 'mouse keyboard webcam usb hub monitor stand laptop' },
+      { label: 'Small Appliances',     subSlug: 'small-appliances',     searchTerm: 'fan heater vacuum cleaner iron hair dryer small appliance' },
     ],
     emptyState: {
       title: 'No Electrical products found',
@@ -377,6 +388,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
       { label: 'Bird Supplies',         subSlug: 'bird-supplies',         searchTerm: 'bird cage perch seed feeder bath bell toy' },
       { label: 'Fish & Aquatics',       subSlug: 'fish-aquatics',         searchTerm: 'fish tank aquarium filter pump gravel ornament' },
       { label: 'Pet Food',              subSlug: 'pet-food',              searchTerm: 'pet food dry wet kibble treat chew biscuit' },
+      { label: 'Pet Toys',             subSlug: 'pet-toys',              searchTerm: 'pet toy ball rope tug fetch squeak chew puzzle treat' },
       { label: 'Grooming',              subSlug: 'grooming',              searchTerm: 'pet grooming brush comb shampoo nail clipper dryer' },
     ],
     emptyState: {
@@ -399,6 +411,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
       { label: 'Art Supplies',         subSlug: 'art-supplies',       searchTerm: 'art paint brush canvas watercolour pastel sketch' },
       { label: 'Greeting Cards',       subSlug: 'greeting-cards',     searchTerm: 'greeting card birthday christmas thank you occasion' },
       { label: 'Gift Wrap',            subSlug: 'gift-wrap',          searchTerm: 'wrapping paper ribbon bow tag tissue kraft' },
+      { label: 'Labels & Tags',        subSlug: 'labels-tags',        searchTerm: 'label tag sticker address self-adhesive print sheet roll' },
       { label: 'Filing & Storage',     subSlug: 'filing-storage',     searchTerm: 'file folder binder box archive lever arch' },
     ],
     emptyState: {
@@ -421,6 +434,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
       { label: "Valentine's Day",subSlug: 'valentines-day', searchTerm: "valentines heart rose gift chocolate love card" },
       { label: 'Summer',         subSlug: 'summer',         searchTerm: 'summer beach pool inflatable sun outdoor fun' },
       { label: 'Back to School', subSlug: 'back-to-school', searchTerm: 'back school bag pencil case lunch box stationery' },
+      { label: 'Spring',         subSlug: 'spring',         searchTerm: 'spring flower planter bulb garden decoration fresh' },
       { label: 'Diwali & Eid',   subSlug: 'diwali-eid',    searchTerm: 'diwali eid decoration gift candle light celebration' },
     ],
     emptyState: {
@@ -444,6 +458,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
       { label: 'Sportswear',         subSlug: 'sportswear',        searchTerm: 'sportswear gym legging jogger hoodie vest athletic' },
       { label: 'Underwear & Socks',  subSlug: 'underwear-socks',   searchTerm: 'underwear briefs boxers socks tights underwear pack' },
       { label: 'Accessories',        subSlug: 'accessories',       searchTerm: 'hat cap scarf gloves belt bag fashion accessory' },
+      { label: 'Swimwear',           subSlug: 'swimwear',          searchTerm: 'swimwear swimsuit bikini trunks shorts beach swim costume' },
     ],
     emptyState: {
       title: 'No Wholesale Clothing found',
