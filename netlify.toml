@@ -28,6 +28,26 @@
   node_bundler = "esbuild"
 
 # ─── Edge Functions ───────────────────────────────────────────────────────────
+# EXECUTION ORDER matters: Netlify runs edge functions in the order declared
+# here.  For /product/:id requests:
+#
+#   request → product-meta → context.next()
+#                             → security-headers → context.next() → CDN (index.html)
+#                             ← security-headers adds HTTP security headers
+#           ← product-meta patches product-specific OG/Twitter meta tags
+#   response → client / crawler
+#
+# product-meta must be declared FIRST so it receives the response LAST (after
+# security-headers has already added its HTTP headers) and can safely read +
+# rewrite the HTML body.
+
+# Injects product-specific Open Graph / Twitter Card / canonical tags into
+# /product/:id HTML so social-media crawlers (Facebook, WhatsApp, etc.) see
+# real product metadata instead of the generic index.html shell tags.
+[[edge_functions]]
+  function = "product-meta"
+  path = "/product/*"
+
 # security-headers runs at the Netlify edge (Deno runtime) and adds
 # Strict-Transport-Security and Permissions-Policy to every HTML response.
 # The edge function also has in-source config (config.path = '/*'), but the
