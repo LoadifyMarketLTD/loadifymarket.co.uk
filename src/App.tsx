@@ -117,9 +117,9 @@ function PageLoader() {
 
 /**
  * Role-aware /dashboard redirect.
- * admins  → /pp/admin
- * sellers → /pp/seller
- * buyers  → /pp/buyer
+ * admins  → /admin
+ * sellers → /seller
+ * buyers  → /buyer
  * While auth is still loading, wait before redirecting to avoid a flash to the
  * wrong dashboard. Unauthenticated users are sent to /login.
  */
@@ -127,9 +127,9 @@ function DashboardRedirect() {
   const { user, isLoading } = useAuthStore();
   if (isLoading) return <PageLoader />;
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role === 'admin') return <Navigate to="/pp/admin" replace />;
-  if (user.role === 'seller') return <Navigate to="/pp/seller" replace />;
-  return <Navigate to="/pp/buyer" replace />;
+  if (user.role === 'admin') return <Navigate to="/admin" replace />;
+  if (user.role === 'seller') return <Navigate to="/seller" replace />;
+  return <Navigate to="/buyer" replace />;
 }
 
 /** Redirects legacy /tracking/:orderNumber to /track-order?orderNumber=:orderNumber */
@@ -347,56 +347,14 @@ function App() {
     let cleanup: (() => void) | undefined;
 
     import('./lib/supabase').then(({ supabase }) => {
-      // Check active session
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session?.user) {
-          // Fetch user profile with role, plus sellerStatus from seller_profiles
-          // so RequireSeller can skip its own DB round-trip for active sellers.
-          supabase
-            .from('users')
-            .select('*, seller_profiles(sellerStatus)')
-            .eq('id', session.user.id)
-            .maybeSingle()
-            .then(({ data, error }) => {
-              if (data) {
-                // Blocked users must not be rehydrated — sign them out immediately.
-                if (data.isActive === false) {
-                  supabase.auth.signOut();
-                  setUser(null);
-                  return;
-                }
-                normalizeSellerStatus(data as unknown as Record<string, unknown>);
-                // Always use the Supabase Auth session as the source of truth for
-                // isEmailVerified.  The custom users table value may be stale (e.g.
-                // the user confirmed their email but the DB row was never updated).
-                // This prevents a false isEmailVerified=false from appearing in the
-                // user object when the email IS actually confirmed in Supabase Auth.
-                (data as Record<string, unknown>).isEmailVerified =
-                  session.user.email_confirmed_at != null;
-                setUser(data);
-              } else {
-                if (error) {
-                  // Network/permission error — fall back to auth session metadata
-                  // so the user isn't stuck logged-out.
-                  console.warn('users table query failed, falling back to auth session:', error.message);
-                  setUser(userFromSession(session.user));
-                } else {
-                  // No row found in users table yet (e.g. trigger lag after signup).
-                  // Fall back to auth session so the user can still navigate.
-                  setUser(userFromSession(session.user));
-                }
-              }
-            });
-        } else {
-          setLoading(false);
-        }
-      }).catch((err: unknown) => {
-        // Network error or Supabase unreachable — unblock loading so the app is usable
-        console.error('[App] Auth initialization error:', err);
-        setLoading(false);
-      });
-
-      // Listen for auth changes
+      // Supabase JS v2 fires onAuthStateChange with an INITIAL_SESSION event
+      // synchronously when the subscription is created — this covers the
+      // page-load / existing-session path without needing a separate
+      // getSession() call.  Running both in parallel caused a last-write-wins
+      // race condition: if getSession()'s DB query returned null/error AFTER
+      // onAuthStateChange already wrote the correct role, it overwrote it with
+      // the userFromSession fallback (defaulting to role='buyer'), which is how
+      // an admin could end up seeing Buyer Hub on a page reload.
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -406,12 +364,13 @@ function App() {
           // a guard can briefly observe isLoading=false + user=null during the
           // SIGNED_IN event (e.g. right after login) and redirect to /login.
           setLoading(true);
-          supabase
-            .from('users')
-            .select('*, seller_profiles(sellerStatus)')
-            .eq('id', session.user.id)
-            .maybeSingle()
-            .then(({ data, error }) => {
+          void Promise.resolve(
+            supabase
+              .from('users')
+              .select('*, seller_profiles(sellerStatus)')
+              .eq('id', session.user.id)
+              .maybeSingle()
+          ).then(({ data, error }) => {
               if (data) {
                 // Blocked users must not be rehydrated — sign them out immediately.
                 if (data.isActive === false) {
@@ -432,11 +391,16 @@ function App() {
                   // Row not yet found — e.g. the DB insert trigger hasn't fired
                   // yet on a fresh sign-up, or a transient query failure.  Fall
                   // back to auth-session metadata so the user is not incorrectly
-                  // kicked back to the login page.  This is consistent with the
-                  // getSession() path above.
+                  // kicked back to the login page.
                   setUser(userFromSession(session.user));
                 }
               }
+            })
+            .catch((err: unknown) => {
+              // Network error during profile fetch — unblock loading so the
+              // app does not hang on a spinner indefinitely.
+              console.error('[Auth] Profile fetch threw unexpectedly:', err);
+              setLoading(false);
             });
         } else {
           setUser(null);
@@ -496,9 +460,37 @@ function App() {
         {/* /pp — pixel-perfect homepage (preview/alternate root) */}
         <Route path="pp" element={<Navigate to="/" replace />} />
 
-        {/* ── Pixel-perfect dashboard routes (own shell with sidebar) ──────────── */}
-        {/* /pp/seller – RequireSeller */}
-        <Route path="pp/seller" element={
+        {/* ── Seller onboarding standalones — defined BEFORE seller shell so they
+            take priority when the same sub-path is reached from the browser ──── */}
+        {/* Seller: Product Create/Edit — linked from pixel-perfect seller pages */}
+        <Route path="seller/products/new" element={
+          <RequireSeller>
+            <Suspense fallback={<PageLoader />}><ProductFormPage /></Suspense>
+          </RequireSeller>
+        } />
+        <Route path="seller/products/:id/edit" element={
+          <RequireSeller>
+            <Suspense fallback={<PageLoader />}><ProductFormPage /></Suspense>
+          </RequireSeller>
+        } />
+
+        {/* Seller: Setup page — accessible by any seller (any status) and admins */}
+        <Route path="seller/setup" element={
+          <RequireSellerAny>
+            <Suspense fallback={<PageLoader />}><SellerSetupPage /></Suspense>
+          </RequireSellerAny>
+        } />
+
+        {/* Seller: Profile edit — accessible by any seller (any status) and admins */}
+        <Route path="seller/profile" element={
+          <RequireSellerAny>
+            <Suspense fallback={<PageLoader />}><PPSellerProfile /></Suspense>
+          </RequireSellerAny>
+        } />
+
+        {/* ── Dashboard shells ────────────────────────────────────────────────── */}
+        {/* /seller – RequireSeller */}
+        <Route path="seller" element={
           <RequireSeller>
             <Suspense fallback={<PageLoader />}><PPSellerShell /></Suspense>
           </RequireSeller>
@@ -510,13 +502,12 @@ function App() {
           <Route path="returns" element={<Suspense fallback={<PageLoader />}><PPSellerReturns /></Suspense>} />
           <Route path="rfq" element={<Suspense fallback={<PageLoader />}><PPSellerRFQ /></Suspense>} />
           <Route path="reviews" element={<Suspense fallback={<PageLoader />}><PPSellerReviews /></Suspense>} />
-          <Route path="profile" element={<Suspense fallback={<PageLoader />}><PPSellerProfile /></Suspense>} />
           <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPSellerSettings /></Suspense>} />
           <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPSellerNotifications /></Suspense>} />
         </Route>
 
-        {/* /pp/buyer – RequireBuyer (buyer role only; sellers→/pp/seller, admins→/pp/admin) */}
-        <Route path="pp/buyer" element={
+        {/* /buyer – RequireBuyer (buyer role only; sellers→/seller, admins→/admin) */}
+        <Route path="buyer" element={
           <RequireBuyer>
             <Suspense fallback={<PageLoader />}><PPBuyerShell /></Suspense>
           </RequireBuyer>
@@ -532,8 +523,8 @@ function App() {
           <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPBuyerNotifications /></Suspense>} />
         </Route>
 
-        {/* /pp/admin – RequireAdmin */}
-        <Route path="pp/admin" element={
+        {/* /admin – RequireAdmin */}
+        <Route path="admin" element={
           <RequireAdmin>
             <Suspense fallback={<PageLoader />}><PPAdminShell /></Suspense>
           </RequireAdmin>
@@ -553,7 +544,7 @@ function App() {
           <Route path="stripe-events" element={<Suspense fallback={<PageLoader />}><PPAdminStripeEvents /></Suspense>} />
         </Route>
 
-        {/* ── Standalone functional pages (no pixel-perfect equivalent yet) ─────── */}
+        {/* ── Standalone functional pages ──────────────────────────────────────── */}
 
         {/* Order Success — Stripe redirects here after payment */}
         {/* NOTE: create-checkout.ts uses /order-success — keep this route matching that */}
@@ -563,37 +554,6 @@ function App() {
 
         {/* Checkout Error — Stripe redirects here on payment failure */}
         <Route path="checkout/error" element={<Suspense fallback={<PageLoader />}><PPCheckoutError /></Suspense>} />
-
-        {/* Seller: Product Create/Edit — linked from pixel-perfect seller pages */}
-        <Route path="seller/products/new" element={
-          <RequireSeller>
-            <Suspense fallback={<PageLoader />}><ProductFormPage /></Suspense>
-          </RequireSeller>
-        } />
-        <Route path="seller/products/:id/edit" element={
-          <RequireSeller>
-            <Suspense fallback={<PageLoader />}><ProductFormPage /></Suspense>
-          </RequireSeller>
-        } />
-
-        {/* Seller: Setup page — accessible by any seller (any status) and admins,
-            so that draft/submitted sellers can complete their onboarding here.
-            Buyers are blocked. */}
-        <Route path="seller/setup" element={
-          <RequireSellerAny>
-            <Suspense fallback={<PageLoader />}><SellerSetupPage /></Suspense>
-          </RequireSellerAny>
-        } />
-
-        {/* Seller: Profile edit — accessible by any seller (any status) and admins,
-            so that draft/submitted sellers can fill their profile from the setup wizard
-            without being bounced back to /seller/setup by the RequireSeller guard.
-            Buyers are blocked. */}
-        <Route path="seller/profile" element={
-          <RequireSellerAny>
-            <Suspense fallback={<PageLoader />}><PPSellerProfile /></Suspense>
-          </RequireSellerAny>
-        } />
 
         {/* Public: Seller Public Profile — no pixel-perfect equivalent yet */}
         <Route path="seller/:slug" element={<Suspense fallback={<PageLoader />}><SellerPublicProfilePage /></Suspense>} />
@@ -614,14 +574,17 @@ function App() {
         <Route path="acceptable-use-policy" element={<Suspense fallback={<PageLoader />}><AcceptableUsePolicyPage /></Suspense>} />
         <Route path="seller-guidelines" element={<Suspense fallback={<PageLoader />}><SellerGuidelinesPage /></Suspense>} />
 
-        {/* ── Legacy routes → redirect to canonical /pp/* equivalents ──────────── */}
-        <Route path="seller" element={<Navigate to="/pp/seller" replace />} />
-        <Route path="admin" element={<Navigate to="/pp/admin" replace />} />
+        {/* ── Aliases: /pp/* → clean routes (backward compat for bookmarks / old links) */}
+        <Route path="pp/admin/*" element={<Navigate to="/admin" replace />} />
+        <Route path="pp/seller/*" element={<Navigate to="/seller" replace />} />
+        <Route path="pp/buyer/*" element={<Navigate to="/buyer" replace />} />
+
+        {/* ── Other legacy aliases ─────────────────────────────────────────────── */}
         <Route path="dashboard" element={<DashboardRedirect />} />
         <Route path="shop" element={<Navigate to="/catalog" replace />} />
         <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />
-        <Route path="seller-dashboard" element={<Navigate to="/pp/seller" replace />} />
-        <Route path="admin-dashboard" element={<Navigate to="/pp/admin" replace />} />
+        <Route path="seller-dashboard" element={<Navigate to="/seller" replace />} />
+        <Route path="admin-dashboard" element={<Navigate to="/admin" replace />} />
 
         {/* ── Wildcard — pixel-perfect 404 ─────────────────────────────────────── */}
         <Route path="*" element={<Suspense fallback={<PageLoader />}><PPNotFound /></Suspense>} />

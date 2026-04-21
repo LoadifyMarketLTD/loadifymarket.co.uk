@@ -10,24 +10,24 @@ import { useAuthStore } from "@/store";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { to: "/pp/seller", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/pp/seller/products", label: "Products", icon: Package },
-  { to: "/pp/seller/orders", label: "Orders", icon: ShoppingCart },
-  { to: "/pp/seller/shipments", label: "Shipments", icon: Truck },
-  { to: "/pp/seller/returns", label: "Returns", icon: RotateCcw },
-  { to: "/pp/seller/rfq", label: "RFQ / Quotes", icon: FileText },
-  { to: "/pp/seller/reviews", label: "Reviews", icon: Star },
-  { to: "/pp/seller/notifications", label: "Notifications", icon: Bell },
-  { to: "/pp/seller/profile", label: "Profile", icon: UserCircle },
-  { to: "/pp/seller/settings", label: "Settings", icon: Settings },
+  { to: "/seller", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/seller/products", label: "Products", icon: Package },
+  { to: "/seller/orders", label: "Orders", icon: ShoppingCart },
+  { to: "/seller/shipments", label: "Shipments", icon: Truck },
+  { to: "/seller/returns", label: "Returns", icon: RotateCcw },
+  { to: "/seller/rfq", label: "RFQ / Quotes", icon: FileText },
+  { to: "/seller/reviews", label: "Reviews", icon: Star },
+  { to: "/seller/notifications", label: "Notifications", icon: Bell },
+  { to: "/seller/profile", label: "Profile", icon: UserCircle },
+  { to: "/seller/settings", label: "Settings", icon: Settings },
 ];
 
 /** The 4 most important pages shown in the mobile bottom tab bar */
 const mobileTabItems = [
-  { to: "/pp/seller", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/pp/seller/products", label: "Products", icon: Package },
-  { to: "/pp/seller/orders", label: "Orders", icon: ShoppingCart },
-  { to: "/pp/seller/settings", label: "Settings", icon: Settings },
+  { to: "/seller", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/seller/products", label: "Products", icon: Package },
+  { to: "/seller/orders", label: "Orders", icon: ShoppingCart },
+  { to: "/seller/settings", label: "Settings", icon: Settings },
 ];
 
 interface SidebarContentProps {

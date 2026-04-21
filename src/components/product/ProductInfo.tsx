@@ -202,7 +202,7 @@ const ProductInfo = ({
               <Settings className="mr-2 h-5 w-5" /> Manage This Listing
             </Button>
           </Link>
-          <Link to="/pp/seller/products" className="shrink-0">
+          <Link to="/seller/products" className="shrink-0">
             <Button size="lg" variant="outline" className="w-full text-base">
               All My Listings
             </Button>

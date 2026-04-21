@@ -96,8 +96,8 @@ const SellerProfile = () => {
   // RequireAuth is intentionally used at the route level (not RequireSeller) so that
   // draft/submitted sellers can edit their profile during onboarding, but buyers and
   // admins must not land here.
-  if (user && hasAdminAccess(user)) return <Navigate to="/pp/admin" replace />;
-  if (user && user.role !== 'seller') return <Navigate to="/pp/buyer" replace />;
+  if (user && hasAdminAccess(user)) return <Navigate to="/admin" replace />;
+  if (user && user.role !== 'seller') return <Navigate to="/buyer" replace />;
 
   const updateField = (field: keyof ProfileForm, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -146,7 +146,7 @@ const SellerProfile = () => {
                   title: "Your store is now live! 🎉",
                   description: "Your seller account has been activated. Redirecting to your dashboard…",
                 });
-                setTimeout(() => window.location.replace("/pp/seller"), 1800);
+                setTimeout(() => window.location.replace("/seller"), 1800);
               }
             }
           }

@@ -9,27 +9,27 @@ import { useAuthStore } from "@/store";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { to: "/pp/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/pp/admin/users", label: "Users", icon: Users },
-  { to: "/pp/admin/buyers", label: "Buyers", icon: UserCheck },
-  { to: "/pp/admin/approvals", label: "Sellers", icon: ShieldCheck },
-  { to: "/pp/admin/products", label: "Products", icon: Package },
-  { to: "/pp/admin/orders", label: "Orders", icon: ShoppingBag },
-  { to: "/pp/admin/payouts", label: "Payouts", icon: Banknote },
-  { to: "/pp/admin/stripe-events", label: "Stripe Events", icon: Zap },
-  { to: "/pp/admin/flagged", label: "Flagged / Reports", icon: Flag },
-  { to: "/pp/admin/reports", label: "Analytics", icon: BarChart3 },
-  { to: "/pp/admin/support", label: "Support", icon: MessageSquare },
-  { to: "/pp/admin/notifications", label: "Notifications", icon: Bell },
-  { to: "/pp/admin/settings", label: "Settings", icon: Settings },
+  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/admin/users", label: "Users", icon: Users },
+  { to: "/admin/buyers", label: "Buyers", icon: UserCheck },
+  { to: "/admin/approvals", label: "Sellers", icon: ShieldCheck },
+  { to: "/admin/products", label: "Products", icon: Package },
+  { to: "/admin/orders", label: "Orders", icon: ShoppingBag },
+  { to: "/admin/payouts", label: "Payouts", icon: Banknote },
+  { to: "/admin/stripe-events", label: "Stripe Events", icon: Zap },
+  { to: "/admin/flagged", label: "Flagged / Reports", icon: Flag },
+  { to: "/admin/reports", label: "Analytics", icon: BarChart3 },
+  { to: "/admin/support", label: "Support", icon: MessageSquare },
+  { to: "/admin/notifications", label: "Notifications", icon: Bell },
+  { to: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 /** The 4 most important admin pages shown in the mobile bottom tab bar */
 const mobileTabItems = [
-  { to: "/pp/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/pp/admin/approvals", label: "Sellers", icon: ShieldCheck },
-  { to: "/pp/admin/orders", label: "Orders", icon: ShoppingBag },
-  { to: "/pp/admin/settings", label: "Settings", icon: Settings },
+  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/admin/approvals", label: "Sellers", icon: ShieldCheck },
+  { to: "/admin/orders", label: "Orders", icon: ShoppingBag },
+  { to: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 interface SidebarContentProps {

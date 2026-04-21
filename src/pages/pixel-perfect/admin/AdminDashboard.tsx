@@ -230,7 +230,7 @@ const AdminDashboard = () => {
               }}
               asChild
             >
-              <Link to="/pp/admin/approvals">
+              <Link to="/admin/approvals">
                 View All <ArrowUpRight className="h-3 w-3 ml-1" />
               </Link>
             </Button>

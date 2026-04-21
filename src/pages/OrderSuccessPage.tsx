@@ -130,7 +130,7 @@ export default function OrderSuccessPage() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
               <Link
-                to="/pp/buyer/orders"
+                to="/buyer/orders"
                 className="flex-1 flex items-center justify-center gap-2 font-bold rounded-full py-3 px-6 text-white"
                 style={{ background: "linear-gradient(90deg,#22c55e 0%,#16a34a 100%)" }}
               >

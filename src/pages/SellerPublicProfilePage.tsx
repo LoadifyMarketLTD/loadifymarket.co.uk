@@ -257,14 +257,14 @@ export default function SellerPublicProfilePage() {
                 {user?.id === seller.userId ? (
                   <>
                     <Link
-                      to="/pp/seller/profile"
+                      to="/seller/profile"
                       className="btn-primary inline-flex items-center gap-2 text-sm"
                     >
                       <Settings className="w-4 h-4" />
                       Edit Store Profile
                     </Link>
                     <Link
-                      to="/pp/seller/products"
+                      to="/seller/products"
                       className="btn-glass inline-flex items-center gap-2 text-sm"
                     >
                       <Package className="w-4 h-4" />
