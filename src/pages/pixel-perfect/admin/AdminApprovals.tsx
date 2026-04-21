@@ -86,19 +86,39 @@ const AdminSellerManagement = () => {
 
       if (profilesError) throw profilesError;
 
-      // Fallback source for legacy/misaligned data where seller profile rows are missing.
-      const { data: productSellerRows, error: productSellerError } = await supabase
-        .from("products")
-        .select("sellerId");
+      let sellerIds = Array.from(new Set((profiles ?? []).map((p) => p.userId)));
 
-      if (productSellerError) throw productSellerError;
+      if (sellerIds.length === 0) {
+        // Fallback source for legacy/misaligned data where canonical seller profile rows are missing.
+        const fallbackIds = new Set<string>();
+        const pageSize = 500;
+        const maxPages = 2000;
+        let page = 0;
+        let from = 0;
 
-      const sellerIds = Array.from(new Set([
-        ...(profiles ?? []).map((p) => p.userId),
-        ...((productSellerRows ?? []) as ProductSellerRow[])
-          .map((p) => p.sellerId)
-          .filter((id): id is string => Boolean(id)),
-      ]));
+        while (page < maxPages) {
+          const { data: productSellerRows, error: productSellerError } = await supabase
+            .from("products")
+            .select("sellerId")
+            .not("sellerId", "is", null)
+            .order("createdAt", { ascending: false })
+            .range(from, from + pageSize - 1);
+
+          if (productSellerError) throw productSellerError;
+
+          const rows = (productSellerRows ?? []) as ProductSellerRow[];
+          rows
+            .map((p) => p.sellerId)
+            .filter((id): id is string => Boolean(id))
+            .forEach((id) => fallbackIds.add(id));
+
+          if (rows.length < pageSize) break;
+          page += 1;
+          from += pageSize;
+        }
+
+        sellerIds = Array.from(fallbackIds);
+      }
 
       if (sellerIds.length === 0) {
         setSellers([]);
@@ -142,8 +162,13 @@ const AdminSellerManagement = () => {
       });
 
       const missingProfileIds = sellerIds.filter((id) => !profileMap.has(id));
-      if (missingProfileIds.length > 0) {
-        console.warn("AdminApprovals fallback: missing seller_profiles rows for sellerIds", missingProfileIds);
+      if (import.meta.env.DEV && missingProfileIds.length > 0) {
+        console.warn(
+          "AdminApprovals fallback: missing seller_profiles rows for seller IDs",
+          missingProfileIds.length > 10
+            ? { count: missingProfileIds.length, sample: missingProfileIds.slice(0, 10) }
+            : missingProfileIds
+        );
       }
 
       setSellers(sorted);
