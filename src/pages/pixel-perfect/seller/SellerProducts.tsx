@@ -9,6 +9,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { copyToClipboard } from "@/lib/clipboard";
 
 interface Product {
   id: string;
@@ -39,22 +40,6 @@ function deriveStatus(p: Product): string {
 }
 
 const BASE_URL = "https://loadifymarket.co.uk";
-
-async function copyToClipboard(text: string): Promise<void> {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text);
-    return;
-  }
-  // Deprecated but intentional legacy fallback for browsers without Clipboard API support.
-  const el = document.createElement("textarea");
-  el.value = text;
-  el.setAttribute("readonly", "");
-  el.style.cssText = "position:absolute;left:-9999px";
-  document.body.appendChild(el);
-  el.select();
-  document.execCommand("copy");
-  document.body.removeChild(el);
-}
 
 const SellerProducts = () => {
   const { user } = useAuthStore();
