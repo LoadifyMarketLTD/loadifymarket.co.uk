@@ -49,46 +49,55 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION is_admin()
-RETURNS BOOLEAN
-LANGUAGE plpgsql STABLE SECURITY DEFINER
+-- JWT-first: checks app_metadata.role (set by migration 340 trigger) then
+-- falls back to public.users query.  LANGUAGE sql avoids PL/pgSQL BEGIN/END
+-- which can be misparsed by the Supabase SQL editor's dollar-quote scanner.
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
 SET search_path = ''
 AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.users
-    WHERE id = auth.uid()
-      AND role = 'admin'
-      AND "isActive" = TRUE
+  SELECT (
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+    OR EXISTS (
+      SELECT 1 FROM public.users
+      WHERE id = auth.uid()
+        AND role = 'admin'
+        AND "isActive" = TRUE
+    )
   );
-END;
 $$;
 
 -- Backward-compat alias: is_owner() was the old name; removed from role model.
 -- Any policy still calling is_owner() will correctly defer to is_admin().
-CREATE OR REPLACE FUNCTION is_owner()
-RETURNS BOOLEAN
-LANGUAGE plpgsql STABLE SECURITY DEFINER
+CREATE OR REPLACE FUNCTION public.is_owner()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
 SET search_path = ''
 AS $$
-BEGIN
-  RETURN is_admin();
-END;
+  SELECT public.is_admin();
 $$;
 
-CREATE OR REPLACE FUNCTION is_seller()
-RETURNS BOOLEAN
-LANGUAGE plpgsql STABLE SECURITY DEFINER
+CREATE OR REPLACE FUNCTION public.is_seller()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
 SET search_path = ''
 AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.users
-    WHERE id = auth.uid()
-      AND role = 'seller'
-      AND "isActive" = TRUE
+  SELECT (
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'seller'
+    OR EXISTS (
+      SELECT 1 FROM public.users
+      WHERE id = auth.uid()
+        AND role = 'seller'
+        AND "isActive" = TRUE
+    )
   );
-END;
 $$;
 
 -- Checks whether the calling user owns a product.
