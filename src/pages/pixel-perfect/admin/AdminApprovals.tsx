@@ -26,6 +26,27 @@ interface Seller {
   stripeConnectStatus: string | null;
 }
 
+type SellerProfileRow = {
+  userId: string;
+  sellerStatus: Seller["sellerStatus"] | null;
+  stripeConnectStatus: string | null;
+  storeName: string | null;
+  businessName: string | null;
+  fullName: string | null;
+};
+
+type UserRow = {
+  id: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  createdAt: string | null;
+};
+
+type ProductSellerRow = {
+  sellerId: string | null;
+};
+
 const statusColor: Record<string, string> = {
   active:    "border-emerald-500/30 text-emerald-400 bg-emerald-500/10",
   submitted: "border-amber-500/30 text-amber-400 bg-amber-500/10",
@@ -35,7 +56,7 @@ const statusColor: Record<string, string> = {
 
 const statusLabel: Record<string, string> = {
   active:    "Active",
-  submitted: "Setup in progress",
+  submitted: "Setup in Progress",
   draft:     "Setup required",
   suspended: "Suspended",
 };
@@ -59,36 +80,73 @@ const AdminSellerManagement = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data: sellerUsers, error: usersError } = await supabase
-        .from("users")
-        .select("id, email, firstName, lastName, createdAt")
-        .eq("role", "seller")
-        .order("createdAt", { ascending: false });
-
-      if (usersError) throw usersError;
-
       const { data: profiles, error: profilesError } = await supabase
         .from("seller_profiles")
         .select("userId, sellerStatus, stripeConnectStatus, storeName, businessName, fullName");
 
       if (profilesError) throw profilesError;
 
-      const profileMap = new Map((profiles || []).map((p) => [p.userId, p]));
+      // Fallback source for legacy/misaligned data where seller profile rows are missing.
+      const { data: productSellerRows, error: productSellerError } = await supabase
+        .from("products")
+        .select("sellerId");
 
-      const combined: Seller[] = (sellerUsers || []).map((u) => {
-        const p = profileMap.get(u.id);
+      if (productSellerError) throw productSellerError;
+
+      const sellerIds = Array.from(new Set([
+        ...(profiles ?? []).map((p) => p.userId),
+        ...((productSellerRows ?? []) as ProductSellerRow[])
+          .map((p) => p.sellerId)
+          .filter((id): id is string => Boolean(id)),
+      ]));
+
+      if (sellerIds.length === 0) {
+        setSellers([]);
+        return;
+      }
+
+      const { data: usersData, error: usersError } = await supabase
+        .from("users")
+        .select("id, email, firstName, lastName, createdAt")
+        .in("id", sellerIds)
+        .order("createdAt", { ascending: false });
+
+      if (usersError) throw usersError;
+
+      const profileMap = new Map<string, SellerProfileRow>(
+        ((profiles ?? []) as SellerProfileRow[]).map((p) => [p.userId, p])
+      );
+      const usersById = new Map<string, UserRow>(
+        ((usersData ?? []) as UserRow[]).map((u) => [u.id, u])
+      );
+
+      const combined: Seller[] = sellerIds.map((sellerId) => {
+        const p = profileMap.get(sellerId);
+        const u = usersById.get(sellerId);
+        const fallbackName = [u?.firstName, u?.lastName].filter(Boolean).join(" ").trim();
         return {
-          userId: u.id,
-          name: p?.fullName || `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email,
-          email: u.email,
+          userId: sellerId,
+          name: p?.fullName || fallbackName || u?.email || sellerId,
+          email: u?.email || "—",
           company: p?.storeName || p?.businessName || "—",
-          date: u.createdAt ? new Date(u.createdAt).toISOString().split("T")[0] : "—",
+          date: u?.createdAt ? new Date(u.createdAt).toISOString().split("T")[0] : "—",
           sellerStatus: (p?.sellerStatus ?? "draft") as Seller["sellerStatus"],
           stripeConnectStatus: p?.stripeConnectStatus ?? null,
         };
       });
 
-      setSellers(combined);
+      const sorted = combined.sort((a, b) => {
+        if (a.date === "—") return 1;
+        if (b.date === "—") return -1;
+        return b.date.localeCompare(a.date);
+      });
+
+      const missingProfileIds = sellerIds.filter((id) => !profileMap.has(id));
+      if (missingProfileIds.length > 0) {
+        console.warn("AdminApprovals fallback: missing seller_profiles rows for sellerIds", missingProfileIds);
+      }
+
+      setSellers(sorted);
     } catch (err: unknown) {
       setError((err as Error).message || "Failed to load sellers");
     } finally {
@@ -208,6 +266,12 @@ const AdminSellerManagement = () => {
           <TableRow>
             <TableCell colSpan={6} className="text-center py-8">
               <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(255,255,255,0.3)" }} />
+            </TableCell>
+          </TableRow>
+        ) : error ? (
+          <TableRow>
+            <TableCell colSpan={6} className="text-center py-8" style={{ color: "rgba(248,113,113,0.9)" }}>
+              Failed to load sellers.
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
@@ -473,4 +537,3 @@ const AdminSellerManagement = () => {
 };
 
 export default AdminSellerManagement;
-
