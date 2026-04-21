@@ -250,8 +250,10 @@ const ProductDetail = () => {
     }
   };
 
+  const normalizedCategory = (product.category ?? "").trim().toLowerCase();
+  const normalizedSubcategory = (product.subcategory ?? "").trim().toLowerCase();
   const hasDistinctSubcategory =
-    !!product.subcategory && product.subcategory.trim().toLowerCase() !== product.category.trim().toLowerCase();
+    normalizedSubcategory.length > 0 && normalizedSubcategory !== normalizedCategory;
   const detailsCategoryLabel = hasDistinctSubcategory ? product.subcategory : product.category;
 
   return (

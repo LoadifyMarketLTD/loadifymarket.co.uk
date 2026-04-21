@@ -50,8 +50,10 @@ const ProductInfo = ({
   const { user } = useAuthStore();
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const normalizedCategory = (category ?? "").trim().toLowerCase();
+  const normalizedSubcategory = (subcategory ?? "").trim().toLowerCase();
   const hasDistinctSubcategory =
-    !!subcategory && subcategory.trim().toLowerCase() !== category.trim().toLowerCase();
+    normalizedSubcategory.length > 0 && normalizedSubcategory !== normalizedCategory;
 
   // True when the logged-in user is the seller/owner of this product
   const isOwner = !!(user && sellerId && user.id === sellerId);
