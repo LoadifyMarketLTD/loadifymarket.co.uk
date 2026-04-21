@@ -50,25 +50,29 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- JWT-first: checks app_metadata.role (set by migration 340 trigger) then
--- falls back to public.users query.  LANGUAGE sql avoids PL/pgSQL BEGIN/END
--- which can be misparsed by the Supabase SQL editor's dollar-quote scanner.
+-- falls back to public.users query.  Named dollar-quote tag $func$ prevents
+-- the Supabase SQL editor's bare-$$ splitting bug (ERROR 42601 at COALESCE).
+-- UUID regex guard on the sub claim prevents ERROR 22P02 from a malformed sub.
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = ''
-AS $$
+AS $func$
   SELECT (
     COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false)
-    OR EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid()
-        AND role = 'admin'
-        AND "isActive" = TRUE
+    OR (
+      (auth.jwt() ->> 'sub') ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      AND EXISTS (
+        SELECT 1 FROM public.users
+        WHERE id = (auth.jwt() ->> 'sub')::uuid
+          AND role = 'admin'
+          AND "isActive" = TRUE
+      )
     )
   );
-$$;
+$func$;
 
 -- Backward-compat alias: is_owner() was the old name; removed from role model.
 -- Any policy still calling is_owner() will correctly defer to is_admin().
@@ -78,9 +82,9 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = ''
-AS $$
+AS $func$
   SELECT public.is_admin();
-$$;
+$func$;
 
 CREATE OR REPLACE FUNCTION public.is_seller()
 RETURNS boolean
@@ -88,17 +92,20 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = ''
-AS $$
+AS $func$
   SELECT (
     COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'seller', false)
-    OR EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid()
-        AND role = 'seller'
-        AND "isActive" = TRUE
+    OR (
+      (auth.jwt() ->> 'sub') ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      AND EXISTS (
+        SELECT 1 FROM public.users
+        WHERE id = (auth.jwt() ->> 'sub')::uuid
+          AND role = 'seller'
+          AND "isActive" = TRUE
+      )
     )
   );
-$$;
+$func$;
 
 -- Checks whether the calling user owns a product.
 -- SECURITY DEFINER so that it bypasses the products RLS policy when
@@ -108,14 +115,17 @@ CREATE OR REPLACE FUNCTION owns_product(p_product_id UUID)
 RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
-AS $$
+AS $func$
   SELECT EXISTS (
     SELECT 1
     FROM   public.products
     WHERE  id         = p_product_id
-      AND  "sellerId" = (SELECT auth.uid())
+      AND  "sellerId" = (
+        SELECT (auth.jwt() ->> 'sub')::uuid
+        WHERE (auth.jwt() ->> 'sub') ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      )
   );
-$$;
+$func$;
 
 -- ──────────────────────────────────────────────────────────────
 -- SECTION 2: USERS & PROFILES

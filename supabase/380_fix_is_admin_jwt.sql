@@ -51,7 +51,7 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = ''
-AS $$
+AS $func$
   SELECT (
     COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false)
     OR EXISTS (
@@ -61,7 +61,7 @@ AS $$
         AND "isActive" = TRUE
     )
   );
-$$;
+$func$;
 
 -- ── is_seller() ──────────────────────────────────────────────────────────────
 -- Same dual-path pattern as is_admin() for consistency.
@@ -72,7 +72,7 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = ''
-AS $$
+AS $func$
   SELECT (
     COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'seller', false)
     OR EXISTS (
@@ -82,7 +82,7 @@ AS $$
         AND "isActive" = TRUE
     )
   );
-$$;
+$func$;
 
 -- ── is_owner() ───────────────────────────────────────────────────────────────
 -- Backward-compat alias — delegates to is_admin().
@@ -94,6 +94,6 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = ''
-AS $$
+AS $func$
   SELECT public.is_admin();
-$$;
+$func$;
