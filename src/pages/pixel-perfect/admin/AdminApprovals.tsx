@@ -218,12 +218,12 @@ const AdminSellerManagement = () => {
         ) : data.length === 0 ? (
           <TableRow>
             <TableCell colSpan={6} className="text-center py-8" style={{ color: "rgba(255,255,255,0.3)" }}>
-              {sellers.length === 0 && fetchedCount === 0
+              {fetchedCount === 0
                 ? (
                   <span>
-                    No seller accounts returned by the database.{" "}
+                    No seller accounts found.{" "}
                     <span style={{ color: "rgba(239,68,68,0.7)" }}>
-                      If sellers exist, apply migration 380 to fix admin read policies.
+                      If sellers should be visible, contact your database administrator to verify admin read policies are applied.
                     </span>
                   </span>
                 )
