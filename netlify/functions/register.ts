@@ -249,11 +249,24 @@ export const handler: Handler = async (event) => {
   // Fire-and-forget: a failure here must never block successful registration.
   // Fall back to the primary admin inbox when the env var is not configured.
   const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'loadifymarket.co.uk@gmail.com';
+  if (!process.env.ADMIN_NOTIFICATION_EMAIL) {
+    console.warn(
+      'register: ADMIN_NOTIFICATION_EMAIL is not set — falling back to loadifymarket.co.uk@gmail.com. ' +
+      'Set this environment variable in the Netlify dashboard to override.'
+    );
+  }
   const appUrl = process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
   {
     const template = role === 'seller' ? 'admin_new_seller' : 'admin_new_buyer';
     const subject  = role === 'seller' ? 'Loadify: New Seller Registration' : 'Loadify: New Buyer Registration';
-    const effectiveStoreName = role === 'seller' ? (storeName?.trim() || `${firstName}'s Store`) : undefined;
+    const notificationData: Record<string, string> = {
+      registeredAt: new Date().toLocaleString('en-GB'),
+      sellerEmail: email,
+      sellerName: `${firstName} ${lastName}`,
+    };
+    if (role === 'seller') {
+      notificationData.storeName = storeName?.trim() || `${firstName}'s Store`;
+    }
     fetch(`${appUrl}/.netlify/functions/send-email`, {
       method: 'POST',
       headers: {
@@ -264,12 +277,7 @@ export const handler: Handler = async (event) => {
         to: adminEmail,
         subject,
         template,
-        data: {
-          registeredAt: new Date().toLocaleString('en-GB'),
-          sellerEmail: email,
-          sellerName: `${firstName} ${lastName}`,
-          storeName: effectiveStoreName,
-        },
+        data: notificationData,
       }),
     }).catch((err: unknown) => console.warn('register: admin notification failed (non-fatal):', err));
   }
