@@ -49,14 +49,19 @@ RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
-  SELECT
+  SELECT COALESCE(
     (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
-    OR EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid()
-        AND role = 'admin'
-        AND "isActive" = TRUE
-    )
+    OR (
+      (auth.jwt() ->> 'sub') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      AND EXISTS (
+        SELECT 1 FROM public.users
+        WHERE id       = (auth.jwt() ->> 'sub')::uuid
+          AND role     = 'admin'
+          AND "isActive" = TRUE
+      )
+    ),
+    false
+  )
 $$;
 
 
@@ -78,14 +83,19 @@ RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
-  SELECT
+  SELECT COALESCE(
     (auth.jwt() -> 'app_metadata' ->> 'role') = 'seller'
-    OR EXISTS (
-      SELECT 1 FROM public.users
-      WHERE id = auth.uid()
-        AND role = 'seller'
-        AND "isActive" = TRUE
-    )
+    OR (
+      (auth.jwt() ->> 'sub') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      AND EXISTS (
+        SELECT 1 FROM public.users
+        WHERE id       = (auth.jwt() ->> 'sub')::uuid
+          AND role     = 'seller'
+          AND "isActive" = TRUE
+      )
+    ),
+    false
+  )
 $$;
 
 
