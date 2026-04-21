@@ -32,58 +32,54 @@
 -- ── is_admin() ───────────────────────────────────────────────────────────────
 
 CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
+RETURNS BOOLEAN
+LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $func$
-  SELECT (
-    COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false)
+  SELECT COALESCE(
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
     OR (
-      (auth.jwt() ->> 'sub') ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      (auth.jwt() ->> 'sub') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
       AND EXISTS (
         SELECT 1 FROM public.users
-        WHERE id = (auth.jwt() ->> 'sub')::uuid
-          AND role = 'admin'
+        WHERE id       = (auth.jwt() ->> 'sub')::uuid
+          AND role     = 'admin'
           AND "isActive" = TRUE
       )
-    )
-  );
+    ),
+    false
+  )
 $func$;
 
 -- ── is_seller() ──────────────────────────────────────────────────────────────
 
 CREATE OR REPLACE FUNCTION public.is_seller()
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
+RETURNS BOOLEAN
+LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $func$
-  SELECT (
-    COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'seller', false)
+  SELECT COALESCE(
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'seller'
     OR (
-      (auth.jwt() ->> 'sub') ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      (auth.jwt() ->> 'sub') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
       AND EXISTS (
         SELECT 1 FROM public.users
-        WHERE id = (auth.jwt() ->> 'sub')::uuid
-          AND role = 'seller'
+        WHERE id       = (auth.jwt() ->> 'sub')::uuid
+          AND role     = 'seller'
           AND "isActive" = TRUE
       )
-    )
-  );
+    ),
+    false
+  )
 $func$;
 
 -- ── is_owner() ───────────────────────────────────────────────────────────────
 -- Backward-compat alias — delegates to is_admin().
 
 CREATE OR REPLACE FUNCTION public.is_owner()
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
+RETURNS BOOLEAN
+LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $func$
-  SELECT public.is_admin();
+  SELECT public.is_admin()
 $func$;
