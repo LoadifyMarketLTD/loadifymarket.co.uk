@@ -11,6 +11,8 @@ interface SEOProps {
   canonical?: string;
   /** Override the og:image URL. */
   ogImage?: string;
+  /** Open Graph type, e.g. "website" or "product". */
+  ogType?: string;
   /** Set to "noindex, nofollow" for auth-gated or private pages. */
   robots?: string;
 }
@@ -27,6 +29,7 @@ export default function SEO({
   description,
   canonical,
   ogImage = DEFAULT_OG_IMAGE,
+  ogType = "website",
   robots = "index, follow",
 }: SEOProps) {
   const fullTitle = title.endsWith(` | ${SITE_NAME}`) || title === SITE_NAME
@@ -46,7 +49,7 @@ export default function SEO({
       {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
 
       {/* Open Graph */}
-      <meta property="og:type" content="website" />
+      <meta property="og:type" content={ogType} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />

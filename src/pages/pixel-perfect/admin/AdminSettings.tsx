@@ -80,10 +80,14 @@ const AdminSettings = () => {
       const isObj = json !== null && typeof json === "object";
       const error = isObj ? (json as Record<string, unknown>).error : undefined;
       if (!res.ok) throw new Error(typeof error === "string" ? error : "Check failed");
+      // Function returns { platformConfigured: boolean, keyPrefix?, platformAccountId? }
       const configured = isObj ? Boolean((json as Record<string, unknown>).platformConfigured) : false;
+      const keyPrefix = isObj && typeof (json as Record<string, unknown>).keyPrefix === "string"
+        ? String((json as Record<string, unknown>).keyPrefix)
+        : "";
       const message = configured
-        ? "Stripe Connect is enabled for this platform."
-        : "Stripe Connect is not enabled yet. Complete onboarding in Stripe Dashboard.";
+        ? `Connected${keyPrefix ? ` (key: ${keyPrefix})` : ""}`
+        : "Not configured";
       setStripeConnectStatus({ configured, message });
     } catch (err) {
       setStripeConnectStatus({ configured: false, message: err instanceof Error ? err.message : "Check failed" });
