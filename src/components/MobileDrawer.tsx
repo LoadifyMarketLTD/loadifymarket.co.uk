@@ -1,8 +1,32 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { X, ArrowLeft, ChevronRight } from "lucide-react";
-import CATEGORY_CONFIG, { getCategoryConfig } from "@/lib/category-config";
+import {
+  X,
+  ArrowLeft,
+  ChevronRight,
+  Hand,
+  Boxes,
+  Shirt,
+  Footprints,
+  Gem,
+  Smartphone,
+  Clapperboard,
+  Package,
+  Gamepad2,
+  HeartPulse,
+  PawPrint,
+  Trophy,
+  UtensilsCrossed,
+  Briefcase,
+  Home,
+  Warehouse,
+  Sparkles,
+  Wrench,
+  Car,
+  Building2,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import DrawerAccountBlock from "@/components/mobile/DrawerAccountBlock";
 import DrawerCTACards from "@/components/mobile/DrawerCTACards";
 import logo from "@/assets/loadify-logo.svg";
@@ -23,15 +47,49 @@ interface MainScreenProps {
   dashboardPath: string;
   onLogout: () => void;
   onClose: () => void;
-  onCategorySelect: (slug: string) => void;
+  onCategorySelect: (categoryKey: string) => void;
   closeBtnRef: React.RefObject<HTMLButtonElement | null>;
 }
 
 interface CategoryScreenProps {
-  categorySlug: string;
+  categoryKey: string;
   onBack: () => void;
   onClose: () => void;
 }
+
+interface HamburgerCategory {
+  key: string;
+  label: string;
+  icon: LucideIcon;
+  iconColor: string;
+  subcategories: string[];
+}
+
+const HAMBURGER_CATEGORIES: readonly HamburgerCategory[] = [
+  { key: "handmade", label: "Handmade", icon: Hand, iconColor: "text-fuchsia-400", subcategories: ["Handcrafted Decor", "Handmade Jewellery", "Personalised Gifts", "Handmade Candles", "Craft Supplies"] },
+  { key: "mixed-job-lots", label: "Mixed Job Lots", icon: Boxes, iconColor: "text-emerald-400", subcategories: ["General Mixed Pallets", "Returns & Clearance Lots", "Branded Mixed Lots", "Seasonal Mixed Lots", "Reseller Starter Lots"] },
+  { key: "clothing", label: "Clothing", icon: Shirt, iconColor: "text-blue-400", subcategories: ["Men's Clothing", "Women's Clothing", "Kids' Clothing", "Sportswear", "Workwear"] },
+  { key: "shoes", label: "Shoes", icon: Footprints, iconColor: "text-amber-400", subcategories: ["Men's Shoes", "Women's Shoes", "Kids' Shoes", "Trainers", "Boots"] },
+  { key: "jewellery", label: "Jewellery", icon: Gem, iconColor: "text-pink-400", subcategories: ["Fashion Jewellery", "Fine Jewellery", "Necklaces", "Bracelets", "Earrings"] },
+  { key: "electronics", label: "Electronics", icon: Smartphone, iconColor: "text-cyan-400", subcategories: ["Mobile Phones", "Laptops", "Tablets", "Audio", "Accessories"] },
+  { key: "media-electronics", label: "Media & Electronics", icon: Clapperboard, iconColor: "text-violet-400", subcategories: ["TV & Home Entertainment", "Gaming", "Audio & Headphones", "Cameras", "Media Accessories"] },
+  { key: "accessories", label: "Accessories", icon: Package, iconColor: "text-lime-400", subcategories: ["Fashion Accessories", "Phone Accessories", "Hair Accessories", "Travel Accessories", "Bags & Wallets"] },
+  { key: "toys", label: "Toys", icon: Gamepad2, iconColor: "text-purple-400", subcategories: ["Action Figures", "Educational Toys", "Outdoor Toys", "Board Games", "Arts & Crafts"] },
+  { key: "health-beauty", label: "Health & Beauty", icon: HeartPulse, iconColor: "text-rose-400", subcategories: ["Skincare", "Haircare", "Makeup", "Personal Care", "Vitamins & Supplements"] },
+  { key: "pets", label: "Pets", icon: PawPrint, iconColor: "text-orange-400", subcategories: ["Dog Supplies", "Cat Supplies", "Pet Food", "Bird Supplies", "Fish & Aquatics"] },
+  { key: "memorabilia", label: "Memorabilia", icon: Trophy, iconColor: "text-yellow-400", subcategories: ["Sports Memorabilia", "Entertainment Memorabilia", "Signed Items", "Collectibles", "Vintage Memorabilia"] },
+  { key: "food-drink", label: "Food & Drink", icon: UtensilsCrossed, iconColor: "text-red-400", subcategories: ["Snacks", "Beverages", "Grocery", "Wholesale Food", "Condiments"] },
+  { key: "office-supplies", label: "Office Supplies", icon: Briefcase, iconColor: "text-sky-400", subcategories: ["Stationery", "Printer Supplies", "Office Furniture", "Storage & Filing", "Desk Accessories"] },
+  { key: "home-garden", label: "Home & Garden", icon: Home, iconColor: "text-green-400", subcategories: ["Furniture", "Kitchen & Dining", "Bedding", "Garden Tools", "Home Decor"] },
+  { key: "wholesale-pallets", label: "Wholesale Pallets", icon: Warehouse, iconColor: "text-indigo-400", subcategories: ["Customer Returns Pallets", "General Merchandise Pallets", "Branded Pallets", "Seasonal Pallets", "Mixed Category Pallets"] },
+  { key: "fashion", label: "Fashion", icon: Sparkles, iconColor: "text-fuchsia-300", subcategories: ["Women's Fashion", "Men's Fashion", "Kids' Fashion", "Footwear", "Fashion Accessories"] },
+  { key: "tools", label: "Tools", icon: Wrench, iconColor: "text-stone-300", subcategories: ["Power Tools", "Hand Tools", "Hardware", "Safety Equipment", "Workshop Equipment"] },
+  { key: "vehicles", label: "Vehicles", icon: Car, iconColor: "text-slate-300", subcategories: ["Car Parts", "Van Parts", "Car Care", "Tyres & Wheels", "Diagnostics"] },
+  { key: "business-supplies", label: "Business Supplies", icon: Building2, iconColor: "text-teal-300", subcategories: ["Packaging", "Warehouse Equipment", "Cleaning Supplies", "Workwear & PPE", "Catering Supplies"] },
+];
+
+const getHamburgerCategory = (key: string) =>
+  HAMBURGER_CATEGORIES.find((cat) => cat.key === key);
 
 // ── Main screen (Level 1) ─────────────────────────────────────────────────────
 
@@ -91,12 +149,12 @@ const MainScreen = ({
         Browse Categories
       </p>
       <nav aria-label="Product categories">
-        {CATEGORY_CONFIG.map((cat) => {
+        {HAMBURGER_CATEGORIES.map((cat) => {
           const Icon = cat.icon;
           return (
             <button
-              key={cat.slug}
-              onClick={() => onCategorySelect(cat.slug)}
+              key={cat.key}
+              onClick={() => onCategorySelect(cat.key)}
               className="w-full flex items-center gap-3 px-4 h-[52px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.05]"
             >
               <Icon className={`h-[18px] w-[18px] shrink-0 ${cat.iconColor}`} aria-hidden="true" />
@@ -145,9 +203,10 @@ const MainScreen = ({
 
 // ── Category screen (Level 2 — shows chips as subcategory links) ──────────────
 
-const CategoryScreen = ({ categorySlug, onBack, onClose }: CategoryScreenProps) => {
-  const cat = getCategoryConfig(categorySlug);
+const CategoryScreen = ({ categoryKey, onBack, onClose }: CategoryScreenProps) => {
+  const cat = getHamburgerCategory(categoryKey);
   if (!cat) return null;
+  const categoryUrl = `/catalog?category=${encodeURIComponent(cat.label)}`;
 
   return (
     <div className="flex flex-col h-full">
@@ -167,7 +226,7 @@ const CategoryScreen = ({ categorySlug, onBack, onClose }: CategoryScreenProps) 
       <div className="flex-1 overflow-y-auto">
         {/* View All row */}
         <Link
-          to={`/category/${cat.slug}`}
+          to={categoryUrl}
           onClick={onClose}
           className="flex items-center gap-2 px-4 h-14 border-b border-white/10 hover:bg-white/[0.07] active:bg-white/10 transition-colors"
         >
@@ -179,15 +238,15 @@ const CategoryScreen = ({ categorySlug, onBack, onClose }: CategoryScreenProps) 
 
         {/* Chip rows — direct links */}
         <nav aria-label={`${cat.label} subcategories`}>
-          {cat.chips.map((chip) => (
+          {cat.subcategories.map((subcategory) => (
             <Link
-              key={chip.label}
-              to={`/category/${cat.slug}${chip.subSlug ? `?sub=${chip.subSlug}` : ''}`}
+              key={subcategory}
+              to={`/catalog?category=${encodeURIComponent(cat.label)}&q=${encodeURIComponent(subcategory)}`}
               onClick={onClose}
               className="flex items-center px-4 h-[52px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.05]"
             >
               <span className="text-[15px] font-medium text-white/80 flex-1 text-left">
-                {chip.label}
+                {subcategory}
               </span>
             </Link>
           ))}
@@ -268,8 +327,8 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
     };
   }, [open]);
 
-  const handleCategorySelect = (slug: string) => {
-    setActiveCategory(slug);
+  const handleCategorySelect = (categoryKey: string) => {
+    setActiveCategory(categoryKey);
   };
 
   const handleBackToMain = () => {
@@ -317,7 +376,7 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
         )}
         {screen === "category" && activeCategory !== null && (
           <CategoryScreen
-            categorySlug={activeCategory}
+            categoryKey={activeCategory}
             onBack={handleBackToMain}
             onClose={onClose}
           />
