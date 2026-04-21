@@ -24,6 +24,11 @@ interface ProductInfoProps {
   product: Product;
   /** The seller's user ID — used to detect if the logged-in user owns this product */
   sellerId?: string | null;
+  onShareFacebook: () => void;
+  onShareWhatsApp: () => void;
+  onCopyLink: () => void;
+  onNativeShare?: () => void;
+  supportsNativeShare?: boolean;
 }
 
 const conditionColor: Record<string, string> = {
@@ -44,6 +49,11 @@ const ProductInfo = ({
   listed,
   product,
   sellerId,
+  onShareFacebook,
+  onShareWhatsApp,
+  onCopyLink,
+  onNativeShare,
+  supportsNativeShare = false,
 }: ProductInfoProps) => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
@@ -246,6 +256,26 @@ const ProductInfo = ({
           </Button>
         </div>
       )}
+
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-muted-foreground">Share</p>
+        <div className="flex flex-wrap gap-2">
+          {supportsNativeShare && onNativeShare && (
+            <Button size="sm" variant="outline" onClick={onNativeShare}>
+              Share
+            </Button>
+          )}
+          <Button size="sm" variant="outline" onClick={onShareFacebook}>
+            Facebook
+          </Button>
+          <Button size="sm" variant="outline" onClick={onShareWhatsApp}>
+            WhatsApp
+          </Button>
+          <Button size="sm" variant="outline" onClick={onCopyLink}>
+            Copy Link
+          </Button>
+        </div>
+      </div>
 
       {/* Accepted payment methods */}
       <PaymentMethodBadges size="sm" />
