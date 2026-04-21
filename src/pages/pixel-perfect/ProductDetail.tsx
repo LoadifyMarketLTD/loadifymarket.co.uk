@@ -321,23 +321,58 @@ const ProductDetail = () => {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
+  const copyProductUrlToClipboard = async (): Promise<void> => {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(currentProductUrl);
+      return;
+    }
+    // Deprecated but intentional legacy fallback for browsers without Clipboard API support.
+    const el = document.createElement("textarea");
+    el.value = currentProductUrl;
+    el.setAttribute("readonly", "");
+    el.style.cssText = "position:absolute;left:-9999px";
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand("copy");
+    document.body.removeChild(el);
+  };
+
   const handleCopyLink = async () => {
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(currentProductUrl);
-      } else {
-        const fallback = document.createElement("textarea");
-        fallback.value = currentProductUrl;
-        fallback.setAttribute("readonly", "");
-        fallback.style.position = "absolute";
-        fallback.style.left = "-9999px";
-        document.body.appendChild(fallback);
-        fallback.select();
-        // Deprecated but intentional legacy fallback for browsers without Clipboard API support.
-        document.execCommand("copy");
-        document.body.removeChild(fallback);
-      }
+      await copyProductUrlToClipboard();
       toast({ title: "Link copied", description: "Product link copied to clipboard." });
+    } catch {
+      toast({
+        title: "Could not copy link",
+        description: "Please copy the page URL from your browser.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShareInstagram = async () => {
+    try {
+      await copyProductUrlToClipboard();
+      toast({
+        title: "Link copied for Instagram",
+        description: "Open Instagram, create a post or story, and paste the link in your caption.",
+      });
+    } catch {
+      toast({
+        title: "Could not copy link",
+        description: "Please copy the page URL from your browser.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShareTikTok = async () => {
+    try {
+      await copyProductUrlToClipboard();
+      toast({
+        title: "Link copied for TikTok",
+        description: "Open TikTok, create a video, and paste the link in your caption or bio.",
+      });
     } catch {
       toast({
         title: "Could not copy link",
@@ -423,6 +458,8 @@ const ProductDetail = () => {
                     sellerId={productSellerId}
                     onShareFacebook={handleShareFacebook}
                     onShareWhatsApp={handleShareWhatsApp}
+                    onShareInstagram={handleShareInstagram}
+                    onShareTikTok={handleShareTikTok}
                     onCopyLink={handleCopyLink}
                     onNativeShare={handleNativeShare}
                     supportsNativeShare={supportsNativeShare}
