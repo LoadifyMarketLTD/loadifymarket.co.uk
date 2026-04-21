@@ -73,17 +73,21 @@ const AdminSettings = () => {
       if (!token) throw new Error("Not authenticated");
 
       const res = await fetch("/.netlify/functions/connect-platform-check", {
-        method: "GET",
+        method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
       const json: unknown = await res.json();
       const isObj = json !== null && typeof json === "object";
       const error = isObj ? (json as Record<string, unknown>).error : undefined;
       if (!res.ok) throw new Error(typeof error === "string" ? error : "Check failed");
-      const configured = isObj ? Boolean((json as Record<string, unknown>).configured) : false;
-      const message = isObj && typeof (json as Record<string, unknown>).message === "string"
-        ? String((json as Record<string, unknown>).message)
-        : "Unknown";
+      // Function returns { platformConfigured: boolean, keyPrefix?, platformAccountId? }
+      const configured = isObj ? Boolean((json as Record<string, unknown>).platformConfigured) : false;
+      const keyPrefix = isObj && typeof (json as Record<string, unknown>).keyPrefix === "string"
+        ? String((json as Record<string, unknown>).keyPrefix)
+        : "";
+      const message = configured
+        ? `Connected${keyPrefix ? ` (key: ${keyPrefix})` : ""}`
+        : "Not configured";
       setStripeConnectStatus({ configured, message });
     } catch (err) {
       setStripeConnectStatus({ configured: false, message: err instanceof Error ? err.message : "Check failed" });

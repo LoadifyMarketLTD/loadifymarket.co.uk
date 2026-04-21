@@ -337,7 +337,10 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <h2 style="color: #243b53;">New Seller Registration</h2>
         <p>A new seller account has been created on Loadify Market and is setting up their store.</p>
         <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
-          <p style="margin: 0;"><strong>Registered:</strong> ${escapeHtml(data.registeredAt || new Date().toLocaleString('en-GB'))}</p>
+          <p style="margin: 0;"><strong>Email:</strong> ${escapeHtml(data.sellerEmail || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Name:</strong> ${escapeHtml(data.sellerName || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Store:</strong> ${escapeHtml(data.storeName || '')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Registered:</strong> ${escapeHtml(data.registeredAt || new Date().toLocaleString('en-GB'))}</p>
         </div>
         <p>The seller must complete their profile and connect a Stripe account before their store is active. No manual approval is required.</p>
         <a href="${process.env.URL}/admin/approvals" style="display: inline-block; background-color: #243b53; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Sellers</a>

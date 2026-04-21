@@ -25,6 +25,27 @@ import { toast } from "@/hooks/use-toast";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 
+const BASE_URL = "https://loadifymarket.co.uk";
+const DEFAULT_PRODUCT_SEO_DESCRIPTION =
+  "Discover products from verified UK sellers on Loadify Market.";
+const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.jpg`;
+
+function toAbsolutePublicUrl(value?: string | null): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith("//")) return `https:${trimmed}`;
+  if (trimmed.startsWith("/")) return `${BASE_URL}${trimmed}`;
+  return `${BASE_URL}/${trimmed}`;
+}
+
+function excerpt(text: string, max = 180): string {
+  const normalised = text.replace(/\s+/g, " ").trim();
+  if (normalised.length <= max) return normalised;
+  return `${normalised.slice(0, Math.max(0, max - 1)).trimEnd()}…`;
+}
+
 // Product select — category joins only; seller data fetched separately
 const PRODUCT_QUERY = `
   *,
@@ -74,6 +95,7 @@ const ProductDetail = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [productDescription, setProductDescription] = useState("");
   const [sellerListingCount, setSellerListingCount] = useState(0);
   const [productSellerId, setProductSellerId] = useState<string | null>(null);
   const [productCategorySlug, setProductCategorySlug] = useState<string | null>(null);
@@ -124,6 +146,9 @@ const ProductDetail = () => {
         // Step 5: Adapt to UI shape
         const adapted = adaptProduct(normalised);
         setProduct(adapted);
+        setProductDescription(
+          typeof data.description === "string" ? data.description : "",
+        );
         setProductSellerId(data.sellerId ?? null);
 
         // Capture category slug for breadcrumb link
@@ -255,13 +280,94 @@ const ProductDetail = () => {
   const hasDistinctSubcategory =
     normalizedSubcategory.length > 0 && normalizedSubcategory !== normalizedCategory;
   const detailsCategoryLabel = hasDistinctSubcategory ? product.subcategory : product.category;
+  const canonicalProductUrl = `${BASE_URL}/product/${product.id}`;
+  const currentProductUrl = typeof window !== "undefined"
+    ? `${window.location.origin}${window.location.pathname}`
+    : canonicalProductUrl;
+  const normalisedDescription = productDescription.replace(/\s+/g, " ").trim();
+  const firstSentenceMatch = normalisedDescription
+    ? normalisedDescription.match(/^[^.!?]+[.!?]?/)
+    : null;
+  const firstSentence = firstSentenceMatch?.[0]?.trim() ?? "";
+  const shortDescription =
+    firstSentence.length > 0 && firstSentence.length <= 140
+      ? firstSentence
+      : "";
+  const longDescriptionExcerpt = normalisedDescription
+    ? excerpt(normalisedDescription, 200)
+    : "";
+  const categoryFallbackDescription = product.category
+    ? `${product.title} in ${product.category} on Loadify Market.`
+    : `${product.title} on Loadify Market.`;
+  const seoDescription =
+    shortDescription ||
+    longDescriptionExcerpt ||
+    categoryFallbackDescription ||
+    DEFAULT_PRODUCT_SEO_DESCRIPTION;
+  const primaryImageCandidate = galleryImages.find((img) => typeof img === "string" && img.trim().length > 0) || product.image;
+  const seoImage = toAbsolutePublicUrl(primaryImageCandidate) ?? DEFAULT_OG_IMAGE;
+  const encodedProductUrl = encodeURIComponent(currentProductUrl);
+  const whatsappText = `Check out this product on Loadify Market: ${product.title} - ${currentProductUrl}`;
+  const encodedWhatsAppText = encodeURIComponent(whatsappText);
+  const supportsNativeShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
+
+  const handleShareFacebook = () => {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodedProductUrl}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleShareWhatsApp = () => {
+    const url = `https://wa.me/?text=${encodedWhatsAppText}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(currentProductUrl);
+      } else {
+        const fallback = document.createElement("textarea");
+        fallback.value = currentProductUrl;
+        fallback.setAttribute("readonly", "");
+        fallback.style.position = "absolute";
+        fallback.style.left = "-9999px";
+        document.body.appendChild(fallback);
+        fallback.select();
+        // Deprecated but intentional legacy fallback for browsers without Clipboard API support.
+        document.execCommand("copy");
+        document.body.removeChild(fallback);
+      }
+      toast({ title: "Link copied", description: "Product link copied to clipboard." });
+    } catch {
+      toast({
+        title: "Could not copy link",
+        description: "Please copy the page URL from your browser.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleNativeShare = async () => {
+    if (!supportsNativeShare) return;
+    try {
+      await navigator.share({
+        title: product.title,
+        text: `Check out this product on Loadify Market: ${product.title}`,
+        url: currentProductUrl,
+      });
+    } catch {
+      // User cancellation is non-fatal; no toast needed.
+    }
+  };
 
   return (
     <MainLayout>
       <SEO
         title={`${product.title} | Loadify Market`}
-        description={`Buy ${product.title} from verified UK sellers on Loadify Market. ${product.category ? `Category: ${product.category}.` : ''}`}
-        canonical={`/product/${product.id}`}
+        description={seoDescription}
+        canonical={canonicalProductUrl}
+        ogImage={seoImage}
+        ogType="product"
       />
       <main id="main-content" className="pt-28 pb-16">
         <div className="container mx-auto px-4">
@@ -315,6 +421,11 @@ const ProductDetail = () => {
                     views={product.views}
                     listed={product.listed}
                     sellerId={productSellerId}
+                    onShareFacebook={handleShareFacebook}
+                    onShareWhatsApp={handleShareWhatsApp}
+                    onCopyLink={handleCopyLink}
+                    onNativeShare={handleNativeShare}
+                    supportsNativeShare={supportsNativeShare}
                   />
                 </div>
 
