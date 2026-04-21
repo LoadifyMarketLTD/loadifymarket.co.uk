@@ -280,13 +280,19 @@ const ProductDetail = () => {
   const hasDistinctSubcategory =
     normalizedSubcategory.length > 0 && normalizedSubcategory !== normalizedCategory;
   const detailsCategoryLabel = hasDistinctSubcategory ? product.subcategory : product.category;
+  const canonicalProductUrl = `${BASE_URL}/product/${product.id}`;
   const currentProductUrl = typeof window !== "undefined"
-    ? window.location.href
-    : `${BASE_URL}/product/${product.id}`;
+    ? `${window.location.origin}${window.location.pathname}`
+    : canonicalProductUrl;
   const normalisedDescription = productDescription.replace(/\s+/g, " ").trim();
-  const shortDescription = normalisedDescription
-    ? excerpt(normalisedDescription, 140)
-    : "";
+  const firstSentenceMatch = normalisedDescription
+    ? normalisedDescription.match(/^[^.!?]+[.!?]?/)
+    : null;
+  const firstSentence = firstSentenceMatch?.[0]?.trim() ?? "";
+  const shortDescription =
+    firstSentence.length > 0 && firstSentence.length <= 140
+      ? firstSentence
+      : "";
   const longDescriptionExcerpt = normalisedDescription
     ? excerpt(normalisedDescription, 200)
     : "";
@@ -327,6 +333,7 @@ const ProductDetail = () => {
         fallback.style.left = "-9999px";
         document.body.appendChild(fallback);
         fallback.select();
+        // Deprecated but intentional legacy fallback for browsers without Clipboard API support.
         document.execCommand("copy");
         document.body.removeChild(fallback);
       }
@@ -356,9 +363,9 @@ const ProductDetail = () => {
   return (
     <MainLayout>
       <SEO
-        title={product.title}
+        title={`${product.title} | Loadify Market`}
         description={seoDescription}
-        canonical={currentProductUrl}
+        canonical={canonicalProductUrl}
         ogImage={seoImage}
         ogType="product"
       />
