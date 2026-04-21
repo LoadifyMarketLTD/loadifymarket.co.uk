@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Package, Plus, Search, Pencil } from "lucide-react";
+import { Package, Plus, Search, Pencil, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { copyToClipboard } from "@/lib/clipboard";
 
 interface Product {
   id: string;
@@ -35,6 +39,8 @@ function deriveStatus(p: Product): string {
   return "active";
 }
 
+const BASE_URL = "https://loadifymarket.co.uk";
+
 const SellerProducts = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -63,6 +69,35 @@ const SellerProducts = () => {
     };
     load();
   }, [user]);
+
+  const shareOnFacebook = (productId: string) => {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${BASE_URL}/product/${productId}`)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const copyForInstagram = async (productId: string) => {
+    try {
+      await copyToClipboard(`${BASE_URL}/product/${productId}`);
+      toast({
+        title: "Link copied for Instagram",
+        description: "Open Instagram, create a post or story, and paste the link in your caption.",
+      });
+    } catch {
+      toast({ title: "Could not copy link", description: "Please copy the URL manually.", variant: "destructive" });
+    }
+  };
+
+  const copyForTikTok = async (productId: string) => {
+    try {
+      await copyToClipboard(`${BASE_URL}/product/${productId}`);
+      toast({
+        title: "Link copied for TikTok",
+        description: "Open TikTok, create a video, and paste the link in your caption or bio.",
+      });
+    } catch {
+      toast({ title: "Could not copy link", description: "Please copy the URL manually.", variant: "destructive" });
+    }
+  };
 
   const filtered = products
     .filter((p) => p.title.toLowerCase().includes(search.toLowerCase()))
@@ -150,6 +185,30 @@ const SellerProducts = () => {
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0 h-9 w-9 p-0"
+                        aria-label="Share product"
+                      >
+                        <Share2 className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => shareOnFacebook(p.id)}>
+                        Share on Facebook
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => copyForInstagram(p.id)}>
+                        Copy link for Instagram
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => copyForTikTok(p.id)}>
+                        Copy link for TikTok
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               );
             })
@@ -204,14 +263,40 @@ const SellerProducts = () => {
                       </td>
                       <td className="p-4 text-sm text-muted-foreground">{p.views ?? 0}</td>
                       <td className="p-4 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs"
-                          onClick={() => navigate(`/seller/products/${p.id}/edit`)}
-                        >
-                          <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => navigate(`/seller/products/${p.id}/edit`)}
+                          >
+                            <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                aria-label="Share product"
+                              >
+                                <Share2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => shareOnFacebook(p.id)}>
+                                Share on Facebook
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => copyForInstagram(p.id)}>
+                                Copy link for Instagram
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => copyForTikTok(p.id)}>
+                                Copy link for TikTok
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </td>
                     </tr>
                   );

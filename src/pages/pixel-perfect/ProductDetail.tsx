@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Flag } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { copyToClipboard } from "@/lib/clipboard";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 
@@ -323,21 +324,40 @@ const ProductDetail = () => {
 
   const handleCopyLink = async () => {
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(currentProductUrl);
-      } else {
-        const fallback = document.createElement("textarea");
-        fallback.value = currentProductUrl;
-        fallback.setAttribute("readonly", "");
-        fallback.style.position = "absolute";
-        fallback.style.left = "-9999px";
-        document.body.appendChild(fallback);
-        fallback.select();
-        // Deprecated but intentional legacy fallback for browsers without Clipboard API support.
-        document.execCommand("copy");
-        document.body.removeChild(fallback);
-      }
+      await copyToClipboard(currentProductUrl);
       toast({ title: "Link copied", description: "Product link copied to clipboard." });
+    } catch {
+      toast({
+        title: "Could not copy link",
+        description: "Please copy the page URL from your browser.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShareInstagram = async () => {
+    try {
+      await copyToClipboard(currentProductUrl);
+      toast({
+        title: "Link copied for Instagram",
+        description: "Open Instagram, create a post or story, and paste the link in your caption.",
+      });
+    } catch {
+      toast({
+        title: "Could not copy link",
+        description: "Please copy the page URL from your browser.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleShareTikTok = async () => {
+    try {
+      await copyToClipboard(currentProductUrl);
+      toast({
+        title: "Link copied for TikTok",
+        description: "Open TikTok, create a video, and paste the link in your caption or bio.",
+      });
     } catch {
       toast({
         title: "Could not copy link",
@@ -423,6 +443,8 @@ const ProductDetail = () => {
                     sellerId={productSellerId}
                     onShareFacebook={handleShareFacebook}
                     onShareWhatsApp={handleShareWhatsApp}
+                    onShareInstagram={handleShareInstagram}
+                    onShareTikTok={handleShareTikTok}
                     onCopyLink={handleCopyLink}
                     onNativeShare={handleNativeShare}
                     supportsNativeShare={supportsNativeShare}

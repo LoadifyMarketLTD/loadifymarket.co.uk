@@ -26,6 +26,8 @@ interface ProductInfoProps {
   sellerId?: string | null;
   onShareFacebook: () => void;
   onShareWhatsApp: () => void;
+  onShareInstagram?: () => void;
+  onShareTikTok?: () => void;
   onCopyLink: () => void;
   onNativeShare?: () => void;
   supportsNativeShare?: boolean;
@@ -51,6 +53,8 @@ const ProductInfo = ({
   sellerId,
   onShareFacebook,
   onShareWhatsApp,
+  onShareInstagram,
+  onShareTikTok,
   onCopyLink,
   onNativeShare,
   supportsNativeShare = false,
@@ -316,6 +320,16 @@ const ProductInfo = ({
           <Button size="sm" variant="outline" onClick={onShareWhatsApp}>
             WhatsApp
           </Button>
+          {onShareInstagram && (
+            <Button size="sm" variant="outline" onClick={onShareInstagram}>
+              Instagram
+            </Button>
+          )}
+          {onShareTikTok && (
+            <Button size="sm" variant="outline" onClick={onShareTikTok}>
+              TikTok
+            </Button>
+          )}
           <Button size="sm" variant="outline" onClick={onCopyLink}>
             Copy Link
           </Button>
