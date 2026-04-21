@@ -196,7 +196,7 @@ const AdminProducts = () => {
           <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Seller</TableHead>
           <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Price</TableHead>
           <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Stock</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Status</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Published</TableHead>
           <TableHead className="hidden lg:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Approved</TableHead>
           <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Actions</TableHead>
         </TableRow>
@@ -233,7 +233,7 @@ const AdminProducts = () => {
                       : "border-white/10 text-slate-400"
                   }
                 >
-                  {p.isActive ? "Active" : "Inactive"}
+                  {p.isActive ? "Published" : "Unpublished"}
                 </Badge>
               </TableCell>
               <TableCell className="hidden lg:table-cell">
@@ -296,7 +296,7 @@ const AdminProducts = () => {
       <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <h1 className="text-2xl font-bold text-white tracking-tight">Product Moderation</h1>
         <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>
-          {products.length} total listings · {activeProducts.length} active · {inactiveProducts.length} inactive · {products.filter(p => !p.isApproved).length} pending approval
+          {products.length} total listings · {activeProducts.length} published · {inactiveProducts.length} unpublished · {products.filter(p => !p.isApproved).length} pending approval
         </p>
       </div>
 
@@ -322,8 +322,8 @@ const AdminProducts = () => {
       <Tabs defaultValue="all">
         <TabsList style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
           <TabsTrigger value="all" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">All <Badge variant="outline" className="ml-2 text-xs border-white/20 text-white/60">{filtered.length}</Badge></TabsTrigger>
-          <TabsTrigger value="active" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Active</TabsTrigger>
-          <TabsTrigger value="inactive" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Inactive</TabsTrigger>
+          <TabsTrigger value="active" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Published</TabsTrigger>
+          <TabsTrigger value="inactive" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Unpublished</TabsTrigger>
         </TabsList>
         {(["all", "active", "inactive"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
