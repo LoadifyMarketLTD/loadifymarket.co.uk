@@ -250,6 +250,12 @@ const ProductDetail = () => {
     }
   };
 
+  const normalizedCategory = (product.category ?? "").trim().toLowerCase();
+  const normalizedSubcategory = (product.subcategory ?? "").trim().toLowerCase();
+  const hasDistinctSubcategory =
+    normalizedSubcategory.length > 0 && normalizedSubcategory !== normalizedCategory;
+  const detailsCategoryLabel = hasDistinctSubcategory ? product.subcategory : product.category;
+
   return (
     <MainLayout>
       <SEO
@@ -352,7 +358,7 @@ const ProductDetail = () => {
                   </p>
                   <h3 className="font-display text-sm font-semibold text-foreground pt-2">What's Included</h3>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>Mixed brands and product types within {product.subcategory}</li>
+                    <li>Mixed brands and product types within {detailsCategoryLabel}</li>
                     <li>Detailed manifest available upon request</li>
                     <li>Condition: {product.condition}</li>
                     <li>All items are UK sourced with full traceability</li>
