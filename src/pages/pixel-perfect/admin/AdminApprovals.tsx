@@ -26,27 +26,6 @@ interface Seller {
   stripeConnectStatus: string | null;
 }
 
-type SellerProfileRow = {
-  userId: string;
-  sellerStatus: Seller["sellerStatus"] | null;
-  stripeConnectStatus: string | null;
-  storeName: string | null;
-  businessName: string | null;
-  fullName: string | null;
-};
-
-type UserRow = {
-  id: string;
-  email: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  createdAt: string | null;
-};
-
-type ProductSellerRow = {
-  sellerId: string | null;
-};
-
 const statusColor: Record<string, string> = {
   active:    "border-emerald-500/30 text-emerald-400 bg-emerald-500/10",
   submitted: "border-amber-500/30 text-amber-400 bg-amber-500/10",
