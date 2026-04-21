@@ -220,6 +220,8 @@ export const handler: Handler = async (event) => {
   }
   // ────────────────────────────────────────────────────────────────────────────
 
+  const appUrl = process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
+
   // ── Seller-only: populate extra profile fields ──────────────────────────────
   // The DB trigger trg_new_user_profile already created the bare
   // seller_profiles + seller_stores rows.  Upsert here to fill in the
@@ -242,13 +244,21 @@ export const handler: Handler = async (event) => {
       { onConflict: 'userId' }
     );
     if (ssErr) console.warn('register: seller_stores upsert (non-fatal):', ssErr.message);
+
+    fetch(`${appUrl}/.netlify/functions/notify-new-seller`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        businessName: effectiveStoreName,
+      }),
+    }).catch((err: unknown) => console.warn('register: notify-new-seller failed (non-fatal):', err));
   }
   // ────────────────────────────────────────────────────────────────────────────
 
   // ── Admin notification email ──────────────────────────────────────────────
   // Fire-and-forget: a failure here must never block successful registration.
   const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
-  const appUrl = process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
   if (adminEmail) {
     const template = role === 'seller' ? 'admin_new_seller' : 'admin_new_buyer';
     const subject  = role === 'seller' ? 'Loadify: New Seller Registration' : 'Loadify: New Buyer Registration';

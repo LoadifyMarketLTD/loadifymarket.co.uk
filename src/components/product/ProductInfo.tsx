@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight, Package, MapPin, Clock, Eye, Tag,
-  Truck, ShieldCheck, ShoppingCart, Heart, Settings
+  Truck, ShieldCheck, ShoppingCart, Heart, Settings, Share2
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import type { Product } from "@/components/catalog/ProductCard";
@@ -132,6 +132,33 @@ const ProductInfo = ({
     });
   };
 
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/product/${product.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title,
+          text: `Check out this product on Loadify Market: ${title}`,
+          url: shareUrl,
+        });
+        return;
+      }
+
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: "Link copied",
+        description: "Product link copied to clipboard.",
+      });
+    } catch (err) {
+      if ((err as Error).name === "AbortError") return;
+      toast({
+        title: "Share failed",
+        description: "Unable to share this product right now.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
@@ -215,6 +242,15 @@ const ProductInfo = ({
               All My Listings
             </Button>
           </Link>
+          <Button
+            size="lg"
+            variant="outline"
+            className="shrink-0"
+            onClick={handleShare}
+            aria-label="Share listing"
+          >
+            <Share2 className="h-5 w-5" />
+          </Button>
         </div>
       ) : (
         <div className="flex flex-col sm:flex-row gap-3">
@@ -243,6 +279,15 @@ const ProductInfo = ({
             aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
             <Heart className={`h-5 w-5 ${isWishlisted ? "fill-rose-500" : ""}`} />
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="shrink-0"
+            onClick={handleShare}
+            aria-label="Share listing"
+          >
+            <Share2 className="h-5 w-5" />
           </Button>
         </div>
       )}
