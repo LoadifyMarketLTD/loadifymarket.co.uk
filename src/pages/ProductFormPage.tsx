@@ -1146,16 +1146,22 @@ export default function ProductFormPage() {
                       </div>
                     </div>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => setShowDeleteConfirm(true)}
-                      disabled={hasActiveOrders}
-                      title={hasActiveOrders ? 'Cannot delete — this product has active orders' : undefined}
-                      className="flex items-center gap-2 text-sm text-red-600 hover:text-red-800 font-medium disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      {hasActiveOrders ? 'Cannot delete — product has active orders' : 'Delete this listing'}
-                    </button>
+                    <div className="flex flex-col gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        disabled={hasActiveOrders}
+                        className="flex items-center gap-2 text-sm text-red-600 hover:text-red-800 font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete this listing
+                      </button>
+                      {hasActiveOrders && (
+                        <p className="text-xs text-amber-600">
+                          Cannot delete — this product has active or completed orders.
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
