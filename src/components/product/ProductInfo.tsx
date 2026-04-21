@@ -50,6 +50,8 @@ const ProductInfo = ({
   const { user } = useAuthStore();
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const hasDistinctSubcategory =
+    !!subcategory && subcategory.trim().toLowerCase() !== category.trim().toLowerCase();
 
   // True when the logged-in user is the seller/owner of this product
   const isOwner = !!(user && sellerId && user.id === sellerId);
@@ -135,8 +137,12 @@ const ProductInfo = ({
         <a href="/catalog" className="hover:text-foreground transition-colors">Catalog</a>
         <span>/</span>
         <span>{category}</span>
-        <span>/</span>
-        <span className="text-foreground">{subcategory}</span>
+        {hasDistinctSubcategory && (
+          <>
+            <span>/</span>
+            <span className="text-foreground">{subcategory}</span>
+          </>
+        )}
       </div>
 
       {/* Title & condition */}
