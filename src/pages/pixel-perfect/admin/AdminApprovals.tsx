@@ -35,7 +35,7 @@ const statusColor: Record<string, string> = {
 
 const statusLabel: Record<string, string> = {
   active:    "Active",
-  submitted: "Setup in progress",
+  submitted: "Setup in Progress",
   draft:     "Setup required",
   suspended: "Suspended",
 };

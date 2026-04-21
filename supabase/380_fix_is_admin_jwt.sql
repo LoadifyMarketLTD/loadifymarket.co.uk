@@ -30,6 +30,8 @@
 --   afterwards to fully benefit from the JWT fast-path.
 --
 -- SAFE: fully idempotent — CREATE OR REPLACE + DROP POLICY IF EXISTS.
+-- Named dollar-quote $func$ prevents the Supabase SQL editor bare-$$
+-- splitting bug (ERROR 42601: syntax error at or near "COALESCE").
 -- ================================================================
 
 
@@ -48,7 +50,7 @@ CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
-AS $$
+AS $func$
   SELECT COALESCE(
     (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
     OR (
@@ -62,7 +64,7 @@ AS $$
     ),
     false
   )
-$$;
+$func$;
 
 
 -- ── 2. is_owner(): backward-compat alias (delegates to is_admin) ─────────────
@@ -71,9 +73,9 @@ CREATE OR REPLACE FUNCTION public.is_owner()
 RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
-AS $$
+AS $func$
   SELECT public.is_admin()
-$$;
+$func$;
 
 
 -- ── 3. is_seller(): same pattern as is_admin() ───────────────────────────────
@@ -82,7 +84,7 @@ CREATE OR REPLACE FUNCTION public.is_seller()
 RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
-AS $$
+AS $func$
   SELECT COALESCE(
     (auth.jwt() -> 'app_metadata' ->> 'role') = 'seller'
     OR (
@@ -96,7 +98,7 @@ AS $$
     ),
     false
   )
-$$;
+$func$;
 
 
 -- ── 4. Re-apply RLS policies that depend on is_admin() ───────────────────────
@@ -115,8 +117,8 @@ CREATE POLICY "seller_profiles_select" ON public.seller_profiles FOR SELECT
   USING (auth.uid() = "userId" OR is_admin());
 
 
-DO $$ BEGIN
+DO $msg$ BEGIN
   RAISE NOTICE '380_fix_is_admin_jwt: is_admin() and is_seller() now use '
                'app_metadata.role (JWT) as the primary check with DB fallback. '
                'users_select and seller_profiles_select policies re-applied.';
-END $$;
+END $msg$;

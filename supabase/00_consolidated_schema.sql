@@ -49,14 +49,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- is_admin(): JWT fast-path + DB fallback.
--- COALESCE ensures FALSE (never NULL) when jwt is absent.
--- UUID regex guard prevents 22P02 when jwt sub is not a valid UUID.
-CREATE OR REPLACE FUNCTION is_admin()
+-- JWT-first: checks app_metadata.role (set by migration 340 trigger) then
+-- falls back to public.users query.  Named dollar-quote tag $func$ prevents
+-- the Supabase SQL editor's bare-$$ splitting bug (ERROR 42601 at COALESCE).
+-- UUID regex guard on the sub claim prevents ERROR 22P02 from a malformed sub.
+CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
-AS $$
+AS $func$
   SELECT COALESCE(
     (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
     OR (
@@ -70,23 +71,23 @@ AS $$
     ),
     false
   )
-$$;
+$func$;
 
 -- Backward-compat alias: is_owner() was the old name; removed from role model.
 -- Any policy still calling is_owner() will correctly defer to is_admin().
-CREATE OR REPLACE FUNCTION is_owner()
+CREATE OR REPLACE FUNCTION public.is_owner()
 RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
-AS $$
-  SELECT is_admin()
-$$;
+AS $func$
+  SELECT public.is_admin()
+$func$;
 
-CREATE OR REPLACE FUNCTION is_seller()
+CREATE OR REPLACE FUNCTION public.is_seller()
 RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
-AS $$
+AS $func$
   SELECT COALESCE(
     (auth.jwt() -> 'app_metadata' ->> 'role') = 'seller'
     OR (
@@ -100,7 +101,7 @@ AS $$
     ),
     false
   )
-$$;
+$func$;
 
 -- Checks whether the calling user owns a product.
 -- SECURITY DEFINER so that it bypasses the products RLS policy when
@@ -111,7 +112,7 @@ CREATE OR REPLACE FUNCTION owns_product(p_product_id UUID)
 RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
-AS $$
+AS $func$
   SELECT COALESCE(
     (auth.jwt() ->> 'sub') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
     AND EXISTS (
@@ -121,7 +122,7 @@ AS $$
     ),
     false
   )
-$$;
+$func$;
 
 -- ──────────────────────────────────────────────────────────────
 -- SECTION 2: USERS & PROFILES
