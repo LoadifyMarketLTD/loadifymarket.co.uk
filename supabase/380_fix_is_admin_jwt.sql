@@ -38,6 +38,12 @@
 --   • Embedded in the Supabase JWT so it is available WITHOUT a DB round-trip.
 -- DB fallback: EXISTS (SELECT 1 FROM public.users WHERE ...)
 --   • Catches edge cases where app_metadata is stale or not yet populated.
+--
+-- COALESCE on the JWT comparison: when auth.jwt() is null (unauthenticated or
+-- called outside a session context), null -> 'role' yields null, and
+-- null = 'admin' yields null — not false.  Without COALESCE the whole
+-- expression returns null instead of false, which is technically wrong even
+-- though RLS treats null as denial.
 
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean
@@ -47,7 +53,7 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
   SELECT (
-    (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+    COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false)
     OR EXISTS (
       SELECT 1 FROM public.users
       WHERE id = auth.uid()
@@ -68,7 +74,7 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
   SELECT (
-    (auth.jwt() -> 'app_metadata' ->> 'role') = 'seller'
+    COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'seller', false)
     OR EXISTS (
       SELECT 1 FROM public.users
       WHERE id = auth.uid()

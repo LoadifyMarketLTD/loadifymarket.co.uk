@@ -60,7 +60,7 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
   SELECT (
-    (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+    COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false)
     OR EXISTS (
       SELECT 1 FROM public.users
       WHERE id = auth.uid()
@@ -90,7 +90,7 @@ SECURITY DEFINER
 SET search_path = ''
 AS $$
   SELECT (
-    (auth.jwt() -> 'app_metadata' ->> 'role') = 'seller'
+    COALESCE((auth.jwt() -> 'app_metadata' ->> 'role') = 'seller', false)
     OR EXISTS (
       SELECT 1 FROM public.users
       WHERE id = auth.uid()
