@@ -9,7 +9,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, Eye, Building2, Mail, Calendar, Loader2, ExternalLink,
-  ShieldOff, RefreshCw, Zap, CheckCircle,
+  ShieldOff, RefreshCw, Zap, CheckCircle, AlertTriangle,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -46,6 +46,38 @@ const stripeStatusColor: Record<string, string> = {
   pending:    "border-white/10 text-slate-400",
 };
 
+async function authorizedFetch(
+  path: string,
+  init: RequestInit = {},
+): Promise<Response> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error("Your session has expired. Please sign in again.");
+  }
+  const headers = new Headers(init.headers || {});
+  headers.set("Content-Type", "application/json");
+  headers.set("Authorization", `Bearer ${session.access_token}`);
+  return fetch(path, { ...init, headers });
+}
+
+async function handleJson<T>(res: Response): Promise<T> {
+  let payload: unknown = null;
+  try {
+    payload = await res.json();
+  } catch {
+    // fall through — will be handled below
+  }
+  if (!res.ok) {
+    const message =
+      (payload && typeof payload === "object" && "error" in payload &&
+        typeof (payload as { error: unknown }).error === "string")
+        ? (payload as { error: string }).error
+        : `Request failed (${res.status})`;
+    throw new Error(message);
+  }
+  return payload as T;
+}
+
 const AdminSellerManagement = () => {
   const navigate = useNavigate();
   const [sellers, setSellers] = useState<Seller[]>([]);
@@ -59,38 +91,14 @@ const AdminSellerManagement = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data: sellerUsers, error: usersError } = await supabase
-        .from("users")
-        .select("id, email, firstName, lastName, createdAt")
-        .eq("role", "seller")
-        .order("createdAt", { ascending: false });
-
-      if (usersError) throw usersError;
-
-      const { data: profiles, error: profilesError } = await supabase
-        .from("seller_profiles")
-        .select("userId, sellerStatus, stripeConnectStatus, storeName, businessName, fullName");
-
-      if (profilesError) throw profilesError;
-
-      const profileMap = new Map((profiles || []).map((p) => [p.userId, p]));
-
-      const combined: Seller[] = (sellerUsers || []).map((u) => {
-        const p = profileMap.get(u.id);
-        return {
-          userId: u.id,
-          name: p?.fullName || `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email,
-          email: u.email,
-          company: p?.storeName || p?.businessName || "—",
-          date: u.createdAt ? new Date(u.createdAt).toISOString().split("T")[0] : "—",
-          sellerStatus: (p?.sellerStatus ?? "draft") as Seller["sellerStatus"],
-          stripeConnectStatus: p?.stripeConnectStatus ?? null,
-        };
+      const res = await authorizedFetch("/.netlify/functions/admin-sellers", {
+        method: "GET",
       });
-
-      setSellers(combined);
+      const json = await handleJson<{ sellers: Seller[] }>(res);
+      setSellers(Array.isArray(json.sellers) ? json.sellers : []);
     } catch (err: unknown) {
       setError((err as Error).message || "Failed to load sellers");
+      setSellers([]);
     } finally {
       setLoading(false);
     }
@@ -98,52 +106,37 @@ const AdminSellerManagement = () => {
 
   useEffect(() => { fetchSellers(); }, [fetchSellers]);
 
-  const handleSuspend = async (userId: string) => {
+  const changeStatus = async (
+    userId: string,
+    op: "suspend" | "reactivate",
+  ) => {
     setActionLoading(userId);
     setError(null);
     try {
-      const { error } = await supabase
-        .from("seller_profiles")
-        .update({ sellerStatus: "suspended" })
-        .eq("userId", userId);
-      if (error) throw error;
+      const res = await authorizedFetch("/.netlify/functions/admin-sellers", {
+        method: "POST",
+        body: JSON.stringify({ op, userId }),
+      });
+      const json = await handleJson<{ sellerStatus: Seller["sellerStatus"] }>(res);
+      const nextStatus = json.sellerStatus;
       setSellers((prev) => prev.map((s) =>
-        s.userId === userId ? { ...s, sellerStatus: "suspended" } : s
+        s.userId === userId ? { ...s, sellerStatus: nextStatus } : s
       ));
       if (selectedSeller?.userId === userId) {
-        setSelectedSeller((s) => s ? { ...s, sellerStatus: "suspended" } : s);
+        setSelectedSeller((s) => s ? { ...s, sellerStatus: nextStatus } : s);
       }
     } catch (err: unknown) {
-      setError((err as Error).message || "Failed to suspend seller");
+      setError(
+        (err as Error).message ||
+          (op === "suspend" ? "Failed to suspend seller" : "Failed to reactivate seller"),
+      );
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleReactivate = async (userId: string) => {
-    setActionLoading(userId);
-    setError(null);
-    try {
-      // Reactivation lifts a suspension back to 'submitted'. If Stripe is already
-      // active, the seller's next visit to /seller/setup will call recheck-activation
-      // and promote them to 'active' automatically. Use handleForceActivate to force-activate immediately.
-      const { error } = await supabase
-        .from("seller_profiles")
-        .update({ sellerStatus: "submitted" })
-        .eq("userId", userId);
-      if (error) throw error;
-      setSellers((prev) => prev.map((s) =>
-        s.userId === userId ? { ...s, sellerStatus: "submitted" } : s
-      ));
-      if (selectedSeller?.userId === userId) {
-        setSelectedSeller((s) => s ? { ...s, sellerStatus: "submitted" } : s);
-      }
-    } catch (err: unknown) {
-      setError((err as Error).message || "Failed to reactivate seller");
-    } finally {
-      setActionLoading(null);
-    }
-  };
+  const handleSuspend = (userId: string) => changeStatus(userId, "suspend");
+  const handleReactivate = (userId: string) => changeStatus(userId, "reactivate");
 
   // Force-activates a seller whose Stripe is confirmed active but sellerStatus
   // is still stuck at 'submitted' or 'draft'. The DB trigger
@@ -208,6 +201,18 @@ const AdminSellerManagement = () => {
           <TableRow>
             <TableCell colSpan={6} className="text-center py-8">
               <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(255,255,255,0.3)" }} />
+            </TableCell>
+          </TableRow>
+        ) : error ? (
+          <TableRow>
+            <TableCell colSpan={6} className="py-8">
+              <div className="flex flex-col items-center gap-3 text-center">
+                <AlertTriangle className="h-6 w-6 text-destructive" />
+                <p className="text-sm text-destructive">{error}</p>
+                <Button size="sm" variant="outline" onClick={fetchSellers}>
+                  <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+                </Button>
+              </div>
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
@@ -302,9 +307,12 @@ const AdminSellerManagement = () => {
         </p>
       </div>
 
-      {error && (
-        <div className="rounded-xl border p-4 text-sm" style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171" }}>
-          {error}
+      {error && !loading && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive flex items-center justify-between gap-3">
+          <span>{error}</span>
+          <Button size="sm" variant="outline" onClick={fetchSellers}>
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+          </Button>
         </div>
       )}
 
@@ -473,4 +481,3 @@ const AdminSellerManagement = () => {
 };
 
 export default AdminSellerManagement;
-

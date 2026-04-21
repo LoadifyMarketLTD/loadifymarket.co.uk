@@ -49,63 +49,78 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- is_admin(): JWT fast-path + DB fallback.
+-- COALESCE ensures FALSE (never NULL) when jwt is absent.
+-- UUID regex guard prevents 22P02 when jwt sub is not a valid UUID.
 CREATE OR REPLACE FUNCTION is_admin()
 RETURNS BOOLEAN
-LANGUAGE plpgsql STABLE SECURITY DEFINER
+LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.users
-    WHERE id = auth.uid()
-      AND role = 'admin'
-      AND "isActive" = TRUE
-  );
-END;
+  SELECT COALESCE(
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+    OR (
+      (auth.jwt() ->> 'sub') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      AND EXISTS (
+        SELECT 1 FROM public.users
+        WHERE id       = (auth.jwt() ->> 'sub')::uuid
+          AND role     = 'admin'
+          AND "isActive" = TRUE
+      )
+    ),
+    false
+  )
 $$;
 
 -- Backward-compat alias: is_owner() was the old name; removed from role model.
 -- Any policy still calling is_owner() will correctly defer to is_admin().
 CREATE OR REPLACE FUNCTION is_owner()
 RETURNS BOOLEAN
-LANGUAGE plpgsql STABLE SECURITY DEFINER
+LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
-BEGIN
-  RETURN is_admin();
-END;
+  SELECT is_admin()
 $$;
 
 CREATE OR REPLACE FUNCTION is_seller()
 RETURNS BOOLEAN
-LANGUAGE plpgsql STABLE SECURITY DEFINER
+LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM public.users
-    WHERE id = auth.uid()
-      AND role = 'seller'
-      AND "isActive" = TRUE
-  );
-END;
+  SELECT COALESCE(
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'seller'
+    OR (
+      (auth.jwt() ->> 'sub') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      AND EXISTS (
+        SELECT 1 FROM public.users
+        WHERE id       = (auth.jwt() ->> 'sub')::uuid
+          AND role     = 'seller'
+          AND "isActive" = TRUE
+      )
+    ),
+    false
+  )
 $$;
 
 -- Checks whether the calling user owns a product.
 -- SECURITY DEFINER so that it bypasses the products RLS policy when
 -- called from product_shipping policies, preventing recursive RLS
 -- evaluation ("infinite recursion detected in policy for relation products").
+-- UUID regex guard prevents 22P02 when jwt sub is not a valid UUID.
 CREATE OR REPLACE FUNCTION owns_product(p_product_id UUID)
 RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
 AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM   public.products
-    WHERE  id         = p_product_id
-      AND  "sellerId" = (SELECT auth.uid())
-  );
+  SELECT COALESCE(
+    (auth.jwt() ->> 'sub') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+    AND EXISTS (
+      SELECT 1 FROM public.products
+      WHERE id         = p_product_id
+        AND "sellerId" = (auth.jwt() ->> 'sub')::uuid
+    ),
+    false
+  )
 $$;
 
 -- ──────────────────────────────────────────────────────────────
