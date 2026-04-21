@@ -402,6 +402,10 @@ const ProductDetail = () => {
             // Category slug: prefer what was passed from CategoryPage, fall back to DB-derived
             const catSlug = navState.categorySlug ?? productCategorySlug;
             const catLabel = navState.categoryLabel ?? product.category;
+            const showSubcategoryCrumb =
+              !!product.subcategory &&
+              product.subcategory.trim().length > 0 &&
+              product.subcategory.trim().toLowerCase() !== (catLabel ?? "").trim().toLowerCase();
             return (
               <BreadcrumbNav
                 items={[
@@ -410,6 +414,7 @@ const ProductDetail = () => {
                   ...(catSlug
                     ? [{ label: catLabel, to: `/category/${catSlug}` }]
                     : [{ label: catLabel }]),
+                  ...(showSubcategoryCrumb ? [{ label: product.subcategory }] : []),
                   { label: product.title },
                 ]}
                 showBack={true}

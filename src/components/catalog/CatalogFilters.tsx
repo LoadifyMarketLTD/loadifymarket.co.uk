@@ -3,24 +3,9 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { TOP_LEVEL_CATEGORY_NAMES } from "@/data/globalCategoryTree";
 
-const categories = [
-  "Electronics & Technology",
-  "Clothing & Apparel",
-  "Home & Garden",
-  "Health & Beauty",
-  "Toys & Games",
-  "Food & Drink",
-  "Tools & DIY",
-  "Sports & Leisure",
-  "Automotive",
-  "Office & Stationery",
-  "Baby & Nursery",
-  "Jewellery & Watches",
-  "Handmade & Crafts",
-  "Books & Media",
-  "Pet Supplies",
-];
+const categories = TOP_LEVEL_CATEGORY_NAMES;
 
 const conditions = ["New", "Like New", "Mixed", "Unchecked"];
 

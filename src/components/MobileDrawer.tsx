@@ -5,32 +5,23 @@ import {
   X,
   ArrowLeft,
   ChevronRight,
-  Hand,
-  Boxes,
   Shirt,
-  Footprints,
-  Gem,
   Smartphone,
-  Clapperboard,
-  Package,
   Gamepad2,
   HeartPulse,
   PawPrint,
-  Trophy,
   UtensilsCrossed,
   Briefcase,
   Home,
-  Warehouse,
-  Sparkles,
-  Wrench,
   Car,
-  Building2,
+  Dumbbell,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import DrawerAccountBlock from "@/components/mobile/DrawerAccountBlock";
 import DrawerCTACards from "@/components/mobile/DrawerCTACards";
 import logo from "@/assets/loadify-logo.svg";
 import type { User } from "@/types";
+import { GLOBAL_CATEGORY_TREE } from "@/data/globalCategoryTree";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -66,26 +57,76 @@ interface HamburgerCategory {
 }
 
 const HAMBURGER_CATEGORIES: readonly HamburgerCategory[] = [
-  { key: "handmade", label: "Handmade", icon: Hand, iconColor: "text-fuchsia-400", subcategories: ["Handcrafted Decor", "Handmade Jewellery", "Personalised Gifts", "Handmade Candles", "Craft Supplies"] },
-  { key: "mixed-job-lots", label: "Mixed Job Lots", icon: Boxes, iconColor: "text-emerald-400", subcategories: ["General Mixed Pallets", "Returns & Clearance Lots", "Branded Mixed Lots", "Seasonal Mixed Lots", "Reseller Starter Lots"] },
-  { key: "clothing", label: "Clothing", icon: Shirt, iconColor: "text-blue-400", subcategories: ["Men's Clothing", "Women's Clothing", "Kids' Clothing", "Sportswear", "Workwear"] },
-  { key: "shoes", label: "Shoes", icon: Footprints, iconColor: "text-amber-400", subcategories: ["Men's Shoes", "Women's Shoes", "Kids' Shoes", "Trainers", "Boots"] },
-  { key: "jewellery", label: "Jewellery", icon: Gem, iconColor: "text-pink-400", subcategories: ["Fashion Jewellery", "Fine Jewellery", "Necklaces", "Bracelets", "Earrings"] },
-  { key: "electronics", label: "Electronics", icon: Smartphone, iconColor: "text-cyan-400", subcategories: ["Mobile Phones", "Laptops", "Tablets", "Audio", "Accessories"] },
-  { key: "media-electronics", label: "Media & Electronics", icon: Clapperboard, iconColor: "text-violet-400", subcategories: ["TV & Home Entertainment", "Gaming", "Audio & Headphones", "Cameras", "Media Accessories"] },
-  { key: "accessories", label: "Accessories", icon: Package, iconColor: "text-lime-400", subcategories: ["Fashion Accessories", "Phone Accessories", "Hair Accessories", "Travel Accessories", "Bags & Wallets"] },
-  { key: "toys", label: "Toys", icon: Gamepad2, iconColor: "text-purple-400", subcategories: ["Action Figures", "Educational Toys", "Outdoor Toys", "Board Games", "Arts & Crafts"] },
-  { key: "health-beauty", label: "Health & Beauty", icon: HeartPulse, iconColor: "text-rose-400", subcategories: ["Skincare", "Haircare", "Makeup", "Personal Care", "Vitamins & Supplements"] },
-  { key: "pets", label: "Pets", icon: PawPrint, iconColor: "text-orange-400", subcategories: ["Dog Supplies", "Cat Supplies", "Pet Food", "Bird Supplies", "Fish & Aquatics"] },
-  { key: "memorabilia", label: "Memorabilia", icon: Trophy, iconColor: "text-yellow-400", subcategories: ["Sports Memorabilia", "Entertainment Memorabilia", "Signed Items", "Collectibles", "Vintage Memorabilia"] },
-  { key: "food-drink", label: "Food & Drink", icon: UtensilsCrossed, iconColor: "text-red-400", subcategories: ["Snacks", "Beverages", "Grocery", "Wholesale Food", "Condiments"] },
-  { key: "office-supplies", label: "Office Supplies", icon: Briefcase, iconColor: "text-sky-400", subcategories: ["Stationery", "Printer Supplies", "Office Furniture", "Storage & Filing", "Desk Accessories"] },
-  { key: "home-garden", label: "Home & Garden", icon: Home, iconColor: "text-green-400", subcategories: ["Furniture", "Kitchen & Dining", "Bedding", "Garden Tools", "Home Decor"] },
-  { key: "wholesale-pallets", label: "Wholesale Pallets", icon: Warehouse, iconColor: "text-indigo-400", subcategories: ["Customer Returns Pallets", "General Merchandise Pallets", "Branded Pallets", "Seasonal Pallets", "Mixed Category Pallets"] },
-  { key: "fashion", label: "Fashion", icon: Sparkles, iconColor: "text-fuchsia-300", subcategories: ["Women's Fashion", "Men's Fashion", "Kids' Fashion", "Footwear", "Fashion Accessories"] },
-  { key: "tools", label: "Tools", icon: Wrench, iconColor: "text-stone-300", subcategories: ["Power Tools", "Hand Tools", "Hardware", "Safety Equipment", "Workshop Equipment"] },
-  { key: "vehicles", label: "Vehicles", icon: Car, iconColor: "text-slate-300", subcategories: ["Car Parts", "Van Parts", "Car Care", "Tyres & Wheels", "Diagnostics"] },
-  { key: "business-supplies", label: "Business Supplies", icon: Building2, iconColor: "text-teal-300", subcategories: ["Packaging", "Warehouse Equipment", "Cleaning Supplies", "Workwear & PPE", "Catering Supplies"] },
+  {
+    key: "electronics",
+    label: "Electronics",
+    icon: Smartphone,
+    iconColor: "text-cyan-400",
+    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "electronics")?.children?.map((c) => c.name) ?? [],
+  },
+  {
+    key: "home-garden",
+    label: "Home & Garden",
+    icon: Home,
+    iconColor: "text-green-400",
+    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "home-garden")?.children?.map((c) => c.name) ?? [],
+  },
+  {
+    key: "clothing-fashion",
+    label: "Clothing & Fashion",
+    icon: Shirt,
+    iconColor: "text-blue-400",
+    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "clothing-fashion")?.children?.map((c) => c.name) ?? [],
+  },
+  {
+    key: "toys-games",
+    label: "Toys & Games",
+    icon: Gamepad2,
+    iconColor: "text-purple-400",
+    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "toys-games")?.children?.map((c) => c.name) ?? [],
+  },
+  {
+    key: "sports-fitness",
+    label: "Sports & Fitness",
+    icon: Dumbbell,
+    iconColor: "text-yellow-300",
+    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "sports-fitness")?.children?.map((c) => c.name) ?? [],
+  },
+  {
+    key: "automotive",
+    label: "Automotive",
+    icon: Car,
+    iconColor: "text-slate-300",
+    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "automotive")?.children?.map((c) => c.name) ?? [],
+  },
+  {
+    key: "health-beauty",
+    label: "Health & Beauty",
+    icon: HeartPulse,
+    iconColor: "text-rose-400",
+    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "health-beauty")?.children?.map((c) => c.name) ?? [],
+  },
+  {
+    key: "pets",
+    label: "Pets",
+    icon: PawPrint,
+    iconColor: "text-orange-400",
+    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "pets")?.children?.map((c) => c.name) ?? [],
+  },
+  {
+    key: "food-drink",
+    label: "Food & Drink",
+    icon: UtensilsCrossed,
+    iconColor: "text-red-400",
+    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "food-drink")?.children?.map((c) => c.name) ?? [],
+  },
+  {
+    key: "office-business",
+    label: "Office & Business",
+    icon: Briefcase,
+    iconColor: "text-sky-400",
+    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "office-business")?.children?.map((c) => c.name) ?? [],
+  },
 ];
 
 const getHamburgerCategory = (key: string) =>

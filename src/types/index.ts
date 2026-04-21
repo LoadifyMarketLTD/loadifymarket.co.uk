@@ -180,6 +180,9 @@ export interface Category {
   slug: string;
   description?: string;
   parentId?: string;
+  parent_id?: string;
+  level?: number;
+  isActive?: boolean;
   imageUrl?: string;
   order: number;
 }
