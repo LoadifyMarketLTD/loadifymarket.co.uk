@@ -51,13 +51,6 @@ interface CategoryScreenProps {
   onClose: () => void;
 }
 
-interface HamburgerCategory {
-  key: string;
-  label: string;
-  icon: LucideIcon;
-  iconColor: string;
-}
-
 /** Icon / colour overrides for known category slugs. */
 const ICON_MAP: Record<string, { icon: LucideIcon; iconColor: string }> = {
   "electronics":       { icon: Smartphone,    iconColor: "text-cyan-400"   },

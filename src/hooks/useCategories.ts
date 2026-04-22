@@ -77,11 +77,9 @@ export function useCategories() {
   const [loading, setLoading] = useState(_cache === null);
 
   useEffect(() => {
-    if (_cache) {
-      setCategories(_cache);
-      setLoading(false);
-      return;
-    }
+    // If cache was already populated at mount time, useState initialised
+    // correctly — nothing to do.
+    if (_cache) return;
 
     let cancelled = false;
     loadCategories()
