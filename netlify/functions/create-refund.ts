@@ -153,6 +153,14 @@ export const handler: Handler = async (event) => {
     refund = await stripe.refunds.create({
       payment_intent: paymentIntentId,
       reason: safeReason as Stripe.RefundCreateParams.Reason,
+      // reverse_transfer instructs Stripe to attempt a reversal of the
+      // associated transfer to the seller's connected account. Under the
+      // current separate-charges-and-transfers model this only reverses
+      // transfers that are directly attached to the underlying charge; it
+      // is a no-op when no such attachment exists, so it is always safe
+      // to include. When we migrate to Destination Charges this flag will
+      // start providing full automatic clawback protection.
+      reverse_transfer: true,
       metadata: {
         orderId,
         orderNumber: order.orderNumber,

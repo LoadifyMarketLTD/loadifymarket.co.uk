@@ -503,3 +503,172 @@ describe('create-refund – P4C column name fix (stripePaymentIntent)', () => {
     expect(src).not.toContain('paymentSession?.paymentIntentId');
   });
 });
+
+// ── Phase 2A: Refund clawback protection ─────────────────────────────────────
+
+describe('create-refund – Phase 2A refund clawback (reverse_transfer)', () => {
+  it('source code passes reverse_transfer: true to stripe.refunds.create', async () => {
+    const { readFileSync } = await import('fs');
+    const { resolve, dirname } = await import('path');
+    const { fileURLToPath } = await import('url');
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const src = readFileSync(resolve(__dirname, '../create-refund.ts'), 'utf-8');
+
+    // The clawback flag must appear in the refund call
+    expect(src).toContain('reverse_transfer: true');
+    // Sanity: the flag should not be commented out
+    const uncommentedMatch = src.match(/^\s*reverse_transfer:\s*true/m);
+    expect(uncommentedMatch).not.toBeNull();
+  });
+});
+
+// ── Phase 2A: Payout delay for connected accounts ────────────────────────────
+
+describe('handleConnectAccountUpdated – Phase 2A payout delay', () => {
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    vi.resetModules();
+    process.env.STRIPE_SECRET_KEY = 'sk_test_abc123';
+    process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-key';
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+    vi.restoreAllMocks();
+  });
+
+  /**
+   * Creates a minimal Supabase mock for handleConnectAccountUpdated.
+   * The function updates seller_profiles and optionally reads users.
+   * tryAutoActivateSeller is lazily imported — we mock that module too.
+   */
+  function makeWebhookSupabaseMock(opts: {
+    sellerProfilesUpdateData?: Array<{ userId: string }>;
+    sellerProfilesUpdateError?: Error | null;
+  } = {}) {
+    const {
+      sellerProfilesUpdateData = [{ userId: 'seller-1' }],
+      sellerProfilesUpdateError = null,
+    } = opts;
+
+    return {
+      createClient: vi.fn(() => ({
+        from: vi.fn((table: string) => {
+          if (table === 'seller_profiles') {
+            return {
+              update: vi.fn().mockReturnThis(),
+              eq: vi.fn().mockReturnThis(),
+              select: vi.fn().mockResolvedValue({
+                data: sellerProfilesUpdateError ? null : sellerProfilesUpdateData,
+                error: sellerProfilesUpdateError ?? null,
+              }),
+            };
+          }
+          // users table (looked up when firstActivation is true)
+          return {
+            select: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          };
+        }),
+      })),
+    };
+  }
+
+  it('Test P2A-1: sets 7-day payout delay when seller becomes active', async () => {
+    const mockAccountsUpdate = vi.fn().mockResolvedValue({});
+
+    vi.doMock('@supabase/supabase-js', () => makeWebhookSupabaseMock());
+    // Mock the lazy sellerActivation import used inside handleConnectAccountUpdated
+    vi.doMock('../_shared/sellerActivation', () => ({
+      tryAutoActivateSeller: vi.fn().mockResolvedValue(null),
+    }));
+
+    const { handleConnectAccountUpdated } = await import('../stripe-webhook');
+
+    // Inject a mock stripe client via the override parameter
+    const mockStripeClient = {
+      accounts: { update: mockAccountsUpdate },
+    } as unknown as import('stripe').default;
+
+    await handleConnectAccountUpdated(
+      {
+        id: 'acct_test_active',
+        charges_enabled: true,
+        payouts_enabled: true,
+        details_submitted: true,
+      } as import('stripe').default.Account,
+      mockStripeClient,
+    );
+
+    expect(mockAccountsUpdate).toHaveBeenCalledOnce();
+    expect(mockAccountsUpdate).toHaveBeenCalledWith('acct_test_active', {
+      settings: { payouts: { schedule: { delay_days: 7 } } },
+    });
+  });
+
+  it('Test P2A-2: does NOT set payout delay when seller is still pending', async () => {
+    const mockAccountsUpdate = vi.fn().mockResolvedValue({});
+
+    vi.doMock('@supabase/supabase-js', () => makeWebhookSupabaseMock());
+    vi.doMock('../_shared/sellerActivation', () => ({
+      tryAutoActivateSeller: vi.fn().mockResolvedValue(null),
+    }));
+
+    const { handleConnectAccountUpdated } = await import('../stripe-webhook');
+
+    const mockStripeClient = {
+      accounts: { update: mockAccountsUpdate },
+    } as unknown as import('stripe').default;
+
+    await handleConnectAccountUpdated(
+      {
+        id: 'acct_test_pending',
+        charges_enabled: false,
+        payouts_enabled: false,
+        details_submitted: false,
+      } as import('stripe').default.Account,
+      mockStripeClient,
+    );
+
+    // delay_days should NOT be set when status is not 'active'
+    expect(mockAccountsUpdate).not.toHaveBeenCalled();
+  });
+
+  it('Test P2A-3: payout delay failure is non-fatal — seller activation still proceeds', async () => {
+    const mockAccountsUpdate = vi.fn().mockRejectedValue(new Error('Stripe rejected delay_days'));
+    const mockAutoActivate = vi.fn().mockResolvedValue(null);
+
+    vi.doMock('@supabase/supabase-js', () => makeWebhookSupabaseMock());
+    vi.doMock('../_shared/sellerActivation', () => ({
+      tryAutoActivateSeller: mockAutoActivate,
+    }));
+
+    const { handleConnectAccountUpdated } = await import('../stripe-webhook');
+
+    const mockStripeClient = {
+      accounts: { update: mockAccountsUpdate },
+    } as unknown as import('stripe').default;
+
+    // Should NOT throw even though stripe.accounts.update rejects
+    await expect(
+      handleConnectAccountUpdated(
+        {
+          id: 'acct_test_fail',
+          charges_enabled: true,
+          payouts_enabled: true,
+          details_submitted: true,
+        } as import('stripe').default.Account,
+        mockStripeClient,
+      ),
+    ).resolves.toBeUndefined();
+
+    // accounts.update was attempted
+    expect(mockAccountsUpdate).toHaveBeenCalledOnce();
+    // Auto-activation still ran after the failure
+    expect(mockAutoActivate).toHaveBeenCalledOnce();
+  });
+});

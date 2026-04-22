@@ -759,8 +759,22 @@ export async function handleStripeDispute(sb: import('@supabase/supabase-js').Su
  *
  * After updating stripeConnectStatus, we call tryAutoActivateSeller to
  * automatically activate the seller if all conditions are now met.
+ *
+ * When a seller first becomes fully active, we also configure a 7-day payout
+ * delay on their connected account (Phase 2A owner-protection). This reduces
+ * the window in which the platform could be left holding a chargeback after
+ * funds have already been paid out to the seller.
+ *
+ * The `stripeClientOverride` parameter is accepted for unit-test injection
+ * only — production calls omit it and the module-level `stripe` singleton is
+ * used instead.
+ *
+ * Exported for unit testing.
  */
-async function handleConnectAccountUpdated(account: Stripe.Account) {
+export async function handleConnectAccountUpdated(
+  account: Stripe.Account,
+  stripeClientOverride?: Stripe | null,
+) {
   let stripeConnectStatus: 'pending' | 'restricted' | 'active';
 
   if (account.charges_enabled && account.payouts_enabled) {
@@ -788,6 +802,31 @@ async function handleConnectAccountUpdated(account: Stripe.Account) {
   }
 
   console.log(`account.updated: ${account.id} → stripeConnectStatus=${stripeConnectStatus}`);
+
+  // ── Phase 2A: Payout delay for newly-active connected accounts ────────────
+  // When a seller's Connect account first becomes fully active, configure a
+  // 7-day payout delay on their connected account.  This means Stripe will not
+  // automatically pay out their balance until 7 days after each transaction,
+  // reducing the window where funds could have already been paid out before a
+  // dispute or refund is raised against the platform.
+  // This is a best-effort call: if Stripe rejects it (e.g. the account type
+  // does not support platform-controlled payout schedules) we log the error and
+  // continue — we must not block or corrupt the seller's activation state.
+  if (stripeConnectStatus === 'active') {
+    const stripeClient = stripeClientOverride ?? stripe!;
+    try {
+      await stripeClient.accounts.update(account.id, {
+        settings: { payouts: { schedule: { delay_days: 7 } } },
+      });
+      console.log(`account.updated: 7-day payout delay set for connected account ${account.id}`);
+    } catch (payoutDelayErr) {
+      console.warn(
+        `account.updated: failed to set payout delay for ${account.id} (non-fatal — seller activation proceeds):`,
+        payoutDelayErr,
+      );
+    }
+  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   // ── Auto-activation check ──────────────────────────────────────────────
   // Import lazily so this module stays loadable even when the helper file is
