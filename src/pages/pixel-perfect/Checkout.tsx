@@ -13,7 +13,6 @@ import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
 import PaymentMethodBadges from "@/components/PaymentMethodBadges";
-import type { ShippingMethod } from "@/types/shipping";
 
 const steps = [
   { id: "shipping", label: "Shipping", icon: Truck },
@@ -27,40 +26,6 @@ const Checkout = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-
-  // ── Shipping methods ────────────────────────────────────────────────────────
-  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
-  const [selectedShippingMethodId, setSelectedShippingMethodId] = useState<string>("");
-  const [shippingAmount, setShippingAmount] = useState<number>(0);
-
-  useEffect(() => {
-    const fetchMethods = async () => {
-      try {
-        const { supabase } = await import("@/lib/supabase");
-        const { data, error } = await supabase
-          .from("shipping_methods")
-          .select("*, shipping_rates(*)")
-          .eq("active", true)
-          .order("name", { ascending: true });
-        if (error) throw error;
-        const methods = (data ?? []) as ShippingMethod[];
-        setShippingMethods(methods);
-        // Pre-select cheapest method
-        const cheapest = methods.reduce<ShippingMethod | null>((best, m) => {
-          const price = Number(m.shipping_rates?.[0]?.price ?? Infinity);
-          const bestPrice = Number(best?.shipping_rates?.[0]?.price ?? Infinity);
-          return price < bestPrice ? m : best;
-        }, null);
-        if (cheapest && cheapest.id) {
-          setSelectedShippingMethodId(cheapest.id);
-          setShippingAmount(Number(cheapest.shipping_rates?.[0]?.price ?? 0));
-        }
-      } catch {
-        // Shipping methods are non-blocking — checkout still works at £0 if this fails
-      }
-    };
-    fetchMethods();
-  }, []);
   const [shippingData, setShippingData] = useState({
     firstName: "",
     lastName: "",
@@ -117,7 +82,7 @@ const Checkout = () => {
   // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
   // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
   const vat = Math.round(subtotal / 6);
-  const total = subtotal + shippingAmount;
+  const total = subtotal;
 
   // ── Submit to Stripe via Netlify function ──────────────────────────────────
   const handlePlaceOrder = async () => {
@@ -174,8 +139,8 @@ const Checkout = () => {
         items,
         buyerId: user?.id ?? "",
         guestEmail: !user ? shippingData.email : undefined,
-        shippingAmount,
-        shippingMethod: shippingMethods.find((m) => m.id === selectedShippingMethodId)?.name ?? "Seller arranged",
+        shippingAmount: 0,
+        shippingMethod: "Seller arranged",
         shippingAddress: address,
         billingAddress: address,
       };
@@ -406,39 +371,7 @@ const Checkout = () => {
                     </div>
                   )}
 
-                  {/* Shipping method selection */}
-                  {shippingMethods.length > 0 && (
-                    <div className="space-y-3 pt-2">
-                      <Label>Delivery Method</Label>
-                      <div className="space-y-2">
-                        {shippingMethods.map((method) => {
-                          const price = method.shipping_rates?.[0]?.price ?? 0;
-                          const isSelected = selectedShippingMethodId === method.id;
-                          return (
-                            <button
-                              key={method.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedShippingMethodId(method.id);
-                                setShippingAmount(Number(price));
-                              }}
-                              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-colors ${
-                                isSelected
-                                  ? "border-primary bg-primary/5 text-foreground"
-                                  : "border-border bg-card text-muted-foreground hover:border-primary/40"
-                              }`}
-                            >
-                              <Truck className={`h-4 w-4 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-                              <span className="flex-1 text-sm font-medium">{method.name}</span>
-                              <span className={`text-sm font-semibold shrink-0 ${isSelected ? "text-primary" : "text-foreground"}`}>
-                                {Number(price) === 0 ? "Free" : `£${Number(price).toFixed(2)}`}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+                  {/* Shipping method selection is handled directly by sellers post-purchase */}
 
                   <Button
                     onClick={handleContinueToPayment}
@@ -522,12 +455,6 @@ const Checkout = () => {
                         {shippingData.postcode || "M1 1AA"}
                       </p>
                       <p>United Kingdom</p>
-                      {selectedShippingMethodId && (
-                        <p className="mt-2 font-medium text-foreground">
-                          {shippingMethods.find((m) => m.id === selectedShippingMethodId)?.name ?? ""}{" "}
-                          — {shippingAmount === 0 ? "Free" : `£${shippingAmount.toFixed(2)}`}
-                        </p>
-                      )}
                     </div>
                   </div>
 
@@ -629,9 +556,7 @@ const Checkout = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Delivery</span>
-                    <span className="text-foreground font-medium">
-                      {shippingAmount === 0 ? "Free" : `£${shippingAmount.toFixed(2)}`}
-                    </span>
+                    <span className="text-muted-foreground italic">Set by seller</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">VAT (20%)</span>
