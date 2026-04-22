@@ -9,7 +9,7 @@
  *  2. HeroSection        — compact navy hero + category quick panel
  *  3. FeaturedProducts   — real DB product cards (immediately under hero)
  *  4. TrustStrip         — white bar with 4 trust items
- *  5. CategoryGrid       — flat 17-category tile grid
+ *  5. CategoryGrid       — flat global category tile grid
  *  6. How It Works       — inline 3-step buyer guide
  *  7. Seller CTA banner  — navy strip, register as supplier
  */
@@ -30,7 +30,7 @@ const HOW_IT_WORKS = [
     num: 1,
     icon: Search,
     title: "Browse & Discover",
-    desc: "Find wholesale products from verified UK trade suppliers across 17 categories.",
+    desc: "Find wholesale products from verified UK trade suppliers across a global 10-category tree.",
   },
   {
     num: 2,

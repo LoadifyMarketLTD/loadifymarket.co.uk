@@ -6,8 +6,8 @@ import logo from "@/assets/loadify-logo.svg";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
 import { isActiveSellerAccess } from "@/lib/roleUtils";
-import CATEGORY_CONFIG from "@/lib/category-config";
 import MobileDrawer from "@/components/MobileDrawer";
+import { TOP_LEVEL_CATEGORY_NAMES } from "@/data/globalCategoryTree";
 
 /**
  * Marketplace-style header — used on every page of the site.
@@ -224,16 +224,14 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
               All Categories
             </Link>
             <span className="w-px h-5 bg-white/10 mx-1.5 shrink-0" aria-hidden="true" />
-            {CATEGORY_CONFIG.slice(0, 8).map((cat) => {
-              const Icon = cat.icon;
+            {TOP_LEVEL_CATEGORY_NAMES.slice(0, 8).map((categoryName) => {
               return (
                 <Link
-                  key={cat.slug}
-                  to={`/category/${cat.slug}`}
+                  key={categoryName}
+                  to={`/catalog?category=${encodeURIComponent(categoryName)}`}
                   className="flex items-center gap-1.5 shrink-0 text-sm font-semibold text-white/70 hover:text-green-400 hover:bg-white/10 px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
                 >
-                  <Icon className={`h-4 w-4 ${cat.iconColor}`} aria-hidden="true" />
-                  {cat.label}
+                  {categoryName}
                 </Link>
               );
             })}

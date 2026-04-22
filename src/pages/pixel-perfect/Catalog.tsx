@@ -72,11 +72,10 @@ const Catalog = () => {
           .from("categories")
           .select("name")
           .eq("isActive", true)
+          .is("parentId", null)
           .order("order", { ascending: true });
         if (data) {
-          const names = data
-            .map((c: { name: string }) => c.name)
-            .filter((n: string) => n !== "Logistics Jobs"); // exclude internal-only
+          const names = data.map((c: { name: string }) => c.name);
           setDbCategories(names);
         }
       } catch (err) {
