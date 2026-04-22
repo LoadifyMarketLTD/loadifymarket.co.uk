@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useCategories } from "@/hooks/useCategories";
 import CATEGORY_CONFIG from "@/lib/category-config";
 
 const FEATURED_SLUGS = [
@@ -10,11 +11,26 @@ const FEATURED_SLUGS = [
   "electrical",
 ];
 
-const featuredCats = FEATURED_SLUGS
-  .map((s) => CATEGORY_CONFIG.find((c) => c.slug === s))
-  .filter(Boolean) as typeof CATEGORY_CONFIG[number][];
+const HeroSection = () => {
+  const { categories } = useCategories();
 
-const HeroSection = () => (
+  // Show featured slugs from DB categories; fall back to category-config for
+  // icon/colour until the DB row for that slug is loaded.
+  const featuredCats = FEATURED_SLUGS
+    .map((s) => {
+      const dbCat = categories.find((c) => c.slug === s);
+      const staticCfg = CATEGORY_CONFIG.find((c) => c.slug === s);
+      if (!dbCat && !staticCfg) return null;
+      return {
+        slug: s,
+        label: dbCat?.name ?? staticCfg?.label ?? s,
+        icon: staticCfg?.icon,
+        iconColor: staticCfg?.iconColor ?? "text-white/50",
+      };
+    })
+    .filter(Boolean) as Array<{ slug: string; label: string; icon?: React.ComponentType<{ className?: string }>; iconColor: string }>;
+
+  return (
   <section
     className="bg-[#0d2240]"
     aria-label="Loadify Market — UK B2B wholesale marketplace"
@@ -98,27 +114,24 @@ const HeroSection = () => (
               </span>
             </div>
             <div className="divide-y divide-white/10">
-              {featuredCats.map((cat) => {
-                const Icon = cat.icon;
-                return (
+              {featuredCats.map((cat) => (
                   <Link
                     key={cat.slug}
                     to={`/category/${cat.slug}`}
                     className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.08] transition-colors"
                   >
-                    <Icon className={`h-3.5 w-3.5 shrink-0 ${cat.iconColor}`} aria-hidden="true" />
+                    {cat.icon && <cat.icon className={`h-3.5 w-3.5 shrink-0 ${cat.iconColor}`} aria-hidden="true" />}
                     <span className="text-[12px] text-white/80 font-medium flex-1">{cat.label}</span>
                     <span className="text-white/30 text-sm">›</span>
                   </Link>
-                );
-              })}
+                ))}
             </div>
             <Link
               to="/catalog"
               className="flex items-center justify-between px-4 py-2.5 border-t border-white/15 bg-white/5 hover:bg-white/10 transition-colors"
             >
               <span className="text-[11px] font-black text-[#22C55E] uppercase tracking-wide">
-                View All 17 Categories
+                View All {categories.length > 0 ? categories.length : 17} Categories
               </span>
               <span className="text-[#22C55E] text-sm font-bold">→</span>
             </Link>
@@ -128,6 +141,7 @@ const HeroSection = () => (
       </div>
     </div>
   </section>
-);
+  );
+};
 
 export default HeroSection;

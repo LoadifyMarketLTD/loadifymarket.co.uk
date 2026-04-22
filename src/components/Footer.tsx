@@ -332,7 +332,7 @@ const Footer = () => {
             <div className="text-xs text-background/40 text-center md:text-left">
               <p>© 2026 Loadify Market. Operated by XDrive Logistics Ltd. All rights reserved.</p>
               <p className="mt-1">
-                Loadify Market does not hold inventory. All products are listed and fulfilled by independent sellers. The platform connects buyers and sellers and processes payments as an intermediary — it does not own, stock, or dispatch any products. Sellers are solely responsible for their listings, pricing and fulfilment.
+                Loadify Market does not hold inventory. All products are listed and fulfilled by independent sellers. The platform connects buyers and sellers and processes payments as a marketplace facilitator using Stripe Connect — it does not own, stock, or dispatch any products. Sellers are solely responsible for their listings, pricing and fulfilment.
               </p>
             </div>
             <div className="flex items-center gap-4 text-xs text-background/50 shrink-0">
