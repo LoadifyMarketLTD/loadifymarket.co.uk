@@ -1407,7 +1407,26 @@ ALTER TABLE stripe_events           ENABLE ROW LEVEL SECURITY;
 
 -- USERS
 CREATE POLICY "users_select" ON users FOR SELECT USING (auth.uid() = id OR is_admin());
-CREATE POLICY "users_update" ON users FOR UPDATE USING (auth.uid() = id OR is_admin());
+-- users_update: USING restricts which rows can be targeted; WITH CHECK prevents
+-- privilege escalation — a regular user cannot change the 'role' column of the
+-- row being updated to a higher-privileged value (e.g. 'admin') unless they are
+-- already an admin.  The sub-query reads the target row's CURRENT role via
+-- users.id (the row being modified) — this is semantically correct and avoids
+-- ambiguity with auth.uid() when an admin updates another user's row.
+-- This policy was strengthened by migration 410_fix_role_escalation.sql.
+CREATE POLICY "users_update"
+ON users
+FOR UPDATE
+USING (auth.uid() = id OR is_admin())
+WITH CHECK (
+  -- Allow the update only when:
+  --   (a) the role column is not being changed (new value equals current DB value), OR
+  --   (b) the caller is already an admin (can promote / demote others).
+  -- We read the current role of the target row via a sub-select because OLD is
+  -- unavailable in RLS WITH CHECK expressions.
+  role = (SELECT u.role FROM public.users u WHERE u.id = users.id)
+  OR is_admin()
+);
 CREATE POLICY "users_insert" ON users FOR INSERT WITH CHECK (TRUE);
 CREATE POLICY "users_delete" ON users FOR DELETE USING (is_admin());
 -- BUYER PROFILES

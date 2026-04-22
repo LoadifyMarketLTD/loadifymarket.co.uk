@@ -1,12 +1,23 @@
 /**
  * category-config.ts
  *
- * UI-specific configuration for the 17 wholesale marketplace categories:
- * • Lucide icon component
- * • Tailwind accent colours
- * • Subcategory filter chips (with sub-page slugs)
- * • Empty-state copy
- * • Supabase product filter strategy
+ * ⚠️  THIS FILE IS A UI-ONLY HELPER — IT IS NOT THE SOURCE OF TRUTH FOR CATEGORIES.
+ *
+ * The source of truth for category names, slugs, hierarchy, and active/inactive
+ * state is the `categories` table in Supabase (seeded by migrations 400 and 420).
+ * Runtime components that need category data fetch from the DB via `useCategories`
+ * hook or direct Supabase queries.
+ *
+ * This file provides ONLY:
+ *   • Lucide icon component (UI visual only)
+ *   • Tailwind accent colour tokens (UI styling only)
+ *   • Subcategory chip labels + sub-page slugs (UX navigation aids)
+ *   • Empty-state copy (UX microcopy)
+ *
+ * DO NOT add business logic here.
+ * DO NOT use this file to determine which categories exist — query the DB instead.
+ * If a category exists in the DB but not in this config, it will still render with
+ * a generic icon and no chips — that is intentional and safe.
  *
  * All data is self-contained here.  Categories are seeded into the DB via
  * supabase/420_seed_wholesale_categories.sql.  DB is the runtime source of
