@@ -60,6 +60,16 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    // Email is required to prevent order enumeration attacks.
+    // Without this check any caller with a valid order number could read
+    // shipping details for orders that are not theirs.
+    if (!email || !email.includes('@')) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'email is required to look up an order' }),
+      };
+    }
+
     // Build query
     let query = supabase
       .from('orders')
@@ -100,8 +110,9 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Optional email verification for additional security
-    if (email) {
+    // Mandatory email verification — email is required by the handler above.
+    // Verifies the caller owns the order before exposing any shipping data.
+    {
       const { data: buyer } = await supabase
         .from('users')
         .select('email')
