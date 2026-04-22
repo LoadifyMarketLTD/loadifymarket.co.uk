@@ -91,8 +91,11 @@ export function useCategories() {
           setLoading(false);
         }
       })
-      .catch(() => {
-        if (!cancelled) setLoading(false);
+      .catch((err) => {
+        if (!cancelled) {
+          console.error('[useCategories] Failed to load categories from DB:', err);
+          setLoading(false);
+        }
       });
 
     return () => {

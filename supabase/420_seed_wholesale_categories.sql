@@ -3,7 +3,7 @@
 --
 -- These are the B2B wholesale categories used by the UI (category-config.ts,
 -- HeroSection, header, sitemap) and by product listings.  They are inserted
--- alongside the 10 consumer categories already seeded by migration 400.
+-- alongside the consumer categories already seeded by migration 400.
 --
 -- Uses ON CONFLICT (slug) DO NOTHING so the migration is idempotent and will
 -- not overwrite any existing admin edits.

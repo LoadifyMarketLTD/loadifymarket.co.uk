@@ -63,10 +63,11 @@ export const handler: Handler = async (event) => {
     // Email is required to prevent order enumeration attacks.
     // Without this check any caller with a valid order number could read
     // shipping details for orders that are not theirs.
-    if (!email || !email.includes('@')) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'email is required to look up an order' }),
+        body: JSON.stringify({ error: 'A valid email is required to look up an order' }),
       };
     }
 

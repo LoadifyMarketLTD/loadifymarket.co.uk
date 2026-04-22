@@ -38,7 +38,12 @@ const CategoryGrid = () => {
         </div>
 
         {/* Tile grid — gap-px creates hairline borders between tiles */}
-        {!loading && (
+        {!loading && categories.length === 0 && (
+          <p className="text-[11px] text-gray-500 text-center py-4">
+            No categories available.
+          </p>
+        )}
+        {!loading && categories.length > 0 && (
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-px bg-gray-200">
             {categories.map((cat) => {
               const sub =
