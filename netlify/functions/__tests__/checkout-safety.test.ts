@@ -204,31 +204,37 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
   // ── Test 2: Authenticated buyer is not blocked by auth check ────────────
   it('Test 2: authenticated buyer passes P1 auth gate', async () => {
     vi.doMock('@supabase/supabase-js', () => makeSupabaseMock({}));
-    // Stripe mock returns a valid session so the handler can return 200
+    // Use 'function' (not arrow) for the Stripe constructor mock — vi.fn() with an
+    // arrow implementation cannot be used with 'new', causing the handler to throw.
     vi.doMock('stripe', () => ({
-      default: vi.fn().mockImplementation(() => ({
-        checkout: {
-          sessions: {
-            create: vi.fn().mockResolvedValue({
-              id: 'cs_test_123',
-              url: 'https://checkout.stripe.com/test',
-              payment_intent: 'pi_test_123',
-            }),
+      default: vi.fn(function MockStripe() {
+        return {
+          checkout: {
+            sessions: {
+              create: vi.fn().mockResolvedValue({
+                id: 'cs_test_123',
+                url: 'https://checkout.stripe.com/test',
+                payment_intent: 'pi_test_123',
+              }),
+            },
           },
-        },
-      })),
+        };
+      }),
     }));
 
     const { handler } = await import('../create-checkout');
+    // Use lowercase 'authorization' — Netlify normalises to lowercase at the edge but
+    // unit-test HandlerEvent mocks are NOT normalised, so the key must match exactly.
     const res = await handler(
-      makeEvent(singleSellerBody, 'POST', { Authorization: 'Bearer valid-token' }),
+      makeEvent(singleSellerBody, 'POST', { authorization: 'Bearer valid-token' }),
       {} as never,
     );
 
-    // Should NOT be 401 (auth check passed). May be 200 or another code, but not 401.
+    // Should NOT be 401 (auth check passed).
     expect(res.statusCode).not.toBe(401);
     const body = JSON.parse(res.body as string) as { error?: string };
-    expect(body.error).not.toMatch(/sign in/i);
+    // body.error may be undefined on a 200 success — guard with ?? '' before matching.
+    expect(body.error ?? '').not.toMatch(/sign in/i);
   });
 
   // ── Test 3: Multi-seller cart → 400 (P3) ───────────────────────────────
@@ -245,7 +251,7 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
 
     const { handler } = await import('../create-checkout');
     const res = await handler(
-      makeEvent(multiSellerBody, 'POST', { Authorization: 'Bearer valid-token' }),
+      makeEvent(multiSellerBody, 'POST', { authorization: 'Bearer valid-token' }),
       {} as never,
     );
 
@@ -264,7 +270,7 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
 
     const { handler } = await import('../create-checkout');
     const res = await handler(
-      makeEvent(singleSellerBody, 'POST', { Authorization: 'Bearer valid-token' }),
+      makeEvent(singleSellerBody, 'POST', { authorization: 'Bearer valid-token' }),
       {} as never,
     );
 
@@ -283,7 +289,7 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
 
     const { handler } = await import('../create-checkout');
     const res = await handler(
-      makeEvent(singleSellerBody, 'POST', { Authorization: 'Bearer valid-token' }),
+      makeEvent(singleSellerBody, 'POST', { authorization: 'Bearer valid-token' }),
       {} as never,
     );
 
@@ -302,7 +308,7 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
 
     const { handler } = await import('../create-checkout');
     const res = await handler(
-      makeEvent(singleSellerBody, 'POST', { Authorization: 'Bearer valid-token' }),
+      makeEvent(singleSellerBody, 'POST', { authorization: 'Bearer valid-token' }),
       {} as never,
     );
 
@@ -313,23 +319,27 @@ describe('create-checkout – safety hardening (P1–P5)', () => {
   // ── Test 7: Valid seller + single seller → 200 (all checks pass) ────────
   it('Test 7: valid single-seller with active Stripe returns 200 with checkout URL', async () => {
     vi.doMock('@supabase/supabase-js', () => makeSupabaseMock({}));
+    // Use 'function' (not arrow) for the Stripe constructor mock — vi.fn() with an
+    // arrow implementation cannot be used with 'new', causing the handler to throw.
     vi.doMock('stripe', () => ({
-      default: vi.fn().mockImplementation(() => ({
-        checkout: {
-          sessions: {
-            create: vi.fn().mockResolvedValue({
-              id: 'cs_test_ok',
-              url: 'https://checkout.stripe.com/pay/cs_test_ok',
-              payment_intent: 'pi_ok',
-            }),
+      default: vi.fn(function MockStripe() {
+        return {
+          checkout: {
+            sessions: {
+              create: vi.fn().mockResolvedValue({
+                id: 'cs_test_ok',
+                url: 'https://checkout.stripe.com/pay/cs_test_ok',
+                payment_intent: 'pi_ok',
+              }),
+            },
           },
-        },
-      })),
+        };
+      }),
     }));
 
     const { handler } = await import('../create-checkout');
     const res = await handler(
-      makeEvent(singleSellerBody, 'POST', { Authorization: 'Bearer valid-token' }),
+      makeEvent(singleSellerBody, 'POST', { authorization: 'Bearer valid-token' }),
       {} as never,
     );
 

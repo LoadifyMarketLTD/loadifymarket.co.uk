@@ -74,6 +74,14 @@ describe('create-checkout handler – request validation', () => {
     }));
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({
+        auth: {
+          // P1 gate: return a valid user so the auth check passes and the
+          // test can reach the product-availability check.
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'buyer-1', email: 'buyer@test.com' } },
+            error: null,
+          }),
+        },
         from: vi.fn(() => ({
           select: vi.fn().mockReturnThis(),
           in: vi.fn().mockResolvedValue({
@@ -88,7 +96,9 @@ describe('create-checkout handler – request validation', () => {
       })),
     }));
     const { handler } = await import('../create-checkout');
-    const res = await handler(makeEvent(validBody), {} as never);
+    // Pass a lowercase 'authorization' header so the P1 auth gate is satisfied.
+    // Netlify normalises headers to lowercase at the edge; unit test mocks do not.
+    const res = await handler(makeEvent(validBody, 'POST', { authorization: 'Bearer valid-token' }), {} as never);
     expect(res.statusCode).toBe(400);
     expect(JSON.parse(res.body as string).error).toMatch(/no longer available/i);
   });

@@ -214,7 +214,7 @@ const Checkout = () => {
           robots="noindex,nofollow"
         />
         <main id="main-content" className="pt-28 pb-16">
-          <div className="container mx-auto px-4 py-20 flex flex-col items-center text-center max-w-md mx-auto">
+          <div className="container mx-auto px-4 py-20 flex flex-col items-center text-center max-w-md">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
               <Lock className="h-8 w-8 text-primary" />
             </div>
