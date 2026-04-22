@@ -805,7 +805,7 @@ export async function handleConnectAccountUpdated(
 
   // ── Phase 2A: Payout delay for newly-active connected accounts ────────────
   // When a seller's Connect account first becomes fully active, configure a
-  // 7-day payout delay on their connected account.  This means Stripe will not
+  // 7-day payout delay on their connected account. This means Stripe will not
   // automatically pay out their balance until 7 days after each transaction,
   // reducing the window where funds could have already been paid out before a
   // dispute or refund is raised against the platform.
