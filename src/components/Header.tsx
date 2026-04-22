@@ -7,7 +7,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
 import { isActiveSellerAccess } from "@/lib/roleUtils";
 import MobileDrawer from "@/components/MobileDrawer";
-import { TOP_LEVEL_CATEGORY_NAMES } from "@/data/globalCategoryTree";
+import { useCategories } from "@/hooks/useCategories";
 
 /**
  * Marketplace-style header — used on every page of the site.
@@ -32,6 +32,7 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
   const { cartCount } = useCart();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const { categories } = useCategories();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -224,14 +225,14 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
               All Categories
             </Link>
             <span className="w-px h-5 bg-white/10 mx-1.5 shrink-0" aria-hidden="true" />
-            {TOP_LEVEL_CATEGORY_NAMES.slice(0, 8).map((categoryName) => {
+            {categories.slice(0, 8).map((cat) => {
               return (
                 <Link
-                  key={categoryName}
-                  to={`/catalog?category=${encodeURIComponent(categoryName)}`}
+                  key={cat.slug}
+                  to={`/catalog?category=${encodeURIComponent(cat.name)}`}
                   className="flex items-center gap-1.5 shrink-0 text-sm font-semibold text-white/70 hover:text-green-400 hover:bg-white/10 px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
                 >
-                  {categoryName}
+                  {cat.name}
                 </Link>
               );
             })}

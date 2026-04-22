@@ -46,6 +46,25 @@ const CategoryPage = () => {
 
   const config = CATEGORY_CONFIG.find((c) => c.slug === slug);
 
+  // DB-driven fallback: when the slug is not in the static config, look it up
+  // in the categories table so new/dynamic DB categories still render.
+  const [dbCategory, setDbCategory] = useState<{ id: string; name: string; slug: string } | null>(null);
+  const [dbCategoryLoading, setDbCategoryLoading] = useState(!config);
+
+  useEffect(() => {
+    if (config || !slug) { setDbCategoryLoading(false); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("categories")
+        .select("id, name, slug")
+        .eq("slug", slug)
+        .eq("isActive", true)
+        .maybeSingle();
+      setDbCategory(data ?? null);
+      setDbCategoryLoading(false);
+    })();
+  }, [slug, config]);
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -72,32 +91,37 @@ const CategoryPage = () => {
 
   // ── Resolve category slug → UUID once on mount ────────────────────────────
   useEffect(() => {
-    if (!config) return;
-    const filter = config.productFilter;
-    if (filter.categorySlug) {
-      (async () => {
-        try {
-          const { data } = await supabase
-            .from("categories")
-            .select("id")
-            .eq("slug", filter.categorySlug)
-            .single();
-          if (data) setCategoryId(data.id as string);
-        } catch (err) {
-          console.error("category id lookup failed:", err);
-          toast({ title: "Could not load category", description: "Please try refreshing the page.", variant: "destructive" });
-        }
-      })();
+    // For static configs, resolve slug → UUID via productFilter.categorySlug
+    if (config) {
+      const filter = config.productFilter;
+      if (filter.categorySlug) {
+        (async () => {
+          try {
+            const { data } = await supabase
+              .from("categories")
+              .select("id")
+              .eq("slug", filter.categorySlug)
+              .single();
+            if (data) setCategoryId(data.id as string);
+          } catch (err) {
+            console.error("category id lookup failed:", err);
+            toast({ title: "Could not load category", description: "Please try refreshing the page.", variant: "destructive" });
+          }
+        })();
+      }
+      return;
     }
-  }, [config]);
+    // For DB-driven fallback, the dbCategory already has the id
+    if (dbCategory) setCategoryId(dbCategory.id);
+  }, [config, dbCategory]);
 
   // ── Fetch products from Supabase ──────────────────────────────────────────
   const fetchProducts = useCallback(async () => {
-    if (!config) return;
+    if (!config && !categoryId) return;
     setLoading(true);
 
-    const filter = config.productFilter;
-    const chip = config.chips[activeChip];
+    const filter = config?.productFilter;
+    const chip = config?.chips[activeChip];
 
     try {
       let query = supabase
@@ -106,11 +130,11 @@ const CategoryPage = () => {
         .eq("isActive", true)
         .eq("isApproved", true);
 
-      if (filter.types) {
+      if (filter?.types) {
         // Filter by product type (e.g. lot, clearance, pallet)
         query = query.in("type", filter.types);
-      } else if (filter.categorySlug && categoryId) {
-        // Filter by category UUID
+      } else if (categoryId) {
+        // Filter by category UUID — works for both static-config and DB-fallback
         query = query.eq("categoryId", categoryId);
       }
 
@@ -185,13 +209,13 @@ const CategoryPage = () => {
 
   // Fetch when categoryId resolves (for slug-based filters) or dependencies change
   useEffect(() => {
-    if (!config) return;
-    const filter = config.productFilter;
+    if (!config && !dbCategory) return;
+    const filter = config?.productFilter;
     // For type-based categories, fetch immediately; for slug-based, wait for categoryId
-    if (filter.types || categoryId) {
+    if (filter?.types || categoryId) {
       fetchProducts();
     }
-  }, [fetchProducts, config, categoryId]);
+  }, [fetchProducts, config, dbCategory, categoryId]);
 
   const clearAll = () => {
     setSelectedConditions([]);
@@ -223,8 +247,21 @@ const CategoryPage = () => {
     }
   };
 
-  // ── 404 state for unknown slugs ───────────────────────────────────────────
-  if (!config) {
+  // ── Loading state while checking DB for unknown slugs ─────────────────────
+  if (!config && dbCategoryLoading) {
+    return (
+      <MainLayout>
+        <main id="main-content" className="pt-28 pb-16">
+          <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">
+            Loading…
+          </div>
+        </main>
+      </MainLayout>
+    );
+  }
+
+  // ── 404 state — slug not in static config AND not in DB ───────────────────
+  if (!config && !dbCategory) {
     return (
       <MainLayout>
         <SEO
@@ -244,13 +281,15 @@ const CategoryPage = () => {
     );
   }
 
-  const Icon = config.icon;
+  // Resolved label: static config takes precedence, then DB name
+  const categoryLabel = config?.label ?? dbCategory?.name ?? slug ?? "";
+  const Icon = config?.icon;
 
   return (
     <MainLayout>
       <SEO
-        title={`${config.label} | Loadify Market`}
-        description={config.subtitle || `Browse ${config.label} products from verified UK sellers on Loadify Market.`}
+        title={`${categoryLabel} | Loadify Market`}
+        description={config?.subtitle || `Browse ${categoryLabel} products from verified UK sellers on Loadify Market.`}
         canonical={`/category/${slug}`}
       />
 
@@ -260,7 +299,7 @@ const CategoryPage = () => {
             items={[
               { label: "Home", to: "/" },
               { label: "Catalog", to: "/catalog" },
-              { label: config.label },
+              { label: categoryLabel },
             ]}
             showBack={true}
             backLabel="Back"
@@ -269,17 +308,19 @@ const CategoryPage = () => {
 
           {/* Category hero */}
           <div className="py-6 flex items-center gap-4">
-            <div className={`${config.accentBg} rounded-xl p-3 shrink-0`}>
-              <Icon className={`h-8 w-8 ${config.iconColor}`} />
-            </div>
+            {Icon && (
+              <div className={`${config?.accentBg ?? 'bg-gray-100'} rounded-xl p-3 shrink-0`}>
+                <Icon className={`h-8 w-8 ${config?.iconColor ?? 'text-gray-400'}`} />
+              </div>
+            )}
             <div>
-              <h1 className="text-2xl font-display font-bold text-foreground">{config.title}</h1>
-              <p className="text-sm text-muted-foreground mt-0.5">{config.subtitle}</p>
+              <h1 className="text-2xl font-display font-bold text-foreground">{config?.title ?? categoryLabel}</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">{config?.subtitle}</p>
             </div>
           </div>
 
-          {/* Chip filters */}
-          {config.chips.length > 1 && (
+          {/* Chip filters — only shown for static-config categories */}
+          {config && config.chips.length > 1 && (
             <div className="flex flex-wrap gap-2 pb-6">
               {config.chips.map((chip, i) => (
                 <button
@@ -396,10 +437,10 @@ const CategoryPage = () => {
               ) : filteredProducts.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="text-lg font-display font-semibold text-foreground mb-2">
-                    {config.emptyState.title}
+                    {config?.emptyState.title ?? `No ${categoryLabel} products found`}
                   </p>
                   <p className="text-sm text-muted-foreground mb-6">
-                    {config.emptyState.description}
+                    {config?.emptyState.description ?? "Try adjusting your search. New products are listed regularly."}
                   </p>
                   <Button asChild variant="outline">
                     <Link to="/catalog">Browse All Listings</Link>

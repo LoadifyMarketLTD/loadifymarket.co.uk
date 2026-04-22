@@ -371,6 +371,8 @@ const Checkout = () => {
                     </div>
                   )}
 
+                  {/* Shipping method selection is handled directly by sellers post-purchase */}
+
                   <Button
                     onClick={handleContinueToPayment}
                     className="w-full sm:w-auto h-11 bg-gradient-hero text-primary-foreground font-semibold px-8"

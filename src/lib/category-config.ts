@@ -1,16 +1,16 @@
 /**
  * category-config.ts
  *
- * Extends the central category definitions from src/data/categories.ts with
- * UI-specific configuration needed by CategoryPage:
+ * UI-specific configuration for the 17 wholesale marketplace categories:
  * • Lucide icon component
  * • Tailwind accent colours
  * • Subcategory filter chips (with sub-page slugs)
  * • Empty-state copy
  * • Supabase product filter strategy
  *
- * SINGLE SOURCE OF TRUTH for category names/slugs/images/subcategories:
- *   → src/data/categories.ts
+ * All data is self-contained here.  Categories are seeded into the DB via
+ * supabase/420_seed_wholesale_categories.sql.  DB is the runtime source of
+ * truth; this file provides rich UX config for known slugs.
  */
 
 import {
@@ -33,7 +33,6 @@ import {
   Shirt,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import CATEGORIES from '@/data/categories';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -65,12 +64,15 @@ export interface CategoryConfig {
   productFilter: CategoryProductFilter;
 }
 
-// ── Per-slug UI overrides ─────────────────────────────────────────────────────
+// ── Per-slug full configs ─────────────────────────────────────────────────────
 
-type UIOverride = Omit<CategoryConfig, 'slug' | 'label' | 'title' | 'subcategories' | 'image'>;
-
-const UI_OVERRIDES: Record<string, UIOverride> = {
-  'large-letter-items': {
+const CATEGORY_CONFIG: readonly CategoryConfig[] = [
+  {
+    slug: 'large-letter-items',
+    label: 'Large Letter Items',
+    title: 'Large Letter Items',
+    image: 'https://images.unsplash.com/photo-1586769852044-692d6e3703f0?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Stationery & Cards', 'Jewellery & Accessories', 'Phone Accessories', 'Hair Accessories', 'Small Gifts & Novelties', 'Keyrings & Badges', 'Beauty Accessories', 'Craft Supplies'],
     subtitle: 'Small, lightweight items ideal for postal and large-letter format — keyrings, accessories, stationery & more',
     icon: Mail,
     iconColor: 'text-blue-400',
@@ -93,7 +95,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'large-letter-items' },
   },
 
-  garden: {
+  {
+    slug: 'garden',
+    label: 'Garden',
+    title: 'Garden',
+    image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Garden Tools', 'Plant Pots & Planters', 'Garden Furniture', 'Outdoor Lighting', 'BBQ & Outdoor Cooking', 'Watering Equipment', 'Garden Décor', 'Seeds & Bulbs'],
     subtitle: 'Garden tools, outdoor furniture, planters, BBQ equipment and garden décor for retail and trade',
     icon: Leaf,
     iconColor: 'text-green-500',
@@ -116,7 +123,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'garden' },
   },
 
-  diy: {
+  {
+    slug: 'diy',
+    label: 'DIY',
+    title: 'DIY',
+    image: 'https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Power Tools', 'Hand Tools', 'Fixings & Fastenings', 'Safety Equipment', 'Paint & Decorating', 'Plumbing', 'Electrical Supplies', 'Storage Solutions'],
     subtitle: 'Power tools, hand tools, fixings, paint, plumbing and home improvement supplies',
     icon: Wrench,
     iconColor: 'text-amber-600',
@@ -139,7 +151,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'diy' },
   },
 
-  cleaning: {
+  {
+    slug: 'cleaning',
+    label: 'Cleaning',
+    title: 'Cleaning',
+    image: 'https://images.unsplash.com/photo-1563453392212-326f5e854473?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Cleaning Wipes & Sprays', 'Sponges, Scourers & Cloths', 'Brooms, Mops & Brushes', 'Laundry Supplies', 'Dehumidifiers', 'Cleaning Gloves', 'Sinks & Drains', 'Bins', 'Bowls & Storage'],
     subtitle: 'Cleaning products, mops, cloths, bin liners, air fresheners, disinfectants and laundry',
     icon: Sparkles,
     iconColor: 'text-cyan-400',
@@ -162,7 +179,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'cleaning' },
   },
 
-  'party-gift': {
+  {
+    slug: 'party-gift',
+    label: 'Party & Gift',
+    title: 'Party & Gift',
+    image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Party Supplies', 'Balloons & Decorations', 'Gifting & Wrapping', 'Candles & Holders', 'Novelty Gifts', 'Seasonal Gifts', 'Tableware', 'Cards & Stationery'],
     subtitle: 'Party supplies, balloons, decorations, gifting, tableware and seasonal gifts',
     icon: Gift,
     iconColor: 'text-pink-500',
@@ -185,7 +207,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'party-gift' },
   },
 
-  'wholesale-pound-lines': {
+  {
+    slug: 'wholesale-pound-lines',
+    label: 'Wholesale Pound Lines',
+    title: 'Wholesale Pound Lines',
+    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Toy Pound Lines', 'Stationery Pound Lines', 'DIY Pound Lines', 'Homeware Pound Lines', 'Garden Pound Lines', 'Pet Pound Lines', 'Baby Pound Lines', 'Clothing Pound Lines', 'Health & Beauty Pound Lines', 'Kitchenware Pound Lines', 'Party & Gift Pound Lines', 'Electrical Pound Lines', 'Seasonal Pound Lines', 'Leisure & Hobbies Pound Lines', 'Cleaning Pound Lines'],
     subtitle: 'High-volume wholesale pound-line products for retailers across all key categories',
     icon: Tag,
     iconColor: 'text-yellow-500',
@@ -214,7 +241,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'wholesale-pound-lines' },
   },
 
-  toys: {
+  {
+    slug: 'toys',
+    label: 'Toys',
+    title: 'Toys',
+    image: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Action Figures', 'Educational Toys', 'Outdoor Toys', 'Board Games', 'Dolls & Accessories', 'Baby Toys', 'Arts & Crafts', 'Remote Control Toys'],
     subtitle: 'Action figures, educational toys, outdoor toys, board games, arts & crafts and remote control',
     icon: Gamepad2,
     iconColor: 'text-violet-500',
@@ -237,7 +269,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'toys' },
   },
 
-  'leisure-hobbies': {
+  {
+    slug: 'leisure-hobbies',
+    label: 'Leisure & Hobbies',
+    title: 'Leisure & Hobbies',
+    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Arts & Crafts', 'Puzzles & Games', 'Sports & Fitness', 'Camping & Outdoor', 'Photography', 'Collecting', 'Musical Instruments', 'Reading & Books'],
     subtitle: 'Arts & crafts, sports, camping, puzzles, photography, collecting and musical instruments',
     icon: Palette,
     iconColor: 'text-orange-400',
@@ -260,7 +297,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'leisure-hobbies' },
   },
 
-  'baby-supplies': {
+  {
+    slug: 'baby-supplies',
+    label: 'Baby Supplies',
+    title: 'Baby Supplies',
+    image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Baby Clothing', 'Feeding & Nursing', 'Nappies & Changing', 'Baby Toys', 'Baby Monitors', 'Travel & Pushchairs', 'Nursery', 'Safety & Babyproofing'],
     subtitle: 'Baby clothing, feeding, nappies, nursery essentials, baby monitors and pushchairs',
     icon: Heart,
     iconColor: 'text-rose-400',
@@ -283,7 +325,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'baby-supplies' },
   },
 
-  kitchenware: {
+  {
+    slug: 'kitchenware',
+    label: 'Kitchenware',
+    title: 'Kitchenware',
+    image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Cookware', 'Bakeware', 'Kitchen Tools', 'Storage Containers', 'Cutlery & Flatware', 'Drinkware', 'Small Appliances', 'Kitchen Gadgets'],
     subtitle: 'Cookware, bakeware, kitchen tools, storage containers, cutlery and small appliances',
     icon: ChefHat,
     iconColor: 'text-emerald-500',
@@ -306,7 +353,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'kitchenware' },
   },
 
-  'health-beauty': {
+  {
+    slug: 'health-beauty',
+    label: 'Health & Beauty',
+    title: 'Health & Beauty',
+    image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Skincare', 'Haircare', 'Makeup & Cosmetics', 'Personal Care', 'Vitamins & Supplements', 'Fragrances', 'Medical Supplies', 'Oral Care'],
     subtitle: 'Skincare, haircare, makeup, personal care, vitamins, fragrances and oral care',
     icon: Activity,
     iconColor: 'text-rose-500',
@@ -329,7 +381,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'health-beauty' },
   },
 
-  homeware: {
+  {
+    slug: 'homeware',
+    label: 'Homeware',
+    title: 'Homeware',
+    image: 'https://images.unsplash.com/photo-1484101403633-562f891dc89a?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Bedding & Pillows', 'Curtains & Blinds', 'Rugs & Flooring', 'Cushions & Throws', 'Bathroom Accessories', 'Picture Frames & Clocks', 'Candles & Home Fragrance', 'Home Décor'],
     subtitle: 'Bedding, curtains, rugs, bathroom accessories, candles and home décor',
     icon: Home,
     iconColor: 'text-indigo-400',
@@ -352,7 +409,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'homeware' },
   },
 
-  electrical: {
+  {
+    slug: 'electrical',
+    label: 'Electrical',
+    title: 'Electrical',
+    image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['LED Lighting', 'Phone Accessories', 'Cables & Adapters', 'Smart Home', 'Batteries', 'Audio', 'Small Appliances', 'Computer Accessories'],
     subtitle: 'LED lighting, phone accessories, cables, smart home, audio and computer accessories',
     icon: Zap,
     iconColor: 'text-yellow-400',
@@ -375,7 +437,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'electrical' },
   },
 
-  'pet-supplies': {
+  {
+    slug: 'pet-supplies',
+    label: 'Pet Supplies',
+    title: 'Pet Supplies',
+    image: 'https://images.unsplash.com/photo-1450778869180-41d0601e046e?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Dog Supplies', 'Cat Supplies', 'Small Animal Supplies', 'Bird Supplies', 'Fish & Aquatics', 'Pet Food', 'Pet Toys', 'Grooming'],
     subtitle: 'Dog, cat, small animal, bird and fish supplies, food, toys and grooming products',
     icon: PawPrint,
     iconColor: 'text-amber-500',
@@ -398,7 +465,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'pet-supplies' },
   },
 
-  stationery: {
+  {
+    slug: 'stationery',
+    label: 'Stationery',
+    title: 'Stationery',
+    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Pens & Pencils', 'Notebooks & Journals', 'Office Supplies', 'Art Supplies', 'Greeting Cards', 'Gift Wrap', 'Labels & Tags', 'Filing & Storage'],
     subtitle: 'Pens, notebooks, office supplies, art materials, greeting cards and gift wrap',
     icon: BookOpen,
     iconColor: 'text-teal-400',
@@ -421,7 +493,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'stationery' },
   },
 
-  seasonal: {
+  {
+    slug: 'seasonal',
+    label: 'Seasonal',
+    title: 'Seasonal',
+    image: 'https://images.unsplash.com/photo-1512389142860-9c449e58a543?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Christmas', 'Easter', 'Halloween', "Valentine's Day", 'Summer', 'Back to School', 'Spring', 'Diwali & Eid'],
     subtitle: 'Christmas, Easter, Halloween, Valentine\'s, summer ranges and all seasonal stock',
     icon: Calendar,
     iconColor: 'text-red-400',
@@ -444,7 +521,12 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     productFilter: { categorySlug: 'seasonal' },
   },
 
-  'wholesale-clothing': {
+  {
+    slug: 'wholesale-clothing',
+    label: 'Wholesale Clothing',
+    title: 'Wholesale Clothing',
+    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=400&q=75&fm=webp',
+    subcategories: ['Women\'s Clothing', 'Men\'s Clothing', 'Children\'s Clothing', 'Baby Clothing', 'Sportswear', 'Underwear & Socks', 'Accessories', 'Swimwear'],
     subtitle: 'Women\'s, men\'s and children\'s clothing, sportswear, underwear and accessories wholesale',
     icon: Shirt,
     iconColor: 'text-purple-400',
@@ -466,30 +548,7 @@ const UI_OVERRIDES: Record<string, UIOverride> = {
     },
     productFilter: { categorySlug: 'wholesale-clothing' },
   },
-};
-
-// ── Build full CategoryConfig array from central data ─────────────────────────
-
-const CATEGORY_CONFIG: readonly CategoryConfig[] = CATEGORIES.map((cat) => {
-  const ui = UI_OVERRIDES[cat.slug];
-  if (!ui) {
-    throw new Error(`category-config: no UI override defined for slug "${cat.slug}"`);
-  }
-  return {
-    slug: cat.slug,
-    label: cat.name,
-    title: cat.name,
-    subtitle: ui.subtitle,
-    icon: ui.icon,
-    iconColor: ui.iconColor,
-    accentBg: ui.accentBg,
-    chips: ui.chips,
-    subcategories: cat.subcategories.map((s) => s.name),
-    image: cat.image,
-    emptyState: ui.emptyState,
-    productFilter: ui.productFilter,
-  };
-});
+];
 
 export default CATEGORY_CONFIG;
 
