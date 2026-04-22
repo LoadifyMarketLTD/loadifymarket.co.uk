@@ -41,6 +41,14 @@ function deriveStatus(p: Product): string {
 
 const BASE_URL = "https://loadifymarket.co.uk";
 
+function facebookShareUrl(productId: string) {
+  return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${BASE_URL}/product/${productId}`)}`;
+}
+
+function facebookDebugUrl(productId: string) {
+  return `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(`${BASE_URL}/product/${productId}`)}`;
+}
+
 const SellerProducts = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -70,9 +78,14 @@ const SellerProducts = () => {
     load();
   }, [user]);
 
-  const shareOnFacebook = (productId: string) => {
-    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${BASE_URL}/product/${productId}`)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+  const shareOnFacebook = (productId: string, status: string) => {
+    if (status === "pending_review" || status === "draft") {
+      toast({
+        title: "Preview may not be visible",
+        description: "Facebook previews only show for active, approved products. Your link will still be shared.",
+      });
+    }
+    window.open(facebookShareUrl(productId), "_blank", "noopener,noreferrer");
   };
 
   const copyForInstagram = async (productId: string) => {
@@ -197,8 +210,13 @@ const SellerProducts = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => shareOnFacebook(p.id)}>
+                      <DropdownMenuItem onClick={() => shareOnFacebook(p.id, status)}>
                         Share on Facebook
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a href={facebookDebugUrl(p.id)} target="_blank" rel="noopener noreferrer" aria-label="Refresh Facebook Preview (opens in new tab)">
+                          Refresh Facebook Preview
+                        </a>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => copyForInstagram(p.id)}>
@@ -284,8 +302,13 @@ const SellerProducts = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => shareOnFacebook(p.id)}>
+                              <DropdownMenuItem onClick={() => shareOnFacebook(p.id, status)}>
                                 Share on Facebook
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <a href={facebookDebugUrl(p.id)} target="_blank" rel="noopener noreferrer" aria-label="Refresh Facebook Preview (opens in new tab)">
+                                  Refresh Facebook Preview
+                                </a>
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => copyForInstagram(p.id)}>

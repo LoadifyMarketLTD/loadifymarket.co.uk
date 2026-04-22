@@ -245,6 +245,10 @@ export default async function productMeta(
     extraLines.push(`  <meta name="twitter:image" content="${img}" />`);
   }
 
+  if (!html.includes('property="og:image:secure_url"')) {
+    extraLines.push(`  <meta property="og:image:secure_url" content="${img}" />`);
+  }
+
   if (!html.includes('property="og:image:alt"')) {
     extraLines.push(`  <meta property="og:image:alt" content="${escapeAttr(title)}" />`);
   }
