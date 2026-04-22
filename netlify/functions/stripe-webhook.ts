@@ -179,6 +179,7 @@ export const handler: Handler = async (event) => {
       case 'payment_intent.payment_failed': {
         const paymentIntent = stripeEvent.data.object as Stripe.PaymentIntent;
         console.error('PaymentIntent failed:', paymentIntent.id);
+        await handlePaymentFailed(supabase!, paymentIntent);
         break;
       }
 
@@ -187,6 +188,17 @@ export const handler: Handler = async (event) => {
         await handleRefund(charge);
         break;
       }
+
+      // ── Stripe charge dispute (chargeback) ────────────────────────────────
+      // Triggered when a buyer raises a dispute / chargeback with their bank.
+      // We store the dispute record and mark the linked order for manual review.
+      // We do NOT auto-refund or auto-close — admin must handle each dispute.
+      case 'charge.dispute.created': {
+        const dispute = stripeEvent.data.object as Stripe.Dispute;
+        await handleStripeDispute(supabase!, dispute);
+        break;
+      }
+      // ──────────────────────────────────────────────────────────────────────
 
       // ── Stripe Connect account status updates ──────────────────────────────
       // Triggered by Stripe when a connected Express account's verification
@@ -620,6 +632,123 @@ async function handleRefund(charge: Stripe.Charge) {
 }
 
 /**
+ * Handles payment_intent.payment_failed events.
+ *
+ * Marks any pending payment_sessions record that corresponds to this
+ * PaymentIntent as 'failed' so it does not stay stuck in the 'pending' state.
+ * We match via the transferGroup stored in both the Stripe PaymentIntent and
+ * in payment_sessions.metadata (set by create-checkout.ts).
+ *
+ * Exported for unit testing.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handlePaymentFailed(sb: import('@supabase/supabase-js').SupabaseClient<any>, paymentIntent: Stripe.PaymentIntent): Promise<void> {
+  const transferGroup = paymentIntent.transfer_group ?? null;
+  if (!transferGroup) {
+    // PaymentIntents without a transferGroup were created before the
+    // Connect activation — we cannot reliably match them to a session.
+    console.warn(
+      `payment_intent.payment_failed: no transfer_group on ${paymentIntent.id} — cannot mark session as failed`,
+    );
+    return;
+  }
+
+  const { error } = await sb
+    .from('payment_sessions')
+    .update({ status: 'failed' })
+    .eq('status', 'pending')
+    .filter('metadata->>transferGroup', 'eq', transferGroup);
+
+  if (error) {
+    console.error(
+      `payment_intent.payment_failed: failed to mark payment_session as failed for transfer_group ${transferGroup}:`,
+      error.message,
+    );
+  } else {
+    console.log(
+      `payment_intent.payment_failed: payment_session with transfer_group ${transferGroup} marked as failed`,
+    );
+  }
+}
+
+/**
+ * Handles charge.dispute.created events (Stripe chargebacks).
+ *
+ * Stores a dispute record in the disputes table so admin can see the
+ * chargeback and act on it manually. We do NOT auto-refund or auto-close.
+ * The order is NOT status-updated because 'disputed' is not in the schema
+ * check constraint — admin must update manually via the orders UI.
+ *
+ * Exported for unit testing.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleStripeDispute(sb: import('@supabase/supabase-js').SupabaseClient<any>, dispute: Stripe.Dispute): Promise<void> {
+  const paymentIntentId =
+    typeof dispute.payment_intent === 'string'
+      ? dispute.payment_intent
+      : dispute.payment_intent?.id ?? null;
+
+  if (!paymentIntentId) {
+    console.warn('charge.dispute.created: no payment_intent on dispute', dispute.id);
+    return;
+  }
+
+  // Find the payment session linked to this PaymentIntent.
+  const { data: session } = await sb
+    .from('payment_sessions')
+    .select('orderId')
+    .eq('stripePaymentIntent', paymentIntentId)
+    .maybeSingle<{ orderId: string | null }>();
+
+  if (!session?.orderId) {
+    console.warn(
+      `charge.dispute.created: no order found for payment_intent ${paymentIntentId} — dispute ${dispute.id} not recorded`,
+    );
+    return;
+  }
+
+  // Fetch buyer/seller IDs from the linked order.
+  const { data: order } = await sb
+    .from('orders')
+    .select('id, buyerId, sellerId')
+    .eq('id', session.orderId)
+    .single<{ id: string; buyerId: string | null; sellerId: string | null }>();
+
+  if (!order?.buyerId || !order?.sellerId) {
+    console.warn(
+      `charge.dispute.created: order ${session.orderId} missing buyer/seller ids — dispute ${dispute.id} not recorded`,
+    );
+    return;
+  }
+
+  const { error } = await sb.from('disputes').insert({
+    orderId: order.id,
+    buyerId: order.buyerId,
+    sellerId: order.sellerId,
+    subject: `Stripe Chargeback — Dispute ID: ${dispute.id}`,
+    description: [
+      `A Stripe chargeback was raised. REQUIRES MANUAL REVIEW.`,
+      `Stripe Dispute ID: ${dispute.id}`,
+      `Reason: ${dispute.reason}`,
+      `Amount: £${(dispute.amount / 100).toFixed(2)}`,
+      `Status: ${dispute.status}`,
+    ].join('\n'),
+    protectionReason: 'other',
+    status: 'in_review',
+    escrowStatus: 'held',
+  });
+
+  if (error) {
+    console.error(
+      `charge.dispute.created: failed to insert dispute record for ${dispute.id}:`,
+      error.message,
+    );
+  } else {
+    console.log(`charge.dispute.created: dispute ${dispute.id} recorded for order ${order.id}`);
+  }
+}
+
+/**
  * Handles Stripe Connect `account.updated` webhook events.
  *
  * Stripe sends this event whenever a connected Express account's state
@@ -630,8 +759,22 @@ async function handleRefund(charge: Stripe.Charge) {
  *
  * After updating stripeConnectStatus, we call tryAutoActivateSeller to
  * automatically activate the seller if all conditions are now met.
+ *
+ * When a seller first becomes fully active, we also configure a 7-day payout
+ * delay on their connected account (Phase 2A owner-protection). This reduces
+ * the window in which the platform could be left holding a chargeback after
+ * funds have already been paid out to the seller.
+ *
+ * The `stripeClientOverride` parameter is accepted for unit-test injection
+ * only — production calls omit it and the module-level `stripe` singleton is
+ * used instead.
+ *
+ * Exported for unit testing.
  */
-async function handleConnectAccountUpdated(account: Stripe.Account) {
+export async function handleConnectAccountUpdated(
+  account: Stripe.Account,
+  stripeClientOverride?: Stripe | null,
+) {
   let stripeConnectStatus: 'pending' | 'restricted' | 'active';
 
   if (account.charges_enabled && account.payouts_enabled) {
@@ -659,6 +802,31 @@ async function handleConnectAccountUpdated(account: Stripe.Account) {
   }
 
   console.log(`account.updated: ${account.id} → stripeConnectStatus=${stripeConnectStatus}`);
+
+  // ── Phase 2A: Payout delay for newly-active connected accounts ────────────
+  // When a seller's Connect account first becomes fully active, configure a
+  // 7-day payout delay on their connected account. This means Stripe will not
+  // automatically pay out their balance until 7 days after each transaction,
+  // reducing the window where funds could have already been paid out before a
+  // dispute or refund is raised against the platform.
+  // This is a best-effort call: if Stripe rejects it (e.g. the account type
+  // does not support platform-controlled payout schedules) we log the error and
+  // continue — we must not block or corrupt the seller's activation state.
+  if (stripeConnectStatus === 'active') {
+    const stripeClient = stripeClientOverride ?? stripe!;
+    try {
+      await stripeClient.accounts.update(account.id, {
+        settings: { payouts: { schedule: { delay_days: 7 } } },
+      });
+      console.log(`account.updated: 7-day payout delay set for connected account ${account.id}`);
+    } catch (payoutDelayErr) {
+      console.warn(
+        `account.updated: failed to set payout delay for ${account.id} (non-fatal — seller activation proceeds):`,
+        payoutDelayErr,
+      );
+    }
+  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   // ── Auto-activation check ──────────────────────────────────────────────
   // Import lazily so this module stays loadable even when the helper file is

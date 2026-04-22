@@ -115,14 +115,14 @@ export const handler: Handler = async (event) => {
   // ── Find payment session ──────────────────────────────────────────────────
   const { data: paymentSession } = await supabase
     .from('payment_sessions')
-    .select('stripeSessionId, paymentIntentId, status')
+    .select('stripeSessionId, stripePaymentIntent, status')
     .eq('orderId', orderId)
     .order('createdAt', { ascending: false })
     .limit(1)
-    .maybeSingle<{ stripeSessionId: string | null; paymentIntentId: string | null; status: string }>();
+    .maybeSingle<{ stripeSessionId: string | null; stripePaymentIntent: string | null; status: string }>();
 
-  // Try to get paymentIntentId directly; fall back to resolving via Stripe session
-  let paymentIntentId = paymentSession?.paymentIntentId ?? null;
+  // Try to get stripePaymentIntent directly; fall back to resolving via Stripe session
+  let paymentIntentId = paymentSession?.stripePaymentIntent ?? null;
 
   const stripe = new Stripe(stripeSecretKey);
 
@@ -153,6 +153,14 @@ export const handler: Handler = async (event) => {
     refund = await stripe.refunds.create({
       payment_intent: paymentIntentId,
       reason: safeReason as Stripe.RefundCreateParams.Reason,
+      // reverse_transfer instructs Stripe to attempt a reversal of the
+      // associated transfer to the seller's connected account. Under the
+      // current separate-charges-and-transfers model this only reverses
+      // transfers that are directly attached to the underlying charge; it
+      // is a no-op when no such attachment exists, so it is always safe
+      // to include. When we migrate to Destination Charges this flag will
+      // start providing full automatic clawback protection.
+      reverse_transfer: true,
       metadata: {
         orderId,
         orderNumber: order.orderNumber,
