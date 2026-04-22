@@ -512,9 +512,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
         // Record the failure in the payouts table so admins can see it in the
         // payouts dashboard and take corrective action (manual Stripe transfer).
+        // Sanitise the error: include only the generic message, not any raw
+        // Stripe object that might contain card/account details.
         const errMsg = transferError instanceof Error
-          ? transferError.message
-          : String(transferError);
+          ? transferError.message.substring(0, 200)
+          : 'Unknown transfer error';
         await supabase!.from('payouts').insert({
           sellerId,
           orderId: order.id,

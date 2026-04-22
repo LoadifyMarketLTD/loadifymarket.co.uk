@@ -498,7 +498,7 @@ const CATEGORY_CONFIG: readonly CategoryConfig[] = [
     label: 'Seasonal',
     title: 'Seasonal',
     image: 'https://images.unsplash.com/photo-1512389142860-9c449e58a543?auto=format&fit=crop&w=400&q=75&fm=webp',
-    subcategories: ['Christmas', 'Easter', 'Halloween', 'Valentine\'s Day', 'Summer', 'Back to School', 'Spring', 'Diwali & Eid'],
+    subcategories: ['Christmas', 'Easter', 'Halloween', "Valentine's Day", 'Summer', 'Back to School', 'Spring', 'Diwali & Eid'],
     subtitle: 'Christmas, Easter, Halloween, Valentine\'s, summer ranges and all seasonal stock',
     icon: Calendar,
     iconColor: 'text-red-400',

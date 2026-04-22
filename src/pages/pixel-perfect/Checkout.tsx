@@ -47,11 +47,11 @@ const Checkout = () => {
         setShippingMethods(methods);
         // Pre-select cheapest method
         const cheapest = methods.reduce<ShippingMethod | null>((best, m) => {
-          const price = m.shipping_rates?.[0]?.price ?? Infinity;
-          const bestPrice = best?.shipping_rates?.[0]?.price ?? Infinity;
+          const price = Number(m.shipping_rates?.[0]?.price ?? Infinity);
+          const bestPrice = Number(best?.shipping_rates?.[0]?.price ?? Infinity);
           return price < bestPrice ? m : best;
         }, null);
-        if (cheapest) {
+        if (cheapest && cheapest.id) {
           setSelectedShippingMethodId(cheapest.id);
           setShippingAmount(Number(cheapest.shipping_rates?.[0]?.price ?? 0));
         }

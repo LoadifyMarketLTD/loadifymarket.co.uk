@@ -309,8 +309,8 @@ const CategoryPage = () => {
           {/* Category hero */}
           <div className="py-6 flex items-center gap-4">
             {Icon && (
-              <div className={`${config!.accentBg} rounded-xl p-3 shrink-0`}>
-                <Icon className={`h-8 w-8 ${config!.iconColor}`} />
+              <div className={`${config?.accentBg ?? 'bg-gray-100'} rounded-xl p-3 shrink-0`}>
+                <Icon className={`h-8 w-8 ${config?.iconColor ?? 'text-gray-400'}`} />
               </div>
             )}
             <div>

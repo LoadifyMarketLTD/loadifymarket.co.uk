@@ -51,6 +51,8 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
             if (parent && !parent.querySelector("[data-img-fallback]")) {
               const fb = document.createElement("div");
               fb.setAttribute("data-img-fallback", "1");
+              fb.setAttribute("role", "img");
+              fb.setAttribute("aria-label", "Product image unavailable");
               fb.className = "w-full h-full flex items-center justify-center bg-gray-100 text-gray-300 text-xs";
               fb.textContent = "No image";
               parent.appendChild(fb);
