@@ -115,14 +115,14 @@ export const handler: Handler = async (event) => {
   // ── Find payment session ──────────────────────────────────────────────────
   const { data: paymentSession } = await supabase
     .from('payment_sessions')
-    .select('stripeSessionId, paymentIntentId, status')
+    .select('stripeSessionId, stripePaymentIntent, status')
     .eq('orderId', orderId)
     .order('createdAt', { ascending: false })
     .limit(1)
-    .maybeSingle<{ stripeSessionId: string | null; paymentIntentId: string | null; status: string }>();
+    .maybeSingle<{ stripeSessionId: string | null; stripePaymentIntent: string | null; status: string }>();
 
-  // Try to get paymentIntentId directly; fall back to resolving via Stripe session
-  let paymentIntentId = paymentSession?.paymentIntentId ?? null;
+  // Try to get stripePaymentIntent directly; fall back to resolving via Stripe session
+  let paymentIntentId = paymentSession?.stripePaymentIntent ?? null;
 
   const stripe = new Stripe(stripeSecretKey);
 

@@ -107,6 +107,17 @@ export const handler: Handler = async (event) => {
     verifiedBuyerId = authUser.id;
   }
 
+  // P1: Require authenticated buyer — guest checkout is not supported.
+  // verifiedBuyerId is set only when a valid Bearer token was provided above.
+  // Without it we cannot create an order record, so we must reject here to
+  // prevent charging a buyer whose payment cannot be tracked or refunded.
+  if (!verifiedBuyerId) {
+    return {
+      statusCode: 401,
+      body: JSON.stringify({ error: 'Authentication required. Please sign in to complete your purchase.' }),
+    };
+  }
+
   // 5. Validate products from DB (price integrity + availability)
   const productIds = items.map((i) => i.productId);
   const { data: dbProducts, error: dbError } = await supabase
@@ -156,6 +167,65 @@ export const handler: Handler = async (event) => {
       title: item.title,
     };
   });
+
+  // P3: Single-seller enforcement — multi-seller checkout is temporarily
+  // disabled because order reconciliation and refund mapping across sellers
+  // is not yet fully implemented. Block at the backend (the Checkout UI also
+  // guards this so the error is rarely user-facing, but this is the real gate).
+  const uniqueSellerIds = [...new Set(enrichedItems.map((i) => i.sellerId))];
+  if (uniqueSellerIds.length > 1) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: 'For now, please complete purchases from one seller at a time.',
+      }),
+    };
+  }
+
+  // P2 + P5: Validate seller Stripe-readiness and suspension status.
+  // The seller ID is authoritative (from the DB enrichedItems, not the client
+  // request) so this check cannot be bypassed by a crafted request body.
+  const checkoutSellerId = uniqueSellerIds[0];
+  const { data: sellerProfile, error: sellerProfileError } = await supabase
+    .from('seller_profiles')
+    .select('stripeAccountId, stripeConnectStatus, sellerStatus')
+    .eq('userId', checkoutSellerId)
+    .maybeSingle<{
+      stripeAccountId: string | null;
+      stripeConnectStatus: string | null;
+      sellerStatus: string | null;
+    }>();
+
+  if (sellerProfileError) {
+    console.error('create-checkout: seller profile query failed:', sellerProfileError.message);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Unable to verify seller status. Please try again.' }),
+    };
+  }
+
+  // P5: Suspended sellers cannot accept new payments.
+  if (sellerProfile?.sellerStatus === 'suspended') {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'This seller is currently unavailable.' }),
+    };
+  }
+
+  // P2: Seller must have a connected, fully-active Stripe account.
+  // stripeConnectStatus === 'active' means charges_enabled AND payouts_enabled
+  // are both true (set by the account.updated webhook handler in stripe-webhook.ts).
+  if (
+    !sellerProfile?.stripeAccountId ||
+    sellerProfile.stripeConnectStatus !== 'active'
+  ) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: 'This seller is not ready to accept payments yet. Please try again later or contact support.',
+      }),
+    };
+  }
 
   const subtotal = enrichedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const total = subtotal + shippingAmount;

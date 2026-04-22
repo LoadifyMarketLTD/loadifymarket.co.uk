@@ -22,7 +22,7 @@ const steps = [
 
 const Checkout = () => {
   const { cartItems, subtotal } = useCart();
-  const { user } = useAuthStore();
+  const { user, isLoading } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -101,6 +101,19 @@ const Checkout = () => {
         setIsSubmitting(false);
         return;
       }
+    }
+
+    // P3: Single-seller enforcement — multi-seller checkout is temporarily
+    // disabled. The backend enforces this too; this check gives better UX.
+    const sellerIds = new Set(
+      cartItems.map((item) => item.product.sellerId).filter((id): id is string => Boolean(id))
+    );
+    if (sellerIds.size > 1) {
+      setCheckoutError(
+        "For now, please complete purchases from one seller at a time. Please split your cart and checkout each seller separately."
+      );
+      setIsSubmitting(false);
+      return;
     }
 
     try {
@@ -186,6 +199,46 @@ const Checkout = () => {
           </div>
         </main>
     </MainLayout>
+    );
+  }
+
+  // P1: Sign-in required wall — shown when cart has items but buyer is not authenticated.
+  // The isLoading check prevents a flash while auth is initialising on page load.
+  if (!isLoading && !user) {
+    return (
+      <MainLayout>
+        <SEO
+          title="Checkout | Loadify Market"
+          description="Complete your purchase securely on Loadify Market."
+          canonical="/checkout"
+          robots="noindex,nofollow"
+        />
+        <main id="main-content" className="pt-28 pb-16">
+          <div className="container mx-auto px-4 py-20 flex flex-col items-center text-center max-w-md mx-auto">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+              <Lock className="h-8 w-8 text-primary" />
+            </div>
+            <h1 className="font-display text-2xl font-bold text-foreground mb-3">
+              Sign In to Checkout
+            </h1>
+            <p className="text-muted-foreground mb-6">
+              Please sign in to complete your purchase securely. Your cart has been saved.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link to={`/login?next=${encodeURIComponent('/checkout')}`}>
+                <Button className="bg-gradient-hero text-primary-foreground font-semibold w-full sm:w-auto">
+                  Sign In
+                </Button>
+              </Link>
+              <Link to="/register">
+                <Button variant="outline" className="w-full sm:w-auto">
+                  Create Account
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </main>
+      </MainLayout>
     );
   }
 
