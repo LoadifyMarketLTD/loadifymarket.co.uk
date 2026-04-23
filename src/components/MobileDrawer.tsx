@@ -81,7 +81,7 @@ const MainScreen = ({
 }: MainScreenProps) => (
   <div className="flex flex-col h-full">
     {/* Header bar */}
-    <div className="h-14 px-4 flex items-center justify-between border-b border-gray-200 shrink-0">
+    <div className="h-14 px-4 flex items-center justify-between border-b border-white/[0.12] shrink-0">
       <Link to="/" onClick={onClose} className="flex items-center gap-2" aria-label="Loadify Market — Home">
         <img src={logo} alt="" aria-hidden="true" className="h-7 w-7" />
         <span className="font-display text-base font-bold text-white leading-none">
@@ -188,7 +188,7 @@ const CategoryScreen = ({ category, onBack, onClose }: CategoryScreenProps) => {
   return (
     <div className="flex flex-col h-full">
       {/* Header bar */}
-      <div className="h-14 px-4 flex items-center gap-3 border-b border-gray-200 shrink-0">
+      <div className="h-14 px-4 flex items-center gap-3 border-b border-white/[0.12] shrink-0">
         <button
           onClick={onBack}
           className="p-2 -ml-2 text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10"
@@ -205,7 +205,7 @@ const CategoryScreen = ({ category, onBack, onClose }: CategoryScreenProps) => {
         <Link
           to={categoryUrl}
           onClick={onClose}
-          className="flex items-center gap-2 px-4 h-14 border-b border-gray-200 hover:bg-white/[0.07] active:bg-white/10 transition-colors"
+          className="flex items-center gap-2 px-4 h-14 border-b border-white/[0.12] hover:bg-white/[0.07] active:bg-white/10 transition-colors"
         >
           <span className="text-[15px] font-semibold text-[#22C55E]">
             View All {category.name}
@@ -321,7 +321,7 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
       {/* Backdrop overlay */}
       <div
         className={[
-          "fixed inset-0 z-[9998] bg-transparent transition-opacity duration-300",
+          "fixed inset-0 z-[9998] bg-black/40 transition-opacity duration-300",
           open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
         ].join(" ")}
         onClick={onClose}
@@ -333,7 +333,7 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
         ref={panelRef}
         className={[
           "fixed top-0 left-0 z-[9999] h-[100dvh] w-[85vw] max-w-[380px]",
-          "bg-white border-r border-gray-200 shadow-2xl flex flex-col",
+          "bg-[#0A1930] border-r border-white/[0.12] shadow-2xl flex flex-col",
           "transition-transform duration-300 ease-in-out",
           open ? "translate-x-0" : "-translate-x-full",
         ].join(" ")}
