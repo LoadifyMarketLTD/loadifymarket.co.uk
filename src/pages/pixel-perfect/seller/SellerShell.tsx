@@ -114,8 +114,10 @@ const SellerShell = () => {
       ? `${user.firstName}${user.lastName ? " " + user.lastName : ""}`
       : user?.email ?? "Seller";
 
+  const headerHeight = "calc(7.625rem + env(safe-area-inset-top, 0px))";
+
   return (
-    <div className="flex h-screen bg-transparent overflow-hidden">
+    <div className="flex bg-transparent overflow-hidden" style={{ height: `calc(100dvh - ${headerHeight})`, marginTop: headerHeight }}>
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-56 border-r border-border bg-card shrink-0 flex-col">
         <SidebarContent displayName={displayName} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />

@@ -240,27 +240,11 @@ export default function TradeAccount() {
 
   const strength = passwordStrength(form.password);
 
+  const headerHeight = "calc(7.625rem + env(safe-area-inset-top, 0px))";
+
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-transparent flex flex-col">
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <header className="bg-white border-b border-gray-200 text-slate-900 py-3 px-4 sm:px-8">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="Loadify Market" className="h-8 w-8" />
-            <span className="flex flex-col leading-tight">
-              <span className="font-bold text-lg text-white">Loadify</span>
-              <span className="font-bold text-sm text-[#F59E0B]">Market</span>
-            </span>
-          </Link>
-          <div className="text-sm text-white/70">
-            Already have an account?{" "}
-            <Link to="/login" className="text-[#F59E0B] hover:underline font-medium">
-              Sign In
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div className="bg-transparent flex flex-col" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
 
       {/* ── Page title ─────────────────────────────────────────────────────── */}
       <div className="bg-white/80 border-b border-gray-200/70 py-6 px-4 sm:px-8">

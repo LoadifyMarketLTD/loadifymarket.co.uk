@@ -90,7 +90,7 @@ const Login = () => {
   const headerHeight = "calc(7.625rem + env(safe-area-inset-top, 0px))";
 
   return (
-    <div className="flex bg-transparent" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
+    <div className="flex bg-white" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
 
       {/* ── LEFT — hero image (desktop only, 65%) ───────────────────────── */}
       <div className="hidden lg:flex lg:w-[65%] xl:w-[67%] relative overflow-hidden">
@@ -107,7 +107,7 @@ const Login = () => {
 
         {/* Centered form — vertically centred inside the right column */}
         <div className="flex-1 flex items-center justify-center px-4 py-8 sm:px-8">
-          <div className="w-full max-w-[400px]">
+          <div className="w-full">
 
             {/* Form card */}
             <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.07)] border border-gray-100 p-7 sm:p-8">
