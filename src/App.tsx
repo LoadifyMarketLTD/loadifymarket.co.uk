@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store';
 import { hasAdminAccess } from './lib/roleUtils';
@@ -210,9 +210,51 @@ function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
 }
 
 
+/**
+ * Returns true when the global public Header + BackButton should be hidden.
+ *
+ * Hidden on:
+ *  • Auth-only full-screen pages (login, register, signup, forgot/reset-password, trade-account)
+ *  • Dashboard shells that own their own navigation (admin/*, buyer/*, seller dashboard paths)
+ *
+ * Kept visible on:
+ *  • All public marketplace content pages (homepage, catalog, product, cart, about, etc.)
+ *  • Public seller store page (/seller/:slug) — identified by the slug not being a known section
+ */
+function useHideGlobalNav(): boolean {
+  const { pathname } = useLocation();
+  const segments = pathname.split('/').filter(Boolean);
+
+  // Auth-only standalone pages
+  const AUTH_PAGES = new Set([
+    'login', 'register', 'signup', 'forgot-password', 'reset-password', 'trade-account',
+  ]);
+  if (segments.length === 1 && AUTH_PAGES.has(segments[0])) return true;
+
+  // Admin dashboard — all /admin/* routes
+  if (segments[0] === 'admin') return true;
+
+  // Buyer dashboard — all /buyer/* routes
+  if (segments[0] === 'buyer') return true;
+
+  // Seller: dashboard shell (/seller exact) and known dashboard sub-routes
+  // /seller/:slug (public store page) must NOT be hidden — checked by exclusion
+  const SELLER_DASHBOARD_SECTIONS = new Set([
+    'products', 'orders', 'shipments', 'returns', 'rfq',
+    'reviews', 'notifications', 'profile', 'settings', 'setup',
+  ]);
+  if (segments[0] === 'seller') {
+    if (segments.length === 1) return true;                              // /seller
+    if (SELLER_DASHBOARD_SECTIONS.has(segments[1])) return true;        // /seller/<section>
+  }
+
+  return false;
+}
+
 function App() {
   const { setUser, setLoading } = useAuthStore();
   const navigate = useNavigate();
+  const hideGlobalNav = useHideGlobalNav();
 
   // ── Android App Links deep link handler ─────────────────────────────────────
   // When the user completes a Stripe payment, Stripe redirects to
@@ -434,8 +476,8 @@ function App() {
 
   return (
     <CartProvider>
-      <Header forceOpaque />
-      <GlobalBackButton />
+      {!hideGlobalNav && <Header forceOpaque />}
+      {!hideGlobalNav && <GlobalBackButton />}
       <MaintenanceModeGate>
         <Routes>
           {/* ── Pixel-perfect standalone pages (own Header + Footer) ─────────────── */}

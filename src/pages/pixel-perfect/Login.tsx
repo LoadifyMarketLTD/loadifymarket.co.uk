@@ -254,7 +254,7 @@ const Login = () => {
             </div>
 
             {/* Footer */}
-            <p className="text-center text-[13px] text-white/60 mt-5">
+            <p className="text-center text-[13px] text-slate-500 mt-5">
               Don't have an account?{" "}
               <Link to="/signup" className="text-[#16A34A] font-semibold hover:text-[#15803D] hover:underline transition-colors">
                 Create account
