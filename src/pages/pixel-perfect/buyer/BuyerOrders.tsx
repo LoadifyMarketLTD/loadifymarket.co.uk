@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, Package, Eye, RotateCcw, AlertTriangle, FileDown } from "lucide-react";
+import { Search, Package, Eye, RotateCcw, AlertTriangle, FileDown, CheckCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
@@ -77,6 +77,46 @@ const BuyerOrders = () => {
   const [disputeReason, setDisputeReason] = useState("");
   const [disputeDescription, setDisputeDescription] = useState("");
   const [disputeLoading, setDisputeLoading] = useState(false);
+
+  // Confirm delivery dialog state
+  const [confirmDeliveryOrder, setConfirmDeliveryOrder] = useState<OrderRow | null>(null);
+  const [confirmDeliveryLoading, setConfirmDeliveryLoading] = useState(false);
+
+  const handleConfirmDelivery = async () => {
+    if (!confirmDeliveryOrder || !user) return;
+    setConfirmDeliveryLoading(true);
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: "delivered", deliveredAt: new Date().toISOString() })
+        .eq("id", confirmDeliveryOrder.id)
+        .eq("buyerId", user.id);
+      if (error) throw error;
+
+      // Notify the seller that the buyer has confirmed receipt.
+      if (confirmDeliveryOrder.sellerId) {
+        await supabase.from("notifications").insert({
+          userId: confirmDeliveryOrder.sellerId,
+          type: "delivery",
+          title: "Buyer confirmed delivery",
+          message: `The buyer has confirmed receipt of order ${confirmDeliveryOrder.orderNumber || confirmDeliveryOrder.id.slice(0, 8).toUpperCase()}.`,
+          link: "/seller/orders",
+        });
+      }
+
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === confirmDeliveryOrder.id ? { ...o, status: "delivered" } : o
+        )
+      );
+      toast({ title: "Delivery confirmed", description: "Thank you for confirming receipt of your order." });
+      setConfirmDeliveryOrder(null);
+    } catch (err) {
+      toast({ title: "Failed to confirm delivery", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setConfirmDeliveryLoading(false);
+    }
+  };
 
   const handleDownloadInvoice = async (orderId: string, orderNumber: string) => {
     try {
@@ -273,6 +313,16 @@ const BuyerOrders = () => {
                   <Button
                     variant="ghost"
                     size="icon"
+                    className={`h-8 w-8 ${o.status === "shipped" ? "text-emerald-600" : ""}`}
+                    title={o.status === "shipped" ? "Confirm delivery" : o.status === "delivered" ? "Already delivered" : "Confirm delivery once item arrives"}
+                    disabled={o.status !== "shipped"}
+                    onClick={() => setConfirmDeliveryOrder(o)}
+                  >
+                    <CheckCheck className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="h-8 w-8"
                     title={o.status === "delivered" ? "Request return" : "Returns available after delivery"}
                     disabled={o.status !== "delivered"}
@@ -449,6 +499,40 @@ const BuyerOrders = () => {
               disabled={disputeLoading || !disputeSubject.trim() || !disputeReason || !disputeDescription.trim()}
             >
               {disputeLoading ? "Submitting…" : "Open Dispute"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Delivery Dialog */}
+      <Dialog open={!!confirmDeliveryOrder} onOpenChange={(open) => { if (!open) setConfirmDeliveryOrder(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCheck className="h-5 w-5 text-emerald-600" /> Confirm Delivery
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-2">
+            <p className="text-sm text-foreground">
+              Please confirm you have received order{" "}
+              <span className="font-semibold">
+                {confirmDeliveryOrder?.orderNumber || confirmDeliveryOrder?.id?.slice(0, 8).toUpperCase()}
+              </span>.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Once confirmed, the order will be marked as delivered. You can still raise a dispute if there is a problem with the item.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDeliveryOrder(null)} disabled={confirmDeliveryLoading}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={handleConfirmDelivery}
+              disabled={confirmDeliveryLoading}
+            >
+              {confirmDeliveryLoading ? "Confirming…" : "Yes, I received it"}
             </Button>
           </DialogFooter>
         </DialogContent>

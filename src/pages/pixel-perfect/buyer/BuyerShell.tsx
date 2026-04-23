@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, ShoppingBag, Heart, MapPin, CreditCard,
-  Star, Settings, UserCircle, ChevronRight, LogOut, Menu, Bell,
+  Star, Settings, UserCircle, ChevronRight, LogOut, Menu, Bell, MessageSquare,
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -16,6 +16,7 @@ const navItems = [
   { to: "/buyer/payments", label: "Payments", icon: CreditCard },
   { to: "/buyer/reviews", label: "Reviews", icon: Star },
   { to: "/buyer/notifications", label: "Notifications", icon: Bell },
+  { to: "/buyer/messages", label: "Messages", icon: MessageSquare },
   { to: "/buyer/profile", label: "Profile", icon: UserCircle },
   { to: "/buyer/settings", label: "Settings", icon: Settings },
 ];
