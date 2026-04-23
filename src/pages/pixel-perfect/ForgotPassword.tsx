@@ -74,7 +74,7 @@ const ForgotPassword = () => {
       <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-background">
         <div className="w-full max-w-md space-y-8">
           {/* Mobile logo — hidden: global Header already shows the logo */}
-          <div className="hidden flex items-center justify-center gap-2 mb-4">
+          <div className="hidden items-center justify-center gap-2 mb-4">
             <img src={logo} alt="Loadify Market" className="h-9 w-9" />
             <span className="flex flex-col leading-tight">
               <span className="font-display text-xl font-bold text-foreground">Loadify</span>
