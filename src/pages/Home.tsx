@@ -55,7 +55,7 @@ const SELLER_BENEFITS = [
 
 export default function Home() {
   return (
-    <MainLayout forceOpaque={true}>
+    <MainLayout>
       {/* Preload the LCP hero image only on the homepage */}
       <Helmet>
         <link

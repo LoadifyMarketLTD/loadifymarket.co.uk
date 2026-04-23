@@ -3,11 +3,9 @@ import Footer from "@/components/Footer";
 
 interface MainLayoutProps {
   children: ReactNode;
-  forceOpaque?: boolean;
 }
 
-export default function MainLayout({ children, forceOpaque = true }: MainLayoutProps) {
-  void forceOpaque;
+export default function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="min-h-screen bg-transparent">
       {/* Skip-to-content link — visible only on keyboard focus (WCAG 2.1 SC 2.4.1) */}

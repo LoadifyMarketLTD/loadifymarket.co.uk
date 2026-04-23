@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store';
 import { hasAdminAccess } from './lib/roleUtils';
@@ -118,7 +118,6 @@ function PageLoader() {
 
 function GlobalBackButton() {
   const navigate = useNavigate();
-  const location = useLocation();
 
   return (
     <button
@@ -126,7 +125,6 @@ function GlobalBackButton() {
       onClick={() => navigate(-1)}
       aria-label="Back"
       className="fixed z-30 left-3 sm:left-4 top-[calc(7rem+env(safe-area-inset-top,0px)+0.5rem)] bg-[#22C55E] hover:bg-[#16A34A] text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-lg shadow-lg shadow-black/35 transition-colors"
-      data-pathname={location.pathname}
     >
       ← Back
     </button>
