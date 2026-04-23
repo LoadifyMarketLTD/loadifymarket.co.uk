@@ -1,11 +1,12 @@
 const HeroSection = () => (
-  <section aria-label="Loadify Market — UK Online Marketplace">
+  <section
+    aria-label="Loadify Market — UK Online Marketplace"
+    className="w-full min-h-screen"
+  >
     <img
       src="/hero-marketplace.jpg"
       alt="Loadify Market — UK Online Marketplace"
-      className="w-full h-auto block"
-      width={1280}
-      height={640}
+      className="w-full h-screen object-cover object-center block"
       loading="eager"
     />
   </section>
