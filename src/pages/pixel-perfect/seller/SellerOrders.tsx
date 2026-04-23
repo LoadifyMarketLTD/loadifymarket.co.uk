@@ -16,6 +16,7 @@ type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 interface Order {
   id: string;
   orderNumber: string;
+  buyerId: string;
   buyerName: string;
   total: number;
   status: string;
@@ -73,6 +74,7 @@ const SellerOrders = () => {
         rows.map((o) => ({
           id: o.id,
           orderNumber: o.orderNumber,
+          buyerId: o.buyerId,
           buyerName: buyerNames[o.buyerId] ?? "Customer",
           total: o.total,
           status: o.status,
@@ -99,6 +101,33 @@ const SellerOrders = () => {
         .eq("id", orderId)
         .eq("sellerId", user!.id);
       if (error) throw error;
+
+      const order = orders.find((o) => o.id === orderId);
+
+      // Notify the buyer about status changes they care about.
+      if (order?.buyerId && (newStatus === "packed" || newStatus === "shipped")) {
+        const notifMap: Record<string, { title: string; message: string; link: string }> = {
+          packed: {
+            title: "Your order is being packed",
+            message: `Order ${order.orderNumber} is being packed and will be dispatched soon.`,
+            link: "/buyer/orders",
+          },
+          shipped: {
+            title: "Your order is on its way!",
+            message: `Order ${order.orderNumber} has been dispatched and is heading to you. Check your orders page to confirm delivery once it arrives.`,
+            link: "/buyer/orders",
+          },
+        };
+        const notif = notifMap[newStatus];
+        await supabase.from("notifications").insert({
+          userId: order.buyerId,
+          type: "shipment",
+          title: notif.title,
+          message: notif.message,
+          link: notif.link,
+        });
+      }
+
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
       );
@@ -166,7 +195,7 @@ const SellerOrders = () => {
                     >
                       View
                     </Button>
-                    {["paid", "packed", "shipped"].includes(o.status) && (
+                    {["paid", "packed"].includes(o.status) && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -187,11 +216,6 @@ const SellerOrders = () => {
                           {(o.status === "paid" || o.status === "packed") && (
                             <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>
                               Mark as Shipped
-                            </DropdownMenuItem>
-                          )}
-                          {o.status === "shipped" && (
-                            <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "delivered")}>
-                              Mark as Delivered
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
@@ -251,7 +275,7 @@ const SellerOrders = () => {
                         >
                           View
                         </Button>
-                        {["paid", "packed", "shipped"].includes(o.status) && (
+                        {["paid", "packed"].includes(o.status) && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
@@ -272,11 +296,6 @@ const SellerOrders = () => {
                               {(o.status === "paid" || o.status === "packed") && (
                                 <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>
                                   Mark as Shipped
-                                </DropdownMenuItem>
-                              )}
-                              {o.status === "shipped" && (
-                                <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "delivered")}>
-                                  Mark as Delivered
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
