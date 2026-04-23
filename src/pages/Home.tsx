@@ -80,20 +80,16 @@ export default function Home() {
       <div className="pt-header-spacer" />
 
       {/* ── Announcement bar ─────────────────────────────────────────── */}
-      <div className="bg-[#0d2240] border-b border-[#22C55E]/30 text-center py-1.5">
+      <div className="bg-gray-100 border-b border-gray-200 text-center py-1.5">
         <span className="text-[11px] font-semibold text-[#22C55E]">
-          🚀 0% Commission for early trade sellers — until 31 December 2026
+          🚀 0% Commission for all sellers — until 31 December 2026
         </span>
       </div>
 
       <main id="main-content" className="bg-[#f4f5f7]">
 
-        {/* ── 1-2. Shared background: hero + products (continuous flow) ── */}
-        <section
-          className="bg-cover bg-center bg-no-repeat"
-          aria-label="Hero and marketplace products"
-          style={{ backgroundImage: "url('/hero-marketplace.jpg')" }}
-        >
+        {/* ── 1-2. Hero + Featured Products ────────────────────────────── */}
+        <section aria-label="Hero and marketplace products">
           {/* ── 1. Hero ────────────────────────────────────────────────── */}
           <HeroSection />
 
