@@ -4,6 +4,7 @@ import { useAuthStore } from './store';
 import { hasAdminAccess } from './lib/roleUtils';
 import { CartProvider } from './contexts/CartContext';
 import CookieConsent from './components/CookieConsent';
+import Header from './components/Header';
 import { isCapacitorNative } from './lib/capacitor';
 
 import RequireAdmin from './components/auth/RequireAdmin';
@@ -106,12 +107,27 @@ const PPAdminStripeEvents   = lazy(() => import('./pages/pixel-perfect/admin/Adm
 // Loading component
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center min-h-screen">
+    <div className="flex items-center justify-center min-h-screen bg-slate-950/20 backdrop-blur-[1px]">
       <div className="text-center">
         <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800"></div>
-        <p className="mt-4 text-gray-600">Loading...</p>
+        <p className="mt-4 text-white/85">Loading...</p>
       </div>
     </div>
+  );
+}
+
+function GlobalBackButton() {
+  const navigate = useNavigate();
+
+  return (
+    <button
+      type="button"
+      onClick={() => navigate(-1)}
+      aria-label="Back"
+      className="fixed z-30 right-3 sm:right-4 top-[calc(7rem+env(safe-area-inset-top,0px)+0.5rem)] bg-[#22C55E] hover:bg-[#16A34A] text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-lg shadow-lg shadow-black/35 transition-colors"
+    >
+      Back →
+    </button>
   );
 }
 
@@ -418,6 +434,8 @@ function App() {
 
   return (
     <CartProvider>
+      <Header forceOpaque />
+      <GlobalBackButton />
       <MaintenanceModeGate>
         <Routes>
           {/* ── Pixel-perfect standalone pages (own Header + Footer) ─────────────── */}

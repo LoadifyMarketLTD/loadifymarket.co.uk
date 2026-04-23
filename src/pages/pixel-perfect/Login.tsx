@@ -88,7 +88,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-transparent">
 
       {/* ── LEFT — hero image (desktop only, 65%) ───────────────────────── */}
       <div className="hidden lg:block lg:w-[65%] xl:w-[67%] relative overflow-hidden">
@@ -101,21 +101,21 @@ const Login = () => {
       </div>
 
       {/* ── RIGHT — login card panel ─────────────────────────────────────── */}
-      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col min-h-screen bg-[#f5f7fa] relative">
+      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col min-h-screen bg-slate-950/25 backdrop-blur-[1px]">
 
         {/* Back to site link — top right */}
         <div className="flex items-center justify-between px-5 sm:px-8 py-4">
           {/* Mobile logo */}
           <Link to="/" className="lg:hidden flex items-center gap-2">
             <img src={logo} alt="Loadify Market" className="h-7 w-7" />
-            <span className="font-bold text-[15px] text-gray-800" style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}>
+            <span className="font-bold text-[15px] text-white" style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}>
               Loadify Market
             </span>
           </Link>
           <div className="hidden lg:block" />
           <Link
             to="/"
-            className="flex items-center gap-1.5 text-[13px] text-gray-400 hover:text-gray-700 transition-colors"
+            className="flex items-center gap-1.5 text-[13px] text-white/70 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Back to site
@@ -254,7 +254,7 @@ const Login = () => {
             </div>
 
             {/* Footer */}
-            <p className="text-center text-[13px] text-gray-500 mt-5">
+            <p className="text-center text-[13px] text-white/60 mt-5">
               Don't have an account?{" "}
               <Link to="/signup" className="text-[#16A34A] font-semibold hover:text-[#15803D] hover:underline transition-colors">
                 Create account

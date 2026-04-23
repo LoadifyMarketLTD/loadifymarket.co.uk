@@ -97,14 +97,45 @@
     overflow-x: hidden;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
     font-family: var(--font-body);
     overflow-x: hidden;
     /* Ensure full-width on all devices */
     min-width: 320px;
+    position: relative;
+    background-color: #050b16;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background-image: url("/hero-marketplace.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transform: scale(1.03);
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(120% 90% at 10% 0%, rgb(34 197 94 / 0.2), transparent 55%),
+      radial-gradient(90% 70% at 100% 100%, rgb(13 34 64 / 0.75), transparent 60%),
+      linear-gradient(180deg, rgb(5 11 22 / 0.7) 0%, rgb(5 11 22 / 0.84) 100%);
+  }
+
+  #root {
+    min-height: 100vh;
   }
 }
 

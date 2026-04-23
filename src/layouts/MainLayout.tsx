@@ -1,15 +1,13 @@
 import type { ReactNode } from "react";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 interface MainLayoutProps {
   children: ReactNode;
-  forceOpaque?: boolean;
 }
 
-export default function MainLayout({ children, forceOpaque = true }: MainLayoutProps) {
+export default function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-transparent">
       {/* Skip-to-content link — visible only on keyboard focus (WCAG 2.1 SC 2.4.1) */}
       <a
         href="#main-content"
@@ -17,7 +15,6 @@ export default function MainLayout({ children, forceOpaque = true }: MainLayoutP
       >
         Skip to main content
       </a>
-      <Header forceOpaque={forceOpaque} />
       {children}
       <Footer />
     </div>

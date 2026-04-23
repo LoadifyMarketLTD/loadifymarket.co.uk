@@ -42,7 +42,7 @@ export default function RequireAdmin({ children }: Props) {
 
   if (!hasAdminAccess(user)) {
     return (
-      <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-slate-950/20 backdrop-blur-[1px] flex items-center justify-center px-4">
         <div className="bg-white border border-gray-200 rounded-xl p-10 max-w-md w-full text-center">
           <p className="text-5xl mb-4">🚫</p>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
