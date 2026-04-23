@@ -9,12 +9,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, Eye, Building2, Mail, Calendar, Loader2, ExternalLink,
-  ShieldOff, RefreshCw, Zap, CheckCircle, AlertTriangle,
+  ShieldOff, RefreshCw, Zap, CheckCircle, AlertTriangle, AlertCircle, Send,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
+import { toast } from "@/hooks/use-toast";
 
 interface Seller {
   userId: string;
@@ -43,7 +44,13 @@ const statusLabel: Record<string, string> = {
 const stripeStatusColor: Record<string, string> = {
   active:     "border-emerald-500/30 text-emerald-400 bg-emerald-500/10",
   restricted: "border-amber-500/30 text-amber-400 bg-amber-500/10",
-  pending:    "border-slate-200 text-slate-400",
+  pending:    "border-amber-500/30 text-amber-400 bg-amber-500/10",
+};
+
+const stripeStatusLabel: Record<string, string> = {
+  active:     "Verified",
+  restricted: "Pending",
+  pending:    "Pending",
 };
 
 async function authorizedFetch(
@@ -83,6 +90,7 @@ const AdminSellerManagement = () => {
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [onboardingLoading, setOnboardingLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
@@ -137,6 +145,43 @@ const AdminSellerManagement = () => {
 
   const handleSuspend = (userId: string) => changeStatus(userId, "suspend");
   const handleReactivate = (userId: string) => changeStatus(userId, "reactivate");
+
+  const handleSendWarning = async (userId: string) => {
+    setActionLoading(userId);
+    setError(null);
+    try {
+      const res = await authorizedFetch("/.netlify/functions/admin-sellers", {
+        method: "POST",
+        body: JSON.stringify({ op: "warn", userId }),
+      });
+      await handleJson<{ success: boolean }>(res);
+      toast({ title: "Warning sent", description: "A warning email has been sent to the seller." });
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to send warning");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleSendOnboardingReminders = async () => {
+    setOnboardingLoading(true);
+    setError(null);
+    try {
+      const res = await authorizedFetch("/.netlify/functions/admin-sellers", {
+        method: "POST",
+        body: JSON.stringify({ op: "onboarding_reminder" }),
+      });
+      const json = await handleJson<{ sent: number }>(res);
+      toast({
+        title: "Reminders sent",
+        description: `Onboarding reminder sent to ${json.sent} seller${json.sent === 1 ? "" : "s"}.`,
+      });
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to send reminders");
+    } finally {
+      setOnboardingLoading(false);
+    }
+  };
 
   // Force-activates a seller whose Stripe is confirmed active but sellerStatus
   // is still stuck at 'submitted' or 'draft'. The DB trigger
@@ -238,16 +283,30 @@ const AdminSellerManagement = () => {
               <TableCell className="hidden lg:table-cell">
                 {s.stripeConnectStatus ? (
                   <Badge variant="outline" className={stripeStatusColor[s.stripeConnectStatus] ?? "border-slate-200 text-slate-400"}>
-                    {s.stripeConnectStatus}
+                    {stripeStatusLabel[s.stripeConnectStatus] ?? s.stripeConnectStatus}
                   </Badge>
                 ) : (
-                  <span className="text-xs" style={{ color: "rgba(100,116,139,0.65)" }}>—</span>
+                  <Badge variant="outline" className="border-slate-200 text-slate-400">
+                    Not Connected
+                  </Badge>
                 )}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-white/10" onClick={() => setSelectedSeller(s)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-white/10" onClick={() => setSelectedSeller(s)} title="View details">
                     <Eye className="h-4 w-4" />
+                  </Button>
+                  {/* Send Warning */}
+                  <Button
+                    variant="ghost" size="icon"
+                    className="h-8 w-8 text-amber-400 hover:bg-amber-500/10"
+                    onClick={() => handleSendWarning(s.userId)}
+                    disabled={actionLoading === s.userId}
+                    title="Send warning email"
+                  >
+                    {actionLoading === s.userId
+                      ? <Loader2 className="h-4 w-4 animate-spin" />
+                      : <AlertCircle className="h-4 w-4" />}
                   </Button>
                   {/* Force-activate: shown when Stripe is active but seller is stuck in draft/submitted */}
                   {canForceActivate(s) && (
@@ -300,11 +359,28 @@ const AdminSellerManagement = () => {
   return (
     <div className="p-4 sm:p-6 space-y-6" style={{ background: "#f8fafc", minHeight: "100%" }}>
       <div className="pb-2" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Seller Management</h1>
-        <p className="text-sm mt-1" style={{ color: "rgba(71,85,105,0.85)" }}>
-          Monitor seller accounts and manage suspensions. Sellers are activated automatically
-          once their profile and Stripe setup are complete.
-        </p>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Seller Management</h1>
+            <p className="text-sm mt-1" style={{ color: "rgba(71,85,105,0.85)" }}>
+              Monitor seller accounts and manage suspensions. Sellers are activated automatically
+              once their profile and Stripe setup are complete.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSendOnboardingReminders}
+            disabled={onboardingLoading}
+            className="shrink-0"
+            title="Send Stripe onboarding reminder to sellers who registered 48h+ ago without connecting Stripe"
+          >
+            {onboardingLoading
+              ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              : <Send className="h-3.5 w-3.5 mr-1.5" />}
+            Send Onboarding Reminder
+          </Button>
+        </div>
       </div>
 
       {error && !loading && (
@@ -400,12 +476,17 @@ const AdminSellerManagement = () => {
                     {statusLabel[selectedSeller.sellerStatus] ?? selectedSeller.sellerStatus}
                   </Badge>
                 </div>
-                {selectedSeller.stripeConnectStatus && (
+                {selectedSeller.stripeConnectStatus ? (
                   <div>
                     <span className="text-xs mr-2" style={{ color: "rgba(71,85,105,0.8)" }}>Stripe:</span>
                     <Badge variant="outline" className={stripeStatusColor[selectedSeller.stripeConnectStatus] ?? "border-slate-200 text-slate-400"}>
-                      {selectedSeller.stripeConnectStatus}
+                      {stripeStatusLabel[selectedSeller.stripeConnectStatus] ?? selectedSeller.stripeConnectStatus}
                     </Badge>
+                  </div>
+                ) : (
+                  <div>
+                    <span className="text-xs mr-2" style={{ color: "rgba(71,85,105,0.8)" }}>Stripe:</span>
+                    <Badge variant="outline" className="border-slate-200 text-slate-400">Not Connected</Badge>
                   </div>
                 )}
               </div>
@@ -421,6 +502,17 @@ const AdminSellerManagement = () => {
             </div>
 
             <DialogFooter className="gap-2">
+              {/* Send Warning */}
+              <Button
+                variant="outline"
+                onClick={() => handleSendWarning(selectedSeller.userId)}
+                disabled={actionLoading === selectedSeller.userId}
+              >
+                {actionLoading === selectedSeller.userId
+                  ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  : <AlertCircle className="h-4 w-4 mr-1" />}
+                Send Warning
+              </Button>
               {/* Force-activate when Stripe is confirmed ready but status is stuck */}
               {canForceActivate(selectedSeller) && (
                 <Button

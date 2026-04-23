@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Search, ShoppingCart, Menu, LogOut, Package, ShoppingBag, Heart, LayoutDashboard } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Search, ShoppingCart, Menu, LogOut, Package, ShoppingBag, Heart, LayoutDashboard, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/loadify-logo.svg";
 import { useCart } from "@/contexts/CartContext";
@@ -8,6 +8,7 @@ import { useAuthStore } from "@/store";
 import { isActiveSellerAccess } from "@/lib/roleUtils";
 import MobileDrawer from "@/components/MobileDrawer";
 import { useCategories } from "@/hooks/useCategories";
+import type { CategoryNode } from "@/hooks/useCategories";
 
 /**
  * Marketplace-style header — used on every page of the site.
@@ -29,10 +30,25 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
   const [query, setQuery] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [hoveredCat, setHoveredCat] = useState<string | null>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { cartCount } = useCart();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const { categories } = useCategories();
+
+  useEffect(() => {
+    setHoveredCat(null);
+  }, [location.pathname]);
+
+  const scheduleClose = useCallback(() => {
+    closeTimerRef.current = setTimeout(() => setHoveredCat(null), 80);
+  }, []);
+
+  const cancelClose = useCallback(() => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -63,14 +79,15 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
   };
 
   const navLinks = [
-    { to: "/", label: "HOME", strong: true },
-    { to: "/catalog", label: "All Categories", strong: true },
+    { to: "/", label: "HOME", strong: true, catSlug: null as string | null },
+    { to: "/catalog", label: "All Categories", strong: true, catSlug: null as string | null },
     ...categories.slice(0, 6).map((cat) => ({
       to: `/catalog?category=${encodeURIComponent(cat.name)}`,
       label: cat.name,
       strong: false,
+      catSlug: cat.slug,
     })),
-    { to: "/catalog", label: "More →", strong: true },
+    { to: "/catalog", label: "More →", strong: true, catSlug: null as string | null },
   ];
 
   return (
@@ -230,18 +247,54 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="h-[50px] overflow-x-auto scrollbar-none">
             <div className="grid grid-flow-col auto-cols-fr items-center justify-between min-w-[980px] lg:min-w-0 gap-x-8 h-full">
-              {navLinks.map((link) => (
-              <Link
-                key={`${link.to}-${link.label}`}
-                to={link.to}
-                className={[
-                  "text-[13px] hover:text-white hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-colors whitespace-nowrap text-center",
-                  link.strong ? "font-bold text-[#22C55E]" : "font-semibold text-[#22C55E]",
-                ].join(" ")}
-              >
-                {link.label}
-              </Link>
-              ))}
+              {navLinks.map((link) => {
+                const catNode: CategoryNode | undefined = link.catSlug
+                  ? categories.find((c) => c.slug === link.catSlug)
+                  : undefined;
+                const hasChildren = !!catNode && catNode.children.length > 0;
+                const isHovered = hoveredCat === link.to;
+                return (
+                  <div
+                    key={`${link.to}-${link.label}`}
+                    className="relative h-full flex items-center"
+                    onMouseEnter={() => { cancelClose(); if (hasChildren) setHoveredCat(link.to); }}
+                    onMouseLeave={scheduleClose}
+                  >
+                    <Link
+                      to={link.to}
+                      className={[
+                        "text-[13px] hover:text-white hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-colors whitespace-nowrap text-center w-full",
+                        link.strong ? "font-bold text-[#22C55E]" : "font-semibold text-[#22C55E]",
+                        isHovered ? "bg-white/[0.08] text-white" : "",
+                      ].join(" ")}
+                    >
+                      {link.label}
+                    </Link>
+                    {hasChildren && isHovered && (
+                      <div
+                        className="absolute top-full left-0 z-50 min-w-[180px] rounded-xl border border-white/[0.12] shadow-2xl overflow-hidden"
+                        style={{ background: "#0A1930", marginTop: "2px" }}
+                        onMouseEnter={cancelClose}
+                        onMouseLeave={scheduleClose}
+                      >
+                        {catNode.children.map((child) => (
+                          <Link
+                            key={child.id}
+                            to={`/category/${child.slug}`}
+                            className="flex items-center justify-between px-4 py-2.5 text-[13px] font-medium text-white/75 hover:text-white hover:bg-white/[0.08] transition-colors"
+                            onClick={() => setHoveredCat(null)}
+                          >
+                            {child.name}
+                            {child.children?.length > 0 && (
+                              <ChevronRight className="h-3.5 w-3.5 text-white/40 shrink-0" />
+                            )}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Package, ShoppingBag, Flag, BarChart3,
   MessageSquare, Settings, ShieldCheck, ChevronRight, LogOut, Menu, Bell, UserCheck, Banknote, Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, memo } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ interface SidebarContentProps {
   onLogout: () => void;
 }
 
-const SidebarContent = ({ displayName, onNavClick, onLogout }: SidebarContentProps) => (
+const SidebarContent = memo(({ displayName, onNavClick, onLogout }: SidebarContentProps) => (
   <div className="flex flex-col h-full">
     <div className="p-5 border-b border-border">
       <div className="flex items-center gap-2">
@@ -93,7 +93,8 @@ const SidebarContent = ({ displayName, onNavClick, onLogout }: SidebarContentPro
       </button>
     </div>
   </div>
-);
+));
+SidebarContent.displayName = "SidebarContent";
 
 const AdminShell = () => {
   const navigate = useNavigate();
