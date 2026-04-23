@@ -95,7 +95,7 @@ export default function Home() {
         <FeaturedProducts />
 
         <div
-          className="relative bg-cover bg-center bg-no-repeat"
+          className="relative mx-2 sm:mx-4 lg:mx-6 my-4 overflow-hidden border border-white/80 shadow-[0_18px_45px_rgba(13,34,64,0.18)] bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/hero-marketplace-flipped.jpg')" }}
         >
           <div className="absolute inset-0 bg-white/85" aria-hidden="true" />
