@@ -94,10 +94,9 @@ export default function Home() {
         {/* ── 2. Real products — immediately under hero ────────────────── */}
         <FeaturedProducts />
 
-        <section
+        <div
           className="relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/hero-marketplace-flipped.jpg')" }}
-          aria-label="Marketplace middle content"
         >
           <div className="absolute inset-0 bg-white/85" aria-hidden="true" />
 
@@ -170,7 +169,7 @@ export default function Home() {
               </div>
             </section>
           </div>
-        </section>
+        </div>
 
         {/* ── 6. Seller CTA banner ─────────────────────────────────────── */}
         <section className="bg-[#0d2240]" aria-label="Seller registration">
