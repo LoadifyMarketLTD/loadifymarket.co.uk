@@ -106,10 +106,10 @@ const PPAdminStripeEvents   = lazy(() => import('./pages/pixel-perfect/admin/Adm
 // Loading component
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center min-h-screen">
+    <div className="flex items-center justify-center min-h-screen bg-slate-950/20 backdrop-blur-[1px]">
       <div className="text-center">
         <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800"></div>
-        <p className="mt-4 text-gray-600">Loading...</p>
+        <p className="mt-4 text-white/85">Loading...</p>
       </div>
     </div>
   );

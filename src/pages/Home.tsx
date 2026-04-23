@@ -76,7 +76,7 @@ export default function Home() {
       {/* Clears fixed header — see .pt-header-spacer in index.css */}
       <div className="pt-header-spacer" />
 
-      <main id="main-content" className="bg-[#f4f5f7]">
+      <main id="main-content" className="bg-transparent">
 
         {/* ── 1-2. Hero + Featured Products ────────────────────────────── */}
         <section aria-label="Hero and marketplace products">
@@ -94,7 +94,7 @@ export default function Home() {
         <CategoryGrid />
 
         {/* ── 5. How It Works ──────────────────────────────────────────── */}
-        <section className="bg-[#f4f5f7] border-b border-gray-200" aria-labelledby="how-heading">
+        <section className="bg-white/75 border-b border-gray-200/70 backdrop-blur-sm" aria-labelledby="how-heading">
           <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-10">
 
             <div className="mb-6">

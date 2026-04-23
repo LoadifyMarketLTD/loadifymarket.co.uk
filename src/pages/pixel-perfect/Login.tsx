@@ -103,7 +103,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-[#f5f7fa]">
+    <div className="min-h-screen flex bg-transparent">
 
       {/* ── LEFT — dark navy branding panel (desktop only) ─────────────── */}
       <div className="hidden lg:flex lg:w-[44%] xl:w-[42%] bg-[#0A1930] relative flex-col items-center justify-center p-10 xl:p-14 overflow-hidden">
@@ -159,21 +159,21 @@ const Login = () => {
       </div>
 
       {/* ── RIGHT — form panel ─────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen bg-slate-950/25 backdrop-blur-[1px]">
 
         {/* Top bar */}
         <div className="flex items-center justify-between px-5 sm:px-8 py-4">
           {/* Mobile logo */}
           <Link to="/" className="lg:hidden flex items-center gap-2">
             <img src={logo} alt="Loadify Market" className="h-7 w-7" />
-            <span className="font-bold text-[15px] text-gray-800" style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}>
+            <span className="font-bold text-[15px] text-white" style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}>
               Loadify Market
             </span>
           </Link>
           <div className="hidden lg:block" />
           <Link
             to="/"
-            className="flex items-center gap-1.5 text-[13px] text-gray-400 hover:text-gray-700 transition-colors"
+            className="flex items-center gap-1.5 text-[13px] text-white/70 hover:text-white transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Back to site

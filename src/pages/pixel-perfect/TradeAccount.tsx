@@ -242,7 +242,7 @@ export default function TradeAccount() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex flex-col">
+    <div className="min-h-screen bg-transparent flex flex-col">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <header className="bg-[#0B1D3A] text-white py-3 px-4 sm:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -263,7 +263,7 @@ export default function TradeAccount() {
       </header>
 
       {/* ── Page title ─────────────────────────────────────────────────────── */}
-      <div className="bg-white border-b border-gray-200 py-6 px-4 sm:px-8">
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/70 py-6 px-4 sm:px-8">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl sm:text-3xl font-bold text-[#0B1D3A]">Trade Account</h1>
           <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 inline-flex items-start gap-2 max-w-2xl">
@@ -277,7 +277,7 @@ export default function TradeAccount() {
       </div>
 
       {/* ── Main form area ─────────────────────────────────────────────────── */}
-      <main className="flex-1 py-8 px-4 sm:px-8">
+      <main className="flex-1 py-8 px-4 sm:px-8 bg-slate-950/15 backdrop-blur-[1px]">
         <div className="max-w-7xl mx-auto">
           <form onSubmit={handleSubmit} noValidate>
             {/* 2-column grid on desktop */}
