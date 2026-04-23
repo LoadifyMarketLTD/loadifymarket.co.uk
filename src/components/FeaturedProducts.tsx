@@ -84,7 +84,7 @@ const FeaturedProducts = () => {
                 <Link
                   key={item.id}
                   to={href}
-                  className="flex flex-col bg-white hover:bg-[#f8f9fb] transition-colors"
+                  className="group flex flex-col bg-white hover:bg-[#f8f9fb] hover:shadow-md hover:scale-[1.02] transition-all duration-200"
                 >
                   {/* Square thumbnail */}
                   <div className="aspect-square bg-gray-50 overflow-hidden">
@@ -96,7 +96,7 @@ const FeaturedProducts = () => {
                         height={400}
                         loading="lazy"
                         decoding="async"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = "none";
                         }}

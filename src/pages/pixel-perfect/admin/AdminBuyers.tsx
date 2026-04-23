@@ -67,6 +67,7 @@ const AdminBuyers = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended">("all");
   const [selected, setSelected] = useState<Buyer | null>(null);
   const [detail, setDetail] = useState<BuyerDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -164,14 +165,19 @@ const AdminBuyers = () => {
     }
   };
 
-  const filtered = buyers.filter(
+  const searchFiltered = buyers.filter(
     (b) =>
       b.name.toLowerCase().includes(search.toLowerCase()) ||
       b.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const suspended = filtered.filter((b) => !b.isActive);
-  const active = filtered.filter((b) => b.isActive);
+  const suspended = searchFiltered.filter((b) => !b.isActive);
+  const active = searchFiltered.filter((b) => b.isActive);
+
+  const filtered =
+    statusFilter === "active" ? active :
+    statusFilter === "suspended" ? suspended :
+    searchFiltered;
 
   return (
     <div className="p-4 sm:p-6 space-y-6" style={{ background: "#f8fafc", minHeight: "100%" }}>
@@ -191,17 +197,23 @@ const AdminBuyers = () => {
         </div>
       )}
 
-      {/* Stats */}
+      {/* Stats — clickable to filter table */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {[
-          { label: "Total Buyers", count: buyers.length, color: "#60A5FA", bg: "rgba(96,165,250,0.12)" },
-          { label: "Active",       count: active.length, color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
-          { label: "Suspended",   count: suspended.length, color: "#F87171", bg: "rgba(248,113,113,0.12)" },
+          { label: "Total Buyers", count: buyers.length, color: "#60A5FA", bg: "rgba(96,165,250,0.12)", filter: "all" as const },
+          { label: "Active",       count: active.length, color: "#22C55E", bg: "rgba(34,197,94,0.12)",  filter: "active" as const },
+          { label: "Suspended",   count: suspended.length, color: "#F87171", bg: "rgba(248,113,113,0.12)", filter: "suspended" as const },
         ].map((stat) => (
-          <div
+          <button
             key={stat.label}
-            className="rounded-2xl p-5"
-            style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}
+            type="button"
+            onClick={() => setStatusFilter(stat.filter)}
+            className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            style={{
+              background: "#ffffff",
+              border: statusFilter === stat.filter ? `2px solid ${stat.color}` : "1px solid rgba(148,163,184,0.35)",
+              boxShadow: "0 4px 24px rgba(15,23,42,0.08)",
+            }}
           >
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
@@ -211,7 +223,7 @@ const AdminBuyers = () => {
             </div>
             <div className="text-3xl font-bold text-slate-900">{loading ? "—" : stat.count}</div>
             <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(71,85,105,0.85)" }}>{stat.label}</p>
-          </div>
+          </button>
         ))}
       </div>
 

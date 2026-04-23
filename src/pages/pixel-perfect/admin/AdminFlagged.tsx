@@ -40,6 +40,7 @@ const AdminFlagged = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("pending");
   const [selected, setSelected] = useState<FlaggedItem | null>(null);
 
   const fetchItems = useCallback(async () => {
@@ -243,22 +244,28 @@ const AdminFlagged = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Pending", count: byStatus("pending").length, icon: AlertTriangle, color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
-          { label: "Reviewed", count: byStatus("reviewed").length, icon: Flag, color: "#60A5FA", bg: "rgba(96,165,250,0.12)" },
-          { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
-          { label: "Dismissed", count: byStatus("dismissed").length, icon: Ban, color: "rgba(71,85,105,0.8)", bg: "rgba(148,163,184,0.3)" },
+          { label: "Pending", count: byStatus("pending").length, icon: AlertTriangle, color: "#F59E0B", bg: "rgba(245,158,11,0.12)", tab: "pending" },
+          { label: "Reviewed", count: byStatus("reviewed").length, icon: Flag, color: "#60A5FA", bg: "rgba(96,165,250,0.12)", tab: "all" },
+          { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "#22C55E", bg: "rgba(34,197,94,0.12)", tab: "resolved" },
+          { label: "Dismissed", count: byStatus("dismissed").length, icon: Ban, color: "rgba(71,85,105,0.8)", bg: "rgba(148,163,184,0.3)", tab: "all" },
         ].map((stat) => (
-          <div
+          <button
             key={stat.label}
-            className="rounded-2xl p-5"
-            style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}
+            type="button"
+            onClick={() => setActiveTab(stat.tab)}
+            className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            style={{
+              background: "#ffffff",
+              border: activeTab === stat.tab ? `2px solid ${stat.color}` : "1px solid rgba(148,163,184,0.35)",
+              boxShadow: "0 4px 24px rgba(15,23,42,0.08)",
+            }}
           >
             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: stat.bg }}>
               <stat.icon className="h-5 w-5" style={{ color: stat.color }} />
             </div>
             <div className="text-3xl font-bold text-slate-900">{stat.count}</div>
             <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(71,85,105,0.85)" }}>{stat.label}</p>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -275,7 +282,7 @@ const AdminFlagged = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="pending">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}>
           <TabsTrigger value="pending" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">
             Pending <Badge variant="outline" className="ml-2 text-xs border-white/20 text-slate-500">{byStatus("pending").length}</Badge>

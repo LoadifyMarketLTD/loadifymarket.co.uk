@@ -41,6 +41,7 @@ const AdminOrders = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
   const [selected, setSelected] = useState<Order | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [refundLoading, setRefundLoading] = useState(false);
@@ -234,15 +235,21 @@ const AdminOrders = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Orders", count: orders.length, value: `£${totalValue.toLocaleString()}`, color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
-          { label: "Active", count: activeOrders.length, value: "In progress", color: "#60A5FA", bg: "rgba(96,165,250,0.12)" },
-          { label: "Delivered", count: byStatus("delivered").length, value: "Completed", color: "#A78BFA", bg: "rgba(167,139,250,0.12)" },
-          { label: "Disputed", count: byStatus("disputed").length, value: "Needs attention", color: "#F87171", bg: "rgba(248,113,113,0.12)" },
+          { label: "Total Orders", count: orders.length, value: `£${totalValue.toLocaleString()}`, color: "#22C55E", bg: "rgba(34,197,94,0.12)", tab: "all" },
+          { label: "Active", count: activeOrders.length, value: "In progress", color: "#60A5FA", bg: "rgba(96,165,250,0.12)", tab: "active" },
+          { label: "Delivered", count: byStatus("delivered").length, value: "Completed", color: "#A78BFA", bg: "rgba(167,139,250,0.12)", tab: "delivered" },
+          { label: "Disputed", count: byStatus("disputed").length, value: "Needs attention", color: "#F87171", bg: "rgba(248,113,113,0.12)", tab: "disputed" },
         ].map((stat) => (
-          <div
+          <button
             key={stat.label}
-            className="rounded-2xl p-5"
-            style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}
+            type="button"
+            onClick={() => setActiveTab(stat.tab)}
+            className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            style={{
+              background: "#ffffff",
+              border: activeTab === stat.tab ? `2px solid ${stat.color}` : "1px solid rgba(148,163,184,0.35)",
+              boxShadow: "0 4px 24px rgba(15,23,42,0.08)",
+            }}
           >
             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: stat.bg }}>
               <ShoppingCart className="h-5 w-5" style={{ color: stat.color }} />
@@ -250,7 +257,7 @@ const AdminOrders = () => {
             <div className="text-3xl font-bold text-slate-900">{stat.count}</div>
             <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(71,85,105,0.85)" }}>{stat.label}</p>
             <p className="text-xs mt-0.5" style={{ color: stat.color, opacity: 0.8 }}>{stat.value}</p>
-          </div>
+          </button>
         ))}
       </div>
 
@@ -267,7 +274,7 @@ const AdminOrders = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="all">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}>
           <TabsTrigger value="all" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">All <Badge variant="outline" className="ml-2 text-xs border-white/20 text-slate-500">{filtered.length}</Badge></TabsTrigger>
           <TabsTrigger value="active" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">Active</TabsTrigger>
