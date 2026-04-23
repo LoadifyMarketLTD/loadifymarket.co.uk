@@ -112,7 +112,7 @@ const AdminShell = () => {
       : user?.email ?? "Admin";
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="dark flex h-screen bg-background overflow-hidden">
       <aside className="hidden lg:flex w-56 border-r border-border bg-card shrink-0 flex-col">
         <SidebarContent displayName={displayName} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
       </aside>
