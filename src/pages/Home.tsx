@@ -91,6 +91,7 @@ export default function Home() {
         {/* ── 1-2. Shared background: hero + products (continuous flow) ── */}
         <section
           className="bg-cover bg-center bg-no-repeat"
+          aria-label="Hero and marketplace products"
           style={{ backgroundImage: "url('/hero-marketplace.jpg')" }}
         >
           {/* ── 1. Hero ────────────────────────────────────────────────── */}

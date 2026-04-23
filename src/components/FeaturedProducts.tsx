@@ -38,7 +38,7 @@ const FeaturedProducts = () => {
 
   if (loading) {
     return (
-      <section className="relative" aria-label="Marketplace products" style={{ minHeight: "4rem" }}>
+      <section className="relative min-h-16" aria-label="Marketplace products">
         <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
       </section>
     );
