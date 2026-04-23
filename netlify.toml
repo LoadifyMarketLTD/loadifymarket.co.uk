@@ -92,47 +92,58 @@
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
 
-# Static images — cache for 7 days (long enough to benefit repeat visitors,
-# short enough to pick up any image replacements)
+# SPA routes (/, /catalog, /product/*, etc.) are all served as index.html via
+# the /* → /index.html 200 rewrite.  The /*.html rule above only matches
+# literal .html URLs so we need an explicit rule here to prevent browsers from
+# heuristically caching the SPA shell for these paths.
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# Root-level static assets (images, icons) are NOT content-hashed, so browsers
+# must always revalidate them to pick up any replacements deployed today.
+# A 304 Not Modified response is returned if the file is unchanged, so this
+# does not increase origin load for genuinely unchanged assets.
 [[headers]]
   for = "/images/*"
   [headers.values]
-    Cache-Control = "public, max-age=604800"
+    Cache-Control = "no-cache, must-revalidate"
 
 [[headers]]
   for = "/images/**"
   [headers.values]
-    Cache-Control = "public, max-age=604800"
+    Cache-Control = "no-cache, must-revalidate"
 
 [[headers]]
   for = "/*.jpg"
   [headers.values]
-    Cache-Control = "public, max-age=604800"
+    Cache-Control = "no-cache, must-revalidate"
 
 [[headers]]
   for = "/*.jpeg"
   [headers.values]
-    Cache-Control = "public, max-age=604800"
+    Cache-Control = "no-cache, must-revalidate"
 
 [[headers]]
   for = "/*.png"
   [headers.values]
-    Cache-Control = "public, max-age=604800"
+    Cache-Control = "no-cache, must-revalidate"
 
 [[headers]]
   for = "/*.webp"
   [headers.values]
-    Cache-Control = "public, max-age=604800"
+    Cache-Control = "no-cache, must-revalidate"
 
 [[headers]]
   for = "/*.svg"
   [headers.values]
-    Cache-Control = "public, max-age=604800"
+    Cache-Control = "no-cache, must-revalidate"
 
 [[headers]]
   for = "/payment-icons/*"
   [headers.values]
-    Cache-Control = "public, max-age=604800"
+    Cache-Control = "no-cache, must-revalidate"
 
 # ─── Android App Links verification file ─────────────────────────────────────
 # Must be served as application/json with HTTP 200 (no redirects, no HTML).
