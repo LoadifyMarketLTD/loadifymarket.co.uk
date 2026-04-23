@@ -14,6 +14,24 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
 import PaymentMethodBadges from "@/components/PaymentMethodBadges";
 
+// ── Shipping option types ──────────────────────────────────────────────────
+interface ShippingOption {
+  methodId: string;
+  name: string;
+  courier: string | null;
+  price: number;
+  dispatchTime: string | null;
+}
+
+// Sentinel value for the "Seller arranged" fallback (no DB methods configured)
+const SELLER_ARRANGED: ShippingOption = {
+  methodId: "seller-arranged",
+  name: "Seller Arranged",
+  courier: null,
+  price: 0,
+  dispatchTime: null,
+};
+
 const steps = [
   { id: "shipping", label: "Shipping", icon: Truck },
   { id: "payment", label: "Payment", icon: CreditCard },
@@ -43,6 +61,101 @@ const Checkout = () => {
   // Track whether we've already auto-filled the email so we never overwrite
   // changes the user makes after the initial sync.
   const emailSyncedRef = useRef(false);
+
+  // ── Shipping method state ────────────────────────────────────────────────
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
+  const [selectedMethodId, setSelectedMethodId] = useState<string>(SELLER_ARRANGED.methodId);
+  const [shippingLoading, setShippingLoading] = useState(false);
+
+  // Derived: the currently selected shipping option
+  const selectedOption: ShippingOption =
+    shippingOptions.find((o) => o.methodId === selectedMethodId) ?? SELLER_ARRANGED;
+
+  // Fetch available shipping methods for the cart products
+  useEffect(() => {
+    if (cartItems.length === 0) return;
+    const productIds = cartItems.map((item) => item.product.id);
+
+    const fetchShippingOptions = async () => {
+      setShippingLoading(true);
+      try {
+        const { supabase } = await import("@/lib/supabase");
+
+        // Fetch product_shipping rows joined to shipping_methods and shipping_rates
+        // for all products in the cart, taking the lowest-price rate per method.
+        const { data, error } = await supabase
+          .from("product_shipping")
+          .select(`
+            product_id,
+            dispatch_time,
+            shipping_methods!method_id (
+              id,
+              name,
+              courier,
+              active,
+              shipping_rates ( price )
+            )
+          `)
+          .in("product_id", productIds);
+
+        if (error || !data) {
+          // Non-fatal: fall back to seller-arranged
+          setShippingOptions([]);
+          setSelectedMethodId(SELLER_ARRANGED.methodId);
+          return;
+        }
+
+        // Build a map of methodId → ShippingOption, keeping min price across rows
+        const optionMap = new Map<string, ShippingOption>();
+        for (const row of data) {
+          const method = Array.isArray(row.shipping_methods)
+            ? row.shipping_methods[0]
+            : row.shipping_methods;
+          if (!method || !method.active) continue;
+
+          const rates: Array<{ price: number }> = Array.isArray(method.shipping_rates)
+            ? method.shipping_rates
+            : method.shipping_rates
+              ? [method.shipping_rates]
+              : [];
+
+          const price = rates.length > 0
+            ? Math.min(...rates.map((r) => Number(r.price)))
+            : 0;
+
+          if (!optionMap.has(method.id)) {
+            optionMap.set(method.id, {
+              methodId: method.id,
+              name: method.name,
+              courier: method.courier ?? null,
+              price,
+              dispatchTime: (row as Record<string, unknown>).dispatch_time as string | null ?? null,
+            });
+          }
+        }
+
+        const options = Array.from(optionMap.values()).sort((a, b) => a.price - b.price);
+
+        if (options.length > 0) {
+          setShippingOptions(options);
+          setSelectedMethodId(options[0].methodId);
+        } else {
+          setShippingOptions([]);
+          setSelectedMethodId(SELLER_ARRANGED.methodId);
+        }
+      } catch {
+        // Non-fatal: fall back to seller-arranged
+        setShippingOptions([]);
+        setSelectedMethodId(SELLER_ARRANGED.methodId);
+      } finally {
+        setShippingLoading(false);
+      }
+    };
+
+    void fetchShippingOptions();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartItems.map((i) => i.product.id).join(",")]);
+  // ────────────────────────────────────────────────────────────────────────
 
   // Sync email once auth resolves (user may be null at initial render)
   useEffect(() => {
@@ -82,7 +195,8 @@ const Checkout = () => {
   // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
   // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
   const vat = Math.round(subtotal / 6);
-  const total = subtotal;
+  const shippingAmount = selectedOption.price;
+  const total = subtotal + shippingAmount;
 
   // ── Submit to Stripe via Netlify function ──────────────────────────────────
   const handlePlaceOrder = async () => {
@@ -139,8 +253,10 @@ const Checkout = () => {
         items,
         buyerId: user?.id ?? "",
         guestEmail: !user ? shippingData.email : undefined,
-        shippingAmount: 0,
-        shippingMethod: "Seller arranged",
+        shippingAmount,
+        shippingMethod: selectedOption.methodId === SELLER_ARRANGED.methodId
+          ? "Seller arranged"
+          : selectedOption.name,
         shippingAddress: address,
         billingAddress: address,
       };
@@ -371,7 +487,56 @@ const Checkout = () => {
                     </div>
                   )}
 
-                  {/* Shipping method selection is handled directly by sellers post-purchase */}
+                  {/* Shipping method selection */}
+                  <div className="space-y-3">
+                    <Label>Delivery Method</Label>
+                    {shippingLoading ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading delivery options…
+                      </div>
+                    ) : shippingOptions.length > 0 ? (
+                      <div className="space-y-2">
+                        {shippingOptions.map((option) => (
+                          <label
+                            key={option.methodId}
+                            className={`flex items-center justify-between gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                              selectedMethodId === option.methodId
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:border-primary/50"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="radio"
+                                name="shippingMethod"
+                                value={option.methodId}
+                                checked={selectedMethodId === option.methodId}
+                                onChange={() => setSelectedMethodId(option.methodId)}
+                                className="accent-primary"
+                              />
+                              <div>
+                                <p className="text-sm font-medium text-foreground">{option.name}</p>
+                                {(option.courier || option.dispatchTime) && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {[option.courier, option.dispatchTime].filter(Boolean).join(" · ")}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <span className="text-sm font-semibold text-foreground shrink-0">
+                              {option.price === 0 ? "Free" : `£${option.price.toFixed(2)}`}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 rounded-lg border border-border p-3 text-sm text-muted-foreground">
+                        <Truck className="h-4 w-4 shrink-0" />
+                        Delivery cost will be confirmed by the seller after purchase.
+                      </div>
+                    )}
+                  </div>
 
                   <Button
                     onClick={handleContinueToPayment}
@@ -556,7 +721,13 @@ const Checkout = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Delivery</span>
-                    <span className="text-muted-foreground italic">Set by seller</span>
+                    <span className="text-foreground font-medium">
+                      {shippingOptions.length === 0
+                        ? <span className="italic text-muted-foreground">Set by seller</span>
+                        : shippingAmount === 0
+                          ? "Free"
+                          : `£${shippingAmount.toFixed(2)}`}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">VAT (20%)</span>
@@ -581,7 +752,7 @@ const Checkout = () => {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Truck className="h-4 w-4 text-primary shrink-0" />
-                  Delivery is set by the seller
+                  {shippingOptions.length > 0 ? "Flexible delivery options available" : "Delivery confirmed by seller"}
                 </div>
               </div>
             </div>
