@@ -476,7 +476,7 @@ function App() {
 
   return (
     <CartProvider>
-      {!hideGlobalNav && <Header forceOpaque />}
+      {!hideGlobalNav && <Header />}
       {!hideGlobalNav && <GlobalBackButton />}
       <MaintenanceModeGate>
         <Routes>

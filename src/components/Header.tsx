@@ -11,25 +11,15 @@ import { useCategories } from "@/hooks/useCategories";
 import type { CategoryNode } from "@/hooks/useCategories";
 
 /**
- * Marketplace-style header — used on every page of the site.
- * Layout: fixed at top-0.
- * Row 1 (h-16): Hamburger (mobile, LEFT) | Logo | Search | Cart + auth actions
- * Row 2 (h-12, desktop only): Category quick-links
- *
- * Transparency behaviour:
- *   - Homepage (default): transparent at top, becomes opaque after 10px scroll.
- *   - Inner pages: pass `forceOpaque` to always render the opaque dark-navy
- *     background from the first paint (no hero behind it).
+ * Marketplace-style header — always renders with the opaque dark-navy background.
+ * Fixed at top-0 on every public-marketplace page.
+ * Row 1 (h-16): Hamburger (LEFT, all sizes) | Logo | Search | Cart + auth actions
+ * Row 2 (h-12): Category quick-links
  */
-interface HeaderProps {
-  /** When true the header is always opaque (use on every non-homepage page). */
-  forceOpaque?: boolean;
-}
 
-const Header = ({ forceOpaque = false }: HeaderProps) => {
+const Header = () => {
   const [query, setQuery] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { cartCount } = useCart();
@@ -49,14 +39,6 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
   const cancelClose = useCallback(() => {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
   }, []);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 10);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const opaque = forceOpaque || scrolled;
 
   const dashboardPath =
     user?.role === "seller" ? "/seller" :
@@ -92,12 +74,7 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
 
   return (
     <header
-      className={[
-        "fixed top-0 left-0 right-0 z-40 transition-all duration-300",
-        opaque
-          ? "bg-[#0A1930]/95 border-b border-gray-200 shadow-[0_4px_32px_rgba(0,0,0,0.45)]"
-          : "bg-transparent border-b border-transparent",
-      ].join(" ")}
+      className="fixed top-0 left-0 right-0 z-40 bg-[#0A1930] border-b border-white/[0.10] shadow-[0_4px_32px_rgba(0,0,0,0.45)]"
       style={{ willChange: "transform", paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
 
@@ -106,7 +83,7 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
 
         {/* Hamburger — LEFT side, all screen sizes */}
         <button
-          className="p-2.5 text-white/80 hover:text-green-400 hover:bg-white/10 active:bg-white/15 rounded-xl transition-all shrink-0"
+          className="p-2.5 text-white bg-white/[0.10] hover:text-green-400 hover:bg-white/[0.18] active:bg-white/[0.22] rounded-xl transition-all shrink-0 ring-1 ring-white/20"
           onClick={() => setMobileOpen(true)}
           aria-label="Open navigation menu"
           aria-expanded={mobileOpen}

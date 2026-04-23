@@ -119,7 +119,7 @@ const AdminShell = () => {
       </aside>
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-transparent" onClick={() => setSidebarOpen(false)} />
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
           <aside className="absolute left-0 top-0 h-full w-64 bg-card border-r border-border flex flex-col">
             <SidebarContent displayName={displayName} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
           </aside>
