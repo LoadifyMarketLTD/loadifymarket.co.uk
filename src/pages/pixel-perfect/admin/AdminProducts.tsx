@@ -216,7 +216,15 @@ const AdminProducts = () => {
           </TableRow>
         ) : (
           data.map((p) => (
-            <TableRow key={p.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+            <TableRow
+              key={p.id}
+              className="cursor-pointer hover:bg-slate-50 transition-colors"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+              onClick={(e) => {
+                if ((e.target as HTMLElement).closest("button,[role=menuitem]")) return;
+                navigate(`/product/${p.id}`);
+              }}
+            >
               <TableCell className="max-w-[250px]">
                 <p className="text-sm font-medium text-slate-900 truncate">{p.title}</p>
                 <p className="text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{p.createdAt}</p>
@@ -313,8 +321,7 @@ const AdminProducts = () => {
             placeholder="Search products or sellers..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-10"
-            style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+          className="pl-9 h-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
           />
         </div>
       </div>

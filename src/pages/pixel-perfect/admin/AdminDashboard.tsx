@@ -113,10 +113,10 @@ const AdminDashboard = () => {
   }, []);
 
   const statsCards = [
-    { label: "Total Users", value: stats.totalUsers.toLocaleString(), change: "Registered", up: true, icon: Users },
-    { label: "Total Products", value: stats.totalProducts.toLocaleString(), change: "Listed", up: true, icon: Package },
-    { label: "Total Orders", value: stats.totalOrders.toLocaleString(), change: "All time", up: true, icon: ShieldCheck },
-    { label: "Setup Incomplete", value: stats.pendingSellers.toString(), change: "Sellers in progress", up: false, icon: ShieldCheck },
+    { label: "Total Users",      value: stats.totalUsers.toLocaleString(),    change: "Registered",          up: true,  icon: Users,       to: "/admin/users"    },
+    { label: "Total Products",   value: stats.totalProducts.toLocaleString(), change: "Listed",              up: true,  icon: Package,     to: "/admin/products" },
+    { label: "Total Orders",     value: stats.totalOrders.toLocaleString(),   change: "All time",            up: true,  icon: ShieldCheck, to: "/admin/orders"   },
+    { label: "Setup Incomplete", value: stats.pendingSellers.toString(),       change: "Sellers in progress", up: false, icon: ShieldCheck, to: "/admin/approvals"},
   ];
 
   const alerts = [
@@ -161,9 +161,10 @@ const AdminDashboard = () => {
         {statsCards.map((s) => {
           const theme = cardIconTheme[s.label] ?? { color: "#22C55E", bg: "rgba(34,197,94,0.12)" };
           return (
-            <div
+            <Link
               key={s.label}
-              className="rounded-2xl p-5"
+              to={s.to}
+              className="block rounded-2xl p-5 transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               style={{
                 background: "#ffffff",
                 border: "1px solid rgba(148,163,184,0.35)",
@@ -197,7 +198,7 @@ const AdminDashboard = () => {
               <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(71,85,105,0.85)" }}>
                 {s.label}
               </p>
-            </div>
+            </Link>
           );
         })}
       </div>

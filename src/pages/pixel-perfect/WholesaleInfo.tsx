@@ -20,62 +20,60 @@ const WholesaleInfo = () => {
           <BreadcrumbNav
             items={[
               { label: "Home", to: "/" },
-              { label: "UK Wholesale Information and Support" },
+              { label: "Marketplace Information" },
             ]}
             backTo="/"
           />
           <h1 className="text-3xl sm:text-4xl font-display font-bold text-foreground mb-4">
-            UK Wholesale Information and Support
+            Marketplace Information
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed mb-10">
-            Loadify Market connects UK wholesale suppliers with buyers across every product
-            category. Whether you are a business looking to source stock in bulk or a
-            supplier wanting to reach more buyers, this page covers everything you need to
-            know about wholesale trading on our platform.
+            Loadify Market is a multi-category online marketplace connecting UK sellers and
+            buyers. Whether you sell individual items or bulk stock, buy one unit or a full
+            pallet — there are no restrictions on what you can list or purchase. This page
+            explains how the platform works for both buyers and sellers.
           </p>
 
           <div className="space-y-10">
             <section>
               <h2 className="text-xl font-display font-semibold text-foreground mb-3 flex items-center gap-2">
                 <PackageSearch className="h-5 w-5 text-primary" />
-                What Is Wholesale on Loadify Market?
+                What Can You Buy on Loadify Market?
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                Wholesale listings on Loadify Market are bulk-quantity product offers sold
-                by verified UK suppliers. Items are typically sold in case packs, pallets or
-                job lots at trade prices, making the platform ideal for retailers, resellers,
-                market traders and small businesses looking to source stock competitively.
+                Loadify Market carries products across every major category — from single
+                consumer items to bulk case packs, pallets and job lots. Buyers can purchase
+                at any quantity. There is no requirement to buy in bulk and no minimum order
+                set by the platform. Each seller sets their own terms, prices and quantities.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-display font-semibold text-foreground mb-3 flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
-                Who Can Buy Wholesale?
+                Who Can Buy?
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
-                Any registered buyer on Loadify Market can purchase wholesale listings.
-                There is no minimum order requirement imposed by the platform — each seller
-                sets their own minimum quantities and pricing tiers. Common buyer types
-                include:
+                Any registered buyer can purchase from any listing on Loadify Market.
+                There are no trade-only restrictions. Common buyer types include:
               </p>
               <ul className="text-muted-foreground space-y-2 ml-4">
-                <li>• Retail shop owners stocking their shelves</li>
-                <li>• Online resellers and eBay / Amazon traders</li>
-                <li>• Market stall holders and car boot sellers</li>
-                <li>• Small businesses sourcing supplies or consumables</li>
-                <li>• Charities and community organisations buying in bulk</li>
+                <li>• Individual consumers buying single items</li>
+                <li>• Retailers and resellers sourcing stock in bulk</li>
+                <li>• Online sellers on eBay, Amazon or their own store</li>
+                <li>• Market traders and small businesses</li>
+                <li>• Charities and organisations purchasing supplies</li>
               </ul>
             </section>
 
             <section>
               <h2 className="text-xl font-display font-semibold text-foreground mb-3 flex items-center gap-2">
                 <Store className="h-5 w-5 text-primary" />
-                Selling Wholesale on Loadify Market
+                Selling on Loadify Market
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
-                UK wholesale suppliers can list their products and reach thousands of trade
-                buyers without paying upfront listing fees. To start selling:
+                Any UK-based individual or business can sell on Loadify Market — across any
+                product category and at any quantity. To start selling:
               </p>
               <ol className="text-muted-foreground space-y-2 ml-4 list-decimal list-inside">
                 <li>
@@ -86,12 +84,12 @@ const WholesaleInfo = () => {
                 </li>
                 <li>Connect your Stripe account for secure payment processing.</li>
                 <li>
-                  List your wholesale products — set your own prices, minimum quantities
-                  and delivery terms.
+                  List your products — set your own prices, quantities and delivery terms.
+                  You can sell single items, multipacks, job lots or full pallets.
                 </li>
                 <li>
-                  Once your profile is verified, your listings go live immediately and are
-                  visible to all buyers on the platform.
+                  Once your profile is verified, your listings go live and are visible to
+                  all buyers on the platform immediately.
                 </li>
               </ol>
               <p className="text-muted-foreground leading-relaxed mt-3">
@@ -106,13 +104,12 @@ const WholesaleInfo = () => {
             <section>
               <h2 className="text-xl font-display font-semibold text-foreground mb-3 flex items-center gap-2">
                 <BadgePercent className="h-5 w-5 text-primary" />
-                Pricing and Minimum Orders
+                Pricing and Orders
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                Sellers are free to set their own wholesale prices, minimum order quantities
-                (MOQ) and volume discount tiers. Prices must accurately reflect the goods
-                being offered. All transactions are processed in GBP through Stripe — no
-                off-platform payments are permitted.
+                Sellers set their own prices and can offer volume discounts or tiered pricing.
+                Buyers can purchase any quantity available. All transactions are processed in
+                GBP through Stripe — no off-platform payments are permitted.
               </p>
             </section>
 
@@ -124,9 +121,8 @@ const WholesaleInfo = () => {
               <p className="text-muted-foreground leading-relaxed">
                 Delivery is arranged directly between the seller and buyer. Each seller
                 specifies their own dispatch timeframes, delivery services and any delivery
-                charges in their listings. For large or palletised wholesale orders, sellers
-                typically use pallet courier networks. Buyers should review the delivery
-                terms on each listing before purchasing.
+                charges in their listings. Buyers should review the delivery terms on each
+                listing before purchasing.
               </p>
             </section>
 
@@ -139,8 +135,7 @@ const WholesaleInfo = () => {
                 All payments on Loadify Market are processed securely through Stripe. If an
                 order is not fulfilled as described, buyers can raise a dispute through the
                 platform. Sellers are required to provide accurate descriptions, comply with
-                UK consumer and business-to-business trading laws, and respond to buyer
-                enquiries within 48 hours.
+                UK trading laws, and respond to buyer enquiries within 48 hours.
               </p>
             </section>
 
@@ -152,20 +147,20 @@ const WholesaleInfo = () => {
               <div className="space-y-5">
                 {[
                   {
-                    q: "Do I need a VAT number to buy wholesale?",
-                    a: "No. There is no requirement to be VAT-registered to purchase wholesale on Loadify Market. However, some sellers may request a VAT number for their own records — this is between the buyer and seller.",
+                    q: "Do I need a business account to buy?",
+                    a: "No. Any registered buyer can purchase from any listing. There are no trade or business requirements imposed by the platform.",
                   },
                   {
                     q: "Can I request a quote before ordering?",
-                    a: "Yes. Use the Request for Quote (RFQ) feature to post your requirements and receive quotes from multiple wholesale suppliers on the platform.",
+                    a: "Yes. Use the Request for Quote (RFQ) feature to post your requirements and receive quotes from suppliers on the platform.",
                   },
                   {
                     q: "Are all sellers UK-based?",
-                    a: "Yes. Loadify Market is a UK-only platform. All sellers are UK-based businesses or individuals, and all deliveries are within the United Kingdom.",
+                    a: "Yes. Loadify Market operates in the UK. All sellers are UK-based and all deliveries are within the United Kingdom.",
                   },
                   {
-                    q: "What categories of wholesale goods are available?",
-                    a: "Wholesale products span all major categories including homeware, cleaning supplies, toys, gardening, electrical, clothing, pet supplies, stationery, seasonal goods and more.",
+                    q: "What categories are available?",
+                    a: "All major product categories are available including homeware, electronics, clothing, toys, sports, gardening, pets, food, health and beauty, automotive, and more.",
                   },
                   {
                     q: "How do I contact a seller before buying?",
@@ -209,7 +204,7 @@ const WholesaleInfo = () => {
               Ready to get started?
             </h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Browse wholesale products now or register as a supplier to start selling.
+              Browse products now or register as a seller to start listing.
             </p>
             <div className="flex flex-wrap gap-3">
               <Link

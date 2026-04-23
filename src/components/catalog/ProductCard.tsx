@@ -1,6 +1,6 @@
 import { MapPin, Package, Star, Eye, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store";
 
 export interface Product {
@@ -33,10 +33,25 @@ const conditionColor: Record<string, string> = {
 
 const ProductCard = ({ product, linkState }: { product: Product; linkState?: Record<string, unknown> }) => {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const isOwner = !!user && !!product.sellerId && user.id === product.sellerId;
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only navigate if the click wasn't on a button or link already
+    const target = e.target as HTMLElement;
+    if (target.closest("a") || target.closest("button")) return;
+    if (isOwner) {
+      navigate(`/seller/products/${product.id}/edit`);
+    } else {
+      navigate(`/product/${product.id}`, { state: linkState ?? undefined });
+    }
+  };
+
   return (
-    <div className="group bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-elevated transition-all duration-300 overflow-hidden">
+    <div
+      className="group bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-xl hover:scale-[1.02] transition-all duration-200 overflow-hidden cursor-pointer"
+      onClick={handleCardClick}
+    >
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         <img

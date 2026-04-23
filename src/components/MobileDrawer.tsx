@@ -155,7 +155,7 @@ const MainScreen = ({
           onClick={onClose}
           className="px-4 h-11 flex items-center text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.07] transition-colors"
         >
-          UK Wholesale Information and Support
+          Marketplace Information
         </Link>
         <Link
           to="/blog"
