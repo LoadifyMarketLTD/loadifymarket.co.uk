@@ -245,9 +245,9 @@ const AdminFlagged = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Pending", count: byStatus("pending").length, icon: AlertTriangle, color: "#F59E0B", bg: "rgba(245,158,11,0.12)", tab: "pending" },
-          { label: "Reviewed", count: byStatus("reviewed").length, icon: Flag, color: "#60A5FA", bg: "rgba(96,165,250,0.12)", tab: "all" },
+          { label: "Reviewed", count: byStatus("reviewed").length, icon: Flag, color: "#60A5FA", bg: "rgba(96,165,250,0.12)", tab: "reviewed" },
           { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "#22C55E", bg: "rgba(34,197,94,0.12)", tab: "resolved" },
-          { label: "Dismissed", count: byStatus("dismissed").length, icon: Ban, color: "rgba(71,85,105,0.8)", bg: "rgba(148,163,184,0.3)", tab: "all" },
+          { label: "Dismissed", count: byStatus("dismissed").length, icon: Ban, color: "rgba(71,85,105,0.8)", bg: "rgba(148,163,184,0.3)", tab: "dismissed" },
         ].map((stat) => (
           <button
             key={stat.label}
@@ -287,10 +287,12 @@ const AdminFlagged = () => {
           <TabsTrigger value="pending" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">
             Pending <Badge variant="outline" className="ml-2 text-xs border-white/20 text-slate-500">{byStatus("pending").length}</Badge>
           </TabsTrigger>
+          <TabsTrigger value="reviewed" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">Reviewed</TabsTrigger>
           <TabsTrigger value="resolved" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">Resolved</TabsTrigger>
+          <TabsTrigger value="dismissed" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">Dismissed</TabsTrigger>
           <TabsTrigger value="all" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">All</TabsTrigger>
         </TabsList>
-        {(["pending", "resolved", "all"] as const).map((tab) => (
+        {(["pending", "reviewed", "resolved", "dismissed", "all"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
             <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}>
               <div className="px-2 py-2 overflow-x-auto">
