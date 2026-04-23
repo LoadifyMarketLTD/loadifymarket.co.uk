@@ -1,9 +1,10 @@
-import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store';
 import { hasAdminAccess } from './lib/roleUtils';
 import { CartProvider } from './contexts/CartContext';
 import CookieConsent from './components/CookieConsent';
+import Header from './components/Header';
 import { isCapacitorNative } from './lib/capacitor';
 
 import RequireAdmin from './components/auth/RequireAdmin';
@@ -112,6 +113,23 @@ function PageLoader() {
         <p className="mt-4 text-white/85">Loading...</p>
       </div>
     </div>
+  );
+}
+
+function GlobalBackButton() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  return (
+    <button
+      type="button"
+      onClick={() => navigate(-1)}
+      aria-label="Back"
+      className="fixed z-30 left-3 sm:left-4 top-[calc(7rem+env(safe-area-inset-top,0px)+0.5rem)] bg-[#22C55E] hover:bg-[#16A34A] text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-lg shadow-lg shadow-black/35 transition-colors"
+      data-pathname={location.pathname}
+    >
+      ← Back
+    </button>
   );
 }
 
@@ -418,6 +436,8 @@ function App() {
 
   return (
     <CartProvider>
+      <Header forceOpaque />
+      <GlobalBackButton />
       <MaintenanceModeGate>
         <Routes>
           {/* ── Pixel-perfect standalone pages (own Header + Footer) ─────────────── */}

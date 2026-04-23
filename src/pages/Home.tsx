@@ -73,9 +73,6 @@ export default function Home() {
         canonical="/"
       />
 
-      {/* Clears fixed header — see .pt-header-spacer in index.css */}
-      <div className="pt-header-spacer" />
-
       <main id="main-content" className="bg-transparent">
 
         {/* ── 1-2. Hero + Featured Products ────────────────────────────── */}

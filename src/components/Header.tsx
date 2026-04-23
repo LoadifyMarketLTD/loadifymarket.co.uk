@@ -62,6 +62,17 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
     navigate("/login", { replace: true });
   };
 
+  const navLinks = [
+    { to: "/", label: "HOME", strong: true },
+    { to: "/catalog", label: "All Categories", strong: true },
+    ...categories.slice(0, 6).map((cat) => ({
+      to: `/catalog?category=${encodeURIComponent(cat.name)}`,
+      label: cat.name,
+      strong: false,
+    })),
+    { to: "/catalog", label: "More →", strong: true },
+  ];
+
   return (
     <header
       className={[
@@ -217,30 +228,21 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
       {/* ── Row 2: Category quick-links ────────────────────────────────── */}
       <nav aria-label="Category navigation" className="border-t border-white/[0.08]">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-[50px] overflow-x-auto scrollbar-none">
-            <Link
-              to="/catalog"
-              className="text-[13px] font-bold text-[#22C55E] hover:text-white hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
-            >
-              All Categories
-            </Link>
-            <span className="w-px h-4 bg-white/10" aria-hidden="true" />
-            {categories.slice(0, 8).map((cat) => (
+          <div className="h-[50px] overflow-x-auto scrollbar-none">
+            <div className="grid grid-flow-col auto-cols-fr items-center justify-between min-w-[980px] lg:min-w-0 gap-x-8 h-full">
+              {navLinks.map((link) => (
               <Link
-                key={cat.slug}
-                to={`/catalog?category=${encodeURIComponent(cat.name)}`}
-                className="text-[13px] font-semibold text-[#22C55E] hover:text-white hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
+                key={`${link.to}-${link.label}`}
+                to={link.to}
+                className={[
+                  "text-[13px] hover:text-white hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-colors whitespace-nowrap text-center",
+                  link.strong ? "font-bold text-[#22C55E]" : "font-semibold text-[#22C55E]",
+                ].join(" ")}
               >
-                {cat.name}
+                {link.label}
               </Link>
-            ))}
-            <span className="w-px h-4 bg-white/10" aria-hidden="true" />
-            <Link
-              to="/catalog"
-              className="text-[13px] font-bold text-[#22C55E] hover:text-white hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
-            >
-              More →
-            </Link>
+              ))}
+            </div>
           </div>
         </div>
       </nav>
