@@ -63,6 +63,7 @@ export default function Home() {
           as="image"
           href="/hero-marketplace.jpg"
           type="image/jpeg"
+          // @ts-expect-error — fetchpriority is a valid HTML attr not yet in React types
           fetchpriority="high"
         />
       </Helmet>
