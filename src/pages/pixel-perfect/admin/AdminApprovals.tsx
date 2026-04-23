@@ -424,7 +424,7 @@ const AdminSellerManagement = () => {
               {/* Force-activate when Stripe is confirmed ready but status is stuck */}
               {canForceActivate(selectedSeller) && (
                 <Button
-                  className="bg-emerald-600 hover:bg-emerald-700 text-slate-900"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
                   onClick={() => handleForceActivate(selectedSeller.userId)}
                   disabled={actionLoading === selectedSeller.userId}
                 >
@@ -438,7 +438,7 @@ const AdminSellerManagement = () => {
                 <>
                   {selectedSeller.sellerStatus !== "active" && (
                     <Button
-                      className="bg-emerald-600 hover:bg-emerald-700 text-slate-900"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
                       onClick={() => handleForceActivate(selectedSeller.userId)}
                       disabled={actionLoading === selectedSeller.userId}
                       title="Bypass auto-activation checks and activate this seller immediately"

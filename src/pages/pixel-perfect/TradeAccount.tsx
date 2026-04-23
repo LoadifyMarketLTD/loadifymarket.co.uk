@@ -744,7 +744,7 @@ export default function TradeAccount() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-13 text-base font-semibold bg-[#22C55E] hover:bg-[#16a34a] text-white py-3.5 rounded-xl shadow-md transition-colors"
+                className="w-full h-12 text-base font-semibold bg-[#22C55E] hover:bg-[#16a34a] text-white py-3.5 rounded-xl shadow-md transition-colors"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
