@@ -59,7 +59,7 @@ const CategoryGrid = () => {
                     {cat.name}
                   </span>
                   {sub && (
-                    <span className="text-[9px] text-gray-400 uppercase tracking-wide leading-none line-clamp-1 w-full">
+                    <span className="text-[9px] text-gray-500 uppercase tracking-wide leading-none line-clamp-1 w-full">
                       {sub}
                     </span>
                   )}

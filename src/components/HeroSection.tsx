@@ -10,6 +10,8 @@ const HeroSection = () => (
       <img
         src="/hero-marketplace.jpg"
         alt="Loadify Market — UK Online Marketplace"
+        width={1536}
+        height={1024}
         className="w-full max-h-[300px] object-cover object-center rounded-xl"
         loading="eager"
       />
@@ -54,6 +56,8 @@ const HeroSection = () => (
       <img
         src="/hero-marketplace.jpg"
         alt="Loadify Market — UK Online Marketplace"
+        width={1536}
+        height={1024}
         className="w-full h-full object-cover object-center rounded-xl"
         loading="eager"
       />
