@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, Package, ShoppingBag, Flag, BarChart3,
   MessageSquare, Settings, ShieldCheck, ChevronRight, LogOut, Menu, Bell, UserCheck, Banknote, Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, memo } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,7 @@ interface SidebarContentProps {
   onLogout: () => void;
 }
 
-const SidebarContent = ({ displayName, onNavClick, onLogout }: SidebarContentProps) => (
+const SidebarContent = memo(({ displayName, onNavClick, onLogout }: SidebarContentProps) => (
   <div className="flex flex-col h-full">
     <div className="p-5 border-b border-border">
       <div className="flex items-center gap-2">
@@ -93,7 +93,8 @@ const SidebarContent = ({ displayName, onNavClick, onLogout }: SidebarContentPro
       </button>
     </div>
   </div>
-);
+));
+SidebarContent.displayName = "SidebarContent";
 
 const AdminShell = () => {
   const navigate = useNavigate();
@@ -111,14 +112,16 @@ const AdminShell = () => {
       ? `${user.firstName}${user.lastName ? " " + user.lastName : ""}`
       : user?.email ?? "Admin";
 
+  const headerHeight = "calc(7.625rem + env(safe-area-inset-top, 0px))";
+
   return (
-    <div className="flex h-screen bg-transparent overflow-hidden">
+    <div className="flex bg-transparent overflow-hidden" style={{ height: `calc(100dvh - ${headerHeight})`, marginTop: headerHeight }}>
       <aside className="hidden lg:flex w-56 border-r border-border bg-card shrink-0 flex-col">
         <SidebarContent displayName={displayName} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
       </aside>
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
           <aside className="absolute left-0 top-0 h-full w-64 bg-card border-r border-border flex flex-col">
             <SidebarContent displayName={displayName} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
           </aside>
@@ -132,7 +135,7 @@ const AdminShell = () => {
           <span className="font-semibold text-foreground text-sm">Admin Hub</span>
         </header>
         {/* Page content — add bottom padding on mobile so content isn't hidden behind tab bar */}
-        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0 bg-slate-950/15 backdrop-blur-[1px]">
+        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0 bg-white">
           <Outlet />
         </main>
       </div>

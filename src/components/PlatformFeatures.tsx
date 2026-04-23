@@ -101,7 +101,7 @@ const PlatformFeatures = () => {
         {/* Two-column comparison */}
         <div className="grid lg:grid-cols-2 gap-5">
           {/* For Buyers */}
-          <div className="rounded-3xl p-7 bg-white/5 backdrop-blur-md border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] flex flex-col gap-5">
+          <div className="rounded-3xl p-7 bg-white border border-gray-200 shadow-[0_10px_40px_rgba(0,0,0,0.4)] flex flex-col gap-5">
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -142,7 +142,7 @@ const PlatformFeatures = () => {
           </div>
 
           {/* For Sellers */}
-          <div className="rounded-3xl p-7 bg-white/5 backdrop-blur-md border border-emerald-500/20 shadow-[0_10px_40px_rgba(0,0,0,0.4)] flex flex-col gap-5">
+          <div className="rounded-3xl p-7 bg-white border border-emerald-500/20 shadow-[0_10px_40px_rgba(0,0,0,0.4)] flex flex-col gap-5">
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -184,7 +184,7 @@ const PlatformFeatures = () => {
         </div>
 
         {/* Trust stats bar */}
-        <div className="mt-5 rounded-2xl bg-white/5 border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.3)] py-4 px-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+        <div className="mt-5 rounded-2xl bg-white border border-gray-200 shadow-[0_10px_40px_rgba(0,0,0,0.3)] py-4 px-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           {[
             { value: "UK", label: "Marketplace" },
             { value: "Early", label: "Seller Launch" },

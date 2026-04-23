@@ -93,9 +93,9 @@ const BuyerDashboard = () => {
   ).length;
 
   const stats = [
-    { label: "Total Orders", value: String(totalOrders), icon: ShoppingBag, desc: `${inProgress} in progress` },
-    { label: "Wishlist Items", value: String(wishlistCount), icon: Heart, desc: "Saved for later" },
-    { label: "Total Spent", value: `£${totalSpent.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: TrendingUp, desc: "All time" },
+    { label: "Total Orders", value: String(totalOrders), icon: ShoppingBag, desc: `${inProgress} in progress`, to: "/buyer/orders" },
+    { label: "Wishlist Items", value: String(wishlistCount), icon: Heart, desc: "Saved for later", to: "/buyer/wishlist" },
+    { label: "Total Spent", value: `£${totalSpent.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, icon: TrendingUp, desc: "All time", to: "/buyer/orders" },
   ];
 
   const firstName = (user as unknown as { firstName?: string } | null)?.firstName ?? "there";
@@ -112,20 +112,22 @@ const BuyerDashboard = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {stats.map((s) => (
-          <Card key={s.label}>
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <s.icon className="h-5 w-5 text-primary" />
+          <Link key={s.label} to={s.to} aria-label={`View ${s.label.toLowerCase()}`} className="block hover:scale-[1.02] transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
+            <Card>
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <s.icon className="h-5 w-5 text-primary" />
+                  </div>
                 </div>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{loading ? "—" : s.value}</p>
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-xs text-muted-foreground">{s.label}</p>
-                <p className="text-xs text-primary">{s.desc}</p>
-              </div>
-            </CardContent>
-          </Card>
+                <p className="text-2xl font-bold text-foreground">{loading ? "—" : s.value}</p>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
+                  <p className="text-xs text-primary">{s.desc}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 

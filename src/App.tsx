@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store';
 import { hasAdminAccess } from './lib/roleUtils';
@@ -107,10 +107,10 @@ const PPAdminStripeEvents   = lazy(() => import('./pages/pixel-perfect/admin/Adm
 // Loading component
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-950/20 backdrop-blur-[1px]">
+    <div className="flex items-center justify-center min-h-screen bg-white">
       <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800"></div>
-        <p className="mt-4 text-white/85">Loading...</p>
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#22C55E]"></div>
+        <p className="mt-4 text-slate-700">Loading...</p>
       </div>
     </div>
   );
@@ -124,9 +124,9 @@ function GlobalBackButton() {
       type="button"
       onClick={() => navigate(-1)}
       aria-label="Back"
-      className="fixed z-30 right-3 sm:right-4 top-[calc(7rem+env(safe-area-inset-top,0px)+0.5rem)] bg-[#22C55E] hover:bg-[#16A34A] text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-lg shadow-lg shadow-black/35 transition-colors"
+      className="fixed z-30 right-3 sm:right-5 top-[calc(7rem+env(safe-area-inset-top,0px)+0.75rem)] bg-[#22C55E] hover:bg-[#16A34A] text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-lg shadow-lg shadow-black/35 transition-colors"
     >
-      Back →
+      ← Back
     </button>
   );
 }
@@ -190,17 +190,17 @@ function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
   // If maintenance is on and user is not admin, show maintenance screen
   if (maintenanceMode) {
     return (
-      <div className="min-h-screen bg-[#0A1930] flex items-center justify-center px-6">
+      <div className="min-h-screen bg-white flex items-center justify-center px-6">
         <div className="text-center max-w-lg">
           <div className="text-6xl mb-6">🔧</div>
-          <h1 className="text-3xl font-bold text-white mb-3">We're under maintenance</h1>
-          <p className="text-white/60 text-base mb-6">
+          <h1 className="text-3xl font-bold text-slate-900 mb-3">We're under maintenance</h1>
+          <p className="text-slate-600 text-base mb-6">
             Loadify Market is currently undergoing scheduled maintenance. We'll be back shortly.
             Thank you for your patience.
           </p>
-          <p className="text-white/40 text-sm">
+          <p className="text-slate-500 text-sm">
             If you are an admin, please{' '}
-            <a href="/login" className="text-blue-400 underline">sign in</a> to access the platform.
+            <a href="/login" className="text-blue-600 underline">sign in</a> to access the platform.
           </p>
         </div>
       </div>
@@ -210,9 +210,53 @@ function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
 }
 
 
+/**
+ * Returns true when the global public Header + BackButton should be hidden.
+ *
+ * Hidden on:
+ *  • Auth-only full-screen pages (login, register, signup, forgot/reset-password, trade-account)
+ *  • Dashboard shells that own their own navigation (admin/*, buyer/*, seller dashboard paths)
+ *
+ * Kept visible on:
+ *  • All public marketplace content pages (homepage, catalog, product, cart, about, etc.)
+ *  • Public seller store page (/seller/:slug) — identified by the slug not being a known section
+ */
+function useHideGlobalNav(): boolean {
+  const { pathname } = useLocation();
+  const segments = pathname.split('/').filter(Boolean);
+
+  // Auth-only standalone pages where the navbar is intentionally hidden
+  // (forgot-password / reset-password are simple one-field pages; login + signup
+  //  now show the global navbar as explicitly requested)
+  const AUTH_PAGES_HIDE_NAV = new Set([
+    'forgot-password', 'reset-password', 'trade-account',
+  ]);
+  if (segments.length === 1 && AUTH_PAGES_HIDE_NAV.has(segments[0])) return true;
+
+  // Admin dashboard — all /admin/* routes
+  if (segments[0] === 'admin') return true;
+
+  // Buyer dashboard — all /buyer/* routes
+  if (segments[0] === 'buyer') return true;
+
+  // Seller: dashboard shell (/seller exact) and known dashboard sub-routes
+  // /seller/:slug (public store page) must NOT be hidden — checked by exclusion
+  const SELLER_DASHBOARD_SECTIONS = new Set([
+    'products', 'orders', 'shipments', 'returns', 'rfq',
+    'reviews', 'notifications', 'profile', 'settings', 'setup',
+  ]);
+  if (segments[0] === 'seller') {
+    if (segments.length === 1) return true;                              // /seller
+    if (SELLER_DASHBOARD_SECTIONS.has(segments[1])) return true;        // /seller/<section>
+  }
+
+  return false;
+}
+
 function App() {
   const { setUser, setLoading } = useAuthStore();
   const navigate = useNavigate();
+  const hideGlobalNav = useHideGlobalNav();
 
   // ── Android App Links deep link handler ─────────────────────────────────────
   // When the user completes a Stripe payment, Stripe redirects to
@@ -434,8 +478,8 @@ function App() {
 
   return (
     <CartProvider>
-      <Header forceOpaque />
-      <GlobalBackButton />
+      <Header />
+      {!hideGlobalNav && <GlobalBackButton />}
       <MaintenanceModeGate>
         <Routes>
           {/* ── Pixel-perfect standalone pages (own Header + Footer) ─────────────── */}

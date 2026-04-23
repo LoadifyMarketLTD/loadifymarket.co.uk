@@ -174,11 +174,11 @@ const AdminSettings = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-[900px]" style={{ background: "#0A0B1A", minHeight: "100%" }}>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+    <div className="p-4 sm:p-6 space-y-6 max-w-[900px]" style={{ background: "#f8fafc", minHeight: "100%" }}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">System Settings</h1>
-          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>Configure platform behaviour and integrations.</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">System Settings</h1>
+          <p className="text-sm mt-1" style={{ color: "rgba(71,85,105,0.85)" }}>Configure platform behaviour and integrations.</p>
         </div>
         <div className="flex items-center gap-3">
           {saveMsg && (
@@ -199,13 +199,13 @@ const AdminSettings = () => {
       {/* Feature Toggles */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}
+        style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}
       >
-        <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+        <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
+          <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
             <Settings className="h-4 w-4" style={{ color: "#22C55E" }} /> Feature Toggles
           </h2>
-          <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>Enable or disable platform features.</p>
+          <p className="text-xs mt-0.5" style={{ color: "rgba(71,85,105,0.8)" }}>Enable or disable platform features.</p>
         </div>
         <div className="px-6 py-4 space-y-4">
           {[
@@ -218,8 +218,8 @@ const AdminSettings = () => {
           ].map((item) => (
             <div key={item.key} className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-white">{item.label}</p>
-                <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{item.desc}</p>
+                <p className="text-sm font-medium text-slate-900">{item.label}</p>
+                <p className="text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{item.desc}</p>
               </div>
               <Switch checked={features[item.key]} onCheckedChange={() => toggleFeature(item.key)} />
             </div>
@@ -230,10 +230,10 @@ const AdminSettings = () => {
       {/* Platform Config */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}
+        style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}
       >
-        <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+        <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
+          <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
             <Globe className="h-4 w-4" style={{ color: "#22C55E" }} /> Platform Configuration
           </h2>
         </div>
@@ -242,8 +242,8 @@ const AdminSettings = () => {
             <div>
               <Label className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>Platform Name</Label>
               <Input
-                className="mt-1 text-white"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+                className="mt-1 text-slate-900"
+                style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}
                 value={config.platformName}
                 onChange={(e) => setConfig((c) => ({ ...c, platformName: e.target.value }))}
               />
@@ -251,8 +251,8 @@ const AdminSettings = () => {
             <div>
               <Label className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>Support Email</Label>
               <Input
-                className="mt-1 text-white"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+                className="mt-1 text-slate-900"
+                style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}
                 value={config.supportEmail}
                 onChange={(e) => setConfig((c) => ({ ...c, supportEmail: e.target.value }))}
               />
@@ -260,7 +260,7 @@ const AdminSettings = () => {
             <div>
               <Label className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>Default Currency</Label>
               <Select value={config.defaultCurrency} onValueChange={(v) => setConfig((c) => ({ ...c, defaultCurrency: v }))}>
-                <SelectTrigger className="mt-1 text-white" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1 text-slate-900" style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="gbp">GBP (£)</SelectItem>
                   <SelectItem value="eur">EUR (€)</SelectItem>
@@ -271,8 +271,8 @@ const AdminSettings = () => {
             <div>
               <Label className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>Commission Rate (%)</Label>
               <Input
-                className="mt-1 text-white"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+                className="mt-1 text-slate-900"
+                style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}
                 type="number"
                 min="0"
                 max="100"
@@ -284,8 +284,8 @@ const AdminSettings = () => {
             <div>
               <Label className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>Max Upload Size (MB)</Label>
               <Input
-                className="mt-1 text-white"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+                className="mt-1 text-slate-900"
+                style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}
                 type="number"
                 min="1"
                 value={config.maxUploadSizeMb}
@@ -295,8 +295,8 @@ const AdminSettings = () => {
             <div>
               <Label className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>Products per Page</Label>
               <Input
-                className="mt-1 text-white"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+                className="mt-1 text-slate-900"
+                style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}
                 type="number"
                 min="1"
                 value={config.productsPerPage}
@@ -310,13 +310,13 @@ const AdminSettings = () => {
       {/* API Keys */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}
+        style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}
       >
-        <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+        <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
+          <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
             <Key className="h-4 w-4" style={{ color: "#22C55E" }} /> API Keys & Integrations
           </h2>
-          <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>Manage external service connections.</p>
+          <p className="text-xs mt-0.5" style={{ color: "rgba(71,85,105,0.8)" }}>Manage external service connections.</p>
         </div>
         <div className="px-6 py-4 space-y-4">
           <div className="grid grid-cols-1 gap-4">
@@ -327,10 +327,10 @@ const AdminSettings = () => {
                   type={showKey ? "text" : "password"}
                   value="Configured via environment variable"
                   readOnly
-                  className="text-white"
-                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}
+                  className="text-slate-900"
+                  style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(71,85,105,0.85)" }}
                 />
-                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 hover:text-white transition-colors" style={{ color: "rgba(255,255,255,0.4)" }} onClick={() => setShowKey(!showKey)}>
+                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 hover:text-slate-900 transition-colors" style={{ color: "rgba(71,85,105,0.8)" }} onClick={() => setShowKey(!showKey)}>
                   {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
@@ -340,7 +340,7 @@ const AdminSettings = () => {
               <Input
                 value="Configured via environment variable"
                 className="mt-1"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}
+                style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(71,85,105,0.85)" }}
                 readOnly
               />
             </div>
@@ -350,21 +350,21 @@ const AdminSettings = () => {
                 type="password"
                 value="Configured via environment variable"
                 className="mt-1"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)" }}
+                style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(71,85,105,0.85)" }}
                 readOnly
               />
             </div>
           </div>
-          <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>API keys are stored securely as environment variables. Contact your DevOps team to update them.</p>
+          <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(148,163,184,0.3)" }}>
+            <p className="text-xs" style={{ color: "rgba(71,85,105,0.8)" }}>API keys are stored securely as environment variables. Contact your DevOps team to update them.</p>
           </div>
-          <div className="rounded-xl p-3 space-y-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="rounded-xl p-3 space-y-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(148,163,184,0.3)" }}>
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}>Stripe Connect Platform</p>
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-7 text-xs text-white/60 hover:text-white"
+                className="h-7 text-xs text-slate-500 hover:text-slate-900"
                 onClick={handleCheckStripeConnect}
                 disabled={checkingStripe}
               >
@@ -385,24 +385,24 @@ const AdminSettings = () => {
       {/* Database */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}
+        style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}
       >
-        <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+        <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
+          <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
             <Database className="h-4 w-4" style={{ color: "#22C55E" }} /> Database & Cache
           </h2>
         </div>
         <div className="px-6 py-4 space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-white">Clear Application Cache</p>
-              <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>Remove cached data to force fresh queries</p>
+              <p className="text-sm font-medium text-slate-900">Clear Application Cache</p>
+              <p className="text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>Remove cached data to force fresh queries</p>
             </div>
             <Button
               size="sm"
               onClick={handleClearCache}
               disabled={cacheCleared}
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+              style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
             >
               {cacheCleared
                 ? <><CheckCircle2 className="h-3.5 w-3.5 mr-1 text-emerald-400" /> Cleared</>

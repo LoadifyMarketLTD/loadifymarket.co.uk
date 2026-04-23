@@ -34,8 +34,10 @@ const ForgotPassword = () => {
     }
   };
 
+  const headerHeight = "calc(7.625rem + env(safe-area-inset-top, 0px))";
+
   return (
-    <div className="min-h-screen flex">
+    <div className="flex" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
       {/* Left — branding panel */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-hero relative items-center justify-center p-12">
         <div className="absolute inset-0 opacity-5" style={{backgroundImage:"radial-gradient(circle,rgba(255,255,255,0.9) 1px,transparent 1px)",backgroundSize:"24px 24px"}} />
@@ -71,8 +73,8 @@ const ForgotPassword = () => {
       {/* Right — form */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-background">
         <div className="w-full max-w-md space-y-8">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center justify-center gap-2 mb-4">
+          {/* Mobile logo — hidden: global Header already shows the logo */}
+          <div className="hidden items-center justify-center gap-2 mb-4">
             <img src={logo} alt="Loadify Market" className="h-9 w-9" />
             <span className="flex flex-col leading-tight">
               <span className="font-display text-xl font-bold text-foreground">Loadify</span>

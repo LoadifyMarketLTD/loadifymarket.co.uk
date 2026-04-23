@@ -1,3 +1,4 @@
+import sgMail from '@sendgrid/mail';
 import { Handler, HandlerEvent } from '@netlify/functions';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
@@ -83,12 +84,132 @@ interface SellerProfileRow {
   fullName: string | null;
 }
 
+/** Escape a string for safe embedding in HTML to prevent HTML injection. */
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+async function sendWarningEmail(email: string, name: string, company: string): Promise<void> {
+  const apiKey = process.env.SENDGRID_API_KEY;
+  if (!apiKey) throw new Error('Email service not configured');
+  sgMail.setApiKey(apiKey);
+  const siteUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
+  await sgMail.send({
+    to: email,
+    from: process.env.VITE_SUPPORT_EMAIL || 'support@loadifymarket.co.uk',
+    subject: 'Account Warning — Loadify Market',
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">
+        <div style="background:#243b53;padding:20px;text-align:center;">
+          <h1 style="color:#f59e0b;margin:0;">Loadify Market</h1>
+        </div>
+        <div style="background:#fff;padding:30px;margin-top:20px;">
+          <h2 style="color:#243b53;">Account Warning</h2>
+          <p>Hi ${escapeHtml(name || company)},</p>
+          <p>Your seller account on Loadify Market has received a warning from our platform team.</p>
+          <p>Please ensure you are complying with our <a href="${siteUrl}/seller-guidelines" style="color:#f59e0b;">Seller Guidelines</a> and platform policies. Continued violations may result in account suspension.</p>
+          <p>If you believe this is an error or have questions, please contact us at <a href="mailto:support@loadifymarket.co.uk" style="color:#f59e0b;">support@loadifymarket.co.uk</a>.</p>
+        </div>
+        <div style="text-align:center;padding:20px;color:#666;font-size:12px;">
+          <p>Loadify Market — XDrive Logistics Ltd | 101 Cornelian Street, Blackburn, BB1 9QL</p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+interface PendingOnboardSeller {
+  userId: string;
+  email: string;
+  name: string;
+  company: string;
+}
+
+async function findSellersNeedingOnboarding(admin: SupabaseClient): Promise<PendingOnboardSeller[]> {
+  const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+
+  const { data: sellerUsers, error } = await admin
+    .from('users')
+    .select('id, email, firstName, lastName, createdAt')
+    .eq('role', 'seller')
+    .lt('createdAt', cutoff)
+    .order('createdAt', { ascending: false })
+    .returns<UserRow[]>();
+
+  if (error) throw new Error(`users query failed: ${error.message}`);
+  if (!sellerUsers || sellerUsers.length === 0) return [];
+
+  const userIds = sellerUsers.map((u) => u.id);
+  const { data: profiles } = await admin
+    .from('seller_profiles')
+    .select('userId, stripeConnectStatus, storeName, businessName, fullName')
+    .in('userId', userIds)
+    .not('stripeConnectStatus', 'eq', 'active')
+    .returns<SellerProfileRow[]>();
+
+  const noStripeIds = new Set((profiles ?? []).map((p) => p.userId));
+  // Build a Set of all userId values that have any profile row (regardless of Stripe status)
+  const allProfileIds = new Set((profiles ?? []).map((p) => p.userId));
+  const profileMap = new Map((profiles ?? []).map((p) => [p.userId, p]));
+
+  // Include sellers whose profile has no Stripe connection, or have no profile row at all
+  const allPending = sellerUsers.filter(
+    (u) => noStripeIds.has(u.id) || !allProfileIds.has(u.id),
+  );
+
+  return allPending.map((u) => {
+    const p = profileMap.get(u.id);
+    const fullName = p?.fullName?.trim() || [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
+    return {
+      userId: u.id,
+      email: u.email,
+      name: fullName || u.email,
+      company: p?.storeName || p?.businessName || '',
+    };
+  });
+}
+
+async function sendOnboardingReminderEmail(seller: PendingOnboardSeller): Promise<void> {
+  const apiKey = process.env.SENDGRID_API_KEY;
+  if (!apiKey) throw new Error('Email service not configured');
+  sgMail.setApiKey(apiKey);
+  const siteUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
+  await sgMail.send({
+    to: seller.email,
+    from: process.env.VITE_SUPPORT_EMAIL || 'support@loadifymarket.co.uk',
+    subject: 'Complete your Stripe onboarding — Loadify Market',
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">
+        <div style="background:#243b53;padding:20px;text-align:center;">
+          <h1 style="color:#f59e0b;margin:0;">Loadify Market</h1>
+        </div>
+        <div style="background:#fff;padding:30px;margin-top:20px;">
+          <h2 style="color:#243b53;">Complete Your Stripe Onboarding</h2>
+          <p>Hi ${escapeHtml(seller.name)},</p>
+          <p>You registered as a seller on Loadify Market but haven't yet connected a Stripe account. You need to connect Stripe to receive payments for your sales.</p>
+          <p>It only takes a few minutes — click the button below to complete your setup:</p>
+          <a href="${siteUrl}/seller/setup" style="display:inline-block;background:#f59e0b;color:#fff;padding:12px 24px;text-decoration:none;border-radius:5px;margin:16px 0;">Complete Stripe Setup</a>
+          <p style="color:#888;font-size:13px;">Once connected, your store will go live automatically. If you need help, contact us at <a href="mailto:support@loadifymarket.co.uk" style="color:#f59e0b;">support@loadifymarket.co.uk</a>.</p>
+        </div>
+        <div style="text-align:center;padding:20px;color:#666;font-size:12px;">
+          <p>Loadify Market — XDrive Logistics Ltd | 101 Cornelian Street, Blackburn, BB1 9QL</p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+
 async function listSellers(admin: SupabaseClient) {
   const { data: sellerUsers, error: usersError } = await admin
     .from('users')
     .select('id, email, firstName, lastName, createdAt')
     .eq('role', 'seller')
-    .order('createdAt', { ascending: false })
     .returns<UserRow[]>();
 
   if (usersError) {
@@ -199,6 +320,54 @@ export const handler: Handler = async (event) => {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ success: true, userId, sellerStatus: nextStatus }),
+      };
+    }
+
+    if (op === 'warn') {
+      const userId = (body.userId ?? '').trim();
+      if (!userId) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
+      }
+      // Fetch seller email + name
+      const { data: userRow } = await admin
+        .from('users')
+        .select('email, firstName, lastName')
+        .eq('id', userId)
+        .single<{ email: string; firstName: string | null; lastName: string | null }>();
+      if (!userRow) {
+        return { statusCode: 404, body: JSON.stringify({ error: 'Seller not found' }) };
+      }
+      const { data: profile } = await admin
+        .from('seller_profiles')
+        .select('storeName, businessName, fullName')
+        .eq('userId', userId)
+        .single<{ storeName: string | null; businessName: string | null; fullName: string | null }>();
+
+      const name = profile?.fullName?.trim() || [userRow.firstName, userRow.lastName].filter(Boolean).join(' ').trim() || userRow.email;
+      const company = profile?.storeName || profile?.businessName || '';
+      await sendWarningEmail(userRow.email, name, company);
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true }),
+      };
+    }
+
+    if (op === 'onboarding_reminder') {
+      const pending = await findSellersNeedingOnboarding(admin);
+      let sent = 0;
+      for (const seller of pending) {
+        try {
+          await sendOnboardingReminderEmail(seller);
+          sent++;
+        } catch (emailErr) {
+          console.warn(`admin-sellers: failed to send onboarding reminder to ${seller.email}:`, emailErr);
+        }
+      }
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, sent }),
       };
     }
 

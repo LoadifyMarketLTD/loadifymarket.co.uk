@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff, Mail, Lock, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ShieldCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import logo from "@/assets/loadify-logo.svg";
 import { useAuthStore } from "@/store";
 
 /* ── Shared Google / Apple SVG logos ─────────────────────────────────── */
@@ -87,11 +86,14 @@ const Login = () => {
     }
   };
 
+  /* Header height: Row1 72px + Row2 50px = 122px, plus iOS safe-area */
+  const headerHeight = "calc(7.625rem + env(safe-area-inset-top, 0px))";
+
   return (
-    <div className="min-h-screen flex bg-transparent">
+    <div className="flex bg-white" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
 
       {/* ── LEFT — hero image (desktop only, 65%) ───────────────────────── */}
-      <div className="hidden lg:block lg:w-[65%] xl:w-[67%] relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[65%] xl:w-[67%] relative overflow-hidden">
         <img
           src="/hero-marketplace.jpg"
           alt=""
@@ -100,31 +102,12 @@ const Login = () => {
         />
       </div>
 
-      {/* ── RIGHT — login card panel ─────────────────────────────────────── */}
-      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col min-h-screen bg-slate-950/25 backdrop-blur-[1px]">
+      {/* ── RIGHT — login card panel (full height under navbar) ─────────── */}
+      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col bg-white" style={{ minHeight: `calc(100vh - ${headerHeight})` }}>
 
-        {/* Back to site link — top right */}
-        <div className="flex items-center justify-between px-5 sm:px-8 py-4">
-          {/* Mobile logo */}
-          <Link to="/" className="lg:hidden flex items-center gap-2">
-            <img src={logo} alt="Loadify Market" className="h-7 w-7" />
-            <span className="font-bold text-[15px] text-white" style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}>
-              Loadify Market
-            </span>
-          </Link>
-          <div className="hidden lg:block" />
-          <Link
-            to="/"
-            className="flex items-center gap-1.5 text-[13px] text-white/70 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Back to site
-          </Link>
-        </div>
-
-        {/* Centered form */}
-        <div className="flex-1 flex items-center justify-center px-4 py-6 sm:px-8">
-          <div className="w-full max-w-[400px]">
+        {/* Centered form — vertically centred inside the right column */}
+        <div className="flex-1 flex items-center justify-center px-4 py-8 sm:px-8">
+          <div className="w-full">
 
             {/* Form card */}
             <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.07)] border border-gray-100 p-7 sm:p-8">
@@ -254,7 +237,7 @@ const Login = () => {
             </div>
 
             {/* Footer */}
-            <p className="text-center text-[13px] text-white/60 mt-5">
+            <p className="text-center text-[13px] text-slate-500 mt-5">
               Don't have an account?{" "}
               <Link to="/signup" className="text-[#16A34A] font-semibold hover:text-[#15803D] hover:underline transition-colors">
                 Create account

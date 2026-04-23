@@ -240,30 +240,14 @@ export default function TradeAccount() {
 
   const strength = passwordStrength(form.password);
 
+  const headerHeight = "calc(7.625rem + env(safe-area-inset-top, 0px))";
+
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-transparent flex flex-col">
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <header className="bg-[#0B1D3A] text-white py-3 px-4 sm:px-8">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="Loadify Market" className="h-8 w-8" />
-            <span className="flex flex-col leading-tight">
-              <span className="font-bold text-lg text-white">Loadify</span>
-              <span className="font-bold text-sm text-[#F59E0B]">Market</span>
-            </span>
-          </Link>
-          <div className="text-sm text-white/70">
-            Already have an account?{" "}
-            <Link to="/login" className="text-[#F59E0B] hover:underline font-medium">
-              Sign In
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div className="bg-transparent flex flex-col" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
 
       {/* ── Page title ─────────────────────────────────────────────────────── */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/70 py-6 px-4 sm:px-8">
+      <div className="bg-white/80 border-b border-gray-200/70 py-6 px-4 sm:px-8">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl sm:text-3xl font-bold text-[#0B1D3A]">Trade Account</h1>
           <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 inline-flex items-start gap-2 max-w-2xl">
@@ -277,7 +261,7 @@ export default function TradeAccount() {
       </div>
 
       {/* ── Main form area ─────────────────────────────────────────────────── */}
-      <main className="flex-1 py-8 px-4 sm:px-8 bg-slate-950/15 backdrop-blur-[1px]">
+      <main className="flex-1 py-8 px-4 sm:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <form onSubmit={handleSubmit} noValidate>
             {/* 2-column grid on desktop */}
@@ -744,7 +728,7 @@ export default function TradeAccount() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-13 text-base font-semibold bg-[#0B1D3A] hover:bg-[#0d2347] text-white py-3.5 rounded-xl shadow-md transition-colors"
+                className="w-full h-12 text-base font-semibold bg-[#22C55E] hover:bg-[#16a34a] text-white rounded-xl shadow-md transition-colors"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -776,7 +760,7 @@ export default function TradeAccount() {
                 key={point.text}
                 className="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-3 shadow-sm"
               >
-                <div className="h-8 w-8 rounded-full bg-[#0B1D3A] flex items-center justify-center shrink-0">
+                <div className="h-8 w-8 rounded-full bg-[#22C55E] flex items-center justify-center shrink-0">
                   <CheckCircle2 className="h-4 w-4 text-[#F59E0B]" />
                 </div>
                 <p className="font-medium text-gray-800 text-sm">{point.text}</p>
@@ -787,7 +771,7 @@ export default function TradeAccount() {
       </main>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <footer className="mt-12 bg-[#0B1D3A] text-white">
+      <footer className="mt-12 bg-white border-t border-gray-200 text-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-10">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Company info */}
@@ -929,7 +913,7 @@ export default function TradeAccount() {
             </div>
           </div>
 
-          <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-white/40">
+          <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-white/40">
             <p>© {new Date().getFullYear()} Loadify Market Ltd. All rights reserved.</p>
             <div className="flex gap-4">
               <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>

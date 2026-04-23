@@ -62,11 +62,11 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   },
   rejected: {
     label: "Rejected",
-    className: "border-white/10 text-slate-400",
+    className: "border-slate-200 text-slate-400",
   },
   cancelled: {
     label: "Cancelled",
-    className: "border-white/10 text-slate-400",
+    className: "border-slate-200 text-slate-400",
   },
 };
 
@@ -229,18 +229,18 @@ const AdminPayouts = () => {
   const renderTable = (rows: PayoutRequest[]) => (
     <Table>
       <TableHeader>
-        <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Seller</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Amount</TableHead>
-          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Requested</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Status</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase text-right" style={{ color: "rgba(255,255,255,0.4)" }}>Actions</TableHead>
+        <TableRow style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Seller</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Amount</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Requested</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Status</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase text-right" style={{ color: "rgba(71,85,105,0.8)" }}>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {rows.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center py-10 text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <TableCell colSpan={5} className="text-center py-10 text-sm" style={{ color: "rgba(100,116,139,0.65)" }}>
               No payout requests found
             </TableCell>
           </TableRow>
@@ -249,10 +249,10 @@ const AdminPayouts = () => {
             const cfg = statusConfig[req.status] ?? statusConfig.requested;
             const busy = actionId === req.id;
             return (
-              <TableRow key={req.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                <TableCell className="font-medium text-white">{req.sellerName}</TableCell>
-                <TableCell className="font-semibold text-white">{fmtGBP(req.amount)}</TableCell>
-                <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+              <TableRow key={req.id} style={{ borderBottom: "1px solid #ffffff" }}>
+                <TableCell className="font-medium text-slate-900">{req.sellerName}</TableCell>
+                <TableCell className="font-semibold text-slate-900">{fmtGBP(req.amount)}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(71,85,105,0.8)" }}>
                   {fmtDate(req.createdAt)}
                 </TableCell>
                 <TableCell>
@@ -332,8 +332,8 @@ const AdminPayouts = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Payout Requests</h1>
-          <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
+          <h1 className="text-2xl font-bold text-slate-900">Payout Requests</h1>
+          <p className="text-sm mt-1" style={{ color: "rgba(71,85,105,0.8)" }}>
             Review and approve seller payout requests.
           </p>
         </div>
@@ -342,7 +342,7 @@ const AdminPayouts = () => {
           size="sm"
           onClick={fetchRequests}
           disabled={loading}
-          className="border-white/10 text-white/60 hover:bg-white/5 self-start sm:self-auto"
+          className="border-slate-200 text-slate-500 hover:bg-slate-100 self-start sm:self-auto"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
           <span className="ml-2">Refresh</span>
@@ -360,9 +360,9 @@ const AdminPayouts = () => {
           <div
             key={stat.label}
             className="rounded-xl p-4"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+            style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)" }}
           >
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{stat.label}</p>
+            <p className="text-xs" style={{ color: "rgba(71,85,105,0.8)" }}>{stat.label}</p>
             <p className={`text-xl font-bold mt-1 ${stat.accent}`}>{stat.value}</p>
           </div>
         ))}
@@ -388,17 +388,17 @@ const AdminPayouts = () => {
 
       {/* Tabs */}
       <Tabs defaultValue="pending">
-        <TabsList style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
-          <TabsTrigger value="pending" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">
-            Pending <Badge variant="outline" className="ml-2 text-xs border-white/20 text-white/60">{pending.length}</Badge>
+        <TabsList style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <TabsTrigger value="pending" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">
+            Pending <Badge variant="outline" className="ml-2 text-xs border-white/20 text-slate-500">{pending.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="approved" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">
+          <TabsTrigger value="approved" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">
             Approved
           </TabsTrigger>
-          <TabsTrigger value="paid" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">
+          <TabsTrigger value="paid" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">
             Paid
           </TabsTrigger>
-          <TabsTrigger value="all" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">
+          <TabsTrigger value="all" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">
             All
           </TabsTrigger>
         </TabsList>
@@ -407,10 +407,10 @@ const AdminPayouts = () => {
           <TabsContent key={tab} value={tab}>
             {loading ? (
               <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-8 w-8 animate-spin" style={{ color: "rgba(255,255,255,0.3)" }} />
+                <Loader2 className="h-8 w-8 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />
               </div>
             ) : (
-              <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)" }}>
                 <div className="px-2 py-2 overflow-x-auto">
                   {renderTable(
                     tab === "pending" ? pending :

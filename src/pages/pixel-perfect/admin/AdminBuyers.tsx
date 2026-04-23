@@ -51,13 +51,13 @@ const StatCard = ({
 }: { icon: React.ReactNode; label: string; value: number; color: string }) => (
   <div
     className="rounded-xl p-4 flex flex-col gap-1"
-    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+    style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)" }}
   >
     <div className="flex items-center gap-2 mb-1" style={{ color }}>
       {icon}
     </div>
-    <div className="text-2xl font-bold text-white">{value}</div>
-    <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{label}</p>
+    <div className="text-2xl font-bold text-slate-900">{value}</div>
+    <p className="text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{label}</p>
   </div>
 );
 
@@ -67,6 +67,7 @@ const AdminBuyers = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended">("all");
   const [selected, setSelected] = useState<Buyer | null>(null);
   const [detail, setDetail] = useState<BuyerDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -164,20 +165,25 @@ const AdminBuyers = () => {
     }
   };
 
-  const filtered = buyers.filter(
+  const searchFiltered = buyers.filter(
     (b) =>
       b.name.toLowerCase().includes(search.toLowerCase()) ||
       b.email.toLowerCase().includes(search.toLowerCase())
   );
 
-  const suspended = filtered.filter((b) => !b.isActive);
-  const active = filtered.filter((b) => b.isActive);
+  const suspended = searchFiltered.filter((b) => !b.isActive);
+  const active = searchFiltered.filter((b) => b.isActive);
+
+  const filtered =
+    statusFilter === "active" ? active :
+    statusFilter === "suspended" ? suspended :
+    searchFiltered;
 
   return (
-    <div className="p-4 sm:p-6 space-y-6" style={{ background: "#0A0B1A", minHeight: "100%" }}>
-      <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Buyer Management</h1>
-        <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>
+    <div className="p-4 sm:p-6 space-y-6" style={{ background: "#f8fafc", minHeight: "100%" }}>
+      <div className="pb-2" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Buyer Management</h1>
+        <p className="text-sm mt-1" style={{ color: "rgba(71,85,105,0.85)" }}>
           {buyers.length} registered buyer{buyers.length !== 1 ? "s" : ""}
         </p>
       </div>
@@ -191,17 +197,23 @@ const AdminBuyers = () => {
         </div>
       )}
 
-      {/* Stats */}
+      {/* Stats — clickable to filter table */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {[
-          { label: "Total Buyers", count: buyers.length, color: "#60A5FA", bg: "rgba(96,165,250,0.12)" },
-          { label: "Active",       count: active.length, color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
-          { label: "Suspended",   count: suspended.length, color: "#F87171", bg: "rgba(248,113,113,0.12)" },
+          { label: "Total Buyers", count: buyers.length, color: "#60A5FA", bg: "rgba(96,165,250,0.12)", filter: "all" as const },
+          { label: "Active",       count: active.length, color: "#22C55E", bg: "rgba(34,197,94,0.12)",  filter: "active" as const },
+          { label: "Suspended",   count: suspended.length, color: "#F87171", bg: "rgba(248,113,113,0.12)", filter: "suspended" as const },
         ].map((stat) => (
-          <div
+          <button
             key={stat.label}
-            className="rounded-2xl p-5"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}
+            type="button"
+            onClick={() => setStatusFilter(stat.filter)}
+            className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            style={{
+              background: "#ffffff",
+              border: statusFilter === stat.filter ? `2px solid ${stat.color}` : "1px solid rgba(148,163,184,0.35)",
+              boxShadow: "0 4px 24px rgba(15,23,42,0.08)",
+            }}
           >
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
@@ -209,49 +221,49 @@ const AdminBuyers = () => {
             >
               <Users className="h-5 w-5" style={{ color: stat.color }} />
             </div>
-            <div className="text-3xl font-bold text-white">{loading ? "—" : stat.count}</div>
-            <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(255,255,255,0.45)" }}>{stat.label}</p>
-          </div>
+            <div className="text-3xl font-bold text-slate-900">{loading ? "—" : stat.count}</div>
+            <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(71,85,105,0.85)" }}>{stat.label}</p>
+          </button>
         ))}
       </div>
 
       {/* Search */}
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(255,255,255,0.3)" }} />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(100,116,139,0.65)" }} />
         <Input
           placeholder="Search buyers..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9 h-10"
-          style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+          style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", color: "#0f172a" }}
         />
       </div>
 
       {/* Table */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}
+        style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}
       >
         <div className="px-2 py-2 overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Buyer</TableHead>
-                <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Joined</TableHead>
-                <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Status</TableHead>
-                <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Actions</TableHead>
+              <TableRow style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
+                <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Buyer</TableHead>
+                <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Joined</TableHead>
+                <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Status</TableHead>
+                <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(255,255,255,0.3)" }} />
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(100,116,139,0.65)" }} />
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8" style={{ color: "rgba(255,255,255,0.3)" }}>
+                  <TableCell colSpan={4} className="text-center py-8" style={{ color: "rgba(100,116,139,0.65)" }}>
                     <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
                     No buyers found.
                   </TableCell>
@@ -260,7 +272,12 @@ const AdminBuyers = () => {
                 filtered.map((b) => {
                   const statusKey = b.isActive ? "active" : "inactive";
                   return (
-                    <TableRow key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableRow
+                      key={b.id}
+                      className="cursor-pointer hover:bg-slate-50 transition-colors"
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+                      onClick={() => openDetail(b)}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div
@@ -270,24 +287,24 @@ const AdminBuyers = () => {
                             {b.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-white">{b.name}</p>
-                            <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{b.email}</p>
+                            <p className="text-sm font-medium text-slate-900">{b.name}</p>
+                            <p className="text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{b.email}</p>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{b.createdAt}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{b.createdAt}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={statusConfig[statusKey].className}>
                           {statusConfig[statusKey].label}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10"
+                              className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-white/10"
                               disabled={actionLoading === b.id}
                             >
                               {actionLoading === b.id ? (

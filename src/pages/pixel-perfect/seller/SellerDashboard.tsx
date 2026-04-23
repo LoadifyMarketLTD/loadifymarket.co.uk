@@ -199,6 +199,7 @@ const SellerDashboard = () => {
           trend: "up" as const,
           icon: PoundSterling,
           description: "all time",
+          to: "/seller/orders",
         },
         {
           label: "Active Orders",
@@ -207,6 +208,7 @@ const SellerDashboard = () => {
           trend: "up" as const,
           icon: ShoppingCart,
           description: "in progress",
+          to: "/seller/orders",
         },
         {
           label: "Products Listed",
@@ -215,6 +217,7 @@ const SellerDashboard = () => {
           trend: "up" as const,
           icon: Package,
           description: "active",
+          to: "/seller/products",
         },
         {
           label: "Low Stock",
@@ -223,6 +226,7 @@ const SellerDashboard = () => {
           trend: stats.lowStockItems > 0 ? ("down" as const) : ("up" as const),
           icon: TrendingUp,
           description: "items ≤ 5 units",
+          to: "/seller/products",
         },
       ]
     : [];
@@ -259,7 +263,12 @@ const SellerDashboard = () => {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {statsCards.map((stat) => (
-            <div key={stat.label} className="bg-card rounded-xl border border-border p-5 space-y-3 hover:shadow-card transition-shadow">
+            <Link
+              key={stat.label}
+              to={stat.to}
+              aria-label={`View ${stat.label.toLowerCase()}`}
+              className="block bg-card rounded-xl border border-border p-5 space-y-3 hover:shadow-card hover:scale-[1.02] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
               <div className="flex items-center justify-between">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <stat.icon className="h-5 w-5 text-primary" />
@@ -275,7 +284,7 @@ const SellerDashboard = () => {
                 <div className="font-display text-2xl font-bold text-foreground">{stat.value}</div>
                 <p className="text-xs text-muted-foreground mt-0.5">{stat.label} · {stat.description}</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

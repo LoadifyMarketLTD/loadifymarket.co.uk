@@ -71,7 +71,7 @@ const HowItWorksSection = () => (
               </span>
 
               {/* Icon box */}
-              <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex items-center justify-center mb-2.5">
+              <div className="w-11 h-11 rounded-xl bg-white/10 border border-gray-200 shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex items-center justify-center mb-2.5">
                 <step.icon className="h-5 w-5 text-white/80" aria-hidden="true" />
               </div>
 

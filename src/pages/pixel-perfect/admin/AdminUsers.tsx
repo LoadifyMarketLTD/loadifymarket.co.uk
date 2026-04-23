@@ -78,6 +78,7 @@ const AdminUsers = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState<"all" | "buyer" | "seller" | "admin" | "suspended">("all");
   const [selected, setSelected] = useState<User | null>(null);
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -271,51 +272,56 @@ const AdminUsers = () => {
   const renderTable = (data: User[]) => (
     <Table>
       <TableHeader>
-        <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>User</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Role</TableHead>
-          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Joined</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Status</TableHead>
-          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Actions</TableHead>
+        <TableRow style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>User</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Role</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Joined</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Status</TableHead>
+          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
             <TableCell colSpan={5} className="text-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(255,255,255,0.3)" }} />
+              <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(100,116,139,0.65)" }} />
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center py-8" style={{ color: "rgba(255,255,255,0.3)" }}>
+            <TableCell colSpan={5} className="text-center py-8" style={{ color: "rgba(100,116,139,0.65)" }}>
               <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />No users found.
             </TableCell>
           </TableRow>
         ) : (
           data.map((u) => {
-            const roleCfg = roleConfig[u.role] ?? { label: u.role, className: "border-white/10 text-slate-400" };
+            const roleCfg = roleConfig[u.role] ?? { label: u.role, className: "border-slate-200 text-slate-400" };
             const statusKey = u.isActive ? "active" : "inactive";
             return (
-              <TableRow key={u.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+              <TableRow
+                key={u.id}
+                className="cursor-pointer hover:bg-slate-50 transition-colors"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+                onClick={() => openDetail(u)}
+              >
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: "rgba(148,163,184,0.35)", color: "rgba(71,85,105,0.85)" }}>
                       {u.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-white">{u.name}</p>
-                      <p className="text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{u.email}</p>
+                      <p className="text-sm font-medium text-slate-900">{u.name}</p>
+                      <p className="text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{u.email}</p>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell><Badge variant="outline" className={roleCfg.className}>{roleCfg.label}</Badge></TableCell>
-                <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(255,255,255,0.45)" }}>{u.createdAt}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{u.createdAt}</TableCell>
                 <TableCell><Badge variant="outline" className={statusConfig[statusKey].className}>{statusConfig[statusKey].label}</Badge></TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10" disabled={actionLoading === u.id}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-white/10" disabled={actionLoading === u.id}>
                         {actionLoading === u.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
@@ -352,10 +358,10 @@ const AdminUsers = () => {
   );
 
   return (
-    <div className="p-4 sm:p-6 space-y-6" style={{ background: "#0A0B1A", minHeight: "100%" }}>
-      <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <h1 className="text-2xl font-bold text-white tracking-tight">User Management</h1>
-        <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>{users.length} registered users</p>
+    <div className="p-4 sm:p-6 space-y-6" style={{ background: "#f8fafc", minHeight: "100%" }}>
+      <div className="pb-2" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">User Management</h1>
+        <p className="text-sm mt-1" style={{ color: "rgba(71,85,105,0.85)" }}>{users.length} registered users</p>
       </div>
 
       {error && (
@@ -366,49 +372,55 @@ const AdminUsers = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Users", count: users.length, color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
-          { label: "Buyers", count: users.filter((u) => u.role === "buyer").length, color: "#60A5FA", bg: "rgba(96,165,250,0.12)" },
-          { label: "Sellers", count: users.filter((u) => u.role === "seller").length, color: "#A78BFA", bg: "rgba(167,139,250,0.12)" },
-          { label: "Suspended", count: users.filter((u) => !u.isActive).length, color: "#F87171", bg: "rgba(248,113,113,0.12)" },
+          { label: "Total Users", count: users.length, color: "#22C55E", bg: "rgba(34,197,94,0.12)", tab: "all" as const },
+          { label: "Buyers", count: users.filter((u) => u.role === "buyer").length, color: "#60A5FA", bg: "rgba(96,165,250,0.12)", tab: "buyer" as const },
+          { label: "Sellers", count: users.filter((u) => u.role === "seller").length, color: "#A78BFA", bg: "rgba(167,139,250,0.12)", tab: "seller" as const },
+          { label: "Suspended", count: users.filter((u) => !u.isActive).length, color: "#F87171", bg: "rgba(248,113,113,0.12)", tab: "suspended" as const },
         ].map((stat) => (
-          <div
+          <button
             key={stat.label}
-            className="rounded-2xl p-5"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}
+            type="button"
+            onClick={() => setActiveTab(stat.tab)}
+            className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            style={{
+              background: "#ffffff",
+              border: activeTab === stat.tab ? `2px solid ${stat.color}` : "1px solid rgba(148,163,184,0.35)",
+              boxShadow: "0 4px 24px rgba(15,23,42,0.08)",
+            }}
           >
             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: stat.bg }}>
               <Users className="h-5 w-5" style={{ color: stat.color }} />
             </div>
-            <div className="text-3xl font-bold text-white">{stat.count}</div>
-            <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(255,255,255,0.45)" }}>{stat.label}</p>
-          </div>
+            <div className="text-3xl font-bold text-slate-900">{loading ? "—" : stat.count}</div>
+            <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(71,85,105,0.85)" }}>{stat.label}</p>
+          </button>
         ))}
       </div>
 
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(255,255,255,0.3)" }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(100,116,139,0.65)" }} />
           <Input
             placeholder="Search users..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 h-10"
-            style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+            style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
           />
         </div>
       </div>
 
-      <Tabs defaultValue="all">
-        <TabsList style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
-          <TabsTrigger value="all" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">All <Badge variant="outline" className="ml-2 text-xs border-white/20 text-white/60">{filtered.length}</Badge></TabsTrigger>
-          <TabsTrigger value="buyer" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Buyers</TabsTrigger>
-          <TabsTrigger value="seller" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Sellers</TabsTrigger>
-          <TabsTrigger value="admin" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Admins</TabsTrigger>
-          <TabsTrigger value="suspended" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-white/50">Suspended</TabsTrigger>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+        <TabsList style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}>
+          <TabsTrigger value="all" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">All <Badge variant="outline" className="ml-2 text-xs border-white/20 text-slate-500">{filtered.length}</Badge></TabsTrigger>
+          <TabsTrigger value="buyer" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">Buyers</TabsTrigger>
+          <TabsTrigger value="seller" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">Sellers</TabsTrigger>
+          <TabsTrigger value="admin" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">Admins</TabsTrigger>
+          <TabsTrigger value="suspended" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">Suspended</TabsTrigger>
         </TabsList>
         {(["all", "buyer", "seller", "admin", "suspended"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(
                   tab === "all" ? filtered :
@@ -427,7 +439,7 @@ const AdminUsers = () => {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }}>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0" style={{ background: "rgba(148,163,184,0.35)", color: "rgba(71,85,105,0.85)" }}>
                   {selected.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                 </div>
                 {selected.name}
@@ -602,11 +614,11 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 /** Small stat card for activity counts */
 function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
   return (
-    <div className="rounded-xl p-4 flex flex-col gap-2" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+    <div className="rounded-xl p-4 flex flex-col gap-2" style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)" }}>
       <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${color}20`, color }}>
         {icon}
       </div>
-      <div className="text-2xl font-bold text-white">{value}</div>
+      <div className="text-2xl font-bold text-slate-900">{value}</div>
       <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   );

@@ -79,7 +79,7 @@ const SellerJourneySection = () => (
         {STEPS.map((step) => (
           <div
             key={step.id}
-            className="flex items-center gap-4 rounded-2xl px-5 py-5 bg-white/5 backdrop-blur-md border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:border-white/20 hover:shadow-[0_20px_60px_rgba(0,255,150,0.1)]"
+            className="flex items-center gap-4 rounded-2xl px-5 py-5 bg-white border border-gray-200 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:border-white/20 hover:shadow-[0_20px_60px_rgba(0,255,150,0.1)]"
           >
             {/* Icon badge */}
             <div

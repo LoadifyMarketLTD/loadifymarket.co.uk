@@ -39,24 +39,25 @@ const FeaturedProducts = () => {
   if (loading) {
     return (
       <section className="relative min-h-16" aria-label="Marketplace products">
-        <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
+        <div className="min-h-16 flex items-center justify-center">
+          <p className="text-xs text-gray-500">Loading products...</p>
+        </div>
       </section>
     );
   }
 
   return (
     <section className="relative" aria-label="Marketplace products">
-      <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
       <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
 
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-[13px] font-black text-white uppercase tracking-widest">
-              Marketplace Products
-            </h2>
-            <p className="text-[11px] text-white/50 mt-0.5">
-              Listed by verified UK trade suppliers
-            </p>
+              <h2 className="text-[13px] font-black text-gray-900 uppercase tracking-widest">
+                Marketplace Products
+              </h2>
+              <p className="text-[11px] text-gray-500 mt-0.5">
+                Listed by verified UK trade suppliers
+              </p>
           </div>
           {products.length > 0 && (
             <Link
@@ -83,7 +84,7 @@ const FeaturedProducts = () => {
                 <Link
                   key={item.id}
                   to={href}
-                  className="flex flex-col bg-white hover:bg-[#f8f9fb] transition-colors"
+                  className="group flex flex-col bg-white hover:bg-[#f8f9fb] hover:shadow-md hover:scale-[1.02] transition-all duration-200"
                 >
                   {/* Square thumbnail */}
                   <div className="aspect-square bg-gray-50 overflow-hidden">
@@ -95,7 +96,7 @@ const FeaturedProducts = () => {
                         height={400}
                         loading="lazy"
                         decoding="async"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = "none";
                         }}
@@ -130,11 +131,11 @@ const FeaturedProducts = () => {
           </div>
         ) : (
           /* Professional empty state — no fake listings */
-          <div className="border border-white/20 bg-white/5 px-6 py-10">
-            <p className="text-sm font-semibold text-white">
+          <div className="border border-gray-200 bg-white px-6 py-10">
+            <p className="text-sm font-semibold text-gray-900">
               No listings available yet.
             </p>
-            <p className="text-xs text-white/60 mt-1.5 mb-6 max-w-md leading-relaxed">
+            <p className="text-xs text-gray-500 mt-1.5 mb-6 max-w-md leading-relaxed">
               We are currently onboarding verified UK trade suppliers.
               Be among the first to list wholesale products on Loadify Market.
             </p>

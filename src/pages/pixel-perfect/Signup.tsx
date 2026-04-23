@@ -59,6 +59,7 @@ const Signup = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isSeller = searchParams.get("type") === "seller";
+  const isPrivate = searchParams.get("account") === "private";
   const role: "buyer" | "seller" = isSeller ? "seller" : "buyer";
 
   const [f, setF] = useState({
@@ -93,7 +94,7 @@ const Signup = () => {
       setError("First name and last name are required."); return;
     }
     if (!f.email.trim()) { setError("Email address is required."); return; }
-    if (!f.company.trim()) { setError("Company name is required."); return; }
+    if (!isPrivate && !f.company.trim()) { setError("Company name is required."); return; }
     if (f.password.length < 8) {
       setError("Password must be at least 8 characters."); return;
     }
@@ -147,43 +148,77 @@ const Signup = () => {
           <div className="mb-3">
 
             {/* Primary heading bar */}
-            <div className="bg-[#0d2240] px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+            <div className="bg-white border border-gray-300 px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
-                <h1 className="text-white text-xl font-black uppercase tracking-widest leading-tight">
-                  Business Account Registration
+                <h1 className="text-slate-900 text-xl font-black uppercase tracking-widest leading-tight">
+                  {isPrivate ? "Personal Account Registration" : "Business Account Registration"}
                 </h1>
-                <p className="text-white/60 text-[11px] uppercase tracking-widest mt-0.5">
-                  {isSeller ? "Trade Supplier Account — Loadify Market Wholesale Platform" : "Trade Buyer Account — Loadify Market Wholesale Platform"}
+                <p className="text-slate-500 text-[11px] uppercase tracking-widest mt-0.5">
+                  {isSeller
+                    ? isPrivate ? "Private Seller Account — Loadify Market" : "Trade Supplier Account — Loadify Market Wholesale Platform"
+                    : isPrivate ? "Private Buyer Account — Loadify Market" : "Trade Buyer Account — Loadify Market Wholesale Platform"}
                 </p>
               </div>
-              <div className="flex items-center gap-0 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const p = new URLSearchParams(searchParams);
-                    p.delete("type");
-                    setSearchParams(p);
-                  }}
-                  className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-white/30 transition-colors ${
-                    !isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-white/50 hover:text-white"
-                  }`}
-                >
-                  Buyer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const p = new URLSearchParams(searchParams);
-                    p.set("type", "seller");
-                    setSearchParams(p);
-                  }}
-                  className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-l-0 border-white/30 transition-colors ${
-                    isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-white/50 hover:text-white"
-                  }`}
-                >
-                  Supplier
-                </button>
-                <span className="text-white/40 text-[11px] ml-4 hidden sm:block">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 shrink-0">
+                {/* Buyer / Supplier toggle */}
+                <div className="flex items-center gap-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const p = new URLSearchParams(searchParams);
+                      p.delete("type");
+                      setSearchParams(p);
+                    }}
+                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-gray-300 transition-colors ${
+                      !isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    Buyer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const p = new URLSearchParams(searchParams);
+                      p.set("type", "seller");
+                      setSearchParams(p);
+                    }}
+                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-l-0 border-gray-300 transition-colors ${
+                      isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    Supplier
+                  </button>
+                </div>
+                {/* Company / Private toggle */}
+                <div className="flex items-center gap-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const p = new URLSearchParams(searchParams);
+                      p.delete("account");
+                      setSearchParams(p);
+                    }}
+                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-gray-300 transition-colors ${
+                      !isPrivate ? "bg-[#0d2240] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    Company
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const p = new URLSearchParams(searchParams);
+                      p.set("account", "private");
+                      setSearchParams(p);
+                    }}
+                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-l-0 border-gray-300 transition-colors ${
+                      isPrivate ? "bg-[#0d2240] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    Private
+                  </button>
+                </div>
+                <span className="text-slate-500 text-[11px] hidden sm:block">
                   Registered?{" "}
                   <Link to="/login" className="text-[#4ade80] hover:underline font-semibold">
                     Sign In
@@ -198,13 +233,12 @@ const Signup = () => {
                 Important:
               </span>
               <p className="text-[#78350f] text-[11px] leading-snug">
-                This registration is for <strong>trade and wholesale buyers/suppliers only</strong>.
-                All accounts are subject to approval. Personal consumer accounts are not permitted.
-                Fields marked <span className="text-red-700 font-bold">*</span> are mandatory.
-                Already have an account?{" "}
-                <Link to="/login" className="underline font-semibold hover:text-[#92400e]">
-                  Sign in here
-                </Link>.
+                {isPrivate
+                  ? <>This registration is for <strong>individual buyers and sellers</strong>. All accounts are subject to review.</>
+                  : <>This registration is for <strong>trade and wholesale buyers/suppliers only</strong>. All accounts are subject to approval. Personal consumer accounts are not permitted.</>
+                }
+                {" "}Fields marked <span className="text-red-700 font-bold">*</span> are mandatory. Already have an account?{" "}
+                <Link to="/login" className="underline font-semibold hover:text-[#92400e]">Sign in here</Link>.
               </p>
             </div>
 
@@ -288,6 +322,7 @@ const Signup = () => {
                     </label>
                   </div>
 
+                  {!isPrivate && (
                   <div>
                     <label htmlFor="vatNumber" className={lbl}>Tax / VAT Number</label>
                     <input
@@ -296,6 +331,7 @@ const Signup = () => {
                       value={f.vatNumber} onChange={set} className={inputBase}
                     />
                   </div>
+                  )}
 
                   <div>
                     <label htmlFor="customerType" className={lbl}>Customer Type{req}</label>
@@ -347,10 +383,11 @@ const Signup = () => {
                 <div className="px-4 py-3 space-y-2">
 
                   <div>
-                    <label htmlFor="company" className={lbl}>Company{req}</label>
+                    <label htmlFor="company" className={lbl}>Company{!isPrivate && req}</label>
                     <input
                       id="company" name="company" type="text"
-                      autoComplete="organization" required
+                      autoComplete="organization" required={!isPrivate}
+                      placeholder={isPrivate ? "Optional" : ""}
                       value={f.company} onChange={set} className={inputBase}
                     />
                   </div>
@@ -388,7 +425,7 @@ const Signup = () => {
                       />
                       <button
                         type="button"
-                        className="px-3 h-[34px] bg-[#0d2240] hover:bg-[#1a3a5c] text-white text-[11px] font-black uppercase tracking-wide border border-[#0d2240] transition-colors whitespace-nowrap"
+                        className="px-3 h-[34px] bg-[#22C55E] hover:bg-[#16a34a] text-white text-[11px] font-black uppercase tracking-wide border border-[#22C55E] transition-colors whitespace-nowrap"
                       >
                         Find Address
                       </button>
@@ -581,13 +618,13 @@ const Signup = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-14 py-3 bg-[#0d2240] hover:bg-[#1a3a5c] text-white text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-2 border-[#0d2240] w-full lg:min-w-[280px]"
+                    className="px-14 py-3 bg-[#22C55E] hover:bg-[#16a34a] text-white text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-2 border-[#22C55E] w-full lg:min-w-[280px]"
                   >
                     {loading
                       ? "Submitting…"
                       : isSeller
-                      ? "▶  Submit Supplier Application"
-                      : "▶  Create Business Account"}
+                      ? isPrivate ? "▶  Submit Seller Application" : "▶  Submit Supplier Application"
+                      : isPrivate ? "▶  Create Personal Account" : "▶  Create Business Account"}
                   </button>
                   <p className="text-[10px] text-gray-500 lg:text-right leading-relaxed">
                     Fields marked <span className="text-red-600 font-bold">*</span> are mandatory.
