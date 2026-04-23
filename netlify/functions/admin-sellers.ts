@@ -138,6 +138,7 @@ async function findSellersNeedingOnboarding(admin: SupabaseClient): Promise<Pend
     .select('id, email, firstName, lastName, createdAt')
     .eq('role', 'seller')
     .lt('createdAt', cutoff)
+    .order('createdAt', { ascending: false })
     .returns<UserRow[]>();
 
   if (error) throw new Error(`users query failed: ${error.message}`);
@@ -152,11 +153,13 @@ async function findSellersNeedingOnboarding(admin: SupabaseClient): Promise<Pend
     .returns<SellerProfileRow[]>();
 
   const noStripeIds = new Set((profiles ?? []).map((p) => p.userId));
+  // Build a Set of all userId values that have any profile row (regardless of Stripe status)
+  const allProfileIds = new Set((profiles ?? []).map((p) => p.userId));
   const profileMap = new Map((profiles ?? []).map((p) => [p.userId, p]));
 
-  // Also include sellers with no profile row yet (stripeConnectStatus = null)
+  // Include sellers whose profile has no Stripe connection, or have no profile row at all
   const allPending = sellerUsers.filter(
-    (u) => noStripeIds.has(u.id) || !(profiles ?? []).find((p) => p.userId === u.id),
+    (u) => noStripeIds.has(u.id) || !allProfileIds.has(u.id),
   );
 
   return allPending.map((u) => {

@@ -51,7 +51,17 @@ const stripeStatusLabel: Record<string, string> = {
   active:     "Verified",
   restricted: "Pending",
   pending:    "Pending",
+  "":         "Not Connected",
 };
+
+function stripeLabel(status: string | null): string {
+  return status ? (stripeStatusLabel[status] ?? status) : "Not Connected";
+}
+
+function stripeClass(status: string | null): string {
+  if (!status) return "border-slate-200 text-slate-400";
+  return stripeStatusColor[status] ?? "border-slate-200 text-slate-400";
+}
 
 async function authorizedFetch(
   path: string,
@@ -281,15 +291,9 @@ const AdminSellerManagement = () => {
                 </Badge>
               </TableCell>
               <TableCell className="hidden lg:table-cell">
-                {s.stripeConnectStatus ? (
-                  <Badge variant="outline" className={stripeStatusColor[s.stripeConnectStatus] ?? "border-slate-200 text-slate-400"}>
-                    {stripeStatusLabel[s.stripeConnectStatus] ?? s.stripeConnectStatus}
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="border-slate-200 text-slate-400">
-                    Not Connected
-                  </Badge>
-                )}
+                <Badge variant="outline" className={stripeClass(s.stripeConnectStatus)}>
+                  {stripeLabel(s.stripeConnectStatus)}
+                </Badge>
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-1">
@@ -476,19 +480,12 @@ const AdminSellerManagement = () => {
                     {statusLabel[selectedSeller.sellerStatus] ?? selectedSeller.sellerStatus}
                   </Badge>
                 </div>
-                {selectedSeller.stripeConnectStatus ? (
-                  <div>
-                    <span className="text-xs mr-2" style={{ color: "rgba(71,85,105,0.8)" }}>Stripe:</span>
-                    <Badge variant="outline" className={stripeStatusColor[selectedSeller.stripeConnectStatus] ?? "border-slate-200 text-slate-400"}>
-                      {stripeStatusLabel[selectedSeller.stripeConnectStatus] ?? selectedSeller.stripeConnectStatus}
-                    </Badge>
-                  </div>
-                ) : (
-                  <div>
-                    <span className="text-xs mr-2" style={{ color: "rgba(71,85,105,0.8)" }}>Stripe:</span>
-                    <Badge variant="outline" className="border-slate-200 text-slate-400">Not Connected</Badge>
-                  </div>
-                )}
+                <div>
+                  <span className="text-xs mr-2" style={{ color: "rgba(71,85,105,0.8)" }}>Stripe:</span>
+                  <Badge variant="outline" className={stripeClass(selectedSeller.stripeConnectStatus)}>
+                    {stripeLabel(selectedSeller.stripeConnectStatus)}
+                  </Badge>
+                </div>
               </div>
 
               <Button
