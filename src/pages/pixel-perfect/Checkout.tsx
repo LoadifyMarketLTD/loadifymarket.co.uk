@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 import { Link } from "react-router-dom";
@@ -71,10 +71,17 @@ const Checkout = () => {
   const selectedOption: ShippingOption =
     shippingOptions.find((o) => o.methodId === selectedMethodId) ?? SELLER_ARRANGED;
 
+  // Stable sorted cart product IDs — only changes when the product set changes.
+  // This drives the shipping fetch effect without re-triggering on quantity updates.
+  const cartProductIds = useMemo(
+    () => cartItems.map((i) => i.product.id).sort(),
+    [cartItems],
+  );
+
   // Fetch available shipping methods for the cart products
   useEffect(() => {
-    if (cartItems.length === 0) return;
-    const productIds = cartItems.map((item) => item.product.id);
+    if (cartProductIds.length === 0) return;
+    const productIds = cartProductIds;
 
     const fetchShippingOptions = async () => {
       setShippingLoading(true);
@@ -129,7 +136,7 @@ const Checkout = () => {
               name: method.name,
               courier: method.courier ?? null,
               price,
-              dispatchTime: (row as Record<string, unknown>).dispatch_time as string | null ?? null,
+              dispatchTime: (row as Record<string, unknown>).dispatch_time as string | null,
             });
           }
         }
@@ -153,8 +160,7 @@ const Checkout = () => {
     };
 
     void fetchShippingOptions();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartItems.map((i) => i.product.id).join(",")]);
+  }, [cartProductIds]);
   // ────────────────────────────────────────────────────────────────────────
 
   // Sync email once auth resolves (user may be null at initial render)
