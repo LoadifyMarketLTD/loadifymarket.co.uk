@@ -207,6 +207,10 @@ async function sendOnboardingReminderEmail(seller: PendingOnboardSeller): Promis
 
 async function listSellers(admin: SupabaseClient) {
   const { data: sellerUsers, error: usersError } = await admin
+    .from('users')
+    .select('id, email, firstName, lastName, createdAt')
+    .eq('role', 'seller')
+    .returns<UserRow[]>();
 
   if (usersError) {
     throw new Error(`users query failed: ${usersError.message}`);
