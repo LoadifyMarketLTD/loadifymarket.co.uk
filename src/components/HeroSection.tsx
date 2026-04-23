@@ -32,7 +32,7 @@ const HeroSection = () => {
 
   return (
   <section
-    className="relative bg-[#0d2240] bg-cover bg-center bg-no-repeat"
+    className="relative bg-cover bg-center bg-no-repeat"
     aria-label="Loadify Market — UK B2B wholesale marketplace"
     style={{ backgroundImage: "url('/hero-marketplace.jpg')" }}
   >
