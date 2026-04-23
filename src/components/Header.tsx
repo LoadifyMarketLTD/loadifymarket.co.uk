@@ -217,27 +217,27 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
       {/* ── Row 2: Category quick-links ────────────────────────────────── */}
       <nav aria-label="Category navigation" className="border-t border-white/[0.08]">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-x-6 h-[50px] overflow-x-auto scrollbar-none">
+          <div className="flex items-center justify-between h-[50px] overflow-x-auto scrollbar-none">
             <Link
               to="/catalog"
-              className="shrink-0 text-[13px] font-bold text-[#22C55E] hover:text-white hover:bg-white/[0.08] px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+              className="text-[13px] font-bold text-[#22C55E] hover:text-white hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
             >
               All Categories
             </Link>
-            <span className="w-px h-4 bg-white/10 shrink-0" aria-hidden="true" />
+            <span className="w-px h-4 bg-white/10" aria-hidden="true" />
             {categories.slice(0, 8).map((cat) => (
               <Link
                 key={cat.slug}
                 to={`/catalog?category=${encodeURIComponent(cat.name)}`}
-                className="flex items-center shrink-0 text-[13px] font-semibold text-[#22C55E] hover:text-white hover:bg-white/[0.08] px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap"
+                className="text-[13px] font-semibold text-[#22C55E] hover:text-white hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
               >
                 {cat.name}
               </Link>
             ))}
-            <span className="w-px h-4 bg-white/10 shrink-0" aria-hidden="true" />
+            <span className="w-px h-4 bg-white/10" aria-hidden="true" />
             <Link
               to="/catalog"
-              className="shrink-0 text-[13px] font-bold text-[#22C55E] hover:text-white hover:bg-white/[0.08] px-3.5 py-2 rounded-lg transition-colors whitespace-nowrap"
+              className="text-[13px] font-bold text-[#22C55E] hover:text-white hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-colors whitespace-nowrap"
             >
               More →
             </Link>
