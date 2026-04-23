@@ -32,10 +32,13 @@ const HeroSection = () => {
 
   return (
   <section
-    className="bg-[#0d2240]"
+    className="relative bg-cover bg-center bg-no-repeat"
     aria-label="Loadify Market — UK B2B wholesale marketplace"
+    style={{ backgroundImage: "url('/hero-marketplace.jpg')" }}
   >
-    <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8 lg:py-10">
+    {/* Dark overlay — keeps text readable over the background image */}
+    <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
+    <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8 lg:py-10">
       <div className="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-10">
 
         {/* ── Left: headline + sub-text + CTAs ────────────────────────── */}
