@@ -31,17 +31,7 @@ const BreadcrumbNav = ({ items, showBack = true, backLabel, backTo }: Breadcrumb
   const lastItem = items[items.length - 1];
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-2 py-3 sm:py-4 min-w-0">
-      {showBack && (
-        <button
-          onClick={handleBack}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors sm:mr-4 shrink-0"
-        >
-          <ArrowLeft className="h-4 w-4 shrink-0" />
-          <span className="truncate">{backLabel || "Back"}</span>
-        </button>
-      )}
-
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-3 sm:py-4 min-w-0">
       {/* Mobile: collapsed breadcrumb (first → … → last) */}
       {hasCollapse && (
         <nav aria-label="Breadcrumb" className="flex sm:hidden items-center gap-1 text-sm min-w-0">
@@ -90,6 +80,16 @@ const BreadcrumbNav = ({ items, showBack = true, backLabel, backTo }: Breadcrumb
           );
         })}
       </nav>
+
+      {showBack && (
+        <button
+          onClick={handleBack}
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors sm:ml-4 shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4 shrink-0" />
+          <span className="truncate">{backLabel || "Back"}</span>
+        </button>
+      )}
     </div>
   );
 };

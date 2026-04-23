@@ -1,24 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff, Mail, Lock, ArrowLeft, ShieldCheck, CheckCircle2, Zap, Users } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowLeft, ShieldCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import logo from "@/assets/loadify-logo.svg";
 import { useAuthStore } from "@/store";
-
-/* ── Left-panel trust stats ─────────────────────────────────────────── */
-const TRUST_STATS = [
-  { value: "500+", label: "Verified Sellers" },
-  { value: "0%",   label: "Commission Fee"   },
-  { value: "24/7", label: "UK Support"       },
-];
-
-/* ── Left-panel feature bullets ──────────────────────────────────────── */
-const FEATURES = [
-  { Icon: CheckCircle2, text: "Free to register as a buyer" },
-  { Icon: ShieldCheck,  text: "Secured payments via Stripe" },
-  { Icon: Zap,          text: "Same-day seller activation"  },
-  { Icon: Users,        text: "Growing UK seller community" },
-];
 
 /* ── Shared Google / Apple SVG logos ─────────────────────────────────── */
 const GoogleIcon = () => (
@@ -105,63 +90,20 @@ const Login = () => {
   return (
     <div className="min-h-screen flex bg-transparent">
 
-      {/* ── LEFT — dark navy branding panel (desktop only) ─────────────── */}
-      <div className="hidden lg:flex lg:w-[44%] xl:w-[42%] bg-[#0A1930] relative flex-col items-center justify-center p-10 xl:p-14 overflow-hidden">
-        {/* Subtle dot-grid texture */}
-        <div
+      {/* ── LEFT — hero image (desktop only, 65%) ───────────────────────── */}
+      <div className="hidden lg:block lg:w-[65%] xl:w-[67%] relative overflow-hidden">
+        <img
+          src="/hero-marketplace.jpg"
+          alt=""
           aria-hidden="true"
-          className="absolute inset-0 opacity-[0.04]"
-          style={{ backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", backgroundSize: "28px 28px" }}
+          className="absolute inset-0 w-full h-full object-cover object-center"
         />
-        {/* Soft green glow */}
-        <div aria-hidden="true" className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[28rem] h-[28rem] bg-[#22C55E]/10 rounded-full blur-[100px] pointer-events-none" />
-
-        <div className="relative z-10 max-w-xs w-full space-y-8">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="Loadify Market" className="h-11 w-11" />
-            <div className="flex flex-col leading-none">
-              <span className="text-[22px] font-bold text-white" style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif", letterSpacing: "-0.02em" }}>Loadify</span>
-              <span className="text-[20px] font-bold text-[#22C55E]" style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif", letterSpacing: "-0.02em" }}>Market</span>
-            </div>
-          </div>
-
-          {/* Headline */}
-          <div className="space-y-3">
-            <h2 className="text-[26px] font-bold text-white leading-tight" style={{ letterSpacing: "-0.02em" }}>
-              The UK's Multi-Category Wholesale Marketplace
-            </h2>
-            <p className="text-white/55 text-[15px] leading-relaxed">
-              Connecting verified UK sellers with buyers across every category — secure, modern, and commission-free.
-            </p>
-          </div>
-
-          {/* Trust stats */}
-          <div className="grid grid-cols-3 gap-3">
-            {TRUST_STATS.map(({ value, label }) => (
-              <div key={label} className="rounded-xl bg-white/[0.05] border border-white/[0.08] p-3 text-center">
-                <div className="text-[22px] font-bold text-[#22C55E] leading-none">{value}</div>
-                <div className="text-white/45 text-[11px] mt-1.5 leading-tight">{label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Feature bullets */}
-          <div className="space-y-3">
-            {FEATURES.map(({ Icon, text }) => (
-              <div key={text} className="flex items-center gap-3">
-                <Icon className="h-4 w-4 text-[#22C55E] shrink-0" />
-                <span className="text-white/65 text-sm">{text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
-      {/* ── RIGHT — form panel ─────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-h-screen bg-slate-950/25 backdrop-blur-[1px]">
+      {/* ── RIGHT — login card panel ─────────────────────────────────────── */}
+      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col min-h-screen bg-slate-950/25 backdrop-blur-[1px]">
 
-        {/* Top bar */}
+        {/* Back to site link — top right */}
         <div className="flex items-center justify-between px-5 sm:px-8 py-4">
           {/* Mobile logo */}
           <Link to="/" className="lg:hidden flex items-center gap-2">
@@ -312,7 +254,7 @@ const Login = () => {
             </div>
 
             {/* Footer */}
-            <p className="text-center text-[13px] text-gray-500 mt-5">
+            <p className="text-center text-[13px] text-white/60 mt-5">
               Don't have an account?{" "}
               <Link to="/signup" className="text-[#16A34A] font-semibold hover:text-[#15803D] hover:underline transition-colors">
                 Create account
