@@ -2,7 +2,7 @@
 
 **UK multi-category physical goods marketplace**, operated by XDrive Logistics Ltd (Co. No: 13171804, VAT: GB375949535).
 
-Independent UK sellers list and sell physical products across all consumer goods categories. The platform does not own inventory, hold or store products, or operate a depot — sellers manage their own inventory and fulfil orders directly. Buyers browse, purchase via Stripe, and receive orders from sellers with full shipment tracking.
+Independent and company UK sellers list and sell physical products across all consumer goods categories. The platform does not own inventory, hold or store products, or operate a depot — sellers manage their own inventory and fulfil orders directly. Buyers browse, purchase via Stripe, and receive orders from sellers with full shipment tracking.
 
 ---
 
