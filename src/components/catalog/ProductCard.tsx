@@ -36,7 +36,7 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
   const navigate = useNavigate();
   const isOwner = !!user && !!product.sellerId && user.id === product.sellerId;
 
-  const handleCardClick = (e: React.MouseEvent) => {
+  const handleCardClick = (e: React.MouseEvent | React.KeyboardEvent) => {
     // Only navigate if the click wasn't on a button or link already
     const target = e.target as HTMLElement;
     if (target.closest("a") || target.closest("button")) return;
@@ -49,8 +49,11 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className="group bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-xl hover:scale-[1.02] transition-all duration-200 overflow-hidden cursor-pointer"
       onClick={handleCardClick}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCardClick(e); } }}
     >
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
