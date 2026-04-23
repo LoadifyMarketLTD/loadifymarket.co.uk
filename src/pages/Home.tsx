@@ -94,82 +94,73 @@ export default function Home() {
         {/* ── 2. Real products — immediately under hero ────────────────── */}
         <FeaturedProducts />
 
-        <div
-          className="relative mx-2 sm:mx-4 lg:mx-6 my-4 overflow-hidden border border-white/80 shadow-[0_18px_45px_rgba(13,34,64,0.18)] bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/hero-marketplace-flipped.jpg')" }}
-        >
-          <div className="absolute inset-0 bg-white/85" aria-hidden="true" />
+        {/* ── 3. Trust bar ─────────────────────────────────────────────── */}
+        <TrustStrip />
 
-          <div className="relative z-10">
-            {/* ── 3. Trust bar ───────────────────────────────────────────── */}
-            <TrustStrip />
+        {/* ── 4. Category grid ─────────────────────────────────────────── */}
+        <CategoryGrid />
 
-            {/* ── 4. Category grid ───────────────────────────────────────── */}
-            <CategoryGrid />
+        {/* ── 5. How It Works ──────────────────────────────────────────── */}
+        <section className="bg-[#f4f5f7] border-b border-gray-200" aria-labelledby="how-heading">
+          <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-10">
 
-            {/* ── 5. How It Works ────────────────────────────────────────── */}
-            <section className="bg-transparent border-b border-gray-200" aria-labelledby="how-heading">
-              <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-10">
+            <div className="mb-6">
+              <h2
+                id="how-heading"
+                className="text-[13px] font-black text-gray-900 uppercase tracking-widest"
+              >
+                How It Works — For Buyers
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">
+                From browsing to delivery in three simple steps
+              </p>
+            </div>
 
-                <div className="mb-6">
-                  <h2
-                    id="how-heading"
-                    className="text-[13px] font-black text-gray-900 uppercase tracking-widest"
-                  >
-                    How It Works — For Buyers
-                  </h2>
-                  <p className="text-xs text-gray-500 mt-1">
-                    From browsing to delivery in three simple steps
-                  </p>
-                </div>
+            {/* 3-step grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-gray-300">
+              {HOW_IT_WORKS.map((step) => {
+                const Icon = step.icon;
+                return (
+                  <div key={step.num} className="bg-white px-6 py-6 flex flex-col gap-4">
+                    {/* Step badge + icon row */}
+                    <div className="flex items-center gap-3">
+                      <span className="w-10 h-10 bg-[#0d2240] text-white text-base font-black flex items-center justify-center shrink-0">
+                        {step.num}
+                      </span>
+                      <span className="w-10 h-10 bg-[#f4f5f7] flex items-center justify-center shrink-0">
+                        <Icon className="h-5 w-5 text-[#0d2240]" aria-hidden="true" />
+                      </span>
+                    </div>
+                    {/* Text */}
+                    <div>
+                      <p className="text-sm font-black text-gray-900 uppercase tracking-wide mb-1.5">
+                        {step.title}
+                      </p>
+                      <p className="text-xs text-gray-500 leading-relaxed">{step.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
-                {/* 3-step grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-gray-300">
-                  {HOW_IT_WORKS.map((step) => {
-                    const Icon = step.icon;
-                    return (
-                      <div key={step.num} className="bg-white px-6 py-6 flex flex-col gap-4">
-                        {/* Step badge + icon row */}
-                        <div className="flex items-center gap-3">
-                          <span className="w-10 h-10 bg-[#0d2240] text-white text-base font-black flex items-center justify-center shrink-0">
-                            {step.num}
-                          </span>
-                          <span className="w-10 h-10 bg-[#f4f5f7] flex items-center justify-center shrink-0">
-                            <Icon className="h-5 w-5 text-[#0d2240]" aria-hidden="true" />
-                          </span>
-                        </div>
-                        {/* Text */}
-                        <div>
-                          <p className="text-sm font-black text-gray-900 uppercase tracking-wide mb-1.5">
-                            {step.title}
-                          </p>
-                          <p className="text-xs text-gray-500 leading-relaxed">{step.desc}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+            {/* CTA row */}
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+              <Link
+                to="/catalog"
+                className="px-7 py-2.5 bg-[#0d2240] text-white text-xs font-black uppercase tracking-wide hover:bg-[#1a3a5c] transition-colors text-center"
+              >
+                Browse Marketplace
+              </Link>
+              <Link
+                to="/register"
+                className="px-7 py-2.5 border border-[#0d2240] text-[#0d2240] text-xs font-black uppercase tracking-wide hover:bg-[#0d2240] hover:text-white transition-colors text-center"
+              >
+                Create Buyer Account
+              </Link>
+            </div>
 
-                {/* CTA row */}
-                <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                  <Link
-                    to="/catalog"
-                    className="px-7 py-2.5 bg-[#0d2240] text-white text-xs font-black uppercase tracking-wide hover:bg-[#1a3a5c] transition-colors text-center"
-                  >
-                    Browse Marketplace
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="px-7 py-2.5 border border-[#0d2240] text-[#0d2240] text-xs font-black uppercase tracking-wide hover:bg-[#0d2240] hover:text-white transition-colors text-center"
-                  >
-                    Create Buyer Account
-                  </Link>
-                </div>
-
-              </div>
-            </section>
           </div>
-        </div>
+        </section>
 
         {/* ── 6. Seller CTA banner ─────────────────────────────────────── */}
         <section className="bg-[#0d2240]" aria-label="Seller registration">
