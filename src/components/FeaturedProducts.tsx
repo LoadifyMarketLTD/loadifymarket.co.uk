@@ -39,7 +39,9 @@ const FeaturedProducts = () => {
   if (loading) {
     return (
       <section className="relative min-h-16" aria-label="Marketplace products">
-        <div className="min-h-16" aria-hidden="true" />
+        <div className="min-h-16 flex items-center justify-center">
+          <p className="text-xs text-gray-500">Loading products...</p>
+        </div>
       </section>
     );
   }
