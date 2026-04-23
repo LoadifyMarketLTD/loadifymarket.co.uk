@@ -248,6 +248,13 @@ function useHideGlobalNav(): boolean {
   ]);
   if (segments[0] === 'seller') {
     if (segments.length === 1) return true;                              // /seller
+    // Standalone product create/edit pages (/seller/products/new,
+    // /seller/products/:id/edit) render outside the shell and need the global
+    // back button so sellers can navigate back to their products list.
+    if (segments[1] === 'products' && segments.length >= 3) return false;
+    // Seller setup/onboarding page — standalone, outside the shell, needs global
+    // back button so sellers can return to the previous step.
+    if (segments[1] === 'setup') return false;
     if (SELLER_DASHBOARD_SECTIONS.has(segments[1])) return true;        // /seller/<section>
   }
 
