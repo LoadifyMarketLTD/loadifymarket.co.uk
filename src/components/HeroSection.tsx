@@ -32,9 +32,8 @@ const HeroSection = () => {
 
   return (
   <section
-    className="relative bg-cover bg-center bg-no-repeat"
+    className="relative"
     aria-label="Loadify Market — UK B2B wholesale marketplace"
-    style={{ backgroundImage: "url('/hero-marketplace.jpg')" }}
   >
     {/* Dark overlay — keeps text readable over the background image */}
     <div className="absolute inset-0 bg-black/40" aria-hidden="true" />

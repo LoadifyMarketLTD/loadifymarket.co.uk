@@ -88,11 +88,17 @@ export default function Home() {
 
       <main id="main-content" className="bg-[#f4f5f7]">
 
-        {/* ── 1. Hero ──────────────────────────────────────────────────── */}
-        <HeroSection />
+        {/* ── 1-2. Shared background: hero + products (continuous flow) ── */}
+        <section
+          className="bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/hero-marketplace.jpg')" }}
+        >
+          {/* ── 1. Hero ────────────────────────────────────────────────── */}
+          <HeroSection />
 
-        {/* ── 2. Real products — immediately under hero ────────────────── */}
-        <FeaturedProducts />
+          {/* ── 2. Real products — immediately under hero ─────────────── */}
+          <FeaturedProducts />
+        </section>
 
         {/* ── 3. Trust bar ─────────────────────────────────────────────── */}
         <TrustStrip />

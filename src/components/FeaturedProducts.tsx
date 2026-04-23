@@ -36,11 +36,18 @@ const FeaturedProducts = () => {
       });
   }, []);
 
-  if (loading) return <section className="bg-[#0d2240]" aria-label="Marketplace products" style={{ minHeight: "4rem" }} />;
+  if (loading) {
+    return (
+      <section className="relative" aria-label="Marketplace products" style={{ minHeight: "4rem" }}>
+        <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
+      </section>
+    );
+  }
 
   return (
-    <section className="bg-[#0d2240] border-b border-[#1a3a5c]" aria-label="Marketplace products">
-      <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
+    <section className="relative" aria-label="Marketplace products">
+      <div className="absolute inset-0 bg-black/20" aria-hidden="true" />
+      <div className="relative z-10 w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
 
         <div className="flex items-center justify-between mb-4">
           <div>
