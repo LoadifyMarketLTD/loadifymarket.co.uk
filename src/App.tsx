@@ -125,7 +125,7 @@ function GlobalBackButton() {
       type="button"
       onClick={() => navigate(-1)}
       aria-label="Back"
-      className="fixed z-30 right-3 sm:right-5 top-[calc(7rem+env(safe-area-inset-top,0px)+0.75rem)] bg-[#22C55E] hover:bg-[#16A34A] text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-lg shadow-lg shadow-black/35 transition-colors"
+      className="fixed z-30 right-3 sm:right-5 top-[calc(7rem+env(safe-area-inset-top,0px)+0.75rem)] bg-[#22C55E] hover:bg-[#16A34A] text-[#0d2240] text-xs sm:text-sm font-semibold px-3 py-2 rounded-lg shadow-lg shadow-black/35 transition-colors"
     >
       ← Back
     </button>

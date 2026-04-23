@@ -38,9 +38,22 @@ const FeaturedProducts = () => {
 
   if (loading) {
     return (
-      <section className="relative min-h-16" aria-label="Marketplace products">
-        <div className="min-h-16 flex items-center justify-center">
-          <p className="text-xs text-gray-500">Loading products...</p>
+      <section className="relative" aria-label="Marketplace products">
+        <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
+          <div className="h-4 w-44 bg-gray-100 rounded mb-1 animate-pulse" />
+          <div className="h-3 w-56 bg-gray-100 rounded mb-4 animate-pulse" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-gray-200">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="bg-white">
+                <div className="aspect-square bg-gray-100 animate-pulse" />
+                <div className="px-2.5 py-2.5 space-y-1.5">
+                  <div className="h-2.5 w-16 bg-gray-100 rounded animate-pulse" />
+                  <div className="h-2.5 w-full bg-gray-100 rounded animate-pulse" />
+                  <div className="h-3.5 w-12 bg-gray-100 rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     );
@@ -62,7 +75,7 @@ const FeaturedProducts = () => {
           {products.length > 0 && (
             <Link
               to="/catalog"
-              className="text-[11px] font-bold text-[#22C55E] uppercase tracking-wide hover:underline flex items-center gap-1"
+              className="text-[11px] font-bold text-[#15803d] uppercase tracking-wide hover:underline flex items-center gap-1"
             >
               Browse All <ArrowRight className="h-3 w-3" />
             </Link>

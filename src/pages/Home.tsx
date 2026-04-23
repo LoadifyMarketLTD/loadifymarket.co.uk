@@ -168,7 +168,7 @@ export default function Home() {
                 <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5">
                   {SELLER_BENEFITS.map((t) => (
                     <span key={t} className="text-[11px] text-gray-600 flex items-center gap-1.5">
-                      <span className="text-[#22C55E] font-bold">✓</span> {t}
+                      <span className="text-[#15803d] font-bold">✓</span> {t}
                     </span>
                   ))}
                 </div>
