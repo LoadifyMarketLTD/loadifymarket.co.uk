@@ -147,12 +147,12 @@ const Signup = () => {
           <div className="mb-3">
 
             {/* Primary heading bar */}
-            <div className="bg-[#0d2240] px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+            <div className="bg-white border border-gray-300 px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
               <div>
-                <h1 className="text-white text-xl font-black uppercase tracking-widest leading-tight">
+                <h1 className="text-slate-900 text-xl font-black uppercase tracking-widest leading-tight">
                   Business Account Registration
                 </h1>
-                <p className="text-white/60 text-[11px] uppercase tracking-widest mt-0.5">
+                <p className="text-slate-500 text-[11px] uppercase tracking-widest mt-0.5">
                   {isSeller ? "Trade Supplier Account — Loadify Market Wholesale Platform" : "Trade Buyer Account — Loadify Market Wholesale Platform"}
                 </p>
               </div>
@@ -164,9 +164,9 @@ const Signup = () => {
                     p.delete("type");
                     setSearchParams(p);
                   }}
-                  className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-white/30 transition-colors ${
-                    !isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-white/50 hover:text-white"
-                  }`}
+                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-gray-300 transition-colors ${
+                      !isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
+                    }`}
                 >
                   Buyer
                 </button>
@@ -177,13 +177,13 @@ const Signup = () => {
                     p.set("type", "seller");
                     setSearchParams(p);
                   }}
-                  className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-l-0 border-white/30 transition-colors ${
-                    isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-white/50 hover:text-white"
-                  }`}
+                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-l-0 border-gray-300 transition-colors ${
+                      isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
+                    }`}
                 >
                   Supplier
                 </button>
-                <span className="text-white/40 text-[11px] ml-4 hidden sm:block">
+                <span className="text-slate-500 text-[11px] ml-4 hidden sm:block">
                   Registered?{" "}
                   <Link to="/login" className="text-[#4ade80] hover:underline font-semibold">
                     Sign In
@@ -388,7 +388,7 @@ const Signup = () => {
                       />
                       <button
                         type="button"
-                        className="px-3 h-[34px] bg-[#0d2240] hover:bg-[#1a3a5c] text-white text-[11px] font-black uppercase tracking-wide border border-[#0d2240] transition-colors whitespace-nowrap"
+                        className="px-3 h-[34px] bg-[#22C55E] hover:bg-[#16a34a] text-white text-[11px] font-black uppercase tracking-wide border border-[#22C55E] transition-colors whitespace-nowrap"
                       >
                         Find Address
                       </button>
@@ -581,7 +581,7 @@ const Signup = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-14 py-3 bg-[#0d2240] hover:bg-[#1a3a5c] text-white text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-2 border-[#0d2240] w-full lg:min-w-[280px]"
+                    className="px-14 py-3 bg-[#22C55E] hover:bg-[#16a34a] text-white text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-2 border-[#22C55E] w-full lg:min-w-[280px]"
                   >
                     {loading
                       ? "Submitting…"

@@ -114,7 +114,7 @@ const BuyerShell = () => {
       </aside>
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+          <div className="absolute inset-0 bg-transparent" onClick={() => setSidebarOpen(false)} />
           <aside className="absolute left-0 top-0 h-full w-64 bg-card border-r border-border flex flex-col">
             <SidebarContent displayName={displayName} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
           </aside>
@@ -128,7 +128,7 @@ const BuyerShell = () => {
           <span className="font-semibold text-foreground text-sm">Buyer Hub</span>
         </header>
         {/* Page content — add bottom padding on mobile so content isn't hidden behind tab bar */}
-        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0 bg-slate-950/15 backdrop-blur-[1px]">
+        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0 bg-white">
           <Outlet />
         </main>
       </div>

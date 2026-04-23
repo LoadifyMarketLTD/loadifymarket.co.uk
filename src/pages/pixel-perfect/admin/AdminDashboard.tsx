@@ -26,7 +26,7 @@ interface DashboardStats {
   pendingSellers: number;
 }
 
-const DEFAULT_STATUS_COLOR = "border-white/10 text-slate-400";
+const DEFAULT_STATUS_COLOR = "border-slate-200 text-slate-400";
 
 const statusColor: Record<string, string> = {
   active:    "border-emerald-500/30 text-emerald-400 bg-emerald-500/10",
@@ -139,10 +139,10 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-7" style={{ background: "#0A0B1A", minHeight: "100%" }}>
-      <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Admin Overview</h1>
-        <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.45)" }}>
+    <div className="p-4 sm:p-6 space-y-7" style={{ background: "#f8fafc", minHeight: "100%" }}>
+      <div className="pb-2" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Admin Overview</h1>
+        <p className="text-sm mt-1" style={{ color: "rgba(71,85,105,0.85)" }}>
           Platform health and key metrics at a glance.
         </p>
       </div>
@@ -165,9 +165,9 @@ const AdminDashboard = () => {
               key={s.label}
               className="rounded-2xl p-5"
               style={{
-                background: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
+                background: "#ffffff",
+                border: "1px solid rgba(148,163,184,0.35)",
+                boxShadow: "0 4px 24px rgba(15,23,42,0.08)",
               }}
             >
               <div className="flex items-center justify-between mb-4">
@@ -191,10 +191,10 @@ const AdminDashboard = () => {
                   {s.change}
                 </span>
               </div>
-              <p className="text-3xl font-bold text-white">
+              <p className="text-3xl font-bold text-slate-900">
                 {loading ? "—" : s.value}
               </p>
-              <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(255,255,255,0.45)" }}>
+              <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(71,85,105,0.85)" }}>
                 {s.label}
               </p>
             </div>
@@ -207,18 +207,18 @@ const AdminDashboard = () => {
         <div
           className="lg:col-span-2 rounded-2xl overflow-hidden"
           style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
+            background: "#ffffff",
+            border: "1px solid rgba(148,163,184,0.35)",
+            boxShadow: "0 4px 24px rgba(15,23,42,0.08)",
           }}
         >
           <div
             className="flex items-center justify-between px-6 py-4"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+            style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}
           >
             <div>
-              <h2 className="text-sm font-semibold text-white">Recent Seller Registrations</h2>
-              <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>Latest seller accounts</p>
+              <h2 className="text-sm font-semibold text-slate-900">Recent Seller Registrations</h2>
+              <p className="text-xs mt-0.5" style={{ color: "rgba(71,85,105,0.8)" }}>Latest seller accounts</p>
             </div>
             <Button
               size="sm"
@@ -238,31 +238,31 @@ const AdminDashboard = () => {
           <div className="px-6 py-4">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" style={{ color: "rgba(255,255,255,0.3)" }} />
+                <Loader2 className="h-6 w-6 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />
               </div>
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                    <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Business Name</TableHead>
-                    <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Email</TableHead>
-                    <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Date</TableHead>
-                    <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(255,255,255,0.4)" }}>Status</TableHead>
+                  <TableRow style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
+                    <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Business Name</TableHead>
+                    <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Email</TableHead>
+                    <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Date</TableHead>
+                    <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {recentSellers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8" style={{ color: "rgba(255,255,255,0.3)" }}>
+                      <TableCell colSpan={4} className="text-center py-8" style={{ color: "rgba(100,116,139,0.65)" }}>
                         No seller applications yet.
                       </TableCell>
                     </TableRow>
                   ) : (
                     recentSellers.map((s) => (
                       <TableRow key={s.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                        <TableCell className="font-medium text-white py-3">{s.name}</TableCell>
-                        <TableCell className="hidden sm:table-cell text-xs py-3" style={{ color: "rgba(255,255,255,0.45)" }}>{s.email}</TableCell>
-                        <TableCell className="text-xs py-3" style={{ color: "rgba(255,255,255,0.45)" }}>{s.date}</TableCell>
+                        <TableCell className="font-medium text-slate-900 py-3">{s.name}</TableCell>
+                        <TableCell className="hidden sm:table-cell text-xs py-3" style={{ color: "rgba(71,85,105,0.85)" }}>{s.email}</TableCell>
+                        <TableCell className="text-xs py-3" style={{ color: "rgba(71,85,105,0.85)" }}>{s.date}</TableCell>
                         <TableCell className="py-3">
                           <Badge
                             variant="outline"
@@ -284,22 +284,22 @@ const AdminDashboard = () => {
         <div
           className="rounded-2xl overflow-hidden"
           style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.3)",
+            background: "#ffffff",
+            border: "1px solid rgba(148,163,184,0.35)",
+            boxShadow: "0 4px 24px rgba(15,23,42,0.08)",
           }}
         >
           <div
             className="px-6 py-4"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+            style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}
           >
-            <h2 className="text-sm font-semibold text-white">System Alerts</h2>
-            <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>Recent notifications</p>
+            <h2 className="text-sm font-semibold text-slate-900">System Alerts</h2>
+            <p className="text-xs mt-0.5" style={{ color: "rgba(71,85,105,0.8)" }}>Recent notifications</p>
           </div>
           <div className="px-6 py-4 space-y-3">
             {loading ? (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin" style={{ color: "rgba(255,255,255,0.3)" }} />
+                <Loader2 className="h-5 w-5 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />
               </div>
             ) : (
               alerts.map((a) => (
@@ -311,7 +311,7 @@ const AdminDashboard = () => {
                       ? { border: "1px solid rgba(245,158,11,0.3)", background: "rgba(245,158,11,0.08)", color: "#FBD760" }
                       : a.type === "success"
                       ? { border: "1px solid rgba(34,197,94,0.3)", background: "rgba(34,197,94,0.08)", color: "#4ade80" }
-                      : { border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.5)" }
+                      : { border: "1px solid rgba(148,163,184,0.35)", background: "#ffffff", color: "rgba(71,85,105,0.85)" }
                   }
                 >
                   {a.message}

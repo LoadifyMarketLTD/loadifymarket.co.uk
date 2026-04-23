@@ -78,7 +78,7 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
       className={[
         "fixed top-0 left-0 right-0 z-40 transition-all duration-300",
         opaque
-          ? "bg-[#0A1930]/95 backdrop-blur-md border-b border-white/10 shadow-[0_4px_32px_rgba(0,0,0,0.45)]"
+          ? "bg-[#0A1930]/95 border-b border-gray-200 shadow-[0_4px_32px_rgba(0,0,0,0.45)]"
           : "bg-transparent border-b border-transparent",
       ].join(" ")}
       style={{ willChange: "transform", paddingTop: "env(safe-area-inset-top, 0px)" }}

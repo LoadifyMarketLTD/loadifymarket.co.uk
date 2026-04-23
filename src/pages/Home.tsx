@@ -91,7 +91,7 @@ export default function Home() {
         <CategoryGrid />
 
         {/* ── 5. How It Works ──────────────────────────────────────────── */}
-        <section className="bg-white/75 border-b border-gray-200/70 backdrop-blur-sm" aria-labelledby="how-heading">
+        <section className="bg-white border-b border-gray-200" aria-labelledby="how-heading">
           <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-10">
 
             <div className="mb-6">
@@ -114,7 +114,7 @@ export default function Home() {
                   <div key={step.num} className="bg-white px-6 py-6 flex flex-col gap-4">
                     {/* Step badge + icon row */}
                     <div className="flex items-center gap-3">
-                      <span className="w-10 h-10 bg-[#0d2240] text-white text-base font-black flex items-center justify-center shrink-0">
+                      <span className="w-10 h-10 bg-[#22C55E] text-white text-base font-black flex items-center justify-center shrink-0">
                         {step.num}
                       </span>
                       <span className="w-10 h-10 bg-[#f4f5f7] flex items-center justify-center shrink-0">
@@ -137,13 +137,13 @@ export default function Home() {
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
               <Link
                 to="/catalog"
-                className="px-7 py-2.5 bg-[#0d2240] text-white text-xs font-black uppercase tracking-wide hover:bg-[#1a3a5c] transition-colors text-center"
+                className="px-7 py-2.5 bg-[#22C55E] text-white text-xs font-black uppercase tracking-wide hover:bg-[#16a34a] transition-colors text-center"
               >
                 Browse Marketplace
               </Link>
               <Link
                 to="/register"
-                className="px-7 py-2.5 border border-[#0d2240] text-[#0d2240] text-xs font-black uppercase tracking-wide hover:bg-[#0d2240] hover:text-white transition-colors text-center"
+                className="px-7 py-2.5 border border-[#22C55E] text-[#15803d] text-xs font-black uppercase tracking-wide hover:bg-[#22C55E] hover:text-white transition-colors text-center"
               >
                 Create Buyer Account
               </Link>
@@ -153,21 +153,21 @@ export default function Home() {
         </section>
 
         {/* ── 6. Seller CTA banner ─────────────────────────────────────── */}
-        <section className="bg-[#0d2240]" aria-label="Seller registration">
+        <section className="bg-white border-b border-gray-200" aria-label="Seller registration">
           <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
 
               <div>
-                <h2 className="text-white text-xl font-black uppercase tracking-tight">
+                <h2 className="text-gray-900 text-xl font-black uppercase tracking-tight">
                   Start Selling on Loadify Market
                 </h2>
-                <p className="text-white/60 text-sm mt-1 max-w-[500px] leading-relaxed">
+                <p className="text-gray-600 text-sm mt-1 max-w-[500px] leading-relaxed">
                    Register your trade business and list wholesale products. 0% Commission
                   until 31 December 2026 — then a simple 7% on completed sales.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5">
                   {SELLER_BENEFITS.map((t) => (
-                    <span key={t} className="text-[11px] text-white/45 flex items-center gap-1.5">
+                    <span key={t} className="text-[11px] text-gray-600 flex items-center gap-1.5">
                       <span className="text-[#22C55E] font-bold">✓</span> {t}
                     </span>
                   ))}

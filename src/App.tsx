@@ -107,10 +107,10 @@ const PPAdminStripeEvents   = lazy(() => import('./pages/pixel-perfect/admin/Adm
 // Loading component
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-950/20 backdrop-blur-[1px]">
+    <div className="flex items-center justify-center min-h-screen bg-white">
       <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-navy-800"></div>
-        <p className="mt-4 text-white/85">Loading...</p>
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#22C55E]"></div>
+        <p className="mt-4 text-slate-700">Loading...</p>
       </div>
     </div>
   );
@@ -190,17 +190,17 @@ function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
   // If maintenance is on and user is not admin, show maintenance screen
   if (maintenanceMode) {
     return (
-      <div className="min-h-screen bg-[#0A1930] flex items-center justify-center px-6">
+      <div className="min-h-screen bg-white flex items-center justify-center px-6">
         <div className="text-center max-w-lg">
           <div className="text-6xl mb-6">🔧</div>
-          <h1 className="text-3xl font-bold text-white mb-3">We're under maintenance</h1>
-          <p className="text-white/60 text-base mb-6">
+          <h1 className="text-3xl font-bold text-slate-900 mb-3">We're under maintenance</h1>
+          <p className="text-slate-600 text-base mb-6">
             Loadify Market is currently undergoing scheduled maintenance. We'll be back shortly.
             Thank you for your patience.
           </p>
-          <p className="text-white/40 text-sm">
+          <p className="text-slate-500 text-sm">
             If you are an admin, please{' '}
-            <a href="/login" className="text-blue-400 underline">sign in</a> to access the platform.
+            <a href="/login" className="text-blue-600 underline">sign in</a> to access the platform.
           </p>
         </div>
       </div>

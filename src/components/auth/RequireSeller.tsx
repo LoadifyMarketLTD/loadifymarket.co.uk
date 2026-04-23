@@ -11,7 +11,7 @@ interface Props {
 type FetchState = 'loading' | 'active' | 'draft' | 'submitted' | 'suspended' | 'error';
 
 const CardShell = ({ children }: { children: ReactNode }) => (
-  <div className="min-h-screen bg-slate-950/20 backdrop-blur-[1px] flex items-center justify-center px-4">
+  <div className="min-h-screen bg-white flex items-center justify-center px-4">
     <div className="bg-white border border-gray-200 rounded-xl p-10 max-w-md w-full text-center">
       {children}
     </div>

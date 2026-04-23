@@ -101,21 +101,21 @@ const Login = () => {
       </div>
 
       {/* ── RIGHT — login card panel ─────────────────────────────────────── */}
-      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col min-h-screen bg-slate-950/25 backdrop-blur-[1px]">
+      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col min-h-screen bg-white">
 
         {/* Back to site link — top right */}
         <div className="flex items-center justify-between px-5 sm:px-8 py-4">
           {/* Mobile logo */}
           <Link to="/" className="lg:hidden flex items-center gap-2">
             <img src={logo} alt="Loadify Market" className="h-7 w-7" />
-            <span className="font-bold text-[15px] text-white" style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}>
+            <span className="font-bold text-[15px] text-slate-900" style={{ fontFamily: "'Space Grotesk', 'Inter', sans-serif" }}>
               Loadify Market
             </span>
           </Link>
           <div className="hidden lg:block" />
           <Link
             to="/"
-            className="flex items-center gap-1.5 text-[13px] text-white/70 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 text-[13px] text-slate-600 hover:text-slate-900 transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             Back to site

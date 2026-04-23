@@ -49,7 +49,7 @@ export default function OrderSuccessPage() {
     return (
       <MainLayout>
         <main id="main-content" className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-gray-300 border-t-[#22C55E] rounded-full animate-spin" />
         </main>
       </MainLayout>
     );
@@ -59,7 +59,7 @@ export default function OrderSuccessPage() {
     <MainLayout>
       <main id="main-content" className="flex-1 pt-28 pb-20 px-4 flex items-start justify-center">
         <div className="w-full max-w-lg mt-10">
-          <div className="bg-white/5 border border-white/10 backdrop-blur-sm rounded-xl p-10 text-center">
+          <div className="bg-white border border-gray-200 rounded-xl p-10 text-center">
             {/* Success Icon */}
             <div className="flex items-center justify-center mb-6">
               <div className="w-20 h-20 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center">
@@ -68,36 +68,36 @@ export default function OrderSuccessPage() {
             </div>
 
             {/* Heading */}
-            <h1 className="text-3xl font-bold text-white mb-3">Order Confirmed!</h1>
-            <p className="text-white/60 text-base mb-2">
+            <h1 className="text-3xl font-bold text-slate-900 mb-3">Order Confirmed!</h1>
+            <p className="text-slate-600 text-base mb-2">
               Thank you for your purchase. Your order has been successfully placed.
             </p>
             {sessionId && (
-              <p className="text-white/40 text-xs mb-6 font-mono">
+              <p className="text-slate-500 text-xs mb-6 font-mono">
                 Ref: {sessionId.slice(0, 8)}…{sessionId.slice(-4)}
               </p>
             )}
 
             {/* Info Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 text-left">
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-start gap-3">
+              <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-start gap-3">
                 <div className="p-2 bg-green-500/10 rounded-lg flex-shrink-0">
                   <Package className="w-5 h-5 text-green-400" />
                 </div>
                 <div>
-                  <p className="text-white font-semibold text-sm">Order Processing</p>
-                  <p className="text-white/50 text-xs mt-0.5">
+                  <p className="text-slate-900 font-semibold text-sm">Order Processing</p>
+                  <p className="text-slate-500 text-xs mt-0.5">
                     Your order is being processed and will be dispatched soon.
                   </p>
                 </div>
               </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-start gap-3">
+              <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-start gap-3">
                 <div className="p-2 bg-green-500/10 rounded-lg flex-shrink-0">
                   <CheckCircle className="w-5 h-5 text-green-400" />
                 </div>
                 <div>
-                  <p className="text-white font-semibold text-sm">Confirmation Email</p>
-                  <p className="text-white/50 text-xs mt-0.5">
+                  <p className="text-slate-900 font-semibold text-sm">Confirmation Email</p>
+                  <p className="text-slate-500 text-xs mt-0.5">
                     A confirmation email has been sent to your inbox.
                   </p>
                 </div>
@@ -105,23 +105,23 @@ export default function OrderSuccessPage() {
             </div>
 
             {/* Marketplace Trust Badges */}
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-8 text-left">
-              <p className="text-white text-sm font-semibold mb-3">Marketplace Checkout Complete</p>
+            <div className="bg-white border border-gray-200 rounded-xl p-4 mb-8 text-left">
+              <p className="text-slate-900 text-sm font-semibold mb-3">Marketplace Checkout Complete</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="flex items-center gap-2">
                   <Shield className="w-4 h-4 text-green-400 flex-shrink-0" />
-                  <span className="text-white/60 text-xs">Secure Marketplace Checkout</span>
+                  <span className="text-slate-600 text-xs">Secure Marketplace Checkout</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Truck className="w-4 h-4 text-green-400 flex-shrink-0" />
-                  <span className="text-white/60 text-xs">Seller Fulfilled Shipping</span>
+                  <span className="text-slate-600 text-xs">Seller Fulfilled Shipping</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Star className="w-4 h-4 text-green-400 flex-shrink-0" />
-                  <span className="text-white/60 text-xs">Independent Marketplace Sellers</span>
+                  <span className="text-slate-600 text-xs">Independent Marketplace Sellers</span>
                 </div>
               </div>
-              <p className="text-white/40 text-xs mt-3 leading-relaxed">
+              <p className="text-slate-500 text-xs mt-3 leading-relaxed">
                 Your item will be packaged and shipped directly by the seller.
                 If there is an issue with your order, you can raise a dispute from your orders page within {BRAND.returnsDays} days of delivery.
               </p>
@@ -139,8 +139,7 @@ export default function OrderSuccessPage() {
               </Link>
               <Link
                 to="/catalog"
-                className="flex-1 flex items-center justify-center gap-2 font-semibold rounded-full py-3 px-6 text-white/85 border border-white/25"
-                style={{ background: "rgba(255,255,255,0.07)" }}
+                className="flex-1 flex items-center justify-center gap-2 font-semibold rounded-full py-3 px-6 text-slate-700 border border-gray-300 hover:bg-gray-50"
               >
                 Continue Shopping
                 <ArrowRight className="w-4 h-4" />
