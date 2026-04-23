@@ -392,7 +392,7 @@ const CategoryPage = () => {
             {/* Mobile filters overlay */}
             {filtersVisible && (
               <div className="fixed inset-0 z-50 lg:hidden">
-                <div className="absolute inset-0 bg-transparent" onClick={() => setFiltersVisible(false)} />
+                <div className="absolute inset-0 bg-black/30" onClick={() => setFiltersVisible(false)} />
                 <div className="absolute left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-card p-6 overflow-y-auto animate-fade-in">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-display text-lg font-bold text-foreground">Filters</h3>
