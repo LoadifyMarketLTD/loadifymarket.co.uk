@@ -241,7 +241,7 @@ const SellerSetupPage = () => {
   const stripeIncomplete = stripeConnected && !stripeReady;
 
   return (
-    <div className="min-h-screen bg-white py-12 px-4">
+    <div className="min-h-screen bg-white pt-28 pb-12 px-4">
       <div className="max-w-lg mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
