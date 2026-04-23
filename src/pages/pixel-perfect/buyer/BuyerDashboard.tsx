@@ -112,7 +112,7 @@ const BuyerDashboard = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {stats.map((s) => (
-          <Link key={s.label} to={s.to} className="block hover:scale-[1.02] transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
+          <Link key={s.label} to={s.to} aria-label={`View ${s.label.toLowerCase()}`} className="block hover:scale-[1.02] transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-xl">
             <Card>
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">

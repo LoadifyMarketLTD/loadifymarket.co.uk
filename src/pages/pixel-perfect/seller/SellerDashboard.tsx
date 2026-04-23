@@ -266,6 +266,7 @@ const SellerDashboard = () => {
             <Link
               key={stat.label}
               to={stat.to}
+              aria-label={`View ${stat.label.toLowerCase()}`}
               className="block bg-card rounded-xl border border-border p-5 space-y-3 hover:shadow-card hover:scale-[1.02] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               <div className="flex items-center justify-between">
