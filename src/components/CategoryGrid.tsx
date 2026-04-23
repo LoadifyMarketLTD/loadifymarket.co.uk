@@ -11,7 +11,7 @@ const CategoryGrid = () => {
 
   return (
     <section
-      className="bg-[#f4f5f7] border-b border-gray-200"
+      className="bg-white/75 backdrop-blur-sm border-b border-gray-200/70"
       aria-labelledby="cats-heading"
     >
       <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-7">

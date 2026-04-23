@@ -115,7 +115,7 @@ const SellerShell = () => {
       : user?.email ?? "Seller";
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-transparent overflow-hidden">
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-56 border-r border-border bg-card shrink-0 flex-col">
         <SidebarContent displayName={displayName} onNavClick={() => setSidebarOpen(false)} onLogout={handleLogout} />
@@ -142,7 +142,7 @@ const SellerShell = () => {
         </header>
 
         {/* Page content — add bottom padding on mobile so content isn't hidden behind tab bar */}
-        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
+        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0 bg-slate-950/15 backdrop-blur-[1px]">
           <Outlet />
         </main>
       </div>
