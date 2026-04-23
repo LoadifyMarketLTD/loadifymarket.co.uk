@@ -56,17 +56,14 @@ const SELLER_BENEFITS = [
 export default function Home() {
   return (
     <MainLayout forceOpaque={true}>
-      {/* Preload the LCP hero image only on the homepage — avoids "preloaded but
-          not used" warnings on all other routes where hero.webp is never loaded. */}
+      {/* Preload the LCP hero image only on the homepage */}
       <Helmet>
         <link
           rel="preload"
           as="image"
-          href="/hero.webp"
-          type="image/webp"
-          // @ts-expect-error — imagesrcset/imagesizes are valid preload attrs not yet in React types
-          imagesrcset="/hero-640.webp 640w, /hero.webp 1536w"
-          imagesizes="(max-width: 640px) 640px, 1536px"
+          href="/hero-marketplace.jpg"
+          type="image/jpeg"
+          // @ts-expect-error — fetchpriority is a valid HTML attr not yet in React types
           fetchpriority="high"
         />
       </Helmet>
@@ -78,13 +75,6 @@ export default function Home() {
 
       {/* Clears fixed header — see .pt-header-spacer in index.css */}
       <div className="pt-header-spacer" />
-
-      {/* ── Announcement bar ─────────────────────────────────────────── */}
-      <div className="bg-gray-100 border-b border-gray-200 text-center py-1.5">
-        <span className="text-[11px] font-semibold text-[#22C55E]">
-          🚀 0% Commission for all sellers — until 31 December 2026
-        </span>
-      </div>
 
       <main id="main-content" className="bg-[#f4f5f7]">
 
