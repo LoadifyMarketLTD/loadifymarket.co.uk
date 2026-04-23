@@ -3,8 +3,7 @@ import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import {
   X,
-  ArrowLeft,
-  ChevronRight,
+  ChevronDown,
   Shirt,
   Smartphone,
   Gamepad2,
@@ -40,15 +39,10 @@ interface MainScreenProps {
   dashboardPath: string;
   onLogout: () => void;
   onClose: () => void;
-  onCategorySelect: (categorySlug: string) => void;
   closeBtnRef: React.RefObject<HTMLButtonElement | null>;
   categories: CategoryNode[];
-}
-
-interface CategoryScreenProps {
-  category: CategoryNode | null;
-  onBack: () => void;
-  onClose: () => void;
+  expandedSlug: string | null;
+  onCategoryExpand: (slug: string | null) => void;
 }
 
 /** Icon / colour overrides for known category slugs. */
@@ -68,16 +62,20 @@ const ICON_MAP: Record<string, { icon: LucideIcon; iconColor: string }> = {
 
 const DEFAULT_ICON = { icon: Briefcase, iconColor: "text-white/50" };
 
-// ── Main screen (Level 1) ─────────────────────────────────────────────────────
+// ── Main screen ────────────────────────────────────────────────────────────────
+// Categories always remain visible. When a category is hovered (desktop) or
+// tapped (mobile) its subcategories expand inline BELOW the parent row so the
+// full list is never replaced.
 
 const MainScreen = ({
   user,
   dashboardPath,
   onLogout,
   onClose,
-  onCategorySelect,
   closeBtnRef,
   categories,
+  expandedSlug,
+  onCategoryExpand,
 }: MainScreenProps) => (
   <div className="flex flex-col h-full">
     {/* Header bar */}
@@ -122,26 +120,73 @@ const MainScreen = ({
       {/* Divider */}
       <div className="h-px bg-white/10 mx-4" />
 
-      {/* Categories */}
+      {/* Categories — accordion, subcategories expand inline */}
       <p className="px-4 pt-4 pb-2 text-[11px] font-bold uppercase tracking-widest text-white/40">
         Browse Categories
       </p>
       <nav aria-label="Product categories">
         {categories.map((cat) => {
           const { icon: Icon, iconColor } = ICON_MAP[cat.slug] ?? DEFAULT_ICON;
+          const isOpen = expandedSlug === cat.slug;
+          const categoryUrl = `/catalog?category=${encodeURIComponent(cat.name)}`;
+
           return (
-            <button
-              key={cat.slug}
-              onClick={() => onCategorySelect(cat.slug)}
-              onMouseEnter={() => onCategorySelect(cat.slug)}
-              className="w-full flex items-center gap-3 px-4 h-[52px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.05]"
-            >
-              <Icon className={`h-[18px] w-[18px] shrink-0 ${iconColor}`} aria-hidden="true" />
-              <span className="text-[15px] font-semibold text-white/90 flex-1 text-left">
-                {cat.name}
-              </span>
-              <ChevronRight className="h-4 w-4 text-white/30 shrink-0" aria-hidden="true" />
-            </button>
+            <div key={cat.slug}>
+              {/* Parent row — hover opens on desktop, click toggles on mobile */}
+              <button
+                onClick={() => onCategoryExpand(isOpen ? null : cat.slug)}
+                onMouseEnter={() => onCategoryExpand(cat.slug)}
+                aria-expanded={isOpen}
+                className={[
+                  "w-full flex items-center gap-3 px-4 h-[52px] transition-colors border-b border-white/[0.05]",
+                  isOpen
+                    ? "bg-white/[0.09] hover:bg-white/[0.11]"
+                    : "hover:bg-white/[0.07] active:bg-white/10",
+                ].join(" ")}
+              >
+                <Icon className={`h-[18px] w-[18px] shrink-0 ${iconColor}`} aria-hidden="true" />
+                <span className="text-[15px] font-semibold text-white/90 flex-1 text-left">
+                  {cat.name}
+                </span>
+                <ChevronDown
+                  className={[
+                    "h-4 w-4 text-white/30 shrink-0 transition-transform duration-200",
+                    isOpen ? "rotate-180" : "",
+                  ].join(" ")}
+                  aria-hidden="true"
+                />
+              </button>
+
+              {/* Inline subcategory expansion — slides down below the parent row */}
+              {isOpen && (
+                <div className="bg-white/[0.04] border-b border-white/[0.07]">
+                  {/* View All link */}
+                  <Link
+                    to={categoryUrl}
+                    onClick={onClose}
+                    className="flex items-center px-6 h-[46px] border-b border-white/[0.06] hover:bg-white/[0.07] active:bg-white/10 transition-colors"
+                  >
+                    <span className="text-[14px] font-semibold text-[#22C55E]">
+                      View All {cat.name}
+                    </span>
+                  </Link>
+
+                  {/* Subcategory rows */}
+                  {cat.children.map((sub) => (
+                    <Link
+                      key={sub.slug}
+                      to={`/catalog?category=${encodeURIComponent(cat.name)}&q=${encodeURIComponent(sub.name)}`}
+                      onClick={onClose}
+                      className="flex items-center px-8 h-[44px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.04] last:border-b-0"
+                    >
+                      <span className="text-[14px] font-medium text-white/70">
+                        {sub.name}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>
@@ -180,77 +225,19 @@ const MainScreen = ({
   </div>
 );
 
-// ── Category screen (Level 2 — shows chips as subcategory links) ──────────────
-
-const CategoryScreen = ({ category, onBack, onClose }: CategoryScreenProps) => {
-  if (!category) return null;
-  const categoryUrl = `/catalog?category=${encodeURIComponent(category.name)}`;
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Header bar */}
-      <div className="h-14 px-4 flex items-center gap-3 border-b border-white/[0.12] shrink-0">
-        <button
-          onClick={onBack}
-          className="p-2 -ml-2 text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10"
-          aria-label="Back to main menu"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <span className="text-[15px] font-semibold text-white/90">{category.name}</span>
-      </div>
-
-      {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto">
-        {/* View All row */}
-        <Link
-          to={categoryUrl}
-          onClick={onClose}
-          className="flex items-center gap-2 px-4 h-14 border-b border-white/[0.12] hover:bg-white/[0.07] active:bg-white/10 transition-colors"
-        >
-          <span className="text-[15px] font-semibold text-[#22C55E]">
-            View All {category.name}
-          </span>
-          <ChevronRight className="h-4 w-4 text-[#22C55E]/60 ml-auto" aria-hidden="true" />
-        </Link>
-
-        {/* Chip rows — direct links */}
-        <nav aria-label={`${category.name} subcategories`}>
-          {category.children.map((sub) => (
-            <Link
-              key={sub.slug}
-              to={`/catalog?category=${encodeURIComponent(category.name)}&q=${encodeURIComponent(sub.name)}`}
-              onClick={onClose}
-              className="flex items-center px-4 h-[52px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.05]"
-            >
-              <span className="text-[15px] font-medium text-white/80 flex-1 text-left">
-                {sub.name}
-              </span>
-            </Link>
-          ))}
-        </nav>
-
-        {/* Safe-area spacer for iOS */}
-        <div style={{ height: "env(safe-area-inset-bottom, 16px)" }} />
-      </div>
-    </div>
-  );
-};
-
 // ── Drawer shell ──────────────────────────────────────────────────────────────
 
 const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDrawerProps) => {
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  // Which category accordion is currently open (null = all collapsed)
+  const [expandedSlug, setExpandedSlug] = useState<string | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const { categories } = useCategories();
 
-  // Reset sub-screens and handle focus / Escape key
+  // Collapse accordion and handle focus / Escape key when drawer state changes
   useEffect(() => {
     if (!open) {
-      const t = setTimeout(() => {
-        setActiveCategory(null);
-      }, 300);
+      const t = setTimeout(() => setExpandedSlug(null), 300);
       return () => clearTimeout(t);
     }
 
@@ -306,17 +293,6 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
     };
   }, [open]);
 
-  const handleCategorySelect = (categoryKey: string) => {
-    setActiveCategory(categoryKey);
-  };
-
-  const handleBackToMain = () => {
-    setActiveCategory(null);
-  };
-
-  // Determine which screen to render
-  const screen = activeCategory === null ? "main" : "category";
-
   return createPortal(
     <>
       {/* Backdrop overlay */}
@@ -343,24 +319,16 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
         aria-label="Navigation menu"
         style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
       >
-        {screen === "main" && (
-          <MainScreen
-            user={user}
-            dashboardPath={dashboardPath}
-            onLogout={onLogout}
-            onClose={onClose}
-            onCategorySelect={handleCategorySelect}
-            closeBtnRef={closeBtnRef}
-            categories={categories}
-          />
-        )}
-        {screen === "category" && activeCategory !== null && (
-          <CategoryScreen
-            category={categories.find((c) => c.slug === activeCategory) ?? null}
-            onBack={handleBackToMain}
-            onClose={onClose}
-          />
-        )}
+        <MainScreen
+          user={user}
+          dashboardPath={dashboardPath}
+          onLogout={onLogout}
+          onClose={onClose}
+          closeBtnRef={closeBtnRef}
+          categories={categories}
+          expandedSlug={expandedSlug}
+          onCategoryExpand={setExpandedSlug}
+        />
       </div>
     </>,
     document.body
