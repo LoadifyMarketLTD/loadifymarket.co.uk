@@ -274,7 +274,7 @@ export default function SellerPublicProfilePage() {
                 ) : (
                   <>
                     <Link
-                      to="/messages"
+                      to="/buyer/messages"
                       className="btn-primary inline-flex items-center gap-2 text-sm"
                     >
                       <MessageCircle className="w-4 h-4" />
