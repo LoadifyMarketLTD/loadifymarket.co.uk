@@ -278,7 +278,12 @@ const AdminSellerManagement = () => {
           </TableRow>
         ) : (
           data.map((s) => (
-            <TableRow key={s.userId} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+            <TableRow
+              key={s.userId}
+              className="cursor-pointer hover:bg-slate-50 transition-colors"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+              onClick={() => setSelectedSeller(s)}
+            >
               <TableCell>
                 <p className="font-medium text-sm text-slate-900">{s.company}</p>
                 <p className="text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{s.name}</p>
@@ -295,7 +300,7 @@ const AdminSellerManagement = () => {
                   {stripeLabel(s.stripeConnectStatus)}
                 </Badge>
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-end gap-1">
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-white/10" onClick={() => setSelectedSeller(s)} title="View details">
                     <Eye className="h-4 w-4" />

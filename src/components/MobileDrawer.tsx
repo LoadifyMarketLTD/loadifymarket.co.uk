@@ -133,6 +133,7 @@ const MainScreen = ({
             <button
               key={cat.slug}
               onClick={() => onCategorySelect(cat.slug)}
+              onMouseEnter={() => onCategorySelect(cat.slug)}
               className="w-full flex items-center gap-3 px-4 h-[52px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.05]"
             >
               <Icon className={`h-[18px] w-[18px] shrink-0 ${iconColor}`} aria-hidden="true" />

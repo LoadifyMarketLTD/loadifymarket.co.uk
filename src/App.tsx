@@ -124,7 +124,7 @@ function GlobalBackButton() {
       type="button"
       onClick={() => navigate(-1)}
       aria-label="Back"
-      className="fixed z-30 left-3 sm:left-4 top-[calc(7rem+env(safe-area-inset-top,0px)+0.5rem)] bg-[#22C55E] hover:bg-[#16A34A] text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-lg shadow-lg shadow-black/35 transition-colors"
+      className="fixed z-30 right-3 sm:right-5 top-[calc(7rem+env(safe-area-inset-top,0px)+0.75rem)] bg-[#22C55E] hover:bg-[#16A34A] text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-lg shadow-lg shadow-black/35 transition-colors"
     >
       ← Back
     </button>
@@ -225,11 +225,13 @@ function useHideGlobalNav(): boolean {
   const { pathname } = useLocation();
   const segments = pathname.split('/').filter(Boolean);
 
-  // Auth-only standalone pages
-  const AUTH_PAGES = new Set([
-    'login', 'register', 'signup', 'forgot-password', 'reset-password', 'trade-account',
+  // Auth-only standalone pages where the navbar is intentionally hidden
+  // (forgot-password / reset-password are simple one-field pages; login + signup
+  //  now show the global navbar as explicitly requested)
+  const AUTH_PAGES_HIDE_NAV = new Set([
+    'forgot-password', 'reset-password', 'trade-account',
   ]);
-  if (segments.length === 1 && AUTH_PAGES.has(segments[0])) return true;
+  if (segments.length === 1 && AUTH_PAGES_HIDE_NAV.has(segments[0])) return true;
 
   // Admin dashboard — all /admin/* routes
   if (segments[0] === 'admin') return true;

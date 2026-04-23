@@ -272,7 +272,12 @@ const AdminBuyers = () => {
                 filtered.map((b) => {
                   const statusKey = b.isActive ? "active" : "inactive";
                   return (
-                    <TableRow key={b.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <TableRow
+                      key={b.id}
+                      className="cursor-pointer hover:bg-slate-50 transition-colors"
+                      style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+                      onClick={() => openDetail(b)}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div
@@ -293,7 +298,7 @@ const AdminBuyers = () => {
                           {statusConfig[statusKey].label}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button

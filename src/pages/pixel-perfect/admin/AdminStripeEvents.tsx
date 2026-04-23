@@ -147,8 +147,22 @@ const AdminStripeEvents = () => {
       <TableBody>
         {rows.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={6} className="text-center py-10 text-sm" style={{ color: "rgba(100,116,139,0.65)" }}>
-              No events found
+            <TableCell colSpan={6} className="py-12 text-center">
+              <div className="flex flex-col items-center gap-3 max-w-sm mx-auto">
+                <Zap className="h-10 w-10 text-amber-300/40" />
+                <p className="text-sm font-semibold text-slate-600">
+                  {search || events.length > 0
+                    ? "No events match your filter"
+                    : "No Stripe webhook events recorded yet"}
+                </p>
+                <p className="text-xs text-slate-400 leading-relaxed text-center">
+                  {search
+                    ? "Try clearing the search to see all events."
+                    : events.length > 0
+                    ? "Try selecting a different tab."
+                    : "Events appear here once your Stripe webhook endpoint starts receiving traffic. Make sure your webhook URL is configured in the Stripe Dashboard and that the stripe-webhook Netlify function is deployed."}
+                </p>
+              </div>
             </TableCell>
           </TableRow>
         ) : (
