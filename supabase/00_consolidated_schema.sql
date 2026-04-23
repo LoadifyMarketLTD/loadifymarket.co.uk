@@ -1722,24 +1722,21 @@ CREATE POLICY "stripe_events_admin_write" ON stripe_events FOR ALL
 -- ──────────────────────────────────────────────────────────────
 -- SEED: CATEGORIES
 -- ──────────────────────────────────────────────────────────────
-INSERT INTO categories (id, name, slug, description, "order", "isActive") VALUES
-  (uuid_generate_v4(), 'Mixed Job Lots',      'mixed-job-lots',     'Assorted mixed pallet lots',                1,  TRUE),
-  (uuid_generate_v4(), 'Clothing',            'clothing',           'Men''s, women''s and children''s clothing', 2,  TRUE),
-  (uuid_generate_v4(), 'Shoes',               'shoes',              'Footwear of all types',                     3,  TRUE),
-  (uuid_generate_v4(), 'Jewellery',           'jewellery',          'Fashion and fine jewellery',                4,  TRUE),
-  (uuid_generate_v4(), 'Media & Electronics', 'media-electronics',  'Consumer electronics and media',            5,  TRUE),
-  (uuid_generate_v4(), 'Accessories',         'accessories',        'Fashion and lifestyle accessories',         6,  TRUE),
-  (uuid_generate_v4(), 'Toys',                'toys',               'Children''s toys and games',                7,  TRUE),
-  (uuid_generate_v4(), 'Health & Beauty',     'health-beauty',      'Personal care and health products',         8,  TRUE),
-  (uuid_generate_v4(), 'Pets',                'pets',               'Pet food, supplies and accessories',        9,  TRUE),
-  (uuid_generate_v4(), 'Memorabilia',         'memorabilia',        'Sports and entertainment memorabilia',      10, TRUE),
-  (uuid_generate_v4(), 'Food & Drink',        'food-drink',         'Food, beverages and consumables',           11, TRUE),
-  (uuid_generate_v4(), 'Office Supplies',     'office-supplies',    'Stationery and office equipment',           12, TRUE),
-  (uuid_generate_v4(), 'Home & Garden',       'home-garden',        'Furniture, decor and garden',               13, TRUE),
-  (uuid_generate_v4(), 'Wholesale Pallets',   'wholesale-pallets',  'Full and part pallets for resale',          14, TRUE),
-  (uuid_generate_v4(), 'Logistics Jobs',      'logistics-jobs',     'Transport and haulage listings',            15, TRUE),
-  (uuid_generate_v4(), 'Handmade',            'handmade',           'Handcrafted and artisan goods',             16, TRUE)
-ON CONFLICT (slug) DO NOTHING;
+-- The canonical category taxonomy is maintained by migrations:
+--   • 400_global_category_system.sql  — 3-level consumer taxonomy (Electronics,
+--     Home & Garden, Clothing & Fashion, Toys & Games, Sports & Fitness,
+--     Automotive, Health & Beauty, Pets, Food & Drink, Office & Business)
+--     with full parent_id / level hierarchy.
+--   • 420_seed_wholesale_categories.sql — 17 B2B wholesale categories
+--     (Large Letter Items, Garden, DIY, Cleaning, Party & Gift,
+--     Wholesale Pound Lines, Toys, Leisure & Hobbies, Baby Supplies,
+--     Kitchenware, Health & Beauty, Homeware, Electrical, Pet Supplies,
+--     Stationery, Seasonal, Wholesale Clothing).
+--
+-- DO NOT add ad-hoc category rows here.  Apply the numbered migrations
+-- to Supabase in order (400 → 420) to populate the categories table.
+-- The legacy seed that was previously in this block has been removed to
+-- prevent slug conflicts and environment drift.
 
 -- ──────────────────────────────────────────────────────────────
 -- SHIPPING METHODS, RATES & PRODUCT SHIPPING
