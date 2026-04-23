@@ -129,7 +129,7 @@ const BuyerMessages = () => {
 
         setConversations(enriched);
       } catch {
-        // Silent — empty state shown
+        toast({ title: "Failed to load conversations", variant: "destructive" });
       } finally {
         if (!cancelled) setLoadingConvs(false);
       }
@@ -172,7 +172,7 @@ const BuyerMessages = () => {
           prev.map((c) => (c.id === selectedId ? { ...c, unreadCount: 0 } : c))
         );
       } catch {
-        // Silent
+        toast({ title: "Failed to load messages", variant: "destructive" });
       } finally {
         if (!cancelled) setLoadingMsgs(false);
       }
