@@ -74,7 +74,7 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
     >
 
       {/* ── Row 1: Hamburger | Logo | Search | Actions ──────────────────── */}
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 h-[72px] flex items-center gap-4">
+      <div className="w-full px-4 sm:px-6 lg:px-8 h-[72px] flex items-center gap-4">
 
         {/* Hamburger — LEFT side, all screen sizes */}
         <button
@@ -216,7 +216,7 @@ const Header = ({ forceOpaque = false }: HeaderProps) => {
 
       {/* ── Row 2: Category quick-links ────────────────────────────────── */}
       <nav aria-label="Category navigation" className="border-t border-white/[0.08]">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-0.5 h-[50px] overflow-x-auto scrollbar-none">
             <Link
               to="/catalog"
