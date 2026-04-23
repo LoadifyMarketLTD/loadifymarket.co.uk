@@ -4,7 +4,7 @@ const HeroSection = () => (
   <section
     className="relative min-h-[70vh] flex items-center"
     style={{
-      backgroundImage: "url(/hero.webp)",
+      backgroundImage: "url(/hero-marketplace.jpg)",
       backgroundSize: "cover",
       backgroundPosition: "center",
       backgroundRepeat: "no-repeat",

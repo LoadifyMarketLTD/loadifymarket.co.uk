@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CATEGORIES } from "@/data/categories";
+import { useCategories } from "@/hooks/useCategories";
 import logo from "@/assets/loadify-logo.svg";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -110,6 +110,7 @@ export default function TradeAccount() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
+  const { categories } = useCategories();
 
   const [form, setForm] = useState<FormState>({
     firstName: "",
@@ -579,7 +580,7 @@ export default function TradeAccount() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Categories</SelectItem>
-                      {CATEGORIES.map((cat) => (
+                      {categories.map((cat) => (
                         <SelectItem key={cat.slug} value={cat.slug}>
                           {cat.name}
                         </SelectItem>

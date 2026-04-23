@@ -1407,7 +1407,26 @@ ALTER TABLE stripe_events           ENABLE ROW LEVEL SECURITY;
 
 -- USERS
 CREATE POLICY "users_select" ON users FOR SELECT USING (auth.uid() = id OR is_admin());
-CREATE POLICY "users_update" ON users FOR UPDATE USING (auth.uid() = id OR is_admin());
+-- users_update: USING restricts which rows can be targeted; WITH CHECK prevents
+-- privilege escalation — a regular user cannot change the 'role' column of the
+-- row being updated to a higher-privileged value (e.g. 'admin') unless they are
+-- already an admin.  The sub-query reads the target row's CURRENT role via
+-- users.id (the row being modified) — this is semantically correct and avoids
+-- ambiguity with auth.uid() when an admin updates another user's row.
+-- This policy was strengthened by migration 410_fix_role_escalation.sql.
+CREATE POLICY "users_update"
+ON users
+FOR UPDATE
+USING (auth.uid() = id OR is_admin())
+WITH CHECK (
+  -- Allow the update only when:
+  --   (a) the role column is not being changed (new value equals current DB value), OR
+  --   (b) the caller is already an admin (can promote / demote others).
+  -- We read the current role of the target row via a sub-select because OLD is
+  -- unavailable in RLS WITH CHECK expressions.
+  role = (SELECT u.role FROM public.users u WHERE u.id = users.id)
+  OR is_admin()
+);
 CREATE POLICY "users_insert" ON users FOR INSERT WITH CHECK (TRUE);
 CREATE POLICY "users_delete" ON users FOR DELETE USING (is_admin());
 -- BUYER PROFILES
@@ -1703,24 +1722,21 @@ CREATE POLICY "stripe_events_admin_write" ON stripe_events FOR ALL
 -- ──────────────────────────────────────────────────────────────
 -- SEED: CATEGORIES
 -- ──────────────────────────────────────────────────────────────
-INSERT INTO categories (id, name, slug, description, "order", "isActive") VALUES
-  (uuid_generate_v4(), 'Mixed Job Lots',      'mixed-job-lots',     'Assorted mixed pallet lots',                1,  TRUE),
-  (uuid_generate_v4(), 'Clothing',            'clothing',           'Men''s, women''s and children''s clothing', 2,  TRUE),
-  (uuid_generate_v4(), 'Shoes',               'shoes',              'Footwear of all types',                     3,  TRUE),
-  (uuid_generate_v4(), 'Jewellery',           'jewellery',          'Fashion and fine jewellery',                4,  TRUE),
-  (uuid_generate_v4(), 'Media & Electronics', 'media-electronics',  'Consumer electronics and media',            5,  TRUE),
-  (uuid_generate_v4(), 'Accessories',         'accessories',        'Fashion and lifestyle accessories',         6,  TRUE),
-  (uuid_generate_v4(), 'Toys',                'toys',               'Children''s toys and games',                7,  TRUE),
-  (uuid_generate_v4(), 'Health & Beauty',     'health-beauty',      'Personal care and health products',         8,  TRUE),
-  (uuid_generate_v4(), 'Pets',                'pets',               'Pet food, supplies and accessories',        9,  TRUE),
-  (uuid_generate_v4(), 'Memorabilia',         'memorabilia',        'Sports and entertainment memorabilia',      10, TRUE),
-  (uuid_generate_v4(), 'Food & Drink',        'food-drink',         'Food, beverages and consumables',           11, TRUE),
-  (uuid_generate_v4(), 'Office Supplies',     'office-supplies',    'Stationery and office equipment',           12, TRUE),
-  (uuid_generate_v4(), 'Home & Garden',       'home-garden',        'Furniture, decor and garden',               13, TRUE),
-  (uuid_generate_v4(), 'Wholesale Pallets',   'wholesale-pallets',  'Full and part pallets for resale',          14, TRUE),
-  (uuid_generate_v4(), 'Logistics Jobs',      'logistics-jobs',     'Transport and haulage listings',            15, TRUE),
-  (uuid_generate_v4(), 'Handmade',            'handmade',           'Handcrafted and artisan goods',             16, TRUE)
-ON CONFLICT (slug) DO NOTHING;
+-- The canonical category taxonomy is maintained by migrations:
+--   • 400_global_category_system.sql  — 3-level consumer taxonomy (Electronics,
+--     Home & Garden, Clothing & Fashion, Toys & Games, Sports & Fitness,
+--     Automotive, Health & Beauty, Pets, Food & Drink, Office & Business)
+--     with full parent_id / level hierarchy.
+--   • 420_seed_wholesale_categories.sql — 17 B2B wholesale categories
+--     (Large Letter Items, Garden, DIY, Cleaning, Party & Gift,
+--     Wholesale Pound Lines, Toys, Leisure & Hobbies, Baby Supplies,
+--     Kitchenware, Health & Beauty, Homeware, Electrical, Pet Supplies,
+--     Stationery, Seasonal, Wholesale Clothing).
+--
+-- DO NOT add ad-hoc category rows here.  Apply the numbered migrations
+-- to Supabase in order (400 → 420) to populate the categories table.
+-- The legacy seed that was previously in this block has been removed to
+-- prevent slug conflicts and environment drift.
 
 -- ──────────────────────────────────────────────────────────────
 -- SHIPPING METHODS, RATES & PRODUCT SHIPPING

@@ -17,7 +17,7 @@ const Disclaimer = () => {
           <p>The information provided on the Loadify Market website ("Platform") is for general informational purposes only. By using this Platform, you acknowledge and agree to the following:</p>
 
           <h2>1. Marketplace Model</h2>
-          <p>Loadify Market is an online marketplace operated by XDrive Logistics Ltd (Company No: 13171804, VAT: GB375949535). We act solely as an intermediary connecting independent buyers and sellers. We do not own, manufacture, store, inspect or sell any products listed on the Platform.</p>
+          <p>Loadify Market is an online marketplace operated by XDrive Logistics Ltd (Company No: 13171804, VAT: GB375949535). Loadify processes payments as a marketplace facilitator using Stripe Connect on behalf of independent sellers. We do not own, manufacture, store, inspect or sell any products listed on the Platform.</p>
 
           <h2>2. Product Listings</h2>
           <p>All product listings, descriptions, images, prices and claims are provided by individual sellers. We do not verify the accuracy, completeness or reliability of any listing. Buyers should conduct their own due diligence before making a purchase.</p>

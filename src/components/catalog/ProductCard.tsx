@@ -44,7 +44,20 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
           alt={product.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          onError={(e) => {
+            const el = e.target as HTMLImageElement;
+            el.style.display = "none";
+            const parent = el.parentElement;
+            if (parent && !parent.querySelector("[data-img-fallback]")) {
+              const fb = document.createElement("div");
+              fb.setAttribute("data-img-fallback", "1");
+              fb.setAttribute("role", "img");
+              fb.setAttribute("aria-label", "Product image unavailable");
+              fb.className = "w-full h-full flex items-center justify-center bg-gray-100 text-gray-300 text-xs";
+              fb.textContent = "No image";
+              parent.appendChild(fb);
+            }
+          }}
         />
         <div className={`absolute top-3 right-3 text-xs font-medium px-2 py-1 rounded-full border ${conditionColor[product.condition] || ""}`}>
           {product.condition}

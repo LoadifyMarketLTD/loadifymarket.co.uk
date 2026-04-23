@@ -3,9 +3,6 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { TOP_LEVEL_CATEGORY_NAMES } from "@/data/globalCategoryTree";
-
-const categories = TOP_LEVEL_CATEGORY_NAMES;
 
 const conditions = ["New", "Like New", "Mixed", "Unchecked"];
 
@@ -70,10 +67,10 @@ const CatalogFilters = ({
   onClearAll,
   availableCategories,
 }: CatalogFiltersProps) => {
-  // Use DB-sourced category names when provided; fall back to design-time defaults
+  // Use DB-sourced category names when provided; show empty list otherwise
   const categoryList = availableCategories && availableCategories.length > 0
     ? availableCategories
-    : categories;
+    : [];
 
   const totalActive =
     selectedCategories.length + selectedConditions.length + selectedLocations.length +

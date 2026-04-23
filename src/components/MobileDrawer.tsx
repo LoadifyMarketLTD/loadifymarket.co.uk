@@ -21,9 +21,11 @@ import DrawerAccountBlock from "@/components/mobile/DrawerAccountBlock";
 import DrawerCTACards from "@/components/mobile/DrawerCTACards";
 import logo from "@/assets/loadify-logo.svg";
 import type { User } from "@/types";
-import { GLOBAL_CATEGORY_TREE } from "@/data/globalCategoryTree";
+import { useCategories } from "@/hooks/useCategories";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+
+import type { CategoryNode } from "@/hooks/useCategories";
 
 interface MobileDrawerProps {
   open: boolean;
@@ -38,99 +40,33 @@ interface MainScreenProps {
   dashboardPath: string;
   onLogout: () => void;
   onClose: () => void;
-  onCategorySelect: (categoryKey: string) => void;
+  onCategorySelect: (categorySlug: string) => void;
   closeBtnRef: React.RefObject<HTMLButtonElement | null>;
+  categories: CategoryNode[];
 }
 
 interface CategoryScreenProps {
-  categoryKey: string;
+  category: CategoryNode | null;
   onBack: () => void;
   onClose: () => void;
 }
 
-interface HamburgerCategory {
-  key: string;
-  label: string;
-  icon: LucideIcon;
-  iconColor: string;
-  subcategories: string[];
-}
+/** Icon / colour overrides for known category slugs. */
+const ICON_MAP: Record<string, { icon: LucideIcon; iconColor: string }> = {
+  "electronics":       { icon: Smartphone,    iconColor: "text-cyan-400"   },
+  "home-garden":       { icon: Home,          iconColor: "text-green-400"  },
+  "clothing-fashion":  { icon: Shirt,         iconColor: "text-blue-400"   },
+  "toys-games":        { icon: Gamepad2,      iconColor: "text-purple-400" },
+  "sports-fitness":    { icon: Dumbbell,      iconColor: "text-yellow-300" },
+  "automotive":        { icon: Car,           iconColor: "text-slate-300"  },
+  "health-beauty":     { icon: HeartPulse,    iconColor: "text-rose-400"   },
+  "pets":              { icon: PawPrint,      iconColor: "text-orange-400" },
+  "pet-supplies":      { icon: PawPrint,      iconColor: "text-amber-400"  },
+  "food-drink":        { icon: UtensilsCrossed, iconColor: "text-red-400"  },
+  "office-business":   { icon: Briefcase,     iconColor: "text-sky-400"    },
+};
 
-const HAMBURGER_CATEGORIES: readonly HamburgerCategory[] = [
-  {
-    key: "electronics",
-    label: "Electronics",
-    icon: Smartphone,
-    iconColor: "text-cyan-400",
-    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "electronics")?.children?.map((c) => c.name) ?? [],
-  },
-  {
-    key: "home-garden",
-    label: "Home & Garden",
-    icon: Home,
-    iconColor: "text-green-400",
-    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "home-garden")?.children?.map((c) => c.name) ?? [],
-  },
-  {
-    key: "clothing-fashion",
-    label: "Clothing & Fashion",
-    icon: Shirt,
-    iconColor: "text-blue-400",
-    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "clothing-fashion")?.children?.map((c) => c.name) ?? [],
-  },
-  {
-    key: "toys-games",
-    label: "Toys & Games",
-    icon: Gamepad2,
-    iconColor: "text-purple-400",
-    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "toys-games")?.children?.map((c) => c.name) ?? [],
-  },
-  {
-    key: "sports-fitness",
-    label: "Sports & Fitness",
-    icon: Dumbbell,
-    iconColor: "text-yellow-300",
-    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "sports-fitness")?.children?.map((c) => c.name) ?? [],
-  },
-  {
-    key: "automotive",
-    label: "Automotive",
-    icon: Car,
-    iconColor: "text-slate-300",
-    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "automotive")?.children?.map((c) => c.name) ?? [],
-  },
-  {
-    key: "health-beauty",
-    label: "Health & Beauty",
-    icon: HeartPulse,
-    iconColor: "text-rose-400",
-    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "health-beauty")?.children?.map((c) => c.name) ?? [],
-  },
-  {
-    key: "pets",
-    label: "Pets",
-    icon: PawPrint,
-    iconColor: "text-orange-400",
-    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "pets")?.children?.map((c) => c.name) ?? [],
-  },
-  {
-    key: "food-drink",
-    label: "Food & Drink",
-    icon: UtensilsCrossed,
-    iconColor: "text-red-400",
-    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "food-drink")?.children?.map((c) => c.name) ?? [],
-  },
-  {
-    key: "office-business",
-    label: "Office & Business",
-    icon: Briefcase,
-    iconColor: "text-sky-400",
-    subcategories: GLOBAL_CATEGORY_TREE.find((c) => c.slug === "office-business")?.children?.map((c) => c.name) ?? [],
-  },
-];
-
-const getHamburgerCategory = (key: string) =>
-  HAMBURGER_CATEGORIES.find((cat) => cat.key === key);
+const DEFAULT_ICON = { icon: Briefcase, iconColor: "text-white/50" };
 
 // ── Main screen (Level 1) ─────────────────────────────────────────────────────
 
@@ -141,6 +77,7 @@ const MainScreen = ({
   onClose,
   onCategorySelect,
   closeBtnRef,
+  categories,
 }: MainScreenProps) => (
   <div className="flex flex-col h-full">
     {/* Header bar */}
@@ -190,17 +127,17 @@ const MainScreen = ({
         Browse Categories
       </p>
       <nav aria-label="Product categories">
-        {HAMBURGER_CATEGORIES.map((cat) => {
-          const Icon = cat.icon;
+        {categories.map((cat) => {
+          const { icon: Icon, iconColor } = ICON_MAP[cat.slug] ?? DEFAULT_ICON;
           return (
             <button
-              key={cat.key}
-              onClick={() => onCategorySelect(cat.key)}
+              key={cat.slug}
+              onClick={() => onCategorySelect(cat.slug)}
               className="w-full flex items-center gap-3 px-4 h-[52px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.05]"
             >
-              <Icon className={`h-[18px] w-[18px] shrink-0 ${cat.iconColor}`} aria-hidden="true" />
+              <Icon className={`h-[18px] w-[18px] shrink-0 ${iconColor}`} aria-hidden="true" />
               <span className="text-[15px] font-semibold text-white/90 flex-1 text-left">
-                {cat.label}
+                {cat.name}
               </span>
               <ChevronRight className="h-4 w-4 text-white/30 shrink-0" aria-hidden="true" />
             </button>
@@ -244,10 +181,9 @@ const MainScreen = ({
 
 // ── Category screen (Level 2 — shows chips as subcategory links) ──────────────
 
-const CategoryScreen = ({ categoryKey, onBack, onClose }: CategoryScreenProps) => {
-  const cat = getHamburgerCategory(categoryKey);
-  if (!cat) return null;
-  const categoryUrl = `/catalog?category=${encodeURIComponent(cat.label)}`;
+const CategoryScreen = ({ category, onBack, onClose }: CategoryScreenProps) => {
+  if (!category) return null;
+  const categoryUrl = `/catalog?category=${encodeURIComponent(category.name)}`;
 
   return (
     <div className="flex flex-col h-full">
@@ -260,7 +196,7 @@ const CategoryScreen = ({ categoryKey, onBack, onClose }: CategoryScreenProps) =
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <span className="text-[15px] font-semibold text-white/90">{cat.label}</span>
+        <span className="text-[15px] font-semibold text-white/90">{category.name}</span>
       </div>
 
       {/* Scrollable body */}
@@ -272,22 +208,22 @@ const CategoryScreen = ({ categoryKey, onBack, onClose }: CategoryScreenProps) =
           className="flex items-center gap-2 px-4 h-14 border-b border-white/10 hover:bg-white/[0.07] active:bg-white/10 transition-colors"
         >
           <span className="text-[15px] font-semibold text-[#22C55E]">
-            View All {cat.label}
+            View All {category.name}
           </span>
           <ChevronRight className="h-4 w-4 text-[#22C55E]/60 ml-auto" aria-hidden="true" />
         </Link>
 
         {/* Chip rows — direct links */}
-        <nav aria-label={`${cat.label} subcategories`}>
-          {cat.subcategories.map((subcategory) => (
+        <nav aria-label={`${category.name} subcategories`}>
+          {category.children.map((sub) => (
             <Link
-              key={subcategory}
-              to={`/catalog?category=${encodeURIComponent(cat.label)}&q=${encodeURIComponent(subcategory)}`}
+              key={sub.slug}
+              to={`/catalog?category=${encodeURIComponent(category.name)}&q=${encodeURIComponent(sub.name)}`}
               onClick={onClose}
               className="flex items-center px-4 h-[52px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.05]"
             >
               <span className="text-[15px] font-medium text-white/80 flex-1 text-left">
-                {subcategory}
+                {sub.name}
               </span>
             </Link>
           ))}
@@ -306,6 +242,7 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const { categories } = useCategories();
 
   // Reset sub-screens and handle focus / Escape key
   useEffect(() => {
@@ -413,11 +350,12 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
             onClose={onClose}
             onCategorySelect={handleCategorySelect}
             closeBtnRef={closeBtnRef}
+            categories={categories}
           />
         )}
         {screen === "category" && activeCategory !== null && (
           <CategoryScreen
-            categoryKey={activeCategory}
+            category={categories.find((c) => c.slug === activeCategory) ?? null}
             onBack={handleBackToMain}
             onClose={onClose}
           />

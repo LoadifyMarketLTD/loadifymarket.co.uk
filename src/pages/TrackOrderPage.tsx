@@ -49,14 +49,19 @@ export default function TrackOrderPage() {
       return;
     }
 
+    // Email is mandatory — the backend rejects requests without a valid email to
+    // prevent order enumeration attacks. We mirror that check here so users get a
+    // clear message immediately instead of a confusing backend 400.
+    if (!trackEmail) {
+      setError('Please enter the email address used when placing this order');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const params = new URLSearchParams({ orderNumber: trackOrderNumber });
-      if (trackEmail) {
-        params.append('email', trackEmail);
-      }
+      const params = new URLSearchParams({ orderNumber: trackOrderNumber, email: trackEmail });
 
       const response = await fetch(`/.netlify/functions/track-shipment?${params}`);
       const data = await response.json();
@@ -79,7 +84,9 @@ export default function TrackOrderPage() {
     const orderNumberParam = searchParams.get('orderNumber');
     if (orderNumberParam) {
       setOrderNumber(orderNumberParam);
-      handleTrack(orderNumberParam, '');
+      // Do NOT auto-trigger tracking here — the backend requires a valid email to
+      // prevent order enumeration attacks and will reject requests without one.
+      // Pre-fill the order number so the user only has to type their email.
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only on mount
@@ -148,7 +155,7 @@ export default function TrackOrderPage() {
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email (optional, for verification)
+              Email Address *
             </label>
             <input
               id="email"
@@ -157,7 +164,9 @@ export default function TrackOrderPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your.email@example.com"
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              required
             />
+            <p className="text-xs text-gray-500 mt-1">Enter the email address you used when placing the order.</p>
           </div>
 
           {error && (

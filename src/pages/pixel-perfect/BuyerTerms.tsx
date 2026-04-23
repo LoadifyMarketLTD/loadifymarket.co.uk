@@ -76,7 +76,7 @@ const BuyerTerms = () => {
           </ul>
 
           <h2>9. Limitation of Liability</h2>
-          <p>Loadify Market acts as an intermediary. We are not liable for the quality, safety, legality or delivery of goods purchased from sellers. Our liability is limited as set out in our general Terms &amp; Conditions.</p>
+          <p>Loadify Market processes payments as a marketplace facilitator using Stripe Connect. We are not liable for the quality, safety, legality or delivery of goods purchased from sellers. Our liability is limited as set out in our general Terms &amp; Conditions.</p>
 
           <h2>10. Contact</h2>
           <p>For buyer-related queries:</p>
