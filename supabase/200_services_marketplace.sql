@@ -269,7 +269,7 @@ CREATE POLICY order_messages_party ON order_messages
     EXISTS (
       SELECT 1 FROM orders o
       WHERE o.id = order_id
-        AND (o."userId" = auth.uid()
+        AND (o."buyerId" = auth.uid()
              OR EXISTS (
                SELECT 1 FROM order_items oi WHERE oi."orderId" = o.id AND oi."sellerId" = auth.uid()
              ))
