@@ -1,8 +1,8 @@
 /**
  * src/pages/Home.tsx — root "/" route
  *
- * Stage 3: B2B wholesale marketplace homepage.
- * Design: structured, business-first, no gradients or startup style.
+ * Stage 3: B2C + B2B online marketplace homepage.
+ * Design: structured, open-marketplace style, no gradients or startup style.
  *
  * Section order:
  *  1. Announcement bar
@@ -30,7 +30,7 @@ const HOW_IT_WORKS = [
     num: 1,
     icon: Search,
     title: "Browse & Discover",
-    desc: "Find wholesale products from verified UK trade suppliers across a global 10-category tree.",
+    desc: "Find products from sellers across the UK.",
   },
   {
     num: 2,
