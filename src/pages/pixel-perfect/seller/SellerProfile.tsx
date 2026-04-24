@@ -118,22 +118,29 @@ const SellerProfile = () => {
         form.phone.trim().length > 0 &&
         form.postcode.trim().length > 0;
 
-      await Promise.all([
+      const [usersRes, sellerRes, storeRes] = await Promise.all([
         supabase.from("users").update({ firstName, lastName }).eq("id", user.id),
-        supabase.from("seller_profiles").update({
-          businessName: form.businessName,
-          vatNumber: form.vatNumber,
-          companyRegistrationNumber: form.companyNumber,
-          contactPhone: form.phone,
-          businessAddress: { address: form.address, city: form.city, postcode: form.postcode },
-          // Onboarding flags: set when all required fields are present.
-          ...(hasRequiredFields ? { profileCompleted: true, storeCreated: true } : {}),
-        }).eq("userId", user.id),
+        supabase.from("seller_profiles").upsert(
+          {
+            userId: user.id,
+            businessName: form.businessName,
+            vatNumber: form.vatNumber,
+            companyRegistrationNumber: form.companyNumber,
+            contactPhone: form.phone,
+            businessAddress: { address: form.address, city: form.city, postcode: form.postcode },
+            // Onboarding flags: set when all required fields are present.
+            ...(hasRequiredFields ? { profileCompleted: true, storeCreated: true } : {}),
+          },
+          { onConflict: "userId" }
+        ),
         supabase.from("seller_stores").upsert(
           { userId: user.id, storeDescription: form.bio },
           { onConflict: "userId" }
         ),
       ]);
+      if (usersRes.error) throw usersRes.error;
+      if (sellerRes.error) throw sellerRes.error;
+      if (storeRes.error) throw storeRes.error;
       toast({ title: "Profile saved", description: "Your seller profile has been updated." });
 
       // Re-evaluate activation using persisted DB data (no Stripe API call needed).
@@ -165,7 +172,8 @@ const SellerProfile = () => {
         // Non-fatal — activation will be re-evaluated the next time the seller
         // visits their setup page or the seller dashboard.
       }
-    } catch {
+    } catch (err) {
+      console.error("Failed to save seller profile:", err);
       toast({ title: "Failed to save profile", description: "Please try again.", variant: "destructive" });
     } finally {
       setSaving(false);

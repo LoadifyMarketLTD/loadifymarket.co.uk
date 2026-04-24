@@ -32,6 +32,8 @@ const Login = () => {
 
   // True when user just registered and needs to confirm email.
   const justRegistered = searchParams.get("registered") === "1";
+  // True when user has just confirmed their email via the confirmation link.
+  const justConfirmed = searchParams.get("confirmed") === "1";
 
   useEffect(() => {
     if (user) {
@@ -123,6 +125,18 @@ const Login = () => {
                   </svg>
                   <p className="text-[13px] text-blue-700 leading-snug">
                     <strong>Check your email</strong> to confirm your account, then sign in below.
+                  </p>
+                </div>
+              )}
+
+              {/* Email confirmed banner — shown after clicking the confirmation link */}
+              {justConfirmed && (
+                <div className="flex items-start gap-2.5 rounded-lg bg-green-50 border border-green-200 px-3.5 py-3 mb-5">
+                  <svg className="h-4 w-4 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <p className="text-[13px] text-green-700 leading-snug">
+                    <strong>Email confirmed!</strong> You can now sign in to your account.
                   </p>
                 </div>
               )}

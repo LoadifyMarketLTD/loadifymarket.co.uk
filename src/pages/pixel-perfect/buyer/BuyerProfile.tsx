@@ -102,7 +102,7 @@ const BuyerProfile = () => {
     if (!user) return;
     setSaving(true);
     try {
-      await Promise.all([
+      const [usersRes, profileRes] = await Promise.all([
         supabase
           .from("users")
           .update({ firstName: form.firstName, lastName: form.lastName })
@@ -123,8 +123,11 @@ const BuyerProfile = () => {
             { onConflict: "userId" }
           ),
       ]);
+      if (usersRes.error) throw usersRes.error;
+      if (profileRes.error) throw profileRes.error;
       toast({ title: "Profile saved", description: "Your profile has been updated." });
-    } catch {
+    } catch (err) {
+      console.error("Failed to save profile:", err);
       toast({ title: "Failed to save profile", description: "Please try again.", variant: "destructive" });
     } finally {
       setSaving(false);
