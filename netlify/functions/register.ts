@@ -267,22 +267,34 @@ export const handler: Handler = async (event) => {
   } else {
     const actionLink = (confirmLinkData as { properties?: { action_link?: string } }).properties?.action_link;
     if (actionLink) {
-      fetch(`${appUrl}/.netlify/functions/send-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
-        },
-        body: JSON.stringify({
-          to: email,
-          subject: 'Confirm your Loadify Market email address',
-          template: 'confirm_email',
-          data: {
-            userName: `${firstName} ${lastName}`,
-            actionLink,
+      // Await the confirmation email so we can log failures — the user must
+      // click this link to verify their email before signing in.  Registration
+      // still returns 200 even if delivery fails so the auth record is never
+      // orphaned; the admin can resend via /resend-verification if needed.
+      try {
+        const confirmEmailRes = await fetch(`${appUrl}/.netlify/functions/send-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
           },
-        }),
-      }).catch((err: unknown) => console.warn('register: confirmation email failed (non-fatal):', err));
+          body: JSON.stringify({
+            to: email,
+            subject: 'Confirm your Loadify Market email address',
+            template: 'confirm_email',
+            data: {
+              userName: `${firstName} ${lastName}`,
+              actionLink,
+            },
+          }),
+        });
+        if (!confirmEmailRes.ok) {
+          const errBody = await confirmEmailRes.json().catch(() => ({})) as Record<string, unknown>;
+          console.error('register: confirmation email delivery failed:', confirmEmailRes.status, errBody);
+        }
+      } catch (err) {
+        console.error('register: confirmation email fetch threw (non-fatal):', err);
+      }
     } else {
       console.warn('register: action_link missing from generateLink response — confirmation email not sent');
     }
