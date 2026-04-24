@@ -77,6 +77,7 @@ interface UserRow {
   firstName: string | null;
   lastName: string | null;
   createdAt: string | null;
+  onboardingCompleted: boolean | null;
 }
 
 interface SellerProfileRow {
@@ -132,6 +133,7 @@ interface PendingOnboardSeller {
   email: string;
   name: string;
   company: string;
+  onboardingCompleted: boolean | null;
 }
 
 async function findSellersNeedingOnboarding(admin: SupabaseClient): Promise<PendingOnboardSeller[]> {
@@ -143,7 +145,7 @@ async function findSellersNeedingOnboarding(admin: SupabaseClient): Promise<Pend
 
   const { data: sellerUsers, error } = await admin
     .from('users')
-    .select('id, email, firstName, lastName, createdAt')
+    .select('id, email, firstName, lastName, createdAt, onboardingCompleted')
     .eq('role', 'seller')
     .lt('createdAt', cutoff)
     // Include rows where onboardingCompleted is explicitly false OR still NULL
@@ -180,6 +182,7 @@ async function findSellersNeedingOnboarding(admin: SupabaseClient): Promise<Pend
         email: u.email,
         name: fullName || u.email,
         company: p?.storeName || p?.businessName || '',
+        onboardingCompleted: u.onboardingCompleted ?? null,
       };
     });
 }
@@ -378,6 +381,7 @@ export const handler: Handler = async (event) => {
       let sent = 0;
       for (const seller of pending) {
         if (!seller.email.trim()) continue;
+        if (seller.onboardingCompleted === true) continue;
         if (debug) console.log('TARGETED SELLERS:', seller.userId);
         try {
           await sendOnboardingReminderEmail(seller);
