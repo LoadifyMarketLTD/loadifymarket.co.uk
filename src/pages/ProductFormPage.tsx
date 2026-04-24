@@ -408,11 +408,30 @@ export default function ProductFormPage() {
 
         // Mark first product created for onboarding completion tracking.
         // Non-fatal: onboarding checklist will still derive this from product count.
+        // Fetch all onboarding flags in a single query to avoid extra round trips.
         const { data: spRow } = await supabase
           .from('seller_profiles')
-          .select('firstProductCreated')
+          .select([
+            'firstProductCreated',
+            'profileCompleted',
+            'stripeConnectStatus',
+            'stripeChargesEnabled',
+            'stripePayoutsEnabled',
+            'stripeDetailsSubmitted',
+            'storeCreated',
+            'shippingSetupCompleted',
+          ].join(', '))
           .eq('userId', user.id)
-          .maybeSingle<{ firstProductCreated: boolean | null }>();
+          .maybeSingle<{
+            firstProductCreated: boolean | null;
+            profileCompleted: boolean | null;
+            stripeConnectStatus: string | null;
+            stripeChargesEnabled: boolean | null;
+            stripePayoutsEnabled: boolean | null;
+            stripeDetailsSubmitted: boolean | null;
+            storeCreated: boolean | null;
+            shippingSetupCompleted: boolean | null;
+          }>();
 
         if (!spRow?.firstProductCreated) {
           await supabase
@@ -422,38 +441,17 @@ export default function ProductFormPage() {
 
           // The DB trigger (trg_sync_seller_onboarding) will auto-set
           // onboardingCompleted when all other flags are also true.
-          // Force-check by re-evaluating user's onboarding state here.
-          const { data: fullSp } = await supabase
-            .from('seller_profiles')
-            .select([
-              'profileCompleted',
-              'stripeConnectStatus',
-              'stripeChargesEnabled',
-              'stripePayoutsEnabled',
-              'stripeDetailsSubmitted',
-              'storeCreated',
-              'shippingSetupCompleted',
-            ].join(', '))
-            .eq('userId', user.id)
-            .maybeSingle<{
-              profileCompleted: boolean | null;
-              stripeConnectStatus: string | null;
-              stripeChargesEnabled: boolean | null;
-              stripePayoutsEnabled: boolean | null;
-              stripeDetailsSubmitted: boolean | null;
-              storeCreated: boolean | null;
-              shippingSetupCompleted: boolean | null;
-            }>();
-
+          // Force-check here using the flags we already fetched above.
           if (
-            fullSp?.profileCompleted &&
-            fullSp?.stripeConnectStatus === 'active' &&
-            fullSp?.stripeChargesEnabled &&
-            fullSp?.stripePayoutsEnabled &&
-            fullSp?.stripeDetailsSubmitted &&
-            fullSp?.storeCreated &&
-            fullSp?.shippingSetupCompleted
+            spRow?.profileCompleted &&
+            spRow?.stripeConnectStatus === 'active' &&
+            spRow?.stripeChargesEnabled &&
+            spRow?.stripePayoutsEnabled &&
+            spRow?.stripeDetailsSubmitted &&
+            spRow?.storeCreated &&
+            spRow?.shippingSetupCompleted
           ) {
+            // ONBOARDING_COMPLETE_STEP = 8 (all 5 wizard steps done)
             await supabase
               .from('users')
               .update({ onboardingCompleted: true, onboardingStep: 8 })

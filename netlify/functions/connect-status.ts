@@ -128,8 +128,12 @@ export const handler: Handler = async (event) => {
       stripePayoutsEnabled: account.payouts_enabled,
       stripeDetailsSubmitted: account.details_submitted,
     };
-    // storeCreated: when Stripe is active the seller has gone through Stripe's
-    // KYC/identity flow which acts as a store-verified gate. Mark as created.
+    // storeCreated: when Stripe is active the seller has completed KYC and
+    // confirmed their identity. We treat this as store-created because the
+    // /onboarding wizard sends sellers through Stripe before store setup.
+    // Sellers who complete Stripe without filling store details will have
+    // the flag set to true but can still continue filling in store details
+    // via /seller/profile — the checklist shows the remaining items.
     if (stripeConnectStatus === 'active') {
       stripeUpdate.storeCreated = true;
     }

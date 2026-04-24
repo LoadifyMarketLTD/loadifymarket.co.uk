@@ -49,6 +49,8 @@ export const handler = schedule('0 9 * * *', async () => {
   const now = new Date();
 
   for (const window of WINDOWS) {
+    // windowStart has a 1-hour buffer beyond the target day boundary to
+    // absorb clock drift or scheduler jitter without missing any sellers.
     const windowStart = new Date(now.getTime() - (window.days * 24 + 1) * 60 * 60 * 1000).toISOString();
     const windowEnd   = new Date(now.getTime() - window.days * 24 * 60 * 60 * 1000).toISOString();
 
