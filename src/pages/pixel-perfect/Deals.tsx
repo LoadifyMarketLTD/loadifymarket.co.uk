@@ -199,7 +199,7 @@ const Deals = () => {
 
   return (
     <MainLayout>
-      <SEO title="Deals & Clearance | Loadify Market" description="Browse the latest deals, clearance lines, and discounted wholesale products on Loadify Market." canonical="/deals" />
+      <SEO title="Deals & Clearance | Loadify Market" description="Browse the latest deals, clearance lines, and discounted products on Loadify Market." canonical="/deals" />
 
       <main id="main-content" className="pt-28 pb-16">
         {/* Hero section */}

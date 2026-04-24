@@ -3,8 +3,8 @@ import { ShieldCheck, Users, CreditCard, Package } from "lucide-react";
 const ITEMS = [
   {
     icon: Users,
-    label: "Trade & Wholesale Only",
-    desc: "Registered business accounts",
+    label: "Open to Individuals & Businesses",
+    desc: "Buy & Sell Freely Across the UK",
   },
   {
     icon: ShieldCheck,

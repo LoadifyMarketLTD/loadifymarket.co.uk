@@ -150,7 +150,7 @@ const FeaturedProducts = () => {
             </p>
             <p className="text-xs text-gray-500 mt-1.5 mb-6 max-w-md leading-relaxed">
               We are currently onboarding verified UK trade suppliers.
-              Be among the first to list wholesale products on Loadify Market.
+              Be among the first to list products on Loadify Market.
             </p>
             <Link
               to="/register?type=seller"

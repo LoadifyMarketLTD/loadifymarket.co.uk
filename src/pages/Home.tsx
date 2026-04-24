@@ -1,7 +1,7 @@
 /**
  * src/pages/Home.tsx — root "/" route
  *
- * Stage 3: B2B wholesale marketplace homepage.
+ * Stage 3: B2C + B2B online marketplace homepage.
  * Design: structured, business-first, no gradients or startup style.
  *
  * Section order:
@@ -29,7 +29,7 @@ const HOW_IT_WORKS = [
     num: 1,
     icon: Search,
     title: "Browse & Discover",
-    desc: "Find wholesale products from verified UK trade suppliers across a global 10-category tree.",
+    desc: "Find products from sellers across the UK.",
   },
   {
     num: 2,
@@ -67,8 +67,8 @@ export default function Home() {
         />
       </Helmet>
       <SEO
-        title="Loadify Market | UK Wholesale B2B Marketplace for Trade Buyers & Suppliers"
-        description="Buy and sell wholesale goods on Loadify Market — the UK's B2B trade marketplace. Browse listings from verified UK suppliers or register your trade business today."
+        title="Loadify Market | UK Online Marketplace for Buyers & Sellers"
+        description="Buy and sell on Loadify Market — the UK's online marketplace for individuals and businesses. Browse listings from verified UK sellers or register and start selling today."
         canonical="/"
       />
 
@@ -161,7 +161,7 @@ export default function Home() {
                   Start Selling on Loadify Market
                 </h2>
                 <p className="text-gray-600 text-sm mt-1 max-w-[500px] leading-relaxed">
-                   Register your trade business and list wholesale products. 0% Commission
+                   Register and start selling your products on Loadify Market. 0% Commission
                   until 31 December 2026 — then a simple 7% on completed sales.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5">
