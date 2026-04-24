@@ -182,10 +182,17 @@ const AdminSellerManagement = () => {
         body: JSON.stringify({ op: "onboarding_reminder" }),
       });
       const json = await handleJson<{ sent: number }>(res);
-      toast({
-        title: "Reminders sent",
-        description: `Onboarding reminder sent to ${json.sent} seller${json.sent === 1 ? "" : "s"}.`,
-      });
+      if (json.sent === 0) {
+        toast({
+          title: "No reminders needed",
+          description: "No sellers need an onboarding reminder right now.",
+        });
+      } else {
+        toast({
+          title: "Reminders sent",
+          description: `Onboarding reminder sent to ${json.sent} seller${json.sent === 1 ? "" : "s"}.`,
+        });
+      }
     } catch (err: unknown) {
       setError((err as Error).message || "Failed to send reminders");
     } finally {

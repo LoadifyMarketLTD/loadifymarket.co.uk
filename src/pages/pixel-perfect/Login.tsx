@@ -30,6 +30,9 @@ const Login = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuthStore();
 
+  // True when user just registered and needs to confirm email.
+  const justRegistered = searchParams.get("registered") === "1";
+
   useEffect(() => {
     if (user) {
       const nextUrl = searchParams.get("next");
@@ -111,6 +114,18 @@ const Login = () => {
 
             {/* Form card */}
             <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.07)] border border-gray-100 p-7 sm:p-8">
+
+              {/* Email confirmation banner — shown after successful registration */}
+              {justRegistered && (
+                <div className="flex items-start gap-2.5 rounded-lg bg-blue-50 border border-blue-200 px-3.5 py-3 mb-5">
+                  <svg className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <p className="text-[13px] text-blue-700 leading-snug">
+                    <strong>Check your email</strong> to confirm your account, then sign in below.
+                  </p>
+                </div>
+              )}
 
               {/* Heading */}
               <div className="mb-6">

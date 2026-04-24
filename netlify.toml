@@ -37,6 +37,9 @@
 [functions]
   node_bundler = "esbuild"
 
+[functions."onboarding-reminder"]
+  schedule = "0 9 * * *"
+
 # ─── Edge Functions ───────────────────────────────────────────────────────────
 # EXECUTION ORDER matters: Netlify runs edge functions in the order declared
 # here.  For /product/:id requests:

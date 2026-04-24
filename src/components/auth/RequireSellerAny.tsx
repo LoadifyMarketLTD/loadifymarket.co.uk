@@ -9,12 +9,12 @@ interface Props {
 }
 
 /**
- * Route guard for seller onboarding pages (setup, profile edit).
+ * Route guard for seller onboarding pages (profile edit).
  * Allows any user with the seller role regardless of activation status,
  * plus admins for inspection. Buyers and unauthenticated users are blocked.
  *
  * Use this guard (not RequireSeller) for:
- *   - /seller/setup  — draft/submitted sellers must complete onboarding here
+ *   - /onboarding  — draft/submitted sellers complete onboarding here
  *   - /seller/profile — sellers can edit their profile at any status
  *
  * Access rules:

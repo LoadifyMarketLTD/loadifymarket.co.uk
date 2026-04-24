@@ -37,17 +37,21 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 type AdminCaller = { id: string; email: string; role: string | null };
 
+type AuthResult =
+  | { ok: true; caller: AdminCaller }
+  | { ok: false; status: 401 | 403 };
+
 async function authenticateAdmin(
   event: HandlerEvent,
   admin: SupabaseClient,
-): Promise<AdminCaller | null> {
+): Promise<AuthResult> {
   const authHeader = event.headers['authorization'] || event.headers['Authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return { ok: false, status: 401 };
   const token = authHeader.substring(7).trim();
-  if (!token) return null;
+  if (!token) return { ok: false, status: 401 };
 
   const { data, error } = await admin.auth.getUser(token);
-  if (error || !data?.user) return null;
+  if (error || !data?.user) return { ok: false, status: 401 };
   const authUser = data.user;
 
   const { data: row } = await admin
@@ -63,8 +67,8 @@ async function authenticateAdmin(
   const isDbAdmin = role === 'admin' || role === 'owner';
   const isEmailAdmin = adminEmail !== '' && email === adminEmail;
 
-  if (!isDbAdmin && !isEmailAdmin) return null;
-  return { id: authUser.id, email, role };
+  if (!isDbAdmin && !isEmailAdmin) return { ok: false, status: 403 };
+  return { ok: true, caller: { id: authUser.id, email, role } };
 }
 
 interface UserRow {
@@ -73,6 +77,7 @@ interface UserRow {
   firstName: string | null;
   lastName: string | null;
   createdAt: string | null;
+  onboardingCompleted: boolean | null;
 }
 
 interface SellerProfileRow {
@@ -128,50 +133,58 @@ interface PendingOnboardSeller {
   email: string;
   name: string;
   company: string;
+  onboardingCompleted: boolean | null;
 }
 
 async function findSellersNeedingOnboarding(admin: SupabaseClient): Promise<PendingOnboardSeller[]> {
-  const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  // Only query sellers registered more than 24h ago to avoid emailing brand-new signups.
+  // Filter by onboardingCompleted = false (or NULL for rows created before the field was added).
+  // This is the canonical completion signal: all onboarding step-flags must be true before
+  // onboardingCompleted is set to true (see supabase/446_add_onboarding_fields.sql).
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   const { data: sellerUsers, error } = await admin
     .from('users')
-    .select('id, email, firstName, lastName, createdAt')
+    .select('id, email, firstName, lastName, createdAt, onboardingCompleted')
     .eq('role', 'seller')
     .lt('createdAt', cutoff)
+    // Include rows where onboardingCompleted is explicitly false OR still NULL
+    // (NULL means the field was not set yet, i.e., the seller hasn't completed onboarding).
+    .or('"onboardingCompleted".eq.false,"onboardingCompleted".is.null')
     .order('createdAt', { ascending: false })
     .returns<UserRow[]>();
 
   if (error) throw new Error(`users query failed: ${error.message}`);
   if (!sellerUsers || sellerUsers.length === 0) return [];
 
+  // Fetch profiles to get display info and sellerStatus. Suspended sellers must
+  // not receive reminder emails regardless of their onboardingCompleted flag.
   const userIds = sellerUsers.map((u) => u.id);
   const { data: profiles } = await admin
     .from('seller_profiles')
-    .select('userId, stripeConnectStatus, storeName, businessName, fullName')
+    .select('userId, sellerStatus, storeName, businessName, fullName')
     .in('userId', userIds)
-    .not('stripeConnectStatus', 'eq', 'active')
-    .returns<SellerProfileRow[]>();
+    .returns<Pick<SellerProfileRow, 'userId' | 'sellerStatus' | 'storeName' | 'businessName' | 'fullName'>[]>();
 
-  const noStripeIds = new Set((profiles ?? []).map((p) => p.userId));
-  // Build a Set of all userId values that have any profile row (regardless of Stripe status)
-  const allProfileIds = new Set((profiles ?? []).map((p) => p.userId));
   const profileMap = new Map((profiles ?? []).map((p) => [p.userId, p]));
 
-  // Include sellers whose profile has no Stripe connection, or have no profile row at all
-  const allPending = sellerUsers.filter(
-    (u) => noStripeIds.has(u.id) || !allProfileIds.has(u.id),
-  );
-
-  return allPending.map((u) => {
-    const p = profileMap.get(u.id);
-    const fullName = p?.fullName?.trim() || [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
-    return {
-      userId: u.id,
-      email: u.email,
-      name: fullName || u.email,
-      company: p?.storeName || p?.businessName || '',
-    };
-  });
+  return sellerUsers
+    .filter((u) => {
+      const p = profileMap.get(u.id);
+      // Exclude suspended accounts from reminder emails.
+      return !p || p.sellerStatus !== 'suspended';
+    })
+    .map((u) => {
+      const p = profileMap.get(u.id);
+      const fullName = p?.fullName?.trim() || [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
+      return {
+        userId: u.id,
+        email: u.email,
+        name: fullName || u.email,
+        company: p?.storeName || p?.businessName || '',
+        onboardingCompleted: u.onboardingCompleted ?? null,
+      };
+    });
 }
 
 async function sendOnboardingReminderEmail(seller: PendingOnboardSeller): Promise<void> {
@@ -182,18 +195,18 @@ async function sendOnboardingReminderEmail(seller: PendingOnboardSeller): Promis
   await sgMail.send({
     to: seller.email,
     from: process.env.SENDGRID_FROM_EMAIL || 'loadifymarket.co.uk@gmail.com',
-    subject: 'Complete your Stripe onboarding — Loadify Market',
+    subject: 'Complete your seller setup — Loadify Market',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">
         <div style="background:#243b53;padding:20px;text-align:center;">
           <h1 style="color:#f59e0b;margin:0;">Loadify Market</h1>
         </div>
         <div style="background:#fff;padding:30px;margin-top:20px;">
-          <h2 style="color:#243b53;">Complete Your Stripe Onboarding</h2>
+          <h2 style="color:#243b53;">Complete Your Seller Setup</h2>
           <p>Hi ${escapeHtml(seller.name)},</p>
-          <p>You registered as a seller on Loadify Market but haven't yet connected a Stripe account. You need to connect Stripe to receive payments for your sales.</p>
+          <p>You registered as a seller on Loadify Market but haven't yet completed your seller onboarding. You need to finish the setup to start selling and receiving payments.</p>
           <p>It only takes a few minutes — click the button below to complete your setup:</p>
-          <a href="${siteUrl}/seller/setup" style="display:inline-block;background:#f59e0b;color:#fff;padding:12px 24px;text-decoration:none;border-radius:5px;margin:16px 0;">Complete Stripe Setup</a>
+          <a href="${siteUrl}/onboarding" style="display:inline-block;background:#f59e0b;color:#fff;padding:12px 24px;text-decoration:none;border-radius:5px;margin:16px 0;">Complete Seller Setup</a>
           <p style="color:#888;font-size:13px;">Once connected, your store will go live automatically. If you need help, contact us at <a href="mailto:support@loadifymarket.co.uk" style="color:#f59e0b;">support@loadifymarket.co.uk</a>.</p>
         </div>
         <div style="text-align:center;padding:20px;color:#666;font-size:12px;">
@@ -283,10 +296,14 @@ export const handler: Handler = async (event) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const caller = await authenticateAdmin(event, admin);
-  if (!caller) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
+  const authResult = await authenticateAdmin(event, admin);
+  if (!authResult.ok) {
+    return {
+      statusCode: authResult.status,
+      body: JSON.stringify({ error: authResult.status === 403 ? 'Forbidden' : 'Unauthorized' }),
+    };
   }
+  const caller = authResult.caller;
 
   let body: { op?: string; userId?: string } = {};
   if (event.httpMethod === 'POST' && event.body) {
@@ -355,10 +372,20 @@ export const handler: Handler = async (event) => {
 
     if (op === 'onboarding_reminder') {
       const pending = await findSellersNeedingOnboarding(admin);
+      const debug = process.env.DEBUG_ADMIN === 'true';
+      if (debug) {
+        console.log('ADMIN ID:', caller.id);
+        console.log('ROLE:', caller.role);
+        console.log('SELLERS FOUND:', pending.length);
+      }
       let sent = 0;
       for (const seller of pending) {
+        if (!seller.email.trim()) continue;
+        if (seller.onboardingCompleted === true) continue;
+        if (debug) console.log('TARGETED SELLERS:', seller.userId);
         try {
           await sendOnboardingReminderEmail(seller);
+          if (debug) console.log('EMAIL SENT:', seller.email);
           sent++;
         } catch (emailErr) {
           console.warn(`admin-sellers: failed to send onboarding reminder to ${seller.email}:`, emailErr);

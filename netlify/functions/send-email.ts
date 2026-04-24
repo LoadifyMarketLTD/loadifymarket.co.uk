@@ -26,7 +26,7 @@ const supabase =
 interface EmailRequest {
   to: string;
   subject: string;
-  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry' | 'admin_new_buyer' | 'admin_new_seller' | 'admin_seller_active' | 'seller_welcome' | 'seller_account_active' | 'buyer_welcome' | 'resend_verification';
+  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry' | 'admin_new_buyer' | 'admin_new_seller' | 'admin_seller_active' | 'seller_welcome' | 'seller_account_active' | 'buyer_welcome' | 'resend_verification' | 'onboarding_reminder';
   data: Record<string, unknown>;
 }
 
@@ -369,7 +369,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
           <li><strong>Connect your Stripe account</strong> — this is required to receive payouts for your sales.</li>
         </ol>
         <p>Once both steps are done your store will go live automatically — no manual approval needed.</p>
-        <a href="${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/seller/setup" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Complete Your Setup</a>
+        <a href="${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/onboarding" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Complete Your Setup</a>
         <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at support@loadifymarket.co.uk</p>
       `;
       break;
@@ -407,6 +407,26 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <p style="color: #555; font-size: 14px;">This link is valid for 24 hours and can only be used once. If you did not expect this email, please ignore it or contact us at <a href="mailto:support@loadifymarket.co.uk" style="color: #f59e0b;">support@loadifymarket.co.uk</a>.</p>
       `;
       break;
+
+    case 'onboarding_reminder': {
+      const windowLabel = escapeHtml((data.windowLabel as string) || '');
+      const reminderMessage =
+        windowLabel === '24h'
+          ? 'It\'s been 24 hours since you registered — a quick reminder to complete your seller setup.'
+          : windowLabel === '3day'
+          ? 'It\'s been 3 days since you registered. Don\'t miss out — complete your setup to start selling.'
+          : 'It\'s been 7 days since you registered. Your store is almost ready — just a few steps left!';
+      const appBaseUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
+      content = `
+        <h2 style="color: #243b53;">Complete your Loadify Market seller setup</h2>
+        <p>Hi ${escapeHtml((data.sellerName as string) || 'there')},</p>
+        <p>${reminderMessage}</p>
+        <p>Finish setting up your account to start listing products and receiving payments via Stripe.</p>
+        <a href="${escapeHtml((data.onboardingUrl as string) || `${appBaseUrl}/onboarding`)}" style="display: inline-block; background-color: #22c55e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Complete My Setup →</a>
+        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at support@loadifymarket.co.uk</p>
+      `;
+      break;
+    }
 
     default:
       content = `

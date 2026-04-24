@@ -110,6 +110,14 @@ const SellerProfile = () => {
       const firstName = nameParts[0] ?? "";
       const lastName = nameParts.slice(1).join(" ");
 
+      // Determine whether the required profile fields are filled so we can
+      // set the profileCompleted onboarding flag. storeCreated is set when
+      // the seller has a store name (from seller_stores) and a contact phone.
+      const hasRequiredFields =
+        form.businessName.trim().length > 0 &&
+        form.phone.trim().length > 0 &&
+        form.postcode.trim().length > 0;
+
       await Promise.all([
         supabase.from("users").update({ firstName, lastName }).eq("id", user.id),
         supabase.from("seller_profiles").update({
@@ -118,6 +126,8 @@ const SellerProfile = () => {
           companyRegistrationNumber: form.companyNumber,
           contactPhone: form.phone,
           businessAddress: { address: form.address, city: form.city, postcode: form.postcode },
+          // Onboarding flags: set when all required fields are present.
+          ...(hasRequiredFields ? { profileCompleted: true, storeCreated: true } : {}),
         }).eq("userId", user.id),
         supabase.from("seller_stores").upsert(
           { userId: user.id, storeDescription: form.bio },

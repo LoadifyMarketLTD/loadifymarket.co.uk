@@ -405,6 +405,62 @@ export default function ProductFormPage() {
           .single();
         if (error) throw error;
         if (inserted) await syncShipping(inserted.id);
+
+        // Mark first product created for onboarding completion tracking.
+        // Non-fatal: onboarding checklist will still derive this from product count.
+        // Fetch all onboarding flags in a single query to avoid extra round trips.
+        const { data: spRow } = await supabase
+          .from('seller_profiles')
+          .select([
+            'firstProductCreated',
+            'profileCompleted',
+            'stripeConnectStatus',
+            'stripeChargesEnabled',
+            'stripePayoutsEnabled',
+            'stripeDetailsSubmitted',
+            'storeCreated',
+            'shippingSetupCompleted',
+          ].join(', '))
+          .eq('userId', user.id)
+          .maybeSingle<{
+            firstProductCreated: boolean | null;
+            profileCompleted: boolean | null;
+            stripeConnectStatus: string | null;
+            stripeChargesEnabled: boolean | null;
+            stripePayoutsEnabled: boolean | null;
+            stripeDetailsSubmitted: boolean | null;
+            storeCreated: boolean | null;
+            shippingSetupCompleted: boolean | null;
+          }>();
+
+        if (!spRow?.firstProductCreated) {
+          await supabase
+            .from('seller_profiles')
+            .update({ firstProductCreated: true })
+            .eq('userId', user.id);
+
+          // The DB trigger (trg_sync_seller_onboarding) will auto-set
+          // onboardingCompleted when all other flags are also true.
+          // Force-check here using the flags we already fetched above.
+          if (
+            spRow?.profileCompleted &&
+            spRow?.stripeConnectStatus === 'active' &&
+            spRow?.stripeChargesEnabled &&
+            spRow?.stripePayoutsEnabled &&
+            spRow?.stripeDetailsSubmitted &&
+            spRow?.storeCreated &&
+            spRow?.shippingSetupCompleted
+          ) {
+            // onboardingStep 8 = all gate flags satisfied (5 wizard UI steps map to
+            // 8 DB sub-steps tracked in seller_profiles; value mirrors ONBOARDING_COMPLETE_STEP
+            // in src/pages/onboarding/SellerOnboarding.tsx).
+            await supabase
+              .from('users')
+              .update({ onboardingCompleted: true, onboardingStep: 8 })
+              .eq('id', user.id);
+          }
+        }
+
         setSuccessMessage(
           publishMode
             ? 'Product created! It will be visible after admin approval.'

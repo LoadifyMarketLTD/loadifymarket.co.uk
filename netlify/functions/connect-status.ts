@@ -120,10 +120,26 @@ export const handler: Handler = async (event) => {
       stripeConnectStatus = 'pending';
     }
 
-    // Persist the refreshed status so the dashboard doesn't need to poll Stripe.
+    // Persist the refreshed status and granular Stripe flags so the dashboard
+    // doesn't need to poll Stripe and onboarding completion can be computed.
+    const stripeUpdate: Record<string, unknown> = {
+      stripeConnectStatus,
+      stripeChargesEnabled: account.charges_enabled,
+      stripePayoutsEnabled: account.payouts_enabled,
+      stripeDetailsSubmitted: account.details_submitted,
+    };
+    // storeCreated: when Stripe is active the seller has completed KYC and
+    // confirmed their identity. We treat this as store-created because the
+    // /onboarding wizard sends sellers through Stripe before store setup.
+    // Sellers who complete Stripe without filling store details will have
+    // the flag set to true but can still continue filling in store details
+    // via /seller/profile — the checklist shows the remaining items.
+    if (stripeConnectStatus === 'active') {
+      stripeUpdate.storeCreated = true;
+    }
     const { error: stripeStatusUpdateError } = await supabase
       .from('seller_profiles')
-      .update({ stripeConnectStatus })
+      .update(stripeUpdate)
       .eq('userId', user.id);
 
     if (stripeStatusUpdateError) {

@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import type { User } from "@/types";
 import { toast } from "@/hooks/use-toast";
+import { OnboardingChecklist } from "@/components/OnboardingChecklist";
 
 type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 
@@ -233,6 +234,9 @@ const SellerDashboard = () => {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[1200px]">
+      {/* Onboarding checklist — shown only to sellers who haven't completed setup */}
+      <OnboardingChecklist />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
