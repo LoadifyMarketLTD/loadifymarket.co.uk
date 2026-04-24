@@ -390,6 +390,6 @@ Potential improvements:
 ## Support
 
 For issues or questions:
-- Email: loadifymarket.co.uk@gmail.com
+- Email: support@loadifymarket.co.uk
 - Review server logs in Netlify dashboard
 - Check Supabase logs for database errors

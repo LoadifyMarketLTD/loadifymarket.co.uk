@@ -82,8 +82,8 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid role' }) };
   }
 
-  if (password.length < 6) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Password must be at least 6 characters' }) };
+  if (password.length < 8) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Password must be at least 8 characters' }) };
   }
   // ────────────────────────────────────────────────────────────────────────────
 
@@ -140,13 +140,11 @@ export const handler: Handler = async (event) => {
   // ─────────────────────────────────────────────────────────────────────────
 
   // ── Create auth user via Admin API ─────────────────────────────────────────
-  // email_confirm: true  →  account is immediately active; no confirmation
-  // email is sent, so Supabase's built-in mailer rate limit is never hit.
-  // This is the key bypass for the "email rate limit exceeded" error.
+  // Supabase will dispatch a confirmation email. The user must click the link
+  // to verify email ownership before they can sign in.
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,
     password,
-    email_confirm: true,
     user_metadata: {
       first_name: firstName,
       last_name: lastName,
@@ -233,7 +231,7 @@ export const handler: Handler = async (event) => {
     firstName,
     lastName,
     role,
-    isEmailVerified: true,  // confirmed above via email_confirm: true
+    isEmailVerified: false,  // user must verify email via the confirmation link
     ...(phone ? { phone } : {}),
   });
 
@@ -291,10 +289,10 @@ export const handler: Handler = async (event) => {
   // ── Admin notification email ──────────────────────────────────────────────
   // Fire-and-forget: a failure here must never block successful registration.
   // Fall back to the primary admin inbox when the env var is not configured.
-  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'loadifymarket.co.uk@gmail.com';
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'support@loadifymarket.co.uk';
   if (!process.env.ADMIN_NOTIFICATION_EMAIL) {
     console.warn(
-      'register: ADMIN_NOTIFICATION_EMAIL is not set — falling back to loadifymarket.co.uk@gmail.com. ' +
+      'register: ADMIN_NOTIFICATION_EMAIL is not set — falling back to support@loadifymarket.co.uk. ' +
       'Set this environment variable in the Netlify dashboard to override.'
     );
   }

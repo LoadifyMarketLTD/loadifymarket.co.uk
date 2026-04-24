@@ -83,7 +83,7 @@ describe('register handler – request validation', () => {
     expect(JSON.parse(res.body as string).error).toMatch(/invalid role/i);
   });
 
-  it('returns 400 when password is shorter than 6 characters', async () => {
+  it('returns 400 when password is shorter than 8 characters', async () => {
     vi.doMock('@supabase/supabase-js', () => ({ createClient: vi.fn(() => ({})) }));
     const { handler } = await import('../register');
     const res = await handler(
@@ -91,7 +91,7 @@ describe('register handler – request validation', () => {
       {} as never,
     );
     expect(res.statusCode).toBe(400);
-    expect(JSON.parse(res.body as string).error).toMatch(/at least 6/i);
+    expect(JSON.parse(res.body as string).error).toMatch(/at least 8/i);
   });
 
   it('returns 429 when rate limit is exceeded', async () => {

@@ -25,6 +25,16 @@ const storeConsent = (prefs: CookiePreferences) => {
   safeLocalStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(prefs));
 };
 
+// Safely update Google Consent Mode. No-op when gtag is not loaded
+// (e.g. VITE_GA_MEASUREMENT_ID is not set or GA4 was blocked by an ad-blocker).
+const updateGtagConsent = (analytics: boolean) => {
+  if (typeof window !== "undefined" && typeof window.gtag === "function") {
+    window.gtag("consent", "update", {
+      analytics_storage: analytics ? "granted" : "denied",
+    });
+  }
+};
+
 const CookieConsent = () => {
   const [visible, setVisible] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
@@ -34,10 +44,14 @@ const CookieConsent = () => {
     marketing: false,
   });
 
+  // On mount: if the user previously consented, restore their GA4 consent state
+  // so analytics is re-enabled on each page load without re-prompting.
   useEffect(() => {
     const consent = getStoredConsent();
-    if (!consent) {
-      // Small delay so it doesn't flash on load
+    if (consent) {
+      updateGtagConsent(consent.analytics);
+    } else {
+      // No stored consent — show the banner after a short delay.
       const timer = setTimeout(() => setVisible(true), 800);
       return () => clearTimeout(timer);
     }
@@ -46,17 +60,20 @@ const CookieConsent = () => {
   const handleAcceptAll = () => {
     const prefs: CookiePreferences = { essential: true, analytics: true, marketing: true };
     storeConsent(prefs);
+    updateGtagConsent(true);
     setVisible(false);
   };
 
   const handleRejectNonEssential = () => {
     const prefs: CookiePreferences = { essential: true, analytics: false, marketing: false };
     storeConsent(prefs);
+    updateGtagConsent(false);
     setVisible(false);
   };
 
   const handleSavePreferences = () => {
     storeConsent({ ...preferences, essential: true });
+    updateGtagConsent(preferences.analytics);
     setVisible(false);
   };
 
