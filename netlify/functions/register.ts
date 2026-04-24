@@ -151,8 +151,8 @@ export const handler: Handler = async (event) => {
       first_name: firstName,
       last_name: lastName,
       role,
-      ...(phone        ? { phone }        : {}),
-      ...(vatNumber    ? { vat_number: vatNumber }    : {}),
+      ...(phone ? { phone } : {}),
+      ...(vatNumber ? { vat_number: vatNumber } : {}),
       ...(customerType ? { customer_type: customerType } : {}),
     },
   });

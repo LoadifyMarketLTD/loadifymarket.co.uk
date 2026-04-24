@@ -56,9 +56,9 @@ BEGIN
     NEW.id,
     NEW.email,
     CASE
-      WHEN (NEW.raw_app_meta_data  ->>'role') IN ('admin', 'seller', 'buyer')
-        THEN (NEW.raw_app_meta_data ->>'role')
-      WHEN (NEW.raw_user_meta_data ->>'role') IN ('admin', 'seller', 'buyer')
+      WHEN (NEW.raw_app_meta_data->>'role') IN ('admin', 'seller', 'buyer')
+        THEN (NEW.raw_app_meta_data->>'role')
+      WHEN (NEW.raw_user_meta_data->>'role') IN ('admin', 'seller', 'buyer')
         THEN (NEW.raw_user_meta_data->>'role')
       ELSE 'buyer'
     END,
