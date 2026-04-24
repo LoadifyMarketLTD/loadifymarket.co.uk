@@ -97,9 +97,9 @@ async function authorizedFetch(
   if (session?.access_token) {
     try {
       const [, rawPayload] = session.access_token.split('.');
-      const payload = JSON.parse(
-        atob(rawPayload.replace(/-/g, '+').replace(/_/g, '/'))
-      ) as { exp?: number };
+      const padded = rawPayload.replace(/-/g, '+').replace(/_/g, '/') +
+        '='.repeat((4 - rawPayload.length % 4) % 4);
+      const payload = JSON.parse(atob(padded)) as { exp?: number };
       if (payload.exp && payload.exp * 1000 - Date.now() < 60_000) {
         const { data: refreshed } = await supabase.auth.refreshSession();
         if (refreshed.session) session = refreshed.session;
@@ -558,7 +558,7 @@ const AdminSellerManagement = () => {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 bg-purple-100 text-purple-700">
-                  {selectedSeller.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "S"}
+                  {selectedSeller.name.split(" ").filter((n) => n).map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "S"}
                 </div>
                 {selectedSeller.company || selectedSeller.name}
               </DialogTitle>
