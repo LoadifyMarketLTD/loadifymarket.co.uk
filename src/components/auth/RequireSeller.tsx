@@ -24,7 +24,7 @@ const CardShell = ({ children }: { children: ReactNode }) => (
  * Access rules:
  *   admins         → bypass all seller checks (full access)
  *   active sellers → render children
- *   draft/submitted → redirect to /seller/setup (complete setup first)
+ *   draft/submitted → redirect to /onboarding (complete setup first)
  *   suspended       → show suspension notice (no redirect)
  *   non-sellers     → show "seller account required" prompt
  *   unauthenticated → redirect to /login
@@ -114,7 +114,7 @@ export default function RequireSeller({ children }: Props) {
           // DB query failed (network/RLS/transient error). Don't show the error
           // screen yet — fall through to recheck-activation, which uses the
           // service role and can verify status independently. If that also fails
-          // the guard will redirect to /seller/setup (safe default).
+          // the guard will redirect to /onboarding (safe default).
           console.warn('RequireSeller: seller_profiles query failed, trying recheck', error.message);
           // dbStatus stays 'draft' — recheck will override it if successful.
         } else {
@@ -179,7 +179,7 @@ export default function RequireSeller({ children }: Props) {
     <>
       {/* While the seller status async check is in progress, show a neutral spinner.
           This prevents dashboard content from flashing briefly before a redirect to
-          /seller/setup fires when the seller's status is draft or submitted. */}
+          /onboarding fires when the seller's status is draft or submitted. */}
       {loading ? (
         <div className="flex items-center justify-center min-h-screen">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800" />
@@ -221,8 +221,8 @@ export default function RequireSeller({ children }: Props) {
           </div>
         </CardShell>
       ) : fetchState === 'draft' || fetchState === 'submitted' ? (
-        /* Setup incomplete — redirect to the seller setup page */
-        <Navigate to="/seller/setup" replace />
+        /* Setup incomplete — redirect to the seller onboarding wizard */
+        <Navigate to="/onboarding" replace />
       ) : fetchState === 'error' ? (
         <CardShell>
           <p className="text-5xl mb-4">⚠️</p>

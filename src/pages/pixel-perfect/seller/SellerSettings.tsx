@@ -117,10 +117,11 @@ const SellerSettings = () => {
         { onConflict: "userId" }
       );
 
-      // Persist shipping defaults to DB (seller_profiles.shippingDefaults) and localStorage as fallback
+      // Persist shipping defaults to DB (seller_profiles.shippingDefaults) and localStorage as fallback.
+      // Also set shippingSetupCompleted=true to mark the onboarding step done.
       const { error: shippingError } = await supabase
         .from("seller_profiles")
-        .update({ shippingDefaults: shipping })
+        .update({ shippingDefaults: shipping, shippingSetupCompleted: true })
         .eq("userId", user.id);
       if (shippingError) throw shippingError;
       safeLocalStorage.setItem(SHIPPING_STORAGE_KEY, JSON.stringify(shipping));

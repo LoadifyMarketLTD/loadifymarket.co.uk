@@ -19,7 +19,7 @@ const ITEMS: {
   cta: string;
 }[] = [
   { key: "profileCompleted",      label: "Complete your seller profile",     href: "/seller/profile",       cta: "Edit profile" },
-  { key: "stripeConnected",       label: "Connect Stripe for payments",       href: "/seller/setup",         cta: "Connect Stripe" },
+  { key: "stripeConnected",       label: "Connect Stripe for payments",       href: "/onboarding",           cta: "Connect Stripe" },
   { key: "storeCreated",          label: "Set up your store",                 href: "/seller/settings",      cta: "Configure store" },
   { key: "shippingSetupCompleted",label: "Configure shipping methods",        href: "/seller/settings",      cta: "Set up shipping" },
   { key: "firstProductCreated",   label: "Add your first product",            href: "/seller/products/new",  cta: "Add product" },

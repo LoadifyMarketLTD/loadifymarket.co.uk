@@ -62,8 +62,6 @@ const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
 // Legal pages without pixel-perfect equivalents
 const AcceptableUsePolicyPage = lazy(() => import('./pages/legal/AcceptableUsePolicyPage'));
 const SellerGuidelinesPage = lazy(() => import('./pages/SellerGuidelinesPage'));
-// SellerSetupPage: shown to sellers who have not yet activated their account
-const SellerSetupPage = lazy(() => import('./pages/pixel-perfect/seller/SellerSetupPage'));
 // Onboarding pages
 const RoleSelection     = lazy(() => import('./pages/onboarding/RoleSelection'));
 const SellerOnboarding  = lazy(() => import('./pages/onboarding/SellerOnboarding'));
@@ -567,12 +565,8 @@ function App() {
           </RequireSeller>
         } />
 
-        {/* Seller: Setup page — accessible by any seller (any status) and admins */}
-        <Route path="seller/setup" element={
-          <RequireSellerAny>
-            <Suspense fallback={<PageLoader />}><SellerSetupPage /></Suspense>
-          </RequireSellerAny>
-        } />
+        {/* Seller: Setup page — redirected to /onboarding (single onboarding system) */}
+        <Route path="seller/setup" element={<Navigate to="/onboarding" replace />} />
 
         {/* Seller: Profile edit — accessible by any seller (any status) and admins */}
         <Route path="seller/profile" element={
