@@ -19,6 +19,12 @@ export interface User {
   id: string;
   email: string;
   role: UserRole;
+  /**
+   * True when this user is a platform admin.
+   * Derived from role === 'admin' at auth-hydration time.
+   * Admin is a system-level flag — it cannot be assigned from the UI.
+   */
+  isAdmin?: boolean;
   marketplaceRole?: MarketplaceRole;
   firstName?: string;
   lastName?: string;

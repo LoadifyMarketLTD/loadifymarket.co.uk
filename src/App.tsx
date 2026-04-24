@@ -459,6 +459,10 @@ function App() {
                 // Always derive isEmailVerified from Supabase Auth (source of truth).
                 (data as Record<string, unknown>).isEmailVerified =
                   session.user.email_confirmed_at != null;
+                // Derive isAdmin from role so components can use user.isAdmin
+                // independently of the role field (which may later become roles[]).
+                (data as Record<string, unknown>).isAdmin =
+                  (data as Record<string, unknown>).role === 'admin';
                 setUser(data);
               } else {
                 if (error) {

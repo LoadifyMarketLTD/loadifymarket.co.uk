@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users, Search, ShieldCheck, Ban, MoreHorizontal, Eye, Loader2, ExternalLink, Package, ShoppingBag, Flag, CreditCard, UserCog, Lock } from "lucide-react";
+import { Users, Search, ShieldCheck, Ban, MoreHorizontal, Eye, Loader2, Package, ShoppingBag, Flag, CreditCard, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -232,6 +232,11 @@ const AdminUsers = () => {
   };
 
   const changeRole = async (userId: string, newRole: string, currentRole: string) => {
+    // Admin role cannot be assigned from the UI — it is set only in the database.
+    if (newRole === 'admin') {
+      toast({ title: "Not allowed", description: "Admin role can only be assigned directly in the database.", variant: "destructive" });
+      return;
+    }
     // Prevent an admin from changing their own role (self-lockout protection).
     if (userId === currentUser?.id) {
       toast({ title: "Not allowed", description: "You cannot change your own role.", variant: "destructive" });
@@ -485,8 +490,8 @@ const AdminUsers = () => {
                   </div>
                 </section>
 
-                {/* ── Seller profile (only shown for sellers) ───────────────── */}
-                {(detail.role === "seller" || detail.sellerStatus) && (
+                {/* ── Seller profile (only shown for sellers, never for admins) ── */}
+                {detail.role === "seller" && (
                   <section>
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Seller Profile</h3>
                     <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
@@ -530,37 +535,31 @@ const AdminUsers = () => {
                 {/* ── Admin actions ─────────────────────────────────────────── */}
                 <section>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Admin Actions</h3>
-                  {detail.role === 'admin' && detail.id === currentUser?.id ? (
-                    /* Cannot act on your own admin account */
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 rounded-lg border border-red-500/20 bg-red-500/5">
-                      <Lock className="h-4 w-4 text-red-500 shrink-0" />
-                      <span>You cannot modify your own account through this UI.</span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-3">
-                      {/* Suspend / Reactivate */}
-                      {detail.isActive ? (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => toggleBlock(detail.id, detail.isActive, detail.role)}
-                          disabled={actionLoading === detail.id}
-                        >
-                          {actionLoading === detail.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Ban className="h-4 w-4 mr-1" />}
-                          Suspend User
-                        </Button>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => toggleBlock(detail.id, detail.isActive, detail.role)}
-                          disabled={actionLoading === detail.id}
-                        >
-                          {actionLoading === detail.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-1" />}
-                          Reactivate User
-                        </Button>
-                      )}
+                  <div className="flex flex-wrap gap-3">
+                    {/* Suspend / Reactivate — guards in toggleBlock prevent self-suspension */}
+                    {detail.isActive ? (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => toggleBlock(detail.id, detail.isActive, detail.role)}
+                        disabled={actionLoading === detail.id}
+                      >
+                        {actionLoading === detail.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Ban className="h-4 w-4 mr-1" />}
+                        Suspend User
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => toggleBlock(detail.id, detail.isActive, detail.role)}
+                        disabled={actionLoading === detail.id}
+                      >
+                        {actionLoading === detail.id ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-1" />}
+                        Reactivate User
+                      </Button>
+                    )}
 
-                      {/* Change Role */}
+                    {/* Change Role — only for non-admin users; admin role is DB-only */}
+                    {detail.role !== 'admin' && (
                       <div className="flex items-center gap-2">
                         <UserCog className="h-4 w-4 text-muted-foreground shrink-0" />
                         <Select
@@ -574,23 +573,12 @@ const AdminUsers = () => {
                           <SelectContent>
                             <SelectItem value="buyer">Buyer</SelectItem>
                             <SelectItem value="seller">Seller</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
                           </SelectContent>
                         </Select>
                         {roleChanging && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
                       </div>
-
-                      {/* Admin seller detail page link (if seller) */}
-                      {detail.role === "seller" && (
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={`/admin/sellers/${detail.id}`} target="_blank" rel="noreferrer">
-                            <ExternalLink className="h-4 w-4 mr-1" />
-                            Full Seller Record
-                          </a>
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </section>
               </div>
             ) : null}

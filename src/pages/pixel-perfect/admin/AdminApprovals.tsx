@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +7,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Search, Eye, Building2, Mail, Calendar, Loader2, ExternalLink,
+  Search, Eye, Building2, Mail, Calendar, Loader2,
   ShieldOff, RefreshCw, Zap, CheckCircle, AlertTriangle, AlertCircle, Send,
 } from "lucide-react";
 import {
@@ -96,7 +95,6 @@ async function handleJson<T>(res: Response): Promise<T> {
 }
 
 const AdminSellerManagement = () => {
-  const navigate = useNavigate();
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -504,9 +502,9 @@ const AdminSellerManagement = () => {
                 variant="outline"
                 size="sm"
                 className="w-full"
-                onClick={() => { setSelectedSeller(null); navigate(`/admin/sellers/${selectedSeller.userId}`); }}
+                onClick={() => setSelectedSeller(null)}
               >
-                <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> View Full Profile
+                Close
               </Button>
             </div>
 
