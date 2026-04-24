@@ -10,7 +10,7 @@ const HERO_FEATURES = [
 const HeroSection = () => (
   <section
     aria-label="Loadify Market — UK Online Marketplace"
-    className="w-full flex flex-col lg:flex-row lg:items-stretch overflow-hidden bg-white pt-[122px]"
+    className="w-full flex flex-col lg:flex-row lg:items-stretch overflow-hidden bg-white pt-[138px] lg:pt-[142px]"
   >
     {/* Mobile: image on top */}
     <div className="w-full lg:hidden">
