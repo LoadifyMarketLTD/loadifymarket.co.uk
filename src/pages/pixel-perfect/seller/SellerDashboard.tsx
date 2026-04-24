@@ -43,7 +43,7 @@ interface TopProduct {
 const statusColors: Record<string, string> = {
   paid: "bg-blue-500/10 text-blue-700 border-blue-200",
   packed: "bg-amber-500/10 text-amber-700 border-amber-200",
-  shipped: "bg-purple-500/10 text-purple-700 border-purple-200",
+  shipped: "bg-[#0A2239]/10 text-[#0A2239] border-[#0A2239]/20",
   delivered: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
   cancelled: "bg-red-500/10 text-red-700 border-red-200",
   refunded: "bg-muted text-muted-foreground border-border",
@@ -100,7 +100,7 @@ const SellerDashboard = () => {
         }>;
 
         // Stats
-        const activeOrders = orders.filter((o) => !["delivered", "cancelled", "refunded"].includes(o.status)).length;
+        const activeOrders = orders.filter((o) => ["paid", "packed", "shipped"].includes(o.status)).length;
         const totalRevenue = orders
           .filter((o) => o.status !== "cancelled" && o.status !== "refunded")
           .reduce((sum, o) => sum + (o.total || 0), 0);

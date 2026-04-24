@@ -29,7 +29,7 @@ interface Order {
 const statusConfig: Record<string, { label: string; className: string }> = {
   paid: { label: "Paid", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
   packed: { label: "Packed", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
-  shipped: { label: "Shipped", className: "border-purple-500/30 text-purple-400 bg-purple-500/10" },
+  shipped: { label: "Shipped", className: "border-[#0A2239]/30 text-[#0A2239] bg-[#0A2239]/10" },
   delivered: { label: "Delivered", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
   cancelled: { label: "Cancelled", className: "border-slate-200 text-slate-400" },
   refunded: { label: "Refunded", className: "border-slate-200 text-slate-400" },
@@ -87,7 +87,7 @@ const AdminOrders = () => {
       if (updateError) throw updateError;
       setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status: newStatus } : o));
       setSelected((s) => s && s.id === id ? { ...s, status: newStatus } : s);
-      toast({ title: "Order status updated" });
+      toast({ title: "Order status updated successfully" });
     } catch (err: unknown) {
       setError((err as Error).message || "Failed to update order status");
     } finally {
@@ -165,7 +165,7 @@ const AdminOrders = () => {
   );
 
   const byStatus = (status: string) => filtered.filter((o) => o.status === status);
-  const activeOrders = filtered.filter((o) => !["cancelled", "refunded"].includes(o.status));
+  const activeOrders = filtered.filter((o) => ["paid", "packed", "shipped"].includes(o.status));
   const totalValue = orders.reduce((s, o) => s + (o.total || 0), 0);
 
   const renderTable = (data: Order[]) => (
@@ -237,14 +237,14 @@ const AdminOrders = () => {
         {[
           { label: "Total Orders", count: orders.length, value: `£${totalValue.toLocaleString()}`, color: "#22C55E", bg: "rgba(34,197,94,0.12)", tab: "all" },
           { label: "Active", count: activeOrders.length, value: "In progress", color: "#60A5FA", bg: "rgba(96,165,250,0.12)", tab: "active" },
-          { label: "Delivered", count: byStatus("delivered").length, value: "Completed", color: "#A78BFA", bg: "rgba(167,139,250,0.12)", tab: "delivered" },
+          { label: "Delivered", count: byStatus("delivered").length, value: "Completed", color: "#0A2239", bg: "rgba(10,34,57,0.08)", tab: "delivered" },
           { label: "Disputed", count: byStatus("disputed").length, value: "Needs attention", color: "#F87171", bg: "rgba(248,113,113,0.12)", tab: "disputed" },
         ].map((stat) => (
           <button
             key={stat.label}
             type="button"
             onClick={() => setActiveTab(stat.tab)}
-            className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22C55E]"
             style={{
               background: "#ffffff",
               border: activeTab === stat.tab ? `2px solid ${stat.color}` : "1px solid rgba(148,163,184,0.35)",
@@ -287,7 +287,7 @@ const AdminOrders = () => {
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(
                   tab === "all" ? filtered :
-                  tab === "active" ? activeOrders.filter((o) => o.status !== "delivered") :
+                  tab === "active" ? activeOrders :
                   byStatus(tab)
                 )}
               </div>

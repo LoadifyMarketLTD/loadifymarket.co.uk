@@ -41,7 +41,7 @@ export function OnboardingChecklist() {
     if (!user || user.role !== "seller") return;
 
     const load = async () => {
-      const [spRes, prodRes] = await Promise.all([
+      const [spRes, prodRes, storeRes] = await Promise.all([
         supabase
           .from("seller_profiles")
           .select([
@@ -60,6 +60,11 @@ export function OnboardingChecklist() {
           .from("products")
           .select("id", { count: "exact", head: true })
           .eq("sellerId", user.id),
+        supabase
+          .from("seller_stores")
+          .select("isActive")
+          .eq("userId", user.id)
+          .maybeSingle(),
       ]);
 
       const sp = spRes.data as Record<string, unknown> | null;
@@ -73,22 +78,18 @@ export function OnboardingChecklist() {
           ((sp?.businessAddress as { postcode?: string } | null)?.postcode ?? "").trim().length > 0
         );
 
-      // storeCreated: use boolean flag OR fall back to checking that a store name is set
+      // storeCreated: use boolean flag OR check seller_stores.isActive = true OR fall back to store name
       const storeName = (sp?.storeName as string | undefined) ?? "";
       const businessName = (sp?.businessName as string | undefined) ?? "";
       const storeNameFilled = (storeName || businessName).trim().length > 0;
-      const storeCreated = Boolean(sp?.storeCreated) || storeNameFilled;
+      const storeCreated =
+        Boolean(sp?.storeCreated) ||
+        Boolean((storeRes.data as { isActive?: boolean } | null)?.isActive) ||
+        storeNameFilled;
 
-      // shippingSetupCompleted: use boolean flag OR fall back to checking shippingDefaults has real data
+      // shippingSetupCompleted: use boolean flag OR check shippingDefaults is not null
       const shippingDefaults = sp?.shippingDefaults as Record<string, unknown> | null;
-      const hasShippingData = Boolean(
-        shippingDefaults &&
-        (
-          ((shippingDefaults.carrier as string) ?? "").trim().length > 0 ||
-          ((shippingDefaults.originPostcode as string) ?? "").trim().length > 0
-        )
-      );
-      const shippingSetupCompleted = Boolean(sp?.shippingSetupCompleted) || hasShippingData;
+      const shippingSetupCompleted = Boolean(sp?.shippingSetupCompleted) || shippingDefaults != null;
 
       setState({
         profileCompleted,
