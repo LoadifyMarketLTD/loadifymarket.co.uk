@@ -369,7 +369,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
           <li><strong>Connect your Stripe account</strong> — this is required to receive payouts for your sales.</li>
         </ol>
         <p>Once both steps are done your store will go live automatically — no manual approval needed.</p>
-        <a href="${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/seller/setup" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Complete Your Setup</a>
+        <a href="${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/onboarding" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Complete Your Setup</a>
         <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at support@loadifymarket.co.uk</p>
       `;
       break;
