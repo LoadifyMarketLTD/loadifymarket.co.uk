@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2, Circle, ChevronRight, Loader2, ExternalLink,
   User, Building2, CreditCard, Store, Truck, Package
@@ -385,13 +385,17 @@ const SellerOnboarding = () => {
     onboardingCompleted: false,
   });
 
-  // Admins bypass onboarding entirely.
-  if (user && hasAdminAccess(user)) return <Navigate to="/admin" replace />;
-  // Buyers have no onboarding wizard.
-  if (user && user.role === "buyer") return <Navigate to="/buyer" replace />;
-
   // Load current onboarding state.
   useEffect(() => {
+    // Redirects must live inside the effect so hooks are never conditional.
+    if (user && hasAdminAccess(user)) {
+      navigate("/admin", { replace: true });
+      return;
+    }
+    if (user && user.role === "buyer") {
+      navigate("/buyer", { replace: true });
+      return;
+    }
     if (!user) return;
 
     const load = async () => {
@@ -545,6 +549,9 @@ const SellerOnboarding = () => {
       setFinishing(false);
     }
   };
+
+  // While a redirect is pending (admin/buyer user), render nothing.
+  if (user && (hasAdminAccess(user) || user.role === "buyer")) return null;
 
   if (loading) {
     return (
