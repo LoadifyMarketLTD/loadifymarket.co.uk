@@ -186,6 +186,10 @@ describe('register handler – request validation', () => {
               data: { user: { id: 'user-uuid-123' } },
               error: null,
             }),
+            generateLink: vi.fn().mockResolvedValue({
+              data: { properties: { action_link: 'https://mock.supabase.co/auth/confirm?token=abc' } },
+              error: null,
+            }),
           },
         },
         from: vi.fn(() => ({

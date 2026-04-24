@@ -11,11 +11,12 @@ import { getClientIp } from './_shared/getClientIp';
  * email through Supabase's built-in mailer, which is throttled to ~3 emails
  * per hour on the free plan.  This function uses the Admin API instead:
  *
- *   supabase.auth.admin.createUser({ …, email_confirm: true })
+ *   supabase.auth.admin.createUser({ … })
  *
- * Setting email_confirm: true marks the address as verified immediately so
- * no confirmation email is dispatched — eliminating the rate-limit entirely.
- * The user can sign in as soon as this function returns 200.
+ * The user is created as unconfirmed (email_confirm defaults to false).
+ * A signup confirmation link is then generated via the Admin API and sent
+ * through SendGrid — bypassing Supabase's built-in mailer entirely.
+ * The user must click the link to verify their email before signing in.
  *
  * After creating the auth record this function also inserts the public.users
  * profile row and, for sellers, upserts seller_profiles / seller_stores with
@@ -246,7 +247,59 @@ export const handler: Handler = async (event) => {
   }
   // ────────────────────────────────────────────────────────────────────────────
 
-  const appUrl = process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
+  const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
+
+  // ── Email confirmation ─────────────────────────────────────────────────────
+  // The Admin API does not send a confirmation email automatically when a user
+  // is created.  Generate a signup confirmation link and deliver it via
+  // SendGrid — the same pipeline used by all other transactional emails.
+  // This also bypasses Supabase's built-in mailer rate limit entirely.
+  const { data: confirmLinkData, error: confirmLinkError } = await supabase.auth.admin.generateLink({
+    type: 'signup',
+    email,
+    options: {
+      redirectTo: `${appUrl}/login?confirmed=1`,
+    },
+  });
+
+  if (confirmLinkError) {
+    console.warn('register: generateLink failed (non-fatal):', confirmLinkError.message);
+  } else {
+    const actionLink = (confirmLinkData as { properties?: { action_link?: string } }).properties?.action_link;
+    if (actionLink) {
+      // Await the confirmation email so we can log failures — the user must
+      // click this link to verify their email before signing in.  Registration
+      // still returns 200 even if delivery fails so the auth record is never
+      // orphaned; the admin can resend via /resend-verification if needed.
+      try {
+        const confirmEmailRes = await fetch(`${appUrl}/.netlify/functions/send-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(process.env.NETLIFY_INTERNAL_SECRET ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET } : {}),
+          },
+          body: JSON.stringify({
+            to: email,
+            subject: 'Confirm your Loadify Market email address',
+            template: 'confirm_email',
+            data: {
+              userName: `${firstName} ${lastName}`,
+              actionLink,
+            },
+          }),
+        });
+        if (!confirmEmailRes.ok) {
+          const errBody = await confirmEmailRes.json().catch(() => ({})) as Record<string, unknown>;
+          console.error('register: confirmation email delivery failed:', confirmEmailRes.status, errBody);
+        }
+      } catch (err) {
+        console.error('register: confirmation email fetch threw (non-fatal):', err);
+      }
+    } else {
+      console.warn('register: action_link missing from generateLink response — confirmation email not sent');
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   // ── Seller-only: populate extra profile fields ──────────────────────────────
   // The DB trigger trg_new_user_profile already created the bare

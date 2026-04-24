@@ -26,7 +26,7 @@ const supabase =
 interface EmailRequest {
   to: string;
   subject: string;
-  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry' | 'admin_new_buyer' | 'admin_new_seller' | 'admin_seller_active' | 'seller_welcome' | 'seller_account_active' | 'buyer_welcome' | 'resend_verification' | 'onboarding_reminder';
+  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry' | 'admin_new_buyer' | 'admin_new_seller' | 'admin_seller_active' | 'seller_welcome' | 'seller_account_active' | 'buyer_welcome' | 'resend_verification' | 'onboarding_reminder' | 'confirm_email';
   data: Record<string, unknown>;
 }
 
@@ -405,6 +405,17 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <p>An administrator has requested that a sign-in link be sent to your account. Click the button below to access your dashboard.</p>
         <a href="${escapeHtml((data.actionLink as string) || '#')}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Access My Account</a>
         <p style="color: #555; font-size: 14px;">This link is valid for 24 hours and can only be used once. If you did not expect this email, please ignore it or contact us at <a href="mailto:support@loadifymarket.co.uk" style="color: #f59e0b;">support@loadifymarket.co.uk</a>.</p>
+      `;
+      break;
+
+    case 'confirm_email':
+      content = `
+        <h2 style="color: #243b53;">Confirm your email address</h2>
+        <p>Hi ${escapeHtml((data.userName as string) || 'there')},</p>
+        <p>Thank you for registering with Loadify Market. Please confirm your email address by clicking the button below before signing in.</p>
+        <a href="${escapeHtml((data.actionLink as string) || '#')}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Confirm Email Address</a>
+        <p style="color: #555; font-size: 14px;">This link is valid for 24 hours. If you did not create an account on Loadify Market, please ignore this email.</p>
+        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at support@loadifymarket.co.uk</p>
       `;
       break;
 
