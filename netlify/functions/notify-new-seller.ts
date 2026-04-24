@@ -31,8 +31,8 @@ export const handler: Handler = async (event) => {
     const safeBusinessName = escapeHtml(data.businessName);
 
     const msg = {
-      to: 'loadifymarket.co.uk@gmail.com',
-      from: 'no-reply@loadifymarket.co.uk',
+      to: 'support@loadifymarket.co.uk',
+      from: process.env.SENDGRID_FROM_EMAIL || 'loadifymarket.co.uk@gmail.com',
       subject: 'New Seller Registered - Loadify Market',
       html: `
         <h2>New Seller Registration</h2>

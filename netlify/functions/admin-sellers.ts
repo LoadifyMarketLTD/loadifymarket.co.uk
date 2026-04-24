@@ -101,7 +101,7 @@ async function sendWarningEmail(email: string, name: string, company: string): P
   const siteUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
   await sgMail.send({
     to: email,
-    from: process.env.VITE_SUPPORT_EMAIL || 'support@loadifymarket.co.uk',
+    from: process.env.SENDGRID_FROM_EMAIL || 'loadifymarket.co.uk@gmail.com',
     subject: 'Account Warning — Loadify Market',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">
@@ -181,7 +181,7 @@ async function sendOnboardingReminderEmail(seller: PendingOnboardSeller): Promis
   const siteUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
   await sgMail.send({
     to: seller.email,
-    from: process.env.VITE_SUPPORT_EMAIL || 'support@loadifymarket.co.uk',
+    from: process.env.SENDGRID_FROM_EMAIL || 'loadifymarket.co.uk@gmail.com',
     subject: 'Complete your Stripe onboarding — Loadify Market',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">

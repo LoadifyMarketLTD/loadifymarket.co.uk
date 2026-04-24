@@ -53,7 +53,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             </p>
             {this.state.error && (
               <p className="text-gray-300 text-xs font-mono mb-6 break-all">
-                {this.state.error.message}
+                Something went wrong. Please try again.
               </p>
             )}
             <button

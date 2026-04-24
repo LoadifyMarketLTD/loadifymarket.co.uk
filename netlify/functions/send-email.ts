@@ -122,7 +122,7 @@ export const handler: Handler = async (event) => {
 
     const msg = {
       to,
-      from: process.env.VITE_SUPPORT_EMAIL || 'support@loadifymarket.co.uk',
+      from: process.env.SENDGRID_FROM_EMAIL || 'loadifymarket.co.uk@gmail.com',
       subject,
       html: htmlContent,
     };

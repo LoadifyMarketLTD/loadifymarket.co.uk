@@ -227,7 +227,7 @@ After running the seed scripts:
 ## 📧 Contact
 
 **Company**: XDrive Logistics Ltd  
-**Support**: loadifymarket.co.uk@gmail.com  
+**Support**: support@loadifymarket.co.uk  
 **Phone**: +44 7423 272138  
 **Address**: 101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom
 

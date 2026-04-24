@@ -22,7 +22,17 @@
   force = true
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "22"
+
+# ── Dynamic sitemap (includes product pages) ──────────────────────────────────
+# The static public/sitemap.xml only covers static pages.  This redirect
+# routes /sitemap.xml to a Netlify Function that appends every active product
+# URL fetched live from the database.  force=true overrides the static file.
+[[redirects]]
+  from   = "/sitemap.xml"
+  to     = "/.netlify/functions/sitemap"
+  status = 200
+  force  = true
 
 [functions]
   node_bundler = "esbuild"

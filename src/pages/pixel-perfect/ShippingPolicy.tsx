@@ -66,7 +66,7 @@ const ShippingPolicy = () => {
           <h2>8. Contact</h2>
           <p>For shipping-related queries:</p>
           <ul>
-            <li>Email: loadifymarket.co.uk@gmail.com</li>
+            <li>Email: support@loadifymarket.co.uk</li>
             <li>Address: 101 Cornelian Street, Blackburn BB1 9QL, UK</li>
           </ul>
         </div>

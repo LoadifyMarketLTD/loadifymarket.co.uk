@@ -57,7 +57,7 @@ const Disclaimer = () => {
           <h2>9. Contact</h2>
           <p>If you have questions about this Disclaimer, contact us:</p>
           <ul>
-            <li>Email: loadifymarket.co.uk@gmail.com</li>
+            <li>Email: support@loadifymarket.co.uk</li>
             <li>Address: 101 Cornelian Street, Blackburn BB1 9QL, UK</li>
           </ul>
         </div>

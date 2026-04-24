@@ -18,7 +18,7 @@ const PrivacyPolicy = () => {
 
           <h2>1. Data Controller</h2>
           <p>The data controller is XDrive Logistics Ltd, registered in England and Wales (Company No: 13171804), with its registered office at 101 Cornelian Street, Blackburn BB1 9QL, United Kingdom.</p>
-          <p>Email: loadifymarket.co.uk@gmail.com</p>
+          <p>Email: support@loadifymarket.co.uk</p>
 
           <h2>2. Information We Collect</h2>
           <p>We may collect the following personal data:</p>
@@ -75,7 +75,7 @@ const PrivacyPolicy = () => {
             <li><strong>Data portability</strong> — receive your data in a structured format</li>
             <li><strong>Withdraw consent</strong> at any time for consent-based processing</li>
           </ul>
-          <p>To exercise any of these rights, please contact us at loadifymarket.co.uk@gmail.com. We will respond within 30 days.</p>
+          <p>To exercise any of these rights, please contact us at support@loadifymarket.co.uk. We will respond within 30 days.</p>
 
           <h2>8. Cookies</h2>
           <p>We use cookies to improve your experience. Essential cookies are always active. Non-essential cookies (analytics, marketing) are only activated with your consent. You can manage your preferences via the cookie banner on our website.</p>
@@ -95,7 +95,7 @@ const PrivacyPolicy = () => {
           <h2>13. Contact</h2>
           <p>For any privacy-related questions or requests, please contact us at:</p>
           <ul>
-            <li>Email: loadifymarket.co.uk@gmail.com</li>
+            <li>Email: support@loadifymarket.co.uk</li>
             <li>Address: 101 Cornelian Street, Blackburn BB1 9QL, UK</li>
           </ul>
         </div>

@@ -75,6 +75,13 @@
         if (!id || id.charAt(0) === '%') return;
         window.dataLayer = window.dataLayer || [];
         function gtag() { window.dataLayer.push(arguments); }
+        // GDPR: deny all tracking by default until the user grants consent.
+        // CookieConsent.tsx calls gtag('consent','update',…) when the user accepts.
+        gtag('consent', 'default', {
+          ad_storage: 'denied',
+          analytics_storage: 'denied',
+          wait_for_update: 500,
+        });
         gtag('js', new Date());
         gtag('config', id);
         var s = document.createElement('script');
@@ -100,7 +107,7 @@
         "@type": "ContactPoint",
         "telephone": "+447423272138",
         "contactType": "Customer Service",
-        "email": "loadifymarket.co.uk@gmail.com",
+        "email": "support@loadifymarket.co.uk",
         "availableLanguage": ["English"]
       },
       "address": {
