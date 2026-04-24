@@ -237,7 +237,8 @@ const Signup = () => {
               <p className="text-[#78350f] text-[11px] leading-snug">
                 {isPrivate
                   ? <>This registration is for <strong>individual buyers and sellers</strong>. All accounts are subject to review.</>
-                  : <>This registration is for <strong>trade and wholesale buyers/suppliers only</strong>. All accounts are subject to approval. Personal consumer accounts are not permitted.</>
+                  : <>Create an account to buy or sell on Loadify Market. Available for <strong>individuals and businesses</strong>.</>
+
                 }
                 {" "}Fields marked <span className="text-red-700 font-bold">*</span> are mandatory. Already have an account?{" "}
                 <Link to="/login" className="underline font-semibold hover:text-[#92400e]">Sign in here</Link>.

@@ -2,24 +2,24 @@ import { ShieldCheck, Users, CreditCard, Package } from "lucide-react";
 
 const ITEMS = [
   {
-    icon: Users,
-    label: "Trade & Wholesale Only",
-    desc: "Registered business accounts",
-  },
-  {
     icon: ShieldCheck,
     label: "Verified UK Sellers",
     desc: "Identity-verified suppliers",
   },
   {
     icon: CreditCard,
-    label: "Secure via Stripe",
+    label: "Secure Payments via Stripe",
     desc: "Encrypted payment processing",
   },
   {
     icon: Package,
     label: "UK Delivery Support",
     desc: "Seller-fulfilled with tracking",
+  },
+  {
+    icon: Users,
+    label: "Buy Single Items or Bulk Deals",
+    desc: "Any quantity, any category",
   },
 ];
 
