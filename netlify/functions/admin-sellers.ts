@@ -377,7 +377,7 @@ export const handler: Handler = async (event) => {
       }
       let sent = 0;
       for (const seller of pending) {
-        if (!seller.email) continue;
+        if (!seller.email.trim()) continue;
         if (debug) console.log('TARGETED SELLERS:', seller.userId);
         try {
           await sendOnboardingReminderEmail(seller);
