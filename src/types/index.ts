@@ -30,6 +30,8 @@ export interface User {
   updatedAt: string;
   /** Cached from seller_profiles at login time. Only set for role==='seller'. */
   sellerStatus?: SellerStatus;
+  /** Onboarding completion flag from users.onboardingCompleted. */
+  onboardingCompleted?: boolean;
 }
 
 export interface BuyerProfile {

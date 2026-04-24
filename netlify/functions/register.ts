@@ -271,28 +271,18 @@ export const handler: Handler = async (event) => {
     );
     if (ssErr) console.warn('register: seller_stores upsert (non-fatal):', ssErr.message);
 
-    try {
-      await fetch(`${appUrl}/.netlify/functions/notify-new-seller`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          businessName: effectiveStoreName,
-        }),
-      });
-    } catch (err: unknown) {
-      console.warn('register: notify-new-seller failed (non-fatal):', err);
-    }
+    // Admin notification is sent below via send-email (admin_new_seller template).
+    // notify-new-seller is NOT called here to avoid duplicate admin emails.
   }
   // ────────────────────────────────────────────────────────────────────────────
 
   // ── Admin notification email ──────────────────────────────────────────────
   // Fire-and-forget: a failure here must never block successful registration.
   // Fall back to the primary admin inbox when the env var is not configured.
-  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'support@loadifymarket.co.uk';
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'loadifymarket.co.uk@gmail.com';
   if (!process.env.ADMIN_NOTIFICATION_EMAIL) {
     console.warn(
-      'register: ADMIN_NOTIFICATION_EMAIL is not set — falling back to support@loadifymarket.co.uk. ' +
+      'register: ADMIN_NOTIFICATION_EMAIL is not set — falling back to loadifymarket.co.uk@gmail.com. ' +
       'Set this environment variable in the Netlify dashboard to override.'
     );
   }

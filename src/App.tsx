@@ -64,6 +64,9 @@ const AcceptableUsePolicyPage = lazy(() => import('./pages/legal/AcceptableUsePo
 const SellerGuidelinesPage = lazy(() => import('./pages/SellerGuidelinesPage'));
 // SellerSetupPage: shown to sellers who have not yet activated their account
 const SellerSetupPage = lazy(() => import('./pages/pixel-perfect/seller/SellerSetupPage'));
+// Onboarding pages
+const RoleSelection     = lazy(() => import('./pages/onboarding/RoleSelection'));
+const SellerOnboarding  = lazy(() => import('./pages/onboarding/SellerOnboarding'));
 
 // ─── Pixel-perfect dashboard shells ──────────────────────────────────────────
 const PPSellerShell         = lazy(() => import('./pages/pixel-perfect/seller/SellerShell'));
@@ -145,7 +148,12 @@ function DashboardRedirect() {
   if (isLoading) return <PageLoader />;
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === 'admin') return <Navigate to="/admin" replace />;
-  if (user.role === 'seller') return <Navigate to="/seller" replace />;
+  // Sellers with incomplete onboarding go to the wizard first.
+  // `onboardingCompleted` is loaded from the DB in App.tsx auth listener.
+  if (user.role === 'seller') {
+    if (user.onboardingCompleted === false) return <Navigate to="/onboarding" replace />;
+    return <Navigate to="/seller" replace />;
+  }
   return <Navigate to="/buyer" replace />;
 }
 
@@ -233,6 +241,9 @@ function useHideGlobalNav(): boolean {
     'forgot-password', 'reset-password', 'trade-account',
   ]);
   if (segments.length === 1 && AUTH_PAGES_HIDE_NAV.has(segments[0])) return true;
+
+  // Onboarding pages — standalone, hide global nav
+  if (segments[0] === 'onboarding') return true;
 
   // Admin dashboard — all /admin/* routes
   if (segments[0] === 'admin') return true;
@@ -529,6 +540,18 @@ function App() {
 
         {/* /pp — pixel-perfect homepage (preview/alternate root) */}
         <Route path="pp" element={<Navigate to="/" replace />} />
+
+        {/* ── Onboarding flow ─────────────────────────────────────────────────── */}
+        {/* Role selection — public (uid passed as query param after signup) */}
+        <Route path="onboarding/role-selection" element={
+          <Suspense fallback={<PageLoader />}><RoleSelection /></Suspense>
+        } />
+        {/* Seller onboarding wizard — accessible by any authenticated seller */}
+        <Route path="onboarding" element={
+          <RequireSellerAny>
+            <Suspense fallback={<PageLoader />}><SellerOnboarding /></Suspense>
+          </RequireSellerAny>
+        } />
 
         {/* ── Seller onboarding standalones — defined BEFORE seller shell so they
             take priority when the same sub-path is reached from the browser ──── */}

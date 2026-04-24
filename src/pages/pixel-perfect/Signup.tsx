@@ -126,9 +126,11 @@ const Signup = () => {
 
       toast({
         title: "Account created!",
-        description: json.message ?? "You can now sign in to your account.",
+        description: "Check your email to confirm your account, then sign in.",
       });
-      navigate("/login", { replace: true });
+      // Redirect to login with a flag so the login page can show
+      // the "check your email" confirmation banner.
+      navigate("/login?registered=1", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {
