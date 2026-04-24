@@ -224,7 +224,7 @@ export default function TradeAccount() {
 
       toast({
         title: "Trade account created!",
-        description: "You can now sign in and start browsing products.",
+        description: "You can now sign in and start browsing products across the marketplace.",
       });
       navigate("/login", { replace: true });
     } catch (err) {
@@ -784,7 +784,7 @@ export default function TradeAccount() {
                 </span>
               </div>
               <p className="text-white/60 text-sm leading-relaxed">
-                The UK's professional online marketplace connecting buyers and sellers.
+                A UK marketplace for businesses and individuals to buy and sell products across all categories.
               </p>
               <div className="space-y-1.5 text-sm text-white/60">
                 <div className="flex items-center gap-2">

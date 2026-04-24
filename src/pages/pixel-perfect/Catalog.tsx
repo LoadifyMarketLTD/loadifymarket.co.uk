@@ -243,7 +243,7 @@ const Catalog = () => {
     <MainLayout>
       <SEO
         title="Browse Products | Loadify Market"
-        description="Browse thousands of products from verified UK sellers. Filter by category, price, and condition on Loadify Market."
+        description="Browse products across all categories from UK sellers. Filter by category, price, and condition on Loadify Market."
         canonical="/catalog"
       />
 

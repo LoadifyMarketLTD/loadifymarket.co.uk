@@ -28,7 +28,7 @@ const HeroSection = () => (
       </h1>
 
       <p className="text-base sm:text-lg text-gray-600 max-w-xl mb-6">
-        A modern UK marketplace where individuals and businesses can buy and sell products across multiple categories — from single items to bulk stock.
+        Buy and sell across the UK — from single items to bulk deals.
       </p>
 
       <div className="flex gap-4 flex-wrap justify-center lg:justify-start mb-6">
