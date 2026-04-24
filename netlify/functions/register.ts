@@ -35,6 +35,12 @@ interface RegisterRequest {
   lastName: string;
   role: 'buyer' | 'seller';
   storeName?: string;
+  // Optional B2B fields sent by the TradeAccount / Signup forms.
+  // phone is persisted to users.phone (column already exists).
+  // vatNumber and customerType are stored in user_metadata for future use.
+  phone?: string;
+  vatNumber?: string;
+  customerType?: string;
 }
 
 export const handler: Handler = async (event) => {
@@ -66,7 +72,7 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
   }
 
-  const { email, password, firstName, lastName, role, storeName } = body;
+  const { email, password, firstName, lastName, role, storeName, phone, vatNumber, customerType } = body;
 
   if (!email || !password || !firstName || !lastName || !role) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
@@ -145,6 +151,9 @@ export const handler: Handler = async (event) => {
       first_name: firstName,
       last_name: lastName,
       role,
+      ...(phone        ? { phone }        : {}),
+      ...(vatNumber    ? { vat_number: vatNumber }    : {}),
+      ...(customerType ? { customer_type: customerType } : {}),
     },
   });
   // ────────────────────────────────────────────────────────────────────────────
@@ -166,6 +175,24 @@ export const handler: Handler = async (event) => {
         statusCode: 429,
         body: JSON.stringify({
           error: 'Registration is temporarily unavailable due to high demand. Please try again in a few minutes.',
+        }),
+      };
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // ── Database trigger error detection ─────────────────────────────────────
+    // Supabase returns "Database error creating new user" (or similar) when an
+    // auth.users INSERT trigger throws an unhandled exception.  This is an
+    // internal server-side error — never expose it verbatim to the user.
+    const isDatabaseError =
+      authError.message.toLowerCase().includes('database error');
+
+    if (isDatabaseError) {
+      console.error('register: Supabase auth database trigger error:', authError.message);
+      return {
+        statusCode: 503,
+        body: JSON.stringify({
+          error: 'Account creation failed due to a technical issue. Please try again in a few moments or contact support if the problem persists.',
         }),
       };
     }
@@ -207,6 +234,7 @@ export const handler: Handler = async (event) => {
     lastName,
     role,
     isEmailVerified: true,  // confirmed above via email_confirm: true
+    ...(phone ? { phone } : {}),
   });
 
   if (profileError) {

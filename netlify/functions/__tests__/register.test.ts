@@ -152,6 +152,31 @@ describe('register handler – request validation', () => {
     expect(body.message).toMatch(/not already in use/i);
   });
 
+  it('returns 503 on Supabase database trigger error (never exposes internal message)', async () => {
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => ({
+        auth: {
+          admin: {
+            createUser: vi.fn().mockResolvedValue({
+              data: { user: null },
+              error: { message: 'Database error creating new user' },
+            }),
+          },
+        },
+      })),
+    }));
+    const { handler } = await import('../register');
+    const res = await handler(
+      makeEvent({ email: 'a@b.com', password: 'secret123', firstName: 'Jane', lastName: 'Doe', role: 'buyer' }),
+      {} as never,
+    );
+    expect(res.statusCode).toBe(503);
+    const body = JSON.parse(res.body as string) as { error?: string };
+    // Raw Supabase internal message must not leak to the client.
+    expect(body.error).not.toMatch(/database error creating/i);
+    expect(body.error).toMatch(/technical issue|try again/i);
+  });
+
   it('returns 200 on successful registration', async () => {
     vi.doMock('@supabase/supabase-js', () => ({
       createClient: vi.fn(() => ({
