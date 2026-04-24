@@ -22,7 +22,7 @@ CREATE INDEX IF NOT EXISTS idx_shipping_zones_active
 
 CREATE TRIGGER trg_shipping_zones_updated_at
   BEFORE UPDATE ON public.shipping_zones
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column_snake();
 
 -- ── Seed: default UK zones ────────────────────────────────────────────────────
 INSERT INTO public.shipping_zones (name, description, countries, active)
