@@ -68,8 +68,8 @@ export default function Home() {
         />
       </Helmet>
       <SEO
-        title="Loadify Market | UK Wholesale B2B Marketplace for Trade Buyers & Suppliers"
-        description="Buy and sell wholesale goods on Loadify Market — the UK's B2B trade marketplace. Browse listings from verified UK suppliers or register your trade business today."
+        title="Loadify Market | UK Multi-Category Marketplace for Buyers & Sellers"
+        description="Buy and sell products across all categories in the UK marketplace — from individual items to bulk deals."
         canonical="/"
       />
 
@@ -162,7 +162,7 @@ export default function Home() {
                   Start Selling on Loadify Market
                 </h2>
                 <p className="text-gray-600 text-sm mt-1 max-w-[500px] leading-relaxed">
-                   Register your trade business and list wholesale products. 0% Commission
+                   Start selling your products and reach buyers across the UK marketplace. 0% Commission
                   until 31 December 2026 — then a simple 7% on completed sales.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5">

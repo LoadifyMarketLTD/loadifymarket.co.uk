@@ -6,7 +6,7 @@ import SEO from "@/components/SEO";
 const AboutUs = () => {
   return (
     <MainLayout>
-      <SEO title="About Us | Loadify Market" description="Learn about Loadify Market — the UK's wholesale marketplace connecting independent buyers and sellers." canonical="/about" />
+      <SEO title="About Us | Loadify Market" description="Learn about Loadify Market — the UK's multi-category marketplace connecting independent buyers and sellers." canonical="/about" />
       <main id="main-content" className="pt-28 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "About Us" }]} backTo="/" />
