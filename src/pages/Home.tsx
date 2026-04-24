@@ -9,7 +9,7 @@
  *  2. HeroSection        — compact navy hero + category quick panel
  *  3. FeaturedProducts   — real DB product cards (immediately under hero)
  *  4. TrustStrip         — white bar with 4 trust items
- *  5. CategoryGrid       — flat global category tile grid
+ *  5. CategoryGrid       — hidden
  *  6. How It Works       — inline 3-step buyer guide
  *  7. Seller CTA banner  — navy strip, register as supplier
  */
@@ -21,7 +21,6 @@ import { Helmet } from "react-helmet-async";
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
 import FeaturedProducts from "@/components/FeaturedProducts";
-import CategoryGrid from "@/components/CategoryGrid";
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
 
@@ -87,10 +86,7 @@ export default function Home() {
         {/* ── 3. Trust bar ─────────────────────────────────────────────── */}
         <TrustStrip />
 
-        {/* ── 4. Category grid ─────────────────────────────────────────── */}
-        <CategoryGrid />
-
-        {/* ── 5. How It Works ──────────────────────────────────────────── */}
+{/* ── 5. How It Works ──────────────────────────────────────────── */}
         <section className="bg-white border-b border-gray-200" aria-labelledby="how-heading">
           <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-10">
 
