@@ -37,28 +37,28 @@ const HeroSection = () => (
       </h1>
 
       {/* 3. Description */}
-      <p className="text-lg text-gray-700 mb-2">
+      <p className="text-xl text-gray-800 font-medium mb-2">
         Buy and sell across the UK — from single items to bulk deals.
       </p>
 
       {/* 4. Support line */}
-      <p className="text-base text-gray-500 mb-5">
+      <p className="text-lg text-gray-700 font-medium mb-5">
         For individuals and businesses • Single items or bulk stock • Secure payments with Stripe
       </p>
 
       {/* 5. Start Selling — inline, no card */}
-      <p className="text-base font-black text-gray-900 uppercase tracking-tight mb-1 w-full">
+      <p className="text-lg font-black text-gray-950 uppercase tracking-tight mb-1 w-full">
         Start Selling on Loadify Market
       </p>
-      <p className="text-xs text-gray-600 mb-1 w-full">
+      <p className="text-base text-gray-800 font-medium mb-1 w-full">
         Start selling your products and reach buyers across the UK marketplace.
       </p>
-      <p className="text-xs text-[#15803d] font-semibold mb-3 w-full">
+      <p className="text-base lg:text-lg font-bold text-[#15803d] mb-3 w-full">
         0% Commission until 31 December 2026 — then a simple 7% on completed sales.
       </p>
       <div className="flex flex-wrap gap-x-5 gap-y-1.5 justify-center lg:justify-start w-full mb-10">
         {HERO_FEATURES.map((f) => (
-          <span key={f} className="text-xs text-gray-600 flex items-center gap-1.5">
+          <span key={f} className="text-sm lg:text-base font-semibold text-gray-700 flex items-center gap-1.5">
             <span className="text-[#15803d] font-bold">✓</span> {f}
           </span>
         ))}
