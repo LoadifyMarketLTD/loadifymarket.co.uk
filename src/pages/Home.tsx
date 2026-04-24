@@ -5,13 +5,11 @@
  * Design: structured, open-marketplace style, no gradients or startup style.
  *
  * Section order:
- *  1. Announcement bar
- *  2. HeroSection        — compact navy hero + category quick panel
- *  3. FeaturedProducts   — real DB product cards (immediately under hero)
- *  4. TrustStrip         — white bar with 4 trust items
- *  5. CategoryGrid       — flat global category tile grid
- *  6. How It Works       — inline 3-step buyer guide
- *  7. Seller CTA banner  — navy strip, register as supplier
+ *  1. HeroSection        — compact navy hero + category quick panel
+ *  2. FeaturedProducts   — real DB product cards (immediately under hero)
+ *  3. TrustStrip         — white bar with 4 trust items
+ *  4. How It Works       — inline 3-step buyer guide
+ *  5. Seller CTA banner  — navy strip, register as supplier
  */
 
 import { Link } from "react-router-dom";
@@ -21,7 +19,6 @@ import { Helmet } from "react-helmet-async";
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
 import FeaturedProducts from "@/components/FeaturedProducts";
-import CategoryGrid from "@/components/CategoryGrid";
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
 
@@ -86,9 +83,6 @@ export default function Home() {
 
         {/* ── 3. Trust bar ─────────────────────────────────────────────── */}
         <TrustStrip />
-
-        {/* ── 4. Category grid ─────────────────────────────────────────── */}
-        <CategoryGrid />
 
         {/* ── 5. How It Works ──────────────────────────────────────────── */}
         <section className="bg-white border-b border-gray-200" aria-labelledby="how-heading">
