@@ -24,8 +24,8 @@ const HeroSection = () => (
       />
     </div>
 
-    {/* Left: text content (45%) — padded */}
-    <div className="w-full lg:w-[45%] flex flex-col text-center lg:text-left items-center lg:items-start px-6 sm:px-10 lg:px-16 py-10">
+    {/* Left: text content (45%) — padded, min-height to balance right image */}
+    <div className="w-full lg:w-[45%] flex flex-col justify-center text-center lg:text-left items-center lg:items-start px-6 sm:px-10 lg:px-16 py-12 lg:py-16 min-h-[440px] lg:min-h-[520px]">
       {/* 1. Label */}
       <span className="text-xs font-medium uppercase tracking-wide text-green-600 mb-3">
         UK Multi-Category Marketplace
@@ -42,28 +42,26 @@ const HeroSection = () => (
       </p>
 
       {/* 4. Support line */}
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-gray-500 mb-5">
         For individuals and businesses • Single items or bulk stock • Secure payments with Stripe
       </p>
 
-      {/* 5. Start Selling block */}
-      <div className="w-full border border-gray-200 bg-gray-50 px-5 py-4 mb-6 text-center lg:text-left">
-        <p className="text-sm font-black text-gray-900 uppercase tracking-tight mb-1">
-          Start Selling on Loadify Market
-        </p>
-        <p className="text-xs text-gray-600 mb-1">
-          Start selling your products and reach buyers across the UK marketplace.
-        </p>
-        <p className="text-xs text-[#15803d] font-semibold mb-3">
-          0% Commission until 31 December 2026 — then a simple 7% on completed sales.
-        </p>
-        <div className="flex flex-wrap gap-x-5 gap-y-1.5 justify-center lg:justify-start">
-          {HERO_FEATURES.map((f) => (
-            <span key={f} className="text-[11px] text-gray-600 flex items-center gap-1.5">
-              <span className="text-[#15803d] font-bold">✓</span> {f}
-            </span>
-          ))}
-        </div>
+      {/* 5. Start Selling — inline, no card */}
+      <p className="text-sm font-black text-gray-900 uppercase tracking-tight mb-1 w-full">
+        Start Selling on Loadify Market
+      </p>
+      <p className="text-xs text-gray-600 mb-1 w-full">
+        Start selling your products and reach buyers across the UK marketplace.
+      </p>
+      <p className="text-xs text-[#15803d] font-semibold mb-3 w-full">
+        0% Commission until 31 December 2026 — then a simple 7% on completed sales.
+      </p>
+      <div className="flex flex-wrap gap-x-5 gap-y-1.5 justify-center lg:justify-start w-full mb-6">
+        {HERO_FEATURES.map((f) => (
+          <span key={f} className="text-[11px] text-gray-600 flex items-center gap-1.5">
+            <span className="text-[#15803d] font-bold">✓</span> {f}
+          </span>
+        ))}
       </div>
 
       {/* 6. CTA row */}
