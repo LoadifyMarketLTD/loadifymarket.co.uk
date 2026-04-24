@@ -13,6 +13,15 @@ import { createClient } from '@supabase/supabase-js';
  *     schedule = "0 9 * * *"
  *
  * Uses SendGrid via the shared send-email function (server-to-server).
+ *
+ * ⚠️  IMPORTANT — admin manual trigger:
+ *   This function uses the `schedule()` wrapper from @netlify/functions, which
+ *   means Netlify only accepts calls from its own scheduler (signed with an
+ *   internal JWT). Direct HTTP requests from the browser will receive 401.
+ *
+ *   To manually trigger onboarding reminders from the admin panel, use:
+ *     POST /.netlify/functions/admin-sellers  { op: "onboarding_reminder" }
+ *   That endpoint validates the admin JWT and runs the same reminder logic.
  */
 
 /** Number of steps in the seller onboarding wizard. */
@@ -55,11 +64,12 @@ export const handler = schedule('0 9 * * *', async () => {
     const windowEnd   = new Date(now.getTime() - window.days * 24 * 60 * 60 * 1000).toISOString();
 
     // Find sellers registered in this window who have NOT completed onboarding.
+    // Include rows where onboardingCompleted is false OR NULL (pre-migration rows).
     const { data: sellers, error } = await supabase
       .from('users')
       .select('id, email, "firstName", "lastName", "createdAt"')
       .eq('role', 'seller')
-      .eq('"onboardingCompleted"', false)
+      .or('"onboardingCompleted".eq.false,"onboardingCompleted".is.null')
       .gte('"createdAt"', windowStart)
       .lte('"createdAt"', windowEnd);
 

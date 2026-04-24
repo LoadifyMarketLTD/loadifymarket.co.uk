@@ -131,38 +131,37 @@ interface PendingOnboardSeller {
 }
 
 async function findSellersNeedingOnboarding(admin: SupabaseClient): Promise<PendingOnboardSeller[]> {
-  const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  // Only query sellers registered more than 24h ago to avoid emailing brand-new signups.
+  // Filter by onboardingCompleted = false (or NULL for rows created before the field was added).
+  // This matches requirement §8: "ONLY if onboarding_completed = false".
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   const { data: sellerUsers, error } = await admin
     .from('users')
     .select('id, email, firstName, lastName, createdAt')
     .eq('role', 'seller')
     .lt('createdAt', cutoff)
+    // Include rows where onboardingCompleted is explicitly false OR still NULL
+    // (NULL means the field was not set yet, i.e., the seller hasn't completed onboarding).
+    .or('"onboardingCompleted".eq.false,"onboardingCompleted".is.null')
     .order('createdAt', { ascending: false })
     .returns<UserRow[]>();
 
   if (error) throw new Error(`users query failed: ${error.message}`);
   if (!sellerUsers || sellerUsers.length === 0) return [];
 
+  // Fetch profiles just for display info (name/company). No Stripe filter needed
+  // since the onboardingCompleted flag is the canonical completion signal.
   const userIds = sellerUsers.map((u) => u.id);
   const { data: profiles } = await admin
     .from('seller_profiles')
-    .select('userId, stripeConnectStatus, storeName, businessName, fullName')
+    .select('userId, storeName, businessName, fullName')
     .in('userId', userIds)
-    .not('stripeConnectStatus', 'eq', 'active')
-    .returns<SellerProfileRow[]>();
+    .returns<Pick<SellerProfileRow, 'userId' | 'storeName' | 'businessName' | 'fullName'>[]>();
 
-  const noStripeIds = new Set((profiles ?? []).map((p) => p.userId));
-  // Build a Set of all userId values that have any profile row (regardless of Stripe status)
-  const allProfileIds = new Set((profiles ?? []).map((p) => p.userId));
   const profileMap = new Map((profiles ?? []).map((p) => [p.userId, p]));
 
-  // Include sellers whose profile has no Stripe connection, or have no profile row at all
-  const allPending = sellerUsers.filter(
-    (u) => noStripeIds.has(u.id) || !allProfileIds.has(u.id),
-  );
-
-  return allPending.map((u) => {
+  return sellerUsers.map((u) => {
     const p = profileMap.get(u.id);
     const fullName = p?.fullName?.trim() || [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
     return {
@@ -189,11 +188,11 @@ async function sendOnboardingReminderEmail(seller: PendingOnboardSeller): Promis
           <h1 style="color:#f59e0b;margin:0;">Loadify Market</h1>
         </div>
         <div style="background:#fff;padding:30px;margin-top:20px;">
-          <h2 style="color:#243b53;">Complete Your Stripe Onboarding</h2>
+          <h2 style="color:#243b53;">Complete Your Seller Setup</h2>
           <p>Hi ${escapeHtml(seller.name)},</p>
-          <p>You registered as a seller on Loadify Market but haven't yet connected a Stripe account. You need to connect Stripe to receive payments for your sales.</p>
+          <p>You registered as a seller on Loadify Market but haven't yet completed your seller onboarding. You need to finish the setup to start selling and receiving payments.</p>
           <p>It only takes a few minutes — click the button below to complete your setup:</p>
-          <a href="${siteUrl}/seller/setup" style="display:inline-block;background:#f59e0b;color:#fff;padding:12px 24px;text-decoration:none;border-radius:5px;margin:16px 0;">Complete Stripe Setup</a>
+          <a href="${siteUrl}/onboarding" style="display:inline-block;background:#f59e0b;color:#fff;padding:12px 24px;text-decoration:none;border-radius:5px;margin:16px 0;">Complete Seller Setup</a>
           <p style="color:#888;font-size:13px;">Once connected, your store will go live automatically. If you need help, contact us at <a href="mailto:support@loadifymarket.co.uk" style="color:#f59e0b;">support@loadifymarket.co.uk</a>.</p>
         </div>
         <div style="text-align:center;padding:20px;color:#666;font-size:12px;">
