@@ -8,10 +8,8 @@
  *  1. HeroSection        — split hero with CTAs + seller features
  *  2. TrustStrip         — white bar with 4 trust items
  *  3. How It Works       — inline 3-step buyer guide (no buttons)
- *  4. Seller CTA banner  — register as supplier row (compact)
  */
 
-import { Link } from "react-router-dom";
 import { Search, CreditCard, Package } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 
@@ -112,33 +110,6 @@ export default function Home() {
               })}
             </div>
 
-          </div>
-        </section>
-
-        {/* ── 4. Seller CTA banner ─────────────────────────────────────── */}
-        <section className="bg-white border-b border-gray-200" aria-label="Seller registration">
-          <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-6">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-
-              <div>
-                <h2 className="text-gray-900 text-xl font-black uppercase tracking-tight">
-                  Start Selling on Loadify Market
-                </h2>
-                <p className="text-gray-600 text-sm mt-1 max-w-[500px] leading-relaxed">
-                  Reach buyers across the UK. 0% Commission until 31 December 2026 — then a simple 7% on completed sales.
-                </p>
-              </div>
-
-              <div className="shrink-0">
-                <Link
-                  to="/register?type=seller"
-                  className="inline-block px-10 py-3 bg-[#22C55E] text-[#0d2240] text-sm font-black uppercase tracking-wide hover:bg-[#16a34a] transition-colors"
-                >
-                  Register as Supplier →
-                </Link>
-              </div>
-
-            </div>
           </div>
         </section>
 
