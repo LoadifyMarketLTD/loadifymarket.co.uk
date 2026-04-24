@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Users, Search, ShieldCheck, Ban, MoreHorizontal, Eye, Loader2, Package, ShoppingBag, Flag, CreditCard, UserCog } from "lucide-react";
+import { Users, Search, ShieldCheck, Ban, MoreHorizontal, Eye, Loader2, Package, ShoppingBag, Flag, CreditCard, UserCog, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
