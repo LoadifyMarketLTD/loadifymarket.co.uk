@@ -6,10 +6,9 @@
  *
  * Section order:
  *  1. HeroSection        — compact navy hero + category quick panel
- *  2. FeaturedProducts   — real DB product cards (immediately under hero)
- *  3. TrustStrip         — white bar with 4 trust items
- *  4. How It Works       — inline 3-step buyer guide
- *  5. Seller CTA banner  — navy strip, register as supplier
+ *  2. TrustStrip         — white bar with 4 trust items
+ *  3. How It Works       — inline 3-step buyer guide
+ *  4. Seller CTA banner  — register as supplier row
  */
 
 import { Link } from "react-router-dom";
@@ -18,7 +17,6 @@ import { Helmet } from "react-helmet-async";
 
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
-import FeaturedProducts from "@/components/FeaturedProducts";
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
 
@@ -72,23 +70,17 @@ export default function Home() {
 
       <main id="main-content" className="bg-transparent">
 
-        {/* ── 1-2. Hero + Featured Products ────────────────────────────── */}
-        <section aria-label="Hero and marketplace products">
-          {/* ── 1. Hero ────────────────────────────────────────────────── */}
-          <HeroSection />
+        {/* ── 1. Hero ──────────────────────────────────────────────────── */}
+        <HeroSection />
 
-          {/* ── 2. Real products — immediately under hero ─────────────── */}
-          <FeaturedProducts />
-        </section>
-
-        {/* ── 3. Trust bar ─────────────────────────────────────────────── */}
+        {/* ── 2. Trust bar ─────────────────────────────────────────────── */}
         <TrustStrip />
 
-        {/* ── 5. How It Works ──────────────────────────────────────────── */}
+        {/* ── 3. How It Works ──────────────────────────────────────────── */}
         <section className="bg-white border-b border-gray-200" aria-labelledby="how-heading">
-          <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-10">
+          <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
 
-            <div className="mb-6">
+            <div className="mb-4">
               <h2
                 id="how-heading"
                 className="text-[13px] font-black text-gray-900 uppercase tracking-widest"
@@ -105,7 +97,7 @@ export default function Home() {
               {HOW_IT_WORKS.map((step) => {
                 const Icon = step.icon;
                 return (
-                  <div key={step.num} className="bg-white px-6 py-6 flex flex-col gap-4">
+                  <div key={step.num} className="bg-white px-6 py-5 flex flex-col gap-3">
                     {/* Step badge + icon row */}
                     <div className="flex items-center gap-3">
                       <span className="w-10 h-10 bg-[#22C55E] text-white text-base font-black flex items-center justify-center shrink-0">
@@ -128,7 +120,7 @@ export default function Home() {
             </div>
 
             {/* CTA row */}
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            <div className="mt-5 flex flex-col sm:flex-row gap-3">
               <Link
                 to="/catalog"
                 className="px-7 py-2.5 bg-[#22C55E] text-white text-xs font-black uppercase tracking-wide hover:bg-[#16a34a] transition-colors text-center"
@@ -146,9 +138,9 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── 6. Seller CTA banner ─────────────────────────────────────── */}
+        {/* ── 4. Seller CTA banner ─────────────────────────────────────── */}
         <section className="bg-white border-b border-gray-200" aria-label="Seller registration">
-          <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
+          <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-6">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
 
               <div>
