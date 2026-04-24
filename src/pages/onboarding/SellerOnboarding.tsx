@@ -10,6 +10,11 @@ import { useAuthStore } from "@/store";
 import { hasAdminAccess } from "@/lib/roleUtils";
 import { toast } from "@/hooks/use-toast";
 
+/** Total number of onboarding steps for a seller. Used when marking completion. */
+const ONBOARDING_TOTAL_STEPS = 5;
+/** DB value written to onboardingStep when all steps are complete. */
+const ONBOARDING_COMPLETE_STEP = 8;
+
 /**
  * /onboarding
  *
@@ -496,7 +501,7 @@ const SellerOnboarding = () => {
     }
   };
 
-  const advanceStep = () => setStep((s) => Math.min(s + 1, 5));
+  const advanceStep = () => setStep((s) => Math.min(s + 1, ONBOARDING_TOTAL_STEPS));
 
   const handleStripeConnect = async () => {
     if (!user) return;
@@ -529,7 +534,7 @@ const SellerOnboarding = () => {
     try {
       await supabase
         .from("users")
-        .update({ onboardingCompleted: true, onboardingStep: 8 })
+        .update({ onboardingCompleted: true, onboardingStep: ONBOARDING_COMPLETE_STEP })
         .eq("id", user.id);
       toast({ title: "Setup complete! 🎉", description: "Your seller account is now live." });
       navigate("/seller", { replace: true });

@@ -5,6 +5,11 @@ import { useAuthStore } from "@/store";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 
+/** First step in the seller onboarding wizard. */
+const SELLER_INITIAL_STEP = 1;
+/** Buyers complete onboarding immediately — no wizard steps. */
+const BUYER_ONBOARDING_STEP = 0;
+
 /**
  * /onboarding/role-selection
  *
@@ -37,7 +42,7 @@ const RoleSelection = () => {
         .update({
           role: selected,
           onboardingCompleted: selected === "buyer",
-          onboardingStep: selected === "seller" ? 1 : 0,
+          onboardingStep: selected === "seller" ? SELLER_INITIAL_STEP : BUYER_ONBOARDING_STEP,
         })
         .eq("id", uid);
 

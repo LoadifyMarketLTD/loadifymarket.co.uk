@@ -15,6 +15,10 @@ import { createClient } from '@supabase/supabase-js';
  * Uses SendGrid via the shared send-email function (server-to-server).
  */
 
+/** Number of steps in the seller onboarding wizard. */
+const ONBOARDING_COMPLETE_STEP = 8;
+void ONBOARDING_COMPLETE_STEP; // exported via migration; documented here for reference
+
 const WINDOWS = [
   { days: 1,  label: '24h'  },
   { days: 3,  label: '3day' },
@@ -66,15 +70,14 @@ export const handler = schedule('0 9 * * *', async () => {
 
     console.log(`onboarding-reminder: sending ${window.label} reminders to ${sellers.length} sellers`);
 
-    for (const seller of sellers as {
+    const emailPromises = (sellers as {
       id: string;
       email: string;
       firstName?: string | null;
       lastName?: string | null;
-    }[]) {
+    }[]).map((seller) => {
       const sellerName = [seller.firstName, seller.lastName].filter(Boolean).join(' ') || seller.email;
-
-      fetch(`${appUrl}/.netlify/functions/send-email`, {
+      return fetch(`${appUrl}/.netlify/functions/send-email`, {
         method: 'POST',
         headers: internalHeaders,
         body: JSON.stringify({
@@ -87,10 +90,22 @@ export const handler = schedule('0 9 * * *', async () => {
             onboardingUrl: `${appUrl}/onboarding`,
           },
         }),
-      }).catch((err: unknown) =>
-        console.warn(`onboarding-reminder: email failed for ${seller.email} (non-fatal):`, err),
-      );
-    }
+      }).then((res) => {
+        if (!res.ok) return { email: seller.email, ok: false, status: res.status };
+        return { email: seller.email, ok: true };
+      }).catch((err: unknown) => {
+        console.warn(`onboarding-reminder: email failed for ${seller.email}:`, err);
+        return { email: seller.email, ok: false };
+      });
+    });
+
+    const results = await Promise.allSettled(emailPromises);
+    const failed = results.filter(
+      (r) => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.ok)
+    ).length;
+    console.log(
+      `onboarding-reminder: ${window.label} window — sent ${sellers.length - failed}/${sellers.length} emails`
+    );
   }
 
   return { statusCode: 200 };
