@@ -89,7 +89,7 @@ export const handler: Handler = async (event) => {
       const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         auth: { autoRefreshToken: false, persistSession: false },
       });
-      // Fetch in a single paginated pass (Supabase default page size is 1 000;
+      // Fetch in a single paginated pass (Supabase default page size is 1,000;
       // use a high limit to capture all active products in one request).
       const { data, error } = await supabase
         .from('products')
