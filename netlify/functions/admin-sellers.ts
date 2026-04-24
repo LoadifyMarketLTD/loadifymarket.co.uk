@@ -182,7 +182,7 @@ async function sendOnboardingReminderEmail(seller: PendingOnboardSeller): Promis
   await sgMail.send({
     to: seller.email,
     from: process.env.SENDGRID_FROM_EMAIL || 'loadifymarket.co.uk@gmail.com',
-    subject: 'Complete your Stripe onboarding — Loadify Market',
+    subject: 'Complete your seller setup — Loadify Market',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">
         <div style="background:#243b53;padding:20px;text-align:center;">
