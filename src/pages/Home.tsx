@@ -5,13 +5,11 @@
  * Design: structured, open-marketplace style, no gradients or startup style.
  *
  * Section order:
- *  1. HeroSection        — compact navy hero + category quick panel
+ *  1. HeroSection        — split hero with CTAs + seller features
  *  2. TrustStrip         — white bar with 4 trust items
- *  3. How It Works       — inline 3-step buyer guide
- *  4. Seller CTA banner  — register as supplier row
+ *  3. How It Works       — inline 3-step buyer guide (no buttons)
  */
 
-import { Link } from "react-router-dom";
 import { Search, CreditCard, Package } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 
@@ -39,13 +37,6 @@ const HOW_IT_WORKS = [
     title: "Delivered to You",
     desc: "Seller ships directly to your address. Track progress from your buyer account.",
   },
-];
-
-const SELLER_BENEFITS = [
-  "Free to list",
-  "0% Commission until 31 December 2026",
-  "Fast Stripe payouts",
-  "Seller dashboard included",
 ];
 
 export default function Home() {
@@ -119,57 +110,6 @@ export default function Home() {
               })}
             </div>
 
-            {/* CTA row */}
-            <div className="mt-5 flex flex-col sm:flex-row gap-3">
-              <Link
-                to="/catalog"
-                className="px-7 py-2.5 bg-[#22C55E] text-white text-xs font-black uppercase tracking-wide hover:bg-[#16a34a] transition-colors text-center"
-              >
-                Browse Marketplace
-              </Link>
-              <Link
-                to="/register"
-                className="px-7 py-2.5 border border-[#22C55E] text-[#15803d] text-xs font-black uppercase tracking-wide hover:bg-[#22C55E] hover:text-white transition-colors text-center"
-              >
-                Create Buyer Account
-              </Link>
-            </div>
-
-          </div>
-        </section>
-
-        {/* ── 4. Seller CTA banner ─────────────────────────────────────── */}
-        <section className="bg-white border-b border-gray-200" aria-label="Seller registration">
-          <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-6">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-
-              <div>
-                <h2 className="text-gray-900 text-xl font-black uppercase tracking-tight">
-                  Start Selling on Loadify Market
-                </h2>
-                <p className="text-gray-600 text-sm mt-1 max-w-[500px] leading-relaxed">
-                   Start selling your products and reach buyers across the UK marketplace. 0% Commission
-                  until 31 December 2026 — then a simple 7% on completed sales.
-                </p>
-                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5">
-                  {SELLER_BENEFITS.map((t) => (
-                    <span key={t} className="text-[11px] text-gray-600 flex items-center gap-1.5">
-                      <span className="text-[#15803d] font-bold">✓</span> {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="shrink-0">
-                <Link
-                  to="/register?type=seller"
-                  className="inline-block px-10 py-3 bg-[#22C55E] text-[#0d2240] text-sm font-black uppercase tracking-wide hover:bg-[#16a34a] transition-colors"
-                >
-                  Register as Supplier →
-                </Link>
-              </div>
-
-            </div>
           </div>
         </section>
 

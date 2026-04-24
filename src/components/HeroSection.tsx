@@ -1,9 +1,16 @@
 import { Link } from 'react-router-dom';
 
+const HERO_FEATURES = [
+  'Free to list',
+  '0% Commission until 31 Dec 2026',
+  'Fast Stripe payouts',
+  'Seller dashboard included',
+];
+
 const HeroSection = () => (
   <section
     aria-label="Loadify Market — UK Online Marketplace"
-    className="w-full flex flex-col lg:flex-row items-center px-6 sm:px-10 lg:px-16 py-10 gap-8"
+    className="w-full flex flex-col lg:flex-row lg:items-stretch overflow-hidden bg-white"
   >
     {/* Mobile: image on top */}
     <div className="w-full lg:hidden">
@@ -12,53 +19,82 @@ const HeroSection = () => (
         alt="Loadify Market — UK Online Marketplace"
         width={1536}
         height={1024}
-        className="w-full max-h-[300px] object-cover object-center rounded-xl"
+        className="w-full max-h-[260px] object-cover object-center"
         loading="eager"
       />
     </div>
 
-    {/* Left: text content (40%) */}
-    <div className="w-full lg:w-[40%] flex flex-col text-center lg:text-left items-center lg:items-start">
+    {/* Left: text content (45%) — padded, min-height to balance right image */}
+    <div className="w-full lg:w-[45%] flex flex-col justify-center text-center lg:text-left items-center lg:items-start px-6 sm:px-10 lg:px-16 py-12 lg:py-16 min-h-[440px] lg:min-h-[520px]">
+      {/* 1. Label */}
       <span className="text-xs font-medium uppercase tracking-wide text-green-600 mb-3">
         UK Multi-Category Marketplace
       </span>
 
-      <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-gray-900 mb-4">
+      {/* 2. Main heading */}
+      <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-gray-900 mb-3">
         Buy &amp; Sell Across the UK
       </h1>
 
-      <p className="text-base sm:text-lg text-gray-600 max-w-xl mb-6">
+      {/* 3. Description */}
+      <p className="text-base text-gray-700 mb-2">
         Buy and sell across the UK — from single items to bulk deals.
       </p>
 
-      <div className="flex gap-4 flex-wrap justify-center lg:justify-start mb-6">
+      {/* 4. Support line */}
+      <p className="text-sm text-gray-500 mb-5">
+        For individuals and businesses • Single items or bulk stock • Secure payments with Stripe
+      </p>
+
+      {/* 5. Start Selling — inline, no card */}
+      <p className="text-sm font-black text-gray-900 uppercase tracking-tight mb-1 w-full">
+        Start Selling on Loadify Market
+      </p>
+      <p className="text-xs text-gray-600 mb-1 w-full">
+        Start selling your products and reach buyers across the UK marketplace.
+      </p>
+      <p className="text-xs text-[#15803d] font-semibold mb-3 w-full">
+        0% Commission until 31 December 2026 — then a simple 7% on completed sales.
+      </p>
+      <div className="flex flex-wrap gap-x-5 gap-y-1.5 justify-center lg:justify-start w-full mb-6">
+        {HERO_FEATURES.map((f) => (
+          <span key={f} className="text-[11px] text-gray-600 flex items-center gap-1.5">
+            <span className="text-[#15803d] font-bold">✓</span> {f}
+          </span>
+        ))}
+      </div>
+
+      {/* 6. CTA row */}
+      <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
         <Link
           to="/catalog"
-          className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-xl font-medium shadow-sm transition-colors"
+          className="bg-[#22C55E] hover:bg-[#16a34a] text-white px-6 py-3 font-semibold text-sm transition-colors text-center"
         >
           Browse Marketplace
         </Link>
         <Link
+          to="/register"
+          className="border border-gray-300 hover:bg-gray-100 text-gray-800 px-6 py-3 font-semibold text-sm transition-colors text-center"
+        >
+          Create Buyer Account
+        </Link>
+        <Link
           to="/register?type=seller"
-          className="border border-gray-300 hover:bg-gray-100 text-gray-800 px-6 py-3 rounded-xl font-medium transition-colors"
+          className="border border-[#22C55E] text-[#15803d] hover:bg-[#22C55E] hover:text-white px-6 py-3 font-semibold text-sm transition-colors text-center"
         >
           Start Selling
         </Link>
       </div>
-
-      <p className="text-sm text-gray-500 flex flex-wrap gap-4 justify-center lg:justify-start">
-        For individuals and businesses • Single items or bulk stock • Secure payments with Stripe
-      </p>
     </div>
 
-    {/* Right: hero image (60%) — desktop only */}
-    <div className="hidden lg:block lg:w-[60%] h-full">
+    {/* Right: hero image (55%) — desktop only, no padding, touches right edge */}
+    <div className="hidden lg:block lg:w-[55%] self-stretch">
       <img
         src="/hero-marketplace.jpg"
         alt="Loadify Market — UK Online Marketplace"
         width={1536}
         height={1024}
-        className="w-full h-full object-cover object-center rounded-xl"
+        className="w-full h-full object-cover object-center"
         loading="eager"
       />
     </div>
