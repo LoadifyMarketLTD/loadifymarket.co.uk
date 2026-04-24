@@ -133,7 +133,7 @@ const AdminDashboard = () => {
 
   const cardIconTheme: Record<string, { color: string; bg: string }> = {
     "Total Users":       { color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
-    "Total Products":    { color: "#7C3AED", bg: "rgba(124,58,237,0.12)" },
+    "Total Products":    { color: "#0A2239", bg: "rgba(10,34,57,0.08)" },
     "Total Orders":      { color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
     "Setup Incomplete":  { color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
   };
@@ -164,7 +164,7 @@ const AdminDashboard = () => {
             <Link
               key={s.label}
               to={s.to}
-              className="block rounded-2xl p-5 transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="block rounded-2xl p-5 transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22C55E]"
               style={{
                 background: "#ffffff",
                 border: "1px solid rgba(148,163,184,0.35)",
@@ -225,9 +225,9 @@ const AdminDashboard = () => {
               size="sm"
               className="text-xs font-medium transition-all"
               style={{
-                background: "rgba(124,58,237,0.15)",
-                color: "#a78bfa",
-                border: "1px solid rgba(124,58,237,0.3)",
+                background: "rgba(34,197,94,0.12)",
+                color: "#16A34A",
+                border: "1px solid rgba(34,197,94,0.3)",
               }}
               asChild
             >

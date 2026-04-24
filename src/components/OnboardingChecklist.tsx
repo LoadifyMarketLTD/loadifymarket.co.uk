@@ -20,7 +20,7 @@ const ITEMS: {
 }[] = [
   { key: "profileCompleted",      label: "Complete your seller profile",     href: "/seller/profile",       cta: "Edit profile" },
   { key: "stripeConnected",       label: "Connect Stripe for payments",       href: "/onboarding",           cta: "Connect Stripe" },
-  { key: "storeCreated",          label: "Set up your store",                 href: "/seller/settings",      cta: "Configure store" },
+  { key: "storeCreated",          label: "Set up your store",                 href: "/seller/profile",       cta: "Configure store" },
   { key: "shippingSetupCompleted",label: "Configure shipping methods",        href: "/seller/settings",      cta: "Set up shipping" },
   { key: "firstProductCreated",   label: "Add your first product",            href: "/seller/products/new",  cta: "Add product" },
 ];
@@ -41,7 +41,7 @@ export function OnboardingChecklist() {
     if (!user || user.role !== "seller") return;
 
     const load = async () => {
-      const [spRes, prodRes] = await Promise.all([
+      const [spRes, prodRes, storeRes] = await Promise.all([
         supabase
           .from("seller_profiles")
           .select([
@@ -50,8 +50,9 @@ export function OnboardingChecklist() {
             "storeCreated",
             "shippingSetupCompleted",
             "firstProductCreated",
-            // Legacy fallback fields
+            // Fallback fields used to derive completion from real persisted data
             "storeName", "businessName", "contactPhone", "businessAddress",
+            "shippingDefaults",
           ].join(", "))
           .eq("userId", user.id)
           .maybeSingle(),
@@ -59,6 +60,11 @@ export function OnboardingChecklist() {
           .from("products")
           .select("id", { count: "exact", head: true })
           .eq("sellerId", user.id),
+        supabase
+          .from("seller_stores")
+          .select("isActive")
+          .eq("userId", user.id)
+          .maybeSingle(),
       ]);
 
       const sp = spRes.data as Record<string, unknown> | null;
@@ -72,11 +78,24 @@ export function OnboardingChecklist() {
           ((sp?.businessAddress as { postcode?: string } | null)?.postcode ?? "").trim().length > 0
         );
 
+      // storeCreated: use boolean flag OR check seller_stores.isActive = true OR fall back to store name
+      const storeName = (sp?.storeName as string | undefined) ?? "";
+      const businessName = (sp?.businessName as string | undefined) ?? "";
+      const storeNameFilled = (storeName || businessName).trim().length > 0;
+      const storeCreated =
+        Boolean(sp?.storeCreated) ||
+        Boolean((storeRes.data as { isActive?: boolean } | null)?.isActive) ||
+        storeNameFilled;
+
+      // shippingSetupCompleted: use boolean flag OR check shippingDefaults is not null
+      const shippingDefaults = sp?.shippingDefaults as Record<string, unknown> | null;
+      const shippingSetupCompleted = Boolean(sp?.shippingSetupCompleted) || shippingDefaults != null;
+
       setState({
         profileCompleted,
         stripeConnected: (sp?.stripeConnectStatus as string) === "active",
-        storeCreated: Boolean(sp?.storeCreated),
-        shippingSetupCompleted: Boolean(sp?.shippingSetupCompleted),
+        storeCreated,
+        shippingSetupCompleted,
         firstProductCreated: Boolean(sp?.firstProductCreated) || productCount > 0,
       });
       setLoading(false);
@@ -98,28 +117,28 @@ export function OnboardingChecklist() {
   const total = ITEMS.length;
 
   return (
-    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 mb-6 relative">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 mb-6 relative">
       {/* Dismiss button */}
       <button
         type="button"
         aria-label="Dismiss checklist"
         onClick={() => setDismissed(true)}
-        className="absolute top-4 right-4 text-amber-400 hover:text-amber-600 transition-colors"
+        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
       >
         <X className="h-4 w-4" />
       </button>
 
       {/* Header */}
       <div className="mb-4 pr-6">
-        <h3 className="font-semibold text-amber-900 text-sm">Complete your seller setup</h3>
+        <h3 className="font-semibold text-[#0A2239] text-sm">Complete your seller setup</h3>
         <div className="flex items-center gap-2 mt-1.5">
-          <div className="flex-1 h-1.5 bg-amber-200 rounded-full overflow-hidden">
+          <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-amber-500 rounded-full transition-all duration-500"
+              className="h-full bg-[#16A34A] rounded-full transition-all duration-500"
               style={{ width: `${Math.round((completed / total) * 100)}%` }}
             />
           </div>
-          <span className="text-xs text-amber-700 shrink-0 font-medium">
+          <span className="text-xs text-gray-500 shrink-0 font-medium">
             {completed}/{total}
           </span>
         </div>
@@ -132,17 +151,17 @@ export function OnboardingChecklist() {
           return (
             <li key={key} className={`flex items-center gap-3 ${done ? "opacity-50" : ""}`}>
               {done ? (
-                <CheckCircle2 className="h-4 w-4 text-amber-600 shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-[#16A34A] shrink-0" />
               ) : (
-                <Circle className="h-4 w-4 text-amber-300 shrink-0" />
+                <Circle className="h-4 w-4 text-gray-400 shrink-0" />
               )}
-              <span className={`text-sm flex-1 ${done ? "line-through text-amber-600" : "text-amber-900"}`}>
+              <span className={`text-sm flex-1 ${done ? "line-through text-gray-400" : "text-[#0A2239] font-semibold"}`}>
                 {label}
               </span>
               {!done && (
                 <Link
                   to={href}
-                  className="text-xs font-medium text-amber-700 hover:text-amber-900 flex items-center gap-0.5 shrink-0"
+                  className="text-xs font-medium text-[#16A34A] hover:text-[#15803D] flex items-center gap-0.5 shrink-0"
                 >
                   {cta} <ChevronRight className="h-3 w-3" />
                 </Link>
@@ -153,10 +172,10 @@ export function OnboardingChecklist() {
       </ul>
 
       {/* Full wizard link */}
-      <div className="mt-4 pt-3 border-t border-amber-200">
+      <div className="mt-4 pt-3 border-t border-gray-200">
         <Link
           to="/onboarding"
-          className="text-xs font-semibold text-amber-800 hover:text-amber-900 underline"
+          className="text-xs font-semibold text-[#0A2239] hover:text-[#16A34A] underline"
         >
           Open setup wizard →
         </Link>
