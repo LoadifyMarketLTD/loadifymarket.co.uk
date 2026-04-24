@@ -451,7 +451,9 @@ export default function ProductFormPage() {
             spRow?.storeCreated &&
             spRow?.shippingSetupCompleted
           ) {
-            // ONBOARDING_COMPLETE_STEP = 8 (all 5 wizard steps done)
+            // onboardingStep 8 = all gate flags satisfied (5 wizard UI steps map to
+            // 8 DB sub-steps tracked in seller_profiles; value mirrors ONBOARDING_COMPLETE_STEP
+            // in src/pages/onboarding/SellerOnboarding.tsx).
             await supabase
               .from('users')
               .update({ onboardingCompleted: true, onboardingStep: 8 })

@@ -133,7 +133,8 @@ interface PendingOnboardSeller {
 async function findSellersNeedingOnboarding(admin: SupabaseClient): Promise<PendingOnboardSeller[]> {
   // Only query sellers registered more than 24h ago to avoid emailing brand-new signups.
   // Filter by onboardingCompleted = false (or NULL for rows created before the field was added).
-  // This matches requirement §8: "ONLY if onboarding_completed = false".
+  // This is the canonical completion signal: all onboarding step-flags must be true before
+  // onboardingCompleted is set to true (see supabase/446_add_onboarding_fields.sql).
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   const { data: sellerUsers, error } = await admin
