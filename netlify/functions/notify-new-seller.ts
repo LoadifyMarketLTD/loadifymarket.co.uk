@@ -32,7 +32,7 @@ export const handler: Handler = async (event) => {
 
     const msg = {
       to: 'support@loadifymarket.co.uk',
-      from: 'no-reply@loadifymarket.co.uk',
+      from: process.env.SENDGRID_FROM_EMAIL || 'loadifymarket.co.uk@gmail.com',
       subject: 'New Seller Registered - Loadify Market',
       html: `
         <h2>New Seller Registration</h2>
