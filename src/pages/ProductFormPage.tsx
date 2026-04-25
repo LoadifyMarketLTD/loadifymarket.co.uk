@@ -108,6 +108,9 @@ export default function ProductFormPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [customSpecs, setCustomSpecs] = useState<CustomSpec[]>([]);
 
+  // 'service' = no stock/shipping; 'goods' = physical product with stock + shipping
+  const [listingContext, setListingContext] = useState<'service' | 'goods'>('service');
+
   const [formData, setFormData] = useState({
     title: '',
     shortDescription: '',
@@ -165,6 +168,10 @@ export default function ProductFormPage() {
       }
 
       if (data) {
+        // Restore listing context from the saved product
+        if (data.listingContext === 'goods' || data.listingContext === 'service') {
+          setListingContext(data.listingContext);
+        }
         const specs = data.specifications || {};
         setFormData({
           title: data.title || '',
@@ -260,8 +267,11 @@ export default function ProductFormPage() {
     if (formData.salePrice && formData.price && parseFloat(formData.salePrice) >= parseFloat(formData.price)) {
       e.salePrice = 'Sale price must be less than the regular price.';
     }
-    if (!formData.stockQuantity || isNaN(parseInt(formData.stockQuantity)) || parseInt(formData.stockQuantity) < 0) {
-      e.stockQuantity = 'Please enter a valid stock quantity (0 or more).';
+    // Stock quantity only required for physical goods
+    if (listingContext === 'goods') {
+      if (!formData.stockQuantity || isNaN(parseInt(formData.stockQuantity)) || parseInt(formData.stockQuantity) < 0) {
+        e.stockQuantity = 'Please enter a valid stock quantity (0 or more).';
+      }
     }
     return e;
   };
@@ -313,38 +323,23 @@ export default function ProductFormPage() {
     if (publishMode) setSaving(true); else setSavingDraft(true);
     try {
       const price = parseFloat(formData.price);
-      const vatRate = 0.20; // 20% VAT
-      const priceExVat = price / (1 + vatRate);
 
       // When critical fields are locked (orders exist) and the user is a seller,
       // only allow non-critical fields to be updated.
       const isAdmin = user.role === 'admin';
       const specs = buildSpecs();
 
-      // Read autoApproveProducts flag from platform settings
-      let autoApprove = false;
-      try {
-        const { data: settingsRows } = await supabase
-          .from("platform_settings")
-          .select("key,value")
-          .eq("key", "feature_flags")
-          .maybeSingle();
-        autoApprove = (settingsRows?.value as Record<string, boolean> | null)?.autoApproveProducts ?? false;
-      } catch {
-        // Non-fatal: default to false (require manual approval)
-      }
-
+      // Build the product payload (isApproved is now set server-side via create-product / update-product)
       const productData = {
         title: formData.title,
         description: formData.description,
         type: formData.type,
         condition: formData.condition,
         price,
-        priceExVat,
-        vatRate,
-        stockQuantity: parseInt(formData.stockQuantity),
-        stockStatus: parseInt(formData.stockQuantity) > 10 ? 'in_stock' :
-                    parseInt(formData.stockQuantity) > 0 ? 'low_stock' : 'out_of_stock',
+        stockQuantity: listingContext === 'service' ? 0 : parseInt(formData.stockQuantity),
+        stockStatus: listingContext === 'service' ? 'in_stock' :
+                    (parseInt(formData.stockQuantity) > 10 ? 'in_stock' :
+                    parseInt(formData.stockQuantity) > 0 ? 'low_stock' : 'out_of_stock'),
         categoryId: formData.categoryId || null,
         subcategoryId: formData.subcategoryId || null,
         images: formData.images,
@@ -357,54 +352,74 @@ export default function ProductFormPage() {
           ? formData.palletInfo
           : null,
         isActive: publishMode,
-        isApproved: isAdmin ? true : autoApprove, // Admin always approved; sellers depend on flag
       };
 
-      // Save or update shipping methods helper
-      const syncShipping = async (productId: string) => {
-        const { error: deleteError } = await supabase.from('product_shipping').delete().eq('product_id', productId);
-        if (deleteError) throw deleteError;
-        if (selectedShippingMethodIds.length > 0) {
-          const rows = selectedShippingMethodIds.map((method_id) => ({
-            product_id: productId,
-            method_id,
-            dispatch_time: dispatchTime || null,
-          }));
-          const { error: shippingError } = await supabase.from('product_shipping').insert(rows);
-          if (shippingError) throw shippingError;
-        }
+      // Fetch bearer token for the serverless functions
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) throw new Error('No auth session found — please sign in again.');
+      const authHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authSession.access_token}`,
       };
 
       if (id && hasActiveOrders && !isAdmin) {
-        // Locked product — only allow non-critical fields
-        const allowedData: Partial<typeof productData> = {
-          description: productData.description,
-          images: productData.images,
-          specifications: productData.specifications,
-          weight: productData.weight,
-          dimensions: productData.dimensions,
-          palletInfo: productData.palletInfo,
-        };
-        const { error } = await supabase.from('products').update(allowedData).eq('id', id);
-        if (error) throw error;
-        await syncShipping(id);
+        // Locked product — only allow non-critical fields via update-product
+        const { description, images, specifications, weight, dimensions, palletInfo } = productData;
+        const res = await fetch('/.netlify/functions/update-product', {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify({
+            id,
+            description,
+            images,
+            specifications,
+            weight,
+            dimensions,
+            palletInfo,
+            shippingMethodIds: selectedShippingMethodIds,
+            dispatchTime: dispatchTime || null,
+            lockedFieldsOnly: true,
+          }),
+        });
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
+        }
         setSuccessMessage('Product updated. Critical fields were not changed as orders exist.');
       } else if (id) {
-        // Full update — sellerId intentionally excluded: it never changes and re-sending it
-        // triggers FK re-validation against seller_profiles / seller_stores unnecessarily.
-        const { error } = await supabase.from('products').update(productData).eq('id', id);
-        if (error) throw error;
-        await syncShipping(id);
+        // Full update via update-product
+        const res = await fetch('/.netlify/functions/update-product', {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify({
+            id,
+            ...productData,
+            shippingMethodIds: selectedShippingMethodIds,
+            dispatchTime: dispatchTime || null,
+          }),
+        });
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
+        }
         setSuccessMessage(publishMode ? 'Product updated and published.' : 'Draft saved successfully.');
       } else {
-        // Create new product — sellerId is required at INSERT and is validated by RLS
-        const { data: inserted, error } = await supabase
-          .from('products')
-          .insert([{ sellerId: user.id, ...productData }])
-          .select('id')
-          .single();
-        if (error) throw error;
-        if (inserted) await syncShipping(inserted.id);
+        // Create new product via create-product (backend sets isApproved)
+        const res = await fetch('/.netlify/functions/create-product', {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify({
+            ...productData,
+            listingContext,
+            shippingMethodIds: listingContext === 'goods' ? selectedShippingMethodIds : [],
+            dispatchTime: listingContext === 'goods' ? (dispatchTime || null) : null,
+          }),
+        });
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
+        }
+        const created = await res.json() as { id: string; isApproved: boolean };
 
         // Mark first product created for onboarding completion tracking.
         // Non-fatal: onboarding checklist will still derive this from product count.
@@ -414,23 +429,17 @@ export default function ProductFormPage() {
           .select([
             'firstProductCreated',
             'profileCompleted',
-            'stripeConnectStatus',
-            'stripeChargesEnabled',
-            'stripePayoutsEnabled',
-            'stripeDetailsSubmitted',
             'storeCreated',
-            'shippingSetupCompleted',
+            'hasServiceCapability',
+            'sellerStatus',
           ].join(', '))
           .eq('userId', user.id)
           .maybeSingle<{
             firstProductCreated: boolean | null;
             profileCompleted: boolean | null;
-            stripeConnectStatus: string | null;
-            stripeChargesEnabled: boolean | null;
-            stripePayoutsEnabled: boolean | null;
-            stripeDetailsSubmitted: boolean | null;
             storeCreated: boolean | null;
-            shippingSetupCompleted: boolean | null;
+            hasServiceCapability: boolean | null;
+            sellerStatus: string | null;
           }>();
 
         if (!spRow?.firstProductCreated) {
@@ -442,14 +451,13 @@ export default function ProductFormPage() {
           // The DB trigger (trg_sync_seller_onboarding) will auto-set
           // onboardingCompleted when all other flags are also true.
           // Force-check here using the flags we already fetched above.
+          // hasServiceCapability will be TRUE after the product insert fires the DB trigger,
+          // so we only gate on profileCompleted + storeCreated + sellerStatus here.
           if (
             spRow?.profileCompleted &&
-            spRow?.stripeConnectStatus === 'active' &&
-            spRow?.stripeChargesEnabled &&
-            spRow?.stripePayoutsEnabled &&
-            spRow?.stripeDetailsSubmitted &&
             spRow?.storeCreated &&
-            spRow?.shippingSetupCompleted
+            spRow?.sellerStatus !== 'suspended' &&
+            spRow?.sellerStatus !== 'rejected'
           ) {
             // onboardingStep 8 = all gate flags satisfied (5 wizard UI steps map to
             // 8 DB sub-steps tracked in seller_profiles; value mirrors ONBOARDING_COMPLETE_STEP
@@ -463,7 +471,9 @@ export default function ProductFormPage() {
 
         setSuccessMessage(
           publishMode
-            ? 'Product created! It will be visible after admin approval.'
+            ? (created.isApproved
+                ? 'Product created and is now live!'
+                : 'Product created! It will be visible after admin approval.')
             : 'Draft saved. You can continue editing and publish when ready.'
         );
       }
@@ -591,6 +601,44 @@ export default function ProductFormPage() {
           )}
 
           <form onSubmit={handleSubmit} noValidate>
+
+            {/* ─── LISTING CONTEXT SELECTOR ─────────────────────────────── */}
+            {!id && (
+              <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6 shadow-sm">
+                <h2 className="text-lg font-semibold text-gray-900 mb-1">Listing Type</h2>
+                <p className="text-sm text-gray-500 mb-4">Choose whether you are listing a service or a physical product.</p>
+                <div className="flex gap-4">
+                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'service' ? 'border-navy-800 bg-navy-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input
+                      type="radio"
+                      name="listingContext"
+                      value="service"
+                      checked={listingContext === 'service'}
+                      onChange={() => setListingContext('service')}
+                      className="mt-0.5 accent-navy-800"
+                    />
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">Service</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Digital or in-person service — no stock, no shipping required. Reusable listing.</p>
+                    </div>
+                  </label>
+                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'goods' ? 'border-navy-800 bg-navy-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input
+                      type="radio"
+                      name="listingContext"
+                      value="goods"
+                      checked={listingContext === 'goods'}
+                      onChange={() => setListingContext('goods')}
+                      className="mt-0.5 accent-navy-800"
+                    />
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">Physical Product</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Tangible goods — requires stock quantity and shipping setup.</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            )}
 
             {/* ─── SECTION 1: Basic Information ─────────────────────────── */}
             <Section title="1. Basic Information">
@@ -755,6 +803,7 @@ export default function ProductFormPage() {
             </Section>
 
             {/* ─── SECTION 4: Inventory ─────────────────────────────────── */}
+            {listingContext === 'goods' && (
             <Section title="4. Inventory">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -805,6 +854,7 @@ export default function ProductFormPage() {
                 </div>
               )}
             </Section>
+            )} {/* end listingContext === 'goods' — Inventory section */}
 
             {/* ─── SECTION 5: Media ─────────────────────────────────────── */}
             <Section title="5. Product Images">
@@ -820,6 +870,7 @@ export default function ProductFormPage() {
             </Section>
 
             {/* ─── SECTION 6: Dimensions & Shipping ────────────────────── */}
+            {listingContext === 'goods' && (
             <Section title="6. Dimensions &amp; Shipping">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div>
@@ -925,6 +976,7 @@ export default function ProductFormPage() {
                 </div>
               )}
             </Section>
+            )} {/* end listingContext === 'goods' — Dimensions & Shipping section */}
 
             {/* ─── SECTION 7: Specifications ────────────────────────────── */}
             <Section title="7. Specifications">

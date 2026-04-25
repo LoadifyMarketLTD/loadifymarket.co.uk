@@ -36,9 +36,11 @@ const statusColor: Record<string, string> = {
   paid: "bg-amber-500/15 text-amber-700 border-amber-200",
   packed: "bg-amber-500/15 text-amber-700 border-amber-200",
   shipped: "bg-blue-500/15 text-blue-700 border-blue-200",
-  delivered: "bg-emerald-500/15 text-emerald-700 border-emerald-200",
+  delivered: "bg-orange-500/15 text-orange-700 border-orange-200",
+  completed: "bg-emerald-500/15 text-emerald-700 border-emerald-200",
   cancelled: "bg-destructive/15 text-destructive border-destructive/20",
   refunded: "bg-destructive/15 text-destructive border-destructive/20",
+  invoice_requested: "bg-blue-500/15 text-blue-700 border-blue-200",
 };
 
 const RETURN_REASONS = [
@@ -88,31 +90,35 @@ const BuyerOrders = () => {
     try {
       const { error } = await supabase
         .from("orders")
-        .update({ status: "delivered", deliveredAt: new Date().toISOString() })
+        .update({
+          status: "completed",
+          escrowStatus: "released",
+          escrowReleasedAt: new Date().toISOString(),
+        })
         .eq("id", confirmDeliveryOrder.id)
         .eq("buyerId", user.id);
       if (error) throw error;
 
-      // Notify the seller that the buyer has confirmed receipt.
+      // Notify the seller that the buyer has confirmed and funds are released.
       if (confirmDeliveryOrder.sellerId) {
         await supabase.from("notifications").insert({
           userId: confirmDeliveryOrder.sellerId,
-          type: "delivery",
-          title: "Buyer confirmed delivery",
-          message: `The buyer has confirmed receipt of order ${confirmDeliveryOrder.orderNumber || confirmDeliveryOrder.id.slice(0, 8).toUpperCase()}.`,
+          type: "payment",
+          title: "Job confirmed — funds released",
+          message: `The buyer has confirmed completion of order ${confirmDeliveryOrder.orderNumber || confirmDeliveryOrder.id.slice(0, 8).toUpperCase()}. Escrow has been released.`,
           link: "/seller/orders",
         });
       }
 
       setOrders((prev) =>
         prev.map((o) =>
-          o.id === confirmDeliveryOrder.id ? { ...o, status: "delivered" } : o
+          o.id === confirmDeliveryOrder.id ? { ...o, status: "completed" } : o
         )
       );
-      toast({ title: "Delivery confirmed", description: "Thank you for confirming receipt of your order." });
+      toast({ title: "Job confirmed", description: "Thank you for confirming. Funds have been released to the provider." });
       setConfirmDeliveryOrder(null);
     } catch (err) {
-      toast({ title: "Failed to confirm delivery", description: (err as Error).message, variant: "destructive" });
+      toast({ title: "Failed to confirm", description: (err as Error).message, variant: "destructive" });
     } finally {
       setConfirmDeliveryLoading(false);
     }
@@ -313,9 +319,9 @@ const BuyerOrders = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`h-8 w-8 ${o.status === "shipped" ? "text-emerald-600" : ""}`}
-                    title={o.status === "shipped" ? "Confirm delivery" : o.status === "delivered" ? "Already delivered" : "Confirm delivery once item arrives"}
-                    disabled={o.status !== "shipped"}
+                    className={`h-8 w-8 ${o.status === "delivered" ? "text-emerald-600" : ""}`}
+                    title={o.status === "delivered" ? "Confirm job completion" : o.status === "completed" ? "Job completed" : "Confirm once provider marks job done"}
+                    disabled={o.status !== "delivered"}
                     onClick={() => setConfirmDeliveryOrder(o)}
                   >
                     <CheckCheck className="h-4 w-4" />
@@ -324,8 +330,8 @@ const BuyerOrders = () => {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    title={o.status === "delivered" ? "Request return" : "Returns available after delivery"}
-                    disabled={o.status !== "delivered"}
+                    title={o.status === "completed" ? "Request return" : "Returns available after job completion"}
+                    disabled={o.status !== "completed"}
                     onClick={() => {
                       setReturnOrder(o);
                       setReturnReason("");
@@ -388,14 +394,16 @@ const BuyerOrders = () => {
         <TabsList>
           <TabsTrigger value="all">All <Badge variant="secondary" className="ml-2 text-xs">{filtered.length}</Badge></TabsTrigger>
           <TabsTrigger value="processing">Processing</TabsTrigger>
-          <TabsTrigger value="shipped">Shipped</TabsTrigger>
-          <TabsTrigger value="delivered">Delivered</TabsTrigger>
+          <TabsTrigger value="shipped">In Progress</TabsTrigger>
+          <TabsTrigger value="delivered">Pending Confirmation</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(filtered)}</div></CardContent></Card></TabsContent>
         <TabsContent value="processing"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(filtered.filter((o) => ["pending","paid","packed"].includes(o.status)))}</div></CardContent></Card></TabsContent>
         <TabsContent value="shipped"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("shipped"))}</div></CardContent></Card></TabsContent>
         <TabsContent value="delivered"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("delivered"))}</div></CardContent></Card></TabsContent>
+        <TabsContent value="completed"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("completed"))}</div></CardContent></Card></TabsContent>
       </Tabs>
 
       {/* Return Request Dialog */}
@@ -504,23 +512,24 @@ const BuyerOrders = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Confirm Delivery Dialog */}
+      {/* Confirm Job Completion Dialog */}
       <Dialog open={!!confirmDeliveryOrder} onOpenChange={(open) => { if (!open) setConfirmDeliveryOrder(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCheck className="h-5 w-5 text-emerald-600" /> Confirm Delivery
+              <CheckCheck className="h-5 w-5 text-emerald-600" /> Confirm Job Completion
             </DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-2">
             <p className="text-sm text-foreground">
-              Please confirm you have received order{" "}
+              Please confirm that the work for order{" "}
               <span className="font-semibold">
                 {confirmDeliveryOrder?.orderNumber || confirmDeliveryOrder?.id?.slice(0, 8).toUpperCase()}
-              </span>.
+              </span>{" "}
+              has been completed to your satisfaction.
             </p>
             <p className="text-xs text-muted-foreground">
-              Once confirmed, the order will be marked as delivered. You can still raise a dispute if there is a problem with the item.
+              Once confirmed, the escrow will be released to the provider. You can still open a dispute if there is a problem.
             </p>
           </div>
           <DialogFooter>
@@ -532,7 +541,7 @@ const BuyerOrders = () => {
               onClick={handleConfirmDelivery}
               disabled={confirmDeliveryLoading}
             >
-              {confirmDeliveryLoading ? "Confirming…" : "Yes, I received it"}
+              {confirmDeliveryLoading ? "Confirming…" : "Yes, job is done"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import type { Handler } from '@netlify/functions';
+import { isMaintenanceMode } from './_shared/platformFlags';
 
 interface CheckoutItem {
   productId: string;
@@ -29,6 +30,7 @@ interface DBProduct {
   isActive: boolean;
   isApproved: boolean;
   stockQuantity: number;
+  listingContext: string;
 }
 
 export const handler: Handler = async (event) => {
@@ -81,7 +83,7 @@ export const handler: Handler = async (event) => {
     shippingAmount: rawShippingAmount,
     shippingMethod,
   } = body;
-  if (!items?.length || !shippingAddress || !billingAddress) {
+  if (!items?.length || !billingAddress) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
   }
   const shippingAmount = typeof rawShippingAmount === 'number' ? rawShippingAmount : 0;
@@ -118,11 +120,29 @@ export const handler: Handler = async (event) => {
     };
   }
 
+  // 5a-b. Maintenance mode guard — block buyers when the platform is under
+  //       maintenance.  Admins (role = 'admin' | 'owner') bypass this gate.
+  const maintenance = await isMaintenanceMode(supabase);
+  if (maintenance) {
+    const { data: callerRow } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', verifiedBuyerId)
+      .maybeSingle<{ role: string | null }>();
+    const isAdmin = callerRow?.role === 'admin' || callerRow?.role === 'owner';
+    if (!isAdmin) {
+      return {
+        statusCode: 503,
+        body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }),
+      };
+    }
+  }
+
   // 5. Validate products from DB (price integrity + availability)
   const productIds = items.map((i) => i.productId);
   const { data: dbProducts, error: dbError } = await supabase
     .from('products')
-    .select('id, price, title, sellerId, isActive, isApproved, stockQuantity')
+    .select('id, price, title, sellerId, isActive, isApproved, stockQuantity, listingContext')
     .in('id', productIds);
 
   if (dbError) {
@@ -139,18 +159,38 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({ error: `Item "${item.title}" is no longer available` }),
       };
     }
-    if (typeof dbProduct.stockQuantity === 'number' && dbProduct.stockQuantity <= 0) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: `Item "${item.title}" is out of stock` }),
-      };
+    // Stock checks apply only to goods listings; service listings have no inventory.
+    // dbProduct.price is always VAT-inclusive (the DB-stored price).
+    if (dbProduct.listingContext !== 'service') {
+      if (typeof dbProduct.stockQuantity === 'number' && dbProduct.stockQuantity <= 0) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: `Item "${item.title}" is out of stock` }),
+        };
+      }
+      if (typeof dbProduct.stockQuantity === 'number' && item.quantity > dbProduct.stockQuantity) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: `Only ${dbProduct.stockQuantity} unit(s) of "${item.title}" are available` }),
+        };
+      }
     }
-    if (typeof dbProduct.stockQuantity === 'number' && item.quantity > dbProduct.stockQuantity) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: `Only ${dbProduct.stockQuantity} unit(s) of "${item.title}" are available` }),
-      };
-    }
+  }
+
+  // Determine if every item in the cart is a service listing.
+  // Service-only carts skip shipping address validation.
+  const isServiceOnlyCart = items.every((item) => {
+    const dbProduct = productMap.get(item.productId);
+    return dbProduct?.listingContext === 'service';
+  });
+
+  // Shipping address is required for physical goods, optional for service-only carts.
+  const effectiveShippingAddress = shippingAddress ?? {};
+  if (!isServiceOnlyCart && (!shippingAddress || Object.keys(shippingAddress).length === 0)) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Shipping address is required for physical product orders.' }),
+    };
   }
 
   // Build enriched items — sellerId and price come from the DB to prevent
@@ -230,12 +270,31 @@ export const handler: Handler = async (event) => {
   const subtotal = enrichedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const total = subtotal + shippingAmount;
 
+  // ── B2B buyer check — VAT reverse charge ─────────────────────────────────
+  // If the buyer has a verified B2B VAT number, the platform applies reverse
+  // charge (0% VAT) and Stripe is charged the ex-VAT price.
+  const VAT_RATE = 0.20;
+  const { data: buyerProfile } = await supabase
+    .from('buyer_profiles')
+    .select('accountType, isVatVerified')
+    .eq('userId', verifiedBuyerId)
+    .maybeSingle<{ accountType: string | null; isVatVerified: boolean | null }>();
+
+  const isB2BBuyer =
+    Boolean(buyerProfile?.accountType) && buyerProfile?.accountType !== 'individual';
+  const applyReverseCharge = isB2BBuyer && Boolean(buyerProfile?.isVatVerified);
+  // ─────────────────────────────────────────────────────────────────────────
+
   // 6. Create Stripe checkout session
   try {
     const stripe = new Stripe(stripeKey, { apiVersion: '2025-08-27.basil' });
     const lineItems = items.map((item) => {
       const dbProduct = productMap.get(item.productId) as DBProduct;
-      const unitAmount = Math.round(dbProduct.price * 100);
+      // B2B reverse charge: Stripe charges the ex-VAT price (price / 1.20).
+      const unitPrice = applyReverseCharge
+        ? dbProduct.price / (1 + VAT_RATE)
+        : dbProduct.price;
+      const unitAmount = Math.round(unitPrice * 100);
       return {
         price_data: {
           currency: 'gbp',
@@ -299,7 +358,7 @@ export const handler: Handler = async (event) => {
         currency: 'GBP',
         metadata: {
           items: enrichedItems,
-          shippingAddress,
+          shippingAddress: effectiveShippingAddress,
           billingAddress,
           subtotal,
           shippingAmount,
@@ -307,6 +366,8 @@ export const handler: Handler = async (event) => {
           total,
           buyerId: verifiedBuyerId,
           transferGroup,
+          isB2B: isB2BBuyer,
+          applyReverseCharge,
         },
       });
 

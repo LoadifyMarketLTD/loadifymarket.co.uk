@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { isMaintenanceMode } from './_shared/platformFlags';
 
 // Collect all available webhook signing secrets.
 // STRIPE_WEBHOOK_SECRET       — standard account webhook (checkout events)
@@ -97,6 +98,18 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method not allowed' }),
+    };
+  }
+
+  // Maintenance mode guard — block webhook processing when the platform is
+  // under maintenance.  This is consistent with create-checkout.ts and rfq.ts.
+  // NOTE: There is no admin bypass here because Stripe webhook calls are
+  // server-to-server (no caller identity is available at this point).
+  const maintenance = await isMaintenanceMode(supabase);
+  if (maintenance) {
+    return {
+      statusCode: 503,
+      body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }),
     };
   }
 
@@ -297,6 +310,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     total: number;
     buyerId: string;
     transferGroup: string;
+    isB2B?: boolean;
+    applyReverseCharge?: boolean;
   }
 
   const orderData = pendingSession.metadata as OrderData;
@@ -328,16 +343,23 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   let firstOrderId: string | null = null;
 
   for (const [sellerId, sellerItems] of sellerGroups) {
-    // Calculate ex-VAT amounts for this seller's portion of the order.
-    // item.price is VAT-inclusive; ex-VAT = price / (1 + VAT_RATE).
+    // item.price in the enriched metadata is always the VAT-inclusive DB price.
+    // For B2B reverse charge, Stripe was charged the ex-VAT amount
+    // (item.price / 1.20), but the metadata still stores the original price.
+    // sellerSubtotal = item.price / (1 + VAT_RATE) gives the ex-VAT amount
+    // which equals what Stripe charged — correct in both B2C and B2B cases.
+    // For B2B reverse charge: vatAmount = 0 (customer accounts for VAT).
+    const isReverseCharge = Boolean(orderData.applyReverseCharge);
     const sellerSubtotal = sellerItems.reduce(
       (sum, i) => sum + (i.price / (1 + VAT_RATE)) * i.quantity,
       0
     );
-    const sellerVat = sellerItems.reduce(
-      (sum, i) => sum + i.price * (VAT_RATE / (1 + VAT_RATE)) * i.quantity,
-      0
-    );
+    const sellerVat = isReverseCharge
+      ? 0
+      : sellerItems.reduce(
+          (sum, i) => sum + i.price * (VAT_RATE / (1 + VAT_RATE)) * i.quantity,
+          0
+        );
     // Distribute shipping proportionally by ex-VAT order value
     const sellerShipping =
       totalSubtotal > 0 ? (sellerSubtotal / totalSubtotal) * totalShipping : 0;
@@ -360,9 +382,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
           total: sellerGrandTotal,
           commission: sellerCommission,
           status: 'paid',
+          escrowStatus: 'held',
           shippingAddress,
           billingAddress,
           shippingMethod: orderData.shippingMethod || 'Standard',
+          isB2B: Boolean(orderData.isB2B),
         },
       ])
       .select()
@@ -400,8 +424,20 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       throw itemsError;
     }
 
-    // Atomically decrement stock for each purchased product in this seller order.
+    // Atomically decrement stock for each purchased goods listing.
+    // Service listings (listingContext = 'service') have no inventory — skip.
     for (const item of sellerItems) {
+      // Check listingContext before decrementing stock
+      const { data: productMeta } = await supabase
+        .from('products')
+        .select('listingContext, stockQuantity')
+        .eq('id', item.productId)
+        .single<{ listingContext: string | null; stockQuantity: number }>();
+
+      if (productMeta?.listingContext === 'service') {
+        continue; // service listings have no stock to decrement
+      }
+
       const { error: rpcError } = await supabase.rpc('decrement_product_stock', {
         p_product_id: item.productId,
         p_qty: item.quantity,
@@ -412,28 +448,20 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         // only writes if the stock value has not changed since we read it,
         // preventing a race condition between two concurrent orders.
         console.warn('decrement_product_stock RPC failed, using fallback:', rpcError.message);
-        const { data: productRow } = await supabase
+        const currentQty = productMeta?.stockQuantity ?? 0;
+        const newQty = Math.max(0, currentQty - item.quantity);
+        const newStatus =
+          newQty <= 0 ? 'out_of_stock' : newQty <= 10 ? 'low_stock' : 'in_stock';
+
+        const { count } = await supabase
           .from('products')
-          .select('stockQuantity')
+          .update({ stockQuantity: newQty, stockStatus: newStatus })
           .eq('id', item.productId)
-          .single<{ stockQuantity: number }>();
+          .eq('stockQuantity', currentQty) // CAS: only update if unchanged
+          .select('id', { count: 'exact', head: true });
 
-        if (productRow !== null) {
-          const currentQty = productRow?.stockQuantity ?? 0;
-          const newQty = Math.max(0, currentQty - item.quantity);
-          const newStatus =
-            newQty <= 0 ? 'out_of_stock' : newQty <= 10 ? 'low_stock' : 'in_stock';
-
-          const { count } = await supabase
-            .from('products')
-            .update({ stockQuantity: newQty, stockStatus: newStatus })
-            .eq('id', item.productId)
-            .eq('stockQuantity', currentQty) // CAS: only update if unchanged
-            .select('id', { count: 'exact', head: true });
-
-          if (!count || count === 0) {
-            console.warn(`Stock decrement fallback: stock for product ${item.productId} changed concurrently — skipping update to avoid corruption`);
-          }
+        if (!count || count === 0) {
+          console.warn(`Stock decrement fallback: stock for product ${item.productId} changed concurrently — skipping update to avoid corruption`);
         }
       }
     }

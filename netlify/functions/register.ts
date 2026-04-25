@@ -2,6 +2,7 @@ import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { getClientIp } from './_shared/getClientIp';
+import { getFeatureFlags } from './_shared/platformFlags';
 
 /**
  * POST /.netlify/functions/register
@@ -36,12 +37,14 @@ interface RegisterRequest {
   lastName: string;
   role: 'buyer' | 'seller';
   storeName?: string;
-  // Optional B2B fields sent by the TradeAccount / Signup forms.
-  // phone is persisted to users.phone (column already exists).
-  // vatNumber and customerType are stored in user_metadata for future use.
-  phone?: string;
+  // B2B buyer fields — persisted to buyer_profiles on registration.
+  companyName?: string;
   vatNumber?: string;
   customerType?: string;
+  businessAddress?: Record<string, string>;
+  // Legacy fields stored in user_metadata / users.phone.
+  phone?: string;
+  areasOfInterest?: string;
 }
 
 export const handler: Handler = async (event) => {
@@ -73,7 +76,7 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
   }
 
-  const { email, password, firstName, lastName, role, storeName, phone, vatNumber, customerType } = body;
+  const { email, password, firstName, lastName, role, storeName, phone, vatNumber, customerType, companyName, businessAddress } = body;
 
   if (!email || !password || !firstName || !lastName || !role) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
@@ -115,25 +118,18 @@ export const handler: Handler = async (event) => {
   // Check platform_settings.feature_flags before allowing registration.
   // AdminSettings saves sellerRegistration / buyerRegistration flags here.
   try {
-    const { data: flagRow } = await supabase
-      .from('platform_settings')
-      .select('value')
-      .eq('key', 'feature_flags')
-      .maybeSingle();
-    if (flagRow?.value && typeof flagRow.value === 'object') {
-      const flags = flagRow.value as Record<string, boolean>;
-      if (role === 'seller' && flags.sellerRegistration === false) {
-        return {
-          statusCode: 403,
-          body: JSON.stringify({ error: 'Seller registration is temporarily disabled. Please try again later.' }),
-        };
-      }
-      if (role === 'buyer' && flags.buyerRegistration === false) {
-        return {
-          statusCode: 403,
-          body: JSON.stringify({ error: 'Buyer registration is temporarily disabled. Please try again later.' }),
-        };
-      }
+    const flags = await getFeatureFlags(supabase);
+    if (role === 'seller' && flags.sellerRegistration === false) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: 'Seller registration is temporarily disabled. Please try again later.' }),
+      };
+    }
+    if (role === 'buyer' && flags.buyerRegistration === false) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: 'Buyer registration is temporarily disabled. Please try again later.' }),
+      };
     }
   } catch {
     // Non-fatal — if settings cannot be read, allow registration to proceed.
@@ -326,6 +322,27 @@ export const handler: Handler = async (event) => {
 
     // Admin notification is sent below via send-email (admin_new_seller template).
     // notify-new-seller is NOT called here to avoid duplicate admin emails.
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
+  // ── Buyer-only: persist B2B fields to buyer_profiles ──────────────────────
+  // The DB trigger trg_new_user_profile already created the bare buyer_profiles
+  // row. Upsert here only when the buyer provided B2B data (company or VAT).
+  if (role === 'buyer' && (companyName?.trim() || vatNumber?.trim() || customerType)) {
+    const accountType = customerType || 'individual';
+    const b2bUpdate: Record<string, unknown> = {
+      userId,
+      accountType,
+    };
+    if (companyName?.trim()) b2bUpdate.companyName = companyName.trim();
+    if (vatNumber?.trim()) b2bUpdate.vatNumber = vatNumber.trim();
+    if (businessAddress && Object.keys(businessAddress).length > 0) {
+      b2bUpdate.businessAddress = businessAddress;
+    }
+    const { error: bpErr } = await supabase
+      .from('buyer_profiles')
+      .upsert(b2bUpdate, { onConflict: 'userId' });
+    if (bpErr) console.warn('register: buyer_profiles B2B upsert (non-fatal):', bpErr.message);
   }
   // ────────────────────────────────────────────────────────────────────────────
 

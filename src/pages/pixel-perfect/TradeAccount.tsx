@@ -205,13 +205,19 @@ export default function TradeAccount() {
         email: form.email.trim(),
         password: form.password,
         role: "buyer" as const,
-        // Extra B2B metadata passed as storeName / company for now
-        storeName: form.companyName.trim() || undefined,
-        // Additional fields stored in user_metadata for future use
+        companyName: form.companyName.trim() || undefined,
         phone: form.phone.trim(),
         vatNumber: form.vatNumber.trim() || undefined,
         customerType: form.customerType || undefined,
         areasOfInterest: form.areasOfInterest || undefined,
+        businessAddress: (form.streetAddress || form.city || form.postcode)
+          ? {
+              line1: form.streetAddress.trim(),
+              city: form.city.trim(),
+              postcode: form.postcode.trim(),
+              country: form.country.trim(),
+            }
+          : undefined,
       };
 
       const res = await fetch("/.netlify/functions/register", {

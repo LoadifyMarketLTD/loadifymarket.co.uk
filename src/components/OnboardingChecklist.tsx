@@ -8,7 +8,6 @@ interface ChecklistState {
   profileCompleted: boolean;
   stripeConnected: boolean;
   storeCreated: boolean;
-  shippingSetupCompleted: boolean;
   firstProductCreated: boolean;
 }
 
@@ -18,11 +17,10 @@ const ITEMS: {
   href: string;
   cta: string;
 }[] = [
-  { key: "profileCompleted",      label: "Complete your seller profile",     href: "/seller/profile",       cta: "Edit profile" },
-  { key: "stripeConnected",       label: "Connect Stripe for payments",       href: "/onboarding",           cta: "Connect Stripe" },
-  { key: "storeCreated",          label: "Set up your store",                 href: "/seller/profile",       cta: "Configure store" },
-  { key: "shippingSetupCompleted",label: "Configure shipping methods",        href: "/seller/settings",      cta: "Set up shipping" },
-  { key: "firstProductCreated",   label: "Add your first product",            href: "/seller/products/new",  cta: "Add product" },
+  { key: "profileCompleted",    label: "Complete your seller profile",     href: "/seller/profile",       cta: "Edit profile" },
+  { key: "stripeConnected",     label: "Connect Stripe for payments",       href: "/onboarding",           cta: "Connect Stripe" },
+  { key: "storeCreated",        label: "Set up your store",                 href: "/seller/profile",       cta: "Configure store" },
+  { key: "firstProductCreated", label: "Add your first service listing",    href: "/seller/products/new",  cta: "Add listing" },
 ];
 
 /**
@@ -48,11 +46,9 @@ export function OnboardingChecklist() {
             "profileCompleted",
             "stripeConnectStatus",
             "storeCreated",
-            "shippingSetupCompleted",
-            "firstProductCreated",
+            "hasServiceCapability",
             // Fallback fields used to derive completion from real persisted data
             "storeName", "businessName", "contactPhone", "businessAddress",
-            "shippingDefaults",
           ].join(", "))
           .eq("userId", user.id)
           .maybeSingle(),
@@ -87,16 +83,15 @@ export function OnboardingChecklist() {
         Boolean((storeRes.data as { isActive?: boolean } | null)?.isActive) ||
         storeNameFilled;
 
-      // shippingSetupCompleted: use boolean flag OR check shippingDefaults is not null
-      const shippingDefaults = sp?.shippingDefaults as Record<string, unknown> | null;
-      const shippingSetupCompleted = Boolean(sp?.shippingSetupCompleted) || shippingDefaults != null;
+      // hasServiceCapability: use boolean flag OR fall back to product count
+      const firstProductCreated =
+        Boolean(sp?.hasServiceCapability) || productCount > 0;
 
       setState({
         profileCompleted,
         stripeConnected: (sp?.stripeConnectStatus as string) === "active",
         storeCreated,
-        shippingSetupCompleted,
-        firstProductCreated: Boolean(sp?.firstProductCreated) || productCount > 0,
+        firstProductCreated,
       });
       setLoading(false);
     };

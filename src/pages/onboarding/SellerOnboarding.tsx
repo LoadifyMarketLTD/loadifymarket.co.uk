@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2, Circle, ChevronRight, Loader2, ExternalLink,
-  User, Building2, CreditCard, Store, Truck, Package
+  User, Building2, CreditCard, Store, Package
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -39,8 +39,7 @@ interface OnboardingState {
   stripePayoutsEnabled: boolean;
   stripeDetailsSubmitted: boolean;
   storeCreated: boolean;
-  shippingSetupCompleted: boolean;
-  firstProductCreated: boolean;
+  hasServiceCapability: boolean;
   onboardingCompleted: boolean;
 }
 
@@ -48,8 +47,8 @@ const STEPS = [
   { id: 1, label: "Account type",   icon: User },
   { id: 2, label: "Profile details", icon: Building2 },
   { id: 3, label: "Stripe Connect",  icon: CreditCard },
-  { id: 4, label: "Store & shipping",icon: Store },
-  { id: 5, label: "First product",   icon: Package },
+  { id: 4, label: "Store setup",     icon: Store },
+  { id: 5, label: "First listing",   icon: Package },
 ];
 
 function ProgressBar({ current, total }: { current: number; total: number }) {
@@ -254,22 +253,19 @@ function StepStripe({
   );
 }
 
-// ─── Step 4: Store & Shipping ─────────────────────────────────────────────────
+// ─── Step 4: Store Setup ──────────────────────────────────────────────────────
 function StepStore({
   storeCreated,
-  shippingDone,
   onNext,
 }: {
   storeCreated: boolean;
-  shippingDone: boolean;
   onNext: () => void;
 }) {
-  const allDone = storeCreated && shippingDone;
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Set up your store &amp; shipping</h2>
-        <p className="text-sm text-gray-500 mt-1">Configure your store details and shipping options.</p>
+        <h2 className="text-xl font-bold text-gray-900">Set up your store</h2>
+        <p className="text-sm text-gray-500 mt-1">Configure your store profile so buyers can find and trust you.</p>
       </div>
 
       <div className="space-y-3">
@@ -289,28 +285,11 @@ function StepStore({
             </a>
           )}
         </div>
-
-        <div className={`flex items-center gap-3 rounded-xl border p-4 ${shippingDone ? "bg-[#f0fdf4] border-[#86efac]" : "border-gray-200"}`}>
-          {shippingDone ? (
-            <CheckCircle2 className="h-5 w-5 text-[#22C55E] shrink-0" />
-          ) : (
-            <Truck className="h-5 w-5 text-gray-300 shrink-0" />
-          )}
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">Shipping methods</p>
-            <p className="text-xs text-gray-500">Rates, delivery zones</p>
-          </div>
-          {!shippingDone && (
-            <a href="/seller/settings" className="text-xs text-[#16A34A] underline shrink-0">
-              Configure →
-            </a>
-          )}
-        </div>
       </div>
 
       <Button
         onClick={onNext}
-        disabled={!allDone}
+        disabled={!storeCreated}
         className="w-full bg-gradient-to-r from-[#16A34A] to-[#22C55E] text-white disabled:opacity-40"
       >
         Continue <ChevronRight className="h-4 w-4 ml-1" />
@@ -319,8 +298,8 @@ function StepStore({
   );
 }
 
-// ─── Step 5: First Product ────────────────────────────────────────────────────
-function StepProduct({
+// ─── Step 5: First Service Listing ───────────────────────────────────────────
+function StepServiceListing({
   done,
   onFinish,
   finishing,
@@ -332,20 +311,20 @@ function StepProduct({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Add your first product</h2>
+        <h2 className="text-xl font-bold text-gray-900">Add your first service listing</h2>
         <p className="text-sm text-gray-500 mt-1">
-          List your first item to make your store live for buyers.
+          Create your first listing to make your store live for buyers.
         </p>
       </div>
 
       {done ? (
         <div className="flex items-center gap-3 rounded-xl bg-[#f0fdf4] border border-[#86efac] p-4">
           <CheckCircle2 className="h-5 w-5 text-[#22C55E] shrink-0" />
-          <p className="text-sm text-[#16A34A] font-medium">First product listed ✓</p>
+          <p className="text-sm text-[#16A34A] font-medium">First listing created ✓</p>
         </div>
       ) : (
         <Button asChild variant="outline" className="w-full">
-          <a href="/seller/products/new">Add a Product →</a>
+          <a href="/seller/products/new">Add a Listing →</a>
         </Button>
       )}
 
@@ -380,8 +359,7 @@ const SellerOnboarding = () => {
     stripePayoutsEnabled: false,
     stripeDetailsSubmitted: false,
     storeCreated: false,
-    shippingSetupCompleted: false,
-    firstProductCreated: false,
+    hasServiceCapability: false,
     onboardingCompleted: false,
   });
 
@@ -411,9 +389,8 @@ const SellerOnboarding = () => {
             "stripePayoutsEnabled",
             "stripeDetailsSubmitted",
             "storeCreated",
-            "shippingSetupCompleted",
-            "firstProductCreated",
-            // Also derive profileCompleted from existing fields if new col is null
+            "hasServiceCapability",
+            // Fallback fields used to derive completion from real persisted data
             "storeName", "businessName", "contactPhone", "businessAddress",
           ].join(", "))
           .eq("userId", user.id)
@@ -443,14 +420,14 @@ const SellerOnboarding = () => {
           ((sp?.businessAddress as { postcode?: string } | null)?.postcode ?? "").trim().length > 0
         );
 
-      // Derive firstProductCreated from products table if flag not set.
-      let firstProductCreated = Boolean(sp?.firstProductCreated);
-      if (!firstProductCreated) {
+      // Derive hasServiceCapability from flag or products/services count.
+      let hasServiceCapability = Boolean(sp?.hasServiceCapability);
+      if (!hasServiceCapability) {
         const { count } = await supabase
           .from("products")
           .select("id", { count: "exact", head: true })
           .eq("sellerId", user.id);
-        firstProductCreated = (count ?? 0) > 0;
+        hasServiceCapability = (count ?? 0) > 0;
       }
 
       const newState: OnboardingState = {
@@ -461,8 +438,7 @@ const SellerOnboarding = () => {
         stripePayoutsEnabled: Boolean(sp?.stripePayoutsEnabled),
         stripeDetailsSubmitted: Boolean(sp?.stripeDetailsSubmitted),
         storeCreated: Boolean(sp?.storeCreated),
-        shippingSetupCompleted: Boolean(sp?.shippingSetupCompleted),
-        firstProductCreated,
+        hasServiceCapability,
         onboardingCompleted: Boolean(u?.onboardingCompleted),
       };
 
@@ -484,8 +460,8 @@ const SellerOnboarding = () => {
     if (!s.accountType) return 1;
     if (!s.profileCompleted) return 2;
     if (s.stripeConnectStatus !== "active" || !s.stripeChargesEnabled || !s.stripePayoutsEnabled) return 3;
-    if (!s.storeCreated || !s.shippingSetupCompleted) return 4;
-    if (!s.firstProductCreated) return 5;
+    if (!s.storeCreated) return 4;
+    if (!s.hasServiceCapability) return 5;
     return 5;
   }
 
@@ -565,8 +541,8 @@ const SellerOnboarding = () => {
     Boolean(state.accountType),
     state.profileCompleted,
     state.stripeConnectStatus === "active" && state.stripeChargesEnabled && state.stripePayoutsEnabled,
-    state.storeCreated && state.shippingSetupCompleted,
-    state.firstProductCreated,
+    state.storeCreated,
+    state.hasServiceCapability,
   ];
 
   return (
@@ -614,13 +590,12 @@ const SellerOnboarding = () => {
           {step === 4 && (
             <StepStore
               storeCreated={state.storeCreated}
-              shippingDone={state.shippingSetupCompleted}
               onNext={advanceStep}
             />
           )}
           {step === 5 && (
-            <StepProduct
-              done={state.firstProductCreated}
+            <StepServiceListing
+              done={state.hasServiceCapability}
               onFinish={handleFinish}
               finishing={finishing}
             />
