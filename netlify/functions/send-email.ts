@@ -1,3 +1,26 @@
+/**
+ * send-email.ts — Transactional email dispatcher (SendGrid)
+ *
+ * ⚠️  TRANSACTIONAL EMAILS ONLY — NOT FOR MARKETING ⚠️
+ * -------------------------------------------------------
+ * This function sends emails that are directly triggered by user actions on
+ * the platform (order confirmations, dispute notifications, welcome emails,
+ * onboarding reminders, etc.).
+ *
+ * It MUST NOT be used for:
+ *   - Marketing or promotional campaigns
+ *   - Newsletters or bulk emails
+ *   - Any unsolicited or opt-in-required communication
+ *
+ * Transactional emails are exempt from PECR soft opt-in rules, but only when
+ * they are genuine service messages. Misusing this endpoint for marketing
+ * would violate SendGrid's Acceptable Use Policy, PECR, and GDPR, and would
+ * risk our sending domain being blacklisted.
+ *
+ * All emails are sent exclusively from support@loadifymarket.co.uk via
+ * SendGrid. Gmail or any other fallback address must never be used.
+ * See docs/SUPPORT_SLA.md for the full transactional email policy.
+ */
 import sgMail from '@sendgrid/mail';
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
