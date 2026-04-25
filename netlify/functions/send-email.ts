@@ -154,7 +154,7 @@ export const handler: Handler = async (event) => {
     const msg = {
       to,
       from: fromEmail,
-      replyTo: 'contact@loadifymarket.co.uk',
+      replyTo: fromEmail,
       subject,
       html: htmlContent,
     };

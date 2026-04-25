@@ -253,9 +253,6 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 # SendGrid (for email notifications)
 SENDGRID_API_KEY=your_sendgrid_api_key
-SENDGRID_TEMPLATE_ID_SHIPPED=optional_template_id
-SENDGRID_TEMPLATE_ID_OUT_FOR_DELIVERY=optional_template_id
-SENDGRID_TEMPLATE_ID_DELIVERED=optional_template_id
 
 # Supabase Storage
 SUPABASE_BUCKET_NAME=proof-of-delivery

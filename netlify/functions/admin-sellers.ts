@@ -109,7 +109,7 @@ async function sendWarningEmail(email: string, name: string, company: string): P
   await sgMail.send({
     to: email,
     from: fromEmail,
-    replyTo: 'contact@loadifymarket.co.uk',
+    replyTo: fromEmail,
     subject: 'Account Warning — Loadify Market',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">
@@ -200,7 +200,7 @@ async function sendOnboardingReminderEmail(seller: PendingOnboardSeller): Promis
   await sgMail.send({
     to: seller.email,
     from: fromEmail,
-    replyTo: 'contact@loadifymarket.co.uk',
+    replyTo: fromEmail,
     subject: 'Complete your seller setup — Loadify Market',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">

@@ -114,6 +114,15 @@ All emails sent by the platform are **strictly transactional** — triggered by 
 - No unsubscribe or opt-out flow exists because none is needed for transactional email under PECR/GDPR.
 - If a marketing capability is added in the future, it must use a separate sending domain, separate SendGrid sub-user, and a compliant opt-in list.
 
+### Email providers in use
+
+| Flow | Provider | Sender |
+|------|----------|--------|
+| Contact form, registration, order notifications, onboarding reminders, admin alerts | **SendGrid** via `send-email.ts` Netlify Function | `SENDGRID_FROM_EMAIL` (default: `contact@loadifymarket.co.uk`) |
+| **Password reset** | **Supabase Auth built-in mailer** (`supabase.auth.resetPasswordForEmail`) | Supabase infrastructure (sender address set in Supabase dashboard) |
+
+> ⚠️ **Action required for password reset branding:** The password reset email is delivered by Supabase's own mailer, not SendGrid, so it bypasses our custom branding and `contact@loadifymarket.co.uk` sender address. To align it with the rest of the platform, configure a custom SMTP provider (e.g. SendGrid SMTP relay) in the Supabase project dashboard under **Authentication → Email Templates → SMTP Settings**, using `contact@loadifymarket.co.uk` as the sender.
+
 ---
 
 ## 9. SMS Policy

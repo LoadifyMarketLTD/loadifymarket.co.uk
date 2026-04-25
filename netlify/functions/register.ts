@@ -321,7 +321,6 @@ export const handler: Handler = async (event) => {
     if (ssErr) console.warn('register: seller_stores upsert (non-fatal):', ssErr.message);
 
     // Admin notification is sent below via send-email (admin_new_seller template).
-    // notify-new-seller is NOT called here to avoid duplicate admin emails.
   }
   // ────────────────────────────────────────────────────────────────────────────
 
