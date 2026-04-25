@@ -179,7 +179,7 @@ const Footer = () => {
                 </p>
                 <p className="flex items-center gap-1.5">
                   <Mail className="h-3.5 w-3.5 text-accent shrink-0" />
-                  support@loadifymarket.co.uk
+                  contact@loadifymarket.co.uk
                 </p>
                 <p className="flex items-center gap-1.5">
                   <Phone className="h-3.5 w-3.5 text-accent shrink-0" />
@@ -237,7 +237,7 @@ const Footer = () => {
                 </p>
                 <p className="flex items-center gap-1.5">
                   <Mail className="h-3.5 w-3.5 text-accent shrink-0" />
-                  support@loadifymarket.co.uk
+                  contact@loadifymarket.co.uk
                 </p>
                 <p className="flex items-center gap-1.5">
                   <Phone className="h-3.5 w-3.5 text-accent shrink-0" />

@@ -9,8 +9,8 @@
 
 All user-facing support is handled via:
 
-- **Email:** support@loadifymarket.co.uk
-- **Reply-To on all transactional emails:** support@loadifymarket.co.uk
+- **Email:** contact@loadifymarket.co.uk
+- **Reply-To on all transactional emails:** contact@loadifymarket.co.uk
 
 ---
 
@@ -72,7 +72,7 @@ Critical (P1) issues are handled outside business hours when possible.
 ## 6. Escalation Path
 
 ```
-User contacts support@loadifymarket.co.uk
+User contacts contact@loadifymarket.co.uk
          │
          ▼
   Support Agent (48h SLA)
@@ -97,7 +97,7 @@ User contacts support@loadifymarket.co.uk
 
 ## 7. Dispute Resolution Process
 
-1. Buyer or seller emails support@loadifymarket.co.uk with order number and description.
+1. Buyer or seller emails contact@loadifymarket.co.uk with order number and description.
 2. Support agent reviews the order in the admin panel.
 3. Both parties are contacted for their account of events.
 4. Support makes a binding resolution decision within the SLA window.

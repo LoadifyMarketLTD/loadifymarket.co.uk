@@ -36,7 +36,7 @@ const DEFAULT_FEATURES: Features = {
 
 const DEFAULT_CONFIG: PlatformConfig = {
   platformName: "Loadify Market",
-  supportEmail: "support@loadifymarket.co.uk",
+  supportEmail: "contact@loadifymarket.co.uk",
   defaultCurrency: "gbp",
   commissionRate: 8,
   maxUploadSizeMb: 10,

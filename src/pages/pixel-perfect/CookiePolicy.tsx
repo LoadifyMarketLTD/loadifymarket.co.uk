@@ -83,7 +83,7 @@ const CookiePolicy = () => {
           <h2>8. Contact</h2>
           <p>If you have questions about our use of cookies, please contact us:</p>
           <ul>
-            <li>Email: support@loadifymarket.co.uk</li>
+            <li>Email: contact@loadifymarket.co.uk</li>
             <li>Address: 101 Cornelian Street, Blackburn BB1 9QL, UK</li>
           </ul>
         </div>

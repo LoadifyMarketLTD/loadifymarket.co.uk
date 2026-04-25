@@ -17,7 +17,7 @@
  * would violate SendGrid's Acceptable Use Policy, PECR, and GDPR, and would
  * risk our sending domain being blacklisted.
  *
- * All emails are sent exclusively from support@loadifymarket.co.uk via
+ * All emails are sent exclusively from contact@loadifymarket.co.uk via
  * SendGrid. Gmail or any other fallback address must never be used.
  * See docs/SUPPORT_SLA.md for the full transactional email policy.
  */
@@ -154,7 +154,7 @@ export const handler: Handler = async (event) => {
     const msg = {
       to,
       from: fromEmail,
-      replyTo: 'support@loadifymarket.co.uk',
+      replyTo: 'contact@loadifymarket.co.uk',
       subject,
       html: htmlContent,
     };
@@ -200,7 +200,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
       <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
         <p>Loadify Market - B2B &amp; B2C Marketplace</p>
         <p>XDrive Logistics Ltd | 101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom</p>
-        <p>VAT: GB375949535 | Email: support@loadifymarket.co.uk</p>
+        <p>VAT: GB375949535 | Email: contact@loadifymarket.co.uk</p>
       </div>
     </div>
   `;
@@ -227,10 +227,10 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
           </div>
         `).join('') : ''}
         <div style="background-color: #f0f9f4; border-left: 4px solid #22c55e; padding: 12px 15px; margin: 20px 0; border-radius: 0 5px 5px 0;">
-          <p style="margin: 0; font-size: 13px; color: #374151;"><strong>Marketplace Notice:</strong> Your order is fulfilled by the seller. Loadify Market is the marketplace platform and is not the seller of the products. For any questions about your order, please contact the seller directly or reach us at support@loadifymarket.co.uk.</p>
+          <p style="margin: 0; font-size: 13px; color: #374151;"><strong>Marketplace Notice:</strong> Your order is fulfilled by the seller. Loadify Market is the marketplace platform and is not the seller of the products. For any questions about your order, please contact the seller directly or reach us at contact@loadifymarket.co.uk.</p>
         </div>
         <p style="margin-top: 20px;">We'll send you another email when your order has been shipped.</p>
-        <p>If you have any questions, please contact us at support@loadifymarket.co.uk</p>
+        <p>If you have any questions, please contact us at contact@loadifymarket.co.uk</p>
       `;
       break;
 
@@ -406,7 +406,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         </ol>
         <p>Once both steps are done your store will go live automatically — no manual approval needed.</p>
         <a href="${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/onboarding" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Complete Your Setup</a>
-        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at support@loadifymarket.co.uk</p>
+        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at contact@loadifymarket.co.uk</p>
       `;
       break;
 
@@ -420,7 +420,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         </div>
         <p>You can now list products and start receiving orders. Head to your seller dashboard to get started.</p>
         <a href="${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/seller" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Go to Seller Dashboard</a>
-        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at support@loadifymarket.co.uk</p>
+        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at contact@loadifymarket.co.uk</p>
       `;
       break;
 
@@ -430,7 +430,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <p>Hi ${escapeHtml((data.buyerName as string) || 'there')},</p>
         <p>Your Loadify Market account has been created successfully. You can now browse products, place orders, and track your deliveries.</p>
         <a href="${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/catalog" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Start Shopping</a>
-        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at support@loadifymarket.co.uk</p>
+        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at contact@loadifymarket.co.uk</p>
       `;
       break;
 
@@ -440,7 +440,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <p>Hi ${escapeHtml((data.userName as string) || 'there')},</p>
         <p>An administrator has requested that a sign-in link be sent to your account. Click the button below to access your dashboard.</p>
         <a href="${escapeHtml((data.actionLink as string) || '#')}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Access My Account</a>
-        <p style="color: #555; font-size: 14px;">This link is valid for 24 hours and can only be used once. If you did not expect this email, please ignore it or contact us at <a href="mailto:support@loadifymarket.co.uk" style="color: #f59e0b;">support@loadifymarket.co.uk</a>.</p>
+        <p style="color: #555; font-size: 14px;">This link is valid for 24 hours and can only be used once. If you did not expect this email, please ignore it or contact us at <a href="mailto:contact@loadifymarket.co.uk" style="color: #f59e0b;">contact@loadifymarket.co.uk</a>.</p>
       `;
       break;
 
@@ -451,7 +451,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <p>Thank you for registering with Loadify Market. Please confirm your email address by clicking the button below before signing in.</p>
         <a href="${escapeHtml((data.actionLink as string) || '#')}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Confirm Email Address</a>
         <p style="color: #555; font-size: 14px;">This link is valid for 24 hours. If you did not create an account on Loadify Market, please ignore this email.</p>
-        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at support@loadifymarket.co.uk</p>
+        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at contact@loadifymarket.co.uk</p>
       `;
       break;
 
@@ -470,7 +470,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <p>${reminderMessage}</p>
         <p>Finish setting up your account to start listing products and receiving payments via Stripe.</p>
         <a href="${escapeHtml((data.onboardingUrl as string) || `${appBaseUrl}/onboarding`)}" style="display: inline-block; background-color: #22c55e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Complete My Setup →</a>
-        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at support@loadifymarket.co.uk</p>
+        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at contact@loadifymarket.co.uk</p>
       `;
       break;
     }

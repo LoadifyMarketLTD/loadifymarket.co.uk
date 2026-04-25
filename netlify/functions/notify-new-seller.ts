@@ -39,7 +39,7 @@ export const handler: Handler = async (event) => {
     const msg = {
       to: adminTo,
       from: fromEmail,
-      replyTo: 'support@loadifymarket.co.uk',
+      replyTo: 'contact@loadifymarket.co.uk',
       subject: 'New Seller Registered - Loadify Market',
       html: `
         <h2>New Seller Registration</h2>

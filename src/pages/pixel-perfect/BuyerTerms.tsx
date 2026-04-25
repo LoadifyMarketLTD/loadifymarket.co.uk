@@ -83,7 +83,7 @@ const BuyerTerms = () => {
           <h2>10. Contact</h2>
           <p>For buyer-related queries:</p>
           <ul>
-            <li>Email: support@loadifymarket.co.uk</li>
+            <li>Email: contact@loadifymarket.co.uk</li>
             <li>Address: 101 Cornelian Street, Blackburn BB1 9QL, UK</li>
           </ul>
         </div>

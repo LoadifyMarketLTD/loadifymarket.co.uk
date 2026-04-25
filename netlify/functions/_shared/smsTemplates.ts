@@ -16,7 +16,7 @@
 // ── Order Confirmed ────────────────────────────────────────────────────────
 
 export function smsOrderConfirmed(orderNumber: string): string {
-  return `Loadify Market: Your order #${orderNumber} is confirmed. We'll notify you when it ships. Help: support@loadifymarket.co.uk`;
+  return `Loadify Market: Your order #${orderNumber} is confirmed. We'll notify you when it ships. Help: contact@loadifymarket.co.uk`;
 }
 
 // ── Service Completed — Confirmation Needed ───────────────────────────────

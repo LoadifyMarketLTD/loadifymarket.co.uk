@@ -109,7 +109,7 @@ async function sendWarningEmail(email: string, name: string, company: string): P
   await sgMail.send({
     to: email,
     from: fromEmail,
-    replyTo: 'support@loadifymarket.co.uk',
+    replyTo: 'contact@loadifymarket.co.uk',
     subject: 'Account Warning — Loadify Market',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">
@@ -121,7 +121,7 @@ async function sendWarningEmail(email: string, name: string, company: string): P
           <p>Hi ${escapeHtml(name || company)},</p>
           <p>Your seller account on Loadify Market has received a warning from our platform team.</p>
           <p>Please ensure you are complying with our <a href="${siteUrl}/seller-guidelines" style="color:#f59e0b;">Seller Guidelines</a> and platform policies. Continued violations may result in account suspension.</p>
-          <p>If you believe this is an error or have questions, please contact us at <a href="mailto:support@loadifymarket.co.uk" style="color:#f59e0b;">support@loadifymarket.co.uk</a>.</p>
+          <p>If you believe this is an error or have questions, please contact us at <a href="mailto:contact@loadifymarket.co.uk" style="color:#f59e0b;">contact@loadifymarket.co.uk</a>.</p>
         </div>
         <div style="text-align:center;padding:20px;color:#666;font-size:12px;">
           <p>Loadify Market — XDrive Logistics Ltd | 101 Cornelian Street, Blackburn, BB1 9QL</p>
@@ -200,7 +200,7 @@ async function sendOnboardingReminderEmail(seller: PendingOnboardSeller): Promis
   await sgMail.send({
     to: seller.email,
     from: fromEmail,
-    replyTo: 'support@loadifymarket.co.uk',
+    replyTo: 'contact@loadifymarket.co.uk',
     subject: 'Complete your seller setup — Loadify Market',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">
@@ -213,7 +213,7 @@ async function sendOnboardingReminderEmail(seller: PendingOnboardSeller): Promis
           <p>You registered as a seller on Loadify Market but haven't yet completed your seller onboarding. You need to finish the setup to start selling and receiving payments.</p>
           <p>It only takes a few minutes — click the button below to complete your setup:</p>
           <a href="${siteUrl}/onboarding" style="display:inline-block;background:#f59e0b;color:#fff;padding:12px 24px;text-decoration:none;border-radius:5px;margin:16px 0;">Complete Seller Setup</a>
-          <p style="color:#888;font-size:13px;">Once connected, your store will go live automatically. If you need help, contact us at <a href="mailto:support@loadifymarket.co.uk" style="color:#f59e0b;">support@loadifymarket.co.uk</a>.</p>
+          <p style="color:#888;font-size:13px;">Once connected, your store will go live automatically. If you need help, contact us at <a href="mailto:contact@loadifymarket.co.uk" style="color:#f59e0b;">contact@loadifymarket.co.uk</a>.</p>
         </div>
         <div style="text-align:center;padding:20px;color:#666;font-size:12px;">
           <p>Loadify Market — XDrive Logistics Ltd | 101 Cornelian Street, Blackburn, BB1 9QL</p>

@@ -44,7 +44,7 @@ export function orderConfirmedBuyer(data: {
       '',
       "We'll send you another email when your order has been shipped.",
       '',
-      'If you have any questions, please contact us at support@loadifymarket.co.uk.',
+      'If you have any questions, please contact us at contact@loadifymarket.co.uk.',
     ].join('\n'),
   };
 }
@@ -72,7 +72,7 @@ export function serviceCompletedConfirmation(data: {
       '',
       'If you have any concerns about the service delivered, please open a dispute before confirming.',
       '',
-      'Need help? Contact support@loadifymarket.co.uk.',
+      'Need help? Contact contact@loadifymarket.co.uk.',
     ].join('\n'),
   };
 }
@@ -103,7 +103,7 @@ export function rfqReceivedSeller(data: {
       '',
       'RFQs that are not responded to within 5 business days may be awarded to another seller.',
       '',
-      'Questions? Contact support@loadifymarket.co.uk.',
+      'Questions? Contact contact@loadifymarket.co.uk.',
     ].join('\n'),
   };
 }
@@ -130,7 +130,7 @@ export function disputeOpenedBuyer(data: {
       '',
       `View dispute: ${data.dashboardUrl}`,
       '',
-      'Questions? Contact support@loadifymarket.co.uk.',
+      'Questions? Contact contact@loadifymarket.co.uk.',
     ].join('\n'),
   };
 }
@@ -155,7 +155,7 @@ export function disputeOpenedSeller(data: {
       '',
       `View dispute: ${data.dashboardUrl}`,
       '',
-      'Questions? Contact support@loadifymarket.co.uk.',
+      'Questions? Contact contact@loadifymarket.co.uk.',
     ].join('\n'),
   };
 }

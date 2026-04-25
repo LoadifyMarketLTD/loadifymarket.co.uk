@@ -77,7 +77,7 @@ const AboutUs = () => {
               <p>Company Number: 13171804</p>
               <p>VAT Registration: GB375949535</p>
               <p>101 Cornelian Street, Blackburn BB1 9QL, UK</p>
-              <p>Email: support@loadifymarket.co.uk</p>
+              <p>Email: contact@loadifymarket.co.uk</p>
               <p>Phone: +44 7423 272138</p>
             </div>
           </div>

@@ -79,8 +79,8 @@ export default function AcceptableUsePolicyPage() {
         <p>
           If you become aware of any content or activity that breaches this policy, please report it to
           us at{' '}
-          <a href="mailto:support@loadifymarket.co.uk" className="text-[#1E3A5F] hover:underline">
-            support@loadifymarket.co.uk
+          <a href="mailto:contact@loadifymarket.co.uk" className="text-[#1E3A5F] hover:underline">
+            contact@loadifymarket.co.uk
           </a>
           . We take all reports seriously and will investigate promptly.
         </p>
@@ -94,8 +94,8 @@ export default function AcceptableUsePolicyPage() {
         <h2 className="text-2xl font-semibold mt-6 mb-3">9. Contact</h2>
         <p>
           For questions about this policy, please contact us at{' '}
-          <a href="mailto:support@loadifymarket.co.uk" className="text-[#1E3A5F] hover:underline">
-            support@loadifymarket.co.uk
+          <a href="mailto:contact@loadifymarket.co.uk" className="text-[#1E3A5F] hover:underline">
+            contact@loadifymarket.co.uk
           </a>{' '}
           or by post at: XDrive Logistics Ltd (trading as Loadify Market), 101 Cornelian Street, Blackburn, BB1 9QL, United Kingdom.
         </p>
