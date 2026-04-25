@@ -330,9 +330,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   let firstOrderId: string | null = null;
 
   for (const [sellerId, sellerItems] of sellerGroups) {
-    // Calculate ex-VAT amounts for this seller's portion of the order.
-    // For B2B reverse charge: item.price is already ex-VAT (charged without
-    // VAT), so vatAmount = 0. For B2C: item.price is VAT-inclusive.
+    // item.price in the enriched metadata is always the VAT-inclusive DB price.
+    // For B2B reverse charge, Stripe was charged the ex-VAT amount
+    // (item.price / 1.20), but the metadata still stores the original price.
+    // sellerSubtotal = item.price / (1 + VAT_RATE) gives the ex-VAT amount
+    // which equals what Stripe charged — correct in both B2C and B2B cases.
+    // For B2B reverse charge: vatAmount = 0 (customer accounts for VAT).
     const isReverseCharge = Boolean(orderData.applyReverseCharge);
     const sellerSubtotal = sellerItems.reduce(
       (sum, i) => sum + (i.price / (1 + VAT_RATE)) * i.quantity,

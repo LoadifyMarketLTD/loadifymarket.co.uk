@@ -27,7 +27,10 @@ import { createClient } from '@supabase/supabase-js';
  *   ESCROW_WINDOW_DAYS (optional, default 7)
  */
 
-const ESCROW_WINDOW_DAYS = Number(process.env.ESCROW_WINDOW_DAYS ?? 7);
+const ESCROW_WINDOW_DAYS = (() => {
+  const parsed = Number(process.env.ESCROW_WINDOW_DAYS);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 7;
+})();
 
 export const handler = schedule('0 2 * * *', async () => {
   const supabaseUrl = process.env.VITE_SUPABASE_URL;

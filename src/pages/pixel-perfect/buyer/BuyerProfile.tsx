@@ -95,9 +95,11 @@ const BuyerProfile = () => {
         const ship = p?.shippingAddress || {};
 
         if (u) {
-          setMemberSince(
-            new Date(u.createdAt ?? "").toLocaleDateString("en-GB", { month: "long", year: "numeric" })
-          );
+          if (u.createdAt) {
+            setMemberSince(
+              new Date(u.createdAt).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+            );
+          }
           setForm((prev) => ({
             ...prev,
             firstName: u.firstName ?? "",

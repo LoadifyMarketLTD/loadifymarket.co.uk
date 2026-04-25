@@ -141,6 +141,7 @@ export const handler: Handler = async (event) => {
       };
     }
     // Stock checks apply only to goods listings; service listings have no inventory.
+    // dbProduct.price is always VAT-inclusive (the DB-stored price).
     if (dbProduct.listingContext !== 'service') {
       if (typeof dbProduct.stockQuantity === 'number' && dbProduct.stockQuantity <= 0) {
         return {

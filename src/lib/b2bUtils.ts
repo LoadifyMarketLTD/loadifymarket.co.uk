@@ -14,6 +14,9 @@ export interface BuyerB2BProfile {
   isVatVerified?: boolean | null;
 }
 
+const VAT_RATE = 0.2;
+const VAT_MULTIPLIER = 1 + VAT_RATE; // 1.20
+
 /**
  * Returns true if the buyer should be treated as a B2B account.
  * Rule: accountType is set AND is not 'individual'.
@@ -33,7 +36,7 @@ export function applyVatReverseCharge(profile: BuyerB2BProfile): boolean {
 
 /**
  * Returns the effective price a buyer is charged given a VAT-inclusive price.
- *   B2B with verified VAT → ex-VAT price (price / 1.20)
+ *   B2B with verified VAT → ex-VAT price (price / (1 + 20% VAT))
  *   All others            → original VAT-inclusive price
  */
 export function effectivePriceForBuyer(
@@ -41,7 +44,7 @@ export function effectivePriceForBuyer(
   profile: BuyerB2BProfile,
 ): number {
   if (applyVatReverseCharge(profile)) {
-    return vatInclusivePrice / 1.2;
+    return vatInclusivePrice / VAT_MULTIPLIER;
   }
   return vatInclusivePrice;
 }
