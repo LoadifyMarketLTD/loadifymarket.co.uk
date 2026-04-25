@@ -672,6 +672,12 @@ const Checkout = () => {
                     </div>
                   )}
 
+                  {/* Intermediary notice */}
+                  <div className="rounded-lg bg-muted/50 border border-border p-4 text-xs text-muted-foreground leading-relaxed">
+                    <span className="font-semibold text-foreground">Marketplace Notice:</span>{" "}
+                    You are buying from independent seller(s). Loadify Market provides the marketplace platform and does not own, stock, fulfil, or deliver the products. The sales contract is between you and the seller.
+                  </div>
+
                   <div className="flex gap-3">
                     <Button variant="outline" onClick={() => setCurrentStep(1)} className="h-11" disabled={isSubmitting}>
                       <ArrowLeft className="mr-2 h-4 w-4" /> Back
@@ -748,17 +754,18 @@ const Checkout = () => {
 
               {/* Trust badges */}
               <div className="bg-card rounded-xl border border-border p-4 space-y-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
-                  Dispute support available
+                <p className="text-xs font-semibold text-foreground uppercase tracking-wider mb-1">Marketplace Assurance</p>
+                <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  You are purchasing from independent seller(s)
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Lock className="h-4 w-4 text-primary shrink-0" />
-                  256-bit SSL encrypted
+                <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <Lock className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  Secure payment via Stripe
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Truck className="h-4 w-4 text-primary shrink-0" />
-                  {shippingOptions.length > 0 ? "Flexible delivery options available" : "Delivery confirmed by seller"}
+                <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <Truck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  Seller fulfils and delivers your order
                 </div>
               </div>
             </div>

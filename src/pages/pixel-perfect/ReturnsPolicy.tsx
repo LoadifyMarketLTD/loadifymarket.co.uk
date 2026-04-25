@@ -16,6 +16,8 @@ const ReturnsPolicy = () => {
 
           <p>This Returns Policy outlines the terms under which returns and refunds are handled on Loadify Market, operated by XDrive Logistics Ltd (Company No: 13171804).</p>
 
+          <p><strong>Returns are handled by the seller according to their stated return policy and applicable law. Loadify Market may assist communication but is not the seller and is not automatically liable for returns or refunds.</strong></p>
+
           <h2>1. Marketplace Returns</h2>
           <p>Loadify Market is an online marketplace. Individual sellers set their own return policies. Before purchasing, please review the seller's specific return terms displayed on each product listing.</p>
 

@@ -8,6 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import PaymentMethodBadges from "@/components/PaymentMethodBadges";
 
 const FooterLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
   <li>
@@ -161,12 +162,12 @@ const Footer = () => {
             {/* About block — always visible on mobile */}
             <div className="pb-6 mb-2 border-b border-background/10">
               <p className="text-sm text-background/60 leading-relaxed mb-3">
-                An open UK marketplace connecting buyers and sellers across all categories.
+                Loadify Market is operated by{" "}
+                <span className="font-semibold text-background/75">XDrive Logistics Ltd</span>{" "}
+                as an online marketplace connecting buyers with independent sellers. We do not own, stock, sell, or ship products.
               </p>
               <p className="text-xs text-background/55 leading-relaxed mb-3">
-                Loadify Market is operated by{" "}
-                <span className="font-semibold text-background/75">XDrive Logistics Ltd</span>,
-                the legal entity responsible for this platform.
+                Products are listed, supplied, fulfilled, and delivered by independent sellers. The sales contract is between the buyer and the seller.
               </p>
               <div className="text-xs text-background/40 space-y-1 mb-3">
                 <p>Co. No: 13171804 &nbsp;·&nbsp; VAT: GB375949535</p>
@@ -219,12 +220,12 @@ const Footer = () => {
                 About Loadify Market
               </h4>
               <p className="text-sm text-background/60 leading-relaxed mb-3">
-                An open UK marketplace connecting buyers and sellers across all categories.
+                Loadify Market is operated by{' '}
+                <span className="font-semibold text-background/75">XDrive Logistics Ltd</span>{' '}
+                as an online marketplace connecting buyers with independent sellers. We do not own, stock, sell, or ship products.
               </p>
               <p className="text-xs text-background/55 leading-relaxed mb-3">
-                Loadify Market is operated by{' '}
-                <span className="font-semibold text-background/75">XDrive Logistics Ltd</span>,
-                the legal entity responsible for this platform, its services, payments, and marketplace operations.
+                Products are listed, supplied, fulfilled, and delivered by independent sellers. The sales contract is between the buyer and the seller.
               </p>
               <div className="text-xs text-background/40 space-y-1">
                 <p>Co. No: 13171804 &nbsp;·&nbsp; VAT: GB375949535</p>
@@ -335,12 +336,15 @@ const Footer = () => {
                 Loadify Market does not hold inventory. All products are listed and fulfilled by independent sellers. The platform connects buyers and sellers and processes payments as a marketplace facilitator using Stripe Connect — it does not own, stock, or dispatch any products. Sellers are solely responsible for their listings, pricing and fulfilment.
               </p>
             </div>
-            <div className="flex items-center gap-4 text-xs text-background/50 shrink-0">
-              <Link to="/terms" className="hover:text-background transition-colors">Terms</Link>
-              <Link to="/privacy" className="hover:text-background transition-colors">Privacy</Link>
-              <Link to="/cookies" className="hover:text-background transition-colors">Cookies</Link>
-              <Link to="/disclaimer" className="hover:text-background transition-colors">Disclaimer</Link>
-              <Link to="/contact" className="hover:text-background transition-colors">Contact</Link>
+            <div className="flex flex-col items-center md:items-end gap-3 shrink-0">
+              <PaymentMethodBadges showLabel={false} size="sm" className="opacity-70" />
+              <div className="flex items-center gap-4 text-xs text-background/50">
+                <Link to="/terms" className="hover:text-background transition-colors">Terms</Link>
+                <Link to="/privacy" className="hover:text-background transition-colors">Privacy</Link>
+                <Link to="/cookies" className="hover:text-background transition-colors">Cookies</Link>
+                <Link to="/disclaimer" className="hover:text-background transition-colors">Disclaimer</Link>
+                <Link to="/contact" className="hover:text-background transition-colors">Contact</Link>
+              </div>
             </div>
           </div>
         </div>

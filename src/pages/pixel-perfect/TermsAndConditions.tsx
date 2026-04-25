@@ -19,7 +19,9 @@ const TermsAndConditions = () => {
           <p>By accessing or using our Platform, you agree to be bound by these Terms. If you do not agree, please do not use the Platform.</p>
 
           <h2>1. About Our Platform</h2>
-          <p>Loadify Market is a UK-based multi-category online marketplace for physical goods that connects independent buyers and sellers. We do not own, manufacture or sell any products listed on the Platform. Sellers are solely responsible for their listings, product descriptions, pricing and fulfilment.</p>
+          <p>Loadify Market is a UK-based multi-category online marketplace operated by XDrive Logistics Ltd. It is an intermediary platform that connects independent buyers and sellers. Loadify Market does not own, stock, sell, inspect, fulfil, or deliver any products listed on the Platform. The sales contract for any purchase is between the buyer and the seller — Loadify Market is not a party to that contract.</p>
+          <p>Sellers are solely responsible for their listings, product descriptions, pricing, stock accuracy, product quality, legal compliance, fulfilment, delivery, returns, and refunds where applicable. Loadify Market may assist with disputes but is not automatically liable for seller failures.</p>
+          <p>All payments are processed through Stripe / Stripe Connect on behalf of independent sellers. Loadify Market acts as a marketplace facilitator and does not receive payment as the seller of goods.</p>
 
           <h2>2. Account Registration</h2>
           <p>To use certain features of the Platform, you must create an account. You agree to:</p>

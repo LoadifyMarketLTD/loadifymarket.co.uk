@@ -16,6 +16,8 @@ const BuyerTerms = () => {
 
           <p>These Buyer Terms apply to all users who purchase goods through Loadify Market ("Platform"), operated by XDrive Logistics Ltd (Company No: 13171804, VAT: GB375949535). These terms supplement our general <a href="/terms">Terms &amp; Conditions</a>.</p>
 
+          <p><strong>When purchasing through Loadify Market, you are purchasing from the independent seller shown on the listing, not from Loadify Market.</strong> Loadify Market is a marketplace intermediary and is not the seller of any products. Please check seller details, delivery terms, return terms, and product information before ordering.</p>
+
           <h2>1. Account &amp; Eligibility</h2>
           <p>To purchase on Loadify Market, you must:</p>
           <ul>

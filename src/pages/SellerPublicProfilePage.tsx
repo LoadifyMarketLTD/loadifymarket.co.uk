@@ -192,6 +192,11 @@ export default function SellerPublicProfilePage() {
                 <p className="text-gray-600 mb-4 max-w-2xl">{seller.store.storeDescription}</p>
               )}
 
+              {/* Marketplace intermediary notice */}
+              <p className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5 mb-4 max-w-2xl">
+                This seller operates independently on Loadify Market. Products are supplied and fulfilled by the seller.
+              </p>
+
               {/* Contact Info */}
               <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-4">
                 {seller.businessAddress && (
