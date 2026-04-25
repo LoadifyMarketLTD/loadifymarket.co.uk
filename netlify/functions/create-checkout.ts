@@ -227,7 +227,7 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 400,
       body: JSON.stringify({
-        error: 'Provider supports invoice/manual settlement only. Card checkout is not available for this seller.',
+        error: 'This seller is not ready to accept payments yet. Please try again later or contact support.',
       }),
     };
   }
