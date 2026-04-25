@@ -225,19 +225,26 @@ const ProductInfo = ({
       </div>
 
       {/* Trust badges */}
-      <div className="flex flex-wrap gap-4 py-3 border-y border-border">
+      <div className="flex flex-wrap gap-4 py-3 border-t border-border">
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <ShieldCheck className="h-4 w-4 text-primary" />
           Dispute Support Available
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Truck className="h-4 w-4 text-primary" />
-          UK-Wide Delivery
+          Seller-Arranged Delivery
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <ShieldCheck className="h-4 w-4 text-primary" />
           Secure Payment
         </div>
+      </div>
+
+      {/* Fulfilment note */}
+      <div className="rounded-lg bg-muted/50 border border-border px-4 py-3 text-xs text-muted-foreground leading-relaxed">
+        <span className="font-semibold text-foreground">Sold by: {product.seller}</span>
+        {" — "}
+        This product is listed, supplied, fulfilled, and delivered by the seller. Loadify Market provides the marketplace platform only.
       </div>
 
       {/* CTA buttons — owner sees management actions; buyers see purchase actions */}

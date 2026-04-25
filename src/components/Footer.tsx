@@ -161,12 +161,12 @@ const Footer = () => {
             {/* About block — always visible on mobile */}
             <div className="pb-6 mb-2 border-b border-background/10">
               <p className="text-sm text-background/60 leading-relaxed mb-3">
-                An open UK marketplace connecting buyers and sellers across all categories.
+                Loadify Market is operated by{" "}
+                <span className="font-semibold text-background/75">XDrive Logistics Ltd</span>{" "}
+                as an online marketplace connecting buyers with independent sellers. We do not own, stock, sell, or ship products.
               </p>
               <p className="text-xs text-background/55 leading-relaxed mb-3">
-                Loadify Market is operated by{" "}
-                <span className="font-semibold text-background/75">XDrive Logistics Ltd</span>,
-                the legal entity responsible for this platform.
+                Products are listed, supplied, fulfilled, and delivered by independent sellers. The sales contract is between the buyer and the seller.
               </p>
               <div className="text-xs text-background/40 space-y-1 mb-3">
                 <p>Co. No: 13171804 &nbsp;·&nbsp; VAT: GB375949535</p>
@@ -219,12 +219,12 @@ const Footer = () => {
                 About Loadify Market
               </h4>
               <p className="text-sm text-background/60 leading-relaxed mb-3">
-                An open UK marketplace connecting buyers and sellers across all categories.
+                Loadify Market is operated by{' '}
+                <span className="font-semibold text-background/75">XDrive Logistics Ltd</span>{' '}
+                as an online marketplace connecting buyers with independent sellers. We do not own, stock, sell, or ship products.
               </p>
               <p className="text-xs text-background/55 leading-relaxed mb-3">
-                Loadify Market is operated by{' '}
-                <span className="font-semibold text-background/75">XDrive Logistics Ltd</span>,
-                the legal entity responsible for this platform, its services, payments, and marketplace operations.
+                Products are listed, supplied, fulfilled, and delivered by independent sellers. The sales contract is between the buyer and the seller.
               </p>
               <div className="text-xs text-background/40 space-y-1">
                 <p>Co. No: 13171804 &nbsp;·&nbsp; VAT: GB375949535</p>

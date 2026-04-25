@@ -16,6 +16,8 @@ const ShippingPolicy = () => {
 
           <p>This Shipping Policy outlines how shipping and delivery work on Loadify Market, operated by XDrive Logistics Ltd (Company No: 13171804).</p>
 
+          <p><strong>Shipping is arranged and completed by the seller. Delivery times, costs, and tracking are provided by the seller. Loadify Market does not ship or dispatch any products.</strong></p>
+
           <h2>1. Marketplace Shipping Model</h2>
           <p>Loadify Market is a marketplace connecting independent buyers and sellers. Each seller is responsible for shipping their own products. Shipping methods, costs, timelines and carrier choices are set by individual sellers and displayed on each product listing.</p>
 

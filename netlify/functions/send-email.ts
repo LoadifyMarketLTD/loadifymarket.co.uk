@@ -185,6 +185,7 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
           <p style="margin: 0;"><strong>Order Number:</strong> ${escapeHtml(data.orderNumber || '')}</p>
           <p style="margin: 10px 0 0 0;"><strong>Order Date:</strong> ${escapeHtml(data.orderDate || '')}</p>
           <p style="margin: 10px 0 0 0;"><strong>Total:</strong> £${typeof data.total === 'number' ? data.total.toFixed(2) : '0.00'}</p>
+          ${data.sellerName ? `<p style="margin: 10px 0 0 0;"><strong>Sold by:</strong> ${escapeHtml(data.sellerName)}</p>` : ''}
         </div>
         <h3 style="color: #243b53;">Order Items:</h3>
         ${Array.isArray(data.items) ? data.items.map((item: Record<string, unknown>) => `
@@ -193,6 +194,9 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
             <p style="margin: 5px 0 0 0; color: #666;">Quantity: ${escapeHtml(item.quantity || 0)} | Price: £${typeof item.price === 'number' ? item.price.toFixed(2) : '0.00'}</p>
           </div>
         `).join('') : ''}
+        <div style="background-color: #f0f9f4; border-left: 4px solid #22c55e; padding: 12px 15px; margin: 20px 0; border-radius: 0 5px 5px 0;">
+          <p style="margin: 0; font-size: 13px; color: #374151;"><strong>Marketplace Notice:</strong> Your order is fulfilled by the seller. Loadify Market is the marketplace platform and is not the seller of the products. For any questions about your order, please contact the seller directly or reach us at support@loadifymarket.co.uk.</p>
+        </div>
         <p style="margin-top: 20px;">We'll send you another email when your order has been shipped.</p>
         <p>If you have any questions, please contact us at support@loadifymarket.co.uk</p>
       `;

@@ -16,6 +16,20 @@ const SellerTerms = () => {
 
           <p>These Seller Terms apply to all users who list and sell goods through Loadify Market ("Platform"), operated by XDrive Logistics Ltd (Company No: 13171804, VAT: GB375949535). These terms supplement our general <a href="/terms">Terms &amp; Conditions</a>.</p>
 
+          <p><strong>As a seller on Loadify Market, you are an independent seller and are solely responsible for your listings, products, and all transactions.</strong> Loadify Market is a marketplace intermediary platform and is not a party to the sales contract between you and the buyer.</p>
+
+          <p>Sellers are responsible for:</p>
+          <ul>
+            <li>Accurate, complete, and non-misleading product listings</li>
+            <li>Lawful products that comply with all applicable UK legislation</li>
+            <li>Stock accuracy and availability</li>
+            <li>Order fulfilment and timely dispatch</li>
+            <li>Shipping, delivery, and tracking</li>
+            <li>Customer communication</li>
+            <li>Handling returns and processing refunds where applicable</li>
+            <li>Compliance with UK consumer law where applicable</li>
+          </ul>
+
           <h2>1. Seller Eligibility</h2>
           <p>To sell on Loadify Market, you must:</p>
           <ul>

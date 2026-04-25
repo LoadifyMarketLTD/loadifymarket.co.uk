@@ -41,6 +41,11 @@ const HeroSection = () => (
         Buy and sell across the UK — from single items to bulk deals.
       </p>
 
+      {/* 3b. Intermediary statement */}
+      <p className="text-sm text-gray-600 font-medium mb-2 w-full">
+        Loadify Market connects buyers with independent UK sellers. We provide the platform; sellers list, supply, fulfil, and deliver their own products.
+      </p>
+
       {/* 4. Support line */}
       <p className="text-lg text-gray-700 font-medium mb-5">
         For individuals and businesses • Single items or bulk stock • Secure payments with Stripe

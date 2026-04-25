@@ -672,6 +672,12 @@ const Checkout = () => {
                     </div>
                   )}
 
+                  {/* Intermediary notice */}
+                  <div className="rounded-lg bg-muted/50 border border-border p-4 text-xs text-muted-foreground leading-relaxed">
+                    <span className="font-semibold text-foreground">Marketplace Notice:</span>{" "}
+                    You are buying from independent seller(s). Loadify Market provides the marketplace platform and does not own, stock, fulfil, or deliver the products. The sales contract is between you and the seller.
+                  </div>
+
                   <div className="flex gap-3">
                     <Button variant="outline" onClick={() => setCurrentStep(1)} className="h-11" disabled={isSubmitting}>
                       <ArrowLeft className="mr-2 h-4 w-4" /> Back
