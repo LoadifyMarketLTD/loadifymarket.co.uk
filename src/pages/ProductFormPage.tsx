@@ -451,11 +451,13 @@ export default function ProductFormPage() {
           // The DB trigger (trg_sync_seller_onboarding) will auto-set
           // onboardingCompleted when all other flags are also true.
           // Force-check here using the flags we already fetched above.
+          // hasServiceCapability will be TRUE after the product insert fires the DB trigger,
+          // so we only gate on profileCompleted + storeCreated + sellerStatus here.
           if (
             spRow?.profileCompleted &&
             spRow?.storeCreated &&
-            (spRow?.hasServiceCapability || true) && // will be true after product insert
-            spRow?.sellerStatus !== 'suspended'
+            spRow?.sellerStatus !== 'suspended' &&
+            spRow?.sellerStatus !== 'rejected'
           ) {
             // onboardingStep 8 = all gate flags satisfied (5 wizard UI steps map to
             // 8 DB sub-steps tracked in seller_profiles; value mirrors ONBOARDING_COMPLETE_STEP

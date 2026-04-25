@@ -387,7 +387,7 @@ const BuyerRFQ = () => {
                           <div key={resp.id} className="rounded-lg border border-border p-3 space-y-2">
                             <div className="flex items-center justify-between">
                               <p className="font-semibold text-sm text-foreground">
-                                £{resp.quotedPrice.toFixed(2)} {resp.currency}
+                                {new Intl.NumberFormat('en-GB', { style: 'currency', currency: resp.currency }).format(resp.quotedPrice)}
                                 {resp.leadTimeDays ? ` · ${resp.leadTimeDays} day lead time` : ""}
                               </p>
                               <Badge variant="outline" className={respStatusColors[resp.status] ?? ""}>{resp.status}</Badge>

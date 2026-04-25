@@ -27,7 +27,7 @@ BEGIN
     NEW."profileCompleted"     IS TRUE AND
     NEW."storeCreated"         IS TRUE AND
     NEW."hasServiceCapability" IS TRUE AND
-    COALESCE(NEW."sellerStatus", 'pending') NOT IN ('suspended')
+    COALESCE(NEW."sellerStatus", 'pending') NOT IN ('suspended', 'rejected')
   ) THEN
     UPDATE users
     SET "onboardingCompleted" = TRUE,

@@ -275,15 +275,15 @@ export const handler: Handler = async (event) => {
     }
 
     // Create an order/job from the accepted quote.
-    // Status is 'accepted' because the buyer has explicitly approved this quote
-    // and the service lifecycle begins (service doctrine).
+    // Status 'paid' is the service-doctrine equivalent of "accepted" per migration 448
+    // (paid → accepted in service lifecycle semantics).
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert([
         {
           buyerId: rfq.buyerId ?? callerId,
           sellerId: response.sellerId,
-          status: 'accepted',
+          status: 'paid',
           escrowStatus: 'held',
           // Financial amounts from the accepted quote
           subtotal: response.quotedPrice,
