@@ -94,7 +94,7 @@ const PlatformFeatures = () => {
             Everything You Need — Whether You Buy or Sell
           </h2>
           <p className="mt-2 text-sm text-white/70">
-            Loadify Market is the UK's trusted multi-category marketplace for physical goods.
+            Loadify Market is the UK's trusted multi-category marketplace for physical goods and service‑based commerce, supporting both standard listings and RFQ‑driven transactions.
           </p>
         </div>
 
