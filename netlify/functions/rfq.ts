@@ -266,13 +266,15 @@ export const handler: Handler = async (event) => {
     }
 
     // Create an order/job from the accepted quote
+    // Status is 'pending' because no payment has been collected yet —
+    // the payment step follows after acceptance (service lifecycle).
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert([
         {
           buyerId: rfq.buyerId ?? callerId,
           sellerId: response.sellerId,
-          status: 'paid',
+          status: 'pending',
           escrowStatus: 'held',
           // Financial amounts from the accepted quote
           subtotal: response.quotedPrice,

@@ -11,19 +11,20 @@ import { toast } from "@/hooks/use-toast";
 
 const CURRENCY_OPTIONS = ["GBP", "EUR", "USD"];
 
+const INITIAL_FORM = {
+  product_name: "",
+  quantity: "",
+  unit: "",
+  destination_country: "United Kingdom",
+  estimated_budget: "",
+  currency: "GBP",
+  message: "",
+};
+
 const BuyerRFQ = () => {
   const { user } = useAuthStore();
 
-  const [form, setForm] = useState({
-    product_name: "",
-    quantity: "",
-    unit: "",
-    destination_country: "United Kingdom",
-    estimated_budget: "",
-    currency: "GBP",
-    message: "",
-    buyer_email: user?.email ?? "",
-  });
+  const [form, setForm] = useState({ ...INITIAL_FORM, buyer_email: user?.email ?? "" });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
@@ -105,7 +106,7 @@ const BuyerRFQ = () => {
           Your quote request has been sent to our sellers. You'll receive quotes directly to{" "}
           <strong>{form.buyer_email}</strong>.
         </p>
-        <Button variant="outline" onClick={() => { setSubmitted(false); setForm({ product_name: "", quantity: "", unit: "", destination_country: "United Kingdom", estimated_budget: "", currency: "GBP", message: "", buyer_email: user?.email ?? "" }); }}>
+        <Button variant="outline" onClick={() => { setSubmitted(false); setForm({ ...INITIAL_FORM, buyer_email: user?.email ?? "" }); }}>
           Submit another request
         </Button>
       </div>
