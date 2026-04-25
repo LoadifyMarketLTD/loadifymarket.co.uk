@@ -40,6 +40,9 @@
 [functions."onboarding-reminder"]
   schedule = "0 9 * * *"
 
+[functions."escrow-release"]
+  schedule = "0 2 * * *"
+
 # ─── Edge Functions ───────────────────────────────────────────────────────────
 # EXECUTION ORDER matters: Netlify runs edge functions in the order declared
 # here.  For /product/:id requests:

@@ -27,9 +27,11 @@ const statusColors: Record<string, string> = {
   paid: "bg-blue-500/10 text-blue-700",
   packed: "bg-amber-500/10 text-amber-700",
   shipped: "bg-purple-500/10 text-purple-700",
-  delivered: "bg-emerald-500/10 text-emerald-700",
+  delivered: "bg-orange-500/10 text-orange-700",
+  completed: "bg-emerald-500/10 text-emerald-700",
   cancelled: "bg-red-500/10 text-red-700",
   refunded: "bg-muted text-muted-foreground",
+  invoice_requested: "bg-blue-500/10 text-blue-700",
 };
 
 function formatDate(dateStr: string): string {
@@ -139,6 +141,38 @@ const SellerOrders = () => {
     }
   };
 
+  const markJobDone = async (orderId: string) => {
+    setActionLoading(orderId);
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: "delivered", serviceCompletedAt: new Date().toISOString() })
+        .eq("id", orderId)
+        .eq("sellerId", user!.id);
+      if (error) throw error;
+
+      const order = orders.find((o) => o.id === orderId);
+      if (order?.buyerId) {
+        await supabase.from("notifications").insert({
+          userId: order.buyerId,
+          type: "delivery",
+          title: "Job completed — please confirm",
+          message: `${order.orderNumber}: your provider has marked this job as complete. Please confirm or open a dispute within 7 days.`,
+          link: "/buyer/orders",
+        });
+      }
+
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: "delivered" } : o))
+      );
+      toast({ title: "Job marked as done", description: "The client has been notified to confirm." });
+    } catch (err) {
+      toast({ title: "Update failed", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[1200px]">
       <div>
@@ -195,7 +229,7 @@ const SellerOrders = () => {
                     >
                       View
                     </Button>
-                    {["paid", "packed"].includes(o.status) && (
+                    {["paid", "packed", "shipped"].includes(o.status) && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -215,7 +249,12 @@ const SellerOrders = () => {
                           )}
                           {(o.status === "paid" || o.status === "packed") && (
                             <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>
-                              Mark as Shipped
+                              Mark as In Progress
+                            </DropdownMenuItem>
+                          )}
+                          {o.status === "shipped" && (
+                            <DropdownMenuItem onClick={() => markJobDone(o.id)}>
+                              Mark Job Done
                             </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
@@ -275,7 +314,7 @@ const SellerOrders = () => {
                         >
                           View
                         </Button>
-                        {["paid", "packed"].includes(o.status) && (
+                        {["paid", "packed", "shipped"].includes(o.status) && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
@@ -295,7 +334,12 @@ const SellerOrders = () => {
                               )}
                               {(o.status === "paid" || o.status === "packed") && (
                                 <DropdownMenuItem onClick={() => updateOrderStatus(o.id, "shipped")}>
-                                  Mark as Shipped
+                                  Mark as In Progress
+                                </DropdownMenuItem>
+                              )}
+                              {o.status === "shipped" && (
+                                <DropdownMenuItem onClick={() => markJobDone(o.id)}>
+                                  Mark Job Done
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
