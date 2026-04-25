@@ -90,6 +90,7 @@ const PPBuyerSettings      = lazy(() => import('./pages/pixel-perfect/buyer/Buye
 const PPBuyerWishlist      = lazy(() => import('./pages/pixel-perfect/buyer/BuyerWishlist'));
 const PPBuyerNotifications = lazy(() => import('./pages/pixel-perfect/buyer/BuyerNotifications'));
 const PPBuyerMessages      = lazy(() => import('./pages/pixel-perfect/buyer/BuyerMessages'));
+const PPBuyerRFQ           = lazy(() => import('./pages/pixel-perfect/buyer/BuyerRFQ'));
 
 const PPAdminShell          = lazy(() => import('./pages/pixel-perfect/admin/AdminShell'));
 const PPAdminDashboard      = lazy(() => import('./pages/pixel-perfect/admin/AdminDashboard'));
@@ -613,6 +614,7 @@ function App() {
           <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPBuyerSettings /></Suspense>} />
           <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPBuyerNotifications /></Suspense>} />
           <Route path="messages" element={<Suspense fallback={<PageLoader />}><PPBuyerMessages /></Suspense>} />
+          <Route path="rfq" element={<Suspense fallback={<PageLoader />}><PPBuyerRFQ /></Suspense>} />
         </Route>
 
         {/* /admin – RequireAdmin */}

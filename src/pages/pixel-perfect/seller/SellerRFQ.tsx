@@ -90,20 +90,26 @@ const SellerRFQ = () => {
     setSending(true);
     setRfqError("");
     try {
-      // Record this seller's reply in rfq_responses for per-seller tracking.
-      // quotedPrice=0 indicates no separate price was quoted (price is embedded in message).
-      const { error: dbError } = await supabase
-        .from("rfq_responses")
-        .upsert(
-          {
-            rfqId: selected.id,
-            sellerId: user.id,
-            quotedPrice: 0,
-            message: quoteNote.trim(),
-          },
-          { onConflict: "rfqId,sellerId" }
-        );
-      if (dbError) throw dbError;
+      // Record the response via serverless function so rfqSystem flag is enforced.
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      const token = authSession?.access_token;
+      const res = await fetch("/.netlify/functions/rfq", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          op: "respond",
+          rfqId: selected.id,
+          quotedPrice: 0,
+          message: quoteNote.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error((payload as { error?: string }).error ?? `Server error ${res.status}`);
+      }
 
       // Update local state immediately so the tab/badge count updates without a reload
       setRepliedIds((prev) => new Set([...prev, selected.id]));

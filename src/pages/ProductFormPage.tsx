@@ -313,35 +313,19 @@ export default function ProductFormPage() {
     if (publishMode) setSaving(true); else setSavingDraft(true);
     try {
       const price = parseFloat(formData.price);
-      const vatRate = 0.20; // 20% VAT
-      const priceExVat = price / (1 + vatRate);
 
       // When critical fields are locked (orders exist) and the user is a seller,
       // only allow non-critical fields to be updated.
       const isAdmin = user.role === 'admin';
       const specs = buildSpecs();
 
-      // Read autoApproveProducts flag from platform settings
-      let autoApprove = false;
-      try {
-        const { data: settingsRows } = await supabase
-          .from("platform_settings")
-          .select("key,value")
-          .eq("key", "feature_flags")
-          .maybeSingle();
-        autoApprove = (settingsRows?.value as Record<string, boolean> | null)?.autoApproveProducts ?? false;
-      } catch {
-        // Non-fatal: default to false (require manual approval)
-      }
-
+      // Build the product payload (isApproved is now set server-side via create-product / update-product)
       const productData = {
         title: formData.title,
         description: formData.description,
         type: formData.type,
         condition: formData.condition,
         price,
-        priceExVat,
-        vatRate,
         stockQuantity: parseInt(formData.stockQuantity),
         stockStatus: parseInt(formData.stockQuantity) > 10 ? 'in_stock' :
                     parseInt(formData.stockQuantity) > 0 ? 'low_stock' : 'out_of_stock',
@@ -357,54 +341,74 @@ export default function ProductFormPage() {
           ? formData.palletInfo
           : null,
         isActive: publishMode,
-        isApproved: isAdmin ? true : autoApprove, // Admin always approved; sellers depend on flag
       };
 
-      // Save or update shipping methods helper
-      const syncShipping = async (productId: string) => {
-        const { error: deleteError } = await supabase.from('product_shipping').delete().eq('product_id', productId);
-        if (deleteError) throw deleteError;
-        if (selectedShippingMethodIds.length > 0) {
-          const rows = selectedShippingMethodIds.map((method_id) => ({
-            product_id: productId,
-            method_id,
-            dispatch_time: dispatchTime || null,
-          }));
-          const { error: shippingError } = await supabase.from('product_shipping').insert(rows);
-          if (shippingError) throw shippingError;
-        }
+      // Fetch bearer token for the serverless functions
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      if (!authSession?.access_token) throw new Error('No auth session found — please sign in again.');
+      const authHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authSession.access_token}`,
       };
 
       if (id && hasActiveOrders && !isAdmin) {
-        // Locked product — only allow non-critical fields
-        const allowedData: Partial<typeof productData> = {
-          description: productData.description,
-          images: productData.images,
-          specifications: productData.specifications,
-          weight: productData.weight,
-          dimensions: productData.dimensions,
-          palletInfo: productData.palletInfo,
-        };
-        const { error } = await supabase.from('products').update(allowedData).eq('id', id);
-        if (error) throw error;
-        await syncShipping(id);
+        // Locked product — only allow non-critical fields via update-product
+        const { description, images, specifications, weight, dimensions, palletInfo } = productData;
+        const res = await fetch('/.netlify/functions/update-product', {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify({
+            id,
+            description,
+            images,
+            specifications,
+            weight,
+            dimensions,
+            palletInfo,
+            shippingMethodIds: selectedShippingMethodIds,
+            dispatchTime: dispatchTime || null,
+            lockedFieldsOnly: true,
+          }),
+        });
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
+        }
         setSuccessMessage('Product updated. Critical fields were not changed as orders exist.');
       } else if (id) {
-        // Full update — sellerId intentionally excluded: it never changes and re-sending it
-        // triggers FK re-validation against seller_profiles / seller_stores unnecessarily.
-        const { error } = await supabase.from('products').update(productData).eq('id', id);
-        if (error) throw error;
-        await syncShipping(id);
+        // Full update via update-product
+        const res = await fetch('/.netlify/functions/update-product', {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify({
+            id,
+            ...productData,
+            shippingMethodIds: selectedShippingMethodIds,
+            dispatchTime: dispatchTime || null,
+          }),
+        });
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
+        }
         setSuccessMessage(publishMode ? 'Product updated and published.' : 'Draft saved successfully.');
       } else {
-        // Create new product — sellerId is required at INSERT and is validated by RLS
-        const { data: inserted, error } = await supabase
-          .from('products')
-          .insert([{ sellerId: user.id, ...productData }])
-          .select('id')
-          .single();
-        if (error) throw error;
-        if (inserted) await syncShipping(inserted.id);
+        // Create new product via create-product (backend sets isApproved)
+        const res = await fetch('/.netlify/functions/create-product', {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify({
+            ...productData,
+            listingContext: 'goods',
+            shippingMethodIds: selectedShippingMethodIds,
+            dispatchTime: dispatchTime || null,
+          }),
+        });
+        if (!res.ok) {
+          const payload = await res.json().catch(() => ({}));
+          throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
+        }
+        const created = await res.json() as { id: string; isApproved: boolean };
 
         // Mark first product created for onboarding completion tracking.
         // Non-fatal: onboarding checklist will still derive this from product count.
@@ -463,7 +467,9 @@ export default function ProductFormPage() {
 
         setSuccessMessage(
           publishMode
-            ? 'Product created! It will be visible after admin approval.'
+            ? (created.isApproved
+                ? 'Product created and is now live!'
+                : 'Product created! It will be visible after admin approval.')
             : 'Draft saved. You can continue editing and publish when ready.'
         );
       }
