@@ -29,6 +29,7 @@ interface DBProduct {
   isActive: boolean;
   isApproved: boolean;
   stockQuantity: number;
+  listingContext: string;
 }
 
 export const handler: Handler = async (event) => {
@@ -122,7 +123,7 @@ export const handler: Handler = async (event) => {
   const productIds = items.map((i) => i.productId);
   const { data: dbProducts, error: dbError } = await supabase
     .from('products')
-    .select('id, price, title, sellerId, isActive, isApproved, stockQuantity')
+    .select('id, price, title, sellerId, isActive, isApproved, stockQuantity, listingContext')
     .in('id', productIds);
 
   if (dbError) {
@@ -139,17 +140,20 @@ export const handler: Handler = async (event) => {
         body: JSON.stringify({ error: `Item "${item.title}" is no longer available` }),
       };
     }
-    if (typeof dbProduct.stockQuantity === 'number' && dbProduct.stockQuantity <= 0) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: `Item "${item.title}" is out of stock` }),
-      };
-    }
-    if (typeof dbProduct.stockQuantity === 'number' && item.quantity > dbProduct.stockQuantity) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: `Only ${dbProduct.stockQuantity} unit(s) of "${item.title}" are available` }),
-      };
+    // Stock checks apply only to goods listings; service listings have no inventory.
+    if (dbProduct.listingContext !== 'service') {
+      if (typeof dbProduct.stockQuantity === 'number' && dbProduct.stockQuantity <= 0) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: `Item "${item.title}" is out of stock` }),
+        };
+      }
+      if (typeof dbProduct.stockQuantity === 'number' && item.quantity > dbProduct.stockQuantity) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: `Only ${dbProduct.stockQuantity} unit(s) of "${item.title}" are available` }),
+        };
+      }
     }
   }
 
@@ -230,12 +234,31 @@ export const handler: Handler = async (event) => {
   const subtotal = enrichedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const total = subtotal + shippingAmount;
 
+  // ── B2B buyer check — VAT reverse charge ─────────────────────────────────
+  // If the buyer has a verified B2B VAT number, the platform applies reverse
+  // charge (0% VAT) and Stripe is charged the ex-VAT price.
+  const VAT_RATE = 0.20;
+  const { data: buyerProfile } = await supabase
+    .from('buyer_profiles')
+    .select('accountType, isVatVerified')
+    .eq('userId', verifiedBuyerId)
+    .maybeSingle<{ accountType: string | null; isVatVerified: boolean | null }>();
+
+  const isB2BBuyer =
+    Boolean(buyerProfile?.accountType) && buyerProfile?.accountType !== 'individual';
+  const applyReverseCharge = isB2BBuyer && Boolean(buyerProfile?.isVatVerified);
+  // ─────────────────────────────────────────────────────────────────────────
+
   // 6. Create Stripe checkout session
   try {
     const stripe = new Stripe(stripeKey, { apiVersion: '2025-08-27.basil' });
     const lineItems = items.map((item) => {
       const dbProduct = productMap.get(item.productId) as DBProduct;
-      const unitAmount = Math.round(dbProduct.price * 100);
+      // B2B reverse charge: Stripe charges the ex-VAT price (price / 1.20).
+      const unitPrice = applyReverseCharge
+        ? dbProduct.price / (1 + VAT_RATE)
+        : dbProduct.price;
+      const unitAmount = Math.round(unitPrice * 100);
       return {
         price_data: {
           currency: 'gbp',
@@ -307,6 +330,8 @@ export const handler: Handler = async (event) => {
           total,
           buyerId: verifiedBuyerId,
           transferGroup,
+          isB2B: isB2BBuyer,
+          applyReverseCharge,
         },
       });
 

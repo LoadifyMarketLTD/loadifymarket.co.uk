@@ -1,13 +1,23 @@
 import { useState, useEffect } from "react";
-import { UserCircle, MapPin, Save, Calendar, ShoppingBag, Star } from "lucide-react";
+import { UserCircle, MapPin, Save, Calendar, ShoppingBag, Star, Building2, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { useToast } from "@/hooks/use-toast";
+
+const ACCOUNT_TYPES = [
+  { value: "individual", label: "Individual" },
+  { value: "business",   label: "Business" },
+  { value: "reseller",   label: "Reseller" },
+  { value: "distributor",label: "Distributor" },
+];
 
 interface FormState {
   firstName: string;
@@ -20,11 +30,19 @@ interface FormState {
   shippingCountry: string;
 }
 
+interface B2BForm {
+  accountType: string;
+  companyName: string;
+  vatNumber: string;
+  isVatVerified: boolean;
+}
+
 const BuyerProfile = () => {
   const { user } = useAuthStore();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingB2B, setSavingB2B] = useState(false);
   const [totalOrders, setTotalOrders] = useState(0);
   const [memberSince, setMemberSince] = useState("—");
   const [form, setForm] = useState<FormState>({
@@ -36,6 +54,12 @@ const BuyerProfile = () => {
     shippingCity: "",
     shippingPostcode: "",
     shippingCountry: "United Kingdom",
+  });
+  const [b2bForm, setB2BForm] = useState<B2BForm>({
+    accountType: "individual",
+    companyName: "",
+    vatNumber: "",
+    isVatVerified: false,
   });
 
   useEffect(() => {
@@ -51,7 +75,7 @@ const BuyerProfile = () => {
             .single(),
           supabase
             .from("buyer_profiles")
-            .select("shippingAddress, billingAddress")
+            .select("shippingAddress, billingAddress, accountType, companyName, vatNumber, isVatVerified")
             .eq("userId", user.id)
             .maybeSingle(),
           supabase
@@ -60,13 +84,19 @@ const BuyerProfile = () => {
             .eq("buyerId", user.id),
         ]);
 
-        const u = userRes.data;
-        const p = profileRes.data;
+        const u = userRes.data as { firstName?: string; lastName?: string; email?: string; createdAt?: string } | null;
+        const p = profileRes.data as {
+          shippingAddress?: Record<string, string>;
+          accountType?: string;
+          companyName?: string;
+          vatNumber?: string;
+          isVatVerified?: boolean;
+        } | null;
         const ship = p?.shippingAddress || {};
 
         if (u) {
           setMemberSince(
-            new Date(u.createdAt).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+            new Date(u.createdAt ?? "").toLocaleDateString("en-GB", { month: "long", year: "numeric" })
           );
           setForm((prev) => ({
             ...prev,
@@ -85,6 +115,14 @@ const BuyerProfile = () => {
             shippingCountry: ship.country ?? "United Kingdom",
           }));
         }
+        if (p) {
+          setB2BForm({
+            accountType: p.accountType ?? "individual",
+            companyName: p.companyName ?? "",
+            vatNumber: p.vatNumber ?? "",
+            isVatVerified: Boolean(p.isVatVerified),
+          });
+        }
         setTotalOrders(ordersRes.count ?? 0);
       } catch {
         toast({ title: "Failed to load profile", description: "Please refresh the page.", variant: "destructive" });
@@ -97,6 +135,9 @@ const BuyerProfile = () => {
 
   const updateField = (field: keyof FormState, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
+
+  const updateB2B = (field: keyof B2BForm, value: string) =>
+    setB2BForm((prev) => ({ ...prev, [field]: value }));
 
   const handleSave = async () => {
     if (!user) return;
@@ -132,6 +173,31 @@ const BuyerProfile = () => {
       toast({ title: "Failed to save profile", description: "Please try again.", variant: "destructive" });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveB2B = async () => {
+    if (!user) return;
+    setSavingB2B(true);
+    try {
+      const { error } = await supabase
+        .from("buyer_profiles")
+        .upsert(
+          {
+            userId: user.id,
+            accountType: b2bForm.accountType || "individual",
+            companyName: b2bForm.companyName.trim() || null,
+            vatNumber: b2bForm.vatNumber.trim() || null,
+          },
+          { onConflict: "userId" }
+        );
+      if (error) throw error;
+      toast({ title: "Business account saved", description: "Your business details have been updated." });
+    } catch (err) {
+      console.error("Failed to save B2B profile:", err);
+      toast({ title: "Failed to save", description: "Please try again.", variant: "destructive" });
+    } finally {
+      setSavingB2B(false);
     }
   };
 
@@ -225,6 +291,85 @@ const BuyerProfile = () => {
               <Label className="text-xs">Country</Label>
               <Input value={form.shippingCountry} onChange={(e) => updateField("shippingCountry", e.target.value)} className="mt-1" />
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Business Account (B2B) */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-primary" /> Business Account
+              </CardTitle>
+              <CardDescription>
+                Add your company details to access B2B pricing and receive proper business invoices.
+              </CardDescription>
+            </div>
+            {b2bForm.accountType !== "individual" && (
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 shrink-0">
+                B2B Account
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs">Account Type</Label>
+              <Select value={b2bForm.accountType} onValueChange={(v) => updateB2B("accountType", v)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ACCOUNT_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Company Name</Label>
+              <Input
+                value={b2bForm.companyName}
+                onChange={(e) => updateB2B("companyName", e.target.value)}
+                placeholder="Acme Ltd"
+                className="mt-1"
+                disabled={b2bForm.accountType === "individual"}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">VAT Number</Label>
+              <Input
+                value={b2bForm.vatNumber}
+                onChange={(e) => updateB2B("vatNumber", e.target.value)}
+                placeholder="GB123456789"
+                className="mt-1"
+                disabled={b2bForm.accountType === "individual"}
+              />
+            </div>
+            <div className="flex items-end pb-1">
+              {b2bForm.isVatVerified ? (
+                <span className="flex items-center gap-1.5 text-sm text-emerald-700 font-medium">
+                  <ShieldCheck className="h-4 w-4" /> VAT Verified
+                </span>
+              ) : b2bForm.vatNumber && b2bForm.accountType !== "individual" ? (
+                <span className="text-xs text-amber-700">
+                  VAT verification pending admin review
+                </span>
+              ) : null}
+            </div>
+          </div>
+          {b2bForm.accountType !== "individual" && (
+            <p className="text-xs text-muted-foreground">
+              Once your VAT number is verified by our team, you will receive ex-VAT pricing and reverse-charge invoices automatically.
+            </p>
+          )}
+          <div className="pt-2">
+            <Button size="sm" onClick={handleSaveB2B} disabled={savingB2B || loading}>
+              <Save className="mr-2 h-4 w-4" />{savingB2B ? "Saving…" : "Save Business Details"}
+            </Button>
           </div>
         </CardContent>
       </Card>
