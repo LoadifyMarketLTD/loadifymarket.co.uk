@@ -223,7 +223,7 @@ export const handler: Handler = async (event) => {
   const vatNumber = process.env.VITE_VAT_NUMBER || '';
   const companyName = process.env.VITE_COMPANY_NAME || 'Loadify Market';
   const companyAddress = process.env.VITE_COMPANY_ADDRESS || 'United Kingdom';
-  const supportEmail = process.env.VITE_SUPPORT_EMAIL || 'support@loadifymarket.co.uk';
+  const supportEmail = process.env.VITE_SUPPORT_EMAIL || 'contact@loadifymarket.co.uk';
 
   const html = `<!DOCTYPE html>
 <html lang="en">

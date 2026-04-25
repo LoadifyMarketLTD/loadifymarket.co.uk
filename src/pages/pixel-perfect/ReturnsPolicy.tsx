@@ -62,7 +62,7 @@ const ReturnsPolicy = () => {
           <h2>9. Contact</h2>
           <p>For returns-related queries, please contact the seller directly. For Platform support:</p>
           <ul>
-            <li>Email: support@loadifymarket.co.uk</li>
+            <li>Email: contact@loadifymarket.co.uk</li>
             <li>Address: 101 Cornelian Street, Blackburn BB1 9QL, UK</li>
           </ul>
         </div>

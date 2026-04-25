@@ -803,7 +803,7 @@ export default function TradeAccount() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="h-3.5 w-3.5 shrink-0" />
-                  <span>hello@loadifymarket.co.uk</span>
+                  <span>contact@loadifymarket.co.uk</span>
                 </div>
               </div>
             </div>
