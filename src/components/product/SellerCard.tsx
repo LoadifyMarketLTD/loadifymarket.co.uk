@@ -31,6 +31,7 @@ const SellerCard = ({ name, verified, rating, location, totalListings, storeSlug
         </div>
         <div>
           <p className="font-display text-sm font-semibold text-foreground">{name}</p>
+          <p className="text-[11px] text-muted-foreground font-medium mt-0.5">Independent Seller</p>
           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
             <span className="flex items-center gap-0.5">
               <Star className="h-3 w-3 fill-accent text-accent" />

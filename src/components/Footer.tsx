@@ -8,6 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import PaymentMethodBadges from "@/components/PaymentMethodBadges";
 
 const FooterLink = ({ to, children }: { to: string; children: React.ReactNode }) => (
   <li>
@@ -335,12 +336,15 @@ const Footer = () => {
                 Loadify Market does not hold inventory. All products are listed and fulfilled by independent sellers. The platform connects buyers and sellers and processes payments as a marketplace facilitator using Stripe Connect — it does not own, stock, or dispatch any products. Sellers are solely responsible for their listings, pricing and fulfilment.
               </p>
             </div>
-            <div className="flex items-center gap-4 text-xs text-background/50 shrink-0">
-              <Link to="/terms" className="hover:text-background transition-colors">Terms</Link>
-              <Link to="/privacy" className="hover:text-background transition-colors">Privacy</Link>
-              <Link to="/cookies" className="hover:text-background transition-colors">Cookies</Link>
-              <Link to="/disclaimer" className="hover:text-background transition-colors">Disclaimer</Link>
-              <Link to="/contact" className="hover:text-background transition-colors">Contact</Link>
+            <div className="flex flex-col items-center md:items-end gap-3 shrink-0">
+              <PaymentMethodBadges showLabel={false} size="sm" className="opacity-70" />
+              <div className="flex items-center gap-4 text-xs text-background/50">
+                <Link to="/terms" className="hover:text-background transition-colors">Terms</Link>
+                <Link to="/privacy" className="hover:text-background transition-colors">Privacy</Link>
+                <Link to="/cookies" className="hover:text-background transition-colors">Cookies</Link>
+                <Link to="/disclaimer" className="hover:text-background transition-colors">Disclaimer</Link>
+                <Link to="/contact" className="hover:text-background transition-colors">Contact</Link>
+              </div>
             </div>
           </div>
         </div>

@@ -84,7 +84,7 @@ const PaymentMethodBadges = ({
 
       <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
         <Lock className="h-3 w-3 shrink-0" />
-        <span>256-bit SSL encrypted · Secure checkout</span>
+        <span>Secure payments powered by Stripe · Sellers receive payments via Stripe Connect</span>
       </div>
     </div>
   );

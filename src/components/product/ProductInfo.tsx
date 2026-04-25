@@ -232,11 +232,11 @@ const ProductInfo = ({
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Truck className="h-4 w-4 text-primary" />
-          Seller-Arranged Delivery
+          Seller-Fulfilled Delivery
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <ShieldCheck className="h-4 w-4 text-primary" />
-          Secure Payment
+          Transparent Seller Terms
         </div>
       </div>
 
@@ -280,7 +280,7 @@ const ProductInfo = ({
             className="flex-1 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
             onClick={handleBuyNow}
           >
-            Buy Now <ArrowRight className="ml-2 h-5 w-5" />
+            Buy from Seller <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
           <Button
             size="lg"
