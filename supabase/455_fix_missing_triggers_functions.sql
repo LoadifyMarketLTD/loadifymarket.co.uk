@@ -136,13 +136,13 @@ $$;
 -- ============================================================================
 
 -- JWT fast-path + DB fallback; UUID regex guard prevents 22P02 errors.
--- Named dollar-quote tag prevents Supabase SQL editor's bare-$$ splitting bug.
+-- Named dollar-quote tag used below; body contains no bare dollar-signs.
 -- Latest definition: 00_consolidated_schema.sql (consolidates 380/389/390 fixes)
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
-AS $func$
+AS $$
   SELECT COALESCE(
     (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
     OR (
@@ -156,22 +156,22 @@ AS $func$
     ),
     false
   )
-$func$;
+$$;
 
 -- Backward-compat alias — delegates to is_admin().
 CREATE OR REPLACE FUNCTION public.is_owner()
 RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
-AS $func$
+AS $$
   SELECT public.is_admin()
-$func$;
+$$;
 
 CREATE OR REPLACE FUNCTION public.is_seller()
 RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
-AS $func$
+AS $$
   SELECT COALESCE(
     (auth.jwt() -> 'app_metadata' ->> 'role') = 'seller'
     OR (
@@ -185,14 +185,14 @@ AS $func$
     ),
     false
   )
-$func$;
+$$;
 
 -- Checks whether the calling user owns a product (bypasses RLS to avoid recursion).
 CREATE OR REPLACE FUNCTION public.owns_product(p_product_id UUID)
 RETURNS BOOLEAN
 LANGUAGE sql STABLE SECURITY DEFINER
 SET search_path = ''
-AS $func$
+AS $$
   SELECT COALESCE(
     (auth.jwt() ->> 'sub') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
     AND EXISTS (
@@ -202,7 +202,7 @@ AS $func$
     ),
     false
   )
-$func$;
+$$;
 
 -- Keeps isApproved/activatedAt in sync whenever sellerStatus changes.
 -- Latest definition: 00_consolidated_schema.sql (consolidates 210 changes)
@@ -386,7 +386,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION public.validate_product_category_assignment()
 RETURNS trigger
 LANGUAGE plpgsql
-AS $func$
+AS $$
 DECLARE
   category_active BOOLEAN;
 BEGIN
@@ -411,14 +411,14 @@ BEGIN
 
   RETURN NEW;
 END;
-$func$;
+$$;
 
 -- Keeps parent_id and "parentId" columns aligned on the categories table.
 -- Latest definition: 400_global_category_system.sql
 CREATE OR REPLACE FUNCTION public.sync_category_parent_columns()
 RETURNS trigger
 LANGUAGE plpgsql
-AS $func$
+AS $$
 BEGIN
   IF NEW.parent_id IS NOT NULL AND NEW."parentId" IS NULL THEN
     NEW."parentId" := NEW.parent_id;
@@ -430,7 +430,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$func$;
+$$;
 
 -- ============================================================================
 -- SECTION 4: RPC / PAYOUT FUNCTIONS
