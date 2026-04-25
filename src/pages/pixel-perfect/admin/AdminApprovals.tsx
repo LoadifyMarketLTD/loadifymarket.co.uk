@@ -8,7 +8,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, Eye, Building2, Mail, Calendar, Loader2, Phone, Package, ShoppingBag, Flag,
-  ShieldOff, RefreshCw, Zap, AlertTriangle, AlertCircle, Send, CreditCard,
+  ShieldOff, RefreshCw, Zap, CheckCircle, AlertTriangle, AlertCircle, Send, CreditCard,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
