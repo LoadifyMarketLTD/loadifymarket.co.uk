@@ -118,11 +118,20 @@ export const handler: Handler = async (event) => {
   // ─────────────────────────────────────────────────────────────────────────
 
   try {
+    const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+    if (!fromEmail) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'SENDGRID_FROM_EMAIL is not configured' }),
+      };
+    }
+
     const htmlContent = generateEmailHTML(template, data);
 
     const msg = {
       to,
-      from: process.env.SENDGRID_FROM_EMAIL || 'loadifymarket.co.uk@gmail.com',
+      from: fromEmail,
+      replyTo: 'support@loadifymarket.co.uk',
       subject,
       html: htmlContent,
     };

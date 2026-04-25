@@ -30,11 +30,16 @@ export const handler: Handler = async (event) => {
     const safeEmail = escapeHtml(data.email);
     const safeBusinessName = escapeHtml(data.businessName);
 
-    const adminTo = process.env.ADMIN_NOTIFICATION_EMAIL || 'support@loadifymarket.co.uk';
+    const adminTo = process.env.ADMIN_NOTIFICATION_EMAIL;
+    if (!adminTo) throw new Error('ADMIN_NOTIFICATION_EMAIL is not configured');
+
+    const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+    if (!fromEmail) throw new Error('SENDGRID_FROM_EMAIL is not configured');
 
     const msg = {
       to: adminTo,
-      from: process.env.SENDGRID_FROM_EMAIL || 'loadifymarket.co.uk@gmail.com',
+      from: fromEmail,
+      replyTo: 'support@loadifymarket.co.uk',
       subject: 'New Seller Registered - Loadify Market',
       html: `
         <h2>New Seller Registration</h2>

@@ -348,12 +348,10 @@ export const handler: Handler = async (event) => {
 
   // ── Admin notification email ──────────────────────────────────────────────
   // Fire-and-forget: a failure here must never block successful registration.
-  // Fall back to the primary admin inbox when the env var is not configured.
-  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'loadifymarket.co.uk@gmail.com';
-  if (!process.env.ADMIN_NOTIFICATION_EMAIL) {
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL;
+  if (!adminEmail) {
     console.warn(
-      'register: ADMIN_NOTIFICATION_EMAIL is not set — falling back to loadifymarket.co.uk@gmail.com. ' +
-      'Set this environment variable in the Netlify dashboard to override.'
+      'register: ADMIN_NOTIFICATION_EMAIL is not set — admin notification email skipped.'
     );
   }
   if (adminEmail) {

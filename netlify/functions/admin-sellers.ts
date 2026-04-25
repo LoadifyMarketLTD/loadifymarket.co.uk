@@ -102,11 +102,14 @@ function escapeHtml(value: unknown): string {
 async function sendWarningEmail(email: string, name: string, company: string): Promise<void> {
   const apiKey = process.env.SENDGRID_API_KEY;
   if (!apiKey) throw new Error('Email service not configured');
+  const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+  if (!fromEmail) throw new Error('SENDGRID_FROM_EMAIL is not configured');
   sgMail.setApiKey(apiKey);
   const siteUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
   await sgMail.send({
     to: email,
-    from: process.env.SENDGRID_FROM_EMAIL || 'loadifymarket.co.uk@gmail.com',
+    from: fromEmail,
+    replyTo: 'support@loadifymarket.co.uk',
     subject: 'Account Warning — Loadify Market',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">
@@ -190,11 +193,14 @@ async function findSellersNeedingOnboarding(admin: SupabaseClient): Promise<Pend
 async function sendOnboardingReminderEmail(seller: PendingOnboardSeller): Promise<void> {
   const apiKey = process.env.SENDGRID_API_KEY;
   if (!apiKey) throw new Error('Email service not configured');
+  const fromEmail = process.env.SENDGRID_FROM_EMAIL;
+  if (!fromEmail) throw new Error('SENDGRID_FROM_EMAIL is not configured');
   sgMail.setApiKey(apiKey);
   const siteUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
   await sgMail.send({
     to: seller.email,
-    from: process.env.SENDGRID_FROM_EMAIL || 'loadifymarket.co.uk@gmail.com',
+    from: fromEmail,
+    replyTo: 'support@loadifymarket.co.uk',
     subject: 'Complete your seller setup — Loadify Market',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">
