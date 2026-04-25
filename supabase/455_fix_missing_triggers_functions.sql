@@ -1,5 +1,5 @@
 -- Migration 455: Idempotent fix for all missing functions and triggers
--- Run this in Supabase SQL Editor to restore 32 missing triggers and 2 missing functions
+-- Re-creates all 28 expected functions and all 49 expected triggers.
 -- Safe to re-run: all functions use CREATE OR REPLACE, triggers use DROP IF EXISTS + CREATE
 
 -- ============================================================================
