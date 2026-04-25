@@ -118,6 +118,7 @@ const BuyerProfile = () => {
                 city: form.shippingCity,
                 postcode: form.shippingPostcode,
                 country: form.shippingCountry,
+                isDefault: true,
               },
             },
             { onConflict: "userId" }

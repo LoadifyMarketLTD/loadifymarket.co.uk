@@ -340,6 +340,79 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    if (op === 'get_seller_detail') {
+      const userId = (body.userId ?? '').trim();
+      if (!userId) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
+      }
+      const { data: userRow } = await admin
+        .from('users')
+        .select('email, firstName, lastName, phone, role, isActive, createdAt')
+        .eq('id', userId)
+        .single<{ email: string; firstName: string | null; lastName: string | null; phone: string | null; role: string; isActive: boolean; createdAt: string | null }>();
+      if (!userRow) {
+        return { statusCode: 404, body: JSON.stringify({ error: 'User not found' }) };
+      }
+      const { data: profile } = await admin
+        .from('seller_profiles')
+        .select('sellerStatus, stripeConnectStatus, stripeAccountId, storeName, businessName, fullName, rating, totalSales')
+        .eq('userId', userId)
+        .single<{ sellerStatus: string | null; stripeConnectStatus: string | null; stripeAccountId: string | null; storeName: string | null; businessName: string | null; fullName: string | null; rating: number | null; totalSales: number | null }>();
+
+      // Parallel counts
+      const [listingsRes, buyerOrdersRes, sellerOrdersRes, reportsRes] = await Promise.all([
+        admin.from('products').select('id', { count: 'exact', head: true }).eq('sellerId', userId),
+        admin.from('orders').select('id', { count: 'exact', head: true }).eq('buyerId', userId),
+        admin.from('orders').select('id', { count: 'exact', head: true }).eq('sellerId', userId),
+        admin.from('reported_listings').select('id', { count: 'exact', head: true }).eq('reportedBy', userId),
+      ]);
+
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          detail: {
+            userId,
+            email: userRow.email,
+            firstName: userRow.firstName,
+            lastName: userRow.lastName,
+            phone: userRow.phone ?? null,
+            role: userRow.role,
+            isActive: userRow.isActive,
+            createdAt: userRow.createdAt,
+            sellerStatus: profile?.sellerStatus ?? null,
+            stripeConnectStatus: profile?.stripeConnectStatus ?? null,
+            stripeAccountId: profile?.stripeAccountId ?? null,
+            storeName: profile?.storeName ?? null,
+            businessName: profile?.businessName ?? null,
+            sellerRating: profile?.rating ?? null,
+            totalSales: profile?.totalSales ?? null,
+            listingsCount: listingsRes.count ?? 0,
+            ordersCount: (buyerOrdersRes.count ?? 0) + (sellerOrdersRes.count ?? 0),
+            reportsCount: reportsRes.count ?? 0,
+          },
+        }),
+      };
+    }
+
+    if (op === 'force_activate') {
+      const userId = (body.userId ?? '').trim();
+      if (!userId) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
+      }
+      const { error: upsertError } = await admin
+        .from('seller_profiles')
+        .upsert({ userId, sellerStatus: 'active' }, { onConflict: 'userId' });
+      if (upsertError) {
+        throw new Error(`force_activate failed: ${upsertError.message}`);
+      }
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, userId, sellerStatus: 'active' }),
+      };
+    }
+
     if (op === 'warn') {
       const userId = (body.userId ?? '').trim();
       if (!userId) {

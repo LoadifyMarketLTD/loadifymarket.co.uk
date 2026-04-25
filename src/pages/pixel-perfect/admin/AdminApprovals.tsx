@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +7,11 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Search, Eye, Building2, Mail, Calendar, Loader2, ExternalLink,
-  ShieldOff, RefreshCw, Zap, CheckCircle, AlertTriangle, AlertCircle, Send,
+  Search, Eye, Building2, Mail, Calendar, Loader2, Phone, Package, ShoppingBag, Flag,
+  ShieldOff, RefreshCw, Zap, CheckCircle, AlertTriangle, AlertCircle, Send, CreditCard,
 } from "lucide-react";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
@@ -25,6 +24,22 @@ interface Seller {
   date: string;
   sellerStatus: "draft" | "submitted" | "active" | "suspended";
   stripeConnectStatus: string | null;
+}
+
+/** Extended seller detail loaded from the Netlify function on dialog open. */
+interface SellerDetail extends Seller {
+  phone: string | null;
+  role: string;
+  isActive: boolean;
+  stripeAccountId: string | null;
+  storeName: string | null;
+  businessName: string | null;
+  sellerRating: number | null;
+  totalSales: number | null;
+  listingsCount: number;
+  ordersCount: number;
+  reportsCount: number;
+  createdAtFormatted: string;
 }
 
 const statusColor: Record<string, string> = {
@@ -63,11 +78,35 @@ function stripeClass(status: string | null): string {
   return stripeStatusColor[status] ?? "border-slate-200 text-slate-400";
 }
 
+/**
+ * Wraps fetch() with the admin's Supabase JWT in the Authorization header.
+ * Automatically refreshes the access token if it has expired or will expire
+ * within the next 60 seconds to prevent "Unauthorized" errors from the
+ * Netlify function when the token silently expired in the background.
+ */
 async function authorizedFetch(
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
-  const { data: { session } } = await supabase.auth.getSession();
+  let { data: { session } } = await supabase.auth.getSession();
+
+  // Decode the JWT payload to check the expiry time (no library needed — JWTs
+  // are just base64url-encoded JSON).  If the token has already expired or will
+  // expire within 60 s, force-refresh it before making the request so the
+  // Netlify function never receives a stale token.
+  if (session?.access_token) {
+    try {
+      const [, rawPayload] = session.access_token.split('.');
+      const padded = rawPayload.replace(/-/g, '+').replace(/_/g, '/') +
+        '='.repeat((4 - rawPayload.length % 4) % 4);
+      const payload = JSON.parse(atob(padded)) as { exp?: number };
+      if (payload.exp && payload.exp * 1000 - Date.now() < 60_000) {
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        if (refreshed.session) session = refreshed.session;
+      }
+    } catch { /* ignore JWT parse errors */ }
+  }
+
   if (!session?.access_token) {
     throw new Error("Your session has expired. Please sign in again.");
   }
@@ -96,7 +135,6 @@ async function handleJson<T>(res: Response): Promise<T> {
 }
 
 const AdminSellerManagement = () => {
-  const navigate = useNavigate();
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -104,6 +142,8 @@ const AdminSellerManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
+  const [sellerDetail, setSellerDetail] = useState<SellerDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const fetchSellers = useCallback(async () => {
     setLoading(true);
@@ -124,6 +164,60 @@ const AdminSellerManagement = () => {
 
   useEffect(() => { fetchSellers(); }, [fetchSellers]);
 
+  /** Open the detail dialog and load extended seller data from the server. */
+  const openSellerDetail = useCallback(async (s: Seller) => {
+    setSelectedSeller(s);
+    setSellerDetail(null);
+    setDetailLoading(true);
+    try {
+      const res = await authorizedFetch("/.netlify/functions/admin-sellers", {
+        method: "POST",
+        body: JSON.stringify({ op: "get_seller_detail", userId: s.userId }),
+      });
+      const json = await handleJson<{ detail: {
+        phone: string | null;
+        role: string;
+        isActive: boolean;
+        createdAt: string | null;
+        stripeAccountId: string | null;
+        storeName: string | null;
+        businessName: string | null;
+        sellerRating: number | null;
+        totalSales: number | null;
+        listingsCount: number;
+        ordersCount: number;
+        reportsCount: number;
+      } }>(res);
+      const d = json.detail;
+      setSellerDetail({
+        ...s,
+        phone: d.phone,
+        role: d.role,
+        isActive: d.isActive,
+        stripeAccountId: d.stripeAccountId,
+        storeName: d.storeName,
+        businessName: d.businessName,
+        sellerRating: d.sellerRating,
+        totalSales: d.totalSales,
+        listingsCount: d.listingsCount,
+        ordersCount: d.ordersCount,
+        reportsCount: d.reportsCount,
+        createdAtFormatted: d.createdAt
+          ? new Date(d.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+          : "—",
+      });
+    } catch (err: unknown) {
+      // Non-fatal — show basic info from the table row
+      toast({
+        title: "Could not load full profile",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
+
   const changeStatus = async (
     userId: string,
     op: "suspend" | "reactivate",
@@ -142,12 +236,13 @@ const AdminSellerManagement = () => {
       ));
       if (selectedSeller?.userId === userId) {
         setSelectedSeller((s) => s ? { ...s, sellerStatus: nextStatus } : s);
+        setSellerDetail((d) => d ? { ...d, sellerStatus: nextStatus } : d);
       }
     } catch (err: unknown) {
-      setError(
-        (err as Error).message ||
-          (op === "suspend" ? "Failed to suspend seller" : "Failed to reactivate seller"),
-      );
+      const msg = (err as Error).message ||
+        (op === "suspend" ? "Failed to suspend seller" : "Failed to reactivate seller");
+      setError(msg);
+      toast({ title: op === "suspend" ? "Suspend failed" : "Reactivate failed", description: msg, variant: "destructive" });
     } finally {
       setActionLoading(null);
     }
@@ -167,7 +262,9 @@ const AdminSellerManagement = () => {
       await handleJson<{ success: boolean }>(res);
       toast({ title: "Warning sent", description: "A warning email has been sent to the seller." });
     } catch (err: unknown) {
-      setError((err as Error).message || "Failed to send warning");
+      const msg = (err as Error).message || "Failed to send warning";
+      setError(msg);
+      toast({ title: "Send warning failed", description: msg, variant: "destructive" });
     } finally {
       setActionLoading(null);
     }
@@ -183,44 +280,42 @@ const AdminSellerManagement = () => {
       });
       const json = await handleJson<{ sent: number }>(res);
       if (json.sent === 0) {
-        toast({
-          title: "No reminders needed",
-          description: "No sellers need an onboarding reminder right now.",
-        });
+        toast({ title: "No reminders needed", description: "No sellers need an onboarding reminder right now." });
       } else {
-        toast({
-          title: "Reminders sent",
-          description: `Onboarding reminder sent to ${json.sent} seller${json.sent === 1 ? "" : "s"}.`,
-        });
+        toast({ title: "Reminders sent", description: `Onboarding reminder sent to ${json.sent} seller${json.sent === 1 ? "" : "s"}.` });
       }
     } catch (err: unknown) {
-      setError((err as Error).message || "Failed to send reminders");
+      const msg = (err as Error).message || "Failed to send reminders";
+      setError(msg);
+      toast({ title: "Reminders failed", description: msg, variant: "destructive" });
     } finally {
       setOnboardingLoading(false);
     }
   };
 
-  // Force-activates a seller whose Stripe is confirmed active but sellerStatus
-  // is still stuck at 'submitted' or 'draft'. The DB trigger
-  // sync_seller_approval_from_status automatically sets activatedAt and
-  // isApproved when sellerStatus transitions to 'active'.
+  // Force-activates a seller via the Netlify function (service-role key bypasses RLS entirely).
+  // The DB trigger sync_seller_approval_from_status sets activatedAt / isApproved automatically.
   const handleForceActivate = async (userId: string) => {
     setActionLoading(userId);
     setError(null);
     try {
-      const { error } = await supabase
-        .from("seller_profiles")
-        .update({ sellerStatus: "active" })
-        .eq("userId", userId);
-      if (error) throw error;
+      const res = await authorizedFetch("/.netlify/functions/admin-sellers", {
+        method: "POST",
+        body: JSON.stringify({ op: "force_activate", userId }),
+      });
+      await handleJson<{ success: boolean }>(res);
       setSellers((prev) => prev.map((s) =>
         s.userId === userId ? { ...s, sellerStatus: "active" } : s
       ));
       if (selectedSeller?.userId === userId) {
         setSelectedSeller((s) => s ? { ...s, sellerStatus: "active" } : s);
+        setSellerDetail((d) => d ? { ...d, sellerStatus: "active" } : d);
       }
+      toast({ title: "Seller activated", description: "Seller status set to Active." });
     } catch (err: unknown) {
-      setError((err as Error).message || "Failed to activate seller");
+      const msg = (err as Error).message || "Failed to activate seller";
+      setError(msg);
+      toast({ title: "Activation failed", description: msg, variant: "destructive" });
     } finally {
       setActionLoading(null);
     }
@@ -289,7 +384,7 @@ const AdminSellerManagement = () => {
               key={s.userId}
               className="cursor-pointer hover:bg-slate-50 transition-colors"
               style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
-              onClick={() => setSelectedSeller(s)}
+              onClick={() => openSellerDetail(s)}
             >
               <TableCell>
                 <p className="font-medium text-sm text-slate-900">{s.company}</p>
@@ -309,7 +404,7 @@ const AdminSellerManagement = () => {
               </TableCell>
               <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-end gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-white/10" onClick={() => setSelectedSeller(s)} title="View details">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-white/10" onClick={() => openSellerDetail(s)} title="View full profile">
                     <Eye className="h-4 w-4" />
                   </Button>
                   {/* Send Warning */}
@@ -451,129 +546,227 @@ const AdminSellerManagement = () => {
         ))}
       </Tabs>
 
-      {/* Detail Dialog */}
-      <Dialog open={!!selectedSeller} onOpenChange={() => setSelectedSeller(null)}>
+      {/* Full Profile Dialog */}
+      <Dialog
+        open={!!selectedSeller}
+        onOpenChange={(open) => {
+          if (!open) { setSelectedSeller(null); setSellerDetail(null); }
+        }}
+      >
         {selectedSeller && (
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{selectedSeller.company}</DialogTitle>
-              <DialogDescription>Seller account details</DialogDescription>
+              <DialogTitle className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 bg-purple-100 text-purple-700">
+                  {selectedSeller.name.split(" ").filter((n) => n).map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "S"}
+                </div>
+                {selectedSeller.company || selectedSeller.name}
+              </DialogTitle>
+              <DialogDescription className="font-mono text-xs">{selectedSeller.email}</DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 py-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-start gap-2">
-                  <Building2 className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "rgba(71,85,105,0.8)" }} />
-                  <div>
-                    <p className="text-xs" style={{ color: "rgba(71,85,105,0.8)" }}>Contact</p>
-                    <p className="text-sm font-medium text-slate-900">{selectedSeller.name}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Mail className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "rgba(71,85,105,0.8)" }} />
-                  <div>
-                    <p className="text-xs" style={{ color: "rgba(71,85,105,0.8)" }}>Email</p>
-                    <p className="text-sm font-medium text-slate-900">{selectedSeller.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2">
-                  <Calendar className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "rgba(71,85,105,0.8)" }} />
-                  <div>
-                    <p className="text-xs" style={{ color: "rgba(71,85,105,0.8)" }}>Joined</p>
-                    <p className="text-sm font-medium text-slate-900">{selectedSeller.date}</p>
-                  </div>
-                </div>
+            {detailLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
+            ) : (
+              <div className="space-y-6 pt-2">
+                {/* Account Details */}
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Account Details</h3>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5">Name</p>
+                      <p className="font-medium">{sellerDetail?.name ?? selectedSeller.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5">Email</p>
+                      <div className="flex items-center gap-1.5">
+                        <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <p className="font-medium text-xs break-all">{selectedSeller.email}</p>
+                      </div>
+                    </div>
+                    {sellerDetail?.phone && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-0.5">Phone</p>
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <p className="font-medium">{sellerDetail.phone}</p>
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5">Joined</p>
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <p className="font-medium">{sellerDetail?.createdAtFormatted ?? selectedSeller.date}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5">Account Status</p>
+                      <Badge variant="outline" className={sellerDetail?.isActive !== false ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" : "border-red-500/30 text-red-400 bg-red-500/10"}>
+                        {sellerDetail?.isActive !== false ? "Active" : "Suspended"}
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5">Role</p>
+                      <Badge variant="outline" className="border-purple-500/30 text-purple-400 bg-purple-500/10">
+                        Seller
+                      </Badge>
+                    </div>
+                  </div>
+                </section>
 
-              <div className="flex items-center gap-3 flex-wrap">
-                <div>
-                  <span className="text-xs mr-2" style={{ color: "rgba(71,85,105,0.8)" }}>Status:</span>
-                  <Badge variant="outline" className={statusColor[selectedSeller.sellerStatus]}>
-                    {statusLabel[selectedSeller.sellerStatus] ?? selectedSeller.sellerStatus}
-                  </Badge>
-                </div>
-                <div>
-                  <span className="text-xs mr-2" style={{ color: "rgba(71,85,105,0.8)" }}>Stripe:</span>
-                  <Badge variant="outline" className={stripeClass(selectedSeller.stripeConnectStatus)}>
-                    {stripeLabel(selectedSeller.stripeConnectStatus)}
-                  </Badge>
-                </div>
-              </div>
+                {/* Activity */}
+                {sellerDetail && (
+                  <section>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Activity</h3>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="rounded-xl p-4 flex flex-col gap-1" style={{ background: "#f8fafc", border: "1px solid rgba(148,163,184,0.35)" }}>
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-purple-100 text-purple-600">
+                          <Package className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="text-xl font-bold text-slate-900 mt-1">{sellerDetail.listingsCount}</div>
+                        <p className="text-xs text-muted-foreground">Listings</p>
+                      </div>
+                      <div className="rounded-xl p-4 flex flex-col gap-1" style={{ background: "#f8fafc", border: "1px solid rgba(148,163,184,0.35)" }}>
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-blue-100 text-blue-600">
+                          <ShoppingBag className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="text-xl font-bold text-slate-900 mt-1">{sellerDetail.ordersCount}</div>
+                        <p className="text-xs text-muted-foreground">Orders</p>
+                      </div>
+                      <div className="rounded-xl p-4 flex flex-col gap-1" style={{ background: "#f8fafc", border: "1px solid rgba(148,163,184,0.35)" }}>
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-red-100 text-red-600">
+                          <Flag className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="text-xl font-bold text-slate-900 mt-1">{sellerDetail.reportsCount}</div>
+                        <p className="text-xs text-muted-foreground">Reports</p>
+                      </div>
+                    </div>
+                  </section>
+                )}
 
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => { setSelectedSeller(null); navigate(`/admin/sellers/${selectedSeller.userId}`); }}
-              >
-                <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> View Full Profile
-              </Button>
-            </div>
+                {/* Seller Profile */}
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Seller Profile</h3>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                    {(sellerDetail?.storeName || sellerDetail?.businessName || selectedSeller.company) && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-0.5">Store / Business</p>
+                        <div className="flex items-center gap-1.5">
+                          <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <p className="font-medium">{sellerDetail?.storeName || sellerDetail?.businessName || selectedSeller.company}</p>
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5">Seller Status</p>
+                      <Badge variant="outline" className={statusColor[selectedSeller.sellerStatus]}>
+                        {statusLabel[selectedSeller.sellerStatus] ?? selectedSeller.sellerStatus}
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5">Stripe Account</p>
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        {sellerDetail?.stripeAccountId ? (
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant="outline" className={stripeClass(selectedSeller.stripeConnectStatus)}>
+                              {stripeLabel(selectedSeller.stripeConnectStatus)}
+                            </Badge>
+                            <span className="font-mono text-xs text-muted-foreground truncate max-w-[120px]">
+                              {sellerDetail.stripeAccountId}
+                            </span>
+                          </div>
+                        ) : (
+                          <Badge variant="outline" className={stripeClass(selectedSeller.stripeConnectStatus)}>
+                            {stripeLabel(selectedSeller.stripeConnectStatus)}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    {sellerDetail?.sellerRating != null && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-0.5">Rating</p>
+                        <p className="font-medium">{Number(sellerDetail.sellerRating).toFixed(2)} ★</p>
+                      </div>
+                    )}
+                    {sellerDetail?.totalSales != null && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-0.5">Total Sales</p>
+                        <p className="font-medium">{sellerDetail.totalSales}</p>
+                      </div>
+                    )}
+                  </div>
+                </section>
 
-            <DialogFooter className="gap-2">
-              {/* Send Warning */}
-              <Button
-                variant="outline"
-                onClick={() => handleSendWarning(selectedSeller.userId)}
-                disabled={actionLoading === selectedSeller.userId}
-              >
-                {actionLoading === selectedSeller.userId
-                  ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  : <AlertCircle className="h-4 w-4 mr-1" />}
-                Send Warning
-              </Button>
-              {/* Force-activate when Stripe is confirmed ready but status is stuck */}
-              {canForceActivate(selectedSeller) && (
-                <Button
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                  onClick={() => handleForceActivate(selectedSeller.userId)}
-                  disabled={actionLoading === selectedSeller.userId}
-                >
-                  {actionLoading === selectedSeller.userId
-                    ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                    : <CheckCircle className="h-4 w-4 mr-1" />}
-                  Activate Seller
-                </Button>
-              )}
-              {selectedSeller.sellerStatus !== "suspended" ? (
-                <>
-                  {selectedSeller.sellerStatus !== "active" && (
+                {/* Admin Actions */}
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Admin Actions</h3>
+                  <div className="flex flex-wrap gap-2">
                     <Button
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                      onClick={() => handleForceActivate(selectedSeller.userId)}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSendWarning(selectedSeller.userId)}
                       disabled={actionLoading === selectedSeller.userId}
-                      title="Bypass auto-activation checks and activate this seller immediately"
                     >
                       {actionLoading === selectedSeller.userId
-                        ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                        : <Zap className="h-4 w-4 mr-1" />}
-                      Force Activate
+                        ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                        : <AlertCircle className="h-4 w-4 mr-1.5" />}
+                      Send Warning
                     </Button>
-                  )}
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleSuspend(selectedSeller.userId)}
-                    disabled={actionLoading === selectedSeller.userId}
-                  >
-                    {actionLoading === selectedSeller.userId
-                      ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                      : <ShieldOff className="h-4 w-4 mr-1" />}
-                    Suspend Seller
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  variant="outline"
-                  onClick={() => handleReactivate(selectedSeller.userId)}
-                  disabled={actionLoading === selectedSeller.userId}
-                >
-                  {actionLoading === selectedSeller.userId
-                    ? <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                    : <RefreshCw className="h-4 w-4 mr-1" />}
-                  Lift Suspension
-                </Button>
-              )}
-            </DialogFooter>
+                    {selectedSeller.sellerStatus !== "active" && (
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => handleForceActivate(selectedSeller.userId)}
+                        disabled={actionLoading === selectedSeller.userId}
+                        title="Force-activate this seller immediately"
+                      >
+                        {actionLoading === selectedSeller.userId
+                          ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                          : <Zap className="h-4 w-4 mr-1.5" />}
+                        Force Activate
+                      </Button>
+                    )}
+                    {selectedSeller.sellerStatus !== "suspended" ? (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleSuspend(selectedSeller.userId)}
+                        disabled={actionLoading === selectedSeller.userId}
+                      >
+                        {actionLoading === selectedSeller.userId
+                          ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                          : <ShieldOff className="h-4 w-4 mr-1.5" />}
+                        Suspend Seller
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleReactivate(selectedSeller.userId)}
+                        disabled={actionLoading === selectedSeller.userId}
+                      >
+                        {actionLoading === selectedSeller.userId
+                          ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                          : <RefreshCw className="h-4 w-4 mr-1.5" />}
+                        Lift Suspension
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-auto"
+                      onClick={() => { setSelectedSeller(null); setSellerDetail(null); }}
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </section>
+              </div>
+            )}
           </DialogContent>
         )}
       </Dialog>
