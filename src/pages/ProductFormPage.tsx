@@ -108,6 +108,9 @@ export default function ProductFormPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [customSpecs, setCustomSpecs] = useState<CustomSpec[]>([]);
 
+  // 'service' = no stock/shipping; 'goods' = physical product with stock + shipping
+  const [listingContext, setListingContext] = useState<'service' | 'goods'>('service');
+
   const [formData, setFormData] = useState({
     title: '',
     shortDescription: '',
@@ -165,6 +168,10 @@ export default function ProductFormPage() {
       }
 
       if (data) {
+        // Restore listing context from the saved product
+        if (data.listingContext === 'goods' || data.listingContext === 'service') {
+          setListingContext(data.listingContext);
+        }
         const specs = data.specifications || {};
         setFormData({
           title: data.title || '',
@@ -260,8 +267,11 @@ export default function ProductFormPage() {
     if (formData.salePrice && formData.price && parseFloat(formData.salePrice) >= parseFloat(formData.price)) {
       e.salePrice = 'Sale price must be less than the regular price.';
     }
-    if (!formData.stockQuantity || isNaN(parseInt(formData.stockQuantity)) || parseInt(formData.stockQuantity) < 0) {
-      e.stockQuantity = 'Please enter a valid stock quantity (0 or more).';
+    // Stock quantity only required for physical goods
+    if (listingContext === 'goods') {
+      if (!formData.stockQuantity || isNaN(parseInt(formData.stockQuantity)) || parseInt(formData.stockQuantity) < 0) {
+        e.stockQuantity = 'Please enter a valid stock quantity (0 or more).';
+      }
     }
     return e;
   };
@@ -326,9 +336,10 @@ export default function ProductFormPage() {
         type: formData.type,
         condition: formData.condition,
         price,
-        stockQuantity: parseInt(formData.stockQuantity),
-        stockStatus: parseInt(formData.stockQuantity) > 10 ? 'in_stock' :
-                    parseInt(formData.stockQuantity) > 0 ? 'low_stock' : 'out_of_stock',
+        stockQuantity: listingContext === 'service' ? 0 : parseInt(formData.stockQuantity),
+        stockStatus: listingContext === 'service' ? 'in_stock' :
+                    (parseInt(formData.stockQuantity) > 10 ? 'in_stock' :
+                    parseInt(formData.stockQuantity) > 0 ? 'low_stock' : 'out_of_stock'),
         categoryId: formData.categoryId || null,
         subcategoryId: formData.subcategoryId || null,
         images: formData.images,
@@ -399,9 +410,9 @@ export default function ProductFormPage() {
           headers: authHeaders,
           body: JSON.stringify({
             ...productData,
-            listingContext: 'goods',
-            shippingMethodIds: selectedShippingMethodIds,
-            dispatchTime: dispatchTime || null,
+            listingContext,
+            shippingMethodIds: listingContext === 'goods' ? selectedShippingMethodIds : [],
+            dispatchTime: listingContext === 'goods' ? (dispatchTime || null) : null,
           }),
         });
         if (!res.ok) {
@@ -418,23 +429,17 @@ export default function ProductFormPage() {
           .select([
             'firstProductCreated',
             'profileCompleted',
-            'stripeConnectStatus',
-            'stripeChargesEnabled',
-            'stripePayoutsEnabled',
-            'stripeDetailsSubmitted',
             'storeCreated',
-            'shippingSetupCompleted',
+            'hasServiceCapability',
+            'sellerStatus',
           ].join(', '))
           .eq('userId', user.id)
           .maybeSingle<{
             firstProductCreated: boolean | null;
             profileCompleted: boolean | null;
-            stripeConnectStatus: string | null;
-            stripeChargesEnabled: boolean | null;
-            stripePayoutsEnabled: boolean | null;
-            stripeDetailsSubmitted: boolean | null;
             storeCreated: boolean | null;
-            shippingSetupCompleted: boolean | null;
+            hasServiceCapability: boolean | null;
+            sellerStatus: string | null;
           }>();
 
         if (!spRow?.firstProductCreated) {
@@ -448,12 +453,9 @@ export default function ProductFormPage() {
           // Force-check here using the flags we already fetched above.
           if (
             spRow?.profileCompleted &&
-            spRow?.stripeConnectStatus === 'active' &&
-            spRow?.stripeChargesEnabled &&
-            spRow?.stripePayoutsEnabled &&
-            spRow?.stripeDetailsSubmitted &&
             spRow?.storeCreated &&
-            spRow?.shippingSetupCompleted
+            (spRow?.hasServiceCapability || true) && // will be true after product insert
+            spRow?.sellerStatus !== 'suspended'
           ) {
             // onboardingStep 8 = all gate flags satisfied (5 wizard UI steps map to
             // 8 DB sub-steps tracked in seller_profiles; value mirrors ONBOARDING_COMPLETE_STEP
@@ -597,6 +599,44 @@ export default function ProductFormPage() {
           )}
 
           <form onSubmit={handleSubmit} noValidate>
+
+            {/* ─── LISTING CONTEXT SELECTOR ─────────────────────────────── */}
+            {!id && (
+              <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6 shadow-sm">
+                <h2 className="text-lg font-semibold text-gray-900 mb-1">Listing Type</h2>
+                <p className="text-sm text-gray-500 mb-4">Choose whether you are listing a service or a physical product.</p>
+                <div className="flex gap-4">
+                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'service' ? 'border-navy-800 bg-navy-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input
+                      type="radio"
+                      name="listingContext"
+                      value="service"
+                      checked={listingContext === 'service'}
+                      onChange={() => setListingContext('service')}
+                      className="mt-0.5 accent-navy-800"
+                    />
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">Service</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Digital or in-person service — no stock, no shipping required. Reusable listing.</p>
+                    </div>
+                  </label>
+                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'goods' ? 'border-navy-800 bg-navy-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input
+                      type="radio"
+                      name="listingContext"
+                      value="goods"
+                      checked={listingContext === 'goods'}
+                      onChange={() => setListingContext('goods')}
+                      className="mt-0.5 accent-navy-800"
+                    />
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">Physical Product</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Tangible goods — requires stock quantity and shipping setup.</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            )}
 
             {/* ─── SECTION 1: Basic Information ─────────────────────────── */}
             <Section title="1. Basic Information">
@@ -761,6 +801,7 @@ export default function ProductFormPage() {
             </Section>
 
             {/* ─── SECTION 4: Inventory ─────────────────────────────────── */}
+            {listingContext === 'goods' && (
             <Section title="4. Inventory">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -811,6 +852,7 @@ export default function ProductFormPage() {
                 </div>
               )}
             </Section>
+            )} {/* end listingContext === 'goods' — Inventory section */}
 
             {/* ─── SECTION 5: Media ─────────────────────────────────────── */}
             <Section title="5. Product Images">
@@ -826,6 +868,7 @@ export default function ProductFormPage() {
             </Section>
 
             {/* ─── SECTION 6: Dimensions & Shipping ────────────────────── */}
+            {listingContext === 'goods' && (
             <Section title="6. Dimensions &amp; Shipping">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div>
@@ -931,6 +974,7 @@ export default function ProductFormPage() {
                 </div>
               )}
             </Section>
+            )} {/* end listingContext === 'goods' — Dimensions & Shipping section */}
 
             {/* ─── SECTION 7: Specifications ────────────────────────────── */}
             <Section title="7. Specifications">

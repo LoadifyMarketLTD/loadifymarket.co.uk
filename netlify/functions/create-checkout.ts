@@ -83,7 +83,7 @@ export const handler: Handler = async (event) => {
     shippingAmount: rawShippingAmount,
     shippingMethod,
   } = body;
-  if (!items?.length || !shippingAddress || !billingAddress) {
+  if (!items?.length || !billingAddress) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
   }
   const shippingAmount = typeof rawShippingAmount === 'number' ? rawShippingAmount : 0;
@@ -133,7 +133,7 @@ export const handler: Handler = async (event) => {
     if (!isAdmin) {
       return {
         statusCode: 503,
-        body: JSON.stringify({ error: 'Platform under maintenance. Please try again later.' }),
+        body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }),
       };
     }
   }
@@ -175,6 +175,22 @@ export const handler: Handler = async (event) => {
         };
       }
     }
+  }
+
+  // Determine if every item in the cart is a service listing.
+  // Service-only carts skip shipping address validation.
+  const isServiceOnlyCart = items.every((item) => {
+    const dbProduct = productMap.get(item.productId);
+    return dbProduct?.listingContext === 'service';
+  });
+
+  // Shipping address is required for physical goods, optional for service-only carts.
+  const effectiveShippingAddress = shippingAddress ?? {};
+  if (!isServiceOnlyCart && (!shippingAddress || Object.keys(shippingAddress).length === 0)) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Shipping address is required for physical product orders.' }),
+    };
   }
 
   // Build enriched items — sellerId and price come from the DB to prevent
@@ -342,7 +358,7 @@ export const handler: Handler = async (event) => {
         currency: 'GBP',
         metadata: {
           items: enrichedItems,
-          shippingAddress,
+          shippingAddress: effectiveShippingAddress,
           billingAddress,
           subtotal,
           shippingAmount,

@@ -32,12 +32,15 @@ const SellerRFQ = () => {
   const [rfqs, setRfqs] = useState<RFQRequest[]>([]);
   // Set of rfqIds that *this seller* has already replied to (from rfq_responses table)
   const [repliedIds, setRepliedIds] = useState<Set<string>>(new Set());
+  // Map from rfqId → responseId for this seller (needed for withdraw)
+  const [responseIdByRfq, setResponseIdByRfq] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<RFQRequest | null>(null);
   const [quoteNote, setQuoteNote] = useState("");
   const [sending, setSending] = useState(false);
   const [rfqError, setRfqError] = useState("");
+  const [withdrawing, setWithdrawing] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!user?.id) return;
@@ -54,15 +57,16 @@ const SellerRFQ = () => {
         // Load only this seller's existing responses to track per-seller replied status
         supabase
           .from("rfq_responses")
-          .select("rfqId")
-          .eq("sellerId", user.id),
+          .select("id, rfqId")
+          .eq("sellerId", user.id)
+          .eq("status", "submitted"),
       ]);
       setRfqs((rfqsRes.data ?? []) as RFQRequest[]);
-      setRepliedIds(
-        new Set(
-          ((responsesRes.data ?? []) as { rfqId: string }[]).map((r) => r.rfqId)
-        )
-      );
+      const responseRows = (responsesRes.data ?? []) as { id: string; rfqId: string }[];
+      setRepliedIds(new Set(responseRows.map((r) => r.rfqId)));
+      const idMap: Record<string, string> = {};
+      for (const r of responseRows) idMap[r.rfqId] = r.id;
+      setResponseIdByRfq(idMap);
     } catch {
       toast({ title: "Could not load quote requests", variant: "destructive" });
     } finally {
@@ -85,8 +89,38 @@ const SellerRFQ = () => {
   const pending = filtered.filter((q) => !repliedIds.has(q.id));
   const replied = filtered.filter((q) => repliedIds.has(q.id));
 
-  const handleOpenEmailClient = async () => {
-    if (!selected || !quoteNote.trim() || !user?.id) return;
+  const handleWithdrawQuote = async (rfqId: string) => {
+    const responseId = responseIdByRfq[rfqId];
+    if (!responseId || !user?.id) return;
+    setWithdrawing(responseId);
+    try {
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      const token = authSession?.access_token;
+      const res = await fetch("/.netlify/functions/rfq", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ op: "withdraw", responseId }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error((payload as { error?: string }).error ?? `Server error ${res.status}`);
+      }
+      // Update local state: remove from replied set and id map
+      setRepliedIds((prev) => { const next = new Set(prev); next.delete(rfqId); return next; });
+      setResponseIdByRfq((prev) => { const next = { ...prev }; delete next[rfqId]; return next; });
+      setSelected(null);
+      toast({ title: "Quote withdrawn", description: "Your quote has been withdrawn from this request." });
+    } catch (e) {
+      toast({ title: "Could not withdraw quote", description: e instanceof Error ? e.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setWithdrawing(null);
+    }
+  };
+
+  const handleOpenEmailClient = async () => {    if (!selected || !quoteNote.trim() || !user?.id) return;
     setSending(true);
     setRfqError("");
     try {
@@ -289,11 +323,23 @@ const SellerRFQ = () => {
                   </div>
                 )}
               </div>
-              {!sellerReplied && (
+              {!sellerReplied ? (
                 <DialogFooter className="flex gap-2">
                   <Button variant="outline" onClick={() => { setSelected(null); setRfqError(""); }}>Cancel</Button>
                   <Button disabled={!quoteNote.trim() || sending} onClick={handleOpenEmailClient}>
                     <Mail className="h-4 w-4 mr-1" /> {sending ? "Saving…" : "Open Email Client"}
+                  </Button>
+                </DialogFooter>
+              ) : (
+                <DialogFooter className="flex gap-2">
+                  <Button variant="outline" onClick={() => { setSelected(null); setRfqError(""); }}>Close</Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={withdrawing === responseIdByRfq[selected.id]}
+                    onClick={() => handleWithdrawQuote(selected.id)}
+                  >
+                    {withdrawing === responseIdByRfq[selected.id] ? "Withdrawing…" : "Withdraw Quote"}
                   </Button>
                 </DialogFooter>
               )}

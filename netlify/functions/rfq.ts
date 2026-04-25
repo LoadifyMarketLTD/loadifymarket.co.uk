@@ -27,7 +27,7 @@
 
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
-import { getFeatureFlags } from './_shared/platformFlags';
+import { getFeatureFlags, isMaintenanceMode } from './_shared/platformFlags';
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -53,8 +53,8 @@ export const handler: Handler = async (event) => {
   }
 
   const { op } = body as { op?: string };
-  if (!op || !['create', 'respond', 'accept'].includes(op)) {
-    return { statusCode: 400, body: JSON.stringify({ error: '"op" must be one of: create, respond, accept' }) };
+  if (!op || !['create', 'respond', 'accept', 'withdraw'].includes(op)) {
+    return { statusCode: 400, body: JSON.stringify({ error: '"op" must be one of: create, respond, accept, withdraw' }) };
   }
 
   // ── Auth (required for respond and accept; optional for create) ──────────
@@ -84,6 +84,15 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 403,
       body: JSON.stringify({ error: 'RFQ system is currently disabled' }),
+    };
+  }
+
+  // ── Maintenance mode guard ────────────────────────────────────────────────
+  const maintenance = await isMaintenanceMode(supabase);
+  if (maintenance && !isAdmin) {
+    return {
+      statusCode: 503,
+      body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }),
     };
   }
 
@@ -265,16 +274,16 @@ export const handler: Handler = async (event) => {
       return { statusCode: 404, body: JSON.stringify({ error: 'Quote not found' }) };
     }
 
-    // Create an order/job from the accepted quote
-    // Status is 'pending' because no payment has been collected yet —
-    // the payment step follows after acceptance (service lifecycle).
+    // Create an order/job from the accepted quote.
+    // Status is 'accepted' because the buyer has explicitly approved this quote
+    // and the service lifecycle begins (service doctrine).
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert([
         {
           buyerId: rfq.buyerId ?? callerId,
           sellerId: response.sellerId,
-          status: 'pending',
+          status: 'accepted',
           escrowStatus: 'held',
           // Financial amounts from the accepted quote
           subtotal: response.quotedPrice,
@@ -316,6 +325,49 @@ export const handler: Handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({ orderId: order.id }),
     };
+  }
+
+  // ── withdraw ──────────────────────────────────────────────────────────────
+  if (op === 'withdraw') {
+    if (!callerId || (userRole !== 'seller' && !isAdmin)) {
+      return { statusCode: 401, body: JSON.stringify({ error: 'Seller authentication required' }) };
+    }
+
+    const { responseId } = body as { responseId?: string };
+    if (!responseId) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'responseId is required' }) };
+    }
+
+    // Fetch the response — seller can only withdraw their own quote
+    const { data: existingResponse } = await supabase
+      .from('rfq_responses')
+      .select('id, sellerId, status')
+      .eq('id', responseId)
+      .maybeSingle<{ id: string; sellerId: string; status: string }>();
+
+    if (!existingResponse) {
+      return { statusCode: 404, body: JSON.stringify({ error: 'Quote not found' }) };
+    }
+
+    if (!isAdmin && existingResponse.sellerId !== callerId) {
+      return { statusCode: 403, body: JSON.stringify({ error: 'You can only withdraw your own quotes' }) };
+    }
+
+    if (existingResponse.status !== 'submitted') {
+      return { statusCode: 409, body: JSON.stringify({ error: 'Only submitted (unaccepted) quotes can be withdrawn' }) };
+    }
+
+    const { error: withdrawError } = await supabase
+      .from('rfq_responses')
+      .update({ status: 'withdrawn' })
+      .eq('id', responseId);
+
+    if (withdrawError) {
+      console.error('rfq/withdraw error:', withdrawError.message);
+      return { statusCode: 500, body: JSON.stringify({ error: 'Failed to withdraw quote. Please try again.' }) };
+    }
+
+    return { statusCode: 200, body: JSON.stringify({ success: true }) };
   }
 
   return { statusCode: 400, body: JSON.stringify({ error: 'Unknown operation' }) };
