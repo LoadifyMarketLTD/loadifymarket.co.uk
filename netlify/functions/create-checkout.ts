@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import type { Handler } from '@netlify/functions';
+import { isMaintenanceMode } from './_shared/platformFlags';
 
 interface CheckoutItem {
   productId: string;
@@ -117,6 +118,24 @@ export const handler: Handler = async (event) => {
       statusCode: 401,
       body: JSON.stringify({ error: 'Authentication required. Please sign in to complete your purchase.' }),
     };
+  }
+
+  // 5a-b. Maintenance mode guard — block buyers when the platform is under
+  //       maintenance.  Admins (role = 'admin' | 'owner') bypass this gate.
+  const maintenance = await isMaintenanceMode(supabase);
+  if (maintenance) {
+    const { data: callerRow } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', verifiedBuyerId)
+      .maybeSingle<{ role: string | null }>();
+    const isAdmin = callerRow?.role === 'admin' || callerRow?.role === 'owner';
+    if (!isAdmin) {
+      return {
+        statusCode: 503,
+        body: JSON.stringify({ error: 'Platform under maintenance. Please try again later.' }),
+      };
+    }
   }
 
   // 5. Validate products from DB (price integrity + availability)

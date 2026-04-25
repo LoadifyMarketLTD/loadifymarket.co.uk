@@ -2,6 +2,7 @@ import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { getClientIp } from './_shared/getClientIp';
+import { getFeatureFlags } from './_shared/platformFlags';
 
 /**
  * POST /.netlify/functions/register
@@ -117,25 +118,18 @@ export const handler: Handler = async (event) => {
   // Check platform_settings.feature_flags before allowing registration.
   // AdminSettings saves sellerRegistration / buyerRegistration flags here.
   try {
-    const { data: flagRow } = await supabase
-      .from('platform_settings')
-      .select('value')
-      .eq('key', 'feature_flags')
-      .maybeSingle();
-    if (flagRow?.value && typeof flagRow.value === 'object') {
-      const flags = flagRow.value as Record<string, boolean>;
-      if (role === 'seller' && flags.sellerRegistration === false) {
-        return {
-          statusCode: 403,
-          body: JSON.stringify({ error: 'Seller registration is temporarily disabled. Please try again later.' }),
-        };
-      }
-      if (role === 'buyer' && flags.buyerRegistration === false) {
-        return {
-          statusCode: 403,
-          body: JSON.stringify({ error: 'Buyer registration is temporarily disabled. Please try again later.' }),
-        };
-      }
+    const flags = await getFeatureFlags(supabase);
+    if (role === 'seller' && flags.sellerRegistration === false) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: 'Seller registration is temporarily disabled. Please try again later.' }),
+      };
+    }
+    if (role === 'buyer' && flags.buyerRegistration === false) {
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: 'Buyer registration is temporarily disabled. Please try again later.' }),
+      };
     }
   } catch {
     // Non-fatal — if settings cannot be read, allow registration to proceed.
