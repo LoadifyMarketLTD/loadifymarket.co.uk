@@ -3,12 +3,15 @@
 -- Run in: Supabase Dashboard → SQL Editor
 -- Expected: Every check returns '✅ OK'
 --
--- CORRECTED from the original draft:
---   • 420_wholesale_categories slugs updated to match the actual
---     seeds in 420_seed_wholesale_categories.sql and the UI config
---     in src/lib/category-config.ts.
---   • trg_sync_email_verified is checked in trigger_schema='public'
---     (trigger fires on public.users, added by migration 442).
+-- Covers migrations: 00_consolidated_schema through 453_stripe_free_onboarding
+--
+-- NOTES:
+--   • 420_wholesale_categories slugs match 420_seed_wholesale_categories.sql
+--     and src/lib/category-config.ts (17 slugs).
+--   • trg_sync_email_verified is checked against trigger_schema='public'
+--     (fires on public.users, added by migration 442).
+--   • 453 check verifies the Stripe gate has been removed from
+--     sync_seller_onboarding_completed() (451 / 453 must be the live body).
 -- ============================================================
 
 SELECT check_name, status FROM (
@@ -368,6 +371,293 @@ SELECT check_name, status FROM (
              'wholesale-clothing'
            )
          ) || '/17 found' END
+
+  -- ── 430_fix_auth_trigger_robustness ─────────────────────────
+  UNION ALL SELECT '430_auth_trigger | function: handle_new_auth_user (hardened)',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                           WHERE n.nspname='public' AND p.proname='handle_new_auth_user')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  -- ── 440_add_storage_buckets_avatars_documents ────────────────
+  UNION ALL SELECT '440_storage | bucket: avatars',
+         CASE WHEN EXISTS (SELECT 1 FROM storage.buckets WHERE id='avatars')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '440_storage | bucket: documents',
+         CASE WHEN EXISTS (SELECT 1 FROM storage.buckets WHERE id='documents')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '440_storage | RLS policy: avatars_select',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_policies
+                           WHERE schemaname='storage' AND tablename='objects'
+                           AND policyname='avatars_select')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '440_storage | RLS policy: documents_select',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_policies
+                           WHERE schemaname='storage' AND tablename='objects'
+                           AND policyname='documents_select')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  -- ── 441_add_shipping_zones ───────────────────────────────────
+  UNION ALL SELECT '441_shipping_zones | table: shipping_zones',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.tables
+                           WHERE table_schema='public' AND table_name='shipping_zones')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '441_shipping_zones | 3 default zones seeded (UK, Europe, Rest of World)',
+         CASE WHEN (SELECT COUNT(*) FROM public.shipping_zones
+                    WHERE name IN ('United Kingdom','Europe','Rest of World')) = 3
+              THEN '✅ OK'
+              ELSE '❌ MISSING — only ' || (
+                SELECT COUNT(*)::text FROM public.shipping_zones
+                WHERE name IN ('United Kingdom','Europe','Rest of World')
+              ) || '/3 found' END
+
+  UNION ALL SELECT '441_shipping_zones | trigger: trg_shipping_zones_updated_at',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.triggers
+                           WHERE trigger_schema='public'
+                           AND trigger_name='trg_shipping_zones_updated_at')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  -- ── 442_fix_sync_email_verified_trigger ──────────────────────
+  UNION ALL SELECT '442_email_verified | function: sync_email_verified_on_insert',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                           WHERE n.nspname='public' AND p.proname='sync_email_verified_on_insert')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '442_email_verified | trigger: trg_sync_email_verified (on public.users)',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.triggers
+                           WHERE trigger_schema='public'
+                           AND trigger_name='trg_sync_email_verified'
+                           AND event_object_table='users')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  -- ── 443_add_stripe_connect_account_id ────────────────────────
+  UNION ALL SELECT '443_stripe_connect_acct | column: seller_profiles.stripeConnectAccountId',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='seller_profiles'
+                           AND column_name='stripeConnectAccountId')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  -- ── 444_add_proof_of_delivery_bucket ─────────────────────────
+  UNION ALL SELECT '444_storage | bucket: proof-of-delivery',
+         CASE WHEN EXISTS (SELECT 1 FROM storage.buckets WHERE id='proof-of-delivery')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '444_storage | RLS policy: pod_select',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_policies
+                           WHERE schemaname='storage' AND tablename='objects'
+                           AND policyname='pod_select')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  -- ── 445_add_decrement_product_stock ──────────────────────────
+  UNION ALL SELECT '445_stock | function: decrement_product_stock(UUID, INTEGER)',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                           WHERE n.nspname='public' AND p.proname='decrement_product_stock')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  -- ── 446_add_onboarding_fields ────────────────────────────────
+  UNION ALL SELECT '446_onboarding | column: users.onboardingCompleted',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='users'
+                           AND column_name='onboardingCompleted')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '446_onboarding | column: users.onboardingStep',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='users'
+                           AND column_name='onboardingStep')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '446_onboarding | column: seller_profiles.profileCompleted',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='seller_profiles'
+                           AND column_name='profileCompleted')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '446_onboarding | column: seller_profiles.storeCreated',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='seller_profiles'
+                           AND column_name='storeCreated')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '446_onboarding | column: seller_profiles.shippingSetupCompleted',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='seller_profiles'
+                           AND column_name='shippingSetupCompleted')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '446_onboarding | column: seller_profiles.firstProductCreated',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='seller_profiles'
+                           AND column_name='firstProductCreated')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '446_onboarding | function: sync_seller_onboarding_completed',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                           WHERE n.nspname='public' AND p.proname='sync_seller_onboarding_completed')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '446_onboarding | trigger: trg_sync_seller_onboarding',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.triggers
+                           WHERE trigger_schema='public'
+                           AND trigger_name='trg_sync_seller_onboarding')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  -- ── 447_service_first_onboarding ─────────────────────────────
+  UNION ALL SELECT '447_service_onboarding | column: seller_profiles.hasServiceCapability',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='seller_profiles'
+                           AND column_name='hasServiceCapability')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '447_service_onboarding | function: set_seller_service_capability',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                           WHERE n.nspname='public' AND p.proname='set_seller_service_capability')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '447_service_onboarding | trigger: trg_products_service_capability',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.triggers
+                           WHERE trigger_schema='public'
+                           AND trigger_name='trg_products_service_capability')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '447_service_onboarding | function: set_seller_service_capability_from_services',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                           WHERE n.nspname='public' AND p.proname='set_seller_service_capability_from_services')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '447_service_onboarding | trigger: trg_services_service_capability',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.triggers
+                           WHERE trigger_schema='public'
+                           AND trigger_name='trg_services_service_capability')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  -- ── 448_service_lifecycle ────────────────────────────────────
+  UNION ALL SELECT '448_service_lifecycle | column: orders.serviceCompletedAt',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='orders'
+                           AND column_name='serviceCompletedAt')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '448_service_lifecycle | orders.status CHECK includes ''completed''',
+         CASE WHEN EXISTS (
+           SELECT 1 FROM pg_constraint c
+           JOIN pg_class t ON t.oid = c.conrelid
+           JOIN pg_namespace n ON n.oid = t.relnamespace
+           WHERE n.nspname = 'public' AND t.relname = 'orders'
+             AND c.conname = 'orders_status_check'
+             AND pg_get_constraintdef(c.oid) LIKE '%completed%'
+         ) THEN '✅ OK' ELSE '❌ MISSING' END
+
+  -- ── 449_listing_context ──────────────────────────────────────
+  UNION ALL SELECT '449_listing_context | column: products.listingContext',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='products'
+                           AND column_name='listingContext')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '449_listing_context | index: idx_products_listing_context',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_indexes
+                           WHERE schemaname='public' AND tablename='products'
+                           AND indexname='idx_products_listing_context')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  -- ── 450_b2b_buyer_profiles ───────────────────────────────────
+  UNION ALL SELECT '450_b2b | column: buyer_profiles.accountType',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='buyer_profiles'
+                           AND column_name='accountType')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '450_b2b | column: buyer_profiles.companyName',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='buyer_profiles'
+                           AND column_name='companyName')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '450_b2b | column: buyer_profiles.vatNumber',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='buyer_profiles'
+                           AND column_name='vatNumber')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '450_b2b | column: buyer_profiles.isVatVerified',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='buyer_profiles'
+                           AND column_name='isVatVerified')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '450_b2b | column: orders.isB2B',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='orders'
+                           AND column_name='isB2B')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '450_b2b | orders.status CHECK includes ''invoice_requested''',
+         CASE WHEN EXISTS (
+           SELECT 1 FROM pg_constraint c
+           JOIN pg_class t ON t.oid = c.conrelid
+           JOIN pg_namespace n ON n.oid = t.relnamespace
+           WHERE n.nspname = 'public' AND t.relname = 'orders'
+             AND c.conname = 'orders_status_check'
+             AND pg_get_constraintdef(c.oid) LIKE '%invoice_requested%'
+         ) THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '450_b2b | index: idx_orders_is_b2b',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_indexes
+                           WHERE schemaname='public' AND tablename='orders'
+                           AND indexname='idx_orders_is_b2b')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  -- ── 451_decouple_stripe_from_onboarding ──────────────────────
+  -- (superseded by 453; the function exists is sufficient)
+  UNION ALL SELECT '451_decouple_stripe | function: sync_seller_onboarding_completed exists',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                           WHERE n.nspname='public' AND p.proname='sync_seller_onboarding_completed')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  -- ── 452_rfq_orders_linkage ───────────────────────────────────
+  UNION ALL SELECT '452_rfq_orders | column: orders.rfqId',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='orders'
+                           AND column_name='rfqId')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '452_rfq_orders | column: orders.rfqResponseId',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
+                           WHERE table_schema='public' AND table_name='orders'
+                           AND column_name='rfqResponseId')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '452_rfq_orders | orders.productId is nullable',
+         CASE WHEN EXISTS (
+           SELECT 1 FROM information_schema.columns
+           WHERE table_schema='public' AND table_name='orders'
+             AND column_name='productId' AND is_nullable='YES'
+         ) THEN '✅ OK' ELSE '❌ MISSING — productId still NOT NULL' END
+
+  UNION ALL SELECT '452_rfq_orders | index: idx_orders_rfq',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_indexes
+                           WHERE schemaname='public' AND tablename='orders'
+                           AND indexname='idx_orders_rfq')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  -- ── 453_stripe_free_onboarding ───────────────────────────────
+  -- Verify the final onboarding gate: Stripe is NOT required.
+  -- The function body must reference hasServiceCapability but NOT
+  -- stripeConnectStatus (indicates the 453 / 451 version is live).
+  UNION ALL SELECT '453_stripe_free | sync_seller_onboarding_completed: Stripe gate removed',
+         CASE WHEN EXISTS (
+           SELECT 1 FROM pg_proc p
+           JOIN pg_namespace n ON n.oid = p.pronamespace
+           WHERE n.nspname = 'public'
+             AND p.proname = 'sync_seller_onboarding_completed'
+             AND pg_get_functiondef(p.oid)     LIKE '%hasServiceCapability%'
+             AND pg_get_functiondef(p.oid) NOT LIKE '%stripeConnectStatus%'
+         ) THEN '✅ OK'
+         ELSE '❌ MISSING — function still references stripeConnectStatus (re-run 453_stripe_free_onboarding.sql)' END
 
   -- ── CRITICAL: admin role set for platform owner ──────────────
   UNION ALL SELECT '⚠️ CRITICAL | owner account has role=admin in public.users',
