@@ -2,7 +2,6 @@ import { Search, ShieldCheck, Truck, UserPlus, Tag, CreditCard } from "lucide-re
 import type { LucideIcon } from "lucide-react";
 
 interface Step {
-  number: number;
   icon: LucideIcon;
   title: string;
   description: string;
@@ -10,19 +9,16 @@ interface Step {
 
 const buyerSteps: Step[] = [
   {
-    number: 1,
     icon: Search,
     title: "Browse & Discover",
     description: "Find products from verified UK sellers across all categories.",
   },
   {
-    number: 2,
     icon: ShieldCheck,
     title: "Secure Checkout",
     description: "Pay safely via Stripe Checkout with full encryption and buyer protection.",
   },
   {
-    number: 3,
     icon: Truck,
     title: "Delivered to You",
     description: "Track your order from your buyer dashboard until it arrives.",
@@ -31,19 +27,16 @@ const buyerSteps: Step[] = [
 
 const sellerSteps: Step[] = [
   {
-    number: 1,
     icon: UserPlus,
     title: "Create Your Account",
     description: "Register in minutes — no fees, no card required, no monthly charges.",
   },
   {
-    number: 2,
     icon: Tag,
     title: "List Products or Services",
     description: "Upload photos, set pricing, manage stock, and publish listings instantly.",
   },
   {
-    number: 3,
     icon: CreditCard,
     title: "Get Paid via Stripe",
     description: "Receive fast payouts directly to your bank through Stripe Connect Express.",
@@ -53,26 +46,25 @@ const sellerSteps: Step[] = [
 function StepCard({ step }: { step: Step }) {
   const Icon = step.icon;
   return (
-    <div className="h-[220px] w-full rounded-xl border border-slate-300 bg-white/80 p-5 shadow-sm flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-[#C99A3E] text-[#0B1016] font-bold text-sm flex items-center justify-center shrink-0">
-          {step.number}
-        </div>
-        <Icon className="w-5 h-5 text-gray-400 shrink-0" aria-hidden="true" />
-      </div>
-      <p className="text-sm font-bold text-gray-900 leading-tight">{step.title}</p>
-      <p className="text-sm text-gray-600 leading-relaxed">{step.description}</p>
+    <div className="rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#0F172A,#020617)] p-6 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(251,191,36,0.15)] hover:border-yellow-400/25">
+      <Icon
+        className="w-7 h-7 text-[#FBBF24] shrink-0"
+        style={{ filter: 'drop-shadow(0 0 6px rgba(251,191,36,0.4))' }}
+        aria-hidden="true"
+      />
+      <p className="text-base font-semibold text-white leading-tight">{step.title}</p>
+      <p className="text-sm text-slate-400 leading-relaxed">{step.description}</p>
     </div>
   );
 }
 
 function StepsPanel({ id, title, steps }: { id: string; title: string; steps: Step[] }) {
   return (
-    <div id={id} className="w-full rounded-2xl border border-slate-200 bg-white/90 p-6 lg:p-8 shadow-sm">
-      <h2 className="text-lg font-bold text-gray-900 mb-6">{title}</h2>
-      <div className="grid grid-cols-3 gap-8">
+    <div id={id} className="w-full rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#0F172A,#020617)] p-6 lg:p-8">
+      <h2 className="text-xl font-semibold text-white mb-4">{title}</h2>
+      <div className="grid grid-cols-3 gap-6">
         {steps.map((step) => (
-          <StepCard key={step.number} step={step} />
+          <StepCard key={step.title} step={step} />
         ))}
       </div>
     </div>

@@ -47,7 +47,7 @@ export default function Home() {
         <HeroSection />
 
         {/* ── 2–4. Dark-bg platform overview (Trust → HowItWorks → Features+Security) ── */}
-        <section className="bg-[#0B1016] py-8 px-8" aria-label="Platform overview">
+        <section className="bg-[#020617] py-8 px-8" aria-label="Platform overview">
 
           {/* Trust Strip */}
           <TrustStrip />

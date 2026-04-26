@@ -31,18 +31,27 @@ const ITEMS: TrustItem[] = [
 ];
 
 const TrustStrip = () => (
-  <div className="grid grid-cols-4 gap-8" aria-label="Platform trust features">
+  <div className="grid grid-cols-4 gap-6" aria-label="Platform trust features">
     {ITEMS.map(({ icon: Icon, flag, label, sub }) => (
-      <div key={label} className="flex items-center gap-3 bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-4">
-        <span className="w-10 h-10 rounded-full bg-[#F3E4BF] flex items-center justify-center shrink-0 overflow-hidden">
+      <div
+        key={label}
+        className="flex items-center gap-3 rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#0F172A,#020617)] px-5 py-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(251,191,36,0.15)] hover:border-yellow-400/25"
+      >
+        <span className="w-10 h-10 flex items-center justify-center shrink-0 overflow-hidden">
           {flag
             ? <UKFlag />
-            : Icon && <Icon className="h-5 w-5 text-[#C99A3E]" aria-hidden="true" />
+            : Icon && (
+                <Icon
+                  className="h-6 w-6 text-[#FBBF24]"
+                  style={{ filter: 'drop-shadow(0 0 6px rgba(251,191,36,0.4))' }}
+                  aria-hidden="true"
+                />
+              )
           }
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-bold text-gray-900 leading-tight">{label}</p>
-          <p className="text-xs text-gray-500 leading-tight mt-0.5">{sub}</p>
+          <p className="text-sm font-semibold text-white leading-tight">{label}</p>
+          <p className="text-xs text-slate-400 leading-tight mt-0.5">{sub}</p>
         </div>
       </div>
     ))}
