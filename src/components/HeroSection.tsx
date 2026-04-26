@@ -1,4 +1,11 @@
 import { Link } from 'react-router-dom';
+import { CheckCircle2 } from 'lucide-react';
+
+const BENEFITS = [
+  { text: 'Free to list products', bold: false },
+  { text: '0% Commission until 31 Dec 2026', bold: true },
+  { text: 'Fast Stripe payouts', bold: false },
+];
 
 const HeroSection = () => (
   <section
@@ -9,30 +16,44 @@ const HeroSection = () => (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
 
         {/* ── Left column ──────────────────────────────────────────────── */}
-        <div className="flex flex-col gap-5 text-center lg:text-left items-center lg:items-start">
+        <div className="flex flex-col gap-4 text-center lg:text-left items-center lg:items-start">
 
           {/* 1. Promo badge */}
-          <div className="inline-flex items-center bg-green-600 text-white text-xs font-bold rounded-full px-4 py-1.5 tracking-wide uppercase">
+          <div className="inline-flex items-center bg-green-600 text-white text-sm font-bold rounded-full px-4 py-1.5 tracking-wide uppercase">
             0% Commission Until 31 December 2026
           </div>
 
-          {/* 2. H1 — two lines */}
-          <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight text-gray-900">
+          {/* 2. Label */}
+          <span className="text-xs font-semibold tracking-widest uppercase text-green-700/60">
+            UK Multi-Category Marketplace
+          </span>
+
+          {/* 3. H1 — two lines */}
+          <h1 className="text-4xl sm:text-5xl font-bold leading-tight text-gray-900">
             The UK Marketplace<br />
             <span className="text-green-600">Built for Modern Sellers</span>
           </h1>
 
-          {/* 3. Subtitle */}
-          <p className="text-lg text-gray-600 max-w-xl">
-            Sell products, manage orders, and get paid —<br className="hidden sm:block" />
-            all in one secure platform.
+          {/* 4. Description */}
+          <p className="text-base text-gray-600 max-w-lg">
+            List your products or services for free and connect with verified UK buyers. No setup fees, no monthly charges.
           </p>
 
-          {/* 4. CTAs */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          {/* 5. Benefits row — 3 checkmarks */}
+          <ul className="flex flex-col sm:flex-row gap-3 sm:gap-5 items-center lg:items-start">
+            {BENEFITS.map(({ text, bold }) => (
+              <li key={text} className="flex items-center gap-1.5 text-sm text-gray-700">
+                <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" aria-hidden="true" />
+                <span className={bold ? 'font-semibold' : ''}>{text}</span>
+              </li>
+            ))}
+          </ul>
+
+          {/* 6. CTAs */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-1">
             <Link
               to="/register?type=seller"
-              className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
             >
               Start Selling Today
             </Link>
@@ -44,27 +65,27 @@ const HeroSection = () => (
             </Link>
           </div>
 
-          {/* 5. Payment badges */}
+          {/* 7. Payment badges */}
           <div className="flex flex-col items-center lg:items-start gap-2 mt-1">
-            <span className="text-[10px] font-semibold text-gray-400 tracking-widest uppercase">
+            <span className="text-sm font-medium text-gray-600">
               Secure Payments Powered By
             </span>
             <div className="flex items-center gap-4">
               {/* Visa */}
-              <svg viewBox="0 0 780 500" xmlns="http://www.w3.org/2000/svg" className="h-7 w-auto" aria-label="Visa">
+              <svg viewBox="0 0 780 500" xmlns="http://www.w3.org/2000/svg" className="h-8 w-auto" aria-label="Visa">
                 <rect width="780" height="500" rx="40" fill="#1a1f71"/>
                 <path d="M290 357l37-218h59l-37 218h-59zM539 145c-12-4-30-9-52-9-57 0-97 29-97 70 0 30 28 47 50 57 22 10 29 17 29 26 0 14-18 20-34 20-22 0-34-3-52-11l-7-3-8 46c13 6 37 11 62 11 61 0 100-29 100-73 0-24-16-43-50-58-21-10-34-16-34-26 0-9 11-18 34-18 20 0 34 4 45 8l5 2 8-42zM614 139h-45c-14 0-24 4-30 18l-85 200h60l12-32h73l7 32h53l-45-218zm-70 140l22-59 5-14 2 8 13 65h-42zM231 139l-57 148-6-30c-10-34-42-70-77-88l52 188h61l91-218h-64z" fill="#fff"/>
                 <path d="M152 139H57l-1 5c74 18 123 62 143 114l-21-103c-4-13-13-16-26-16z" fill="#f9a533"/>
               </svg>
               {/* Mastercard */}
-              <svg viewBox="0 0 38 24" xmlns="http://www.w3.org/2000/svg" className="h-7 w-auto" aria-label="Mastercard">
+              <svg viewBox="0 0 38 24" xmlns="http://www.w3.org/2000/svg" className="h-8 w-auto" aria-label="Mastercard">
                 <rect width="38" height="24" rx="3" fill="#252525"/>
                 <circle cx="15" cy="12" r="7" fill="#eb001b"/>
                 <circle cx="23" cy="12" r="7" fill="#f79e1b"/>
                 <path d="M19 7a7 7 0 010 10A7 7 0 0119 7z" fill="#ff5f00"/>
               </svg>
               {/* Stripe wordmark */}
-              <svg viewBox="0 0 60 25" xmlns="http://www.w3.org/2000/svg" className="h-6 w-auto" aria-label="Stripe">
+              <svg viewBox="0 0 60 25" xmlns="http://www.w3.org/2000/svg" className="h-7 w-auto" aria-label="Stripe">
                 <path d="M5.4 10.2c0-.8.7-1.1 1.8-1.1 1.6 0 3.6.5 5.2 1.3V5.7C10.8 5 9 4.7 7.2 4.7 3 4.7.6 6.9.6 10.4c0 5.5 7.5 4.6 7.5 7 0 .9-.8 1.2-2 1.2-1.7 0-3.9-.7-5.6-1.7V22c1.9.8 3.8 1.2 5.6 1.2 4.3 0 7.2-2.1 7.2-5.7-.1-5.9-7.9-4.9-7.9-7.3zM22.2 1.5L17.8 2.5 17.8 7.1 15 7.1 15 11.5 17.8 11.5 17.8 19c0 3.6 1.7 4.8 5 4.8 1.3 0 2.8-.2 4-.7l0-4.3c-.7.3-2.1.7-3 .7-1.3 0-1.8-.5-1.8-1.8V11.5h4.8V7.1h-4.6V1.5zM38.7 7c-1.8 0-3 .9-3.7 1.5l-.3-1.4h-4.5V23.5h5.1V12.9c.6-.7 1.5-1.1 2.6-1.1.4 0 .8 0 1.1.1V7C38.8 7 38.7 7 38.7 7zM44 4.3c-1.6 0-2.9 1.2-2.9 2.8 0 1.6 1.3 2.8 2.9 2.8 1.7 0 2.9-1.2 2.9-2.8C46.9 5.5 45.7 4.3 44 4.3zM41.5 23.5h5.1V7.1h-5.1V23.5zM60 14.2c0-4.4-2.1-7.5-6.3-7.5-4.2 0-6.8 3.1-6.8 7.5 0 5 2.8 7.5 7.1 7.5 2 0 3.6-.4 5-1.2l0-3.8c-1.2.7-2.6 1.2-4.2 1.2-1.6 0-3-.6-3.2-2.7h8.3C60 14.8 60 14.5 60 14.2zM51.6 12.7c.1-2 1.2-2.8 2.3-2.8 1.1 0 2.1.8 2.1 2.8H51.6z" fill="#635bff"/>
               </svg>
             </div>
@@ -73,7 +94,7 @@ const HeroSection = () => (
         </div>
 
         {/* ── Right column — product image ─────────────────────────────── */}
-        <div className="relative rounded-xl overflow-hidden min-h-[280px] sm:min-h-[380px] lg:min-h-[420px]">
+        <div className="relative rounded-xl overflow-hidden min-h-[280px] sm:min-h-[380px] lg:min-h-[440px]">
           <img
             src="/hero-marketplace.jpg"
             alt="UK Marketplace products — phones, bags, shoes, cameras"
@@ -81,6 +102,12 @@ const HeroSection = () => (
             height={1024}
             className="w-full h-full object-cover object-center absolute inset-0"
             loading="eager"
+          />
+          {/* Gradient: white → transparent from left edge for smooth blending */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.5) 0%, transparent 35%)' }}
+            aria-hidden="true"
           />
         </div>
 

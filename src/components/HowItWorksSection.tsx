@@ -1,4 +1,5 @@
-import { Search, ShieldCheck, Truck, UserPlus, Tag, CreditCard } from "lucide-react";
+import { Link } from 'react-router-dom';
+import { Search, ShieldCheck, Truck, UserPlus, Tag, CreditCard, ArrowRight } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface Step {
@@ -50,31 +51,63 @@ const sellerSteps: Step[] = [
   },
 ];
 
-function StepsPanel({ title, steps, id }: { title: string; steps: Step[]; id: string }) {
+function StepCard({ step }: { step: Step }) {
+  const Icon = step.icon;
   return (
-    <div id={id} className="flex-1 rounded-xl border border-gray-200 bg-white shadow-sm p-6 lg:p-8">
+    <div className="flex flex-col gap-3 flex-1 min-w-0">
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 rounded-full bg-green-600 text-white font-bold text-sm flex items-center justify-center shrink-0">
+          {step.number}
+        </div>
+        <Icon className="w-5 h-5 text-gray-400 shrink-0" aria-hidden="true" />
+      </div>
+      <p className="text-sm font-bold text-gray-900 leading-tight">{step.title}</p>
+      <p className="text-sm text-gray-600 leading-relaxed">{step.description}</p>
+    </div>
+  );
+}
+
+function StepsPanel({
+  id,
+  title,
+  steps,
+  cta,
+}: {
+  id: string;
+  title: string;
+  steps: Step[];
+  cta?: { label: string; to: string };
+}) {
+  return (
+    <div id={id} className="flex-1 rounded-xl border border-gray-200 bg-white shadow-sm p-6 lg:p-8 flex flex-col">
       <h2 className="text-lg font-bold text-gray-900 mb-6">{title}</h2>
-      <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-0">
+
+      {/* Steps row — equal height via items-stretch */}
+      <div className="flex flex-col sm:flex-row items-stretch gap-4 sm:gap-2 flex-1">
         {steps.map((step, idx) => (
-          <div key={step.number} className="flex items-start sm:flex-col gap-3 flex-1 min-w-0">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-full bg-green-700 text-white font-bold text-sm flex items-center justify-center shrink-0">
-                  {step.number}
-                </div>
-                <step.icon className="w-5 h-5 text-gray-500 shrink-0" aria-hidden="true" />
-              </div>
-              <p className="text-sm font-bold text-gray-900 leading-tight mb-1">{step.title}</p>
-              <p className="text-xs text-gray-600 leading-relaxed">{step.description}</p>
-            </div>
+          <div key={step.number} className="flex sm:flex-col items-start sm:items-stretch gap-2 flex-1 min-w-0">
+            <StepCard step={step} />
             {idx < steps.length - 1 && (
-              <div className="hidden sm:flex items-start pt-2.5 text-gray-300 text-base font-light shrink-0 mx-1 self-start">
-                →
+              <div className="hidden sm:flex items-start pt-3 shrink-0 mx-1">
+                <ArrowRight className="h-4 w-4 text-gray-300" aria-hidden="true" />
               </div>
             )}
           </div>
         ))}
       </div>
+
+      {/* Optional section CTA */}
+      {cta && (
+        <div className="mt-6 pt-5 border-t border-gray-100 text-center sm:text-left">
+          <Link
+            to={cta.to}
+            className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm"
+          >
+            {cta.label}
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
@@ -83,8 +116,17 @@ const HowItWorksSection = () => (
   <section className="py-10 lg:py-14 bg-white" aria-label="How it works">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex flex-col lg:flex-row gap-6">
-        <StepsPanel id="how-it-works-buyers" title="How It Works for Buyers" steps={buyerSteps} />
-        <StepsPanel id="how-it-works-sellers" title="How It Works for Sellers" steps={sellerSteps} />
+        <StepsPanel
+          id="how-it-works-buyers"
+          title="How It Works for Buyers"
+          steps={buyerSteps}
+        />
+        <StepsPanel
+          id="how-it-works-sellers"
+          title="How It Works for Sellers"
+          steps={sellerSteps}
+          cta={{ label: "Start Selling — It's Free", to: "/register?type=seller" }}
+        />
       </div>
     </div>
   </section>
