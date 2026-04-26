@@ -149,24 +149,21 @@ SELECT check_name, status FROM (
                            WHERE n.nspname='public' AND p.proname='request_payout')
               THEN '✅ OK' ELSE '❌ MISSING' END
 
-  UNION ALL SELECT '90_launch_features | function: approve_payout(UUID)',
-         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
-                           WHERE n.nspname='public' AND p.proname='approve_payout')
+  -- ── 454_payout_rpc_security: payout RPCs ─────────────────────
+  UNION ALL SELECT '454_payout_rpc_security | fn: credit_seller_balance',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.routines WHERE routine_schema='public' AND routine_name='credit_seller_balance')
               THEN '✅ OK' ELSE '❌ MISSING' END
 
-  UNION ALL SELECT '90_launch_features | function: complete_payout(UUID)',
-         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
-                           WHERE n.nspname='public' AND p.proname='complete_payout')
+  UNION ALL SELECT '454_payout_rpc_security | fn: approve_payout',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.routines WHERE routine_schema='public' AND routine_name='approve_payout')
               THEN '✅ OK' ELSE '❌ MISSING' END
 
-  UNION ALL SELECT '90_launch_features | function: reject_payout(UUID, TEXT)',
-         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
-                           WHERE n.nspname='public' AND p.proname='reject_payout')
+  UNION ALL SELECT '454_payout_rpc_security | fn: complete_payout',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.routines WHERE routine_schema='public' AND routine_name='complete_payout')
               THEN '✅ OK' ELSE '❌ MISSING' END
 
-  UNION ALL SELECT '90_launch_features | function: credit_seller_balance(UUID, UUID)',
-         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
-                           WHERE n.nspname='public' AND p.proname='credit_seller_balance')
+  UNION ALL SELECT '454_payout_rpc_security | fn: reject_payout',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.routines WHERE routine_schema='public' AND routine_name='reject_payout')
               THEN '✅ OK' ELSE '❌ MISSING' END
 
   -- ── 95_stripe_connect: Stripe Connect columns ────────────────
