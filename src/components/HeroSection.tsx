@@ -44,9 +44,9 @@ const HeroSection = () => (
             </Link>
           </div>
 
-          {/* 7. Payment badges */}
+          {/* 5. Payment badges */}
           <div className="flex flex-col items-center lg:items-start gap-2 mt-1">
-            <span className="text-sm font-medium text-gray-600">
+            <span className="text-xs font-semibold tracking-wider uppercase text-gray-500">
               Secure Payments Powered By
             </span>
             <div className="flex items-center gap-4">

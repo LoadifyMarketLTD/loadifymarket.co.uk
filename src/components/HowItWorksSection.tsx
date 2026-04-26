@@ -82,17 +82,17 @@ function StepsPanel({
     <div id={id} className="flex-1 rounded-xl border border-gray-200 bg-white shadow-sm p-6 lg:p-8 flex flex-col">
       <h2 className="text-lg font-bold text-gray-900 mb-6">{title}</h2>
 
-      {/* Steps row — equal height via items-stretch */}
-      <div className="flex flex-col sm:flex-row items-stretch gap-4 sm:gap-2 flex-1">
+      {/* Steps row — arrows as siblings between cards */}
+      <div className="flex flex-col sm:flex-row items-stretch gap-4 sm:gap-0 flex-1">
         {steps.map((step, idx) => (
-          <div key={step.number} className="flex sm:flex-col items-start sm:items-stretch gap-2 flex-1 min-w-0">
-            <StepCard step={step} />
+          <>
+            <StepCard key={step.number} step={step} />
             {idx < steps.length - 1 && (
-              <div className="hidden sm:flex items-start pt-3 shrink-0 mx-1">
+              <div key={`arrow-${idx}`} className="hidden sm:flex items-start pt-3 shrink-0 px-2">
                 <ArrowRight className="h-4 w-4 text-gray-300" aria-hidden="true" />
               </div>
             )}
-          </div>
+          </>
         ))}
       </div>
 
