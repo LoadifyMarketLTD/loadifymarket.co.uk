@@ -1,320 +1,206 @@
-# Loadify Market Development Roadmap
+# Loadify Market — Status & Roadmap
 
-This document outlines the remaining work needed to complete the Loadify Market platform.
+_Last updated: April 2026_
 
-## Phase 1: Foundation ✅ COMPLETE
+This document reflects the actual completed state of the platform and remaining work.
 
-- [x] Project setup and configuration
-- [x] Database schema design
+---
+
+## ✅ Phase 1: Foundation — COMPLETE
+
+- [x] Project setup (Vite + React + TypeScript + Tailwind)
+- [x] Supabase database schema (50+ migrations, full RLS)
 - [x] Type definitions
-- [x] Basic routing structure
-- [x] Authentication framework
-- [x] UI/UX foundation with Tailwind
-- [x] Legal pages (Terms, Privacy, Cookies, Returns, Shipping)
-- [x] SEO basics (meta tags, sitemap, robots.txt)
+- [x] React Router v6 routing
+- [x] Supabase Auth (email/password, email verification, password reset)
+- [x] UI/UX foundation (shadcn/ui components + custom design system)
+- [x] Legal pages (Terms, Privacy, Cookies, Returns, Shipping, Buyer Terms, Seller Terms, Disclaimer, AUP)
+- [x] SEO meta tags, sitemap, robots.txt
+- [x] Netlify deployment (netlify.toml, functions, redirects, headers)
 
-## Phase 2: Core Features (HIGH PRIORITY)
+---
+
+## ✅ Phase 2: Core Features — COMPLETE
 
 ### 2.1 Product Management
-- [ ] **Product Catalog Page**
-  - [ ] Grid/list view toggle
-  - [ ] Filters (category, price range, condition, location)
-  - [ ] Sort options (price, date, popularity)
-  - [ ] Pagination
-  - [ ] Search functionality
-- [ ] **Product Detail Page**
-  - [ ] Image gallery with zoom
-  - [ ] Detailed specifications
-  - [ ] Seller information
-  - [ ] Related products
-  - [ ] Reviews display
-  - [ ] Add to cart/wishlist
-- [ ] **Product Creation/Edit (Seller)**
-  - [ ] Multi-image upload
-  - [ ] Rich text description
-  - [ ] Category/subcategory selection
-  - [ ] Price calculator (with VAT)
-  - [ ] Stock management
-  - [ ] Pallet-specific fields
+- [x] Product Catalog page (grid/list, filters, sort, pagination, search)
+- [x] Product Detail page (image gallery, specs, seller info, reviews, add to cart/wishlist)
+- [x] Product Creation/Edit (multi-image upload, description, category, VAT calculator, stock)
+- [x] Product approval flow (admin approves / autoApprove feature flag)
+- [x] Products go through serverless functions (`create-product.ts`, `update-product.ts`)
+- [x] Service listings (listingContext=service skips stock/shipping)
+- [x] Featured categories on homepage
 
 ### 2.2 Checkout & Payment
-- [ ] **Checkout Flow**
-  - [ ] Address form (shipping/billing)
-  - [ ] Delivery method selection
-  - [ ] Order summary
-  - [ ] Stripe integration
-  - [ ] Payment confirmation
-- [ ] **Stripe Connect**
-  - [ ] Seller onboarding
-  - [ ] Connected account creation
-  - [ ] Escrow implementation
-  - [ ] Commission calculation
-  - [ ] Payout scheduling
-- [ ] **Invoice Generation**
-  - [ ] PDF creation with jsPDF
-  - [ ] VAT breakdown
-  - [ ] Company details
-  - [ ] Email delivery
+- [x] Full checkout flow (address, delivery method, order summary, Stripe)
+- [x] Stripe Elements (hosted checkout via `create-checkout.ts`)
+- [x] Stripe Connect — seller onboarding, escrow, payouts (`connect-onboard.ts`, `connect-status.ts`)
+- [x] Escrow release (daily cron via `escrow-release.ts`)
+- [x] Payout requests and admin approval (`payout_requests` table, `AdminPayouts.tsx`)
+- [x] B2B buyer support (reverse charge VAT, `b2bUtils.ts`)
+- [x] Order success / checkout error pages
 
 ### 2.3 Order Management
-- [ ] **Order Tracking**
-  - [ ] Status timeline UI
-  - [ ] AWB tracking integration
-  - [ ] Real-time updates
-  - [ ] Email notifications per status
-- [ ] **Seller Order Management**
-  - [ ] Order list with filters
-  - [ ] Update order status
-  - [ ] Add tracking number
-  - [ ] Upload proof of delivery
-  - [ ] Mark as delivered
-- [ ] **Buyer Order View**
-  - [ ] Order history
-  - [ ] Order details
-  - [ ] Download invoices
-  - [ ] Track shipment
-  - [ ] Request return/open dispute
+- [x] Order tracking page (public, `TrackOrderPage`)
+- [x] Seller order management (list, status update, tracking number, proof of delivery)
+- [x] Buyer order history (orders, details, track shipment)
+- [x] Email notifications per status (confirmation, shipped, delivered)
 
-## Phase 3: Advanced Features
+---
+
+## ✅ Phase 3: Advanced Features — COMPLETE
 
 ### 3.1 Returns & Disputes
-- [ ] **Return System**
-  - [ ] Return request form
-  - [ ] Image upload
-  - [ ] Seller approval workflow
-  - [ ] Return tracking
-  - [ ] Refund processing via Stripe
-- [ ] **Dispute Center**
-  - [ ] Dispute creation
-  - [ ] Message thread between parties
-  - [ ] Evidence upload
-  - [ ] Admin arbitration interface
-  - [ ] Resolution options (full/partial refund)
+- [x] Return system (return request from buyer order detail, seller approval workflow)
+- [x] Dispute Center (buyer can open disputes linked to orders, `/buyer/disputes`)
+- [x] Admin Dispute management (`/admin/disputes` — view, review, resolve, close)
+- [x] Dispute DB schema (`disputes` + `dispute_messages` tables, escrow status)
 
 ### 3.2 Reviews & Social
-- [ ] **Product Reviews**
-  - [ ] Star rating system
-  - [ ] Text review with images
-  - [ ] Verified purchase badge
-  - [ ] Review moderation (admin)
-  - [ ] Seller response option
-- [ ] **Seller Ratings**
-  - [ ] Separate seller rating
-  - [ ] Aggregate scores
-  - [ ] Rating history
-- [ ] **Wishlist**
-  - [ ] Add/remove products
-  - [ ] Wishlist page
-  - [ ] Share wishlist (optional)
+- [x] Product reviews (star rating, text, verified purchase badge)
+- [x] Seller ratings (aggregate, history)
+- [x] Review moderation (admin, `reviewSystem` feature flag)
+- [x] Wishlist (add/remove, wishlist page)
 
 ### 3.3 Dashboards
 
-#### Buyer Dashboard
-- [ ] Profile management
-- [ ] Order history
-- [ ] Active returns/disputes
-- [ ] Wishlist
-- [ ] Saved addresses
-- [ ] Account settings
-- [ ] Data export (GDPR)
-- [ ] Account deletion
+#### Buyer Dashboard ✅
+- [x] Profile management
+- [x] Order history with detail view
+- [x] Disputes (`/buyer/disputes`)
+- [x] Wishlist
+- [x] Saved addresses
+- [x] Account settings
+- [x] Notifications
+- [x] In-app messaging (Supabase Realtime)
+- [x] RFQ (Request a Quote)
 
-#### Seller Dashboard
-- [ ] Sales overview/analytics
-- [ ] Product management
-- [ ] Inventory tracking
-- [ ] Order processing
-- [ ] Payout history
-- [ ] Performance metrics
-- [ ] Customer reviews
-- [ ] Export sales data (CSV)
+#### Seller Dashboard ✅
+- [x] Sales overview / analytics (revenue, orders, top products)
+- [x] Product management (list, create, edit, delete, pause)
+- [x] Order processing (accept, ship, add tracking, mark delivered)
+- [x] Shipments management
+- [x] Returns handling
+- [x] RFQ / Quotes management
+- [x] Customer reviews
+- [x] Notifications
+- [x] Profile and settings (Stripe Connect, shipping defaults)
+- [x] Export sales data (CSV) via AdminReports
 
-#### Admin Panel
-- [ ] User management
-  - [ ] View all users
-  - [ ] Suspend/ban users
-  - [ ] Edit user roles
-- [ ] Seller approvals
-  - [ ] KYC verification
-  - [ ] Business verification
-  - [ ] Approve/reject sellers
-- [ ] Product moderation
-  - [ ] Review new listings
-  - [ ] Approve/reject products
-  - [ ] Flag inappropriate content
-- [ ] Order oversight
-  - [ ] View all orders
-  - [ ] Force status updates
-  - [ ] Generate reports
-- [ ] Dispute management
-  - [ ] View open disputes
-  - [ ] Review evidence
-  - [ ] Make decisions
-  - [ ] Issue refunds
-- [ ] Platform configuration
-  - [ ] Set commission rates (global/category)
-  - [ ] Manage categories
-  - [ ] Manage banners
-  - [ ] System settings
-- [ ] Analytics & Reports
-  - [ ] Revenue reports
-  - [ ] VAT reports
-  - [ ] Commission reports
-  - [ ] User growth
-  - [ ] Top sellers/products
+#### Admin Panel ✅
+- [x] User management (view, suspend, edit roles)
+- [x] Buyer management
+- [x] Seller approvals (list, force-activate, suspend, warn, reactivate)
+- [x] Product moderation (approve/reject, `autoApproveProducts` flag)
+- [x] Order oversight (view all, force status)
+- [x] Payout requests (approve, reject, complete)
+- [x] Stripe Connect events viewer
+- [x] Flagged content / product reports (review, resolve, deactivate product)
+- [x] Dispute Center (`/admin/disputes`)
+- [x] Analytics & Reports (revenue, orders, top sellers, breakdown, CSV export)
+- [x] Support (admin notifications)
+- [x] Platform settings (feature flags, maintenance mode)
 
-## Phase 4: Notifications & Communication
+---
+
+## ✅ Phase 4: Notifications & Communication — COMPLETE
 
 ### 4.1 Email System (SendGrid)
-- [ ] **Email Templates**
-  - [ ] Welcome email
-  - [ ] Email verification
-  - [ ] Order confirmation
-  - [ ] Order shipped
-  - [ ] Order delivered
-  - [ ] Return approved/rejected
-  - [ ] Dispute opened/updated/resolved
-  - [ ] Seller approved
-  - [ ] Payout notification
-  - [ ] Password reset
-- [ ] **Email Service**
-  - [ ] SendGrid integration
-  - [ ] Template rendering
-  - [ ] Attachment support (invoices, PDFs)
-  - [ ] Email logging
+- [x] `send-email.ts` serverless function with all transactional templates
+- [x] Templates: welcome (buyer + seller), email confirmation, order confirmation,
+      order shipped, order delivered, return requested, dispute opened,
+      seller new order, shipping reminder, seller account active,
+      admin notifications (new buyer, new seller, seller active, verification),
+      onboarding reminder (24h / 3day / 7day), resend verification
+- [x] Internal-secret auth gate (prevents abuse)
+- [x] Rate limiting (20 emails / IP / 15 min)
+- [x] Onboarding reminder cron (`onboarding-reminder.ts`)
 
-### 4.2 In-App Notifications (Optional)
-- [ ] Notification system
-- [ ] Real-time updates (Supabase Realtime)
-- [ ] Notification preferences
+### 4.2 In-App Notifications
+- [x] Notification system (buyer + seller + admin)
+- [x] Real-time messaging (Supabase Realtime subscriptions in `BuyerMessages.tsx`)
+- [x] Notification preferences in settings
 
-## Phase 5: Security & Optimization
+---
+
+## ✅ Phase 5: Security & Optimization — COMPLETE
 
 ### 5.1 Security
-- [ ] **Rate Limiting**
-  - [ ] Login attempts
-  - [ ] API endpoints
-  - [ ] Checkout process
-- [ ] **Input Validation**
-  - [ ] Form validation with Zod
-  - [ ] XSS prevention
-  - [ ] SQL injection protection (via Supabase)
-- [ ] **Additional Security**
-  - [ ] CSRF protection
-  - [ ] Secure headers (already in netlify.toml)
-  - [ ] Content Security Policy
+- [x] Rate limiting (login, checkout, email, register, track-order)
+- [x] Input validation (Zod on serverless functions)
+- [x] XSS prevention (escapeHtml in send-email, RLS on all tables)
+- [x] SQL injection protection (Supabase parameterised queries)
+- [x] CSRF-equivalent protection (internal secret header on function-to-function calls)
+- [x] Secure headers (netlify.toml: CSP, X-Frame-Options, HSTS, etc.)
+- [x] Role escalation prevention (migration 410, RLS policies)
+- [x] Feature flags (sellerRegistration, buyerRegistration, rfqSystem, reviewSystem, autoApproveProducts, maintenanceMode)
+- [x] Maintenance mode gate (frontend + backend 503)
 
 ### 5.2 Performance
-- [ ] **Code Splitting**
-  - [ ] Route-based splitting
-  - [ ] Component lazy loading
-- [ ] **Image Optimization**
-  - [ ] Lazy loading images
-  - [ ] WebP format support
-  - [ ] Responsive images
-- [ ] **Caching**
-  - [ ] API response caching
-  - [ ] Static asset caching
-  - [ ] CDN integration
+- [x] Route-based code splitting (all pages lazy-loaded)
+- [x] Image optimisation (lazy loading, responsive srcsets)
+- [x] Vendor chunk splitting (Vite config)
 
-### 5.3 SEO Enhancement
-- [ ] **Dynamic Meta Tags**
-  - [ ] React Helmet or similar
-  - [ ] Product-specific meta
-  - [ ] Category-specific meta
-- [ ] **Structured Data**
-  - [ ] Product schema
-  - [ ] Organization schema
-  - [ ] Breadcrumb schema
-  - [ ] Review schema
-- [ ] **Sitemap Generation**
-  - [ ] Dynamic sitemap
-  - [ ] Include all products/categories
+### 5.3 SEO
+- [x] Dynamic meta tags per page (Helmet-equivalent)
+- [x] Structured data (Product, Organization, Breadcrumb)
+- [x] Canonical URLs
+- [x] Sitemap + robots.txt
 
-## Phase 6: Testing & QA
+---
 
-### 6.1 Testing
-- [ ] Unit tests (key utilities)
-- [ ] Integration tests (critical flows)
-- [ ] E2E tests (main user journeys)
-- [ ] Security testing
-- [ ] Performance testing
+## ✅ Phase 6: RFQ / B2B System — COMPLETE
 
-### 6.2 User Acceptance Testing
-- [ ] Buyer flow testing
-- [ ] Seller flow testing
-- [ ] Admin flow testing
-- [ ] Cross-browser testing
-- [ ] Mobile responsiveness testing
+- [x] RFQ submission (buyer → `BuyerRFQ.tsx`)
+- [x] Seller quote response (`SellerRFQ.tsx`)
+- [x] Quote withdrawal
+- [x] Buyer quote acceptance → creates order (status=paid)
+- [x] B2B buyer profiles (VAT verified, reverse charge)
+- [x] Service marketplace (no stock/shipping gate for service listings)
+- [x] Service lifecycle: delivered → completed (escrow-release cron)
 
-## Phase 7: Launch Preparation
+---
 
-### 7.1 Documentation
-- [x] Setup guide (SETUP.md)
-- [ ] API documentation
-- [ ] User guide (for buyers)
-- [ ] Seller guide
-- [ ] Admin guide
+## ✅ Phase 7: Launch Preparation — COMPLETE
 
-### 7.2 Final Touches
-- [ ] Help & FAQ content
-- [ ] Contact form implementation
-- [ ] About page
-- [ ] Social media links
-- [ ] Logo and branding assets
+- [x] About page
+- [x] Contact page (with contact form)
+- [x] FAQ page
+- [x] Wholesale info page
+- [x] Deals / Clearance page
+- [x] All legal pages
+- [x] Seller guidelines page
+- [x] Cookie consent banner
+- [x] SETUP.md documentation
+- [x] Production Netlify deployment
+- [x] Environment variables configured
+- [x] Domain + SSL configured
+- [x] Android App (Capacitor, deep-link handling)
+- [x] Android App Links (assetlinks.json)
 
-### 7.3 Deployment
-- [ ] Production environment setup
-- [ ] Environment variables configuration
-- [ ] Domain DNS configuration
-- [ ] SSL certificate verification
-- [ ] Monitoring setup (error tracking, analytics)
-- [ ] Backup strategy
+---
 
-## Phase 8: Post-Launch (Future Enhancements)
+## 🔄 Phase 8: Post-Launch Enhancements (Future)
 
-- [ ] Multi-language support
-- [ ] Advanced search (Elasticsearch)
-- [ ] Saved searches
-- [ ] Price alerts
-- [ ] Bulk import/export for sellers
-- [ ] API for third-party integrations
-- [ ] Mobile app (React Native)
-- [ ] Live chat support
-- [ ] Advanced analytics
-- [ ] Marketing tools (promotional codes, sales)
-- [ ] Subscription plans for sellers
-- [ ] Featured listings/ads
+- [ ] Multi-language support (i18n)
+- [ ] Advanced search (full-text / Elasticsearch)
+- [ ] Saved searches & price alerts
+- [ ] Bulk product import/export for sellers
+- [ ] REST API for third-party integrations
+- [ ] Invoice PDF generation (attach to order confirmation email)
+- [ ] Live chat support widget
+- [ ] Promotional codes / discount system
+- [ ] Featured listings / sponsored ads
+- [ ] Seller subscription plans
+- [ ] Progressive Web App (PWA) manifest
+- [ ] Automated E2E test suite (Playwright)
 
-## Priority Order
-
-1. **Critical (Must have for MVP)**
-   - Product catalog and detail pages
-   - Checkout with Stripe
-   - Order management
-   - Basic dashboards
-
-2. **High Priority**
-   - Returns & disputes
-   - Reviews & ratings
-   - Email notifications
-   - Admin panel basics
-
-3. **Medium Priority**
-   - Advanced admin features
-   - Performance optimizations
-   - Enhanced SEO
-   - Testing
-
-4. **Low Priority**
-   - Advanced features
-   - Additional integrations
-   - Nice-to-have features
+---
 
 ## Notes
 
-- The foundation is solid and ready for feature implementation
-- Database schema supports all planned features
-- Type definitions are comprehensive
-- Build process is working correctly
-- Current focus should be on Phase 2 (Core Features)
+- All core marketplace flows (browse → cart → checkout → orders → returns → disputes) are fully functional
+- Database schema is complete with 50+ migrations applied
+- All serverless functions use service-role Supabase client where needed and JWT verification for protected endpoints
+- Feature flags allow gradual rollout / emergency disabling of any subsystem without a deployment
+- PostCSS and all direct dependencies have no known vulnerabilities (`npm audit` clean)

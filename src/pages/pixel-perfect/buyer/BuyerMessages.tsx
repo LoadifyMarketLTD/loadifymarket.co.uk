@@ -182,6 +182,43 @@ const BuyerMessages = () => {
     return () => { cancelled = true; };
   }, [selectedId, user?.id]);
 
+  // ── Supabase Realtime: subscribe to new messages in the open conversation ──
+  useEffect(() => {
+    if (!selectedId || !user?.id) return;
+
+    const channel = supabase
+      .channel(`messages:${selectedId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversationId=eq.${selectedId}`,
+        },
+        (payload) => {
+          const msg = payload.new as Message;
+          setMessages((prev) => {
+            // Deduplicate: skip if we already have this id (e.g. from handleSend)
+            if (prev.some((m) => m.id === msg.id)) return prev;
+            return [...prev, msg];
+          });
+          // If the incoming message is from the other party, mark it read immediately
+          if (msg.senderId !== user.id) {
+            void supabase
+              .from("messages")
+              .update({ isRead: true, readAt: new Date().toISOString() })
+              .eq("id", msg.id);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [selectedId, user?.id]);
+
   // ── Scroll to bottom on new messages ────────────────────────────────────
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
