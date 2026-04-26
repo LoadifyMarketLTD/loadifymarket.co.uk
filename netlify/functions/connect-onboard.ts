@@ -41,8 +41,7 @@ export const handler: Handler = async (event) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
   const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-08-27.basil' });
 
-  // Log which Stripe account is active (key prefix only — never log the full secret).
-  console.log(`connect-onboard: using Stripe key ${stripeSecretKey.slice(0, 12)}…`);
+  // Stripe key is present and loaded (do not log any part of the key).
 
   // Verify the JWT and derive the seller's user ID from it.
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
