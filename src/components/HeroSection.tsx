@@ -127,7 +127,7 @@ const HeroSection = () => (
             <img src="/payment-icons/mastercard.svg" alt="Mastercard" className="h-full w-auto" width="56" height="36" loading="lazy" decoding="async" />
           </div>
           <div className="h-9 w-14 rounded-md border border-gray-200 shadow-sm bg-white flex items-center justify-center overflow-hidden">
-            <img src="/payment-icons/amex.svg" alt="American Express" className="h-full w-auto" width="56" height="36" loading="lazy" decoding="async" />
+            <img src="/assets/apm/paypal.svg" alt="PayPal" className="h-full w-auto" width="56" height="36" loading="lazy" decoding="async" />
           </div>
           <div className="h-9 w-14 rounded-md border border-gray-200 shadow-sm bg-white flex items-center justify-center overflow-hidden">
             <img src="/payment-icons/stripe.svg" alt="Stripe" className="h-full w-auto" width="56" height="36" loading="lazy" decoding="async" />
