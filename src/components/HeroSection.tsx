@@ -3,28 +3,29 @@ import { Link } from 'react-router-dom';
 const HeroSection = () => (
   <section
     aria-label="Loadify Market — UK Online Marketplace"
-    className="relative w-full overflow-hidden min-h-[560px] sm:min-h-[620px] lg:min-h-[680px] flex items-center pt-[122px]"
+    className="relative w-full min-h-[480px] bg-[#0a2239]"
   >
-    {/* ── Background image ─────────────────────────────────────────────── */}
+    {/* ── Background image — natural width/height, no zoom or crop ─────── */}
     <img
       src="/hero.jpeg"
       alt=""
       aria-hidden="true"
       width={1536}
       height={1024}
-      className="absolute inset-0 w-full h-full object-contain object-center"
+      className="w-full h-auto block"
       loading="eager"
     />
 
-    {/* ── Dark overlay for text legibility ─────────────────────────────── */}
+    {/* ── Light gradient for text legibility — max opacity 0.6 ─────────── */}
     <div
-      className="absolute inset-0"
+      className="absolute inset-0 pointer-events-none"
       style={{ background: 'linear-gradient(to right, rgba(10,34,57,0.6) 0%, rgba(10,34,57,0.2) 50%, transparent 100%)' }}
       aria-hidden="true"
     />
 
     {/* ── Content ──────────────────────────────────────────────────────── */}
-    <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+    <div className="absolute inset-0 flex items-center">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[122px] pb-8 lg:py-24">
       <div className="flex flex-col gap-5 text-center sm:text-left items-center sm:items-start max-w-2xl">
 
         {/* 1. Promo badge */}
@@ -87,6 +88,7 @@ const HeroSection = () => (
         </div>
 
       </div>
+    </div>
     </div>
   </section>
 );

@@ -29,7 +29,7 @@ export default function Home() {
         <link
           rel="preload"
           as="image"
-          href="/hero-marketplace.jpg"
+          href="/hero.jpeg"
           type="image/jpeg"
           // @ts-expect-error — fetchpriority is a valid HTML attr not yet in React types
           fetchpriority="high"
