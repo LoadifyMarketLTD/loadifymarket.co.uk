@@ -114,7 +114,7 @@ function StepsPanel({
 
 const HowItWorksSection = () => (
   <section className="py-10 lg:py-14 bg-white" aria-label="How it works">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="w-full px-4 sm:px-6">
       <div className="flex flex-col lg:flex-row gap-6">
         <StepsPanel
           id="how-it-works-buyers"

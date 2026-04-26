@@ -54,7 +54,7 @@ export default function Home() {
 
         {/* ── 4. Features + Security (side by side) ────────────────────── */}
         <section className="py-10 lg:py-14 bg-white border-t border-gray-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="w-full px-4 sm:px-6">
             <div className="flex flex-col lg:flex-row rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               <FeaturesGrid />
               <div className="hidden lg:block w-px bg-gray-200 self-stretch" aria-hidden="true" />
