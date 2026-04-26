@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 38" role="img" aria-label="Mastercard">
+  <!-- Flat white card with subtle border -->
+  <rect width="60" height="38" rx="4" fill="#ffffff" stroke="#e5e7eb" stroke-width="0.75"/>
+  <!-- Left red circle (smaller, centred vertically) -->
+  <circle cx="22" cy="19" r="9.5" fill="#EB001B"/>
+  <!-- Right yellow/orange circle -->
+  <circle cx="38" cy="19" r="9.5" fill="#F79E1B"/>
+  <!-- Orange lens overlap
+       d=16, r=9.5 → iy=19±sqrt(90.25-64)=19±sqrt(26.25)≈19±5.123
+       → (30, 13.877) & (30, 24.123) -->
+  <path d="M30 13.877 A9.5 9.5 0 0 1 30 24.123 A9.5 9.5 0 0 0 30 13.877 Z" fill="#FF5F00"/>
+</svg>
