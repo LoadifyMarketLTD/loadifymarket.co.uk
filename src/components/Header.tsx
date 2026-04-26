@@ -59,10 +59,30 @@ const Header = () => {
     navigate("/login", { replace: true });
   };
 
+  // Priority order for the category quick-links bar (canonical slugs from migration 400).
+  // Shown in this order; any slug not yet in the DB is silently skipped.
+  const PRIORITY_SLUGS = [
+    "electronics",
+    "clothing-fashion",
+    "home-garden",
+    "health-beauty",
+    "sports-fitness",
+    "automotive",
+  ];
+
+  const priorityCategories = PRIORITY_SLUGS
+    .map((slug) => categories.find((c) => c.slug === slug))
+    .filter((c): c is NonNullable<typeof c> => c !== undefined);
+
+  // Fall back to the first 6 DB categories if none of the priority slugs are
+  // found (e.g. legacy DB that hasn't run migration 400 yet).
+  const displayCategories =
+    priorityCategories.length > 0 ? priorityCategories : categories.slice(0, 6);
+
   const navLinks = [
     { to: "/", label: "HOME", strong: true, catSlug: null as string | null },
     { to: "/catalog", label: "All Categories", strong: true, catSlug: null as string | null },
-    ...categories.slice(0, 6).map((cat) => ({
+    ...displayCategories.map((cat) => ({
       to: `/catalog?category=${encodeURIComponent(cat.name)}`,
       label: cat.name,
       strong: false,
