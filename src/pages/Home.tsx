@@ -47,24 +47,22 @@ export default function Home() {
         <HeroSection />
 
         {/* ── 2–4. Dark-bg platform overview (Trust → HowItWorks → Features+Security) ── */}
-        <section className="bg-[#0A1930] py-8 md:py-10 lg:py-12" aria-label="Platform overview">
-          <div className="w-full max-w-[1600px] mx-auto px-10 xl:px-14 2xl:px-16">
+        <section className="bg-[#0A1930] py-8 px-8" aria-label="Platform overview">
 
-            {/* Trust Strip */}
-            <TrustStrip />
+          {/* Trust Strip */}
+          <TrustStrip />
 
-            {/* How It Works */}
-            <div className="mt-8 md:mt-10 lg:mt-12">
-              <HowItWorksSection />
-            </div>
-
-            {/* Features + Security */}
-            <div className="mt-8 md:mt-10 lg:mt-12 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-              <FeaturesGrid />
-              <SecurityTrust />
-            </div>
-
+          {/* How It Works */}
+          <div className="mt-8">
+            <HowItWorksSection />
           </div>
+
+          {/* Features + Security */}
+          <div className="mt-8 grid grid-cols-2 gap-8">
+            <FeaturesGrid />
+            <SecurityTrust />
+          </div>
+
         </section>
 
         {/* ── 5. Seller CTA ────────────────────────────────────────────── */}

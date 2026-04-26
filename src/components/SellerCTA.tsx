@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 export default function SellerCTA() {
   return (
     <section className="bg-green-600 py-8">
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-10 xl:px-14">
+      <div className="px-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-white font-medium text-base text-center sm:text-left">
             Join UK sellers earning more with 0% commission until 31 December 2026.
