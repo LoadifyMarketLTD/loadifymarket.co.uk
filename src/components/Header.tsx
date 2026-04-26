@@ -93,7 +93,7 @@ const Header = () => {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-40 bg-[#0E1520] border-b border-white/[0.10] shadow-[0_4px_32px_rgba(0,0,0,0.45)]"
+      className="fixed top-0 left-0 right-0 z-40 bg-[linear-gradient(180deg,#111827,#020617)] border-b border-white/[0.06] shadow-[0_8px_25px_rgba(0,0,0,0.35)]"
       style={{ willChange: "transform", paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
 
@@ -231,9 +231,9 @@ const Header = () => {
                     <Link
                       to={link.to}
                       className={[
-                        "text-[13px] hover:text-white hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-colors whitespace-nowrap text-center w-full",
-                        link.strong ? "font-bold text-[#C99A3E]" : "font-semibold text-[#C99A3E]",
-                        isHovered ? "bg-white/[0.08] text-white" : "",
+                        "text-[13px] hover:text-[#FBBF24] hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap text-center w-full",
+                        link.strong ? "font-bold text-[#C99A3E]" : "font-medium text-slate-300 hover:[text-shadow:0_0_8px_rgba(251,191,36,0.35)]",
+                        isHovered ? "bg-white/[0.08] text-[#FBBF24]" : "",
                       ].join(" ")}
                     >
                       {link.label}

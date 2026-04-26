@@ -24,7 +24,7 @@ const FooterLink = ({ to, children }: { to: string; children: React.ReactNode })
 
 const Footer = () => {
   return (
-    <footer className="bg-[#0B1016] text-[#C9D0D6] border-t border-[rgba(201,154,62,0.25)]">
+    <footer className="bg-[linear-gradient(180deg,#0B1220,#020617)] text-[#C9D0D6] border-t border-white/[0.06]">
 
       {/* ── Trust row ───────────────────────────────────────────────────── */}
       <div className="border-b border-white/[0.07]">
@@ -48,44 +48,24 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Social icons */}
           <div className="flex items-center gap-3">
-            <a
-              href="https://www.facebook.com/loadifymarket"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Loadify Market on Facebook"
-              className="p-2 rounded-lg bg-white/[0.07] hover:bg-white/[0.14] transition-colors"
-            >
-              <Facebook className="h-4 w-4 text-white/60" />
-            </a>
-            <a
-              href="https://www.twitter.com/loadifymarket"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Loadify Market on X / Twitter"
-              className="p-2 rounded-lg bg-white/[0.07] hover:bg-white/[0.14] transition-colors"
-            >
-              <Twitter className="h-4 w-4 text-white/60" />
-            </a>
-            <a
-              href="https://www.instagram.com/loadifymarket"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Loadify Market on Instagram"
-              className="p-2 rounded-lg bg-white/[0.07] hover:bg-white/[0.14] transition-colors"
-            >
-              <Instagram className="h-4 w-4 text-white/60" />
-            </a>
-            <a
-              href="https://www.linkedin.com/company/loadifymarket"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Loadify Market on LinkedIn"
-              className="p-2 rounded-lg bg-white/[0.07] hover:bg-white/[0.14] transition-colors"
-            >
-              <Linkedin className="h-4 w-4 text-white/60" />
-            </a>
+            {[
+              { href: "https://www.facebook.com/loadifymarket", label: "Loadify Market on Facebook", Icon: Facebook },
+              { href: "https://www.twitter.com/loadifymarket", label: "Loadify Market on X / Twitter", Icon: Twitter },
+              { href: "https://www.instagram.com/loadifymarket", label: "Loadify Market on Instagram", Icon: Instagram },
+              { href: "https://www.linkedin.com/company/loadifymarket", label: "Loadify Market on LinkedIn", Icon: Linkedin },
+            ].map(({ href, label, Icon }) => (
+              <a
+                key={href}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                className="p-2 rounded-lg border border-white/5 bg-white/[0.06] text-white/60 transition-all duration-250 hover:text-[#FBBF24] hover:border-yellow-400/30 hover:shadow-[0_0_15px_rgba(251,191,36,0.15)] hover:-translate-y-0.5"
+              >
+                <Icon className="h-4 w-4" />
+              </a>
+            ))}
           </div>
         </div>
       </div>

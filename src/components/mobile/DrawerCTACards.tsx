@@ -63,7 +63,7 @@ const DrawerCTACards = ({ onClose }: DrawerCTACardsProps) => (
         key={label}
         to={route}
         onClick={onClose}
-        className="bg-white/[0.06] border border-gray-200 rounded-xl p-3 flex flex-col items-start gap-1.5 h-[68px] hover:bg-white/10 hover:border-[#C99A3E]/30 transition-all active:scale-[0.97]"
+        className="bg-[linear-gradient(145deg,#111827,#020617)] border border-white/5 rounded-xl p-3 flex flex-col items-start gap-1.5 h-[68px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(251,191,36,0.15)] hover:border-yellow-400/25 active:scale-[0.97]"
       >
         <Icon className={`h-5 w-5 ${iconClass}`} aria-hidden="true" />
         <span className="text-xs font-semibold text-white/80 leading-tight">{label}</span>
