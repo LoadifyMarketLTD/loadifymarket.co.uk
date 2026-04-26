@@ -51,7 +51,7 @@ const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
     }
   };
 
-  const hasData = data.line1 || data.city || data.postcode;
+  const hasData = data.name || data.line1 || data.city || data.postcode;
 
   return (
     <Card className={hasData ? "ring-2 ring-primary/20" : ""}>
@@ -174,7 +174,7 @@ const BuyerAddresses = () => {
     try {
       const { error } = await supabase
         .from("buyer_profiles")
-        .upsert({ userId: user.id, [field]: data }, { onConflict: "userId" });
+        .upsert({ userId: user.id, [field]: data }, { onConflict: "userId", defaultToNull: false });
       if (error) throw error;
       if (type === "shipping") setShippingAddress(data);
       else setBillingAddress(data);
