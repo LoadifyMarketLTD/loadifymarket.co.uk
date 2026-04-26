@@ -199,21 +199,21 @@ const MainScreen = ({
         <Link
           to="/wholesale-info"
           onClick={onClose}
-          className="px-4 h-11 flex items-center text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.07] transition-colors"
+          className="px-4 h-11 flex items-center text-sm font-medium text-[#9CA3AF] hover:text-[#FBBF24] hover:bg-[rgba(251,191,36,0.08)] transition-colors"
         >
           Marketplace Information
         </Link>
         <Link
           to="/blog"
           onClick={onClose}
-          className="px-4 h-11 flex items-center text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.07] transition-colors"
+          className="px-4 h-11 flex items-center text-sm font-medium text-[#9CA3AF] hover:text-[#FBBF24] hover:bg-[rgba(251,191,36,0.08)] transition-colors"
         >
           Blog
         </Link>
         <Link
           to="/about"
           onClick={onClose}
-          className="px-4 h-11 flex items-center text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.07] transition-colors"
+          className="px-4 h-11 flex items-center text-sm font-medium text-[#9CA3AF] hover:text-[#FBBF24] hover:bg-[rgba(251,191,36,0.08)] transition-colors"
         >
           About Us
         </Link>
