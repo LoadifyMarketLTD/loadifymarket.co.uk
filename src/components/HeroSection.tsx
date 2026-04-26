@@ -3,23 +3,21 @@ import { Link } from 'react-router-dom';
 const HeroSection = () => (
   <section
     aria-label="Loadify Market — UK Online Marketplace"
-    className="relative w-full min-h-[480px] bg-[#0a2239]"
+    className="relative w-full min-h-[480px] bg-[#0B1016]"
   >
-    {/* ── Background image — natural width/height, no zoom or crop ─────── */}
+    {/* ── Background image — full cover, no distortion ─────────────────── */}
     <img
-      src="/hero.jpeg"
+      src="/hero-gold.jpeg"
       alt=""
       aria-hidden="true"
-      width={1536}
-      height={1024}
-      className="w-full h-auto block"
+      className="absolute inset-0 w-full h-full object-cover object-center"
       loading="eager"
     />
 
-    {/* ── Light gradient for text legibility — max opacity 0.6 ─────────── */}
+    {/* ── Premium dark overlay for text legibility ─────────────────────── */}
     <div
       className="absolute inset-0 pointer-events-none"
-      style={{ background: 'linear-gradient(to right, rgba(10,34,57,0.6) 0%, rgba(10,34,57,0.2) 50%, transparent 100%)' }}
+      style={{ background: 'linear-gradient(90deg, rgba(11,16,22,0.88) 0%, rgba(11,16,22,0.68) 42%, rgba(11,16,22,0.18) 100%)' }}
       aria-hidden="true"
     />
 
@@ -29,18 +27,18 @@ const HeroSection = () => (
       <div className="flex flex-col gap-5 text-center sm:text-left items-center sm:items-start max-w-2xl">
 
         {/* 1. Promo badge */}
-        <div className="inline-flex items-center bg-green-500 text-white text-sm font-bold rounded-full px-4 py-1.5 tracking-wide uppercase">
+        <div className="inline-flex items-center bg-[#C99A3E] text-[#0B1016] text-sm font-bold rounded-full px-4 py-1.5 tracking-wide uppercase">
           0% Commission Until 31 December 2026
         </div>
 
         {/* 2. H1 */}
-        <h1 className="text-5xl sm:text-6xl font-extrabold leading-tight text-white">
+        <h1 className="text-5xl sm:text-6xl font-extrabold leading-tight text-[#F5F1E8]">
           The UK Marketplace<br />
-          <span className="text-green-400">Built for Modern Sellers</span>
+          <span className="text-[#C99A3E]">Built for Modern Sellers</span>
         </h1>
 
         {/* 3. Description */}
-        <p className="text-lg text-white/80 max-w-xl">
+        <p className="text-lg text-[#C9D0D6] max-w-xl">
           Sell products, manage orders, and get paid —<br className="hidden sm:block" />
           all in one secure platform.
         </p>
@@ -49,7 +47,7 @@ const HeroSection = () => (
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <Link
             to="/register?type=seller"
-            className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
+            className="w-full sm:w-auto bg-[#C99A3E] hover:bg-[#D8AE57] text-[#0B1016] font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
           >
             Start Selling Today
           </Link>
@@ -63,7 +61,7 @@ const HeroSection = () => (
 
         {/* 5. Payment badges */}
         <div className="flex flex-col items-center sm:items-start gap-2 mt-1">
-          <span className="text-xs font-semibold tracking-wider uppercase text-white/50">
+          <span className="text-xs font-semibold tracking-wider uppercase text-[#C9D0D6]/60">
             Secure Payments Powered By
           </span>
           <div className="flex items-center gap-4">

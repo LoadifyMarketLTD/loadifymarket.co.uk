@@ -41,8 +41,8 @@ export default function SecurityTrust() {
           const Icon = item.icon;
           return (
             <div key={item.title} className="min-h-[150px] flex flex-col gap-2 rounded-xl border border-slate-300 bg-white/80 p-5 shadow-sm">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                <Icon className="w-4 h-4 text-green-700" aria-hidden="true" />
+              <div className="w-8 h-8 rounded-full bg-[#F3E4BF] flex items-center justify-center shrink-0">
+                <Icon className="w-4 h-4 text-[#C99A3E]" aria-hidden="true" />
               </div>
               <p className="text-sm font-bold text-gray-900 leading-tight">{item.title}</p>
               <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>

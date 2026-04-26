@@ -10,7 +10,7 @@ const CTA_CARDS = [
     icon: Tag,
     label: "Price Crunch",
     route: "/catalog?filter=price-crunch",
-    iconClass: "text-green-400",
+    iconClass: "text-[#C99A3E]",
   },
   {
     icon: RefreshCw,
@@ -63,7 +63,7 @@ const DrawerCTACards = ({ onClose }: DrawerCTACardsProps) => (
         key={label}
         to={route}
         onClick={onClose}
-        className="bg-white/[0.06] border border-gray-200 rounded-xl p-3 flex flex-col items-start gap-1.5 h-[68px] hover:bg-white/10 hover:border-green-400/30 transition-all active:scale-[0.97]"
+        className="bg-white/[0.06] border border-gray-200 rounded-xl p-3 flex flex-col items-start gap-1.5 h-[68px] hover:bg-white/10 hover:border-[#C99A3E]/30 transition-all active:scale-[0.97]"
       >
         <Icon className={`h-5 w-5 ${iconClass}`} aria-hidden="true" />
         <span className="text-xs font-semibold text-white/80 leading-tight">{label}</span>

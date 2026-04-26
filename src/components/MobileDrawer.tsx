@@ -83,7 +83,7 @@ const MainScreen = ({
       <Link to="/" onClick={onClose} className="flex items-center gap-2" aria-label="Loadify Market — Home">
         <img src={logo} alt="" aria-hidden="true" className="h-7 w-7" />
         <span className="font-display text-base font-bold text-white leading-none">
-          Loadify <span className="text-[#22C55E]">Market</span>
+          Loadify <span className="text-[#C99A3E]">Market</span>
         </span>
       </Link>
       <button
@@ -166,7 +166,7 @@ const MainScreen = ({
                     onClick={onClose}
                     className="flex items-center px-6 h-[46px] border-b border-white/[0.06] hover:bg-white/[0.07] active:bg-white/10 transition-colors"
                   >
-                    <span className="text-[14px] font-semibold text-[#22C55E]">
+                    <span className="text-[14px] font-semibold text-[#C99A3E]">
                       View All {cat.name}
                     </span>
                   </Link>
@@ -310,7 +310,7 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
         ref={panelRef}
         className={[
           "fixed top-0 left-0 z-[9999] h-[100dvh] w-[85vw] max-w-[380px]",
-          "bg-[#0A1930] border-r border-white/[0.12] shadow-2xl flex flex-col",
+          "bg-[#0E1520] border-r border-white/[0.12] shadow-2xl flex flex-col",
           "transition-transform duration-300 ease-in-out",
           open ? "translate-x-0" : "-translate-x-full",
         ].join(" ")}

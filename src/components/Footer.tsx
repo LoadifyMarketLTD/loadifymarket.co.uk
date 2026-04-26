@@ -4,7 +4,7 @@ import { ShieldCheck, Store, Truck, Facebook, Twitter, Instagram, Linkedin } fro
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 const ColHeading = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[11px] font-bold tracking-widest uppercase text-[#22C55E] mb-4">
+  <p className="text-[11px] font-bold tracking-widest uppercase text-[#C99A3E] mb-4">
     {children}
   </p>
 );
@@ -13,7 +13,7 @@ const FooterLink = ({ to, children }: { to: string; children: React.ReactNode })
   <li>
     <Link
       to={to}
-      className="text-[13px] text-white/55 hover:text-white transition-colors duration-150"
+      className="text-[13px] text-[#C9D0D6]/70 hover:text-[#D8AE57] transition-colors duration-150"
     >
       {children}
     </Link>
@@ -24,26 +24,26 @@ const FooterLink = ({ to, children }: { to: string; children: React.ReactNode })
 
 const Footer = () => {
   return (
-    <footer className="bg-[#0A1930] text-white/70 border-t border-white/[0.07]">
+    <footer className="bg-[#0B1016] text-[#C9D0D6] border-t border-[rgba(201,154,62,0.25)]">
 
       {/* ── Trust row ───────────────────────────────────────────────────── */}
       <div className="border-b border-white/[0.07]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-6">
-            <div className="flex items-center gap-2 text-sm font-medium text-white/75">
-              <ShieldCheck className="h-5 w-5 text-[#22C55E] shrink-0" />
+            <div className="flex items-center gap-2 text-sm font-medium text-[#C9D0D6]">
+              <ShieldCheck className="h-5 w-5 text-[#C99A3E] shrink-0" />
               Registered Sellers
             </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-white/75">
-              <ShieldCheck className="h-5 w-5 text-[#22C55E] shrink-0" />
+            <div className="flex items-center gap-2 text-sm font-medium text-[#C9D0D6]">
+              <ShieldCheck className="h-5 w-5 text-[#C99A3E] shrink-0" />
               Secure Platform
             </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-white/75">
-              <Truck className="h-5 w-5 text-[#22C55E] shrink-0" />
+            <div className="flex items-center gap-2 text-sm font-medium text-[#C9D0D6]">
+              <Truck className="h-5 w-5 text-[#C99A3E] shrink-0" />
               UK Delivery Support
             </div>
-            <div className="flex items-center gap-2 text-sm font-medium text-white/75">
-              <Store className="h-5 w-5 text-[#22C55E] shrink-0" />
+            <div className="flex items-center gap-2 text-sm font-medium text-[#C9D0D6]">
+              <Store className="h-5 w-5 text-[#C99A3E] shrink-0" />
               Independent UK Marketplace
             </div>
           </div>
@@ -96,14 +96,14 @@ const Footer = () => {
 
           {/* Col 1 — About (spans 2 columns on lg) */}
           <div className="lg:col-span-2">
-            <p className="text-lg font-bold text-white mb-3">Loadify Market</p>
-            <p className="text-[13px] text-white/55 leading-relaxed mb-4">
-              Loadify Market is operated by <strong className="text-white/75">XDrive Logistics Ltd</strong>.
+            <p className="text-lg font-bold text-[#F5F1E8] mb-3">Loadify Market</p>
+            <p className="text-[13px] text-[#C9D0D6]/70 leading-relaxed mb-4">
+              Loadify Market is operated by <strong className="text-[#C9D0D6]">XDrive Logistics Ltd</strong>.
               We are a marketplace that connects buyers with independent sellers across the UK.
               Loadify Market does not own, stock, sell, or ship any products — all orders are
               fulfilled directly by the independent seller.
             </p>
-            <ul className="space-y-1 text-[12px] text-white/45">
+            <ul className="space-y-1 text-[12px] text-[#C9D0D6]/55">
               <li>Company No. 13171804</li>
               <li>VAT GB375949535</li>
               <li>101 Cornelian Street, Blackburn BB1 9QL, UK</li>
@@ -158,7 +158,7 @@ const Footer = () => {
               <FooterLink to="/contact">Report a Problem</FooterLink>
             </ul>
 
-            <p className="text-[11px] font-bold tracking-widest uppercase text-[#22C55E] mt-7 mb-4">
+            <p className="text-[11px] font-bold tracking-widest uppercase text-[#C99A3E] mt-7 mb-4">
               Company
             </p>
             <ul className="space-y-2.5">
@@ -191,12 +191,12 @@ const Footer = () => {
       <div className="border-t border-white/[0.07]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
 
-          <p className="text-[12px] text-white/35">
+          <p className="text-[12px] text-[#C9D0D6]/45">
             &copy; 2021 XDrive Logistics Ltd (Company No. 13171804). All rights reserved.
             Loadify Market is a trading name of XDrive Logistics Ltd, registered in England &amp; Wales.
           </p>
 
-          <p className="text-[12px] text-white/35 lg:text-right">
+          <p className="text-[12px] text-[#C9D0D6]/45 lg:text-right">
             Payments secured by Stripe · Independent sellers fulfil all orders ·
             Loadify Market is not a seller or retailer.
           </p>
@@ -218,7 +218,7 @@ const Footer = () => {
               <Link
                 key={l.to}
                 to={l.to}
-                className="text-[11px] text-white/30 hover:text-white/55 transition-colors"
+                className="text-[11px] text-[#C9D0D6]/40 hover:text-[#C9D0D6]/70 transition-colors"
               >
                 {l.label}
               </Link>

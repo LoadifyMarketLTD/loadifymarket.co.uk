@@ -55,7 +55,7 @@ function StepCard({ step }: { step: Step }) {
   return (
     <div className="h-[220px] w-full rounded-xl border border-slate-300 bg-white/80 p-5 shadow-sm flex flex-col gap-2">
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-green-600 text-white font-bold text-sm flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-full bg-[#C99A3E] text-[#0B1016] font-bold text-sm flex items-center justify-center shrink-0">
           {step.number}
         </div>
         <Icon className="w-5 h-5 text-gray-400 shrink-0" aria-hidden="true" />
