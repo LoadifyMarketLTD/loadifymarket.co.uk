@@ -20,7 +20,7 @@ export default function HowItWorksBuyers() {
   ];
 
   return (
-    <section className="py-20 bg-white">
+    <section id="how-it-works-buyers" className="py-20 bg-white">
       <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
         How It Works for Buyers
       </h2>

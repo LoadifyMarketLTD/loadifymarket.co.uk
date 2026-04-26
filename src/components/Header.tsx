@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Search, ShoppingCart, Menu, LogOut, Package, ShoppingBag, Heart, LayoutDashboard, ChevronRight } from "lucide-react";
+import { Search, ShoppingCart, Menu, LogOut, LayoutDashboard, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/loadify-logo.svg";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
-import { isActiveSellerAccess } from "@/lib/roleUtils";
 import MobileDrawer from "@/components/MobileDrawer";
 import { useCategories } from "@/hooks/useCategories";
 import type { CategoryNode } from "@/hooks/useCategories";
@@ -60,10 +59,30 @@ const Header = () => {
     navigate("/login", { replace: true });
   };
 
+  // Priority order for the category quick-links bar (canonical slugs from migration 400).
+  // Shown in this order; any slug not yet in the DB is silently skipped.
+  const PRIORITY_SLUGS = [
+    "electronics",
+    "clothing-fashion",
+    "home-garden",
+    "health-beauty",
+    "sports-fitness",
+    "automotive",
+  ];
+
+  const priorityCategories = PRIORITY_SLUGS
+    .map((slug) => categories.find((c) => c.slug === slug))
+    .filter((c): c is NonNullable<typeof c> => c !== undefined);
+
+  // Fall back to the first 6 DB categories if none of the priority slugs are
+  // found (e.g. legacy DB that hasn't run migration 400 yet).
+  const displayCategories =
+    priorityCategories.length > 0 ? priorityCategories : categories.slice(0, 6);
+
   const navLinks = [
     { to: "/", label: "HOME", strong: true, catSlug: null as string | null },
     { to: "/catalog", label: "All Categories", strong: true, catSlug: null as string | null },
-    ...categories.slice(0, 6).map((cat) => ({
+    ...displayCategories.map((cat) => ({
       to: `/catalog?category=${encodeURIComponent(cat.name)}`,
       label: cat.name,
       strong: false,
@@ -155,34 +174,6 @@ const Header = () => {
 
           {user ? (
             <>
-              {isActiveSellerAccess(user) && (
-                <>
-                  <Button variant="ghost" size="sm" className="text-white/65 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex rounded-xl" asChild>
-                    <Link to="/seller/products">
-                      <Package className="h-4 w-4 mr-1.5" aria-hidden="true" /> My Products
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-white/65 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex rounded-xl" asChild>
-                    <Link to="/seller/orders">
-                      <ShoppingBag className="h-4 w-4 mr-1.5" aria-hidden="true" /> Orders
-                    </Link>
-                  </Button>
-                </>
-              )}
-              {(user.role === "buyer") && (
-                <>
-                  <Button variant="ghost" size="sm" className="text-white/65 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex rounded-xl" asChild>
-                    <Link to="/buyer/orders">
-                      <ShoppingBag className="h-4 w-4 mr-1.5" aria-hidden="true" /> Orders
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-white/65 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex rounded-xl" asChild>
-                    <Link to="/buyer/wishlist">
-                      <Heart className="h-4 w-4 mr-1.5" aria-hidden="true" /> Wishlist
-                    </Link>
-                  </Button>
-                </>
-              )}
               <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" asChild>
                 <Link to={dashboardPath}>
                   <LayoutDashboard className="h-4 w-4 mr-1.5" aria-hidden="true" />
@@ -192,18 +183,18 @@ const Header = () => {
               <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-1.5" aria-hidden="true" /> Sign Out
               </Button>
-              {user.role !== "admin" && user.role !== "seller" && (
-                <Button
-                  size="sm"
-                  className="h-9 bg-gradient-to-r from-[#22C55E] to-[#16a34a] hover:from-[#4ade80] hover:to-[#22C55E] text-black font-semibold px-5 rounded-full shadow-lg shadow-green-500/20 hover:shadow-green-400/30 transition-all duration-300 ml-1"
-                  asChild
-                >
-                  <Link to="/seller">Start Selling</Link>
-                </Button>
-              )}
             </>
           ) : (
             <>
+              <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" asChild>
+                <Link to="/#how-it-works-buyers">For Buyers</Link>
+              </Button>
+              <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" asChild>
+                <Link to="/#how-it-works-sellers">For Sellers</Link>
+              </Button>
+              <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" asChild>
+                <Link to="/help">Help</Link>
+              </Button>
               <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" asChild>
                 <Link to="/login">Sign In</Link>
               </Button>
@@ -212,7 +203,7 @@ const Header = () => {
                 className="h-9 bg-gradient-to-r from-[#22C55E] to-[#16a34a] hover:from-[#4ade80] hover:to-[#22C55E] text-black font-semibold px-5 rounded-full shadow-lg shadow-green-500/20 hover:shadow-green-400/30 transition-all duration-300 ml-1"
                 asChild
               >
-                <Link to="/signup?type=seller">Start Selling</Link>
+                <Link to="/register">Register</Link>
               </Button>
             </>
           )}
