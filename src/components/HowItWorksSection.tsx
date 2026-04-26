@@ -79,7 +79,7 @@ function StepsPanel({
   cta?: { label: string; to: string };
 }) {
   return (
-    <div id={id} className="flex-1 rounded-xl border border-gray-200 bg-white shadow-sm p-6 lg:p-8 flex flex-col">
+    <div id={id} className="flex-1 rounded-xl border border-[#0A1930] bg-white shadow-sm p-6 lg:p-8 flex flex-col">
       <h2 className="text-lg font-bold text-gray-900 mb-6">{title}</h2>
 
       {/* Steps row — arrows as siblings between cards */}

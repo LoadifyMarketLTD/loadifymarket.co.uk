@@ -35,7 +35,7 @@ const TrustStrip = () => (
     <div className="w-full px-4 sm:px-6 py-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {ITEMS.map(({ icon: Icon, flag, label, sub }) => (
-          <div key={label} className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-4">
+          <div key={label} className="flex items-center gap-3 bg-white rounded-xl border border-[#0A1930] shadow-sm px-4 py-4">
             <span className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0 overflow-hidden">
               {flag
                 ? <UKFlag />
