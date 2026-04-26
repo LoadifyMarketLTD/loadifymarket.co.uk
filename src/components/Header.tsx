@@ -93,7 +93,7 @@ const Header = () => {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-40 bg-[#0A1930] border-b border-white/[0.10] shadow-[0_4px_32px_rgba(0,0,0,0.45)]"
+      className="fixed top-0 left-0 right-0 z-40 bg-[linear-gradient(180deg,#111827,#020617)] border-b border-white/[0.06] shadow-[0_8px_25px_rgba(0,0,0,0.35)]"
       style={{ willChange: "transform", paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
 
@@ -102,7 +102,7 @@ const Header = () => {
 
         {/* Hamburger — LEFT side, all screen sizes */}
         <button
-          className="p-2.5 text-white bg-white/[0.10] hover:text-green-400 hover:bg-white/[0.18] active:bg-white/[0.22] rounded-xl transition-all shrink-0 ring-1 ring-white/20"
+          className="p-2.5 text-[#CBD5E1] bg-white/[0.10] hover:text-[#FBBF24] hover:bg-white/[0.18] active:bg-white/[0.22] rounded-xl transition-all shrink-0 ring-1 ring-white/20"
           onClick={() => setMobileOpen(true)}
           aria-label="Open navigation menu"
           aria-expanded={mobileOpen}
@@ -116,7 +116,7 @@ const Header = () => {
           <img src={logo} alt="" aria-hidden="true" className="h-9 w-9" />
           <span className="flex flex-col leading-tight">
             <span className="font-display text-[15px] font-bold text-white tracking-tight">Loadify</span>
-            <span className="hidden sm:block font-display text-[13px] font-bold text-[#22C55E] tracking-tight">Market</span>
+            <span className="hidden sm:block font-display text-[13px] font-bold text-[#C99A3E] tracking-tight">Market</span>
           </span>
         </Link>
 
@@ -130,11 +130,11 @@ const Header = () => {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search products, categories, sellers..."
               aria-label="Search marketplace"
-              className="w-full h-11 sm:h-[46px] pl-9 sm:pl-11 pr-10 sm:pr-28 bg-white/[0.09] border border-white/20 rounded-2xl text-xs sm:text-sm text-white placeholder:text-white/35 focus:outline-none focus:bg-white/[0.13] focus:border-green-400/70 focus:ring-2 focus:ring-green-400/15 transition-all duration-200"
+              className="w-full h-11 sm:h-[46px] pl-9 sm:pl-11 pr-10 sm:pr-28 bg-[rgba(15,23,42,0.85)] border border-white/[0.08] rounded-2xl text-xs sm:text-sm text-white placeholder:text-[#94A3B8] focus:outline-none focus:border-[rgba(251,191,36,0.35)] focus:ring-2 focus:ring-[rgba(251,191,36,0.12)] transition-all duration-200"
             />
             <button
               type="submit"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 sm:h-[34px] px-3 sm:px-5 bg-[#22C55E] hover:bg-[#16A34A] active:bg-[#15803d] text-white text-xs sm:text-[13px] font-semibold rounded-xl transition-colors"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 sm:h-[34px] px-3 sm:px-5 bg-gradient-to-br from-[#FBBF24] to-[#D97706] hover:-translate-y-0.5 hover:shadow-[0_0_18px_rgba(251,191,36,0.25)] text-[#020617] text-xs sm:text-[13px] font-bold rounded-xl transition-all duration-250"
               aria-label="Search"
             >
               <span className="hidden sm:inline">Search</span>
@@ -146,12 +146,12 @@ const Header = () => {
         {/* Mobile cart icon */}
         <Link
           to="/cart"
-          className="lg:hidden relative p-2.5 text-white/75 hover:text-green-400 hover:bg-white/10 rounded-xl transition-all shrink-0"
+          className="lg:hidden relative p-2.5 text-[#CBD5E1] hover:text-[#FBBF24] hover:-translate-y-0.5 hover:drop-shadow-[0_0_7px_rgba(251,191,36,0.35)] hover:bg-white/10 rounded-xl transition-all shrink-0"
           aria-label="Shopping cart"
         >
           <ShoppingCart className="h-5 w-5" />
           {cartCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-[#22C55E] text-white text-[10px] font-bold flex items-center justify-center px-0.5">
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-[#C99A3E] text-white text-[10px] font-bold flex items-center justify-center px-0.5">
               {cartCount}
             </span>
           )}
@@ -161,12 +161,12 @@ const Header = () => {
         <div className="hidden lg:flex items-center gap-1.5 shrink-0">
           <Link
             to="/cart"
-            className="relative p-2.5 text-white/75 hover:text-green-400 hover:bg-white/10 rounded-xl transition-all"
+            className="relative p-2.5 text-[#CBD5E1] hover:text-[#FBBF24] hover:-translate-y-0.5 hover:drop-shadow-[0_0_7px_rgba(251,191,36,0.35)] hover:bg-white/10 rounded-xl transition-all"
             aria-label="Shopping cart"
           >
             <ShoppingCart className="h-5 w-5" />
             {cartCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-[#22C55E] text-white text-[10px] font-bold flex items-center justify-center px-0.5">
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-[#C99A3E] text-white text-[10px] font-bold flex items-center justify-center px-0.5">
                 {cartCount}
               </span>
             )}
@@ -174,33 +174,33 @@ const Header = () => {
 
           {user ? (
             <>
-              <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" asChild>
+              <Button variant="ghost" size="sm" className="text-[#9CA3AF] hover:text-[#FBBF24] hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
                 <Link to={dashboardPath}>
                   <LayoutDashboard className="h-4 w-4 mr-1.5" aria-hidden="true" />
                   {user.role === "admin" ? "Admin Hub" : "Dashboard"}
                 </Link>
               </Button>
-              <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" onClick={handleLogout}>
+              <Button variant="ghost" size="sm" className="text-[#9CA3AF] hover:text-[#FBBF24] hover:bg-white/10 font-medium rounded-xl transition-all" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-1.5" aria-hidden="true" /> Sign Out
               </Button>
             </>
           ) : (
             <>
-              <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" asChild>
+              <Button variant="ghost" size="sm" className="text-[#9CA3AF] hover:text-[#FBBF24] hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
                 <Link to="/#how-it-works-buyers">For Buyers</Link>
               </Button>
-              <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" asChild>
+              <Button variant="ghost" size="sm" className="text-[#9CA3AF] hover:text-[#FBBF24] hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
                 <Link to="/#how-it-works-sellers">For Sellers</Link>
               </Button>
-              <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" asChild>
+              <Button variant="ghost" size="sm" className="text-[#9CA3AF] hover:text-[#FBBF24] hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
                 <Link to="/help">Help</Link>
               </Button>
-              <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" asChild>
+              <Button variant="ghost" size="sm" className="text-[#9CA3AF] hover:text-[#FBBF24] hover:bg-white/10 font-medium rounded-xl transition-all" asChild>
                 <Link to="/login">Sign In</Link>
               </Button>
               <Button
                 size="sm"
-                className="h-9 bg-gradient-to-r from-[#22C55E] to-[#16a34a] hover:from-[#4ade80] hover:to-[#22C55E] text-black font-semibold px-5 rounded-full shadow-lg shadow-green-500/20 hover:shadow-green-400/30 transition-all duration-300 ml-1"
+                className="h-9 bg-gradient-to-br from-[#FBBF24] to-[#D97706] border border-[rgba(251,191,36,0.35)] text-[#020617] font-bold px-5 rounded-xl shadow-[0_6px_16px_rgba(251,191,36,0.25)] hover:-translate-y-0.5 hover:shadow-[0_0_22px_rgba(251,191,36,0.28),0_10px_24px_rgba(0,0,0,0.40)] transition-all duration-250 ml-1"
                 asChild
               >
                 <Link to="/register">Register</Link>
@@ -231,9 +231,8 @@ const Header = () => {
                     <Link
                       to={link.to}
                       className={[
-                        "text-[13px] hover:text-white hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-colors whitespace-nowrap text-center w-full",
-                        link.strong ? "font-bold text-[#22C55E]" : "font-semibold text-[#22C55E]",
-                        isHovered ? "bg-white/[0.08] text-white" : "",
+                        "nav-cat-link text-[13px] font-semibold text-[#E5E7EB] hover:text-[#FBBF24] hover:-translate-y-px hover:[text-shadow:0_0_8px_rgba(251,191,36,0.25)] hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap text-center w-full",
+                        isHovered ? "bg-white/[0.08] text-[#FBBF24]" : "",
                       ].join(" ")}
                     >
                       {link.label}
@@ -241,7 +240,7 @@ const Header = () => {
                     {hasChildren && isHovered && (
                       <div
                         className="absolute top-full left-0 z-50 min-w-[180px] rounded-xl border border-white/[0.12] shadow-2xl overflow-hidden"
-                        style={{ background: "#0A1930", marginTop: "2px" }}
+                        style={{ background: "#0E1520", marginTop: "2px" }}
                         onMouseEnter={cancelClose}
                         onMouseLeave={scheduleClose}
                       >

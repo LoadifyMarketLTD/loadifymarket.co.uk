@@ -5,6 +5,7 @@ import { hasAdminAccess } from './lib/roleUtils';
 import { CartProvider } from './contexts/CartContext';
 import CookieConsent from './components/CookieConsent';
 import Header from './components/Header';
+import AmbientLayer from './components/AmbientLayer';
 import { isCapacitorNative } from './lib/capacitor';
 
 import RequireAdmin from './components/auth/RequireAdmin';
@@ -114,7 +115,7 @@ function PageLoader() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">
       <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#22C55E]"></div>
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#C99A3E]"></div>
         <p className="mt-4 text-slate-700">Loading...</p>
       </div>
     </div>
@@ -433,6 +434,7 @@ function App() {
 
   return (
     <CartProvider>
+      <AmbientLayer />
       <Header />
       <MaintenanceModeGate>
         <Routes>

@@ -51,7 +51,7 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
     <div
       role="button"
       tabIndex={0}
-      className="group bg-card rounded-xl border border-border hover:border-primary/30 hover:shadow-xl hover:scale-[1.02] transition-all duration-200 overflow-hidden cursor-pointer"
+      className="group bg-card rounded-xl border border-border hover:border-yellow-400/35 hover:shadow-[0_0_22px_rgba(251,191,36,0.14),0_12px_28px_rgba(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer"
       onClick={handleCardClick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCardClick(e); } }}
     >
@@ -140,7 +140,7 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
           </Link>
         ) : (
           <Link to={`/product/${product.id}`} state={linkState ?? undefined}>
-            <Button className="w-full bg-gradient-hero text-primary-foreground hover:opacity-90 transition-opacity text-sm" size="sm">
+            <Button className="w-full bg-[linear-gradient(135deg,#FBBF24,#D97706)] text-[#020617] font-bold hover:shadow-[0_0_18px_rgba(251,191,36,0.28)] hover:opacity-90 transition-all duration-250 text-sm" size="sm">
               View Details
             </Button>
           </Link>

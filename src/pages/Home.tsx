@@ -29,7 +29,7 @@ export default function Home() {
         <link
           rel="preload"
           as="image"
-          href="/hero.jpeg"
+          href="/hero-gold.jpeg"
           type="image/jpeg"
           // @ts-expect-error — fetchpriority is a valid HTML attr not yet in React types
           fetchpriority="high"
@@ -47,7 +47,7 @@ export default function Home() {
         <HeroSection />
 
         {/* ── 2–4. Dark-bg platform overview (Trust → HowItWorks → Features+Security) ── */}
-        <section className="bg-[#0A1930] py-8 px-8" aria-label="Platform overview">
+        <section className="bg-[#020617] py-8 px-8" aria-label="Platform overview">
 
           {/* Trust Strip */}
           <TrustStrip />

@@ -165,6 +165,154 @@ section {
   scroll-margin-top: 80px;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   AMBIENT INTERACTION LAYER
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Gold cursor glow — follows --cursor-x / --cursor-y set by JS ─────────── */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 41;
+
+  background: radial-gradient(
+    400px circle at var(--cursor-x, 50%) var(--cursor-y, 50%),
+    rgba(251, 191, 36, 0.08),
+    transparent 60%
+  );
+}
+
+/* ── Noise texture overlay — fine grain, barely perceptible ───────────────── */
+.noise-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+
+  /* SVG feTurbulence noise tile — no separate file needed */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  opacity: 0.025;
+}
+
+/* ── Card 3D parallax ─────────────────────────────────────────────────────── */
+[data-parallax] {
+  transform-style: preserve-3d;
+  transition: transform 0.25s ease;
+}
+
+/* ── Magnetic button ──────────────────────────────────────────────────────── */
+[data-magnetic] {
+  transition: transform 0.2s ease;
+}
+
+/* ── Gold icon pulse — applied only to card icon wrappers via .icon-pulse ─── */
+@keyframes goldPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.25));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.4));
+  }
+}
+
+.icon-pulse {
+  animation: goldPulse 3s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PREMIUM PAYMENT & SOCIAL CARDS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Shared shine sweep (::after moves from left → right on hover) ────────── */
+.payment-card,
+.social-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.payment-card::after,
+.social-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transform: translateX(-120%);
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.10),
+    transparent
+  );
+  transition: transform 0.6s ease;
+}
+
+.payment-card:hover::after,
+.social-card:hover::after {
+  transform: translateX(120%);
+}
+
+/* ── Platform-specific hover glow (subtle brand tint + gold base) ─────────── */
+.social-card.facebook:hover {
+  box-shadow:
+    0 0 20px rgba(24, 119, 242, 0.18),
+    0 0 22px rgba(251, 191, 36, 0.10),
+    0 16px 34px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.social-card.twitter:hover {
+  box-shadow:
+    0 0 20px rgba(29, 161, 242, 0.18),
+    0 0 22px rgba(251, 191, 36, 0.10),
+    0 16px 34px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.social-card.instagram:hover {
+  box-shadow:
+    0 0 20px rgba(225, 48, 108, 0.18),
+    0 0 22px rgba(251, 191, 36, 0.10),
+    0 16px 34px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.social-card.linkedin:hover {
+  box-shadow:
+    0 0 20px rgba(10, 102, 194, 0.18),
+    0 0 22px rgba(251, 191, 36, 0.10),
+    0 16px 34px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NAVBAR — PRIMARY CATEGORY LINK ANIMATED UNDERLINE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.nav-cat-link {
+  position: relative;
+}
+
+.nav-cat-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 0%;
+  height: 2px;
+  background: #FBBF24;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.nav-cat-link:hover::after,
+.nav-cat-link.active::after {
+  width: 100%;
+}
+
 /* ── Safe-area inset utilities (Capacitor / notch phones) ─────────────────── */
 /* Use these on any fixed/sticky element that must clear the OS status bar or
    bottom navigation bar.  In a browser the env() values resolve to 0.          */
