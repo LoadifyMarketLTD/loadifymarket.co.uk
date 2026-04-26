@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ShieldCheck, Store, Truck, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import SocialCard from "@/components/ui/SocialCard";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -49,23 +50,10 @@ const Footer = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            {[
-              { href: "https://www.facebook.com/loadifymarket", label: "Loadify Market on Facebook", Icon: Facebook },
-              { href: "https://www.twitter.com/loadifymarket", label: "Loadify Market on X / Twitter", Icon: Twitter },
-              { href: "https://www.instagram.com/loadifymarket", label: "Loadify Market on Instagram", Icon: Instagram },
-              { href: "https://www.linkedin.com/company/loadifymarket", label: "Loadify Market on LinkedIn", Icon: Linkedin },
-            ].map(({ href, label, Icon }) => (
-              <a
-                key={href}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={label}
-                className="p-2 rounded-lg border border-white/5 bg-white/[0.06] text-white/60 transition-all duration-250 hover:text-[#FBBF24] hover:border-yellow-400/30 hover:shadow-[0_0_15px_rgba(251,191,36,0.15)] hover:-translate-y-0.5"
-              >
-                <Icon className="h-4 w-4" />
-              </a>
-            ))}
+            <SocialCard href="https://www.facebook.com/loadifymarket"          label="Loadify Market on Facebook"   Icon={Facebook}  platform="facebook"  size="footer" />
+            <SocialCard href="https://www.twitter.com/loadifymarket"           label="Loadify Market on X / Twitter" Icon={Twitter}   platform="twitter"   size="footer" />
+            <SocialCard href="https://www.instagram.com/loadifymarket"         label="Loadify Market on Instagram"   Icon={Instagram} platform="instagram" size="footer" />
+            <SocialCard href="https://www.linkedin.com/company/loadifymarket"  label="Loadify Market on LinkedIn"    Icon={Linkedin}  platform="linkedin"  size="footer" />
           </div>
         </div>
       </div>
