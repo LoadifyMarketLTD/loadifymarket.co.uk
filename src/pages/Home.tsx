@@ -11,11 +11,11 @@
  *  7. Footer             — rendered by MainLayout
  */
 
-import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
+import HeroSection from "@/components/HeroSection";
 import HowItWorksBuyers from "@/components/HowItWorksBuyers";
 import HowItWorksSellers from "@/components/HowItWorksSellers";
 import FeaturesGrid from "@/components/FeaturesGrid";
@@ -45,30 +45,7 @@ export default function Home() {
       <main id="main-content">
 
         {/* ── 1. Hero ──────────────────────────────────────────────────── */}
-        <section className="py-24 bg-white">
-          <div className="max-w-6xl mx-auto px-4 text-center">
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">
-              The UK Marketplace Built for Modern Sellers
-            </h1>
-            <p className="text-xl text-gray-600 mb-10">
-              Sell products, manage orders, and get paid — all in one secure platform.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link
-                to="/register?role=seller"
-                className="bg-green-600 text-white font-semibold px-8 py-4 rounded-xl hover:opacity-90 transition-opacity"
-              >
-                Start Selling Today
-              </Link>
-              <Link
-                to="/catalog"
-                className="text-gray-700 hover:underline"
-              >
-                Browse the Marketplace
-              </Link>
-            </div>
-          </div>
-        </section>
+        <HeroSection />
 
         {/* ── 2. How It Works — Buyers ─────────────────────────────────── */}
         <HowItWorksBuyers />
