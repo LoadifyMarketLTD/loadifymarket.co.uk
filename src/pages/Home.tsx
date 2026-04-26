@@ -3,9 +3,9 @@
  *
  * Section order:
  *  1. Hero Section       — headline, CTAs, payment badges, product image
- *  2. TrustStrip         — 4 trust items (full-width)
- *  3. HowItWorksSection  — buyers + sellers side by side
- *  4. Features + Security — two panels side by side
+ *  2–4. Dark platform overview (bg-[#0A1930]):
+ *       TrustStrip → HowItWorksSection → FeaturesGrid + SecurityTrust
+ *       All spaced with mt-8 md:mt-10 lg:mt-12 inside one section wrapper
  *  5. SellerCTA          — green full-width CTA banner
  *  6. Footer             — rendered by MainLayout
  */
@@ -46,19 +46,24 @@ export default function Home() {
         {/* ── 1. Hero ──────────────────────────────────────────────────── */}
         <HeroSection />
 
-        {/* ── 2. Trust Strip ───────────────────────────────────────────── */}
-        <TrustStrip />
+        {/* ── 2–4. Dark-bg platform overview (Trust → HowItWorks → Features+Security) ── */}
+        <section className="bg-[#0A1930] py-8 md:py-10 lg:py-12" aria-label="Platform overview">
+          <div className="w-full max-w-[1600px] mx-auto px-10 xl:px-14 2xl:px-16">
 
-        {/* ── 3. How It Works (Buyers + Sellers) ───────────────────────── */}
-        <HowItWorksSection />
+            {/* Trust Strip */}
+            <TrustStrip />
 
-        {/* ── 4. Features + Security (side by side) ────────────────────── */}
-        <section className="py-10 md:py-12 lg:py-14 bg-[#0A1930]">
-          <div className="max-w-[1440px] mx-auto px-6 lg:px-10 xl:px-14">
-            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            {/* How It Works */}
+            <div className="mt-8 md:mt-10 lg:mt-12">
+              <HowItWorksSection />
+            </div>
+
+            {/* Features + Security */}
+            <div className="mt-8 md:mt-10 lg:mt-12 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
               <FeaturesGrid />
               <SecurityTrust />
             </div>
+
           </div>
         </section>
 

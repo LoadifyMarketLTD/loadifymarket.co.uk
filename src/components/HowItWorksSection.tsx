@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom';
-import { Search, ShieldCheck, Truck, UserPlus, Tag, CreditCard, ArrowRight } from "lucide-react";
+import { Search, ShieldCheck, Truck, UserPlus, Tag, CreditCard } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface Step {
@@ -54,7 +53,7 @@ const sellerSteps: Step[] = [
 function StepCard({ step }: { step: Step }) {
   const Icon = step.icon;
   return (
-    <div className="flex flex-col gap-2 flex-1 min-w-0 rounded-xl border border-[#0A1930] bg-white p-5 lg:p-6 shadow-sm">
+    <div className="h-[220px] w-full rounded-xl border border-slate-300 bg-white/80 p-5 shadow-sm flex flex-col gap-2">
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 rounded-full bg-green-600 text-white font-bold text-sm flex items-center justify-center shrink-0">
           {step.number}
@@ -67,69 +66,24 @@ function StepCard({ step }: { step: Step }) {
   );
 }
 
-function StepsPanel({
-  id,
-  title,
-  steps,
-  cta,
-}: {
-  id: string;
-  title: string;
-  steps: Step[];
-  cta?: { label: string; to: string };
-}) {
+function StepsPanel({ id, title, steps }: { id: string; title: string; steps: Step[] }) {
   return (
-    <div id={id} className="flex-1 rounded-xl border border-[#0A1930] bg-white shadow-sm p-6 lg:p-8 flex flex-col">
+    <div id={id} className="w-full rounded-2xl border border-slate-200 bg-white/90 p-6 lg:p-8 shadow-sm">
       <h2 className="text-lg font-bold text-gray-900 mb-6">{title}</h2>
-
-      {/* Steps row — arrows as siblings between cards */}
-      <div className="flex flex-col sm:flex-row items-stretch gap-4 sm:gap-0 flex-1">
-        {steps.map((step, idx) => (
-          <>
-            <StepCard key={step.number} step={step} />
-            {idx < steps.length - 1 && (
-              <div key={`arrow-${idx}`} className="hidden sm:flex items-center shrink-0 px-2">
-                <ArrowRight className="h-4 w-4 text-gray-500" aria-hidden="true" />
-              </div>
-            )}
-          </>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        {steps.map((step) => (
+          <StepCard key={step.number} step={step} />
         ))}
       </div>
-
-      {/* Optional section CTA */}
-      {cta && (
-        <div className="mt-6 pt-5 border-t border-gray-100 text-center">
-          <Link
-            to={cta.to}
-            className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm"
-          >
-            {cta.label}
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </Link>
-        </div>
-      )}
     </div>
   );
 }
 
 const HowItWorksSection = () => (
-  <section className="py-10 md:py-12 lg:py-14 bg-[#0A1930]" aria-label="How it works">
-    <div className="max-w-[1440px] mx-auto px-6 lg:px-10 xl:px-14">
-      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-        <StepsPanel
-          id="how-it-works-buyers"
-          title="How It Works for Buyers"
-          steps={buyerSteps}
-        />
-        <StepsPanel
-          id="how-it-works-sellers"
-          title="How It Works for Sellers"
-          steps={sellerSteps}
-          cta={{ label: "Start Selling — It's Free", to: "/register?type=seller" }}
-        />
-      </div>
-    </div>
-  </section>
+  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8" aria-label="How it works">
+    <StepsPanel id="how-it-works-buyers" title="How It Works for Buyers" steps={buyerSteps} />
+    <StepsPanel id="how-it-works-sellers" title="How It Works for Sellers" steps={sellerSteps} />
+  </div>
 );
 
 export default HowItWorksSection;
