@@ -51,7 +51,7 @@ const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
     }
   };
 
-  const hasData = data.line1 || data.city || data.postcode;
+  const hasData = data.name || data.line1 || data.city || data.postcode;
 
   return (
     <Card className={hasData ? "ring-2 ring-primary/20" : ""}>
