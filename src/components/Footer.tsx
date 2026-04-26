@@ -13,7 +13,7 @@ const Footer = () => {
           {/* Column 1 — Brand / Description */}
           <div>
             <p className="text-xl font-bold text-white mb-4">Loadify Market</p>
-            <p className="text-sm text-gray-400 max-w-xs">
+            <p className="text-sm text-gray-400 max-w-md">
               A UK-based multi-category marketplace connecting buyers and sellers with secure payments and modern tools.
             </p>
             <p className="text-sm text-gray-400 mt-3">Operated by Loadify Market LTD (UK).</p>
