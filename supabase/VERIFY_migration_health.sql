@@ -141,6 +141,23 @@ SELECT check_name, status FROM (
          CASE WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='checkout_rate_limits')
               THEN '✅ OK' ELSE '❌ MISSING' END
 
+  -- ── 454_payout_rpc_security: payout RPCs ─────────────────────
+  UNION ALL SELECT '454_payout_rpc_security | fn: credit_seller_balance',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.routines WHERE routine_schema='public' AND routine_name='credit_seller_balance')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '454_payout_rpc_security | fn: approve_payout',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.routines WHERE routine_schema='public' AND routine_name='approve_payout')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '454_payout_rpc_security | fn: complete_payout',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.routines WHERE routine_schema='public' AND routine_name='complete_payout')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '454_payout_rpc_security | fn: reject_payout',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.routines WHERE routine_schema='public' AND routine_name='reject_payout')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
   -- ── 95_stripe_connect: Stripe Connect columns ────────────────
   UNION ALL SELECT '95_stripe_connect | column: seller_profiles.stripeConnectStatus',
          CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
