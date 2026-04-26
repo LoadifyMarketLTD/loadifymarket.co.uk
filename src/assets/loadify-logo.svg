@@ -1,14 +1,48 @@
-<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="none" role="img" aria-label="Loadify Market">
-  <!-- Handle: L-shape up to basket top-left corner -->
-  <path d="M 3,28 L 3,7 L 10,7"
-        stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Cart basket: trapezoid with vertical left side -->
-  <path d="M 10,7 L 44,7 L 42,28 L 10,28 Z"
-        stroke="#7C3AED" stroke-width="2.5" stroke-linejoin="round"/>
-  <!-- 2 thick green stripes inside basket -->
-  <line x1="12" y1="14.5" x2="43" y2="14.5" stroke="#22C55E" stroke-width="4" stroke-linecap="round"/>
-  <line x1="11.5" y1="22" x2="42.5" y2="22" stroke="#22C55E" stroke-width="4" stroke-linecap="round"/>
-  <!-- Wheels (solid purple) -->
-  <circle cx="17" cy="37" r="4" fill="#7C3AED"/>
-  <circle cx="35" cy="37" r="4" fill="#7C3AED"/>
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Loadify Market">
+  <defs>
+    <!-- Gold gradient: top-left → bottom-right -->
+    <linearGradient id="lm-gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <!-- Subtle golden glow -->
+    <filter id="lm-glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.8" result="blur"/>
+      <feFlood flood-color="#FBBF24" flood-opacity="0.38" result="color"/>
+      <feComposite in="color" in2="blur" operator="in" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Dark container -->
+  <rect width="48" height="48" rx="9" fill="#020617"/>
+
+  <!-- LM monogram mark — all shapes share the same gold gradient -->
+  <g filter="url(#lm-glow)">
+    <!--
+      Design logic:
+        • L = left vertical bar (x 4–10) + horizontal base (x 4–20, y 34–41)
+        • M = left bar shared with L + two 45° diagonal bars meeting at a V-tip
+              (x 21–27, y 24) + right outer vertical bar (x 38–44)
+        • The L base and M inner space are visually fused into one mark
+    -->
+
+    <!-- Left vertical bar — shared between L and M -->
+    <rect x="4"  y="7" width="6" height="34" fill="url(#lm-gold)"/>
+
+    <!-- L horizontal base -->
+    <rect x="4"  y="34" width="16" height="7" fill="url(#lm-gold)"/>
+
+    <!-- M right outer vertical bar -->
+    <rect x="38" y="7" width="6" height="34" fill="url(#lm-gold)"/>
+
+    <!-- M left diagonal (top-left → V-tip): 6 px wide, 45° -->
+    <polygon points="10,7 16,7 27,24 21,24" fill="url(#lm-gold)"/>
+
+    <!-- M right diagonal (V-tip → top-right): 6 px wide, 45° -->
+    <polygon points="21,24 27,24 38,7 32,7" fill="url(#lm-gold)"/>
+  </g>
 </svg>
