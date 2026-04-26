@@ -566,26 +566,6 @@ const Signup = () => {
                 {/* Left: reCAPTCHA + Terms */}
                 <div className="flex flex-col gap-3">
 
-                  {/* reCAPTCHA placeholder */}
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Security Verification</p>
-                    <div className="flex items-center gap-3 border border-gray-400 bg-white px-3 py-2.5 w-[300px] max-w-full">
-                      <input
-                        type="checkbox" disabled
-                        className="h-5 w-5 border border-gray-400 bg-white cursor-not-allowed shrink-0"
-                      />
-                      <span className="text-sm text-gray-700 flex-1 font-medium">I'm not a robot</span>
-                      <div className="text-center ml-1 shrink-0">
-                        <svg viewBox="0 0 64 64" className="h-8 w-8 opacity-60" fill="none">
-                          <circle cx="32" cy="32" r="30" stroke="#4a90d9" strokeWidth="4"/>
-                          <path d="M32 14v18l10 10" stroke="#4a90d9" strokeWidth="4" strokeLinecap="round"/>
-                        </svg>
-                        <p className="text-[8px] text-gray-400 leading-none mt-0.5">reCAPTCHA</p>
-                        <p className="text-[7px] text-gray-300 leading-none">Privacy · Terms</p>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Mandatory terms checkbox */}
                   <div>
                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Legal Agreement <span className="text-red-600">*</span></p>

@@ -677,26 +677,6 @@ export default function TradeAccount() {
             <div className="mt-6 bg-white rounded-xl border border-gray-200 p-6 space-y-4">
               <SectionHeader label="Security & Compliance" />
 
-              {/* reCAPTCHA placeholder */}
-              <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 flex items-center gap-4 bg-gray-50">
-                <div className="h-7 w-7 rounded border-2 border-gray-300 bg-white flex items-center justify-center shrink-0">
-                  <span className="text-gray-300 text-lg">☐</span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">I'm not a robot</p>
-                  <p className="text-xs text-gray-400">reCAPTCHA • Privacy • Terms</p>
-                </div>
-                <div className="ml-auto">
-                  <svg viewBox="0 0 64 64" className="h-12 w-12 opacity-30" fill="none">
-                    <circle cx="32" cy="32" r="30" stroke="#4A90E2" strokeWidth="4" />
-                    <path d="M20 32l10 10 14-18" stroke="#4A90E2" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-xs text-gray-400 -mt-1">
-                Full reCAPTCHA integration will be enabled before launch.
-              </p>
-
               {/* GDPR checkbox */}
               <div
                 data-error={!!errors.gdprAccepted || undefined}
