@@ -12,7 +12,7 @@ const HeroSection = () => (
       aria-hidden="true"
       width={1536}
       height={1024}
-      className="absolute inset-0 w-full h-full object-contain object-center"
+      className="absolute inset-0 w-full h-full object-cover object-center"
       loading="eager"
     />
 
