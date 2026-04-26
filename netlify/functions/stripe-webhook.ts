@@ -1,7 +1,6 @@
 import Stripe from 'stripe';
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
-import { isMaintenanceMode } from './_shared/platformFlags';
 
 // Collect all available webhook signing secrets.
 // STRIPE_WEBHOOK_SECRET       — standard account webhook (checkout events)
@@ -98,18 +97,6 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method not allowed' }),
-    };
-  }
-
-  // Maintenance mode guard — block webhook processing when the platform is
-  // under maintenance.  This is consistent with create-checkout.ts and rfq.ts.
-  // NOTE: There is no admin bypass here because Stripe webhook calls are
-  // server-to-server (no caller identity is available at this point).
-  const maintenance = await isMaintenanceMode(supabase);
-  if (maintenance) {
-    return {
-      statusCode: 503,
-      body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }),
     };
   }
 
@@ -476,7 +463,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       p_order_id: order.id,
     });
     if (balanceError) {
-      console.warn('credit_seller_balance RPC failed:', balanceError.message);
+      // PostgREST code 42883 = "function does not exist" — the RPC is missing
+      // from the database. Log an actionable message so the on-call engineer
+      // knows exactly which migration to re-apply and which order was affected.
+      if ((balanceError as { code?: string }).code === '42883') {
+        console.error(
+          `credit_seller_balance RPC does not exist in the database. ` +
+          `Re-apply 90_launch_features.sql (or the migration that defines this function). ` +
+          `Affected: seller=${sellerId}, order=${order.id}`,
+        );
+      } else {
+        console.warn('credit_seller_balance RPC failed:', balanceError.message);
+      }
     }
 
     // ── Stripe Connect automatic Transfer ────────────────────────────────────

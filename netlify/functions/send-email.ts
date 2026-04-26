@@ -96,10 +96,20 @@ export const handler: Handler = async (event) => {
         'server-side calls in local dev. Set this variable before deploying.',
       );
     } else {
+      // In production/staging the secret MUST be set.  Return 503 so callers
+      // can distinguish a misconfiguration from an unauthorised request (403).
       console.error(
         'send-email: NETLIFY_INTERNAL_SECRET is not configured. ' +
         'Add this environment variable in the Netlify dashboard.',
       );
+      if (!PUBLIC_TEMPLATES.has(template)) {
+        return {
+          statusCode: 503,
+          body: JSON.stringify({
+            error: 'Email service misconfigured / NETLIFY_INTERNAL_SECRET is not set on this deploy',
+          }),
+        };
+      }
     }
   }
 

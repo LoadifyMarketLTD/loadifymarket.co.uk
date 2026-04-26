@@ -144,6 +144,31 @@ SELECT check_name, status FROM (
          CASE WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='checkout_rate_limits')
               THEN '✅ OK' ELSE '❌ MISSING' END
 
+  UNION ALL SELECT '90_launch_features | function: request_payout(DECIMAL)',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                           WHERE n.nspname='public' AND p.proname='request_payout')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '90_launch_features | function: approve_payout(UUID)',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                           WHERE n.nspname='public' AND p.proname='approve_payout')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '90_launch_features | function: complete_payout(UUID)',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                           WHERE n.nspname='public' AND p.proname='complete_payout')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '90_launch_features | function: reject_payout(UUID, TEXT)',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                           WHERE n.nspname='public' AND p.proname='reject_payout')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '90_launch_features | function: credit_seller_balance(UUID, UUID)',
+         CASE WHEN EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+                           WHERE n.nspname='public' AND p.proname='credit_seller_balance')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
   -- ── 95_stripe_connect: Stripe Connect columns ────────────────
   UNION ALL SELECT '95_stripe_connect | column: seller_profiles.stripeConnectStatus',
          CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
