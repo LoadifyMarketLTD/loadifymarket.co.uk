@@ -23,7 +23,7 @@ const HeroSection = () => (
 
     {/* ── Content ──────────────────────────────────────────────────────── */}
     <div className="absolute inset-0 flex items-center">
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[122px] pb-8 lg:py-24">
+    <div className="w-full px-4 sm:px-6 lg:pl-8 xl:pl-10 pt-[122px] pb-8 lg:pt-36 lg:pb-12">
       <div className="flex flex-col text-center sm:text-left items-center sm:items-start max-w-[500px]">
 
         {/* 1. Promo badge */}
