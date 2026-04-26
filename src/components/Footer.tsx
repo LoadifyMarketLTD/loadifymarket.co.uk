@@ -23,8 +23,6 @@ const FooterLink = ({ to, children }: { to: string; children: React.ReactNode })
 // ─── Footer ──────────────────────────────────────────────────────────────────
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
-
   return (
     <footer className="bg-[#0A1930] text-white/70 border-t border-white/[0.07]">
 
@@ -194,7 +192,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
 
           <p className="text-[12px] text-white/35">
-            &copy; {currentYear} XDrive Logistics Ltd (Company No. 13171804). All rights reserved.
+            &copy; 2021 XDrive Logistics Ltd (Company No. 13171804). All rights reserved.
             Loadify Market is a trading name of XDrive Logistics Ltd, registered in England &amp; Wales.
           </p>
 
