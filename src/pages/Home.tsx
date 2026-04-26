@@ -53,9 +53,9 @@ export default function Home() {
         <HowItWorksSection />
 
         {/* ── 4. Features + Security (side by side) ────────────────────── */}
-        <section className="py-10 lg:py-14 bg-[#0A1930]">
-          <div className="w-full px-4 sm:px-6">
-            <div className="flex flex-col lg:flex-row gap-6">
+        <section className="py-10 md:py-12 lg:py-14 bg-[#0A1930]">
+          <div className="max-w-[1440px] mx-auto px-6 lg:px-10 xl:px-14">
+            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
               <FeaturesGrid />
               <SecurityTrust />
             </div>

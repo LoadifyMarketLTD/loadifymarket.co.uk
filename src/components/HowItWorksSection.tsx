@@ -54,7 +54,7 @@ const sellerSteps: Step[] = [
 function StepCard({ step }: { step: Step }) {
   const Icon = step.icon;
   return (
-    <div className="flex flex-col gap-2 flex-1 min-w-0 rounded-xl border border-[#0A1930] bg-white p-3 shadow-sm">
+    <div className="flex flex-col gap-2 flex-1 min-w-0 rounded-xl border border-[#0A1930] bg-white p-5 lg:p-6 shadow-sm">
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 rounded-full bg-green-600 text-white font-bold text-sm flex items-center justify-center shrink-0">
           {step.number}
@@ -113,9 +113,9 @@ function StepsPanel({
 }
 
 const HowItWorksSection = () => (
-  <section className="py-10 lg:py-14 bg-[#0A1930]" aria-label="How it works">
-    <div className="w-full px-4 sm:px-6">
-      <div className="flex flex-col lg:flex-row gap-6">
+  <section className="py-10 md:py-12 lg:py-14 bg-[#0A1930]" aria-label="How it works">
+    <div className="max-w-[1440px] mx-auto px-6 lg:px-10 xl:px-14">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         <StepsPanel
           id="how-it-works-buyers"
           title="How It Works for Buyers"

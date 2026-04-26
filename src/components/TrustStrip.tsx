@@ -32,10 +32,10 @@ const ITEMS: TrustItem[] = [
 
 const TrustStrip = () => (
   <div className="bg-[#0A1930]" aria-label="Platform trust features">
-    <div className="w-full px-4 sm:px-6 py-6">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="max-w-[1440px] mx-auto px-6 lg:px-10 xl:px-14 py-8 md:py-10 lg:py-12">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
         {ITEMS.map(({ icon: Icon, flag, label, sub }) => (
-          <div key={label} className="flex items-center gap-3 bg-white rounded-xl border border-[#0A1930] shadow-sm px-4 py-4">
+          <div key={label} className="flex items-center gap-3 bg-white rounded-xl border border-[#0A1930] shadow-sm px-5 py-4">
             <span className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0 overflow-hidden">
               {flag
                 ? <UKFlag />
