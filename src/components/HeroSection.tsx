@@ -7,7 +7,7 @@ const HeroSection = () => (
   >
     {/* ── Background image ─────────────────────────────────────────────── */}
     <img
-      src="/hero-marketplace.jpg"
+      src="/hero.jpeg"
       alt=""
       aria-hidden="true"
       width={1536}
@@ -19,7 +19,7 @@ const HeroSection = () => (
     {/* ── Dark overlay for text legibility ─────────────────────────────── */}
     <div
       className="absolute inset-0"
-      style={{ background: 'linear-gradient(to right, rgba(10,25,48,0.75) 0%, rgba(10,25,48,0.45) 45%, rgba(10,25,48,0.10) 100%)' }}
+      style={{ background: 'linear-gradient(to right, rgba(10,34,57,0.6) 0%, rgba(10,34,57,0.2) 50%, transparent 100%)' }}
       aria-hidden="true"
     />
 
