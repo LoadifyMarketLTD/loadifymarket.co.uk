@@ -14,15 +14,16 @@ interface PaymentMethodBadgesProps {
 }
 
 /**
- * Accepted payment method badges — Visa, Mastercard, American Express, Stripe.
+ * Accepted payment method badges — Visa, Mastercard, PayPal, Stripe.
  *
- * Sources: standalone SVG files in /public/payment-icons/
- *   visa.svg        — serif italic wordmark, Visa Classic Blue #1A1F71 on white
- *   mastercard.svg  — two circles, geometrically-correct lens overlap, official brand colours
- *   amex.svg        — American Express Blue #016FD0 badge, white AMEX wordmark
- *   stripe.svg      — Stripe Blurple #635BFF badge, white "stripe" wordmark
+ * Sources: standalone SVG files in /public/payment-icons/ and /public/assets/apm/
+ *   visa.svg               — serif italic wordmark, Visa Classic Blue #1A1F71 on white
+ *   mastercard.svg         — two circles, geometrically-correct lens overlap, official brand colours
+ *   assets/apm/paypal.svg  — PP monogram + PayPal wordmark, official brand colours on white
+ *   stripe.svg             — Stripe Blurple #635BFF badge, white "stripe" wordmark
  *
- * Do NOT add PayPal, Apple Pay or Google Pay — they are not enabled.
+ * AMEX removed: American Express is not a confirmed supported payment method at checkout.
+ * Do NOT re-add AMEX until it is explicitly verified as active in the Stripe account.
  */
 const PaymentMethodBadges = ({
   showLabel = true,
@@ -63,8 +64,8 @@ const PaymentMethodBadges = ({
           decoding="async"
         />
         <img
-          src="/payment-icons/amex.svg"
-          alt="American Express"
+          src="/assets/apm/paypal.svg"
+          alt="PayPal"
           className={badgeClass}
           width="60"
           height="38"
