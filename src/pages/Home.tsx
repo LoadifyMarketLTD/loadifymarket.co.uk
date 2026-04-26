@@ -2,14 +2,12 @@
  * src/pages/Home.tsx — root "/" route
  *
  * Section order:
- *  1. Hero Section       — headline, subheadline, primary + secondary CTA
- *  2. HowItWorksBuyers   — 3-step buyer guide
- *  3. HowItWorksSellers  — 3-step seller guide
- *  4. FeaturesGrid       — 9-feature grid
- *  5. SecurityTrust      — 8-item trust grid
- *  6. CategoriesOverview — all categories
- *  7. SellerCTA          — green full-width CTA banner
- *  8. Footer             — rendered by MainLayout
+ *  1. Hero Section       — headline, CTAs, payment badges, product image
+ *  2. TrustStrip         — 4 trust items (full-width)
+ *  3. HowItWorksSection  — buyers + sellers side by side
+ *  4. Features + Security — two panels side by side
+ *  5. SellerCTA          — green full-width CTA banner
+ *  6. Footer             — rendered by MainLayout
  */
 
 import { Helmet } from "react-helmet-async";
@@ -17,11 +15,10 @@ import { Helmet } from "react-helmet-async";
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
 import HeroSection from "@/components/HeroSection";
-import HowItWorksBuyers from "@/components/HowItWorksBuyers";
-import HowItWorksSellers from "@/components/HowItWorksSellers";
+import TrustStrip from "@/components/TrustStrip";
+import HowItWorksSection from "@/components/HowItWorksSection";
 import FeaturesGrid from "@/components/FeaturesGrid";
 import SecurityTrust from "@/components/SecurityTrust";
-import CategoriesOverview from "@/components/CategoriesOverview";
 import SellerCTA from "@/components/SellerCTA";
 
 export default function Home() {
@@ -39,8 +36,8 @@ export default function Home() {
         />
       </Helmet>
       <SEO
-        title="Sell in the UK Marketplace — 0% Commission | Loadify Market"
-        description="Start selling your products and services across the UK — free to list, 0% commission until 31 Dec 2026. Secure Stripe payouts."
+        title="The UK Marketplace Built for Modern Sellers — 0% Commission | Loadify Market"
+        description="Sell products, manage orders, and get paid — all in one secure platform. 0% commission until 31 December 2026. Free to list, no monthly charges."
         canonical="/"
       />
 
@@ -49,25 +46,27 @@ export default function Home() {
         {/* ── 1. Hero ──────────────────────────────────────────────────── */}
         <HeroSection />
 
-        {/* ── 2. How It Works — Buyers ─────────────────────────────────── */}
-        <HowItWorksBuyers />
+        {/* ── 2. Trust Strip ───────────────────────────────────────────── */}
+        <TrustStrip />
 
-        {/* ── 3. How It Works — Sellers ────────────────────────────────── */}
-        <HowItWorksSellers />
+        {/* ── 3. How It Works (Buyers + Sellers) ───────────────────────── */}
+        <HowItWorksSection />
 
-        {/* ── 4. Features Grid ─────────────────────────────────────────── */}
-        <FeaturesGrid />
+        {/* ── 4. Features + Security (side by side) ────────────────────── */}
+        <section className="py-10 lg:py-14 bg-white border-t border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col lg:flex-row rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <FeaturesGrid />
+              <div className="hidden lg:block w-px bg-gray-200 self-stretch" aria-hidden="true" />
+              <SecurityTrust />
+            </div>
+          </div>
+        </section>
 
-        {/* ── 5. Security & Trust ──────────────────────────────────────── */}
-        <SecurityTrust />
-
-        {/* ── 6. Categories Overview ───────────────────────────────────── */}
-        <CategoriesOverview />
-
-        {/* ── 7. Seller CTA ────────────────────────────────────────────── */}
+        {/* ── 5. Seller CTA ────────────────────────────────────────────── */}
         <SellerCTA />
 
-        {/* ── 8. Footer — rendered by MainLayout ───────────────────────── */}
+        {/* ── 6. Footer — rendered by MainLayout ───────────────────────── */}
 
       </main>
     </MainLayout>

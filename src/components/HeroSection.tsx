@@ -1,136 +1,87 @@
 import { Link } from 'react-router-dom';
-import { ShieldCheck, CreditCard, BadgeCheck, Tag } from 'lucide-react';
-
-const HERO_BULLETS = [
-  'Free to list — no hidden fees',
-  '0% commission until 1 July 2026',
-  'Fast Stripe payouts to your bank',
-];
-
-const TRUST_ITEMS = [
-  {
-    icon: CreditCard,
-    label: 'Stripe Secured Payments',
-    desc: 'Every transaction encrypted end-to-end',
-  },
-  {
-    icon: BadgeCheck,
-    label: 'Verified UK Sellers',
-    desc: 'Identity-checked before they can list',
-  },
-  {
-    icon: ShieldCheck,
-    label: 'UK-Based Marketplace',
-    desc: 'Registered & operated in the United Kingdom',
-  },
-  {
-    icon: Tag,
-    label: '0% Commission Until 1 July 2026',
-    desc: 'No hidden fees — list and sell for free',
-  },
-];
 
 const HeroSection = () => (
   <section
     aria-label="Loadify Market — UK Online Marketplace"
-    className="w-full bg-white pt-[122px] py-20"
+    className="w-full bg-white pt-[122px] pb-0"
   >
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-center">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
 
-        {/* ── Left column (7 cols) ─────────────────────────────────────── */}
-        <div className="md:col-span-7 flex flex-col gap-5 text-center md:text-left items-center md:items-start">
+        {/* ── Left column ──────────────────────────────────────────────── */}
+        <div className="flex flex-col gap-5 text-center lg:text-left items-center lg:items-start">
 
           {/* 1. Promo badge */}
-          <div className="inline-flex items-center gap-2 bg-green-600 text-white text-xs font-bold rounded-full px-4 py-1.5">
-            <span aria-hidden="true">⚡</span>
-            <span>0% Commission Until 1 July 2026</span>
+          <div className="inline-flex items-center bg-green-600 text-white text-xs font-bold rounded-full px-4 py-1.5 tracking-wide uppercase">
+            0% Commission Until 31 December 2026
           </div>
 
-          {/* 2. Label */}
-          <span className="text-sm font-medium text-green-600 tracking-wide uppercase">
-            UK Multi Category Marketplace
-          </span>
-
-          {/* 3. H1 */}
+          {/* 2. H1 — two lines */}
           <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight text-gray-900">
-            Sell Across the UK — Reach More Buyers
+            The UK Marketplace<br />
+            <span className="text-green-600">Built for Modern Sellers</span>
           </h1>
 
-          {/* 4. Paragraph */}
-          <p className="text-lg text-gray-700 max-w-xl">
-            List your products or services for free and connect with verified UK buyers. No setup fees, no monthly charges.
+          {/* 3. Subtitle */}
+          <p className="text-lg text-gray-600 max-w-xl">
+            Sell products, manage orders, and get paid —<br className="hidden sm:block" />
+            all in one secure platform.
           </p>
 
-          {/* 5. Bullet points */}
-          <ul className="flex flex-col gap-2">
-            {HERO_BULLETS.map((b) => (
-              <li key={b} className="flex items-center gap-2 text-base text-gray-700">
-                <span className="text-green-600 font-bold text-lg leading-none" aria-hidden="true">✓</span>
-                {b}
-              </li>
-            ))}
-          </ul>
-
-          {/* 6. CTAs */}
+          {/* 4. CTAs */}
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <Link
               to="/register?type=seller"
-              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-4 rounded-xl text-center transition-colors"
+              className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
             >
-              Start Selling — It's Free
+              Start Selling Today
             </Link>
             <Link
-              to="/register"
-              className="w-full sm:w-auto border border-green-600 text-green-600 hover:bg-green-50 font-semibold px-8 py-4 rounded-xl text-center transition-colors"
+              to="/products"
+              className="w-full sm:w-auto border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
             >
-              Create Buyer Account
+              Browse the Marketplace
             </Link>
           </div>
 
-          {/* 7. Social proof */}
-          <p className="text-sm text-gray-500 italic">
-            Join our early sellers — priority homepage placement for new sellers.
-          </p>
+          {/* 5. Payment badges */}
+          <div className="flex flex-col items-center lg:items-start gap-2 mt-1">
+            <span className="text-[10px] font-semibold text-gray-400 tracking-widest uppercase">
+              Secure Payments Powered By
+            </span>
+            <div className="flex items-center gap-4">
+              {/* Visa */}
+              <svg viewBox="0 0 780 500" xmlns="http://www.w3.org/2000/svg" className="h-7 w-auto" aria-label="Visa">
+                <rect width="780" height="500" rx="40" fill="#1a1f71"/>
+                <path d="M290 357l37-218h59l-37 218h-59zM539 145c-12-4-30-9-52-9-57 0-97 29-97 70 0 30 28 47 50 57 22 10 29 17 29 26 0 14-18 20-34 20-22 0-34-3-52-11l-7-3-8 46c13 6 37 11 62 11 61 0 100-29 100-73 0-24-16-43-50-58-21-10-34-16-34-26 0-9 11-18 34-18 20 0 34 4 45 8l5 2 8-42zM614 139h-45c-14 0-24 4-30 18l-85 200h60l12-32h73l7 32h53l-45-218zm-70 140l22-59 5-14 2 8 13 65h-42zM231 139l-57 148-6-30c-10-34-42-70-77-88l52 188h61l91-218h-64z" fill="#fff"/>
+                <path d="M152 139H57l-1 5c74 18 123 62 143 114l-21-103c-4-13-13-16-26-16z" fill="#f9a533"/>
+              </svg>
+              {/* Mastercard */}
+              <svg viewBox="0 0 38 24" xmlns="http://www.w3.org/2000/svg" className="h-7 w-auto" aria-label="Mastercard">
+                <rect width="38" height="24" rx="3" fill="#252525"/>
+                <circle cx="15" cy="12" r="7" fill="#eb001b"/>
+                <circle cx="23" cy="12" r="7" fill="#f79e1b"/>
+                <path d="M19 7a7 7 0 010 10A7 7 0 0119 7z" fill="#ff5f00"/>
+              </svg>
+              {/* Stripe wordmark */}
+              <svg viewBox="0 0 60 25" xmlns="http://www.w3.org/2000/svg" className="h-6 w-auto" aria-label="Stripe">
+                <path d="M5.4 10.2c0-.8.7-1.1 1.8-1.1 1.6 0 3.6.5 5.2 1.3V5.7C10.8 5 9 4.7 7.2 4.7 3 4.7.6 6.9.6 10.4c0 5.5 7.5 4.6 7.5 7 0 .9-.8 1.2-2 1.2-1.7 0-3.9-.7-5.6-1.7V22c1.9.8 3.8 1.2 5.6 1.2 4.3 0 7.2-2.1 7.2-5.7-.1-5.9-7.9-4.9-7.9-7.3zM22.2 1.5L17.8 2.5 17.8 7.1 15 7.1 15 11.5 17.8 11.5 17.8 19c0 3.6 1.7 4.8 5 4.8 1.3 0 2.8-.2 4-.7l0-4.3c-.7.3-2.1.7-3 .7-1.3 0-1.8-.5-1.8-1.8V11.5h4.8V7.1h-4.6V1.5zM38.7 7c-1.8 0-3 .9-3.7 1.5l-.3-1.4h-4.5V23.5h5.1V12.9c.6-.7 1.5-1.1 2.6-1.1.4 0 .8 0 1.1.1V7C38.8 7 38.7 7 38.7 7zM44 4.3c-1.6 0-2.9 1.2-2.9 2.8 0 1.6 1.3 2.8 2.9 2.8 1.7 0 2.9-1.2 2.9-2.8C46.9 5.5 45.7 4.3 44 4.3zM41.5 23.5h5.1V7.1h-5.1V23.5zM60 14.2c0-4.4-2.1-7.5-6.3-7.5-4.2 0-6.8 3.1-6.8 7.5 0 5 2.8 7.5 7.1 7.5 2 0 3.6-.4 5-1.2l0-3.8c-1.2.7-2.6 1.2-4.2 1.2-1.6 0-3-.6-3.2-2.7h8.3C60 14.8 60 14.5 60 14.2zM51.6 12.7c.1-2 1.2-2.8 2.3-2.8 1.1 0 2.1.8 2.1 2.8H51.6z" fill="#635bff"/>
+              </svg>
+            </div>
+          </div>
+
         </div>
 
-        {/* ── Right column (5 cols) ────────────────────────────────────── */}
-        <div className="md:col-span-5 relative rounded-xl overflow-hidden min-h-[320px] md:min-h-[460px]">
-
-          {/* Hero image */}
+        {/* ── Right column — product image ─────────────────────────────── */}
+        <div className="relative rounded-xl overflow-hidden min-h-[280px] sm:min-h-[380px] lg:min-h-[420px]">
           <img
             src="/hero-marketplace.jpg"
-            alt="Loadify Market — UK Online Marketplace"
+            alt="UK Marketplace products — phones, bags, shoes, cameras"
             width={1536}
             height={1024}
             className="w-full h-full object-cover object-center absolute inset-0"
             loading="eager"
           />
-
-          {/* Gradient overlay: white → transparent, left to right */}
-          <div
-            className="absolute inset-0"
-            style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.35) 0%, transparent 60%)' }}
-            aria-hidden="true"
-          />
-
-          {/* Trust strip — bottom overlay */}
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-200"
-            aria-label="Platform trust features"
-          >
-            {TRUST_ITEMS.map(({ icon: Icon, label, desc }) => (
-              <div key={label} className="flex items-start gap-2 px-3 py-3">
-                <span className="w-7 h-7 bg-green-50 rounded-md flex items-center justify-center shrink-0 mt-0.5">
-                  <Icon className="h-3.5 w-3.5 text-green-700" aria-hidden="true" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold text-gray-900 leading-tight">{label}</p>
-                  <p className="text-[9px] text-gray-500 leading-tight mt-0.5 hidden md:block">{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
 
       </div>
