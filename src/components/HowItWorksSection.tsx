@@ -70,7 +70,7 @@ function StepsPanel({ id, title, steps }: { id: string; title: string; steps: St
   return (
     <div id={id} className="w-full rounded-2xl border border-slate-200 bg-white/90 p-6 lg:p-8 shadow-sm">
       <h2 className="text-lg font-bold text-gray-900 mb-6">{title}</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <div className="grid grid-cols-3 gap-5">
         {steps.map((step) => (
           <StepCard key={step.number} step={step} />
         ))}
