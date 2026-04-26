@@ -563,7 +563,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       .single<{ email: string }>();
 
     if (sellerUser?.email) {
-      fetch(`${process.env.URL}/.netlify/functions/send-email`, {
+      fetch(`${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/.netlify/functions/send-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -623,7 +623,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   // Send buyer confirmation email (async, don't wait)
   const sellerCount = sellerGroups.size;
   const subjectSuffix = sellerCount > 1 ? ` (${sellerCount} sellers)` : '';
-  fetch(`${process.env.URL}/.netlify/functions/send-email`, {
+  fetch(`${(process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '')}/.netlify/functions/send-email`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

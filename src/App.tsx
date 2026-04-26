@@ -91,6 +91,7 @@ const PPBuyerWishlist      = lazy(() => import('./pages/pixel-perfect/buyer/Buye
 const PPBuyerNotifications = lazy(() => import('./pages/pixel-perfect/buyer/BuyerNotifications'));
 const PPBuyerMessages      = lazy(() => import('./pages/pixel-perfect/buyer/BuyerMessages'));
 const PPBuyerRFQ           = lazy(() => import('./pages/pixel-perfect/buyer/BuyerRFQ'));
+const PPBuyerDisputes      = lazy(() => import('./pages/pixel-perfect/buyer/BuyerDisputes'));
 
 const PPAdminShell          = lazy(() => import('./pages/pixel-perfect/admin/AdminShell'));
 const PPAdminDashboard      = lazy(() => import('./pages/pixel-perfect/admin/AdminDashboard'));
@@ -106,6 +107,7 @@ const PPAdminSettings       = lazy(() => import('./pages/pixel-perfect/admin/Adm
 const PPAdminNotifications  = lazy(() => import('./pages/pixel-perfect/admin/AdminNotifications'));
 const PPAdminPayouts        = lazy(() => import('./pages/pixel-perfect/admin/AdminPayouts'));
 const PPAdminStripeEvents   = lazy(() => import('./pages/pixel-perfect/admin/AdminStripeEvents'));
+const PPAdminDisputes       = lazy(() => import('./pages/pixel-perfect/admin/AdminDisputes'));
 
 // Loading component
 function PageLoader() {
@@ -254,7 +256,7 @@ function useHideGlobalNav(): boolean {
   // /seller/:slug (public store page) must NOT be hidden — checked by exclusion
   const SELLER_DASHBOARD_SECTIONS = new Set([
     'products', 'orders', 'shipments', 'returns', 'rfq',
-    'reviews', 'notifications', 'profile', 'settings', 'setup',
+    'reviews', 'notifications', 'profile', 'settings', 'setup', 'analytics', 'payouts',
   ]);
   if (segments[0] === 'seller') {
     if (segments.length === 1) return true;                              // /seller
@@ -572,6 +574,10 @@ function App() {
 
         {/* Seller: Setup page — redirected to /onboarding (single onboarding system) */}
         <Route path="seller/setup" element={<Navigate to="/onboarding" replace />} />
+        {/* Seller: Analytics — redirected to seller dashboard (analytics shown there) */}
+        <Route path="seller/analytics" element={<Navigate to="/seller" replace />} />
+        {/* Seller: Payouts — redirected to seller settings (payout config shown there) */}
+        <Route path="seller/payouts" element={<Navigate to="/seller/settings" replace />} />
 
         {/* Seller: Profile edit — accessible by any seller (any status) and admins */}
         <Route path="seller/profile" element={
@@ -615,6 +621,7 @@ function App() {
           <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPBuyerNotifications /></Suspense>} />
           <Route path="messages" element={<Suspense fallback={<PageLoader />}><PPBuyerMessages /></Suspense>} />
           <Route path="rfq" element={<Suspense fallback={<PageLoader />}><PPBuyerRFQ /></Suspense>} />
+          <Route path="disputes" element={<Suspense fallback={<PageLoader />}><PPBuyerDisputes /></Suspense>} />
         </Route>
 
         {/* /admin – RequireAdmin */}
@@ -636,6 +643,7 @@ function App() {
           <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPAdminNotifications /></Suspense>} />
           <Route path="payouts" element={<Suspense fallback={<PageLoader />}><PPAdminPayouts /></Suspense>} />
           <Route path="stripe-events" element={<Suspense fallback={<PageLoader />}><PPAdminStripeEvents /></Suspense>} />
+          <Route path="disputes" element={<Suspense fallback={<PageLoader />}><PPAdminDisputes /></Suspense>} />
         </Route>
 
         {/* ── Standalone functional pages ──────────────────────────────────────── */}
