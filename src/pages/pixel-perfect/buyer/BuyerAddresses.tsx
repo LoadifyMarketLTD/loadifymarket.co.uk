@@ -174,7 +174,7 @@ const BuyerAddresses = () => {
     try {
       const { error } = await supabase
         .from("buyer_profiles")
-        .upsert({ userId: user.id, [field]: data }, { onConflict: "userId", defaultToNull: false });
+        .upsert({ userId: user.id, [field]: data }, { onConflict: "userId" });
       if (error) throw error;
       if (type === "shipping") setShippingAddress(data);
       else setBillingAddress(data);
