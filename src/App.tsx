@@ -5,6 +5,7 @@ import { hasAdminAccess } from './lib/roleUtils';
 import { CartProvider } from './contexts/CartContext';
 import CookieConsent from './components/CookieConsent';
 import Header from './components/Header';
+import AmbientLayer from './components/AmbientLayer';
 import { isCapacitorNative } from './lib/capacitor';
 
 import RequireAdmin from './components/auth/RequireAdmin';
@@ -433,6 +434,7 @@ function App() {
 
   return (
     <CartProvider>
+      <AmbientLayer />
       <Header />
       <MaintenanceModeGate>
         <Routes>

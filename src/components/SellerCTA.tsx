@@ -11,6 +11,7 @@ export default function SellerCTA() {
           <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
             <Link
               to="/register?type=seller"
+              data-magnetic
               className="bg-[linear-gradient(135deg,#FBBF24,#D97706)] hover:shadow-[0_0_22px_rgba(251,191,36,0.25)] hover:-translate-y-0.5 text-[#020617] font-bold px-6 py-2.5 rounded-xl transition-all duration-300 text-sm whitespace-nowrap"
             >
               Create Your Free Seller Account

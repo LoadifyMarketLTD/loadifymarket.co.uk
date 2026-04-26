@@ -46,12 +46,14 @@ const HeroSection = () => (
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-2.5">
           <Link
             to="/register?type=seller"
+            data-magnetic
             className="w-full sm:w-auto bg-[#C99A3E] hover:bg-[#D8AE57] text-[#0B1016] font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
           >
             Start Selling Today
           </Link>
           <Link
             to="/products"
+            data-magnetic
             className="w-full sm:w-auto border border-white/40 text-white hover:bg-white/10 font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
           >
             Browse the Marketplace

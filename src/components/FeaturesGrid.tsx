@@ -47,11 +47,11 @@ export default function FeaturesGrid() {
           return (
             <div
               key={feature.title}
+              data-parallax
               className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#0F172A,#020617)] p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(251,191,36,0.15)] hover:border-yellow-400/25"
             >
               <Icon
-                className="w-7 h-7 text-[#FBBF24] shrink-0"
-                style={{ filter: 'drop-shadow(0 0 6px rgba(251,191,36,0.4))' }}
+                className="w-7 h-7 text-[#FBBF24] shrink-0 icon-pulse"
                 aria-hidden="true"
               />
               <p className="text-base font-semibold text-white leading-tight">{feature.title}</p>
