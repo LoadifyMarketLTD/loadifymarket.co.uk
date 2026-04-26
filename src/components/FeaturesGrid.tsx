@@ -5,6 +5,9 @@ import {
   RotateCcw,
   ShieldCheck,
   Banknote,
+  Users,
+  RefreshCw,
+  CalendarCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -46,10 +49,28 @@ const features: Feature[] = [
       "A clear process for resolving issues between buyers and sellers.",
   },
   {
-    icon: Banknote,
-    title: "Stripe Connect Payouts",
+    icon: Users,
+    title: "Moderation",
     description:
-      "Fast, secure payouts directly to your bank via Stripe Connect Express.",
+      "All listings are reviewed by our moderation team before going live.",
+  },
+  {
+    icon: RefreshCw,
+    title: "Seller Lifecycle",
+    description:
+      "Full seller journey from registration through onboarding to active selling.",
+  },
+  {
+    icon: Banknote,
+    title: "Stripe Connect",
+    description:
+      "Stripe Connect Express powers secure identity verification and payouts.",
+  },
+  {
+    icon: CalendarCheck,
+    title: "Weekly Payouts",
+    description:
+      "Sellers receive fast weekly payouts directly to their bank account.",
   },
 ];
 

@@ -5,10 +5,11 @@
  *  1. Hero Section       — headline, subheadline, primary + secondary CTA
  *  2. HowItWorksBuyers   — 3-step buyer guide
  *  3. HowItWorksSellers  — 3-step seller guide
- *  4. FeaturesGrid       — 6-feature grid
- *  5. SecurityTrust      — 4-item trust grid
- *  6. SellerCTA          — green full-width CTA banner
- *  7. Footer             — rendered by MainLayout
+ *  4. FeaturesGrid       — 9-feature grid
+ *  5. SecurityTrust      — 8-item trust grid
+ *  6. CategoriesOverview — all categories
+ *  7. SellerCTA          — green full-width CTA banner
+ *  8. Footer             — rendered by MainLayout
  */
 
 import { Helmet } from "react-helmet-async";
@@ -20,6 +21,7 @@ import HowItWorksBuyers from "@/components/HowItWorksBuyers";
 import HowItWorksSellers from "@/components/HowItWorksSellers";
 import FeaturesGrid from "@/components/FeaturesGrid";
 import SecurityTrust from "@/components/SecurityTrust";
+import CategoriesOverview from "@/components/CategoriesOverview";
 import SellerCTA from "@/components/SellerCTA";
 
 export default function Home() {
@@ -59,10 +61,13 @@ export default function Home() {
         {/* ── 5. Security & Trust ──────────────────────────────────────── */}
         <SecurityTrust />
 
-        {/* ── 6. Seller CTA ────────────────────────────────────────────── */}
+        {/* ── 6. Categories Overview ───────────────────────────────────── */}
+        <CategoriesOverview />
+
+        {/* ── 7. Seller CTA ────────────────────────────────────────────── */}
         <SellerCTA />
 
-        {/* ── 7. Footer — rendered by MainLayout ───────────────────────── */}
+        {/* ── 8. Footer — rendered by MainLayout ───────────────────────── */}
 
       </main>
     </MainLayout>

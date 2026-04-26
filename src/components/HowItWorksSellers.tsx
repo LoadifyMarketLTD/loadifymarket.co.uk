@@ -21,7 +21,7 @@ export default function HowItWorksSellers() {
   ];
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section id="how-it-works-sellers" className="py-20 bg-gray-50">
       <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
         How It Works for Sellers
       </h2>

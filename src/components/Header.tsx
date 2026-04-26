@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Search, ShoppingCart, Menu, LogOut, Package, ShoppingBag, Heart, LayoutDashboard, ChevronRight } from "lucide-react";
+import { Search, ShoppingCart, Menu, LogOut, LayoutDashboard, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/loadify-logo.svg";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
-import { isActiveSellerAccess } from "@/lib/roleUtils";
 import MobileDrawer from "@/components/MobileDrawer";
 import { useCategories } from "@/hooks/useCategories";
 import type { CategoryNode } from "@/hooks/useCategories";
@@ -155,34 +154,6 @@ const Header = () => {
 
           {user ? (
             <>
-              {isActiveSellerAccess(user) && (
-                <>
-                  <Button variant="ghost" size="sm" className="text-white/65 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex rounded-xl" asChild>
-                    <Link to="/seller/products">
-                      <Package className="h-4 w-4 mr-1.5" aria-hidden="true" /> My Products
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-white/65 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex rounded-xl" asChild>
-                    <Link to="/seller/orders">
-                      <ShoppingBag className="h-4 w-4 mr-1.5" aria-hidden="true" /> Orders
-                    </Link>
-                  </Button>
-                </>
-              )}
-              {(user.role === "buyer") && (
-                <>
-                  <Button variant="ghost" size="sm" className="text-white/65 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex rounded-xl" asChild>
-                    <Link to="/buyer/orders">
-                      <ShoppingBag className="h-4 w-4 mr-1.5" aria-hidden="true" /> Orders
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" size="sm" className="text-white/65 hover:text-green-400 hover:bg-white/10 font-medium hidden xl:flex rounded-xl" asChild>
-                    <Link to="/buyer/wishlist">
-                      <Heart className="h-4 w-4 mr-1.5" aria-hidden="true" /> Wishlist
-                    </Link>
-                  </Button>
-                </>
-              )}
               <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" asChild>
                 <Link to={dashboardPath}>
                   <LayoutDashboard className="h-4 w-4 mr-1.5" aria-hidden="true" />
@@ -192,18 +163,18 @@ const Header = () => {
               <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-1.5" aria-hidden="true" /> Sign Out
               </Button>
-              {user.role !== "admin" && user.role !== "seller" && (
-                <Button
-                  size="sm"
-                  className="h-9 bg-gradient-to-r from-[#22C55E] to-[#16a34a] hover:from-[#4ade80] hover:to-[#22C55E] text-black font-semibold px-5 rounded-full shadow-lg shadow-green-500/20 hover:shadow-green-400/30 transition-all duration-300 ml-1"
-                  asChild
-                >
-                  <Link to="/seller">Start Selling</Link>
-                </Button>
-              )}
             </>
           ) : (
             <>
+              <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" asChild>
+                <Link to="/#how-it-works-buyers">For Buyers</Link>
+              </Button>
+              <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" asChild>
+                <Link to="/#how-it-works-sellers">For Sellers</Link>
+              </Button>
+              <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" asChild>
+                <Link to="/help">Help</Link>
+              </Button>
               <Button variant="ghost" size="sm" className="text-white/75 hover:text-green-400 hover:bg-white/10 font-medium rounded-xl" asChild>
                 <Link to="/login">Sign In</Link>
               </Button>
@@ -212,7 +183,7 @@ const Header = () => {
                 className="h-9 bg-gradient-to-r from-[#22C55E] to-[#16a34a] hover:from-[#4ade80] hover:to-[#22C55E] text-black font-semibold px-5 rounded-full shadow-lg shadow-green-500/20 hover:shadow-green-400/30 transition-all duration-300 ml-1"
                 asChild
               >
-                <Link to="/signup?type=seller">Start Selling</Link>
+                <Link to="/register">Register</Link>
               </Button>
             </>
           )}

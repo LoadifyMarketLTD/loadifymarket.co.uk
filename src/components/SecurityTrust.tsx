@@ -1,4 +1,4 @@
-import { CreditCard, Database, ShieldCheck, BadgeCheck } from "lucide-react";
+import { CreditCard, Database, ShieldCheck, Lock, Zap, Building2, Receipt } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface TrustItem {
@@ -10,9 +10,9 @@ interface TrustItem {
 const items: TrustItem[] = [
   {
     icon: CreditCard,
-    title: "Stripe Secured Payments",
+    title: "Stripe Connect",
     description:
-      "All payments are processed through Stripe with full PCI compliance and encryption.",
+      "All payments processed through Stripe Connect with full PCI compliance and identity verification.",
   },
   {
     icon: Database,
@@ -27,10 +27,34 @@ const items: TrustItem[] = [
       "A hardened CSP prevents malicious scripts and protects against common web attacks.",
   },
   {
-    icon: BadgeCheck,
-    title: "UK Business Compliance",
+    icon: Lock,
+    title: "JWT Authentication",
     description:
-      "Operated by a registered UK company with transparent policies and verified seller onboarding.",
+      "Secure JSON Web Token authentication with short-lived tokens and automatic refresh.",
+  },
+  {
+    icon: Zap,
+    title: "Rate Limiting",
+    description:
+      "API rate limiting protects against abuse, bots, and brute-force attacks.",
+  },
+  {
+    icon: Database,
+    title: "Supabase Security",
+    description:
+      "Enterprise-grade Supabase infrastructure with encrypted storage and audit logging.",
+  },
+  {
+    icon: Building2,
+    title: "Registered UK Company",
+    description:
+      "Operated by Loadify Market LTD, a registered company in England & Wales.",
+  },
+  {
+    icon: Receipt,
+    title: "VAT Compliant",
+    description:
+      "Fully VAT-compliant billing including B2B reverse-charge and VAT verification.",
   },
 ];
 
@@ -44,7 +68,7 @@ export default function SecurityTrust() {
         Loadify Market is built with enterprise‑grade security, UK compliance, and modern protection standards.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 max-w-6xl mx-auto px-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto px-4">
         {items.map((item) => {
           const Icon = item.icon;
           return (
