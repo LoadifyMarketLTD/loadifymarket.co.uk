@@ -1,22 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 24" role="img" aria-labelledby="stripe-title">
-  <title id="stripe-title">Stripe</title>
-  <!--
-    Stripe payment processor badge.
-    Background: Stripe Blurple #635BFF (official brand color)
-    Wordmark: "stripe" lowercase bold in Arial (universally available).
-    Stripe's own brand guide uses lowercase for the wordmark.
-    Arial is the closest freely available approximation to the
-    Stripe wordmark font at small badge sizes.
-  -->
-  <rect width="38" height="24" rx="3" fill="#635BFF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 38" role="img" aria-label="Stripe">
+  <!-- Stripe Blurple gradient -->
+  <defs>
+    <linearGradient id="stripe-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C74FF"/>
+      <stop offset="100%" stop-color="#635BFF"/>
+    </linearGradient>
+  </defs>
+  <rect width="60" height="38" rx="4" fill="url(#stripe-grad)"/>
+  <!-- "stripe" lowercase wordmark -->
   <text
-    x="19"
-    y="16"
+    x="30" y="23"
     font-family="Arial, Helvetica, 'Liberation Sans', sans-serif"
-    font-weight="bold"
-    font-size="10"
-    fill="#ffffff"
-    text-anchor="middle"
-    letter-spacing="0.3"
+    font-weight="bold" font-size="13"
+    fill="#ffffff" text-anchor="middle" letter-spacing="0.5"
   >stripe</text>
+  <!-- Subtle shine line at top -->
+  <rect x="0" y="0" width="60" height="2" rx="2" fill="#ffffff" opacity="0.15"/>
 </svg>

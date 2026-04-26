@@ -1,21 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 24" role="img" aria-labelledby="amex-title">
-  <title id="amex-title">American Express</title>
-  <!--
-    American Express compact badge.
-    Background: American Express Blue #016FD0
-    Wordmark: "AMEX" in bold uppercase Arial (guaranteed available on all platforms).
-    This is the universally recognised compact badge format used across
-    payment processors and checkout pages.
-  -->
-  <rect width="38" height="24" rx="3" fill="#016FD0"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 38" role="img" aria-label="American Express">
+  <!-- Blue gradient background -->
+  <defs>
+    <linearGradient id="amex-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0077CF"/>
+      <stop offset="100%" stop-color="#005EB0"/>
+    </linearGradient>
+  </defs>
+  <rect width="60" height="38" rx="4" fill="url(#amex-grad)"/>
+  <!-- AMEX wordmark -->
   <text
-    x="19"
-    y="16.5"
+    x="30" y="24"
     font-family="Arial, Helvetica, 'Liberation Sans', sans-serif"
-    font-weight="bold"
-    font-size="10"
-    fill="#ffffff"
-    text-anchor="middle"
-    letter-spacing="0.5"
+    font-weight="900" font-size="13"
+    fill="#ffffff" text-anchor="middle" letter-spacing="1.5"
   >AMEX</text>
+  <!-- Underline accent -->
+  <rect x="16" y="27" width="28" height="1.5" rx="1" fill="#ffffff" opacity="0.4"/>
 </svg>

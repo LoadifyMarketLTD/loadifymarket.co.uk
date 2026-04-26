@@ -1,31 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 24" role="img" aria-labelledby="mc-title">
-  <title id="mc-title">Mastercard</title>
-  <!--
-    Mastercard symbol: two overlapping circles with the lens-shaped
-    intersection rendered in the official brand orange.
-
-    Geometry (all circles r=10):
-      Left  circle center: (14, 12)  — official Mastercard Red   #EB001B
-      Right circle center: (24, 12)  — official Mastercard Yellow #F79E1B
-      Distance between centers: 10  (equals r, so each center lies on the other circle)
-      Intersection x:  (14+24)/2 = 19
-      Intersection y:  12 ± sqrt(r²−(19−14)²) = 12 ± sqrt(100−25) = 12 ± sqrt(75) ≈ 12 ± 8.660
-      → Intersection points: (19, 3.340) and (19, 20.660)
-
-    Lens arcs:
-      Arc 1 — clockwise (sweep=1) minor arc (large-arc=0) on left circle from
-               (19, 3.34) → (19, 20.66), passes through right edge of left circle (24, 12)
-      Arc 2 — counter-clockwise (sweep=0) minor arc on right circle from
-               (19, 20.66) → (19, 3.34), passes through left edge of right circle (14, 12)
-    Brand orange: #FF5F00
-  -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 38" role="img" aria-label="Mastercard">
+  <rect width="60" height="38" rx="4" fill="#ffffff"/>
   <!-- Left red circle -->
-  <circle cx="14" cy="12" r="10" fill="#EB001B"/>
+  <circle cx="23" cy="19" r="11" fill="#EB001B"/>
   <!-- Right yellow circle -->
-  <circle cx="24" cy="12" r="10" fill="#F79E1B"/>
-  <!-- Lens-shaped intersection in Mastercard orange -->
-  <path
-    d="M19 3.34 A10 10 0 0 1 19 20.66 A10 10 0 0 0 19 3.34 Z"
-    fill="#FF5F00"
-  />
+  <circle cx="37" cy="19" r="11" fill="#F79E1B"/>
+  <!-- Orange lens overlap: r=11, left-center=(23,19), right-center=(37,19)
+       d=14/2=7; iy=19±sqrt(121-49)=19±8.485 → (30,10.515) & (30,27.485) -->
+  <path d="M30 10.515 A11 11 0 0 1 30 27.485 A11 11 0 0 0 30 10.515 Z" fill="#FF5F00"/>
 </svg>

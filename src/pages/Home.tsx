@@ -16,7 +16,6 @@ import { Search, CreditCard, Package, UserPlus, ListPlus, Banknote } from "lucid
 import { Helmet } from "react-helmet-async";
 
 import HeroSection from "@/components/HeroSection";
-import TrustStrip from "@/components/TrustStrip";
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
 
@@ -87,10 +86,7 @@ export default function Home() {
         {/* ── 1. Hero ──────────────────────────────────────────────────── */}
         <HeroSection />
 
-        {/* ── 2. Trust bar ─────────────────────────────────────────────── */}
-        <TrustStrip />
-
-        {/* ── 3. How It Works — For Buyers ─────────────────────────────── */}
+        {/* ── 2. How It Works — For Buyers ─────────────────────────────── */}
         <section className="bg-white border-b border-gray-200" aria-labelledby="how-heading">
           <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-10">
 
