@@ -1,11 +1,4 @@
 import { Link } from 'react-router-dom';
-import { CheckCircle2 } from 'lucide-react';
-
-const BENEFITS = [
-  { text: 'Free to list products', bold: false },
-  { text: '0% Commission until 31 Dec 2026', bold: true },
-  { text: 'Fast Stripe payouts', bold: false },
-];
 
 const HeroSection = () => (
   <section
@@ -16,44 +9,30 @@ const HeroSection = () => (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
 
         {/* ── Left column ──────────────────────────────────────────────── */}
-        <div className="flex flex-col gap-4 text-center lg:text-left items-center lg:items-start">
+        <div className="flex flex-col gap-5 text-center lg:text-left items-center lg:items-start">
 
           {/* 1. Promo badge */}
           <div className="inline-flex items-center bg-green-600 text-white text-sm font-bold rounded-full px-4 py-1.5 tracking-wide uppercase">
             0% Commission Until 31 December 2026
           </div>
 
-          {/* 2. Label */}
-          <span className="text-xs font-semibold tracking-widest uppercase text-green-700/60">
-            UK Multi-Category Marketplace
-          </span>
-
-          {/* 3. H1 — two lines */}
-          <h1 className="text-4xl sm:text-5xl font-bold leading-tight text-gray-900">
+          {/* 2. H1 — two lines */}
+          <h1 className="text-5xl sm:text-6xl font-extrabold leading-tight text-gray-900">
             The UK Marketplace<br />
             <span className="text-green-600">Built for Modern Sellers</span>
           </h1>
 
-          {/* 4. Description */}
-          <p className="text-base text-gray-600 max-w-lg">
-            List your products or services for free and connect with verified UK buyers. No setup fees, no monthly charges.
+          {/* 3. Description */}
+          <p className="text-lg text-gray-600 max-w-xl">
+            Sell products, manage orders, and get paid —<br className="hidden sm:block" />
+            all in one secure platform.
           </p>
 
-          {/* 5. Benefits row — 3 checkmarks */}
-          <ul className="flex flex-col sm:flex-row gap-3 sm:gap-5 items-center lg:items-start">
-            {BENEFITS.map(({ text, bold }) => (
-              <li key={text} className="flex items-center gap-1.5 text-sm text-gray-700">
-                <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" aria-hidden="true" />
-                <span className={bold ? 'font-semibold' : ''}>{text}</span>
-              </li>
-            ))}
-          </ul>
-
-          {/* 6. CTAs */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-1">
+          {/* 4. CTAs */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <Link
               to="/register?type=seller"
-              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
+              className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
             >
               Start Selling Today
             </Link>

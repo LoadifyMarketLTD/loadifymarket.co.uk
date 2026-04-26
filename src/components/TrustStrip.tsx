@@ -4,27 +4,27 @@ const ITEMS = [
   {
     icon: ShieldCheck,
     label: "Secure Payments",
-    sub: "Powered by Stripe",
+    sub: "with Stripe",
   },
   {
     icon: Flag,
     label: "UK Marketplace",
-    sub: "Registered UK company",
+    sub: "Platform",
   },
   {
     icon: BadgeCheck,
     label: "Seller Verification",
-    sub: "Identity-checked via Stripe",
+    sub: "via Stripe",
   },
   {
     icon: Percent,
     label: "0% Commission",
-    sub: "Until 31 December 2026",
+    sub: "Until 31 Dec 2026",
   },
 ];
 
 const TrustStrip = () => (
-  <div className="bg-gray-50 border-y border-gray-200" aria-label="Platform trust features">
+  <div className="bg-white border-y border-gray-200" aria-label="Platform trust features">
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-gray-200">
         {ITEMS.map(({ icon: Icon, label, sub }) => (
@@ -33,7 +33,7 @@ const TrustStrip = () => (
               <Icon className="h-5 w-5 text-green-700" aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-bold text-gray-900 leading-tight whitespace-nowrap">{label}</p>
+              <p className="text-sm font-bold text-gray-900 leading-tight">{label}</p>
               <p className="text-xs text-gray-500 leading-tight mt-0.5">{sub}</p>
             </div>
           </div>
