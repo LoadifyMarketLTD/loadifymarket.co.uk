@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 const HeroSection = () => (
   <section
     aria-label="Loadify Market — UK Online Marketplace"
-    className="relative w-full min-h-[480px] bg-[#0B1016]"
+    className="relative w-full min-h-[75vh] bg-[#0B1016]"
   >
     {/* ── Background image — full cover, no distortion ─────────────────── */}
     <img
@@ -32,7 +32,7 @@ const HeroSection = () => (
         </div>
 
         {/* 2. H1 */}
-        <h1 className="text-5xl sm:text-6xl font-extrabold leading-tight text-[#F5F1E8]">
+        <h1 className="text-5xl sm:text-6xl font-extrabold leading-snug text-[#F5F1E8]">
           The UK Marketplace<br />
           <span className="text-[#C99A3E]">Built for Modern Sellers</span>
         </h1>
