@@ -17,34 +17,33 @@ const HeroSection = () => (
     {/* ── Premium dark overlay for text legibility ─────────────────────── */}
     <div
       className="absolute inset-0 pointer-events-none"
-      style={{ background: 'linear-gradient(90deg, rgba(11,16,22,0.88) 0%, rgba(11,16,22,0.68) 42%, rgba(11,16,22,0.18) 100%)' }}
+      style={{ background: 'linear-gradient(90deg, rgba(11,16,22,0.85) 0%, rgba(11,16,22,0.55) 42%, rgba(11,16,22,0.10) 100%)' }}
       aria-hidden="true"
     />
 
     {/* ── Content ──────────────────────────────────────────────────────── */}
     <div className="absolute inset-0 flex items-center">
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-[122px] pb-8 lg:py-24">
-      <div className="flex flex-col gap-5 text-center sm:text-left items-center sm:items-start max-w-2xl">
+      <div className="flex flex-col text-center sm:text-left items-center sm:items-start max-w-[500px]">
 
         {/* 1. Promo badge */}
-        <div className="inline-flex items-center bg-[#C99A3E] text-[#0B1016] text-sm font-bold rounded-full px-4 py-1.5 tracking-wide uppercase">
+        <div className="inline-flex items-center bg-[#C99A3E] text-[#0B1016] text-sm font-bold rounded-full px-4 py-1.5 tracking-wide uppercase mb-5">
           0% Commission Until 31 December 2026
         </div>
 
         {/* 2. H1 */}
-        <h1 className="text-5xl sm:text-6xl font-extrabold leading-snug text-[#F5F1E8]">
+        <h1 className="text-[2.7rem] sm:text-5xl font-extrabold leading-[1.2] text-[#F5F1E8] mb-5">
           The UK Marketplace<br />
-          <span className="text-[#C99A3E]">Built for Modern Sellers</span>
+          <span className="text-[#C99A3E]">for Buyers &amp; Sellers</span>
         </h1>
 
         {/* 3. Description */}
-        <p className="text-lg text-[#C9D0D6] max-w-xl">
-          Sell products, manage orders, and get paid —<br className="hidden sm:block" />
-          all in one secure platform.
+        <p className="text-lg text-[#C9D0D6] mb-7">
+          Sell with 0% commission until 2026 or discover products from trusted UK sellers — all in one secure platform.
         </p>
 
         {/* 4. CTAs */}
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-2.5">
           <Link
             to="/register?type=seller"
             className="w-full sm:w-auto bg-[#C99A3E] hover:bg-[#D8AE57] text-[#0B1016] font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
