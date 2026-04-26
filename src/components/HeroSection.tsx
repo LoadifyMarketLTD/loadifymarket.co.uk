@@ -32,7 +32,7 @@ const HeroSection = () => (
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <Link
               to="/register?type=seller"
-              className="w-full sm:w-auto bg-gray-900 hover:bg-gray-800 text-white font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
             >
               Start Selling Today
             </Link>

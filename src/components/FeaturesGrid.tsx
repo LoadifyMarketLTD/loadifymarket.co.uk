@@ -2,8 +2,6 @@ import {
   FileText,
   MessageSquare,
   Truck,
-  RotateCcw,
-  ShieldCheck,
   Banknote,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -31,16 +29,6 @@ const features: Feature[] = [
     description: "Track order progress from dispatch to delivery.",
   },
   {
-    icon: RotateCcw,
-    title: "Returns Management",
-    description: "Handle returns smoothly with a structured system.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Dispute Resolution",
-    description: "Resolve issues fairly between buyers and sellers.",
-  },
-  {
     icon: Banknote,
     title: "Stripe Connect Payouts",
     description: "Get paid fast and secure via Stripe Connect Express.",
@@ -53,7 +41,7 @@ export default function FeaturesGrid() {
       <h2 className="text-lg font-bold text-gray-900 mb-5">
         Powerful Features Built for UK Sellers
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
+      <div className="grid grid-cols-2 gap-5">
         {features.map((feature) => {
           const Icon = feature.icon;
           return (

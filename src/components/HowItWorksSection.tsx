@@ -88,8 +88,8 @@ function StepsPanel({
           <>
             <StepCard key={step.number} step={step} />
             {idx < steps.length - 1 && (
-              <div key={`arrow-${idx}`} className="hidden sm:flex items-start pt-3 shrink-0 px-2">
-                <ArrowRight className="h-4 w-4 text-gray-300" aria-hidden="true" />
+              <div key={`arrow-${idx}`} className="hidden sm:flex items-center shrink-0 px-2">
+                <ArrowRight className="h-4 w-4 text-gray-500" aria-hidden="true" />
               </div>
             )}
           </>
@@ -98,7 +98,7 @@ function StepsPanel({
 
       {/* Optional section CTA */}
       {cta && (
-        <div className="mt-6 pt-5 border-t border-gray-100 text-center sm:text-left">
+        <div className="mt-6 pt-5 border-t border-gray-100 text-center">
           <Link
             to={cta.to}
             className="inline-flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm"

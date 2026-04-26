@@ -16,7 +16,7 @@ const Footer = () => {
             <p className="text-sm text-gray-400 max-w-md">
               A UK-based multi-category marketplace connecting buyers and sellers with secure payments and modern tools.
             </p>
-            <p className="text-sm text-gray-400 mt-3">Operated by Loadify Market LTD (UK).</p>
+            <p className="text-sm text-gray-400 mt-3">Operated by XDrive Logistics Ltd (UK).</p>
           </div>
 
           {/* Column 2 — Marketplace */}
@@ -82,7 +82,7 @@ const Footer = () => {
         {/* Bottom bar */}
         <div className="mt-10 pt-6 border-t border-gray-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <p className="text-xs text-gray-500">
-            &copy; {currentYear} Loadify Market LTD. All rights reserved.
+            &copy; {currentYear} XDrive Logistics Ltd. All rights reserved.
           </p>
           <p className="text-xs text-gray-500">
             Built with Stripe, Supabase, and modern web standards.
