@@ -54,7 +54,7 @@ const sellerSteps: Step[] = [
 function StepCard({ step }: { step: Step }) {
   const Icon = step.icon;
   return (
-    <div className="flex flex-col gap-3 flex-1 min-w-0">
+    <div className="flex flex-col gap-2 flex-1 min-w-0 rounded-xl border border-[#0A1930] bg-white p-3 shadow-sm">
       <div className="flex items-center gap-2">
         <div className="w-8 h-8 rounded-full bg-green-600 text-white font-bold text-sm flex items-center justify-center shrink-0">
           {step.number}
