@@ -246,7 +246,7 @@ const ProductDetail = () => {
         <div className="pt-28 text-center">
           <h1 className="text-2xl font-display font-bold text-foreground">Product Not Found</h1>
           <Link to="/catalog" className="text-primary hover:underline mt-4 inline-block">
-            ← Back to Catalog
+            Back to Catalog
           </Link>
         </div>
       </MainLayout>

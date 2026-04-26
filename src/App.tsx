@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store';
 import { hasAdminAccess } from './lib/roleUtils';
@@ -121,20 +121,6 @@ function PageLoader() {
   );
 }
 
-function GlobalBackButton() {
-  const navigate = useNavigate();
-
-  return (
-    <button
-      type="button"
-      onClick={() => navigate(-1)}
-      aria-label="Back"
-      className="fixed z-30 right-3 sm:right-5 top-[calc(7rem+env(safe-area-inset-top,0px)+0.75rem)] bg-[#22C55E] hover:bg-[#16A34A] text-[#0d2240] text-xs sm:text-sm font-semibold px-3 py-2 rounded-lg shadow-lg shadow-black/35 transition-colors"
-    >
-      ← Back
-    </button>
-  );
-}
 
 /**
  * Role-aware /dashboard redirect.
@@ -219,64 +205,9 @@ function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-
-/**
- * Returns true when the global public Header + BackButton should be hidden.
- *
- * Hidden on:
- *  • Auth-only full-screen pages (login, register, signup, forgot/reset-password, trade-account)
- *  • Dashboard shells that own their own navigation (admin/*, buyer/*, seller dashboard paths)
- *
- * Kept visible on:
- *  • All public marketplace content pages (homepage, catalog, product, cart, about, etc.)
- *  • Public seller store page (/seller/:slug) — identified by the slug not being a known section
- */
-function useHideGlobalNav(): boolean {
-  const { pathname } = useLocation();
-  const segments = pathname.split('/').filter(Boolean);
-
-  // Auth-only standalone pages where the navbar is intentionally hidden
-  // (forgot-password / reset-password are simple one-field pages; login + signup
-  //  now show the global navbar as explicitly requested)
-  const AUTH_PAGES_HIDE_NAV = new Set([
-    'forgot-password', 'reset-password', 'trade-account',
-  ]);
-  if (segments.length === 1 && AUTH_PAGES_HIDE_NAV.has(segments[0])) return true;
-
-  // Onboarding pages — standalone, hide global nav
-  if (segments[0] === 'onboarding') return true;
-
-  // Admin dashboard — all /admin/* routes
-  if (segments[0] === 'admin') return true;
-
-  // Buyer dashboard — all /buyer/* routes
-  if (segments[0] === 'buyer') return true;
-
-  // Seller: dashboard shell (/seller exact) and known dashboard sub-routes
-  // /seller/:slug (public store page) must NOT be hidden — checked by exclusion
-  const SELLER_DASHBOARD_SECTIONS = new Set([
-    'products', 'orders', 'shipments', 'returns', 'rfq',
-    'reviews', 'notifications', 'profile', 'settings', 'setup', 'analytics', 'payouts',
-  ]);
-  if (segments[0] === 'seller') {
-    if (segments.length === 1) return true;                              // /seller
-    // Standalone product create/edit pages (/seller/products/new,
-    // /seller/products/:id/edit) render outside the shell and need the global
-    // back button so sellers can navigate back to their products list.
-    if (segments[1] === 'products' && segments.length >= 3) return false;
-    // Seller setup/onboarding page — standalone, outside the shell, needs global
-    // back button so sellers can return to the previous step.
-    if (segments[1] === 'setup') return false;
-    if (SELLER_DASHBOARD_SECTIONS.has(segments[1])) return true;        // /seller/<section>
-  }
-
-  return false;
-}
-
 function App() {
   const { setUser, setLoading } = useAuthStore();
   const navigate = useNavigate();
-  const hideGlobalNav = useHideGlobalNav();
 
   // ── Android App Links deep link handler ─────────────────────────────────────
   // When the user completes a Stripe payment, Stripe redirects to
@@ -503,7 +434,6 @@ function App() {
   return (
     <CartProvider>
       <Header />
-      {!hideGlobalNav && <GlobalBackButton />}
       <MaintenanceModeGate>
         <Routes>
           {/* ── Pixel-perfect standalone pages (own Header + Footer) ─────────────── */}
