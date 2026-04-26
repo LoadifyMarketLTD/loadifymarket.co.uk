@@ -53,7 +53,7 @@ export default function Home() {
         <HowItWorksSection />
 
         {/* ── 4. Features + Security (side by side) ────────────────────── */}
-        <section className="py-10 lg:py-14 bg-white border-t border-gray-100">
+        <section className="py-10 lg:py-14 bg-[#0A1930]">
           <div className="w-full px-4 sm:px-6">
             <div className="flex flex-col lg:flex-row rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               <FeaturesGrid />

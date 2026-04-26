@@ -113,7 +113,7 @@ function StepsPanel({
 }
 
 const HowItWorksSection = () => (
-  <section className="py-10 lg:py-14 bg-white" aria-label="How it works">
+  <section className="py-10 lg:py-14 bg-[#0A1930]" aria-label="How it works">
     <div className="w-full px-4 sm:px-6">
       <div className="flex flex-col lg:flex-row gap-6">
         <StepsPanel
