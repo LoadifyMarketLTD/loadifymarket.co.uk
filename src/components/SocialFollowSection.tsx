@@ -35,7 +35,7 @@ const SOCIAL_CARDS: SocialEntry[] = [
     title: "Follow us on Facebook",
     description: "Latest deals, seller spotlights & marketplace news.",
     cta: "Open Facebook",
-    href: "https://www.facebook.com/loadifymarket",
+    href: "https://www.facebook.com/profile.php?id=61583570176707",
   },
   {
     platform: "instagram",

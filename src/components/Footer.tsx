@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, Store, Truck, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { ShieldCheck, Store, Truck, Facebook, Twitter, Instagram, Linkedin, ChevronDown } from "lucide-react";
 import SocialCard from "@/components/ui/SocialCard";
 import TikTokIcon from "@/components/ui/TikTokIcon";
 
@@ -21,6 +22,39 @@ const FooterLink = ({ to, children }: { to: string; children: React.ReactNode })
     </Link>
   </li>
 );
+
+// ─── Mobile accordion section ────────────────────────────────────────────────
+
+interface AccordionSectionProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+const AccordionSection = ({ title, children }: AccordionSectionProps) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-white/[0.07] lg:hidden">
+      <button
+        className="w-full flex items-center justify-between py-4 px-4 text-left"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <span className="text-[11px] font-bold tracking-widest uppercase text-[#C99A3E]">
+          {title}
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 text-[#C99A3E]/60 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+      {open && (
+        <ul className="space-y-3 px-4 pb-4">
+          {children}
+        </ul>
+      )}
+    </div>
+  );
+};
 
 // ─── Footer ──────────────────────────────────────────────────────────────────
 
@@ -51,18 +85,80 @@ const Footer = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <SocialCard href="https://www.facebook.com/loadifymarket"          label="Loadify Market on Facebook"   Icon={Facebook}  platform="facebook"  size="footer" />
+            <SocialCard href="https://www.facebook.com/profile.php?id=61583570176707" label="Loadify Market on Facebook"   Icon={Facebook}  platform="facebook"  size="footer" />
             <SocialCard href="https://www.twitter.com/loadifymarket"           label="Loadify Market on X / Twitter" Icon={Twitter}   platform="twitter"   size="footer" />
             <SocialCard href="https://www.instagram.com/loadifymarket"         label="Loadify Market on Instagram"   Icon={Instagram} platform="instagram" size="footer" />
             <SocialCard href="https://www.tiktok.com/@loadifymarket"           label="Loadify Market on TikTok"      Icon={TikTokIcon} platform="tiktok"   size="footer" />
-            <SocialCard href="https://www.linkedin.com/company/loadifymarket"  label="Loadify Market on LinkedIn"    Icon={Linkedin}  platform="linkedin"  size="footer" />
+            <SocialCard href="https://www.linkedin.com/company/loadify-market"  label="Loadify Market on LinkedIn"    Icon={Linkedin}  platform="linkedin"  size="footer" />
           </div>
         </div>
       </div>
 
       {/* ── Main columns ────────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-8 lg:gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+
+        {/* About block — always visible */}
+        <div className="mb-6 lg:mb-0 lg:hidden">
+          <p className="text-lg font-bold text-[#F5F1E8] mb-3">Loadify Market</p>
+          <p className="text-[13px] text-[#C9D0D6]/70 leading-relaxed mb-4">
+            Operated by <strong className="text-[#C9D0D6]">XDrive Logistics Ltd</strong>.
+            A marketplace connecting buyers with independent UK sellers.
+          </p>
+          <ul className="space-y-1 text-[12px] text-[#C9D0D6]/55">
+            <li>Company No. 13171804 · VAT GB375949535</li>
+            <li>101 Cornelian Street, Blackburn BB1 9QL</li>
+            <li><a href="mailto:contact@loadifymarket.co.uk" className="hover:text-white/70 transition-colors">contact@loadifymarket.co.uk</a></li>
+          </ul>
+        </div>
+
+        {/* Mobile accordion sections */}
+        <AccordionSection title="For Buyers">
+          <FooterLink to="/catalog">Browse Marketplace</FooterLink>
+          <FooterLink to="/category/health-beauty">Health &amp; Beauty</FooterLink>
+          <FooterLink to="/wholesale-info">Wholesale Clothing</FooterLink>
+          <FooterLink to="/category/kitchen-dining">Kitchenware</FooterLink>
+          <FooterLink to="/catalog">All Categories</FooterLink>
+          <FooterLink to="/track-order">Track Order</FooterLink>
+          <FooterLink to="/faq">Help &amp; FAQ</FooterLink>
+        </AccordionSection>
+
+        <AccordionSection title="For Sellers">
+          <FooterLink to="/register">Start Selling</FooterLink>
+          <FooterLink to="/seller">Seller Dashboard</FooterLink>
+          <FooterLink to="/seller/products/new">List a Product</FooterLink>
+          <FooterLink to="/seller-terms">Seller Fees &amp; Pricing</FooterLink>
+          <FooterLink to="/seller-guidelines">Seller Guidelines</FooterLink>
+          <FooterLink to="/#how-it-works-sellers">How It Works</FooterLink>
+          <FooterLink to="/contact">Partner With Us</FooterLink>
+        </AccordionSection>
+
+        <AccordionSection title="Marketplace">
+          <FooterLink to="/buyer-terms">Buyer Terms</FooterLink>
+          <FooterLink to="/shipping">Shipping &amp; Delivery</FooterLink>
+          <FooterLink to="/returns">Returns &amp; Refunds</FooterLink>
+          <FooterLink to="/contact">Report a Problem</FooterLink>
+        </AccordionSection>
+
+        <AccordionSection title="Company">
+          <FooterLink to="/about">About Us</FooterLink>
+          <FooterLink to="/contact">Contact Us</FooterLink>
+          <FooterLink to="/faq">Help &amp; Support</FooterLink>
+        </AccordionSection>
+
+        <AccordionSection title="Legal">
+          <FooterLink to="/terms">Terms &amp; Conditions</FooterLink>
+          <FooterLink to="/privacy">Privacy Policy</FooterLink>
+          <FooterLink to="/cookies">Cookie Policy</FooterLink>
+          <FooterLink to="/disclaimer">Disclaimer</FooterLink>
+          <FooterLink to="/acceptable-use-policy">Acceptable Use Policy</FooterLink>
+          <FooterLink to="/returns-policy">Returns Policy</FooterLink>
+          <FooterLink to="/shipping-policy">Shipping Policy</FooterLink>
+          <FooterLink to="/buyer-terms">Buyer Terms</FooterLink>
+          <FooterLink to="/seller-terms">Seller Terms</FooterLink>
+        </AccordionSection>
+
+        {/* Desktop grid — hidden on mobile */}
+        <div className="hidden lg:grid grid-cols-6 gap-6">
 
           {/* Col 1 — About (spans 2 columns on lg) */}
           <div className="lg:col-span-2">
@@ -118,7 +214,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Col 4 — Marketplace */}
+          {/* Col 4 — Marketplace + Company */}
           <div>
             <ColHeading>Marketplace</ColHeading>
             <ul className="space-y-2.5">
