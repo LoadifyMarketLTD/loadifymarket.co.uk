@@ -55,7 +55,7 @@ const Footer = () => {
             <SocialCard href="https://www.twitter.com/loadifymarket"           label="Loadify Market on X / Twitter" Icon={Twitter}   platform="twitter"   size="footer" />
             <SocialCard href="https://www.instagram.com/loadifymarket"         label="Loadify Market on Instagram"   Icon={Instagram} platform="instagram" size="footer" />
             <SocialCard href="https://www.tiktok.com/@loadifymarket"           label="Loadify Market on TikTok"      Icon={TikTokIcon} platform="tiktok"   size="footer" />
-            <SocialCard href="https://www.linkedin.com/company/loadifymarket"  label="Loadify Market on LinkedIn"    Icon={Linkedin}  platform="linkedin"  size="footer" />
+            <SocialCard href="https://www.linkedin.com/company/loadify-market"  label="Loadify Market on LinkedIn"    Icon={Linkedin}  platform="linkedin"  size="footer" />
           </div>
         </div>
       </div>
