@@ -192,11 +192,11 @@ const AdminReports = () => {
   }, [period]);
 
   return (
-    <div className="p-4 sm:p-6 space-y-6" style={{ background: "#f8fafc", minHeight: "100%" }}>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
+    <div className="p-4 sm:p-6 space-y-6" style={{ background: "transparent", minHeight: "100%" }}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Reports & Analytics</h1>
-          <p className="text-sm mt-1" style={{ color: "rgba(71,85,105,0.85)" }}>Platform performance overview and insights.</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Reports & Analytics</h1>
+          <p className="text-sm mt-1" style={{ color: "rgba(148,163,184,0.85)" }}>Platform performance overview and insights.</p>
         </div>
         <div className="flex gap-2">
           <Select value={period} onValueChange={(v) => setPeriod(v as "all" | "7d" | "30d")}>
@@ -231,7 +231,7 @@ const AdminReports = () => {
               <div
                 key={i}
                 className="rounded-2xl p-5 flex items-center justify-center h-28"
-                style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)" }}
+                style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}
               >
                 <Loader2 className="h-6 w-6 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />
               </div>
@@ -240,19 +240,19 @@ const AdminReports = () => {
               <div
                 key={k.label}
                 className="rounded-2xl p-5"
-                style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}
+                style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
               >
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(34,197,94,0.12)" }}>
-                    <k.icon className="h-5 w-5" style={{ color: "#22C55E" }} />
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(251,191,36,0.12)" }}>
+                    <k.icon className="h-5 w-5" style={{ color: "#FBBF24" }} />
                   </div>
-                  <span className="text-xs font-medium flex items-center gap-1" style={{ color: k.up ? "#22C55E" : "#F87171" }}>
+                  <span className="text-xs font-medium flex items-center gap-1" style={{ color: k.up ? "#FBBF24" : "#F87171" }}>
                     {k.up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                     {k.change}
                   </span>
                 </div>
-                <p className="text-3xl font-bold text-slate-900 mt-3">{k.value}</p>
-                <p className="text-xs mt-1" style={{ color: "rgba(71,85,105,0.85)" }}>{k.label} · {k.period}</p>
+                <p className="text-3xl font-bold text-white mt-3">{k.value}</p>
+                <p className="text-xs mt-1" style={{ color: "rgba(148,163,184,0.85)" }}>{k.label} · {k.period}</p>
               </div>
             ))}
       </div>
@@ -261,11 +261,11 @@ const AdminReports = () => {
         {/* Order Breakdown */}
         <div
           className="rounded-2xl overflow-hidden"
-          style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}
+          style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
         >
-          <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
-            <h2 className="text-sm font-semibold text-slate-900">Order Breakdown</h2>
-            <p className="text-xs mt-0.5" style={{ color: "rgba(71,85,105,0.8)" }}>Orders by status</p>
+          <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+            <h2 className="text-sm font-semibold text-white">Order Breakdown</h2>
+            <p className="text-xs mt-0.5" style={{ color: "rgba(148,163,184,0.85)" }}>Orders by status</p>
           </div>
           <div className="px-6 py-4">
             {loading ? (
@@ -280,11 +280,11 @@ const AdminReports = () => {
                   <div
                     key={o.status}
                     className="flex items-center justify-between rounded-xl p-3"
-                    style={{ border: "1px solid rgba(148,163,184,0.3)", background: "rgba(255,255,255,0.03)" }}
+                    style={{ border: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.03)" }}
                   >
                     <div className="flex items-center gap-3">
                       <Calendar className="h-4 w-4" style={{ color: "rgba(100,116,139,0.65)" }} />
-                      <span className="text-sm font-medium text-slate-900 capitalize">{o.status}</span>
+                      <span className="text-sm font-medium text-white capitalize">{o.status}</span>
                     </div>
                     <Badge variant="outline" className="text-xs border-white/20 text-slate-500">{o.count} orders</Badge>
                   </div>
@@ -297,11 +297,11 @@ const AdminReports = () => {
         {/* Top Sellers */}
         <div
           className="rounded-2xl overflow-hidden"
-          style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}
+          style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
         >
-          <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
-            <h2 className="text-sm font-semibold text-slate-900">Top Sellers</h2>
-            <p className="text-xs mt-0.5" style={{ color: "rgba(71,85,105,0.8)" }}>By total sales volume</p>
+          <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+            <h2 className="text-sm font-semibold text-white">Top Sellers</h2>
+            <p className="text-xs mt-0.5" style={{ color: "rgba(148,163,184,0.85)" }}>By total sales volume</p>
           </div>
           <div className="px-6 py-4">
             {loading ? (
@@ -316,16 +316,16 @@ const AdminReports = () => {
                   <div
                     key={s.name}
                     className="flex items-center gap-3 rounded-xl p-3"
-                    style={{ border: "1px solid rgba(148,163,184,0.3)", background: "rgba(255,255,255,0.03)" }}
+                    style={{ border: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.03)" }}
                   >
-                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: "rgba(148,163,184,0.35)", color: "rgba(71,85,105,0.85)" }}>
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: "rgba(255,255,255,0.08)", color: "rgba(148,163,184,0.85)" }}>
                       {i + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">{s.name}</p>
-                      <p className="text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>⭐ {s.rating.toFixed(1)} rating</p>
+                      <p className="text-sm font-medium text-white truncate">{s.name}</p>
+                      <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>⭐ {s.rating.toFixed(1)} rating</p>
                     </div>
-                    <span className="text-sm font-semibold text-slate-900 shrink-0">
+                    <span className="text-sm font-semibold text-white shrink-0">
                       {s.totalSales} sales
                     </span>
                   </div>

@@ -265,14 +265,14 @@ const AdminSupport = () => {
   const renderTable = (data: Ticket[]) => (
     <Table>
       <TableHeader>
-        <TableRow style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Ticket</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>User</TableHead>
-          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Category</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Priority</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Status</TableHead>
-          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Updated</TableHead>
-          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Action</TableHead>
+        <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Ticket</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>User</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Category</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Priority</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Status</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Updated</TableHead>
+          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Action</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -295,22 +295,22 @@ const AdminSupport = () => {
             return (
               <TableRow key={t.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                 <TableCell>
-                  <p className="text-sm font-medium text-slate-900">{t.id.slice(0, 8).toUpperCase()}</p>
-                  <p className="text-xs max-w-[200px] truncate" style={{ color: "rgba(71,85,105,0.85)" }}>{t.subject}</p>
+                  <p className="text-sm font-medium text-white">{t.id.slice(0, 8).toUpperCase()}</p>
+                  <p className="text-xs max-w-[200px] truncate" style={{ color: "rgba(148,163,184,0.85)" }}>{t.subject}</p>
                 </TableCell>
                 <TableCell>
-                  <p className="text-sm text-slate-900">{t.userName}</p>
-                  <p className="text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{t.userEmail}</p>
+                  <p className="text-sm text-white">{t.userName}</p>
+                  <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{t.userEmail}</p>
                 </TableCell>
-                <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{t.category}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{t.category}</TableCell>
                 <TableCell><Badge variant="outline" className={priCfg.className}>{priCfg.label}</Badge></TableCell>
                 <TableCell><Badge variant="outline" className={stCfg.className}>{stCfg.label}</Badge></TableCell>
-                <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{t.updatedAt}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{t.updatedAt}</TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-xs text-slate-400 hover:text-slate-900 hover:bg-white/10"
+                    className="text-xs text-slate-400 hover:text-white hover:bg-white/10"
                     onClick={() => setSelected(t)}
                   >
                     View
@@ -325,10 +325,10 @@ const AdminSupport = () => {
   );
 
   return (
-    <div className="p-4 sm:p-6 space-y-6" style={{ background: "#f8fafc", minHeight: "100%" }}>
-      <div className="pb-2" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Support Tickets</h1>
-        <p className="text-sm mt-1" style={{ color: "rgba(71,85,105,0.85)" }}>
+    <div className="p-4 sm:p-6 space-y-6" style={{ background: "transparent", minHeight: "100%" }}>
+      <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Support Tickets</h1>
+        <p className="text-sm mt-1" style={{ color: "rgba(148,163,184,0.85)" }}>
           {tickets.length} total · {openTickets.length} open
         </p>
       </div>
@@ -343,19 +343,19 @@ const AdminSupport = () => {
         {[
           { label: "Open", count: byStatus("open").length, icon: AlertCircle, color: "#60A5FA", bg: "rgba(96,165,250,0.12)" },
           { label: "In Progress", count: byStatus("in_progress").length, icon: Clock, color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
-          { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
+          { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "#FBBF24", bg: "rgba(251,191,36,0.12)" },
           { label: "Urgent", count: urgentOpen.length, icon: AlertCircle, color: "#F87171", bg: "rgba(248,113,113,0.12)" },
         ].map((stat) => (
           <div
             key={stat.label}
             className="rounded-2xl p-5"
-            style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}
+            style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
           >
             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: stat.bg }}>
               <stat.icon className="h-5 w-5" style={{ color: stat.color }} />
             </div>
-            <div className="text-3xl font-bold text-slate-900">{stat.count}</div>
-            <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(71,85,105,0.85)" }}>{stat.label}</p>
+            <div className="text-3xl font-bold text-white">{stat.count}</div>
+            <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(148,163,184,0.85)" }}>{stat.label}</p>
           </div>
         ))}
       </div>
@@ -375,12 +375,12 @@ const AdminSupport = () => {
 
       <Tabs defaultValue="open">
         <TabsList style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}>
-          <TabsTrigger value="open" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">
+          <TabsTrigger value="open" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">
             Open <Badge variant="outline" className="ml-2 text-xs border-white/20 text-slate-500">{openTickets.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger value="resolved" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">Resolved</TabsTrigger>
-          <TabsTrigger value="all" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">All Tickets</TabsTrigger>
-          <TabsTrigger value="disputes" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">
+          <TabsTrigger value="resolved" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">Resolved</TabsTrigger>
+          <TabsTrigger value="all" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">All Tickets</TabsTrigger>
+          <TabsTrigger value="disputes" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">
             Disputes
             {disputes.filter((d) => d.status === "open").length > 0 && (
               <Badge variant="outline" className="ml-2 text-xs border-red-500/30 text-red-400 bg-red-500/10">
@@ -391,7 +391,7 @@ const AdminSupport = () => {
         </TabsList>
         {(["open", "resolved", "all"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2">
                 {renderTable(
                   tab === "open" ? openTickets :
@@ -403,17 +403,17 @@ const AdminSupport = () => {
           </TabsContent>
         ))}
         <TabsContent value="disputes">
-          <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
             <Table>
               <TableHeader>
-                <TableRow style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
-                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>ID</TableHead>
-                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Buyer</TableHead>
-                  <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Subject</TableHead>
-                  <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Reason</TableHead>
-                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Status</TableHead>
-                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Date</TableHead>
-                  <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Action</TableHead>
+                <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>ID</TableHead>
+                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Buyer</TableHead>
+                  <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Subject</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Reason</TableHead>
+                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Status</TableHead>
+                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Date</TableHead>
+                  <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -435,19 +435,19 @@ const AdminSupport = () => {
                     return (
                       <TableRow key={d.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                         <TableCell>
-                          <p className="text-sm font-medium text-slate-900">{d.id.slice(0, 8).toUpperCase()}</p>
-                          <p className="text-xs" style={{ color: "rgba(71,85,105,0.8)" }}>Order: {d.orderId.slice(0, 8).toUpperCase()}</p>
+                          <p className="text-sm font-medium text-white">{d.id.slice(0, 8).toUpperCase()}</p>
+                          <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>Order: {d.orderId.slice(0, 8).toUpperCase()}</p>
                         </TableCell>
-                        <TableCell className="text-sm text-slate-900">{d.buyerName}</TableCell>
+                        <TableCell className="text-sm text-white">{d.buyerName}</TableCell>
                         <TableCell className="hidden sm:table-cell text-xs max-w-[200px] truncate" style={{ color: "rgba(255,255,255,0.7)" }}>{d.subject}</TableCell>
-                        <TableCell className="hidden md:table-cell text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{d.protectionReason.replace(/_/g, " ")}</TableCell>
+                        <TableCell className="hidden md:table-cell text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{d.protectionReason.replace(/_/g, " ")}</TableCell>
                         <TableCell><Badge variant="outline" className={stCfg.className}>{stCfg.label}</Badge></TableCell>
-                        <TableCell className="text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{d.createdAt}</TableCell>
+                        <TableCell className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{d.createdAt}</TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-xs text-slate-400 hover:text-slate-900 hover:bg-white/10"
+                            className="text-xs text-slate-400 hover:text-white hover:bg-white/10"
                             onClick={() => setSelectedDispute(d)}
                           >
                             Review
@@ -472,25 +472,25 @@ const AdminSupport = () => {
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span style={{ color: "rgba(71,85,105,0.8)" }}>User</span><p className="font-medium text-slate-900">{selected.userName}</p></div>
-                <div><span style={{ color: "rgba(71,85,105,0.8)" }}>Email</span><p className="font-medium text-slate-900">{selected.userEmail}</p></div>
-                <div><span style={{ color: "rgba(71,85,105,0.8)" }}>Priority</span>
+                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>User</span><p className="font-medium text-white">{selected.userName}</p></div>
+                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Email</span><p className="font-medium text-white">{selected.userEmail}</p></div>
+                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Priority</span>
                   <p><Badge variant="outline" className={(priorityConfig[selected.priority] ?? { className: "border-slate-200 text-slate-400" }).className}>
                     {(priorityConfig[selected.priority] ?? { label: selected.priority }).label}
                   </Badge></p>
                 </div>
-                <div><span style={{ color: "rgba(71,85,105,0.8)" }}>Status</span>
+                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Status</span>
                   <p><Badge variant="outline" className={(statusConfig[selected.status] ?? { className: "border-slate-200 text-slate-400" }).className}>
                     {(statusConfig[selected.status] ?? { label: selected.status }).label}
                   </Badge></p>
                 </div>
-                <div><span style={{ color: "rgba(71,85,105,0.8)" }}>Created</span><p className="font-medium text-slate-900">{selected.createdAt}</p></div>
-                <div><span style={{ color: "rgba(71,85,105,0.8)" }}>Updated</span><p className="font-medium text-slate-900">{selected.updatedAt}</p></div>
+                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Created</span><p className="font-medium text-white">{selected.createdAt}</p></div>
+                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Updated</span><p className="font-medium text-white">{selected.updatedAt}</p></div>
               </div>
 
               {["open", "in_progress", "waiting_customer"].includes(selected.status) && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold" style={{ color: "rgba(71,85,105,0.8)" }}>UPDATE STATUS</p>
+                  <p className="text-xs font-semibold" style={{ color: "rgba(148,163,184,0.85)" }}>UPDATE STATUS</p>
                   <div className="flex items-center gap-2">
                     <Select
                       defaultValue={selected.status}
@@ -515,7 +515,7 @@ const AdminSupport = () => {
 
               {/* Admin reply */}
               <div className="space-y-2 pt-2" style={{ borderTop: "1px solid rgba(148,163,184,0.3)" }}>
-                <p className="text-xs font-semibold" style={{ color: "rgba(71,85,105,0.8)" }}>SEND REPLY</p>
+                <p className="text-xs font-semibold" style={{ color: "rgba(148,163,184,0.85)" }}>SEND REPLY</p>
                 <Textarea
                   placeholder="Type your reply..."
                   rows={3}
@@ -575,23 +575,23 @@ const AdminSupport = () => {
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span style={{ color: "rgba(71,85,105,0.8)" }}>Buyer</span><p className="font-medium text-slate-900">{selectedDispute.buyerName}</p></div>
-                <div><span style={{ color: "rgba(71,85,105,0.8)" }}>Order</span><p className="font-medium text-slate-900">{selectedDispute.orderId.slice(0, 8).toUpperCase()}</p></div>
-                <div><span style={{ color: "rgba(71,85,105,0.8)" }}>Reason</span><p className="font-medium text-slate-900">{selectedDispute.protectionReason.replace(/_/g, " ")}</p></div>
-                <div><span style={{ color: "rgba(71,85,105,0.8)" }}>Status</span>
+                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Buyer</span><p className="font-medium text-white">{selectedDispute.buyerName}</p></div>
+                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Order</span><p className="font-medium text-white">{selectedDispute.orderId.slice(0, 8).toUpperCase()}</p></div>
+                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Reason</span><p className="font-medium text-white">{selectedDispute.protectionReason.replace(/_/g, " ")}</p></div>
+                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Status</span>
                   <p><Badge variant="outline" className={(disputeStatusConfig[selectedDispute.status] ?? { className: "border-slate-200 text-slate-400" }).className}>
                     {(disputeStatusConfig[selectedDispute.status] ?? { label: selectedDispute.status }).label}
                   </Badge></p>
                 </div>
               </div>
-              <div className="rounded-xl p-3" style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)" }}>
-                <p className="text-xs font-semibold mb-1" style={{ color: "rgba(71,85,105,0.8)" }}>SUBJECT</p>
-                <p className="text-sm font-medium text-slate-900 mb-3">{selectedDispute.subject}</p>
-                <p className="text-xs font-semibold mb-1" style={{ color: "rgba(71,85,105,0.8)" }}>DESCRIPTION</p>
-                <p className="text-sm text-slate-900">{selectedDispute.description}</p>
+              <div className="rounded-xl p-3" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                <p className="text-xs font-semibold mb-1" style={{ color: "rgba(148,163,184,0.85)" }}>SUBJECT</p>
+                <p className="text-sm font-medium text-white mb-3">{selectedDispute.subject}</p>
+                <p className="text-xs font-semibold mb-1" style={{ color: "rgba(148,163,184,0.85)" }}>DESCRIPTION</p>
+                <p className="text-sm text-white">{selectedDispute.description}</p>
               </div>
               <div className="space-y-2">
-                <p className="text-xs font-semibold" style={{ color: "rgba(71,85,105,0.8)" }}>UPDATE STATUS</p>
+                <p className="text-xs font-semibold" style={{ color: "rgba(148,163,184,0.85)" }}>UPDATE STATUS</p>
                 <Select
                   value={selectedDispute.status}
                   onValueChange={(val) => updateDisputeStatus(selectedDispute.id, val)}
@@ -611,7 +611,7 @@ const AdminSupport = () => {
             </div>
             <DialogFooter className="gap-2">
               {disputeActionLoading === selectedDispute.id && (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" style={{ color: "rgba(71,85,105,0.8)" }} />
+                <Loader2 className="h-4 w-4 animate-spin mr-1" style={{ color: "rgba(148,163,184,0.85)" }} />
               )}
               <Button
                 variant="outline"
