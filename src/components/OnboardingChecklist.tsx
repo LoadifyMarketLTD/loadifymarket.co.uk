@@ -112,13 +112,13 @@ export function OnboardingChecklist() {
   const total = ITEMS.length;
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 mb-6 relative">
+    <div className="rounded-xl border border-white/10 p-5 mb-6 relative" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)" }}>
       {/* Dismiss button */}
       <button
         type="button"
         aria-label="Dismiss checklist"
         onClick={() => setDismissed(true)}
-        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+        className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
       >
         <X className="h-4 w-4" />
       </button>
@@ -127,13 +127,13 @@ export function OnboardingChecklist() {
       <div className="mb-4 pr-6">
         <h3 className="font-semibold text-[#0A2239] text-sm">Complete your seller setup</h3>
         <div className="flex items-center gap-2 mt-1.5">
-          <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+          <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
             <div
-              className="h-full bg-[#16A34A] rounded-full transition-all duration-500"
-              style={{ width: `${Math.round((completed / total) * 100)}%` }}
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${Math.round((completed / total) * 100)}%`, background: "#FBBF24" }}
             />
           </div>
-          <span className="text-xs text-gray-500 shrink-0 font-medium">
+          <span className="text-xs text-slate-400 shrink-0 font-medium">
             {completed}/{total}
           </span>
         </div>
@@ -146,17 +146,17 @@ export function OnboardingChecklist() {
           return (
             <li key={key} className={`flex items-center gap-3 ${done ? "opacity-50" : ""}`}>
               {done ? (
-                <CheckCircle2 className="h-4 w-4 text-[#16A34A] shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-[#FBBF24] shrink-0" />
               ) : (
-                <Circle className="h-4 w-4 text-gray-400 shrink-0" />
+                <Circle className="h-4 w-4 text-slate-400 shrink-0" />
               )}
-              <span className={`text-sm flex-1 ${done ? "line-through text-gray-400" : "text-[#0A2239] font-semibold"}`}>
+              <span className={`text-sm flex-1 ${done ? "line-through text-slate-400" : "text-white font-semibold"}`}>
                 {label}
               </span>
               {!done && (
                 <Link
                   to={href}
-                  className="text-xs font-medium text-[#16A34A] hover:text-[#15803D] flex items-center gap-0.5 shrink-0"
+                  className="text-xs font-medium text-[#FBBF24] hover:text-[#F59E0B] flex items-center gap-0.5 shrink-0"
                 >
                   {cta} <ChevronRight className="h-3 w-3" />
                 </Link>
@@ -167,10 +167,10 @@ export function OnboardingChecklist() {
       </ul>
 
       {/* Full wizard link */}
-      <div className="mt-4 pt-3 border-t border-gray-200">
+      <div className="mt-4 pt-3 border-t border-white/10">
         <Link
           to="/onboarding"
-          className="text-xs font-semibold text-[#0A2239] hover:text-[#16A34A] underline"
+          className="text-xs font-semibold text-white hover:text-[#FBBF24] underline"
         >
           Open setup wizard →
         </Link>

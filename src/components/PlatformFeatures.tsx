@@ -12,8 +12,8 @@ const buyerBenefits = [
   },
   {
     icon: ShieldCheck,
-    iconBg: "rgba(34,197,94,0.20)",
-    iconColor: "#4ADE80",
+    iconBg: "rgba(251,191,36,0.20)",
+    iconColor: "#FBBF24",
     title: "Active Seller Accounts",
     desc: "Sellers complete their profile and Stripe setup before listing on the marketplace.",
   },
@@ -36,15 +36,15 @@ const buyerBenefits = [
 const sellerBenefits = [
   {
     icon: PackagePlus,
-    iconBg: "rgba(34,197,94,0.20)",
-    iconColor: "#4ADE80",
+    iconBg: "rgba(251,191,36,0.20)",
+    iconColor: "#FBBF24",
     title: "List for Free",
     desc: "Create your seller account and list your first products at zero cost — no setup fees.",
   },
   {
     icon: Users,
-    iconBg: "rgba(52,211,153,0.20)",
-    iconColor: "#34D399",
+    iconBg: "rgba(251,191,36,0.20)",
+    iconColor: "#FBBF24",
     title: "Reach Real UK Buyers",
     desc: "Access a growing base of registered buyers actively searching for products across all categories.",
   },
@@ -87,7 +87,7 @@ const PlatformFeatures = () => {
       <div className="relative max-w-[1280px] mx-auto w-full">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#FBBF24]">
             Built for UK Buyers &amp; Sellers
           </span>
           <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold text-white">
@@ -101,7 +101,7 @@ const PlatformFeatures = () => {
         {/* Two-column comparison */}
         <div className="grid lg:grid-cols-2 gap-5">
           {/* For Buyers */}
-          <div className="rounded-3xl p-7 bg-white border border-gray-200 shadow-[0_10px_40px_rgba(0,0,0,0.4)] flex flex-col gap-5">
+          <div className="rounded-3xl p-7 flex flex-col gap-5" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}>
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -134,7 +134,7 @@ const PlatformFeatures = () => {
 
             <div className="mt-auto pt-1">
               <Link to="/catalog">
-                <Button className="w-full h-11 bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold rounded-full hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(0,255,150,0.3)] transition-all duration-300">
+                <Button className="w-full h-11 bg-gradient-to-r from-[#FBBF24] to-[#F59E0B] text-black font-semibold rounded-full hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(251,191,36,0.3)] transition-all duration-300">
                   Browse Marketplace <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -142,16 +142,16 @@ const PlatformFeatures = () => {
           </div>
 
           {/* For Sellers */}
-          <div className="rounded-3xl p-7 bg-white border border-emerald-500/20 shadow-[0_10px_40px_rgba(0,0,0,0.4)] flex flex-col gap-5">
+          <div className="rounded-3xl p-7 flex flex-col gap-5" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}>
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "rgba(34,197,94,0.20)" }}
+                style={{ background: "rgba(251,191,36,0.20)" }}
               >
-                <PackagePlus className="h-5 w-5 text-emerald-400" />
+                <PackagePlus className="h-5 w-5 text-[#FBBF24]" />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400">For Sellers</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#FBBF24]">For Sellers</p>
                 <h3 className="text-lg font-display font-bold text-white">Sell Your Products</h3>
               </div>
             </div>
@@ -175,7 +175,7 @@ const PlatformFeatures = () => {
 
             <div className="mt-auto pt-1">
               <Link to="/signup">
-                <Button className="w-full h-11 bg-gradient-to-r from-green-400 to-green-500 text-black font-semibold rounded-full hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(0,255,150,0.3)] transition-all duration-300">
+                <Button className="w-full h-11 bg-gradient-to-r from-[#FBBF24] to-[#F59E0B] text-black font-semibold rounded-full hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(251,191,36,0.3)] transition-all duration-300">
                   Start Selling Today <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -184,7 +184,7 @@ const PlatformFeatures = () => {
         </div>
 
         {/* Trust stats bar */}
-        <div className="mt-5 rounded-2xl bg-white border border-gray-200 shadow-[0_10px_40px_rgba(0,0,0,0.3)] py-4 px-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+        <div className="mt-5 rounded-2xl py-4 px-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}>
           {[
             { value: "UK", label: "Marketplace" },
             { value: "Early", label: "Seller Launch" },

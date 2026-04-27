@@ -42,9 +42,9 @@ const FeaturedProducts = () => {
         <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
           <div className="h-4 w-44 bg-gray-100 rounded mb-1 animate-pulse" />
           <div className="h-3 w-56 bg-gray-100 rounded mb-4 animate-pulse" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-gray-200">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-white/5">
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="bg-white">
+              <div key={i} className="bg-[#0B1220]">
                 <div className="aspect-square bg-gray-100 animate-pulse" />
                 <div className="px-2.5 py-2.5 space-y-1.5">
                   <div className="h-2.5 w-16 bg-gray-100 rounded animate-pulse" />
@@ -65,17 +65,17 @@ const FeaturedProducts = () => {
 
         <div className="flex items-center justify-between mb-4">
           <div>
-              <h2 className="text-[13px] font-black text-gray-900 uppercase tracking-widest">
+              <h2 className="text-[13px] font-black text-white uppercase tracking-widest">
                 Marketplace Products
               </h2>
-              <p className="text-[11px] text-gray-500 mt-0.5">
+              <p className="text-[11px] text-slate-400 mt-0.5">
                 Listed by verified UK trade suppliers
               </p>
           </div>
           {products.length > 0 && (
             <Link
               to="/catalog"
-              className="text-[11px] font-bold text-[#15803d] uppercase tracking-wide hover:underline flex items-center gap-1"
+              className="text-[11px] font-bold text-[#FBBF24] uppercase tracking-wide hover:underline flex items-center gap-1"
             >
               Browse All <ArrowRight className="h-3 w-3" />
             </Link>
@@ -84,7 +84,7 @@ const FeaturedProducts = () => {
 
         {products.length > 0 ? (
           /* Product grid — gap-px hairline borders */
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-gray-200">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-white/5">
             {products.map((item) => {
               const img =
                 Array.isArray(item.images) && item.images.length > 0
@@ -97,10 +97,10 @@ const FeaturedProducts = () => {
                 <Link
                   key={item.id}
                   to={href}
-                  className="group flex flex-col bg-white hover:bg-[#f8f9fb] hover:shadow-md hover:scale-[1.02] transition-all duration-200"
+                  className="group flex flex-col bg-[#0B1220] hover:bg-[#0F172A] hover:shadow-md hover:scale-[1.02] transition-all duration-200"
                 >
                   {/* Square thumbnail */}
-                  <div className="aspect-square bg-gray-50 overflow-hidden">
+                  <div className="aspect-square bg-[#0B1220] overflow-hidden">
                     {img ? (
                       <img
                         src={img}
@@ -115,20 +115,20 @@ const FeaturedProducts = () => {
                         }}
                       />
                     ) : (
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                        <span className="text-gray-300 text-xs">No image</span>
+                      <div className="w-full h-full bg-[#0F172A] flex items-center justify-center">
+                        <span className="text-slate-400 text-xs">No image</span>
                       </div>
                     )}
                   </div>
 
                   {/* Product info */}
-                  <div className="px-2.5 py-2.5 flex flex-col gap-0.5 flex-1 border-t border-gray-100">
+                  <div className="px-2.5 py-2.5 flex flex-col gap-0.5 flex-1 border-t border-white/5">
                     {item.category && (
                       <span className="text-[10px] font-bold text-[#0d2240] uppercase tracking-wide line-clamp-1">
                         {item.category.name}
                       </span>
                     )}
-                    <p className="text-xs font-semibold text-gray-800 leading-snug line-clamp-2 flex-1">
+                    <p className="text-xs font-semibold text-white leading-snug line-clamp-2 flex-1">
                       {item.title}
                     </p>
                     <p className="text-sm font-black text-[#0d2240] mt-1">
@@ -144,17 +144,17 @@ const FeaturedProducts = () => {
           </div>
         ) : (
           /* Professional empty state — no fake listings */
-          <div className="border border-gray-200 bg-white px-6 py-10">
-            <p className="text-sm font-semibold text-gray-900">
+          <div className="border border-white/10 bg-[#0B1220] px-6 py-10">
+            <p className="text-sm font-semibold text-white">
               No listings available yet.
             </p>
-            <p className="text-xs text-gray-500 mt-1.5 mb-6 max-w-md leading-relaxed">
+            <p className="text-xs text-slate-400 mt-1.5 mb-6 max-w-md leading-relaxed">
               We are currently onboarding verified UK trade suppliers.
               Be among the first to list products on Loadify Market.
             </p>
             <Link
               to="/register?type=seller"
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#22C55E] text-[#0d2240] text-xs font-bold uppercase tracking-wide hover:bg-[#16a34a] transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#FBBF24] text-black text-xs font-bold uppercase tracking-wide hover:bg-[#F59E0B] transition-colors"
             >
               Register as Supplier <ArrowRight className="h-3.5 w-3.5" />
             </Link>

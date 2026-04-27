@@ -53,11 +53,11 @@ export default function RequireSellerAny({ children }: Props) {
 
   // Buyer or any other authenticated non-seller — show access denied
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-4">
-      <div className="bg-white border border-gray-200 rounded-xl p-10 max-w-md w-full text-center">
+    <div className="min-h-screen bg-[#020617] flex items-center justify-center px-4">
+      <div className="rounded-xl p-10 max-w-md w-full text-center" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}>
         <p className="text-5xl mb-4">🏪</p>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Seller Account Required</h2>
-        <p className="text-gray-500 mb-6">
+        <h2 className="text-2xl font-bold text-white mb-2">Seller Account Required</h2>
+        <p className="text-slate-400 mb-6">
           You need a seller account to access this page. Sign up as a seller to start
           listing products on Loadify Market.
         </p>

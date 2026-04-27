@@ -20,8 +20,8 @@ export default function HowItWorksBuyers() {
   ];
 
   return (
-    <section id="how-it-works-buyers" className="py-20 bg-white">
-      <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
+    <section id="how-it-works-buyers" className="py-20 bg-[#020617]">
+      <h2 className="text-3xl font-bold text-white text-center mb-12">
         How It Works for Buyers
       </h2>
 
@@ -29,13 +29,14 @@ export default function HowItWorksBuyers() {
         {steps.map((step) => (
           <div
             key={step.number}
-            className="bg-white rounded-xl shadow-sm p-8 flex flex-col items-start gap-4 border border-gray-100"
+            className="rounded-xl p-8 flex flex-col items-start gap-4 border border-white/5"
+            style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)" }}
           >
-            <div className="w-10 h-10 rounded-full bg-green-600 text-white font-semibold text-lg flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[#FBBF24] text-black font-semibold text-lg flex items-center justify-center">
               {step.number}
             </div>
-            <h3 className="text-xl font-semibold text-gray-900">{step.title}</h3>
-            <p className="text-base text-gray-600 leading-relaxed">
+            <h3 className="text-xl font-semibold text-white">{step.title}</h3>
+            <p className="text-base text-slate-400 leading-relaxed">
               {step.description}
             </p>
           </div>

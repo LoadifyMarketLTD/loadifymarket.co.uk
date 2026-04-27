@@ -19,12 +19,12 @@ const getStrength = (pw: string) => {
 };
 
 /* ── Shared primitives ─────────────────────────────────────────────── */
-const lbl = "block text-[11px] font-semibold text-gray-700 uppercase tracking-wide mb-0.5";
+const lbl = "block text-[11px] font-semibold text-slate-300 uppercase tracking-wide mb-0.5";
 const req = <span className="text-red-600"> *</span>;
 
 /* Square/traditional input */
 const inputBase =
-  "block w-full h-[34px] border border-gray-400 bg-white text-gray-900 text-sm px-2 py-1 focus:outline-none focus:border-[#0d2240] focus:ring-0";
+  "block w-full h-[34px] border border-white/10 bg-[#0F172A] text-white text-sm px-2 py-1 focus:outline-none focus:border-[#FBBF24] focus:ring-0";
 
 /* Select wrapper adds the caret manually */
 const SelectField = ({
@@ -42,7 +42,7 @@ const SelectField = ({
       {children}
     </select>
     <svg
-      className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500 pointer-events-none"
+      className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none"
       fill="none" viewBox="0 0 24 24" stroke="currentColor"
     >
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -141,7 +141,7 @@ const Signup = () => {
   return (
     <MainLayout>
       {/* ── Full-page container — light grey, NO card ────────────── */}
-      <div className="bg-[#e8eaed] pt-28 pb-10">
+      <div className="bg-[#020617] pt-28 pb-10">
         <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10">
 
           {/* ══════════════════════════════════════════════════════════
@@ -150,9 +150,9 @@ const Signup = () => {
           <div className="mb-3">
 
             {/* Primary heading bar */}
-            <div className="bg-white border border-gray-300 px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="bg-[#0B1220] border border-white/10 px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
-                <h1 className="text-slate-900 text-xl font-black uppercase tracking-widest leading-tight">
+                <h1 className="text-white text-xl font-black uppercase tracking-widest leading-tight">
                   {isPrivate ? "Personal Account Registration" : "Business Account Registration"}
                 </h1>
                 <p className="text-slate-500 text-[11px] uppercase tracking-widest mt-0.5">
@@ -171,8 +171,8 @@ const Signup = () => {
                       p.delete("type");
                       setSearchParams(p);
                     }}
-                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-gray-300 transition-colors ${
-                      !isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
+                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-white/10 transition-colors ${
+                      !isSeller ? "bg-[#FBBF24] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
                     }`}
                   >
                     Buyer
@@ -184,8 +184,8 @@ const Signup = () => {
                       p.set("type", "seller");
                       setSearchParams(p);
                     }}
-                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-l-0 border-gray-300 transition-colors ${
-                      isSeller ? "bg-[#22C55E] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
+                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-l-0 border-white/10 transition-colors ${
+                      isSeller ? "bg-[#FBBF24] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
                     }`}
                   >
                     Supplier
@@ -200,7 +200,7 @@ const Signup = () => {
                       p.delete("account");
                       setSearchParams(p);
                     }}
-                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-gray-300 transition-colors ${
+                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-white/10 transition-colors ${
                       !isPrivate ? "bg-[#0d2240] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
                     }`}
                   >
@@ -213,7 +213,7 @@ const Signup = () => {
                       p.set("account", "private");
                       setSearchParams(p);
                     }}
-                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-l-0 border-gray-300 transition-colors ${
+                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-l-0 border-white/10 transition-colors ${
                       isPrivate ? "bg-[#0d2240] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
                     }`}
                   >
@@ -222,7 +222,7 @@ const Signup = () => {
                 </div>
                 <span className="text-slate-500 text-[11px] hidden sm:block">
                   Registered?{" "}
-                  <Link to="/login" className="text-[#4ade80] hover:underline font-semibold">
+                  <Link to="/login" className="text-[#FBBF24] hover:underline font-semibold">
                     Sign In
                   </Link>
                 </span>
@@ -260,14 +260,14 @@ const Signup = () => {
             {/* ═══════════════════════════════════════════════════════
                 MAIN GRID — 3 columns desktop, 2 tablet, 1 mobile
             ════════════════════════════════════════════════════════ */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border border-gray-400 border-t-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border border-white/10 border-t-0">
 
               {/* ╔══════════════════════════════════════════════════╗
                   ║  COLUMN 1 — Personal / Business Information      ║
                   ╚══════════════════════════════════════════════════╝ */}
-              <div className="bg-white border-b md:border-b-0 md:border-r border-gray-400">
+              <div className="bg-[#0B1220] border-b md:border-b-0 md:border-r border-white/10">
                 {/* Column header */}
-                <div className="bg-[#1e3a5f] border-b border-gray-400 px-4 py-2">
+                <div className="bg-[#1e3a5f] border-b border-white/10 px-4 py-2">
                   <span className="text-[11px] font-black text-white uppercase tracking-widest">
                     Personal / Business Information
                   </span>
@@ -315,11 +315,11 @@ const Signup = () => {
                     <input
                       id="newsletter" name="newsletter" type="checkbox"
                       checked={f.newsletter} onChange={set}
-                      className="mt-0.5 h-3.5 w-3.5 border border-gray-400 cursor-pointer"
+                      className="mt-0.5 h-3.5 w-3.5 border border-white/10 cursor-pointer"
                     />
                     <label
                       htmlFor="newsletter"
-                      className="text-[11px] text-gray-600 leading-snug cursor-pointer"
+                      className="text-[11px] text-slate-400 leading-snug cursor-pointer"
                     >
                       Subscribe to our trade newsletter for exclusive offers and updates
                     </label>
@@ -359,11 +359,11 @@ const Signup = () => {
                     <input
                       id="requestAssistance" name="requestAssistance" type="checkbox"
                       checked={f.requestAssistance} onChange={set}
-                      className="mt-0.5 h-3.5 w-3.5 border border-gray-400 cursor-pointer"
+                      className="mt-0.5 h-3.5 w-3.5 border border-white/10 cursor-pointer"
                     />
                     <label
                       htmlFor="requestAssistance"
-                      className="text-[11px] text-gray-600 leading-snug cursor-pointer"
+                      className="text-[11px] text-slate-400 leading-snug cursor-pointer"
                     >
                       I would like assistance setting up my account from the sales team
                     </label>
@@ -375,9 +375,9 @@ const Signup = () => {
               {/* ╔══════════════════════════════════════════════════╗
                   ║  COLUMN 2 — Address Information                  ║
                   ╚══════════════════════════════════════════════════╝ */}
-              <div className="bg-[#f4f5f7] border-b md:border-b-0 md:border-r-0 lg:border-r border-gray-400">
+              <div className="bg-[#0F172A] border-b md:border-b-0 md:border-r-0 lg:border-r border-white/10">
                 {/* Column header */}
-                <div className="bg-[#1e3a5f] border-b border-gray-400 px-4 py-2">
+                <div className="bg-[#1e3a5f] border-b border-white/10 px-4 py-2">
                   <span className="text-[11px] font-black text-white uppercase tracking-widest">
                     Address Information
                   </span>
@@ -428,12 +428,12 @@ const Signup = () => {
                       />
                       <button
                         type="button"
-                        className="px-3 h-[34px] bg-[#22C55E] hover:bg-[#16a34a] text-white text-[11px] font-black uppercase tracking-wide border border-[#22C55E] transition-colors whitespace-nowrap"
+                        className="px-3 h-[34px] bg-[#FBBF24] hover:bg-[#B45309] text-white text-[11px] font-black uppercase tracking-wide border border-[#FBBF24] transition-colors whitespace-nowrap"
                       >
                         Find Address
                       </button>
                     </div>
-                    <p className="text-[10px] text-gray-400 mt-0.5">
+                    <p className="text-[10px] text-slate-500 mt-0.5">
                       Enter your postcode and click "Find Address" to auto-fill.
                     </p>
                   </div>
@@ -462,9 +462,9 @@ const Signup = () => {
               {/* ╔══════════════════════════════════════════════════╗
                   ║  COLUMN 3 — Sign-in Information                  ║
                   ╚══════════════════════════════════════════════════╝ */}
-              <div className="bg-white md:col-span-2 lg:col-span-1">
+              <div className="bg-[#0B1220] md:col-span-2 lg:col-span-1">
                 {/* Column header */}
-                <div className="bg-[#1e3a5f] border-b border-gray-400 px-4 py-2">
+                <div className="bg-[#1e3a5f] border-b border-white/10 px-4 py-2">
                   <span className="text-[11px] font-black text-white uppercase tracking-widest">
                     Sign-in Information
                   </span>
@@ -486,7 +486,7 @@ const Signup = () => {
                         type="button"
                         aria-label={showPw ? "Hide password" : "Show password"}
                         onClick={() => setShowPw((v) => !v)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                       >
                         {showPw ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                       </button>
@@ -495,20 +495,20 @@ const Signup = () => {
                     {/* Strength bar */}
                     {f.password.length > 0 && (
                       <div className="mt-1.5 space-y-0.5">
-                        <div className="h-[3px] w-full bg-gray-200">
+                        <div className="h-[3px] w-full bg-white/10">
                           <div
                             className={`h-full transition-all duration-300 ${strength.color}`}
                             style={{ width: `${strength.pct}%` }}
                           />
                         </div>
-                        <p className="text-[11px] text-gray-500">
+                        <p className="text-[11px] text-slate-500">
                           Password strength:{" "}
-                          <span className="font-semibold text-gray-700">{strength.label}</span>
+                          <span className="font-semibold text-slate-300">{strength.label}</span>
                         </p>
                       </div>
                     )}
 
-                    <p className="text-[11px] text-gray-500 mt-1.5 leading-snug">
+                    <p className="text-[11px] text-slate-500 mt-1.5 leading-snug">
                       Must be at least 8 characters. Use a combination of uppercase letters,
                       numbers, and symbols for a stronger password.
                     </p>
@@ -540,11 +540,11 @@ const Signup = () => {
                     <input
                       id="showPassword" type="checkbox"
                       checked={showPw} onChange={() => setShowPw((v) => !v)}
-                      className="h-3.5 w-3.5 border border-gray-400 cursor-pointer"
+                      className="h-3.5 w-3.5 border border-white/10 cursor-pointer"
                     />
                     <label
                       htmlFor="showPassword"
-                      className="text-[11px] text-gray-600 cursor-pointer select-none"
+                      className="text-[11px] text-slate-400 cursor-pointer select-none"
                     >
                       Show Password
                     </label>
@@ -559,7 +559,7 @@ const Signup = () => {
             {/* ════════════════════════════════════════════════════════
                 BOTTOM SECTION — reCAPTCHA · Terms · Submit
             ════════════════════════════════════════════════════════ */}
-            <div className="bg-[#f4f5f7] border border-t-4 border-t-[#0d2240] border-x-gray-400 border-b-gray-400">
+            <div className="bg-[#0B1220] border border-t-4 border-t-[#FBBF24] border-x-white/10 border-b-white/10">
 
               <div className="px-5 py-4 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
 
@@ -568,24 +568,24 @@ const Signup = () => {
 
                   {/* Mandatory terms checkbox */}
                   <div>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Legal Agreement <span className="text-red-600">*</span></p>
-                    <div className="flex items-start gap-2 border border-gray-300 bg-white px-3 py-2.5 max-w-lg">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Legal Agreement <span className="text-red-600">*</span></p>
+                    <div className="flex items-start gap-2 border border-white/10 bg-[#0F172A] px-3 py-2.5 max-w-lg">
                       <input
                         id="agreeTerms" name="agreeTerms" type="checkbox"
                         required checked={f.agreeTerms} onChange={set}
-                        className="mt-0.5 h-4 w-4 border-2 border-gray-500 cursor-pointer shrink-0"
+                        className="mt-0.5 h-4 w-4 border-2 border-white/30 cursor-pointer shrink-0"
                       />
                       <label
                         htmlFor="agreeTerms"
-                        className="text-xs text-gray-700 leading-relaxed cursor-pointer"
+                        className="text-xs text-slate-300 leading-relaxed cursor-pointer"
                       >
                         <span className="text-red-600 font-bold">*</span>{" "}
                         I have read and agree to the{" "}
-                        <Link to="/privacy" className="text-[#0d2240] underline font-semibold">
+                        <Link to="/privacy" className="text-[#FBBF24] underline font-semibold">
                           Privacy Policy
                         </Link>{" "}
                         and{" "}
-                        <Link to="/terms" className="text-[#0d2240] underline font-semibold">
+                        <Link to="/terms" className="text-[#FBBF24] underline font-semibold">
                           Terms and Conditions of Use
                         </Link>
                         . I confirm I am registering for <strong>business use only</strong> and am
@@ -601,7 +601,8 @@ const Signup = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-14 py-3 bg-[#22C55E] hover:bg-[#16a34a] text-white text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-2 border-[#22C55E] w-full lg:min-w-[280px]"
+                    className="px-14 py-3 text-white text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full lg:min-w-[280px]"
+                    style={{ background: "linear-gradient(135deg, #B45309, #FBBF24)" }}
                   >
                     {loading
                       ? "Submitting…"
@@ -609,13 +610,13 @@ const Signup = () => {
                       ? isPrivate ? "▶  Submit Seller Application" : "▶  Submit Supplier Application"
                       : isPrivate ? "▶  Create Personal Account" : "▶  Create Business Account"}
                   </button>
-                  <p className="text-[10px] text-gray-500 lg:text-right leading-relaxed">
+                  <p className="text-[10px] text-slate-500 lg:text-right leading-relaxed">
                     Fields marked <span className="text-red-600 font-bold">*</span> are mandatory.
                     <br />
                     You will receive a confirmation email once your application is reviewed.
                     <br />
                     Already have an account?{" "}
-                    <Link to="/login" className="text-[#0d2240] underline font-semibold">
+                    <Link to="/login" className="text-[#FBBF24] underline font-semibold">
                       Sign in here
                     </Link>
                     .
