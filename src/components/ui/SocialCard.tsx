@@ -1,11 +1,19 @@
 import type { LucideIcon } from 'lucide-react';
+import type { FC, CSSProperties } from 'react';
 
-export type SocialPlatform = 'facebook' | 'twitter' | 'instagram' | 'linkedin';
+export type SocialPlatform = 'facebook' | 'twitter' | 'instagram' | 'linkedin' | 'tiktok';
+
+/**
+ * Accepts Lucide ForwardRef icons (LucideIcon) or plain function components.
+ * We use an explicit union rather than React.ComponentType so that Lucide's
+ * ForwardRefExoticComponent types are correctly covered.
+ */
+type IconComponent = LucideIcon | FC<{ className?: string; style?: CSSProperties; 'aria-hidden'?: string | boolean }>;
 
 interface SocialCardProps {
   href: string;
   label: string;
-  Icon: LucideIcon;
+  Icon: IconComponent;
   platform: SocialPlatform;
   /** "footer" renders slightly smaller (42×42 px, 18px icon) */
   size?: 'default' | 'footer';

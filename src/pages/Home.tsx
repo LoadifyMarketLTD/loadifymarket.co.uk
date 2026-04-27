@@ -19,6 +19,7 @@ import TrustStrip from "@/components/TrustStrip";
 import HowItWorksSection from "@/components/HowItWorksSection";
 import FeaturesGrid from "@/components/FeaturesGrid";
 import SecurityTrust from "@/components/SecurityTrust";
+import SocialFollowSection from "@/components/SocialFollowSection";
 import SellerCTA from "@/components/SellerCTA";
 
 export default function Home() {
@@ -51,6 +52,11 @@ export default function Home() {
 
           {/* Trust Strip */}
           <TrustStrip />
+
+          {/* Social Follow — directly below trust badges, above How It Works */}
+          <div className="mt-8">
+            <SocialFollowSection />
+          </div>
 
           {/* How It Works */}
           <div className="mt-8">
