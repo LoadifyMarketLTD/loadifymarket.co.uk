@@ -242,7 +242,6 @@ const Header = () => {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search products, categories, sellers..."
               aria-label="Search marketplace"
-              // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
               className="w-full h-10 pl-9 pr-[72px] bg-[rgba(15,23,42,0.85)] border border-white/[0.08] rounded-2xl text-sm text-white placeholder:text-[#94A3B8] focus:outline-none focus:border-[rgba(251,191,36,0.35)] focus:ring-2 focus:ring-[rgba(251,191,36,0.12)] transition-all duration-200"
             />
