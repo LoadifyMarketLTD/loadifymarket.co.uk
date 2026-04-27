@@ -66,6 +66,7 @@ const SellerGuidelinesPage = lazy(() => import('./pages/SellerGuidelinesPage'));
 // Onboarding pages
 const RoleSelection     = lazy(() => import('./pages/onboarding/RoleSelection'));
 const SellerOnboarding  = lazy(() => import('./pages/onboarding/SellerOnboarding'));
+const SellerSetupPage   = lazy(() => import('./pages/pixel-perfect/seller/SellerSetupPage'));
 
 // ─── Pixel-perfect dashboard shells ──────────────────────────────────────────
 const PPSellerShell         = lazy(() => import('./pages/pixel-perfect/seller/SellerShell'));
@@ -504,8 +505,12 @@ function App() {
           </RequireSeller>
         } />
 
-        {/* Seller: Setup page — redirected to /onboarding (single onboarding system) */}
-        <Route path="seller/setup" element={<Navigate to="/onboarding" replace />} />
+        {/* Seller: Setup page — Stripe Connect return URL lands here with ?connect=success|refresh */}
+        <Route path="seller/setup" element={
+          <RequireSellerAny>
+            <Suspense fallback={<PageLoader />}><SellerSetupPage /></Suspense>
+          </RequireSellerAny>
+        } />
         {/* Seller: Analytics — redirected to seller dashboard (analytics shown there) */}
         <Route path="seller/analytics" element={<Navigate to="/seller" replace />} />
         {/* Seller: Payouts — redirected to seller settings (payout config shown there) */}

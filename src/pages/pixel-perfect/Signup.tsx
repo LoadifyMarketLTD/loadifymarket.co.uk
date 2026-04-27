@@ -107,14 +107,35 @@ const Signup = () => {
 
     setLoading(true);
     try {
-      const body: Record<string, string> = {
-        firstName: f.firstName.trim(),
-        lastName: f.lastName.trim(),
-        email: f.email.trim(),
-        password: f.password,
+      const businessAddress: Record<string, string> = {};
+      if (f.streetAddress.trim()) businessAddress.streetAddress = f.streetAddress.trim();
+      if (f.city.trim())          businessAddress.city          = f.city.trim();
+      if (f.postcode.trim())      businessAddress.postcode      = f.postcode.trim();
+      if (f.country.trim())       businessAddress.country       = f.country.trim();
+
+      const body: Record<string, unknown> = {
+        firstName:          f.firstName.trim(),
+        lastName:           f.lastName.trim(),
+        email:              f.email.trim(),
+        password:           f.password,
         role,
+        ...(f.middleName.trim()   ? { middleName:          f.middleName.trim() }   : {}),
+        ...(f.phone.trim()        ? { phone:               f.phone.trim() }        : {}),
+        ...(f.vatNumber.trim()    ? { vatNumber:           f.vatNumber.trim() }    : {}),
+        ...(f.customerType        ? { customerType:        f.customerType }        : {}),
+        ...(f.newsletter          ? { newsletter:          true }                  : {}),
+        ...(f.requestAssistance   ? { requestAssistance:   true }                  : {}),
+        ...(Object.keys(businessAddress).length > 0 ? { businessAddress }         : {}),
       };
-      if (f.company.trim()) body.storeName = f.company.trim();
+
+      // storeName is used for sellers; companyName for buyers
+      if (f.company.trim()) {
+        if (role === 'seller') {
+          body.storeName   = f.company.trim();
+        } else {
+          body.companyName = f.company.trim();
+        }
+      }
 
       const res = await fetch("/.netlify/functions/register", {
         method: "POST",

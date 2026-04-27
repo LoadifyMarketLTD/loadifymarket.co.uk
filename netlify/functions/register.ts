@@ -42,8 +42,11 @@ interface RegisterRequest {
   vatNumber?: string;
   customerType?: string;
   businessAddress?: Record<string, string>;
-  // Legacy fields stored in user_metadata / users.phone.
+  // Fields stored in user_metadata / users table.
   phone?: string;
+  middleName?: string;
+  newsletter?: boolean;
+  requestAssistance?: boolean;
   areasOfInterest?: string;
 }
 
@@ -76,7 +79,7 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
   }
 
-  const { email, password, firstName, lastName, role, storeName, phone, vatNumber, customerType, companyName, businessAddress } = body;
+  const { email, password, firstName, lastName, role, storeName, phone, vatNumber, customerType, companyName, businessAddress, middleName, newsletter, requestAssistance } = body;
 
   if (!email || !password || !firstName || !lastName || !role) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
@@ -146,9 +149,12 @@ export const handler: Handler = async (event) => {
       first_name: firstName,
       last_name: lastName,
       role,
-      ...(phone ? { phone } : {}),
-      ...(vatNumber ? { vat_number: vatNumber } : {}),
-      ...(customerType ? { customer_type: customerType } : {}),
+      ...(middleName        ? { middle_name:        middleName }        : {}),
+      ...(phone             ? { phone }                                  : {}),
+      ...(vatNumber         ? { vat_number:         vatNumber }         : {}),
+      ...(customerType      ? { customer_type:      customerType }      : {}),
+      ...(newsletter        ? { newsletter:         true }              : {}),
+      ...(requestAssistance ? { request_assistance: true }              : {}),
     },
   });
   // ────────────────────────────────────────────────────────────────────────────
@@ -300,16 +306,21 @@ export const handler: Handler = async (event) => {
   // ── Seller-only: populate extra profile fields ──────────────────────────────
   // The DB trigger trg_new_user_profile already created the bare
   // seller_profiles + seller_stores rows.  Upsert here to fill in the
-  // name fields that the trigger does not know about.
+  // fields that the trigger does not know about.
   if (role === 'seller') {
     const effectiveStoreName = storeName?.trim() || `${firstName}'s Store`;
 
+    const sellerProfileUpdate: Record<string, unknown> = {
+      userId,
+      fullName: `${firstName} ${lastName}`,
+      storeName: effectiveStoreName,
+    };
+    if (phone?.trim())                                           sellerProfileUpdate.contactPhone    = phone.trim();
+    if (vatNumber?.trim())                                       sellerProfileUpdate.vatNumber        = vatNumber.trim();
+    if (businessAddress && Object.keys(businessAddress).length > 0) sellerProfileUpdate.businessAddress = businessAddress;
+
     const { error: spErr } = await supabase.from('seller_profiles').upsert(
-      {
-        userId,
-        fullName: `${firstName} ${lastName}`,
-        storeName: effectiveStoreName,
-      },
+      sellerProfileUpdate,
       { onConflict: 'userId' }
     );
     if (spErr) console.warn('register: seller_profiles upsert (non-fatal):', spErr.message);
