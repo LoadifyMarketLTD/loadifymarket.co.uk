@@ -51,7 +51,7 @@ const Footer = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <SocialCard href="https://www.facebook.com/loadifymarket"          label="Loadify Market on Facebook"   Icon={Facebook}  platform="facebook"  size="footer" />
+            <SocialCard href="https://www.facebook.com/profile.php?id=61583570176707" label="Loadify Market on Facebook"   Icon={Facebook}  platform="facebook"  size="footer" />
             <SocialCard href="https://www.twitter.com/loadifymarket"           label="Loadify Market on X / Twitter" Icon={Twitter}   platform="twitter"   size="footer" />
             <SocialCard href="https://www.instagram.com/loadifymarket"         label="Loadify Market on Instagram"   Icon={Instagram} platform="instagram" size="footer" />
             <SocialCard href="https://www.tiktok.com/@loadifymarket"           label="Loadify Market on TikTok"      Icon={TikTokIcon} platform="tiktok"   size="footer" />
