@@ -19,6 +19,7 @@ import type { CategoryNode } from "@/hooks/useCategories";
 const Header = () => {
   const [query, setQuery] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { cartCount } = useCart();
@@ -29,6 +30,7 @@ const Header = () => {
 
   useEffect(() => {
     setHoveredCat(null);
+    setMobileSearchOpen(false);
   }, [location.pathname]);
 
   const scheduleClose = useCallback(() => {
@@ -49,6 +51,7 @@ const Header = () => {
     if (query.trim()) {
       navigate(`/catalog?q=${encodeURIComponent(query.trim())}`);
       setQuery("");
+      setMobileSearchOpen(false);
     }
   };
 
@@ -78,6 +81,11 @@ const Header = () => {
   // found (e.g. legacy DB that hasn't run migration 400 yet).
   const displayCategories =
     priorityCategories.length > 0 ? priorityCategories : categories.slice(0, 6);
+
+  const isActivePath = (to: string): boolean => {
+    if (to === "/") return location.pathname === "/" && !location.search;
+    return (location.pathname + location.search) === to;
+  };
 
   const navLinks = [
     { to: "/", label: "HOME", strong: true, catSlug: null as string | null },
@@ -120,9 +128,9 @@ const Header = () => {
           </span>
         </Link>
 
-        {/* Prominent search bar (center) */}
-        <form onSubmit={handleSearch} className="flex-1 max-w-2xl mx-auto min-w-0">
-          <div className="relative flex items-center">
+        {/* Prominent search bar — hidden on mobile, visible md+ */}
+        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl mx-auto min-w-0">
+          <div className="relative flex items-center w-full">
             <Search className="absolute left-3.5 h-4 w-4 sm:left-4 sm:h-[18px] sm:w-[18px] text-white/35 pointer-events-none" aria-hidden="true" />
             <input
               type="search"
@@ -142,6 +150,19 @@ const Header = () => {
             </button>
           </div>
         </form>
+
+        {/* Flex spacer — pushes icons to the right on mobile only */}
+        <div className="flex-1 md:hidden" aria-hidden="true" />
+
+        {/* Mobile search icon — visible only below md */}
+        <button
+          className="md:hidden p-2.5 text-[#CBD5E1] hover:text-[#FBBF24] hover:bg-white/[0.10] active:bg-white/[0.18] rounded-xl transition-all shrink-0"
+          onClick={() => setMobileSearchOpen((v) => !v)}
+          aria-label={mobileSearchOpen ? "Close search" : "Open search"}
+          aria-expanded={mobileSearchOpen}
+        >
+          <Search className="h-5 w-5" aria-hidden="true" />
+        </button>
 
         {/* Mobile cart icon */}
         <Link
@@ -210,6 +231,32 @@ const Header = () => {
         </div>
       </div>
 
+      {/* ── Mobile expandable search row ────────────────────────────────── */}
+      {mobileSearchOpen && (
+        <div className="md:hidden px-4 pb-3 pt-1 border-t border-white/[0.06]">
+          <form onSubmit={handleSearch} className="relative flex items-center">
+            <Search className="absolute left-3.5 h-4 w-4 text-white/35 pointer-events-none" aria-hidden="true" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search products, categories, sellers..."
+              aria-label="Search marketplace"
+              // eslint-disable-next-line jsx-a11y/no-autofocus
+              autoFocus
+              className="w-full h-10 pl-9 pr-[72px] bg-[rgba(15,23,42,0.85)] border border-white/[0.08] rounded-2xl text-sm text-white placeholder:text-[#94A3B8] focus:outline-none focus:border-[rgba(251,191,36,0.35)] focus:ring-2 focus:ring-[rgba(251,191,36,0.12)] transition-all duration-200"
+            />
+            <button
+              type="submit"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 px-4 bg-gradient-to-br from-[#FBBF24] to-[#D97706] text-[#020617] text-xs font-bold rounded-xl"
+              aria-label="Search"
+            >
+              Search
+            </button>
+          </form>
+        </div>
+      )}
+
       {/* ── Row 2: Category quick-links ────────────────────────────────── */}
       <nav aria-label="Category navigation" className="border-t border-white/[0.08]">
         <div className="w-full px-4 sm:px-6 lg:px-8">
@@ -233,6 +280,7 @@ const Header = () => {
                       className={[
                         "nav-cat-link text-[13px] font-semibold text-[#E5E7EB] hover:text-[#FBBF24] hover:-translate-y-px hover:[text-shadow:0_0_8px_rgba(251,191,36,0.25)] hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap text-center w-full",
                         isHovered ? "bg-white/[0.08] text-[#FBBF24]" : "",
+                        isActivePath(link.to) ? "active text-[#FBBF24]" : "",
                       ].join(" ")}
                     >
                       {link.label}
