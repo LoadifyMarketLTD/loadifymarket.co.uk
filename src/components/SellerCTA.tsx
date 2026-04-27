@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 export default function SellerCTA() {
   return (
     <section className="bg-[linear-gradient(135deg,#111827,#020617)] border-y border-yellow-400/20 py-8">
-      <div className="px-8">
+      <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[#F5F1E8] font-medium text-base text-center sm:text-left">
             Join UK sellers earning more with 0% commission until 31 December 2026.
