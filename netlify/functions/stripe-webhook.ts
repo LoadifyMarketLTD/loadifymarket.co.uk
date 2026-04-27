@@ -211,6 +211,30 @@ export const handler: Handler = async (event) => {
       }
       // ──────────────────────────────────────────────────────────────────────
 
+      // ── Stripe Connect transfer confirmation ──────────────────────────────
+      // Fired when a transfer to a seller's connected account is created.
+      // We log the transfer and update the corresponding payouts row (matched
+      // by stripeTransferId) so the admin audit trail is complete.
+      case 'transfer.created': {
+        const transfer = stripeEvent.data.object as Stripe.Transfer;
+        await handleTransferCreated(transfer);
+        break;
+      }
+      // ──────────────────────────────────────────────────────────────────────
+
+      // ── Stripe payout to seller's bank account ────────────────────────────
+      // Fired when Stripe pays out a seller's connected-account balance to
+      // their bank. We update the matching payouts row with the Stripe payout
+      // ID so the seller and admin can see the settled amount.
+      case 'payout.paid': {
+        const payout = stripeEvent.data.object as Stripe.Payout;
+        // stripeEvent.account is set on Connect webhooks and identifies the
+        // connected seller account that triggered the payout.
+        await handlePayoutPaid(payout, stripeEvent.account ?? null);
+        break;
+      }
+      // ──────────────────────────────────────────────────────────────────────
+
       default:
         console.log(`Unhandled event type: ${stripeEvent.type}`);
     }
@@ -927,4 +951,115 @@ export async function handleConnectAccountUpdated(
     console.warn('account.updated: auto-activation check failed (non-fatal):', activationError);
   }
   // ──────────────────────────────────────────────────────────────────────
+}
+
+/**
+ * Handles `transfer.created` events.
+ *
+ * Fired by Stripe when a transfer to a seller's connected Express account is
+ * successfully created (immediately after stripe.transfers.create() returns).
+ * We match the transfer to a payouts row by stripeTransferId and confirm the
+ * status is 'paid' for the audit trail.
+ * If no matching row is found the event is still acknowledged — the webhook
+ * handler already inserts a payouts row synchronously during
+ * checkout.session.completed processing, so misses here are harmless.
+ *
+ * Exported for unit testing.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handleTransferCreated(transfer: Stripe.Transfer): Promise<void> {
+  const orderId = typeof transfer.metadata?.orderId === 'string' ? transfer.metadata.orderId : null;
+
+  console.log(
+    `transfer.created: ${transfer.id} — amount £${(transfer.amount / 100).toFixed(2)} ` +
+      `→ destination ${String(transfer.destination)} | orderId=${orderId ?? 'unknown'}`,
+  );
+
+  if (!orderId) {
+    // Transfer was not originated by our checkout flow (e.g. a manual transfer).
+    // Log and skip — nothing to link.
+    console.warn(`transfer.created: no orderId in metadata for transfer ${transfer.id} — skipping DB update`);
+    return;
+  }
+
+  // Update the payout row that was inserted during checkout.session.completed.
+  // stripeTransferId is already set; we confirm status is 'paid'.
+  const { error } = await supabase!
+    .from('payouts')
+    .update({ status: 'paid', notes: `Transfer confirmed by Stripe webhook. Transfer ID: ${transfer.id}` })
+    .eq('orderId', orderId)
+    .eq('stripeTransferId', transfer.id);
+
+  if (error) {
+    console.error(`transfer.created: DB update failed for transfer ${transfer.id}:`, error.message);
+  } else {
+    console.log(`transfer.created: payout row updated for order ${orderId}`);
+  }
+}
+
+/**
+ * Handles `payout.paid` events.
+ *
+ * Fired by Stripe when funds move from a connected Express account's Stripe
+ * balance to the seller's bank account. This is the final step of the payout
+ * lifecycle. One Stripe payout can cover multiple transfers (multiple orders),
+ * so we cannot reliably link it to a single `payouts` row without knowing the
+ * underlying transfers. Instead we:
+ *   1. Resolve the seller ID from `seller_profiles` via the connected account ID
+ *      (`connectedAccountId`, taken from `stripeEvent.account` by the caller).
+ *   2. Update all paid, unlinked `payouts` rows for that seller, recording the
+ *      Stripe payout ID and bank arrival date for reconciliation.
+ *
+ * Exported for unit testing.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function handlePayoutPaid(payout: Stripe.Payout, connectedAccountId: string | null): Promise<void> {
+  console.log(
+    `payout.paid: ${payout.id} — amount £${(payout.amount / 100).toFixed(2)} ` +
+      `| arrival ${new Date((payout.arrival_date) * 1000).toISOString()} ` +
+      `| account=${connectedAccountId ?? 'unknown'}`,
+  );
+
+  if (!connectedAccountId) {
+    // Without the connected account ID we cannot link the payout to a seller.
+    // This should not happen on a correctly configured Connect webhook.
+    console.warn(`payout.paid: no connectedAccountId for payout ${payout.id} — skipping DB update`);
+    return;
+  }
+
+  // Resolve sellerId from seller_profiles using the connected Stripe account ID.
+  const { data: sellerProfile } = await supabase!
+    .from('seller_profiles')
+    .select('userId')
+    .eq('stripeAccountId', connectedAccountId)
+    .maybeSingle<{ userId: string }>();
+
+  if (!sellerProfile?.userId) {
+    console.warn(
+      `payout.paid: no seller_profiles row found for stripeAccountId=${connectedAccountId} — skipping DB update for payout ${payout.id}`,
+    );
+    return;
+  }
+
+  const sellerId = sellerProfile.userId;
+
+  // Update all paid, unlinked payout rows for this seller with the Stripe payout
+  // ID and arrival date. This covers the case where one bank payout settles
+  // multiple order-level transfers.
+  const { error } = await supabase!
+    .from('payouts')
+    .update({
+      stripePayoutId: payout.id,
+      paidAt: new Date((payout.arrival_date) * 1000).toISOString(),
+      notes: `Bank payout confirmed by Stripe. Payout ID: ${payout.id}`,
+    })
+    .eq('sellerId', sellerId)
+    .eq('status', 'paid')
+    .is('stripePayoutId', null);
+
+  if (error) {
+    console.error(`payout.paid: DB update failed for payout ${payout.id}:`, error.message);
+  } else {
+    console.log(`payout.paid: payout ${payout.id} recorded for seller ${sellerId}`);
+  }
 }

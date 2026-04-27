@@ -506,8 +506,8 @@ describe('create-refund – P4C column name fix (stripePaymentIntent)', () => {
 
 // ── Phase 2A: Refund clawback protection ─────────────────────────────────────
 
-describe('create-refund – Phase 2A refund clawback (reverse_transfer)', () => {
-  it('source code passes reverse_transfer: true to stripe.refunds.create', async () => {
+describe('create-refund – Phase 2A refund clawback (explicit transfer reversal)', () => {
+  it('source code calls stripe.transfers.createReversal for explicit transfer clawback', async () => {
     const { readFileSync } = await import('fs');
     const { resolve, dirname } = await import('path');
     const { fileURLToPath } = await import('url');
@@ -515,11 +515,13 @@ describe('create-refund – Phase 2A refund clawback (reverse_transfer)', () => 
     const __dirname = dirname(__filename);
     const src = readFileSync(resolve(__dirname, '../create-refund.ts'), 'utf-8');
 
-    // The clawback flag must appear in the refund call
-    expect(src).toContain('reverse_transfer: true');
-    // Sanity: the flag should not be commented out
-    const uncommentedMatch = src.match(/^\s*reverse_transfer:\s*true/m);
-    expect(uncommentedMatch).not.toBeNull();
+    // The explicit reversal call must appear
+    expect(src).toContain('transfers.createReversal');
+    // The payout record must be looked up by orderId and status='paid'
+    expect(src).toContain("eq('orderId', orderId)");
+    expect(src).toContain("eq('status', 'paid')");
+    // The old no-op flag must NOT be present (it gave false confidence)
+    expect(src).not.toContain('reverse_transfer: true');
   });
 });
 
