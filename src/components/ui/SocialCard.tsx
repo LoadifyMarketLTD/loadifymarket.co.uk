@@ -1,11 +1,14 @@
+import type { LucideIcon } from 'lucide-react';
+import type { FC, CSSProperties } from 'react';
+
 export type SocialPlatform = 'facebook' | 'twitter' | 'instagram' | 'linkedin' | 'tiktok';
 
-/** Accepts Lucide icons or any custom SVG component with the same prop surface. */
-type IconComponent = React.ComponentType<{
-  className?: string;
-  style?: React.CSSProperties;
-  'aria-hidden'?: boolean | string;
-}>;
+/**
+ * Accepts Lucide ForwardRef icons (LucideIcon) or plain function components.
+ * We use an explicit union rather than React.ComponentType so that Lucide's
+ * ForwardRefExoticComponent types are correctly covered.
+ */
+type IconComponent = LucideIcon | FC<{ className?: string; style?: CSSProperties; 'aria-hidden'?: string | boolean }>;
 
 interface SocialCardProps {
   href: string;

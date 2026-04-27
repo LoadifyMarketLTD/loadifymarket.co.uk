@@ -53,6 +53,11 @@ export default function Home() {
           {/* Trust Strip */}
           <TrustStrip />
 
+          {/* Social Follow — directly below trust badges, above How It Works */}
+          <div className="mt-8">
+            <SocialFollowSection />
+          </div>
+
           {/* How It Works */}
           <div className="mt-8">
             <HowItWorksSection />
@@ -62,11 +67,6 @@ export default function Home() {
           <div className="mt-8 grid grid-cols-2 gap-8">
             <FeaturesGrid />
             <SecurityTrust />
-          </div>
-
-          {/* Social Follow */}
-          <div className="mt-8">
-            <SocialFollowSection />
           </div>
 
         </section>
