@@ -172,7 +172,7 @@ const Signup = () => {
                       setSearchParams(p);
                     }}
                     className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-white/10 transition-colors ${
-                      !isSeller ? "bg-[#FBBF24] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
+                      !isSeller ? "bg-[#FBBF24] text-white" : "bg-transparent text-slate-500 hover:text-white"
                     }`}
                   >
                     Buyer
@@ -185,7 +185,7 @@ const Signup = () => {
                       setSearchParams(p);
                     }}
                     className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-l-0 border-white/10 transition-colors ${
-                      isSeller ? "bg-[#FBBF24] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
+                      isSeller ? "bg-[#FBBF24] text-white" : "bg-transparent text-slate-500 hover:text-white"
                     }`}
                   >
                     Supplier
@@ -201,7 +201,7 @@ const Signup = () => {
                       setSearchParams(p);
                     }}
                     className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-white/10 transition-colors ${
-                      !isPrivate ? "bg-[#0d2240] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
+                      !isPrivate ? "bg-[#0d2240] text-white" : "bg-transparent text-slate-500 hover:text-white"
                     }`}
                   >
                     Company
@@ -214,7 +214,7 @@ const Signup = () => {
                       setSearchParams(p);
                     }}
                     className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-l-0 border-white/10 transition-colors ${
-                      isPrivate ? "bg-[#0d2240] text-white" : "bg-transparent text-slate-500 hover:text-slate-900"
+                      isPrivate ? "bg-[#0d2240] text-white" : "bg-transparent text-slate-500 hover:text-white"
                     }`}
                   >
                     Private
