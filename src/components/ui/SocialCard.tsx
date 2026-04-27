@@ -1,11 +1,16 @@
-import type { LucideIcon } from 'lucide-react';
+export type SocialPlatform = 'facebook' | 'twitter' | 'instagram' | 'linkedin' | 'tiktok';
 
-export type SocialPlatform = 'facebook' | 'twitter' | 'instagram' | 'linkedin';
+/** Accepts Lucide icons or any custom SVG component with the same prop surface. */
+type IconComponent = React.ComponentType<{
+  className?: string;
+  style?: React.CSSProperties;
+  'aria-hidden'?: boolean | string;
+}>;
 
 interface SocialCardProps {
   href: string;
   label: string;
-  Icon: LucideIcon;
+  Icon: IconComponent;
   platform: SocialPlatform;
   /** "footer" renders slightly smaller (42×42 px, 18px icon) */
   size?: 'default' | 'footer';
