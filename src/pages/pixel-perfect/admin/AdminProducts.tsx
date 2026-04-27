@@ -191,14 +191,14 @@ const AdminProducts = () => {
   const renderTable = (data: Product[]) => (
     <Table>
       <TableHeader>
-        <TableRow style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Product</TableHead>
-          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Seller</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Price</TableHead>
-          <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Stock</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Published</TableHead>
-          <TableHead className="hidden lg:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Approved</TableHead>
-          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Actions</TableHead>
+        <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Product</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Seller</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Price</TableHead>
+          <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Stock</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Published</TableHead>
+          <TableHead className="hidden lg:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Approved</TableHead>
+          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -218,7 +218,7 @@ const AdminProducts = () => {
           data.map((p) => (
             <TableRow
               key={p.id}
-              className="cursor-pointer hover:bg-slate-50 transition-colors"
+              className="cursor-pointer hover:bg-white/5 transition-colors"
               style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
               onClick={(e) => {
                 if ((e.target as HTMLElement).closest("button,[role=menuitem]")) return;
@@ -226,12 +226,12 @@ const AdminProducts = () => {
               }}
             >
               <TableCell className="max-w-[250px]">
-                <p className="text-sm font-medium text-slate-900 truncate">{p.title}</p>
-                <p className="text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{p.createdAt}</p>
+                <p className="text-sm font-medium text-white truncate">{p.title}</p>
+                <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{p.createdAt}</p>
               </TableCell>
-              <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{p.seller}</TableCell>
-              <TableCell className="text-sm font-semibold text-slate-900">£{p.price.toLocaleString()}</TableCell>
-              <TableCell className="hidden md:table-cell text-sm" style={{ color: "rgba(71,85,105,0.85)" }}>{p.stockQuantity}</TableCell>
+              <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{p.seller}</TableCell>
+              <TableCell className="text-sm font-semibold text-white">£{p.price.toLocaleString()}</TableCell>
+              <TableCell className="hidden md:table-cell text-sm" style={{ color: "rgba(148,163,184,0.85)" }}>{p.stockQuantity}</TableCell>
               <TableCell>
                 <Badge
                   variant="outline"
@@ -259,7 +259,7 @@ const AdminProducts = () => {
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-white/10" disabled={actionLoading === p.id}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10" disabled={actionLoading === p.id}>
                       {actionLoading === p.id ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
@@ -300,10 +300,10 @@ const AdminProducts = () => {
   );
 
   return (
-    <div className="p-4 sm:p-6 space-y-6" style={{ background: "#f8fafc", minHeight: "100%" }}>
-      <div className="pb-2" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Product Moderation</h1>
-        <p className="text-sm mt-1" style={{ color: "rgba(71,85,105,0.85)" }}>
+    <div className="p-4 sm:p-6 space-y-6" style={{ background: "transparent", minHeight: "100%" }}>
+      <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Product Moderation</h1>
+        <p className="text-sm mt-1" style={{ color: "rgba(148,163,184,0.85)" }}>
           {products.length} total listings · {activeProducts.length} published · {inactiveProducts.length} unpublished · {products.filter(p => !p.isApproved).length} pending approval
         </p>
       </div>
@@ -322,20 +322,20 @@ const AdminProducts = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           className="pl-9 h-10"
-          style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", color: "#0f172a" }}
+          style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", color: "#ffffff" }}
           />
         </div>
       </div>
 
       <Tabs defaultValue="all">
         <TabsList style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}>
-          <TabsTrigger value="all" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">All <Badge variant="outline" className="ml-2 text-xs border-white/20 text-slate-500">{filtered.length}</Badge></TabsTrigger>
-          <TabsTrigger value="active" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">Published</TabsTrigger>
-          <TabsTrigger value="inactive" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">Unpublished</TabsTrigger>
+          <TabsTrigger value="all" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">All <Badge variant="outline" className="ml-2 text-xs border-white/20 text-slate-500">{filtered.length}</Badge></TabsTrigger>
+          <TabsTrigger value="active" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">Published</TabsTrigger>
+          <TabsTrigger value="inactive" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">Unpublished</TabsTrigger>
         </TabsList>
         {(["all", "active", "inactive"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(tab === "all" ? filtered : tab === "active" ? activeProducts : inactiveProducts)}
               </div>

@@ -95,7 +95,7 @@ const Login = () => {
   const headerHeight = "calc(7.625rem + env(safe-area-inset-top, 0px))";
 
   return (
-    <div className="flex bg-white" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
+    <div className="flex bg-[#020617]" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
 
       {/* ── LEFT — hero image (desktop only, 65%) ───────────────────────── */}
       <div className="hidden lg:flex lg:w-[65%] xl:w-[67%] relative overflow-hidden">
@@ -108,14 +108,14 @@ const Login = () => {
       </div>
 
       {/* ── RIGHT — login card panel (full height under navbar) ─────────── */}
-      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col bg-white" style={{ minHeight: `calc(100vh - ${headerHeight})` }}>
+      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col bg-[#020617]" style={{ minHeight: `calc(100vh - ${headerHeight})` }}>
 
         {/* Centered form — vertically centred inside the right column */}
         <div className="flex-1 flex items-center justify-center px-4 py-8 sm:px-8">
           <div className="w-full">
 
             {/* Form card */}
-            <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.07)] border border-gray-100 p-7 sm:p-8">
+            <div className="rounded-2xl p-7 sm:p-8" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.08)" }}>
 
               {/* Email confirmation banner — shown after successful registration */}
               {justRegistered && (
@@ -143,10 +143,10 @@ const Login = () => {
 
               {/* Heading */}
               <div className="mb-6">
-                <h1 className="text-[22px] font-bold text-gray-900 leading-tight" style={{ letterSpacing: "-0.02em" }}>
+                <h1 className="text-[22px] font-bold text-white leading-tight" style={{ letterSpacing: "-0.02em" }}>
                   Welcome back
                 </h1>
-                <p className="text-gray-400 text-sm mt-1">Sign in to your Loadify Market account</p>
+                <p className="text-slate-400 text-sm mt-1">Sign in to your Loadify Market account</p>
               </div>
 
               {/* Social sign-in */}
@@ -154,14 +154,14 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => toast({ title: "Coming soon", description: "Google sign-in will be available after launch." })}
-                  className="flex items-center justify-center gap-2 h-10 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-[13px] font-medium text-gray-600 transition-colors"
+                  className="flex items-center justify-center gap-2 h-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-[13px] font-medium text-slate-300 transition-colors"
                 >
                   <GoogleIcon /> Google
                 </button>
                 <button
                   type="button"
                   onClick={() => toast({ title: "Coming soon", description: "Apple sign-in will be available after launch." })}
-                  className="flex items-center justify-center gap-2 h-10 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-[13px] font-medium text-gray-600 transition-colors"
+                  className="flex items-center justify-center gap-2 h-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-[13px] font-medium text-slate-300 transition-colors"
                 >
                   <AppleIcon /> Apple
                 </button>
@@ -170,10 +170,10 @@ const Login = () => {
               {/* Divider */}
               <div className="relative mb-5">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-100" />
+                  <span className="w-full border-t border-white/10" />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="bg-white px-3 text-[11px] text-gray-400 uppercase tracking-wide">or continue with email</span>
+                  <span className="bg-[#0B1220] px-3 text-[11px] text-slate-500 uppercase tracking-wide">or continue with email</span>
                 </div>
               </div>
 
@@ -182,7 +182,7 @@ const Login = () => {
 
                 {/* Email */}
                 <div className="space-y-1.5">
-                  <label htmlFor="login-email" className="block text-[13px] font-medium text-gray-700">
+                  <label htmlFor="login-email" className="block text-[13px] font-medium text-slate-300">
                     Email address
                   </label>
                   <div className="relative">
@@ -195,7 +195,7 @@ const Login = () => {
                       placeholder="name@company.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full h-11 pl-10 pr-3.5 rounded-lg border border-gray-200 bg-gray-50 text-[14px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#22C55E]/25 focus:border-[#22C55E] transition-all"
+                      className="w-full h-11 pl-10 pr-3.5 rounded-lg border border-white/10 bg-[#0F172A] text-[14px] text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                     />
                   </div>
                 </div>
@@ -203,10 +203,10 @@ const Login = () => {
                 {/* Password */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label htmlFor="login-password" className="block text-[13px] font-medium text-gray-700">
+                    <label htmlFor="login-password" className="block text-[13px] font-medium text-slate-300">
                       Password
                     </label>
-                    <Link to="/forgot-password" className="text-[12px] text-[#16A34A] hover:text-[#15803D] hover:underline transition-colors">
+                    <Link to="/forgot-password" className="text-[12px] text-[#FBBF24] hover:text-yellow-300 hover:underline transition-colors">
                       Forgot password?
                     </Link>
                   </div>
@@ -220,7 +220,7 @@ const Login = () => {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full h-11 pl-10 pr-10 rounded-lg border border-gray-200 bg-gray-50 text-[14px] text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#22C55E]/25 focus:border-[#22C55E] transition-all"
+                      className="w-full h-11 pl-10 pr-10 rounded-lg border border-white/10 bg-[#0F172A] text-[14px] text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                     />
                     <button
                       type="button"
@@ -249,16 +249,16 @@ const Login = () => {
                   disabled={loading}
                   className="w-full h-11 rounded-lg text-white text-[14px] font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
-                    background: "linear-gradient(135deg, #16A34A 0%, #22C55E 100%)",
-                    boxShadow: "0 2px 12px rgba(34,197,94,0.35)",
+                    background: "linear-gradient(135deg, #B45309 0%, #FBBF24 100%)",
+                    boxShadow: "0 2px 12px rgba(251,191,36,0.35)",
                   }}
                 >
                   {loading ? "Signing in…" : "Sign In"}
                 </button>
 
                 {/* SSL trust */}
-                <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400">
-                  <ShieldCheck className="h-3.5 w-3.5 text-gray-400" />
+                <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500">
+                  <ShieldCheck className="h-3.5 w-3.5 text-slate-500" />
                   <span>Secured with 256-bit SSL encryption</span>
                 </div>
 
@@ -268,7 +268,7 @@ const Login = () => {
             {/* Footer */}
             <p className="text-center text-[13px] text-slate-500 mt-5">
               Don't have an account?{" "}
-              <Link to="/signup" className="text-[#16A34A] font-semibold hover:text-[#15803D] hover:underline transition-colors">
+              <Link to="/signup" className="text-[#FBBF24] font-semibold hover:text-yellow-300 hover:underline transition-colors">
                 Create account
               </Link>
             </p>

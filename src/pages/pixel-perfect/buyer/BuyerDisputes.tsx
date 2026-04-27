@@ -36,7 +36,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   open:      { label: "Open",      className: "border-amber-500/30 text-amber-600 bg-amber-50" },
   in_review: { label: "In Review", className: "border-blue-500/30 text-blue-600 bg-blue-50" },
   resolved:  { label: "Resolved",  className: "border-emerald-500/30 text-emerald-700 bg-emerald-50" },
-  closed:    { label: "Closed",    className: "border-slate-300 text-slate-500 bg-slate-50" },
+  closed:    { label: "Closed",    className: "border-slate-300 text-slate-500 bg-transparent" },
 };
 
 const protectionReasonLabels: Record<string, string> = {

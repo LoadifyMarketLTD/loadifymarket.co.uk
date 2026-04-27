@@ -132,17 +132,17 @@ const AdminDashboard = () => {
   ];
 
   const cardIconTheme: Record<string, { color: string; bg: string }> = {
-    "Total Users":       { color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
-    "Total Products":    { color: "#0A2239", bg: "rgba(10,34,57,0.08)" },
-    "Total Orders":      { color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
+    "Total Users":       { color: "#FBBF24", bg: "rgba(251,191,36,0.12)" },
+    "Total Products":    { color: "#FBBF24", bg: "rgba(251,191,36,0.12)" },
+    "Total Orders":      { color: "#FBBF24", bg: "rgba(251,191,36,0.12)" },
     "Setup Incomplete":  { color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-7" style={{ background: "#f8fafc", minHeight: "100%" }}>
-      <div className="pb-2" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Admin Overview</h1>
-        <p className="text-sm mt-1" style={{ color: "rgba(71,85,105,0.85)" }}>
+    <div className="p-4 sm:p-6 space-y-7" style={{ background: "transparent", minHeight: "100%" }}>
+      <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Admin Overview</h1>
+        <p className="text-sm mt-1 text-slate-400">
           Platform health and key metrics at a glance.
         </p>
       </div>
@@ -159,16 +159,16 @@ const AdminDashboard = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statsCards.map((s) => {
-          const theme = cardIconTheme[s.label] ?? { color: "#22C55E", bg: "rgba(34,197,94,0.12)" };
+          const theme = cardIconTheme[s.label] ?? { color: "#FBBF24", bg: "rgba(251,191,36,0.12)" };
           return (
             <Link
               key={s.label}
               to={s.to}
-              className="block rounded-2xl p-5 transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22C55E]"
+              className="block rounded-2xl p-5 transition-all hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FBBF24]"
               style={{
-                background: "#ffffff",
-                border: "1px solid rgba(148,163,184,0.35)",
-                boxShadow: "0 4px 24px rgba(15,23,42,0.08)",
+                background: "linear-gradient(145deg, #0B1220, #0F172A)",
+                border: "1px solid rgba(255,255,255,0.05)",
+                boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
               }}
             >
               <div className="flex items-center justify-between mb-4">
@@ -184,7 +184,7 @@ const AdminDashboard = () => {
                 </div>
                 <span
                   className="text-xs font-medium flex items-center gap-1"
-                  style={{ color: s.up ? "#22C55E" : "#F59E0B" }}
+                  style={{ color: s.up ? "#FBBF24" : "#F59E0B" }}
                 >
                   {s.up
                     ? <TrendingUp className="h-3 w-3" />
@@ -192,10 +192,10 @@ const AdminDashboard = () => {
                   {s.change}
                 </span>
               </div>
-              <p className="text-3xl font-bold text-slate-900">
+              <p className="text-3xl font-bold text-white">
                 {loading ? "—" : s.value}
               </p>
-              <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(71,85,105,0.85)" }}>
+              <p className="text-xs mt-1.5 font-medium text-slate-400">
                 {s.label}
               </p>
             </Link>
@@ -208,26 +208,26 @@ const AdminDashboard = () => {
         <div
           className="lg:col-span-2 rounded-2xl overflow-hidden"
           style={{
-            background: "#ffffff",
-            border: "1px solid rgba(148,163,184,0.35)",
-            boxShadow: "0 4px 24px rgba(15,23,42,0.08)",
+            background: "linear-gradient(145deg, #0B1220, #0F172A)",
+            border: "1px solid rgba(255,255,255,0.05)",
+            boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
           }}
         >
           <div
             className="flex items-center justify-between px-6 py-4"
-            style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
           >
             <div>
-              <h2 className="text-sm font-semibold text-slate-900">Recent Seller Registrations</h2>
-              <p className="text-xs mt-0.5" style={{ color: "rgba(71,85,105,0.8)" }}>Latest seller accounts</p>
+              <h2 className="text-sm font-semibold text-white">Recent Seller Registrations</h2>
+              <p className="text-xs mt-0.5 text-slate-400">Latest seller accounts</p>
             </div>
             <Button
               size="sm"
               className="text-xs font-medium transition-all"
               style={{
-                background: "rgba(34,197,94,0.12)",
-                color: "#16A34A",
-                border: "1px solid rgba(34,197,94,0.3)",
+                background: "rgba(251,191,36,0.12)",
+                color: "#FBBF24",
+                border: "1px solid rgba(251,191,36,0.3)",
               }}
               asChild
             >
@@ -239,31 +239,31 @@ const AdminDashboard = () => {
           <div className="px-6 py-4">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />
+                <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
               </div>
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
-                    <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Business Name</TableHead>
-                    <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Email</TableHead>
-                    <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Date</TableHead>
-                    <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Status</TableHead>
+                  <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <TableHead className="text-xs font-semibold tracking-wide uppercase text-slate-400">Business Name</TableHead>
+                    <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase text-slate-400">Email</TableHead>
+                    <TableHead className="text-xs font-semibold tracking-wide uppercase text-slate-400">Date</TableHead>
+                    <TableHead className="text-xs font-semibold tracking-wide uppercase text-slate-400">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {recentSellers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8" style={{ color: "rgba(100,116,139,0.65)" }}>
+                      <TableCell colSpan={4} className="text-center py-8 text-slate-500">
                         No seller applications yet.
                       </TableCell>
                     </TableRow>
                   ) : (
                     recentSellers.map((s) => (
-                      <TableRow key={s.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                        <TableCell className="font-medium text-slate-900 py-3">{s.name}</TableCell>
-                        <TableCell className="hidden sm:table-cell text-xs py-3" style={{ color: "rgba(71,85,105,0.85)" }}>{s.email}</TableCell>
-                        <TableCell className="text-xs py-3" style={{ color: "rgba(71,85,105,0.85)" }}>{s.date}</TableCell>
+                      <TableRow key={s.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                        <TableCell className="font-medium text-white py-3">{s.name}</TableCell>
+                        <TableCell className="hidden sm:table-cell text-xs py-3 text-slate-400">{s.email}</TableCell>
+                        <TableCell className="text-xs py-3 text-slate-400">{s.date}</TableCell>
                         <TableCell className="py-3">
                           <Badge
                             variant="outline"
@@ -285,22 +285,22 @@ const AdminDashboard = () => {
         <div
           className="rounded-2xl overflow-hidden"
           style={{
-            background: "#ffffff",
-            border: "1px solid rgba(148,163,184,0.35)",
-            boxShadow: "0 4px 24px rgba(15,23,42,0.08)",
+            background: "linear-gradient(145deg, #0B1220, #0F172A)",
+            border: "1px solid rgba(255,255,255,0.05)",
+            boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
           }}
         >
           <div
             className="px-6 py-4"
-            style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
           >
-            <h2 className="text-sm font-semibold text-slate-900">System Alerts</h2>
-            <p className="text-xs mt-0.5" style={{ color: "rgba(71,85,105,0.8)" }}>Recent notifications</p>
+            <h2 className="text-sm font-semibold text-white">System Alerts</h2>
+            <p className="text-xs mt-0.5 text-slate-400">Recent notifications</p>
           </div>
           <div className="px-6 py-4 space-y-3">
             {loading ? (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="h-5 w-5 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />
+                <Loader2 className="h-5 w-5 animate-spin text-slate-500" />
               </div>
             ) : (
               alerts.map((a) => (
@@ -311,8 +311,8 @@ const AdminDashboard = () => {
                     a.type === "warning"
                       ? { border: "1px solid rgba(245,158,11,0.3)", background: "rgba(245,158,11,0.08)", color: "#FBD760" }
                       : a.type === "success"
-                      ? { border: "1px solid rgba(34,197,94,0.3)", background: "rgba(34,197,94,0.08)", color: "#4ade80" }
-                      : { border: "1px solid rgba(148,163,184,0.35)", background: "#ffffff", color: "rgba(71,85,105,0.85)" }
+                      ? { border: "1px solid rgba(251,191,36,0.3)", background: "rgba(251,191,36,0.08)", color: "#FBBF24" }
+                      : { border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "rgba(148,163,184,0.85)" }
                   }
                 >
                   {a.message}

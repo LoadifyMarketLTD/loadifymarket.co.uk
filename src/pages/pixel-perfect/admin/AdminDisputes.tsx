@@ -288,11 +288,11 @@ const AdminDisputes = () => {
   );
 
   return (
-    <div className="p-4 sm:p-6 space-y-6" style={{ background: "#f8fafc", minHeight: "100%" }}>
+    <div className="p-4 sm:p-6 space-y-6" style={{ background: "transparent", minHeight: "100%" }}>
       {/* Header */}
-      <div className="pb-2" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dispute Center</h1>
-        <p className="text-sm mt-1" style={{ color: "rgba(71,85,105,0.85)" }}>
+      <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Dispute Center</h1>
+        <p className="text-sm mt-1" style={{ color: "rgba(148,163,184,0.85)" }}>
           {disputes.length} disputes · {openCount} open
         </p>
       </div>
@@ -302,19 +302,19 @@ const AdminDisputes = () => {
         {[
           { label: "Open",      count: byStatus("open").length,      color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
           { label: "In Review", count: byStatus("in_review").length, color: "#60A5FA", bg: "rgba(96,165,250,0.12)" },
-          { label: "Resolved",  count: byStatus("resolved").length,  color: "#22C55E", bg: "rgba(34,197,94,0.12)" },
-          { label: "Closed",    count: byStatus("closed").length,    color: "rgba(71,85,105,0.8)", bg: "rgba(148,163,184,0.3)" },
+          { label: "Resolved",  count: byStatus("resolved").length,  color: "#FBBF24", bg: "rgba(251,191,36,0.12)" },
+          { label: "Closed",    count: byStatus("closed").length,    color: "rgba(148,163,184,0.85)", bg: "rgba(148,163,184,0.3)" },
         ].map((stat) => (
           <div
             key={stat.label}
             className="rounded-2xl p-4"
-            style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}
+            style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
           >
             <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style={{ background: stat.bg }}>
               <ShieldAlert className="h-4 w-4" style={{ color: stat.color }} />
             </div>
-            <div className="text-2xl font-bold text-slate-900">{stat.count}</div>
-            <p className="text-xs mt-0.5 font-medium" style={{ color: "rgba(71,85,105,0.85)" }}>{stat.label}</p>
+            <div className="text-2xl font-bold text-white">{stat.count}</div>
+            <p className="text-xs mt-0.5 font-medium" style={{ color: "rgba(148,163,184,0.85)" }}>{stat.label}</p>
           </div>
         ))}
       </div>
@@ -343,7 +343,7 @@ const AdminDisputes = () => {
         </TabsList>
         {(["open", "in_review", "resolved", "closed", "all"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(tab === "all" ? filtered : byStatus(tab))}
               </div>

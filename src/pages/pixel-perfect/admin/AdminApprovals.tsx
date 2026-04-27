@@ -344,13 +344,13 @@ const AdminSellerManagement = () => {
   const renderTable = (data: Seller[]) => (
     <Table>
       <TableHeader>
-        <TableRow style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Business</TableHead>
-          <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Email</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Joined</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Status</TableHead>
-          <TableHead className="hidden lg:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Stripe</TableHead>
-          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(71,85,105,0.8)" }}>Actions</TableHead>
+        <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Business</TableHead>
+          <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Email</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Joined</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Status</TableHead>
+          <TableHead className="hidden lg:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Stripe</TableHead>
+          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -382,16 +382,16 @@ const AdminSellerManagement = () => {
           data.map((s) => (
             <TableRow
               key={s.userId}
-              className="cursor-pointer hover:bg-slate-50 transition-colors"
+              className="cursor-pointer hover:bg-white/5 transition-colors"
               style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
               onClick={() => openSellerDetail(s)}
             >
               <TableCell>
-                <p className="font-medium text-sm text-slate-900">{s.company}</p>
-                <p className="text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{s.name}</p>
+                <p className="font-medium text-sm text-white">{s.company}</p>
+                <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{s.name}</p>
               </TableCell>
-              <TableCell className="hidden md:table-cell text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{s.email}</TableCell>
-              <TableCell className="text-xs" style={{ color: "rgba(71,85,105,0.85)" }}>{s.date}</TableCell>
+              <TableCell className="hidden md:table-cell text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{s.email}</TableCell>
+              <TableCell className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{s.date}</TableCell>
               <TableCell>
                 <Badge variant="outline" className={statusColor[s.sellerStatus]}>
                   {statusLabel[s.sellerStatus] ?? s.sellerStatus}
@@ -404,7 +404,7 @@ const AdminSellerManagement = () => {
               </TableCell>
               <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-end gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-white/10" onClick={() => openSellerDetail(s)} title="View full profile">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10" onClick={() => openSellerDetail(s)} title="View full profile">
                     <Eye className="h-4 w-4" />
                   </Button>
                   {/* Send Warning */}
@@ -468,12 +468,12 @@ const AdminSellerManagement = () => {
   );
 
   return (
-    <div className="p-4 sm:p-6 space-y-6" style={{ background: "#f8fafc", minHeight: "100%" }}>
-      <div className="pb-2" style={{ borderBottom: "1px solid rgba(148,163,184,0.3)" }}>
+    <div className="p-4 sm:p-6 space-y-6" style={{ background: "transparent", minHeight: "100%" }}>
+      <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Seller Management</h1>
-            <p className="text-sm mt-1" style={{ color: "rgba(71,85,105,0.85)" }}>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Seller Management</h1>
+            <p className="text-sm mt-1" style={{ color: "rgba(148,163,184,0.85)" }}>
               Monitor seller accounts and manage suspensions. Sellers are activated automatically
               once their profile and Stripe setup are complete.
             </p>
@@ -518,22 +518,22 @@ const AdminSellerManagement = () => {
 
       <Tabs defaultValue="all">
         <TabsList style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}>
-          <TabsTrigger value="all" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">All</TabsTrigger>
-          <TabsTrigger value="active" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">
+          <TabsTrigger value="all" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">All</TabsTrigger>
+          <TabsTrigger value="active" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">
             <Zap className="h-3.5 w-3.5 mr-1" /> Active
           </TabsTrigger>
-          <TabsTrigger value="in-progress" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">
+          <TabsTrigger value="in-progress" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">
             Setup in Progress
             {inProgressCount > 0 && (
               <Badge variant="outline" className="ml-2 text-xs border-white/20 text-slate-500">{inProgressCount}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="suspended" className="data-[state=active]:text-slate-900 data-[state=active]:bg-white/10 text-slate-500">Suspended</TabsTrigger>
+          <TabsTrigger value="suspended" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">Suspended</TabsTrigger>
         </TabsList>
 
         {(["all", "active", "in-progress", "suspended"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "#ffffff", border: "1px solid rgba(148,163,184,0.35)", boxShadow: "0 4px 24px rgba(15,23,42,0.08)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(
                   tab === "all" ? filtered :
@@ -622,25 +622,25 @@ const AdminSellerManagement = () => {
                   <section>
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Activity</h3>
                     <div className="grid grid-cols-3 gap-3">
-                      <div className="rounded-xl p-4 flex flex-col gap-1" style={{ background: "#f8fafc", border: "1px solid rgba(148,163,184,0.35)" }}>
+                      <div className="rounded-xl p-4 flex flex-col gap-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.05)" }}>
                         <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-purple-100 text-purple-600">
                           <Package className="h-3.5 w-3.5" />
                         </div>
-                        <div className="text-xl font-bold text-slate-900 mt-1">{sellerDetail.listingsCount}</div>
+                        <div className="text-xl font-bold text-white mt-1">{sellerDetail.listingsCount}</div>
                         <p className="text-xs text-muted-foreground">Listings</p>
                       </div>
-                      <div className="rounded-xl p-4 flex flex-col gap-1" style={{ background: "#f8fafc", border: "1px solid rgba(148,163,184,0.35)" }}>
+                      <div className="rounded-xl p-4 flex flex-col gap-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.05)" }}>
                         <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-blue-100 text-blue-600">
                           <ShoppingBag className="h-3.5 w-3.5" />
                         </div>
-                        <div className="text-xl font-bold text-slate-900 mt-1">{sellerDetail.ordersCount}</div>
+                        <div className="text-xl font-bold text-white mt-1">{sellerDetail.ordersCount}</div>
                         <p className="text-xs text-muted-foreground">Orders</p>
                       </div>
-                      <div className="rounded-xl p-4 flex flex-col gap-1" style={{ background: "#f8fafc", border: "1px solid rgba(148,163,184,0.35)" }}>
+                      <div className="rounded-xl p-4 flex flex-col gap-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.05)" }}>
                         <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-red-100 text-red-600">
                           <Flag className="h-3.5 w-3.5" />
                         </div>
-                        <div className="text-xl font-bold text-slate-900 mt-1">{sellerDetail.reportsCount}</div>
+                        <div className="text-xl font-bold text-white mt-1">{sellerDetail.reportsCount}</div>
                         <p className="text-xs text-muted-foreground">Reports</p>
                       </div>
                     </div>

@@ -125,21 +125,21 @@ export default {
         'premium-lg': '32px',
       },
       boxShadow: {
-        'cinematic': '0 25px 50px -12px rgba(34, 197, 94, 0.25)',
-        'cinematic-lg': '0 35px 60px -15px rgba(34, 197, 94, 0.35)',
-        'cinematic-gold': '0 25px 50px -12px rgba(124, 58, 237, 0.25)',
-        'cinematic-blue': '0 25px 50px -12px rgba(34, 197, 94, 0.25)',
-        'glass': '0 8px 32px 0 rgba(34, 197, 94, 0.2)',
-        'premium-card': '0 20px 40px rgba(15, 45, 82, 0.15)',
-        'premium-hover': '0 30px 60px rgba(15, 45, 82, 0.2)',
+        'cinematic': '0 25px 50px -12px rgba(251, 191, 36, 0.25)',
+        'cinematic-lg': '0 35px 60px -15px rgba(251, 191, 36, 0.35)',
+        'cinematic-gold': '0 25px 50px -12px rgba(251, 191, 36, 0.25)',
+        'cinematic-blue': '0 25px 50px -12px rgba(251, 191, 36, 0.15)',
+        'glass': '0 8px 32px 0 rgba(251, 191, 36, 0.15)',
+        'premium-card': '0 10px 40px rgba(0,0,0,0.6)',
+        'premium-hover': '0 0 20px rgba(251,191,36,0.15), 0 10px 40px rgba(0,0,0,0.8)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-cinematic': 'linear-gradient(135deg, #0F172A 0%, #1E3A5F 50%, #0F172A 100%)',
-        'gradient-gold': 'linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)',
-        'gradient-primary': 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
-        'gradient-overlay': 'linear-gradient(to top, rgba(15, 45, 82, 0.95) 0%, rgba(15, 45, 82, 0.5) 50%, transparent 100%)',
-        'gradient-overlay-light': 'linear-gradient(to top, rgba(15, 45, 82, 0.8) 0%, transparent 100%)',
+        'gradient-cinematic': 'linear-gradient(135deg, #020617 0%, #0F172A 50%, #020617 100%)',
+        'gradient-gold': 'linear-gradient(135deg, #B45309 0%, #FBBF24 100%)',
+        'gradient-primary': 'linear-gradient(135deg, #B45309 0%, #FBBF24 100%)',
+        'gradient-overlay': 'linear-gradient(to top, rgba(2, 6, 23, 0.95) 0%, rgba(2, 6, 23, 0.5) 50%, transparent 100%)',
+        'gradient-overlay-light': 'linear-gradient(to top, rgba(2, 6, 23, 0.8) 0%, transparent 100%)',
       },
       backdropBlur: {
         'glass': '20px',
@@ -184,9 +184,9 @@ export default {
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
         glow: {
-          /* primary color: #22C55E = rgb(34, 197, 94) */
-          '0%': { boxShadow: '0 0 20px rgba(34, 197, 94, 0.4)' },
-          '100%': { boxShadow: '0 0 50px rgba(34, 197, 94, 0.7)' },
+          /* gold accent: #FBBF24 = rgb(251, 191, 36) */
+          '0%': { boxShadow: '0 0 20px rgba(251, 191, 36, 0.4)' },
+          '100%': { boxShadow: '0 0 50px rgba(251, 191, 36, 0.7)' },
         },
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },

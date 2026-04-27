@@ -11,7 +11,7 @@ const CategoryGrid = () => {
 
   return (
     <section
-      className="bg-white border-b border-gray-200"
+    className="bg-[#020617] border-b border-white/10"
       aria-labelledby="cats-heading"
     >
       <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-7">
@@ -21,11 +21,11 @@ const CategoryGrid = () => {
           <div>
             <h2
               id="cats-heading"
-              className="text-[13px] font-black text-gray-900 uppercase tracking-widest"
+              className="text-[13px] font-black text-white uppercase tracking-widest"
             >
               Shop by Category
             </h2>
-            <p className="text-[11px] text-gray-500 mt-0.5">
+            <p className="text-[11px] text-slate-400 mt-0.5">
               {loading ? "Loading…" : `${categories.length} marketplace categories`}
             </p>
           </div>
@@ -39,12 +39,12 @@ const CategoryGrid = () => {
 
         {/* Tile grid — gap-px creates hairline borders between tiles */}
         {!loading && categories.length === 0 && (
-          <p className="text-[11px] text-gray-500 text-center py-4">
+          <p className="text-[11px] text-slate-400 text-center py-4">
             No categories available.
           </p>
         )}
         {!loading && categories.length > 0 && (
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-px bg-gray-200">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-px bg-white/5">
             {categories.map((cat) => {
               const sub =
                 cat.children.slice(0, 2).map((c) => c.name).join(" • ") +
@@ -53,13 +53,13 @@ const CategoryGrid = () => {
                 <Link
                   key={cat.slug}
                   to={`/catalog?category=${encodeURIComponent(cat.name)}`}
-                  className="flex flex-col items-start gap-1.5 px-3 py-4 bg-white hover:bg-[#f0f3f7] transition-colors group"
+                  className="flex flex-col items-start gap-1.5 px-3 py-4 bg-[#0B1220] hover:bg-[#0F172A] transition-colors group"
                 >
-                  <span className="text-[11px] font-bold text-gray-900 leading-tight line-clamp-2 w-full">
+                  <span className="text-[11px] font-bold text-white leading-tight line-clamp-2 w-full">
                     {cat.name}
                   </span>
                   {sub && (
-                    <span className="text-[9px] text-gray-500 uppercase tracking-wide leading-none line-clamp-1 w-full">
+                    <span className="text-[9px] text-slate-400 uppercase tracking-wide leading-none line-clamp-1 w-full">
                       {sub}
                     </span>
                   )}

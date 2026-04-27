@@ -11,8 +11,8 @@ interface Props {
 type FetchState = 'loading' | 'active' | 'draft' | 'submitted' | 'suspended' | 'error';
 
 const CardShell = ({ children }: { children: ReactNode }) => (
-  <div className="min-h-screen bg-white flex items-center justify-center px-4">
-    <div className="bg-white border border-gray-200 rounded-xl p-10 max-w-md w-full text-center">
+  <div className="min-h-screen bg-[#020617] flex items-center justify-center px-4">
+    <div className="rounded-xl p-10 max-w-md w-full text-center" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}>
       {children}
     </div>
   </div>
@@ -188,8 +188,8 @@ export default function RequireSeller({ children }: Props) {
         /* Not a seller and not admin — show account-type prompt */
         <CardShell>
           <p className="text-5xl mb-4">🏪</p>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Seller Account Required</h2>
-          <p className="text-gray-500 mb-6">
+          <h2 className="text-2xl font-bold text-white mb-2">Seller Account Required</h2>
+          <p className="text-slate-400 mb-6">
             You need a seller account to access this page. Sign up as a seller to start
             listing products on Loadify Market.
           </p>
@@ -206,8 +206,8 @@ export default function RequireSeller({ children }: Props) {
         /* Suspended — show notice, do not redirect */
         <CardShell>
           <p className="text-5xl mb-4">🚫</p>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Seller Account Suspended</h2>
-          <p className="text-gray-500 mb-6">
+          <h2 className="text-2xl font-bold text-white mb-2">Seller Account Suspended</h2>
+          <p className="text-slate-400 mb-6">
             Your seller account has been suspended. Please contact our support team if you
             believe this is an error.
           </p>
@@ -226,8 +226,8 @@ export default function RequireSeller({ children }: Props) {
       ) : fetchState === 'error' ? (
         <CardShell>
           <p className="text-5xl mb-4">⚠️</p>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Unable to Verify Access</h2>
-          <p className="text-gray-500 mb-6">
+          <h2 className="text-2xl font-bold text-white mb-2">Unable to Verify Access</h2>
+          <p className="text-slate-400 mb-6">
             We could not verify your seller account status. Please try refreshing the page or
             contact support if the problem persists.
           </p>

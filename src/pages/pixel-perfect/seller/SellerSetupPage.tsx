@@ -215,7 +215,7 @@ const SellerSetupPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#020617] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -223,7 +223,7 @@ const SellerSetupPage = () => {
 
   if (!status) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[#020617] flex items-center justify-center px-4">
         <Card className="max-w-md w-full text-center">
           <CardContent className="p-10">
             <p className="text-muted-foreground">Unable to load seller status. Please refresh the page.</p>
@@ -241,7 +241,7 @@ const SellerSetupPage = () => {
   const stripeIncomplete = stripeConnected && !stripeReady;
 
   return (
-    <div className="min-h-screen bg-white pt-28 pb-12 px-4">
+    <div className="min-h-screen bg-[#020617] pt-28 pb-12 px-4">
       <div className="max-w-lg mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">

@@ -19,8 +19,8 @@ const STEPS = [
   {
     id: "step-2",
     Icon: UserCheck,
-    iconBg: "rgba(34,197,94,0.20)",
-    iconColor: "#22C55E",
+    iconBg: "rgba(251,191,36,0.20)",
+    iconColor: "#FBBF24",
     title: "Set Up Your Store",
     desc: "Add your business details and prepare your seller profile.",
   },
@@ -63,7 +63,7 @@ const SellerJourneySection = () => (
     <div className="relative w-full max-w-7xl mx-auto">
       {/* Centered header */}
       <div className="text-center mb-10">
-        <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+        <span className="text-xs font-semibold uppercase tracking-wider text-[#FBBF24]">
           For Sellers
         </span>
         <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold text-white">
@@ -79,7 +79,8 @@ const SellerJourneySection = () => (
         {STEPS.map((step) => (
           <div
             key={step.id}
-            className="flex items-center gap-4 rounded-2xl px-5 py-5 bg-white border border-gray-200 shadow-[0_10px_40px_rgba(0,0,0,0.4)] transition-all duration-300 hover:border-white/20 hover:shadow-[0_20px_60px_rgba(0,255,150,0.1)]"
+            className="flex items-center gap-4 rounded-2xl px-5 py-5 border border-white/5 transition-all duration-300 hover:border-white/20 hover:shadow-[0_20px_60px_rgba(251,191,36,0.1)]"
+            style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)" }}
           >
             {/* Icon badge */}
             <div
@@ -100,7 +101,7 @@ const SellerJourneySection = () => (
       {/* Prominent centered CTA */}
       <div className="flex justify-center">
         <Link to="/signup?type=seller">
-          <button className="inline-flex items-center gap-2 px-10 py-3.5 bg-gradient-to-r from-green-400 to-green-500 text-black font-bold text-sm rounded-full shadow-lg shadow-green-500/30 transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(0,255,150,0.4)]">
+          <button className="inline-flex items-center gap-2 px-10 py-3.5 bg-gradient-to-r from-[#FBBF24] to-[#F59E0B] text-black font-bold text-sm rounded-full shadow-lg shadow-yellow-500/30 transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(251,191,36,0.4)]">
             Start Selling Today <ArrowRight className="h-4 w-4" />
           </button>
         </Link>

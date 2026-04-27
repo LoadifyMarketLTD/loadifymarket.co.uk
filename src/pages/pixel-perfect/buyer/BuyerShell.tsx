@@ -133,7 +133,7 @@ const BuyerShell = () => {
           <span className="font-semibold text-foreground text-sm">Buyer Hub</span>
         </header>
         {/* Page content — add bottom padding on mobile so content isn't hidden behind tab bar */}
-        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0 bg-white">
+        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0 bg-[#020617]">
           <Outlet />
         </main>
       </div>
