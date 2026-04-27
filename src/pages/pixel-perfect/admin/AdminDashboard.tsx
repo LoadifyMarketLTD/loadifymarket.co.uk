@@ -215,7 +215,7 @@ const AdminDashboard = () => {
         >
           <div
             className="flex items-center justify-between px-6 py-4"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
           >
             <div>
               <h2 className="text-sm font-semibold text-white">Recent Seller Registrations</h2>
@@ -244,7 +244,7 @@ const AdminDashboard = () => {
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                  <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                     <TableHead className="text-xs font-semibold tracking-wide uppercase text-slate-400">Business Name</TableHead>
                     <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase text-slate-400">Email</TableHead>
                     <TableHead className="text-xs font-semibold tracking-wide uppercase text-slate-400">Date</TableHead>
@@ -292,7 +292,7 @@ const AdminDashboard = () => {
         >
           <div
             className="px-6 py-4"
-            style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+            style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
           >
             <h2 className="text-sm font-semibold text-white">System Alerts</h2>
             <p className="text-xs mt-0.5 text-slate-400">Recent notifications</p>
