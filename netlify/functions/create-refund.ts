@@ -8,6 +8,15 @@
  * payment session and calls stripe.refunds.create().  The order status is
  * then updated to 'refunded' in the database.
  *
+ * Transfer reversal (Separate Charges and Transfers model):
+ *   After the refund is created, the function explicitly reverses the Stripe
+ *   transfer that was sent to the seller's connected account. This is required
+ *   because the platform uses the "separate charges and transfers" model — in
+ *   this model Stripe's built-in reverse_transfer flag on stripe.refunds.create()
+ *   is a no-op (it only works with destination charges). The explicit reversal
+ *   via stripe.transfers.createReversal() ensures the seller's funds are
+ *   recovered so the platform does not bear the cost of the refund.
+ *
  * Security:
  *   – Requires Authorization: Bearer <admin-jwt>
  *   – Caller must have role = 'admin'
@@ -153,14 +162,6 @@ export const handler: Handler = async (event) => {
     refund = await stripe.refunds.create({
       payment_intent: paymentIntentId,
       reason: safeReason as Stripe.RefundCreateParams.Reason,
-      // reverse_transfer instructs Stripe to attempt a reversal of the
-      // associated transfer to the seller's connected account. Under the
-      // current separate-charges-and-transfers model this only reverses
-      // transfers that are directly attached to the underlying charge; it
-      // is a no-op when no such attachment exists, so it is always safe
-      // to include. When we migrate to Destination Charges this flag will
-      // start providing full automatic clawback protection.
-      reverse_transfer: true,
       metadata: {
         orderId,
         orderNumber: order.orderNumber,
@@ -198,6 +199,73 @@ export const handler: Handler = async (event) => {
     // Non-fatal: refund is issued in Stripe; DB can be updated manually if needed
   }
 
+  // ── Reverse the seller's Stripe transfer ─────────────────────────────────
+  // The platform uses "separate charges and transfers": the buyer pays the
+  // platform account and the platform explicitly transfers funds to the seller.
+  // Stripe's reverse_transfer flag on stripe.refunds.create() is a no-op in
+  // this model (it only works with destination charges). We must explicitly
+  // call stripe.transfers.createReversal() to claw back the seller's funds so
+  // the platform does not absorb the cost of the refund.
+  //
+  // This is best-effort: a failed reversal does NOT roll back the refund — the
+  // buyer has already been returned their money. Admin is alerted via log so
+  // they can reverse the transfer manually from the Stripe Dashboard if needed.
+  let transferReversalId: string | null = null;
+
+  const { data: payoutRecord } = await supabase
+    .from('payouts')
+    .select('id, stripeTransferId')
+    .eq('orderId', orderId)
+    .eq('status', 'paid')
+    .maybeSingle<{ id: string; stripeTransferId: string | null }>();
+
+  if (payoutRecord?.stripeTransferId) {
+    try {
+      const reversal = await stripe.transfers.createReversal(payoutRecord.stripeTransferId, {
+        metadata: {
+          orderId,
+          orderNumber: order.orderNumber,
+          refundId: refund.id,
+          reversedByAdminId: user.id,
+        },
+      });
+      transferReversalId = reversal.id;
+
+      // Mark the payout record as reversed so the admin dashboard reflects it.
+      await supabase
+        .from('payouts')
+        .update({
+          status: 'cancelled',
+          notes: `Transfer reversed on refund. Stripe reversal ID: ${reversal.id}`,
+          reference: reversal.id,
+        })
+        .eq('id', payoutRecord.id)
+        .catch((e: unknown) =>
+          console.warn('create-refund: payout status update failed (non-fatal):', (e as Error).message),
+        );
+
+      console.log(
+        `create-refund: transfer ${payoutRecord.stripeTransferId} reversed (reversal ${reversal.id}) for order ${orderId}`,
+      );
+    } catch (reversalErr) {
+      // Log clearly so admin can action this manually in the Stripe Dashboard.
+      console.error(
+        `create-refund: MANUAL ACTION REQUIRED — failed to reverse transfer ` +
+          `${payoutRecord.stripeTransferId} for order ${orderId}. ` +
+          `Refund ${refund.id} was issued to buyer but seller funds were NOT recovered. ` +
+          `Reverse manually at https://dashboard.stripe.com/connect/transfers/${payoutRecord.stripeTransferId}`,
+        reversalErr,
+      );
+    }
+  } else {
+    // No payout record found — order was placed before Connect was active, or
+    // the transfer failed and was never recorded. No reversal needed.
+    console.log(
+      `create-refund: no paid payout record found for order ${orderId} — transfer reversal skipped`,
+    );
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   // ── Notify buyer (best-effort) ────────────────────────────────────────────
   const { data: orderFull } = await supabase
     .from('orders')
@@ -223,6 +291,7 @@ export const handler: Handler = async (event) => {
       refundId: refund.id,
       amount: refund.amount / 100,
       status: refund.status,
+      transferReversalId,
       message: `Refund of £${(refund.amount / 100).toFixed(2)} issued successfully.`,
     }),
   };

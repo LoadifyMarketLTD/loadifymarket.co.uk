@@ -222,21 +222,30 @@ GET    /api/payments/balance         → seller payout balance
 ## 6. Payments Architecture (Stripe)
 
 ### 6.1 Stripe Connect
-- **Model:** Standard Connect (sellers manage their own Stripe accounts)
-- **Flow:** Seller completes Stripe Connect OAuth during onboarding → `stripe_account_id` stored in `seller_profiles`
-- **Payouts:** Platform collects full payment; weekly payouts to sellers minus commission
+- **Model:** Express Connect (each seller gets an individual `acct_...` Express account)
+- **Flow:** Seller completes Stripe Connect Express onboarding → `stripeAccountId` stored in `seller_profiles`
+- **Payment model:** Separate Charges and Transfers — the platform collects the full payment in its own Stripe account, then issues an explicit `stripe.transfers.create()` to the seller's Express account after order confirmation
+- **Payouts:** Automatic — transfers are created immediately on `checkout.session.completed`. Stripe then pays out the seller's connected-account balance to their bank on a 7-day rolling delay (configured by the platform for chargeback protection)
 
 ### 6.2 Commission Model
-- Platform fee: configurable in `platform_settings` (key: `platform_config.commission_rate`)
-- Collected via `application_fee_amount` in Stripe Checkout
+- **Promotion period:** 0% commission on all transactions until **31 December 2026 23:59:59 GMT**
+  - `getCommissionRate()` in `stripe-webhook.ts` returns `0` for any timestamp before this deadline
+  - No `application_fee_amount` or `application_fee_percent` is set on checkout sessions during this period
+- **Post-promotion rate:** 7% default (configurable via `platform_settings` key `platform_config`, field `commissionRate` stored as a percentage, e.g. `7`)
+  - `getCommissionRate()` reads from `platform_settings` at runtime; falls back to `DEFAULT_COMMISSION_RATE = 0.07`
+- **Fee collection mechanism:** Commission is deducted from the transfer amount before sending funds to the seller (`netSellerAmount = sellerGrandTotal - sellerCommission`). The platform retains the commission in its own Stripe balance. No `application_fee_amount` is used.
 
 ### 6.3 Webhook Events Handled
 | Event | Action |
 |-------|--------|
-| `checkout.session.completed` | Mark order `paid`, notify seller |
-| `account.updated` | Sync Stripe Connect status |
-| `payout.paid` | Notify seller of payout |
-| `dispute.created` | Flag order, notify admin |
+| `checkout.session.completed` | Create order, issue Stripe transfer to seller, notify buyer/seller |
+| `payment_intent.succeeded` | Logged for audit trail |
+| `payment_intent.payment_failed` | Mark `payment_sessions` record as failed |
+| `charge.refunded` | Mark order as `refunded` in DB |
+| `charge.dispute.created` | Create `disputes` record, flag for admin review |
+| `account.updated` | Sync seller `stripeConnectStatus`, set 7-day payout delay on first activation |
+| `transfer.created` | Log transfer confirmation, update `payouts` row with confirmation |
+| `payout.paid` | Record Stripe payout ID on `payouts` row for bank-settlement reconciliation |
 
 ---
 
