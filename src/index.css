@@ -195,6 +195,20 @@ body::before {
   animation: goldPulse 3s ease-in-out infinite;
 }
 
+/* Disable GPU-intensive animations on touch/mobile devices */
+@media (max-width: 767px) {
+  /* Disable gold icon pulse — reduces continuous GPU work in the WebView */
+  .icon-pulse {
+    animation: none;
+    filter: none;
+  }
+
+  /* Disable cursor glow overlay — cursor events don't fire on touch screens */
+  body::before {
+    display: none;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    PREMIUM PAYMENT & SOCIAL CARDS
    ═══════════════════════════════════════════════════════════════════════════ */
