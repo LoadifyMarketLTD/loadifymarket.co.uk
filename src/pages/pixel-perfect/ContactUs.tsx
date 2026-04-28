@@ -12,7 +12,7 @@ import { formatPhoneNumber } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 
-const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || BRAND.supportEmail;
+const SUPPORT_EMAIL = BRAND.supportEmail;
 
 const ContactUs = () => {
   const { user } = useAuthStore();
