@@ -630,10 +630,11 @@ function App() {
         <Route path="*" element={<Suspense fallback={<PageLoader />}><PPNotFound /></Suspense>} />
         </Routes>
       </MaintenanceModeGate>
-      {/* Cookie consent banner — rendered once globally, outside the router tree
-          so it persists across route changes. Self-manages visibility via
-          localStorage (key: loadify_cookie_consent). */}
-      <CookieConsent />
+      {/* Cookie consent banner — web only. Not shown inside the native Android
+          WebView: GDPR cookie rules don't apply to a native app's localStorage,
+          and the banner would be misleading to mobile users. Self-manages
+          visibility via localStorage (key: loadify_cookie_consent). */}
+      {!isCapacitorNative && <CookieConsent />}
     </CartProvider>
   );
 }
