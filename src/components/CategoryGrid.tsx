@@ -1,77 +1,58 @@
 import { Link } from "react-router-dom";
-import { useCategories } from "@/hooks/useCategories";
+import { Package, Truck, Wrench, Home } from "lucide-react";
 
 /**
- * Shop by Category — DB-driven taxonomy tile grid.
- * Top-level categories from the DB, 3 cols mobile → 4 tablet → 5 desktop.
- * Flat, bordered tiles: no rounded cards, no gradients, no glow effects.
+ * CategoryGrid — 4 static category tiles, 2-col mobile.
+ * Products | Transport | Services | Home
  */
-const CategoryGrid = () => {
-  const { categories, loading } = useCategories();
 
-  return (
-    <section
-    className="bg-[#020617] border-b border-white/10"
-      aria-labelledby="cats-heading"
+const CATEGORIES = [
+  {
+    label: "Products",
+    Icon: Package,
+    to: "/catalog",
+  },
+  {
+    label: "Transport",
+    Icon: Truck,
+    to: "/catalog?category=Transport",
+  },
+  {
+    label: "Services",
+    Icon: Wrench,
+    to: "/catalog?category=Services",
+  },
+  {
+    label: "Home & Garden",
+    Icon: Home,
+    to: "/catalog?category=Home+%26+Garden",
+  },
+];
+
+const CategoryGrid = () => (
+  <section aria-labelledby="catgrid-heading" className="px-4 py-4" style={{ background: "#0B0F1A" }}>
+    <h2
+      id="catgrid-heading"
+      className="text-[13px] font-black text-white uppercase tracking-widest mb-3"
     >
-      <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-7">
-
-        {/* Header row */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2
-              id="cats-heading"
-              className="text-[13px] font-black text-white uppercase tracking-widest"
-            >
-              Shop by Category
-            </h2>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              {loading ? "Loading…" : `${categories.length} marketplace categories`}
-            </p>
-          </div>
-          <Link
-            to="/catalog"
-            className="text-[11px] font-bold text-[#0d2240] uppercase tracking-wide hover:underline"
-          >
-            Browse All →
-          </Link>
-        </div>
-
-        {/* Tile grid — gap-px creates hairline borders between tiles */}
-        {!loading && categories.length === 0 && (
-          <p className="text-[11px] text-slate-400 text-center py-4">
-            No categories available.
-          </p>
-        )}
-        {!loading && categories.length > 0 && (
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-px bg-white/5">
-            {categories.map((cat) => {
-              const sub =
-                cat.children.slice(0, 2).map((c) => c.name).join(" • ") +
-                (cat.children.length > 2 ? " • ..." : "");
-              return (
-                <Link
-                  key={cat.slug}
-                  to={`/catalog?category=${encodeURIComponent(cat.name)}`}
-                  className="flex flex-col items-start gap-1.5 px-3 py-4 bg-[#0B1220] hover:bg-[#0F172A] transition-colors group"
-                >
-                  <span className="text-[11px] font-bold text-white leading-tight line-clamp-2 w-full">
-                    {cat.name}
-                  </span>
-                  {sub && (
-                    <span className="text-[9px] text-slate-400 uppercase tracking-wide leading-none line-clamp-1 w-full">
-                      {sub}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        )}
-
-      </div>
-    </section>
-  );
-};
+      Categories
+    </h2>
+    <div className="grid grid-cols-2 gap-3">
+      {CATEGORIES.map(({ label, Icon, to }) => (
+        <Link
+          key={label}
+          to={to}
+          className="flex flex-col items-center justify-center gap-2 rounded-2xl py-5 border border-white/[0.07] transition-all duration-200 hover:border-[#FBBF24]/30 hover:shadow-[0_0_14px_rgba(251,191,36,0.10)] active:scale-95"
+          style={{ background: "#111827" }}
+        >
+          <span className="flex items-center justify-center w-11 h-11 rounded-xl bg-[#FBBF24]/10">
+            <Icon className="h-5 w-5 text-[#FBBF24]" aria-hidden="true" />
+          </span>
+          <span className="text-[13px] font-semibold text-white">{label}</span>
+        </Link>
+      ))}
+    </div>
+  </section>
+);
 
 export default CategoryGrid;

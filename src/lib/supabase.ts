@@ -12,6 +12,19 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
+// Validate that supabaseUrl is a well-formed URL so that any configuration
+// mistake (missing https://, stray quote, embedded newline, etc.) throws a
+// clear error here rather than a cryptic "Invalid value" from the fetch API
+// deep inside the Supabase client.
+try {
+  new URL(supabaseUrl);
+} catch {
+  throw new Error(
+    `[Supabase] VITE_SUPABASE_URL is not a valid URL: "${supabaseUrl}". ` +
+    'It must be a full https:// URL, e.g. https://<project-ref>.supabase.co'
+  );
+}
+
 // Detect Capacitor native environment (window.Capacitor is injected by the
 // native runtime before any JS runs in the WebView).
 const isNative =
@@ -36,6 +49,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     // Use localStorage explicitly so the storage key is predictable and
     // Supabase never silently downgrades to in-memory storage.
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+  },
+  global: {
+    // In the Capacitor Android WebView, calling the unbound global `fetch`
+    // can lose the Window context and throw "Failed to execute 'fetch' on
+    // 'Window': Invalid value". Binding it to `window` ensures the correct
+    // receiver is used on all platforms (web, iOS, Android WebView).
+    fetch: typeof window !== 'undefined' ? window.fetch.bind(window) : undefined,
   },
 });
 
