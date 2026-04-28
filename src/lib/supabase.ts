@@ -30,6 +30,20 @@ try {
 const isNative =
   typeof window !== 'undefined' && 'Capacitor' in window;
 
+// Build a safe fetch reference that is always bound to `window` when running
+// in a browser/WebView.  Passing an *unbound* global fetch (or `undefined`)
+// to the Supabase client can trigger "Failed to execute 'fetch' on 'Window':
+// Invalid value" in the Capacitor Android WebView because the fetch
+// implementation requires `this === window`.  Using `.bind(window)` guarantees
+// the correct receiver regardless of how the Supabase internals call it.
+// The bare `fetch` fallback is only reached in non-browser SSR/test
+// environments where there is no `window` at all; in those contexts the
+// native fetch (Node ≥ 18) or a polyfill owns the binding itself.
+const customFetch =
+  typeof window !== 'undefined' && typeof window.fetch === 'function'
+    ? window.fetch.bind(window)
+    : fetch;
+
 // In Capacitor with androidScheme:'https', the WebView runs under the
 // https://localhost origin so window.localStorage is available and persistent.
 // We pass it explicitly to ensure Supabase never falls back to an in-memory
@@ -51,15 +65,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
   },
   global: {
-    // In the Capacitor Android WebView, calling the unbound global `fetch`
-    // can lose the Window context and throw "Failed to execute 'fetch' on
-    // 'Window': Invalid value".  Using a wrapper arrow function (rather than
-    // window.fetch.bind(window)) ensures we always call the *current*
-    // window.fetch at the time of the request, so any late patching by
-    // Capacitor plugins is picked up, and `this` is always `window`.
-    fetch: typeof window !== 'undefined'
-      ? (input: RequestInfo | URL, init?: RequestInit) => window.fetch(input, init)
-      : undefined,
+    fetch: customFetch,
   },
 });
 
