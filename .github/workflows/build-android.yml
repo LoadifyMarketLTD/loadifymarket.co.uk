@@ -72,6 +72,14 @@ jobs:
           fi
           echo "All required secrets are present."
 
+      # ── Debug: confirm VITE_* env vars are present before build ─────────────
+      - name: Debug VITE env vars
+        run: |
+          echo "SUPABASE URL set: $([ -n "$VITE_SUPABASE_URL" ] && echo YES || echo NO)"
+          echo "SUPABASE ANON KEY set: $([ -n "$VITE_SUPABASE_ANON_KEY" ] && echo YES || echo NO)"
+          echo "SUPABASE URL length: ${#VITE_SUPABASE_URL}"
+          echo "SUPABASE ANON KEY length: ${#VITE_SUPABASE_ANON_KEY}"
+
       # ── Build web assets ─────────────────────────────────────────────────────
       - name: Build web app
         run: npm run build
