@@ -41,6 +41,7 @@ const ContactUs = () => {
         guestEmail: user ? null : formData.email,
         guestName: user ? null : formData.name,
         subject: formData.subject || "Contact Form Enquiry",
+        message: formData.message || null,
         category: "general",
         priority: "normal",
         status: "open",

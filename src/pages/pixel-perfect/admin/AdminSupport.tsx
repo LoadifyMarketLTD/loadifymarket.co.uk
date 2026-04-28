@@ -21,6 +21,7 @@ import { toast } from "@/hooks/use-toast";
 interface Ticket {
   id: string;
   subject: string;
+  message: string | null;
   userName: string;
   userEmail: string;
   category: string;
@@ -90,7 +91,10 @@ const AdminSupport = () => {
         .select(`
           id,
           userId,
+          guestEmail,
+          guestName,
           subject,
+          message,
           category,
           priority,
           status,
@@ -117,21 +121,32 @@ const AdminSupport = () => {
         });
       }
 
-      const mapped: Ticket[] = rows.map((t) => ({
-        id: t.id,
-        subject: t.subject || "—",
-        userName: userInfo[t.userId]?.name ?? (t.userId ? t.userId.slice(0, 8).toUpperCase() : "—"),
-        userEmail: userInfo[t.userId]?.email ?? "—",
-        category: t.category || "—",
-        priority: t.priority ?? "medium",
-        status: t.status ?? "open",
-        createdAt: t.createdAt
-          ? new Date(t.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-          : "—",
-        updatedAt: t.updatedAt
-          ? new Date(t.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-          : "—",
-      }));
+      const mapped: Ticket[] = rows.map((t) => {
+        // For authenticated users resolve their profile; for guests use the
+        // guestName/guestEmail saved at submission time.
+        const resolvedName = t.userId
+          ? (userInfo[t.userId]?.name ?? t.userId.slice(0, 8).toUpperCase())
+          : (t.guestName || "Guest");
+        const resolvedEmail = t.userId
+          ? (userInfo[t.userId]?.email ?? "—")
+          : (t.guestEmail || "—");
+        return {
+          id: t.id,
+          subject: t.subject || "—",
+          message: t.message ?? null,
+          userName: resolvedName,
+          userEmail: resolvedEmail,
+          category: t.category || "—",
+          priority: t.priority ?? "medium",
+          status: t.status ?? "open",
+          createdAt: t.createdAt
+            ? new Date(t.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+            : "—",
+          updatedAt: t.updatedAt
+            ? new Date(t.updatedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
+            : "—",
+        };
+      });
 
       setTickets(mapped);
     } catch (err: unknown) {
@@ -487,6 +502,19 @@ const AdminSupport = () => {
                 <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Created</span><p className="font-medium text-white">{selected.createdAt}</p></div>
                 <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Updated</span><p className="font-medium text-white">{selected.updatedAt}</p></div>
               </div>
+
+              {/* Message body — shown when the ticket has a saved message (e.g. contact form) */}
+              {selected.message && (
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold" style={{ color: "rgba(148,163,184,0.85)" }}>MESSAGE</p>
+                  <div
+                    className="rounded-lg p-3 text-sm whitespace-pre-wrap"
+                    style={{ background: "rgba(15,23,42,0.6)", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(226,232,240,0.9)" }}
+                  >
+                    {selected.message}
+                  </div>
+                </div>
+              )}
 
               {["open", "in_progress", "waiting_customer"].includes(selected.status) && (
                 <div className="space-y-2">
