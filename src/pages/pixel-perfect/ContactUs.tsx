@@ -34,9 +34,24 @@ const ContactUs = () => {
     setStatus("loading");
 
     try {
-      // Relative path is correct for browser→Netlify Function calls.
-      // Backend functions use an absolute URL (process.env.URL) because they run server-side.
-      const res = await fetch("/.netlify/functions/send-email", {
+      // Primary capture: create a support ticket so the enquiry is always recorded
+      // in the admin support queue even if the email notification cannot be delivered.
+      const { error: ticketError } = await supabase.from("support_tickets").insert({
+        userId: user?.id ?? null,
+        guestEmail: user ? null : formData.email,
+        guestName: user ? null : formData.name,
+        subject: formData.subject || "Contact Form Enquiry",
+        category: "general",
+        priority: "normal",
+        status: "open",
+      });
+
+      if (ticketError) throw new Error(ticketError.message);
+
+      // Best-effort email notification — Cloudflare WAF, SendGrid errors or missing
+      // environment variables must not block the form from confirming receipt to
+      // the user.  The support ticket above is the reliable capture mechanism.
+      fetch("/.netlify/functions/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -50,21 +65,10 @@ const ContactUs = () => {
             message: formData.message,
           },
         }),
-      });
-
-      if (!res.ok) throw new Error("Submit failed");
-
-      // Create a support ticket so the enquiry appears in the admin support queue
-      await supabase.from("support_tickets").insert({
-        userId: user?.id ?? null,
-        guestEmail: user ? null : formData.email,
-        guestName: user ? null : formData.name,
-        subject: formData.subject || "Contact Form Enquiry",
-        category: "general",
-        priority: "normal",
-        status: "open",
-      }).then(({ error }) => {
-        if (error) console.warn("Support ticket insert failed (non-fatal):", error.message);
+      }).then(res => {
+        if (!res.ok) console.warn("Contact email notification failed:", res.status);
+      }).catch(err => {
+        console.warn("Contact email notification error (non-fatal):", err);
       });
 
       setFormData({ name: "", email: "", subject: "", message: "", "bot-field": "" });
