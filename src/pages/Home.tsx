@@ -57,7 +57,7 @@ export default function Home() {
         </div>
 
         {/* ── 3–6. Platform overview section ───────────────────────────── */}
-        <section className="bg-[#020617] py-8 px-4 sm:px-6 lg:px-8" aria-label="Platform overview">
+        <section className="bg-[#020617] py-8 px-8" aria-label="Platform overview">
 
           {/* Trust Strip — visible on both mobile and desktop */}
           <TrustStrip />
@@ -69,17 +69,17 @@ export default function Home() {
             <div className="hidden md:block">
 
               {/* Social Follow */}
-              <div className="mt-6 lg:mt-8">
+              <div className="mt-8">
                 <SocialFollowSection />
               </div>
 
               {/* How It Works */}
-              <div className="mt-6 lg:mt-8">
+              <div className="mt-8">
                 <HowItWorksSection />
               </div>
 
               {/* Features + Security */}
-              <div className="mt-6 lg:mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
+              <div className="mt-8 grid grid-cols-2 gap-8">
                 <FeaturesGrid />
                 <SecurityTrust />
               </div>

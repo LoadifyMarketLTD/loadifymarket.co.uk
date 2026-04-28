@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ShieldCheck } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/store";
 
 /* ── Shared Google / Apple SVG logos ─────────────────────────────────── */
@@ -183,21 +182,27 @@ const Login = () => {
                 <p className="text-slate-400 text-sm mt-1">Sign in to your Loadify Market account</p>
               </div>
 
-              {/* Social sign-in */}
+              {/* Social sign-in — not yet available; shown as disabled to set expectations */}
               <div className="grid grid-cols-2 gap-3 mb-5">
                 <button
                   type="button"
-                  onClick={() => toast({ title: "Coming soon", description: "Google sign-in will be available after launch." })}
-                  className="flex items-center justify-center gap-2 h-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-[13px] font-medium text-slate-300 transition-colors"
+                  disabled
+                  aria-disabled="true"
+                  title="Coming soon after launch"
+                  className="relative flex items-center justify-center gap-2 h-10 rounded-lg border border-white/10 bg-white/5 text-[13px] font-medium text-slate-500 cursor-not-allowed select-none"
                 >
                   <GoogleIcon /> Google
+                  <span className="absolute -top-2 -right-2 text-[9px] font-bold bg-[#C99A3E] text-[#0B1016] rounded-full px-1.5 py-0.5 leading-none uppercase tracking-wide">Soon</span>
                 </button>
                 <button
                   type="button"
-                  onClick={() => toast({ title: "Coming soon", description: "Apple sign-in will be available after launch." })}
-                  className="flex items-center justify-center gap-2 h-10 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-[13px] font-medium text-slate-300 transition-colors"
+                  disabled
+                  aria-disabled="true"
+                  title="Coming soon after launch"
+                  className="relative flex items-center justify-center gap-2 h-10 rounded-lg border border-white/10 bg-white/5 text-[13px] font-medium text-slate-500 cursor-not-allowed select-none"
                 >
                   <AppleIcon /> Apple
+                  <span className="absolute -top-2 -right-2 text-[9px] font-bold bg-[#C99A3E] text-[#0B1016] rounded-full px-1.5 py-0.5 leading-none uppercase tracking-wide">Soon</span>
                 </button>
               </div>
 
