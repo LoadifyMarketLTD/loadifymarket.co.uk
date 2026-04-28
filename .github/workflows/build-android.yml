@@ -70,7 +70,28 @@ jobs:
             echo "Without these, the APK will have broken authentication."
             exit 1
           fi
-          echo "All required secrets are present."
+          # Validate that VITE_SUPABASE_URL is a valid https:// URL.
+          # An empty string or a non-https value causes fetch() to throw
+          # "Invalid value" at runtime inside the Android WebView.
+          if [[ "$VITE_SUPABASE_URL" != https://* ]]; then
+            echo "ERROR: VITE_SUPABASE_URL must start with https://"
+            echo "  Current value starts with: ${VITE_SUPABASE_URL:0:10}..."
+            echo ""
+            echo "Check the VITE_SUPABASE_URL secret under:"
+            echo "  GitHub repo → Settings → Secrets and variables → Actions"
+            echo "It should look like: https://<project-ref>.supabase.co"
+            exit 1
+          fi
+          echo "All required secrets are present and valid."
+
+      # ── Debug: confirm VITE_* env vars are present before build ─────────────
+      - name: Debug VITE env vars
+        run: |
+          echo "SUPABASE URL set: $([ -n "$VITE_SUPABASE_URL" ] && echo YES || echo NO)"
+          echo "SUPABASE URL scheme: ${VITE_SUPABASE_URL%%:*}://"
+          echo "SUPABASE URL length: ${#VITE_SUPABASE_URL}"
+          echo "SUPABASE ANON KEY set: $([ -n "$VITE_SUPABASE_ANON_KEY" ] && echo YES || echo NO)"
+          echo "SUPABASE ANON KEY length: ${#VITE_SUPABASE_ANON_KEY}"
 
       # ── Build web assets ─────────────────────────────────────────────────────
       - name: Build web app
