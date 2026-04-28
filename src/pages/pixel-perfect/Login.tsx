@@ -85,7 +85,23 @@ const Login = () => {
       }
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed. Please check your credentials.");
+      const raw = err instanceof Error ? err.message : "";
+      // Low-level fetch/network errors (e.g. Capacitor Android WebView
+      // "Failed to execute 'fetch' on 'Window': Invalid value") are TypeErrors
+      // or DOMExceptions that expose raw browser internals — replace them with
+      // a user-friendly message.  We gate on the error type first to avoid
+      // false-positives on Supabase auth errors whose messages may contain
+      // the word "network".
+      const isFetchError =
+        (err instanceof TypeError || err instanceof DOMException) &&
+        (raw.toLowerCase().includes("fetch") ||
+          raw.toLowerCase().includes("network") ||
+          raw.toLowerCase().includes("failed to execute"));
+      setError(
+        isFetchError
+          ? "Network error — please check your connection and try again."
+          : raw || "Login failed. Please check your credentials."
+      );
     } finally {
       setLoading(false);
     }
