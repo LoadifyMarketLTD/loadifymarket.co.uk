@@ -4,10 +4,6 @@ android {
     namespace = "co.uk.loadifymarket.app"
     compileSdk = rootProject.ext.compileSdkVersion
 
-    def keystorePath = System.getenv("KEYSTORE_FILE")
-    def releaseKeystoreFile = keystorePath ? file(keystorePath) : null
-    def hasReleaseKeystore = releaseKeystoreFile?.exists()
-
     defaultConfig {
         applicationId "co.uk.loadifymarket.app"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -23,19 +19,15 @@ android {
     }
     signingConfigs {
         release {
-            if (hasReleaseKeystore) {
-                storeFile releaseKeystoreFile
-                storePassword System.getenv("KEYSTORE_STORE_PASSWORD")
-                keyAlias System.getenv("KEYSTORE_KEY_ALIAS")
-                keyPassword System.getenv("KEYSTORE_KEY_PASSWORD")
-            }
+            storeFile file(System.getenv("KEYSTORE_FILE"))
+            storePassword System.getenv("KEYSTORE_STORE_PASSWORD")
+            keyAlias System.getenv("KEYSTORE_KEY_ALIAS")
+            keyPassword System.getenv("KEYSTORE_KEY_PASSWORD")
         }
     }
     buildTypes {
         release {
-            if (hasReleaseKeystore) {
-                signingConfig signingConfigs.release
-            }
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

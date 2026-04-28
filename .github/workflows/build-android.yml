@@ -144,27 +144,26 @@ jobs:
       - name: Build release APK
         working-directory: android
         env:
-          KEYSTORE_FILE: ${{ env.RELEASE_KEYSTORE_FILENAME }}
+          KEYSTORE_FILE: ${{ github.workspace }}/android/app/${{ env.RELEASE_KEYSTORE_FILENAME }}
           KEYSTORE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEYSTORE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEYSTORE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: ./gradlew assembleRelease --no-daemon
 
-      # ── Remove keystore from disk ─────────────────────────────────────────────
-      - name: Remove keystore
-        if: always()
-        run: rm -f android/app/$RELEASE_KEYSTORE_FILENAME
+      # ── List & verify output ──────────────────────────────────────────────────
+      - name: List APK output directory
+        run: ls -lah android/app/build/outputs/apk/release/
 
-      # ── Verify signed APK exists ─────────────────────────────────────────────
-      - name: Verify signed APK
+      - name: Verify signed APK exists (hard fail)
         run: |
           APK=android/app/build/outputs/apk/release/app-release.apk
           if [ ! -f "$APK" ]; then
-            echo "ERROR: Signed APK not found at $APK"
-            echo "Check that all ANDROID_KEYSTORE_* secrets are correct and that the keystore is valid."
+            echo "ERROR: app-release.apk not found — signing was not applied."
+            echo "Unsigned or missing artifact:"
+            ls -lah android/app/build/outputs/apk/release/ || true
             exit 1
           fi
-          echo "Signed APK found: $APK ($(du -sh "$APK" | cut -f1))"
+          echo "Signed APK confirmed: $APK ($(du -sh "$APK" | cut -f1))"
 
       # ── Verify APK signature (cryptographic) ─────────────────────────────────
       # Uses apksigner from the Android build-tools to confirm the APK carries a
@@ -188,3 +187,8 @@ jobs:
           name: loadify-market-release-apk
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30
+
+      # ── Remove keystore from disk ─────────────────────────────────────────────
+      - name: Remove keystore
+        if: always()
+        run: rm -f android/app/$RELEASE_KEYSTORE_FILENAME
