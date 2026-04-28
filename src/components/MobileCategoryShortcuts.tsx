@@ -16,6 +16,7 @@ import {
   Shirt,
   HeartPulse,
   Car,
+  ArrowRight,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -46,9 +47,9 @@ export default function MobileCategoryShortcuts() {
         </h2>
         <Link
           to="/catalog"
-          className="text-[11px] font-semibold text-[#FBBF24] hover:text-[#D8AE57] transition-colors"
+          className="flex items-center gap-1 text-[11px] font-semibold text-[#FBBF24] hover:text-[#D8AE57] transition-colors"
         >
-          View all →
+          View all <ArrowRight className="h-3 w-3" aria-hidden="true" />
         </Link>
       </div>
 

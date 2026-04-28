@@ -25,16 +25,23 @@ const PRODUCT_QUERY = `
   subcategory:categories!subcategoryId(name, slug)
 `;
 
+interface SellerInfo {
+  businessName?: string;
+  isApproved?: boolean;
+  rating?: number;
+  userId?: string;
+}
+
 async function fetchSellerMap(
   sellerIds: string[],
-): Promise<Map<string, { businessName?: string; isApproved?: boolean; rating?: number; userId?: string }>> {
-  const map = new Map<string, { businessName?: string; isApproved?: boolean; rating?: number; userId?: string }>();
+): Promise<Map<string, SellerInfo>> {
+  const map = new Map<string, SellerInfo>();
   if (sellerIds.length === 0) return map;
   const { data } = await supabase
     .from('seller_profiles_public')
     .select('userId, businessName, isApproved, rating')
     .in('userId', sellerIds);
-  (data ?? []).forEach((row: { userId?: string; businessName?: string; isApproved?: boolean; rating?: number }) => {
+  (data ?? []).forEach((row: SellerInfo) => {
     if (row.userId) map.set(row.userId, row);
   });
   return map;
