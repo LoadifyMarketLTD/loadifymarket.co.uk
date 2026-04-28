@@ -104,6 +104,30 @@ jobs:
           echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/$RELEASE_KEYSTORE_FILENAME
           echo "Keystore decoded successfully."
 
+      # ── Validate keystore ────────────────────────────────────────────────────
+      # Runs keytool -list to confirm the decoded file is a valid keystore and
+      # that the alias and passwords match before handing off to Gradle.
+      - name: Validate keystore
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          echo "Validating keystore: password and alias check..."
+          if ! keytool -list \
+              -keystore android/app/$RELEASE_KEYSTORE_FILENAME \
+              -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+              -alias "$ANDROID_KEY_ALIAS"; then
+            echo ""
+            echo "ERROR: Keystore validation failed. Possible causes:"
+            echo "  - ANDROID_KEYSTORE_PASSWORD is incorrect"
+            echo "  - ANDROID_KEY_ALIAS '${ANDROID_KEY_ALIAS}' does not exist in the keystore"
+            echo "  - The base64-decoded keystore file is corrupt"
+            echo ""
+            echo "To generate a fresh keystore run the 'Generate Release Keystore' workflow."
+            exit 1
+          fi
+          echo "Keystore valid. Alias '${ANDROID_KEY_ALIAS}' confirmed."
+
       # ── Java 21 ──────────────────────────────────────────────────────────────
       - uses: actions/setup-java@v5
         with:
@@ -141,6 +165,21 @@ jobs:
             exit 1
           fi
           echo "Signed APK found: $APK ($(du -sh "$APK" | cut -f1))"
+
+      # ── Verify APK signature (cryptographic) ─────────────────────────────────
+      # Uses apksigner from the Android build-tools to confirm the APK carries a
+      # valid v1/v2/v3 signature. If this passes the APK will install on-device.
+      - name: Verify APK signature
+        run: |
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -name "apksigner" -type f | sort -V | tail -1)
+          if [ -z "$APKSIGNER" ]; then
+            echo "ERROR: apksigner not found under $ANDROID_SDK_ROOT/build-tools"
+            exit 1
+          fi
+          echo "Using: $APKSIGNER"
+          "$APKSIGNER" verify --verbose "$APK"
+          echo "APK signature verification PASSED ✓"
 
       # ── Upload artifact ──────────────────────────────────────────────────────
       - name: Upload APK artifact
