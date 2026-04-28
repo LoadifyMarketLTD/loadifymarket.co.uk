@@ -70,18 +70,21 @@ jobs:
             echo "Without these, the APK will have broken authentication."
             exit 1
           fi
+          # Trim whitespace (defensive against accidental spaces/newlines in secrets)
+          VITE_SUPABASE_URL_TRIMMED="$(echo -n "$VITE_SUPABASE_URL" | xargs)"
           # Validate that VITE_SUPABASE_URL is a valid https:// URL.
           # An empty string or a non-https value causes fetch() to throw
           # "Invalid value" at runtime inside the Android WebView.
-          if [[ "$VITE_SUPABASE_URL" != https://* ]]; then
+          if [[ "$VITE_SUPABASE_URL_TRIMMED" != https://* ]]; then
             echo "ERROR: VITE_SUPABASE_URL must start with https://"
-            echo "  Current value starts with: ${VITE_SUPABASE_URL:0:10}..."
+            echo "  Current value starts with: ${VITE_SUPABASE_URL_TRIMMED:0:10}..."
             echo ""
             echo "Check the VITE_SUPABASE_URL secret under:"
             echo "  GitHub repo → Settings → Secrets and variables → Actions"
             echo "It should look like: https://<project-ref>.supabase.co"
             exit 1
           fi
+          echo "VITE_SUPABASE_URL=$VITE_SUPABASE_URL_TRIMMED" >> "$GITHUB_ENV"
           echo "All required secrets are present and valid."
 
       # ── Debug: confirm VITE_* env vars are present before build ─────────────
