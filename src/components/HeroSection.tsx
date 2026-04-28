@@ -4,7 +4,7 @@ import PaymentCard from '@/components/ui/PaymentCard';
 const HeroSection = () => (
   <section
     aria-label="Loadify Market — UK Online Marketplace"
-    className="relative w-full min-h-[75vh] bg-[#0B1016]"
+    className="relative w-full min-h-[38vh] md:min-h-[75vh] bg-[#0B1016]"
   >
     {/* ── Background image — full cover, no distortion ─────────────────── */}
     <img
@@ -22,8 +22,41 @@ const HeroSection = () => (
       aria-hidden="true"
     />
 
-    {/* ── Content ──────────────────────────────────────────────────────── */}
-    <div className="absolute inset-0 flex items-center">
+    {/* ── Mobile content (< md) ────────────────────────────────────────── */}
+    <div className="md:hidden absolute inset-0 flex items-center">
+      <div className="w-full px-4 pt-[68px] pb-6">
+        <div className="flex flex-col items-start max-w-[320px]">
+
+          {/* Badge */}
+          <div className="inline-flex items-center bg-[#C99A3E] text-[#0B1016] text-[10px] font-bold rounded-full px-3 py-1 tracking-wide uppercase mb-3">
+            0% Commission Until Dec 2026
+          </div>
+
+          {/* H1 */}
+          <h1 className="text-[1.65rem] font-extrabold leading-[1.2] text-[#F5F1E8] mb-2">
+            Buy &amp; sell<br />
+            <span className="text-[#C99A3E]">across the UK</span>
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-[13px] text-[#C9D0D6] mb-4 leading-snug">
+            Fast. Secure. Simple.
+          </p>
+
+          {/* Single CTA */}
+          <Link
+            to="/catalog"
+            className="bg-[#C99A3E] hover:bg-[#D8AE57] text-[#0B1016] font-bold px-6 py-2.5 rounded-lg text-sm transition-colors"
+          >
+            Browse Products
+          </Link>
+
+        </div>
+      </div>
+    </div>
+
+    {/* ── Desktop content (>= md) — unchanged ─────────────────────────── */}
+    <div className="hidden md:flex absolute inset-0 items-center">
     <div className="w-full px-4 sm:px-6 lg:pl-8 xl:pl-10 pt-[122px] pb-8 lg:pt-36 lg:pb-12">
       <div className="flex flex-col text-center sm:text-left items-center sm:items-start max-w-[500px]">
 

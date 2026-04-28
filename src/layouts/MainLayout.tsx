@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Footer from "@/components/Footer";
+import MobileBottomNav from "@/components/MobileBottomNav";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -17,6 +18,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
       </a>
       {children}
       <Footer />
+      {/* Spacer so footer content isn't hidden behind the fixed bottom nav on mobile */}
+      <div className="h-[70px] md:hidden" aria-hidden="true" />
+      <MobileBottomNav />
     </div>
   );
 }

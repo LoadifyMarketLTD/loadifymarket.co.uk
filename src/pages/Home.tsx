@@ -1,13 +1,13 @@
 /**
  * src/pages/Home.tsx — root "/" route
  *
- * Section order:
- *  1. Hero Section       — headline, CTAs, payment badges, product image
- *  2–4. Dark platform overview (bg-[#0A1930]):
- *       TrustStrip → HowItWorksSection → FeaturesGrid + SecurityTrust
- *       All spaced with mt-8 md:mt-10 lg:mt-12 inside one section wrapper
- *  5. SellerCTA          — green full-width CTA banner
- *  6. Footer             — rendered by MainLayout
+ * Mobile (< md / 768 px):
+ *   Hero → MobileCategoryShortcuts → MobileProductSection →
+ *   TrustStrip → SellerCTA → Footer → MobileBottomNav (via MainLayout)
+ *
+ * Desktop (>= md / 768 px) — unchanged:
+ *   Hero → TrustStrip → SocialFollowSection → HowItWorksSection →
+ *   FeaturesGrid + SecurityTrust → SellerCTA → Footer
  */
 
 import { Helmet } from "react-helmet-async";
@@ -21,6 +21,9 @@ import FeaturesGrid from "@/components/FeaturesGrid";
 import SecurityTrust from "@/components/SecurityTrust";
 import SocialFollowSection from "@/components/SocialFollowSection";
 import SellerCTA from "@/components/SellerCTA";
+import LazySection from "@/components/LazySection";
+import MobileCategoryShortcuts from "@/components/MobileCategoryShortcuts";
+import MobileProductSection from "@/components/MobileProductSection";
 
 export default function Home() {
   return (
@@ -47,34 +50,49 @@ export default function Home() {
         {/* ── 1. Hero ──────────────────────────────────────────────────── */}
         <HeroSection />
 
-        {/* ── 2–4. Dark-bg platform overview (Trust → HowItWorks → Features+Security) ── */}
+        {/* ── 2. Mobile-only: Category shortcuts + Product sections ─────── */}
+        <div className="md:hidden bg-[#020617]">
+          <MobileCategoryShortcuts />
+          <MobileProductSection />
+        </div>
+
+        {/* ── 3–6. Platform overview section ───────────────────────────── */}
         <section className="bg-[#020617] py-8 px-4 sm:px-6 lg:px-8" aria-label="Platform overview">
 
-          {/* Trust Strip */}
+          {/* Trust Strip — visible on both mobile and desktop */}
           <TrustStrip />
 
-          {/* Social Follow — directly below trust badges, above How It Works */}
-          <div className="mt-6 lg:mt-8">
-            <SocialFollowSection />
-          </div>
+          {/* Desktop-only marketing sections — lazy-loaded to avoid blocking
+              initial render; hidden on mobile so IntersectionObserver never
+              fires for them in the WebView */}
+          <LazySection rootMargin="300px">
+            <div className="hidden md:block">
 
-          {/* How It Works */}
-          <div className="mt-6 lg:mt-8">
-            <HowItWorksSection />
-          </div>
+              {/* Social Follow */}
+              <div className="mt-6 lg:mt-8">
+                <SocialFollowSection />
+              </div>
 
-          {/* Features + Security */}
-          <div className="mt-6 lg:mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
-            <FeaturesGrid />
-            <SecurityTrust />
-          </div>
+              {/* How It Works */}
+              <div className="mt-6 lg:mt-8">
+                <HowItWorksSection />
+              </div>
+
+              {/* Features + Security */}
+              <div className="mt-6 lg:mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
+                <FeaturesGrid />
+                <SecurityTrust />
+              </div>
+
+            </div>
+          </LazySection>
 
         </section>
 
-        {/* ── 5. Seller CTA ────────────────────────────────────────────── */}
+        {/* ── 7. Seller CTA ────────────────────────────────────────────── */}
         <SellerCTA />
 
-        {/* ── 6. Footer — rendered by MainLayout ───────────────────────── */}
+        {/* ── 8. Footer — rendered by MainLayout ───────────────────────── */}
 
       </main>
     </MainLayout>
