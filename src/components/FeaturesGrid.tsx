@@ -41,7 +41,7 @@ export default function FeaturesGrid() {
       <h2 className="text-xl font-semibold text-white mb-4">
         Powerful Features Built for UK Sellers
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 flex-1">
+      <div className="grid grid-cols-2 gap-6 flex-1">
         {features.map((feature) => {
           const Icon = feature.icon;
           return (

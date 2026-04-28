@@ -61,18 +61,18 @@ const HeroSection = () => (
       <div className="flex flex-col text-center sm:text-left items-center sm:items-start max-w-[500px]">
 
         {/* 1. Promo badge */}
-        <div className="inline-flex items-center bg-[#C99A3E] text-[#0B1016] text-xs sm:text-sm font-bold rounded-full px-3 sm:px-4 py-1.5 tracking-wide uppercase mb-4 sm:mb-5 text-center">
+        <div className="inline-flex items-center bg-[#C99A3E] text-[#0B1016] text-sm font-bold rounded-full px-4 py-1.5 tracking-wide uppercase mb-5">
           0% Commission Until 31 December 2026
         </div>
 
         {/* 2. H1 */}
-        <h1 className="text-[1.8rem] sm:text-[2.7rem] font-extrabold leading-[1.2] text-[#F5F1E8] mb-4 sm:mb-5">
+        <h1 className="text-[2.7rem] sm:text-5xl font-extrabold leading-[1.2] text-[#F5F1E8] mb-5">
           The UK Marketplace<br />
           <span className="text-[#C99A3E]">for Buyers &amp; Sellers</span>
         </h1>
 
         {/* 3. Description */}
-        <p className="text-base sm:text-lg text-[#C9D0D6] mb-5 sm:mb-7">
+        <p className="text-lg text-[#C9D0D6] mb-7">
           Sell with 0% commission until 2026 or discover products from trusted UK sellers — all in one secure platform.
         </p>
 

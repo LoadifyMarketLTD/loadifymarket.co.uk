@@ -36,7 +36,7 @@ export default function SecurityTrust() {
       <h2 className="text-xl font-semibold text-white mb-4">
         Security &amp; Trust You Can Rely On
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 flex-1">
+      <div className="grid grid-cols-2 gap-6 flex-1">
         {items.map((item) => {
           const Icon = item.icon;
           return (

@@ -64,7 +64,7 @@ function StepsPanel({ id, title, steps }: { id: string; title: string; steps: St
   return (
     <div id={id} className="w-full rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#0F172A,#020617)] p-6 lg:p-8">
       <h2 className="text-xl font-semibold text-white mb-4">{title}</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-3 gap-6">
         {steps.map((step) => (
           <StepCard key={step.title} step={step} />
         ))}
@@ -74,7 +74,7 @@ function StepsPanel({ id, title, steps }: { id: string; title: string; steps: St
 }
 
 const HowItWorksSection = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8" aria-label="How it works">
+  <div className="grid grid-cols-2 gap-8" aria-label="How it works">
     <StepsPanel id="how-it-works-buyers" title="How It Works for Buyers" steps={buyerSteps} />
     <StepsPanel id="how-it-works-sellers" title="How It Works for Sellers" steps={sellerSteps} />
   </div>
