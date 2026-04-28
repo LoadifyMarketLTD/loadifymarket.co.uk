@@ -466,6 +466,8 @@ function App() {
         <Route path="seller-terms" element={<Suspense fallback={<PageLoader />}><PPSellerTerms /></Suspense>} />
         <Route path="disclaimer" element={<Suspense fallback={<PageLoader />}><PPDisclaimer /></Suspense>} />
         <Route path="faq" element={<Suspense fallback={<PageLoader />}><PPFAQ /></Suspense>} />
+        {/* /help — redirect to FAQ (header nav link target) */}
+        <Route path="help" element={<Navigate to="/faq" replace />} />
         <Route path="wholesale-info" element={<Suspense fallback={<PageLoader />}><PPWholesaleInfo /></Suspense>} />
 
         {/* ── Pixel-perfect auth pages (standalone full-page designs) ──────────── */}

@@ -3,6 +3,9 @@ Allow: /
 
 # Disallow auth-gated dashboard routes — no SEO value and wastes crawl budget.
 Disallow: /pp/
+Disallow: /admin
+Disallow: /buyer
+Disallow: /seller
 
 # Disallow transactional and auth-only pages — no SEO value.
 Disallow: /checkout
