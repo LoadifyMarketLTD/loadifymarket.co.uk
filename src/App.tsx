@@ -621,6 +621,7 @@ function App() {
         {/* ── Other legacy aliases ─────────────────────────────────────────────── */}
         <Route path="dashboard" element={<DashboardRedirect />} />
         <Route path="shop" element={<Navigate to="/catalog" replace />} />
+        <Route path="products" element={<Navigate to="/catalog" replace />} />
         <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />
         <Route path="seller-dashboard" element={<Navigate to="/seller" replace />} />
         <Route path="admin-dashboard" element={<Navigate to="/admin" replace />} />

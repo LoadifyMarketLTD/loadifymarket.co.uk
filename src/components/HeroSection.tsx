@@ -53,7 +53,7 @@ const HeroSection = () => (
             Start Selling Today
           </Link>
           <Link
-            to="/products"
+            to="/catalog"
             data-magnetic
             className="w-full sm:w-auto border border-white/40 text-white hover:bg-white/10 font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
           >
