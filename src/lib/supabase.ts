@@ -53,9 +53,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   global: {
     // In the Capacitor Android WebView, calling the unbound global `fetch`
     // can lose the Window context and throw "Failed to execute 'fetch' on
-    // 'Window': Invalid value". Binding it to `window` ensures the correct
-    // receiver is used on all platforms (web, iOS, Android WebView).
-    fetch: typeof window !== 'undefined' ? window.fetch.bind(window) : undefined,
+    // 'Window': Invalid value".  Using a wrapper arrow function (rather than
+    // window.fetch.bind(window)) ensures we always call the *current*
+    // window.fetch at the time of the request, so any late patching by
+    // Capacitor plugins is picked up, and `this` is always `window`.
+    fetch: typeof window !== 'undefined'
+      ? (input: RequestInfo | URL, init?: RequestInit) => window.fetch(input, init)
+      : undefined,
   },
 });
 
