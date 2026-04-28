@@ -1,59 +1,82 @@
 /**
  * src/pages/Home.tsx — root "/" route
  *
- * Product-first marketplace layout:
- *  Header (global, rendered by App.tsx)
- *  Hero
- *  CategoryGrid
- *  TrendingProducts
- *  LatestListings
- *  SellerCTA
- *  BottomNav
+ * Section order:
+ *  1. Hero Section       — headline, CTAs, payment badges, product image
+ *  2–4. Dark platform overview (bg-[#0A1930]):
+ *       TrustStrip → HowItWorksSection → FeaturesGrid + SecurityTrust
+ *       All spaced with mt-8 md:mt-10 lg:mt-12 inside one section wrapper
+ *  5. SellerCTA          — green full-width CTA banner
+ *  6. Footer             — rendered by MainLayout
  */
 
+import { Helmet } from "react-helmet-async";
+
 import SEO from "@/components/SEO";
+import MainLayout from "@/layouts/MainLayout";
 import HeroSection from "@/components/HeroSection";
-import CategoryGrid from "@/components/CategoryGrid";
-import TrendingProducts from "@/components/TrendingProducts";
-import LatestListings from "@/components/LatestListings";
+import TrustStrip from "@/components/TrustStrip";
+import HowItWorksSection from "@/components/HowItWorksSection";
+import FeaturesGrid from "@/components/FeaturesGrid";
+import SecurityTrust from "@/components/SecurityTrust";
+import SocialFollowSection from "@/components/SocialFollowSection";
 import SellerCTA from "@/components/SellerCTA";
-import BottomNav from "@/components/BottomNav";
 
 export default function Home() {
   return (
-    <>
+    <MainLayout>
+      {/* Preload the LCP hero image only on the homepage */}
+      <Helmet>
+        <link
+          rel="preload"
+          as="image"
+          href="/hero-gold.jpeg"
+          type="image/jpeg"
+          // @ts-expect-error — fetchpriority is a valid HTML attr not yet in React types
+          fetchpriority="high"
+        />
+      </Helmet>
       <SEO
-        title="Buy & Sell Across the UK — Loadify Market"
-        description="Browse trending products, the latest listings and top UK sellers. Fast. Secure. Simple."
+        title="The UK Marketplace Built for Modern Sellers — 0% Commission | Loadify Market"
+        description="Sell products, manage orders, and get paid — all in one secure platform. 0% commission until 31 December 2026. Free to list, no monthly charges."
         canonical="/"
       />
 
-      <main
-        id="main-content"
-        className="min-h-screen"
-        style={{ background: "#0B0F1A", paddingTop: 122 /* header height */ }}
-      >
-        {/* ── 1. Hero ─────────────────────────────────────────────────────── */}
+      <main id="main-content">
+
+        {/* ── 1. Hero ──────────────────────────────────────────────────── */}
         <HeroSection />
 
-        {/* ── 2. Category Grid ────────────────────────────────────────────── */}
-        <CategoryGrid />
+        {/* ── 2–4. Dark-bg platform overview (Trust → HowItWorks → Features+Security) ── */}
+        <section className="bg-[#020617] py-8 px-4 sm:px-6 lg:px-8" aria-label="Platform overview">
 
-        {/* ── 3. Trending Products ────────────────────────────────────────── */}
-        <TrendingProducts />
+          {/* Trust Strip */}
+          <TrustStrip />
 
-        {/* ── 4. Latest Listings ──────────────────────────────────────────── */}
-        <LatestListings />
+          {/* Social Follow — directly below trust badges, above How It Works */}
+          <div className="mt-6 lg:mt-8">
+            <SocialFollowSection />
+          </div>
 
-        {/* ── 5. Seller CTA ───────────────────────────────────────────────── */}
+          {/* How It Works */}
+          <div className="mt-6 lg:mt-8">
+            <HowItWorksSection />
+          </div>
+
+          {/* Features + Security */}
+          <div className="mt-6 lg:mt-8 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
+            <FeaturesGrid />
+            <SecurityTrust />
+          </div>
+
+        </section>
+
+        {/* ── 5. Seller CTA ────────────────────────────────────────────── */}
         <SellerCTA />
 
-        {/* Spacer so content isn't hidden behind fixed BottomNav */}
-        <div className="h-20" aria-hidden="true" />
-      </main>
+        {/* ── 6. Footer — rendered by MainLayout ───────────────────────── */}
 
-      {/* ── 6. Bottom Nav ───────────────────────────────────────────────── */}
-      <BottomNav />
-    </>
+      </main>
+    </MainLayout>
   );
 }
