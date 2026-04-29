@@ -52,6 +52,10 @@ const Login = () => {
     setError("");
     setLoading(true);
 
+    // STEP 3 — Verify env inside APK (unconditional so it appears in all builds)
+    console.log("[ENV URL]", import.meta.env.VITE_SUPABASE_URL);
+    console.log("[ENV KEY LENGTH]", import.meta.env.VITE_SUPABASE_ANON_KEY?.length);
+
     // TEMPORARY mobile diagnostics — active on both the native APK and any
     // mobile browser (phone/tablet user-agent).  Uses console.warn so terser
     // does not strip these calls.  Remove once the mobile auth issue is fixed.
@@ -97,11 +101,31 @@ const Login = () => {
     try {
       const { supabase } = await import("@/lib/supabase");
 
+      // STEP 4 — Raw network tests before login attempt
+      await fetch("https://www.google.com")
+        .then(r => console.log("[TEST GOOGLE OK]", r.status))
+        .catch(e => console.error("[TEST GOOGLE FAIL]", e));
+
+      const _testSupabaseUrl = (import.meta.env.VITE_SUPABASE_URL ?? '').trim();
+      if (_testSupabaseUrl) {
+        await fetch(_testSupabaseUrl + "/auth/v1/token", { method: "POST" })
+          .then(r => console.log("[TEST SUPABASE OK]", r.status))
+          .catch(e => console.error("[TEST SUPABASE FAIL]", e));
+      }
+
+      // STEP 2 — Log before Supabase call
+      console.log("[LOGIN START]");
       if (_mobileDiag) {
         console.warn('[Login] calling supabase.auth.signInWithPassword');
       }
 
       const { data, error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+
+      // STEP 2 — Log result and session
+      console.log("[LOGIN RESULT]", { data, error: authError });
+      if (!authError) {
+        console.log("[LOGIN SESSION]", data?.session);
+      }
 
       if (_mobileDiag) {
         try {
@@ -136,6 +160,12 @@ const Login = () => {
 
       navigate(redirectTo, { replace: true });
     } catch (err) {
+      // STEP 1 — Force full error visibility (unconditional, appears in all builds)
+      console.error("[LOGIN RAW ERROR]", err);
+      console.error("[LOGIN NAME]", (err as Error)?.name);
+      console.error("[LOGIN MESSAGE]", (err as Error)?.message);
+      console.error("[LOGIN STACK]", (err as Error)?.stack);
+
       // TEMPORARY mobile diagnostics — active for APK and mobile browsers.
       // Remove once root cause is confirmed.
       if (_mobileDiag) {
@@ -183,10 +213,13 @@ const Login = () => {
           (raw.toLowerCase().includes("fetch") ||
             raw.toLowerCase().includes("network") ||
             raw.toLowerCase().includes("failed to execute")));
+      // STEP 1 — Show raw error message so APK logs capture the exact failure.
+      // Uses isFetchError to distinguish network-layer failures from auth errors.
+      const errMsg = (err as Error)?.message ?? String(err);
       setError(
         isFetchError
-          ? "Network error — please check your connection and try again."
-          : raw || "Login failed. Please check your credentials."
+          ? `Network error (${errMsg})`
+          : errMsg || "Login failed. Please check your credentials."
       );
     } finally {
       setLoading(false);

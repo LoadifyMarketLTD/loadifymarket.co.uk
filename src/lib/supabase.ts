@@ -29,6 +29,9 @@ try {
 // whenever it is present.  Strip it from every outgoing Supabase request so the
 // client works identically on both web and the Android APK.
 const mobileSafeFetch: typeof fetch = (input, init?) => {
+  // STEP 5 — Confirm mobileSafeFetch is used (unconditional, appears in all builds)
+  console.log("[mobileSafeFetch CALLED]", input, init);
+
   // DIAGNOSTIC (temporary): log every call so the APK log shows exactly what
   // options enter and exit this wrapper.  Uses console.warn so terser does not
   // strip it from the production bundle.  Remove once root cause is confirmed.
