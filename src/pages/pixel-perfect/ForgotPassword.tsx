@@ -28,7 +28,18 @@ const ForgotPassword = () => {
       if (resetError) throw resetError;
       setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send reset email");
+      const raw = err instanceof Error ? err.message : "";
+      // Android WebView (Capacitor APK) may throw a non-TypeError fetch error.
+      const isFetchError =
+        raw.includes("Failed to execute 'fetch'") ||
+        raw.includes('Failed to execute "fetch"') ||
+        ((err instanceof TypeError || err instanceof DOMException) &&
+          (raw.toLowerCase().includes("fetch") || raw.toLowerCase().includes("network")));
+      setError(
+        isFetchError
+          ? "Network error — please check your connection and try again."
+          : raw || "Failed to send reset email"
+      );
     } finally {
       setLoading(false);
     }
