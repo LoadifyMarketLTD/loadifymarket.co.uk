@@ -52,90 +52,78 @@ const Login = () => {
     setError("");
     setLoading(true);
 
-    // STEP 3 — Verify env inside APK (unconditional so it appears in all builds)
-    console.log("[ENV URL]", import.meta.env.VITE_SUPABASE_URL);
-    console.log("[ENV KEY LENGTH]", import.meta.env.VITE_SUPABASE_ANON_KEY?.length);
-
-    // TEMPORARY mobile diagnostics — active on both the native APK and any
-    // mobile browser (phone/tablet user-agent).  Uses console.warn so terser
-    // does not strip these calls.  Remove once the mobile auth issue is fixed.
+    // TEMPORARY diagnostics — unconditional so every platform (APK, mobile
+    // browser, desktop) emits the same evidence to logcat / DevTools.
+    // Remove once root cause is confirmed.
     const _apkDiag = isApkNative();
     const _mobileDiag = _apkDiag || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-    if (_mobileDiag) {
+    // ── STEP 3: env check ────────────────────────────────────────────────────
+    console.error('[ENV URL]', import.meta.env.VITE_SUPABASE_URL);
+    console.error('[ENV KEY LENGTH]', (import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').length);
+
+    // ── STEP 1 context: platform / fetch / localStorage / SW ────────────────
+    try {
+      let lsWritable = false;
       try {
-        // localStorage writability
-        let lsWritable = false;
-        try {
-          localStorage.setItem('__auth_check', '1');
-          localStorage.removeItem('__auth_check');
-          lsWritable = true;
-        } catch { /* blocked */ }
+        localStorage.setItem('__auth_check', '1');
+        localStorage.removeItem('__auth_check');
+        lsWritable = true;
+      } catch { /* blocked */ }
 
-        // service worker presence
-        let swState = 'unsupported';
-        try {
-          const swReg = await navigator.serviceWorker?.getRegistration?.();
-          swState = swReg?.active?.state ?? (swReg ? 'registered-no-active' : 'none');
-        } catch { swState = 'error'; }
+      let swState = 'unsupported';
+      try {
+        const swReg = await navigator.serviceWorker?.getRegistration?.();
+        swState = swReg?.active?.state ?? (swReg ? 'registered-no-active' : 'none');
+      } catch { swState = 'error'; }
 
-        const supabaseDomain = (() => {
-          try { return new URL((import.meta.env.VITE_SUPABASE_URL ?? '').trim()).hostname; }
-          catch { return '(invalid-url)'; }
-        })();
+      const supabaseDomain = (() => {
+        try { return new URL((import.meta.env.VITE_SUPABASE_URL ?? '').trim()).hostname; }
+        catch { return '(invalid-url)'; }
+      })();
 
-        console.warn(
-          '[Login] handleSubmit START',
-          `platform: ${_apkDiag ? 'APK-native' : 'mobile-browser'}`,
-          `ua: ${navigator.userAgent.slice(0, 80)}`,
-          `window.fetch type: ${typeof window?.fetch}`,
-          `fetch is patched: ${window?.fetch?.name === 'apkDiagFetch'}`,
-          `localStorage writable: ${lsWritable}`,
-          `serviceWorker state: ${swState}`,
-          `supabase domain: ${supabaseDomain}`,
-          `build: ${(import.meta.env.VITE_BUILD_SHA ?? 'local').slice(0, 7)} #${import.meta.env.VITE_BUILD_NUMBER ?? '0'}`,
-        );
-      } catch { /* ignore diagnostic errors */ }
-    }
+      console.warn(
+        '[Login] handleSubmit START',
+        `platform: ${_apkDiag ? 'APK-native' : (_mobileDiag ? 'mobile-browser' : 'desktop')}`,
+        `ua: ${navigator.userAgent.slice(0, 80)}`,
+        `window.fetch type: ${typeof window?.fetch}`,
+        `fetch is patched: ${window?.fetch?.name === 'apkDiagFetch'}`,
+        `localStorage writable: ${lsWritable}`,
+        `serviceWorker state: ${swState}`,
+        `supabase domain: ${supabaseDomain}`,
+        `build: ${(import.meta.env.VITE_BUILD_SHA ?? 'local').slice(0, 7)} #${import.meta.env.VITE_BUILD_NUMBER ?? '0'}`,
+      );
+    } catch { /* ignore diagnostic errors */ }
+
+    // ── STEP 4: raw network pre-flight ───────────────────────────────────────
+    // Tests that the device can reach the internet AND the Supabase auth
+    // endpoint before we attempt the real sign-in.  Results appear in logcat
+    // regardless of what happens during the actual login call.
+    try {
+      await fetch('https://www.google.com')
+        .then(r => console.error('[TEST GOOGLE]', r.ok ? 'OK' : 'FAIL', r.status))
+        .catch(e => console.error('[TEST GOOGLE FAIL]', e));
+    } catch (e) { console.error('[TEST GOOGLE FAIL]', e); }
+
+    try {
+      const supabaseAuthUrl = (import.meta.env.VITE_SUPABASE_URL ?? '').trim() + '/auth/v1/token';
+      await fetch(supabaseAuthUrl, { method: 'POST' })
+        .then(r => console.error('[TEST SUPABASE]', r.ok ? 'OK' : 'FAIL', r.status))
+        .catch(e => console.error('[TEST SUPABASE FAIL]', e));
+    } catch (e) { console.error('[TEST SUPABASE FAIL]', e); }
 
     try {
       const { supabase } = await import("@/lib/supabase");
 
-      // STEP 4 — Raw network tests before login attempt
-      await fetch("https://www.google.com")
-        .then(r => console.log("[TEST GOOGLE OK]", r.status))
-        .catch(e => console.error("[TEST GOOGLE FAIL]", e));
-
-      const _testSupabaseUrl = (import.meta.env.VITE_SUPABASE_URL ?? '').trim();
-      if (_testSupabaseUrl) {
-        await fetch(_testSupabaseUrl + "/auth/v1/token", { method: "POST" })
-          .then(r => console.log("[TEST SUPABASE OK]", r.status))
-          .catch(e => console.error("[TEST SUPABASE FAIL]", e));
-      }
-
-      // STEP 2 — Log before Supabase call
-      console.log("[LOGIN START]");
-      if (_mobileDiag) {
-        console.warn('[Login] calling supabase.auth.signInWithPassword');
-      }
+      // ── STEP 2: log before signIn ─────────────────────────────────────────
+      console.error('[LOGIN START]');
 
       const { data, error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
 
-      // STEP 2 — Log result and session
-      console.log("[LOGIN RESULT]", { data, error: authError });
-      if (!authError) {
-        console.log("[LOGIN SESSION]", data?.session);
-      }
-
-      if (_mobileDiag) {
-        try {
-          console.warn(
-            '[Login] signInWithPassword returned',
-            `user: ${data?.user?.id ?? 'null'}`,
-            `session: ${data?.session ? 'present' : 'null'}`,
-            `error: ${authError?.message ?? 'none'}`,
-          );
-        } catch { /* ignore */ }
+      // ── STEP 2: log after signIn ──────────────────────────────────────────
+      console.error('[LOGIN RESULT]', { data, error: authError });
+      if (data?.session) {
+        console.error('[LOGIN SESSION]', data.session);
       }
 
       if (authError) throw authError;
@@ -147,80 +135,21 @@ const Login = () => {
       //   • populates the Zustand store
       // DashboardRedirect at /dashboard waits for isLoading=false and then
       // routes to the correct role-based hub (/buyer, /seller, /admin).
-      // Removing the redundant isActive + role queries here fixes the
-      // "Signing in…" stall on slow mobile networks where those queries hang.
       const nextUrl = searchParams.get("next");
       const redirectTo = nextUrl ?? "/dashboard";
-
-      if (_mobileDiag) {
-        try {
-          console.warn('[Login] navigating to:', redirectTo);
-        } catch { /* ignore */ }
-      }
-
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      // STEP 1 — Force full error visibility (unconditional, appears in all builds)
-      console.error("[LOGIN RAW ERROR]", err);
-      console.error("[LOGIN NAME]", (err as Error)?.name);
-      console.error("[LOGIN MESSAGE]", (err as Error)?.message);
-      console.error("[LOGIN STACK]", (err as Error)?.stack);
+      // ── STEP 1: full raw error — unconditional so it always hits logcat ───
+      console.error('[LOGIN RAW ERROR]', err);
+      console.error('[LOGIN NAME]', (err as Error)?.name);
+      console.error('[LOGIN MESSAGE]', (err as Error)?.message);
+      console.error('[LOGIN STACK]', (err as Error)?.stack);
 
-      // TEMPORARY mobile diagnostics — active for APK and mobile browsers.
-      // Remove once root cause is confirmed.
-      if (_mobileDiag) {
-        try {
-          const name = err instanceof Error ? err.name : 'UnknownError';
-          const msg = err instanceof Error ? err.message : String(err);
-          const stack = err instanceof Error ? (err.stack ?? '(no stack)') : '(no stack)';
-          console.error(
-            '[Login] signInWithPassword FAILED',
-            `error: ${name}: ${msg}`,
-            `stack: ${stack}`,
-          );
-        } catch { /* ignore diagnostic errors */ }
-      }
-
-      // APK-safe runtime diagnostics — dev-only to avoid exposing config details in production.
-      if (import.meta.env.DEV) {
-        try {
-          const supabaseUrlRuntime = (import.meta.env.VITE_SUPABASE_URL ?? '').trim();
-          console.error('[Login] signInWithPassword error:', err);
-          console.error('[Login] typeof window.fetch:', typeof window?.fetch);
-          console.error('[Login] supabaseUrl starts with https://', supabaseUrlRuntime.startsWith('https://'));
-          try {
-            console.error('[Login] supabaseUrl hostname:', new URL(supabaseUrlRuntime).hostname);
-          } catch {
-            console.error('[Login] supabaseUrl is not a valid URL:', supabaseUrlRuntime);
-          }
-          const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim();
-          console.error('[Login] anon key present:', anonKey.length > 0);
-          console.error('[Login] anon key length:', anonKey.length);
-        } catch {
-          // ignore diagnostic errors
-        }
-      }
-      const raw = err instanceof Error ? err.message : "";
-      // Low-level fetch/network errors (e.g. Capacitor Android WebView
-      // "Failed to execute 'fetch' on 'Window': Invalid value") should be
-      // replaced with a user-friendly message.
-      // In Android WebView the error may not be a TypeError or DOMException,
-      // so check the message directly for the WebView-specific pattern first,
-      // then fall back to the standard web error types.
-      const isFetchError =
-        /failed to execute ['"]?fetch['"]?/i.test(raw) ||
-        ((err instanceof TypeError || err instanceof DOMException) &&
-          (raw.toLowerCase().includes("fetch") ||
-            raw.toLowerCase().includes("network") ||
-            raw.toLowerCase().includes("failed to execute")));
-      // STEP 1 — Show raw error message so APK logs capture the exact failure.
-      // Uses isFetchError to distinguish network-layer failures from auth errors.
-      const errMsg = (err as Error)?.message ?? String(err);
-      setError(
-        isFetchError
-          ? `Network error (${errMsg})`
-          : errMsg || "Login failed. Please check your credentials."
-      );
+      const raw = err instanceof Error ? err.message : String(err);
+      const name = err instanceof Error ? err.name : 'UnknownError';
+      // Show the exact error class + message on-screen so the APK screenshot
+      // captures it without needing logcat access.
+      setError(raw ? `${name}: ${raw}` : 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
