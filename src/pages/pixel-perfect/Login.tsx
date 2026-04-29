@@ -105,16 +105,18 @@ const Login = () => {
       }
       const raw = err instanceof Error ? err.message : "";
       // Low-level fetch/network errors (e.g. Capacitor Android WebView
-      // "Failed to execute 'fetch' on 'Window': Invalid value") are TypeErrors
-      // or DOMExceptions that expose raw browser internals — replace them with
-      // a user-friendly message.  We gate on the error type first to avoid
-      // false-positives on Supabase auth errors whose messages may contain
-      // the word "network".
+      // "Failed to execute 'fetch' on 'Window': Invalid value") should be
+      // replaced with a user-friendly message.
+      // In Android WebView the error may not be a TypeError or DOMException,
+      // so check the message directly for the WebView-specific pattern first,
+      // then fall back to the standard web error types.
       const isFetchError =
-        (err instanceof TypeError || err instanceof DOMException) &&
-        (raw.toLowerCase().includes("fetch") ||
-          raw.toLowerCase().includes("network") ||
-          raw.toLowerCase().includes("failed to execute"));
+        raw.includes("Failed to execute 'fetch'") ||
+        raw.includes('Failed to execute "fetch"') ||
+        ((err instanceof TypeError || err instanceof DOMException) &&
+          (raw.toLowerCase().includes("fetch") ||
+            raw.toLowerCase().includes("network") ||
+            raw.toLowerCase().includes("failed to execute")));
       setError(
         isFetchError
           ? "Network error — please check your connection and try again."

@@ -23,6 +23,19 @@ try {
   );
 }
 
+// Android WebView (used by the Loadify APK) does not support the `keepalive`
+// fetch option and throws "Failed to execute 'fetch' on 'Window': Invalid value"
+// whenever it is present.  Strip it from every outgoing Supabase request so the
+// client works identically on both web and the Android APK.
+const mobileSafeFetch: typeof fetch = (input, init?) => {
+  if (init && 'keepalive' in init) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { keepalive: _keepalive, ...rest } = init as RequestInit & { keepalive?: boolean };
+    return fetch(input, rest);
+  }
+  return fetch(input, init);
+};
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
@@ -33,6 +46,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     // Use localStorage explicitly so the storage key is predictable and
     // Supabase never silently downgrades to in-memory storage.
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+  },
+  global: {
+    // Use the mobile-safe fetch wrapper defined above.
+    fetch: mobileSafeFetch,
   },
 });
 
