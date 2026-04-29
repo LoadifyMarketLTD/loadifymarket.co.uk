@@ -34,6 +34,13 @@ jobs:
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+      # TEMPORARY: Build identity vars baked into the APK bundle so the login
+      # page shows a visible build stamp for APK diagnostics.  Remove these
+      # (and the corresponding UI code) once the fetch root cause is confirmed.
+      VITE_BUILD_SHA: ${{ github.sha }}
+      VITE_BUILD_NUMBER: ${{ github.run_number }}
+      # VITE_BUILD_TIME is set by the "Set build timestamp" step below so it
+      # is always a real UTC timestamp regardless of trigger type.
       # Keystore filename used consistently across decode + build steps.
       RELEASE_KEYSTORE_FILENAME: loadify-release.keystore
 
@@ -49,6 +56,13 @@ jobs:
 
       - name: Install JS dependencies
         run: npm ci
+
+      # ── Set build timestamp ────────────────────────────────────────────────────
+      # Sets VITE_BUILD_TIME in the workflow env so Vite bakes it into the bundle
+      # as the APK build stamp.  Uses date rather than head_commit.timestamp so it
+      # is always present regardless of the workflow trigger type.
+      - name: Set build timestamp
+        run: echo "VITE_BUILD_TIME=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
 
       # ── Guard: require real Supabase credentials ───────────────────────────────
       # VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are baked into the bundle at
