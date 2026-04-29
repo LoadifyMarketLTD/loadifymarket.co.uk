@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ShieldCheck } from "lucide-react";
 import { useAuthStore } from "@/store";
+import { isApkNative } from "@/lib/apkDiagnostics";
 
 /* ── Shared Google / Apple SVG logos ─────────────────────────────────── */
 const GoogleIcon = () => (
@@ -50,8 +51,34 @@ const Login = () => {
     e.preventDefault();
     setError("");
     setLoading(true);
+
+    // TEMPORARY APK diagnostics — runs in ALL builds (not DEV-only) so the
+    // production APK log captures this.  Uses console.warn so terser keeps it.
+    // Remove once the fetch root cause is confirmed.
+    const _apkDiag = isApkNative();
+    if (_apkDiag) {
+      try {
+        const supabaseDomain = (() => {
+          try { return new URL((import.meta.env.VITE_SUPABASE_URL ?? '').trim()).hostname; }
+          catch { return '(invalid-url)'; }
+        })();
+        console.warn(
+          '[Login] handleSubmit START',
+          `window.fetch type: ${typeof window?.fetch}`,
+          `fetch is patched: ${window?.fetch?.name === 'apkDiagFetch'}`,
+          `supabase domain: ${supabaseDomain}`,
+          `build: ${(import.meta.env.VITE_BUILD_SHA ?? 'local').slice(0, 7)} #${import.meta.env.VITE_BUILD_NUMBER ?? '0'}`,
+        );
+      } catch { /* ignore diagnostic errors */ }
+    }
+
     try {
       const { supabase } = await import("@/lib/supabase");
+
+      if (_apkDiag) {
+        console.warn('[Login] calling supabase.auth.signInWithPassword');
+      }
+
       const { data, error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (authError) throw authError;
 
@@ -84,6 +111,21 @@ const Login = () => {
       }
       navigate(redirectTo, { replace: true });
     } catch (err) {
+      // TEMPORARY APK diagnostics — always-on for production APK builds.
+      // Remove once root cause is confirmed.
+      if (_apkDiag) {
+        try {
+          const name = err instanceof Error ? err.name : 'UnknownError';
+          const msg = err instanceof Error ? err.message : String(err);
+          const stack = err instanceof Error ? (err.stack ?? '(no stack)') : '(no stack)';
+          console.error(
+            '[Login] signInWithPassword FAILED',
+            `error: ${name}: ${msg}`,
+            `stack: ${stack}`,
+          );
+        } catch { /* ignore diagnostic errors */ }
+      }
+
       // APK-safe runtime diagnostics — dev-only to avoid exposing config details in production.
       if (import.meta.env.DEV) {
         try {
@@ -302,6 +344,13 @@ const Login = () => {
                   <ShieldCheck className="h-3.5 w-3.5 text-slate-500" />
                   <span>Secured with 256-bit SSL encryption</span>
                 </div>
+
+                {/* TEMPORARY build stamp — remove once APK fetch root cause confirmed. */}
+                <p className="text-center font-mono text-[9px] text-slate-600 select-all leading-tight mt-1" title="Build diagnostics">
+                  {(import.meta.env.VITE_BUILD_SHA ?? 'local').slice(0, 7)}
+                  {' '}#{import.meta.env.VITE_BUILD_NUMBER ?? '0'}
+                  {' '}{import.meta.env.VITE_BUILD_TIME ? import.meta.env.VITE_BUILD_TIME.slice(0, 16).replace('T', ' ') : ''}
+                </p>
 
               </form>
             </div>
