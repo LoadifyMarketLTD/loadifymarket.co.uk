@@ -152,7 +152,15 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::Missing KEYSTORE_BASE64 secret (required for release signing)."
+            exit 1
+          fi
           echo "$KEYSTORE_BASE64" | base64 --decode > android/app/loadify-release.jks
+          if [ ! -s android/app/loadify-release.jks ]; then
+            echo "::error::Decoded keystore is empty or invalid."
+            exit 1
+          fi
 
       - name: Build release APK
         working-directory: android
@@ -164,7 +172,7 @@ jobs:
           # Derive version from the git run number so it increases with every main push.
           APK_VERSION_CODE: ${{ github.run_number }}
           APK_VERSION_NAME: "1.${{ github.run_number }}"
-        run: ./gradlew assembleRelease --no-daemon
+        run: ./gradlew :app:assembleRelease --no-daemon --stacktrace --info
 
       - name: Upload signed APK artifact
         uses: actions/upload-artifact@v7
