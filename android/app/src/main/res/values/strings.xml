@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Loadify Market</string>
-    <string name="title_activity_main">Loadify Market</string>
-    <string name="package_name">co.uk.loadifymarket.app</string>
-    <string name="custom_url_scheme">co.uk.loadifymarket.app</string>
-</resources>

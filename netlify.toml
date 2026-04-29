@@ -161,15 +161,6 @@
   [headers.values]
     Cache-Control = "no-cache, must-revalidate"
 
-# ─── Android App Links verification file ─────────────────────────────────────
-# Must be served as application/json with HTTP 200 (no redirects, no HTML).
-[[headers]]
-  for = "/.well-known/assetlinks.json"
-  [headers.values]
-    Content-Type = "application/json"
-    Cache-Control = "no-store"
-    Access-Control-Allow-Origin = "*"
-
 [[headers]]
   for = "/manifest.webmanifest"
   [headers.values]
