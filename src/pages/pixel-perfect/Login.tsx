@@ -139,8 +139,8 @@ const Login = () => {
       const redirectTo = nextUrl ?? "/dashboard";
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      // ── STEP 1: full raw error — unconditional so it always hits logcat ───
-      console.error('[LOGIN RAW ERROR]', err);
+      // ── Full error object — unconditional so it always hits logcat ────────
+      console.error('[LOGIN ERROR FULL]', err);
       console.error('[LOGIN NAME]', (err as Error)?.name);
       console.error('[LOGIN MESSAGE]', (err as Error)?.message);
       console.error('[LOGIN STACK]', (err as Error)?.stack);

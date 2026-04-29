@@ -93,6 +93,45 @@ export function isApkNative(): boolean {
 }
 
 /**
+ * Log runtime proof of the Supabase env vars baked into the bundle.
+ *
+ * Reads the RAW (untrimmed) values so any leading/trailing/internal whitespace
+ * or hidden characters are detectable.  Nothing secret is printed: only length,
+ * first/last 10 characters, and boolean flags are emitted — the full key is
+ * never exposed in logcat.
+ *
+ * Uses console.error so terser's pure_funcs config does NOT strip these calls
+ * from the production bundle.
+ */
+export function logApkEnvDiagnostics(): void {
+  // Read raw — intentionally NOT trimmed so hidden chars are visible in flags.
+  const url = import.meta.env.VITE_SUPABASE_URL ?? '';
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
+
+  // Required proof: log exactly what the runtime has baked in.
+  console.error('[ENV CHECK]', {
+    url,
+    keyLength: key.length,
+    keyFirst10: key.slice(0, 10),
+    keyLast10: key.slice(-10),
+    hasWhitespace: /\s/.test(key),
+    startsWithEyJ: key.startsWith('eyJ'),
+  });
+
+  const urlValid = url.trimStart().startsWith('https://');
+  const keyOk = key.length > 0 && !/\s/.test(key) && key.startsWith('eyJ');
+
+  if (!urlValid || !keyOk) {
+    console.error('[FATAL] INVALID SUPABASE ENV IN APK', {
+      urlValid,
+      keyNonEmpty: key.length > 0,
+      keyNoWhitespace: !/\s/.test(key),
+      keyStartsEyJ: key.startsWith('eyJ'),
+    });
+  }
+}
+
+/**
  * Install a diagnostic wrapper around window.fetch.
  *
  * Only active when Capacitor.isNativePlatform() returns true (i.e. when the
