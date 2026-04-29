@@ -24,10 +24,16 @@ try {
   );
 }
 
-// Android WebView (used by the Loadify APK) does not support the `keepalive`
-// fetch option and throws "Failed to execute 'fetch' on 'Window': Invalid value"
-// whenever it is present.  Strip it from every outgoing Supabase request so the
-// client works identically on both web and the Android APK.
+// Primary fix for Android WebView network failures: CapacitorHttp is enabled in
+// capacitor.config.ts (plugins.CapacitorHttp.enabled = true).  This routes all
+// window.fetch calls through the native Android HTTP client, bypassing every
+// WebView-specific limitation (CORS from https://localhost origin, keepalive
+// support gaps, WebView SSL quirks, etc.).
+//
+// Secondary defence: strip the `keepalive` option from every Supabase request.
+// Android WebView throws "Failed to execute 'fetch' on 'Window': Invalid value"
+// if `keepalive` is present, even without CapacitorHttp.  Keeping the strip
+// ensures the APK works safely across Capacitor versions and WebView builds.
 const mobileSafeFetch: typeof fetch = (input, init?) => {
   // DIAGNOSTIC (temporary): log every call so the APK log shows exactly what
   // options enter and exit this wrapper.  Uses console.warn so terser does not

@@ -272,6 +272,44 @@ jobs:
       - name: Sync Capacitor → Android
         run: npx cap sync android
 
+      # ── Forensic check: CapacitorHttp enabled in generated config ─────────────
+      # Verifies that the CapacitorHttp plugin (which routes all window.fetch calls
+      # through the native Android HTTP client) is present and enabled in the
+      # capacitor.config.json file synced into the Android assets.  Without this
+      # the APK uses the WebView fetch stack which fails with "Network error" due
+      # to CORS from https://localhost and other WebView HTTP limitations.
+      - name: '[Forensic] Verify CapacitorHttp enabled in Android config'
+        run: |
+          CONFIG_FILE="android/app/src/main/assets/capacitor.config.json"
+          echo "Checking: $CONFIG_FILE"
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "FAIL: $CONFIG_FILE not found after cap sync"
+            exit 1
+          fi
+          echo "Config contents:"
+          cat "$CONFIG_FILE"
+          echo ""
+          if python3 -c "
+          import json, sys
+          with open('$CONFIG_FILE') as f:
+              cfg = json.load(f)
+          plugins = cfg.get('plugins', {})
+          cap_http = plugins.get('CapacitorHttp', {})
+          enabled = cap_http.get('enabled', False)
+          if enabled:
+              print('PASS: CapacitorHttp.enabled=true found in capacitor.config.json')
+              sys.exit(0)
+          else:
+              print('FAIL: CapacitorHttp.enabled is NOT true in capacitor.config.json')
+              print('  plugins.CapacitorHttp =', cap_http)
+              sys.exit(1)
+          "; then
+            echo "CapacitorHttp check PASSED"
+          else
+            echo "CapacitorHttp check FAILED — Android APK will use WebView fetch (broken)"
+            exit 1
+          fi
+
       # ── Forensic check 2: Android assets (post-sync) ──────────────────────────
       - name: '[Forensic 2] Inspect android assets (post-cap-sync)'
         run: |

@@ -23,6 +23,15 @@ const config: CapacitorConfig = {
     },
   },
   plugins: {
+    // Route all window.fetch and XMLHttpRequest calls through the native Android
+    // HTTP client instead of the WebView network stack.  This resolves the
+    // "Network error — please check your connection" failure seen in the APK
+    // because it bypasses WebView-specific limitations such as CORS restrictions
+    // from the https://localhost origin, keepalive support gaps, and other
+    // Chromium WebView quirks that do not affect desktop browsers.
+    CapacitorHttp: {
+      enabled: true,
+    },
     SplashScreen: {
       launchShowDuration: 2000,
       launchAutoHide: true,
