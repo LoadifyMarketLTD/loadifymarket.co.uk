@@ -56,17 +56,15 @@ const Login = () => {
     // mobile browser (phone/tablet user-agent).  Uses console.warn so terser
     // does not strip these calls.  Remove once the mobile auth issue is fixed.
     const _apkDiag = isApkNative();
-    const _mobileDiag = _apkDiag || /Mobi|Android|iPhone|iPad|iPod/i.test(
-      typeof navigator !== 'undefined' ? navigator.userAgent : ''
-    );
+    const _mobileDiag = _apkDiag || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     if (_mobileDiag) {
       try {
         // localStorage writability
         let lsWritable = false;
         try {
-          localStorage.setItem('__lm_check', '1');
-          localStorage.removeItem('__lm_check');
+          localStorage.setItem('__auth_check', '1');
+          localStorage.removeItem('__auth_check');
           lsWritable = true;
         } catch { /* blocked */ }
 
