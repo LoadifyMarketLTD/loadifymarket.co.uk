@@ -146,7 +146,7 @@ jobs:
         run: npm run build
 
       - name: Sync Capacitor
-        run: npx cap copy android
+        run: npx cap sync android
 
       - name: Decode keystore
         env:
