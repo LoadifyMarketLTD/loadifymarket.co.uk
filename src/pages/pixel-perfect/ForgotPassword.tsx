@@ -28,6 +28,10 @@ const ForgotPassword = () => {
       if (resetError) throw resetError;
       setSubmitted(true);
     } catch (err) {
+      // APK-safe runtime diagnostics — dev-only to avoid exposing config details in production.
+      if (import.meta.env.DEV) {
+        console.error('[ForgotPassword] resetPasswordForEmail error:', err);
+      }
       const raw = err instanceof Error ? err.message : "";
       // Android WebView (Capacitor APK) may throw a non-TypeError fetch error.
       const isFetchError =

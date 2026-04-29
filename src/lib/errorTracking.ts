@@ -36,11 +36,16 @@ function sendReport(report: ErrorReport): void {
     if (navigator.sendBeacon) {
       navigator.sendBeacon(REPORT_ENDPOINT, new Blob([payload], { type: 'application/json' }));
     } else {
+      // Note: `keepalive: true` is intentionally omitted here.
+      // Android WebView (Capacitor APK) does not support the keepalive fetch
+      // option and throws "Failed to execute 'fetch' on 'Window': Invalid value"
+      // when it is present.  Dropping it means the request may not survive a
+      // page-unload event, but that is acceptable for fire-and-forget error
+      // reporting — the app must never crash because of error tracking.
       fetch(REPORT_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: payload,
-        keepalive: true,
       }).catch(() => {
         // Swallow fetch errors — the app must not crash due to error reporting.
       });
