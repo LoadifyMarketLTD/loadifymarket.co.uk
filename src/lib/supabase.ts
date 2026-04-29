@@ -1,5 +1,4 @@
 import { createClient } from '@supabase/supabase-js';
-import { isApkNative } from './apkDiagnostics';
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL ?? '').trim();
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim();
@@ -35,28 +34,25 @@ try {
 // if `keepalive` is present, even without CapacitorHttp.  Keeping the strip
 // ensures the APK works safely across Capacitor versions and WebView builds.
 const mobileSafeFetch: typeof fetch = (input, init?) => {
-  // DIAGNOSTIC (temporary): log every call so the APK log shows exactly what
-  // options enter and exit this wrapper.  Uses console.warn so terser does not
-  // strip it from the production bundle.  Remove once root cause is confirmed.
-  const _native = isApkNative();
-  if (_native) {
-    const preKeys = init ? Object.keys(init).join(',') : '(none)';
-    const hasKeepalive = init != null && 'keepalive' in init;
-    console.warn(
-      '[mobileSafeFetch] ENTER',
-      `optKeys=[${preKeys}]`,
-      `hasKeepalive=${hasKeepalive}`,
-    );
-  }
+  // DIAGNOSTIC (temporary): unconditional console.error so the call appears
+  // in logcat on every platform (APK, mobile browser, desktop DevTools).
+  // Uses console.error to survive terser's pure_funcs drop_console config.
+  // Remove once root cause is confirmed.
+  const preKeys = init ? Object.keys(init).join(',') : '(none)';
+  const hasKeepalive = init != null && 'keepalive' in init;
+  console.error(
+    '[mobileSafeFetch CALLED]',
+    String(input instanceof Request ? input.url : input).slice(0, 120),
+    `optKeys=[${preKeys}]`,
+    `hasKeepalive=${hasKeepalive}`,
+  );
 
   if (init && 'keepalive' in init) {
     const { keepalive: _keepalive, ...rest } = init as RequestInit & { keepalive?: boolean };
-    if (_native) {
-      console.warn(
-        '[mobileSafeFetch] STRIPPED keepalive',
-        `remaining optKeys=[${Object.keys(rest).join(',') || '(none)'}]`,
-      );
-    }
+    console.error(
+      '[mobileSafeFetch] STRIPPED keepalive',
+      `remaining optKeys=[${Object.keys(rest).join(',') || '(none)'}]`,
+    );
     return fetch(input, rest);
   }
   return fetch(input, init);
