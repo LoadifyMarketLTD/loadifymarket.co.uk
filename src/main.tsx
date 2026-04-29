@@ -70,11 +70,9 @@ if (import.meta.env.DEV) {
   });
 }
 
-import { isCapacitorNative } from "./lib/capacitor.ts";
-
 // Register the cleanup service worker so any previously cached responses are
 // cleared and the old SW is unregistered. The SW itself does no caching.
-if (!isCapacitorNative && 'serviceWorker' in navigator) {
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {
       // Non-fatal — ignore registration errors

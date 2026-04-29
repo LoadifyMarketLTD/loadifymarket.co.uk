@@ -13,9 +13,6 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@capacitor/android": "^8.3.0",
-    "@capacitor/app": "^8.1.0",
-    "@capacitor/core": "^8.3.0",
     "@hookform/resolvers": "^5.2.2",
     "@netlify/functions": "^2.0.0",
     "@radix-ui/react-accordion": "^1.2.12",
@@ -77,7 +74,6 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.3.0",
     "@eslint/js": "^9.39.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
