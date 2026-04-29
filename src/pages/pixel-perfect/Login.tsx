@@ -111,8 +111,7 @@ const Login = () => {
       // so check the message directly for the WebView-specific pattern first,
       // then fall back to the standard web error types.
       const isFetchError =
-        raw.includes("Failed to execute 'fetch'") ||
-        raw.includes('Failed to execute "fetch"') ||
+        /failed to execute ['"]?fetch['"]?/i.test(raw) ||
         ((err instanceof TypeError || err instanceof DOMException) &&
           (raw.toLowerCase().includes("fetch") ||
             raw.toLowerCase().includes("network") ||
