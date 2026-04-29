@@ -52,20 +52,42 @@ const Login = () => {
     setError("");
     setLoading(true);
 
-    // TEMPORARY APK diagnostics — runs in ALL builds (not DEV-only) so the
-    // production APK log captures this.  Uses console.warn so terser keeps it.
-    // Remove once the fetch root cause is confirmed.
+    // TEMPORARY mobile diagnostics — active on both the native APK and any
+    // mobile browser (phone/tablet user-agent).  Uses console.warn so terser
+    // does not strip these calls.  Remove once the mobile auth issue is fixed.
     const _apkDiag = isApkNative();
-    if (_apkDiag) {
+    const _mobileDiag = _apkDiag || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (_mobileDiag) {
       try {
+        // localStorage writability
+        let lsWritable = false;
+        try {
+          localStorage.setItem('__auth_check', '1');
+          localStorage.removeItem('__auth_check');
+          lsWritable = true;
+        } catch { /* blocked */ }
+
+        // service worker presence
+        let swState = 'unsupported';
+        try {
+          const swReg = await navigator.serviceWorker?.getRegistration?.();
+          swState = swReg?.active?.state ?? (swReg ? 'registered-no-active' : 'none');
+        } catch { swState = 'error'; }
+
         const supabaseDomain = (() => {
           try { return new URL((import.meta.env.VITE_SUPABASE_URL ?? '').trim()).hostname; }
           catch { return '(invalid-url)'; }
         })();
+
         console.warn(
           '[Login] handleSubmit START',
+          `platform: ${_apkDiag ? 'APK-native' : 'mobile-browser'}`,
+          `ua: ${navigator.userAgent.slice(0, 80)}`,
           `window.fetch type: ${typeof window?.fetch}`,
           `fetch is patched: ${window?.fetch?.name === 'apkDiagFetch'}`,
+          `localStorage writable: ${lsWritable}`,
+          `serviceWorker state: ${swState}`,
           `supabase domain: ${supabaseDomain}`,
           `build: ${(import.meta.env.VITE_BUILD_SHA ?? 'local').slice(0, 7)} #${import.meta.env.VITE_BUILD_NUMBER ?? '0'}`,
         );
@@ -75,45 +97,48 @@ const Login = () => {
     try {
       const { supabase } = await import("@/lib/supabase");
 
-      if (_apkDiag) {
+      if (_mobileDiag) {
         console.warn('[Login] calling supabase.auth.signInWithPassword');
       }
 
       const { data, error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+
+      if (_mobileDiag) {
+        try {
+          console.warn(
+            '[Login] signInWithPassword returned',
+            `user: ${data?.user?.id ?? 'null'}`,
+            `session: ${data?.session ? 'present' : 'null'}`,
+            `error: ${authError?.message ?? 'none'}`,
+          );
+        } catch { /* ignore */ }
+      }
+
       if (authError) throw authError;
 
-      if (data.user) {
-        const { data: userRow } = await supabase
-          .from("users")
-          .select("isActive")
-          .eq("id", data.user.id)
-          .single();
-        if (userRow && userRow.isActive === false) {
-          await supabase.auth.signOut();
-          throw new Error("Your account has been suspended. Please contact support.");
-        }
+      // After a successful sign-in, navigate immediately without making extra
+      // DB round-trips.  App.tsx's onAuthStateChange listener already:
+      //   • checks isActive and signs out suspended users
+      //   • fetches the full user profile (role, seller status, etc.)
+      //   • populates the Zustand store
+      // DashboardRedirect at /dashboard waits for isLoading=false and then
+      // routes to the correct role-based hub (/buyer, /seller, /admin).
+      // Removing the redundant isActive + role queries here fixes the
+      // "Signing in…" stall on slow mobile networks where those queries hang.
+      const nextUrl = searchParams.get("next");
+      const redirectTo = nextUrl ?? "/dashboard";
+
+      if (_mobileDiag) {
+        try {
+          console.warn('[Login] navigating to:', redirectTo);
+        } catch { /* ignore */ }
       }
 
-      const nextUrl = searchParams.get("next");
-      if (nextUrl) { navigate(nextUrl, { replace: true }); return; }
-      // Default to /dashboard so DashboardRedirect (which waits for the correct
-      // Zustand store state) handles role-based routing.  Avoid hardcoding
-      // /buyer here — if the role query below fails, an admin would be
-      // incorrectly sent to the buyer hub.
-      let redirectTo = "/dashboard";
-      if (data.user) {
-        const { data: profile, error: profileError } = await supabase
-          .from("users").select("role").eq("id", data.user.id).single();
-        if (profileError) console.warn("Could not fetch user role:", profileError.message);
-        if (profile?.role === "seller") redirectTo = "/seller";
-        else if (profile?.role === "admin") redirectTo = "/admin";
-        else if (profile?.role === "buyer") redirectTo = "/buyer";
-      }
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      // TEMPORARY APK diagnostics — always-on for production APK builds.
+      // TEMPORARY mobile diagnostics — active for APK and mobile browsers.
       // Remove once root cause is confirmed.
-      if (_apkDiag) {
+      if (_mobileDiag) {
         try {
           const name = err instanceof Error ? err.name : 'UnknownError';
           const msg = err instanceof Error ? err.message : String(err);
