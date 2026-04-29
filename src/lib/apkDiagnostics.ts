@@ -93,44 +93,41 @@ export function isApkNative(): boolean {
 }
 
 /**
- * Log a safe summary of the Supabase env vars baked into the bundle.
+ * Log runtime proof of the Supabase env vars baked into the bundle.
  *
- * Nothing secret is printed: only length, first/last 10 characters, and
- * boolean flags are emitted so the full key is never exposed in logcat.
+ * Reads the RAW (untrimmed) values so any leading/trailing/internal whitespace
+ * or hidden characters are detectable.  Nothing secret is printed: only length,
+ * first/last 10 characters, and boolean flags are emitted — the full key is
+ * never exposed in logcat.
  *
- * Uses console.error so terser's pure_funcs config does NOT strip this call
+ * Uses console.error so terser's pure_funcs config does NOT strip these calls
  * from the production bundle.
  */
 export function logApkEnvDiagnostics(): void {
-  const url = (import.meta.env.VITE_SUPABASE_URL ?? '').trim();
-  const key = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim();
+  // Read raw — intentionally NOT trimmed so hidden chars are visible in flags.
+  const url = import.meta.env.VITE_SUPABASE_URL ?? '';
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
 
-  const keyLen = key.length;
-  const keyFirst10 = key.slice(0, 10);
-  const keyLast10 = key.slice(-10);
-  const keyHasWhitespace = /\s/.test(key);
-  const keyStartsEyJ = key.startsWith('eyJ');
-  const urlValid = url.startsWith('https://');
+  // Required proof: log exactly what the runtime has baked in.
+  console.error('[ENV CHECK]', {
+    url,
+    keyLength: key.length,
+    keyFirst10: key.slice(0, 10),
+    keyLast10: key.slice(-10),
+    hasWhitespace: /\s/.test(key),
+    startsWithEyJ: key.startsWith('eyJ'),
+  });
 
-  console.error(
-    '[APK-ENV]',
-    `VITE_SUPABASE_URL=${url}`,
-    `urlValid=${urlValid}`,
-    `keyLength=${keyLen}`,
-    `keyFirst10="${keyFirst10}"`,
-    `keyLast10="${keyLast10}"`,
-    `keyHasWhitespace=${keyHasWhitespace}`,
-    `keyStartsEyJ=${keyStartsEyJ}`,
-  );
+  const urlValid = url.trimStart().startsWith('https://');
+  const keyOk = key.length > 0 && !/\s/.test(key) && key.startsWith('eyJ');
 
-  if (keyHasWhitespace) {
-    console.error('[APK-ENV] WARNING: VITE_SUPABASE_ANON_KEY contains whitespace — this will cause "Invalid value" Headers error');
-  }
-  if (!keyStartsEyJ) {
-    console.error('[APK-ENV] WARNING: VITE_SUPABASE_ANON_KEY does not start with "eyJ" — key may be wrong value');
-  }
-  if (!urlValid) {
-    console.error('[APK-ENV] WARNING: VITE_SUPABASE_URL does not start with https://');
+  if (!urlValid || !keyOk) {
+    console.error('[FATAL] INVALID SUPABASE ENV IN APK', {
+      urlValid,
+      keyNonEmpty: key.length > 0,
+      keyNoWhitespace: !/\s/.test(key),
+      keyStartsEyJ: key.startsWith('eyJ'),
+    });
   }
 }
 

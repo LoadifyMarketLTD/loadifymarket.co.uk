@@ -73,6 +73,11 @@ const mobileSafeFetch: typeof fetch = (input, init?) => {
     `hasKeepalive=${hasKeepalive}`,
   );
 
+  // Log the exact headers object so we can identify which header value is
+  // invalid.  This is the direct evidence needed for the
+  // "Failed to construct 'Headers': Invalid value" error.
+  console.error('[FETCH HEADERS]', init?.headers);
+
   if (init && 'keepalive' in init) {
     const { keepalive: _keepalive, ...rest } = init as RequestInit & { keepalive?: boolean };
     console.error(

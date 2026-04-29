@@ -95,9 +95,13 @@ jobs:
             exit 1
           fi
           echo "VITE_SUPABASE_URL=$VITE_SUPABASE_URL_TRIMMED" >> "$GITHUB_ENV"
+          # Print RAW key length BEFORE any trimming so CI logs prove exactly
+          # what length the secret injected into the runner environment.
+          echo "RAW KEY LENGTH: ${#VITE_SUPABASE_ANON_KEY}"
           # Trim the anon key to remove any stray leading/trailing whitespace or
           # newline that would cause "Failed to construct 'Headers': Invalid value".
           VITE_SUPABASE_ANON_KEY_TRIMMED="$(printf '%s' "$VITE_SUPABASE_ANON_KEY" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+          echo "TRIMMED KEY LENGTH: ${#VITE_SUPABASE_ANON_KEY_TRIMMED}"
           echo "VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY_TRIMMED" >> "$GITHUB_ENV"
           echo "All required secrets are present and valid."
 
@@ -113,11 +117,23 @@ jobs:
           echo "SUPABASE ANON KEY length:   ${#KEY}"
           echo "SUPABASE ANON KEY first10:  ${KEY:0:10}"
           echo "SUPABASE ANON KEY last10:   ${KEY: -10}"
-          # Check for whitespace/newline using grep; -P for PCRE \s class
-          if printf '%s' "$KEY" | grep -qP '\s'; then
-            echo "SUPABASE ANON KEY whitespace: YES  ← WARNING: will cause 'Invalid value' Headers error"
+          # Check for internal whitespace (spaces, tabs) — separate from newlines.
+          if printf '%s' "$KEY" | grep -qP '[ \t]'; then
+            echo "SUPABASE ANON KEY internal spaces/tabs: YES  ← WARNING"
           else
-            echo "SUPABASE ANON KEY whitespace: NO"
+            echo "SUPABASE ANON KEY internal spaces/tabs: NO"
+          fi
+          # Check for embedded newlines (\n or \r) — separate from spaces.
+          if printf '%s' "$KEY" | grep -qP '[\r\n]'; then
+            echo "SUPABASE ANON KEY embedded newlines: YES  ← WARNING"
+          else
+            echo "SUPABASE ANON KEY embedded newlines: NO"
+          fi
+          # Combined whitespace check (covers all \s categories).
+          if printf '%s' "$KEY" | grep -qP '\s'; then
+            echo "SUPABASE ANON KEY any-whitespace: YES  ← will cause 'Invalid value' Headers error"
+          else
+            echo "SUPABASE ANON KEY any-whitespace: NO"
           fi
           echo "SUPABASE ANON KEY starts eyJ: $([[ "$KEY" == eyJ* ]] && echo YES || echo NO)"
 
