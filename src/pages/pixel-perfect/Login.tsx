@@ -84,23 +84,24 @@ const Login = () => {
       }
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      // APK-safe runtime diagnostics — helps confirm the actual root cause
-      // when inspecting logs from a real Android Capacitor build.
-      try {
-        const supabaseUrlRuntime = (import.meta.env.VITE_SUPABASE_URL ?? '').trim();
-        console.error('[Login] signInWithPassword error:', err);
-        console.error('[Login] typeof window.fetch:', typeof window?.fetch);
-        console.error('[Login] supabaseUrl starts with https://', supabaseUrlRuntime.startsWith('https://'));
+      // APK-safe runtime diagnostics — dev-only to avoid exposing config details in production.
+      if (import.meta.env.DEV) {
         try {
-          console.error('[Login] supabaseUrl hostname:', new URL(supabaseUrlRuntime).hostname);
+          const supabaseUrlRuntime = (import.meta.env.VITE_SUPABASE_URL ?? '').trim();
+          console.error('[Login] signInWithPassword error:', err);
+          console.error('[Login] typeof window.fetch:', typeof window?.fetch);
+          console.error('[Login] supabaseUrl starts with https://', supabaseUrlRuntime.startsWith('https://'));
+          try {
+            console.error('[Login] supabaseUrl hostname:', new URL(supabaseUrlRuntime).hostname);
+          } catch {
+            console.error('[Login] supabaseUrl is not a valid URL:', supabaseUrlRuntime);
+          }
+          const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim();
+          console.error('[Login] anon key present:', anonKey.length > 0);
+          console.error('[Login] anon key length:', anonKey.length);
         } catch {
-          console.error('[Login] supabaseUrl is not a valid URL:', supabaseUrlRuntime);
+          // ignore diagnostic errors
         }
-        const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim();
-        console.error('[Login] anon key present:', anonKey.length > 0);
-        console.error('[Login] anon key length:', anonKey.length);
-      } catch {
-        // ignore diagnostic errors
       }
       const raw = err instanceof Error ? err.message : "";
       // Low-level fetch/network errors (e.g. Capacitor Android WebView

@@ -8,6 +8,7 @@ import type { ProductType, ProductCondition } from '../types';
 import CategorySelector from '../components/CategorySelector';
 import ImageUpload from '../components/ImageUpload';
 import ShippingMethodSelector from '../components/ShippingMethodSelector';
+import { toast } from '../hooks/use-toast';
 
 // Listing types that require bulk/pallet-specific fields
 const BULK_PRODUCT_TYPES: ProductType[] = ['pallet', 'lot', 'wholesale'];
@@ -162,7 +163,7 @@ export default function ProductFormPage() {
 
       // Ownership check — only the seller who created the product (or admin/owner) may edit it.
       if (data.sellerId !== user?.id && user?.role !== 'admin') {
-        alert('You do not have permission to edit this product.');
+        toast({ title: 'Access denied', description: 'You do not have permission to edit this product.', variant: 'destructive' });
         navigate('/seller');
         return;
       }
@@ -240,7 +241,7 @@ export default function ProductFormPage() {
       }
     } catch (error) {
       console.error('Error fetching product:', error);
-      alert('Failed to load product');
+      toast({ title: 'Failed to load product', description: 'Could not load the product details. Please try again.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }

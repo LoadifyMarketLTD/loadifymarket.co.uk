@@ -219,6 +219,17 @@ const AdminUsers = () => {
         .update({ isActive: !currentlyActive })
         .eq("id", userId);
       if (error) throw error;
+
+      // For seller accounts, keep seller_profiles.sellerStatus in sync so that
+      // catalog queries filtering on sellerStatus reflect the suspension immediately.
+      if (targetRole === 'seller') {
+        const nextSellerStatus = currentlyActive ? 'suspended' : 'submitted';
+        await supabase
+          .from("seller_profiles")
+          .update({ sellerStatus: nextSellerStatus })
+          .eq("userId", userId);
+      }
+
       setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, isActive: !currentlyActive } : u));
       if (selected?.id === userId) setSelected((s) => s ? { ...s, isActive: !currentlyActive } : s);
       if (detail?.id === userId) setDetail((d) => d ? { ...d, isActive: !currentlyActive } : d);

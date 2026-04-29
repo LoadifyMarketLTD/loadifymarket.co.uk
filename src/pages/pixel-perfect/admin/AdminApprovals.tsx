@@ -238,6 +238,7 @@ const AdminSellerManagement = () => {
         setSelectedSeller((s) => s ? { ...s, sellerStatus: nextStatus } : s);
         setSellerDetail((d) => d ? { ...d, sellerStatus: nextStatus } : d);
       }
+      toast({ title: op === "suspend" ? "Seller suspended" : "Seller reactivated" });
     } catch (err: unknown) {
       const msg = (err as Error).message ||
         (op === "suspend" ? "Failed to suspend seller" : "Failed to reactivate seller");
