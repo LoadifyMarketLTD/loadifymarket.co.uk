@@ -95,18 +95,42 @@ jobs:
             exit 1
           fi
           echo "VITE_SUPABASE_URL=$VITE_SUPABASE_URL_TRIMMED" >> "$GITHUB_ENV"
-          # Print RAW key length BEFORE any trimming so CI logs prove exactly
+          # Print RAW key length BEFORE any cleaning so CI logs show exactly
           # what length the secret injected into the runner environment.
           echo "RAW KEY LENGTH: ${#VITE_SUPABASE_ANON_KEY}"
-          # Trim the anon key to remove any stray leading/trailing whitespace or
-          # newline that would cause "Failed to construct 'Headers': Invalid value".
-          VITE_SUPABASE_ANON_KEY_TRIMMED="$(printf '%s' "$VITE_SUPABASE_ANON_KEY" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-          echo "TRIMMED KEY LENGTH: ${#VITE_SUPABASE_ANON_KEY_TRIMMED}"
-          {
-            echo "VITE_SUPABASE_ANON_KEY<<EOF"
-            echo "$VITE_SUPABASE_ANON_KEY_TRIMMED"
-            echo "EOF"
-          } >> "$GITHUB_ENV"
+          # Extract only the JWT token from the secret value.
+          # If the secret was incorrectly set (e.g. copied from a Netlify env-vars
+          # table that includes row labels, Deploy Preview text, a Stripe pk_live
+          # key, etc.) the raw value contains embedded whitespace, pipes, and
+          # non-JWT content.  A plain whitespace-strip is insufficient in that
+          # case.  Instead we split the raw value on whitespace and pipes, then
+          # take the first token whose entire value matches the JWT pattern
+          # (starts with eyJ, contains only base64url chars and dots, no spaces).
+          # shellcheck disable=SC2016
+          VITE_SUPABASE_ANON_KEY_CLEAN="$(
+            printf '%s' "$VITE_SUPABASE_ANON_KEY" \
+              | tr -s '[:space:]|' '\n' \
+              | grep -m1 '^eyJ[A-Za-z0-9._-]\{10,\}$'
+          )"
+          if [ -z "$VITE_SUPABASE_ANON_KEY_CLEAN" ]; then
+            echo "ERROR: VITE_SUPABASE_ANON_KEY does not contain a valid JWT."
+            echo "  Expected a token starting with eyJ (e.g. eyJhbGciOi...)."
+            echo "  Current raw length: ${#VITE_SUPABASE_ANON_KEY}"
+            echo "  Please update the secret to contain ONLY the Supabase anon JWT:"
+            echo "    GitHub repo → Settings → Secrets and variables → Actions → VITE_SUPABASE_ANON_KEY"
+            exit 1
+          fi
+          echo "CLEAN KEY LENGTH: ${#VITE_SUPABASE_ANON_KEY_CLEAN}"
+          if [ "${#VITE_SUPABASE_ANON_KEY_CLEAN}" -gt 600 ]; then
+            echo "WARNING: Extracted JWT is ${#VITE_SUPABASE_ANON_KEY_CLEAN} chars — real Supabase JWTs are ~200–400 chars."
+            echo "  The secret may still contain extra content.  Please verify it holds ONLY the JWT."
+          fi
+          if [ "${#VITE_SUPABASE_ANON_KEY}" -gt $(( ${#VITE_SUPABASE_ANON_KEY_CLEAN} + 10 )) ]; then
+            echo "WARNING: Raw secret (${#VITE_SUPABASE_ANON_KEY} chars) is longer than the extracted JWT (${#VITE_SUPABASE_ANON_KEY_CLEAN} chars)."
+            echo "  Extra content was stripped.  Please update the GitHub secret to contain ONLY the Supabase anon JWT:"
+            echo "    GitHub repo → Settings → Secrets and variables → Actions → VITE_SUPABASE_ANON_KEY"
+          fi
+          echo "VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY_CLEAN" >> "$GITHUB_ENV"
           echo "All required secrets are present and valid."
 
       # ── Debug: confirm VITE_* env vars are present before build ───────────────
