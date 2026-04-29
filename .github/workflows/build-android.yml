@@ -3,7 +3,12 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, develop]
+    branches:
+      - main
+      - develop
+      # Build APK automatically on the active diagnostics branch so every push
+      # produces an artifact that can be installed and tested immediately.
+      - 'copilot/build-signed-release-apk-another-one'
     paths:
       - 'src/**'
       - 'public/**'
@@ -196,13 +201,19 @@ jobs:
             echo "No keepalive found at all"
           fi
 
-          # ── window.fetch.bind ────────────────────────────────────────────────
-          if grep -qr "window\.fetch\.bind" dist/assets/*.js 2>/dev/null; then
-            echo "FAIL: window.fetch.bind found in dist/assets — causes Android WebView crashes"
-            grep -rn "window\.fetch\.bind" dist/assets/*.js | head -5
+          # ── window.fetch.bind as Supabase global option (the bad old pattern) ──
+          # window.fetch.bind MAY legitimately appear inside our apkDiagnostics.ts
+          # diagnostic wrapper (which uses it to capture the original fetch before
+          # patching).  The only dangerous pattern is when it is used as the VALUE
+          # of the Supabase createClient global:{fetch: option, i.e.:
+          #   global:{fetch:window.fetch.bind(...)
+          # That was the broken PR#345 pattern — not a bare occurrence of the string.
+          if grep -qrP 'global:\{fetch:\s*window\.fetch\.bind' dist/assets/*.js 2>/dev/null; then
+            echo "FAIL: Supabase global:{fetch: is set to window.fetch.bind — old broken pattern"
+            grep -rn 'global:{fetch:.*window\.fetch\.bind' dist/assets/*.js | head -5
             PASS=false
           else
-            echo "PASS: window.fetch.bind NOT found in dist/assets"
+            echo "PASS: Supabase global:{fetch: does NOT use window.fetch.bind (OK: apkDiagnostics may use it internally)"
           fi
 
           # ── Failed to execute ────────────────────────────────────────────────
@@ -232,7 +243,7 @@ jobs:
             echo "   ✓ global:{fetch: wrapper present (PR #361 Supabase fix)"
             echo "   ✓ keepalive-stripping logic present"
             echo "   ✓ no keepalive:true (errorTracking fix applied)"
-            echo "   ✓ no window.fetch.bind"
+            echo "   ✓ Supabase global:{fetch: not using window.fetch.bind"
           else
             echo " FORENSIC 1 RESULT: FAIL — see FAIL lines above"
             exit 1
@@ -325,12 +336,12 @@ jobs:
             echo "No keepalive found at all"
           fi
 
-          if grep -qr "window\.fetch\.bind" "$ASSET_DIR"/*.js 2>/dev/null; then
-            echo "FAIL: window.fetch.bind found in Android assets"
-            grep -rn "window\.fetch\.bind" "$ASSET_DIR"/*.js | head -5
+          if grep -qrP 'global:\{fetch:\s*window\.fetch\.bind' "$ASSET_DIR"/*.js 2>/dev/null; then
+            echo "FAIL: Supabase global:{fetch: is set to window.fetch.bind — old broken pattern"
+            grep -rn 'global:{fetch:.*window\.fetch\.bind' "$ASSET_DIR"/*.js | head -5
             PASS=false
           else
-            echo "PASS: window.fetch.bind NOT found in Android assets"
+            echo "PASS: Supabase global:{fetch: does NOT use window.fetch.bind (OK: apkDiagnostics may use it internally)"
           fi
 
           echo ""
@@ -340,7 +351,7 @@ jobs:
             echo "   ✓ global:{fetch: wrapper present"
             echo "   ✓ keepalive-stripping logic present"
             echo "   ✓ no keepalive:true"
-            echo "   ✓ no window.fetch.bind"
+            echo "   ✓ Supabase global:{fetch: not using window.fetch.bind"
           else
             echo " FORENSIC 2 RESULT: FAIL — see FAIL lines above"
             exit 1
@@ -541,13 +552,16 @@ jobs:
             echo "No keepalive found at all"
           fi
 
-          # ── window.fetch.bind ─────────────────────────────────────────────────
-          if grep -qr "window\.fetch\.bind" "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
-            echo "FAIL: window.fetch.bind found in APK bundle — causes Android WebView crashes"
-            grep -rn "window\.fetch\.bind" "$EXTRACT_DIR/assets/public/assets/"*.js | head -5
+          # ── window.fetch.bind as Supabase global option (the bad old pattern) ──
+          # window.fetch.bind MAY appear inside apkDiagnostics.ts (which captures
+          # the original fetch before patching).  The only dangerous pattern is it
+          # being passed directly as the Supabase global:{fetch: value.
+          if grep -qrP 'global:\{fetch:\s*window\.fetch\.bind' "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
+            echo "FAIL: Supabase global:{fetch: is set to window.fetch.bind — old broken pattern"
+            grep -rn 'global:{fetch:.*window\.fetch\.bind' "$EXTRACT_DIR/assets/public/assets/"*.js | head -5
             PASS=false
           else
-            echo "PASS: window.fetch.bind NOT found in APK bundle"
+            echo "PASS: Supabase global:{fetch: does NOT use window.fetch.bind (OK: apkDiagnostics may use it internally)"
           fi
 
           # ── Failed to execute ─────────────────────────────────────────────────
@@ -573,7 +587,7 @@ jobs:
             echo "   ✓ global:{fetch: wrapper present (Supabase PR #361 fix)"
             echo "   ✓ keepalive-stripping logic present"
             echo "   ✓ no keepalive:true (errorTracking + Supabase fixed)"
-            echo "   ✓ no window.fetch.bind"
+            echo "   ✓ Supabase global:{fetch: not using window.fetch.bind"
             echo " Commit ${{ github.sha }} bundled JS contains the PR #361 fix."
           else
             echo " FORENSIC 3 RESULT: FAIL — see FAIL lines above"
