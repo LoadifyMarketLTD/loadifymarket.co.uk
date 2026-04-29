@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store';
 import { hasAdminAccess } from './lib/roleUtils';
@@ -208,7 +208,6 @@ function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
 
 function App() {
   const { setUser, setLoading } = useAuthStore();
-  const navigate = useNavigate();
 
   useEffect(() => {
     // Build a minimal User object from Supabase auth session metadata when the
