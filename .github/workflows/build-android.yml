@@ -125,6 +125,8 @@ jobs:
             echo "WARNING: Extracted JWT is ${#VITE_SUPABASE_ANON_KEY_CLEAN} chars — real Supabase JWTs are ~200–400 chars."
             echo "  The secret may still contain extra content.  Please verify it holds ONLY the JWT."
           fi
+          # A difference > 10 chars means real extra content was stripped (not just a
+          # lone trailing newline from copy-paste), so warn the operator to fix the secret.
           if [ "${#VITE_SUPABASE_ANON_KEY}" -gt $(( ${#VITE_SUPABASE_ANON_KEY_CLEAN} + 10 )) ]; then
             echo "WARNING: Raw secret (${#VITE_SUPABASE_ANON_KEY} chars) is longer than the extracted JWT (${#VITE_SUPABASE_ANON_KEY_CLEAN} chars)."
             echo "  Extra content was stripped.  Please update the GitHub secret to contain ONLY the Supabase anon JWT:"
