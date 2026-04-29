@@ -3,7 +3,7 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, develop, copilot/build-android-apk]
+    branches: [main, develop, copilot/build-android-apk, copilot/investigate-apk-webview-issues]
     paths:
       - 'src/**'
       - 'android/**'
@@ -12,6 +12,7 @@ on:
       - 'capacitor.config.ts'
       - 'package*.json'
       - 'vite.config.ts'
+      - '.github/workflows/build-android.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
