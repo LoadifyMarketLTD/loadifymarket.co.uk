@@ -345,7 +345,7 @@ const Login = () => {
                   <span>Secured with 256-bit SSL encryption</span>
                 </div>
 
-                {/* TEMPORARY build stamp — remove once APK fetch root cause confirmed */}
+                {/* TEMPORARY build stamp — remove once APK fetch root cause confirmed. */}
                 <p className="text-center font-mono text-[9px] text-slate-600 select-all leading-tight mt-1" title="Build diagnostics">
                   {(import.meta.env.VITE_BUILD_SHA ?? 'local').slice(0, 7)}
                   {' '}#{import.meta.env.VITE_BUILD_NUMBER ?? '0'}
