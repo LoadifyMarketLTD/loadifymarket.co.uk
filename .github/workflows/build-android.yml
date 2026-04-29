@@ -102,7 +102,11 @@ jobs:
           # newline that would cause "Failed to construct 'Headers': Invalid value".
           VITE_SUPABASE_ANON_KEY_TRIMMED="$(printf '%s' "$VITE_SUPABASE_ANON_KEY" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
           echo "TRIMMED KEY LENGTH: ${#VITE_SUPABASE_ANON_KEY_TRIMMED}"
-          echo "VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY_TRIMMED" >> "$GITHUB_ENV"
+          {
+            echo "VITE_SUPABASE_ANON_KEY<<EOF"
+            echo "$VITE_SUPABASE_ANON_KEY_TRIMMED"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
           echo "All required secrets are present and valid."
 
       # ── Debug: confirm VITE_* env vars are present before build ───────────────
