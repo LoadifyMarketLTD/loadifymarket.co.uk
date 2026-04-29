@@ -468,7 +468,7 @@ jobs:
           PASS=true
 
           # ── mobileSafeFetch (informational for unminified builds) ─────────────
-          if grep -qr "mobileSafeFetch" "$EXTRACT_DIR/assets/"*.js 2>/dev/null; then
+          if grep -qr "mobileSafeFetch" "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
             echo "PASS: mobileSafeFetch found verbatim in APK (unminified/dev build)"
           else
             echo "INFO: mobileSafeFetch not found verbatim (expected in minified builds — see global:{fetch check)"
@@ -477,8 +477,8 @@ jobs:
           # ── global:{fetch: wrapper (minification-robust primary check) ────────
           # This string survives minification. It proves Supabase createClient
           # is configured with the keepalive-stripping custom fetch function.
-          if grep -qrP 'global:\{fetch:' "$EXTRACT_DIR/assets/"*.js 2>/dev/null || \
-             grep -qrP 'global\s*:\s*\{\s*fetch\s*:' "$EXTRACT_DIR/assets/"*.js 2>/dev/null; then
+          if grep -qrP 'global:\{fetch:' "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null || \
+             grep -qrP 'global\s*:\s*\{\s*fetch\s*:' "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
             echo "PASS: global:{fetch: wrapper found in APK bundle — Supabase using custom fetch"
           else
             echo "FAIL: global:{fetch: wrapper NOT found in APK bundle — PR #361 fix may be missing"
@@ -489,7 +489,7 @@ jobs:
           # `"keepalive"in` survives minification because it is a string property
           # lookup.  Its presence proves the mobileSafeFetch stripping logic is
           # compiled into the bundle.
-          if grep -qr '"keepalive"in' "$EXTRACT_DIR/assets/"*.js 2>/dev/null; then
+          if grep -qr '"keepalive"in' "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
             echo "PASS: keepalive-stripping logic (\"keepalive\"in) found in APK bundle — PR #361 fix IS present"
           else
             echo "FAIL: keepalive-stripping logic NOT found in APK bundle — PR #361 fix is MISSING"
@@ -497,7 +497,7 @@ jobs:
           fi
 
           # ── createClient ─────────────────────────────────────────────────────
-          if grep -qr "createClient" "$EXTRACT_DIR/assets/"*.js 2>/dev/null; then
+          if grep -qr "createClient" "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
             echo "PASS: createClient found in APK bundle"
           else
             echo "FAIL: createClient NOT found in APK bundle"
@@ -507,7 +507,7 @@ jobs:
           # ── keepalive:true (the bad pattern — must be absent) ─────────────────
           echo ""
           echo "--- keepalive:true occurrences in APK (must be zero) ---"
-          BAD_KEEPALIVE=$(grep -rn 'keepalive\s*:\s*true\|keepalive:true' "$EXTRACT_DIR/assets/"*.js 2>/dev/null || true)
+          BAD_KEEPALIVE=$(grep -rn 'keepalive\s*:\s*true\|keepalive:true' "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null || true)
           if [ -n "$BAD_KEEPALIVE" ]; then
             echo "FAIL: keepalive:true found in APK bundle — will cause Android WebView crash:"
             echo "$BAD_KEEPALIVE" | head -10
@@ -519,7 +519,7 @@ jobs:
           # ── All keepalive occurrences (informational) ─────────────────────────
           echo ""
           echo "--- All keepalive occurrences in APK (informational) ---"
-          ALL_KA=$(grep -rn "keepalive" "$EXTRACT_DIR/assets/"*.js 2>/dev/null || true)
+          ALL_KA=$(grep -rn "keepalive" "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null || true)
           if [ -n "$ALL_KA" ]; then
             echo "$ALL_KA" | head -10
             echo "(expected: only the stripping-detection logic above)"
@@ -528,18 +528,18 @@ jobs:
           fi
 
           # ── window.fetch.bind ─────────────────────────────────────────────────
-          if grep -qr "window\.fetch\.bind" "$EXTRACT_DIR/assets/"*.js 2>/dev/null; then
+          if grep -qr "window\.fetch\.bind" "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
             echo "FAIL: window.fetch.bind found in APK bundle — causes Android WebView crashes"
-            grep -rn "window\.fetch\.bind" "$EXTRACT_DIR/assets/"*.js | head -5
+            grep -rn "window\.fetch\.bind" "$EXTRACT_DIR/assets/public/assets/"*.js | head -5
             PASS=false
           else
             echo "PASS: window.fetch.bind NOT found in APK bundle"
           fi
 
           # ── Failed to execute ─────────────────────────────────────────────────
-          if grep -qr "Failed to execute" "$EXTRACT_DIR/assets/"*.js 2>/dev/null; then
+          if grep -qr "Failed to execute" "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
             echo "INFO: 'Failed to execute' found in APK bundle (used in error-detection logic)"
-            grep -rn "Failed to execute" "$EXTRACT_DIR/assets/"*.js | head -5
+            grep -rn "Failed to execute" "$EXTRACT_DIR/assets/public/assets/"*.js | head -5
           else
             echo "INFO: 'Failed to execute' not in APK bundle"
           fi
@@ -547,7 +547,7 @@ jobs:
           # ── errorTracking fetch fallback must not have keepalive ──────────────
           # The keepalive:true check above already covers this globally; no further
           # check needed.  Just log presence of error-reporting code.
-          if grep -qr "error-report\|sendBeacon\|\.netlify\/functions" "$EXTRACT_DIR/assets/"*.js 2>/dev/null; then
+          if grep -qr "error-report\|sendBeacon\|\.netlify\/functions" "$EXTRACT_DIR/assets/public/assets/"*.js 2>/dev/null; then
             echo "INFO: errorTracking / sendBeacon code found in APK bundle (keepalive:true already checked above)"
           fi
 
