@@ -191,7 +191,7 @@ function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
         <div className="text-center max-w-lg">
           <div className="text-6xl mb-6">🔧</div>
           <h1 className="text-3xl font-bold text-white mb-3">We're under maintenance</h1>
-          <p className="text-slate-600 text-base mb-6">
+          <p className="text-slate-400 text-base mb-6">
             Loadify Market is currently undergoing scheduled maintenance. We'll be back shortly.
             Thank you for your patience.
           </p>

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { hasAdminAccess } from "@/lib/roleUtils";
+import { toast } from "@/hooks/use-toast";
 
 interface SetupStatus {
   sellerStatus: string;
@@ -208,6 +209,11 @@ const SellerSetupPage = () => {
       if (data.url) window.location.href = data.url;
     } catch (err) {
       console.error("Stripe Connect error:", err);
+      toast({
+        title: "Stripe setup failed",
+        description: err instanceof Error ? err.message : "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setStripeLoading(false);
     }
