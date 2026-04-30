@@ -25,6 +25,7 @@
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { sendPushToUser } from './_shared/pushNotifications';
+import { checkRateLimit } from './_shared/rateLimiter';
 
 interface RequestBody {
   conversationId?: string;
@@ -73,6 +74,18 @@ export const handler: Handler = async (event) => {
     return { statusCode: 401, body: JSON.stringify({ error: 'Invalid authentication token' }) };
   }
   const callerId = authUser.id;
+
+  // ── Rate limiting — 60 messages per minute per user ────────────────────────
+  const rl = await checkRateLimit({
+    supabase,
+    tableName:     'send_message_rate_limits',
+    identifier:    callerId,
+    windowMinutes: 1,
+    maxAttempts:   60,
+  });
+  if (rl.exceeded) {
+    return { statusCode: 429, body: JSON.stringify({ error: 'Too many messages. Please slow down.' }) };
+  }
 
   // ── Parse body ──────────────────────────────────────────────────────────────
   let body: RequestBody;

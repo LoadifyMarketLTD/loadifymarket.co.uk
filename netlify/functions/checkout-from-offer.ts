@@ -23,6 +23,7 @@ import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import type { Handler } from '@netlify/functions';
 import { isMaintenanceMode } from './_shared/platformFlags';
+import { checkRateLimit } from './_shared/rateLimiter';
 
 interface RequestBody {
   orderId?: string;
@@ -86,6 +87,18 @@ export const handler: Handler = async (event) => {
     return { statusCode: 401, body: JSON.stringify({ error: 'Invalid authentication token' }) };
   }
   const callerId = authUser.id;
+
+  // ── Rate limiting — 10 checkout initiations per hour per user ───────────────
+  const rl = await checkRateLimit({
+    supabase,
+    tableName:     'checkout_offer_rate_limits',
+    identifier:    callerId,
+    windowMinutes: 60,
+    maxAttempts:   10,
+  });
+  if (rl.exceeded) {
+    return { statusCode: 429, body: JSON.stringify({ error: 'Too many checkout attempts. Please try again later.' }) };
+  }
 
   // ── Parse body ──────────────────────────────────────────────────────────────
   let body: RequestBody;

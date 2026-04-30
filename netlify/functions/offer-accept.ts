@@ -18,6 +18,7 @@
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { sendPushToUser } from './_shared/pushNotifications';
+import { checkRateLimit } from './_shared/rateLimiter';
 
 interface RequestBody {
   offerId?: string;
@@ -64,6 +65,18 @@ export const handler: Handler = async (event) => {
     return { statusCode: 401, body: JSON.stringify({ error: 'Invalid authentication token' }) };
   }
   const callerId = authUser.id;
+
+  // ── Rate limiting — 20 accepts per hour per user ────────────────────────────
+  const rl = await checkRateLimit({
+    supabase,
+    tableName:     'offer_accept_rate_limits',
+    identifier:    callerId,
+    windowMinutes: 60,
+    maxAttempts:   20,
+  });
+  if (rl.exceeded) {
+    return { statusCode: 429, body: JSON.stringify({ error: 'Too many requests. Please try again later.' }) };
+  }
 
   // ── Parse body ──────────────────────────────────────────────────────────────
   let body: RequestBody;
