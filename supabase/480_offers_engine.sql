@@ -62,15 +62,59 @@ CREATE INDEX IF NOT EXISTS idx_order_events_created ON order_events ("createdAt"
 
 -- ── 3. Extend orders table ────────────────────────────────────────────────────
 
--- Add awaiting_payment to the status check constraint.
--- Drop the auto-named constraint (Postgres generates "orders_status_check")
--- and recreate it with awaiting_payment included.
-ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_status_check;
+-- Add awaiting_payment to the status check constraint while keeping every
+-- value that already exists in the database.
+--
+-- History of status values across all migrations:
+--   base schema (00_consolidated_schema.sql):
+--     pending, paid, packed, shipped, delivered, cancelled, refunded
+--   migration 448 (not in repo, but reflected in 455):
+--     + completed
+--   migration 450 (450_b2b_buyer_profiles.sql):
+--     + invoice_requested
+--   migration 455 (455_fix_audit_gaps.sql):
+--     definitive set: pending, paid, packed, shipped, delivered,
+--                     completed, cancelled, refunded, invoice_requested
+--   THIS migration (480):
+--     + awaiting_payment
+--
+-- We use the same robust DO-block pattern from migration 455 to drop every
+-- CHECK constraint that references the status column (handles any name) then
+-- add the definitive constraint that includes all current valid values.
+-- This means the migration is safe on any DB that ran or skipped 455.
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN
+    SELECT c.conname
+    FROM   pg_constraint c
+    JOIN   pg_class      t ON t.oid = c.conrelid
+    JOIN   pg_namespace  n ON n.oid = t.relnamespace
+    WHERE  n.nspname = 'public'
+      AND  t.relname = 'orders'
+      AND  c.contype = 'c'
+      AND  pg_get_constraintdef(c.oid) LIKE '%status%'
+  LOOP
+    EXECUTE format('ALTER TABLE public.orders DROP CONSTRAINT IF EXISTS %I', r.conname);
+    RAISE NOTICE '480: dropped constraint % from orders', r.conname;
+  END LOOP;
+END;
+$$;
+
 ALTER TABLE orders
   ADD CONSTRAINT orders_status_check
   CHECK (status IN (
-    'awaiting_payment','pending','paid','packed',
-    'shipped','delivered','cancelled','refunded'
+    'awaiting_payment',
+    'pending',
+    'paid',
+    'packed',
+    'shipped',
+    'delivered',
+    'completed',
+    'cancelled',
+    'refunded',
+    'invoice_requested'
   ));
 
 -- Link offer → order so we can look up an order from an offer.

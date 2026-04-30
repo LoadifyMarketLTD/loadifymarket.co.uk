@@ -44,6 +44,8 @@ interface OfferRecord {
   status: string;
   proposedById: string;
   recipientId: string;
+  /** orderId from the linked order (present when status = 'accepted') */
+  orderId?: string | null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -316,20 +318,42 @@ export default function MobileChatPage() {
     return () => { cancelled = true; };
   }, [conversationId, user?.id, navigate]);
 
-  // Load offers for this conversation and keep offerMap up-to-date
+  // Load offers for this conversation and keep offerMap up-to-date.
+  // We join the linked order so OfferBubble has the orderId it needs for
+  // the "Pay Now" button without relying on message JSON.
   const loadOffers = useCallback(async () => {
     if (!conversationId) return;
+
+    // PostgREST foreign-key join: orders.offerId → offers.id
+    // `orders(id)` returns an array; we normalise to the first element.
     const { data: offers } = await supabase
       .from("offers")
-      .select("id, amountPence, status, proposedById, recipientId")
+      .select("id, amountPence, status, proposedById, recipientId, orders(id)")
       .eq("conversationId", conversationId)
       .order("createdAt", { ascending: false })
       .limit(50);
 
     if (offers) {
-      setOfferMap(new Map(
-        (offers as OfferRecord[]).map((o) => [o.id, o]),
-      ));
+      const mapped = (offers as Array<{
+        id: string;
+        amountPence: number;
+        status: string;
+        proposedById: string;
+        recipientId: string;
+        orders: Array<{ id: string }> | null;
+      }>).map((o) => ({
+        id:           o.id,
+        amountPence:  o.amountPence,
+        status:       o.status,
+        proposedById: o.proposedById,
+        recipientId:  o.recipientId,
+        // orders is an array of rows that reference this offer; there is at
+        // most one because of the unique index one_active_order_per_listing.
+        orderId: Array.isArray(o.orders) && o.orders.length > 0
+          ? o.orders[0].id
+          : null,
+      }));
+      setOfferMap(new Map(mapped.map((o) => [o.id, o])));
     }
   }, [conversationId]);
 
@@ -623,9 +647,14 @@ export default function MobileChatPage() {
                     onDecline={parsed.offerId && actingOnOffer !== parsed.offerId
                       ? () => void handleDeclineOffer(parsed.offerId!)
                       : undefined}
-                    onPayNow={parsed.orderId
-                      ? () => void handlePayNow(parsed.orderId!)
-                      : undefined}
+                    onPayNow={(() => {
+                      // Source of truth for orderId is the offers table (via
+                      // offerRecord.orderId from the orders FK join), not the
+                      // message JSON which never contains orderId.
+                      const rec = parsed.offerId ? offerMap.get(parsed.offerId) : undefined;
+                      const oid = rec?.orderId;
+                      return oid ? () => void handlePayNow(oid) : undefined;
+                    })()}
                   />
                 ) : (
                   <div
