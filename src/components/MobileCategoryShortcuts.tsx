@@ -1,73 +1,83 @@
 /**
  * MobileCategoryShortcuts
  *
- * Mobile-only (hidden md:block is applied in the parent).
- * 8 static category shortcuts in a 4-column icon grid.
- * Links use /category/:slug for DB-backed categories and /catalog for generic ones.
+ * Mobile-only horizontal scroll category row — matches the reference mockup.
+ * No section title, no "View all" link.
+ * Categories: All (selected/gold), Phones, Laptops, Watches, Vehicles, More
  */
 
 import { Link } from 'react-router-dom';
-import {
-  ShoppingBag,
-  Truck,
-  Wrench,
-  Home,
-  Smartphone,
-  Shirt,
-  HeartPulse,
-  Car,
-  ArrowRight,
-} from 'lucide-react';
+import { LayoutGrid, Smartphone, Laptop, Watch, Car, MoreHorizontal } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface Shortcut {
   label: string;
   icon: LucideIcon;
   to: string;
-  iconClass: string;
+  active?: boolean;
 }
 
 const SHORTCUTS: Shortcut[] = [
-  { label: 'Products',    icon: ShoppingBag, to: '/catalog',                  iconClass: 'text-[#FBBF24]'  },
-  { label: 'Transport',   icon: Truck,       to: '/catalog?q=transport',       iconClass: 'text-sky-400'    },
-  { label: 'Services',    icon: Wrench,      to: '/catalog?q=services',        iconClass: 'text-violet-400' },
-  { label: 'Home',        icon: Home,        to: '/category/home-garden',      iconClass: 'text-green-400'  },
-  { label: 'Electronics', icon: Smartphone,  to: '/category/electronics',      iconClass: 'text-cyan-400'   },
-  { label: 'Fashion',     icon: Shirt,       to: '/category/clothing-fashion', iconClass: 'text-blue-400'   },
-  { label: 'Health',      icon: HeartPulse,  to: '/category/health-beauty',    iconClass: 'text-rose-400'   },
-  { label: 'Automotive',  icon: Car,         to: '/category/automotive',       iconClass: 'text-slate-300'  },
+  { label: 'All',      icon: LayoutGrid,     to: '/catalog',              active: true },
+  { label: 'Phones',   icon: Smartphone,     to: '/category/electronics'              },
+  { label: 'Laptops',  icon: Laptop,         to: '/catalog?q=laptop'                  },
+  { label: 'Watches',  icon: Watch,          to: '/catalog?q=watch'                   },
+  { label: 'Vehicles', icon: Car,            to: '/category/automotive'               },
+  { label: 'More',     icon: MoreHorizontal, to: '/catalog'                           },
 ];
 
 export default function MobileCategoryShortcuts() {
   return (
-    <section aria-label="Shop by category" className="px-4 pt-5 pb-3">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-[13px] font-bold text-white tracking-tight">
-          Shop by Category
-        </h2>
-        <Link
-          to="/catalog"
-          className="flex items-center gap-1 text-[11px] font-semibold text-[#FBBF24] hover:text-[#D8AE57] transition-colors"
-        >
-          View all <ArrowRight className="h-3 w-3" aria-hidden="true" />
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-4 gap-2.5">
-        {SHORTCUTS.map(({ label, icon: Icon, to, iconClass }) => (
+    <div
+      className="overflow-x-auto scrollbar-none px-4 py-3"
+      aria-label="Browse by category"
+    >
+      <div className="flex gap-5" style={{ width: 'max-content' }}>
+        {SHORTCUTS.map(({ label, icon: Icon, to, active }) => (
           <Link
             key={label}
             to={to}
-            className="flex flex-col items-center gap-1.5 rounded-[14px] border border-white/[0.06] bg-[#111827] px-1.5 py-3.5 active:scale-95 active:bg-white/[0.08] transition-transform"
-            aria-label={label}
+            className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform"
+            aria-label={`Browse ${label}`}
           >
-            <Icon className={`h-5 w-5 ${iconClass} shrink-0`} aria-hidden="true" />
-            <span className="text-[10px] font-semibold text-white/80 leading-none text-center">
+            {/* Circle icon */}
+            <div
+              style={{
+                width: '58px',
+                height: '58px',
+                borderRadius: '50%',
+                backgroundColor: active ? 'rgba(245,185,66,0.14)' : 'rgba(255,255,255,0.05)',
+                border: active
+                  ? '1.5px solid rgba(245,185,66,0.50)'
+                  : '1px solid rgba(255,255,255,0.09)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Icon
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  color: active ? '#F5B942' : '#A0A0A0',
+                }}
+                aria-hidden="true"
+              />
+            </div>
+
+            {/* Label */}
+            <span
+              style={{
+                fontSize: '12px',
+                fontWeight: active ? 600 : 400,
+                color: active ? '#F5B942' : 'rgba(255,255,255,0.65)',
+              }}
+            >
               {label}
             </span>
           </Link>
         ))}
       </div>
-    </section>
+    </div>
   );
 }
