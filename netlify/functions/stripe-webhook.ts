@@ -482,6 +482,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
           console.warn(`Stock decrement fallback: stock for product ${item.productId} changed concurrently — skipping update to avoid corruption`);
         }
       }
+
+      // Mark this goods listing as sold — consistent with handleMobilePaymentIntentSucceeded.
+      // Without this, a product paid for via web checkout would remain 'active' and
+      // could be added to another buyer's cart immediately after payment.
+      await supabase!
+        .from('products')
+        .update({ listingStatus: 'sold', reservedUntil: null })
+        .eq('id', item.productId);
     }
 
     const confirmedOrderNumber: string =

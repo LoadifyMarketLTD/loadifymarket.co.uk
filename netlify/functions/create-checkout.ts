@@ -31,6 +31,7 @@ interface DBProduct {
   isApproved: boolean;
   stockQuantity: number;
   listingContext: string;
+  listingStatus: string;
 }
 
 export const handler: Handler = async (event) => {
@@ -142,7 +143,7 @@ export const handler: Handler = async (event) => {
   const productIds = items.map((i) => i.productId);
   const { data: dbProducts, error: dbError } = await supabase
     .from('products')
-    .select('id, price, title, sellerId, isActive, isApproved, stockQuantity, listingContext')
+    .select('id, price, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus')
     .in('id', productIds);
 
   if (dbError) {
@@ -154,6 +155,15 @@ export const handler: Handler = async (event) => {
   for (const item of items) {
     const dbProduct = productMap.get(item.productId);
     if (!dbProduct || !dbProduct.isActive || !dbProduct.isApproved) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: `Item "${item.title}" is no longer available` }),
+      };
+    }
+    // Block products that are reserved by another buyer or already sold.
+    // This keeps the web checkout consistent with the mobile PaymentIntent flow
+    // which performs the same check in create-payment-intent.ts.
+    if (dbProduct.listingStatus === 'reserved' || dbProduct.listingStatus === 'sold') {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: `Item "${item.title}" is no longer available` }),

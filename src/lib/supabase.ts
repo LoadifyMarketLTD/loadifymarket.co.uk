@@ -60,30 +60,27 @@ if (!supabaseAnonKey.startsWith('eyJ')) {
 // if `keepalive` is present, even without CapacitorHttp.  Keeping the strip
 // ensures the APK works safely across Capacitor versions and WebView builds.
 const mobileSafeFetch: typeof fetch = (input, init?) => {
-  // DIAGNOSTIC (temporary): unconditional console.error so the call appears
-  // in logcat on every platform (APK, mobile browser, desktop DevTools).
-  // Uses console.error to survive terser's pure_funcs drop_console config.
-  // Remove once root cause is confirmed.
-  const preKeys = init ? Object.keys(init).join(',') : '(none)';
-  const hasKeepalive = init != null && 'keepalive' in init;
-  console.error(
-    '[mobileSafeFetch CALLED]',
-    String(input instanceof Request ? input.url : input).slice(0, 120),
-    `optKeys=[${preKeys}]`,
-    `hasKeepalive=${hasKeepalive}`,
-  );
-
-  // Log the exact headers object so we can identify which header value is
-  // invalid.  This is the direct evidence needed for the
-  // "Failed to construct 'Headers': Invalid value" error.
-  console.error('[FETCH HEADERS]', init?.headers);
+  if (import.meta.env.DEV) {
+    // Development-only diagnostics — never logged in production builds.
+    const preKeys = init ? Object.keys(init).join(',') : '(none)';
+    const hasKeepalive = init != null && 'keepalive' in init;
+    console.debug(
+      '[mobileSafeFetch CALLED]',
+      String(input instanceof Request ? input.url : input).slice(0, 120),
+      `optKeys=[${preKeys}]`,
+      `hasKeepalive=${hasKeepalive}`,
+    );
+    console.debug('[FETCH HEADERS]', init?.headers);
+  }
 
   if (init && 'keepalive' in init) {
     const { keepalive: _keepalive, ...rest } = init as RequestInit & { keepalive?: boolean };
-    console.error(
-      '[mobileSafeFetch] STRIPPED keepalive',
-      `remaining optKeys=[${Object.keys(rest).join(',') || '(none)'}]`,
-    );
+    if (import.meta.env.DEV) {
+      console.debug(
+        '[mobileSafeFetch] STRIPPED keepalive',
+        `remaining optKeys=[${Object.keys(rest).join(',') || '(none)'}]`,
+      );
+    }
     return fetch(input, rest);
   }
   return fetch(input, init);
