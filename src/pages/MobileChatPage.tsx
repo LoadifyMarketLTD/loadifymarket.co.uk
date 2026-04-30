@@ -46,6 +46,8 @@ interface OfferRecord {
   recipientId: string;
   /** orderId from the linked order (present when status = 'accepted') */
   orderId?: string | null;
+  /** Live order status from the orders table (updated via Realtime) */
+  orderStatus?: string | null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -181,8 +183,8 @@ function OfferBubble({
         </div>
       )}
 
-      {/* Buyer: Pay Now button for accepted offers */}
-      {!isSeller && isMine && status === "accepted" && (
+      {/* Buyer: Pay Now button for accepted offers awaiting payment */}
+      {!isSeller && isMine && status === "accepted" && offerRecord?.orderStatus !== "paid" && (
         <button
           onClick={onPayNow}
           className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#FBBF24] text-[#020617] text-sm font-bold active:bg-[#F59E0B] transition-colors"
@@ -190,6 +192,13 @@ function OfferBubble({
           <CreditCard className="h-4 w-4" />
           Pay Now
         </button>
+      )}
+
+      {/* Buyer: payment confirmed state */}
+      {!isSeller && isMine && status === "accepted" && offerRecord?.orderStatus === "paid" && (
+        <p className="mt-3 text-center text-xs font-semibold text-green-400">
+          ✓ Payment confirmed
+        </p>
       )}
     </div>
   );
@@ -325,10 +334,10 @@ export default function MobileChatPage() {
     if (!conversationId) return;
 
     // PostgREST foreign-key join: orders.offerId → offers.id
-    // `orders(id)` returns an array; we normalise to the first element.
+    // `orders(id, status)` returns an array; we normalise to the first element.
     const { data: offers } = await supabase
       .from("offers")
-      .select("id, amountPence, status, proposedById, recipientId, orders(id)")
+      .select("id, amountPence, status, proposedById, recipientId, orders(id, status)")
       .eq("conversationId", conversationId)
       .order("createdAt", { ascending: false })
       .limit(50);
@@ -340,7 +349,7 @@ export default function MobileChatPage() {
         status: string;
         proposedById: string;
         recipientId: string;
-        orders: Array<{ id: string }> | null;
+        orders: Array<{ id: string; status: string }> | null;
       }>).map((o) => ({
         id:           o.id,
         amountPence:  o.amountPence,
@@ -351,6 +360,9 @@ export default function MobileChatPage() {
         // most one because of the unique index one_active_order_per_listing.
         orderId: (o.orders != null && Array.isArray(o.orders) && o.orders.length > 0)
           ? o.orders[0].id
+          : null,
+        orderStatus: (o.orders != null && Array.isArray(o.orders) && o.orders.length > 0)
+          ? o.orders[0].status
           : null,
       }));
       setOfferMap(new Map(mapped.map((o) => [o.id, o])));
@@ -439,6 +451,75 @@ export default function MobileChatPage() {
     return () => { void supabase.removeChannel(channel); };
   }, [conversationId, user?.id, loadOffers]);
 
+  // Offers table Realtime — catch direct status changes (accepted / declined /
+  // cancelled) without relying solely on system messages.
+  useEffect(() => {
+    if (!conversationId || !user?.id) return;
+
+    const offersChannel = supabase
+      .channel(`chat-offers:${conversationId}`)
+      .on(
+        "postgres_changes",
+        {
+          event:  "UPDATE",
+          schema: "public",
+          table:  "offers",
+          filter: `conversationId=eq.${conversationId}`,
+        },
+        (payload) => {
+          const updated = payload.new as { id: string; status: string };
+          setOfferMap((prev) => {
+            const existing = prev.get(updated.id);
+            if (!existing) return prev;
+            const next = new Map(prev);
+            next.set(updated.id, { ...existing, status: updated.status });
+            return next;
+          });
+        },
+      )
+      .subscribe();
+
+    return () => { void supabase.removeChannel(offersChannel); };
+  }, [conversationId, user?.id]);
+
+  // Orders table Realtime — update the Pay Now / payment-confirmed state live
+  // when an order's status changes (e.g. awaiting_payment → paid after webhook).
+  // Filter by buyerId so only the buyer receives events for their own orders.
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const ordersChannel = supabase
+      .channel(`chat-orders:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event:  "UPDATE",
+          schema: "public",
+          table:  "orders",
+          filter: `buyerId=eq.${user.id}`,
+        },
+        (payload) => {
+          const updated = payload.new as {
+            id: string;
+            status: string;
+            offerId: string | null;
+          };
+          if (!updated.offerId) return;
+          // Only update if this order belongs to an offer in the current chat.
+          setOfferMap((prev) => {
+            const existing = prev.get(updated.offerId!);
+            if (!existing || existing.orderId !== updated.id) return prev;
+            const next = new Map(prev);
+            next.set(updated.offerId!, { ...existing, orderStatus: updated.status });
+            return next;
+          });
+        },
+      )
+      .subscribe();
+
+    return () => { void supabase.removeChannel(ordersChannel); };
+  }, [user?.id]);
+
   // Scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -451,22 +532,39 @@ export default function MobileChatPage() {
     const text = draft.trim();
     setDraft("");
     try {
-      const { data, error } = await supabase
-        .from("messages")
-        .insert({
-          conversationId,
-          senderId: user.id,
-          receiverId: otherId,
-          message: text,
-        })
-        .select("id, senderId, message, isRead, createdAt")
-        .single();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
 
-      if (error) throw error;
-      setMessages((prev) => [...prev, data as Message]);
-    } catch {
+      const res = await fetch("/.netlify/functions/send-message", {
+        method: "POST",
+        headers: {
+          "Content-Type":  "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ conversationId, receiverId: otherId, message: text }),
+      });
+
+      const json = await res.json() as {
+        id?: string; senderId?: string; message?: string;
+        isRead?: boolean; createdAt?: string; error?: string;
+      };
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+
+      // Append to local state; Realtime will also fire but dedup by id prevents duplicates.
+      const msg: Message = {
+        id:        json.id!,
+        senderId:  json.senderId!,
+        message:   json.message!,
+        isRead:    json.isRead ?? false,
+        createdAt: json.createdAt!,
+      };
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) return prev;
+        return [...prev, msg];
+      });
+    } catch (err) {
       setDraft(text);
-      toast({ title: "Failed to send message", variant: "destructive" });
+      toast({ title: "Failed to send message", description: (err as Error).message, variant: "destructive" });
     } finally {
       setSending(false);
     }
