@@ -19,12 +19,12 @@ const getStrength = (pw: string) => {
 };
 
 /* ── Shared primitives ─────────────────────────────────────────────── */
-const lbl = "block text-[11px] font-semibold text-slate-300 uppercase tracking-wide mb-0.5";
+const lbl = "block text-[13px] font-semibold text-slate-300 uppercase tracking-wide mb-0.5";
 const req = <span className="text-red-600"> *</span>;
 
-/* Square/traditional input */
+/* Touch-friendly input — h-11 (44px) meets Apple/Google touch-target spec */
 const inputBase =
-  "block w-full h-[34px] border border-white/10 bg-[#0F172A] text-white text-sm px-2 py-1 focus:outline-none focus:border-[#FBBF24] focus:ring-0";
+  "block w-full h-11 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:border-[#FBBF24] focus:ring-0";
 
 /* Select wrapper adds the caret manually */
 const SelectField = ({
@@ -449,7 +449,7 @@ const Signup = () => {
                       />
                       <button
                         type="button"
-                        className="px-3 h-[34px] bg-[#FBBF24] hover:bg-[#B45309] text-white text-[11px] font-black uppercase tracking-wide border border-[#FBBF24] transition-colors whitespace-nowrap"
+                        className="px-3 h-11 bg-[#FBBF24] hover:bg-[#B45309] text-white text-[11px] font-black uppercase tracking-wide border border-[#B45309] transition-colors whitespace-nowrap rounded-r-lg"
                       >
                         Find Address
                       </button>

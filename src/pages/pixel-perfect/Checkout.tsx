@@ -451,7 +451,7 @@ const Checkout = () => {
                       <Label htmlFor="phone">Phone</Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input id="phone" name="phone" placeholder="+44 7700 900000" className="pl-10 h-11" value={shippingData.phone} onChange={handleShippingChange} />
+                        <Input id="phone" name="phone" type="tel" placeholder="+44 7700 900000" className="pl-10 h-11" value={shippingData.phone} onChange={handleShippingChange} />
                       </div>
                     </div>
                     <div className="space-y-2 sm:col-span-2">

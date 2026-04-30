@@ -63,10 +63,10 @@ const Footer = () => {
       {/* ── Main columns ────────────────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
 
-        <div className="grid grid-cols-6 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
 
           {/* Col 1 — About (spans 2 columns on lg) */}
-          <div className="lg:col-span-2">
+          <div className="col-span-2 sm:col-span-3 lg:col-span-2">
             <p className="text-lg font-bold text-[#F5F1E8] mb-3">Loadify Market</p>
             <p className="text-[13px] text-[#C9D0D6]/70 leading-relaxed mb-4">
               Loadify Market is operated by <strong className="text-[#C9D0D6]">XDrive Logistics Ltd</strong>.

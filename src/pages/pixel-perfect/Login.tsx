@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ShieldCheck } from "lucide-react";
 import { useAuthStore } from "@/store";
-import { isApkNative } from "@/lib/apkDiagnostics";
 
 /* ── Shared Google / Apple SVG logos ─────────────────────────────────── */
 const GoogleIcon = () => (
@@ -52,80 +51,9 @@ const Login = () => {
     setError("");
     setLoading(true);
 
-    // TEMPORARY diagnostics — unconditional so every platform (APK, mobile
-    // browser, desktop) emits the same evidence to logcat / DevTools.
-    // Remove once root cause is confirmed.
-    const _apkDiag = isApkNative();
-    const _mobileDiag = _apkDiag || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-    // ── STEP 3: env check ────────────────────────────────────────────────────
-    console.error('[ENV URL]', import.meta.env.VITE_SUPABASE_URL);
-    console.error('[ENV KEY LENGTH]', (import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').length);
-
-    // ── STEP 1 context: platform / fetch / localStorage / SW ────────────────
-    try {
-      let lsWritable = false;
-      try {
-        localStorage.setItem('__auth_check', '1');
-        localStorage.removeItem('__auth_check');
-        lsWritable = true;
-      } catch { /* blocked */ }
-
-      let swState = 'unsupported';
-      try {
-        const swReg = await navigator.serviceWorker?.getRegistration?.();
-        swState = swReg?.active?.state ?? (swReg ? 'registered-no-active' : 'none');
-      } catch { swState = 'error'; }
-
-      const supabaseDomain = (() => {
-        try { return new URL((import.meta.env.VITE_SUPABASE_URL ?? '').trim()).hostname; }
-        catch { return '(invalid-url)'; }
-      })();
-
-      console.warn(
-        '[Login] handleSubmit START',
-        `platform: ${_apkDiag ? 'APK-native' : (_mobileDiag ? 'mobile-browser' : 'desktop')}`,
-        `ua: ${navigator.userAgent.slice(0, 80)}`,
-        `window.fetch type: ${typeof window?.fetch}`,
-        `fetch is patched: ${window?.fetch?.name === 'apkDiagFetch'}`,
-        `localStorage writable: ${lsWritable}`,
-        `serviceWorker state: ${swState}`,
-        `supabase domain: ${supabaseDomain}`,
-        `build: ${(import.meta.env.VITE_BUILD_SHA ?? 'local').slice(0, 7)} #${import.meta.env.VITE_BUILD_NUMBER ?? '0'}`,
-      );
-    } catch { /* ignore diagnostic errors */ }
-
-    // ── STEP 4: raw network pre-flight ───────────────────────────────────────
-    // Tests that the device can reach the internet AND the Supabase auth
-    // endpoint before we attempt the real sign-in.  Results appear in logcat
-    // regardless of what happens during the actual login call.
-    try {
-      await fetch('https://www.google.com')
-        .then(r => console.error('[TEST GOOGLE]', r.ok ? 'OK' : 'FAIL', r.status))
-        .catch(e => console.error('[TEST GOOGLE FAIL]', e));
-    } catch (e) { console.error('[TEST GOOGLE FAIL]', e); }
-
-    try {
-      const supabaseAuthUrl = (import.meta.env.VITE_SUPABASE_URL ?? '').trim() + '/auth/v1/token';
-      await fetch(supabaseAuthUrl, { method: 'POST' })
-        .then(r => console.error('[TEST SUPABASE]', r.ok ? 'OK' : 'FAIL', r.status))
-        .catch(e => console.error('[TEST SUPABASE FAIL]', e));
-    } catch (e) { console.error('[TEST SUPABASE FAIL]', e); }
-
     try {
       const { supabase } = await import("@/lib/supabase");
-
-      // ── STEP 2: log before signIn ─────────────────────────────────────────
-      console.error('[LOGIN START]');
-
-      const { data, error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-
-      // ── STEP 2: log after signIn ──────────────────────────────────────────
-      console.error('[LOGIN RESULT]', { data, error: authError });
-      if (data?.session) {
-        console.error('[LOGIN SESSION]', data.session);
-      }
-
+      const { error: authError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (authError) throw authError;
 
       // After a successful sign-in, navigate immediately without making extra
@@ -139,17 +67,8 @@ const Login = () => {
       const redirectTo = nextUrl ?? "/dashboard";
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      // ── Full error object — unconditional so it always hits logcat ────────
-      console.error('[LOGIN ERROR FULL]', err);
-      console.error('[LOGIN NAME]', (err as Error)?.name);
-      console.error('[LOGIN MESSAGE]', (err as Error)?.message);
-      console.error('[LOGIN STACK]', (err as Error)?.stack);
-
       const raw = err instanceof Error ? err.message : String(err);
-      const name = err instanceof Error ? err.name : 'UnknownError';
-      // Show the exact error class + message on-screen so the APK screenshot
-      // captures it without needing logcat access.
-      setError(raw ? `${name}: ${raw}` : 'Login failed. Please check your credentials.');
+      setError(raw || 'Login failed. Please check your credentials and try again.');
     } finally {
       setLoading(false);
     }
@@ -333,12 +252,6 @@ const Login = () => {
                 </div>
 
                 {/* TEMPORARY build stamp — remove once APK fetch root cause confirmed. */}
-                <p className="text-center font-mono text-[9px] text-slate-600 select-all leading-tight mt-1" title="Build diagnostics">
-                  {(import.meta.env.VITE_BUILD_SHA ?? 'local').slice(0, 7)}
-                  {' '}#{import.meta.env.VITE_BUILD_NUMBER ?? '0'}
-                  {' '}{import.meta.env.VITE_BUILD_TIME ? import.meta.env.VITE_BUILD_TIME.slice(0, 16).replace('T', ' ') : ''}
-                </p>
-
               </form>
             </div>
 

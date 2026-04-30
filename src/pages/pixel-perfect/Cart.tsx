@@ -187,7 +187,7 @@ const Cart = () => {
             </div>
 
             {/* Order Summary */}
-            <div className="lg:sticky lg:top-24 h-fit space-y-4">
+            <div className="order-first lg:order-none lg:sticky lg:top-24 h-fit space-y-4">
               <div className="bg-card rounded-xl border border-border p-6 space-y-5">
                 <h2 className="font-display text-lg font-semibold text-foreground">Order Summary</h2>
 

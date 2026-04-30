@@ -74,8 +74,8 @@ type FormErrors = Partial<Record<string, string>>;
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 function Section({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-white border border-gray-200 rounded-xl p-6 mb-6 shadow-sm ${className}`}>
-      <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-100">{title}</h2>
+    <div className={`bg-[#0B1220] border border-white/10 rounded-xl p-6 mb-6 shadow-lg shadow-black/20 ${className}`}>
+      <h2 className="text-lg font-semibold text-white mb-4 pb-3 border-b border-white/10">{title}</h2>
       {children}
     </div>
   );
@@ -541,7 +541,7 @@ export default function ProductFormPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="card text-center py-12">
-          <p className="text-gray-600">You must be a seller to access this page.</p>
+          <p className="text-slate-300">You must be a seller to access this page.</p>
         </div>
       </div>
     );
@@ -551,7 +551,7 @@ export default function ProductFormPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center h-64">
-          <div className="text-gray-500">Loading...</div>
+          <div className="text-slate-400">Loading...</div>
         </div>
       </div>
     );
@@ -560,13 +560,13 @@ export default function ProductFormPage() {
   const isBulkType = BULK_PRODUCT_TYPES.includes(formData.type);
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-[#020617] min-h-screen">
       <div className="container mx-auto px-4 pt-28 pb-8">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">{id ? 'Edit Listing' : 'Create New Listing'}</h1>
-            <p className="text-gray-500 mt-1 text-sm">
+            <h1 className="text-3xl font-bold text-white">{id ? 'Edit Listing' : 'Create New Listing'}</h1>
+            <p className="text-slate-400 mt-1 text-sm">
               {id ? 'Update your product information below.' : 'Fill in the details below to list your product on the marketplace.'}
             </p>
           </div>
@@ -605,36 +605,36 @@ export default function ProductFormPage() {
 
             {/* ─── LISTING CONTEXT SELECTOR ─────────────────────────────── */}
             {!id && (
-              <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6 shadow-sm">
-                <h2 className="text-lg font-semibold text-gray-900 mb-1">Listing Type</h2>
-                <p className="text-sm text-gray-500 mb-4">Choose whether you are listing a service or a physical product.</p>
+              <div className="bg-[#0B1220] border border-white/10 rounded-xl p-6 mb-6">
+                <h2 className="text-lg font-semibold text-white mb-1">Listing Type</h2>
+                <p className="text-sm text-slate-400 mb-4">Choose whether you are listing a service or a physical product.</p>
                 <div className="flex gap-4">
-                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'service' ? 'border-navy-800 bg-navy-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'service' ? 'border-[#FBBF24] bg-[#FBBF24]/10' : 'border-white/10 hover:border-white/20'}`}>
                     <input
                       type="radio"
                       name="listingContext"
                       value="service"
                       checked={listingContext === 'service'}
                       onChange={() => setListingContext('service')}
-                      className="mt-0.5 accent-navy-800"
+                      className="mt-0.5 accent-[#FBBF24]"
                     />
                     <div>
-                      <p className="font-semibold text-gray-900 text-sm">Service</p>
-                      <p className="text-xs text-gray-500 mt-0.5">Digital or in-person service — no stock, no shipping required. Reusable listing.</p>
+                      <p className="font-semibold text-white text-sm">Service</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Digital or in-person service — no stock, no shipping required. Reusable listing.</p>
                     </div>
                   </label>
-                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'goods' ? 'border-navy-800 bg-navy-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'goods' ? 'border-[#FBBF24] bg-[#FBBF24]/10' : 'border-white/10 hover:border-white/20'}`}>
                     <input
                       type="radio"
                       name="listingContext"
                       value="goods"
                       checked={listingContext === 'goods'}
                       onChange={() => setListingContext('goods')}
-                      className="mt-0.5 accent-navy-800"
+                      className="mt-0.5 accent-[#FBBF24]"
                     />
                     <div>
-                      <p className="font-semibold text-gray-900 text-sm">Physical Product</p>
-                      <p className="text-xs text-gray-500 mt-0.5">Tangible goods — requires stock quantity and shipping setup.</p>
+                      <p className="font-semibold text-white text-sm">Physical Product</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Tangible goods — requires stock quantity and shipping setup.</p>
                     </div>
                   </label>
                 </div>
@@ -644,7 +644,7 @@ export default function ProductFormPage() {
             {/* ─── SECTION 1: Basic Information ─────────────────────────── */}
             <Section title="1. Basic Information">
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   Product Title <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -652,34 +652,34 @@ export default function ProductFormPage() {
                   value={formData.title}
                   onChange={(e) => handleChange('title', e.target.value)}
                   disabled={hasActiveOrders}
-                  className={`input-field ${hasActiveOrders ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''} ${errors.title ? 'border-red-400' : ''}`}
+                  className={`w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.title ? 'border-red-400' : ''}`}
                   placeholder="e.g., 100x Mixed Electronics Bundle — Various Brands"
                 />
                 <FieldError msg={errors.title} />
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Short Description</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">Short Description</label>
                 <input
                   type="text"
                   value={formData.shortDescription}
                   onChange={(e) => handleChange('shortDescription', e.target.value)}
                   maxLength={160}
-                  className="input-field"
+                  className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                   placeholder="One-line summary shown in search results (max 160 characters)"
                 />
-                <p className="text-xs text-gray-400 mt-1">{formData.shortDescription.length}/160</p>
+                <p className="text-xs text-slate-500 mt-1">{formData.shortDescription.length}/160</p>
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   Full Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => handleChange('description', e.target.value)}
                   rows={6}
-                  className={`input-field ${errors.description ? 'border-red-400' : ''}`}
+                  className={`w-full rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all resize-y ${errors.description ? 'border-red-400' : ''}`}
                   placeholder="Describe your product in detail — condition, contents, brand mix, origin, etc."
                 />
                 <FieldError msg={errors.description} />
@@ -687,14 +687,14 @@ export default function ProductFormPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
                     Listing Type <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={formData.type}
                     onChange={(e) => handleChange('type', e.target.value)}
                     disabled={hasActiveOrders}
-                    className={`input-field ${hasActiveOrders ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''}`}
+                    className={`w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <option value="product">Single Item</option>
                     <option value="retail">Retail Product</option>
@@ -707,14 +707,14 @@ export default function ProductFormPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
                     Condition <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={formData.condition}
                     onChange={(e) => handleChange('condition', e.target.value)}
                     disabled={hasActiveOrders}
-                    className={`input-field ${hasActiveOrders ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''}`}
+                    className={`w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <option value="new">New</option>
                     <option value="used">Used</option>
@@ -733,7 +733,7 @@ export default function ProductFormPage() {
             {/* ─── SECTION 2: Category ──────────────────────────────────── */}
             <Section title="2. Category">
               {errors.categoryId && (
-                <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded flex items-center gap-2">
+                <div className="mb-3 p-2 bg-red-950/30 border border-red-500/30 rounded flex items-center gap-2">
                   <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
                   <p className="text-xs text-red-600">{errors.categoryId}</p>
                 </div>
@@ -752,7 +752,7 @@ export default function ProductFormPage() {
             <Section title="3. Pricing">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
                     Price (£) <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -761,15 +761,15 @@ export default function ProductFormPage() {
                     value={formData.price}
                     onChange={(e) => handleChange('price', normalizeDecimal(e.target.value))}
                     disabled={hasActiveOrders}
-                    className={`input-field ${hasActiveOrders ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''} ${errors.price ? 'border-red-400' : ''}`}
+                    className={`w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.price ? 'border-red-400' : ''}`}
                     placeholder="0.00"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Enter the VAT-inclusive price (20% VAT applied)</p>
+                  <p className="text-xs text-slate-500 mt-1">Enter the VAT-inclusive price (20% VAT applied)</p>
                   <FieldError msg={errors.price} />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
                     Sale / Discounted Price (£)
                   </label>
                   <input
@@ -777,16 +777,16 @@ export default function ProductFormPage() {
                     inputMode="decimal"
                     value={formData.salePrice}
                     onChange={(e) => handleChange('salePrice', normalizeDecimal(e.target.value))}
-                    className={`input-field ${errors.salePrice ? 'border-red-400' : ''}`}
+                    className={`w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all ${errors.salePrice ? 'border-red-400' : ''}`}
                     placeholder="Optional — leave blank if no discount"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Optional. Must be lower than the regular price.</p>
+                  <p className="text-xs text-slate-500 mt-1">Optional. Must be lower than the regular price.</p>
                   <FieldError msg={errors.salePrice} />
                 </div>
               </div>
 
               {formData.price && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
+                <div className="mt-3 p-3 bg-[#0F172A] border border-white/10 rounded-lg text-sm text-slate-400">
                   {(() => {
                     const priceNum = parseFloat(formData.price || '0');
                     const exVat = priceNum / 1.2;
@@ -795,7 +795,7 @@ export default function ProductFormPage() {
                       <>
                         <span className="font-medium">Price ex-VAT: </span>
                         £{exVat.toFixed(2)}
-                        {' '}<span className="text-gray-400">(20% VAT: £{vatAmt.toFixed(2)})</span>
+                        {' '}<span className="text-slate-500">(20% VAT: £{vatAmt.toFixed(2)})</span>
                       </>
                     );
                   })()}
@@ -808,7 +808,7 @@ export default function ProductFormPage() {
             <Section title="4. Inventory">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
                     Stock Quantity <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -817,15 +817,15 @@ export default function ProductFormPage() {
                     value={formData.stockQuantity}
                     onChange={(e) => handleChange('stockQuantity', e.target.value)}
                     disabled={hasActiveOrders}
-                    className={`input-field ${hasActiveOrders ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''} ${errors.stockQuantity ? 'border-red-400' : ''}`}
+                    className={`w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.stockQuantity ? 'border-red-400' : ''}`}
                     placeholder="0"
                   />
                   <FieldError msg={errors.stockQuantity} />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock Status</label>
-                  <div className="input-field bg-gray-50 cursor-default text-sm text-gray-600 flex items-center">
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Stock Status</label>
+                  <div className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A]/50 cursor-default text-sm text-slate-400 flex items-center px-3">
                     {(() => {
                       const qty = parseInt(formData.stockQuantity || '0', 10);
                       if (isNaN(qty)) return '— Enter quantity above';
@@ -834,13 +834,13 @@ export default function ProductFormPage() {
                       return '❌ Out of Stock';
                     })()}
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">Calculated automatically from quantity</p>
+                  <p className="text-xs text-slate-500 mt-1">Calculated automatically from quantity</p>
                 </div>
               </div>
 
               {(formData.type === 'wholesale' || formData.type === 'pallet') && (
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
                     Minimum Order Quantity (MOQ)
                   </label>
                   <input
@@ -848,10 +848,10 @@ export default function ProductFormPage() {
                     min="1"
                     value={formData.moq}
                     onChange={(e) => setFormData(prev => ({ ...prev, moq: e.target.value }))}
-                    className="input-field max-w-xs"
+                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all max-w-xs"
                     placeholder="e.g., 10"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Minimum units a buyer must order</p>
+                  <p className="text-xs text-slate-500 mt-1">Minimum units a buyer must order</p>
                 </div>
               )}
             </Section>
@@ -859,7 +859,7 @@ export default function ProductFormPage() {
 
             {/* ─── SECTION 5: Media ─────────────────────────────────────── */}
             <Section title="5. Product Images">
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-sm text-slate-400 mb-4">
                 Upload up to 10 images. The first image will be your main product photo.
                 Use clear, well-lit photos showing the actual product.
               </p>
@@ -875,54 +875,54 @@ export default function ProductFormPage() {
             <Section title="6. Dimensions &amp; Shipping">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Length (cm)</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Length (cm)</label>
                   <input
                     type="text" inputMode="decimal"
                     value={formData.dimensions.length}
                     onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, length: normalizeDecimal(e.target.value) } }))}
-                    className="input-field"
+                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                     placeholder="0"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Width (cm)</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Width (cm)</label>
                   <input
                     type="text" inputMode="decimal"
                     value={formData.dimensions.width}
                     onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, width: normalizeDecimal(e.target.value) } }))}
-                    className="input-field"
+                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                     placeholder="0"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Height (cm)</label>
                   <input
                     type="text" inputMode="decimal"
                     value={formData.dimensions.height}
                     onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, height: normalizeDecimal(e.target.value) } }))}
-                    className="input-field"
+                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                     placeholder="0"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Weight (kg)</label>
                   <input
                     type="text" inputMode="decimal"
                     value={formData.weight}
                     onChange={(e) => handleChange('weight', normalizeDecimal(e.target.value))}
-                    className="input-field"
+                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                     placeholder="0"
                   />
                 </div>
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Shipping / Delivery Notes</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1">Shipping / Delivery Notes</label>
                 <input
                   type="text"
                   value={formData.shippingNotes}
                   onChange={(e) => handleChange('shippingNotes', e.target.value)}
-                  className="input-field"
+                  className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                   placeholder="e.g., Fragile — handle with care, collection preferred for large items"
                 />
               </div>
@@ -933,45 +933,45 @@ export default function ProductFormPage() {
                     type="checkbox"
                     checked={formData.collectionAvailable}
                     onChange={(e) => setFormData(prev => ({ ...prev, collectionAvailable: e.target.checked }))}
-                    className="w-4 h-4 rounded border-gray-300 text-navy-800 focus:ring-navy-800"
+                    className="w-4 h-4 rounded border-white/20 text-[#FBBF24] focus:ring-[#FBBF24]/25"
                   />
-                  <span className="text-sm text-gray-700">Collection available</span>
+                  <span className="text-sm text-slate-300">Collection available</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.deliveryAvailable}
                     onChange={(e) => setFormData(prev => ({ ...prev, deliveryAvailable: e.target.checked }))}
-                    className="w-4 h-4 rounded border-gray-300 text-navy-800 focus:ring-navy-800"
+                    className="w-4 h-4 rounded border-white/20 text-[#FBBF24] focus:ring-[#FBBF24]/25"
                   />
-                  <span className="text-sm text-gray-700">Delivery available</span>
+                  <span className="text-sm text-slate-300">Delivery available</span>
                 </label>
               </div>
 
               {formData.type !== 'pallet' ? (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Shipping Methods</h3>
-                  <p className="text-xs text-gray-500 mb-3">Select the shipping options you offer for this product.</p>
+                  <h3 className="text-sm font-semibold text-slate-300 mb-2">Shipping Methods</h3>
+                  <p className="text-xs text-slate-400 mb-3">Select the shipping options you offer for this product.</p>
                   <ShippingMethodSelector
                     selectedMethodIds={selectedShippingMethodIds}
                     onChange={setSelectedShippingMethodIds}
                   />
                   {selectedShippingMethodIds.length > 0 && (
                     <div className="mt-3">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Dispatch Time</label>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Estimated Dispatch Time</label>
                       <input
                         type="text"
                         value={dispatchTime}
                         onChange={(e) => setDispatchTime(e.target.value)}
-                        className="input-field"
+                        className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                         placeholder="e.g. 1–2 working days"
                       />
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                  <p className="text-sm text-gray-600">
+                <div className="p-3 bg-blue-950/30 border border-blue-500/20 rounded-lg">
+                  <p className="text-sm text-slate-300">
                     <strong>Pallet &amp; bulk listings</strong> — ensure your shipping details and dimensions are accurate so buyers can arrange collection or delivery.
                   </p>
                 </div>
@@ -983,32 +983,32 @@ export default function ProductFormPage() {
             <Section title="7. Specifications">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Brand</label>
                   <input
                     type="text"
                     value={formData.brand}
                     onChange={(e) => handleChange('brand', e.target.value)}
-                    className="input-field"
+                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                     placeholder="e.g., Samsung"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">Model</label>
                   <input
                     type="text"
                     value={formData.model}
                     onChange={(e) => handleChange('model', e.target.value)}
-                    className="input-field"
+                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                     placeholder="e.g., Galaxy S23"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">SKU / Internal Code</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">SKU / Internal Code</label>
                   <input
                     type="text"
                     value={formData.sku}
                     onChange={(e) => handleChange('sku', e.target.value)}
-                    className="input-field"
+                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                     placeholder="Your ref code"
                   />
                 </div>
@@ -1017,18 +1017,18 @@ export default function ProductFormPage() {
               {/* Custom key-value specs */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-700">Additional Specifications</label>
+                  <label className="text-sm font-medium text-slate-300">Additional Specifications</label>
                   <button
                     type="button"
                     onClick={addCustomSpec}
-                    className="text-xs text-navy-800 hover:text-navy-600 flex items-center gap-1 font-medium"
+                    className="text-xs text-[#FBBF24] hover:text-yellow-300 flex items-center gap-1 font-medium"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Add Spec
                   </button>
                 </div>
                 {customSpecs.length === 0 && (
-                  <p className="text-xs text-gray-400 mb-2">
+                  <p className="text-xs text-slate-500 mb-2">
                     Add any extra attributes relevant to your product (e.g., Colour, Material, Storage Capacity).
                   </p>
                 )}
@@ -1039,14 +1039,14 @@ export default function ProductFormPage() {
                         type="text"
                         value={spec.key}
                         onChange={(e) => updateCustomSpec(i, 'key', e.target.value)}
-                        className="input-field flex-1"
+                        className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all flex-1"
                         placeholder="Attribute name (e.g., Colour)"
                       />
                       <input
                         type="text"
                         value={spec.value}
                         onChange={(e) => updateCustomSpec(i, 'value', e.target.value)}
-                        className="input-field flex-1"
+                        className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all flex-1"
                         placeholder="Value (e.g., Black)"
                       />
                       <button
@@ -1069,35 +1069,35 @@ export default function ProductFormPage() {
                 {/* Pallet-specific fields */}
                 {formData.type === 'pallet' && (
                   <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Pallet Details</h3>
+                    <h3 className="text-sm font-semibold text-slate-300 mb-3">Pallet Details</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Number of Pallets</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Number of Pallets</label>
                         <input
                           type="number" min="0"
                           value={formData.palletInfo.palletCount}
                           onChange={(e) => setFormData(prev => ({ ...prev, palletInfo: { ...prev.palletInfo, palletCount: e.target.value } }))}
-                          className="input-field"
+                          className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                           placeholder="1"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Items per Pallet</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Items per Pallet</label>
                         <input
                           type="number" min="0"
                           value={formData.palletInfo.itemsPerPallet}
                           onChange={(e) => setFormData(prev => ({ ...prev, palletInfo: { ...prev.palletInfo, itemsPerPallet: e.target.value } }))}
-                          className="input-field"
+                          className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                           placeholder="e.g., 100"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Pallet Type</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Pallet Type</label>
                         <input
                           type="text"
                           value={formData.palletInfo.palletType}
                           onChange={(e) => setFormData(prev => ({ ...prev, palletInfo: { ...prev.palletInfo, palletType: e.target.value } }))}
-                          className="input-field"
+                          className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                           placeholder="e.g., Euro pallet"
                         />
                       </div>
@@ -1108,29 +1108,29 @@ export default function ProductFormPage() {
                 {/* Wholesale fields */}
                 {formData.type === 'wholesale' && (
                   <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Wholesale Details</h3>
+                    <h3 className="text-sm font-semibold text-slate-300 mb-3">Wholesale Details</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Order Quantity (MOQ)</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Minimum Order Quantity (MOQ)</label>
                         <input
                           type="number" min="1"
                           value={formData.moq}
                           onChange={(e) => setFormData(prev => ({ ...prev, moq: e.target.value }))}
-                          className="input-field"
+                          className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                           placeholder="e.g., 10"
                         />
-                        <p className="text-xs text-gray-400 mt-1">Minimum units a buyer must order</p>
+                        <p className="text-xs text-slate-500 mt-1">Minimum units a buyer must order</p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Units in Lot / Batch</label>
+                        <label className="block text-sm font-medium text-slate-300 mb-1">Units in Lot / Batch</label>
                         <input
                           type="number" min="1"
                           value={formData.lotQuantity}
                           onChange={(e) => setFormData(prev => ({ ...prev, lotQuantity: e.target.value }))}
-                          className="input-field"
+                          className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                           placeholder="e.g., 100"
                         />
-                        <p className="text-xs text-gray-400 mt-1">Total units available in this lot</p>
+                        <p className="text-xs text-slate-500 mt-1">Total units available in this lot</p>
                       </div>
                     </div>
                   </div>
@@ -1139,41 +1139,41 @@ export default function ProductFormPage() {
                 {/* Bulk lot fields */}
                 {formData.type === 'lot' && (
                   <div className="mb-4">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Bulk Lot Details</h3>
+                    <h3 className="text-sm font-semibold text-slate-300 mb-3">Bulk Lot Details</h3>
                     <div className="max-w-xs">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Number of Items in Lot</label>
+                      <label className="block text-sm font-medium text-slate-300 mb-1">Number of Items in Lot</label>
                       <input
                         type="number" min="1"
                         value={formData.lotQuantity}
                         onChange={(e) => setFormData(prev => ({ ...prev, lotQuantity: e.target.value }))}
-                        className="input-field"
+                        className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                         placeholder="e.g., 50"
                       />
-                      <p className="text-xs text-gray-400 mt-1">Total items sold as one lot</p>
+                      <p className="text-xs text-slate-500 mt-1">Total items sold as one lot</p>
                     </div>
                   </div>
                 )}
 
                 {/* Shared bulk/pallet fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-100 mt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-white/10 mt-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Retail Value (£)</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Estimated Retail Value (£)</label>
                     <input
                       type="number" step="0.01" min="0"
                       value={formData.estimatedRetailValue}
                       onChange={(e) => handleChange('estimatedRetailValue', e.target.value)}
-                      className="input-field"
+                      className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
                       placeholder="Optional RRP estimate"
                     />
-                    <p className="text-xs text-gray-400 mt-1">Approximate total retail value of the lot</p>
+                    <p className="text-xs text-slate-500 mt-1">Approximate total retail value of the lot</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Manifest / Stock Notes</label>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">Manifest / Stock Notes</label>
                     <textarea
                       value={formData.manifestNotes}
                       onChange={(e) => handleChange('manifestNotes', e.target.value)}
                       rows={2}
-                      className="input-field"
+                      className="w-full rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all resize-y"
                       placeholder="e.g., Mixed electronics — approx 40% Grade A, 40% Grade B, 20% parts"
                     />
                   </div>
@@ -1182,18 +1182,18 @@ export default function ProductFormPage() {
             )}
 
             {/* ─── SECTION 9: Publish / Save ────────────────────────────── */}
-            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-100">
+            <div className="bg-[#0B1220] border border-white/10 rounded-xl p-6">
+              <h2 className="text-lg font-semibold text-white mb-4 pb-3 border-b border-white/10">
                 {id ? '9. Save Changes' : '9. Publish Listing'}
               </h2>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-slate-400">
                   {id ? (
                     <p>Save your changes. Published listings require admin approval before going live.</p>
                   ) : (
                     <>
-                      <p className="font-medium text-gray-700 mb-1">Ready to list your product?</p>
+                      <p className="font-medium text-slate-300 mb-1">Ready to list your product?</p>
                       <p>Use <strong>Save as Draft</strong> to continue editing later, or <strong>Publish</strong> to submit for admin approval.</p>
                     </>
                   )}
@@ -1203,7 +1203,7 @@ export default function ProductFormPage() {
                   <button
                     type="button"
                     onClick={() => navigate('/seller')}
-                    className="btn-outline"
+                    className="px-4 py-2 rounded-lg border border-white/10 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors"
                   >
                     Cancel
                   </button>
@@ -1212,7 +1212,7 @@ export default function ProductFormPage() {
                       type="button"
                       onClick={handleSaveDraft}
                       disabled={savingDraft || saving}
-                      className="btn-outline disabled:opacity-50"
+                      className="px-4 py-2 rounded-lg border border-white/10 text-slate-300 text-sm font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
                     >
                       {savingDraft ? 'Saving...' : 'Save as Draft'}
                     </button>
@@ -1220,7 +1220,8 @@ export default function ProductFormPage() {
                   <button
                     type="submit"
                     disabled={saving || savingDraft}
-                    className="btn-primary disabled:opacity-50"
+                    className="px-4 py-2 rounded-lg text-white text-sm font-semibold disabled:opacity-50 transition-all"
+                    style={{ background: "linear-gradient(135deg, #B45309, #FBBF24)" }}
                   >
                     {saving ? 'Publishing...' : id ? 'Save Changes' : 'Publish Listing'}
                   </button>
@@ -1229,10 +1230,10 @@ export default function ProductFormPage() {
 
               {/* ── Delete listing (existing products only) ───────────────── */}
               {id && (
-                <div className="mt-6 pt-4 border-t border-gray-100">
+                <div className="mt-6 pt-4 border-t border-white/10">
                   {showDeleteConfirm ? (
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <p className="text-sm font-medium text-red-800 mb-3">
+                    <div className="p-4 bg-red-950/30 border border-red-500/30 rounded-lg">
+                      <p className="text-sm font-medium text-red-300 mb-3">
                         Permanently delete this listing? This cannot be undone.
                       </p>
                       <div className="flex gap-3">
@@ -1247,7 +1248,7 @@ export default function ProductFormPage() {
                         <button
                           type="button"
                           onClick={() => setShowDeleteConfirm(false)}
-                          className="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50"
+                          className="px-4 py-2 border border-white/10 text-slate-300 text-sm font-medium rounded-lg hover:bg-white/5"
                         >
                           Cancel
                         </button>
