@@ -28,6 +28,7 @@
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { getFeatureFlags, isMaintenanceMode } from './_shared/platformFlags';
+import { checkRateLimit } from './_shared/rateLimiter';
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -93,6 +94,28 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 503,
       body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }),
+    };
+  }
+
+  // ── Rate limit ────────────────────────────────────────────────────────────
+  // Use authenticated user ID when available; fall back to IP for anonymous
+  // RFQ submissions so unauthenticated spam is also caught.
+  const rlIdentifier =
+    callerId ??
+    (event.headers['x-nf-client-connection-ip'] ??
+      event.headers['client-ip'] ??
+      'anonymous');
+  const rfqRl = await checkRateLimit({
+    supabase,
+    tableName: 'rfq_rate_limits',
+    identifier: rlIdentifier,
+    windowMinutes: 60,
+    maxAttempts: 20,
+  });
+  if (rfqRl.exceeded && !isAdmin) {
+    return {
+      statusCode: 429,
+      body: JSON.stringify({ error: 'Too many RFQ submissions. Please wait and try again later.' }),
     };
   }
 

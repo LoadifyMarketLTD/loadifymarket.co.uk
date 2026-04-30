@@ -4,22 +4,8 @@ import { BrowserRouter } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
-import { initApkFetchDiagnostics, logApkEnvDiagnostics } from "./lib/apkDiagnostics.ts";
 import { initErrorTracking } from "./lib/errorTracking.ts";
 import "./index.css";
-
-// TEMPORARY: Patch window.fetch before anything else so every outgoing request
-// is logged in the APK.  Must run first so the patch is in place before the
-// Supabase client or error-tracking code makes any fetch calls.
-// Remove once the "Failed to execute 'fetch' on 'Window': Invalid value" root
-// cause is confirmed.
-initApkFetchDiagnostics();
-
-// TEMPORARY: Log safe Supabase env var diagnostics (key length, first/last 10
-// chars, whitespace flag, eyJ prefix) to help diagnose
-// "AuthRetryableFetchError: Failed to construct 'Headers': Invalid value".
-// Remove once the root cause is confirmed.
-logApkEnvDiagnostics();
 
 // Initialise global error tracking (unhandled errors + unhandled rejections).
 // Must be called before the React tree mounts so no early errors are missed.

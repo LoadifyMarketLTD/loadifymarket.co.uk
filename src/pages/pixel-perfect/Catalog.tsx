@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
-import { X } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { X, ChevronDown } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import CatalogFilters from "@/components/catalog/CatalogFilters";
@@ -38,6 +38,9 @@ async function fetchSellerMap(
   return map;
 }
 
+// Number of products fetched per page
+const PAGE_SIZE = 24;
+
 const Catalog = () => {
   const [searchParams] = useSearchParams();
   const queryParam = searchParams.get("q") || "";
@@ -46,6 +49,9 @@ const Catalog = () => {
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const pageRef = useRef(0);
   const [dbCategories, setDbCategories] = useState<string[]>([]);
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -87,9 +93,16 @@ const Catalog = () => {
   }, []);
 
   // ── Fetch products from Supabase ──────────────────────────────────────────
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
+  const fetchProducts = useCallback(async (page = 0) => {
+    if (page === 0) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
     try {
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
       // Step 1: Fetch products with category joins only
       let query = supabase
         .from("products")
@@ -156,9 +169,7 @@ const Catalog = () => {
           break;
       }
 
-      // When no special filter is active, price range and sort are handled above.
-
-      const { data, error } = await query.limit(96);
+      const { data, error } = await query.range(from, to);
       if (error) throw error;
 
       // Step 2: Collect unique sellerIds
@@ -177,17 +188,22 @@ const Catalog = () => {
       }));
 
       // Step 5: Adapt to UI shape
-      setProducts(adaptProducts(mapped as unknown as DBProduct[]));
+      const newProducts = adaptProducts(mapped as unknown as DBProduct[]);
+      setProducts((prev) => page === 0 ? newProducts : [...prev, ...newProducts]);
+      setHasMore(rows.length === PAGE_SIZE);
+      pageRef.current = page;
     } catch (err) {
       console.error("Error fetching catalog products:", err);
       toast({ title: "Could not load products", description: "Please try refreshing the page.", variant: "destructive" });
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [queryParam, priceRange, sortBy, filterParam]);
 
   useEffect(() => {
-    fetchProducts();
+    pageRef.current = 0;
+    fetchProducts(0);
   }, [fetchProducts]);
 
   const clearAll = () => {
@@ -386,6 +402,28 @@ const Catalog = () => {
                   {filteredProducts.map((product) => (
                     <ProductCard key={product.id} product={product} linkState={{ flow: "marketplace" }} />
                   ))}
+                </div>
+              )}
+              {!loading && hasMore && (
+                <div className="flex justify-center mt-8">
+                  <Button
+                    variant="outline"
+                    className="gap-2 px-8"
+                    onClick={() => fetchProducts(pageRef.current + 1)}
+                    disabled={loadingMore}
+                  >
+                    {loadingMore ? (
+                      <span className="flex items-center gap-2">
+                        <span className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                        Loading…
+                      </span>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-4 w-4" />
+                        Load More
+                      </>
+                    )}
+                  </Button>
                 </div>
               )}
             </div>

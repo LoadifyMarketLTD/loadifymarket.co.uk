@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Handler, HandlerEvent } from '@netlify/functions';
+import { checkRateLimit } from './_shared/rateLimiter';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -76,6 +77,21 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 403,
         body: JSON.stringify({ error: 'Forbidden - seller role required' }),
+      };
+    }
+
+    // Rate-limit: 30 shipment creates/updates per user per 60-minute window.
+    const shipRl = await checkRateLimit({
+      supabase,
+      tableName: 'create_shipment_rate_limits',
+      identifier: user.id as string,
+      windowMinutes: 60,
+      maxAttempts: 30,
+    });
+    if (shipRl.exceeded) {
+      return {
+        statusCode: 429,
+        body: JSON.stringify({ error: 'Too many shipment requests. Please wait and try again.' }),
       };
     }
 

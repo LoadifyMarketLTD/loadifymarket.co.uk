@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Handler, HandlerEvent } from '@netlify/functions';
+import { checkRateLimit } from './_shared/rateLimiter';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -134,6 +135,21 @@ export const handler: Handler = async (event) => {
       return {
         statusCode: 403,
         body: JSON.stringify({ error: 'Forbidden – seller or admin role required' }),
+      };
+    }
+
+    // Rate-limit: 60 status updates per user per 60-minute window.
+    const statusRl = await checkRateLimit({
+      supabase,
+      tableName: 'update_shipment_status_rate_limits',
+      identifier: user.id as string,
+      windowMinutes: 60,
+      maxAttempts: 60,
+    });
+    if (statusRl.exceeded) {
+      return {
+        statusCode: 429,
+        body: JSON.stringify({ error: 'Too many status update requests. Please wait and try again.' }),
       };
     }
 

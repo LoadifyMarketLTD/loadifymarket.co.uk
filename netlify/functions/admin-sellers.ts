@@ -1,6 +1,7 @@
 import sgMail from '@sendgrid/mail';
 import { Handler, HandlerEvent } from '@netlify/functions';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { checkRateLimit } from './_shared/rateLimiter';
 
 /**
  * /.netlify/functions/admin-sellers
@@ -310,6 +311,21 @@ export const handler: Handler = async (event) => {
     };
   }
   const caller = authResult.caller;
+
+  // Rate-limit: 30 admin operations per caller per 60-minute window.
+  const adminRl = await checkRateLimit({
+    supabase: admin,
+    tableName: 'admin_sellers_rate_limits',
+    identifier: caller.id,
+    windowMinutes: 60,
+    maxAttempts: 30,
+  });
+  if (adminRl.exceeded) {
+    return {
+      statusCode: 429,
+      body: JSON.stringify({ error: 'Too many admin requests. Please wait and try again.' }),
+    };
+  }
 
   let body: { op?: string; userId?: string } = {};
   if (event.httpMethod === 'POST' && event.body) {
