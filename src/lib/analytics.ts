@@ -66,3 +66,45 @@ export function trackProductView(productId: string, productName: string, price?:
 export function trackSearch(searchTerm: string): void {
   trackEvent("search", { search_term: searchTerm });
 }
+
+/** Track when a buyer submits an offer. */
+export function trackOfferCreated(params: {
+  conversationId: string;
+  amountPence: number;
+  listingId?: string;
+}): void {
+  trackEvent("offer_created", {
+    conversation_id: params.conversationId,
+    value: params.amountPence / 100,
+    currency: "GBP",
+    ...(params.listingId ? { item_id: params.listingId } : {}),
+  });
+}
+
+/** Track when a seller accepts an offer. */
+export function trackOfferAccepted(params: {
+  offerId: string;
+  amountPence: number;
+  listingId?: string;
+}): void {
+  trackEvent("offer_accepted", {
+    offer_id: params.offerId,
+    value: params.amountPence / 100,
+    currency: "GBP",
+    ...(params.listingId ? { item_id: params.listingId } : {}),
+  });
+}
+
+/** Track when a payment is confirmed (offer → order → paid). */
+export function trackOfferPaid(params: {
+  orderId: string;
+  amountPence: number;
+  listingId?: string;
+}): void {
+  trackEvent("purchase", {
+    transaction_id: params.orderId,
+    value: params.amountPence / 100,
+    currency: "GBP",
+    ...(params.listingId ? { items: [{ item_id: params.listingId }] } : {}),
+  });
+}

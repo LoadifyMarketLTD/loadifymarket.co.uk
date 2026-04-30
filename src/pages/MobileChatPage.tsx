@@ -19,6 +19,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
 import MakeOfferSheet from "@/components/MakeOfferSheet";
+import { trackOfferAccepted } from "@/lib/analytics";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -257,6 +258,11 @@ export default function MobileChatPage() {
   // True when the current user is the seller (listing owner) in this conversation
   const [isSeller, setIsSeller] = useState(false);
   const [actingOnOffer, setActingOnOffer] = useState<string | null>(null);
+  // Typing indicator — true when the other participant is typing
+  const [otherTyping, setOtherTyping] = useState(false);
+  const otherTypingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track whether the last sent message has been read by the other participant
+  const [lastSentRead, setLastSentRead] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -520,10 +526,74 @@ export default function MobileChatPage() {
     return () => { void supabase.removeChannel(ordersChannel); };
   }, [user?.id]);
 
+  // Supabase Presence channel — used for typing indicator only.
+  // We join the channel for the conversation; each side broadcasts
+  // {typing:true|false} via presenceState.
+  useEffect(() => {
+    if (!conversationId || !user?.id || !otherId) return;
+
+    const presenceChannel = supabase.channel(
+      `chat-presence:${conversationId}`,
+      { config: { presence: { key: user.id } } },
+    );
+
+    presenceChannel
+      .on("presence", { event: "sync" }, () => {
+        const state = presenceChannel.presenceState() as Record<
+          string,
+          Array<{ typing?: boolean }>
+        >;
+        const otherPresences = state[otherId] ?? [];
+        const isTyping = otherPresences.some((p) => p.typing === true);
+        setOtherTyping(isTyping);
+        if (isTyping) {
+          // Auto-clear after 4 s in case the other side disconnects silently
+          if (otherTypingTimeout.current) clearTimeout(otherTypingTimeout.current);
+          otherTypingTimeout.current = setTimeout(() => {
+            setOtherTyping(false);
+          }, 4000);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      if (otherTypingTimeout.current) clearTimeout(otherTypingTimeout.current);
+      void supabase.removeChannel(presenceChannel);
+    };
+  }, [conversationId, user?.id, otherId]);
+
   // Scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Detect when the other side reads our last sent message.
+  // We watch the Realtime UPDATE event on messages filtered by senderId so we
+  // can flip `lastSentRead → true` when isRead becomes true.
+  useEffect(() => {
+    if (!conversationId || !user?.id) return;
+
+    const readChannel = supabase
+      .channel(`chat-read:${conversationId}:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event:  "UPDATE",
+          schema: "public",
+          table:  "messages",
+          filter: `conversationId=eq.${conversationId}`,
+        },
+        (payload) => {
+          const updated = payload.new as { id: string; senderId: string; isRead: boolean };
+          if (updated.senderId === user.id && updated.isRead) {
+            setLastSentRead(true);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => { void supabase.removeChannel(readChannel); };
+  }, [conversationId, user?.id]);
 
   // Send message
   const handleSend = async () => {
@@ -562,6 +632,8 @@ export default function MobileChatPage() {
         if (prev.some((m) => m.id === msg.id)) return prev;
         return [...prev, msg];
       });
+      // Reset seen state — new message not yet read by receiver
+      setLastSentRead(false);
     } catch (err) {
       setDraft(text);
       toast({ title: "Failed to send message", description: (err as Error).message, variant: "destructive" });
@@ -575,6 +647,20 @@ export default function MobileChatPage() {
       e.preventDefault();
       void handleSend();
     }
+  };
+
+  // Broadcast typing state to the Presence channel.
+  // Uses a 1 s debounce so we don't spam on every keystroke.
+  const typingBroadcastTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleDraftChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setDraft(e.target.value);
+    if (!conversationId || !user?.id) return;
+    const channel = supabase.channel(`chat-presence:${conversationId}`);
+    void channel.track({ typing: true });
+    if (typingBroadcastTimeout.current) clearTimeout(typingBroadcastTimeout.current);
+    typingBroadcastTimeout.current = setTimeout(() => {
+      void channel.track({ typing: false });
+    }, 1500);
   };
 
   // ── Offer action handlers ──────────────────────────────────────────────────
@@ -598,6 +684,11 @@ export default function MobileChatPage() {
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
 
       toast({ title: "Offer accepted! Buyer has been notified to pay." });
+      // Track analytics event
+      const acceptedOffer = offerMap.get(offerId);
+      if (acceptedOffer) {
+        trackOfferAccepted({ offerId, amountPence: acceptedOffer.amountPence });
+      }
       void loadOffers();
     } catch (err) {
       toast({ title: "Failed to accept offer", description: (err as Error).message, variant: "destructive" });
@@ -777,6 +868,27 @@ export default function MobileChatPage() {
         <div ref={bottomRef} />
       </div>
 
+      {/* Typing indicator + seen receipt */}
+      <div className="shrink-0 px-4 h-5 flex items-center gap-3">
+        {otherTyping && (
+          <div className="flex items-center gap-1.5">
+            <span className="flex gap-0.5">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full bg-white/40"
+                  style={{ animation: `bounce 1.2s infinite ${i * 0.2}s` }}
+                />
+              ))}
+            </span>
+            <span className="text-[11px] text-white/40">{otherName} is typing…</span>
+          </div>
+        )}
+        {!otherTyping && lastSentRead && (
+          <p className="text-[11px] text-white/35 ml-auto">Seen ✓</p>
+        )}
+      </div>
+
       {/* Compose bar */}
       <div
         className="shrink-0 px-4 py-3 border-t border-white/10"
@@ -789,7 +901,7 @@ export default function MobileChatPage() {
           <textarea
             ref={inputRef}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={handleDraftChange}
             onKeyDown={handleKeyDown}
             placeholder="Type a message…"
             rows={1}

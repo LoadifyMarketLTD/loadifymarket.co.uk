@@ -118,6 +118,8 @@ const ProductDetail = () => {
   const [ctaLoading, setCtaLoading] = useState(false);
   const [offerConvId, setOfferConvId] = useState<string | null>(null);
   const [offerOpen, setOfferOpen] = useState(false);
+  // Listing availability state (active | reserved | sold)
+  const [listingStatus, setListingStatus] = useState<string>("active");
 
   useEffect(() => {
     if (!id) return;
@@ -160,6 +162,7 @@ const ProductDetail = () => {
           typeof data.description === "string" ? data.description : "",
         );
         setProductSellerId(data.sellerId ?? null);
+        setListingStatus((data as Record<string, unknown>).listingStatus as string ?? "active");
 
         // Capture category slug for breadcrumb link
         const rawCat = Array.isArray(data.category) ? data.category[0] : data.category;
@@ -693,34 +696,50 @@ const ProductDetail = () => {
             paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))",
           }}
         >
-          {/* Message Seller */}
-          <button
-            onClick={() => void handleMessageSeller()}
-            disabled={ctaLoading}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-white/20 text-white text-sm font-semibold active:bg-white/10 transition-colors disabled:opacity-50"
-          >
-            <MessageSquare className="h-4 w-4" />
-            <span>Message</span>
-          </button>
+          {/* Reserved / sold notice — shown in place of normal CTAs */}
+          {listingStatus === "reserved" && (
+            <div className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-amber-500/15 border border-amber-500/25 py-2.5 px-3">
+              <span className="text-amber-400 text-sm font-semibold">⏳ Reserved — awaiting payment</span>
+            </div>
+          )}
+          {listingStatus === "sold" && (
+            <div className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-red-500/15 border border-red-500/25 py-2.5 px-3">
+              <span className="text-red-400 text-sm font-semibold">✕ This item has been sold</span>
+            </div>
+          )}
 
-          {/* Make Offer */}
-          <button
-            onClick={() => void handleMakeOffer()}
-            disabled={ctaLoading}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-[#FBBF24]/50 text-[#FBBF24] text-sm font-semibold active:bg-[#FBBF24]/10 transition-colors disabled:opacity-50"
-          >
-            <Tag className="h-4 w-4" />
-            <span>Make Offer</span>
-          </button>
+          {listingStatus === "active" && (
+            <>
+              {/* Message Seller */}
+              <button
+                onClick={() => void handleMessageSeller()}
+                disabled={ctaLoading}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-white/20 text-white text-sm font-semibold active:bg-white/10 transition-colors disabled:opacity-50"
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span>Message</span>
+              </button>
 
-          {/* Buy Now */}
-          <button
-            onClick={handleBuyNow}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#FBBF24] text-[#020617] text-sm font-bold active:bg-[#F59E0B] transition-colors"
-          >
-            <ShoppingCart className="h-4 w-4" />
-            <span>Buy Now</span>
-          </button>
+              {/* Make Offer */}
+              <button
+                onClick={() => void handleMakeOffer()}
+                disabled={ctaLoading}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-[#FBBF24]/50 text-[#FBBF24] text-sm font-semibold active:bg-[#FBBF24]/10 transition-colors disabled:opacity-50"
+              >
+                <Tag className="h-4 w-4" />
+                <span>Make Offer</span>
+              </button>
+
+              {/* Buy Now */}
+              <button
+                onClick={handleBuyNow}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#FBBF24] text-[#020617] text-sm font-bold active:bg-[#F59E0B] transition-colors"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                <span>Buy Now</span>
+              </button>
+            </>
+          )}
         </div>
       )}
 

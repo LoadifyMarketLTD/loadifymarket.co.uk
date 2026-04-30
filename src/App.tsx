@@ -15,6 +15,7 @@ import RequireBuyer from './components/auth/RequireBuyer';
 // ─── Mobile standalone pages ──────────────────────────────────────────────────
 const MobileInboxPage   = lazy(() => import('./pages/MobileInboxPage'));
 const MobileChatPage    = lazy(() => import('./pages/MobileChatPage'));
+const MobileOrdersPage  = lazy(() => import('./pages/MobileOrdersPage'));
 
 // ─── Homepage ─────────────────────────────────────────────────────────────────
 const Home                 = lazy(() => import('./pages/Home'));
@@ -500,6 +501,9 @@ function App() {
         {/* ── Mobile inbox + chat ─────────────────────────────────────────────── */}
         <Route path="inbox" element={<Suspense fallback={<PageLoader />}><MobileInboxPage /></Suspense>} />
         <Route path="inbox/:conversationId" element={<Suspense fallback={<PageLoader />}><MobileChatPage /></Suspense>} />
+
+        {/* ── Mobile orders (buyer) — also handles push notification deep-links ── */}
+        <Route path="orders" element={<Suspense fallback={<PageLoader />}><MobileOrdersPage /></Suspense>} />
 
         {/* ── Standalone functional pages ──────────────────────────────────────── */}
 

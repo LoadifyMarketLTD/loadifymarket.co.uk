@@ -22,6 +22,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
 import { Tag } from "lucide-react";
+import { trackOfferCreated } from "@/lib/analytics";
 
 interface MakeOfferSheetProps {
   open: boolean;
@@ -90,6 +91,7 @@ export default function MakeOfferSheet({
       }
 
       toast({ title: `Offer of £${numPounds.toFixed(2)} sent!` });
+      trackOfferCreated({ conversationId, amountPence });
       setPounds("");
       handleOpenChange(false);
       onSent?.();

@@ -6,6 +6,7 @@ import { useCart } from '../contexts/CartContext';
 import { BRAND } from '../constants/brand';
 import { supabase } from '../lib/supabase';
 import { toast } from '../hooks/use-toast';
+import { trackOfferPaid } from '../lib/analytics';
 
 export default function OrderSuccessPage() {
   const [searchParams] = useSearchParams();
@@ -26,7 +27,7 @@ export default function OrderSuccessPage() {
     const verifyOrder = async () => {
       const { data } = await supabase
         .from('payment_sessions')
-        .select('id, status')
+        .select('id, status, orderId, amount')
         .eq('stripeSessionId', sessionId)
         .eq('status', 'completed')
         .maybeSingle();
@@ -36,6 +37,11 @@ export default function OrderSuccessPage() {
         toast({ title: "Order not found", description: "We could not verify your order. Please check your orders page or contact support.", variant: "destructive" });
         navigate('/catalog', { replace: true });
         return;
+      }
+      // Track purchase analytics (order paid via offer flow)
+      const d = data as { id: string; orderId?: string | null; amount?: number | null };
+      if (d.orderId) {
+        trackOfferPaid({ orderId: d.orderId, amountPence: Math.round((d.amount ?? 0) * 100) });
       }
       setVerified(true);
     };

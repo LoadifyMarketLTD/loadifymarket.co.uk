@@ -191,6 +191,12 @@ body::before {
   }
 }
 
+/* ── Typing indicator bounce dots ─────────────────────────────────────────── */
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40%           { transform: translateY(-4px); opacity: 1; }
+}
+
 .icon-pulse {
   animation: goldPulse 3s ease-in-out infinite;
 }
