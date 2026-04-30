@@ -44,6 +44,14 @@ export default function MakeOfferSheet({
   const [pounds, setPounds] = useState("");
   const [sending, setSending] = useState(false);
 
+  /** Reset local state whenever the sheet closes, regardless of how it's dismissed. */
+  const handleOpenChange = (next: boolean) => {
+    if (!next) {
+      setPounds("");
+    }
+    onOpenChange(next);
+  };
+
   const handleSubmit = async () => {
     if (!user?.id) {
       toast({ title: "Please sign in to make an offer", variant: "destructive" });
@@ -53,6 +61,10 @@ export default function MakeOfferSheet({
     const numPounds = parseFloat(pounds.replace(/[^0-9.]/g, ""));
     if (isNaN(numPounds) || numPounds <= 0) {
       toast({ title: "Please enter a valid amount", variant: "destructive" });
+      return;
+    }
+    if (numPounds > 99_999) {
+      toast({ title: "Offer cannot exceed £99,999", variant: "destructive" });
       return;
     }
     const amount_pence = Math.round(numPounds * 100);
@@ -76,7 +88,7 @@ export default function MakeOfferSheet({
 
       toast({ title: `Offer of £${numPounds.toFixed(2)} sent!` });
       setPounds("");
-      onOpenChange(false);
+      handleOpenChange(false);
       onSent?.();
     } catch (err) {
       toast({
@@ -90,7 +102,7 @@ export default function MakeOfferSheet({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -114,6 +126,7 @@ export default function MakeOfferSheet({
             <input
               type="number"
               min="0.01"
+              max="99999"
               step="0.01"
               placeholder="0.00"
               value={pounds}
@@ -130,7 +143,7 @@ export default function MakeOfferSheet({
           <Button
             variant="outline"
             className="flex-1"
-            onClick={() => { setPounds(""); onOpenChange(false); }}
+            onClick={() => handleOpenChange(false)}
             disabled={sending}
           >
             Cancel

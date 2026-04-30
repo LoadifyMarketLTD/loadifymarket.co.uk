@@ -288,6 +288,9 @@ const ProductDetail = () => {
   /**
    * Finds or creates a conversation between the current buyer and the seller
    * for this product, then returns the conversation id.
+   *
+   * Handles the UNIQUE (user1Id, user2Id, productId) constraint race by
+   * catching error code 23505 and re-querying for the existing row.
    */
   const getOrCreateConversation = async (): Promise<string | null> => {
     if (!user?.id || !productSellerId || !id) return null;
@@ -317,7 +320,20 @@ const ProductDetail = () => {
       .select("id")
       .single<{ id: string }>();
 
+    // 23505 = unique_violation: a concurrent request already created the row
     if (error) {
+      if (error.code === "23505") {
+        const { data: raceWinner } = await supabase
+          .from("conversations")
+          .select("id")
+          .eq("productId", id)
+          .or(
+            `and(user1Id.eq.${user.id},user2Id.eq.${productSellerId}),` +
+            `and(user1Id.eq.${productSellerId},user2Id.eq.${user.id})`
+          )
+          .maybeSingle<{ id: string }>();
+        return raceWinner?.id ?? null;
+      }
       console.error("Failed to create conversation:", error.message);
       return null;
     }

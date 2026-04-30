@@ -135,6 +135,12 @@ export default function MobileChatPage() {
         if (!cancelled) navigate("/inbox", { replace: true });
         return;
       }
+      // Verify the current user is actually a participant (belt-and-suspenders
+      // on top of Supabase RLS, in case of any stale session edge-case)
+      if (conv.user1Id !== user.id && conv.user2Id !== user.id) {
+        if (!cancelled) navigate("/inbox", { replace: true });
+        return;
+      }
       if (cancelled) return;
       setConvMeta(conv);
 
@@ -275,16 +281,13 @@ export default function MobileChatPage() {
       className="flex flex-col bg-[#020617]"
       style={{
         height: "100dvh",
-        paddingTop: "env(safe-area-inset-top, 0px)",
+        paddingTop: "calc(3.5rem + env(safe-area-inset-top, 0px))",
       }}
     >
       {/* Sub-header */}
       <div
         className="flex items-center gap-3 px-4 py-3 border-b border-white/10 shrink-0"
-        style={{
-          marginTop: "calc(3.5rem + env(safe-area-inset-top, 0px))",
-          background: "rgba(11,15,26,0.97)",
-        }}
+        style={{ background: "rgba(11,15,26,0.97)" }}
       >
         <button
           onClick={() => navigate("/inbox")}

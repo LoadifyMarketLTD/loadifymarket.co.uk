@@ -130,7 +130,9 @@ export default function MobileInboxPage() {
           unreadMap.set(r.conversationId, (unreadMap.get(r.conversationId) ?? 0) + 1);
         });
 
-        // Last message per conversation
+        // Last message per conversation — fetch the most recent N messages where
+        // N = conversations * 5 to bound the query while still reliably getting
+        // at least one message per conversation.
         const convIds = convRows.map((r) => r.id);
         const lastMsgMap = new Map<string, string>();
         if (convIds.length > 0) {
@@ -138,7 +140,8 @@ export default function MobileInboxPage() {
             .from("messages")
             .select("conversationId, message")
             .in("conversationId", convIds)
-            .order("createdAt", { ascending: false });
+            .order("createdAt", { ascending: false })
+            .limit(Math.max(convIds.length * 5, 20));
           // Keep only the most recent message per conversation (rows are DESC)
           (lastMsgs ?? []).forEach((m: { conversationId: string; message: string }) => {
             if (!lastMsgMap.has(m.conversationId)) {
@@ -181,11 +184,14 @@ export default function MobileInboxPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020617] flex flex-col" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
+    <div
+      className="min-h-screen bg-[#020617] flex flex-col"
+      style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}
+    >
       {/* Sub-header */}
       <div
-        className="sticky z-40 flex items-center gap-3 px-4 py-3 border-b border-white/10"
-        style={{ top: "calc(3.5rem + env(safe-area-inset-top, 0px))", background: "rgba(11,15,26,0.97)" }}
+        className="sticky top-0 z-40 flex items-center gap-3 px-4 py-3 border-b border-white/10"
+        style={{ background: "rgba(11,15,26,0.97)" }}
       >
         <Link to="/" className="text-white/60 hover:text-white transition-colors p-1 -ml-1">
           <ArrowLeft className="h-5 w-5" />
