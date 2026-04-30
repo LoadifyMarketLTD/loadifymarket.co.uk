@@ -21,7 +21,7 @@ const features: Feature[] = [
   },
   {
     icon: MessageSquare,
-    title: "Built-In Messaging",
+    title: "Buyer/Seller Messaging",
     description: "Communicate directly with buyers before purchase.",
   },
   {
@@ -31,7 +31,7 @@ const features: Feature[] = [
   },
   {
     icon: Banknote,
-    title: "Stripe Connect Payouts",
+    title: "Stripe Payouts",
     description: "Get paid fast and secure via Stripe Connect Express.",
   },
 ];
@@ -42,7 +42,7 @@ export default function FeaturesGrid() {
 
       {/* Section heading */}
       <h2 className="text-lg sm:text-xl font-semibold text-white mb-1">
-        Powerful <span className="text-[#FBBF24]">Features</span> Built for <span className="text-[#FBBF24]">You</span>
+        Everything you need to <span className="text-[#FBBF24]">buy and sell</span>
       </h2>
 
       {/* ── Mobile: card list ─────────────────────────────────────── */}

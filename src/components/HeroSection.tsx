@@ -26,6 +26,11 @@ const HeroSection = () => (
     <div className="md:hidden absolute inset-0 flex items-end">
       <div className="w-full px-4 pt-[68px] pb-5" style={{ background: 'linear-gradient(to top, rgba(11,16,22,0.97) 0%, rgba(11,16,22,0.80) 55%, transparent 100%)' }}>
 
+        {/* Commission badge */}
+        <div className="inline-flex items-center bg-[#C99A3E] text-[#0B1016] text-[10px] font-bold rounded-full px-3 py-1 tracking-wide uppercase mb-3">
+          0% Commission Until Dec 2026
+        </div>
+
         {/* H1 */}
         <h1 className="text-[1.75rem] font-extrabold leading-[1.18] text-[#F5F1E8] mb-2">
           The UK Marketplace<br />
@@ -49,7 +54,7 @@ const HeroSection = () => (
             to="/catalog"
             className="w-full border border-white/40 text-white hover:bg-white/10 font-semibold px-5 py-3 rounded-xl text-sm text-center transition-colors"
           >
-            Browse the Marketplace
+            Browse Marketplace
           </Link>
         </div>
 

@@ -21,25 +21,21 @@ interface TrustItem {
   flag?: boolean;
   label: string;
   sub: string;
-  desktopOnly?: boolean;
 }
 
 const ITEMS: TrustItem[] = [
   { icon: ShieldCheck, label: "Secure Payments", sub: "with Stripe" },
+  { icon: BadgeCheck,  label: "Stripe Verified", sub: "Platform" },
   { flag: true,        label: "UK Marketplace",  sub: "Platform" },
   { icon: Percent,     label: "0% Commission",   sub: "Until 31 Dec 2026" },
-  { icon: BadgeCheck,  label: "Seller Verification", sub: "via Stripe", desktopOnly: true },
 ];
 
 const TrustStrip = () => (
-  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-6" aria-label="Platform trust features">
-    {ITEMS.map(({ icon: Icon, flag, label, sub, desktopOnly }) => (
+  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6" aria-label="Platform trust features">
+    {ITEMS.map(({ icon: Icon, flag, label, sub }) => (
       <div
         key={label}
-        className={
-          `flex items-center gap-2 sm:gap-3 rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#0F172A,#020617)] px-3 sm:px-5 py-3 sm:py-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(251,191,36,0.15)] hover:border-yellow-400/25` +
-          (desktopOnly ? ' hidden sm:flex' : ' flex')
-        }
+        className="flex items-center gap-2 sm:gap-3 rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#0F172A,#020617)] px-3 sm:px-5 py-3 sm:py-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(251,191,36,0.15)] hover:border-yellow-400/25"
       >
         <span className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0 overflow-hidden">
           {flag

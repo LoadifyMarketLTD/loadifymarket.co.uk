@@ -32,26 +32,26 @@ const SOCIAL_CARDS: SocialEntry[] = [
   {
     platform: "tiktok",
     Icon: TikTokIcon,
-    title: "Follow us on TikTok",
+    title: "TikTok",
     description: "Short videos, trending products & seller stories.",
-    cta: "Open TikTok",
+    cta: "Follow",
     href: "https://www.tiktok.com/@loadifymarket",
-  },
-  {
-    platform: "facebook",
-    Icon: Facebook,
-    title: "Follow us on Facebook",
-    description: "Latest deals, seller spotlights & marketplace news.",
-    cta: "Open Facebook",
-    href: "https://www.facebook.com/loadifymarket",
   },
   {
     platform: "instagram",
     Icon: Instagram,
-    title: "Follow us on Instagram",
+    title: "Instagram",
     description: "New arrivals, visual inspiration & behind-the-scenes.",
-    cta: "Open Instagram",
+    cta: "Follow",
     href: "https://www.instagram.com/loadifymarket",
+  },
+  {
+    platform: "facebook",
+    Icon: Facebook,
+    title: "Facebook",
+    description: "Latest deals, seller spotlights & marketplace news.",
+    cta: "Follow",
+    href: "https://www.facebook.com/loadifymarket",
   },
 ];
 
@@ -61,7 +61,7 @@ export default function SocialFollowSection() {
       {/* Section heading */}
       <div className="mb-5 sm:mb-8 sm:text-center">
         <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white">
-          Follow Loadify Market
+          Follow Loadify
         </h2>
         <p className="mt-1 text-[12px] sm:text-[13px] text-slate-400">
           Stay connected across all platforms.
@@ -94,18 +94,14 @@ export default function SocialFollowSection() {
               <p className="text-[13px] font-semibold text-white leading-tight">{title}</p>
               <p className="text-[11px] text-slate-400 leading-snug mt-0.5">{description}</p>
             </div>
-            {/* Inline link */}
+            {/* Follow button */}
             <a
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[11px] font-semibold text-[#FBBF24] whitespace-nowrap shrink-0 flex items-center gap-1"
+              className="shrink-0 text-[11px] font-bold text-[#020617] bg-[#FBBF24] hover:bg-[#D97706] px-3 py-1.5 rounded-lg transition-colors"
             >
               {cta}
-              <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/>
-                <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/>
-              </svg>
             </a>
           </div>
         ))}
@@ -145,7 +141,7 @@ export default function SocialFollowSection() {
             </div>
             {/* Text */}
             <div className="flex-1 min-w-0">
-              <h3 className="text-[16px] font-semibold text-white leading-snug mb-2">{title}</h3>
+              <h3 className="text-[16px] font-semibold text-white leading-snug mb-2">Follow us on {title}</h3>
               <p className="text-[13px] text-slate-400 leading-relaxed">{description}</p>
             </div>
             {/* CTA button */}

@@ -2,8 +2,8 @@
  * src/pages/Home.tsx — root "/" route
  *
  * Mobile (< md / 768 px):
- *   Hero → MobileCategoryShortcuts → MobileProductSection →
- *   TrustStrip → SellerCTA → Footer → MobileBottomNav (via MainLayout)
+ *   MobileTopBar → Hero → TrustStrip → FeaturesGrid →
+ *   SocialFollowSection → SellerCTA → Footer (compact)
  *
  * Desktop (>= md / 768 px) — unchanged:
  *   Hero → TrustStrip → SocialFollowSection → HowItWorksSection →
@@ -14,6 +14,7 @@ import { Helmet } from "react-helmet-async";
 
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
+import MobileTopBar from "@/components/MobileTopBar";
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
 import HowItWorksSection from "@/components/HowItWorksSection";
@@ -22,8 +23,6 @@ import SecurityTrust from "@/components/SecurityTrust";
 import SocialFollowSection from "@/components/SocialFollowSection";
 import SellerCTA from "@/components/SellerCTA";
 import LazySection from "@/components/LazySection";
-import MobileCategoryShortcuts from "@/components/MobileCategoryShortcuts";
-import MobileProductSection from "@/components/MobileProductSection";
 
 export default function Home() {
   return (
@@ -44,6 +43,9 @@ export default function Home() {
         description="Sell products, manage orders, and get paid — all in one secure platform. 0% commission until 31 December 2026. Free to list, no monthly charges."
         canonical="/"
       />
+
+      {/* Mobile-only top bar (replaces global Header on < md) */}
+      <MobileTopBar />
 
       <main id="main-content">
 
@@ -85,16 +87,10 @@ export default function Home() {
 
         </section>
 
-        {/* ── 3. Mobile-only: Category shortcuts + Product sections ─────── */}
-        <div className="md:hidden bg-[#020617]">
-          <MobileCategoryShortcuts />
-          <MobileProductSection />
-        </div>
-
-        {/* ── 4. Seller CTA ────────────────────────────────────────────── */}
+        {/* ── 3. Seller CTA ────────────────────────────────────────────── */}
         <SellerCTA />
 
-        {/* ── 5. Footer — rendered by MainLayout ───────────────────────── */}
+        {/* ── 4. Footer — rendered by MainLayout ───────────────────────── */}
 
       </main>
     </MainLayout>

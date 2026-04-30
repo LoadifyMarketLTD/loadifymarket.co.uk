@@ -1,55 +1,41 @@
 import { Link } from "react-router-dom";
-import { ShieldCheck, Truck, Store, Rocket } from "lucide-react";
-
-const TRUST_BADGES = [
-  { icon: ShieldCheck, label: "Registered", sub: "Sellers" },
-  { icon: ShieldCheck, label: "Secure",     sub: "Platform" },
-  { icon: Truck,       label: "UK Delivery", sub: "Support" },
-  { icon: Store,       label: "Independent", sub: "UK Marketplace" },
-];
+import { Rocket } from "lucide-react";
 
 export default function SellerCTA() {
   return (
     <section className="bg-[linear-gradient(135deg,#111827,#020617)] border-y border-yellow-400/20">
 
       {/* ── Mobile layout ───────────────────────────────────────────── */}
-      <div className="sm:hidden px-4 pt-6 pb-5">
+      <div className="sm:hidden px-4 py-8 text-center">
 
-        {/* Heading row — icon+text left, button right */}
-        <div className="flex items-center gap-3 mb-3">
-          <Rocket className="w-8 h-8 text-[#FBBF24] shrink-0" aria-hidden="true" />
-          <div className="flex-1 min-w-0">
-            <p className="text-white font-bold text-base leading-tight">
-              Start Selling for <span className="text-[#FBBF24]">FREE</span>
-            </p>
-            <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-              Join UK sellers earning more with 0% commission until 31 Dec 2026.
-            </p>
+        {/* Icon */}
+        <div className="flex justify-center mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-[#0B1220] border border-[#FBBF24]/20 flex items-center justify-center">
+            <Rocket className="w-7 h-7 text-[#FBBF24]" aria-hidden="true" />
           </div>
-          <Link
-            to="/register?type=seller"
-            className="shrink-0 bg-[linear-gradient(135deg,#FBBF24,#D97706)] text-[#020617] font-bold py-2.5 px-3 rounded-xl text-[11px] text-center leading-tight"
-          >
-            Create Your<br />Free Seller<br />Account
-          </Link>
         </div>
 
-        <p className="text-center text-[11px] text-slate-500 mb-4">
-          No fees. No monthly charges. No risk.
+        {/* Heading */}
+        <p className="text-white font-extrabold text-2xl leading-tight mb-2">
+          Start Selling for <span className="text-[#FBBF24]">FREE</span>
         </p>
 
-        {/* Trust badges row */}
-        <div className="grid grid-cols-4 gap-1.5">
-          {TRUST_BADGES.map(({ icon: Icon, label, sub }) => (
-            <div key={label} className="flex flex-col items-center gap-1.5">
-              <div className="w-9 h-9 rounded-xl bg-[#0B1220] border border-white/[0.07] flex items-center justify-center">
-                <Icon className="w-4 h-4 text-[#FBBF24]" aria-hidden="true" />
-              </div>
-              <p className="text-[9px] font-semibold text-white/80 text-center leading-tight">{label}</p>
-              <p className="text-[9px] text-slate-400 text-center leading-tight">{sub}</p>
-            </div>
-          ))}
-        </div>
+        {/* Subtext */}
+        <p className="text-[13px] text-slate-400 mb-6 leading-relaxed mx-auto max-w-[260px]">
+          List products, receive offers, get paid securely.
+        </p>
+
+        {/* Gold CTA button */}
+        <Link
+          to="/register?type=seller"
+          className="inline-flex items-center justify-center w-full bg-[linear-gradient(135deg,#FBBF24,#D97706)] text-[#020617] font-bold py-3.5 px-6 rounded-xl text-base shadow-[0_0_22px_rgba(251,191,36,0.25)] transition-all hover:-translate-y-0.5"
+        >
+          Become a Seller
+        </Link>
+
+        <p className="text-[11px] text-slate-500 mt-3">
+          No fees. No monthly charges. No risk.
+        </p>
       </div>
 
       {/* ── Desktop layout ──────────────────────────────────────────── */}
