@@ -27,6 +27,7 @@ import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import type { Handler } from '@netlify/functions';
 import { isMaintenanceMode } from './_shared/platformFlags';
+import { checkRateLimit } from './_shared/rateLimiter';
 
 interface CheckoutItem {
   productId: string;
@@ -122,6 +123,21 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 401,
       body: JSON.stringify({ error: 'Authentication required. Please sign in to complete your purchase.' }),
+    };
+  }
+
+  // Rate-limit: 10 payment-intent attempts per buyer per 60-minute window.
+  const piRl = await checkRateLimit({
+    supabase,
+    tableName: 'create_payment_intent_rate_limits',
+    identifier: verifiedBuyerId,
+    windowMinutes: 60,
+    maxAttempts: 10,
+  });
+  if (piRl.exceeded) {
+    return {
+      statusCode: 429,
+      body: JSON.stringify({ error: 'Too many payment attempts. Please wait a moment and try again.' }),
     };
   }
 

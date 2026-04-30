@@ -5,10 +5,18 @@ import { sendPushToUser } from './_shared/pushNotifications';
 /**
  * escrow-release — scheduled Netlify function
  *
- * Runs daily and auto-releases escrow for service orders that:
+ * Runs daily and auto-releases escrow for orders that:
+ *
+ * SERVICE ORDERS:
  *   1. Have status = 'delivered' (= awaiting_confirmation)
  *   2. Have serviceCompletedAt set (provider declared job done)
  *   3. serviceCompletedAt is older than ESCROW_WINDOW_DAYS
+ *   4. Have no open dispute
+ *
+ * PHYSICAL GOODS ORDERS:
+ *   1. Have status = 'delivered'
+ *   2. serviceCompletedAt IS NULL (not a service order)
+ *   3. deliveredAt is set and older than ESCROW_WINDOW_DAYS
  *   4. Have no open dispute
  *
  * On release:
@@ -50,8 +58,10 @@ export const handler = schedule('0 2 * * *', async () => {
     Date.now() - ESCROW_WINDOW_DAYS * 24 * 60 * 60 * 1000,
   ).toISOString();
 
-  // Find orders awaiting confirmation whose auto-release window has passed
-  const { data: candidates, error: fetchError } = await supabase
+  // ── Query 1: Service orders ────────────────────────────────────────────────
+  // Service orders require explicit provider completion (serviceCompletedAt set)
+  // before auto-release so the seller has explicitly declared the job done.
+  const { data: serviceOrders, error: serviceError } = await supabase
     .from('orders')
     .select('id, orderNumber, sellerId, total')
     .eq('status', 'delivered')
@@ -59,8 +69,33 @@ export const handler = schedule('0 2 * * *', async () => {
     .not('serviceCompletedAt', 'is', null)
     .lt('serviceCompletedAt', releaseBefore);
 
-  if (fetchError) {
-    console.error('escrow-release: candidate query failed:', fetchError.message);
+  if (serviceError) {
+    console.error('escrow-release: service order query failed:', serviceError.message);
+  }
+
+  // ── Query 2: Physical goods orders ────────────────────────────────────────
+  // Physical goods use deliveredAt as the release trigger.  serviceCompletedAt
+  // must be NULL so service orders are not accidentally included here.
+  const { data: physicalOrders, error: physicalError } = await supabase
+    .from('orders')
+    .select('id, orderNumber, sellerId, total')
+    .eq('status', 'delivered')
+    .eq('escrowStatus', 'held')
+    .is('serviceCompletedAt', null)
+    .not('deliveredAt', 'is', null)
+    .lt('deliveredAt', releaseBefore);
+
+  if (physicalError) {
+    console.error('escrow-release: physical goods order query failed:', physicalError.message);
+  }
+
+  const candidates = [
+    ...((serviceOrders ?? []) as { id: string; orderNumber: string; sellerId: string; total: number }[]),
+    ...((physicalOrders ?? []) as { id: string; orderNumber: string; sellerId: string; total: number }[]),
+  ];
+
+  if (serviceError && physicalError) {
+    // Both queries failed — bail out
     return { statusCode: 200 };
   }
 

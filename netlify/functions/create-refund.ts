@@ -31,6 +31,7 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
+import { checkRateLimit } from './_shared/rateLimiter';
 
 const REFUNDABLE_STATUSES = new Set(['paid', 'packed', 'shipped', 'delivered', 'disputed']);
 
@@ -82,6 +83,23 @@ export const handler: Handler = async (event) => {
 
   if (callerRow?.role !== 'admin') {
     return { statusCode: 403, headers: corsHeaders, body: JSON.stringify({ error: 'Admin access required' }) };
+  }
+
+  // Rate-limit: 10 refunds per admin per 60-minute window to prevent accidental
+  // mass-refunds and provide an audit trail.
+  const refundRl = await checkRateLimit({
+    supabase,
+    tableName: 'create_refund_rate_limits',
+    identifier: user.id,
+    windowMinutes: 60,
+    maxAttempts: 10,
+  });
+  if (refundRl.exceeded) {
+    return {
+      statusCode: 429,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: 'Too many refund requests in a short period. Please wait and try again.' }),
+    };
   }
 
   // ── Parse body ────────────────────────────────────────────────────────────
