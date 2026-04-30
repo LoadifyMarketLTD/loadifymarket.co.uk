@@ -154,16 +154,17 @@ export const handler: Handler = async (event) => {
 
   for (const item of items) {
     const dbProduct = productMap.get(item.productId);
-    if (!dbProduct || !dbProduct.isActive || !dbProduct.isApproved) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: `Item "${item.title}" is no longer available` }),
-      };
-    }
-    // Block products that are reserved by another buyer or already sold.
-    // This keeps the web checkout consistent with the mobile PaymentIntent flow
-    // which performs the same check in create-payment-intent.ts.
-    if (dbProduct.listingStatus === 'reserved' || dbProduct.listingStatus === 'sold') {
+    // Reject if the product is missing, inactive, unapproved, reserved by another
+    // buyer, or already sold. All of these states mean the item is unavailable.
+    // The listingStatus check keeps web checkout consistent with the mobile
+    // create-payment-intent flow (which performs the same guard).
+    if (
+      !dbProduct ||
+      !dbProduct.isActive ||
+      !dbProduct.isApproved ||
+      dbProduct.listingStatus === 'reserved' ||
+      dbProduct.listingStatus === 'sold'
+    ) {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: `Item "${item.title}" is no longer available` }),
