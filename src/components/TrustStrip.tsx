@@ -31,7 +31,7 @@ const ITEMS: TrustItem[] = [
 ];
 
 const TrustStrip = () => (
-  <div className="grid grid-cols-4 gap-6" aria-label="Platform trust features">
+  <div className="grid grid-cols-2 sm:grid-cols-4 gap-6" aria-label="Platform trust features">
     {ITEMS.map(({ icon: Icon, flag, label, sub }) => (
       <div
         key={label}

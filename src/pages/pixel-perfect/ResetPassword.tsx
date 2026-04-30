@@ -3,8 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { Lock, Eye, EyeOff, CheckCircle2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import logo from "@/assets/loadify-logo.svg";
 import { supabase } from "@/lib/supabase";
 
 const ResetPassword = () => {
@@ -92,150 +90,122 @@ const ResetPassword = () => {
   const headerHeight = "calc(7.625rem + env(safe-area-inset-top, 0px))";
 
   return (
-    <div className="flex" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
-      {/* Left — branding panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-hero relative items-center justify-center p-12">
-        <div className="absolute inset-0 opacity-5" style={{backgroundImage:"radial-gradient(circle,rgba(255,255,255,0.9) 1px,transparent 1px)",backgroundSize:"24px 24px"}} />
-        <div className="relative z-10 max-w-md text-center space-y-6">
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <img src={logo} alt="Loadify Market" className="h-12 w-12" />
-            <span className="flex flex-col leading-tight">
-              <span className="font-display text-3xl font-bold text-primary-foreground">Loadify</span>
-              <span className="font-display text-2xl font-bold text-accent">Market</span>
-            </span>
-          </div>
-          <h2 className="font-display text-2xl font-bold text-primary-foreground">
-            The UK Multi-Category Marketplace
-          </h2>
-          <p className="text-primary-foreground/70 text-lg leading-relaxed">
-            A trusted platform connecting buyers and sellers of physical goods across all categories in the UK.
-          </p>
-          <div className="grid grid-cols-3 gap-4 pt-4">
-            {[
-              { label: "Registered Sellers", value: "✓" },
-              { label: "Secure Payments", value: "✓" },
-              { label: "UK Businesses", value: "✓" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="font-display text-2xl font-bold text-accent">{stat.value}</div>
-                <div className="text-xs text-primary-foreground/60 mt-1">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+    <div className="flex bg-[#020617]" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
+      {/* Left — hero image (desktop only) */}
+      <div className="hidden lg:flex lg:w-[65%] xl:w-[67%] relative overflow-hidden">
+        <img
+          src="/hero-marketplace.jpg"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
       </div>
 
-      {/* Right — form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-background">
-        <div className="w-full max-w-md space-y-8">
-          {/* Mobile logo — hidden: global Header already shows the logo */}
-          <div className="hidden items-center justify-center gap-2 mb-4">
-            <img src={logo} alt="Loadify Market" className="h-9 w-9" />
-            <span className="flex flex-col leading-tight">
-              <span className="font-display text-xl font-bold text-foreground">Loadify</span>
-              <span className="font-display text-base font-bold text-primary">Market</span>
-            </span>
+      {/* Right — form panel */}
+      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col bg-[#020617]" style={{ minHeight: `calc(100vh - ${headerHeight})` }}>
+        <div className="flex-1 flex items-center justify-center px-4 py-8 sm:px-8">
+          <div className="w-full">
+            <div className="rounded-2xl p-7 sm:p-8 space-y-6" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.08)" }}>
+
+              {sessionChecking ? (
+                <div className="flex items-center justify-center py-16">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#FBBF24]"></div>
+                </div>
+              ) : !submitted ? (
+                <>
+                  <div className="space-y-1.5">
+                    <h1 className="text-[22px] font-bold text-white leading-tight" style={{ letterSpacing: "-0.02em" }}>Set new password</h1>
+                    <p className="text-slate-400 text-sm">Choose a strong password with at least 8 characters.</p>
+                  </div>
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label htmlFor="password" className="block text-[13px] font-medium text-slate-300">New Password</label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          className="h-11 pl-10 pr-10 bg-[#0F172A] border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-[#FBBF24]/25 focus-visible:border-[#FBBF24]"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label htmlFor="confirm-password" className="block text-[13px] font-medium text-slate-300">Confirm Password</label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                        <Input
+                          id="confirm-password"
+                          type={showConfirm ? "text" : "password"}
+                          placeholder="••••••••"
+                          className="h-11 pl-10 pr-10 bg-[#0F172A] border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-[#FBBF24]/25 focus-visible:border-[#FBBF24]"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirm(!showConfirm)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                        >
+                          {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {error && (
+                      <p className="text-sm text-red-400">{error}</p>
+                    )}
+
+                    <Button type="submit" disabled={loading || !hasSession} className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
+                      {loading ? "Resetting…" : "Reset Password"}
+                    </Button>
+                  </form>
+                </>
+              ) : (
+                <div className="space-y-4 text-center py-2">
+                  <div className="flex justify-center">
+                    <div className="h-16 w-16 rounded-full bg-[#FBBF24]/10 flex items-center justify-center">
+                      <CheckCircle2 className="h-8 w-8 text-[#FBBF24]" />
+                    </div>
+                  </div>
+                  <h1 className="text-[22px] font-bold text-white leading-tight" style={{ letterSpacing: "-0.02em" }}>Password updated</h1>
+                  <p className="text-slate-400 text-sm">
+                    Your password has been successfully reset. You can now sign in with your new password.
+                  </p>
+                  <Link to="/login">
+                    <Button className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold mt-2">
+                      Sign In
+                    </Button>
+                  </Link>
+                </div>
+              )}
+
+              {!sessionChecking && !submitted && (
+                <div className="text-center pt-1">
+                  <Link
+                    to="/login"
+                    className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to sign in
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
-
-          {sessionChecking ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-            </div>
-          ) : !submitted ? (
-            <>
-              <div className="space-y-2 text-center">
-                <h1 className="font-display text-3xl font-bold text-foreground">Set new password</h1>
-                <p className="text-muted-foreground">
-                  Choose a strong password with at least 8 characters.
-                </p>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password">New Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      className="pl-10 pr-10 h-11"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="confirm-password"
-                      type={showConfirm ? "text" : "password"}
-                      placeholder="••••••••"
-                      className="pl-10 pr-10 h-11"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirm(!showConfirm)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {error && (
-                  <p className="text-sm text-destructive font-medium">{error}</p>
-                )}
-
-                <Button type="submit" disabled={loading || !hasSession} className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
-                  {loading ? "Resetting…" : "Reset Password"}
-                </Button>
-              </form>
-            </>
-          ) : (
-            <div className="space-y-4 text-center">
-              <div className="flex justify-center">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <CheckCircle2 className="h-8 w-8 text-primary" />
-                </div>
-              </div>
-              <h1 className="font-display text-3xl font-bold text-foreground">Password updated</h1>
-              <p className="text-muted-foreground">
-                Your password has been successfully reset. You can now sign in with your new password.
-              </p>
-              <Link to="/login">
-                <Button className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold mt-2">
-                  Sign In
-                </Button>
-              </Link>
-            </div>
-          )}
-
-          {!sessionChecking && !submitted && (
-            <div className="text-center">
-              <Link
-                to="/login"
-                className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to sign in
-              </Link>
-            </div>
-          )}
         </div>
       </div>
     </div>

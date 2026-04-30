@@ -310,10 +310,10 @@ const SellerReviewsPage = () => {
           <TabsTrigger value="published">Published</TabsTrigger>
           <TabsTrigger value="flagged">Flagged</TabsTrigger>
         </TabsList>
-        <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
-        <TabsContent value="pending"><Card><CardContent className="pt-4">{renderTable(withReplyFilter(false))}</CardContent></Card></TabsContent>
-        <TabsContent value="published"><Card><CardContent className="pt-4">{renderTable(byStatus("published"))}</CardContent></Card></TabsContent>
-        <TabsContent value="flagged"><Card><CardContent className="pt-4">{renderTable(byStatus("flagged"))}</CardContent></Card></TabsContent>
+        <TabsContent value="all"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(filtered)}</div></CardContent></Card></TabsContent>
+        <TabsContent value="pending"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(withReplyFilter(false))}</div></CardContent></Card></TabsContent>
+        <TabsContent value="published"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("published"))}</div></CardContent></Card></TabsContent>
+        <TabsContent value="flagged"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("flagged"))}</div></CardContent></Card></TabsContent>
       </Tabs>
 
       {/* Review Detail / Reply Dialog */}
