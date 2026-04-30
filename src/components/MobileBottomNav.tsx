@@ -145,7 +145,7 @@ function AccountNavButton({ to, isActive }: { to: string; isActive: boolean }) {
   const [awaitingCount, setAwaitingCount] = useState(0);
 
   useEffect(() => {
-    if (user?.role !== 'seller') { setAwaitingCount(0); return; }
+    if (user?.role !== 'seller') { return; }
     let cancelled = false;
 
     const load = async () => {
@@ -162,12 +162,13 @@ function AccountNavButton({ to, isActive }: { to: string; isActive: boolean }) {
   }, [user?.id, user?.role]);
 
   const label = user ? (user.role === 'seller' ? 'Dashboard' : 'Account') : 'Sign In';
+  const displayCount = user?.role === 'seller' ? awaitingCount : 0;
 
   return (
     <Link
       to={to}
       className="flex flex-col items-center gap-1 px-3 py-1"
-      aria-label={`${label}${awaitingCount > 0 ? `, ${awaitingCount} orders awaiting payment` : ''}`}
+      aria-label={`${label}${displayCount > 0 ? `, ${displayCount} orders awaiting payment` : ''}`}
       aria-current={isActive ? 'page' : undefined}
     >
       <div className="relative">
@@ -175,7 +176,7 @@ function AccountNavButton({ to, isActive }: { to: string; isActive: boolean }) {
           className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-[#FBBF24]' : 'text-white/50'}`}
           aria-hidden="true"
         />
-        {awaitingCount > 0 && (
+        {displayCount > 0 && (
           <span className="absolute -top-1 -right-1.5 w-3 h-3 rounded-full bg-amber-400 border-2 border-[#0B0F1A]" />
         )}
       </div>

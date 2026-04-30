@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ShieldCheck, Truck, BadgeCheck, Store, Rocket } from "lucide-react";
+import { ShieldCheck, Truck, Store, Rocket } from "lucide-react";
 
 const TRUST_BADGES = [
   { icon: ShieldCheck, label: "Registered", sub: "Sellers" },

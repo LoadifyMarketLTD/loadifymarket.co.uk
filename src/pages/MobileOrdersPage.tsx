@@ -221,7 +221,7 @@ export default function MobileOrdersPage() {
 
         // Resolve conversationId via offerId → offers.conversationId
         const offerIds = (
-          data as Array<{
+          data as unknown as Array<{
             id: string;
             orderNumber: string;
             total: number;
@@ -234,7 +234,7 @@ export default function MobileOrdersPage() {
           .map((o) => o.offerId)
           .filter((x): x is string => x != null);
 
-        let convMap: Record<string, string> = {};
+        const convMap: Record<string, string> = {};
         if (offerIds.length > 0) {
           const { data: offerRows } = await supabase
             .from("offers")
@@ -248,7 +248,7 @@ export default function MobileOrdersPage() {
         }
 
         const rows: OrderRow[] = (
-          data as Array<{
+          data as unknown as Array<{
             id: string;
             orderNumber: string;
             total: number;
