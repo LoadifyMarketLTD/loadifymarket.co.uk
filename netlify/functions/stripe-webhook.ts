@@ -1365,7 +1365,7 @@ async function handleMobilePaymentIntentSucceeded(
     }).catch((err: unknown) => console.warn('Mobile buyer notification insert failed (non-fatal):', err));
 
     sendPushToUser(sb, orderData.buyerId, {
-      title: 'Payment confirmed ✓',
+      title: 'Order confirmed ✓',
       body:  `Your order has been placed. We'll notify you when it ships.`,
       data:  { type: 'order_confirmed', orderId: firstOrderId ?? '' },
     }).catch((err: unknown) => console.warn('Mobile buyer push failed (non-fatal):', err));
