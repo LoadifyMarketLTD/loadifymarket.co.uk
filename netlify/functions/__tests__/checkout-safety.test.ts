@@ -358,12 +358,37 @@ describe('handlePaymentFailed – marks payment_sessions as failed (P4A)', () =>
   });
 
   it('Test 8: updates payment_sessions status to failed using transfer_group', async () => {
-    const mockFilter = vi.fn().mockResolvedValue({ error: null });
-    const mockEq = vi.fn().mockReturnValue({ filter: mockFilter });
-    const mockUpdate = vi.fn().mockReturnValue({ eq: mockEq });
+    // 1st from() call: mobile lookup by stripePaymentIntent → no session found
+    const mobileMaybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+    const mobileChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      filter: vi.fn().mockReturnThis(),
+      maybeSingle: mobileMaybeSingle,
+    };
+
+    // 2nd from() call: web lookup by transfer_group → session found
+    const webMaybeSingle = vi.fn().mockResolvedValue({
+      data: { id: 'ps_1', metadata: { items: [] } },
+      error: null,
+    });
+    const webChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      filter: vi.fn().mockReturnThis(),
+      maybeSingle: webMaybeSingle,
+    };
+
+    // 3rd from() call: update session status to failed
+    const updateEq = vi.fn().mockReturnThis();
+    const update = vi.fn().mockReturnValue({ eq: updateEq });
+    const updateChain = { update };
 
     const mockSb = {
-      from: vi.fn(() => ({ update: mockUpdate })),
+      from: vi.fn()
+        .mockReturnValueOnce(mobileChain)
+        .mockReturnValueOnce(webChain)
+        .mockReturnValueOnce(updateChain),
     };
 
     const { handlePaymentFailed } = await import('../stripe-webhook');
@@ -372,13 +397,29 @@ describe('handlePaymentFailed – marks payment_sessions as failed (P4A)', () =>
       { id: 'pi_failed_123', transfer_group: 'tg_abc' } as import('stripe').default.PaymentIntent,
     );
 
-    expect(mockUpdate).toHaveBeenCalledWith({ status: 'failed' });
-    expect(mockEq).toHaveBeenCalledWith('status', 'pending');
-    expect(mockFilter).toHaveBeenCalledWith('metadata->>transferGroup', 'eq', 'tg_abc');
+    // Web lookup used transfer_group filter
+    expect(webChain.filter).toHaveBeenCalledWith('metadata->>transferGroup', 'eq', 'tg_abc');
+
+    // Update was called with failed status
+    expect(update).toHaveBeenCalledWith({ status: 'failed' });
+    expect(updateEq).toHaveBeenCalledWith('id', 'ps_1');
+    expect(updateEq).toHaveBeenCalledWith('status', 'pending');
   });
 
   it('Test 8b: skips update when transfer_group is absent (legacy intent)', async () => {
-    const mockSb = { from: vi.fn() };
+    const update = vi.fn();
+
+    // Mobile lookup returns no session; the single chain object is reused for all from() calls
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+    const mockSb = {
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        filter: vi.fn().mockReturnThis(),
+        maybeSingle,
+        update,
+      })),
+    };
 
     const { handlePaymentFailed } = await import('../stripe-webhook');
     await handlePaymentFailed(
@@ -386,8 +427,8 @@ describe('handlePaymentFailed – marks payment_sessions as failed (P4A)', () =>
       { id: 'pi_legacy', transfer_group: null } as import('stripe').default.PaymentIntent,
     );
 
-    // from() should never be called because we have no transfer_group to match on
-    expect(mockSb.from).not.toHaveBeenCalled();
+    // No session found and no transfer_group → early return, no update attempted
+    expect(update).not.toHaveBeenCalled();
   });
 });
 

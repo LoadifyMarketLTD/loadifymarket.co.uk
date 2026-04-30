@@ -1,5 +1,6 @@
 import { schedule } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { sendPushToUser } from './_shared/pushNotifications';
 
 /**
  * escrow-release — scheduled Netlify function
@@ -126,6 +127,15 @@ export const handler = schedule('0 2 * * *', async () => {
       .catch((err: unknown) =>
         console.warn('escrow-release: notification insert failed (non-fatal):', err),
       );
+
+    // Push notification to seller's mobile device (non-fatal)
+    sendPushToUser(supabase, order.sellerId, {
+      title: 'Funds released 💰',
+      body: `Escrow for order ${order.orderNumber} released. £${order.total.toFixed(2)} now available.`,
+      data: { type: 'escrow_released', orderId: order.id },
+    }).catch((err: unknown) =>
+      console.warn('escrow-release: push notification failed (non-fatal):', err),
+    );
   }
 
   return { statusCode: 200 };
