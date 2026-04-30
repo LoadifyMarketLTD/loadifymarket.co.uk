@@ -8,7 +8,6 @@
  * flow continues unaffected.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface PushPayload {
@@ -25,9 +24,8 @@ export interface PushPayload {
  * to the Expo Push API in a single batched request.  Tokens that Expo reports
  * as invalid are silently ignored — the app should clean them up on next launch.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function sendPushToUser(
-  supabase: SupabaseClient<any>,
+  supabase: SupabaseClient,
   userId: string,
   notification: PushPayload,
 ): Promise<void> {

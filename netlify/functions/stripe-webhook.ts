@@ -1065,7 +1065,6 @@ export async function handleConnectAccountUpdated(
  *
  * Exported for unit testing.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function handleTransferCreated(transfer: Stripe.Transfer): Promise<void> {
   const orderId = typeof transfer.metadata?.orderId === 'string' ? transfer.metadata.orderId : null;
 
@@ -1111,7 +1110,6 @@ export async function handleTransferCreated(transfer: Stripe.Transfer): Promise<
  *
  * Exported for unit testing.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function handlePayoutPaid(payout: Stripe.Payout, connectedAccountId: string | null): Promise<void> {
   console.log(
     `payout.paid: ${payout.id} — amount £${(payout.amount / 100).toFixed(2)} ` +
@@ -1181,7 +1179,6 @@ export async function handlePayoutPaid(payout: Stripe.Payout, connectedAccountId
  *   - Marks product(s) as `listingStatus = 'sold'`
  *   - Sends push notifications to buyer and seller(s)
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function handleMobilePaymentIntentSucceeded(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sb: import('@supabase/supabase-js').SupabaseClient<any>,
