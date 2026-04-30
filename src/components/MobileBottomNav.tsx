@@ -13,11 +13,13 @@
  * correctly on Android devices with gesture navigation.
  */
 
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Store, Search, Plus, ShoppingCart, User } from 'lucide-react';
+import { Store, MessageSquare, Plus, ShoppingCart, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuthStore } from '@/store';
+import { supabase } from '@/lib/supabase';
 
 // ── Cart badge helper ─────────────────────────────────────────────────────────
 
@@ -83,6 +85,55 @@ function NavItem({
   );
 }
 
+// ── Inbox badge helper ────────────────────────────────────────────────────────
+
+function InboxNavButton({ isActive }: { isActive: boolean }) {
+  const { user } = useAuthStore();
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    if (!user?.id) { setUnread(0); return; }
+    let cancelled = false;
+
+    const load = async () => {
+      const { count } = await supabase
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('receiverId', user.id)
+        .eq('isRead', false);
+      if (!cancelled) setUnread(count ?? 0);
+    };
+
+    load();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  return (
+    <Link
+      to="/inbox"
+      className="flex flex-col items-center gap-1 px-3 py-1"
+      aria-label={`Inbox${unread > 0 ? `, ${unread} unread` : ''}`}
+    >
+      <div className="relative">
+        <MessageSquare
+          className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-[#FBBF24]' : 'text-white/50'}`}
+          aria-hidden="true"
+        />
+        {unread > 0 && (
+          <span className="absolute -top-1 -right-1.5 min-w-[16px] h-[16px] rounded-full bg-[#FBBF24] text-[#020617] text-[9px] font-bold flex items-center justify-center px-0.5 leading-none">
+            {unread > 99 ? '99+' : unread}
+          </span>
+        )}
+      </div>
+      <span
+        className={`text-[10px] font-semibold leading-none transition-colors ${isActive ? 'text-[#FBBF24]' : 'text-white/40'}`}
+      >
+        Inbox
+      </span>
+    </Link>
+  );
+}
+
 // ── Bottom nav ────────────────────────────────────────────────────────────────
 
 export default function MobileBottomNav() {
@@ -118,13 +169,8 @@ export default function MobileBottomNav() {
           isActive={isActive('/catalog') || isActive('/category')}
         />
 
-        {/* Search */}
-        <NavItem
-          to="/catalog"
-          icon={Search}
-          label="Search"
-          isActive={false}
-        />
+        {/* Inbox */}
+        <InboxNavButton isActive={isActive('/inbox')} />
 
         {/* Sell — elevated gold CTA */}
         <Link

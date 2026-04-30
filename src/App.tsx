@@ -12,6 +12,10 @@ import RequireSeller from './components/auth/RequireSeller';
 import RequireSellerAny from './components/auth/RequireSellerAny';
 import RequireBuyer from './components/auth/RequireBuyer';
 
+// ─── Mobile standalone pages ──────────────────────────────────────────────────
+const MobileInboxPage   = lazy(() => import('./pages/MobileInboxPage'));
+const MobileChatPage    = lazy(() => import('./pages/MobileChatPage'));
+
 // ─── Homepage ─────────────────────────────────────────────────────────────────
 const Home                 = lazy(() => import('./pages/Home'));
 
@@ -492,6 +496,10 @@ function App() {
           <Route path="stripe-events" element={<Suspense fallback={<PageLoader />}><PPAdminStripeEvents /></Suspense>} />
           <Route path="disputes" element={<Suspense fallback={<PageLoader />}><PPAdminDisputes /></Suspense>} />
         </Route>
+
+        {/* ── Mobile inbox + chat ─────────────────────────────────────────────── */}
+        <Route path="inbox" element={<Suspense fallback={<PageLoader />}><MobileInboxPage /></Suspense>} />
+        <Route path="inbox/:conversationId" element={<Suspense fallback={<PageLoader />}><MobileChatPage /></Suspense>} />
 
         {/* ── Standalone functional pages ──────────────────────────────────────── */}
 
