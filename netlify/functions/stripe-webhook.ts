@@ -721,41 +721,119 @@ async function handleRefund(charge: Stripe.Charge) {
 /**
  * Handles payment_intent.payment_failed events.
  *
- * Marks any pending payment_sessions record that corresponds to this
- * PaymentIntent as 'failed' so it does not stay stuck in the 'pending' state.
- * We match via the transferGroup stored in both the Stripe PaymentIntent and
- * in payment_sessions.metadata (set by create-checkout.ts).
+ * 1. Finds the pending payment_sessions record:
+ *    - Mobile sessions: matched by stripePaymentIntent = paymentIntent.id
+ *      (set at insert time by create-payment-intent.ts)
+ *    - Web sessions:    matched by metadata->>'transferGroup' = transfer_group
+ *      (stripePaymentIntent is not set at insert time for web sessions)
+ * 2. Marks the session as 'failed'.
+ * 3. Immediately releases any product reservations (listingStatus → 'active')
+ *    listed in session.metadata.items so the items become purchasable again
+ *    without waiting for the 15-minute scheduled expiry.
  *
  * Exported for unit testing.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function handlePaymentFailed(sb: import('@supabase/supabase-js').SupabaseClient<any>, paymentIntent: Stripe.PaymentIntent): Promise<void> {
-  const transferGroup = paymentIntent.transfer_group ?? null;
-  if (!transferGroup) {
-    // PaymentIntents without a transferGroup were created before the
-    // Connect activation — we cannot reliably match them to a session.
-    console.warn(
-      `payment_intent.payment_failed: no transfer_group on ${paymentIntent.id} — cannot mark session as failed`,
-    );
+  // ── 1. Locate the pending session ────────────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let sessionData: { id: string; metadata: Record<string, any> } | null = null;
+
+  // Mobile path: stripePaymentIntent is set at insert time, so we can look up
+  // the session directly by PaymentIntent ID.
+  const { data: mobileSession, error: mobileErr } = await sb
+    .from('payment_sessions')
+    .select('id, metadata')
+    .eq('stripePaymentIntent', paymentIntent.id)
+    .eq('status', 'pending')
+    .maybeSingle<{ id: string; metadata: Record<string, unknown> }>();
+
+  if (mobileErr) {
+    console.error(`payment_intent.payment_failed: mobile session lookup error for PI ${paymentIntent.id}:`, mobileErr.message);
+  }
+
+  if (mobileSession) {
+    sessionData = mobileSession;
+  } else {
+    // Web path: fall back to matching by transferGroup stored in metadata JSON.
+    const transferGroup = paymentIntent.transfer_group ?? null;
+    if (!transferGroup) {
+      console.warn(
+        `payment_intent.payment_failed: no mobile session and no transfer_group for PI ${paymentIntent.id} — cannot locate session`,
+      );
+      return;
+    }
+
+    const { data: webSession, error: webErr } = await sb
+      .from('payment_sessions')
+      .select('id, metadata')
+      .eq('status', 'pending')
+      .filter('metadata->>transferGroup', 'eq', transferGroup)
+      .maybeSingle<{ id: string; metadata: Record<string, unknown> }>();
+
+    if (webErr) {
+      console.error(`payment_intent.payment_failed: web session lookup error for transfer_group ${transferGroup}:`, webErr.message);
+      return;
+    }
+
+    sessionData = webSession;
+  }
+
+  if (!sessionData) {
+    // No matching pending session — may have already been processed or cancelled.
+    console.warn(`payment_intent.payment_failed: no pending session found for PI ${paymentIntent.id} — nothing to do`);
     return;
   }
 
-  const { error } = await sb
+  // ── 2. Mark session as failed ─────────────────────────────────────────────
+  const { error: updateErr } = await sb
     .from('payment_sessions')
     .update({ status: 'failed' })
-    .eq('status', 'pending')
-    .filter('metadata->>transferGroup', 'eq', transferGroup);
+    .eq('id', sessionData.id)
+    .eq('status', 'pending'); // guard against double-processing
 
-  if (error) {
+  if (updateErr) {
     console.error(
-      `payment_intent.payment_failed: failed to mark payment_session as failed for transfer_group ${transferGroup}:`,
-      error.message,
+      `payment_intent.payment_failed: failed to mark session ${sessionData.id} as failed:`,
+      updateErr.message,
     );
-  } else {
-    console.log(
-      `payment_intent.payment_failed: payment_session with transfer_group ${transferGroup} marked as failed`,
-    );
+    // Continue — still attempt to release reservations even if status update failed.
   }
+
+  // ── 3. Release product reservations immediately ───────────────────────────
+  // Without this, reserved products stay locked for up to 15 minutes until the
+  // scheduled release_expired_reservations() RPC runs.
+  const items = sessionData.metadata?.items as Array<{ productId?: string }> | undefined;
+
+  if (!items?.length) {
+    console.log(`payment_intent.payment_failed: session ${sessionData.id} marked failed (no items to unreserve)`);
+    return;
+  }
+
+  let releasedCount = 0;
+  for (const item of items) {
+    if (!item.productId) continue;
+
+    const { error: releaseErr } = await sb
+      .from('products')
+      .update({ listingStatus: 'active', reservedUntil: null })
+      .eq('id', item.productId)
+      .eq('listingStatus', 'reserved'); // only release if still reserved (idempotent)
+
+    if (releaseErr) {
+      console.warn(
+        `payment_intent.payment_failed: could not release reservation for product ${item.productId} (non-fatal):`,
+        releaseErr.message,
+      );
+    } else {
+      releasedCount++;
+    }
+  }
+
+  console.log(
+    `payment_intent.payment_failed: session ${sessionData.id} marked failed; ` +
+    `${releasedCount}/${items.length} reservation(s) released for PI ${paymentIntent.id}`,
+  );
 }
 
 /**
