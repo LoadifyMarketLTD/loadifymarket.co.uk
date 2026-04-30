@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { COLORS } from '../constants/theme';
 
 interface ConversationItemProps {
-  id: string;
   name: string;
   preview: string;
   time: string;

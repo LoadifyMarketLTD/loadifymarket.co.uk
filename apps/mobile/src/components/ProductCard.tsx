@@ -4,7 +4,6 @@ import { Feather } from '@expo/vector-icons';
 import { COLORS, RADIUS } from '../constants/theme';
 
 interface ProductCardProps {
-  id: string;
   title: string;
   price: number;
   distance: string;
