@@ -61,7 +61,7 @@ export default function Home() {
             No product sections from the marketing layout here — just the
             0% commission hero and the continuous infinite product feed.
         ───────────────────────────────────────────────────────────────── */}
-        <div className="md:hidden bg-[#0B0B0F] pt-14">
+        <div className="md:hidden bg-[#0B0B0F] pt-[70px]">
 
           {/* Search input */}
           <MobileSearchBar />

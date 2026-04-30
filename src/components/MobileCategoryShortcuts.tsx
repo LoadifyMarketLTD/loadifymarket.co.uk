@@ -1,9 +1,10 @@
 /**
- * MobileCategoryShortcuts
+ * MobileCategoryShortcuts — horizontal scroll category row.
  *
- * Mobile-only horizontal scroll category row — matches the reference mockup.
- * No section title, no "View all" link.
- * Categories: All (selected/gold), Phones, Laptops, Watches, Vehicles, More
+ * Reference: "All" is the ONLY item with a gold circle background.
+ * All other items are plain icon + label (no circle).
+ * Active (All) = gold icon + gold label.
+ * Inactive = gold-outline icon + white label.
  */
 
 import { Link } from 'react-router-dom';
@@ -18,59 +19,75 @@ interface Shortcut {
 }
 
 const SHORTCUTS: Shortcut[] = [
-  { label: 'All',      icon: LayoutGrid,     to: '/catalog',              active: true },
-  { label: 'Phones',   icon: Smartphone,     to: '/category/electronics'              },
-  { label: 'Laptops',  icon: Laptop,         to: '/catalog?q=laptop'                  },
-  { label: 'Watches',  icon: Watch,          to: '/catalog?q=watch'                   },
-  { label: 'Vehicles', icon: Car,            to: '/category/automotive'               },
-  { label: 'More',     icon: MoreHorizontal, to: '/catalog'                           },
+  { label: 'All',      icon: LayoutGrid,     to: '/catalog',               active: true },
+  { label: 'Phones',   icon: Smartphone,     to: '/category/electronics'               },
+  { label: 'Laptops',  icon: Laptop,         to: '/catalog?q=laptop'                   },
+  { label: 'Watches',  icon: Watch,          to: '/catalog?q=watch'                    },
+  { label: 'Vehicles', icon: Car,            to: '/category/automotive'                },
+  { label: 'More',     icon: MoreHorizontal, to: '/catalog'                            },
 ];
 
 export default function MobileCategoryShortcuts() {
   return (
     <div
-      className="overflow-x-auto scrollbar-none px-4 py-3"
+      className="overflow-x-auto scrollbar-none py-3"
+      style={{ paddingLeft: '16px', paddingRight: '16px' }}
       aria-label="Browse by category"
     >
-      <div className="flex gap-5" style={{ width: 'max-content' }}>
+      <div style={{ display: 'flex', gap: '24px', width: 'max-content' }}>
         {SHORTCUTS.map(({ label, icon: Icon, to, active }) => (
           <Link
             key={label}
             to={to}
-            className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform"
+            className="flex flex-col items-center active:scale-95 transition-transform"
+            style={{ gap: '6px', textDecoration: 'none' }}
             aria-label={`Browse ${label}`}
           >
-            {/* Circle icon */}
-            <div
-              style={{
-                width: '58px',
-                height: '58px',
-                borderRadius: '50%',
-                backgroundColor: active ? 'rgba(245,185,66,0.14)' : 'rgba(255,255,255,0.05)',
-                border: active
-                  ? '1.5px solid rgba(245,185,66,0.50)'
-                  : '1px solid rgba(255,255,255,0.09)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Icon
+            {active ? (
+              /* "All" — gold circle with icon inside */
+              <div
                 style={{
-                  width: '24px',
-                  height: '24px',
-                  color: active ? '#F5B942' : '#A0A0A0',
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(200,134,10,0.14)',
+                  border: '1.5px solid rgba(245,185,66,0.55)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
-                aria-hidden="true"
-              />
-            </div>
+              >
+                <Icon
+                  style={{ width: '26px', height: '26px', color: '#F5B942' }}
+                  aria-hidden="true"
+                />
+              </div>
+            ) : (
+              /* Inactive items — bare icon, no circle */
+              <div
+                style={{
+                  width: '60px',
+                  height: '60px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Icon
+                  style={{ width: '28px', height: '28px', color: 'rgba(245,185,66,0.75)' }}
+                  strokeWidth={1.5}
+                  aria-hidden="true"
+                />
+              </div>
+            )}
 
             {/* Label */}
             <span
               style={{
                 fontSize: '12px',
-                fontWeight: active ? 600 : 400,
-                color: active ? '#F5B942' : 'rgba(255,255,255,0.65)',
+                fontWeight: active ? 700 : 400,
+                color: active ? '#F5B942' : 'rgba(255,255,255,0.75)',
+                lineHeight: 1,
               }}
             >
               {label}
