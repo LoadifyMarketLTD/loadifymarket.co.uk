@@ -390,7 +390,7 @@ const Checkout = () => {
               <div key={step.id} className="flex items-center gap-2">
                 <button
                   onClick={() => i <= currentStep && setCurrentStep(i)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-full text-sm font-medium transition-all ${
                     i === currentStep
                       ? "bg-gradient-hero text-primary-foreground shadow-elevated"
                       : i < currentStep
@@ -430,21 +430,21 @@ const Checkout = () => {
                       <Label htmlFor="firstName">First Name</Label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input id="firstName" name="firstName" placeholder="John" className="pl-10 h-11" value={shippingData.firstName} onChange={handleShippingChange} />
+                        <Input id="firstName" name="firstName" placeholder="John" className="pl-10 h-11" value={shippingData.firstName} onChange={handleShippingChange} required />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lastName">Last Name</Label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input id="lastName" name="lastName" placeholder="Doe" className="pl-10 h-11" value={shippingData.lastName} onChange={handleShippingChange} />
+                        <Input id="lastName" name="lastName" placeholder="Doe" className="pl-10 h-11" value={shippingData.lastName} onChange={handleShippingChange} required />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input id="email" name="email" type="email" placeholder="john@company.com" className="pl-10 h-11" value={shippingData.email} onChange={handleShippingChange} />
+                        <Input id="email" name="email" type="email" placeholder="john@company.com" className="pl-10 h-11" value={shippingData.email} onChange={handleShippingChange} required />
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -463,7 +463,7 @@ const Checkout = () => {
                     </div>
                     <div className="space-y-2 sm:col-span-2">
                       <Label htmlFor="address1">Address Line 1</Label>
-                      <Input id="address1" name="address1" placeholder="123 High Street" className="h-11" value={shippingData.address1} onChange={handleShippingChange} />
+                      <Input id="address1" name="address1" placeholder="123 High Street" className="h-11" value={shippingData.address1} onChange={handleShippingChange} required />
                     </div>
                     <div className="space-y-2 sm:col-span-2">
                       <Label htmlFor="address2">Address Line 2 (optional)</Label>
@@ -471,7 +471,7 @@ const Checkout = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="city">City</Label>
-                      <Input id="city" name="city" placeholder="Manchester" className="h-11" value={shippingData.city} onChange={handleShippingChange} />
+                      <Input id="city" name="city" placeholder="Manchester" className="h-11" value={shippingData.city} onChange={handleShippingChange} required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="county">County</Label>
@@ -479,7 +479,7 @@ const Checkout = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="postcode">Postcode</Label>
-                      <Input id="postcode" name="postcode" placeholder="M1 1AA" className="h-11" value={shippingData.postcode} onChange={handleShippingChange} />
+                      <Input id="postcode" name="postcode" placeholder="M1 1AA" className="h-11" value={shippingData.postcode} onChange={handleShippingChange} required />
                     </div>
                     <div className="space-y-2">
                       <Label>Country</Label>

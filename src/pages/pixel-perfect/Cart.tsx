@@ -62,7 +62,7 @@ const Cart = () => {
         canonical="/cart"
         robots="noindex,nofollow"
       />
-      <main id="main-content" className="pt-28 pb-16">
+      <main id="main-content" className="pt-28 pb-40 lg:pb-16">
         <div className="container mx-auto px-4">
           <BreadcrumbNav
             items={[
@@ -236,6 +236,18 @@ const Cart = () => {
           </div>
         </div>
       </main>
+
+      {/* Mobile sticky checkout CTA — sits above the MobileBottomNav */}
+      <div
+        className="lg:hidden fixed inset-x-0 z-[9996] px-4 py-3 bg-background/95 backdrop-blur border-t border-border"
+        style={{ bottom: "calc(60px + env(safe-area-inset-bottom, 0px))" }}
+      >
+        <Link to="/checkout">
+          <Button className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity">
+            Checkout · £{total.toLocaleString()} <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+        </Link>
+      </div>
 
     </MainLayout>
   );

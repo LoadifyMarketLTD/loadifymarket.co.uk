@@ -873,7 +873,7 @@ export default function ProductFormPage() {
             {/* ─── SECTION 6: Dimensions & Shipping ────────────────────── */}
             {listingContext === 'goods' && (
             <Section title="6. Dimensions &amp; Shipping">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Length (cm)</label>
                   <input

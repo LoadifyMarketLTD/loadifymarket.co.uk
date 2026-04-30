@@ -6,6 +6,7 @@ import CatalogFilters from "@/components/catalog/CatalogFilters";
 import CatalogHeader from "@/components/catalog/CatalogHeader";
 import ProductCard from "@/components/catalog/ProductCard";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import type { Product } from "@/components/catalog/ProductCard";
 import { supabase } from "@/lib/supabase";
@@ -319,14 +320,14 @@ const Catalog = () => {
               </div>
             </aside>
 
-            {/* Mobile filters overlay */}
+            {/* Mobile filters — bottom sheet */}
             {filtersVisible && (
               <div className="fixed inset-0 z-50 lg:hidden">
-                <div className="absolute inset-0 bg-transparent" onClick={() => setFiltersVisible(false)} />
-                <div className="absolute left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-card p-6 overflow-y-auto animate-fade-in">
+                <div className="absolute inset-0 bg-black/50" onClick={() => setFiltersVisible(false)} />
+                <div className="absolute bottom-0 inset-x-0 max-h-[85vh] rounded-t-2xl bg-card p-6 overflow-y-auto animate-in slide-in-from-bottom duration-300">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-display text-lg font-bold text-foreground">Filters</h3>
-                    <button onClick={() => setFiltersVisible(false)} className="text-muted-foreground hover:text-foreground">
+                    <button onClick={() => setFiltersVisible(false)} className="text-muted-foreground hover:text-foreground p-1">
                       <X className="h-5 w-5" />
                     </button>
                   </div>
@@ -342,6 +343,12 @@ const Catalog = () => {
                     onClearAll={clearAll}
                     availableCategories={dbCategories}
                   />
+                  {/* Apply button to close the sheet */}
+                  <div className="mt-6 pb-2">
+                    <Button className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold" onClick={() => setFiltersVisible(false)}>
+                      Apply Filters
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}

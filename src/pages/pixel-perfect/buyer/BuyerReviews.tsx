@@ -330,9 +330,9 @@ const BuyerReviews = () => {
           <TabsTrigger value="published">Published</TabsTrigger>
           <TabsTrigger value="pending">Pending</TabsTrigger>
         </TabsList>
-        <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
-        <TabsContent value="published"><Card><CardContent className="pt-4">{renderTable(byStatus("published"))}</CardContent></Card></TabsContent>
-        <TabsContent value="pending"><Card><CardContent className="pt-4">{renderTable(byStatus("pending"))}</CardContent></Card></TabsContent>
+        <TabsContent value="all"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(filtered)}</div></CardContent></Card></TabsContent>
+        <TabsContent value="published"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("published"))}</div></CardContent></Card></TabsContent>
+        <TabsContent value="pending"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("pending"))}</div></CardContent></Card></TabsContent>
       </Tabs>
 
       {/* Review Detail Dialog */}

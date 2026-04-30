@@ -265,9 +265,9 @@ const SellerRFQ = () => {
           <TabsTrigger value="pending">New <Badge variant="secondary" className="ml-2 text-xs">{pending.length}</Badge></TabsTrigger>
           <TabsTrigger value="replied">You Replied</TabsTrigger>
         </TabsList>
-        <TabsContent value="all"><Card><CardContent className="pt-4">{renderTable(filtered)}</CardContent></Card></TabsContent>
-        <TabsContent value="pending"><Card><CardContent className="pt-4">{renderTable(pending)}</CardContent></Card></TabsContent>
-        <TabsContent value="replied"><Card><CardContent className="pt-4">{renderTable(replied)}</CardContent></Card></TabsContent>
+        <TabsContent value="all"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(filtered)}</div></CardContent></Card></TabsContent>
+        <TabsContent value="pending"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(pending)}</div></CardContent></Card></TabsContent>
+        <TabsContent value="replied"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(replied)}</div></CardContent></Card></TabsContent>
       </Tabs>
 
       {/* RFQ Detail / Reply Dialog */}
