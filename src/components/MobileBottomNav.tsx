@@ -92,10 +92,14 @@ function InboxNavButton({ isActive }: { isActive: boolean }) {
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
-    if (!user?.id) { setUnread(0); return; }
     let cancelled = false;
 
     const load = async () => {
+      if (!user?.id) {
+        if (!cancelled) setUnread(0);
+        return;
+      }
+
       const { count } = await supabase
         .from('messages')
         .select('id', { count: 'exact', head: true })
@@ -104,7 +108,7 @@ function InboxNavButton({ isActive }: { isActive: boolean }) {
       if (!cancelled) setUnread(count ?? 0);
     };
 
-    load();
+    void load();
     return () => { cancelled = true; };
   }, [user?.id]);
 

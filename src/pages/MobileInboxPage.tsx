@@ -67,7 +67,9 @@ function previewText(raw: string | null): string {
       if (typeof parsed.amount_pence === "number") {
         return `💰 Offer: £${(parsed.amount_pence / 100).toFixed(2)}`;
       }
-    } catch {}
+    } catch {
+      // ignore invalid offer JSON; fall back to raw preview
+    }
   }
   return raw.length > 60 ? raw.slice(0, 60) + "…" : raw;
 }

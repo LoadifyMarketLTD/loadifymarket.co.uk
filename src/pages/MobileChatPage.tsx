@@ -60,7 +60,9 @@ function parseMessage(raw: string): { type: "text" | "offer"; text?: string; amo
           productTitle: typeof parsed.productTitle === "string" ? parsed.productTitle : undefined,
         };
       }
-    } catch {}
+    } catch {
+      // ignore invalid JSON; treat as plain text
+    }
   }
   return { type: "text", text: raw };
 }
