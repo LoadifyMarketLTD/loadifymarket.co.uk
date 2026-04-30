@@ -1612,7 +1612,16 @@ CREATE POLICY "conversations_update" ON conversations FOR UPDATE
 -- MESSAGES
 CREATE POLICY "messages_select" ON messages FOR SELECT
   USING (auth.uid() = "senderId" OR auth.uid() = "receiverId" OR is_admin());
-CREATE POLICY "messages_insert" ON messages FOR INSERT WITH CHECK (auth.uid() = "senderId");
+CREATE POLICY "messages_insert" ON messages FOR INSERT
+  WITH CHECK (
+    auth.uid() = "senderId"
+    AND EXISTS (
+      SELECT 1
+      FROM   conversations c
+      WHERE  c.id = "conversationId"
+        AND  (c."user1Id" = auth.uid() OR c."user2Id" = auth.uid())
+    )
+  );
 CREATE POLICY "messages_update" ON messages FOR UPDATE
   USING (auth.uid() = "receiverId" OR is_admin());
 -- DELIVERY REQUESTS
