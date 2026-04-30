@@ -162,6 +162,7 @@ DECLARE
   v_order_id       UUID;
   v_reserved_until TIMESTAMPTZ;
   v_system_msg     TEXT;
+  v_amount_pounds  NUMERIC;
 BEGIN
   -- 1. Lock and fetch the offer row so no concurrent accept can race us.
   SELECT * INTO v_offer
@@ -214,6 +215,8 @@ BEGIN
 
   -- 8. Create the order in awaiting_payment state.
   --    Amount is the agreed offer price (pence → pounds).
+  v_amount_pounds := v_offer."amountPence"::NUMERIC / 100;
+
   INSERT INTO orders (
     "buyerId", "sellerId", "productId",
     quantity,
@@ -226,10 +229,10 @@ BEGIN
     v_listing."sellerId",
     v_offer."listingId",
     1,
-    (v_offer."amountPence"::NUMERIC / 100),
+    v_amount_pounds,
     0.00,
     0.00,
-    (v_offer."amountPence"::NUMERIC / 100),
+    v_amount_pounds,
     'awaiting_payment',
     'held',
     '{}',

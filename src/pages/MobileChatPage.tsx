@@ -611,7 +611,7 @@ export default function MobileChatPage() {
               <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                 {parsed.type === "offer" ? (
                   <OfferBubble
-                    amount_pence={parsed.amount_pence!}
+                    amount_pence={parsed.amount_pence ?? 0}
                     offerId={parsed.offerId}
                     isMine={isMine}
                     isSeller={isSeller}
