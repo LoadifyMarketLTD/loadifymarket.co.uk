@@ -31,6 +31,7 @@ interface DBProduct {
   isApproved: boolean;
   stockQuantity: number;
   listingContext: string;
+  listingStatus: string;
 }
 
 export const handler: Handler = async (event) => {
@@ -142,7 +143,7 @@ export const handler: Handler = async (event) => {
   const productIds = items.map((i) => i.productId);
   const { data: dbProducts, error: dbError } = await supabase
     .from('products')
-    .select('id, price, title, sellerId, isActive, isApproved, stockQuantity, listingContext')
+    .select('id, price, title, sellerId, isActive, isApproved, stockQuantity, listingContext, listingStatus')
     .in('id', productIds);
 
   if (dbError) {
@@ -153,7 +154,17 @@ export const handler: Handler = async (event) => {
 
   for (const item of items) {
     const dbProduct = productMap.get(item.productId);
-    if (!dbProduct || !dbProduct.isActive || !dbProduct.isApproved) {
+    // Reject if the product is missing, inactive, unapproved, reserved by another
+    // buyer, or already sold. All of these states mean the item is unavailable.
+    // The listingStatus check keeps web checkout consistent with the mobile
+    // create-payment-intent flow (which performs the same guard).
+    if (
+      !dbProduct ||
+      !dbProduct.isActive ||
+      !dbProduct.isApproved ||
+      dbProduct.listingStatus === 'reserved' ||
+      dbProduct.listingStatus === 'sold'
+    ) {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: `Item "${item.title}" is no longer available` }),

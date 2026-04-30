@@ -23,6 +23,7 @@
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { isMaintenanceMode, getFeatureFlags } from './_shared/platformFlags';
+import { checkRateLimit } from './_shared/rateLimiter';
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -51,6 +52,18 @@ export const handler: Handler = async (event) => {
     return { statusCode: 401, body: JSON.stringify({ error: 'Invalid or expired token' }) };
   }
   const callerId = authData.user.id;
+
+  // ── Rate limiting — 20 listings per hour per user ─────────────────────────
+  const rl = await checkRateLimit({
+    supabase,
+    tableName:     'create_product_rate_limits',
+    identifier:    callerId,
+    windowMinutes: 60,
+    maxAttempts:   20,
+  });
+  if (rl.exceeded) {
+    return { statusCode: 429, body: JSON.stringify({ error: 'Too many listings created. Please try again later.' }) };
+  }
 
   // ── Role check ────────────────────────────────────────────────────────────
   const { data: userRow } = await supabase

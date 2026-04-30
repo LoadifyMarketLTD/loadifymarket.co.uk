@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useLocation, Link } from "react-router-dom";
+import { useParams, useLocation, Link, useNavigate } from "react-router-dom";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import ProductGallery from "@/components/product/ProductGallery";
 import ProductInfo from "@/components/product/ProductInfo";
@@ -20,11 +20,13 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Flag } from "lucide-react";
+import { Flag, MessageSquare, Tag, ShoppingCart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { copyToClipboard } from "@/lib/clipboard";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
+import MakeOfferSheet from "@/components/MakeOfferSheet";
+import { useCart } from "@/contexts/CartContext";
 
 const BASE_URL = "https://loadifymarket.co.uk";
 const DEFAULT_PRODUCT_SEO_DESCRIPTION =
@@ -83,7 +85,9 @@ const REPORT_REASONS = [
 const ProductDetail = () => {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { addToCart } = useCart();
   // State passed from listing pages (Catalog, CategoryPage, Clearance)
   const navState = (location.state ?? {}) as {
     flow?: string;
@@ -109,6 +113,13 @@ const ProductDetail = () => {
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
   const [reportLoading, setReportLoading] = useState(false);
+
+  // Mobile CTA state
+  const [ctaLoading, setCtaLoading] = useState(false);
+  const [offerConvId, setOfferConvId] = useState<string | null>(null);
+  const [offerOpen, setOfferOpen] = useState(false);
+  // Listing availability state (active | reserved | sold)
+  const [listingStatus, setListingStatus] = useState<string>("active");
 
   useEffect(() => {
     if (!id) return;
@@ -151,6 +162,7 @@ const ProductDetail = () => {
           typeof data.description === "string" ? data.description : "",
         );
         setProductSellerId(data.sellerId ?? null);
+        setListingStatus((data as Record<string, unknown>).listingStatus as string ?? "active");
 
         // Capture category slug for breadcrumb link
         const rawCat = Array.isArray(data.category) ? data.category[0] : data.category;
@@ -275,6 +287,94 @@ const ProductDetail = () => {
       setReportLoading(false);
     }
   };
+
+  /**
+   * Finds or creates a conversation between the current buyer and the seller
+   * for this product, then returns the conversation id.
+   *
+   * Handles the UNIQUE (user1Id, user2Id, productId) constraint race by
+   * catching error code 23505 and re-querying for the existing row.
+   */
+  const getOrCreateConversation = async (): Promise<string | null> => {
+    if (!user?.id || !productSellerId || !id) return null;
+
+    // Check both orderings because user1Id/user2Id is set at creation time
+    const { data: existing } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("productId", id)
+      .or(
+        `and(user1Id.eq.${user.id},user2Id.eq.${productSellerId}),` +
+        `and(user1Id.eq.${productSellerId},user2Id.eq.${user.id})`
+      )
+      .maybeSingle<{ id: string }>();
+
+    if (existing?.id) return existing.id;
+
+    // Create new conversation
+    const { data: created, error } = await supabase
+      .from("conversations")
+      .insert({
+        user1Id: user.id,
+        user2Id: productSellerId,
+        productId: id,
+        subject: product.title ? `Re: ${product.title}` : null,
+      })
+      .select("id")
+      .single<{ id: string }>();
+
+    // 23505 = unique_violation: a concurrent request already created the row
+    if (error) {
+      if (error.code === "23505") {
+        const { data: raceWinner } = await supabase
+          .from("conversations")
+          .select("id")
+          .eq("productId", id)
+          .or(
+            `and(user1Id.eq.${user.id},user2Id.eq.${productSellerId}),` +
+            `and(user1Id.eq.${productSellerId},user2Id.eq.${user.id})`
+          )
+          .maybeSingle<{ id: string }>();
+        return raceWinner?.id ?? null;
+      }
+      console.error("Failed to create conversation:", error.message);
+      return null;
+    }
+    return created?.id ?? null;
+  };
+
+  const handleMessageSeller = async () => {
+    if (!user) { navigate("/login", { state: { from: `/product/${id}` } }); return; }
+    setCtaLoading(true);
+    try {
+      const convId = await getOrCreateConversation();
+      if (convId) navigate(`/inbox/${convId}`);
+      else toast({ title: "Could not open conversation", variant: "destructive" });
+    } finally {
+      setCtaLoading(false);
+    }
+  };
+
+  const handleMakeOffer = async () => {
+    if (!user) { navigate("/login", { state: { from: `/product/${id}` } }); return; }
+    setCtaLoading(true);
+    try {
+      const convId = await getOrCreateConversation();
+      if (convId) { setOfferConvId(convId); setOfferOpen(true); }
+      else toast({ title: "Could not open conversation", variant: "destructive" });
+    } finally {
+      setCtaLoading(false);
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (!product) return;
+    addToCart(product, 1);
+    navigate("/checkout");
+  };
+
+  // True when the logged-in user is the seller/owner of this product
+  const isMobileCtaVisible = !!(product && productSellerId && (!user || user.id !== productSellerId));
 
   const normalizedCategory = (product.category ?? "").trim().toLowerCase();
   const normalizedSubcategory = (product.subcategory ?? "").trim().toLowerCase();
@@ -583,6 +683,77 @@ const ProductDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── Mobile CTA bar — sticky at bottom, hidden on desktop ─────────── */}
+      {isMobileCtaVisible && (
+        <div
+          className="md:hidden fixed bottom-[60px] left-0 right-0 z-[9996] px-4 py-3 flex gap-2"
+          style={{
+            background: "rgba(11,15,26,0.96)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))",
+          }}
+        >
+          {/* Reserved / sold notice — shown in place of normal CTAs */}
+          {listingStatus === "reserved" && (
+            <div className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-amber-500/15 border border-amber-500/25 py-2.5 px-3">
+              <span className="text-amber-400 text-sm font-semibold">⏳ Reserved — awaiting payment</span>
+            </div>
+          )}
+          {listingStatus === "sold" && (
+            <div className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-red-500/15 border border-red-500/25 py-2.5 px-3">
+              <span className="text-red-400 text-sm font-semibold">✕ This item has been sold</span>
+            </div>
+          )}
+
+          {listingStatus === "active" && (
+            <>
+              {/* Message Seller */}
+              <button
+                onClick={() => void handleMessageSeller()}
+                disabled={ctaLoading}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-white/20 text-white text-sm font-semibold active:bg-white/10 transition-colors disabled:opacity-50"
+              >
+                <MessageSquare className="h-4 w-4" />
+                <span>Message</span>
+              </button>
+
+              {/* Make Offer */}
+              <button
+                onClick={() => void handleMakeOffer()}
+                disabled={ctaLoading}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-[#FBBF24]/50 text-[#FBBF24] text-sm font-semibold active:bg-[#FBBF24]/10 transition-colors disabled:opacity-50"
+              >
+                <Tag className="h-4 w-4" />
+                <span>Make Offer</span>
+              </button>
+
+              {/* Buy Now */}
+              <button
+                onClick={handleBuyNow}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#FBBF24] text-[#020617] text-sm font-bold active:bg-[#F59E0B] transition-colors"
+              >
+                <ShoppingCart className="h-4 w-4" />
+                <span>Buy Now</span>
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Make Offer sheet */}
+      {offerConvId && productSellerId && (
+        <MakeOfferSheet
+          open={offerOpen}
+          onOpenChange={setOfferOpen}
+          conversationId={offerConvId}
+          receiverId={productSellerId}
+          productTitle={product?.title}
+          onSent={() => navigate(`/inbox/${offerConvId}`)}
+        />
+      )}
 
     </MainLayout>
   );

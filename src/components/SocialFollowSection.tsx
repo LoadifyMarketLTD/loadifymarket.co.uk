@@ -30,6 +30,14 @@ type SocialEntry = {
 
 const SOCIAL_CARDS: SocialEntry[] = [
   {
+    platform: "tiktok",
+    Icon: TikTokIcon,
+    title: "Follow us on TikTok",
+    description: "Short videos, trending products & seller stories.",
+    cta: "Open TikTok",
+    href: "https://www.tiktok.com/@loadifymarket",
+  },
+  {
     platform: "facebook",
     Icon: Facebook,
     title: "Follow us on Facebook",
@@ -45,31 +53,66 @@ const SOCIAL_CARDS: SocialEntry[] = [
     cta: "Open Instagram",
     href: "https://www.instagram.com/loadifymarket",
   },
-  {
-    platform: "tiktok",
-    Icon: TikTokIcon,
-    title: "Follow us on TikTok",
-    description: "Short videos, trending products & seller stories.",
-    cta: "Open TikTok",
-    href: "https://www.tiktok.com/@loadifymarket",
-  },
 ];
 
 export default function SocialFollowSection() {
   return (
-    <section aria-label="Follow us on social media" className="text-center">
+    <section aria-label="Follow us on social media">
       {/* Section heading */}
-      <div className="mb-8">
-        <h2 className="text-xl font-bold tracking-tight text-white">
+      <div className="mb-5 sm:mb-8 sm:text-center">
+        <h2 className="text-lg sm:text-xl font-bold tracking-tight text-white">
           Follow Loadify Market
         </h2>
-        <p className="mt-2 text-[13px] text-slate-400">
-          Stay connected across all social platforms.
+        <p className="mt-1 text-[12px] sm:text-[13px] text-slate-400">
+          Stay connected across all platforms.
         </p>
       </div>
 
-      {/* 3-column card grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* ── Mobile: compact rows ─────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 sm:hidden">
+        {SOCIAL_CARDS.map(({ platform, Icon, title, description, cta, href }) => (
+          <div
+            key={platform}
+            className="flex items-center gap-4 rounded-xl p-4"
+            style={{
+              background: "linear-gradient(145deg, #0F172A, #020617)",
+              border: "1px solid rgba(255,255,255,0.05)",
+            }}
+          >
+            {/* Icon */}
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+              style={{
+                background: "linear-gradient(145deg, rgba(17,24,39,0.98), rgba(2,6,23,0.98))",
+                border: "1px solid rgba(255,255,255,0.07)",
+              }}
+            >
+              <Icon className="w-6 h-6 text-slate-300" aria-hidden="true" />
+            </div>
+            {/* Text */}
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold text-white leading-tight">{title}</p>
+              <p className="text-[11px] text-slate-400 leading-snug mt-0.5">{description}</p>
+            </div>
+            {/* Inline link */}
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] font-semibold text-[#FBBF24] whitespace-nowrap shrink-0 flex items-center gap-1"
+            >
+              {cta}
+              <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"/>
+                <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"/>
+              </svg>
+            </a>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Desktop: 3-column card grid ──────────────────────────────── */}
+      <div className="hidden sm:grid grid-cols-3 gap-6">
         {SOCIAL_CARDS.map(({ platform, Icon, title, description, cta, href }) => (
           <div
             key={platform}
@@ -87,38 +130,24 @@ export default function SocialFollowSection() {
               boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
             }}
           >
-            {/* Platform icon — 28 px */}
+            {/* Platform icon */}
             <div
-              className={
-                `w-14 h-14 rounded-xl ` +
-                `flex items-center justify-center shrink-0 ` +
-                `transition-all duration-300 ` +
-                `group-hover:shadow-[0_0_18px_rgba(251,191,36,0.22)]`
-              }
+              className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:shadow-[0_0_18px_rgba(251,191,36,0.22)]"
               style={{
                 background: "linear-gradient(145deg, rgba(17,24,39,0.98), rgba(2,6,23,0.98))",
                 border: "1px solid rgba(255,255,255,0.07)",
               }}
             >
               <Icon
-                className={
-                  "w-7 h-7 text-slate-400 " +
-                  "group-hover:text-[#FBBF24] transition-colors duration-300"
-                }
+                className="w-7 h-7 text-slate-400 group-hover:text-[#FBBF24] transition-colors duration-300"
                 aria-hidden="true"
               />
             </div>
-
-            {/* Text content */}
+            {/* Text */}
             <div className="flex-1 min-w-0">
-              <h3 className="text-[16px] font-semibold text-white leading-snug mb-2">
-                {title}
-              </h3>
-              <p className="text-[13px] text-slate-400 leading-relaxed">
-                {description}
-              </p>
+              <h3 className="text-[16px] font-semibold text-white leading-snug mb-2">{title}</h3>
+              <p className="text-[13px] text-slate-400 leading-relaxed">{description}</p>
             </div>
-
             {/* CTA button */}
             <a
               href={href}
@@ -134,12 +163,7 @@ export default function SocialFollowSection() {
               }
             >
               {cta}
-              <svg
-                className="w-3.5 h-3.5 shrink-0"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
+              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
                 <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
               </svg>

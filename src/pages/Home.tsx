@@ -50,37 +50,33 @@ export default function Home() {
         {/* ── 1. Hero ──────────────────────────────────────────────────── */}
         <HeroSection />
 
-        {/* ── 2. Mobile-only: Category shortcuts + Product sections ─────── */}
-        <div className="md:hidden bg-[#020617]">
-          <MobileCategoryShortcuts />
-          <MobileProductSection />
-        </div>
-
-        {/* ── 3–6. Platform overview section ───────────────────────────── */}
-        <section className="bg-[#020617] py-8 px-8" aria-label="Platform overview">
+        {/* ── 2. Platform overview section ─────────────────────────────── */}
+        <section className="bg-[#020617] py-6 px-4 sm:px-8" aria-label="Platform overview">
 
           {/* Trust Strip — visible on both mobile and desktop */}
           <TrustStrip />
 
-          {/* Desktop-only marketing sections — lazy-loaded to avoid blocking
-              initial render; hidden on mobile so IntersectionObserver never
-              fires for them in the WebView */}
+          {/* Features — visible on both mobile (list) and desktop (grid) */}
+          <div className="mt-6 sm:mt-8">
+            <FeaturesGrid />
+          </div>
+
+          {/* Social Follow — visible on both mobile and desktop */}
+          <div className="mt-6 sm:mt-8">
+            <SocialFollowSection />
+          </div>
+
+          {/* Desktop-only extra sections */}
           <LazySection rootMargin="300px">
             <div className="hidden md:block">
-
-              {/* Social Follow */}
-              <div className="mt-8">
-                <SocialFollowSection />
-              </div>
 
               {/* How It Works */}
               <div className="mt-8">
                 <HowItWorksSection />
               </div>
 
-              {/* Features + Security */}
-              <div className="mt-8 grid grid-cols-2 gap-8">
-                <FeaturesGrid />
+              {/* Security */}
+              <div className="mt-8">
                 <SecurityTrust />
               </div>
 
@@ -89,10 +85,16 @@ export default function Home() {
 
         </section>
 
-        {/* ── 7. Seller CTA ────────────────────────────────────────────── */}
+        {/* ── 3. Mobile-only: Category shortcuts + Product sections ─────── */}
+        <div className="md:hidden bg-[#020617]">
+          <MobileCategoryShortcuts />
+          <MobileProductSection />
+        </div>
+
+        {/* ── 4. Seller CTA ────────────────────────────────────────────── */}
         <SellerCTA />
 
-        {/* ── 8. Footer — rendered by MainLayout ───────────────────────── */}
+        {/* ── 5. Footer — rendered by MainLayout ───────────────────────── */}
 
       </main>
     </MainLayout>

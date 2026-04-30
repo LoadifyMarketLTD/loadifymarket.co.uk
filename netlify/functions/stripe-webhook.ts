@@ -309,6 +309,17 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     );
   }
 
+  // ── Branch: offer-based checkout ──────────────────────────────────────────
+  // checkout-from-offer.ts sets metadata.source = 'offer' and metadata.orderId.
+  // In this case the order already exists (awaiting_payment) — we just need to
+  // mark it paid and handle the post-payment steps.
+  const sessionMeta = pendingSession.metadata as Record<string, unknown>;
+  if (sessionMeta?.source === 'offer' && typeof sessionMeta.orderId === 'string') {
+    await handleOfferCheckoutCompleted(session, pendingSession.id, sessionMeta);
+    return;
+  }
+  // ── End offer branch ──────────────────────────────────────────────────────
+
   // CartItem interface — matches the shape written by create-checkout.ts
   interface CartItem {
     productId: string;
@@ -482,6 +493,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
           console.warn(`Stock decrement fallback: stock for product ${item.productId} changed concurrently — skipping update to avoid corruption`);
         }
       }
+
+      // Mark this goods listing as sold — consistent with handleMobilePaymentIntentSucceeded.
+      // Without this, a product paid for via web checkout would remain 'active' and
+      // could be added to another buyer's cart immediately after payment.
+      await supabase!
+        .from('products')
+        .update({ listingStatus: 'sold', reservedUntil: null })
+        .eq('id', item.productId);
     }
 
     const confirmedOrderNumber: string =
@@ -1460,5 +1479,268 @@ async function handleMobilePaymentIntentSucceeded(
   console.log(
     `handleMobilePaymentIntentSucceeded: PI ${paymentIntent.id} processed — ` +
     `${sellerGroups.size} order(s) created; firstOrderId=${firstOrderId}`,
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Offer-based checkout completion handler
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Handles checkout.session.completed for orders that originated from an
+ * accepted offer (checkout-from-offer.ts sets metadata.source = 'offer').
+ *
+ * The order already exists in `awaiting_payment` status — this handler:
+ *   1. Idempotency: skip if order is already paid
+ *   2. Calculates commission and updates order → paid
+ *   3. Marks listing → sold
+ *   4. Cancels any other pending offers on the same listing
+ *   5. Inserts order_event audit row
+ *   6. Credits seller balance + creates Stripe Connect transfer
+ *   7. Sends push notifications to buyer and seller
+ *   8. Marks payment_sessions → completed
+ */
+async function handleOfferCheckoutCompleted(
+  session: Stripe.Checkout.Session,
+  paymentSessionId: string,
+  sessionMeta: Record<string, unknown>,
+): Promise<void> {
+  const orderId    = sessionMeta.orderId    as string;
+  const sellerId   = sessionMeta.sellerId   as string | undefined;
+  const buyerId    = sessionMeta.buyerId    as string | undefined;
+  const productId  = sessionMeta.productId  as string | undefined;
+  const transferGroup = sessionMeta.transferGroup as string | undefined;
+
+  // ── 1. Fetch and validate the existing order ─────────────────────────────
+  interface OfferOrderRow {
+    id: string;
+    buyerId: string;
+    sellerId: string;
+    productId: string;
+    total: number;
+    status: string;
+    offerId: string | null;
+  }
+
+  const { data: order, error: orderFetchError } = await supabase!
+    .from('orders')
+    .select('id, buyerId, sellerId, productId, total, status, offerId')
+    .eq('id', orderId)
+    .maybeSingle<OfferOrderRow>();
+
+  if (orderFetchError || !order) {
+    throw new Error(`handleOfferCheckoutCompleted: order ${orderId} not found`);
+  }
+
+  if (order.status === 'paid') {
+    console.log(`handleOfferCheckoutCompleted: order ${orderId} already paid — skipping`);
+    await supabase!
+      .from('payment_sessions')
+      .update({ status: 'completed', stripePaymentIntent: session.payment_intent as string })
+      .eq('id', paymentSessionId);
+    return;
+  }
+
+  if (order.status !== 'awaiting_payment') {
+    throw new Error(
+      `handleOfferCheckoutCompleted: order ${orderId} has unexpected status '${order.status}'`,
+    );
+  }
+
+  // ── 2. Calculate commission ──────────────────────────────────────────────
+  const configuredRate = await fetchConfiguredCommissionRate(supabase!);
+  const COMMISSION_RATE = getCommissionRate(configuredRate ?? undefined);
+  const commission = order.total * COMMISSION_RATE;
+
+  // ── 3. Mark order as paid ────────────────────────────────────────────────
+  const { error: orderUpdateError } = await supabase!
+    .from('orders')
+    .update({
+      status:               'paid',
+      commission,
+      stripePaymentIntentId: session.payment_intent as string | null,
+    })
+    .eq('id', orderId)
+    .eq('status', 'awaiting_payment'); // idempotency guard
+
+  if (orderUpdateError) {
+    throw new Error(`handleOfferCheckoutCompleted: failed to update order ${orderId}: ${orderUpdateError.message}`);
+  }
+
+  // ── 4. Mark listing as sold ──────────────────────────────────────────────
+  await supabase!
+    .from('products')
+    .update({ listingStatus: 'sold', reservedUntil: null })
+    .eq('id', order.productId);
+
+  // ── 5. Cancel other pending offers for this listing ──────────────────────
+  // Fetch all other pending offers on this listing so we can notify those buyers.
+  const { data: otherOffers } = await supabase!
+    .from('offers')
+    .select('id, conversationId, proposedById, amountPence')
+    .eq('listingId', order.productId)
+    .eq('status', 'pending')
+    .neq('id', order.offerId ?? '');
+
+  if (otherOffers?.length) {
+    await supabase!
+      .from('offers')
+      .update({ status: 'cancelled' })
+      .eq('listingId', order.productId)
+      .eq('status', 'pending')
+      .neq('id', order.offerId ?? '');
+
+    // Insert system messages for each cancelled offer conversation
+    for (const otherOffer of otherOffers) {
+      const cancelMsg = JSON.stringify({
+        _t:    'system',
+        event: 'listing_unavailable',
+        listingId: order.productId,
+      });
+      await supabase!
+        .from('messages')
+        .insert({
+          conversationId: otherOffer.conversationId,
+          senderId:       order.sellerId,
+          receiverId:     otherOffer.proposedById,
+          message:        cancelMsg,
+        })
+        .catch((err: unknown) => console.warn('handleOfferCheckoutCompleted: listing_unavailable system message insert failed (non-fatal):', err));
+
+      sendPushToUser(supabase!, otherOffer.proposedById, {
+        title: 'Listing no longer available',
+        body:  'Sorry, this listing has been purchased by another buyer.',
+        data:  { type: 'listing_unavailable', conversationId: otherOffer.conversationId },
+      }).catch((err: unknown) => console.warn('handleOfferCheckoutCompleted: cancel push failed (non-fatal):', err));
+    }
+  }
+
+  // ── 6. Insert order_event audit row ─────────────────────────────────────
+  await supabase!
+    .from('order_events')
+    .insert({
+      orderId,
+      actorId:  null,
+      event:    'payment_completed',
+      metadata: {
+        stripeSessionId:   session.id,
+        paymentIntentId:   session.payment_intent,
+        source:            'offer',
+        offerId:           order.offerId,
+      },
+    })
+    .catch((err: unknown) => console.warn('handleOfferCheckoutCompleted: order_event insert failed (non-fatal):', err));
+
+  // ── 7. Credit seller balance ─────────────────────────────────────────────
+  const effectiveSellerId = order.sellerId ?? sellerId;
+
+  if (effectiveSellerId) {
+    const { error: balanceError } = await supabase!.rpc('credit_seller_balance', {
+      p_seller_id: effectiveSellerId,
+      p_order_id:  orderId,
+    });
+    if (balanceError) {
+      if ((balanceError as { code?: string }).code === '42883') {
+        console.error(
+          `handleOfferCheckoutCompleted: credit_seller_balance RPC missing. ` +
+          `Re-apply 90_launch_features.sql. Affected: seller=${effectiveSellerId}, order=${orderId}`,
+        );
+      } else {
+        console.warn('handleOfferCheckoutCompleted: credit_seller_balance failed:', balanceError.message);
+      }
+    }
+
+    // ── 8. Stripe Connect transfer ────────────────────────────────────────
+    const { data: sellerConnect } = await supabase!
+      .from('seller_profiles')
+      .select('stripeAccountId, stripeConnectStatus')
+      .eq('userId', effectiveSellerId)
+      .single<{ stripeAccountId: string | null; stripeConnectStatus: string | null }>();
+
+    if (sellerConnect?.stripeAccountId && sellerConnect.stripeConnectStatus === 'active') {
+      const netAmount = order.total - commission;
+      try {
+        const transfer = await stripe!.transfers.create({
+          amount:      Math.round(netAmount * 100),
+          currency:    'gbp',
+          destination: sellerConnect.stripeAccountId,
+          ...(transferGroup ? { transfer_group: transferGroup } : {}),
+          metadata: { orderId, sellerId: effectiveSellerId, source: 'offer' },
+        });
+
+        await supabase!.from('payouts').insert({
+          sellerId:        effectiveSellerId,
+          orderId,
+          amount:          netAmount,
+          currency:        'GBP',
+          status:          'paid',
+          stripeTransferId: transfer.id,
+          paidAt:          new Date().toISOString(),
+        });
+
+        console.log(`handleOfferCheckoutCompleted: transfer ${transfer.id} for seller ${effectiveSellerId}`);
+      } catch (transferError) {
+        const errMsg = transferError instanceof Error
+          ? transferError.message.substring(0, 200)
+          : 'Unknown transfer error';
+        await supabase!.from('payouts').insert({
+          sellerId: effectiveSellerId,
+          orderId,
+          amount:   order.total - commission,
+          currency: 'GBP',
+          status:   'failed',
+          notes:    `Automatic Stripe Connect transfer failed: ${errMsg}`,
+        });
+        console.error(`handleOfferCheckoutCompleted: transfer failed for seller ${effectiveSellerId}:`, transferError);
+      }
+    }
+
+    // Push + in-app notification to seller
+    supabase!.from('notifications').insert({
+      userId:  effectiveSellerId,
+      type:    'order',
+      title:   'Your offer was paid!',
+      message: `The buyer completed payment for order ${orderId}. Total: £${order.total.toFixed(2)}`,
+      link:    '/pp/seller/orders',
+    }).catch((err: unknown) => console.warn('handleOfferCheckoutCompleted: seller notification failed (non-fatal):', err));
+
+    sendPushToUser(supabase!, effectiveSellerId, {
+      title: 'Payment received 💰',
+      body:  `The buyer paid £${order.total.toFixed(2)} for your listing.`,
+      data:  { type: 'order_paid', orderId },
+    }).catch((err: unknown) => console.warn('handleOfferCheckoutCompleted: seller push failed (non-fatal):', err));
+  }
+
+  // ── 9. Buyer notifications ───────────────────────────────────────────────
+  const effectiveBuyerId = order.buyerId ?? buyerId;
+
+  if (effectiveBuyerId) {
+    supabase!.from('notifications').insert({
+      userId:  effectiveBuyerId,
+      type:    'order',
+      title:   'Payment confirmed!',
+      message: `Your payment of £${order.total.toFixed(2)} was received. The seller will ship soon.`,
+      link:    '/pp/buyer/orders',
+    }).catch((err: unknown) => console.warn('handleOfferCheckoutCompleted: buyer notification failed (non-fatal):', err));
+
+    sendPushToUser(supabase!, effectiveBuyerId, {
+      title: 'Payment confirmed ✓',
+      body:  `You paid £${order.total.toFixed(2)}. The seller will ship your item soon.`,
+      data:  { type: 'order_confirmed', orderId },
+    }).catch((err: unknown) => console.warn('handleOfferCheckoutCompleted: buyer push failed (non-fatal):', err));
+  }
+
+  // ── 10. Mark payment_sessions as completed ────────────────────────────────
+  await supabase!
+    .from('payment_sessions')
+    .update({
+      stripePaymentIntent: session.payment_intent as string,
+      status:              'completed',
+    })
+    .eq('id', paymentSessionId);
+
+  console.log(
+    `handleOfferCheckoutCompleted: session ${session.id} processed — ` +
+    `offer order ${orderId} marked paid; productId=${productId ?? order.productId}`,
   );
 }

@@ -4,7 +4,7 @@ import PaymentCard from '@/components/ui/PaymentCard';
 const HeroSection = () => (
   <section
     aria-label="Loadify Market — UK Online Marketplace"
-    className="relative w-full min-h-[38vh] md:min-h-[75vh] bg-[#0B1016]"
+    className="relative w-full min-h-[68vh] md:min-h-[75vh] bg-[#0B1016]"
   >
     {/* ── Background image — full cover, no distortion ─────────────────── */}
     <img
@@ -23,35 +23,48 @@ const HeroSection = () => (
     />
 
     {/* ── Mobile content (< md) ────────────────────────────────────────── */}
-    <div className="md:hidden absolute inset-0 flex items-center">
-      <div className="w-full px-4 pt-[68px] pb-6">
-        <div className="flex flex-col items-start max-w-[320px]">
+    <div className="md:hidden absolute inset-0 flex items-end">
+      <div className="w-full px-4 pt-[68px] pb-5" style={{ background: 'linear-gradient(to top, rgba(11,16,22,0.97) 0%, rgba(11,16,22,0.80) 55%, transparent 100%)' }}>
 
-          {/* Badge */}
-          <div className="inline-flex items-center bg-[#C99A3E] text-[#0B1016] text-[10px] font-bold rounded-full px-3 py-1 tracking-wide uppercase mb-3">
-            0% Commission Until Dec 2026
-          </div>
+        {/* H1 */}
+        <h1 className="text-[1.75rem] font-extrabold leading-[1.18] text-[#F5F1E8] mb-2">
+          The UK Marketplace<br />
+          <span className="text-[#C99A3E]">for Buyers &amp; Sellers</span>
+        </h1>
 
-          {/* H1 */}
-          <h1 className="text-[1.65rem] font-extrabold leading-[1.2] text-[#F5F1E8] mb-2">
-            Buy &amp; sell<br />
-            <span className="text-[#C99A3E]">across the UK</span>
-          </h1>
+        {/* Subtitle */}
+        <p className="text-[12px] text-[#C9D0D6] mb-4 leading-snug max-w-[280px]">
+          Sell with 0% commission until 2026 or discover products from trusted UK sellers — all in one secure platform.
+        </p>
 
-          {/* Subtitle */}
-          <p className="text-[13px] text-[#C9D0D6] mb-4 leading-snug">
-            Fast. Secure. Simple.
-          </p>
-
-          {/* Single CTA */}
+        {/* Two CTAs */}
+        <div className="flex flex-col gap-2.5 mb-4">
+          <Link
+            to="/register?type=seller"
+            className="w-full bg-[#C99A3E] hover:bg-[#D8AE57] text-[#0B1016] font-bold px-5 py-3 rounded-xl text-sm text-center transition-colors"
+          >
+            Start Selling Today
+          </Link>
           <Link
             to="/catalog"
-            className="bg-[#C99A3E] hover:bg-[#D8AE57] text-[#0B1016] font-bold px-6 py-2.5 rounded-lg text-sm transition-colors"
+            className="w-full border border-white/40 text-white hover:bg-white/10 font-semibold px-5 py-3 rounded-xl text-sm text-center transition-colors"
           >
-            Browse Products
+            Browse the Marketplace
           </Link>
-
         </div>
+
+        {/* Payment logos */}
+        <div className="flex flex-col items-start gap-1.5">
+          <span className="text-[9px] font-bold tracking-[0.12em] uppercase text-[#94A3B8]">
+            Secure Payments Powered By
+          </span>
+          <div className="flex items-center gap-2.5">
+            <PaymentCard variant="visa"       size="hero" />
+            <PaymentCard variant="mastercard" size="hero" />
+            <PaymentCard variant="stripe"     size="hero" />
+          </div>
+        </div>
+
       </div>
     </div>
 

@@ -15,6 +15,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
+import { checkRateLimit } from './_shared/rateLimiter';
 
 interface RegisterBody {
   op: 'register';
@@ -52,6 +53,18 @@ export const handler: Handler = async (event) => {
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Invalid authentication token' }) };
+  }
+
+  // ── Rate limiting — 10 registrations per hour per user ─────────────────────
+  const rl = await checkRateLimit({
+    supabase,
+    tableName:     'push_token_rate_limits',
+    identifier:    user.id,
+    windowMinutes: 60,
+    maxAttempts:   10,
+  });
+  if (rl.exceeded) {
+    return { statusCode: 429, body: JSON.stringify({ error: 'Too many token registration requests. Please try again later.' }) };
   }
 
   // Parse body
