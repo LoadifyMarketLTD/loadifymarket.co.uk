@@ -30,6 +30,14 @@ type SocialEntry = {
 
 const SOCIAL_CARDS: SocialEntry[] = [
   {
+    platform: "tiktok",
+    Icon: TikTokIcon,
+    title: "Follow us on TikTok",
+    description: "Short videos, trending products & seller stories.",
+    cta: "Open TikTok",
+    href: "https://www.tiktok.com/@loadifymarket",
+  },
+  {
     platform: "facebook",
     Icon: Facebook,
     title: "Follow us on Facebook",
@@ -44,14 +52,6 @@ const SOCIAL_CARDS: SocialEntry[] = [
     description: "New arrivals, visual inspiration & behind-the-scenes.",
     cta: "Open Instagram",
     href: "https://www.instagram.com/loadifymarket",
-  },
-  {
-    platform: "tiktok",
-    Icon: TikTokIcon,
-    title: "Follow us on TikTok",
-    description: "Short videos, trending products & seller stories.",
-    cta: "Open TikTok",
-    href: "https://www.tiktok.com/@loadifymarket",
   },
 ];
 

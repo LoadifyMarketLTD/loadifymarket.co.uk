@@ -15,26 +15,25 @@ export default function SellerCTA() {
       {/* ── Mobile layout ───────────────────────────────────────────── */}
       <div className="sm:hidden px-4 pt-6 pb-5">
 
-        {/* Heading */}
-        <div className="flex items-start gap-3 mb-3">
-          <Rocket className="w-7 h-7 text-[#FBBF24] shrink-0 mt-0.5" aria-hidden="true" />
-          <div>
+        {/* Heading row — icon+text left, button right */}
+        <div className="flex items-center gap-3 mb-3">
+          <Rocket className="w-8 h-8 text-[#FBBF24] shrink-0" aria-hidden="true" />
+          <div className="flex-1 min-w-0">
             <p className="text-white font-bold text-base leading-tight">
               Start Selling for <span className="text-[#FBBF24]">FREE</span>
             </p>
-            <p className="text-[12px] text-slate-400 mt-0.5 leading-snug">
+            <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
               Join UK sellers earning more with 0% commission until 31 Dec 2026.
             </p>
           </div>
+          <Link
+            to="/register?type=seller"
+            className="shrink-0 bg-[linear-gradient(135deg,#FBBF24,#D97706)] text-[#020617] font-bold py-2.5 px-3 rounded-xl text-[11px] text-center leading-tight"
+          >
+            Create Your<br />Free Seller<br />Account
+          </Link>
         </div>
 
-        {/* CTA button */}
-        <Link
-          to="/register?type=seller"
-          className="block w-full bg-[linear-gradient(135deg,#FBBF24,#D97706)] text-[#020617] font-bold py-3 rounded-xl text-sm text-center mb-2"
-        >
-          Create Your Free Seller Account
-        </Link>
         <p className="text-center text-[11px] text-slate-500 mb-4">
           No fees. No monthly charges. No risk.
         </p>

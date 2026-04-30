@@ -45,17 +45,17 @@ export default function FeaturesGrid() {
         Powerful <span className="text-[#FBBF24]">Features</span> Built for <span className="text-[#FBBF24]">You</span>
       </h2>
 
-      {/* ── Mobile: vertical list ─────────────────────────────────────── */}
-      <div className="flex flex-col divide-y divide-white/[0.06] sm:hidden mt-2">
+      {/* ── Mobile: card list ─────────────────────────────────────── */}
+      <div className="flex flex-col gap-2 sm:hidden mt-2">
         {features.map((feature) => {
           const Icon = feature.icon;
           return (
             <div
               key={feature.title}
-              className="flex items-center gap-4 py-4"
+              className="flex items-center gap-4 py-3 px-3 rounded-xl border border-white/[0.06] bg-[linear-gradient(145deg,#0F172A,#020617)]"
             >
               {/* Icon box */}
-              <div className="w-11 h-11 rounded-xl bg-[#0B1220] border border-white/[0.07] flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-[#0B1220] border border-white/[0.07] flex items-center justify-center shrink-0">
                 <Icon className="w-5 h-5 text-[#FBBF24]" aria-hidden="true" />
               </div>
               {/* Text */}
