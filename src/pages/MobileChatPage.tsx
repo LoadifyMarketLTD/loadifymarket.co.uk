@@ -264,6 +264,9 @@ export default function MobileChatPage() {
   // Track whether the last sent message has been read by the other participant
   const [lastSentRead, setLastSentRead] = useState(false);
 
+  // How long to show the typing indicator after the last heartbeat (ms)
+  const TYPING_INDICATOR_TIMEOUT_MS = 4000;
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -547,11 +550,11 @@ export default function MobileChatPage() {
         const isTyping = otherPresences.some((p) => p.typing === true);
         setOtherTyping(isTyping);
         if (isTyping) {
-          // Auto-clear after 4 s in case the other side disconnects silently
+          // Auto-clear after TYPING_INDICATOR_TIMEOUT_MS in case the other side disconnects silently
           if (otherTypingTimeout.current) clearTimeout(otherTypingTimeout.current);
           otherTypingTimeout.current = setTimeout(() => {
             setOtherTyping(false);
-          }, 4000);
+          }, TYPING_INDICATOR_TIMEOUT_MS);
         }
       })
       .subscribe();
