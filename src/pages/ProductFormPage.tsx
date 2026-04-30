@@ -685,7 +685,7 @@ export default function ProductFormPage() {
                 <FieldError msg={errors.description} />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Listing Type <span className="text-red-500">*</span>
@@ -750,7 +750,7 @@ export default function ProductFormPage() {
 
             {/* ─── SECTION 3: Pricing ───────────────────────────────────── */}
             <Section title="3. Pricing">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Price (£) <span className="text-red-500">*</span>
@@ -806,7 +806,7 @@ export default function ProductFormPage() {
             {/* ─── SECTION 4: Inventory ─────────────────────────────────── */}
             {listingContext === 'goods' && (
             <Section title="4. Inventory">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Stock Quantity <span className="text-red-500">*</span>
@@ -981,7 +981,7 @@ export default function ProductFormPage() {
 
             {/* ─── SECTION 7: Specifications ────────────────────────────── */}
             <Section title="7. Specifications">
-              <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Brand</label>
                   <input
@@ -1070,7 +1070,7 @@ export default function ProductFormPage() {
                 {formData.type === 'pallet' && (
                   <div className="mb-4">
                     <h3 className="text-sm font-semibold text-gray-700 mb-3">Pallet Details</h3>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Number of Pallets</label>
                         <input
@@ -1109,7 +1109,7 @@ export default function ProductFormPage() {
                 {formData.type === 'wholesale' && (
                   <div className="mb-4">
                     <h3 className="text-sm font-semibold text-gray-700 mb-3">Wholesale Details</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Order Quantity (MOQ)</label>
                         <input
@@ -1155,7 +1155,7 @@ export default function ProductFormPage() {
                 )}
 
                 {/* Shared bulk/pallet fields */}
-                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100 mt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-100 mt-2">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Retail Value (£)</label>
                     <input
