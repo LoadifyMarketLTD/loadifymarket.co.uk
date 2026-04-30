@@ -3,16 +3,18 @@
  *
  * Full-screen chat thread for a single conversation.
  * Features:
- *   - Message bubbles (plain text + special offer card)
+ *   - Message bubbles (plain text + real offer cards with state)
  *   - Supabase Realtime for live messages
  *   - Send text message
  *   - "Make Offer" FAB → MakeOfferSheet
+ *   - Accept / Decline offer buttons for the seller
+ *   - "Pay Now" button for accepted offers (buyer)
  *   - Back button → /inbox
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, Tag } from "lucide-react";
+import { ArrowLeft, Send, Tag, CheckCircle, XCircle, CreditCard } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
@@ -36,6 +38,14 @@ interface ConversationMeta {
   productId: string | null;
 }
 
+interface OfferRecord {
+  id: string;
+  amountPence: number;
+  status: string;
+  proposedById: string;
+  recipientId: string;
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatTime(iso: string) {
@@ -48,16 +58,35 @@ function formatTime(iso: string) {
     " " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
 
-/** Parse a message string that may be a JSON-encoded offer */
-function parseMessage(raw: string): { type: "text" | "offer"; text?: string; amount_pence?: number; productTitle?: string } {
+/** Parse a message string that may be JSON-encoded offer / system event */
+function parseMessage(raw: string): {
+  type: "text" | "offer" | "system";
+  text?: string;
+  // offer fields
+  amount_pence?: number;
+  offerId?: string;
+  productTitle?: string;
+  // system event fields
+  event?: string;
+  orderId?: string;
+} {
   if (raw.startsWith("{")) {
     try {
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       if (parsed._t === "offer" && typeof parsed.amount_pence === "number") {
         return {
-          type: "offer",
+          type:         "offer",
           amount_pence: parsed.amount_pence as number,
+          offerId:      typeof parsed.offerId === "string" ? parsed.offerId : undefined,
           productTitle: typeof parsed.productTitle === "string" ? parsed.productTitle : undefined,
+        };
+      }
+      if (parsed._t === "system") {
+        return {
+          type:    "system",
+          event:   typeof parsed.event === "string" ? parsed.event : undefined,
+          orderId: typeof parsed.orderId === "string" ? parsed.orderId : undefined,
+          amount_pence: typeof parsed.amountPence === "number" ? parsed.amountPence : undefined,
         };
       }
     } catch {
@@ -69,11 +98,50 @@ function parseMessage(raw: string): { type: "text" | "offer"; text?: string; amo
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function OfferBubble({ amount_pence, isMine, productTitle }: { amount_pence: number; isMine: boolean; productTitle?: string }) {
+/** Offer bubble with live status from the offers table */
+function OfferBubble({
+  amount_pence,
+  offerId,
+  isMine,
+  isSeller,
+  productTitle,
+  offerRecord,
+  onAccept,
+  onDecline,
+  onPayNow,
+}: {
+  amount_pence: number;
+  offerId?: string;
+  isMine: boolean;
+  isSeller: boolean;
+  productTitle?: string;
+  offerRecord?: OfferRecord | null;
+  onAccept?: () => void;
+  onDecline?: () => void;
+  onPayNow?: () => void;
+}) {
   const pounds = (amount_pence / 100).toFixed(2);
+  const status = offerRecord?.status ?? "pending";
+
+  const statusLabel: Record<string, string> = {
+    pending:   isMine ? "You offered · Pending" : "Offer received · Pending",
+    accepted:  "Accepted ✓",
+    declined:  "Declined",
+    expired:   "Expired",
+    cancelled: "Cancelled",
+  };
+
+  const statusColour: Record<string, string> = {
+    pending:   "text-white/40",
+    accepted:  "text-green-400",
+    declined:  "text-red-400",
+    expired:   "text-white/30",
+    cancelled: "text-white/30",
+  };
+
   return (
     <div
-      className={`rounded-2xl px-4 py-3 max-w-[75%] ${
+      className={`rounded-2xl px-4 py-3 max-w-[80%] ${
         isMine
           ? "bg-[#FBBF24]/15 border border-[#FBBF24]/30 rounded-br-sm"
           : "bg-[#FBBF24]/10 border border-[#FBBF24]/20 rounded-bl-sm"
@@ -87,9 +155,72 @@ function OfferBubble({ amount_pence, isMine, productTitle }: { amount_pence: num
         <p className="text-xs text-white/50 mb-1 truncate">{productTitle}</p>
       )}
       <p className="text-xl font-bold text-white">£{pounds}</p>
-      <p className="text-[11px] text-white/40 mt-1">
-        {isMine ? "You offered" : "Offer received"} · Pending
+      <p className={`text-[11px] mt-1 ${statusColour[status] ?? "text-white/40"}`}>
+        {statusLabel[status] ?? status}
       </p>
+
+      {/* Seller: accept / decline buttons for pending offers */}
+      {isSeller && !isMine && offerId && status === "pending" && (
+        <div className="flex gap-2 mt-3">
+          <button
+            onClick={onAccept}
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-green-500/20 border border-green-500/40 text-green-400 text-xs font-semibold active:bg-green-500/30 transition-colors"
+          >
+            <CheckCircle className="h-3.5 w-3.5" />
+            Accept
+          </button>
+          <button
+            onClick={onDecline}
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-red-500/20 border border-red-500/40 text-red-400 text-xs font-semibold active:bg-red-500/30 transition-colors"
+          >
+            <XCircle className="h-3.5 w-3.5" />
+            Decline
+          </button>
+        </div>
+      )}
+
+      {/* Buyer: Pay Now button for accepted offers */}
+      {!isSeller && isMine && status === "accepted" && (
+        <button
+          onClick={onPayNow}
+          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#FBBF24] text-[#020617] text-sm font-bold active:bg-[#F59E0B] transition-colors"
+        >
+          <CreditCard className="h-4 w-4" />
+          Pay Now
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** System event card (offer accepted / declined / listing unavailable) */
+function SystemEventCard({ event, amountPence }: { event?: string; amountPence?: number }) {
+  const pounds = amountPence ? `£${(amountPence / 100).toFixed(2)}` : "";
+
+  const content: Record<string, { icon: string; text: string }> = {
+    offer_accepted: {
+      icon: "🎉",
+      text: pounds ? `Offer of ${pounds} accepted! Complete payment to secure the item.` : "Offer accepted!",
+    },
+    offer_declined: {
+      icon: "❌",
+      text: pounds ? `Your offer of ${pounds} was declined.` : "Offer declined.",
+    },
+    listing_unavailable: {
+      icon: "🔒",
+      text: "This listing has been purchased. It is no longer available.",
+    },
+  };
+
+  const info = event ? content[event] : null;
+  if (!info) return null;
+
+  return (
+    <div className="flex justify-center">
+      <div className="max-w-[80%] rounded-2xl px-4 py-2.5 bg-white/5 border border-white/10 text-center">
+        <span className="mr-1">{info.icon}</span>
+        <span className="text-xs text-white/60">{info.text}</span>
+      </div>
     </div>
   );
 }
@@ -98,6 +229,7 @@ function OfferBubble({ amount_pence, isMine, productTitle }: { amount_pence: num
 
 export default function MobileChatPage() {
   const { conversationId } = useParams<{ conversationId: string }>();
+
   const navigate = useNavigate();
   const { user, isLoading } = useAuthStore();
 
@@ -109,6 +241,11 @@ export default function MobileChatPage() {
   const [loadingMsgs, setLoadingMsgs] = useState(true);
   const [sending, setSending] = useState(false);
   const [offerOpen, setOfferOpen] = useState(false);
+  // Map of offerId → OfferRecord for live status display
+  const [offerMap, setOfferMap] = useState<Map<string, OfferRecord>>(new Map());
+  // True when the current user is the seller (listing owner) in this conversation
+  const [isSeller, setIsSeller] = useState(false);
+  const [actingOnOffer, setActingOnOffer] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -120,7 +257,7 @@ export default function MobileChatPage() {
     }
   }, [user, isLoading, navigate, conversationId]);
 
-  // Load conversation metadata + other participant name
+  // Load conversation metadata + other participant name + seller detection
   useEffect(() => {
     if (!conversationId || !user?.id) return;
     let cancelled = false;
@@ -161,11 +298,47 @@ export default function MobileChatPage() {
         const name = [otherUser.firstName, otherUser.lastName].filter(Boolean).join(" ");
         setOtherName(name || otherUser.email);
       }
+
+      // Determine if the current user is the seller (listing owner)
+      if (conv.productId) {
+        const { data: listing } = await supabase
+          .from("products")
+          .select("sellerId")
+          .eq("id", conv.productId)
+          .maybeSingle<{ sellerId: string }>();
+        if (!cancelled && listing) {
+          setIsSeller(listing.sellerId === user.id);
+        }
+      }
     };
 
     load();
     return () => { cancelled = true; };
   }, [conversationId, user?.id, navigate]);
+
+  // Load offers for this conversation and keep offerMap up-to-date
+  const loadOffers = useCallback(async () => {
+    if (!conversationId) return;
+    const { data: offers } = await supabase
+      .from("offers")
+      .select("id, amountPence, status, proposedById, recipientId")
+      .eq("conversationId", conversationId)
+      .order("createdAt", { ascending: false })
+      .limit(50);
+
+    if (offers) {
+      setOfferMap(new Map(
+        (offers as OfferRecord[]).map((o) => [o.id, o]),
+      ));
+    }
+  }, [conversationId]);
+
+  useEffect(() => {
+    void loadOffers();
+  }, [loadOffers]);
+
+  // Reload offers when an offer system message arrives (realtime)
+  // handled inside the messages subscription below.
 
   // Load messages
   useEffect(() => {
@@ -231,12 +404,16 @@ export default function MobileChatPage() {
               .update({ isRead: true, readAt: new Date().toISOString() })
               .eq("id", msg.id);
           }
+          // If a system message arrives (offer accepted/declined), refresh offers
+          if (msg.message.startsWith('{"_t":"system"')) {
+            void loadOffers();
+          }
         },
       )
       .subscribe();
 
     return () => { void supabase.removeChannel(channel); };
-  }, [conversationId, user?.id]);
+  }, [conversationId, user?.id, loadOffers]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -275,6 +452,86 @@ export default function MobileChatPage() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       void handleSend();
+    }
+  };
+
+  // ── Offer action handlers ──────────────────────────────────────────────────
+
+  const handleAcceptOffer = async (offerId: string) => {
+    setActingOnOffer(offerId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
+
+      const res = await fetch("/.netlify/functions/offer-accept", {
+        method: "POST",
+        headers: {
+          "Content-Type":  "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ offerId }),
+      });
+
+      const json = await res.json() as { orderId?: string; error?: string };
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+
+      toast({ title: "Offer accepted! Buyer has been notified to pay." });
+      void loadOffers();
+    } catch (err) {
+      toast({ title: "Failed to accept offer", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setActingOnOffer(null);
+    }
+  };
+
+  const handleDeclineOffer = async (offerId: string) => {
+    setActingOnOffer(offerId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
+
+      const res = await fetch("/.netlify/functions/offer-decline", {
+        method: "POST",
+        headers: {
+          "Content-Type":  "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ offerId }),
+      });
+
+      const json = await res.json() as { success?: boolean; error?: string };
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+
+      toast({ title: "Offer declined." });
+      void loadOffers();
+    } catch (err) {
+      toast({ title: "Failed to decline offer", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setActingOnOffer(null);
+    }
+  };
+
+  const handlePayNow = async (orderId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
+
+      const res = await fetch("/.netlify/functions/checkout-from-offer", {
+        method: "POST",
+        headers: {
+          "Content-Type":  "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ orderId }),
+      });
+
+      const json = await res.json() as { checkoutUrl?: string; error?: string };
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      if (!json.checkoutUrl) throw new Error("No checkout URL returned");
+
+      window.location.href = json.checkoutUrl;
+    } catch (err) {
+      toast({ title: "Failed to start checkout", description: (err as Error).message, variant: "destructive" });
     }
   };
 
@@ -340,13 +597,35 @@ export default function MobileChatPage() {
             const isMine = msg.senderId === user?.id;
             const parsed = parseMessage(msg.message);
 
+            if (parsed.type === "system") {
+              return (
+                <SystemEventCard
+                  key={msg.id}
+                  event={parsed.event}
+                  amountPence={parsed.amount_pence}
+                />
+              );
+            }
+
             return (
               <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                 {parsed.type === "offer" ? (
                   <OfferBubble
                     amount_pence={parsed.amount_pence!}
+                    offerId={parsed.offerId}
                     isMine={isMine}
+                    isSeller={isSeller}
                     productTitle={parsed.productTitle}
+                    offerRecord={parsed.offerId ? offerMap.get(parsed.offerId) ?? null : null}
+                    onAccept={parsed.offerId && actingOnOffer !== parsed.offerId
+                      ? () => void handleAcceptOffer(parsed.offerId!)
+                      : undefined}
+                    onDecline={parsed.offerId && actingOnOffer !== parsed.offerId
+                      ? () => void handleDeclineOffer(parsed.offerId!)
+                      : undefined}
+                    onPayNow={parsed.orderId
+                      ? () => void handlePayNow(parsed.orderId!)
+                      : undefined}
                   />
                 ) : (
                   <div

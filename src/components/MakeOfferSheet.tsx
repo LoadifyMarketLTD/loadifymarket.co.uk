@@ -2,17 +2,17 @@
  * MakeOfferSheet
  *
  * A modal bottom-sheet that lets a buyer submit an offer amount for a product.
- * The offer is stored as a JSON-encoded message in the conversations/messages
- * tables so it can be rendered as a special offer bubble in the chat thread:
- *   {"_t":"offer","amount_pence":5000,"productTitle":"…"}
+ * Calls the conversation-offer Netlify function which creates a real offer
+ * record in the `offers` table and a display message in chat.
  *
  * Props:
  *   open           – controlled open state
  *   onOpenChange   – called when the sheet should close
  *   conversationId – id of the conversation to post into
- *   receiverId     – the other party's user id (seller)
+ *   receiverId     – the other party's user id (seller, unused server-side but
+ *                    kept for backwards-compatible prop interface)
  *   productTitle   – shown in the offer card inside chat
- *   onSent         – optional callback after the message is inserted
+ *   onSent         – optional callback after the offer is created
  */
 
 import { useState } from "react";
@@ -36,7 +36,6 @@ export default function MakeOfferSheet({
   open,
   onOpenChange,
   conversationId,
-  receiverId,
   productTitle = "this item",
   onSent,
 }: MakeOfferSheetProps) {
@@ -67,24 +66,28 @@ export default function MakeOfferSheet({
       toast({ title: "Offer cannot exceed £99,999", variant: "destructive" });
       return;
     }
-    const amount_pence = Math.round(numPounds * 100);
+    const amountPence = Math.round(numPounds * 100);
 
     setSending(true);
     try {
-      const offerPayload = JSON.stringify({
-        _t: "offer",
-        amount_pence,
-        productTitle,
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("No active session — please sign in again");
+      }
+
+      const res = await fetch("/.netlify/functions/conversation-offer", {
+        method: "POST",
+        headers: {
+          "Content-Type":  "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ conversationId, amountPence }),
       });
 
-      const { error } = await supabase.from("messages").insert({
-        conversationId,
-        senderId: user.id,
-        receiverId,
-        message: offerPayload,
-      });
-
-      if (error) throw error;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Request failed" })) as { error?: string };
+        throw new Error(err.error ?? `HTTP ${res.status}`);
+      }
 
       toast({ title: `Offer of £${numPounds.toFixed(2)} sent!` });
       setPounds("");
@@ -160,3 +163,4 @@ export default function MakeOfferSheet({
     </Dialog>
   );
 }
+
