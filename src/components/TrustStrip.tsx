@@ -21,28 +21,32 @@ interface TrustItem {
   flag?: boolean;
   label: string;
   sub: string;
+  desktopOnly?: boolean;
 }
 
 const ITEMS: TrustItem[] = [
   { icon: ShieldCheck, label: "Secure Payments", sub: "with Stripe" },
   { flag: true,        label: "UK Marketplace",  sub: "Platform" },
-  { icon: BadgeCheck,  label: "Seller Verification", sub: "via Stripe" },
   { icon: Percent,     label: "0% Commission",   sub: "Until 31 Dec 2026" },
+  { icon: BadgeCheck,  label: "Seller Verification", sub: "via Stripe", desktopOnly: true },
 ];
 
 const TrustStrip = () => (
-  <div className="grid grid-cols-2 sm:grid-cols-4 gap-6" aria-label="Platform trust features">
-    {ITEMS.map(({ icon: Icon, flag, label, sub }) => (
+  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-6" aria-label="Platform trust features">
+    {ITEMS.map(({ icon: Icon, flag, label, sub, desktopOnly }) => (
       <div
         key={label}
-        className="flex items-center gap-3 rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#0F172A,#020617)] px-5 py-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(251,191,36,0.15)] hover:border-yellow-400/25"
+        className={
+          `flex items-center gap-2 sm:gap-3 rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#0F172A,#020617)] px-3 sm:px-5 py-3 sm:py-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(251,191,36,0.15)] hover:border-yellow-400/25` +
+          (desktopOnly ? ' hidden sm:flex' : ' flex')
+        }
       >
-        <span className="w-10 h-10 flex items-center justify-center shrink-0 overflow-hidden">
+        <span className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0 overflow-hidden">
           {flag
             ? <UKFlag />
             : Icon && (
                 <Icon
-                  className="h-6 w-6 text-[#FBBF24]"
+                  className="h-5 w-5 sm:h-6 sm:w-6 text-[#FBBF24]"
                   style={{ filter: 'drop-shadow(0 0 6px rgba(251,191,36,0.4))' }}
                   aria-hidden="true"
                 />
@@ -50,8 +54,8 @@ const TrustStrip = () => (
           }
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-white leading-tight">{label}</p>
-          <p className="text-xs text-slate-400 leading-tight mt-0.5">{sub}</p>
+          <p className="text-[11px] sm:text-sm font-semibold text-white leading-tight">{label}</p>
+          <p className="text-[10px] sm:text-xs text-slate-400 leading-tight mt-0.5">{sub}</p>
         </div>
       </div>
     ))}

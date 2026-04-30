@@ -3,6 +3,7 @@ import {
   MessageSquare,
   Truck,
   Banknote,
+  ChevronRight,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -15,8 +16,8 @@ interface Feature {
 const features: Feature[] = [
   {
     icon: FileText,
-    title: "Request for Quotes (RFQ)",
-    description: "Get custom pricing requests from buyers for bulk orders.",
+    title: "Request for Quote",
+    description: "Get custom pricing for bulk orders.",
   },
   {
     icon: MessageSquare,
@@ -26,7 +27,7 @@ const features: Feature[] = [
   {
     icon: Truck,
     title: "Order Tracking",
-    description: "Track order progress from dispatch to delivery.",
+    description: "Track your order from dispatch to delivery.",
   },
   {
     icon: Banknote,
@@ -37,11 +38,40 @@ const features: Feature[] = [
 
 export default function FeaturesGrid() {
   return (
-    <div className="flex-1 rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#0F172A,#020617)] p-6 lg:p-8 flex flex-col">
-      <h2 className="text-xl font-semibold text-white mb-4">
-        Powerful Features Built for UK Sellers
+    <div className="flex-1 rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#0F172A,#020617)] p-4 sm:p-6 lg:p-8 flex flex-col">
+
+      {/* Section heading */}
+      <h2 className="text-lg sm:text-xl font-semibold text-white mb-1">
+        Powerful <span className="text-[#FBBF24]">Features</span> Built for <span className="text-[#FBBF24]">You</span>
       </h2>
-      <div className="grid grid-cols-2 gap-6 flex-1">
+
+      {/* ── Mobile: vertical list ─────────────────────────────────────── */}
+      <div className="flex flex-col divide-y divide-white/[0.06] sm:hidden mt-2">
+        {features.map((feature) => {
+          const Icon = feature.icon;
+          return (
+            <div
+              key={feature.title}
+              className="flex items-center gap-4 py-4"
+            >
+              {/* Icon box */}
+              <div className="w-11 h-11 rounded-xl bg-[#0B1220] border border-white/[0.07] flex items-center justify-center shrink-0">
+                <Icon className="w-5 h-5 text-[#FBBF24]" aria-hidden="true" />
+              </div>
+              {/* Text */}
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-white leading-tight">{feature.title}</p>
+                <p className="text-[11px] text-slate-400 leading-snug mt-0.5">{feature.description}</p>
+              </div>
+              {/* Chevron */}
+              <ChevronRight className="w-4 h-4 text-slate-500 shrink-0" aria-hidden="true" />
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Desktop: 2×2 grid ─────────────────────────────────────────── */}
+      <div className="hidden sm:grid grid-cols-2 gap-6 flex-1 mt-4">
         {features.map((feature) => {
           const Icon = feature.icon;
           return (
@@ -60,6 +90,7 @@ export default function FeaturesGrid() {
           );
         })}
       </div>
+
     </div>
   );
 }
