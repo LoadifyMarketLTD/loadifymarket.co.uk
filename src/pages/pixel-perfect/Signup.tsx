@@ -192,7 +192,7 @@ const Signup = () => {
                       p.delete("type");
                       setSearchParams(p);
                     }}
-                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-white/10 transition-colors ${
+                    className={`px-3 min-h-[44px] text-[11px] font-bold uppercase tracking-wide border border-white/10 transition-colors ${
                       !isSeller ? "bg-[#FBBF24] text-white" : "bg-transparent text-slate-500 hover:text-white"
                     }`}
                   >
@@ -205,7 +205,7 @@ const Signup = () => {
                       p.set("type", "seller");
                       setSearchParams(p);
                     }}
-                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-l-0 border-white/10 transition-colors ${
+                    className={`px-3 min-h-[44px] text-[11px] font-bold uppercase tracking-wide border border-l-0 border-white/10 transition-colors ${
                       isSeller ? "bg-[#FBBF24] text-white" : "bg-transparent text-slate-500 hover:text-white"
                     }`}
                   >
@@ -221,7 +221,7 @@ const Signup = () => {
                       p.delete("account");
                       setSearchParams(p);
                     }}
-                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-white/10 transition-colors ${
+                    className={`px-3 min-h-[44px] text-[11px] font-bold uppercase tracking-wide border border-white/10 transition-colors ${
                       !isPrivate ? "bg-[#0d2240] text-white" : "bg-transparent text-slate-500 hover:text-white"
                     }`}
                   >
@@ -234,7 +234,7 @@ const Signup = () => {
                       p.set("account", "private");
                       setSearchParams(p);
                     }}
-                    className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide border border-l-0 border-white/10 transition-colors ${
+                    className={`px-3 min-h-[44px] text-[11px] font-bold uppercase tracking-wide border border-l-0 border-white/10 transition-colors ${
                       isPrivate ? "bg-[#0d2240] text-white" : "bg-transparent text-slate-500 hover:text-white"
                     }`}
                   >
