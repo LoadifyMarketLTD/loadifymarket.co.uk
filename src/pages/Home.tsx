@@ -1,19 +1,27 @@
 /**
  * src/pages/Home.tsx — root "/" route
  *
- * Mobile (< md / 768 px):
- *   Hero → MobileCategoryShortcuts → MobileProductSection →
- *   TrustStrip → SellerCTA → Footer → MobileBottomNav (via MainLayout)
+ * MOBILE (< md / 768 px):
+ *   MobileTopBar (fixed) → Search → Categories → HeroBanner → InfiniteFeed → BottomNav
  *
- * Desktop (>= md / 768 px) — unchanged:
- *   Hero → TrustStrip → SocialFollowSection → HowItWorksSection →
- *   FeaturesGrid + SecurityTrust → SellerCTA → Footer
+ * DESKTOP (>= md / 768 px):
+ *   GlobalHeader → HeroSection (full-screen) → TrustStrip → FeaturesGrid →
+ *   SocialFollowSection → HowItWorksSection → SecurityTrust → SellerCTA → Footer
  */
 
 import { Helmet } from "react-helmet-async";
 
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
+
+// Mobile-only components
+import MobileTopBar from "@/components/MobileTopBar";
+import MobileSearchBar from "@/components/MobileSearchBar";
+import MobileCategoryShortcuts from "@/components/MobileCategoryShortcuts";
+import MobileHeroBanner from "@/components/MobileHeroBanner";
+import MobileInfiniteFeed from "@/components/MobileInfiniteFeed";
+
+// Desktop-only components
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
 import HowItWorksSection from "@/components/HowItWorksSection";
@@ -22,13 +30,11 @@ import SecurityTrust from "@/components/SecurityTrust";
 import SocialFollowSection from "@/components/SocialFollowSection";
 import SellerCTA from "@/components/SellerCTA";
 import LazySection from "@/components/LazySection";
-import MobileCategoryShortcuts from "@/components/MobileCategoryShortcuts";
-import MobileProductSection from "@/components/MobileProductSection";
 
 export default function Home() {
   return (
     <MainLayout>
-      {/* Preload the LCP hero image only on the homepage */}
+      {/* Preload LCP hero image for desktop */}
       <Helmet>
         <link
           rel="preload"
@@ -45,56 +51,72 @@ export default function Home() {
         canonical="/"
       />
 
+      {/* Fixed mobile top bar (hidden on desktop) */}
+      <MobileTopBar />
+
       <main id="main-content">
 
-        {/* ── 1. Hero ──────────────────────────────────────────────────── */}
-        <HeroSection />
+        {/* ── MOBILE layout (< md) ─────────────────────────────────────────
+            Stacks below the fixed 56px top bar via pt-14.
+            No product sections from the marketing layout here — just the
+            0% commission hero and the continuous infinite product feed.
+        ───────────────────────────────────────────────────────────────── */}
+        <div className="md:hidden bg-[#0B0B0F] pt-[70px]">
 
-        {/* ── 2. Platform overview section ─────────────────────────────── */}
-        <section className="bg-[#020617] py-6 px-4 sm:px-8" aria-label="Platform overview">
+          {/* Search input */}
+          <MobileSearchBar />
 
-          {/* Trust Strip — visible on both mobile and desktop */}
-          <TrustStrip />
+          {/* Horizontal category shortcuts */}
+          <MobileCategoryShortcuts />
 
-          {/* Features — visible on both mobile (list) and desktop (grid) */}
-          <div className="mt-6 sm:mt-8">
-            <FeaturesGrid />
-          </div>
+          {/* 0% COMMISSION hero banner */}
+          <MobileHeroBanner />
 
-          {/* Social Follow — visible on both mobile and desktop */}
-          <div className="mt-6 sm:mt-8">
-            <SocialFollowSection />
-          </div>
+          {/* Continuous 2-column infinite product feed */}
+          <MobileInfiniteFeed />
 
-          {/* Desktop-only extra sections */}
-          <LazySection rootMargin="300px">
-            <div className="hidden md:block">
+          {/* Spacer so content isn't hidden behind the fixed bottom nav */}
+          <div className="h-24" aria-hidden="true" />
 
-              {/* How It Works */}
+        </div>
+
+        {/* ── DESKTOP layout (>= md) — unchanged ──────────────────────────
+            HeroSection is desktop-only; the mobile banner is above.
+        ───────────────────────────────────────────────────────────────── */}
+        <div className="hidden md:block">
+
+          {/* Full-screen hero with gold background image */}
+          <HeroSection />
+
+          {/* Platform overview section */}
+          <section
+            className="bg-[#020617] py-6 px-8"
+            aria-label="Platform overview"
+          >
+            <TrustStrip />
+
+            <div className="mt-8">
+              <FeaturesGrid />
+            </div>
+
+            <div className="mt-8">
+              <SocialFollowSection />
+            </div>
+
+            <LazySection rootMargin="300px">
               <div className="mt-8">
                 <HowItWorksSection />
               </div>
-
-              {/* Security */}
               <div className="mt-8">
                 <SecurityTrust />
               </div>
+            </LazySection>
+          </section>
 
-            </div>
-          </LazySection>
+          {/* Seller call-to-action */}
+          <SellerCTA />
 
-        </section>
-
-        {/* ── 3. Mobile-only: Category shortcuts + Product sections ─────── */}
-        <div className="md:hidden bg-[#020617]">
-          <MobileCategoryShortcuts />
-          <MobileProductSection />
         </div>
-
-        {/* ── 4. Seller CTA ────────────────────────────────────────────── */}
-        <SellerCTA />
-
-        {/* ── 5. Footer — rendered by MainLayout ───────────────────────── */}
 
       </main>
     </MainLayout>

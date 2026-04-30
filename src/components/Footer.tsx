@@ -28,8 +28,23 @@ const Footer = () => {
   return (
     <footer className="bg-[linear-gradient(180deg,#0B1220,#020617)] text-[#C9D0D6] border-t border-white/[0.06]">
 
-      {/* ── Trust row ───────────────────────────────────────────────────── */}
-      <div className="border-b border-white/[0.07]">
+      {/* ── Mobile: compact footer ───────────────────────────────────────── */}
+      <div
+        className="sm:hidden flex flex-col items-center gap-3"
+        style={{ backgroundColor: '#0B0B0F', padding: '20px 16px' }}
+      >
+        <div className="flex items-center gap-5 flex-wrap justify-center">
+          <Link to="/terms"   style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>Terms</Link>
+          <Link to="/privacy" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>Privacy</Link>
+          <Link to="/contact" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>Support</Link>
+        </div>
+        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.2)', textAlign: 'center' }}>
+          &copy; {new Date().getFullYear()} Loadify Market
+        </p>
+      </div>
+
+      {/* ── Trust row (desktop only) ─────────────────────────────────────── */}
+      <div className="hidden sm:block border-b border-white/[0.07]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-6">
             <div className="flex items-center gap-2 text-sm font-medium text-[#C9D0D6]">
@@ -60,8 +75,8 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* ── Main columns ────────────────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+      {/* ── Main columns (desktop only) ─────────────────────────────────── */}
+      <div className="hidden sm:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
 
@@ -158,8 +173,8 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* ── Bottom bar ──────────────────────────────────────────────────── */}
-      <div className="border-t border-white/[0.07]">
+      {/* ── Bottom bar (desktop only) ────────────────────────────────────── */}
+      <div className="hidden sm:block border-t border-white/[0.07]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
 
           <p className="text-[12px] text-[#C9D0D6]/45">

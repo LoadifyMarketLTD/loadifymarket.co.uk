@@ -1,58 +1,60 @@
 import { Link } from "react-router-dom";
-import { ShieldCheck, Truck, Store, Rocket } from "lucide-react";
-
-const TRUST_BADGES = [
-  { icon: ShieldCheck, label: "Registered", sub: "Sellers" },
-  { icon: ShieldCheck, label: "Secure",     sub: "Platform" },
-  { icon: Truck,       label: "UK Delivery", sub: "Support" },
-  { icon: Store,       label: "Independent", sub: "UK Marketplace" },
-];
 
 export default function SellerCTA() {
   return (
-    <section className="bg-[linear-gradient(135deg,#111827,#020617)] border-y border-yellow-400/20">
+    <section
+      className="sm:bg-[linear-gradient(135deg,#111827,#020617)] sm:border-y sm:border-yellow-400/20"
+      style={{ backgroundColor: '#0B0B0F' }}
+    >
+      {/* ── Mobile: card with margin/radius ───────────────────────── */}
+      <div className="sm:hidden" style={{ padding: '24px 16px' }}>
+        <div
+          style={{
+            background: 'linear-gradient(145deg, #1C1400, #0D0D12)',
+            border: '1px solid rgba(245,185,66,0.2)',
+            borderRadius: '20px',
+            padding: '20px',
+            textAlign: 'center',
+          }}
+        >
+          {/* Heading */}
+          <p style={{ color: '#FFFFFF', fontWeight: 800, fontSize: '24px', lineHeight: 1.2, marginBottom: '10px' }}>
+            Start Selling for{' '}
+            <span style={{ color: '#F5B942' }}>FREE</span>
+          </p>
 
-      {/* ── Mobile layout ───────────────────────────────────────────── */}
-      <div className="sm:hidden px-4 pt-6 pb-5">
+          {/* Subtext */}
+          <p style={{ fontSize: '14px', color: '#A0A0A0', lineHeight: 1.55, marginBottom: '22px' }}>
+            List products, receive offers, get paid securely.
+          </p>
 
-        {/* Heading row — icon+text left, button right */}
-        <div className="flex items-center gap-3 mb-3">
-          <Rocket className="w-8 h-8 text-[#FBBF24] shrink-0" aria-hidden="true" />
-          <div className="flex-1 min-w-0">
-            <p className="text-white font-bold text-base leading-tight">
-              Start Selling for <span className="text-[#FBBF24]">FREE</span>
-            </p>
-            <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-              Join UK sellers earning more with 0% commission until 31 Dec 2026.
-            </p>
-          </div>
+          {/* Gold CTA button */}
           <Link
             to="/register?type=seller"
-            className="shrink-0 bg-[linear-gradient(135deg,#FBBF24,#D97706)] text-[#020617] font-bold py-2.5 px-3 rounded-xl text-[11px] text-center leading-tight"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '52px',
+              background: '#F5B942',
+              color: '#0B0B0F',
+              fontWeight: 700,
+              fontSize: '16px',
+              borderRadius: '14px',
+              textDecoration: 'none',
+              marginBottom: '12px',
+            }}
           >
-            Create Your<br />Free Seller<br />Account
+            Become a Seller
           </Link>
-        </div>
 
-        <p className="text-center text-[11px] text-slate-500 mb-4">
-          No fees. No monthly charges. No risk.
-        </p>
-
-        {/* Trust badges row */}
-        <div className="grid grid-cols-4 gap-1.5">
-          {TRUST_BADGES.map(({ icon: Icon, label, sub }) => (
-            <div key={label} className="flex flex-col items-center gap-1.5">
-              <div className="w-9 h-9 rounded-xl bg-[#0B1220] border border-white/[0.07] flex items-center justify-center">
-                <Icon className="w-4 h-4 text-[#FBBF24]" aria-hidden="true" />
-              </div>
-              <p className="text-[9px] font-semibold text-white/80 text-center leading-tight">{label}</p>
-              <p className="text-[9px] text-slate-400 text-center leading-tight">{sub}</p>
-            </div>
-          ))}
+          <p style={{ fontSize: '12px', color: '#505050' }}>
+            No fees. No monthly charges. No risk.
+          </p>
         </div>
       </div>
 
-      {/* ── Desktop layout ──────────────────────────────────────────── */}
+      {/* ── Desktop layout — unchanged ────────────────────────────── */}
       <div className="hidden sm:block px-8 py-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[#F5F1E8] font-medium text-base text-center sm:text-left">
