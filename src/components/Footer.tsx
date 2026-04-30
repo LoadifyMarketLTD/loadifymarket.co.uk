@@ -29,14 +29,17 @@ const Footer = () => {
     <footer className="bg-[linear-gradient(180deg,#0B1220,#020617)] text-[#C9D0D6] border-t border-white/[0.06]">
 
       {/* ── Mobile: compact footer ───────────────────────────────────────── */}
-      <div className="sm:hidden px-4 py-5 flex flex-col items-center gap-3">
-        <div className="flex items-center gap-4 flex-wrap justify-center">
-          <Link to="/terms"   className="text-[12px] text-[#C9D0D6]/60 hover:text-[#D8AE57] transition-colors">Terms</Link>
-          <Link to="/privacy" className="text-[12px] text-[#C9D0D6]/60 hover:text-[#D8AE57] transition-colors">Privacy</Link>
-          <Link to="/contact" className="text-[12px] text-[#C9D0D6]/60 hover:text-[#D8AE57] transition-colors">Support</Link>
+      <div
+        className="sm:hidden flex flex-col items-center gap-3"
+        style={{ backgroundColor: '#0B0B0F', padding: '20px 16px' }}
+      >
+        <div className="flex items-center gap-5 flex-wrap justify-center">
+          <Link to="/terms"   style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>Terms</Link>
+          <Link to="/privacy" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>Privacy</Link>
+          <Link to="/contact" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>Support</Link>
         </div>
-        <p className="text-[11px] text-[#C9D0D6]/35 text-center">
-          &copy; {new Date().getFullYear()} Loadify Market · XDrive Logistics Ltd
+        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.2)', textAlign: 'center' }}>
+          &copy; {new Date().getFullYear()} Loadify Market
         </p>
       </div>
 

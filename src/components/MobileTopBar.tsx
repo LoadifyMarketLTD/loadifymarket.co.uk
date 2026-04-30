@@ -13,14 +13,8 @@ export default function MobileTopBar() {
 
   return (
     <header
-      className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between"
-      style={{
-        height: '56px',
-        padding: '0 16px',
-        background: '#0B0B0F',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
-        paddingTop: 'env(safe-area-inset-top, 0px)',
-      }}
+      className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between h-14 px-4 bg-[#0B0B0F] border-b border-white/[0.07]"
+      style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
       aria-label="Loadify Market top bar"
     >
       {/* Logo */}

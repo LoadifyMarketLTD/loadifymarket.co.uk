@@ -68,38 +68,59 @@ export default function SocialFollowSection() {
         </p>
       </div>
 
-      {/* ── Mobile: compact rows ─────────────────────────────────────── */}
-      <div className="flex flex-col gap-3 sm:hidden">
+      {/* ── Mobile: spec-exact rows ──────────────────────────────────── */}
+      <div className="flex flex-col sm:hidden" style={{ gap: '12px' }}>
         {SOCIAL_CARDS.map(({ platform, Icon, title, description, cta, href }) => (
           <div
             key={platform}
-            className="flex items-center gap-4 rounded-xl p-4"
             style={{
-              background: "linear-gradient(145deg, #0F172A, #020617)",
-              border: "1px solid rgba(255,255,255,0.05)",
+              display: 'flex',
+              alignItems: 'center',
+              gap: '14px',
+              backgroundColor: '#12121A',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '16px',
+              padding: '16px',
             }}
           >
             {/* Icon */}
             <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
               style={{
-                background: "linear-gradient(145deg, rgba(17,24,39,0.98), rgba(2,6,23,0.98))",
-                border: "1px solid rgba(255,255,255,0.07)",
+                width: '44px',
+                height: '44px',
+                borderRadius: '12px',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
               }}
             >
-              <Icon className="w-6 h-6 text-slate-300" aria-hidden="true" />
+              <Icon style={{ width: '22px', height: '22px', color: '#A0A0A0' }} aria-hidden="true" />
             </div>
             {/* Text */}
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-white leading-tight">{title}</p>
-              <p className="text-[11px] text-slate-400 leading-snug mt-0.5">{description}</p>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: '14px', fontWeight: 600, color: '#FFFFFF', lineHeight: 1.2 }}>{title}</p>
+              <p style={{ fontSize: '12px', color: '#A0A0A0', lineHeight: 1.4, marginTop: '3px' }}>{description}</p>
             </div>
-            {/* Follow button */}
+            {/* Follow button — gold outline */}
             <a
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="shrink-0 text-[11px] font-bold text-[#020617] bg-[#FBBF24] hover:bg-[#D97706] px-3 py-1.5 rounded-lg transition-colors"
+              style={{
+                flexShrink: 0,
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#F5B942',
+                background: 'transparent',
+                border: '1px solid rgba(245,185,66,0.4)',
+                borderRadius: '10px',
+                padding: '6px 14px',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+              }}
             >
               {cta}
             </a>

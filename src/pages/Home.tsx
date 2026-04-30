@@ -53,17 +53,20 @@ export default function Home() {
         <HeroSection />
 
         {/* ── 2. Platform overview section ─────────────────────────────── */}
-        <section className="bg-[#020617] py-6 px-4 sm:px-8" aria-label="Platform overview">
+        <section
+          className="bg-[#0B0B0F] px-4 pt-6 pb-0 sm:bg-[#020617] sm:py-6 sm:px-8"
+          aria-label="Platform overview"
+        >
 
-          {/* Trust Strip — visible on both mobile and desktop */}
+          {/* Trust Strip */}
           <TrustStrip />
 
-          {/* Features — visible on both mobile (list) and desktop (grid) */}
+          {/* Features */}
           <div className="mt-6 sm:mt-8">
             <FeaturesGrid />
           </div>
 
-          {/* Social Follow — visible on both mobile and desktop */}
+          {/* Social Follow */}
           <div className="mt-6 sm:mt-8">
             <SocialFollowSection />
           </div>
