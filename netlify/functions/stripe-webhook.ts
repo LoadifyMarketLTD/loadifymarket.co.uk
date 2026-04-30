@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { sendPushToUser } from './_shared/pushNotifications';
 
 // Collect all available webhook signing secrets.
 // STRIPE_WEBHOOK_SECRET       — standard account webhook (checkout events)
@@ -172,7 +173,13 @@ export const handler: Handler = async (event) => {
 
       case 'payment_intent.succeeded': {
         const paymentIntent = stripeEvent.data.object as Stripe.PaymentIntent;
-        console.log('PaymentIntent succeeded:', paymentIntent.id);
+        // For web checkout the orders are already created by checkout.session.completed
+        // (which fires before payment_intent.succeeded).  For mobile the payment
+        // session is pre-populated by create-payment-intent.ts with
+        // stripePaymentIntent set at insert time (status='pending'), so the handler
+        // below will pick it up and create orders. Web pending sessions do NOT have
+        // stripePaymentIntent set at insert time, so they are never matched here.
+        await handleMobilePaymentIntentSucceeded(supabase!, stripe!, paymentIntent);
         break;
       }
 
@@ -619,6 +626,13 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       message: `Order ${confirmedOrderNumber} has been placed. Total: £${sellerGrandTotal.toFixed(2)}`,
       link: '/pp/seller/orders',
     }).catch((err: unknown) => console.warn('Seller notification insert failed (non-fatal):', err));
+
+    // Push notification to seller (mobile — non-fatal)
+    sendPushToUser(supabase!, sellerId, {
+      title: 'New order received',
+      body: `Order ${confirmedOrderNumber} placed. Total: £${sellerGrandTotal.toFixed(2)}`,
+      data: { type: 'new_order', orderId: order.id },
+    }).catch((err: unknown) => console.warn('Seller push notification failed (non-fatal):', err));
   }
 
   // Insert in-app notification for buyer — fire-and-forget, non-blocking
@@ -630,6 +644,13 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       message: `Your order has been placed successfully. We'll notify you when it ships.`,
       link: '/pp/buyer/orders',
     }).catch((err: unknown) => console.warn('Buyer notification insert failed (non-fatal):', err));
+
+    // Push notification to buyer (mobile — non-fatal)
+    sendPushToUser(supabase!, orderData.buyerId, {
+      title: 'Order confirmed ✓',
+      body: `Your order has been placed. We'll notify you when it ships.`,
+      data: { type: 'order_confirmed', orderId: firstOrderId ?? '' },
+    }).catch((err: unknown) => console.warn('Buyer push notification failed (non-fatal):', err));
   }
 
   // Mark the pre-populated payment_sessions record as completed now that all
@@ -1062,4 +1083,307 @@ export async function handlePayoutPaid(payout: Stripe.Payout, connectedAccountId
   } else {
     console.log(`payout.paid: payout ${payout.id} recorded for seller ${sellerId}`);
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mobile PaymentIntent handler
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Handles `payment_intent.succeeded` for orders originating from the mobile
+ * app (create-payment-intent.ts).
+ *
+ * Mobile sessions are distinguished from web sessions by having
+ * `stripePaymentIntent` set at insert time in payment_sessions.  Web sessions
+ * only get `stripePaymentIntent` written by handleCheckoutCompleted after
+ * checkout.session.completed fires (which runs before payment_intent.succeeded),
+ * leaving the web session in 'completed' status — not matched here.
+ *
+ * Creates orders using the same logic as handleCheckoutCompleted, then:
+ *   - Marks product(s) as `listingStatus = 'sold'`
+ *   - Sends push notifications to buyer and seller(s)
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function handleMobilePaymentIntentSucceeded(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sb: import('@supabase/supabase-js').SupabaseClient<any>,
+  stripeClient: Stripe,
+  paymentIntent: Stripe.PaymentIntent,
+): Promise<void> {
+  // Idempotency: only process pending sessions — completed sessions are skipped.
+  const { data: pendingSession, error: sessionErr } = await sb
+    .from('payment_sessions')
+    .select('id, metadata')
+    .eq('stripePaymentIntent', paymentIntent.id)
+    .eq('status', 'pending')
+    .maybeSingle<{ id: string; metadata: Record<string, unknown> }>();
+
+  if (sessionErr) {
+    console.error('handleMobilePaymentIntentSucceeded: payment_sessions query failed:', sessionErr.message);
+    return;
+  }
+  if (!pendingSession) {
+    // Not a mobile session (or already processed) — skip silently.
+    return;
+  }
+
+  interface CartItem {
+    productId: string;
+    sellerId: string;
+    quantity: number;
+    price: number;
+    title: string;
+  }
+
+  interface MobileOrderData {
+    items: CartItem[];
+    shippingAddress: Record<string, string>;
+    billingAddress: Record<string, string>;
+    subtotal: number;
+    shippingAmount: number;
+    shippingMethod: string;
+    total: number;
+    buyerId: string;
+    transferGroup: string;
+    isB2B?: boolean;
+    applyReverseCharge?: boolean;
+  }
+
+  const orderData = pendingSession.metadata as MobileOrderData;
+  const items: CartItem[] = orderData.items ?? [];
+  if (!items.length) {
+    console.error(`handleMobilePaymentIntentSucceeded: no items in session ${pendingSession.id}`);
+    return;
+  }
+
+  const VAT_RATE = 0.20;
+  const configuredRate = await fetchConfiguredCommissionRate(sb);
+  const COMMISSION_RATE = getCommissionRate(configuredRate ?? undefined);
+  const totalShipping = orderData.shippingAmount ?? 0;
+  const totalSubtotal = orderData.subtotal;
+  const transferGroup = orderData.transferGroup;
+
+  // Split items by seller (matches handleCheckoutCompleted logic)
+  const sellerGroups = new Map<string, CartItem[]>();
+  for (const item of items) {
+    const group = sellerGroups.get(item.sellerId) ?? [];
+    group.push(item);
+    sellerGroups.set(item.sellerId, group);
+  }
+
+  let firstOrderId: string | null = null;
+  const now = new Date().toISOString();
+
+  for (const [sellerId, sellerItems] of sellerGroups) {
+    const isReverseCharge = Boolean(orderData.applyReverseCharge);
+    const sellerSubtotal = sellerItems.reduce(
+      (sum, i) => sum + (i.price / (1 + VAT_RATE)) * i.quantity,
+      0,
+    );
+    const sellerVat = isReverseCharge
+      ? 0
+      : sellerItems.reduce(
+          (sum, i) => sum + i.price * (VAT_RATE / (1 + VAT_RATE)) * i.quantity,
+          0,
+        );
+    const sellerShipping =
+      totalSubtotal > 0 ? (sellerSubtotal / totalSubtotal) * totalShipping : 0;
+    const sellerGrandTotal = sellerSubtotal + sellerVat + sellerShipping;
+    const sellerCommission = sellerSubtotal * COMMISSION_RATE;
+    const primaryItem = sellerItems[0];
+
+    const { data: order, error: orderError } = await sb
+      .from('orders')
+      .insert([
+        {
+          buyerId:         orderData.buyerId || null,
+          sellerId,
+          productId:       primaryItem.productId,
+          quantity:        sellerItems.reduce((sum, i) => sum + i.quantity, 0),
+          subtotal:        sellerSubtotal,
+          vatAmount:       sellerVat,
+          shippingAmount:  sellerShipping,
+          total:           sellerGrandTotal,
+          commission:      sellerCommission,
+          status:          'paid',
+          escrowStatus:    'held',
+          shippingAddress: orderData.shippingAddress,
+          billingAddress:  orderData.billingAddress,
+          shippingMethod:  orderData.shippingMethod || 'Standard',
+          isB2B:           Boolean(orderData.isB2B),
+        },
+      ])
+      .select()
+      .single();
+
+    if (orderError) {
+      console.error(`handleMobilePaymentIntentSucceeded: order insert failed for seller ${sellerId}:`, orderError);
+      throw orderError;
+    }
+
+    if (!firstOrderId) firstOrderId = order.id;
+
+    // Order items
+    const orderItemsRows = sellerItems.map((item) => ({
+      orderId:      order.id,
+      productId:    item.productId,
+      quantity:     item.quantity,
+      pricePerUnit: item.price,
+      vatRate:      VAT_RATE,
+      subtotal:     (item.price / (1 + VAT_RATE)) * item.quantity,
+    }));
+
+    const { error: itemsError } = await sb.from('order_items').insert(orderItemsRows);
+    if (itemsError) {
+      console.error('handleMobilePaymentIntentSucceeded: order_items insert failed:', itemsError);
+      await sb.from('orders').delete().eq('id', order.id)
+        .catch((e: unknown) => console.error('Failed to delete orphaned mobile order:', e));
+      throw itemsError;
+    }
+
+    // Decrement stock (goods only)
+    for (const item of sellerItems) {
+      const { data: productMeta } = await sb
+        .from('products')
+        .select('listingContext, stockQuantity')
+        .eq('id', item.productId)
+        .single<{ listingContext: string | null; stockQuantity: number }>();
+
+      if (productMeta?.listingContext === 'service') continue;
+
+      const { error: rpcError } = await sb.rpc('decrement_product_stock', {
+        p_product_id: item.productId,
+        p_qty: item.quantity,
+      });
+
+      if (rpcError) {
+        const currentQty = productMeta?.stockQuantity ?? 0;
+        const newQty = Math.max(0, currentQty - item.quantity);
+        const newStatus = newQty <= 0 ? 'out_of_stock' : newQty <= 10 ? 'low_stock' : 'in_stock';
+        const { count } = await sb
+          .from('products')
+          .update({ stockQuantity: newQty, stockStatus: newStatus })
+          .eq('id', item.productId)
+          .eq('stockQuantity', currentQty)
+          .select('id', { count: 'exact', head: true });
+        if (!count || count === 0) {
+          console.warn(`handleMobilePaymentIntentSucceeded: concurrent stock change for product ${item.productId}`);
+        }
+      }
+
+      // Mark product as sold
+      await sb
+        .from('products')
+        .update({ listingStatus: 'sold', reservedUntil: null })
+        .eq('id', item.productId);
+    }
+
+    const confirmedOrderNumber: string =
+      (order as { orderNumber?: string }).orderNumber ?? order.id;
+
+    // Credit seller balance
+    const { error: balanceError } = await sb.rpc('credit_seller_balance', {
+      p_seller_id: sellerId,
+      p_order_id:  order.id,
+    });
+    if (balanceError) {
+      console.warn('handleMobilePaymentIntentSucceeded: credit_seller_balance RPC failed:', balanceError.message);
+    }
+
+    // Stripe Connect transfer
+    const { data: sellerConnectProfile } = await sb
+      .from('seller_profiles')
+      .select('stripeAccountId, stripeConnectStatus')
+      .eq('userId', sellerId)
+      .single<{ stripeAccountId: string | null; stripeConnectStatus: string | null }>();
+
+    if (
+      sellerConnectProfile?.stripeAccountId &&
+      sellerConnectProfile.stripeConnectStatus === 'active'
+    ) {
+      const netSellerAmount = sellerGrandTotal - sellerCommission;
+      try {
+        const transfer = await stripeClient.transfers.create({
+          amount:      Math.round(netSellerAmount * 100),
+          currency:    'gbp',
+          destination: sellerConnectProfile.stripeAccountId,
+          ...(transferGroup ? { transfer_group: transferGroup } : {}),
+          metadata: { orderId: order.id, sellerId },
+        });
+
+        await sb.from('payouts').insert({
+          sellerId,
+          orderId:         order.id,
+          amount:          netSellerAmount,
+          currency:        'GBP',
+          status:          'paid',
+          stripeTransferId: transfer.id,
+          paidAt:          now,
+        });
+
+        console.log(`handleMobilePaymentIntentSucceeded: transfer ${transfer.id} for seller ${sellerId}`);
+      } catch (transferError) {
+        const errMsg = transferError instanceof Error
+          ? transferError.message.substring(0, 200)
+          : 'Unknown transfer error';
+        await sb.from('payouts').insert({
+          sellerId,
+          orderId:  order.id,
+          amount:   netSellerAmount,
+          currency: 'GBP',
+          status:   'failed',
+          notes:    `Automatic Stripe Connect transfer failed: ${errMsg}`,
+        });
+        console.error(`handleMobilePaymentIntentSucceeded: transfer failed for seller ${sellerId}:`, transferError);
+      }
+    }
+
+    // Seller notifications
+    sb.from('notifications').insert({
+      userId:  sellerId,
+      type:    'order',
+      title:   'New order received',
+      message: `Order ${confirmedOrderNumber} has been placed. Total: £${sellerGrandTotal.toFixed(2)}`,
+      link:    '/pp/seller/orders',
+    }).catch((err: unknown) => console.warn('Mobile seller notification insert failed (non-fatal):', err));
+
+    sendPushToUser(sb, sellerId, {
+      title: 'New order received',
+      body:  `Order ${confirmedOrderNumber} placed. Total: £${sellerGrandTotal.toFixed(2)}`,
+      data:  { type: 'new_order', orderId: order.id },
+    }).catch((err: unknown) => console.warn('Mobile seller push failed (non-fatal):', err));
+  }
+
+  // Buyer notifications
+  if (orderData.buyerId) {
+    sb.from('notifications').insert({
+      userId:  orderData.buyerId,
+      type:    'order',
+      title:   'Order confirmed',
+      message: `Your order has been placed successfully. We'll notify you when it ships.`,
+      link:    '/pp/buyer/orders',
+    }).catch((err: unknown) => console.warn('Mobile buyer notification insert failed (non-fatal):', err));
+
+    sendPushToUser(sb, orderData.buyerId, {
+      title: 'Payment confirmed ✓',
+      body:  `Your order has been placed. We'll notify you when it ships.`,
+      data:  { type: 'order_confirmed', orderId: firstOrderId ?? '' },
+    }).catch((err: unknown) => console.warn('Mobile buyer push failed (non-fatal):', err));
+  }
+
+  // Mark payment_sessions as completed
+  await sb
+    .from('payment_sessions')
+    .update({
+      orderId:             firstOrderId,
+      stripePaymentIntent: paymentIntent.id,
+      amount:              orderData.total,
+      status:              'completed',
+    })
+    .eq('id', pendingSession.id);
+
+  console.log(
+    `handleMobilePaymentIntentSucceeded: PI ${paymentIntent.id} processed — ` +
+    `${sellerGroups.size} order(s) created; firstOrderId=${firstOrderId}`,
+  );
 }
