@@ -349,7 +349,7 @@ export default function MobileChatPage() {
         recipientId:  o.recipientId,
         // orders is an array of rows that reference this offer; there is at
         // most one because of the unique index one_active_order_per_listing.
-        orderId: Array.isArray(o.orders) && o.orders.length > 0
+        orderId: (o.orders != null && Array.isArray(o.orders) && o.orders.length > 0)
           ? o.orders[0].id
           : null,
       }));
