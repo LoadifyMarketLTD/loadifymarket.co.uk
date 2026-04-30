@@ -11,7 +11,7 @@ interface DraftListingState {
   location: string;
   deliveryOption: string;
   setStep: (step: number) => void;
-  setField: (field: string, value: string | boolean) => void;
+  setField: (field: keyof Omit<DraftListingState, 'setStep' | 'setField' | 'reset'>, value: string | boolean) => void;
   reset: () => void;
 }
 

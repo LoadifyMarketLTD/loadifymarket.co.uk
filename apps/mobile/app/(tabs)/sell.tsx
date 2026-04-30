@@ -33,7 +33,7 @@ const stepStyles = StyleSheet.create({
 
 export default function SellScreen() {
   const router = useRouter();
-  const { step, title, category, condition, acceptOffers, price, description, location, setStep, setField } = useDraftListingStore();
+  const { step, title, category, condition, acceptOffers, price, description, location, deliveryOption, setStep, setField } = useDraftListingStore();
 
   const handleNext = () => {
     if (step < 3) setStep(step + 1);
@@ -147,8 +147,8 @@ export default function SellScreen() {
 
             {/* Delivery Option */}
             <Text style={styles.fieldLabel}>Delivery Option</Text>
-            <TouchableOpacity style={styles.selectRow}>
-              <Text style={styles.placeholder}>Select delivery option</Text>
+            <TouchableOpacity style={styles.selectRow} onPress={() => setField('deliveryOption', 'Shipping')}>
+              <Text style={[styles.selectText, !deliveryOption && styles.placeholder]}>{deliveryOption || 'Select delivery option'}</Text>
               <Feather name="chevron-right" size={18} color={COLORS.textSecondary} />
             </TouchableOpacity>
           </>

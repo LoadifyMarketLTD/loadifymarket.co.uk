@@ -4,7 +4,6 @@ import { COLORS, RADIUS } from '../constants/theme';
 
 interface FilterSheetProps {
   onApply?: () => void;
-  onReset?: () => void;
 }
 
 const CONDITIONS = ['All', 'New', 'Like New', 'Used', 'Fair'];
