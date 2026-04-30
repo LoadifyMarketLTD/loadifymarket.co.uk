@@ -1605,7 +1605,7 @@ async function handleOfferCheckoutCompleted(
           receiverId:     otherOffer.proposedById,
           message:        cancelMsg,
         })
-        .catch((err: unknown) => console.warn('handleOfferCheckoutCompleted: cancel message insert failed (non-fatal):', err));
+        .catch((err: unknown) => console.warn('handleOfferCheckoutCompleted: listing_unavailable system message insert failed (non-fatal):', err));
 
       sendPushToUser(supabase!, otherOffer.proposedById, {
         title: 'Listing no longer available',

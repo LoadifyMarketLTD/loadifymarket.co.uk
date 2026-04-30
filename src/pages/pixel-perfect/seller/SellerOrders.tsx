@@ -188,9 +188,14 @@ const SellerOrders = () => {
         <div className="flex items-start gap-3 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3.5">
           <span className="text-amber-500 text-xl leading-none mt-0.5">⚠</span>
           <div>
-            <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-              {orders.filter((o) => o.status === "awaiting_payment").length} accepted offer{orders.filter((o) => o.status === "awaiting_payment").length > 1 ? "s" : ""} awaiting buyer payment
-            </p>
+            {(() => {
+              const awaitingCount = orders.filter((o) => o.status === "awaiting_payment").length;
+              return (
+                <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                  {awaitingCount} accepted offer{awaitingCount > 1 ? "s" : ""} awaiting buyer payment
+                </p>
+              );
+            })()}
             <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
               Items are reserved for 15 minutes. If payment isn't completed the reservation expires automatically.
             </p>
