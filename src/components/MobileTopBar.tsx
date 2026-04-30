@@ -13,12 +13,11 @@ export default function MobileTopBar() {
 
   return (
     <header
-      className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4"
+      className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between"
       style={{
         height: '56px',
-        background: 'rgba(11,15,26,0.97)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        padding: '0 16px',
+        background: '#0B0B0F',
         borderBottom: '1px solid rgba(255,255,255,0.07)',
         paddingTop: 'env(safe-area-inset-top, 0px)',
       }}
@@ -37,14 +36,14 @@ export default function MobileTopBar() {
         <button
           onClick={() => navigate('/catalog')}
           aria-label="Search marketplace"
-          className="p-2.5 rounded-xl text-white/60 hover:text-[#FBBF24] hover:bg-white/10 transition-all"
+          className="p-2.5 rounded-xl text-white/60 hover:text-[#F5B942] hover:bg-white/10 transition-all"
         >
           <Search className="h-5 w-5" aria-hidden="true" />
         </button>
         <Link
           to="/inbox"
           aria-label="Notifications and messages"
-          className="p-2.5 rounded-xl text-white/60 hover:text-[#FBBF24] hover:bg-white/10 transition-all"
+          className="p-2.5 rounded-xl text-white/60 hover:text-[#F5B942] hover:bg-white/10 transition-all"
         >
           <Bell className="h-5 w-5" aria-hidden="true" />
         </Link>
