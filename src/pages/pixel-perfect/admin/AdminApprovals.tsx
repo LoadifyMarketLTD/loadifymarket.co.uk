@@ -160,7 +160,7 @@ const AdminSellerManagement = () => {
   const [detailLoading, setDetailLoading] = useState(false);
 
   const setApiError = (err: unknown, fallback: string) => {
-    setError((err as Error).message || fallback);
+    setError(err instanceof Error ? err.message : fallback);
     setErrorRetryable(isRetryableError(err));
   };
 
