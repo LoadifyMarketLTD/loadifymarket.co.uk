@@ -61,6 +61,10 @@ async function authenticateAdmin(
     .eq('id', authUser.id)
     .single<{ id: string; email: string; role: string }>();
 
+  if (!row) {
+    console.error('User not found in public.users', { authUserId: authUser.id });
+  }
+
   const email = (row?.email ?? authUser.email ?? '').toLowerCase().trim();
   const role = row?.role ?? null;
 
