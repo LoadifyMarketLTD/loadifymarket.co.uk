@@ -20,12 +20,16 @@ export default function MobileAppHeader() {
     if (!user?.id) return;
     let cancelled = false;
     (async () => {
-      const { count } = await supabase
-        .from('messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('receiverId', user.id)
-        .eq('isRead', false);
-      if (!cancelled) setUnread(count ?? 0);
+      try {
+        const { count } = await supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('receiverId', user.id)
+          .eq('isRead', false);
+        if (!cancelled) setUnread(count ?? 0);
+      } catch {
+        // Non-critical: unread badge stays at 0 on error
+      }
     })();
     return () => { cancelled = true; };
   }, [user?.id]);

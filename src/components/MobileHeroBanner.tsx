@@ -8,6 +8,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store';
+import { hasSellerAccess } from '@/lib/roleUtils';
 
 function Commission3D() {
   return (
@@ -119,7 +120,7 @@ export default function MobileHeroBanner() {
   const { user } = useAuthStore();
 
   const handleStartSelling = () => {
-    if (user?.role === 'seller') {
+    if (hasSellerAccess(user)) {
       navigate('/seller/products/new');
     } else {
       navigate('/register?type=seller');
