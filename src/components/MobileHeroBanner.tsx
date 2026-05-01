@@ -6,6 +6,9 @@
 // pedestal with a gold rim and "COMMISSION" inscription, surrounded by a
 // warm ambient glow.
 
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/store';
+
 function Commission3D() {
   return (
     <svg
@@ -112,6 +115,17 @@ function Commission3D() {
 }
 
 export default function MobileHeroBanner() {
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
+
+  const handleStartSelling = () => {
+    if (user?.role === 'seller') {
+      navigate('/seller/products/new');
+    } else {
+      navigate('/register?type=seller');
+    }
+  };
+
   return (
     <div className="px-4 mt-4">
       <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#0F0F14] to-[#1A1A22] p-5 flex items-center justify-between min-h-[200px] shadow-lg">
@@ -130,7 +144,10 @@ export default function MobileHeroBanner() {
             Buy. Sell. Save more with Loadify.
           </p>
 
-          <button className="mt-4 bg-gradient-to-r from-[#F5C76E] to-[#D4A94D] text-black font-semibold px-4 py-2 rounded-lg shadow-md">
+          <button
+            onClick={handleStartSelling}
+            className="mt-4 bg-gradient-to-r from-[#F5C76E] to-[#D4A94D] text-black font-semibold px-4 py-2 rounded-lg shadow-md active:scale-95 transition-transform"
+          >
             Start Selling
           </button>
         </div>
