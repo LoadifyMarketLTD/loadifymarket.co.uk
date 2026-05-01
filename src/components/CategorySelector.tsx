@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import type React from 'react';
 import { supabase } from '../lib/supabase';
 import type { Category } from '../types';
 
@@ -17,6 +18,13 @@ type DbCategory = Category & {
 };
 
 const resolveParentId = (category: DbCategory): string | undefined => category.parentId ?? category.parent_id;
+
+// ── Shared select styling constants ──────────────────────────────────────────
+const SELECT_CLASS =
+  'w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all';
+const SELECT_STYLE: React.CSSProperties = { colorScheme: 'dark' };
+const OPTION_PLACEHOLDER_STYLE: React.CSSProperties = { background: '#17181E', color: '#8E929A' };
+const OPTION_ITEM_STYLE: React.CSSProperties = { background: '#17181E', color: '#FFFFFF' };
 
 export default function CategorySelector({
   selectedCategoryId,
@@ -122,12 +130,12 @@ export default function CategorySelector({
             onCategoryChange(e.target.value);
             if (onSubcategoryChange) onSubcategoryChange('');
           }}
-          className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
-          style={{ colorScheme: 'dark' }}
+          className={SELECT_CLASS}
+          style={SELECT_STYLE}
         >
-          <option value="" style={{ background: '#17181E', color: '#8E929A' }}>Select a category</option>
+          <option value="" style={OPTION_PLACEHOLDER_STYLE}>Select a category</option>
           {level1Categories.map((category) => (
-            <option key={category.id} value={category.id} style={{ background: '#17181E', color: '#FFFFFF' }}>
+            <option key={category.id} value={category.id} style={OPTION_ITEM_STYLE}>
               {category.name}
             </option>
           ))}
@@ -148,12 +156,12 @@ export default function CategorySelector({
               if (!onSubcategoryChange) return;
               onSubcategoryChange(hasChildren ? '' : value);
             }}
-            className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
-            style={{ colorScheme: 'dark' }}
+            className={SELECT_CLASS}
+            style={SELECT_STYLE}
           >
-            <option value="" style={{ background: '#17181E', color: '#8E929A' }}>None</option>
+            <option value="" style={OPTION_PLACEHOLDER_STYLE}>None</option>
             {level2Categories.map((category) => (
-              <option key={category.id} value={category.id} style={{ background: '#17181E', color: '#FFFFFF' }}>
+              <option key={category.id} value={category.id} style={OPTION_ITEM_STYLE}>
                 {category.name}
               </option>
             ))}
@@ -171,12 +179,12 @@ export default function CategorySelector({
             onChange={(e) => {
               if (onSubcategoryChange) onSubcategoryChange(e.target.value);
             }}
-            className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
-            style={{ colorScheme: 'dark' }}
+            className={SELECT_CLASS}
+            style={SELECT_STYLE}
           >
-            <option value="" style={{ background: '#17181E', color: '#8E929A' }}>Select nested subcategory</option>
+            <option value="" style={OPTION_PLACEHOLDER_STYLE}>Select nested subcategory</option>
             {level3Categories.map((category) => (
-              <option key={category.id} value={category.id} style={{ background: '#17181E', color: '#FFFFFF' }}>
+              <option key={category.id} value={category.id} style={OPTION_ITEM_STYLE}>
                 {category.name}
               </option>
             ))}

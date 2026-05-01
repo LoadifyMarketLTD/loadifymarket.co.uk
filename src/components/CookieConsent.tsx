@@ -39,6 +39,9 @@ const updateGtagConsent = (analytics: boolean) => {
 // Evaluated once at module load — safe as a constant (never changes at runtime).
 const IS_NATIVE = Capacitor.isNativePlatform();
 
+// Must match MobileBottomNav height (MobileBottomNav.tsx: height 60px).
+const BOTTOM_NAV_HEIGHT = 60;
+
 function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
@@ -84,8 +87,7 @@ function CookieConsentBanner() {
   if (!visible) return null;
 
   return (
-    // On mobile: max-height 160px, sits above the 60px bottom nav (mb-[60px]).
-    // On desktop: full-width bottom bar as before.
+    // On mobile: sits above bottom nav (BOTTOM_NAV_HEIGHT). On desktop: full-width bar.
     <div className="fixed bottom-0 left-0 right-0 z-[100] animate-in slide-in-from-bottom-4 duration-500 mb-[60px] sm:mb-0">
       <div className="bg-card border-t border-border shadow-elevated max-h-[160px] overflow-y-auto sm:max-h-none sm:overflow-visible">
         <div className="container mx-auto px-4 py-3 sm:py-4">

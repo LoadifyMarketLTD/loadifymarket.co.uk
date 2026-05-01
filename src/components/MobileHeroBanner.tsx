@@ -5,6 +5,7 @@
 // SVG visual on the right side only (no full-background images).
 
 import { useState, useRef, useCallback } from 'react';
+import type React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store';
 import { hasSellerAccess } from '@/lib/roleUtils';
@@ -216,6 +217,20 @@ const SLIDES = [
 ] as const;
 
 /* ─── Carousel component ──────────────────────────────────────────────────── */
+
+// Dot button: 44×44px invisible touch target with small visual dot centred inside.
+const DOT_BUTTON_STYLE: React.CSSProperties = {
+  width: 44, height: 44,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+};
+const dotVisualStyle = (active: boolean): React.CSSProperties => ({
+  display: 'block',
+  width: 8, height: 8,
+  borderRadius: '50%',
+  backgroundColor: active ? '#F5C76E' : 'rgba(255,255,255,0.3)',
+  transition: 'background-color 0.2s',
+});
 export default function MobileHeroBanner() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -311,18 +326,9 @@ export default function MobileHeroBanner() {
             aria-selected={i === current}
             aria-label={`Go to slide ${i + 1}`}
             onClick={() => goTo(i)}
-            style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+            style={DOT_BUTTON_STYLE}
           >
-            <span
-              style={{
-                display: 'block',
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                backgroundColor: i === current ? '#F5C76E' : 'rgba(255,255,255,0.3)',
-                transition: 'background-color 0.2s',
-              }}
-            />
+            <span style={dotVisualStyle(i === current)} />
           </button>
         ))}
       </div>
