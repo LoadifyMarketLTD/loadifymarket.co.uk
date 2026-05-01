@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { SupportedStorage } from '@supabase/supabase-js';
+import { isCapacitorNative } from './capacitorUtils';
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL ?? '').trim();
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim();
@@ -130,13 +131,8 @@ function buildCapacitorStorageAdapter(): SupportedStorage {
 }
 
 // Detect Capacitor runtime (injected by the bridge on Android/iOS only).
-const isCapacitorNative =
-  typeof window !== 'undefined' &&
-  !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean } })
-    .Capacitor?.isNativePlatform?.();
-
 const authStorage: SupportedStorage | undefined = (() => {
-  if (isCapacitorNative) return buildCapacitorStorageAdapter();
+  if (isCapacitorNative()) return buildCapacitorStorageAdapter();
   if (typeof window !== 'undefined') return window.localStorage;
   return undefined;
 })();

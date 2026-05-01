@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ShieldCheck } from "lucide-react";
 import { useAuthStore } from "@/store";
+import { isCapacitorNative } from "@/lib/capacitorUtils";
 
 /* ── Shared Google / Apple SVG logos ─────────────────────────────────── */
 const GoogleIcon = () => (
@@ -84,9 +85,7 @@ const Login = () => {
       const { supabase } = await import("@/lib/supabase");
 
       // Detect if running inside a Capacitor APK.
-      const isCapacitor = typeof window !== "undefined" && !!(window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
-
-      if (isCapacitor) {
+      if (isCapacitorNative()) {
         // In the APK we cannot use a browser redirect back into the WebView.
         // Use skipBrowserRedirect so signInWithOAuth returns the URL without
         // opening it, then open it in Chrome Custom Tabs via @capacitor/browser.

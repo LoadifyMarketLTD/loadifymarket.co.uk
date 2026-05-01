@@ -21,7 +21,7 @@ interface Category {
 const QUICK_CATEGORIES: Category[] = [
   { label: 'Electronics',  value: 'electronics' },
   { label: 'Clothing',     value: 'clothing' },
-  { label: 'Vehicles',     value: 'automotive' },
+  { label: 'Automotive',   value: 'automotive' },
   { label: 'Home',         value: 'home-garden' },
   { label: 'Sports',       value: 'sports' },
   { label: 'Toys',         value: 'toys-games' },

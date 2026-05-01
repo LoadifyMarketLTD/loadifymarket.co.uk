@@ -41,7 +41,7 @@ export function OnboardingChecklist() {
     if (!user || user.role !== "seller") return;
 
     const load = async () => {
-      const [spRes, prodRes, sharedRes] = await Promise.all([
+      const [spRes, prodCountRes, sharedCountRes] = await Promise.all([
         supabase
           .from("seller_profiles")
           .select([
@@ -53,11 +53,12 @@ export function OnboardingChecklist() {
           ].join(", "))
           .eq("userId", user.id)
           .maybeSingle(),
+        // Count-only: how many products has this seller listed?
         supabase
           .from("products")
-          .select("id, shareCount", { count: "exact", head: false })
+          .select("id", { count: "exact", head: true })
           .eq("sellerId", user.id),
-        // Check if the seller has shared any product (shareCount > 0, or record exists)
+        // Count-only: how many products have been shared at least once?
         supabase
           .from("products")
           .select("id", { count: "exact", head: true })
@@ -66,8 +67,7 @@ export function OnboardingChecklist() {
       ]);
 
       const sp = spRes.data as Record<string, unknown> | null;
-      const products = prodRes.data ?? [];
-      const productCount = products.length;
+      const productCount = prodCountRes.count ?? 0;
 
       const profileCompleted =
         (sp?.profileCompleted as boolean | null) ??
@@ -88,8 +88,8 @@ export function OnboardingChecklist() {
       const firstProductCreated =
         Boolean(sp?.hasServiceCapability) || productCount > 0;
 
-      // productShared: any product has been shared (shareCount > 0), or fallback to count from sharedRes
-      const productShared = (sharedRes.count ?? 0) > 0;
+      // productShared: any product has been shared at least once (shareCount > 0)
+      const productShared = (sharedCountRes.count ?? 0) > 0;
 
       setState({
         profileCompleted,

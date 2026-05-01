@@ -45,6 +45,12 @@ function deriveStatus(p: Product): string {
   return "active";
 }
 
+/** Returns the URL of the lowest-position image, or null when there are none. */
+function getProductThumbnail(p: Product): string | null {
+  if (!p.images || p.images.length === 0) return null;
+  return p.images.slice().sort((a, b) => a.position - b.position)[0].url;
+}
+
 const BASE_URL = "https://loadifymarket.co.uk";
 
 function facebookShareUrl(productId: string) {
@@ -186,7 +192,7 @@ const SellerProducts = () => {
                 <div key={p.id} className="flex items-center gap-3 p-4">
                   {/* Thumbnail */}
                   {(() => {
-                    const thumb = p.images?.slice().sort((a, b) => a.position - b.position)[0]?.url;
+                    const thumb = getProductThumbnail(p);
                     return thumb ? (
                       <img
                         src={thumb}
@@ -288,7 +294,7 @@ const SellerProducts = () => {
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           {(() => {
-                            const thumb = p.images?.slice().sort((a, b) => a.position - b.position)[0]?.url;
+                            const thumb = getProductThumbnail(p);
                             return thumb ? (
                               <img
                                 src={thumb}
