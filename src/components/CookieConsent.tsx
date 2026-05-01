@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Cookie, ChevronDown, ChevronUp } from "lucide-react";
 import { safeLocalStorage } from "@/lib/safeStorage";
+import { Capacitor } from "@capacitor/core";
 
 type CookiePreferences = {
   essential: boolean; // always true
@@ -35,7 +36,10 @@ const updateGtagConsent = (analytics: boolean) => {
   }
 };
 
-const CookieConsent = () => {
+// Evaluated once at module load — safe as a constant (never changes at runtime).
+const IS_NATIVE = Capacitor.isNativePlatform();
+
+function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
   const [preferences, setPreferences] = useState<CookiePreferences>({
@@ -80,11 +84,13 @@ const CookieConsent = () => {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[100] animate-in slide-in-from-bottom-4 duration-500">
-      <div className="bg-card border-t border-border shadow-elevated">
-        <div className="container mx-auto px-4 py-4">
+    // On mobile: max-height 160px, sits above the 60px bottom nav (mb-[60px]).
+    // On desktop: full-width bottom bar as before.
+    <div className="fixed bottom-0 left-0 right-0 z-[100] animate-in slide-in-from-bottom-4 duration-500 mb-[60px] sm:mb-0">
+      <div className="bg-card border-t border-border shadow-elevated max-h-[160px] overflow-y-auto sm:max-h-none sm:overflow-visible">
+        <div className="container mx-auto px-4 py-3 sm:py-4">
           {/* Main row */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
             <div className="flex items-start gap-3 flex-1 min-w-0">
               <Cookie className="h-5 w-5 text-accent shrink-0 mt-0.5" />
               <div className="text-sm text-muted-foreground leading-relaxed">
@@ -165,6 +171,9 @@ const CookieConsent = () => {
       </div>
     </div>
   );
-};
+}
+
+// APK (Capacitor native) — no cookie banner needed (cookies not used in APK).
+const CookieConsent = IS_NATIVE ? () => null : CookieConsentBanner;
 
 export default CookieConsent;

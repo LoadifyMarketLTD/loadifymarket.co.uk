@@ -4,7 +4,7 @@
 // Each slide has real text, a real CTA button, real navigation, and an inline
 // SVG visual on the right side only (no full-background images).
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store';
 import { hasSellerAccess } from '@/lib/roleUtils';
@@ -221,24 +221,11 @@ export default function MobileHeroBanner() {
   const { user } = useAuthStore();
   const [current, setCurrent] = useState(0);
   const touchStartX = useRef<number | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const startTimer = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setCurrent(c => (c + 1) % SLIDES.length);
-    }, 4000);
-  }, []);
-
-  useEffect(() => {
-    startTimer();
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [startTimer]);
-
+  // No autoplay — carousel only moves on swipe or dot tap.
   const goTo = useCallback((idx: number) => {
     setCurrent(idx);
-    startTimer();
-  }, [startTimer]);
+  }, []);
 
   const handleCTA = (action: string, requiresSeller: boolean) => {
     if (requiresSeller && hasSellerAccess(user)) {
@@ -298,6 +285,7 @@ export default function MobileHeroBanner() {
                   </p>
                   <button
                     onClick={() => handleCTA(slide.action, slide.requiresSeller)}
+                    tabIndex={i !== current ? -1 : 0}
                     className="mt-4 bg-gradient-to-r from-[#F5C76E] to-[#D4A94D] text-black font-semibold px-4 py-2 rounded-lg shadow-md active:scale-95 transition-transform"
                   >
                     {slide.cta}
@@ -314,8 +302,8 @@ export default function MobileHeroBanner() {
         </div>
       </div>
 
-      {/* Clickable dots */}
-      <div className="flex justify-center gap-2 mt-3" role="tablist" aria-label="Carousel navigation">
+      {/* Clickable dots — 44×44 touch target wrapping small visual dot */}
+      <div className="flex justify-center gap-1 mt-3" role="tablist" aria-label="Carousel navigation">
         {SLIDES.map((_, i) => (
           <button
             key={i}
@@ -323,8 +311,19 @@ export default function MobileHeroBanner() {
             aria-selected={i === current}
             aria-label={`Go to slide ${i + 1}`}
             onClick={() => goTo(i)}
-            className={`w-2 h-2 rounded-full transition-colors ${i === current ? 'bg-[#F5C76E]' : 'bg-gray-500'}`}
-          />
+            style={{ width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+          >
+            <span
+              style={{
+                display: 'block',
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                backgroundColor: i === current ? '#F5C76E' : 'rgba(255,255,255,0.3)',
+                transition: 'background-color 0.2s',
+              }}
+            />
+          </button>
         ))}
       </div>
     </div>

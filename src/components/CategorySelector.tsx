@@ -112,7 +112,7 @@ export default function CategorySelector({
   return (
     <div className="space-y-4">
       <div>
-        <label htmlFor="main-category-select" className="block text-sm font-medium text-gray-700 mb-2">Main Category *</label>
+        <label htmlFor="main-category-select" className="block text-sm font-medium text-slate-300 mb-2">Main Category *</label>
         <select
           id="main-category-select"
           aria-label="Main category"
@@ -122,11 +122,12 @@ export default function CategorySelector({
             onCategoryChange(e.target.value);
             if (onSubcategoryChange) onSubcategoryChange('');
           }}
-          className="input-field"
+          className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+          style={{ colorScheme: 'dark' }}
         >
-          <option value="">Select a category</option>
+          <option value="" style={{ background: '#17181E', color: '#8E929A' }}>Select a category</option>
           {level1Categories.map((category) => (
-            <option key={category.id} value={category.id}>
+            <option key={category.id} value={category.id} style={{ background: '#17181E', color: '#FFFFFF' }}>
               {category.name}
             </option>
           ))}
@@ -135,7 +136,7 @@ export default function CategorySelector({
 
       {selectedCategoryId && level2Categories.length > 0 && (
         <div>
-          <label htmlFor="subcategory-select" className="block text-sm font-medium text-gray-700 mb-2">Subcategory</label>
+          <label htmlFor="subcategory-select" className="block text-sm font-medium text-slate-300 mb-2">Subcategory</label>
           <select
             id="subcategory-select"
             aria-label="Subcategory"
@@ -147,11 +148,12 @@ export default function CategorySelector({
               if (!onSubcategoryChange) return;
               onSubcategoryChange(hasChildren ? '' : value);
             }}
-            className="input-field"
+            className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+            style={{ colorScheme: 'dark' }}
           >
-            <option value="">None</option>
+            <option value="" style={{ background: '#17181E', color: '#8E929A' }}>None</option>
             {level2Categories.map((category) => (
-              <option key={category.id} value={category.id}>
+              <option key={category.id} value={category.id} style={{ background: '#17181E', color: '#FFFFFF' }}>
                 {category.name}
               </option>
             ))}
@@ -161,7 +163,7 @@ export default function CategorySelector({
 
       {selectedLevel2Id && level3Categories.length > 0 && (
         <div>
-          <label htmlFor="nested-subcategory-select" className="block text-sm font-medium text-gray-700 mb-2">Nested Subcategory</label>
+          <label htmlFor="nested-subcategory-select" className="block text-sm font-medium text-slate-300 mb-2">Nested Subcategory</label>
           <select
             id="nested-subcategory-select"
             aria-label="Nested subcategory"
@@ -169,11 +171,12 @@ export default function CategorySelector({
             onChange={(e) => {
               if (onSubcategoryChange) onSubcategoryChange(e.target.value);
             }}
-            className="input-field"
+            className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+            style={{ colorScheme: 'dark' }}
           >
-            <option value="">Select nested subcategory</option>
+            <option value="" style={{ background: '#17181E', color: '#8E929A' }}>Select nested subcategory</option>
             {level3Categories.map((category) => (
-              <option key={category.id} value={category.id}>
+              <option key={category.id} value={category.id} style={{ background: '#17181E', color: '#FFFFFF' }}>
                 {category.name}
               </option>
             ))}
@@ -182,7 +185,7 @@ export default function CategorySelector({
       )}
 
       {selectedCategory && (
-        <nav aria-label="Category breadcrumb" className="text-xs text-gray-500">
+        <nav aria-label="Category breadcrumb" className="text-xs text-slate-500">
           <ol className="flex flex-wrap items-center gap-1">
             <li>{selectedCategory.name}</li>
             {selectedLevel2Id && (
