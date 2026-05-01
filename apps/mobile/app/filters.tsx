@@ -13,8 +13,8 @@ export default function FiltersScreen() {
   const router = useRouter();
   const [condition, setCondition] = useState('All');
   const [delivery, setDelivery] = useState('All');
-  const [category, setCategory] = useState('All Categories');
-  const [sortBy, setSortBy] = useState('Newest First');
+  const [category] = useState('All Categories');
+  const [sortBy] = useState('Newest First');
 
   return (
     <SafeAreaView style={styles.container}>

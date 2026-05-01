@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
 import { OrderItem } from '@/components/OrderItem';
 import { MOCK_ORDERS } from '@/lib/api';
 import { COLORS } from '@/constants/theme';
@@ -11,7 +9,6 @@ import { COLORS } from '@/constants/theme';
 const TABS = ['All', 'Buying', 'Selling'];
 
 export default function TabOrdersScreen() {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState('All');
 
   return (
