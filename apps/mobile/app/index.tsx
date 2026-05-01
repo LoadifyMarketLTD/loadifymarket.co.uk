@@ -36,8 +36,12 @@ export default function SplashScreen() {
       <Text style={styles.appName}>LOADIFY MARKET</Text>
       <Text style={styles.tagline}>0% COMMISSION</Text>
 
-      {/* Subtle animated loading indicator */}
-      <View style={styles.dotsRow}>
+      {/* Subtle animated loading indicator — decorative only, hidden from screen readers */}
+      <View
+        style={styles.dotsRow}
+        accessibilityElementsHidden={true}
+        importantForAccessibility="no-hide-descendants"
+      >
         {[0, 1, 2].map((i) => (
           <View key={i} style={styles.dot} />
         ))}

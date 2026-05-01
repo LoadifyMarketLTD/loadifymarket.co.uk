@@ -4,6 +4,13 @@ import { COLORS } from '../constants/theme';
 
 const SCREEN_W = Dimensions.get('window').width;
 
+// ── Fluid font scaling factors (adjust to tune across screen sizes) ───────────
+const SCALE_COMMISSION  = 0.055;  // "0% COMMISSION" headline
+const SCALE_KEEP        = 0.038;  // "KEEP 100%..." sub-headline
+const SCALE_BODY        = 0.033;  // body text + button label
+const SCALE_BIG_ZERO    = 0.150;  // large "0%" display number
+const SCALE_PADDING     = 0.040;  // container padding
+
 export const HeroBanner: React.FC = () => {
   return (
     <View style={styles.container}>
@@ -34,7 +41,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.card,
     borderRadius: 16,
-    padding: Math.max(14, SCREEN_W * 0.04),
+    padding: Math.max(14, SCREEN_W * SCALE_PADDING),
     flexDirection: 'row',
     marginHorizontal: 16,
     marginBottom: 24,
@@ -48,18 +55,18 @@ const styles = StyleSheet.create({
   commission: {
     color: COLORS.gold,
     // Fluid font: scales with screen but never smaller than 16 or larger than 22
-    fontSize: Math.min(22, Math.max(16, SCREEN_W * 0.055)),
+    fontSize: Math.min(22, Math.max(16, SCREEN_W * SCALE_COMMISSION)),
     fontWeight: '700',
   },
   keep: {
     color: COLORS.textPrimary,
-    fontSize: Math.min(15, Math.max(12, SCREEN_W * 0.038)),
+    fontSize: Math.min(15, Math.max(12, SCREEN_W * SCALE_KEEP)),
     fontWeight: '700',
     flexWrap: 'wrap',
   },
   sub: {
     color: COLORS.textSecondary,
-    fontSize: Math.min(13, Math.max(11, SCREEN_W * 0.033)),
+    fontSize: Math.min(13, Math.max(11, SCREEN_W * SCALE_BODY)),
     marginBottom: 4,
     flexWrap: 'wrap',
   },
@@ -74,7 +81,7 @@ const styles = StyleSheet.create({
   btnText: {
     color: '#000',
     fontWeight: '700',
-    fontSize: Math.min(13, Math.max(11, SCREEN_W * 0.033)),
+    fontSize: Math.min(13, Math.max(11, SCREEN_W * SCALE_BODY)),
   },
   right: {
     alignItems: 'center',
@@ -83,9 +90,9 @@ const styles = StyleSheet.create({
   },
   bigZero: {
     color: COLORS.gold,
-    fontSize: Math.min(64, Math.max(48, SCREEN_W * 0.15)),
+    fontSize: Math.min(64, Math.max(48, SCREEN_W * SCALE_BIG_ZERO)),
     fontWeight: '700',
-    lineHeight: Math.min(68, Math.max(52, SCREEN_W * 0.16)),
+    lineHeight: Math.min(68, Math.max(52, SCREEN_W * (SCALE_BIG_ZERO + 0.01))),
   },
   badge: {
     backgroundColor: 'rgba(245,185,66,0.2)',
