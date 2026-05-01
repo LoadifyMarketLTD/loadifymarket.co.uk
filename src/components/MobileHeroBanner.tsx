@@ -183,30 +183,35 @@ function TrustedShieldVisual() {
 }
 
 /* ─── Slide definitions ───────────────────────────────────────────────────── */
+const SWIPE_THRESHOLD = 40;
+
 const SLIDES = [
   {
-    title:    '0% COMMISSION',
-    subtitle: 'KEEP 100% OF YOUR SALE',
-    desc:     'Buy. Sell. Save more with Loadify.',
-    cta:      'Start Selling',
-    action:   '/register?type=seller',
-    Visual:   Commission3D,
+    title:          '0% COMMISSION',
+    subtitle:       'KEEP 100% OF YOUR SALE',
+    desc:           'Buy. Sell. Save more with Loadify.',
+    cta:            'Start Selling',
+    action:         '/register?type=seller',
+    requiresSeller: true,
+    Visual:         Commission3D,
   },
   {
-    title:    'SELL IN MINUTES',
-    subtitle: 'POST YOUR ITEM IN 30 SECONDS',
-    desc:     'No fees. No hassle. Just upload and start earning.',
-    cta:      'Sell Now',
-    action:   '/seller/products/new',
-    Visual:   SellFastVisual,
+    title:          'SELL IN MINUTES',
+    subtitle:       'POST YOUR ITEM IN 30 SECONDS',
+    desc:           'No fees. No hassle. Just upload and start earning.',
+    cta:            'Sell Now',
+    action:         '/seller/products/new',
+    requiresSeller: true,
+    Visual:         SellFastVisual,
   },
   {
-    title:    'SAFE & TRUSTED',
-    subtitle: 'VERIFIED USERS ONLY',
-    desc:     'Secure deals. Real people. No scams.',
-    cta:      'Explore Now',
-    action:   '/catalog',
-    Visual:   TrustedShieldVisual,
+    title:          'SAFE & TRUSTED',
+    subtitle:       'VERIFIED USERS ONLY',
+    desc:           'Secure deals. Real people. No scams.',
+    cta:            'Explore Now',
+    action:         '/catalog',
+    requiresSeller: false,
+    Visual:         TrustedShieldVisual,
   },
 ] as const;
 
@@ -235,8 +240,8 @@ export default function MobileHeroBanner() {
     startTimer();
   }, [startTimer]);
 
-  const handleCTA = (action: string) => {
-    if ((action === '/register?type=seller' || action === '/seller/products/new') && hasSellerAccess(user)) {
+  const handleCTA = (action: string, requiresSeller: boolean) => {
+    if (requiresSeller && hasSellerAccess(user)) {
       navigate('/seller/products/new');
     } else {
       navigate(action);
@@ -250,7 +255,7 @@ export default function MobileHeroBanner() {
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return;
     const delta = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(delta) > 40) {
+    if (Math.abs(delta) > SWIPE_THRESHOLD) {
       goTo(delta > 0
         ? (current + 1) % SLIDES.length
         : (current + SLIDES.length - 1) % SLIDES.length
@@ -292,7 +297,7 @@ export default function MobileHeroBanner() {
                     {slide.desc}
                   </p>
                   <button
-                    onClick={() => handleCTA(slide.action)}
+                    onClick={() => handleCTA(slide.action, slide.requiresSeller)}
                     className="mt-4 bg-gradient-to-r from-[#F5C76E] to-[#D4A94D] text-black font-semibold px-4 py-2 rounded-lg shadow-md active:scale-95 transition-transform"
                   >
                     {slide.cta}
