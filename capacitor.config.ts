@@ -9,7 +9,9 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
     // External URLs (Stripe, Supabase auth) open in the system browser via
     // Capacitor's default behaviour for non-matching URLs.
-    allowNavigation: [],
+    // Add the Supabase project domain so the OAuth redirect back to the app
+    // is handled correctly by the Android intent filter (deep link).
+    allowNavigation: ['*.supabase.co', '*.google.com', '*.accounts.google.com'],
     // Clear text for development only — keep false in production.
     cleartext: false,
   },

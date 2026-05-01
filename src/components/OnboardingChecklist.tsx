@@ -6,9 +6,10 @@ import { useAuthStore } from "@/store";
 
 interface ChecklistState {
   profileCompleted: boolean;
-  stripeConnected: boolean;
-  storeCreated: boolean;
+  addressAdded: boolean;
+  payoutSetup: boolean;
   firstProductCreated: boolean;
+  productShared: boolean;
 }
 
 const ITEMS: {
@@ -17,10 +18,11 @@ const ITEMS: {
   href: string;
   cta: string;
 }[] = [
-  { key: "profileCompleted",    label: "Complete your seller profile",     href: "/seller/profile",       cta: "Edit profile" },
-  { key: "stripeConnected",     label: "Connect Stripe for payments",       href: "/onboarding",           cta: "Connect Stripe" },
-  { key: "storeCreated",        label: "Set up your store",                 href: "/seller/profile",       cta: "Configure store" },
-  { key: "firstProductCreated", label: "Add your first service listing",    href: "/seller/products/new",  cta: "Add listing" },
+  { key: "profileCompleted",    label: "Complete your seller profile",  href: "/seller/profile",       cta: "Edit profile" },
+  { key: "addressAdded",        label: "Add your business address",     href: "/seller/profile",       cta: "Add address" },
+  { key: "payoutSetup",         label: "Set up payout",                 href: "/onboarding",           cta: "Connect Stripe" },
+  { key: "firstProductCreated", label: "List your first product",       href: "/seller/products/new",  cta: "Add product" },
+  { key: "productShared",       label: "Share a product",               href: "/seller/products",      cta: "Share now" },
 ];
 
 /**
@@ -39,13 +41,12 @@ export function OnboardingChecklist() {
     if (!user || user.role !== "seller") return;
 
     const load = async () => {
-      const [spRes, prodRes, storeRes] = await Promise.all([
+      const [spRes, prodRes, sharedRes] = await Promise.all([
         supabase
           .from("seller_profiles")
           .select([
             "profileCompleted",
             "stripeConnectStatus",
-            "storeCreated",
             "hasServiceCapability",
             // Fallback fields used to derive completion from real persisted data
             "storeName", "businessName", "contactPhone", "businessAddress",
@@ -54,17 +55,19 @@ export function OnboardingChecklist() {
           .maybeSingle(),
         supabase
           .from("products")
-          .select("id", { count: "exact", head: true })
+          .select("id, shareCount", { count: "exact", head: false })
           .eq("sellerId", user.id),
+        // Check if the seller has shared any product (shareCount > 0, or record exists)
         supabase
-          .from("seller_stores")
-          .select("isActive")
-          .eq("userId", user.id)
-          .maybeSingle(),
+          .from("products")
+          .select("id", { count: "exact", head: true })
+          .eq("sellerId", user.id)
+          .gt("shareCount", 0),
       ]);
 
       const sp = spRes.data as Record<string, unknown> | null;
-      const productCount = prodRes.count ?? 0;
+      const products = prodRes.data ?? [];
+      const productCount = products.length;
 
       const profileCompleted =
         (sp?.profileCompleted as boolean | null) ??
@@ -74,24 +77,26 @@ export function OnboardingChecklist() {
           ((sp?.businessAddress as { postcode?: string } | null)?.postcode ?? "").trim().length > 0
         );
 
-      // storeCreated: use boolean flag OR check seller_stores.isActive = true OR fall back to store name
-      const storeName = (sp?.storeName as string | undefined) ?? "";
-      const businessName = (sp?.businessName as string | undefined) ?? "";
-      const storeNameFilled = (storeName || businessName).trim().length > 0;
-      const storeCreated =
-        Boolean(sp?.storeCreated) ||
-        Boolean((storeRes.data as { isActive?: boolean } | null)?.isActive) ||
-        storeNameFilled;
+      // addressAdded: businessAddress must have at least a postcode
+      const bAddr = sp?.businessAddress as { postcode?: string; address?: string } | null;
+      const addressAdded = Boolean(bAddr?.postcode?.trim() || bAddr?.address?.trim());
 
-      // hasServiceCapability: use boolean flag OR fall back to product count
+      // payoutSetup: Stripe Connect active
+      const payoutSetup = (sp?.stripeConnectStatus as string) === "active";
+
+      // firstProductCreated: has at least one product
       const firstProductCreated =
         Boolean(sp?.hasServiceCapability) || productCount > 0;
 
+      // productShared: any product has been shared (shareCount > 0), or fallback to count from sharedRes
+      const productShared = (sharedRes.count ?? 0) > 0;
+
       setState({
         profileCompleted,
-        stripeConnected: (sp?.stripeConnectStatus as string) === "active",
-        storeCreated,
+        addressAdded,
+        payoutSetup,
         firstProductCreated,
+        productShared,
       });
       setLoading(false);
     };

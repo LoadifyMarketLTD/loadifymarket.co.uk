@@ -11,6 +11,11 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { copyToClipboard } from "@/lib/clipboard";
 
+interface ProductImage {
+  url: string;
+  position: number;
+}
+
 interface Product {
   id: string;
   title: string;
@@ -21,6 +26,7 @@ interface Product {
   isActive: boolean;
   isApproved: boolean;
   views: number;
+  images?: ProductImage[];
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -63,7 +69,7 @@ const SellerProducts = () => {
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views")
+          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views, images(url, position)")
           .eq("sellerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
@@ -178,9 +184,22 @@ const SellerProducts = () => {
               const s = statusConfig[status];
               return (
                 <div key={p.id} className="flex items-center gap-3 p-4">
-                  <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    <Package className="h-5 w-5 text-muted-foreground" />
-                  </div>
+                  {/* Thumbnail */}
+                  {(() => {
+                    const thumb = p.images?.slice().sort((a, b) => a.position - b.position)[0]?.url;
+                    return thumb ? (
+                      <img
+                        src={thumb}
+                        alt=""
+                        aria-hidden="true"
+                        className="w-12 h-12 rounded-lg object-cover shrink-0 bg-muted"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                        <Package className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    );
+                  })()}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{p.title}</p>
                     <div className="flex items-center gap-2 mt-1">
@@ -268,9 +287,21 @@ const SellerProducts = () => {
                     <tr key={p.id} className="hover:bg-muted/20 transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                            <Package className="h-4 w-4 text-muted-foreground" />
-                          </div>
+                          {(() => {
+                            const thumb = p.images?.slice().sort((a, b) => a.position - b.position)[0]?.url;
+                            return thumb ? (
+                              <img
+                                src={thumb}
+                                alt=""
+                                aria-hidden="true"
+                                className="w-10 h-10 rounded-lg object-cover shrink-0 bg-muted"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                                <Package className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            );
+                          })()}
                           <span className="text-sm font-medium text-foreground line-clamp-1">{p.title}</span>
                         </div>
                       </td>
