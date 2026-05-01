@@ -21,7 +21,7 @@ const features: Feature[] = [
   },
   {
     icon: MessageSquare,
-    title: "Built-In Messaging",
+    title: "Buyer/Seller Messaging",
     description: "Communicate directly with buyers before purchase.",
   },
   {
@@ -31,40 +31,68 @@ const features: Feature[] = [
   },
   {
     icon: Banknote,
-    title: "Stripe Connect Payouts",
+    title: "Stripe Payouts",
     description: "Get paid fast and secure via Stripe Connect Express.",
   },
 ];
 
 export default function FeaturesGrid() {
   return (
-    <div className="flex-1 rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#0F172A,#020617)] p-4 sm:p-6 lg:p-8 flex flex-col">
+    <div className="sm:flex-1 sm:rounded-2xl sm:border sm:border-white/5 sm:bg-[linear-gradient(145deg,#0F172A,#020617)] sm:p-6 lg:p-8 sm:flex sm:flex-col">
 
       {/* Section heading */}
-      <h2 className="text-lg sm:text-xl font-semibold text-white mb-1">
-        Powerful <span className="text-[#FBBF24]">Features</span> Built for <span className="text-[#FBBF24]">You</span>
+      <h2
+        className="text-[17px] sm:text-xl font-semibold text-white mb-3 sm:mb-1"
+      >
+        Everything you need to{' '}
+        <span style={{ color: '#F5B942' }} className="sm:text-[#FBBF24]">buy and sell</span>
       </h2>
 
-      {/* ── Mobile: card list ─────────────────────────────────────── */}
-      <div className="flex flex-col gap-2 sm:hidden mt-2">
+      {/* ── Mobile: spec-exact card list ────────────────────────────── */}
+      <div className="flex flex-col sm:hidden" style={{ gap: '12px', marginTop: '12px' }}>
         {features.map((feature) => {
           const Icon = feature.icon;
           return (
             <div
               key={feature.title}
-              className="flex items-center gap-4 py-3 px-3 rounded-xl border border-white/[0.06] bg-[linear-gradient(145deg,#0F172A,#020617)]"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px',
+                minHeight: '72px',
+                backgroundColor: '#12121A',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '16px',
+                padding: '16px',
+              }}
             >
               {/* Icon box */}
-              <div className="w-10 h-10 rounded-xl bg-[#0B1220] border border-white/[0.07] flex items-center justify-center shrink-0">
-                <Icon className="w-5 h-5 text-[#FBBF24]" aria-hidden="true" />
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '12px',
+                  background: 'rgba(245,185,66,0.1)',
+                  border: '1px solid rgba(245,185,66,0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Icon style={{ width: '18px', height: '18px', color: '#F5B942' }} aria-hidden="true" />
               </div>
               {/* Text */}
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-white leading-tight">{feature.title}</p>
-                <p className="text-[11px] text-slate-400 leading-snug mt-0.5">{feature.description}</p>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: '14px', fontWeight: 600, color: '#FFFFFF', lineHeight: 1.2 }}>
+                  {feature.title}
+                </p>
+                <p style={{ fontSize: '12px', color: '#A0A0A0', lineHeight: 1.4, marginTop: '3px' }}>
+                  {feature.description}
+                </p>
               </div>
               {/* Chevron */}
-              <ChevronRight className="w-4 h-4 text-slate-500 shrink-0" aria-hidden="true" />
+              <ChevronRight style={{ width: '16px', height: '16px', color: '#404040', flexShrink: 0 }} aria-hidden="true" />
             </div>
           );
         })}
