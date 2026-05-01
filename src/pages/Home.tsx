@@ -57,7 +57,7 @@ function MobileHome() {
       {/* 2. Category row */}
       <MobileCategoryShortcuts />
 
-      {/* 4. Hero Banner */}
+      {/* 3. Hero Banner */}
       <MobileHeroBanner />
 
       {/* 5. Trending Now */}

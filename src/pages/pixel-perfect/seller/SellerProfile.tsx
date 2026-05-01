@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import {
   Building2, MapPin, Mail, Star,
-  ShieldCheck, Save, Package, Calendar, ExternalLink
+  ShieldCheck, Save, Package, Calendar, ExternalLink, AlertTriangle, Search, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,38 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { useToast } from "@/hooks/use-toast";
 import { hasAdminAccess } from "@/lib/roleUtils";
+
+/** Validates that a string matches the standard UK postcode format. */
+function isValidUKPostcode(postcode: string): boolean {
+  return /^[A-Z]{1,2}[0-9][0-9A-Z]?\s?[0-9][A-Z]{2}$/i.test(postcode.trim());
+}
+
+/**
+ * Returns a warning string if the business name looks suspicious or uses a
+ * non-UK company structure, otherwise returns null.
+ */
+function getBusinessNameWarning(name: string): string | null {
+  const n = name.trim().toLowerCase();
+  if (!n) return null;
+  // Warn when "Private Limited" is written out instead of using "Ltd" or "Limited"
+  if (/\bprivate\s+limited\b/.test(n)) {
+    return 'In the UK, use "Ltd" or "Limited" — not "Private Limited" (which is a non-UK format).';
+  }
+  // Warn for common non-UK structures
+  if (/\b(inc\.?|corp\.?|incorporated|llc|l\.l\.c|s\.a\.?|gmbh|b\.v\.?)\b/.test(n)) {
+    return 'This looks like a non-UK company structure. Only UK-registered businesses may sell on Loadify Market.';
+  }
+  return null;
+}
+
+interface PostcodesIoResponse {
+  status: number;
+  result: {
+    postcode: string;
+    admin_district: string;
+    country: string;
+  } | null;
+}
 
 interface ProfileForm {
   businessName: string;
@@ -49,6 +81,10 @@ const SellerProfile = () => {
   const [stats, setStats] = useState({ rating: 0, totalSales: 0, memberSince: "" });
   const [storeSlug, setStoreSlug] = useState("");
   const [sellerStatus, setSellerStatus] = useState<string>("draft");
+  const [postcodeError, setPostcodeError] = useState<string | null>(null);
+  const [postcodeLoading, setPostcodeLoading] = useState(false);
+  const [postcodeVerified, setPostcodeVerified] = useState(false);
+  const businessNameWarning = getBusinessNameWarning(form.businessName);
 
   useEffect(() => {
     if (!user) return;
@@ -102,8 +138,81 @@ const SellerProfile = () => {
   const updateField = (field: keyof ProfileForm, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
+  /** Looks up a UK postcode via api.postcodes.io and autofills city + validates. */
+  const handlePostcodeLookup = async () => {
+    const raw = form.postcode.trim().toUpperCase();
+    if (!raw) return;
+
+    if (!isValidUKPostcode(raw)) {
+      setPostcodeError("Please enter a valid UK postcode (e.g. SW1A 1AA).");
+      return;
+    }
+
+    setPostcodeLoading(true);
+    setPostcodeError(null);
+    setPostcodeVerified(false);
+
+    try {
+      const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(raw)}`);
+      const data = await res.json() as PostcodesIoResponse;
+
+      if (data.status !== 200 || !data.result) {
+        setPostcodeError("Postcode not found. Please enter a valid UK postcode.");
+        return;
+      }
+
+      const { admin_district, country } = data.result;
+
+      // Validate that the postcode is within the UK.
+      // api.postcodes.io returns "England", "Wales", "Scotland", or "Northern Ireland"
+      // for the country field on UK postcodes.
+      const ukTerms = ["england", "wales", "scotland", "northern ireland", "united kingdom"];
+      const countryLower = country.toLowerCase();
+      const isUK = ukTerms.some((term) => countryLower.includes(term));
+
+      if (!isUK) {
+        setPostcodeError("Only UK sellers are accepted on Loadify Market.");
+        return;
+      }
+
+      setPostcodeVerified(true);
+      setForm((prev) => ({
+        ...prev,
+        postcode: raw,
+        city: prev.city || admin_district,
+      }));
+      toast({ title: "Postcode verified ✓", description: `${admin_district}, UK` });
+    } catch {
+      setPostcodeError("Could not verify postcode. Please try again.");
+    } finally {
+      setPostcodeLoading(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!user) return;
+
+    // ── Validation ────────────────────────────────────────────────────────────
+    if (!form.businessName.trim()) {
+      toast({ title: "Business name required", description: "Please enter your business name.", variant: "destructive" });
+      return;
+    }
+    if (!form.contactName.trim()) {
+      toast({ title: "Contact name required", description: "Please enter your full name.", variant: "destructive" });
+      return;
+    }
+    if (form.postcode.trim() && !isValidUKPostcode(form.postcode)) {
+      setPostcodeError("Please enter a valid UK postcode before saving.");
+      toast({ title: "Invalid postcode", description: "Please enter a valid UK postcode.", variant: "destructive" });
+      return;
+    }
+    if (form.postcode.trim() && isValidUKPostcode(form.postcode) && !postcodeVerified) {
+      setPostcodeError("Please click the search icon to verify your postcode.");
+      toast({ title: "Postcode not verified", description: "Please verify your UK postcode using the search button.", variant: "destructive" });
+      return;
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     setSaving(true);
     try {
       const nameParts = form.contactName.trim().split(" ");
@@ -208,17 +317,22 @@ const SellerProfile = () => {
                 <h2 className="text-xl font-bold text-foreground">{form.businessName || "Your Business"}</h2>
                 {sellerStatus === "active" && (
                   <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200" variant="outline">
-                    <ShieldCheck className="h-3 w-3 mr-1" /> Active
+                    <ShieldCheck className="h-3 w-3 mr-1" /> Verified Seller
                   </Badge>
                 )}
                 {sellerStatus === "submitted" && (
                   <Badge className="bg-amber-500/10 text-amber-700 border-amber-200" variant="outline">
-                    Setup in progress
+                    Pending Verification
+                  </Badge>
+                )}
+                {sellerStatus === "draft" && (
+                  <Badge className="bg-slate-500/10 text-slate-500 border-slate-300" variant="outline">
+                    Setup Required
                   </Badge>
                 )}
                 {sellerStatus === "suspended" && (
                   <Badge className="bg-red-500/10 text-red-700 border-red-200" variant="outline">
-                    Suspended
+                    Restricted
                   </Badge>
                 )}
               </div>
@@ -254,11 +368,17 @@ const SellerProfile = () => {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs">Business Name</Label>
+              <Label className="text-xs">Business Name <span className="text-red-500">*</span></Label>
               <Input value={form.businessName} onChange={(e) => updateField("businessName", e.target.value)} className="mt-1" />
+              {businessNameWarning && (
+                <div className="flex items-start gap-1.5 mt-1.5 text-amber-600 text-xs">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                  <span>{businessNameWarning}</span>
+                </div>
+              )}
             </div>
             <div>
-              <Label className="text-xs">Contact Name</Label>
+              <Label className="text-xs">Contact Name <span className="text-red-500">*</span></Label>
               <Input value={form.contactName} onChange={(e) => updateField("contactName", e.target.value)} className="mt-1" />
             </div>
             <div>
@@ -318,8 +438,36 @@ const SellerProfile = () => {
               <Input value={form.city} onChange={(e) => updateField("city", e.target.value)} className="mt-1" />
             </div>
             <div>
-              <Label className="text-xs">Postcode</Label>
-              <Input value={form.postcode} onChange={(e) => updateField("postcode", e.target.value)} className="mt-1" />
+              <Label className="text-xs">Postcode <span className="text-red-500">*</span></Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  value={form.postcode}
+                  onChange={(e) => {
+                    updateField("postcode", e.target.value);
+                    setPostcodeError(null);
+                    setPostcodeVerified(false);
+                  }}
+                  placeholder="e.g. SW1A 1AA"
+                  className={postcodeError ? "border-red-500 focus:border-red-500" : postcodeVerified ? "border-emerald-500" : ""}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={handlePostcodeLookup}
+                  disabled={postcodeLoading}
+                  title="Verify UK postcode"
+                >
+                  {postcodeLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                </Button>
+              </div>
+              {postcodeError && (
+                <p className="text-red-500 text-xs mt-1">{postcodeError}</p>
+              )}
+              <p className="text-[11px] text-muted-foreground mt-1">
+                UK addresses only. Click the search icon to verify.
+              </p>
             </div>
           </div>
         </CardContent>

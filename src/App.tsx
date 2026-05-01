@@ -11,6 +11,7 @@ import RequireAdmin from './components/auth/RequireAdmin';
 import RequireSeller from './components/auth/RequireSeller';
 import RequireSellerAny from './components/auth/RequireSellerAny';
 import RequireBuyer from './components/auth/RequireBuyer';
+import RequireEmailVerified from './components/auth/RequireEmailVerified';
 
 // ─── Auth callback — OAuth redirect landing page ──────────────────────────────
 const AuthCallbackPage    = lazy(() => import('./pages/AuthCallbackPage'));
@@ -409,7 +410,9 @@ function App() {
         {/* Seller onboarding wizard — accessible by any authenticated seller */}
         <Route path="onboarding" element={
           <RequireSellerAny>
-            <Suspense fallback={<PageLoader />}><SellerOnboarding /></Suspense>
+            <RequireEmailVerified>
+              <Suspense fallback={<PageLoader />}><SellerOnboarding /></Suspense>
+            </RequireEmailVerified>
           </RequireSellerAny>
         } />
 
@@ -418,19 +421,25 @@ function App() {
         {/* Seller: Product Create/Edit — linked from pixel-perfect seller pages */}
         <Route path="seller/products/new" element={
           <RequireSeller>
-            <Suspense fallback={<PageLoader />}><ProductFormPage /></Suspense>
+            <RequireEmailVerified>
+              <Suspense fallback={<PageLoader />}><ProductFormPage /></Suspense>
+            </RequireEmailVerified>
           </RequireSeller>
         } />
         <Route path="seller/products/:id/edit" element={
           <RequireSeller>
-            <Suspense fallback={<PageLoader />}><ProductFormPage /></Suspense>
+            <RequireEmailVerified>
+              <Suspense fallback={<PageLoader />}><ProductFormPage /></Suspense>
+            </RequireEmailVerified>
           </RequireSeller>
         } />
 
         {/* Seller: Setup page — Stripe Connect return URL lands here with ?connect=success|refresh */}
         <Route path="seller/setup" element={
           <RequireSellerAny>
-            <Suspense fallback={<PageLoader />}><SellerSetupPage /></Suspense>
+            <RequireEmailVerified>
+              <Suspense fallback={<PageLoader />}><SellerSetupPage /></Suspense>
+            </RequireEmailVerified>
           </RequireSellerAny>
         } />
         {/* Seller: Analytics — redirected to seller dashboard (analytics shown there) */}
@@ -441,7 +450,9 @@ function App() {
         {/* Seller: Profile edit — accessible by any seller (any status) and admins */}
         <Route path="seller/profile" element={
           <RequireSellerAny>
-            <Suspense fallback={<PageLoader />}><PPSellerProfile /></Suspense>
+            <RequireEmailVerified>
+              <Suspense fallback={<PageLoader />}><PPSellerProfile /></Suspense>
+            </RequireEmailVerified>
           </RequireSellerAny>
         } />
 
@@ -449,7 +460,9 @@ function App() {
         {/* /seller – RequireSeller */}
         <Route path="seller" element={
           <RequireSeller>
-            <Suspense fallback={<PageLoader />}><PPSellerShell /></Suspense>
+            <RequireEmailVerified>
+              <Suspense fallback={<PageLoader />}><PPSellerShell /></Suspense>
+            </RequireEmailVerified>
           </RequireSeller>
         }>
           <Route index element={<Suspense fallback={<PageLoader />}><PPSellerDashboard /></Suspense>} />
@@ -466,7 +479,9 @@ function App() {
         {/* /buyer – RequireBuyer (buyer role only; sellers→/seller, admins→/admin) */}
         <Route path="buyer" element={
           <RequireBuyer>
-            <Suspense fallback={<PageLoader />}><PPBuyerShell /></Suspense>
+            <RequireEmailVerified>
+              <Suspense fallback={<PageLoader />}><PPBuyerShell /></Suspense>
+            </RequireEmailVerified>
           </RequireBuyer>
         }>
           <Route index element={<Suspense fallback={<PageLoader />}><PPBuyerDashboard /></Suspense>} />

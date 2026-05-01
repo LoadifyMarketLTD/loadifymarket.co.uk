@@ -118,11 +118,27 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-medium text-foreground">{product.seller}</span>
-            {product.sellerVerified && (
-              <span className="w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center">
-                <svg className="w-2 h-2 text-primary-foreground" fill="currentColor" viewBox="0 0 12 12">
-                  <path d="M10 3L4.5 8.5 2 6" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            {product.sellerVerified ? (
+              <span
+                className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-1.5 py-0.5"
+                title="Verified Seller"
+                aria-label="Verified Seller"
+              >
+                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
+                <span>Verified</span>
+              </span>
+            ) : (
+              <span
+                className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-500 bg-amber-500/10 border border-amber-500/30 rounded-full px-1.5 py-0.5"
+                title="Unverified seller"
+                aria-label="Unverified seller"
+              >
+                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>Unverified</span>
               </span>
             )}
           </div>
