@@ -425,9 +425,11 @@ const AdminSellerManagement = () => {
               <div className="flex flex-col items-center gap-3 text-center">
                 <AlertTriangle className="h-6 w-6 text-destructive" />
                 <p className="text-sm text-destructive">{error}</p>
-                <Button size="sm" variant="outline" onClick={fetchSellers}>
-                  <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
-                </Button>
+                {!error.toLowerCase().includes("not authorized") && !error.toLowerCase().includes("authentication required") && (
+                  <Button size="sm" variant="outline" onClick={fetchSellers}>
+                    <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+                  </Button>
+                )}
               </div>
             </TableCell>
           </TableRow>
@@ -570,9 +572,11 @@ const AdminSellerManagement = () => {
       {error && !loading && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive flex items-center justify-between gap-3">
           <span>{error}</span>
-          <Button size="sm" variant="outline" onClick={fetchSellers}>
-            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
-          </Button>
+          {!error.toLowerCase().includes("not authorized") && !error.toLowerCase().includes("authentication required") && (
+            <Button size="sm" variant="outline" onClick={fetchSellers}>
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
+            </Button>
+          )}
         </div>
       )}
 

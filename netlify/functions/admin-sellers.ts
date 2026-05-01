@@ -64,6 +64,8 @@ async function authenticateAdmin(
   const email = (row?.email ?? authUser.email ?? '').toLowerCase().trim();
   const role = row?.role ?? null;
 
+  console.log('USER ROLE:', role, '| EMAIL:', email, '| UID:', authUser.id);
+
   const adminEmail = (process.env.ADMIN_NOTIFICATION_EMAIL ?? '').toLowerCase().trim();
   const isDbAdmin = role === 'admin' || role === 'owner';
   const isEmailAdmin = adminEmail !== '' && email === adminEmail;
@@ -307,7 +309,11 @@ export const handler: Handler = async (event) => {
   if (!authResult.ok) {
     return {
       statusCode: authResult.status,
-      body: JSON.stringify({ error: authResult.status === 403 ? 'Forbidden' : 'Unauthorized' }),
+      body: JSON.stringify({
+        error: authResult.status === 403
+          ? 'You are not authorized to perform this action. Ensure your account has role = admin in the database.'
+          : 'Authentication required — please sign in again.',
+      }),
     };
   }
   const caller = authResult.caller;
