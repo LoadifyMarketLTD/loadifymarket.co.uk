@@ -1,13 +1,13 @@
 /**
  * src/pages/Home.tsx — root "/" route
  *
- * Mobile (< md / 768 px):
+ * MOBILE (< md / 768 px):
  *   MobileAppHeader → search bar → MobileCategoryShortcuts → MobileHeroBanner →
  *   Trending Now → New Arrivals → MobileBottomNav (via MainLayout)
  *
- * Desktop (>= md / 768 px) — unchanged:
- *   Hero → TrustStrip → SocialFollowSection → HowItWorksSection →
- *   FeaturesGrid + SecurityTrust → SellerCTA → Footer
+ * DESKTOP (>= md / 768 px):
+ *   GlobalHeader → HeroSection (full-screen) → TrustStrip → FeaturesGrid →
+ *   SocialFollowSection → HowItWorksSection → SecurityTrust → SellerCTA → Footer
  */
 
 import { Helmet } from "react-helmet-async";
@@ -16,6 +16,16 @@ import { TrendingUp, Sparkles, Search } from "lucide-react";
 
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
+
+// Mobile-only components
+import MobileAppHeader from "@/components/MobileAppHeader";
+import MobileCategoryShortcuts from "@/components/MobileCategoryShortcuts";
+import MobileHeroBanner from "@/components/MobileHeroBanner";
+import MobileProductCard from "@/components/MobileProductCard";
+import { useMobileProducts } from "@/hooks/useMobileProducts";
+import type { Product } from "@/components/catalog/ProductCard";
+
+// Desktop-only components
 import HeroSection from "@/components/HeroSection";
 import TrustStrip from "@/components/TrustStrip";
 import HowItWorksSection from "@/components/HowItWorksSection";
@@ -24,12 +34,6 @@ import SecurityTrust from "@/components/SecurityTrust";
 import SocialFollowSection from "@/components/SocialFollowSection";
 import SellerCTA from "@/components/SellerCTA";
 import LazySection from "@/components/LazySection";
-import MobileAppHeader from "@/components/MobileAppHeader";
-import MobileCategoryShortcuts from "@/components/MobileCategoryShortcuts";
-import MobileHeroBanner from "@/components/MobileHeroBanner";
-import MobileProductCard from "@/components/MobileProductCard";
-import { useMobileProducts } from "@/hooks/useMobileProducts";
-import type { Product } from "@/components/catalog/ProductCard";
 
 // ── Mobile skeleton cards ─────────────────────────────────────────────────────
 function SkeletonProductCard() {
@@ -64,7 +68,7 @@ function MobileHome() {
             aria-hidden="true"
           />
           <span style={{ fontSize: 14, color: '#6F737C' }}>
-            Search Loadify Market…
+            Search items, brands, or keywords...
           </span>
         </div>
       </div>
@@ -153,7 +157,7 @@ function MobileHome() {
 export default function Home() {
   return (
     <MainLayout>
-      {/* Preload the LCP hero image only on the homepage */}
+      {/* Preload LCP hero image for desktop */}
       <Helmet>
         <link
           rel="preload"
@@ -175,44 +179,38 @@ export default function Home() {
         {/* ── Mobile APK home UI (< md) ────────────────────────────────────── */}
         <MobileHome />
 
-        {/* ── Desktop-only layout (>= md) ──────────────────────────────────── */}
+        {/* ── Desktop-only layout (>= md) — unchanged ──────────────────────── */}
         <div className="hidden md:block">
 
-          {/* 1. Hero */}
+          {/* Full-screen hero with gold background image */}
           <HeroSection />
 
-          {/* 2. Platform overview section */}
-          <section className="bg-[#020617] py-6 px-4 sm:px-8" aria-label="Platform overview">
-
-            {/* Trust Strip */}
+          {/* Platform overview section */}
+          <section
+            className="bg-[#020617] py-6 px-8"
+            aria-label="Platform overview"
+          >
             <TrustStrip />
 
-            {/* Features */}
-            <div className="mt-6 sm:mt-8">
+            <div className="mt-8">
               <FeaturesGrid />
             </div>
 
-            {/* Social Follow */}
-            <div className="mt-6 sm:mt-8">
+            <div className="mt-8">
               <SocialFollowSection />
             </div>
 
-            {/* Desktop-only extra sections */}
             <LazySection rootMargin="300px">
-              {/* How It Works */}
               <div className="mt-8">
                 <HowItWorksSection />
               </div>
-
-              {/* Security */}
               <div className="mt-8">
                 <SecurityTrust />
               </div>
             </LazySection>
-
           </section>
 
-          {/* 3. Seller CTA */}
+          {/* Seller call-to-action */}
           <SellerCTA />
 
         </div>

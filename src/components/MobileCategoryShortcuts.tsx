@@ -1,20 +1,15 @@
 /**
- * MobileCategoryShortcuts
+ * MobileCategoryShortcuts — horizontal scroll category row.
  *
- * Mobile-only horizontal-scroll category row for the APK home screen.
+ * "All" is the ONLY item with a gold circle background.
+ * Active (All or selected) = gold circle + gold label.
+ * Inactive = bare icon (no circle) + white/muted label.
  * Active category is tracked in local state (initialised to 'all').
  */
 
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  LayoutGrid,
-  Smartphone,
-  Laptop,
-  Watch,
-  Car,
-  MoreHorizontal,
-} from 'lucide-react';
+import { LayoutGrid, Smartphone, Laptop, Watch, Car, MoreHorizontal } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 interface Category {
@@ -25,11 +20,11 @@ interface Category {
 }
 
 const CATEGORIES: Category[] = [
-  { id: 'all',      label: 'All',      icon: LayoutGrid,    to: '/catalog' },
-  { id: 'phones',   label: 'Phones',   icon: Smartphone,    to: '/category/electronics?sub=phones' },
-  { id: 'laptops',  label: 'Laptops',  icon: Laptop,        to: '/category/electronics?sub=laptops' },
-  { id: 'watches',  label: 'Watches',  icon: Watch,         to: '/category/accessories?sub=watches' },
-  { id: 'vehicles', label: 'Vehicles', icon: Car,           to: '/category/automotive' },
+  { id: 'all',      label: 'All',      icon: LayoutGrid,     to: '/catalog' },
+  { id: 'phones',   label: 'Phones',   icon: Smartphone,     to: '/category/electronics' },
+  { id: 'laptops',  label: 'Laptops',  icon: Laptop,         to: '/catalog?q=laptop' },
+  { id: 'watches',  label: 'Watches',  icon: Watch,          to: '/catalog?q=watch' },
+  { id: 'vehicles', label: 'Vehicles', icon: Car,            to: '/category/automotive' },
   { id: 'more',     label: 'More',     icon: MoreHorizontal, to: '/catalog' },
 ];
 
@@ -37,62 +32,78 @@ export default function MobileCategoryShortcuts() {
   const [active, setActive] = useState('all');
 
   return (
-    <section
-      aria-label="Shop by category"
-      className="overflow-x-auto scrollbar-hide flex gap-5 px-4 py-3"
+    <div
+      className="overflow-x-auto scrollbar-hide py-3"
+      style={{ paddingLeft: '16px', paddingRight: '16px' }}
+      aria-label="Browse by category"
     >
-      {CATEGORIES.map(({ id, label, icon: Icon, to }) => {
-        const isActive = active === id;
+      <div style={{ display: 'flex', gap: '24px', width: 'max-content' }}>
+        {CATEGORIES.map(({ id, label, icon: Icon, to }) => {
+          const isActive = active === id;
 
-        return (
-          <Link
-            key={id}
-            to={to}
-            onClick={() => setActive(id)}
-            className="flex flex-col items-center gap-1.5 flex-shrink-0"
-            style={{ minWidth: 56 }}
-            aria-label={label}
-            aria-current={isActive ? 'page' : undefined}
-          >
-            {/* Icon wrapper — circle only when active */}
-            <div
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: '50%',
-                background: isActive ? '#1E1A0E' : 'transparent',
-                border: isActive ? '2px solid #F2B84B' : '2px solid transparent',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.15s ease',
-              }}
+          return (
+            <Link
+              key={id}
+              to={to}
+              onClick={() => setActive(id)}
+              className="flex flex-col items-center active:scale-95 transition-transform"
+              style={{ gap: '6px', textDecoration: 'none' }}
+              aria-label={`Browse ${label}`}
+              aria-current={isActive ? 'page' : undefined}
             >
-              <Icon
+              {isActive ? (
+                /* Active item — gold circle with icon inside */
+                <div
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(200,134,10,0.14)',
+                    border: '1.5px solid rgba(245,185,66,0.55)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon
+                    style={{ width: '26px', height: '26px', color: '#F5B942' }}
+                    aria-hidden="true"
+                  />
+                </div>
+              ) : (
+                /* Inactive items — bare icon, no circle */
+                <div
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon
+                    style={{ width: '28px', height: '28px', color: 'rgba(245,185,66,0.75)' }}
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                  />
+                </div>
+              )}
+
+              {/* Label */}
+              <span
                 style={{
-                  width: 24,
-                  height: 24,
-                  color: '#F2B84B',
+                  fontSize: '12px',
+                  fontWeight: isActive ? 700 : 400,
+                  color: isActive ? '#F5B942' : 'rgba(255,255,255,0.75)',
+                  lineHeight: 1,
                 }}
-                aria-hidden="true"
-              />
-            </div>
-
-            {/* Label */}
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: isActive ? 700 : 500,
-                color: isActive ? '#FFFFFF' : '#FFFFFF',
-                lineHeight: 1,
-              }}
-            >
-              {label}
-            </span>
-          </Link>
-        );
-      })}
-    </section>
+              >
+                {label}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
   );
 }
-
