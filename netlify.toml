@@ -117,49 +117,50 @@
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
 
-# Root-level static assets (images, icons) are NOT content-hashed, so browsers
-# must always revalidate them to pick up any replacements deployed today.
-# A 304 Not Modified response is returned if the file is unchanged, so this
-# does not increase origin load for genuinely unchanged assets.
+# Root-level static assets (images, icons) are NOT content-hashed, so we use a
+# 7-day cache with stale-while-revalidate so browsers serve the cached copy
+# instantly and revalidate in the background.  This is safe because these files
+# rarely change and any replacement is typically a new deploy (which bumps the
+# ETag at the origin).  This matches the "increase image cache" requirement.
 [[headers]]
   for = "/images/*"
   [headers.values]
-    Cache-Control = "no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/images/**"
   [headers.values]
-    Cache-Control = "no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/*.jpg"
   [headers.values]
-    Cache-Control = "no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/*.jpeg"
   [headers.values]
-    Cache-Control = "no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/*.png"
   [headers.values]
-    Cache-Control = "no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/*.webp"
   [headers.values]
-    Cache-Control = "no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/*.svg"
   [headers.values]
-    Cache-Control = "no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/payment-icons/*"
   [headers.values]
-    Cache-Control = "no-cache, must-revalidate"
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/manifest.webmanifest"

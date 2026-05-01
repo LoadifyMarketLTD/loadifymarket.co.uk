@@ -652,7 +652,7 @@ export default function ProductFormPage() {
                   value={formData.title}
                   onChange={(e) => handleChange('title', e.target.value)}
                   disabled={hasActiveOrders}
-                  className={`w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.title ? 'border-red-400' : ''}`}
+                  className={`w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.title ? 'border-red-400' : ''}`}
                   placeholder="e.g., 100x Mixed Electronics Bundle — Various Brands"
                 />
                 <FieldError msg={errors.title} />
@@ -665,7 +665,7 @@ export default function ProductFormPage() {
                   value={formData.shortDescription}
                   onChange={(e) => handleChange('shortDescription', e.target.value)}
                   maxLength={160}
-                  className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                  className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                   placeholder="One-line summary shown in search results (max 160 characters)"
                 />
                 <p className="text-xs text-slate-500 mt-1">{formData.shortDescription.length}/160</p>
@@ -679,7 +679,7 @@ export default function ProductFormPage() {
                   value={formData.description}
                   onChange={(e) => handleChange('description', e.target.value)}
                   rows={6}
-                  className={`w-full rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all resize-y ${errors.description ? 'border-red-400' : ''}`}
+                  className={`w-full rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all resize-y ${errors.description ? 'border-red-400' : ''}`}
                   placeholder="Describe your product in detail — condition, contents, brand mix, origin, etc."
                 />
                 <FieldError msg={errors.description} />
@@ -694,7 +694,7 @@ export default function ProductFormPage() {
                     value={formData.type}
                     onChange={(e) => handleChange('type', e.target.value)}
                     disabled={hasActiveOrders}
-                    className={`w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <option value="product">Single Item</option>
                     <option value="retail">Retail Product</option>
@@ -714,7 +714,7 @@ export default function ProductFormPage() {
                     value={formData.condition}
                     onChange={(e) => handleChange('condition', e.target.value)}
                     disabled={hasActiveOrders}
-                    className={`w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <option value="new">New</option>
                     <option value="used">Used</option>
@@ -761,7 +761,7 @@ export default function ProductFormPage() {
                     value={formData.price}
                     onChange={(e) => handleChange('price', normalizeDecimal(e.target.value))}
                     disabled={hasActiveOrders}
-                    className={`w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.price ? 'border-red-400' : ''}`}
+                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.price ? 'border-red-400' : ''}`}
                     placeholder="0.00"
                   />
                   <p className="text-xs text-slate-500 mt-1">Enter the VAT-inclusive price (20% VAT applied)</p>
@@ -777,7 +777,7 @@ export default function ProductFormPage() {
                     inputMode="decimal"
                     value={formData.salePrice}
                     onChange={(e) => handleChange('salePrice', normalizeDecimal(e.target.value))}
-                    className={`w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all ${errors.salePrice ? 'border-red-400' : ''}`}
+                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all ${errors.salePrice ? 'border-red-400' : ''}`}
                     placeholder="Optional — leave blank if no discount"
                   />
                   <p className="text-xs text-slate-500 mt-1">Optional. Must be lower than the regular price.</p>
@@ -786,7 +786,7 @@ export default function ProductFormPage() {
               </div>
 
               {formData.price && (
-                <div className="mt-3 p-3 bg-[#0F172A] border border-white/10 rounded-lg text-sm text-slate-400">
+                <div className="mt-3 p-3 bg-[#17181E] border border-white/10 rounded-[14px] text-sm text-slate-400">
                   {(() => {
                     const priceNum = parseFloat(formData.price || '0');
                     const exVat = priceNum / 1.2;
@@ -817,7 +817,7 @@ export default function ProductFormPage() {
                     value={formData.stockQuantity}
                     onChange={(e) => handleChange('stockQuantity', e.target.value)}
                     disabled={hasActiveOrders}
-                    className={`w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.stockQuantity ? 'border-red-400' : ''}`}
+                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.stockQuantity ? 'border-red-400' : ''}`}
                     placeholder="0"
                   />
                   <FieldError msg={errors.stockQuantity} />
@@ -825,7 +825,7 @@ export default function ProductFormPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Stock Status</label>
-                  <div className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A]/50 cursor-default text-sm text-slate-400 flex items-center px-3">
+                  <div className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E]/50 cursor-default text-sm text-slate-400 flex items-center px-3">
                     {(() => {
                       const qty = parseInt(formData.stockQuantity || '0', 10);
                       if (isNaN(qty)) return '— Enter quantity above';
@@ -848,7 +848,7 @@ export default function ProductFormPage() {
                     min="1"
                     value={formData.moq}
                     onChange={(e) => setFormData(prev => ({ ...prev, moq: e.target.value }))}
-                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all max-w-xs"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all max-w-xs"
                     placeholder="e.g., 10"
                   />
                   <p className="text-xs text-slate-500 mt-1">Minimum units a buyer must order</p>
@@ -880,7 +880,7 @@ export default function ProductFormPage() {
                     type="text" inputMode="decimal"
                     value={formData.dimensions.length}
                     onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, length: normalizeDecimal(e.target.value) } }))}
-                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                     placeholder="0"
                   />
                 </div>
@@ -890,7 +890,7 @@ export default function ProductFormPage() {
                     type="text" inputMode="decimal"
                     value={formData.dimensions.width}
                     onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, width: normalizeDecimal(e.target.value) } }))}
-                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                     placeholder="0"
                   />
                 </div>
@@ -900,7 +900,7 @@ export default function ProductFormPage() {
                     type="text" inputMode="decimal"
                     value={formData.dimensions.height}
                     onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, height: normalizeDecimal(e.target.value) } }))}
-                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                     placeholder="0"
                   />
                 </div>
@@ -910,7 +910,7 @@ export default function ProductFormPage() {
                     type="text" inputMode="decimal"
                     value={formData.weight}
                     onChange={(e) => handleChange('weight', normalizeDecimal(e.target.value))}
-                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                     placeholder="0"
                   />
                 </div>
@@ -922,7 +922,7 @@ export default function ProductFormPage() {
                   type="text"
                   value={formData.shippingNotes}
                   onChange={(e) => handleChange('shippingNotes', e.target.value)}
-                  className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                  className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                   placeholder="e.g., Fragile — handle with care, collection preferred for large items"
                 />
               </div>
@@ -933,7 +933,7 @@ export default function ProductFormPage() {
                     type="checkbox"
                     checked={formData.collectionAvailable}
                     onChange={(e) => setFormData(prev => ({ ...prev, collectionAvailable: e.target.checked }))}
-                    className="w-4 h-4 rounded border-white/20 text-[#FBBF24] focus:ring-[#FBBF24]/25"
+                    className="w-4 h-4 rounded border-white/20 text-[#FBBF24] focus:ring-[#F2B84B]/40"
                   />
                   <span className="text-sm text-slate-300">Collection available</span>
                 </label>
@@ -942,7 +942,7 @@ export default function ProductFormPage() {
                     type="checkbox"
                     checked={formData.deliveryAvailable}
                     onChange={(e) => setFormData(prev => ({ ...prev, deliveryAvailable: e.target.checked }))}
-                    className="w-4 h-4 rounded border-white/20 text-[#FBBF24] focus:ring-[#FBBF24]/25"
+                    className="w-4 h-4 rounded border-white/20 text-[#FBBF24] focus:ring-[#F2B84B]/40"
                   />
                   <span className="text-sm text-slate-300">Delivery available</span>
                 </label>
@@ -963,7 +963,7 @@ export default function ProductFormPage() {
                         type="text"
                         value={dispatchTime}
                         onChange={(e) => setDispatchTime(e.target.value)}
-                        className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                        className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                         placeholder="e.g. 1–2 working days"
                       />
                     </div>
@@ -988,7 +988,7 @@ export default function ProductFormPage() {
                     type="text"
                     value={formData.brand}
                     onChange={(e) => handleChange('brand', e.target.value)}
-                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                     placeholder="e.g., Samsung"
                   />
                 </div>
@@ -998,7 +998,7 @@ export default function ProductFormPage() {
                     type="text"
                     value={formData.model}
                     onChange={(e) => handleChange('model', e.target.value)}
-                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                     placeholder="e.g., Galaxy S23"
                   />
                 </div>
@@ -1008,7 +1008,7 @@ export default function ProductFormPage() {
                     type="text"
                     value={formData.sku}
                     onChange={(e) => handleChange('sku', e.target.value)}
-                    className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                     placeholder="Your ref code"
                   />
                 </div>
@@ -1039,14 +1039,14 @@ export default function ProductFormPage() {
                         type="text"
                         value={spec.key}
                         onChange={(e) => updateCustomSpec(i, 'key', e.target.value)}
-                        className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all flex-1"
+                        className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all flex-1"
                         placeholder="Attribute name (e.g., Colour)"
                       />
                       <input
                         type="text"
                         value={spec.value}
                         onChange={(e) => updateCustomSpec(i, 'value', e.target.value)}
-                        className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all flex-1"
+                        className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all flex-1"
                         placeholder="Value (e.g., Black)"
                       />
                       <button
@@ -1077,7 +1077,7 @@ export default function ProductFormPage() {
                           type="number" min="0"
                           value={formData.palletInfo.palletCount}
                           onChange={(e) => setFormData(prev => ({ ...prev, palletInfo: { ...prev.palletInfo, palletCount: e.target.value } }))}
-                          className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                          className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                           placeholder="1"
                         />
                       </div>
@@ -1087,7 +1087,7 @@ export default function ProductFormPage() {
                           type="number" min="0"
                           value={formData.palletInfo.itemsPerPallet}
                           onChange={(e) => setFormData(prev => ({ ...prev, palletInfo: { ...prev.palletInfo, itemsPerPallet: e.target.value } }))}
-                          className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                          className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                           placeholder="e.g., 100"
                         />
                       </div>
@@ -1097,7 +1097,7 @@ export default function ProductFormPage() {
                           type="text"
                           value={formData.palletInfo.palletType}
                           onChange={(e) => setFormData(prev => ({ ...prev, palletInfo: { ...prev.palletInfo, palletType: e.target.value } }))}
-                          className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                          className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                           placeholder="e.g., Euro pallet"
                         />
                       </div>
@@ -1116,7 +1116,7 @@ export default function ProductFormPage() {
                           type="number" min="1"
                           value={formData.moq}
                           onChange={(e) => setFormData(prev => ({ ...prev, moq: e.target.value }))}
-                          className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                          className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                           placeholder="e.g., 10"
                         />
                         <p className="text-xs text-slate-500 mt-1">Minimum units a buyer must order</p>
@@ -1127,7 +1127,7 @@ export default function ProductFormPage() {
                           type="number" min="1"
                           value={formData.lotQuantity}
                           onChange={(e) => setFormData(prev => ({ ...prev, lotQuantity: e.target.value }))}
-                          className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                          className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                           placeholder="e.g., 100"
                         />
                         <p className="text-xs text-slate-500 mt-1">Total units available in this lot</p>
@@ -1146,7 +1146,7 @@ export default function ProductFormPage() {
                         type="number" min="1"
                         value={formData.lotQuantity}
                         onChange={(e) => setFormData(prev => ({ ...prev, lotQuantity: e.target.value }))}
-                        className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                        className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                         placeholder="e.g., 50"
                       />
                       <p className="text-xs text-slate-500 mt-1">Total items sold as one lot</p>
@@ -1162,7 +1162,7 @@ export default function ProductFormPage() {
                       type="number" step="0.01" min="0"
                       value={formData.estimatedRetailValue}
                       onChange={(e) => handleChange('estimatedRetailValue', e.target.value)}
-                      className="w-full h-10 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                      className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
                       placeholder="Optional RRP estimate"
                     />
                     <p className="text-xs text-slate-500 mt-1">Approximate total retail value of the lot</p>
@@ -1173,7 +1173,7 @@ export default function ProductFormPage() {
                       value={formData.manifestNotes}
                       onChange={(e) => handleChange('manifestNotes', e.target.value)}
                       rows={2}
-                      className="w-full rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all resize-y"
+                      className="w-full rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all resize-y"
                       placeholder="e.g., Mixed electronics — approx 40% Grade A, 40% Grade B, 20% parts"
                     />
                   </div>
