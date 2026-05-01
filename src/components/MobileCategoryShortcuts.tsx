@@ -1,73 +1,98 @@
 /**
  * MobileCategoryShortcuts
  *
- * Mobile-only (hidden md:block is applied in the parent).
- * 8 static category shortcuts in a 4-column icon grid.
- * Links use /category/:slug for DB-backed categories and /catalog for generic ones.
+ * Mobile-only horizontal-scroll category row for the APK home screen.
+ * Active category is tracked in local state (initialised to 'all').
  */
 
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  ShoppingBag,
-  Truck,
-  Wrench,
-  Home,
+  LayoutGrid,
   Smartphone,
-  Shirt,
-  HeartPulse,
+  Laptop,
+  Watch,
   Car,
-  ArrowRight,
+  MoreHorizontal,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-interface Shortcut {
+interface Category {
+  id: string;
   label: string;
   icon: LucideIcon;
   to: string;
-  iconClass: string;
 }
 
-const SHORTCUTS: Shortcut[] = [
-  { label: 'Products',    icon: ShoppingBag, to: '/catalog',                  iconClass: 'text-[#FBBF24]'  },
-  { label: 'Transport',   icon: Truck,       to: '/catalog?q=transport',       iconClass: 'text-sky-400'    },
-  { label: 'Services',    icon: Wrench,      to: '/catalog?q=services',        iconClass: 'text-violet-400' },
-  { label: 'Home',        icon: Home,        to: '/category/home-garden',      iconClass: 'text-green-400'  },
-  { label: 'Electronics', icon: Smartphone,  to: '/category/electronics',      iconClass: 'text-cyan-400'   },
-  { label: 'Fashion',     icon: Shirt,       to: '/category/clothing-fashion', iconClass: 'text-blue-400'   },
-  { label: 'Health',      icon: HeartPulse,  to: '/category/health-beauty',    iconClass: 'text-rose-400'   },
-  { label: 'Automotive',  icon: Car,         to: '/category/automotive',       iconClass: 'text-slate-300'  },
+const CATEGORIES: Category[] = [
+  { id: 'all',      label: 'All',      icon: LayoutGrid,    to: '/catalog' },
+  { id: 'phones',   label: 'Phones',   icon: Smartphone,    to: '/category/electronics?sub=phones' },
+  { id: 'laptops',  label: 'Laptops',  icon: Laptop,        to: '/category/electronics?sub=laptops' },
+  { id: 'watches',  label: 'Watches',  icon: Watch,         to: '/category/accessories?sub=watches' },
+  { id: 'vehicles', label: 'Vehicles', icon: Car,           to: '/category/automotive' },
+  { id: 'more',     label: 'More',     icon: MoreHorizontal, to: '/catalog' },
 ];
 
 export default function MobileCategoryShortcuts() {
-  return (
-    <section aria-label="Shop by category" className="px-4 pt-5 pb-3">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-[13px] font-bold text-white tracking-tight">
-          Shop by Category
-        </h2>
-        <Link
-          to="/catalog"
-          className="flex items-center gap-1 text-[11px] font-semibold text-[#FBBF24] hover:text-[#D8AE57] transition-colors"
-        >
-          View all <ArrowRight className="h-3 w-3" aria-hidden="true" />
-        </Link>
-      </div>
+  const [active, setActive] = useState('all');
 
-      <div className="grid grid-cols-4 gap-2.5">
-        {SHORTCUTS.map(({ label, icon: Icon, to, iconClass }) => (
+  return (
+    <section
+      aria-label="Shop by category"
+      className="overflow-x-auto scrollbar-hide flex gap-5 px-4 py-3"
+    >
+      {CATEGORIES.map(({ id, label, icon: Icon, to }) => {
+        const isActive = active === id;
+
+        return (
           <Link
-            key={label}
+            key={id}
             to={to}
-            className="flex flex-col items-center gap-1.5 rounded-[14px] border border-white/[0.06] bg-[#111827] px-1.5 py-3.5 active:scale-95 active:bg-white/[0.08] transition-transform"
+            onClick={() => setActive(id)}
+            className="flex flex-col items-center gap-1.5 flex-shrink-0"
+            style={{ minWidth: 56 }}
             aria-label={label}
+            aria-current={isActive ? 'page' : undefined}
           >
-            <Icon className={`h-5 w-5 ${iconClass} shrink-0`} aria-hidden="true" />
-            <span className="text-[10px] font-semibold text-white/80 leading-none text-center">
+            {/* Icon wrapper — circle only when active */}
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                background: isActive ? '#1E1A0E' : 'transparent',
+                border: isActive ? '2px solid #F2B84B' : '2px solid transparent',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Icon
+                style={{
+                  width: 24,
+                  height: 24,
+                  color: '#F2B84B',
+                }}
+                aria-hidden="true"
+              />
+            </div>
+
+            {/* Label */}
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: isActive ? 700 : 500,
+                color: isActive ? '#FFFFFF' : '#FFFFFF',
+                lineHeight: 1,
+              }}
+            >
               {label}
             </span>
           </Link>
-        ))}
-      </div>
+        );
+      })}
     </section>
   );
 }
+

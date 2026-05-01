@@ -4,10 +4,10 @@
  * Fixed bottom navigation bar — visible only below md (768 px).
  * Hidden on desktop via Tailwind `md:hidden`.
  *
- * Items: Browse | Search | Sell (gold highlight) | Cart | Account
+ * Items: Home | Messages (badge) | Sell Item (gold FAB) | Orders | Profile
  *
- * The "Sell" button is elevated above the bar with a circular gold accent to
- * draw attention — matching the convention used by major marketplace apps.
+ * The "Sell Item" FAB is 56 px, elevated above the bar with -mt-7, with a
+ * gold glow shadow — matching major marketplace app conventions.
  *
  * Safe-area-inset-bottom is applied via inline padding so the bar works
  * correctly on Android devices with gesture navigation.
@@ -15,42 +15,10 @@
 
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Store, MessageSquare, Plus, ShoppingCart, User } from 'lucide-react';
+import { Home, MessageSquare, Plus, ShoppingBag, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { useCart } from '@/contexts/CartContext';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
-
-// ── Cart badge helper ─────────────────────────────────────────────────────────
-
-function CartNavButton({ isActive }: { isActive: boolean }) {
-  const { cartCount } = useCart();
-
-  return (
-    <Link
-      to="/cart"
-      className="flex flex-col items-center gap-1 px-3 py-1"
-      aria-label={`Cart${cartCount > 0 ? `, ${cartCount} items` : ''}`}
-    >
-      <div className="relative">
-        <ShoppingCart
-          className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-[#FBBF24]' : 'text-white/50'}`}
-          aria-hidden="true"
-        />
-        {cartCount > 0 && (
-          <span className="absolute -top-1 -right-1.5 min-w-[16px] h-[16px] rounded-full bg-[#FBBF24] text-[#020617] text-[9px] font-bold flex items-center justify-center px-0.5 leading-none">
-            {cartCount > 99 ? '99+' : cartCount}
-          </span>
-        )}
-      </div>
-      <span
-        className={`text-[10px] font-semibold leading-none transition-colors ${isActive ? 'text-[#FBBF24]' : 'text-white/40'}`}
-      >
-        Cart
-      </span>
-    </Link>
-  );
-}
 
 // ── Generic nav item ──────────────────────────────────────────────────────────
 
@@ -73,11 +41,11 @@ function NavItem({
       aria-current={isActive ? 'page' : undefined}
     >
       <Icon
-        className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-[#FBBF24]' : 'text-white/50'}`}
+        className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-[#F2B84B]' : 'text-white/50'}`}
         aria-hidden="true"
       />
       <span
-        className={`text-[10px] font-semibold leading-none transition-colors ${isActive ? 'text-[#FBBF24]' : 'text-white/40'}`}
+        className={`text-[10px] font-semibold leading-none transition-colors ${isActive ? 'text-[#F2B84B]' : 'text-white/40'}`}
       >
         {label}
       </span>
@@ -85,9 +53,9 @@ function NavItem({
   );
 }
 
-// ── Inbox badge helper ────────────────────────────────────────────────────────
+// ── Messages badge helper ─────────────────────────────────────────────────────
 
-function InboxNavButton({ isActive }: { isActive: boolean }) {
+function MessagesNavButton({ isActive }: { isActive: boolean }) {
   const { user } = useAuthStore();
   const [unread, setUnread] = useState(0);
 
@@ -116,72 +84,47 @@ function InboxNavButton({ isActive }: { isActive: boolean }) {
     <Link
       to="/inbox"
       className="flex flex-col items-center gap-1 px-3 py-1"
-      aria-label={`Inbox${unread > 0 ? `, ${unread} unread` : ''}`}
+      aria-label={`Messages${unread > 0 ? `, ${unread} unread` : ''}`}
+      aria-current={isActive ? 'page' : undefined}
     >
       <div className="relative">
         <MessageSquare
-          className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-[#FBBF24]' : 'text-white/50'}`}
+          className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-[#F2B84B]' : 'text-white/50'}`}
           aria-hidden="true"
         />
         {unread > 0 && (
-          <span className="absolute -top-1 -right-1.5 min-w-[16px] h-[16px] rounded-full bg-[#FBBF24] text-[#020617] text-[9px] font-bold flex items-center justify-center px-0.5 leading-none">
+          <span className="absolute -top-1 -right-1.5 min-w-[16px] h-[16px] rounded-full bg-[#F2B84B] text-[#020617] text-[9px] font-bold flex items-center justify-center px-0.5 leading-none">
             {unread > 99 ? '99+' : unread}
           </span>
         )}
       </div>
       <span
-        className={`text-[10px] font-semibold leading-none transition-colors ${isActive ? 'text-[#FBBF24]' : 'text-white/40'}`}
+        className={`text-[10px] font-semibold leading-none transition-colors ${isActive ? 'text-[#F2B84B]' : 'text-white/40'}`}
       >
-        Inbox
+        Messages
       </span>
     </Link>
   );
 }
 
-// ── Orders badge helper — shows a dot for sellers with awaiting-payment orders ─
+// ── Profile nav button ────────────────────────────────────────────────────────
 
-function AccountNavButton({ to, isActive }: { to: string; isActive: boolean }) {
-  const { user } = useAuthStore();
-  const [awaitingCount, setAwaitingCount] = useState(0);
-
-  useEffect(() => {
-    if (user?.role !== 'seller') { return; }
-    let cancelled = false;
-
-    const load = async () => {
-      const { count } = await supabase
-        .from('orders')
-        .select('id', { count: 'exact', head: true })
-        .eq('sellerId', user.id)
-        .eq('status', 'awaiting_payment');
-      if (!cancelled) setAwaitingCount(count ?? 0);
-    };
-
-    void load();
-    return () => { cancelled = true; };
-  }, [user?.id, user?.role]);
-
-  const label = user ? (user.role === 'seller' ? 'Dashboard' : 'Account') : 'Sign In';
-  const displayCount = user?.role === 'seller' ? awaitingCount : 0;
-
+function ProfileNavButton({ to, isActive }: { to: string; isActive: boolean }) {
   return (
     <Link
       to={to}
       className="flex flex-col items-center gap-1 px-3 py-1"
-      aria-label={`${label}${displayCount > 0 ? `, ${displayCount} orders awaiting payment` : ''}`}
+      aria-label="Profile"
       aria-current={isActive ? 'page' : undefined}
     >
-      <div className="relative">
-        <User
-          className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-[#FBBF24]' : 'text-white/50'}`}
-          aria-hidden="true"
-        />
-        {displayCount > 0 && (
-          <span className="absolute -top-1 -right-1.5 w-3 h-3 rounded-full bg-amber-400 border-2 border-[#0B0F1A]" />
-        )}
-      </div>
-      <span className={`text-[10px] font-semibold leading-none transition-colors ${isActive ? 'text-[#FBBF24]' : 'text-white/40'}`}>
-        {label}
+      <User
+        className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-[#F2B84B]' : 'text-white/50'}`}
+        aria-hidden="true"
+      />
+      <span
+        className={`text-[10px] font-semibold leading-none transition-colors ${isActive ? 'text-[#F2B84B]' : 'text-white/40'}`}
+      >
+        Profile
       </span>
     </Link>
   );
@@ -193,10 +136,11 @@ export default function MobileBottomNav() {
   const location = useLocation();
   const { user } = useAuthStore();
 
-  const dashboardPath =
+  const profilePath =
     user?.role === 'seller' ? '/seller' :
     user?.role === 'admin'  ? '/admin'  :
-    '/buyer';
+    user            ? '/buyer'  :
+    '/login';
 
   const isActive = (to: string) =>
     location.pathname === to || location.pathname.startsWith(to + '/');
@@ -210,44 +154,57 @@ export default function MobileBottomNav() {
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
         borderTop: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: '20px 20px 0 0',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
       <div className="h-[60px] flex items-center justify-around">
-        {/* Browse */}
+        {/* Home */}
         <NavItem
-          to="/catalog"
-          icon={Store}
-          label="Browse"
-          isActive={isActive('/catalog') || isActive('/category')}
+          to="/"
+          icon={Home}
+          label="Home"
+          isActive={location.pathname === '/'}
         />
 
-        {/* Inbox */}
-        <InboxNavButton isActive={isActive('/inbox')} />
+        {/* Messages */}
+        <MessagesNavButton isActive={isActive('/inbox')} />
 
-        {/* Sell — elevated gold CTA */}
+        {/* Sell Item — elevated gold FAB */}
         <Link
           to="/register?type=seller"
           className="flex flex-col items-center gap-0.5 px-3"
-          aria-label="Start selling"
+          aria-label="Sell an item"
         >
-          <div className="w-11 h-11 rounded-full bg-[#FBBF24] flex items-center justify-center -mt-5 shadow-[0_0_20px_rgba(251,191,36,0.4),0_4px_12px_rgba(0,0,0,0.5)]">
-            <Plus className="h-5 w-5 text-[#020617]" aria-hidden="true" />
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center -mt-7"
+            style={{
+              background: 'linear-gradient(135deg, #D89A28, #F7C867)',
+              boxShadow: '0 0 24px rgba(242,184,75,0.35), 0 4px 14px rgba(0,0,0,0.5)',
+            }}
+          >
+            <Plus className="h-6 w-6 text-black" aria-hidden="true" />
           </div>
-          <span className="text-[10px] font-semibold text-[#FBBF24] leading-none mt-0.5">
-            Sell
+          <span className="text-[10px] font-semibold text-[#F2B84B] leading-none mt-0.5">
+            Sell Item
           </span>
         </Link>
 
-        {/* Cart */}
-        <CartNavButton isActive={isActive('/cart')} />
+        {/* Orders */}
+        <NavItem
+          to="/orders"
+          icon={ShoppingBag}
+          label="Orders"
+          isActive={isActive('/orders')}
+        />
 
-        {/* Account */}
-        <AccountNavButton
-          to={user ? dashboardPath : '/login'}
-          isActive={user ? isActive(dashboardPath) : isActive('/login')}
+        {/* Profile */}
+        <ProfileNavButton
+          to={profilePath}
+          isActive={user ? isActive(profilePath) : isActive('/login')}
         />
       </div>
     </nav>
   );
 }
+
