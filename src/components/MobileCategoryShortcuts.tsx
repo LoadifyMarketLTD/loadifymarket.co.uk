@@ -1,9 +1,10 @@
 /**
  * MobileCategoryShortcuts — horizontal scroll category row.
  *
- * "All" is the ONLY item with a gold circle background.
+ * Reference: "All" is the ONLY item with a gold circle background.
+ * All other items are plain icon + label (no circle).
  * Active (All or selected) = gold circle + gold label.
- * Inactive = bare icon (no circle) + white/muted label.
+ * Inactive = gold-outline icon + white label.
  * Active category is tracked in local state (initialised to 'all').
  */
 

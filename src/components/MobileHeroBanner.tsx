@@ -48,42 +48,54 @@ function Commission3D() {
       <ellipse cx="120" cy="168" rx="118" ry="110" fill="url(#cg-glow)" />
 
       {/* ── "0" — 3D extrusion (dark depth layers → bright face) ─────── */}
+      {/* Depth layer 3 — deepest shadow */}
       <text x="84" y="220"
         fontFamily="'Arial Black', 'Impact', 'Haettenschweiler', sans-serif"
         fontSize="172" fontWeight="900" fill="#2A1200" textAnchor="middle">0</text>
+      {/* Depth layer 2 */}
       <text x="82" y="218"
         fontFamily="'Arial Black', 'Impact', 'Haettenschweiler', sans-serif"
         fontSize="172" fontWeight="900" fill="#5A3200" textAnchor="middle">0</text>
+      {/* Depth layer 1 */}
       <text x="80" y="216"
         fontFamily="'Arial Black', 'Impact', 'Haettenschweiler', sans-serif"
         fontSize="172" fontWeight="900" fill="#8A5200" textAnchor="middle">0</text>
+      {/* Front face — gold gradient */}
       <text x="78" y="214"
         fontFamily="'Arial Black', 'Impact', 'Haettenschweiler', sans-serif"
         fontSize="172" fontWeight="900" fill="url(#cg-gold)" filter="url(#cg-shadow)"
         textAnchor="middle">0</text>
 
       {/* ── "%" — 3D extrusion ───────────────────────────────────────── */}
+      {/* Depth layer 3 */}
       <text x="200" y="186"
         fontFamily="'Arial Black', 'Impact', 'Haettenschweiler', sans-serif"
         fontSize="92" fontWeight="900" fill="#2A1200" textAnchor="middle">%</text>
+      {/* Depth layer 2 */}
       <text x="198" y="184"
         fontFamily="'Arial Black', 'Impact', 'Haettenschweiler', sans-serif"
         fontSize="92" fontWeight="900" fill="#5A3200" textAnchor="middle">%</text>
+      {/* Depth layer 1 */}
       <text x="196" y="182"
         fontFamily="'Arial Black', 'Impact', 'Haettenschweiler', sans-serif"
         fontSize="92" fontWeight="900" fill="#8A5200" textAnchor="middle">%</text>
+      {/* Front face — gold gradient */}
       <text x="194" y="180"
         fontFamily="'Arial Black', 'Impact', 'Haettenschweiler', sans-serif"
         fontSize="92" fontWeight="900" fill="url(#cg-gold)" filter="url(#cg-shadow)"
         textAnchor="middle">%</text>
 
       {/* ── Cylindrical pedestal ─────────────────────────────────────── */}
+      {/* Side face — gives the disc a 3-D cylinder appearance */}
       <path
         d="M 28 234 Q 28 252 120 256 Q 212 252 212 234 L 212 244 Q 212 262 120 266 Q 28 262 28 244 Z"
         fill="url(#cg-rim)"
       />
+      {/* Top face — very dark, almost black */}
       <ellipse cx="120" cy="234" rx="92" ry="16" fill="#130C00" />
+      {/* Top face rim highlight */}
       <ellipse cx="120" cy="234" rx="92" ry="16" fill="none" stroke="#D4940A" strokeWidth="1.5" />
+      {/* Specular highlight (off-centre = convex feel) */}
       <ellipse cx="88" cy="230" rx="28" ry="5" fill="rgba(255,215,80,0.20)" />
 
       {/* "◎ COMMISSION" inscription */}
