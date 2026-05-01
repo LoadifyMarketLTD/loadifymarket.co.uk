@@ -96,6 +96,22 @@ interface SellerProfileRow {
   fullName: string | null;
 }
 
+const JSON_HEADERS = { 'Content-Type': 'application/json' };
+
+/**
+ * Extract a human-readable message from a SendGrid ResponseError.
+ * sgMail.send() throws an AxiosError-like object with a `response.body.errors` array.
+ */
+function sendGridErrorMessage(err: unknown): string {
+  if (err && typeof err === 'object') {
+    const e = err as { message?: string; response?: { body?: { errors?: Array<{ message?: string }> } } };
+    const first = e?.response?.body?.errors?.[0]?.message;
+    if (first) return `Email service error: ${first}`;
+    if (e.message) return `Email service error: ${e.message}`;
+  }
+  return 'Email service error — check SENDGRID_API_KEY';
+}
+
 /** Escape a string for safe embedding in HTML to prevent HTML injection. */
 function escapeHtml(value: unknown): string {
   return String(value ?? '')
@@ -113,29 +129,33 @@ async function sendWarningEmail(email: string, name: string, company: string): P
   if (!fromEmail) throw new Error('SENDGRID_FROM_EMAIL is not configured');
   sgMail.setApiKey(apiKey);
   const siteUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
-  await sgMail.send({
-    to: email,
-    from: fromEmail,
-    replyTo: fromEmail,
-    subject: 'Account Warning — Loadify Market',
-    html: `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">
-        <div style="background:#243b53;padding:20px;text-align:center;">
-          <h1 style="color:#f59e0b;margin:0;">Loadify Market</h1>
+  try {
+    await sgMail.send({
+      to: email,
+      from: fromEmail,
+      replyTo: fromEmail,
+      subject: 'Account Warning — Loadify Market',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">
+          <div style="background:#243b53;padding:20px;text-align:center;">
+            <h1 style="color:#f59e0b;margin:0;">Loadify Market</h1>
+          </div>
+          <div style="background:#fff;padding:30px;margin-top:20px;">
+            <h2 style="color:#243b53;">Account Warning</h2>
+            <p>Hi ${escapeHtml(name || company)},</p>
+            <p>Your seller account on Loadify Market has received a warning from our platform team.</p>
+            <p>Please ensure you are complying with our <a href="${siteUrl}/seller-guidelines" style="color:#f59e0b;">Seller Guidelines</a> and platform policies. Continued violations may result in account suspension.</p>
+            <p>If you believe this is an error or have questions, please contact us at <a href="mailto:contact@loadifymarket.co.uk" style="color:#f59e0b;">contact@loadifymarket.co.uk</a>.</p>
+          </div>
+          <div style="text-align:center;padding:20px;color:#666;font-size:12px;">
+            <p>Loadify Market — XDrive Logistics Ltd | 101 Cornelian Street, Blackburn, BB1 9QL</p>
+          </div>
         </div>
-        <div style="background:#fff;padding:30px;margin-top:20px;">
-          <h2 style="color:#243b53;">Account Warning</h2>
-          <p>Hi ${escapeHtml(name || company)},</p>
-          <p>Your seller account on Loadify Market has received a warning from our platform team.</p>
-          <p>Please ensure you are complying with our <a href="${siteUrl}/seller-guidelines" style="color:#f59e0b;">Seller Guidelines</a> and platform policies. Continued violations may result in account suspension.</p>
-          <p>If you believe this is an error or have questions, please contact us at <a href="mailto:contact@loadifymarket.co.uk" style="color:#f59e0b;">contact@loadifymarket.co.uk</a>.</p>
-        </div>
-        <div style="text-align:center;padding:20px;color:#666;font-size:12px;">
-          <p>Loadify Market — XDrive Logistics Ltd | 101 Cornelian Street, Blackburn, BB1 9QL</p>
-        </div>
-      </div>
-    `,
-  });
+      `,
+    });
+  } catch (sgErr) {
+    throw new Error(sendGridErrorMessage(sgErr));
+  }
 }
 
 interface PendingOnboardSeller {
@@ -204,30 +224,34 @@ async function sendOnboardingReminderEmail(seller: PendingOnboardSeller): Promis
   if (!fromEmail) throw new Error('SENDGRID_FROM_EMAIL is not configured');
   sgMail.setApiKey(apiKey);
   const siteUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
-  await sgMail.send({
-    to: seller.email,
-    from: fromEmail,
-    replyTo: fromEmail,
-    subject: 'Complete your seller setup — Loadify Market',
-    html: `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">
-        <div style="background:#243b53;padding:20px;text-align:center;">
-          <h1 style="color:#f59e0b;margin:0;">Loadify Market</h1>
+  try {
+    await sgMail.send({
+      to: seller.email,
+      from: fromEmail,
+      replyTo: fromEmail,
+      subject: 'Complete your seller setup — Loadify Market',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f5f5f5;">
+          <div style="background:#243b53;padding:20px;text-align:center;">
+            <h1 style="color:#f59e0b;margin:0;">Loadify Market</h1>
+          </div>
+          <div style="background:#fff;padding:30px;margin-top:20px;">
+            <h2 style="color:#243b53;">Complete Your Seller Setup</h2>
+            <p>Hi ${escapeHtml(seller.name)},</p>
+            <p>You registered as a seller on Loadify Market but haven't yet completed your seller onboarding. You need to finish the setup to start selling and receiving payments.</p>
+            <p>It only takes a few minutes — click the button below to complete your setup:</p>
+            <a href="${siteUrl}/onboarding" style="display:inline-block;background:#f59e0b;color:#fff;padding:12px 24px;text-decoration:none;border-radius:5px;margin:16px 0;">Complete Seller Setup</a>
+            <p style="color:#888;font-size:13px;">Once connected, your store will go live automatically. If you need help, contact us at <a href="mailto:contact@loadifymarket.co.uk" style="color:#f59e0b;">contact@loadifymarket.co.uk</a>.</p>
+          </div>
+          <div style="text-align:center;padding:20px;color:#666;font-size:12px;">
+            <p>Loadify Market — XDrive Logistics Ltd | 101 Cornelian Street, Blackburn, BB1 9QL</p>
+          </div>
         </div>
-        <div style="background:#fff;padding:30px;margin-top:20px;">
-          <h2 style="color:#243b53;">Complete Your Seller Setup</h2>
-          <p>Hi ${escapeHtml(seller.name)},</p>
-          <p>You registered as a seller on Loadify Market but haven't yet completed your seller onboarding. You need to finish the setup to start selling and receiving payments.</p>
-          <p>It only takes a few minutes — click the button below to complete your setup:</p>
-          <a href="${siteUrl}/onboarding" style="display:inline-block;background:#f59e0b;color:#fff;padding:12px 24px;text-decoration:none;border-radius:5px;margin:16px 0;">Complete Seller Setup</a>
-          <p style="color:#888;font-size:13px;">Once connected, your store will go live automatically. If you need help, contact us at <a href="mailto:contact@loadifymarket.co.uk" style="color:#f59e0b;">contact@loadifymarket.co.uk</a>.</p>
-        </div>
-        <div style="text-align:center;padding:20px;color:#666;font-size:12px;">
-          <p>Loadify Market — XDrive Logistics Ltd | 101 Cornelian Street, Blackburn, BB1 9QL</p>
-        </div>
-      </div>
-    `,
-  });
+      `,
+    });
+  } catch (sgErr) {
+    throw new Error(sendGridErrorMessage(sgErr));
+  }
 }
 
 
@@ -297,58 +321,60 @@ export const handler: Handler = async (event) => {
     console.error('admin-sellers: missing VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
     return {
       statusCode: 500,
+      headers: JSON_HEADERS,
       body: JSON.stringify({ error: 'Server misconfiguration — contact platform admin' }),
     };
   }
 
   if (!['GET', 'POST'].includes(event.httpMethod)) {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+    return { statusCode: 405, headers: JSON_HEADERS, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
-
-  const admin = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-
-  const authResult = await authenticateAdmin(event, admin);
-  if (!authResult.ok) {
-    return {
-      statusCode: authResult.status,
-      body: JSON.stringify({
-        error: authResult.status === 403
-          ? 'You are not authorized to perform this action. Ensure your account has role = admin in the database.'
-          : 'Authentication required — please sign in again.',
-      }),
-    };
-  }
-  const caller = authResult.caller;
-
-  // Rate-limit: 30 admin operations per caller per 60-minute window.
-  const adminRl = await checkRateLimit({
-    supabase: admin,
-    tableName: 'admin_sellers_rate_limits',
-    identifier: caller.id,
-    windowMinutes: 60,
-    maxAttempts: 30,
-  });
-  if (adminRl.exceeded) {
-    return {
-      statusCode: 429,
-      body: JSON.stringify({ error: 'Too many admin requests. Please wait and try again.' }),
-    };
-  }
-
-  let body: { op?: string; userId?: string } = {};
-  if (event.httpMethod === 'POST' && event.body) {
-    try {
-      body = JSON.parse(event.body);
-    } catch {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body' }) };
-    }
-  }
-
-  const op = (body.op ?? 'list').trim();
 
   try {
+    const admin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const authResult = await authenticateAdmin(event, admin);
+    if (!authResult.ok) {
+      return {
+        statusCode: authResult.status,
+        headers: JSON_HEADERS,
+        body: JSON.stringify({
+          error: authResult.status === 403
+            ? 'You are not authorized to perform this action. Ensure your account has role = admin in the database.'
+            : 'Authentication required — please sign in again.',
+        }),
+      };
+    }
+    const caller = authResult.caller;
+
+    // Rate-limit: 30 admin operations per caller per 60-minute window.
+    const adminRl = await checkRateLimit({
+      supabase: admin,
+      tableName: 'admin_sellers_rate_limits',
+      identifier: caller.id,
+      windowMinutes: 60,
+      maxAttempts: 30,
+    });
+    if (adminRl.exceeded) {
+      return {
+        statusCode: 429,
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ error: 'Too many admin requests. Please wait and try again.' }),
+      };
+    }
+
+    let body: { op?: string; userId?: string } = {};
+    if (event.httpMethod === 'POST' && event.body) {
+      try {
+        body = JSON.parse(event.body);
+      } catch {
+        return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'Invalid JSON body' }) };
+      }
+    }
+
+    const op = (body.op ?? 'list').trim();
     if (op === 'list' || event.httpMethod === 'GET') {
       const sellers = await listSellers(admin);
       return {
@@ -361,7 +387,7 @@ export const handler: Handler = async (event) => {
     if (op === 'suspend' || op === 'reactivate') {
       const userId = (body.userId ?? '').trim();
       if (!userId) {
-        return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
+        return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId is required' }) };
       }
       const nextStatus = op === 'suspend' ? 'suspended' : 'submitted';
       await updateSellerStatus(admin, userId, nextStatus);
@@ -375,7 +401,7 @@ export const handler: Handler = async (event) => {
     if (op === 'get_seller_detail') {
       const userId = (body.userId ?? '').trim();
       if (!userId) {
-        return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
+        return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId is required' }) };
       }
       const { data: userRow } = await admin
         .from('users')
@@ -383,7 +409,7 @@ export const handler: Handler = async (event) => {
         .eq('id', userId)
         .single<{ email: string; firstName: string | null; lastName: string | null; phone: string | null; role: string; isActive: boolean; createdAt: string | null }>();
       if (!userRow) {
-        return { statusCode: 404, body: JSON.stringify({ error: 'User not found' }) };
+        return { statusCode: 404, headers: JSON_HEADERS, body: JSON.stringify({ error: 'User not found' }) };
       }
       const { data: profile } = await admin
         .from('seller_profiles')
@@ -432,7 +458,7 @@ export const handler: Handler = async (event) => {
     if (op === 'force_activate') {
       const userId = (body.userId ?? '').trim();
       if (!userId) {
-        return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
+        return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId is required' }) };
       }
       const { error: upsertError } = await admin
         .from('seller_profiles')
@@ -442,7 +468,7 @@ export const handler: Handler = async (event) => {
       }
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ success: true, userId, sellerStatus: 'active' }),
       };
     }
@@ -452,7 +478,7 @@ export const handler: Handler = async (event) => {
     if (op === 'approve') {
       const userId = (body.userId ?? '').trim();
       if (!userId) {
-        return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
+        return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId is required' }) };
       }
       const { error: approveError } = await admin
         .from('seller_profiles')
@@ -463,7 +489,7 @@ export const handler: Handler = async (event) => {
       }
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ success: true, userId, sellerStatus: 'active' }),
       };
     }
@@ -472,7 +498,7 @@ export const handler: Handler = async (event) => {
     if (op === 'reject') {
       const userId = (body.userId ?? '').trim();
       if (!userId) {
-        return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
+        return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId is required' }) };
       }
       const { error: rejectError } = await admin
         .from('seller_profiles')
@@ -483,7 +509,7 @@ export const handler: Handler = async (event) => {
       }
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ success: true, userId, sellerStatus: 'suspended' }),
       };
     }
@@ -491,7 +517,7 @@ export const handler: Handler = async (event) => {
     if (op === 'warn') {
       const userId = (body.userId ?? '').trim();
       if (!userId) {
-        return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
+        return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId is required' }) };
       }
       // Fetch seller email + name
       const { data: userRow } = await admin
@@ -500,7 +526,7 @@ export const handler: Handler = async (event) => {
         .eq('id', userId)
         .single<{ email: string; firstName: string | null; lastName: string | null }>();
       if (!userRow) {
-        return { statusCode: 404, body: JSON.stringify({ error: 'Seller not found' }) };
+        return { statusCode: 404, headers: JSON_HEADERS, body: JSON.stringify({ error: 'Seller not found' }) };
       }
       const { data: profile } = await admin
         .from('seller_profiles')
@@ -513,7 +539,7 @@ export const handler: Handler = async (event) => {
       await sendWarningEmail(userRow.email, name, company);
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ success: true }),
       };
     }
@@ -541,16 +567,17 @@ export const handler: Handler = async (event) => {
       }
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ success: true, sent }),
       };
     }
 
-    return { statusCode: 400, body: JSON.stringify({ error: `Unknown op: ${op}` }) };
+    return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: `Unknown op: ${op}` }) };
   } catch (err) {
     console.error('admin-sellers: unhandled error:', err);
     return {
       statusCode: 500,
+      headers: JSON_HEADERS,
       body: JSON.stringify({
         error: err instanceof Error ? err.message : 'Internal server error',
       }),
