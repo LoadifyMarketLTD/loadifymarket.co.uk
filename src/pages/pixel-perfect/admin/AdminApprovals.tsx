@@ -131,9 +131,20 @@ async function handleJson<T>(res: Response): Promise<T> {
         typeof (payload as { error: unknown }).error === "string")
         ? (payload as { error: string }).error
         : `Request failed (${res.status})`;
-    throw new Error(message);
+    const err = new Error(message) as Error & { status: number };
+    err.status = res.status;
+    throw err;
   }
   return payload as T;
+}
+
+/** Returns false for auth errors (401/403) where retrying the same request won't help. */
+function isRetryableError(err: unknown): boolean {
+  if (err instanceof Error) {
+    const status = (err as Error & { status?: number }).status;
+    if (status === 401 || status === 403) return false;
+  }
+  return true;
 }
 
 const AdminSellerManagement = () => {
@@ -142,14 +153,21 @@ const AdminSellerManagement = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [onboardingLoading, setOnboardingLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorRetryable, setErrorRetryable] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [sellerDetail, setSellerDetail] = useState<SellerDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
+  const setApiError = (err: unknown, fallback: string) => {
+    setError((err as Error).message || fallback);
+    setErrorRetryable(isRetryableError(err));
+  };
+
   const fetchSellers = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setErrorRetryable(true);
     try {
       const res = await authorizedFetch("/.netlify/functions/admin-sellers", {
         method: "GET",
@@ -157,7 +175,7 @@ const AdminSellerManagement = () => {
       const json = await handleJson<{ sellers: Seller[] }>(res);
       setSellers(Array.isArray(json.sellers) ? json.sellers : []);
     } catch (err: unknown) {
-      setError((err as Error).message || "Failed to load sellers");
+      setApiError(err, "Failed to load sellers");
       setSellers([]);
     } finally {
       setLoading(false);
@@ -248,7 +266,7 @@ const AdminSellerManagement = () => {
     } catch (err: unknown) {
       const msg = (err as Error).message ||
         (op === "suspend" ? "Failed to suspend seller" : "Failed to reactivate seller");
-      setError(msg);
+      setApiError(err, op === "suspend" ? "Failed to suspend seller" : "Failed to reactivate seller");
       toast({ title: op === "suspend" ? "Suspend failed" : "Reactivate failed", description: msg, variant: "destructive" });
     } finally {
       setActionLoading(null);
@@ -277,7 +295,7 @@ const AdminSellerManagement = () => {
       toast({ title: "Seller approved ✅", description: "Seller status set to Verified." });
     } catch (err: unknown) {
       const msg = (err as Error).message || "Failed to approve seller";
-      setError(msg);
+      setApiError(err, "Failed to approve seller");
       toast({ title: "Approval failed", description: msg, variant: "destructive" });
     } finally {
       setActionLoading(null);
@@ -303,7 +321,7 @@ const AdminSellerManagement = () => {
       toast({ title: "Seller rejected", description: "Seller application has been rejected." });
     } catch (err: unknown) {
       const msg = (err as Error).message || "Failed to reject seller";
-      setError(msg);
+      setApiError(err, "Failed to reject seller");
       toast({ title: "Rejection failed", description: msg, variant: "destructive" });
     } finally {
       setActionLoading(null);
@@ -322,7 +340,7 @@ const AdminSellerManagement = () => {
       toast({ title: "Warning sent", description: "A warning email has been sent to the seller." });
     } catch (err: unknown) {
       const msg = (err as Error).message || "Failed to send warning";
-      setError(msg);
+      setApiError(err, "Failed to send warning");
       toast({ title: "Send warning failed", description: msg, variant: "destructive" });
     } finally {
       setActionLoading(null);
@@ -345,7 +363,7 @@ const AdminSellerManagement = () => {
       }
     } catch (err: unknown) {
       const msg = (err as Error).message || "Failed to send reminders";
-      setError(msg);
+      setApiError(err, "Failed to send reminders");
       toast({ title: "Reminders failed", description: msg, variant: "destructive" });
     } finally {
       setOnboardingLoading(false);
@@ -373,7 +391,7 @@ const AdminSellerManagement = () => {
       toast({ title: "Seller activated", description: "Seller status set to Active." });
     } catch (err: unknown) {
       const msg = (err as Error).message || "Failed to activate seller";
-      setError(msg);
+      setApiError(err, "Failed to activate seller");
       toast({ title: "Activation failed", description: msg, variant: "destructive" });
     } finally {
       setActionLoading(null);
@@ -425,7 +443,7 @@ const AdminSellerManagement = () => {
               <div className="flex flex-col items-center gap-3 text-center">
                 <AlertTriangle className="h-6 w-6 text-destructive" />
                 <p className="text-sm text-destructive">{error}</p>
-                {!error.toLowerCase().includes("not authorized") && !error.toLowerCase().includes("authentication required") && (
+                {errorRetryable && (
                   <Button size="sm" variant="outline" onClick={fetchSellers}>
                     <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
                   </Button>
@@ -572,7 +590,7 @@ const AdminSellerManagement = () => {
       {error && !loading && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive flex items-center justify-between gap-3">
           <span>{error}</span>
-          {!error.toLowerCase().includes("not authorized") && !error.toLowerCase().includes("authentication required") && (
+          {errorRetryable && (
             <Button size="sm" variant="outline" onClick={fetchSellers}>
               <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry
             </Button>
