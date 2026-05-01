@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { COLORS, RADIUS } from '../constants/theme';
+import { COLORS } from '../constants/theme';
 
 export const HeroBanner: React.FC = () => {
   return (
