@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Loadify Market",
+    "slug": "loadify-market",
+    "scheme": "loadifymarket",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "backgroundColor": "#0B0B0F",
+    "splash": {
+      "backgroundColor": "#0B0B0F"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0B0B0F"
+      },
+      "package": "co.uk.loadifymarket.app"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}

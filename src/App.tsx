@@ -13,9 +13,10 @@ import RequireSellerAny from './components/auth/RequireSellerAny';
 import RequireBuyer from './components/auth/RequireBuyer';
 
 // ─── Mobile standalone pages ──────────────────────────────────────────────────
-const MobileInboxPage   = lazy(() => import('./pages/MobileInboxPage'));
-const MobileChatPage    = lazy(() => import('./pages/MobileChatPage'));
-const MobileOrdersPage  = lazy(() => import('./pages/MobileOrdersPage'));
+const MobileInboxPage     = lazy(() => import('./pages/MobileInboxPage'));
+const MobileChatPage      = lazy(() => import('./pages/MobileChatPage'));
+const MobileOrdersPage    = lazy(() => import('./pages/MobileOrdersPage'));
+const MobileCategoriesPage = lazy(() => import('./pages/MobileCategoriesPage'));
 
 // ─── Homepage ─────────────────────────────────────────────────────────────────
 const Home                 = lazy(() => import('./pages/Home'));
@@ -504,6 +505,9 @@ function App() {
 
         {/* ── Mobile orders (buyer) — also handles push notification deep-links ── */}
         <Route path="orders" element={<Suspense fallback={<PageLoader />}><MobileOrdersPage /></Suspense>} />
+
+        {/* ── Mobile categories list ───────────────────────────────────────────── */}
+        <Route path="categories" element={<Suspense fallback={<PageLoader />}><MobileCategoriesPage /></Suspense>} />
 
         {/* ── Standalone functional pages ──────────────────────────────────────── */}
 

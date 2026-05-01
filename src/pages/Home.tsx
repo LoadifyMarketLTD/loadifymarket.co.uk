@@ -2,7 +2,8 @@
  * src/pages/Home.tsx — root "/" route
  *
  * MOBILE (< md / 768 px):
- *   MobileTopBar (fixed) → Search → Categories → HeroBanner → InfiniteFeed → BottomNav
+ *   MobileAppHeader → search bar → MobileCategoryShortcuts → MobileHeroBanner →
+ *   Trending Now → New Arrivals → MobileBottomNav (via MainLayout)
  *
  * DESKTOP (>= md / 768 px):
  *   GlobalHeader → HeroSection (full-screen) → TrustStrip → FeaturesGrid →
@@ -10,16 +11,19 @@
  */
 
 import { Helmet } from "react-helmet-async";
+import { Link } from "react-router-dom";
+import { TrendingUp, Sparkles, Search } from "lucide-react";
 
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
 
 // Mobile-only components
-import MobileTopBar from "@/components/MobileTopBar";
-import MobileSearchBar from "@/components/MobileSearchBar";
+import MobileAppHeader from "@/components/MobileAppHeader";
 import MobileCategoryShortcuts from "@/components/MobileCategoryShortcuts";
 import MobileHeroBanner from "@/components/MobileHeroBanner";
-import MobileInfiniteFeed from "@/components/MobileInfiniteFeed";
+import MobileProductCard from "@/components/MobileProductCard";
+import { useMobileProducts } from "@/hooks/useMobileProducts";
+import type { Product } from "@/components/catalog/ProductCard";
 
 // Desktop-only components
 import HeroSection from "@/components/HeroSection";
@@ -30,6 +34,125 @@ import SecurityTrust from "@/components/SecurityTrust";
 import SocialFollowSection from "@/components/SocialFollowSection";
 import SellerCTA from "@/components/SellerCTA";
 import LazySection from "@/components/LazySection";
+
+// ── Mobile skeleton cards ─────────────────────────────────────────────────────
+function SkeletonProductCard() {
+  return (
+    <div
+      className="flex-shrink-0 rounded-2xl bg-white/[0.04] animate-pulse"
+      style={{ width: 168, height: 220 }}
+    />
+  );
+}
+
+// ── Mobile home section ───────────────────────────────────────────────────────
+function MobileHome() {
+  const { trending, latest, loading } = useMobileProducts();
+
+  return (
+    <div className="md:hidden min-h-screen" style={{ background: '#07080B' }}>
+      {/* 1. App Header */}
+      <MobileAppHeader />
+
+      {/* 2. Search Bar */}
+      <div className="px-4 pt-2 pb-1">
+        <div
+          className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5"
+          style={{
+            background: '#17181E',
+            border: '1px solid rgba(255,255,255,0.08)',
+          }}
+        >
+          <Search
+            style={{ width: 16, height: 16, color: '#6F737C', flexShrink: 0 }}
+            aria-hidden="true"
+          />
+          <span style={{ fontSize: 14, color: '#6F737C' }}>
+            Search items, brands, or keywords...
+          </span>
+        </div>
+      </div>
+
+      {/* 3. Category row */}
+      <MobileCategoryShortcuts />
+
+      {/* 4. Hero Banner */}
+      <MobileHeroBanner />
+
+      {/* 5. Trending Now */}
+      <section className="pt-5 pb-2" aria-label="Trending products">
+        <div className="flex items-center justify-between px-4 mb-3">
+          <div className="flex items-center gap-2">
+            <TrendingUp
+              style={{ width: 18, height: 18, color: '#F2B84B' }}
+              aria-hidden="true"
+            />
+            <span className="text-[17px] font-bold text-white">Trending Now</span>
+          </div>
+          <Link
+            to="/catalog?filter=trending"
+            className="text-[13px] font-semibold"
+            style={{ color: '#F2B84B' }}
+          >
+            See all
+          </Link>
+        </div>
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide px-4 pb-1">
+          {loading
+            ? Array.from({ length: 4 }).map((_, i) => <SkeletonProductCard key={i} />)
+            : trending.map((p: Product) => (
+                <MobileProductCard
+                  key={p.id}
+                  id={p.id}
+                  title={p.title}
+                  price={p.price}
+                  image={p.image}
+                  distance={p.location}
+                  sellerName={p.seller}
+                  rating={p.rating}
+                />
+              ))}
+        </div>
+      </section>
+
+      {/* 6. New Arrivals */}
+      <section className="pt-2 pb-24" aria-label="New arrivals">
+        <div className="flex items-center justify-between px-4 mb-3">
+          <div className="flex items-center gap-2">
+            <Sparkles
+              style={{ width: 18, height: 18, color: '#F2B84B' }}
+              aria-hidden="true"
+            />
+            <span className="text-[17px] font-bold text-white">New Arrivals</span>
+          </div>
+          <Link
+            to="/catalog?filter=latest"
+            className="text-[13px] font-semibold"
+            style={{ color: '#F2B84B' }}
+          >
+            See all
+          </Link>
+        </div>
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide px-4 pb-1">
+          {loading
+            ? Array.from({ length: 4 }).map((_, i) => <SkeletonProductCard key={i} />)
+            : latest.map((p: Product) => (
+                <MobileProductCard
+                  key={p.id}
+                  id={p.id}
+                  title={p.title}
+                  price={p.price}
+                  image={p.image}
+                  distance={p.location}
+                  sellerName={p.seller}
+                  rating={p.rating}
+                />
+              ))}
+        </div>
+      </section>
+    </div>
+  );
+}
 
 export default function Home() {
   return (
@@ -51,38 +174,12 @@ export default function Home() {
         canonical="/"
       />
 
-      {/* Fixed mobile top bar (hidden on desktop) */}
-      <MobileTopBar />
-
       <main id="main-content">
 
-        {/* ── MOBILE layout (< md) ─────────────────────────────────────────
-            Stacks below the fixed 56px top bar via pt-14.
-            No product sections from the marketing layout here — just the
-            0% commission hero and the continuous infinite product feed.
-        ───────────────────────────────────────────────────────────────── */}
-        <div className="md:hidden bg-[#0B0B0F] pt-[70px]">
+        {/* ── Mobile APK home UI (< md) ────────────────────────────────────── */}
+        <MobileHome />
 
-          {/* Search input */}
-          <MobileSearchBar />
-
-          {/* Horizontal category shortcuts */}
-          <MobileCategoryShortcuts />
-
-          {/* 0% COMMISSION hero banner */}
-          <MobileHeroBanner />
-
-          {/* Continuous 2-column infinite product feed */}
-          <MobileInfiniteFeed />
-
-          {/* Spacer so content isn't hidden behind the fixed bottom nav */}
-          <div className="h-24" aria-hidden="true" />
-
-        </div>
-
-        {/* ── DESKTOP layout (>= md) — unchanged ──────────────────────────
-            HeroSection is desktop-only; the mobile banner is above.
-        ───────────────────────────────────────────────────────────────── */}
+        {/* ── Desktop-only layout (>= md) — unchanged ──────────────────────── */}
         <div className="hidden md:block">
 
           {/* Full-screen hero with gold background image */}
