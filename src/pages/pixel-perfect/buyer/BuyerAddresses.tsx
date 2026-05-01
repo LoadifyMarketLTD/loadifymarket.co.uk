@@ -4,10 +4,37 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapPin, Home, Building2, Save, X } from "lucide-react";
+import { MapPin, Home, Building2, Save, X, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { useToast } from "@/hooks/use-toast";
+
+// Free UK postcode lookup — no API key required (api.postcodes.io)
+interface PostcodesIoResult {
+  postcode: string;
+  admin_district: string | null;
+  country: string | null;
+}
+
+async function lookupPostcode(raw: string): Promise<PostcodesIoResult | null> {
+  const postcode = raw.trim().toUpperCase().replace(/\s+/g, " ");
+  if (!postcode) return null;
+  try {
+    const res = await fetch(
+      `https://api.postcodes.io/postcodes/${encodeURIComponent(postcode)}`
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json.status !== 200 || !json.result) return null;
+    return {
+      postcode: json.result.postcode as string,
+      admin_district: json.result.admin_district as string | null,
+      country: json.result.country as string | null,
+    };
+  } catch {
+    return null;
+  }
+}
 
 interface AddressData {
   name?: string;
@@ -33,11 +60,32 @@ const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<AddressData>(data);
   const [saving, setSaving] = useState(false);
+  const [postcodeStatus, setPostcodeStatus] = useState<"idle" | "loading" | "invalid">("idle");
 
   useEffect(() => { setForm(data); }, [data]);
 
-  const updateField = (field: keyof AddressData, value: string) =>
+  const updateField = (field: keyof AddressData, value: string) => {
+    if (field === "postcode") setPostcodeStatus("idle");
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handlePostcodeBlur = async () => {
+    const raw = form.postcode?.trim() ?? "";
+    if (!raw) return;
+    setPostcodeStatus("loading");
+    const result = await lookupPostcode(raw);
+    if (result) {
+      setForm((prev) => ({
+        ...prev,
+        postcode: result.postcode,
+        city: prev.city || result.admin_district || prev.city || "",
+        country: prev.country || result.country || prev.country || "",
+      }));
+      setPostcodeStatus("idle");
+    } else {
+      setPostcodeStatus("invalid");
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -90,8 +138,22 @@ const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
                 <Input value={form.city ?? ""} onChange={(e) => updateField("city", e.target.value)} className="mt-1 h-8 text-sm" />
               </div>
               <div>
-                <Label className="text-xs">Postcode</Label>
-                <Input value={form.postcode ?? ""} onChange={(e) => updateField("postcode", e.target.value)} className="mt-1 h-8 text-sm" />
+                <Label className="text-xs">
+                  Postcode
+                  {postcodeStatus === "loading" && (
+                    <Loader2 className="inline ml-1 h-3 w-3 animate-spin text-muted-foreground" />
+                  )}
+                </Label>
+                <Input
+                  value={form.postcode ?? ""}
+                  onChange={(e) => updateField("postcode", e.target.value)}
+                  onBlur={handlePostcodeBlur}
+                  className={`mt-1 h-8 text-sm${postcodeStatus === "invalid" ? " border-destructive focus-visible:ring-destructive" : ""}`}
+                  placeholder="e.g. SW1A 2AA"
+                />
+                {postcodeStatus === "invalid" && (
+                  <p className="text-[10px] text-destructive mt-0.5">Invalid postcode</p>
+                )}
               </div>
             </div>
             <div>
