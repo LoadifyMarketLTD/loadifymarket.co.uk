@@ -5,9 +5,34 @@
  * Hidden on desktop via the parent's md:hidden wrapper.
  */
 
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, SlidersHorizontal } from 'lucide-react';
+import { useAuthStore } from '@/store';
+import { supabase } from '@/lib/supabase';
 
 export default function MobileAppHeader() {
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { count } = await supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('receiverId', user.id)
+          .eq('isRead', false);
+        if (!cancelled) setUnread(count ?? 0);
+      } catch {
+        // Non-critical: unread badge stays at 0 on error
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
   return (
     <header
       className="flex items-center justify-between px-4"
@@ -90,38 +115,55 @@ export default function MobileAppHeader() {
 
       {/* ── Right: bell + filter ─── */}
       <div className="flex items-center gap-2">
-        {/* Bell with badge */}
-        <div className="relative p-1">
+        {/* Bell with badge — navigates to inbox */}
+        <button
+          onClick={() => navigate('/inbox')}
+          aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
+          style={{
+            position: 'relative',
+            padding: '6px',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <Bell
             style={{ width: 20, height: 20, color: '#FFFFFF' }}
-            aria-label="Notifications"
+            aria-hidden="true"
           />
-          <span
-            style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              minWidth: 16,
-              height: 16,
-              borderRadius: 9999,
-              background: '#F2B84B',
-              color: '#000',
-              fontSize: 9,
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              paddingLeft: 2,
-              paddingRight: 2,
-            }}
-          >
-            3
-          </span>
-        </div>
+          {unread > 0 && (
+            <span
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                minWidth: 16,
+                height: 16,
+                borderRadius: 9999,
+                background: '#F2B84B',
+                color: '#000',
+                fontSize: 9,
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingLeft: 2,
+                paddingRight: 2,
+              }}
+            >
+              {unread > 9 ? '9+' : unread}
+            </span>
+          )}
+        </button>
 
-        {/* Filter button */}
+        {/* Filter button — navigates to catalog */}
         <button
           aria-label="Filter"
+          onClick={() => navigate('/catalog')}
           style={{
             width: 36,
             height: 36,
@@ -132,6 +174,7 @@ export default function MobileAppHeader() {
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
+            cursor: 'pointer',
           }}
         >
           <SlidersHorizontal

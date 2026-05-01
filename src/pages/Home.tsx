@@ -12,7 +12,7 @@
 
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { TrendingUp, Sparkles, Search } from "lucide-react";
+import { TrendingUp, Sparkles } from "lucide-react";
 
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
@@ -21,6 +21,7 @@ import MainLayout from "@/layouts/MainLayout";
 import MobileAppHeader from "@/components/MobileAppHeader";
 import MobileCategoryShortcuts from "@/components/MobileCategoryShortcuts";
 import MobileHeroBanner from "@/components/MobileHeroBanner";
+import MobileSearchBar from "@/components/MobileSearchBar";
 import MobileProductCard from "@/components/MobileProductCard";
 import { useMobileProducts } from "@/hooks/useMobileProducts";
 import type { Product } from "@/components/catalog/ProductCard";
@@ -55,23 +56,7 @@ function MobileHome() {
       <MobileAppHeader />
 
       {/* 2. Search Bar */}
-      <div className="px-4 pt-2 pb-1">
-        <div
-          className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5"
-          style={{
-            background: '#17181E',
-            border: '1px solid rgba(255,255,255,0.08)',
-          }}
-        >
-          <Search
-            style={{ width: 16, height: 16, color: '#6F737C', flexShrink: 0 }}
-            aria-hidden="true"
-          />
-          <span style={{ fontSize: 14, color: '#6F737C' }}>
-            Search items, brands, or keywords...
-          </span>
-        </div>
-      </div>
+      <MobileSearchBar />
 
       {/* 3. Category row */}
       <MobileCategoryShortcuts />
