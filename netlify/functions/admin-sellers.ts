@@ -377,9 +377,9 @@ export const handler: Handler = async (event) => {
       }
       const { data: profile } = await admin
         .from('seller_profiles')
-        .select('sellerStatus, stripeConnectStatus, stripeAccountId, storeName, businessName, fullName, rating, totalSales')
+        .select('sellerStatus, stripeConnectStatus, stripeAccountId, storeName, businessName, fullName, rating, totalSales, businessAddress, contactPhone')
         .eq('userId', userId)
-        .single<{ sellerStatus: string | null; stripeConnectStatus: string | null; stripeAccountId: string | null; storeName: string | null; businessName: string | null; fullName: string | null; rating: number | null; totalSales: number | null }>();
+        .single<{ sellerStatus: string | null; stripeConnectStatus: string | null; stripeAccountId: string | null; storeName: string | null; businessName: string | null; fullName: string | null; rating: number | null; totalSales: number | null; businessAddress: Record<string, string> | null; contactPhone: string | null }>();
 
       // Parallel counts
       const [listingsRes, buyerOrdersRes, sellerOrdersRes, reportsRes] = await Promise.all([
@@ -407,6 +407,8 @@ export const handler: Handler = async (event) => {
             stripeAccountId: profile?.stripeAccountId ?? null,
             storeName: profile?.storeName ?? null,
             businessName: profile?.businessName ?? null,
+            businessAddress: profile?.businessAddress ?? null,
+            contactPhone: profile?.contactPhone ?? userRow.phone ?? null,
             sellerRating: profile?.rating ?? null,
             totalSales: profile?.totalSales ?? null,
             listingsCount: listingsRes.count ?? 0,
@@ -432,6 +434,45 @@ export const handler: Handler = async (event) => {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ success: true, userId, sellerStatus: 'active' }),
+      };
+    }
+
+    // approve — admin explicitly approves a seller (sets sellerStatus='active').
+    // Semantically cleaner than force_activate for the approval workflow.
+    if (op === 'approve') {
+      const userId = (body.userId ?? '').trim();
+      if (!userId) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
+      }
+      const { error: approveError } = await admin
+        .from('seller_profiles')
+        .upsert({ userId, sellerStatus: 'active' }, { onConflict: 'userId' });
+      if (approveError) {
+        throw new Error(`approve failed: ${approveError.message}`);
+      }
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, userId, sellerStatus: 'active' }),
+      };
+    }
+
+    // reject — admin rejects a seller application (sets sellerStatus='suspended').
+    if (op === 'reject') {
+      const userId = (body.userId ?? '').trim();
+      if (!userId) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'userId is required' }) };
+      }
+      const { error: rejectError } = await admin
+        .from('seller_profiles')
+        .upsert({ userId, sellerStatus: 'suspended' }, { onConflict: 'userId' });
+      if (rejectError) {
+        throw new Error(`reject failed: ${rejectError.message}`);
+      }
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true, userId, sellerStatus: 'suspended' }),
       };
     }
 

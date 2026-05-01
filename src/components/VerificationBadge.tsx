@@ -1,4 +1,4 @@
-import { ShieldCheck, AlertCircle } from 'lucide-react';
+import { ShieldCheck, AlertTriangle } from 'lucide-react';
 
 interface VerificationBadgeProps {
   isVerified: boolean;
@@ -26,22 +26,22 @@ export default function VerificationBadge({
   if (isVerified) {
     return (
       <div
-        className={`inline-flex items-center gap-1.5 rounded-full bg-gold/20 border border-gold/40 text-gold font-semibold ${sizeClasses[size]}`}
-        title="Active Seller"
+        className={`inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 font-semibold ${sizeClasses[size]}`}
+        title="Verified Seller"
       >
         <ShieldCheck className={iconSizes[size]} />
-        {showLabel && <span>Active</span>}
+        {showLabel && <span>Verified Seller ✅</span>}
       </div>
     );
   }
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 rounded-full bg-gray-50 border border-gray-200 text-gray-500 font-semibold ${sizeClasses[size]}`}
-      title="Setup in progress"
+      className={`inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 font-semibold ${sizeClasses[size]}`}
+      title="Unverified seller"
     >
-      <AlertCircle className={iconSizes[size]} />
-      {showLabel && <span>Inactive</span>}
+      <AlertTriangle className={iconSizes[size]} />
+      {showLabel && <span>Unverified ⚠️</span>}
     </div>
   );
 }

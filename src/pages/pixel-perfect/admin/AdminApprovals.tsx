@@ -8,7 +8,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Search, Eye, Building2, Mail, Calendar, Loader2, Phone, Package, ShoppingBag, Flag,
-  ShieldOff, RefreshCw, Zap, CheckCircle, AlertTriangle, AlertCircle, Send, CreditCard,
+  ShieldOff, RefreshCw, Zap, CheckCircle, AlertTriangle, AlertCircle, Send, CreditCard, MapPin,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -34,6 +34,8 @@ interface SellerDetail extends Seller {
   stripeAccountId: string | null;
   storeName: string | null;
   businessName: string | null;
+  businessAddress: Record<string, string> | null;
+  contactPhone: string | null;
   sellerRating: number | null;
   totalSales: number | null;
   listingsCount: number;
@@ -50,10 +52,10 @@ const statusColor: Record<string, string> = {
 };
 
 const statusLabel: Record<string, string> = {
-  active:    "Active",
-  submitted: "Setup in Progress",
-  draft:     "Setup required",
-  suspended: "Suspended",
+  active:    "Verified",
+  submitted: "Pending Verification",
+  draft:     "Setup Required",
+  suspended: "Restricted",
 };
 
 const stripeStatusColor: Record<string, string> = {
@@ -182,6 +184,8 @@ const AdminSellerManagement = () => {
         stripeAccountId: string | null;
         storeName: string | null;
         businessName: string | null;
+        businessAddress: Record<string, string> | null;
+        contactPhone: string | null;
         sellerRating: number | null;
         totalSales: number | null;
         listingsCount: number;
@@ -197,6 +201,8 @@ const AdminSellerManagement = () => {
         stripeAccountId: d.stripeAccountId,
         storeName: d.storeName,
         businessName: d.businessName,
+        businessAddress: d.businessAddress ?? null,
+        contactPhone: d.contactPhone ?? null,
         sellerRating: d.sellerRating,
         totalSales: d.totalSales,
         listingsCount: d.listingsCount,
@@ -251,6 +257,58 @@ const AdminSellerManagement = () => {
 
   const handleSuspend = (userId: string) => changeStatus(userId, "suspend");
   const handleReactivate = (userId: string) => changeStatus(userId, "reactivate");
+
+  const handleApprove = async (userId: string) => {
+    setActionLoading(userId);
+    setError(null);
+    try {
+      const res = await authorizedFetch("/.netlify/functions/admin-sellers", {
+        method: "POST",
+        body: JSON.stringify({ op: "approve", userId }),
+      });
+      await handleJson<{ success: boolean }>(res);
+      setSellers((prev) => prev.map((s) =>
+        s.userId === userId ? { ...s, sellerStatus: "active" } : s
+      ));
+      if (selectedSeller?.userId === userId) {
+        setSelectedSeller((s) => s ? { ...s, sellerStatus: "active" } : s);
+        setSellerDetail((d) => d ? { ...d, sellerStatus: "active" } : d);
+      }
+      toast({ title: "Seller approved ✅", description: "Seller status set to Verified." });
+    } catch (err: unknown) {
+      const msg = (err as Error).message || "Failed to approve seller";
+      setError(msg);
+      toast({ title: "Approval failed", description: msg, variant: "destructive" });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleReject = async (userId: string) => {
+    setActionLoading(userId);
+    setError(null);
+    try {
+      const res = await authorizedFetch("/.netlify/functions/admin-sellers", {
+        method: "POST",
+        body: JSON.stringify({ op: "reject", userId }),
+      });
+      await handleJson<{ success: boolean }>(res);
+      setSellers((prev) => prev.map((s) =>
+        s.userId === userId ? { ...s, sellerStatus: "suspended" } : s
+      ));
+      if (selectedSeller?.userId === userId) {
+        setSelectedSeller((s) => s ? { ...s, sellerStatus: "suspended" } : s);
+        setSellerDetail((d) => d ? { ...d, sellerStatus: "suspended" } : d);
+      }
+      toast({ title: "Seller rejected", description: "Seller application has been rejected." });
+    } catch (err: unknown) {
+      const msg = (err as Error).message || "Failed to reject seller";
+      setError(msg);
+      toast({ title: "Rejection failed", description: msg, variant: "destructive" });
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const handleSendWarning = async (userId: string) => {
     setActionLoading(userId);
@@ -420,6 +478,20 @@ const AdminSellerManagement = () => {
                       ? <Loader2 className="h-4 w-4 animate-spin" />
                       : <AlertCircle className="h-4 w-4" />}
                   </Button>
+                  {/* Approve: shown for submitted/draft sellers who are not yet active */}
+                  {(s.sellerStatus === "submitted" || s.sellerStatus === "draft") && (
+                    <Button
+                      variant="ghost" size="icon"
+                      className="h-8 w-8 text-emerald-400 hover:bg-emerald-500/10"
+                      onClick={() => handleApprove(s.userId)}
+                      disabled={actionLoading === s.userId}
+                      title="Approve seller"
+                    >
+                      {actionLoading === s.userId
+                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                        : <CheckCircle className="h-4 w-4" />}
+                    </Button>
+                  )}
                   {/* Force-activate: shown when Stripe is active but seller is stuck in draft/submitted */}
                   {canForceActivate(s) && (
                     <Button
@@ -524,12 +596,12 @@ const AdminSellerManagement = () => {
             <Zap className="h-3.5 w-3.5 mr-1" /> Active
           </TabsTrigger>
           <TabsTrigger value="in-progress" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">
-            Setup in Progress
+            Pending Verification
             {inProgressCount > 0 && (
               <Badge variant="outline" className="ml-2 text-xs border-white/20 text-slate-500">{inProgressCount}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="suspended" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">Suspended</TabsTrigger>
+          <TabsTrigger value="suspended" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">Restricted</TabsTrigger>
         </TabsList>
 
         {(["all", "active", "in-progress", "suspended"] as const).map((tab) => (
@@ -661,6 +733,29 @@ const AdminSellerManagement = () => {
                         </div>
                       </div>
                     )}
+                    {/* UK Business Address */}
+                    {sellerDetail?.businessAddress && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-0.5">Business Address</p>
+                        <div className="flex items-start gap-1.5">
+                          <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                          <div>
+                            {sellerDetail.businessAddress.address && <p className="font-medium text-sm">{sellerDetail.businessAddress.address}</p>}
+                            {sellerDetail.businessAddress.city && <p className="text-muted-foreground text-xs">{sellerDetail.businessAddress.city}</p>}
+                            {sellerDetail.businessAddress.postcode && <p className="font-mono text-xs text-white">{sellerDetail.businessAddress.postcode}</p>}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {sellerDetail?.contactPhone && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-0.5">Contact Phone</p>
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                          <p className="font-medium">{sellerDetail.contactPhone}</p>
+                        </div>
+                      </div>
+                    )}
                     <div>
                       <p className="text-xs text-muted-foreground mb-0.5">Seller Status</p>
                       <Badge variant="outline" className={statusColor[selectedSeller.sellerStatus]}>
@@ -702,10 +797,37 @@ const AdminSellerManagement = () => {
                   </div>
                 </section>
 
-                {/* Admin Actions */}
                 <section>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Admin Actions</h3>
                   <div className="flex flex-wrap gap-2">
+                    {/* Approve — available for non-active sellers */}
+                    {selectedSeller.sellerStatus !== "active" && selectedSeller.sellerStatus !== "suspended" && (
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => handleApprove(selectedSeller.userId)}
+                        disabled={actionLoading === selectedSeller.userId}
+                      >
+                        {actionLoading === selectedSeller.userId
+                          ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                          : <CheckCircle className="h-4 w-4 mr-1.5" />}
+                        Approve Seller
+                      </Button>
+                    )}
+                    {/* Reject — available for pending/draft sellers */}
+                    {(selectedSeller.sellerStatus === "submitted" || selectedSeller.sellerStatus === "draft") && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleReject(selectedSeller.userId)}
+                        disabled={actionLoading === selectedSeller.userId}
+                      >
+                        {actionLoading === selectedSeller.userId
+                          ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                          : <ShieldOff className="h-4 w-4 mr-1.5" />}
+                        Reject Application
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -723,7 +845,7 @@ const AdminSellerManagement = () => {
                         className="bg-emerald-600 hover:bg-emerald-700 text-white"
                         onClick={() => handleForceActivate(selectedSeller.userId)}
                         disabled={actionLoading === selectedSeller.userId}
-                        title="Force-activate this seller immediately"
+                        title="Force-activate this seller immediately (bypasses Stripe check)"
                       >
                         {actionLoading === selectedSeller.userId
                           ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
@@ -741,7 +863,7 @@ const AdminSellerManagement = () => {
                         {actionLoading === selectedSeller.userId
                           ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                           : <ShieldOff className="h-4 w-4 mr-1.5" />}
-                        Suspend Seller
+                        Restrict Seller
                       </Button>
                     ) : (
                       <Button
@@ -753,7 +875,7 @@ const AdminSellerManagement = () => {
                         {actionLoading === selectedSeller.userId
                           ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                           : <RefreshCw className="h-4 w-4 mr-1.5" />}
-                        Lift Suspension
+                        Lift Restriction
                       </Button>
                     )}
                     <Button
