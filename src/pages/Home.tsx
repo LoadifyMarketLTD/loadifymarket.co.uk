@@ -41,7 +41,7 @@ function SkeletonProductCard() {
   return (
     <div
       className="flex-shrink-0 rounded-2xl bg-white/[0.04] animate-pulse"
-      style={{ width: 168, height: 220 }}
+      style={{ width: 'clamp(150px, 43vw, 180px)', height: 'clamp(200px, 52vw, 220px)' }}
     />
   );
 }

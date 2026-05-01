@@ -284,31 +284,85 @@ export default function MobileHeroBanner() {
             return (
               <div
                 key={i}
-                className="relative flex-shrink-0 w-full p-5 flex items-center min-h-[200px]"
+                className="relative flex-shrink-0 w-full flex items-center"
+                style={{ padding: 'clamp(14px, 4vw, 20px)', minHeight: 'clamp(180px, 44vw, 220px)' }}
                 aria-hidden={i !== current}
               >
-                {/* Left text */}
-                <div className="z-10 max-w-[55%]">
-                  <h2 className="text-[34px] leading-[38px] font-extrabold text-[#F5C76E]">
+                {/* Left text — fluid width, wraps gracefully on narrow screens */}
+                <div style={{ zIndex: 10, width: '58%', minWidth: 0 }}>
+                  <h2
+                    style={{
+                      fontSize: 'clamp(20px, 6.5vw, 34px)',
+                      lineHeight: 1.12,
+                      fontWeight: 800,
+                      color: '#F5C76E',
+                      margin: 0,
+                      wordBreak: 'break-word',
+                    }}
+                  >
                     {slide.title}
                   </h2>
-                  <p className="text-white font-semibold mt-1 text-sm leading-snug">
+                  <p
+                    style={{
+                      color: '#FFFFFF',
+                      fontWeight: 600,
+                      marginTop: '4px',
+                      fontSize: 'clamp(10px, 3vw, 13px)',
+                      lineHeight: 1.3,
+                    }}
+                  >
                     {slide.subtitle}
                   </p>
-                  <p className="text-gray-400 text-sm mt-1">
+                  <p
+                    style={{
+                      color: 'rgba(255,255,255,0.55)',
+                      marginTop: '4px',
+                      fontSize: 'clamp(10px, 2.8vw, 13px)',
+                      lineHeight: 1.3,
+                    }}
+                  >
                     {slide.desc}
                   </p>
                   <button
                     onClick={() => handleCTA(slide.action, slide.requiresSeller)}
                     tabIndex={i !== current ? -1 : 0}
-                    className="mt-4 bg-gradient-to-r from-[#F5C76E] to-[#D4A94D] text-black font-semibold px-4 py-2 rounded-lg shadow-md active:scale-95 transition-transform"
+                    style={{
+                      marginTop: 'clamp(10px, 3vw, 16px)',
+                      background: 'linear-gradient(90deg, #F5C76E, #D4A94D)',
+                      color: '#000',
+                      fontWeight: 700,
+                      padding: 'clamp(6px, 1.8vw, 8px) clamp(12px, 3.5vw, 18px)',
+                      borderRadius: '10px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: 'clamp(11px, 3vw, 13px)',
+                      boxShadow: '0 3px 12px rgba(200,134,10,0.35)',
+                      transition: 'transform 0.15s',
+                      display: 'inline-block',
+                      whiteSpace: 'nowrap',
+                    }}
+                    onTouchStart={(e) => { (e.currentTarget as HTMLElement).style.transform = 'scale(0.95)'; }}
+                    onTouchEnd={(e)   => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
                   >
                     {slide.cta}
                   </button>
                 </div>
 
                 {/* Right visual — inline SVG only, no background image */}
-                <div className="absolute right-0 bottom-0 w-[52%] h-full flex items-end justify-end pointer-events-none">
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    right: 0,
+                    bottom: 0,
+                    width: '45%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    justifyContent: 'flex-end',
+                    pointerEvents: 'none',
+                  }}
+                >
                   <Visual />
                 </div>
               </div>

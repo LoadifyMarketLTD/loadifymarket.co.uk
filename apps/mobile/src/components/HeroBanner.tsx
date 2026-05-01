@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { COLORS } from '../constants/theme';
+
+const SCREEN_W = Dimensions.get('window').width;
 
 export const HeroBanner: React.FC = () => {
   return (
@@ -32,7 +34,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.card,
     borderRadius: 16,
-    padding: 20,
+    padding: Math.max(14, SCREEN_W * 0.04),
     flexDirection: 'row',
     marginHorizontal: 16,
     marginBottom: 24,
@@ -41,26 +43,30 @@ const styles = StyleSheet.create({
   left: {
     flex: 1,
     gap: 6,
+    minWidth: 0,
   },
   commission: {
     color: COLORS.gold,
-    fontSize: 22,
+    // Fluid font: scales with screen but never smaller than 16 or larger than 22
+    fontSize: Math.min(22, Math.max(16, SCREEN_W * 0.055)),
     fontWeight: '700',
   },
   keep: {
     color: COLORS.textPrimary,
-    fontSize: 16,
+    fontSize: Math.min(15, Math.max(12, SCREEN_W * 0.038)),
     fontWeight: '700',
+    flexWrap: 'wrap',
   },
   sub: {
     color: COLORS.textSecondary,
-    fontSize: 13,
+    fontSize: Math.min(13, Math.max(11, SCREEN_W * 0.033)),
     marginBottom: 4,
+    flexWrap: 'wrap',
   },
   btn: {
     backgroundColor: COLORS.gold,
     borderRadius: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: Math.max(12, SCREEN_W * 0.035),
     paddingVertical: 8,
     alignSelf: 'flex-start',
     marginTop: 4,
@@ -68,7 +74,7 @@ const styles = StyleSheet.create({
   btnText: {
     color: '#000',
     fontWeight: '700',
-    fontSize: 13,
+    fontSize: Math.min(13, Math.max(11, SCREEN_W * 0.033)),
   },
   right: {
     alignItems: 'center',
@@ -77,9 +83,9 @@ const styles = StyleSheet.create({
   },
   bigZero: {
     color: COLORS.gold,
-    fontSize: 64,
+    fontSize: Math.min(64, Math.max(48, SCREEN_W * 0.15)),
     fontWeight: '700',
-    lineHeight: 68,
+    lineHeight: Math.min(68, Math.max(52, SCREEN_W * 0.16)),
   },
   badge: {
     backgroundColor: 'rgba(245,185,66,0.2)',
