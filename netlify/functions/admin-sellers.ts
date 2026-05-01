@@ -446,7 +446,8 @@ export const handler: Handler = async (event) => {
       }
       const { error: approveError } = await admin
         .from('seller_profiles')
-        .upsert({ userId, sellerStatus: 'active' }, { onConflict: 'userId' });
+        .update({ sellerStatus: 'active' })
+        .eq('userId', userId);
       if (approveError) {
         throw new Error(`approve failed: ${approveError.message}`);
       }
@@ -465,7 +466,8 @@ export const handler: Handler = async (event) => {
       }
       const { error: rejectError } = await admin
         .from('seller_profiles')
-        .upsert({ userId, sellerStatus: 'suspended' }, { onConflict: 'userId' });
+        .update({ sellerStatus: 'suspended' })
+        .eq('userId', userId);
       if (rejectError) {
         throw new Error(`reject failed: ${rejectError.message}`);
       }

@@ -70,9 +70,21 @@ export default function RequireEmailVerified({ children }: Props) {
   const handleRefresh = async () => {
     try {
       const { supabase } = await import('../../lib/supabase');
-      await supabase.auth.refreshSession();
-      // Force a full page reload so the auth store gets a fresh session
-      // with the updated email_confirmed_at field.
+      // Refresh the session — Supabase will return an updated token if the user
+      // has since confirmed their email (email_confirmed_at will be set).
+      const { data } = await supabase.auth.refreshSession();
+      if (data.session) {
+        // Re-fetch the user profile so the auth store gets the updated
+        // isEmailVerified flag without a full page reload.
+        const { data: authUser } = await supabase.auth.getUser();
+        if (authUser.user?.email_confirmed_at) {
+          // Trigger a full reload so App.tsx re-runs its onAuthStateChange
+          // listener and re-fetches the user profile from the DB.
+          window.location.reload();
+          return;
+        }
+      }
+      // Session refresh didn't reveal a confirmed email — tell the user.
       window.location.reload();
     } catch {
       window.location.reload();

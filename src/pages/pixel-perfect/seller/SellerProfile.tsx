@@ -83,6 +83,7 @@ const SellerProfile = () => {
   const [sellerStatus, setSellerStatus] = useState<string>("draft");
   const [postcodeError, setPostcodeError] = useState<string | null>(null);
   const [postcodeLoading, setPostcodeLoading] = useState(false);
+  const [postcodeVerified, setPostcodeVerified] = useState(false);
   const businessNameWarning = getBusinessNameWarning(form.businessName);
 
   useEffect(() => {
@@ -149,6 +150,7 @@ const SellerProfile = () => {
 
     setPostcodeLoading(true);
     setPostcodeError(null);
+    setPostcodeVerified(false);
 
     try {
       const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(raw)}`);
@@ -161,15 +163,19 @@ const SellerProfile = () => {
 
       const { admin_district, country } = data.result;
 
-      if (!country.toLowerCase().includes("england") &&
-          !country.toLowerCase().includes("wales") &&
-          !country.toLowerCase().includes("scotland") &&
-          !country.toLowerCase().includes("northern ireland") &&
-          !country.toLowerCase().includes("united kingdom")) {
+      // Validate that the postcode is within the UK.
+      // api.postcodes.io returns "England", "Wales", "Scotland", or "Northern Ireland"
+      // for the country field on UK postcodes.
+      const ukTerms = ["england", "wales", "scotland", "northern ireland", "united kingdom"];
+      const countryLower = country.toLowerCase();
+      const isUK = ukTerms.some((term) => countryLower.includes(term));
+
+      if (!isUK) {
         setPostcodeError("Only UK sellers are accepted on Loadify Market.");
         return;
       }
 
+      setPostcodeVerified(true);
       setForm((prev) => ({
         ...prev,
         postcode: raw,
@@ -198,6 +204,11 @@ const SellerProfile = () => {
     if (form.postcode.trim() && !isValidUKPostcode(form.postcode)) {
       setPostcodeError("Please enter a valid UK postcode before saving.");
       toast({ title: "Invalid postcode", description: "Please enter a valid UK postcode.", variant: "destructive" });
+      return;
+    }
+    if (form.postcode.trim() && isValidUKPostcode(form.postcode) && !postcodeVerified) {
+      setPostcodeError("Please click the search icon to verify your postcode.");
+      toast({ title: "Postcode not verified", description: "Please verify your UK postcode using the search button.", variant: "destructive" });
       return;
     }
     // ─────────────────────────────────────────────────────────────────────────
@@ -434,9 +445,10 @@ const SellerProfile = () => {
                   onChange={(e) => {
                     updateField("postcode", e.target.value);
                     setPostcodeError(null);
+                    setPostcodeVerified(false);
                   }}
                   placeholder="e.g. SW1A 1AA"
-                  className={postcodeError ? "border-red-500 focus:border-red-500" : ""}
+                  className={postcodeError ? "border-red-500 focus:border-red-500" : postcodeVerified ? "border-emerald-500" : ""}
                 />
                 <Button
                   type="button"

@@ -28,9 +28,10 @@ export default function VerificationBadge({
       <div
         className={`inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 font-semibold ${sizeClasses[size]}`}
         title="Verified Seller"
+        aria-label="Verified Seller"
       >
-        <ShieldCheck className={iconSizes[size]} />
-        {showLabel && <span>Verified Seller ✅</span>}
+        <ShieldCheck className={iconSizes[size]} aria-hidden="true" />
+        {showLabel && <span>Verified Seller</span>}
       </div>
     );
   }
@@ -39,9 +40,10 @@ export default function VerificationBadge({
     <div
       className={`inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 font-semibold ${sizeClasses[size]}`}
       title="Unverified seller"
+      aria-label="Unverified seller"
     >
-      <AlertTriangle className={iconSizes[size]} />
-      {showLabel && <span>Unverified ⚠️</span>}
+      <AlertTriangle className={iconSizes[size]} aria-hidden="true" />
+      {showLabel && <span>Unverified</span>}
     </div>
   );
 }
