@@ -87,7 +87,9 @@ function CookieConsentBanner() {
   if (!visible) return null;
 
   return (
-    // On mobile: sits above bottom nav (BOTTOM_NAV_HEIGHT). On desktop: full-width bar.
+    // On mobile: sits above bottom nav (BOTTOM_NAV_HEIGHT px — hardcoded string required
+    // for Tailwind's static class scanner; keep in sync with BOTTOM_NAV_HEIGHT above).
+    // On desktop: full-width bar at bottom of page.
     <div className="fixed bottom-0 left-0 right-0 z-[100] animate-in slide-in-from-bottom-4 duration-500 mb-[60px] sm:mb-0">
       <div className="bg-card border-t border-border shadow-elevated max-h-[160px] overflow-y-auto sm:max-h-none sm:overflow-visible">
         <div className="container mx-auto px-4 py-3 sm:py-4">
