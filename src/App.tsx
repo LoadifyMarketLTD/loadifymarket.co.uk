@@ -13,6 +13,9 @@ import RequireSellerAny from './components/auth/RequireSellerAny';
 import RequireBuyer from './components/auth/RequireBuyer';
 import RequireEmailVerified from './components/auth/RequireEmailVerified';
 
+// ─── Auth callback — OAuth redirect landing page ──────────────────────────────
+const AuthCallbackPage    = lazy(() => import('./pages/AuthCallbackPage'));
+
 // ─── Mobile standalone pages ──────────────────────────────────────────────────
 const MobileInboxPage     = lazy(() => import('./pages/MobileInboxPage'));
 const MobileChatPage      = lazy(() => import('./pages/MobileChatPage'));
@@ -392,6 +395,9 @@ function App() {
         <Route path="trade-account" element={<Suspense fallback={<PageLoader />}><PPTradeAccount /></Suspense>} />
         <Route path="forgot-password" element={<Suspense fallback={<PageLoader />}><PPForgotPassword /></Suspense>} />
         <Route path="reset-password" element={<Suspense fallback={<PageLoader />}><PPResetPassword /></Suspense>} />
+
+        {/* OAuth callback — Supabase redirects here after Google / social login */}
+        <Route path="auth/callback" element={<Suspense fallback={<PageLoader />}><AuthCallbackPage /></Suspense>} />
 
         {/* /pp — pixel-perfect homepage (preview/alternate root) */}
         <Route path="pp" element={<Navigate to="/" replace />} />

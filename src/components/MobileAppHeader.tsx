@@ -7,14 +7,16 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, SlidersHorizontal } from 'lucide-react';
+import { Bell, Search, SlidersHorizontal } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
+import MobileSearchOverlay from '@/components/MobileSearchOverlay';
 
 export default function MobileAppHeader() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [unread, setUnread] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -34,6 +36,7 @@ export default function MobileAppHeader() {
     return () => { cancelled = true; };
   }, [user?.id]);
   return (
+    <>
     <header
       className="flex items-center justify-between px-4"
       style={{
@@ -113,8 +116,28 @@ export default function MobileAppHeader() {
         </div>
       </div>
 
-      {/* ── Right: bell + filter ─── */}
+      {/* ── Right: search + bell + filter ─── */}
       <div className="flex items-center gap-2">
+        {/* Search icon — opens full-screen overlay */}
+        <button
+          onClick={() => setSearchOpen(true)}
+          aria-label="Open search"
+          style={{
+            padding: '6px',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Search
+            style={{ width: 20, height: 20, color: 'rgba(255,255,255,0.80)' }}
+            aria-hidden="true"
+          />
+        </button>
+
         {/* Bell with badge — navigates to inbox */}
         <button
           onClick={() => navigate('/inbox')}
@@ -184,5 +207,9 @@ export default function MobileAppHeader() {
         </button>
       </div>
     </header>
+
+    {/* Full-screen search overlay — rendered outside the header flow */}
+    {searchOpen && <MobileSearchOverlay onClose={() => setSearchOpen(false)} />}
+  </>
   );
 }

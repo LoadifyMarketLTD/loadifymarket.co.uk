@@ -57,6 +57,10 @@ function NavItem({
           color: isActive ? '#F5B942' : 'rgba(255,255,255,0.40)',
           lineHeight: 1,
           transition: 'color 0.2s',
+          maxWidth: '52px',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}
       >
         {label}
@@ -134,6 +138,10 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
           fontWeight: isActive ? 700 : 400,
           color: isActive ? '#F5B942' : 'rgba(255,255,255,0.40)',
           lineHeight: 1,
+          maxWidth: '52px',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}
       >
         Messages
@@ -178,7 +186,7 @@ export default function MobileBottomNav() {
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
-      <div style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-around' }}>
+      <div style={{ minHeight: '60px', display: 'flex', alignItems: 'center', justifyContent: 'space-around', paddingTop: '4px', paddingBottom: '4px' }}>
 
         {/* Home */}
         <NavItem to="/" icon={Home} label="Home" isActive={isHomeActive} exact />

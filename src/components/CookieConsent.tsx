@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Cookie, ChevronDown, ChevronUp } from "lucide-react";
 import { safeLocalStorage } from "@/lib/safeStorage";
-import { Capacitor } from "@capacitor/core";
+import { isCapacitorNative } from "@/lib/capacitorUtils";
 
 type CookiePreferences = {
   essential: boolean; // always true
@@ -37,7 +37,7 @@ const updateGtagConsent = (analytics: boolean) => {
 };
 
 // Evaluated once at module load — safe as a constant (never changes at runtime).
-const IS_NATIVE = Capacitor.isNativePlatform();
+const IS_NATIVE = isCapacitorNative();
 
 function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
@@ -84,10 +84,11 @@ function CookieConsentBanner() {
   if (!visible) return null;
 
   return (
-    // On mobile: sits above bottom nav (BOTTOM_NAV_HEIGHT px — hardcoded string required
-    // for Tailwind's static class scanner; keep in sync with BOTTOM_NAV_HEIGHT above).
-    // On desktop: full-width bar at bottom of page.
-    <div className="fixed bottom-0 left-0 right-0 z-[100] animate-in slide-in-from-bottom-4 duration-500 mb-[60px] sm:mb-0">
+    // On mobile: sits above bottom nav. We use a CSS utility class (defined in
+    // index.css) that adds calc(60px + env(safe-area-inset-bottom, 0px)) so it
+    // stays clear of the nav on tall-notch devices too.
+    // On desktop: full-width bar at bottom of page (mb-0).
+    <div className="fixed bottom-0 left-0 right-0 z-[100] animate-in slide-in-from-bottom-4 duration-500 mb-safearea-nav sm:mb-0">
       <div className="bg-card border-t border-border shadow-elevated max-h-[160px] overflow-y-auto sm:max-h-none sm:overflow-visible">
         <div className="container mx-auto px-4 py-3 sm:py-4">
           {/* Main row */}
