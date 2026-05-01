@@ -21,7 +21,6 @@ import MainLayout from "@/layouts/MainLayout";
 import MobileAppHeader from "@/components/MobileAppHeader";
 import MobileCategoryShortcuts from "@/components/MobileCategoryShortcuts";
 import MobileHeroBanner from "@/components/MobileHeroBanner";
-import MobileSearchBar from "@/components/MobileSearchBar";
 import MobileProductCard from "@/components/MobileProductCard";
 import { useMobileProducts } from "@/hooks/useMobileProducts";
 import type { Product } from "@/components/catalog/ProductCard";
@@ -55,13 +54,10 @@ function MobileHome() {
       {/* 1. App Header */}
       <MobileAppHeader />
 
-      {/* 2. Search Bar */}
-      <MobileSearchBar />
-
-      {/* 3. Category row */}
+      {/* 2. Category row */}
       <MobileCategoryShortcuts />
 
-      {/* 4. Hero Banner */}
+      {/* 3. Hero Banner */}
       <MobileHeroBanner />
 
       {/* 5. Trending Now */}
