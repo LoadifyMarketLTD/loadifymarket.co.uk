@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Cookie, ChevronDown, ChevronUp } from "lucide-react";
 import { safeLocalStorage } from "@/lib/safeStorage";
-import { Capacitor } from "@capacitor/core";
+import { isCapacitorNative } from "@/lib/capacitorUtils";
 
 type CookiePreferences = {
   essential: boolean; // always true
@@ -37,7 +37,7 @@ const updateGtagConsent = (analytics: boolean) => {
 };
 
 // Evaluated once at module load — safe as a constant (never changes at runtime).
-const IS_NATIVE = Capacitor.isNativePlatform();
+const IS_NATIVE = isCapacitorNative();
 
 function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
