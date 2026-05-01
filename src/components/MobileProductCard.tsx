@@ -35,22 +35,22 @@ export default function MobileProductCard({
     <Link
       to={`/product/${id}`}
       className="flex-shrink-0 active:scale-95 transition-transform"
-      style={{ width: 168, display: 'block', textDecoration: 'none' }}
+      style={{ width: 'clamp(150px, 43vw, 180px)', display: 'block', textDecoration: 'none' }}
       aria-label={title}
     >
       <div
         style={{
-          width: 168,
+          width: '100%',
           background: '#111216',
           borderRadius: 16,
           overflow: 'hidden',
           border: '1px solid rgba(255,255,255,0.07)',
         }}
       >
-        {/* ── Image area ── */}
+        {/* ── Image area — uses aspect-ratio so height scales with card width ── */}
         <div
           style={{
-            height: 140,
+            aspectRatio: '16 / 11',
             position: 'relative',
             overflow: 'hidden',
             background: '#1C1C24',

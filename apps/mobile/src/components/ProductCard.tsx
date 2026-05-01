@@ -1,7 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { COLORS, RADIUS } from '../constants/theme';
+
+// Card width scales relative to screen: ~42% of screen, clamped between 145–180dp
+const SCREEN_W = Dimensions.get('window').width;
+const CARD_W = Math.min(180, Math.max(145, Math.round(SCREEN_W * 0.42)));
 
 interface ProductCardProps {
   title: string;
@@ -51,14 +55,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    width: 160,
+    width: CARD_W,
     backgroundColor: COLORS.card,
     borderRadius: RADIUS.card,
     overflow: 'hidden',
     marginRight: 12,
   },
   imageArea: {
-    height: 130,
+    // Aspect-ratio-like: height = card width * ~80%
+    height: Math.round(CARD_W * 0.82),
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',

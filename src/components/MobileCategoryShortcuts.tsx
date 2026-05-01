@@ -18,6 +18,7 @@ interface Category {
   label: string;
   icon: LucideIcon;
   to: string;
+  ariaLabel?: string;
 }
 
 const CATEGORIES: Category[] = [
@@ -26,7 +27,7 @@ const CATEGORIES: Category[] = [
   { id: 'laptops',  label: 'Laptops',  icon: Laptop,         to: '/catalog?q=laptop' },
   { id: 'watches',  label: 'Watches',  icon: Watch,          to: '/catalog?q=watch' },
   { id: 'vehicles', label: 'Vehicles', icon: Car,            to: '/category/automotive' },
-  { id: 'more',     label: 'More',     icon: MoreHorizontal, to: '/catalog' },
+  { id: 'more',     label: 'More',     icon: MoreHorizontal, to: '/catalog',            ariaLabel: 'Browse all categories' },
 ];
 
 export default function MobileCategoryShortcuts() {
@@ -39,7 +40,7 @@ export default function MobileCategoryShortcuts() {
       aria-label="Browse by category"
     >
       <div style={{ display: 'flex', gap: '24px', width: 'max-content' }}>
-        {CATEGORIES.map(({ id, label, icon: Icon, to }) => {
+        {CATEGORIES.map(({ id, label, icon: Icon, to, ariaLabel }) => {
           const isActive = active === id;
 
           return (
@@ -49,7 +50,7 @@ export default function MobileCategoryShortcuts() {
               onClick={() => setActive(id)}
               className="flex flex-col items-center active:scale-95 transition-transform"
               style={{ gap: '6px', textDecoration: 'none' }}
-              aria-label={`Browse ${label}`}
+              aria-label={ariaLabel ?? `Browse ${label}`}
               aria-current={isActive ? 'page' : undefined}
             >
               {isActive ? (

@@ -4,7 +4,8 @@
 // Each slide has real text, a real CTA button, real navigation, and an inline
 // SVG visual on the right side only (no full-background images).
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import type React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store';
 import { hasSellerAccess } from '@/lib/roleUtils';
@@ -216,29 +217,30 @@ const SLIDES = [
 ] as const;
 
 /* ─── Carousel component ──────────────────────────────────────────────────── */
+
+// Dot button: 44×44px invisible touch target with small visual dot centred inside.
+const DOT_BUTTON_STYLE: React.CSSProperties = {
+  width: 44, height: 44,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+};
+const dotVisualStyle = (active: boolean): React.CSSProperties => ({
+  display: 'block',
+  width: 8, height: 8,
+  borderRadius: '50%',
+  backgroundColor: active ? '#F5C76E' : 'rgba(255,255,255,0.3)',
+  transition: 'background-color 0.2s',
+});
 export default function MobileHeroBanner() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [current, setCurrent] = useState(0);
   const touchStartX = useRef<number | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const startTimer = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setCurrent(c => (c + 1) % SLIDES.length);
-    }, 4000);
-  }, []);
-
-  useEffect(() => {
-    startTimer();
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [startTimer]);
-
+  // No autoplay — carousel only moves on swipe or dot tap.
   const goTo = useCallback((idx: number) => {
     setCurrent(idx);
-    startTimer();
-  }, [startTimer]);
+  }, []);
 
   const handleCTA = (action: string, requiresSeller: boolean) => {
     if (requiresSeller && hasSellerAccess(user)) {
@@ -282,30 +284,85 @@ export default function MobileHeroBanner() {
             return (
               <div
                 key={i}
-                className="relative flex-shrink-0 w-full p-5 flex items-center min-h-[200px]"
+                className="relative flex-shrink-0 w-full flex items-center"
+                style={{ padding: 'clamp(14px, 4vw, 20px)', minHeight: 'clamp(180px, 44vw, 220px)' }}
                 aria-hidden={i !== current}
               >
-                {/* Left text */}
-                <div className="z-10 max-w-[55%]">
-                  <h2 className="text-[34px] leading-[38px] font-extrabold text-[#F5C76E]">
+                {/* Left text — fluid width, wraps gracefully on narrow screens */}
+                <div style={{ zIndex: 10, width: '58%', minWidth: 0 }}>
+                  <h2
+                    style={{
+                      fontSize: 'clamp(20px, 6.5vw, 34px)',
+                      lineHeight: 1.12,
+                      fontWeight: 800,
+                      color: '#F5C76E',
+                      margin: 0,
+                      wordBreak: 'break-word',
+                    }}
+                  >
                     {slide.title}
                   </h2>
-                  <p className="text-white font-semibold mt-1 text-sm leading-snug">
+                  <p
+                    style={{
+                      color: '#FFFFFF',
+                      fontWeight: 600,
+                      marginTop: '4px',
+                      fontSize: 'clamp(10px, 3vw, 13px)',
+                      lineHeight: 1.3,
+                    }}
+                  >
                     {slide.subtitle}
                   </p>
-                  <p className="text-gray-400 text-sm mt-1">
+                  <p
+                    style={{
+                      color: 'rgba(255,255,255,0.55)',
+                      marginTop: '4px',
+                      fontSize: 'clamp(10px, 2.8vw, 13px)',
+                      lineHeight: 1.3,
+                    }}
+                  >
                     {slide.desc}
                   </p>
                   <button
                     onClick={() => handleCTA(slide.action, slide.requiresSeller)}
-                    className="mt-4 bg-gradient-to-r from-[#F5C76E] to-[#D4A94D] text-black font-semibold px-4 py-2 rounded-lg shadow-md active:scale-95 transition-transform"
+                    tabIndex={i !== current ? -1 : 0}
+                    style={{
+                      marginTop: 'clamp(10px, 3vw, 16px)',
+                      background: 'linear-gradient(90deg, #F5C76E, #D4A94D)',
+                      color: '#000',
+                      fontWeight: 700,
+                      padding: 'clamp(6px, 1.8vw, 8px) clamp(12px, 3.5vw, 18px)',
+                      borderRadius: '10px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: 'clamp(11px, 3vw, 13px)',
+                      boxShadow: '0 3px 12px rgba(200,134,10,0.35)',
+                      transition: 'transform 0.15s',
+                      display: 'inline-block',
+                      whiteSpace: 'nowrap',
+                    }}
+                    onTouchStart={(e) => { (e.currentTarget as HTMLElement).style.transform = 'scale(0.95)'; }}
+                    onTouchEnd={(e)   => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
                   >
                     {slide.cta}
                   </button>
                 </div>
 
                 {/* Right visual — inline SVG only, no background image */}
-                <div className="absolute right-0 bottom-0 w-[52%] h-full flex items-end justify-end pointer-events-none">
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    right: 0,
+                    bottom: 0,
+                    width: '45%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    justifyContent: 'flex-end',
+                    pointerEvents: 'none',
+                  }}
+                >
                   <Visual />
                 </div>
               </div>
@@ -314,8 +371,8 @@ export default function MobileHeroBanner() {
         </div>
       </div>
 
-      {/* Clickable dots */}
-      <div className="flex justify-center gap-2 mt-3" role="tablist" aria-label="Carousel navigation">
+      {/* Clickable dots — 44×44 touch target wrapping small visual dot */}
+      <div className="flex justify-center gap-1 mt-3" role="tablist" aria-label="Carousel navigation">
         {SLIDES.map((_, i) => (
           <button
             key={i}
@@ -323,8 +380,10 @@ export default function MobileHeroBanner() {
             aria-selected={i === current}
             aria-label={`Go to slide ${i + 1}`}
             onClick={() => goTo(i)}
-            className={`w-2 h-2 rounded-full transition-colors ${i === current ? 'bg-[#F5C76E]' : 'bg-gray-500'}`}
-          />
+            style={DOT_BUTTON_STYLE}
+          >
+            <span style={dotVisualStyle(i === current)} />
+          </button>
         ))}
       </div>
     </div>
