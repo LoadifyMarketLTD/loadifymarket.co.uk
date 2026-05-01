@@ -39,9 +39,6 @@ const updateGtagConsent = (analytics: boolean) => {
 // Evaluated once at module load — safe as a constant (never changes at runtime).
 const IS_NATIVE = Capacitor.isNativePlatform();
 
-// Must match MobileBottomNav height (MobileBottomNav.tsx: height 60px).
-const BOTTOM_NAV_HEIGHT = 60;
-
 function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
