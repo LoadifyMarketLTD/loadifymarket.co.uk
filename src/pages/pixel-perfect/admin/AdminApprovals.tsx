@@ -110,11 +110,13 @@ async function authorizedFetch(
   }
 
   if (!session?.access_token) {
+    console.error('[authorizedFetch] No session / access_token — request blocked before reaching Netlify', { path });
     throw new Error("Your session has expired. Please sign in again.");
   }
   const headers = new Headers(init.headers || {});
   headers.set("Content-Type", "application/json");
   headers.set("Authorization", `Bearer ${session.access_token}`);
+  console.log('[authorizedFetch] Dispatching fetch →', path);
   return fetch(path, { ...init, headers });
 }
 
@@ -169,6 +171,7 @@ const AdminSellerManagement = () => {
     setError(null);
     setErrorRetryable(true);
     try {
+      console.log('Calling admin-sellers API');
       const res = await authorizedFetch("/.netlify/functions/admin-sellers", {
         method: "GET",
       });
