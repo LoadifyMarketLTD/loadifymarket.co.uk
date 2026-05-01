@@ -29,6 +29,18 @@ const emptyAddress = (): AddressData => ({
   name: "", line1: "", line2: "", city: "", postcode: "", country: "United Kingdom",
 });
 
+/** Shape of a successful postcodes.io single-lookup response. */
+interface PostcodesIoResponse {
+  status: number;
+  result?: {
+    postcode?: string;
+    admin_district?: string;
+    post_town?: string;
+    admin_county?: string;
+    country?: string;
+  };
+}
+
 const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
@@ -45,13 +57,13 @@ const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
   const handleFindAddress = async () => {
     const pc = (form.postcode ?? "").trim().replace(/\s+/g, "").toUpperCase();
     if (pc.length < 5) {
-      toast({ title: "Enter a postcode first", description: "Type a UK postcode in the Postcode field, then tap Find.", variant: "destructive" });
+      toast({ title: "Enter a postcode first", description: "Type a UK postcode in the Postcode field, then use the Find button.", variant: "destructive" });
       return;
     }
     setLookingUp(true);
     try {
       const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc)}`);
-      const json = await res.json() as { status: number; result?: { postcode?: string; admin_district?: string; post_town?: string; admin_county?: string; country?: string } };
+      const json = await res.json() as PostcodesIoResponse;
       if (json.status === 200 && json.result) {
         const r = json.result;
         setForm((prev) => ({
@@ -136,7 +148,7 @@ const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
                     )}
                   </Button>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Tap <strong>Find</strong> to auto-fill town & country from postcode.</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Use the <strong>Find</strong> button to auto-fill town &amp; country from postcode.</p>
               </div>
               <div>
                 <Label className="text-xs">Address Line 1 (house/flat number &amp; street)</Label>

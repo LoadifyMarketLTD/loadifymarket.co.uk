@@ -188,7 +188,7 @@ const Login = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <p className="text-[13px] text-red-700 leading-snug">
-                    Google sign-in was not completed. Please try again.
+                    Google sign-in was not completed or failed. Please try again, or sign in with email below.
                   </p>
                 </div>
               )}

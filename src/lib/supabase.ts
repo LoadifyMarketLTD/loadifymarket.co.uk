@@ -107,7 +107,8 @@ function buildCapacitorStorageAdapter(): SupportedStorage {
         const { Preferences } = await import('@capacitor/preferences');
         const { value } = await Preferences.get({ key });
         return value;
-      } catch {
+      } catch (err) {
+        console.warn('[supabase] Capacitor Preferences.get failed, falling back to localStorage', err);
         return window.localStorage.getItem(key);
       }
     },
@@ -115,7 +116,8 @@ function buildCapacitorStorageAdapter(): SupportedStorage {
       try {
         const { Preferences } = await import('@capacitor/preferences');
         await Preferences.set({ key, value });
-      } catch {
+      } catch (err) {
+        console.warn('[supabase] Capacitor Preferences.set failed, falling back to localStorage', err);
         window.localStorage.setItem(key, value);
       }
     },
@@ -123,7 +125,8 @@ function buildCapacitorStorageAdapter(): SupportedStorage {
       try {
         const { Preferences } = await import('@capacitor/preferences');
         await Preferences.remove({ key });
-      } catch {
+      } catch (err) {
+        console.warn('[supabase] Capacitor Preferences.remove failed, falling back to localStorage', err);
         window.localStorage.removeItem(key);
       }
     },
