@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MapPin, Home, Building2, Save, X } from "lucide-react";
+import { MapPin, Home, Building2, Save, X, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { useToast } from "@/hooks/use-toast";
@@ -29,15 +29,59 @@ const emptyAddress = (): AddressData => ({
   name: "", line1: "", line2: "", city: "", postcode: "", country: "United Kingdom",
 });
 
+/** Shape of a successful postcodes.io single-lookup response. */
+interface PostcodesIoResponse {
+  status: number;
+  result?: {
+    postcode?: string;
+    admin_district?: string;
+    post_town?: string;
+    admin_county?: string;
+    country?: string;
+  };
+}
+
 const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
+  const { toast } = useToast();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<AddressData>(data);
   const [saving, setSaving] = useState(false);
+  const [lookingUp, setLookingUp] = useState(false);
 
   useEffect(() => { setForm(data); }, [data]);
 
   const updateField = (field: keyof AddressData, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
+
+  /** Validates and autofills city/county/country from postcodes.io (free, no key required). */
+  const handleFindAddress = async () => {
+    const pc = (form.postcode ?? "").trim().replace(/\s+/g, "").toUpperCase();
+    if (pc.length < 5) {
+      toast({ title: "Enter a postcode first", description: "Type a UK postcode in the Postcode field, then use the Find button.", variant: "destructive" });
+      return;
+    }
+    setLookingUp(true);
+    try {
+      const res = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(pc)}`);
+      const json = await res.json() as PostcodesIoResponse;
+      if (json.status === 200 && json.result) {
+        const r = json.result;
+        setForm((prev) => ({
+          ...prev,
+          postcode: r.postcode ?? prev.postcode,
+          city: r.admin_district || r.post_town || prev.city || "",
+          country: "United Kingdom",
+        }));
+        toast({ title: "Postcode found", description: "Town and country have been filled in. Please complete the street address." });
+      } else {
+        toast({ title: "Postcode not found", description: "Check the postcode and try again.", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Lookup failed", description: "Unable to connect to the postcode service. Please fill the address manually.", variant: "destructive" });
+    } finally {
+      setLookingUp(false);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -71,42 +115,66 @@ const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
         </div>
 
         {editing ? (
-          <div className="space-y-3">
-            <div>
-              <Label className="text-xs">Full Name</Label>
-              <Input value={form.name ?? ""} onChange={(e) => updateField("name", e.target.value)} className="mt-1 h-8 text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs">Address Line 1</Label>
-              <Input value={form.line1 ?? ""} onChange={(e) => updateField("line1", e.target.value)} className="mt-1 h-8 text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs">Address Line 2</Label>
-              <Input value={form.line2 ?? ""} onChange={(e) => updateField("line2", e.target.value)} className="mt-1 h-8 text-sm" />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-3">
               <div>
-                <Label className="text-xs">City</Label>
+                <Label className="text-xs">Full Name</Label>
+                <Input value={form.name ?? ""} onChange={(e) => updateField("name", e.target.value)} className="mt-1 h-8 text-sm" />
+              </div>
+              {/* Postcode lookup row */}
+              <div>
+                <Label className="text-xs">Postcode</Label>
+                <div className="flex gap-1.5 mt-1">
+                  <Input
+                    value={form.postcode ?? ""}
+                    onChange={(e) => updateField("postcode", e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleFindAddress(); } }}
+                    className="h-8 text-sm uppercase"
+                    placeholder="e.g. SW1A 2AA"
+                    maxLength={8}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleFindAddress}
+                    disabled={lookingUp}
+                    className="text-xs shrink-0 h-8 px-2"
+                    title="Look up postcode to fill town & country"
+                  >
+                    {lookingUp ? (
+                      <span className="animate-spin text-base leading-none">⟳</span>
+                    ) : (
+                      <><Search className="h-3 w-3 mr-1" />Find</>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Use the <strong>Find</strong> button to auto-fill town &amp; country from postcode.</p>
+              </div>
+              <div>
+                <Label className="text-xs">Address Line 1 (house/flat number &amp; street)</Label>
+                <Input value={form.line1 ?? ""} onChange={(e) => updateField("line1", e.target.value)} className="mt-1 h-8 text-sm" placeholder="e.g. 12 High Street" />
+              </div>
+              <div>
+                <Label className="text-xs">Address Line 2</Label>
+                <Input value={form.line2 ?? ""} onChange={(e) => updateField("line2", e.target.value)} className="mt-1 h-8 text-sm" />
+              </div>
+              <div>
+                <Label className="text-xs">Town / City</Label>
                 <Input value={form.city ?? ""} onChange={(e) => updateField("city", e.target.value)} className="mt-1 h-8 text-sm" />
               </div>
               <div>
-                <Label className="text-xs">Postcode</Label>
-                <Input value={form.postcode ?? ""} onChange={(e) => updateField("postcode", e.target.value)} className="mt-1 h-8 text-sm" />
+                <Label className="text-xs">Country</Label>
+                <Input value={form.country ?? ""} onChange={(e) => updateField("country", e.target.value)} className="mt-1 h-8 text-sm" />
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <Button size="sm" className="text-xs" onClick={handleSave} disabled={saving}>
+                  <Save className="h-3 w-3 mr-1" />{saving ? "Saving…" : "Save"}
+                </Button>
+                <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setEditing(false); setForm(data); }}>
+                  <X className="h-3 w-3 mr-1" />Cancel
+                </Button>
               </div>
             </div>
-            <div>
-              <Label className="text-xs">Country</Label>
-              <Input value={form.country ?? ""} onChange={(e) => updateField("country", e.target.value)} className="mt-1 h-8 text-sm" />
-            </div>
-            <div className="flex items-center gap-2 pt-1">
-              <Button size="sm" className="text-xs" onClick={handleSave} disabled={saving}>
-                <Save className="h-3 w-3 mr-1" />{saving ? "Saving…" : "Save"}
-              </Button>
-              <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setEditing(false); setForm(data); }}>
-                <X className="h-3 w-3 mr-1" />Cancel
-              </Button>
-            </div>
-          </div>
         ) : hasData ? (
           <>
             <div className="text-sm text-muted-foreground space-y-0.5">

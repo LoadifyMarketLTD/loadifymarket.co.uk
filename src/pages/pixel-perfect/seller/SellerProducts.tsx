@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Package, Plus, Search, Pencil, Share2 } from "lucide-react";
+import { Plus, Search, Pencil, Share2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,6 +10,48 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { copyToClipboard } from "@/lib/clipboard";
+
+/** Branded Loadify Market "LM" placeholder shown when a product has no image. */
+function LMPlaceholder({ size = 48 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 48 48"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      style={{ borderRadius: '8px', display: 'block', flexShrink: 0 }}
+    >
+      <rect width="48" height="48" rx="8" fill="#12121A" />
+      <rect width="48" height="48" rx="8" fill="none" stroke="rgba(245,185,66,0.18)" strokeWidth="1" />
+      {/* Stylised "L" */}
+      <text
+        x="10"
+        y="33"
+        fontFamily="'Arial Black','Impact',sans-serif"
+        fontSize="22"
+        fontWeight="900"
+        fill="#F5B942"
+        opacity="0.85"
+      >L</text>
+      {/* Stylised "M" */}
+      <text
+        x="24"
+        y="33"
+        fontFamily="'Arial Black','Impact',sans-serif"
+        fontSize="22"
+        fontWeight="900"
+        fill="#F5B942"
+        opacity="0.55"
+      >M</text>
+    </svg>
+  );
+}
+
+interface ProductImage {
+  url: string;
+  position: number;
+}
 
 interface Product {
   id: string;
@@ -21,6 +63,7 @@ interface Product {
   isActive: boolean;
   isApproved: boolean;
   views: number;
+  images?: ProductImage[];
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -37,6 +80,12 @@ function deriveStatus(p: Product): string {
   if (p.stockQuantity === 0) return "out_of_stock";
   if (p.stockQuantity <= 5) return "low_stock";
   return "active";
+}
+
+/** Returns the URL of the lowest-position image, or null when there are none. */
+function getProductThumbnail(p: Product): string | null {
+  if (!p.images || p.images.length === 0) return null;
+  return p.images.slice().sort((a, b) => a.position - b.position)[0].url;
 }
 
 const BASE_URL = "https://loadifymarket.co.uk";
@@ -63,7 +112,7 @@ const SellerProducts = () => {
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views")
+          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views, images(url, position)")
           .eq("sellerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
@@ -178,9 +227,20 @@ const SellerProducts = () => {
               const s = statusConfig[status];
               return (
                 <div key={p.id} className="flex items-center gap-3 p-4">
-                  <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    <Package className="h-5 w-5 text-muted-foreground" />
-                  </div>
+                  {/* Thumbnail */}
+                  {(() => {
+                    const thumb = getProductThumbnail(p);
+                    return thumb ? (
+                      <img
+                        src={thumb}
+                        alt=""
+                        aria-hidden="true"
+                        className="w-12 h-12 rounded-lg object-cover shrink-0 bg-muted"
+                      />
+                    ) : (
+                      <LMPlaceholder size={48} />
+                    );
+                  })()}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{p.title}</p>
                     <div className="flex items-center gap-2 mt-1">
@@ -268,9 +328,19 @@ const SellerProducts = () => {
                     <tr key={p.id} className="hover:bg-muted/20 transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                            <Package className="h-4 w-4 text-muted-foreground" />
-                          </div>
+                          {(() => {
+                            const thumb = getProductThumbnail(p);
+                            return thumb ? (
+                              <img
+                                src={thumb}
+                                alt=""
+                                aria-hidden="true"
+                                className="w-10 h-10 rounded-lg object-cover shrink-0 bg-muted"
+                              />
+                            ) : (
+                              <LMPlaceholder size={40} />
+                            );
+                          })()}
                           <span className="text-sm font-medium text-foreground line-clamp-1">{p.title}</span>
                         </div>
                       </td>

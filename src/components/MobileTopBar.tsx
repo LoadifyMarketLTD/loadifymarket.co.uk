@@ -36,7 +36,7 @@ export default function MobileTopBar() {
     <header
       className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 bg-[#0B0B0F]"
       style={{
-        height: '70px',
+        minHeight: '70px',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         borderBottom: '1px solid rgba(255,255,255,0.05)',
       }}

@@ -115,6 +115,13 @@
 }
 
 
+/* Cookie-banner safe-area offset: clears the mobile bottom nav (60 px) plus
+   any iOS home-indicator / Android gesture bar. Reset to 0 at sm+ breakpoint
+   via the sm:mb-0 Tailwind class (see CookieConsent.tsx). */
+.mb-safearea-nav {
+  margin-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+}
+
 @layer utilities {
   .scrollbar-none {
     scrollbar-width: none;

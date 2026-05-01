@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+import type { SupportedStorage } from '@supabase/supabase-js';
+import { isCapacitorNative } from './capacitorUtils';
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL ?? '').trim();
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim();
@@ -86,6 +88,58 @@ const mobileSafeFetch: typeof fetch = (input, init?) => {
   return fetch(input, init);
 };
 
+// ── Capacitor Preferences storage adapter ────────────────────────────────────
+//
+// When running as an Android APK, localStorage in the WebView can be cleared by
+// the OS under memory pressure.  @capacitor/preferences writes to native Android
+// SharedPreferences (encrypted at rest), which is far more reliable.
+//
+// Detection: window.Capacitor is injected by the Capacitor bridge only inside
+// the APK; it is never present in a regular browser or Netlify deployment.
+//
+// The adapter is loaded lazily (dynamic import) so the Capacitor plugin is
+// never bundled into the web-only chunk.
+
+function buildCapacitorStorageAdapter(): SupportedStorage {
+  return {
+    async getItem(key: string): Promise<string | null> {
+      try {
+        const { Preferences } = await import('@capacitor/preferences');
+        const { value } = await Preferences.get({ key });
+        return value;
+      } catch (err) {
+        console.warn('[supabase] Capacitor Preferences.get failed, falling back to localStorage', err);
+        return window.localStorage.getItem(key);
+      }
+    },
+    async setItem(key: string, value: string): Promise<void> {
+      try {
+        const { Preferences } = await import('@capacitor/preferences');
+        await Preferences.set({ key, value });
+      } catch (err) {
+        console.warn('[supabase] Capacitor Preferences.set failed, falling back to localStorage', err);
+        window.localStorage.setItem(key, value);
+      }
+    },
+    async removeItem(key: string): Promise<void> {
+      try {
+        const { Preferences } = await import('@capacitor/preferences');
+        await Preferences.remove({ key });
+      } catch (err) {
+        console.warn('[supabase] Capacitor Preferences.remove failed, falling back to localStorage', err);
+        window.localStorage.removeItem(key);
+      }
+    },
+  };
+}
+
+// Detect Capacitor runtime (injected by the bridge on Android/iOS only).
+const authStorage: SupportedStorage | undefined = (() => {
+  if (isCapacitorNative()) return buildCapacitorStorageAdapter();
+  if (typeof window !== 'undefined') return window.localStorage;
+  return undefined;
+})();
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
@@ -93,9 +147,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     // Detect session tokens in the URL so magic-link, OAuth, and
     // password-reset redirects work correctly in the browser.
     detectSessionInUrl: true,
-    // Use localStorage explicitly so the storage key is predictable and
-    // Supabase never silently downgrades to in-memory storage.
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    // In the APK use native SharedPreferences via @capacitor/preferences for
+    // reliable session persistence.  In the browser, use localStorage.
+    storage: authStorage,
   },
   global: {
     // Use the mobile-safe fetch wrapper defined above.

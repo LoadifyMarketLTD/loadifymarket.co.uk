@@ -488,6 +488,8 @@ const ProductDetail = () => {
         canonical={canonicalProductUrl}
         ogImage={seoImage}
         ogType="product"
+        ogPrice={product.price != null ? product.price.toFixed(2) : undefined}
+        ogPriceCurrency="GBP"
       />
       <main id="main-content" className="pt-28 pb-16">
         <div className="container mx-auto px-4">

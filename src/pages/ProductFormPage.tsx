@@ -694,6 +694,7 @@ export default function ProductFormPage() {
                     value={formData.type}
                     onChange={(e) => handleChange('type', e.target.value)}
                     disabled={hasActiveOrders}
+                    style={{ colorScheme: 'dark' }}
                     className={`w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <option value="product">Single Item</option>
@@ -714,6 +715,7 @@ export default function ProductFormPage() {
                     value={formData.condition}
                     onChange={(e) => handleChange('condition', e.target.value)}
                     disabled={hasActiveOrders}
+                    style={{ colorScheme: 'dark' }}
                     className={`w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <option value="new">New</option>
