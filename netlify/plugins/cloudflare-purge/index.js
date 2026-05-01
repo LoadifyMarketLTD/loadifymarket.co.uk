@@ -16,7 +16,6 @@
  * preview deploys and local `netlify dev` sessions are unaffected.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const https = require('https');
 
 module.exports = {
