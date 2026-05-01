@@ -15,6 +15,10 @@ interface SEOProps {
   ogType?: string;
   /** Set to "noindex, nofollow" for auth-gated or private pages. */
   robots?: string;
+  /** Product price as a numeric string, e.g. "29.99". Used for og:price meta on product pages. */
+  ogPrice?: string;
+  /** ISO 4217 currency code for og:price, defaults to "GBP". */
+  ogPriceCurrency?: string;
 }
 
 /**
@@ -31,6 +35,8 @@ export default function SEO({
   ogImage = DEFAULT_OG_IMAGE,
   ogType = "website",
   robots = "index, follow",
+  ogPrice,
+  ogPriceCurrency = "GBP",
 }: SEOProps) {
   const fullTitle = title.endsWith(` | ${SITE_NAME}`) || title === SITE_NAME
     ? title
@@ -55,6 +61,16 @@ export default function SEO({
       <meta property="og:description" content={description} />
       <meta property="og:image" content={ogImage} />
       {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+
+      {/* Product-specific Open Graph (Facebook commerce & rich previews) */}
+      {ogType === "product" && ogPrice && (
+        <>
+          <meta property="og:price:amount" content={ogPrice} />
+          <meta property="og:price:currency" content={ogPriceCurrency} />
+          <meta property="product:price:amount" content={ogPrice} />
+          <meta property="product:price:currency" content={ogPriceCurrency} />
+        </>
+      )}
 
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />

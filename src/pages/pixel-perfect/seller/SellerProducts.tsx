@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Package, Plus, Search, Pencil, Share2 } from "lucide-react";
+import { Plus, Search, Pencil, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,6 +10,43 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { copyToClipboard } from "@/lib/clipboard";
+
+/** Branded Loadify Market "LM" placeholder shown when a product has no image. */
+function LMPlaceholder({ size = 48 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 48 48"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      style={{ borderRadius: '8px', display: 'block', flexShrink: 0 }}
+    >
+      <rect width="48" height="48" rx="8" fill="#12121A" />
+      <rect width="48" height="48" rx="8" fill="none" stroke="rgba(245,185,66,0.18)" strokeWidth="1" />
+      {/* Stylised "L" */}
+      <text
+        x="10"
+        y="33"
+        fontFamily="'Arial Black','Impact',sans-serif"
+        fontSize="22"
+        fontWeight="900"
+        fill="#F5B942"
+        opacity="0.85"
+      >L</text>
+      {/* Stylised "M" */}
+      <text
+        x="24"
+        y="33"
+        fontFamily="'Arial Black','Impact',sans-serif"
+        fontSize="22"
+        fontWeight="900"
+        fill="#F5B942"
+        opacity="0.55"
+      >M</text>
+    </svg>
+  );
+}
 
 interface ProductImage {
   url: string;
@@ -201,9 +238,7 @@ const SellerProducts = () => {
                         className="w-12 h-12 rounded-lg object-cover shrink-0 bg-muted"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        <Package className="h-5 w-5 text-muted-foreground" />
-                      </div>
+                      <LMPlaceholder size={48} />
                     );
                   })()}
                   <div className="flex-1 min-w-0">
@@ -303,9 +338,7 @@ const SellerProducts = () => {
                                 className="w-10 h-10 rounded-lg object-cover shrink-0 bg-muted"
                               />
                             ) : (
-                              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                                <Package className="h-4 w-4 text-muted-foreground" />
-                              </div>
+                              <LMPlaceholder size={40} />
                             );
                           })()}
                           <span className="text-sm font-medium text-foreground line-clamp-1">{p.title}</span>
