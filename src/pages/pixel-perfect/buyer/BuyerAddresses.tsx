@@ -78,8 +78,8 @@ const AddressCard = ({ label, type, data, onSave }: AddressFormProps) => {
       setForm((prev) => ({
         ...prev,
         postcode: result.postcode,
-        city: prev.city || result.admin_district || prev.city || "",
-        country: prev.country || result.country || prev.country || "",
+        city: prev.city || result.admin_district || "",
+        country: prev.country || result.country || "",
       }));
       setPostcodeStatus("idle");
     } else {
