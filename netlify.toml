@@ -2,6 +2,17 @@
   command = "npm ci && npm run build"
   publish = "dist"
 
+# ─── Build Plugins ────────────────────────────────────────────────────────────
+# Purge Cloudflare CDN cache after every successful deploy so visitors receive
+# the latest assets without waiting for TTL expiry.
+# Required env vars: CLOUDFLARE_ZONE_ID, CLOUDFLARE_API_TOKEN
+[[plugins]]
+  package = "./netlify/plugins/cloudflare-purge"
+
+  [plugins.inputs]
+    cloudflare_zone_id = "${CLOUDFLARE_ZONE_ID}"
+    cloudflare_api_token = "${CLOUDFLARE_API_TOKEN}"
+
 # ─── Force HTTPS ──────────────────────────────────────────────────────────────
 [[redirects]]
   from = "http://loadifymarket.co.uk/*"
