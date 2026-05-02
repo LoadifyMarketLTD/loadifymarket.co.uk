@@ -5,11 +5,18 @@ import { HelmetProvider } from "react-helmet-async";
 import App from "./App.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
 import { initErrorTracking } from "./lib/errorTracking.ts";
+import { patchCapacitorFetch } from "./lib/capacitorFetchPatch.ts";
 import "./index.css";
 
 // Initialise global error tracking (unhandled errors + unhandled rejections).
 // Must be called before the React tree mounts so no early errors are missed.
 initErrorTracking();
+
+// On Capacitor APK, relative /.netlify/functions/ URLs resolve to
+// https://localhost (the local WebView file server) instead of the Netlify
+// backend.  This patch rewrites them to absolute URLs so every component
+// fetch call reaches the live deployment without any per-file changes.
+patchCapacitorFetch();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
