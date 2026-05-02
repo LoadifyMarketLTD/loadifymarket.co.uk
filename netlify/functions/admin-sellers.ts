@@ -3,7 +3,31 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
-async function authenticateAdmin(event: HandlerEvent, admin: SupabaseClient) {
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface AuthOk {
+  ok: true;
+  caller: { id: string; email: string; role: string };
+}
+interface AuthFail {
+  ok: false;
+  status: number;
+}
+type AuthResult = AuthOk | AuthFail;
+
+interface SellerRow {
+  userId: string;
+  name: string;
+  email: string;
+  company: string;
+  date: string;
+  sellerStatus: 'draft' | 'submitted' | 'active' | 'suspended';
+  stripeConnectStatus: string | null;
+}
+
+// ── Auth helper ────────────────────────────────────────────────────────────────
+
+async function authenticateAdmin(event: HandlerEvent, admin: SupabaseClient): Promise<AuthResult> {
   const authHeader = event.headers['authorization'] || event.headers['Authorization'];
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -21,20 +45,15 @@ async function authenticateAdmin(event: HandlerEvent, admin: SupabaseClient) {
   const authUser = data.user;
   const authEmail = (authUser.email || '').toLowerCase().trim();
 
-  console.log('AUTH USER EMAIL:', authEmail);
-
   if (!authEmail) {
     return { ok: false, status: 401 };
   }
 
-  // 🔥 FIXUL REAL AICI (EMAIL, NU ID)
   const { data: dbUser, error: dbError } = await admin
     .from('users')
     .select('role')
     .eq('email', authEmail)
     .maybeSingle();
-
-  console.log('DB USER ROLE:', dbUser?.role ?? null);
 
   if (dbError || !dbUser || dbUser.role !== 'admin') {
     return { ok: false, status: 403 };
@@ -49,6 +68,37 @@ async function authenticateAdmin(event: HandlerEvent, admin: SupabaseClient) {
     },
   };
 }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function formatDate(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+/** Send an internal server-to-server email via the send-email function. */
+async function sendInternalEmail(
+  appUrl: string,
+  payload: Record<string, unknown>,
+): Promise<void> {
+  const internalHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(process.env.NETLIFY_INTERNAL_SECRET
+      ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET }
+      : {}),
+  };
+  await fetch(`${appUrl}/.netlify/functions/send-email`, {
+    method: 'POST',
+    headers: internalHeaders,
+    body: JSON.stringify(payload),
+  });
+}
+
+// ── Handler ───────────────────────────────────────────────────────────────────
 
 export const handler: Handler = async (event) => {
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -76,23 +126,234 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  try {
-    // 🔥 LIST SELLERS
-    const { data: users, error } = await admin
-      .from('users')
-      .select('id, email, firstName, lastName, createdAt')
-      .eq('role', 'seller');
+  const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
 
-    if (error) throw error;
+  try {
+    // ── GET — list all sellers ────────────────────────────────────────────────
+    if (event.httpMethod === 'GET') {
+      const { data: rows, error } = await admin
+        .from('users')
+        .select(`
+          id,
+          email,
+          firstName,
+          lastName,
+          createdAt,
+          seller_profiles (
+            sellerStatus,
+            stripeConnectStatus,
+            storeName,
+            businessName
+          )
+        `)
+        .eq('role', 'seller')
+        .order('createdAt', { ascending: false });
+
+      if (error) throw error;
+
+      const sellers: SellerRow[] = (rows || []).map((u) => {
+        const sp = Array.isArray(u.seller_profiles)
+          ? u.seller_profiles[0]
+          : u.seller_profiles;
+        const firstName = (u?.['firstName'] as string | null) ?? '';
+        const lastName = (u?.['lastName'] as string | null) ?? '';
+        const name = `${firstName} ${lastName}`.trim() || u.email;
+        const company =
+          (sp?.storeName as string | null) ||
+          (sp?.businessName as string | null) ||
+          '—';
+        return {
+          userId: u.id as string,
+          name,
+          email: u.email as string,
+          company,
+          date: formatDate(u.createdAt as string | null),
+          sellerStatus: ((sp?.sellerStatus as string) || 'draft') as SellerRow['sellerStatus'],
+          stripeConnectStatus: (sp?.stripeConnectStatus as string | null) ?? null,
+        };
+      });
+
+      return {
+        statusCode: 200,
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ sellers }),
+      };
+    }
+
+    // ── POST — operations ─────────────────────────────────────────────────────
+    if (event.httpMethod === 'POST') {
+      let body: Record<string, unknown> = {};
+      try {
+        body = JSON.parse(event.body || '{}') as Record<string, unknown>;
+      } catch {
+        return {
+          statusCode: 400,
+          headers: JSON_HEADERS,
+          body: JSON.stringify({ error: 'Invalid request body' }),
+        };
+      }
+
+      const op = body.op as string | undefined;
+      const userId = body.userId as string | undefined;
+
+      // ── get_seller_detail ──────────────────────────────────────────────────
+      if (op === 'get_seller_detail') {
+        if (!userId) {
+          return {
+            statusCode: 400,
+            headers: JSON_HEADERS,
+            body: JSON.stringify({ error: 'userId required' }),
+          };
+        }
+
+        const [userRes, spRes, listingsCountRes, ordersCountRes] = await Promise.all([
+          admin.from('users').select('id, email, firstName, lastName, createdAt, phone, role, isActive').eq('id', userId).maybeSingle(),
+          admin.from('seller_profiles').select('*').eq('userId', userId).maybeSingle(),
+          admin.from('products').select('id').eq('sellerId', userId),
+          admin.from('orders').select('id', { count: 'exact', head: true }).eq('sellerId', userId),
+        ]);
+
+        if (userRes.error) throw userRes.error;
+
+        // Count reports on the seller's products
+        const productIds = (listingsCountRes.data || []).map((p: { id: string }) => p.id);
+        let reportsCount = 0;
+        if (productIds.length > 0) {
+          const { count } = await admin
+            .from('reported_listings')
+            .select('id', { count: 'exact', head: true })
+            .in('productId', productIds);
+          reportsCount = count ?? 0;
+        }
+        const u = userRes.data;
+        const sp = spRes.data;
+
+        return {
+          statusCode: 200,
+          headers: JSON_HEADERS,
+          body: JSON.stringify({
+            detail: {
+              phone: (u?.phone as string | null) ?? null,
+              role: (u?.role as string) ?? 'seller',
+              isActive: (u?.isActive as boolean) ?? true,
+              createdAt: (u?.createdAt as string | null) ?? null,
+              stripeAccountId: (sp?.stripeAccountId as string | null) ?? null,
+              storeName: (sp?.storeName as string | null) ?? null,
+              businessName: (sp?.businessName as string | null) ?? null,
+              businessAddress: (sp?.businessAddress as Record<string, string> | null) ?? null,
+              contactPhone: (sp?.contactPhone as string | null) ?? null,
+              sellerRating: (sp?.rating as number | null) ?? null,
+              totalSales: (sp?.totalSales as number | null) ?? null,
+              listingsCount: productIds.length,
+              ordersCount: ordersCountRes.count ?? 0,
+              reportsCount,
+            },
+          }),
+        };
+      }
+
+      // ── approve ────────────────────────────────────────────────────────────
+      if (op === 'approve') {
+        if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
+        const { error } = await admin.from('seller_profiles').update({ sellerStatus: 'active', isApproved: true }).eq('userId', userId);
+        if (error) throw error;
+        return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ success: true }) };
+      }
+
+      // ── reject ─────────────────────────────────────────────────────────────
+      if (op === 'reject') {
+        if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
+        const { error } = await admin.from('seller_profiles').update({ sellerStatus: 'suspended' }).eq('userId', userId);
+        if (error) throw error;
+        return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ success: true }) };
+      }
+
+      // ── suspend ────────────────────────────────────────────────────────────
+      if (op === 'suspend') {
+        if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
+        const { error } = await admin.from('seller_profiles').update({ sellerStatus: 'suspended' }).eq('userId', userId);
+        if (error) throw error;
+        return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ sellerStatus: 'suspended' }) };
+      }
+
+      // ── reactivate ─────────────────────────────────────────────────────────
+      if (op === 'reactivate') {
+        if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
+        const { error } = await admin.from('seller_profiles').update({ sellerStatus: 'submitted' }).eq('userId', userId);
+        if (error) throw error;
+        return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ sellerStatus: 'submitted' }) };
+      }
+
+      // ── force_activate ─────────────────────────────────────────────────────
+      if (op === 'force_activate') {
+        if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
+        const { error } = await admin.from('seller_profiles').update({ sellerStatus: 'active', isApproved: true }).eq('userId', userId);
+        if (error) throw error;
+        return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ success: true }) };
+      }
+
+      // ── warn ───────────────────────────────────────────────────────────────
+      if (op === 'warn') {
+        if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
+        const { data: u, error: userError } = await admin
+          .from('users')
+          .select('email, firstName, lastName')
+          .eq('id', userId)
+          .maybeSingle();
+        if (userError) throw userError;
+        if (u?.email) {
+          const sellerName = [`${u.firstName ?? ''}`, `${u.lastName ?? ''}`].filter(Boolean).join(' ') || u.email;
+          await sendInternalEmail(appUrl, {
+            to: u.email,
+            subject: 'Important notice about your Loadify Market account',
+            template: 'admin_seller_verification',
+            data: { sellerName, message: 'You have received a warning regarding your account. Please review the platform guidelines.' },
+          });
+        }
+        return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ success: true }) };
+      }
+
+      // ── onboarding_reminder ────────────────────────────────────────────────
+      if (op === 'onboarding_reminder') {
+        const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+        const { data: incomplete, error: qErr } = await admin
+          .from('users')
+          .select('id, email, firstName, lastName')
+          .eq('role', 'seller')
+          .or('onboardingCompleted.eq.false,onboardingCompleted.is.null')
+          .lte('createdAt', cutoff);
+        if (qErr) throw qErr;
+        const sellers = incomplete || [];
+        let sent = 0;
+        await Promise.allSettled(
+          sellers.map(async (s) => {
+            const sellerName = [`${s.firstName ?? ''}`, `${s.lastName ?? ''}`].filter(Boolean).join(' ') || s.email;
+            const res = await sendInternalEmail(appUrl, {
+              to: s.email,
+              subject: 'Complete your Loadify Market seller setup',
+              template: 'onboarding_reminder',
+              data: { sellerName, windowLabel: '48h', onboardingUrl: `${appUrl}/onboarding` },
+            }).then(() => true).catch(() => false);
+            if (res) sent++;
+          }),
+        );
+        return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ sent }) };
+      }
+
+      return {
+        statusCode: 400,
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ error: `Unknown op: ${op ?? '(none)'}` }),
+      };
+    }
 
     return {
-      statusCode: 200,
+      statusCode: 405,
       headers: JSON_HEADERS,
-      body: JSON.stringify({ sellers: users || [] }),
+      body: JSON.stringify({ error: 'Method not allowed' }),
     };
   } catch (err: unknown) {
     console.error('ADMIN SELLERS ERROR:', err);
-
     return {
       statusCode: 500,
       headers: JSON_HEADERS,
