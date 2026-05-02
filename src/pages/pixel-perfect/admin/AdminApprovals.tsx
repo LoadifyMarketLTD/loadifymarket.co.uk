@@ -122,10 +122,11 @@ async function authorizedFetch(
 
 async function handleJson<T>(res: Response): Promise<T> {
   let payload: unknown = null;
+  let parseError = false;
   try {
     payload = await res.json();
   } catch {
-    // fall through — will be handled below
+    parseError = true;
   }
   if (!res.ok) {
     const message =
@@ -134,6 +135,11 @@ async function handleJson<T>(res: Response): Promise<T> {
         ? (payload as { error: string }).error
         : `Request failed (${res.status})`;
     const err = new Error(message) as Error & { status: number };
+    err.status = res.status;
+    throw err;
+  }
+  if (parseError || payload === null) {
+    const err = new Error(`Empty or non-JSON response from server (${res.status})`) as Error & { status: number };
     err.status = res.status;
     throw err;
   }
