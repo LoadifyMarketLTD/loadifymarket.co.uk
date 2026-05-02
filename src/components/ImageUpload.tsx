@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Upload, X, ImageIcon, Link as LinkIcon } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Upload, X, ImageIcon, Link as LinkIcon, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface ImageUploadProps {
@@ -35,6 +35,9 @@ export default function ImageUpload({
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [urlValue, setUrlValue] = useState('');
+  const urlInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageAdd = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -65,12 +68,32 @@ export default function ImageUpload({
     onImagesChange(updatedImages);
   };
 
-  const handleUrlAdd = () => {
-    const url = prompt('Enter image URL:');
-    if (url && url.trim()) {
-      const updatedImages = [...images, url.trim()].slice(0, maxImages);
+  const openUrlInput = () => {
+    setUrlValue('');
+    setShowUrlInput(true);
+    // Focus the input on the next tick after it mounts
+    setTimeout(() => urlInputRef.current?.focus(), 0);
+  };
+
+  const confirmUrlAdd = () => {
+    const trimmed = urlValue.trim();
+    if (trimmed) {
+      // Only allow http/https URLs to prevent javascript: or data: XSS vectors
+      if (!/^https?:\/\//i.test(trimmed)) {
+        setUploadError('Image URL must start with https:// or http://');
+        return;
+      }
+      const updatedImages = [...images, trimmed].slice(0, maxImages);
       onImagesChange(updatedImages);
     }
+    setShowUrlInput(false);
+    setUrlValue('');
+    setUploadError(null);
+  };
+
+  const cancelUrlInput = () => {
+    setShowUrlInput(false);
+    setUrlValue('');
   };
 
   return (
@@ -80,17 +103,55 @@ export default function ImageUpload({
           Product Images ({images.length}/{maxImages})
         </label>
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={handleUrlAdd}
-            className="text-sm text-navy-800 hover:text-navy-600 flex items-center gap-1"
-            disabled={images.length >= maxImages}
-          >
-            <LinkIcon className="h-4 w-4" />
-            Add URL
-          </button>
+          {!showUrlInput && (
+            <button
+              type="button"
+              onClick={openUrlInput}
+              className="text-sm text-navy-800 hover:text-navy-600 flex items-center gap-1"
+              disabled={images.length >= maxImages}
+            >
+              <LinkIcon className="h-4 w-4" />
+              Add URL
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Inline URL input */}
+      {showUrlInput && (
+        <div className="flex items-center gap-2">
+          <input
+            ref={urlInputRef}
+            type="url"
+            value={urlValue}
+            onChange={(e) => setUrlValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') { e.preventDefault(); confirmUrlAdd(); }
+              if (e.key === 'Escape') cancelUrlInput();
+            }}
+            placeholder="Paste image URL (https://...)"
+            aria-label="Image URL input"
+            className="flex-1 h-9 rounded-lg border border-gray-300 bg-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-navy-800/40 focus:border-navy-800"
+          />
+          <button
+            type="button"
+            onClick={confirmUrlAdd}
+            className="h-9 px-3 rounded-lg bg-navy-800 text-white text-sm font-medium hover:bg-navy-700 flex items-center gap-1"
+            aria-label="Confirm add URL"
+          >
+            <Check className="h-4 w-4" />
+            Add
+          </button>
+          <button
+            type="button"
+            onClick={cancelUrlInput}
+            className="h-9 px-3 rounded-lg border border-gray-300 text-sm text-gray-600 hover:bg-gray-50"
+            aria-label="Cancel"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Upload Error */}
       {uploadError && (

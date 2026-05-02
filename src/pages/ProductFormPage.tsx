@@ -1225,7 +1225,9 @@ export default function ProductFormPage() {
                     className="px-4 py-2 rounded-lg text-white text-sm font-semibold disabled:opacity-50 transition-all"
                     style={{ background: "linear-gradient(135deg, #B45309, #FBBF24)" }}
                   >
-                    {saving ? 'Publishing...' : id ? 'Save Changes' : 'Publish Listing'}
+                    {saving
+                      ? (id && hasActiveOrders ? 'Saving...' : 'Publishing...')
+                      : id ? 'Save Changes' : 'Publish Listing'}
                   </button>
                 </div>
               </div>
