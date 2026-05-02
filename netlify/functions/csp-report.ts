@@ -1,5 +1,7 @@
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit } from './_shared/rateLimiter';
+import { getClientIp } from './_shared/getClientIp';
 
 /**
  * POST /.netlify/functions/csp-report
@@ -46,6 +48,26 @@ export const handler: Handler = async (event) => {
     return { statusCode: 405, body: '' };
   }
 
+  // ── IP-based rate limit: 60 reports per hour per IP ──────────────────────────
+  // Prevents an attacker from flooding the csp_reports table or our log budget.
+  // If the client IP cannot be determined, skip DB persistence entirely
+  // (we still log to console) to avoid grouping all unidentifiable clients
+  // into a shared bucket that could block legitimate browsers.
+  const ip = getClientIp(event);
+  if (supabase && ip) {
+    const rl = await checkRateLimit({
+      supabase,
+      tableName: 'csp_report_rate_limits',
+      identifier: ip,
+      windowMinutes: 60,
+      maxAttempts: 60,
+    });
+    if (rl.exceeded) {
+      // Return 204 so the browser does not keep retrying; we silently drop it.
+      return { statusCode: 204, body: '' };
+    }
+  }
+
   let report: CSPReportBody = {};
   try {
     report = JSON.parse(event.body || '{}') as CSPReportBody;
@@ -58,8 +80,9 @@ export const handler: Handler = async (event) => {
   if (cspReport) {
     console.warn('[CSP Violation]', JSON.stringify(cspReport));
 
-    // Persist to database for monitoring.
-    if (supabase) {
+    // Persist to database for monitoring (only when IP was identifiable, since
+    // the rate-limit guard above is skipped for requests without a known IP).
+    if (supabase && ip) {
       const { error: dbError } = await supabase
         .from('csp_reports')
         .insert({

@@ -40,7 +40,10 @@ const Login = () => {
 
   useEffect(() => {
     if (user) {
-      const nextUrl = searchParams.get("next");
+      const raw = searchParams.get("next");
+      // Sanitise the redirect target: only allow same-origin relative paths
+      // (must start with "/" but not "//", to prevent open-redirect attacks).
+      const nextUrl = raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : null;
       if (nextUrl) navigate(nextUrl, { replace: true });
       else if (user.role === "seller") navigate("/seller", { replace: true });
       else if (user.role === "admin") navigate("/admin", { replace: true });
