@@ -37,13 +37,6 @@
 [functions]
   node_bundler = "esbuild"
 
-# ─── Build Plugins ────────────────────────────────────────────────────────────
-# cloudflare-purge runs after every successful deploy and calls the Cloudflare
-# API to invalidate the entire zone cache so visitors see the new version
-# immediately.  Requires CLOUDFLARE_API_TOKEN + CLOUDFLARE_ZONE_ID env vars
-# (set in Netlify dashboard).  Safe no-op when either var is absent.
-[[plugins]]
-  package = "./netlify/plugins/cloudflare-purge"
 
 [functions."onboarding-reminder"]
   schedule = "0 9 * * *"
