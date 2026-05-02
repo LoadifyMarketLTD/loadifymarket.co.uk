@@ -1,9 +1,9 @@
-import { Handler } from '@netlify/functions';
-import { createClient } from '@supabase/supabase-js';
+import { Handler, HandlerEvent } from '@netlify/functions';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
-async function authenticateAdmin(event: any, admin: any) {
+async function authenticateAdmin(event: HandlerEvent, admin: SupabaseClient) {
   const authHeader = event.headers['authorization'] || event.headers['Authorization'];
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -90,7 +90,7 @@ export const handler: Handler = async (event) => {
       headers: JSON_HEADERS,
       body: JSON.stringify({ sellers: users || [] }),
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('ADMIN SELLERS ERROR:', err);
 
     return {
