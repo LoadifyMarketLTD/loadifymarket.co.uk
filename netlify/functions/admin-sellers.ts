@@ -51,31 +51,26 @@ async function authenticateAdmin(
   const token = authHeader.substring(7).trim();
   if (!token) return { ok: false, status: 401 };
 
+  console.log('TOKEN EXISTS');
+
   const { data, error } = await admin.auth.getUser(token);
   if (error || !data?.user) return { ok: false, status: 401 };
   const authUser = data.user;
 
-  const { data: row } = await admin
+  console.log('AUTH USER ID', authUser.id);
+
+  const { data: dbUser } = await admin
     .from('users')
-    .select('id, email, role')
+    .select('role')
     .eq('id', authUser.id)
-    .single<{ id: string; email: string; role: string }>();
+    .maybeSingle<{ role: string }>();
 
-  if (!row) {
-    console.error('User not found in public.users', { authUserId: authUser.id });
-  }
+  console.log('DB USER ROLE', dbUser?.role ?? null);
 
-  const email = (row?.email ?? authUser.email ?? '').toLowerCase().trim();
-  const role = row?.role ?? null;
+  if (dbUser?.role !== 'admin') return { ok: false, status: 403 };
 
-  console.log('USER ROLE:', role);
-
-  const adminEmail = (process.env.ADMIN_NOTIFICATION_EMAIL ?? '').toLowerCase().trim();
-  const isDbAdmin = role === 'admin' || role === 'owner';
-  const isEmailAdmin = adminEmail !== '' && email === adminEmail;
-
-  if (!isDbAdmin && !isEmailAdmin) return { ok: false, status: 403 };
-  return { ok: true, caller: { id: authUser.id, email, role } };
+  const email = (authUser.email ?? '').toLowerCase().trim();
+  return { ok: true, caller: { id: authUser.id, email, role: dbUser.role } };
 }
 
 interface UserRow {
@@ -574,7 +569,7 @@ export const handler: Handler = async (event) => {
 
     return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: `Unknown op: ${op}` }) };
   } catch (err) {
-    console.error('admin-sellers: unhandled error:', err);
+    console.error('ADMIN SELLERS ERROR', err);
     return {
       statusCode: 500,
       headers: JSON_HEADERS,
