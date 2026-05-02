@@ -98,7 +98,13 @@ async function sendInternalEmail(
   });
 }
 
-// ── Handler ───────────────────────────────────────────────────────────────────
+/** Build a display name from a user row, falling back to email. */
+function sellerDisplayName(user: { firstName?: string | null; lastName?: string | null; email: string }): string {
+  return [`${user.firstName ?? ''}`, `${user.lastName ?? ''}`].filter(Boolean).join(' ') || user.email;
+}
+
+/** 48 hours in milliseconds — threshold for onboarding reminder eligibility. */
+const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
 
 export const handler: Handler = async (event) => {
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -302,12 +308,12 @@ export const handler: Handler = async (event) => {
           .maybeSingle();
         if (userError) throw userError;
         if (u?.email) {
-          const sellerName = [`${u.firstName ?? ''}`, `${u.lastName ?? ''}`].filter(Boolean).join(' ') || u.email;
+          const name = sellerDisplayName({ firstName: u.firstName as string | null, lastName: u.lastName as string | null, email: u.email as string });
           await sendInternalEmail(appUrl, {
-            to: u.email,
+            to: u.email as string,
             subject: 'Important notice about your Loadify Market account',
             template: 'admin_seller_verification',
-            data: { sellerName, message: 'You have received a warning regarding your account. Please review the platform guidelines.' },
+            data: { sellerName: name, message: 'You have received a warning regarding your account. Please review the platform guidelines.' },
           });
         }
         return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ success: true }) };
@@ -315,7 +321,7 @@ export const handler: Handler = async (event) => {
 
       // ── onboarding_reminder ────────────────────────────────────────────────
       if (op === 'onboarding_reminder') {
-        const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+        const cutoff = new Date(Date.now() - FORTY_EIGHT_HOURS_MS).toISOString();
         const { data: incomplete, error: qErr } = await admin
           .from('users')
           .select('id, email, firstName, lastName')
@@ -324,19 +330,21 @@ export const handler: Handler = async (event) => {
           .lte('createdAt', cutoff);
         if (qErr) throw qErr;
         const sellers = incomplete || [];
-        let sent = 0;
-        await Promise.allSettled(
-          sellers.map(async (s) => {
-            const sellerName = [`${s.firstName ?? ''}`, `${s.lastName ?? ''}`].filter(Boolean).join(' ') || s.email;
-            const res = await sendInternalEmail(appUrl, {
+        const results = await Promise.allSettled(
+          sellers.map((s) => {
+            const name = sellerDisplayName({ firstName: s.firstName as string | null, lastName: s.lastName as string | null, email: s.email as string });
+            return sendInternalEmail(appUrl, {
               to: s.email,
               subject: 'Complete your Loadify Market seller setup',
               template: 'onboarding_reminder',
-              data: { sellerName, windowLabel: '48h', onboardingUrl: `${appUrl}/onboarding` },
-            }).then(() => true).catch(() => false);
-            if (res) sent++;
+              data: { sellerName: name, windowLabel: '48h', onboardingUrl: `${appUrl}/onboarding` },
+            }).catch((err: unknown) => {
+              console.warn(`admin-sellers: onboarding reminder email failed for ${s.email as string}:`, err);
+              throw err;
+            });
           }),
         );
+        const sent = results.filter((r) => r.status === 'fulfilled').length;
         return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ sent }) };
       }
 
