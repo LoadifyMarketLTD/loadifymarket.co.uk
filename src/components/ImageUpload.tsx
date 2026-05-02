@@ -166,7 +166,7 @@ export default function ImageUpload({
         {images.map((image, index) => (
           <div key={index} className="relative group aspect-square">
             <img
-              src={image}
+              src={/^https?:\/\//i.test(image) ? image : ''}
               alt={`Product ${index + 1}`}
               className="w-full h-full object-cover rounded-lg border-2 border-gray-200"
             />
