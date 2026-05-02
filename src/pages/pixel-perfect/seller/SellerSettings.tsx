@@ -14,6 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
 import { safeLocalStorage } from "@/lib/safeStorage";
@@ -170,11 +171,8 @@ const SellerSettings = () => {
     setConnectError("");
     setConnectLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
-      const response = await fetch("/.netlify/functions/connect-onboard", {
+      const response = await authorizedFetch("/.netlify/functions/connect-onboard", {
         method: "POST",
-        headers: { Authorization: `Bearer ${session.access_token}` },
       });
       let data: Record<string, unknown> = {};
       try { data = await response.json(); } catch { /* non-JSON response */ }
@@ -190,11 +188,8 @@ const SellerSettings = () => {
     setConnectError("");
     setDashboardLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
-      const response = await fetch("/.netlify/functions/connect-dashboard", {
+      const response = await authorizedFetch("/.netlify/functions/connect-dashboard", {
         method: "POST",
-        headers: { Authorization: `Bearer ${session.access_token}` },
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to open Stripe dashboard");

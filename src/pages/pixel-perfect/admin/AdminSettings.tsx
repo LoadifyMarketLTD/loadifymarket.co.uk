@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 
 type FeatureKey = "sellerRegistration" | "buyerRegistration" | "rfqSystem" | "reviewSystem" | "maintenanceMode" | "autoApproveProducts";
 type Features = Record<FeatureKey, boolean>;
@@ -68,13 +69,8 @@ const AdminSettings = () => {
     setCheckingStripe(true);
     setStripeConnectStatus(null);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Not authenticated");
-
-      const res = await fetch("/.netlify/functions/connect-platform-check", {
+      const res = await authorizedFetch("/.netlify/functions/connect-platform-check", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
       });
       const json: unknown = await res.json();
       const isObj = json !== null && typeof json === "object";
@@ -148,23 +144,24 @@ const AdminSettings = () => {
     setSaveMsg(null);
     try {
       const { maintenanceMode, ...flagsWithoutMaintenance } = features;
-      const ops = [
-        supabase.from("platform_settings").upsert(
-          { key: "feature_flags", value: flagsWithoutMaintenance },
-          { onConflict: "key" }
-        ),
-        supabase.from("platform_settings").upsert(
-          { key: "maintenance_mode", value: maintenanceMode },
-          { onConflict: "key" }
-        ),
-        supabase.from("platform_settings").upsert(
-          { key: "platform_config", value: config },
-          { onConflict: "key" }
-        ),
-      ];
-      const results = await Promise.all(ops);
-      const firstError = results.find((r) => r.error)?.error;
-      if (firstError) throw firstError;
+
+      // Route the save through a Netlify function that uses the service-role key
+      // to bypass RLS on platform_settings (avoids RLS INSERT check failures).
+      // authorizedFetch handles proactive JWT refresh automatically.
+      const res = await authorizedFetch("/.netlify/functions/save-admin-settings", {
+        method: "POST",
+        body: JSON.stringify({
+          settings: [
+            { key: "feature_flags", value: flagsWithoutMaintenance },
+            { key: "maintenance_mode", value: maintenanceMode },
+            { key: "platform_config", value: config },
+          ],
+        }),
+      });
+      let resBody: { error?: string } = {};
+      try { resBody = await res.json(); } catch { /* non-JSON */ }
+      if (!res.ok) throw new Error(resBody.error || `Request failed (${res.status})`);
+
       setSaveMsg({ text: "Settings saved successfully.", ok: true });
     } catch (err: unknown) {
       setSaveMsg({ text: (err as Error).message || "Failed to save settings.", ok: false });

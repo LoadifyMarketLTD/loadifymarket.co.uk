@@ -87,7 +87,9 @@ const ResetPassword = () => {
     }
   };
 
-  const headerHeight = "calc(7.625rem + env(safe-area-inset-top, 0px))";
+  // Uses --header-h CSS variable (6.875rem on mobile, 7.625rem on md+) so the
+  // page content starts directly below the global Header on every screen size.
+  const headerHeight = "calc(var(--header-h, 6.875rem) + env(safe-area-inset-top, 0px))";
 
   return (
     <div className="flex bg-[#020617]" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>

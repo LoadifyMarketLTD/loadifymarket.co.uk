@@ -49,10 +49,24 @@ async function authenticateAdmin(event: HandlerEvent, admin: SupabaseClient): Pr
     return { ok: false, status: 401 };
   }
 
+  // Fast-path: check app_metadata.role from the JWT claim (set by migration 340
+  // and kept in sync by the auth trigger).  This avoids an extra DB round-trip
+  // and works correctly even when the public.users row has a case mismatch on
+  // the email column.
+  const jwtRole = (authUser.app_metadata as Record<string, unknown> | undefined)?.role;
+  if (jwtRole === 'admin') {
+    return {
+      ok: true,
+      caller: { id: authUser.id, email: authEmail, role: 'admin' },
+    };
+  }
+
+  // Fallback: look up by user ID (not email) for robustness against email
+  // casing differences between auth.users and public.users.
   const { data: dbUser, error: dbError } = await admin
     .from('users')
     .select('role')
-    .eq('email', authEmail)
+    .eq('id', authUser.id)
     .maybeSingle();
 
   if (dbError || !dbUser || dbUser.role !== 'admin') {
