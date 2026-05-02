@@ -1,8 +1,10 @@
 name: cloudflare-purge
 inputs:
   - name: cloudflare_zone_id
-    description: Cloudflare Zone ID for the site (found in the Cloudflare dashboard overview)
-    required: true
+    description: Cloudflare Zone ID for the site (found in the Cloudflare dashboard overview).
+      Falls back to the CLOUDFLARE_ZONE_ID environment variable if not supplied.
+    required: false
   - name: cloudflare_api_token
-    description: Cloudflare API token with Cache Purge permission for the zone
-    required: true
+    description: Cloudflare API token with Cache Purge permission for the zone.
+      Falls back to the CLOUDFLARE_API_TOKEN environment variable if not supplied.
+    required: false

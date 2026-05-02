@@ -1,14 +1,22 @@
 // Netlify Build plugin: cloudflare-purge
 // Purges the entire Cloudflare CDN cache for the configured zone after
 // a successful Netlify deploy so visitors always get the latest assets.
+//
+// Credentials are read from environment variables (CLOUDFLARE_ZONE_ID and
+// CLOUDFLARE_API_TOKEN) so the plugin works without any [plugins.inputs]
+// block in netlify.toml.  When the variables are absent (e.g. deploy
+// previews) the plugin skips silently so the deploy still succeeds.
 
 module.exports = {
   onSuccess: async ({ inputs, utils }) => {
-    const { cloudflare_zone_id: zoneId, cloudflare_api_token: apiToken } = inputs;
+    const zoneId =
+      (inputs && inputs.cloudflare_zone_id) || process.env.CLOUDFLARE_ZONE_ID;
+    const apiToken =
+      (inputs && inputs.cloudflare_api_token) || process.env.CLOUDFLARE_API_TOKEN;
 
     if (!zoneId || !apiToken) {
-      utils.build.failBuild(
-        'cloudflare-purge: cloudflare_zone_id and cloudflare_api_token are both required.',
+      console.log(
+        'cloudflare-purge: CLOUDFLARE_ZONE_ID / CLOUDFLARE_API_TOKEN not set — skipping cache purge.',
       );
       return;
     }
