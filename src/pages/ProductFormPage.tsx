@@ -229,13 +229,14 @@ export default function ProductFormPage() {
         }
 
         // Check for active or completed orders — sellers cannot edit critical fields once ordered.
+        // Only paid/in-progress orders count; 'pending' (unpaid/abandoned checkouts) does not lock the product.
         // Admins/owners bypass this restriction.
         if (data.sellerId === user?.id) {
           const { count } = await supabase
             .from('orders')
             .select('id', { count: 'exact', head: true })
             .eq('productId', id)
-            .in('status', ['paid', 'packed', 'shipped', 'delivered', 'pending']);
+            .in('status', ['paid', 'packed', 'shipped', 'delivered']);
           setHasActiveOrders((count ?? 0) > 0);
         }
       }
