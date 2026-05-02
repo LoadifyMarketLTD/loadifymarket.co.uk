@@ -14,6 +14,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 import { toast } from "@/hooks/use-toast";
 
 interface Order {
@@ -51,15 +52,8 @@ const AdminOrders = () => {
     setRefundLoading(true);
     setRefundError(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      if (!token) throw new Error("Not authenticated");
-      const res = await fetch("/.netlify/functions/create-refund", {
+      const res = await authorizedFetch("/.netlify/functions/create-refund", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ orderId: order.id }),
       });
       const data = await res.json() as { success?: boolean; message?: string; error?: string };

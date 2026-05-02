@@ -110,7 +110,10 @@ const BuyerShell = () => {
       ? `${user.firstName}${user.lastName ? " " + user.lastName : ""}`
       : user?.email ?? "Buyer";
 
-  const headerHeight = "calc(7.625rem + env(safe-area-inset-top, 0px))";
+  // On mobile the global Header is hidden (see Header.tsx) so the shell
+  // starts at the top with only safe-area-inset-top clearance.
+  // On desktop the shell must sit below the full global header (--shell-offset-h = 7.625rem).
+  const headerHeight = "calc(var(--shell-offset-h, 0px) + env(safe-area-inset-top, 0px))";
 
   return (
     <div className="flex bg-transparent overflow-hidden" style={{ height: `calc(100dvh - ${headerHeight})`, marginTop: headerHeight }}>

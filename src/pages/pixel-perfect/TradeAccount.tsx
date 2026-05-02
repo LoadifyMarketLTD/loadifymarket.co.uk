@@ -246,7 +246,9 @@ export default function TradeAccount() {
 
   const strength = passwordStrength(form.password);
 
-  const headerHeight = "calc(7.625rem + env(safe-area-inset-top, 0px))";
+  // Uses --header-h CSS variable (6.875rem on mobile, 7.625rem on md+) so the
+  // page content starts directly below the global Header on every screen size.
+  const headerHeight = "calc(var(--header-h, 6.875rem) + env(safe-area-inset-top, 0px))";
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (

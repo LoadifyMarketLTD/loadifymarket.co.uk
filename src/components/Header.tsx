@@ -21,6 +21,11 @@ const Header = () => {
   const location = useLocation();
   // Hide this header on mobile when on the homepage — MobileTopBar renders there instead.
   const isHomeMobile = location.pathname === '/';
+  // Also hide on mobile for the dashboard shells (/seller, /admin, /buyer) because
+  // they render their own mobile hamburger header.  On desktop (md+) the global
+  // header is always shown and the shells offset themselves with --shell-offset-h.
+  const isShellPath = /^\/(seller|admin|buyer)(\/|$)/.test(location.pathname);
+  const hideOnMobile = isHomeMobile || isShellPath;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -95,7 +100,7 @@ const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-40 bg-[linear-gradient(180deg,#111827,#020617)] border-b border-white/[0.06] shadow-[0_8px_25px_rgba(0,0,0,0.35)]${isHomeMobile ? ' hidden md:block' : ''}`}
+      className={`fixed top-0 left-0 right-0 z-40 bg-[linear-gradient(180deg,#111827,#020617)] border-b border-white/[0.06] shadow-[0_8px_25px_rgba(0,0,0,0.35)]${hideOnMobile ? ' hidden md:block' : ''}`}
       style={{ willChange: "transform", paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
 

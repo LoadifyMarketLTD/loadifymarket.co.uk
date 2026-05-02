@@ -148,23 +148,46 @@ const AdminSettings = () => {
     setSaveMsg(null);
     try {
       const { maintenanceMode, ...flagsWithoutMaintenance } = features;
-      const ops = [
-        supabase.from("platform_settings").upsert(
-          { key: "feature_flags", value: flagsWithoutMaintenance },
-          { onConflict: "key" }
-        ),
-        supabase.from("platform_settings").upsert(
-          { key: "maintenance_mode", value: maintenanceMode },
-          { onConflict: "key" }
-        ),
-        supabase.from("platform_settings").upsert(
-          { key: "platform_config", value: config },
-          { onConflict: "key" }
-        ),
-      ];
-      const results = await Promise.all(ops);
-      const firstError = results.find((r) => r.error)?.error;
-      if (firstError) throw firstError;
+
+      // Proactively refresh the JWT before the request so the Netlify function
+      // always receives a valid token even on long-running admin sessions.
+      let { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        try {
+          const [, rawPayload] = session.access_token.split('.');
+          const padded = rawPayload.replace(/-/g, '+').replace(/_/g, '/') +
+            '='.repeat((4 - rawPayload.length % 4) % 4);
+          const payload = JSON.parse(atob(padded)) as { exp?: number };
+          if (payload.exp && payload.exp * 1000 - Date.now() < 60_000) {
+            const { data: refreshed } = await supabase.auth.refreshSession();
+            if (refreshed.session) session = refreshed.session;
+          }
+        } catch { /* ignore JWT parse errors */ }
+      }
+      if (!session?.access_token) {
+        throw new Error("Your session has expired. Please sign in again.");
+      }
+
+      // Route the save through a Netlify function that uses the service-role key
+      // to bypass RLS on platform_settings (avoids RLS INSERT check failures).
+      const res = await fetch("/.netlify/functions/save-admin-settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          settings: [
+            { key: "feature_flags", value: flagsWithoutMaintenance },
+            { key: "maintenance_mode", value: maintenanceMode },
+            { key: "platform_config", value: config },
+          ],
+        }),
+      });
+      let resBody: { error?: string } = {};
+      try { resBody = await res.json(); } catch { /* non-JSON */ }
+      if (!res.ok) throw new Error(resBody.error || `Request failed (${res.status})`);
+
       setSaveMsg({ text: "Settings saved successfully.", ok: true });
     } catch (err: unknown) {
       setSaveMsg({ text: (err as Error).message || "Failed to save settings.", ok: false });

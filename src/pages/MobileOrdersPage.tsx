@@ -205,6 +205,16 @@ export default function MobileOrdersPage() {
     const load = async () => {
       setLoading(true);
       try {
+        // Ensure the Supabase session is ready before querying.  On APK cold
+        // restart the @capacitor/preferences async restore may not have
+        // completed yet, so getSession() forces the client to finish loading
+        // the session and auto-refresh the token if it has expired.
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          navigate("/login", { state: { from: "/orders" }, replace: true });
+          return;
+        }
+
         const { data } = await supabase
           .from("orders")
           .select(
@@ -312,7 +322,7 @@ export default function MobileOrdersPage() {
         </button>
         <h1 className="text-white font-bold text-lg flex-1">My Orders</h1>
         <Link
-          to="/pp/buyer/orders"
+          to="/buyer/orders"
           className="text-xs text-[#FBBF24] font-semibold py-1 px-2 rounded-lg bg-[#FBBF24]/10 active:bg-[#FBBF24]/20"
         >
           Full view

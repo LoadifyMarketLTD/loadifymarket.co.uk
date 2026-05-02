@@ -56,6 +56,27 @@
 
     --font-display: 'Space Grotesk', sans-serif;
     --font-body: 'Inter', sans-serif;
+
+    /* ── Responsive global Header height ──────────────────────────────────
+     * Header Row 1: h-[60px] (mobile) / h-[72px] (md+)
+     * Header Row 2: h-[50px] (all sizes, category nav)
+     * Mobile total: 60 + 50 = 110px = 6.875rem
+     * Desktop total: 72 + 50 = 122px = 7.625rem
+     *
+     * --header-h   → used by non-shell pages (Login, Register, Catalog, etc.)
+     * --shell-offset-h → used by dashboard shells (/seller, /admin, /buyer).
+     *   On mobile the global Header is hidden on shell paths, so the offset
+     *   is 0 (only safe-area-inset-top is needed).
+     * ─────────────────────────────────────────────────────────────────── */
+    --header-h: 6.875rem;       /* 110px — mobile header height */
+    --shell-offset-h: 0px;      /* shells hide global header on mobile */
+  }
+
+  @media (min-width: 768px) {
+    :root {
+      --header-h: 7.625rem;     /* 122px — desktop header height */
+      --shell-offset-h: 7.625rem; /* desktop: shells sit below the global header */
+    }
   }
 }
 
@@ -354,13 +375,10 @@ body::before {
   }
 
   /* pt-header-spacer: clears the fixed public Header on all viewports.
-   *   All viewports: 7rem = 64px header row (Row 1) + 48px category-nav row (Row 2).
-   *   Row 2 (category nav) is visible on ALL screen sizes so both rows must be
-   *   cleared on mobile and desktop alike.
-   *   Plus env(safe-area-inset-top) for iOS notch / Dynamic Island.
-   * Use on the spacer div below <Header /> on the homepage and any page
-   * that uses the transparent-on-scroll public Header without forceOpaque. */
+   * Uses --header-h CSS variable (6.875rem on mobile, 7.625rem on md+).
+   * Plus env(safe-area-inset-top) for iOS notch / Dynamic Island.
+   * Use on the spacer div below <Header /> on pages that use the global header. */
   .pt-header-spacer {
-    padding-top: calc(7rem + env(safe-area-inset-top, 0px));
+    padding-top: calc(var(--header-h) + env(safe-area-inset-top, 0px));
   }
 }
