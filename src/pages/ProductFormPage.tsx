@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Plus, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, AlertCircle, CheckCircle2, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../store';
 import { hasSellerAccess } from '../lib/roleUtils';
@@ -644,8 +644,8 @@ export default function ProductFormPage() {
             {/* ─── SECTION 1: Basic Information ─────────────────────────── */}
             <Section title="1. Basic Information">
               <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-300 mb-1">
-                  Product Title <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
+                  Product Title {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-amber-500" /> : <span className="text-red-500">*</span>}
                 </label>
                 <input
                   type="text"
@@ -687,8 +687,8 @@ export default function ProductFormPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
-                    Listing Type <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
+                    Listing Type {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-amber-500" /> : <span className="text-red-500">*</span>}
                   </label>
                   <select
                     value={formData.type}
@@ -708,8 +708,8 @@ export default function ProductFormPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
-                    Condition <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
+                    Condition {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-amber-500" /> : <span className="text-red-500">*</span>}
                   </label>
                   <select
                     value={formData.condition}
@@ -754,8 +754,8 @@ export default function ProductFormPage() {
             <Section title="3. Pricing">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
-                    Price (£) <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
+                    Price (£) {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-amber-500" /> : <span className="text-red-500">*</span>}
                   </label>
                   <input
                     type="text"
@@ -810,8 +810,8 @@ export default function ProductFormPage() {
             <Section title="4. Inventory">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">
-                    Stock Quantity <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
+                    Stock Quantity {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-amber-500" /> : <span className="text-red-500">*</span>}
                   </label>
                   <input
                     type="number"
