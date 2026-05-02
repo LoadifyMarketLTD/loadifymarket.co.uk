@@ -32,10 +32,25 @@ describe('register handler – request validation', () => {
     // Provide required env vars so the function passes the env check.
     process.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-test-key';
+
+    // Prevent real outbound HTTP calls (confirmation email, admin notification,
+    // welcome emails) from being made during unit tests.  Without this stub the
+    // "successful registration" test times out in CI because the handler awaits
+    // fetch() to the send-email function which is unreachable in the test env.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: vi.fn().mockResolvedValue({}),
+      } as unknown),
+    );
+
     vi.resetModules();
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     process.env = { ...originalEnv };
     vi.restoreAllMocks();
   });
