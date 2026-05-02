@@ -10,6 +10,18 @@ interface ImageUploadProps {
 
 const STORAGE_BUCKET = 'product-images';
 
+/** Returns the URL only if it is a valid http/https URL, otherwise empty string. */
+function safeSrc(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:'
+      ? parsed.toString()
+      : '';
+  } catch {
+    return '';
+  }
+}
+
 async function uploadImageToStorage(file: File, sellerId?: string): Promise<string> {
   // Generate a unique file path
   const timestamp = Date.now();
@@ -78,12 +90,12 @@ export default function ImageUpload({
   const confirmUrlAdd = () => {
     const trimmed = urlValue.trim();
     if (trimmed) {
-      // Only allow http/https URLs to prevent javascript: or data: XSS vectors
-      if (!/^https?:\/\//i.test(trimmed)) {
+      const safe = safeSrc(trimmed);
+      if (!safe) {
         setUploadError('Image URL must start with https:// or http://');
         return;
       }
-      const updatedImages = [...images, trimmed].slice(0, maxImages);
+      const updatedImages = [...images, safe].slice(0, maxImages);
       onImagesChange(updatedImages);
     }
     setShowUrlInput(false);
@@ -166,9 +178,10 @@ export default function ImageUpload({
         {images.map((image, index) => (
           <div key={index} className="relative group aspect-square">
             <img
-              src={/^https?:\/\//i.test(image) ? image : ''}
+              src={safeSrc(image)}
               alt={`Product ${index + 1}`}
               className="w-full h-full object-cover rounded-lg border-2 border-gray-200"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).src = ''; }}
             />
             <button
               type="button"
