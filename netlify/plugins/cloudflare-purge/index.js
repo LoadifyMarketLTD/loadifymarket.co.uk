@@ -30,7 +30,15 @@ module.exports = {
       return;
     }
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (err) {
+      utils.build.failBuild(
+        `cloudflare-purge: unexpected non-JSON response from Cloudflare (HTTP ${response.status})`,
+      );
+      return;
+    }
 
     if (!response.ok || !data.success) {
       const errors = (data.errors || []).map((e) => e.message).join('; ');
@@ -40,6 +48,6 @@ module.exports = {
       return;
     }
 
-    console.log(`cloudflare-purge: successfully purged cache for zone ${zoneId}`);
+    utils.status.show({ summary: `Successfully purged Cloudflare cache for zone ${zoneId}` });
   },
 };
