@@ -135,7 +135,7 @@ const SellerProducts = () => {
         p.id === productId ? { ...p, shareCount: (p.shareCount ?? 0) + 1 } : p
       );
       const newCount = updated.find((p) => p.id === productId)?.shareCount ?? 1;
-      supabase.from("products").update({ shareCount: newCount }).eq("id", productId).then(() => {/* ignore */}).catch(() => {/* non-fatal */});
+      supabase.from("products").update({ shareCount: newCount }).eq("id", productId).then(undefined, () => {/* non-fatal */});
       return updated;
     });
   };
