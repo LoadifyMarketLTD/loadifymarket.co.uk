@@ -109,7 +109,10 @@ function buildCapacitorStorageAdapter(): SupportedStorage {
         return value;
       } catch (err) {
         console.warn('[supabase] Capacitor Preferences.get failed, falling back to localStorage', err);
-        return window.localStorage.getItem(key);
+        try { return window.localStorage.getItem(key); } catch (lsErr) {
+          console.warn('[supabase] localStorage.getItem fallback also failed', lsErr);
+          return null;
+        }
       }
     },
     async setItem(key: string, value: string): Promise<void> {
@@ -118,7 +121,9 @@ function buildCapacitorStorageAdapter(): SupportedStorage {
         await Preferences.set({ key, value });
       } catch (err) {
         console.warn('[supabase] Capacitor Preferences.set failed, falling back to localStorage', err);
-        window.localStorage.setItem(key, value);
+        try { window.localStorage.setItem(key, value); } catch (lsErr) {
+          console.warn('[supabase] localStorage.setItem fallback also failed', lsErr);
+        }
       }
     },
     async removeItem(key: string): Promise<void> {
@@ -127,7 +132,9 @@ function buildCapacitorStorageAdapter(): SupportedStorage {
         await Preferences.remove({ key });
       } catch (err) {
         console.warn('[supabase] Capacitor Preferences.remove failed, falling back to localStorage', err);
-        window.localStorage.removeItem(key);
+        try { window.localStorage.removeItem(key); } catch (lsErr) {
+          console.warn('[supabase] localStorage.removeItem fallback also failed', lsErr);
+        }
       }
     },
   };

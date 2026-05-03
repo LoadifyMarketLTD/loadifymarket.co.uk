@@ -193,8 +193,6 @@ export const handler: Handler = async (event) => {
         };
       });
 
-      console.log("SELLERS RESULT:", sellers);
-
       return {
         statusCode: 200,
         headers: JSON_HEADERS,

@@ -13,7 +13,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
-import { supabase } from "@/lib/supabase";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 import { toast } from "@/hooks/use-toast";
 
 interface Seller {
@@ -78,46 +78,6 @@ function stripeLabel(status: string | null): string {
 function stripeClass(status: string | null): string {
   if (!status) return "border-slate-200 text-slate-400";
   return stripeStatusColor[status] ?? "border-slate-200 text-slate-400";
-}
-
-/**
- * Wraps fetch() with the admin's Supabase JWT in the Authorization header.
- * Automatically refreshes the access token if it has expired or will expire
- * within the next 60 seconds to prevent "Unauthorized" errors from the
- * Netlify function when the token silently expired in the background.
- */
-async function authorizedFetch(
-  path: string,
-  init: RequestInit = {},
-): Promise<Response> {
-  let { data: { session } } = await supabase.auth.getSession();
-
-  // Decode the JWT payload to check the expiry time (no library needed — JWTs
-  // are just base64url-encoded JSON).  If the token has already expired or will
-  // expire within 60 s, force-refresh it before making the request so the
-  // Netlify function never receives a stale token.
-  if (session?.access_token) {
-    try {
-      const [, rawPayload] = session.access_token.split('.');
-      const padded = rawPayload.replace(/-/g, '+').replace(/_/g, '/') +
-        '='.repeat((4 - rawPayload.length % 4) % 4);
-      const payload = JSON.parse(atob(padded)) as { exp?: number };
-      if (payload.exp && payload.exp * 1000 - Date.now() < 60_000) {
-        const { data: refreshed } = await supabase.auth.refreshSession();
-        if (refreshed.session) session = refreshed.session;
-      }
-    } catch { /* ignore JWT parse errors */ }
-  }
-
-  if (!session?.access_token) {
-    console.error('[authorizedFetch] No session / access_token — request blocked before reaching Netlify', { path });
-    throw new Error("Your session has expired. Please sign in again.");
-  }
-  const headers = new Headers(init.headers || {});
-  headers.set("Content-Type", "application/json");
-  headers.set("Authorization", `Bearer ${session.access_token}`);
-  console.log('[authorizedFetch] Dispatching fetch →', path);
-  return fetch(path, { ...init, headers });
 }
 
 async function handleJson<T>(res: Response): Promise<T> {
