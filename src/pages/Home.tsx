@@ -138,8 +138,16 @@ function MobileHome() {
 export default function Home() {
   return (
     <MainLayout>
-      {/* Preload LCP hero image for desktop */}
+      {/* Preload LCP hero image for desktop — WebP for capable browsers, JPEG fallback */}
       <Helmet>
+        <link
+          rel="preload"
+          as="image"
+          href="/hero-gold.webp"
+          type="image/webp"
+          // @ts-expect-error — fetchpriority is a valid HTML attr not yet in React types
+          fetchpriority="high"
+        />
         <link
           rel="preload"
           as="image"
