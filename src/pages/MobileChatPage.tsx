@@ -19,6 +19,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
+import { openExternalUrl } from "@/lib/capacitorUtils";
 import MakeOfferSheet from "@/components/MakeOfferSheet";
 import { trackOfferAccepted } from "@/lib/analytics";
 
@@ -739,7 +740,7 @@ export default function MobileChatPage() {
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
       if (!json.checkoutUrl) throw new Error("No checkout URL returned");
 
-      window.location.href = json.checkoutUrl;
+      await openExternalUrl(json.checkoutUrl);
     } catch (err) {
       toast({ title: "Failed to start checkout", description: (err as Error).message, variant: "destructive" });
     }

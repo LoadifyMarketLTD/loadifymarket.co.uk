@@ -13,6 +13,7 @@ import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
 import PaymentMethodBadges from "@/components/PaymentMethodBadges";
+import { openExternalUrl } from "@/lib/capacitorUtils";
 
 // ── Shipping option types ──────────────────────────────────────────────────
 interface ShippingOption {
@@ -296,7 +297,7 @@ const Checkout = () => {
       }
 
       if (data.url) {
-        window.location.href = data.url;
+        await openExternalUrl(data.url);
       } else {
         throw new Error("No checkout URL returned. Please try again.");
       }

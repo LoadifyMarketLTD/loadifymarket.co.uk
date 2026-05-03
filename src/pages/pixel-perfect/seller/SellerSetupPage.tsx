@@ -9,6 +9,7 @@ import { useAuthStore } from "@/store";
 import { hasAdminAccess } from "@/lib/roleUtils";
 import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
+import { openExternalUrl } from "@/lib/capacitorUtils";
 
 interface SetupStatus {
   sellerStatus: string;
@@ -196,7 +197,7 @@ const SellerSetupPage = () => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to start Stripe setup");
-      if (data.url) window.location.href = data.url;
+      if (data.url) await openExternalUrl(data.url);
     } catch (err) {
       console.error("Stripe Connect error:", err);
       toast({
