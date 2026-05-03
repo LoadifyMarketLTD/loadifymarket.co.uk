@@ -259,7 +259,9 @@ const Checkout = () => {
         items,
         buyerId: user?.id ?? "",
         guestEmail: !user ? shippingData.email : undefined,
-        shippingAmount,
+        // shippingAmount is intentionally omitted — the server looks it up
+        // from the DB using shippingMethodId to prevent cost tampering.
+        shippingMethodId: selectedOption.methodId,
         shippingMethod: selectedOption.methodId === SELLER_ARRANGED.methodId
           ? "Seller arranged"
           : selectedOption.name,

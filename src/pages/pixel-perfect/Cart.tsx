@@ -18,6 +18,14 @@ const Cart = () => {
         .map((item) => item.product.id)
     : [];
 
+  // Detect multi-seller cart — checkout is blocked until resolved
+  const uniqueSellerIds = new Set(
+    cartItems
+      .map((item) => item.product.sellerId)
+      .filter((id): id is string => Boolean(id))
+  );
+  const isMultiSellerCart = uniqueSellerIds.size > 1;
+
   // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
   // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
   const vat = Math.round(subtotal / 6);
@@ -88,6 +96,12 @@ const Cart = () => {
             {ownProductIds.length > 0 && (
               <div className="lg:col-span-2 bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
                 <strong>Notice:</strong> You cannot purchase your own products. Please remove the highlighted items before checking out.
+              </div>
+            )}
+            {/* Multi-seller warning */}
+            {isMultiSellerCart && (
+              <div className="lg:col-span-2 bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
+                <strong>Multiple sellers detected:</strong> Your cart contains items from {uniqueSellerIds.size} different sellers. Please remove items until only one seller remains before checking out.
               </div>
             )}
             {/* Cart Items */}
@@ -210,8 +224,12 @@ const Cart = () => {
                   </div>
                 </div>
 
-                <Link to="/checkout">
-                  <Button className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity">
+                <Link to={isMultiSellerCart ? "#" : "/checkout"} onClick={isMultiSellerCart ? (e) => e.preventDefault() : undefined}>
+                  <Button
+                    className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
+                    disabled={isMultiSellerCart}
+                    aria-disabled={isMultiSellerCart}
+                  >
                     Proceed to Checkout <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
@@ -242,8 +260,12 @@ const Cart = () => {
         className="lg:hidden fixed inset-x-0 z-[9996] px-4 py-3 bg-background/95 backdrop-blur border-t border-border"
         style={{ bottom: "calc(60px + env(safe-area-inset-bottom, 0px))" }}
       >
-        <Link to="/checkout">
-          <Button className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity">
+        <Link to={isMultiSellerCart ? "#" : "/checkout"} onClick={isMultiSellerCart ? (e) => e.preventDefault() : undefined}>
+          <Button
+            className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
+            disabled={isMultiSellerCart}
+            aria-disabled={isMultiSellerCart}
+          >
             Checkout · £{total.toLocaleString()} <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </Link>

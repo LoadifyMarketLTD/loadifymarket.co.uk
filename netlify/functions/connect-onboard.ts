@@ -54,7 +54,7 @@ export const handler: Handler = async (event) => {
     .from('users')
     .select('role')
     .eq('id', user.id)
-    .single<{ role: string }>();
+    .maybeSingle<{ role: string }>();
   if (userRow?.role !== 'seller') {
     return { statusCode: 403, body: JSON.stringify({ error: 'Seller account required' }) };
   }
@@ -83,11 +83,14 @@ export const handler: Handler = async (event) => {
       .from('seller_profiles')
       .select('stripeAccountId, stripeConnectStatus')
       .eq('userId', sellerId)
-      .single<{ stripeAccountId: string | null; stripeConnectStatus: string | null }>();
+      .maybeSingle<{ stripeAccountId: string | null; stripeConnectStatus: string | null }>();
 
     if (profileError) {
       console.error('connect-onboard: profile lookup failed:', profileError.message);
-      return { statusCode: 404, body: JSON.stringify({ error: 'Seller profile not found' }) };
+      return { statusCode: 500, body: JSON.stringify({ error: 'Unable to look up seller profile. Please try again.' }) };
+    }
+    if (!profile) {
+      return { statusCode: 404, body: JSON.stringify({ error: 'Seller profile not found. Please complete your seller registration first.' }) };
     }
 
     let stripeAccountId = profile?.stripeAccountId ?? null;
@@ -126,7 +129,7 @@ export const handler: Handler = async (event) => {
         .from('users')
         .select('email')
         .eq('id', sellerId)
-        .single<{ email: string }>();
+        .maybeSingle<{ email: string }>();
 
       const account = await stripe.accounts.create({
         type: 'express',
