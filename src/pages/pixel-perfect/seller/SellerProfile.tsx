@@ -130,7 +130,7 @@ const SellerProfile = () => {
       });
       setStoreSlug(storeRes.data?.storeSlug ?? "");
       setSellerStatus(p?.sellerStatus ?? "draft");
-      setSellerType((p as Record<string, unknown> | null)?.sellerType as string | null ?? null);
+      setSellerType((p as Record<string, string | null> | null)?.sellerType ?? null);
     };
     load();
   }, [user]);

@@ -143,6 +143,9 @@ export const handler: Handler = async (event) => {
     const limit = profileRes.data?.listingLimit ?? null;
     const currentCount = countRes.count ?? 0;
 
+    // A limit of 0 intentionally blocks all new listings (e.g., can be used
+    // as a lightweight admin tool to freeze a seller's listings without
+    // suspending their account). Use a large listingLimit value for "unlimited".
     if (limit !== null && currentCount >= limit) {
       return {
         statusCode: 429,
