@@ -303,7 +303,6 @@ export default function MobileHeroBanner() {
                       color: '#F5C76E',
                       margin: 0,
                       overflowWrap: 'break-word',
-                      hyphens: 'none',
                     }}
                   >
                     {slide.title}

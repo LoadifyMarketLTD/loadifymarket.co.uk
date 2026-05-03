@@ -46,6 +46,9 @@ export default function MobileAppHeader() {
       }}
     >
       {/* ── Left: logo + brand name ─── */}
+      {/* overflow:hidden + flex:1 + minWidth:0 is the correct flex shrink pattern:
+          the container shrinks when the right icon group needs space, and clipping
+          prevents the nowrap brand text from overflowing. */}
       <div className="flex items-center gap-2.5" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
         {/* Hexagonal LM badge */}
         <div
