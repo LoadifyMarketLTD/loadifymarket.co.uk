@@ -4,6 +4,10 @@
  * Full-screen mobile categories list with a sticky header, chevron rows,
  * and MobileBottomNav. Desktop users are not expected to land here but
  * the page is accessible and functional on all screen sizes.
+ *
+ * Categories are loaded from the database via the useCategories hook so
+ * new categories added by admins are reflected immediately without a
+ * code change.
  */
 
 import { useNavigate, Link } from 'react-router-dom';
@@ -18,33 +22,50 @@ import {
   Zap,
   Home,
   Dumbbell,
-  MoreHorizontal,
+  Leaf,
+  ShoppingBag,
+  Cpu,
+  Gamepad2,
+  Baby,
+  BookOpen,
   ChevronRight,
+  Tag,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import MobileBottomNav from '@/components/MobileBottomNav';
+import { useCategories } from '@/hooks/useCategories';
 
-interface CategoryRow {
-  icon: LucideIcon;
-  label: string;
-  to: string;
+// Map category slugs → icons for recognised categories; unknown slugs use Tag.
+const SLUG_ICON_MAP: Record<string, LucideIcon> = {
+  electronics:          Zap,
+  'phones-tablets':     Smartphone,
+  'laptops-computers':  Laptop,
+  'smart-tech':         Cpu,
+  gaming:               Gamepad2,
+  'watches-jewellery':  Watch,
+  accessories:          Watch,
+  automotive:           Car,
+  'clothing-fashion':   Shirt,
+  fashion:              Shirt,
+  'home-garden':        Home,
+  'home-living':        Home,
+  sports:               Dumbbell,
+  'sports-outdoors':    Dumbbell,
+  garden:               Leaf,
+  'health-beauty':      Leaf,
+  toys:                 Baby,
+  baby:                 Baby,
+  books:                BookOpen,
+  'bags-luggage':       ShoppingBag,
+};
+
+function categoryIcon(slug: string): LucideIcon {
+  return SLUG_ICON_MAP[slug] ?? Tag;
 }
-
-const CATEGORY_ROWS: CategoryRow[] = [
-  { icon: LayoutGrid,    label: 'All Categories',     to: '/catalog' },
-  { icon: Smartphone,    label: 'Phones & Tablets',   to: '/category/electronics?sub=phones' },
-  { icon: Laptop,        label: 'Laptops',            to: '/category/electronics?sub=laptops' },
-  { icon: Watch,         label: 'Watches',            to: '/category/accessories?sub=watches' },
-  { icon: Car,           label: 'Vehicles',           to: '/category/automotive' },
-  { icon: Shirt,         label: 'Fashion',            to: '/category/clothing-fashion' },
-  { icon: Zap,           label: 'Electronics',        to: '/category/electronics' },
-  { icon: Home,          label: 'Home & Living',      to: '/category/home-garden' },
-  { icon: Dumbbell,      label: 'Sports & Outdoors',  to: '/category/sports' },
-  { icon: MoreHorizontal, label: 'More Categories',   to: '/catalog' },
-];
 
 export default function MobileCategoriesPage() {
   const navigate = useNavigate();
+  const { categories, loading } = useCategories();
 
   return (
     <div
@@ -82,39 +103,75 @@ export default function MobileCategoriesPage() {
         className="flex-1 overflow-y-auto"
         style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}
       >
-        {CATEGORY_ROWS.map(({ icon: Icon, label, to }) => (
-          <Link
-            key={to + label}
-            to={to}
-            className="flex items-center px-4 active:bg-white/[0.03] transition-colors"
-            style={{
-              height: 56,
-              borderBottom: '1px solid rgba(255,255,255,0.05)',
-              textDecoration: 'none',
-            }}
-          >
-            {/* Gold icon */}
-            <Icon
-              className="h-[22px] w-[22px] shrink-0"
-              style={{ color: '#F2B84B' }}
-              aria-hidden="true"
-            />
+        {/* "All Categories" is always the first row */}
+        <Link
+          to="/catalog"
+          className="flex items-center px-4 active:bg-white/[0.03] transition-colors"
+          style={{
+            height: 56,
+            borderBottom: '1px solid rgba(255,255,255,0.05)',
+            textDecoration: 'none',
+          }}
+        >
+          <LayoutGrid
+            className="h-[22px] w-[22px] shrink-0"
+            style={{ color: '#F2B84B' }}
+            aria-hidden="true"
+          />
+          <span className="flex-1 ml-3 text-[16px] font-medium text-white">
+            All Categories
+          </span>
+          <ChevronRight
+            className="h-[18px] w-[18px] shrink-0"
+            style={{ color: 'rgba(255,255,255,0.3)' }}
+            aria-hidden="true"
+          />
+        </Link>
 
-            {/* Label */}
-            <span
-              className="flex-1 ml-3 text-[16px] font-medium text-white"
+        {/* Loading skeleton */}
+        {loading &&
+          Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex items-center px-4 gap-3 animate-pulse"
+              style={{ height: 56, borderBottom: '1px solid rgba(255,255,255,0.05)' }}
             >
-              {label}
-            </span>
+              <div className="h-[22px] w-[22px] rounded bg-white/10 shrink-0" />
+              <div className="flex-1 h-4 rounded bg-white/10" />
+            </div>
+          ))}
 
-            {/* Chevron */}
-            <ChevronRight
-              className="h-[18px] w-[18px] shrink-0"
-              style={{ color: 'rgba(255,255,255,0.3)' }}
-              aria-hidden="true"
-            />
-          </Link>
-        ))}
+        {/* DB-driven category rows */}
+        {!loading &&
+          categories.map((cat) => {
+            const Icon = categoryIcon(cat.slug);
+            return (
+              <Link
+                key={cat.id}
+                to={`/category/${cat.slug}`}
+                className="flex items-center px-4 active:bg-white/[0.03] transition-colors"
+                style={{
+                  height: 56,
+                  borderBottom: '1px solid rgba(255,255,255,0.05)',
+                  textDecoration: 'none',
+                }}
+              >
+                <Icon
+                  className="h-[22px] w-[22px] shrink-0"
+                  style={{ color: '#F2B84B' }}
+                  aria-hidden="true"
+                />
+                <span className="flex-1 ml-3 text-[16px] font-medium text-white">
+                  {cat.name}
+                </span>
+                <ChevronRight
+                  className="h-[18px] w-[18px] shrink-0"
+                  style={{ color: 'rgba(255,255,255,0.3)' }}
+                  aria-hidden="true"
+                />
+              </Link>
+            );
+          })}
       </div>
 
       <MobileBottomNav />
