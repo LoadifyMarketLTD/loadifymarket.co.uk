@@ -46,6 +46,10 @@
     <meta name="msapplication-TileColor" content="#0A0A0A" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
+    <!-- Preload hero image — served as WebP (JPEG fallback via <picture> in HeroSection.tsx).
+         imagesrcset/imagesizes are omitted because the image is displayed full-width at 100vw. -->
+    <link rel="preload" as="image" href="/hero-gold.webp" type="image/webp" />
+
     <!-- Preconnect to Supabase (API/auth requests fire immediately on load) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
