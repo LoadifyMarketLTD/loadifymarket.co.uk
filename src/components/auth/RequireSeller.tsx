@@ -220,9 +220,28 @@ export default function RequireSeller({ children }: Props) {
             </Link>
           </div>
         </CardShell>
-      ) : fetchState === 'draft' || fetchState === 'submitted' ? (
-        /* Setup incomplete — redirect to the seller onboarding wizard */
+      ) : fetchState === 'draft' ? (
+        /* Draft: setup incomplete — redirect to the seller onboarding wizard */
         <Navigate to="/onboarding" replace />
+      ) : fetchState === 'submitted' ? (
+        /* Submitted: awaiting admin approval — show a clear pending screen so
+           the seller is not confused or looped through onboarding again. */
+        <CardShell>
+          <p className="text-5xl mb-4">⏳</p>
+          <h2 className="text-2xl font-bold text-white mb-2">Application Under Review</h2>
+          <p className="text-slate-400 mb-6">
+            Your seller application has been submitted and is awaiting approval from the Loadify Market team.
+            You will receive an email once your account has been reviewed. This typically takes 1–2 business days.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/" className="btn-primary">
+              Back to Home
+            </Link>
+            <Link to="/contact" className="btn-secondary">
+              Contact Support
+            </Link>
+          </div>
+        </CardShell>
       ) : fetchState === 'error' ? (
         <CardShell>
           <p className="text-5xl mb-4">⚠️</p>

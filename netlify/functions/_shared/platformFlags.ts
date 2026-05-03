@@ -11,7 +11,8 @@
  * │ key                │ value (JSONB)                                        │
  * ├────────────────────┼─────────────────────────────────────────────────────┤
  * │ feature_flags      │ { sellerRegistration, buyerRegistration, rfqSystem, │
- * │                    │   reviewSystem, autoApproveProducts }                │
+ * │                    │   reviewSystem, autoApproveProducts,                 │
+ * │                    │   requireCompanyApproval }                           │
  * │ maintenance_mode   │ true | false                                        │
  * └────────────────────┴─────────────────────────────────────────────────────┘
  */
@@ -24,15 +25,23 @@ export interface FeatureFlags {
   rfqSystem: boolean;
   reviewSystem: boolean;
   autoApproveProducts: boolean;
+  /**
+   * When true, newly registered company sellers (sellerType='company') are
+   * flagged with requiresAdminApproval=true and cannot auto-activate via
+   * Stripe alone — admin must explicitly approve them.
+   * Default: false (all sellers auto-activate as today).
+   */
+  requireCompanyApproval: boolean;
 }
 
-/** Safe defaults — everything enabled except auto-approve. */
+/** Safe defaults — everything enabled except auto-approve and company gate. */
 const FLAG_DEFAULTS: FeatureFlags = {
   sellerRegistration: true,
   buyerRegistration: true,
   rfqSystem: true,
   reviewSystem: true,
   autoApproveProducts: false,
+  requireCompanyApproval: false,
 };
 
 /**

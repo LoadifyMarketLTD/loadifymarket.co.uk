@@ -21,6 +21,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 import { toast } from "@/hooks/use-toast";
 
 interface Dispute {
@@ -165,7 +166,46 @@ const AdminDisputes = () => {
       return;
     }
     setActionLoading(resolveTarget.id);
+
+    const isRefundType =
+      resolveForm.resolutionType === "full_refund" ||
+      resolveForm.resolutionType === "partial_refund";
+
     try {
+      // ── Step 1: If resolution involves a refund, trigger Stripe refund first ──
+      // We must NOT update the dispute to "resolved" if the Stripe call fails,
+      // because that would falsely imply money was returned to the buyer.
+      if (isRefundType) {
+        let refundRes: Response;
+        try {
+          refundRes = await authorizedFetch("/.netlify/functions/create-refund", {
+            method: "POST",
+            body: JSON.stringify({
+              orderId: resolveTarget.orderId,
+              reason: "requested_by_customer",
+            }),
+          });
+        } catch (networkErr: unknown) {
+          toast({
+            title: "Refund failed — dispute not resolved",
+            description: `Could not reach the refund service: ${(networkErr as Error).message}`,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (!refundRes.ok) {
+          const refundData = await refundRes.json() as { error?: string };
+          toast({
+            title: "Stripe refund failed — dispute not resolved",
+            description: refundData.error || "The refund could not be processed. Please issue the refund from the Orders section or the Stripe dashboard before resolving this dispute.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // ── Step 2: Update the dispute row now that refund (if any) succeeded ────
       const { error } = await supabase
         .from("disputes")
         .update({
@@ -182,7 +222,10 @@ const AdminDisputes = () => {
             : d
         )
       );
-      toast({ title: "Dispute resolved" });
+      toast({
+        title: isRefundType ? "Dispute resolved — Stripe refund issued" : "Dispute resolved",
+        description: isRefundType ? "The refund has been processed and the dispute marked resolved." : undefined,
+      });
       setResolveTarget(null);
       setResolveForm({ resolution: "", resolutionType: "" });
     } catch (err: unknown) {
@@ -448,14 +491,23 @@ const AdminDisputes = () => {
                     <SelectValue placeholder="Select resolution…" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="full_refund">Full Refund</SelectItem>
-                    <SelectItem value="partial_refund">Partial Refund</SelectItem>
+                    <SelectItem value="full_refund">Full Refund (triggers Stripe refund)</SelectItem>
+                    <SelectItem value="partial_refund">Partial Refund (triggers Stripe refund)</SelectItem>
                     <SelectItem value="replacement">Replacement</SelectItem>
                     <SelectItem value="rejected">Rejected (No Action)</SelectItem>
                     <SelectItem value="withdrawn">Withdrawn by Buyer</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              {(resolveForm.resolutionType === "full_refund" || resolveForm.resolutionType === "partial_refund") && (
+                <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5 flex gap-2 text-sm text-amber-800">
+                  <span className="shrink-0 font-bold">⚠</span>
+                  <span>
+                    Clicking <strong>Confirm Resolution</strong> will immediately issue a Stripe refund for this order.
+                    Only proceed if you are certain a refund should be issued. This cannot be undone.
+                  </span>
+                </div>
+              )}
               <div>
                 <Label htmlFor="res-notes">Resolution Notes *</Label>
                 <Textarea

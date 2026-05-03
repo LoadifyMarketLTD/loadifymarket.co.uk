@@ -66,6 +66,8 @@ const Signup = () => {
     /* Col 1 */
     firstName: "", middleName: "", lastName: "", email: "",
     newsletter: false, vatNumber: "", customerType: "", requestAssistance: false,
+    /** Seller-only: captured for compliance routing. */
+    sellerType: "" as "" | "individual" | "sole_trader" | "company",
     /* Col 2 */
     company: "", phone: "", country: "United Kingdom",
     postcode: "", streetAddress: "", city: "",
@@ -94,7 +96,7 @@ const Signup = () => {
       setError("First name and last name are required."); return;
     }
     if (!f.email.trim()) { setError("Email address is required."); return; }
-    if (!isPrivate && !f.company.trim()) { setError("Company name is required."); return; }
+    if (isSeller && !f.company.trim()) { setError("Store / company name is required for seller accounts."); return; }
     if (f.password.length < 8) {
       setError("Password must be at least 8 characters."); return;
     }
@@ -103,6 +105,9 @@ const Signup = () => {
     }
     if (!f.agreeTerms) {
       setError("You must agree to the Privacy Policy and Terms of Use."); return;
+    }
+    if (isSeller && !f.sellerType) {
+      setError("Please select your seller type (Individual, Sole Trader, or Company)."); return;
     }
 
     setLoading(true);
@@ -126,6 +131,8 @@ const Signup = () => {
         ...(f.newsletter          ? { newsletter:          true }                  : {}),
         ...(f.requestAssistance   ? { requestAssistance:   true }                  : {}),
         ...(Object.keys(businessAddress).length > 0 ? { businessAddress }         : {}),
+        // Seller-type captured at registration for compliance routing
+        ...(isSeller && f.sellerType ? { sellerType: f.sellerType }               : {}),
       };
 
       // storeName is used for sellers; companyName for buyers
@@ -390,6 +397,27 @@ const Signup = () => {
                     </label>
                   </div>
 
+                  {/* Seller type — shown only for seller registrations */}
+                  {isSeller && (
+                    <div>
+                      <label htmlFor="sellerType" className={lbl}>
+                        Seller Type{req}
+                      </label>
+                      <SelectField
+                        id="sellerType" name="sellerType" required
+                        value={f.sellerType} onChange={set}
+                      >
+                        <option value="">— Please Select —</option>
+                        <option value="individual">Individual (Private Seller)</option>
+                        <option value="sole_trader">Sole Trader</option>
+                        <option value="company">Registered Company (Ltd / PLC)</option>
+                      </SelectField>
+                      <p className="text-[10px] text-slate-500 mt-0.5">
+                        Company sellers must provide their Companies House registration number and VAT number.
+                      </p>
+                    </div>
+                  )}
+
                 </div>
               </div>
 
@@ -407,13 +435,16 @@ const Signup = () => {
                 <div className="px-4 py-3 space-y-2">
 
                   <div>
-                    <label htmlFor="company" className={lbl}>Company{!isPrivate && req}</label>
+                    <label htmlFor="company" className={lbl}>Company{isSeller && req}</label>
                     <input
                       id="company" name="company" type="text"
-                      autoComplete="organization" required={!isPrivate}
-                      placeholder={isPrivate ? "Optional" : ""}
+                      autoComplete="organization" required={isSeller}
+                      placeholder={isSeller ? "" : "Optional"}
                       value={f.company} onChange={set} className={inputBase}
                     />
+                    {!isSeller && (
+                      <p className="text-[10px] text-slate-500 mt-0.5">Optional — leave blank if you are an individual buyer.</p>
+                    )}
                   </div>
 
                   <div>

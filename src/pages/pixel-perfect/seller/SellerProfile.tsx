@@ -15,6 +15,11 @@ import { useAuthStore } from "@/store";
 import { useToast } from "@/hooks/use-toast";
 import { hasAdminAccess } from "@/lib/roleUtils";
 
+/** Validates a UK Companies House registration number. */
+function isValidCompanyNumber(num: string): boolean {
+  return /^[A-Z]{0,2}\d{6,8}$/i.test(num.trim());
+}
+
 /** Validates that a string matches the standard UK postcode format. */
 function isValidUKPostcode(postcode: string): boolean {
   return /^[A-Z]{1,2}[0-9][0-9A-Z]?\s?[0-9][A-Z]{2}$/i.test(postcode.trim());
@@ -81,6 +86,8 @@ const SellerProfile = () => {
   const [stats, setStats] = useState({ rating: 0, totalSales: 0, memberSince: "" });
   const [storeSlug, setStoreSlug] = useState("");
   const [sellerStatus, setSellerStatus] = useState<string>("draft");
+  const [sellerType, setSellerType] = useState<string | null>(null);
+  const [isVatRegistered, setIsVatRegistered] = useState(false);
   const [postcodeError, setPostcodeError] = useState<string | null>(null);
   const [postcodeLoading, setPostcodeLoading] = useState(false);
   const [postcodeVerified, setPostcodeVerified] = useState(false);
@@ -92,7 +99,7 @@ const SellerProfile = () => {
       const [profileRes, storeRes] = await Promise.all([
         supabase
           .from("seller_profiles")
-          .select("businessName, vatNumber, companyRegistrationNumber, businessAddress, contactPhone, rating, totalSales, createdAt, sellerStatus")
+          .select("businessName, vatNumber, companyRegistrationNumber, businessAddress, contactPhone, rating, totalSales, createdAt, sellerStatus, sellerType, isVatRegistered")
           .eq("userId", user.id)
           .maybeSingle(),
         supabase
@@ -124,6 +131,8 @@ const SellerProfile = () => {
       });
       setStoreSlug(storeRes.data?.storeSlug ?? "");
       setSellerStatus(p?.sellerStatus ?? "draft");
+      setSellerType((p as Record<string, string | null> | null)?.sellerType ?? null);
+      setIsVatRegistered(Boolean((p as Record<string, unknown> | null)?.isVatRegistered));
     };
     load();
   }, [user]);
@@ -211,6 +220,23 @@ const SellerProfile = () => {
       toast({ title: "Postcode not verified", description: "Please verify your UK postcode using the search button.", variant: "destructive" });
       return;
     }
+
+    // Phase B: company sellers must supply a Companies House registration number.
+    // VAT number is only required when the seller has declared VAT registration.
+    if (sellerType === "company") {
+      if (!form.companyNumber.trim()) {
+        toast({ title: "Company number required", description: "Registered companies must provide their Companies House registration number.", variant: "destructive" });
+        return;
+      }
+      if (!isValidCompanyNumber(form.companyNumber)) {
+        toast({ title: "Invalid company number", description: "UK Companies House numbers are up to 8 digits, optionally prefixed with letters (e.g. 12345678 or SC123456).", variant: "destructive" });
+        return;
+      }
+      if (isVatRegistered && !form.vatNumber.trim()) {
+        toast({ title: "VAT number required", description: "You have indicated you are VAT registered — please provide your VAT number.", variant: "destructive" });
+        return;
+      }
+    }
     // ─────────────────────────────────────────────────────────────────────────
 
     setSaving(true);
@@ -235,6 +261,7 @@ const SellerProfile = () => {
             businessName: form.businessName,
             vatNumber: form.vatNumber,
             companyRegistrationNumber: form.companyNumber,
+            isVatRegistered,
             contactPhone: form.phone,
             businessAddress: { address: form.address, city: form.city, postcode: form.postcode },
             // Onboarding flags: set when all required fields are present.
@@ -382,12 +409,38 @@ const SellerProfile = () => {
               <Input value={form.contactName} onChange={(e) => updateField("contactName", e.target.value)} className="mt-1" />
             </div>
             <div>
-              <Label className="text-xs">Company Number</Label>
-              <Input value={form.companyNumber} onChange={(e) => updateField("companyNumber", e.target.value)} className="mt-1" />
+              <Label className="text-xs">
+                Company Number{sellerType === "company" && <span className="text-red-500"> *</span>}
+              </Label>
+              <Input value={form.companyNumber} onChange={(e) => updateField("companyNumber", e.target.value)} className="mt-1" placeholder="e.g. 12345678" />
+              {sellerType === "company" && (
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  UK Companies House number (up to 8 digits, e.g. 12345678 or SC123456).
+                </p>
+              )}
             </div>
             <div>
-              <Label className="text-xs">VAT Number</Label>
-              <Input value={form.vatNumber} onChange={(e) => updateField("vatNumber", e.target.value)} className="mt-1" />
+              {/* VAT section — shown for all sellers; isVatRegistered toggle controls requirement */}
+              <div className="flex items-center gap-2 mb-1">
+                <input
+                  id="isVatRegistered"
+                  type="checkbox"
+                  checked={isVatRegistered}
+                  onChange={(e) => setIsVatRegistered(e.target.checked)}
+                  className="h-3.5 w-3.5 cursor-pointer"
+                />
+                <label htmlFor="isVatRegistered" className="text-xs cursor-pointer select-none text-muted-foreground">
+                  I am VAT registered
+                </label>
+              </div>
+              {isVatRegistered && (
+                <>
+                  <Label className="text-xs">
+                    VAT Number <span className="text-red-500">*</span>
+                  </Label>
+                  <Input value={form.vatNumber} onChange={(e) => updateField("vatNumber", e.target.value)} className="mt-1" placeholder="e.g. GB123456789" />
+                </>
+              )}
             </div>
           </div>
           <div>
