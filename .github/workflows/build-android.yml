@@ -9,6 +9,8 @@ on:
       # Build APK automatically on the active diagnostics branch so every push
       # produces an artifact that can be installed and tested immediately.
       - 'copilot/build-signed-release-apk-another-one'
+      # Responsive-fix branch: triggers fresh signed APK/AAB after hero layout fix.
+      - 'copilot/fix-responsive-scaling-issues'
     paths:
       - 'src/**'
       - 'public/**'
