@@ -18,7 +18,13 @@ interface CheckoutBody {
   buyerId: string;
   shippingAddress: Record<string, string>;
   billingAddress: Record<string, string>;
+  /** Client-provided shipping amount is intentionally ignored — the server
+   *  looks up the authoritative price from the DB using shippingMethodId. */
   shippingAmount?: number;
+  /** UUID of the selected shipping_method row, or the sentinel string
+   *  "seller-arranged" when no DB methods are configured for the products. */
+  shippingMethodId?: string;
+  /** Human-readable label sent only for metadata display purposes. */
   shippingMethod?: string;
   guestEmail?: string;
 }
@@ -82,13 +88,14 @@ export const handler: Handler = async (event) => {
     buyerId,
     shippingAddress,
     billingAddress,
-    shippingAmount: rawShippingAmount,
+    shippingMethodId,
     shippingMethod,
   } = body;
+  // NOTE: body.shippingAmount is deliberately not destructured — all shipping
+  // costs are fetched server-side from the DB to prevent client-side tampering.
   if (!items?.length || !billingAddress) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
   }
-  const shippingAmount = typeof rawShippingAmount === 'number' ? rawShippingAmount : 0;
 
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
@@ -296,6 +303,70 @@ export const handler: Handler = async (event) => {
     };
   }
 
+  // ── Server-side shipping cost resolution ────────────────────────────────
+  // The client-provided shippingAmount is NEVER trusted. We derive the
+  // authoritative shipping cost entirely server-side.
+  //
+  // Two cases:
+  //  1. shippingMethodId is a valid UUID → look up the rate from shipping_rates
+  //     and verify the method is active and linked to at least one product in
+  //     the cart (preventing a buyer from picking an arbitrary method UUID).
+  //  2. shippingMethodId is absent / "seller-arranged" → service-only cart or
+  //     no DB methods configured; shipping cost is £0.
+  let shippingAmount = 0;
+  const SELLER_ARRANGED_SENTINEL = 'seller-arranged';
+  const hasUUIDFormat = (v: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+
+  if (shippingMethodId && shippingMethodId !== SELLER_ARRANGED_SENTINEL && hasUUIDFormat(shippingMethodId)) {
+    // Verify the method exists, is active, and is linked to at least one
+    // product in the cart (so buyers cannot inject arbitrary method IDs).
+    const { data: productShippingRows, error: psError } = await supabase
+      .from('product_shipping')
+      .select('product_id, shipping_methods!method_id(id, active, shipping_rates(price))')
+      .eq('method_id', shippingMethodId)
+      .in('product_id', productIds);
+
+    if (psError) {
+      console.error('create-checkout: shipping method validation failed:', psError.message);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Unable to validate shipping method. Please try again.' }),
+      };
+    }
+
+    if (!productShippingRows || productShippingRows.length === 0) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'The selected shipping method is not available for these products.' }),
+      };
+    }
+
+    // Extract the method record — Supabase can return a single object or a
+    // one-element array depending on the join type. Normalise to a single value.
+    type ShippingMethodRow = { id: string; active: boolean; shipping_rates: Array<{ price: number }> | null };
+    const rawMethod = (productShippingRows[0] as Record<string, unknown>)['shipping_methods'];
+    const method: ShippingMethodRow | null = Array.isArray(rawMethod)
+      ? (rawMethod[0] as ShippingMethodRow) ?? null
+      : (rawMethod as ShippingMethodRow | null);
+
+    if (!method || !method.active) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'The selected shipping method is no longer available.' }),
+      };
+    }
+
+    // Resolve the price — use the minimum rate. For the current schema each
+    // method typically has one rate; taking the minimum is safe and consistent
+    // with how the checkout UI presents prices to the buyer.
+    const rates = Array.isArray(method.shipping_rates) ? method.shipping_rates : [];
+    shippingAmount = rates.length > 0
+      ? Math.min(...rates.map((r) => Number(r.price)))
+      : 0;
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   const subtotal = enrichedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const total = subtotal + shippingAmount;
 
@@ -391,6 +462,7 @@ export const handler: Handler = async (event) => {
           billingAddress,
           subtotal,
           shippingAmount,
+          shippingMethodId: shippingMethodId ?? null,
           shippingMethod: shippingMethod ?? 'Standard',
           total,
           buyerId: verifiedBuyerId,

@@ -1,15 +1,21 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, ShieldCheck, Truck } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, ShieldCheck, Truck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
 
 const Cart = () => {
-  const { cartItems, updateQuantity, removeFromCart, subtotal } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, subtotal, priceChangedBanner, dismissPriceBanner, refreshCartPrices } = useCart();
   const { user } = useAuthStore();
+
+  // Refresh prices from DB on mount — single batch query, non-blocking
+  useEffect(() => {
+    void refreshCartPrices();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Detect any own-product items in cart (should not happen via normal UI, but guard edge cases)
   const ownProductIds = user
@@ -17,6 +23,14 @@ const Cart = () => {
         .filter((item) => item.product.sellerId && item.product.sellerId === user.id)
         .map((item) => item.product.id)
     : [];
+
+  // Detect multi-seller cart — checkout is blocked until resolved
+  const uniqueSellerIds = new Set(
+    cartItems
+      .map((item) => item.product.sellerId)
+      .filter((id): id is string => Boolean(id))
+  );
+  const isMultiSellerCart = uniqueSellerIds.size > 1;
 
   // For 20% VAT on VAT-inclusive prices: VAT portion = gross / 6
   // (gross = net * 1.2, so VAT = gross - net = gross - gross/1.2 = gross/6)
@@ -84,10 +98,25 @@ const Cart = () => {
           </div>
 
           <div className="grid lg:grid-cols-[1fr_380px] gap-8">
+            {/* Price-changed banner */}
+            {priceChangedBanner && (
+              <div className="lg:col-span-2 flex items-start justify-between gap-3 bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
+                <span><strong>Prices updated:</strong> Some prices have been updated since you added items to your cart. Please review before checking out.</span>
+                <button onClick={dismissPriceBanner} aria-label="Dismiss" className="shrink-0 mt-0.5 text-amber-600 hover:text-amber-800">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
             {/* Own-product warning */}
             {ownProductIds.length > 0 && (
               <div className="lg:col-span-2 bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
                 <strong>Notice:</strong> You cannot purchase your own products. Please remove the highlighted items before checking out.
+              </div>
+            )}
+            {/* Multi-seller warning */}
+            {isMultiSellerCart && (
+              <div className="lg:col-span-2 bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
+                <strong>Multiple sellers detected:</strong> Your cart contains items from {uniqueSellerIds.size} different sellers. Please remove items until only one seller remains before checking out.
               </div>
             )}
             {/* Cart Items */}
@@ -210,11 +239,21 @@ const Cart = () => {
                   </div>
                 </div>
 
-                <Link to="/checkout">
-                  <Button className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity">
+                {isMultiSellerCart ? (
+                  <Button
+                    className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base opacity-50 cursor-not-allowed"
+                    disabled
+                    aria-disabled="true"
+                  >
                     Proceed to Checkout <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
-                </Link>
+                ) : (
+                  <Link to="/checkout">
+                    <Button className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity">
+                      Proceed to Checkout <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                )}
               </div>
 
               {/* Trust */}
@@ -242,11 +281,21 @@ const Cart = () => {
         className="lg:hidden fixed inset-x-0 z-[9996] px-4 py-3 bg-background/95 backdrop-blur border-t border-border"
         style={{ bottom: "calc(60px + env(safe-area-inset-bottom, 0px))" }}
       >
-        <Link to="/checkout">
-          <Button className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity">
+        {isMultiSellerCart ? (
+          <Button
+            className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base opacity-50 cursor-not-allowed"
+            disabled
+            aria-disabled="true"
+          >
             Checkout · £{total.toLocaleString()} <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
-        </Link>
+        ) : (
+          <Link to="/checkout">
+            <Button className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity">
+              Checkout · £{total.toLocaleString()} <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
+        )}
       </div>
 
     </MainLayout>

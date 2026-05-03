@@ -14,14 +14,18 @@ const HeroSection = () => (
     aria-label="Loadify Market — UK Online Marketplace"
     className="relative w-full min-h-[75vh] bg-[#0B1016]"
   >
-    {/* Background image */}
-    <img
-      src="/hero-gold.jpeg"
-      alt=""
-      aria-hidden="true"
-      className="absolute inset-0 w-full h-full object-cover object-center"
-      loading="eager"
-    />
+    {/* Background image — WebP with JPEG fallback */}
+    <picture>
+      <source srcSet="/hero-gold.webp" type="image/webp" />
+      <img
+        src="/hero-gold.jpeg"
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full object-cover object-center"
+        loading="eager"
+        fetchPriority="high"
+      />
+    </picture>
 
     {/* Dark overlay */}
     <div

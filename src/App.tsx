@@ -365,7 +365,7 @@ function App() {
         <Route path="categories/:slug" element={<CategoryRedirect />} />
         <Route path="product/:id" element={<Suspense fallback={<PageLoader />}><PPProductDetail /></Suspense>} />
         <Route path="cart" element={<Suspense fallback={<PageLoader />}><PPCart /></Suspense>} />
-        <Route path="checkout" element={<Suspense fallback={<PageLoader />}><PPCheckout /></Suspense>} />
+        <Route path="checkout" element={<RequireEmailVerified><Suspense fallback={<PageLoader />}><PPCheckout /></Suspense></RequireEmailVerified>} />
         <Route path="about" element={<Suspense fallback={<PageLoader />}><PPAboutUs /></Suspense>} />
         <Route path="contact" element={<Suspense fallback={<PageLoader />}><PPContactUs /></Suspense>} />
         <Route path="deals" element={<Suspense fallback={<PageLoader />}><PPDeals /></Suspense>} />

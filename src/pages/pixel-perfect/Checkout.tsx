@@ -4,7 +4,7 @@ import SEO from "@/components/SEO";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, CreditCard, MapPin, User, Phone, Mail,
-  Building2, ShieldCheck, Lock, Truck, Check, Loader2
+  Building2, ShieldCheck, Lock, Truck, Check, Loader2, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,7 @@ const steps = [
 ];
 
 const Checkout = () => {
-  const { cartItems, subtotal } = useCart();
+  const { cartItems, subtotal, refreshCartPrices, priceChangedBanner, dismissPriceBanner } = useCart();
   const { user, isLoading } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,6 +163,11 @@ const Checkout = () => {
   }, [cartProductIds]);
   // ────────────────────────────────────────────────────────────────────────
 
+  // Refresh cart prices from DB on checkout load — single batch query
+  useEffect(() => {
+    void refreshCartPrices();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Sync email once auth resolves (user may be null at initial render)
   useEffect(() => {
     if (user?.email && !emailSyncedRef.current) {
@@ -259,7 +264,9 @@ const Checkout = () => {
         items,
         buyerId: user?.id ?? "",
         guestEmail: !user ? shippingData.email : undefined,
-        shippingAmount,
+        // shippingAmount is intentionally omitted — the server looks it up
+        // from the DB using shippingMethodId to prevent cost tampering.
+        shippingMethodId: selectedOption.methodId,
         shippingMethod: selectedOption.methodId === SELLER_ARRANGED.methodId
           ? "Seller arranged"
           : selectedOption.name,
@@ -410,6 +417,15 @@ const Checkout = () => {
           </div>
 
           <div className="grid lg:grid-cols-[1fr_380px] gap-8">
+            {/* Price-changed banner */}
+            {priceChangedBanner && (
+              <div className="lg:col-span-2 flex items-start justify-between gap-3 bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
+                <span><strong>Prices updated:</strong> Some prices have been updated since you added items to your cart. Please review the totals below before proceeding.</span>
+                <button onClick={dismissPriceBanner} aria-label="Dismiss" className="shrink-0 mt-0.5 text-amber-600 hover:text-amber-800">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
             {/* Main content */}
             <div>
               {/* Step 1: Shipping */}
