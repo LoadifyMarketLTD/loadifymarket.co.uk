@@ -188,12 +188,16 @@ export default function MobileInboxPage() {
   return (
     <div
       className="min-h-screen bg-[#020617] flex flex-col"
-      style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}
     >
-      {/* Sub-header */}
+      {/* Sub-header — paddingTop includes safe-area-inset-top so it fills
+          the status-bar area with its background and content starts below it. */}
       <div
-        className="sticky top-0 z-40 flex items-center gap-3 px-4 py-3 border-b border-white/10"
-        style={{ background: "rgba(11,15,26,0.97)" }}
+        className="sticky top-0 z-40 flex items-center gap-3 px-4 border-b border-white/10"
+        style={{
+          background: "rgba(11,15,26,0.97)",
+          paddingTop: "calc(0.75rem + env(safe-area-inset-top, 0px))",
+          paddingBottom: "0.75rem",
+        }}
       >
         <Link to="/" className="text-white/60 hover:text-white transition-colors p-1 -ml-1">
           <ArrowLeft className="h-5 w-5" />

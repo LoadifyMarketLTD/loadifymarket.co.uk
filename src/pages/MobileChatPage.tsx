@@ -756,13 +756,17 @@ export default function MobileChatPage() {
       className="flex flex-col bg-[#020617]"
       style={{
         height: "100dvh",
-        paddingTop: "calc(3.5rem + env(safe-area-inset-top, 0px))",
       }}
     >
-      {/* Sub-header */}
+      {/* Sub-header — paddingTop includes safe-area-inset-top so the background
+          fills the status-bar area and content starts cleanly below it. */}
       <div
-        className="flex items-center gap-3 px-4 py-3 border-b border-white/10 shrink-0"
-        style={{ background: "rgba(11,15,26,0.97)" }}
+        className="flex items-center gap-3 px-4 border-b border-white/10 shrink-0"
+        style={{
+          background: "rgba(11,15,26,0.97)",
+          paddingTop: "calc(0.75rem + env(safe-area-inset-top, 0px))",
+          paddingBottom: "0.75rem",
+        }}
       >
         <button
           onClick={() => navigate("/inbox")}

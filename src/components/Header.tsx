@@ -25,7 +25,10 @@ const Header = () => {
   // they render their own mobile hamburger header.  On desktop (md+) the global
   // header is always shown and the shells offset themselves with --shell-offset-h.
   const isShellPath = /^\/(seller|admin|buyer)(\/|$)/.test(location.pathname);
-  const hideOnMobile = isHomeMobile || isShellPath;
+  // Mobile-standalone pages (/inbox, /orders, /categories) render their own sticky
+  // sub-header and must not have the global header layered on top.
+  const isMobileStandalonePath = /^\/(inbox|orders|categories)(\/|$)/.test(location.pathname);
+  const hideOnMobile = isHomeMobile || isShellPath || isMobileStandalonePath;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
