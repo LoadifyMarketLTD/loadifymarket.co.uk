@@ -314,7 +314,6 @@ export default function MobileHeroBanner() {
                       marginTop: '4px',
                       fontSize: 'clamp(9px, 2.8vw, 12px)',
                       lineHeight: 1.3,
-                      hyphens: 'none',
                     }}
                   >
                     {slide.subtitle}

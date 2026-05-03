@@ -112,7 +112,7 @@ function ProductGridCard({ product }: { product: Product }) {
         <p
           className="line-clamp-2"
           style={{
-            fontSize: '13px',
+            fontSize: 'clamp(11px, 3vw, 13px)',
             fontWeight: 500,
             color: '#FFFFFF',
             lineHeight: 1.35,
@@ -125,7 +125,7 @@ function ProductGridCard({ product }: { product: Product }) {
         {/* Price — white, bold */}
         <p
           style={{
-            fontSize: '15px',
+            fontSize: 'clamp(13px, 3.8vw, 15px)',
             fontWeight: 700,
             color: '#FFFFFF',
             lineHeight: 1,
@@ -157,7 +157,7 @@ function ProductGridCard({ product }: { product: Product }) {
           {/* Seller name */}
           <span
             style={{
-              fontSize: '11px',
+              fontSize: 'clamp(9px, 2.5vw, 11px)',
               color: 'rgba(255,255,255,0.55)',
               flex: 1,
               overflow: 'hidden',
@@ -171,7 +171,7 @@ function ProductGridCard({ product }: { product: Product }) {
           {/* Star + rating */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
             <Star style={{ width: '11px', height: '11px', color: '#F5B942', fill: '#F5B942' }} aria-hidden="true" />
-            <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
+            <span style={{ fontSize: 'clamp(9px, 2.5vw, 11px)', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
               {product.rating > 0 ? product.rating.toFixed(1) : '—'}
             </span>
           </div>
@@ -212,7 +212,7 @@ export default function MobileInfiniteFeed() {
 
   if (loading) {
     return (
-      <div style={{ padding: '12px 16px 0' }}>
+      <div style={{ padding: '12px var(--mob-side, 16px) 0' }}>
         <div className="grid grid-cols-2 gap-3">
           {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
@@ -224,7 +224,7 @@ export default function MobileInfiniteFeed() {
     return (
       <div
         style={{
-          margin: '12px 16px 0',
+          margin: '12px var(--mob-side, 16px) 0',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -254,7 +254,12 @@ export default function MobileInfiniteFeed() {
   }
 
   return (
-    <div style={{ padding: '12px 16px 0' }}>
+    <div
+      style={{
+        padding: '12px var(--mob-side, 16px) 0',
+        paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px) + 16px)',
+      }}
+    >
       <div className="grid grid-cols-2 gap-3">
         {products.map((p: Product) => (
           <ProductGridCard key={p.id} product={p} />
