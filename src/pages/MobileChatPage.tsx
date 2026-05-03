@@ -18,6 +18,7 @@ import { ArrowLeft, Send, Tag, CheckCircle, XCircle, CreditCard } from "lucide-r
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 import MakeOfferSheet from "@/components/MakeOfferSheet";
 import { trackOfferAccepted } from "@/lib/analytics";
 
@@ -729,15 +730,8 @@ export default function MobileChatPage() {
 
   const handlePayNow = async (orderId: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Not authenticated");
-
-      const res = await fetch("/.netlify/functions/checkout-from-offer", {
+      const res = await authorizedFetch("/.netlify/functions/checkout-from-offer", {
         method: "POST",
-        headers: {
-          "Content-Type":  "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
         body: JSON.stringify({ orderId }),
       });
 
