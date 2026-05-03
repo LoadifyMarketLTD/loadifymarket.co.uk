@@ -742,14 +742,16 @@ jobs:
       # Creates a versioned GitHub Release and uploads the APK as
       # "loadify-market.apk" so the stable download URL resolves:
       #   https://github.com/LoadifyMarketLTD/loadifymarket.co.uk/releases/latest/download/loadify-market.apk
-      # Only runs on main-branch pushes and manual dispatches to avoid
-      # cluttering releases with every branch build.
+      # Only runs on main-branch builds (push and workflow_dispatch from main)
+      # to avoid cluttering releases with branch builds.
+      # The commit SHA suffix ensures the tag is unique even when a run is
+      # retried (re-runs share the same GITHUB_RUN_NUMBER).
       - name: Create GitHub Release
-        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v0.$(date -u +'%Y%m%d').${GITHUB_RUN_NUMBER}"
+          TAG="v0.$(date -u +'%Y%m%d').${GITHUB_RUN_NUMBER}.${GITHUB_SHA:0:7}"
           gh release create "$TAG" \
             --title "Loadify Market $TAG" \
             --notes "Automated release — build #${GITHUB_RUN_NUMBER} from commit \`${GITHUB_SHA:0:7}\`." \
