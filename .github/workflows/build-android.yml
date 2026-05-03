@@ -25,14 +25,14 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-apk:
     name: Build Signed Release APK
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     env:
       # VITE_* variables are baked into the JavaScript bundle by Vite at build
@@ -737,6 +737,25 @@ jobs:
             exit 1
           fi
           echo "=================================================================="
+
+      # ── Publish GitHub Release ────────────────────────────────────────────────
+      # Creates a versioned GitHub Release and uploads the APK as
+      # "loadify-market.apk" so the stable download URL resolves:
+      #   https://github.com/LoadifyMarketLTD/loadifymarket.co.uk/releases/latest/download/loadify-market.apk
+      # Only runs on main-branch pushes and manual dispatches to avoid
+      # cluttering releases with every branch build.
+      - name: Create GitHub Release
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v0.$(date -u +'%Y%m%d').${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" \
+            --title "Loadify Market $TAG" \
+            --notes "Automated release — build #${GITHUB_RUN_NUMBER} from commit \`${GITHUB_SHA:0:7}\`." \
+            --latest \
+            android/app/build/outputs/apk/release/app-release.apk#loadify-market.apk
+          echo "Release $TAG published with loadify-market.apk ✓"
 
       # ── Upload artifacts ───────────────────────────────────────────────────────
       - name: Upload APK artifact
