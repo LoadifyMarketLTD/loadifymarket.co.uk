@@ -315,10 +315,10 @@ export const handler: Handler = async (event) => {
   //     no DB methods configured; shipping cost is £0.
   let shippingAmount = 0;
   const SELLER_ARRANGED_SENTINEL = 'seller-arranged';
-  const isValidUUID = (v: string) =>
+  const hasUUIDFormat = (v: string) =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
-  if (shippingMethodId && shippingMethodId !== SELLER_ARRANGED_SENTINEL && isValidUUID(shippingMethodId)) {
+  if (shippingMethodId && shippingMethodId !== SELLER_ARRANGED_SENTINEL && hasUUIDFormat(shippingMethodId)) {
     // Verify the method exists, is active, and is linked to at least one
     // product in the cart (so buyers cannot inject arbitrary method IDs).
     const { data: productShippingRows, error: psError } = await supabase
@@ -342,13 +342,13 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Extract the method and check it is active
-    const firstRow = productShippingRows[0] as Record<string, unknown>;
-    const methodData = firstRow['shipping_methods'] as
-      | { id: string; active: boolean; shipping_rates: Array<{ price: number }> | { price: number } | null }
-      | Array<{ id: string; active: boolean; shipping_rates: Array<{ price: number }> | { price: number } | null }>
-      | null;
-    const method = Array.isArray(methodData) ? methodData[0] : methodData;
+    // Extract the method record — Supabase can return a single object or a
+    // one-element array depending on the join type. Normalise to a single value.
+    type ShippingMethodRow = { id: string; active: boolean; shipping_rates: Array<{ price: number }> | null };
+    const rawMethod = (productShippingRows[0] as Record<string, unknown>)['shipping_methods'];
+    const method: ShippingMethodRow | null = Array.isArray(rawMethod)
+      ? (rawMethod[0] as ShippingMethodRow) ?? null
+      : (rawMethod as ShippingMethodRow | null);
 
     if (!method || !method.active) {
       return {
@@ -357,10 +357,10 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Resolve the price — take the minimum rate for the method
-    const rates = method.shipping_rates
-      ? (Array.isArray(method.shipping_rates) ? method.shipping_rates : [method.shipping_rates])
-      : [];
+    // Resolve the price — use the minimum rate. For the current schema each
+    // method typically has one rate; taking the minimum is safe and consistent
+    // with how the checkout UI presents prices to the buyer.
+    const rates = Array.isArray(method.shipping_rates) ? method.shipping_rates : [];
     shippingAmount = rates.length > 0
       ? Math.min(...rates.map((r) => Number(r.price)))
       : 0;

@@ -224,15 +224,21 @@ const Cart = () => {
                   </div>
                 </div>
 
-                <Link to={isMultiSellerCart ? "#" : "/checkout"} onClick={isMultiSellerCart ? (e) => e.preventDefault() : undefined}>
+                {isMultiSellerCart ? (
                   <Button
-                    className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
-                    disabled={isMultiSellerCart}
-                    aria-disabled={isMultiSellerCart}
+                    className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base opacity-50 cursor-not-allowed"
+                    disabled
+                    aria-disabled="true"
                   >
                     Proceed to Checkout <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
-                </Link>
+                ) : (
+                  <Link to="/checkout">
+                    <Button className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity">
+                      Proceed to Checkout <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                )}
               </div>
 
               {/* Trust */}
@@ -260,15 +266,21 @@ const Cart = () => {
         className="lg:hidden fixed inset-x-0 z-[9996] px-4 py-3 bg-background/95 backdrop-blur border-t border-border"
         style={{ bottom: "calc(60px + env(safe-area-inset-bottom, 0px))" }}
       >
-        <Link to={isMultiSellerCart ? "#" : "/checkout"} onClick={isMultiSellerCart ? (e) => e.preventDefault() : undefined}>
+        {isMultiSellerCart ? (
           <Button
-            className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
-            disabled={isMultiSellerCart}
-            aria-disabled={isMultiSellerCart}
+            className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base opacity-50 cursor-not-allowed"
+            disabled
+            aria-disabled="true"
           >
             Checkout · £{total.toLocaleString()} <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
-        </Link>
+        ) : (
+          <Link to="/checkout">
+            <Button className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity">
+              Checkout · £{total.toLocaleString()} <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
+        )}
       </div>
 
     </MainLayout>

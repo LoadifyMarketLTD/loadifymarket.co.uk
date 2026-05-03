@@ -90,7 +90,7 @@ export const handler: Handler = async (event) => {
       return { statusCode: 500, body: JSON.stringify({ error: 'Unable to look up seller profile. Please try again.' }) };
     }
     if (!profile) {
-      return { statusCode: 404, body: JSON.stringify({ error: 'Seller profile not found. Please complete your seller registration first.' }) };
+      return { statusCode: 404, body: JSON.stringify({ error: 'Seller profile not found. Please contact support if you believe this is an error.' }) };
     }
 
     let stripeAccountId = profile?.stripeAccountId ?? null;
