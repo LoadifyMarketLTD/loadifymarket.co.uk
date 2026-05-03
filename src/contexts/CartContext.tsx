@@ -94,10 +94,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
    * Uses a single query for all cart items (no N+1).
    */
   const refreshCartPrices = useCallback(async () => {
-    const current = loadCart();
-    if (current.length === 0) return;
+    // Use the functional updater pattern to read the latest cart state
+    // rather than a stale closure or a localStorage re-read.
+    let snapshot: CartItem[] = [];
+    setCartItems((prev) => {
+      snapshot = prev;
+      return prev;
+    });
 
-    const productIds = current.map((i) => i.product.id);
+    if (snapshot.length === 0) return;
+
+    const productIds = snapshot.map((i) => i.product.id);
 
     try {
       const { supabase } = await import("@/lib/supabase");
@@ -113,7 +120,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       let anyPriceChanged = false;
 
-      const updated = current
+      const updated = snapshot
         .filter((item) => {
           const row = dbMap.get(item.product.id);
           // Remove products that are no longer active or approved
