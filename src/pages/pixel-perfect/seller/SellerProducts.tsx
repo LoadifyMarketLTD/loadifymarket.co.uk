@@ -129,6 +129,17 @@ const SellerProducts = () => {
     load();
   }, [user]);
 
+  const persistShareCount = (productId: string) => {
+    setProducts((prev) => {
+      const updated = prev.map((p) =>
+        p.id === productId ? { ...p, shareCount: (p.shareCount ?? 0) + 1 } : p
+      );
+      const newCount = updated.find((p) => p.id === productId)?.shareCount ?? 1;
+      supabase.from("products").update({ shareCount: newCount }).eq("id", productId).then(() => {/* ignore */}).catch(() => {/* non-fatal */});
+      return updated;
+    });
+  };
+
   const shareOnFacebook = (productId: string, status: string) => {
     if (status === "pending_review" || status === "draft") {
       toast({
@@ -142,28 +153,13 @@ const SellerProducts = () => {
       });
     }
     trackShareProduct("facebook", productId);
-    // Optimistically increment then persist — read new value from within the updater to avoid race conditions
-    setProducts((prev) => {
-      const updated = prev.map((p) =>
-        p.id === productId ? { ...p, shareCount: (p.shareCount ?? 0) + 1 } : p
-      );
-      const newCount = updated.find((p) => p.id === productId)?.shareCount ?? 1;
-      supabase.from("products").update({ shareCount: newCount }).eq("id", productId).then(() => {/* ignore */}).catch(() => {/* non-fatal */});
-      return updated;
-    });
+    persistShareCount(productId);
     window.open(facebookShareUrl(productId), "_blank", "noopener,noreferrer");
   };
 
   const shareOnWhatsApp = (productId: string, title: string, price: number) => {
     trackShareProduct("whatsapp", productId, title);
-    setProducts((prev) => {
-      const updated = prev.map((p) =>
-        p.id === productId ? { ...p, shareCount: (p.shareCount ?? 0) + 1 } : p
-      );
-      const newCount = updated.find((p) => p.id === productId)?.shareCount ?? 1;
-      supabase.from("products").update({ shareCount: newCount }).eq("id", productId).then(() => {/* ignore */}).catch(() => {/* non-fatal */});
-      return updated;
-    });
+    persistShareCount(productId);
     const text = encodeURIComponent(`Check out ${title} — £${price.toLocaleString("en-GB")} on Loadify Market: ${BASE_URL}/product/${productId}`);
     window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
   };
@@ -190,14 +186,7 @@ const SellerProducts = () => {
         url: `${BASE_URL}/product/${productId}`,
       });
       trackShareProduct("native", productId, title);
-      setProducts((prev) => {
-        const updated = prev.map((p) =>
-          p.id === productId ? { ...p, shareCount: (p.shareCount ?? 0) + 1 } : p
-        );
-        const newCount = updated.find((p) => p.id === productId)?.shareCount ?? 1;
-        supabase.from("products").update({ shareCount: newCount }).eq("id", productId).then(() => {/* ignore */}).catch(() => {/* non-fatal */});
-        return updated;
-      });
+      persistShareCount(productId);
     } catch {
       // User cancelled — non-fatal.
     }

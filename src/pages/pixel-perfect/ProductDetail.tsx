@@ -420,7 +420,7 @@ const ProductDetail = () => {
     DEFAULT_PRODUCT_SEO_DESCRIPTION;
   // Always append the brand tagline if not already present anywhere in the text
   const BRAND_TAGLINE = " Sell with 0% commission on Loadify Market.";
-  const ogDescription = seoDescription.includes("0% commission")
+  const ogDescription = seoDescription.toLowerCase().includes("0% commission")
     ? seoDescription
     : seoDescription.trimEnd() + BRAND_TAGLINE;
   const primaryImageCandidate = galleryImages.find((img) => typeof img === "string" && img.trim().length > 0) || product.image;
