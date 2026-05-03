@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { authorizedFetch } from "@/lib/authorizedFetch";
+import { openExternalUrl } from "@/lib/capacitorUtils";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
 import { safeLocalStorage } from "@/lib/safeStorage";
@@ -177,7 +178,7 @@ const SellerSettings = () => {
       let data: Record<string, unknown> = {};
       try { data = await response.json(); } catch { /* non-JSON response */ }
       if (!response.ok) throw new Error((data.error as string) || "Failed to start Stripe onboarding");
-      window.location.href = data.url as string;
+      await openExternalUrl(data.url as string);
     } catch (err) {
       setConnectError(err instanceof Error ? err.message : "Failed to connect Stripe account");
       setConnectLoading(false);

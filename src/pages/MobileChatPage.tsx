@@ -18,6 +18,8 @@ import { ArrowLeft, Send, Tag, CheckCircle, XCircle, CreditCard } from "lucide-r
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
+import { authorizedFetch } from "@/lib/authorizedFetch";
+import { openExternalUrl } from "@/lib/capacitorUtils";
 import MakeOfferSheet from "@/components/MakeOfferSheet";
 import { trackOfferAccepted } from "@/lib/analytics";
 
@@ -729,15 +731,8 @@ export default function MobileChatPage() {
 
   const handlePayNow = async (orderId: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Not authenticated");
-
-      const res = await fetch("/.netlify/functions/checkout-from-offer", {
+      const res = await authorizedFetch("/.netlify/functions/checkout-from-offer", {
         method: "POST",
-        headers: {
-          "Content-Type":  "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
         body: JSON.stringify({ orderId }),
       });
 
@@ -745,7 +740,7 @@ export default function MobileChatPage() {
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
       if (!json.checkoutUrl) throw new Error("No checkout URL returned");
 
-      window.location.href = json.checkoutUrl;
+      await openExternalUrl(json.checkoutUrl);
     } catch (err) {
       toast({ title: "Failed to start checkout", description: (err as Error).message, variant: "destructive" });
     }
@@ -756,13 +751,17 @@ export default function MobileChatPage() {
       className="flex flex-col bg-[#020617]"
       style={{
         height: "100dvh",
-        paddingTop: "calc(3.5rem + env(safe-area-inset-top, 0px))",
       }}
     >
-      {/* Sub-header */}
+      {/* Sub-header — paddingTop includes safe-area-inset-top so the background
+          fills the status-bar area and content starts cleanly below it. */}
       <div
-        className="flex items-center gap-3 px-4 py-3 border-b border-white/10 shrink-0"
-        style={{ background: "rgba(11,15,26,0.97)" }}
+        className="flex items-center gap-3 px-4 border-b border-white/10 shrink-0"
+        style={{
+          background: "rgba(11,15,26,0.97)",
+          paddingTop: "calc(0.75rem + env(safe-area-inset-top, 0px))",
+          paddingBottom: "0.75rem",
+        }}
       >
         <button
           onClick={() => navigate("/inbox")}

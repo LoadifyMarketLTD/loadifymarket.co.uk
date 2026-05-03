@@ -39,6 +39,11 @@ jobs:
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+      # VITE_APP_URL is used by patchCapacitorFetch() to rewrite relative
+      # /.netlify/functions/* URLs to absolute URLs in the APK WebView.
+      # Must be the production Netlify site URL with no trailing slash,
+      # e.g. https://loadifymarket.co.uk
+      VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
       # TEMPORARY: Build identity vars baked into the APK bundle so the login
       # page shows a visible build stamp for APK diagnostics.  Remove these
       # (and the corresponding UI code) once the fetch root cause is confirmed.
@@ -530,6 +535,35 @@ jobs:
             -Pandroid.injected.signing.key.alias="$KEYSTORE_KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$KEYSTORE_KEY_PASSWORD"
 
+      # ── Build release AAB (Android App Bundle for Play Store) ─────────────────
+      # Google Play requires AAB format for new app submissions (mandatory since
+      # August 2021).  The APK above is for direct/sideload distribution; the AAB
+      # is what must be uploaded to the Play Console internal/production track.
+      - name: Build release AAB
+        working-directory: android
+        env:
+          KEYSTORE_FILE: ${{ github.workspace }}/android/app/${{ env.RELEASE_KEYSTORE_FILENAME }}
+          KEYSTORE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEYSTORE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEYSTORE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          ./gradlew bundleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file="$KEYSTORE_FILE" \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_STORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEYSTORE_KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEYSTORE_KEY_PASSWORD"
+
+      # ── Verify signed AAB exists ───────────────────────────────────────────────
+      - name: Verify signed AAB exists
+        run: |
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          if [ ! -f "$AAB" ]; then
+            echo "ERROR: app-release.aab not found — AAB build was not produced."
+            ls -lah android/app/build/outputs/bundle/release/ || true
+            exit 1
+          fi
+          echo "Signed AAB confirmed: $AAB ($(du -sh "$AAB" | cut -f1))"
+
       # ── List APK output ────────────────────────────────────────────────────────
       - name: List APK output directory
         run: ls -lah android/app/build/outputs/apk/release/
@@ -694,12 +728,19 @@ jobs:
           fi
           echo "=================================================================="
 
-      # ── Upload artifact ────────────────────────────────────────────────────────
+      # ── Upload artifacts ───────────────────────────────────────────────────────
       - name: Upload APK artifact
         uses: actions/upload-artifact@v7
         with:
           name: loadify-market-release-apk
           path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: loadify-market-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
 
       # ── Remove keystore from disk ──────────────────────────────────────────────

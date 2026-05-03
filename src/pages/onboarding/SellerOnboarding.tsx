@@ -9,6 +9,8 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { hasAdminAccess } from "@/lib/roleUtils";
 import { toast } from "@/hooks/use-toast";
+import { authorizedFetch } from "@/lib/authorizedFetch";
+import { openExternalUrl } from "@/lib/capacitorUtils";
 
 /** Total number of onboarding steps for a seller. Used when marking completion. */
 const ONBOARDING_TOTAL_STEPS = 5;
@@ -487,16 +489,12 @@ const SellerOnboarding = () => {
     if (!user) return;
     setConnecting(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Not authenticated");
-      const res = await fetch("/.netlify/functions/connect-onboard", {
+      const res = await authorizedFetch("/.netlify/functions/connect-onboard", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to start Stripe setup");
-      if (data.url) window.location.href = data.url;
+      if (data.url) await openExternalUrl(data.url);
     } catch (err) {
       toast({
         title: "Stripe Connect error",
