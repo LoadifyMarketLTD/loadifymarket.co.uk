@@ -267,7 +267,12 @@ export default function MobileHeroBanner() {
   };
 
   return (
-    <div className="px-4 mt-4">
+    <div
+      style={{
+        paddingInline: 'var(--mob-side, 16px)',
+        marginTop: '16px',
+      }}
+    >
       {/* Carousel container */}
       <div
         className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#0F0F14] to-[#1A1A22] shadow-lg"
@@ -284,45 +289,76 @@ export default function MobileHeroBanner() {
             return (
               <div
                 key={i}
-                className="relative flex-shrink-0 w-full flex items-center"
-                style={{ padding: 'clamp(14px, 4vw, 20px)', minHeight: 'clamp(180px, 44vw, 220px)' }}
+                className="flex-shrink-0 w-full"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 'clamp(14px, 4vw, 20px)',
+                  minHeight: 'clamp(180px, 44vw, 220px)',
+                  gap: 'clamp(6px, 2vw, 12px)',
+                }}
                 aria-hidden={i !== current}
               >
-                {/* Left text — fluid width, wraps gracefully on narrow screens */}
-                <div style={{ zIndex: 10, width: '58%', minWidth: 0 }}>
+                {/* ── Left: text + CTA — takes remaining space, never compresses visual ── */}
+                {/* flex:1 1 0 + min-width:0 + overflow:hidden lets the column shrink
+                    below its content's intrinsic width so the visual always has room. */}
+                <div
+                  style={{
+                    flex: '1 1 0',
+                    minWidth: 0,
+                    overflow: 'hidden',
+                    zIndex: 10,
+                  }}
+                >
+                  {/* Title — whiteSpace:nowrap prevents any mid-word or inter-word
+                      line break. overflow:hidden + text-overflow:ellipsis is the
+                      absolute last-resort safety valve (font would have to be
+                      enormous for this to trigger). */}
                   <h2
                     style={{
-                      fontSize: 'clamp(20px, 6.5vw, 34px)',
+                      fontSize: 'clamp(14px, 4.2vw, 24px)',
                       lineHeight: 1.12,
                       fontWeight: 800,
                       color: '#F5C76E',
                       margin: 0,
-                      wordBreak: 'break-word',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                     }}
                   >
                     {slide.title}
                   </h2>
+
+                  {/* Subtitle — word wrapping OK, mid-word breaking NOT allowed */}
                   <p
                     style={{
                       color: '#FFFFFF',
                       fontWeight: 600,
                       marginTop: '4px',
-                      fontSize: 'clamp(10px, 3vw, 13px)',
+                      fontSize: 'clamp(9px, 2.6vw, 12px)',
                       lineHeight: 1.3,
+                      overflowWrap: 'normal',
+                      wordBreak: 'normal',
                     }}
                   >
                     {slide.subtitle}
                   </p>
+
+                  {/* Desc */}
                   <p
                     style={{
                       color: 'rgba(255,255,255,0.55)',
                       marginTop: '4px',
-                      fontSize: 'clamp(10px, 2.8vw, 13px)',
+                      fontSize: 'clamp(9px, 2.4vw, 12px)',
                       lineHeight: 1.3,
+                      overflowWrap: 'normal',
+                      wordBreak: 'normal',
                     }}
                   >
                     {slide.desc}
                   </p>
+
                   <button
                     onClick={() => handleCTA(slide.action, slide.requiresSeller)}
                     tabIndex={i !== current ? -1 : 0}
@@ -348,18 +384,18 @@ export default function MobileHeroBanner() {
                   </button>
                 </div>
 
-                {/* Right visual — inline SVG only, no background image */}
+                {/* ── Right: inline SVG visual — fixed flex-basis, never squeezed ── */}
+                {/* flex-shrink:0 prevents the visual from compressing when the
+                    text column is wide. The visual sits inline (no absolute pos)
+                    so both columns participate in the same flex flow and neither
+                    can overlap the other. alignSelf:flex-end anchors it to the
+                    bottom of the card, matching the original aesthetic. */}
                 <div
                   aria-hidden="true"
                   style={{
-                    position: 'absolute',
-                    right: 0,
-                    bottom: 0,
-                    width: '45%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    justifyContent: 'flex-end',
+                    flex: '0 0 auto',
+                    width: 'clamp(90px, 34vw, 140px)',
+                    alignSelf: 'flex-end',
                     pointerEvents: 'none',
                   }}
                 >

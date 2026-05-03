@@ -36,10 +36,14 @@ export default function MobileCategoryShortcuts() {
   return (
     <div
       className="overflow-x-auto scrollbar-hide py-3"
-      style={{ paddingLeft: '16px', paddingRight: '16px' }}
+      style={{
+        paddingLeft: 'var(--mob-side, 16px)',
+        scrollPaddingInlineStart: 'var(--mob-side, 16px)',
+        scrollPaddingInlineEnd: 'var(--mob-side, 16px)',
+      }}
       aria-label="Browse by category"
     >
-      <div style={{ display: 'flex', gap: '24px', width: 'max-content' }}>
+      <div style={{ display: 'flex', gap: '20px', width: 'max-content' }}>
         {CATEGORIES.map(({ id, label, icon: Icon, to, ariaLabel }) => {
           const isActive = active === id;
 
@@ -57,8 +61,8 @@ export default function MobileCategoryShortcuts() {
                 /* Active item — gold circle with icon inside */
                 <div
                   style={{
-                    width: '60px',
-                    height: '60px',
+                    width: '56px',
+                    height: '56px',
                     borderRadius: '50%',
                     backgroundColor: 'rgba(200,134,10,0.14)',
                     border: '1.5px solid rgba(245,185,66,0.55)',
@@ -68,7 +72,7 @@ export default function MobileCategoryShortcuts() {
                   }}
                 >
                   <Icon
-                    style={{ width: '26px', height: '26px', color: '#F5B942' }}
+                    style={{ width: '24px', height: '24px', color: '#F5B942' }}
                     aria-hidden="true"
                   />
                 </div>
@@ -76,15 +80,15 @@ export default function MobileCategoryShortcuts() {
                 /* Inactive items — bare icon, no circle */
                 <div
                   style={{
-                    width: '60px',
-                    height: '60px',
+                    width: '56px',
+                    height: '56px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
                   <Icon
-                    style={{ width: '28px', height: '28px', color: 'rgba(245,185,66,0.75)' }}
+                    style={{ width: '26px', height: '26px', color: 'rgba(245,185,66,0.75)' }}
                     strokeWidth={1.5}
                     aria-hidden="true"
                   />
@@ -94,10 +98,11 @@ export default function MobileCategoryShortcuts() {
               {/* Label */}
               <span
                 style={{
-                  fontSize: '12px',
+                  fontSize: 'clamp(10px, 2.8vw, 12px)',
                   fontWeight: isActive ? 700 : 400,
                   color: isActive ? '#F5B942' : 'rgba(255,255,255,0.75)',
                   lineHeight: 1,
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {label}
@@ -105,6 +110,8 @@ export default function MobileCategoryShortcuts() {
             </Link>
           );
         })}
+        {/* Trailing spacer so last item clears the scroll container edge */}
+        <div style={{ minWidth: 'var(--mob-side, 16px)', flexShrink: 0 }} aria-hidden="true" />
       </div>
     </div>
   );

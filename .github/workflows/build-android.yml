@@ -9,6 +9,8 @@ on:
       # Build APK automatically on the active diagnostics branch so every push
       # produces an artifact that can be installed and tested immediately.
       - 'copilot/build-signed-release-apk-another-one'
+      # Responsive-fix branch: triggers fresh signed APK/AAB after hero layout fix.
+      - 'copilot/fix-responsive-scaling-issues'
     paths:
       - 'src/**'
       - 'public/**'
@@ -318,10 +320,18 @@ jobs:
 
       # ── Scaffold Android project ───────────────────────────────────────────────
       # `npx cap add android` generates the full Android Gradle project from the
-      # installed @capacitor/android template. No android/ directory needs to be
-      # committed to the repository.
+      # installed @capacitor/android template.  When the android/ directory is
+      # already committed to the repository (as it is in this repo) the command
+      # would fail with "android platform already exists".  We skip it in that
+      # case and let `cap sync` (below) copy the fresh web bundle into the
+      # existing native project.
       - name: Scaffold Android platform
-        run: npx cap add android
+        run: |
+          if [ -d android ]; then
+            echo "android/ directory already present — skipping cap add android"
+          else
+            npx cap add android
+          fi
 
       # ── Ensure cordova.variables.gradle stub exists ────────────────────────────
       # When no Cordova plugins are installed, cap sync does not create this file,

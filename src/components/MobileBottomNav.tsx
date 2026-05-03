@@ -35,10 +35,10 @@ function NavItem({
   return (
     <Link
       to={to}
-      className="flex flex-col items-center gap-1 px-3 py-1"
+      className="flex flex-col items-center gap-1 px-3 py-2"
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}
-      style={{ textDecoration: 'none' }}
+      style={{ textDecoration: 'none', minHeight: '44px', justifyContent: 'center' }}
     >
       <Icon
         style={{
@@ -93,9 +93,9 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
   return (
     <Link
       to="/inbox"
-      className="flex flex-col items-center gap-1 px-3 py-1"
+      className="flex flex-col items-center gap-1 px-3 py-2"
       aria-label={`Messages${unread > 0 ? `, ${unread} unread` : ''}`}
-      style={{ textDecoration: 'none' }}
+      style={{ textDecoration: 'none', minHeight: '44px', justifyContent: 'center' }}
     >
       <div style={{ position: 'relative' }}>
         <MessageCircle

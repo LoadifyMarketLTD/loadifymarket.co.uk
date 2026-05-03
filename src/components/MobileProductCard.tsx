@@ -34,8 +34,8 @@ export default function MobileProductCard({
   return (
     <Link
       to={`/product/${id}`}
-      className="flex-shrink-0 active:scale-95 transition-transform"
-      style={{ width: 'clamp(150px, 43vw, 180px)', display: 'block', textDecoration: 'none' }}
+      className="flex-shrink-0 snap-start active:scale-95 transition-transform"
+      style={{ width: 'clamp(148px, 42vw, 180px)', display: 'block', textDecoration: 'none' }}
       aria-label={title}
     >
       <div
@@ -68,7 +68,7 @@ export default function MobileProductCard({
             />
           ) : null}
 
-          {/* Heart / favourite button */}
+          {/* Heart / favourite button — 36×36 touch target, 16px visual icon */}
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -78,10 +78,10 @@ export default function MobileProductCard({
             aria-label="Save to wishlist"
             style={{
               position: 'absolute',
-              top: 8,
-              right: 8,
-              width: 28,
-              height: 28,
+              top: 4,
+              right: 4,
+              width: 36,
+              height: 36,
               background: 'rgba(0,0,0,0.5)',
               borderRadius: '50%',
               display: 'flex',
@@ -124,11 +124,11 @@ export default function MobileProductCard({
         </div>
 
         {/* ── Info area ── */}
-        <div style={{ padding: '10px' }}>
+        <div style={{ padding: '10px 12px 12px' }}>
           {/* Title */}
           <p
             style={{
-              fontSize: 13,
+              fontSize: 'clamp(11px, 3vw, 13px)',
               fontWeight: 600,
               color: '#FFFFFF',
               margin: 0,
@@ -143,7 +143,7 @@ export default function MobileProductCard({
           {/* Price */}
           <p
             style={{
-              fontSize: 17,
+              fontSize: 'clamp(14px, 4vw, 17px)',
               fontWeight: 700,
               color: '#F2B84B',
               margin: '4px 0 0',
@@ -185,7 +185,7 @@ export default function MobileProductCard({
                 />
                 <span
                   style={{
-                    fontSize: 11,
+                    fontSize: 'clamp(9px, 2.5vw, 11px)',
                     color: '#A6A6A6',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -216,7 +216,7 @@ export default function MobileProductCard({
                   }}
                   aria-hidden="true"
                 />
-                <span style={{ fontSize: 12, color: '#A6A6A6' }}>
+                <span style={{ fontSize: 'clamp(10px, 2.8vw, 12px)', color: '#A6A6A6' }}>
                   {rating.toFixed(1)}
                 </span>
               </div>
