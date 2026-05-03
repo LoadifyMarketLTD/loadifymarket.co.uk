@@ -94,7 +94,7 @@ const Signup = () => {
       setError("First name and last name are required."); return;
     }
     if (!f.email.trim()) { setError("Email address is required."); return; }
-    if (!isPrivate && !f.company.trim()) { setError("Company name is required."); return; }
+    if (isSeller && !f.company.trim()) { setError("Store / company name is required for seller accounts."); return; }
     if (f.password.length < 8) {
       setError("Password must be at least 8 characters."); return;
     }
@@ -407,13 +407,16 @@ const Signup = () => {
                 <div className="px-4 py-3 space-y-2">
 
                   <div>
-                    <label htmlFor="company" className={lbl}>Company{!isPrivate && req}</label>
+                    <label htmlFor="company" className={lbl}>Company{isSeller && req}</label>
                     <input
                       id="company" name="company" type="text"
-                      autoComplete="organization" required={!isPrivate}
-                      placeholder={isPrivate ? "Optional" : ""}
+                      autoComplete="organization" required={isSeller}
+                      placeholder={isSeller ? "" : "Optional"}
                       value={f.company} onChange={set} className={inputBase}
                     />
+                    {!isSeller && (
+                      <p className="text-[10px] text-slate-500 mt-0.5">Optional — leave blank if you are an individual buyer.</p>
+                    )}
                   </div>
 
                   <div>

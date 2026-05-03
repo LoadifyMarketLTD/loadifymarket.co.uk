@@ -12,6 +12,7 @@ import RequireSeller from './components/auth/RequireSeller';
 import RequireSellerAny from './components/auth/RequireSellerAny';
 import RequireBuyer from './components/auth/RequireBuyer';
 import RequireEmailVerified from './components/auth/RequireEmailVerified';
+import RequireAuth from './components/auth/RequireAuth';
 
 // ─── Auth callback — OAuth redirect landing page ──────────────────────────────
 const AuthCallbackPage    = lazy(() => import('./pages/AuthCallbackPage'));
@@ -521,13 +522,13 @@ function App() {
         </Route>
 
         {/* ── Mobile inbox + chat ─────────────────────────────────────────────── */}
-        <Route path="inbox" element={<Suspense fallback={<PageLoader />}><MobileInboxPage /></Suspense>} />
-        <Route path="inbox/:conversationId" element={<Suspense fallback={<PageLoader />}><MobileChatPage /></Suspense>} />
+        <Route path="inbox" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileInboxPage /></Suspense></RequireAuth>} />
+        <Route path="inbox/:conversationId" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileChatPage /></Suspense></RequireAuth>} />
 
         {/* ── Mobile orders (buyer) — also handles push notification deep-links ── */}
-        <Route path="orders" element={<Suspense fallback={<PageLoader />}><MobileOrdersPage /></Suspense>} />
+        <Route path="orders" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileOrdersPage /></Suspense></RequireAuth>} />
 
-        {/* ── Mobile categories list ───────────────────────────────────────────── */}
+        {/* ── Mobile categories list — public browsing, no auth required ──────── */}
         <Route path="categories" element={<Suspense fallback={<PageLoader />}><MobileCategoriesPage /></Suspense>} />
 
         {/* ── Standalone functional pages ──────────────────────────────────────── */}
