@@ -57,6 +57,15 @@
     --font-display: 'Space Grotesk', sans-serif;
     --font-body: 'Inter', sans-serif;
 
+    /* ── Mobile spacing system ────────────────────────────────────────────
+     * --mob-side    : consistent horizontal gutter on mobile screens
+     * --mob-nav-h   : visible height of MobileBottomNav (excl. safe-area)
+     * Use these in calc() expressions alongside env(safe-area-inset-bottom)
+     * to ensure content is never hidden behind the bottom nav bar.
+     * ─────────────────────────────────────────────────────────────────── */
+    --mob-side: clamp(12px, 4vw, 20px);
+    --mob-nav-h: 68px;
+
     /* ── Responsive global Header height ──────────────────────────────────
      * Header Row 1: h-[60px] (mobile) / h-[72px] (md+)
      * Header Row 2: h-[50px] (all sizes, category nav)

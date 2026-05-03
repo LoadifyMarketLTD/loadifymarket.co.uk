@@ -46,14 +46,14 @@ export default function MobileAppHeader() {
       }}
     >
       {/* ── Left: logo + brand name ─── */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2.5" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
         {/* Hexagonal LM badge */}
         <div
           style={{
-            width: 40,
-            height: 40,
+            width: 36,
+            height: 36,
             border: '2px solid #F2B84B',
-            borderRadius: 10,
+            borderRadius: 9,
             background: 'linear-gradient(135deg, #1E1A0E 0%, #111216 100%)',
             display: 'flex',
             alignItems: 'center',
@@ -63,7 +63,7 @@ export default function MobileAppHeader() {
         >
           <span
             style={{
-              fontSize: 14,
+              fontSize: 'clamp(11px, 3.2vw, 14px)',
               fontWeight: 900,
               color: '#F2B84B',
               letterSpacing: 0.5,
@@ -74,29 +74,31 @@ export default function MobileAppHeader() {
           </span>
         </div>
 
-        {/* Brand text */}
-        <div className="flex flex-col leading-none gap-0">
-          <div className="flex items-baseline gap-1">
+        {/* Brand text — fluid font size so it never overflows on narrow screens */}
+        <div className="flex flex-col leading-none gap-0" style={{ minWidth: 0 }}>
+          <div className="flex items-baseline gap-1" style={{ flexWrap: 'nowrap' }}>
             <span
               style={{
-                fontSize: 18,
+                fontSize: 'clamp(13px, 4vw, 18px)',
                 fontWeight: 800,
                 color: '#FFFFFF',
-                letterSpacing: 1.5,
+                letterSpacing: 'clamp(0.5px, 0.3vw, 1.5px)',
                 lineHeight: 1,
                 fontFamily: 'var(--font-display)',
+                whiteSpace: 'nowrap',
               }}
             >
               LOADIFY
             </span>
             <span
               style={{
-                fontSize: 18,
+                fontSize: 'clamp(13px, 4vw, 18px)',
                 fontWeight: 800,
                 color: '#FFFFFF',
-                letterSpacing: 1.5,
+                letterSpacing: 'clamp(0.5px, 0.3vw, 1.5px)',
                 lineHeight: 1,
                 fontFamily: 'var(--font-display)',
+                whiteSpace: 'nowrap',
               }}
             >
               MARKET
@@ -104,11 +106,12 @@ export default function MobileAppHeader() {
           </div>
           <span
             style={{
-              fontSize: 10,
+              fontSize: 'clamp(8px, 2.5vw, 10px)',
               fontWeight: 600,
               color: 'rgba(242,184,75,0.8)',
               letterSpacing: 0.5,
               marginTop: 2,
+              whiteSpace: 'nowrap',
             }}
           >
             0% COMMISSION
@@ -117,7 +120,7 @@ export default function MobileAppHeader() {
       </div>
 
       {/* ── Right: search + bell + filter ─── */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
         {/* Search icon — opens full-screen overlay */}
         <button
           onClick={() => setSearchOpen(true)}

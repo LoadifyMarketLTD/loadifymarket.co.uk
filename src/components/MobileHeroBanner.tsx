@@ -292,12 +292,14 @@ export default function MobileHeroBanner() {
                 <div style={{ zIndex: 10, width: '58%', minWidth: 0 }}>
                   <h2
                     style={{
-                      fontSize: 'clamp(20px, 6.5vw, 34px)',
+                      fontSize: 'clamp(15px, 4.5vw, 24px)',
                       lineHeight: 1.12,
                       fontWeight: 800,
                       color: '#F5C76E',
                       margin: 0,
-                      wordBreak: 'break-word',
+                      wordBreak: 'keep-all',
+                      overflowWrap: 'break-word',
+                      hyphens: 'none',
                     }}
                   >
                     {slide.title}
@@ -307,8 +309,9 @@ export default function MobileHeroBanner() {
                       color: '#FFFFFF',
                       fontWeight: 600,
                       marginTop: '4px',
-                      fontSize: 'clamp(10px, 3vw, 13px)',
+                      fontSize: 'clamp(9px, 2.8vw, 12px)',
                       lineHeight: 1.3,
+                      hyphens: 'none',
                     }}
                   >
                     {slide.subtitle}
@@ -317,7 +320,7 @@ export default function MobileHeroBanner() {
                     style={{
                       color: 'rgba(255,255,255,0.55)',
                       marginTop: '4px',
-                      fontSize: 'clamp(10px, 2.8vw, 13px)',
+                      fontSize: 'clamp(9px, 2.6vw, 12px)',
                       lineHeight: 1.3,
                     }}
                   >

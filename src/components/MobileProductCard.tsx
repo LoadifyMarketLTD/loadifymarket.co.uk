@@ -34,8 +34,8 @@ export default function MobileProductCard({
   return (
     <Link
       to={`/product/${id}`}
-      className="flex-shrink-0 active:scale-95 transition-transform"
-      style={{ width: 'clamp(150px, 43vw, 180px)', display: 'block', textDecoration: 'none' }}
+      className="flex-shrink-0 snap-start active:scale-95 transition-transform"
+      style={{ width: 'clamp(148px, 42vw, 180px)', display: 'block', textDecoration: 'none' }}
       aria-label={title}
     >
       <div
