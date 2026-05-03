@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ShieldCheck } from "lucide-react";
 import { useAuthStore } from "@/store";
 import { isCapacitorNative } from "@/lib/capacitorUtils";
+import { sanitizeRedirectUrl } from "@/lib/sanitizeRedirectUrl";
 
 /* ── Shared Google / Apple SVG logos ─────────────────────────────────── */
 const GoogleIcon = () => (
@@ -40,10 +41,7 @@ const Login = () => {
 
   useEffect(() => {
     if (user) {
-      const raw = searchParams.get("next");
-      // Sanitise the redirect target: only allow same-origin relative paths
-      // (must start with "/" but not "//", to prevent open-redirect attacks).
-      const nextUrl = raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : null;
+      const nextUrl = sanitizeRedirectUrl(searchParams.get("next"));
       if (nextUrl) navigate(nextUrl, { replace: true });
       else if (user.role === "seller") navigate("/seller", { replace: true });
       else if (user.role === "admin") navigate("/admin", { replace: true });
@@ -70,8 +68,7 @@ const Login = () => {
       //   • populates the Zustand store
       // DashboardRedirect at /dashboard waits for isLoading=false and then
       // routes to the correct role-based hub (/buyer, /seller, /admin).
-      const nextUrl = searchParams.get("next");
-      const redirectTo = nextUrl ?? "/dashboard";
+      const redirectTo = sanitizeRedirectUrl(searchParams.get("next")) ?? "/dashboard";
       navigate(redirectTo, { replace: true });
     } catch (err) {
       const raw = err instanceof Error ? err.message : String(err);
