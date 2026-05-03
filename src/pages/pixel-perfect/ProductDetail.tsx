@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Flag, MessageSquare, Tag, ShoppingCart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { copyToClipboard } from "@/lib/clipboard";
+import { isCapacitorNative } from "@/lib/capacitorUtils";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 import MakeOfferSheet from "@/components/MakeOfferSheet";
@@ -413,8 +414,20 @@ const ProductDetail = () => {
   const supportsNativeShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   const handleShareFacebook = () => {
-    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodedProductUrl}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+    const webSharerUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedProductUrl}`;
+    if (isCapacitorNative()) {
+      // On Android APK use an Intent URL so Android routes directly into the
+      // installed Facebook app (where the user is already logged in).
+      // If Facebook is not installed the browser_fallback_url opens the web sharer.
+      const fallback = encodeURIComponent(webSharerUrl);
+      const intentUrl =
+        `intent://www.facebook.com/sharer/sharer.php?u=${encodedProductUrl}` +
+        `#Intent;package=com.facebook.katana;scheme=https;` +
+        `S.browser_fallback_url=${fallback};end`;
+      window.open(intentUrl, "_blank");
+    } else {
+      window.open(webSharerUrl, "_blank", "noopener,noreferrer");
+    }
   };
 
   const handleShareWhatsApp = () => {

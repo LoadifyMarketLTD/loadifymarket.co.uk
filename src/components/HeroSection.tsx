@@ -1,5 +1,8 @@
 import { Link } from 'react-router-dom';
+import { Smartphone } from 'lucide-react';
 import PaymentCard from '@/components/ui/PaymentCard';
+import { isCapacitorNative } from '@/lib/capacitorUtils';
+import { APK_DOWNLOAD_URL } from '@/lib/apkDownloadUrl';
 
 /**
  * HeroSection — desktop full-screen hero (>= md).
@@ -84,6 +87,19 @@ const HeroSection = () => (
               <PaymentCard variant="stripe"     size="hero" />
             </div>
           </div>
+
+          {/* Android app download — hidden when already running inside the APK */}
+          {!isCapacitorNative() && (
+            <a
+              href={APK_DOWNLOAD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-2 bg-white/[0.08] hover:bg-white/[0.14] border border-white/20 hover:border-[#C99A3E]/60 text-[#F5F1E8] hover:text-[#C99A3E] rounded-full px-5 py-2 text-sm font-medium transition-colors duration-150 self-center sm:self-start"
+            >
+              <Smartphone className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Download for Android
+            </a>
+          )}
 
         </div>
       </div>

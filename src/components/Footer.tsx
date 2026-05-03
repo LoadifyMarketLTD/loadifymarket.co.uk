@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
-import { ShieldCheck, Store, Truck, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { ShieldCheck, Store, Truck, Facebook, Twitter, Instagram, Linkedin, Smartphone } from "lucide-react";
 import SocialCard from "@/components/ui/SocialCard";
 import TikTokIcon from "@/components/ui/TikTokIcon";
+import { isCapacitorNative } from "@/lib/capacitorUtils";
+import { APK_DOWNLOAD_URL } from "@/lib/apkDownloadUrl";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -37,6 +39,17 @@ const Footer = () => {
           <Link to="/terms"   style={{ fontSize: '13px', color: 'rgba(255,255,255,0.70)', textDecoration: 'none' }}>Terms</Link>
           <Link to="/privacy" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.70)', textDecoration: 'none' }}>Privacy</Link>
           <Link to="/contact" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.70)', textDecoration: 'none' }}>Support</Link>
+          {!isCapacitorNative() && (
+            <a
+              href={APK_DOWNLOAD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[13px] text-[rgba(255,255,255,0.70)] no-underline flex items-center gap-1"
+            >
+              <Smartphone className="h-[14px] w-[14px] shrink-0" aria-hidden="true" />
+              Android App
+            </a>
+          )}
         </div>
         <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', textAlign: 'center' }}>
           &copy; {new Date().getFullYear()} Loadify Market
@@ -104,6 +117,24 @@ const Footer = () => {
                 </a>
               </li>
             </ul>
+
+            {/* ── Get the App ── */}
+            {!isCapacitorNative() && (
+              <div className="mt-5">
+                <p className="text-[11px] font-bold tracking-widest uppercase text-[#FFD77A] mb-3">
+                  Get the App
+                </p>
+                <a
+                  href={APK_DOWNLOAD_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-[#1A1F2E] border border-white/[0.12] hover:border-[#FFD77A]/40 hover:text-[#FFD77A] text-[#F5F1E8] rounded-lg px-4 py-2.5 text-[13px] font-medium transition-colors duration-150"
+                >
+                  <Smartphone className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  Download for Android
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Col 2 — For Buyers */}
