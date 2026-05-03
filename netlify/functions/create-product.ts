@@ -123,6 +123,36 @@ export const handler: Handler = async (event) => {
   // Admin creates are always approved; sellers depend on the flag
   const isApproved: boolean = isAdmin ? true : Boolean(flags.autoApproveProducts);
 
+  // ── Listing limit check ───────────────────────────────────────────────────
+  // Non-admin sellers are capped by seller_profiles.listingLimit (default 5).
+  // Count all their existing listings regardless of isActive — drafts use up
+  // capacity the same as published ones, preventing limit circumvention.
+  if (!isAdmin) {
+    const [profileRes, countRes] = await Promise.all([
+      supabase
+        .from('seller_profiles')
+        .select('listingLimit')
+        .eq('userId', callerId)
+        .maybeSingle<{ listingLimit: number | null }>(),
+      supabase
+        .from('products')
+        .select('id', { count: 'exact', head: true })
+        .eq('sellerId', callerId),
+    ]);
+
+    const limit = profileRes.data?.listingLimit ?? null;
+    const currentCount = countRes.count ?? 0;
+
+    if (limit !== null && currentCount >= limit) {
+      return {
+        statusCode: 429,
+        body: JSON.stringify({
+          error: `Listing limit reached. You can have a maximum of ${limit} listing(s). Archive or delete existing listings to create new ones.`,
+        }),
+      };
+    }
+  }
+
   // VAT calculation (UK 20%)
   const vatRate = 0.20;
   const priceExVat = price / (1 + vatRate);

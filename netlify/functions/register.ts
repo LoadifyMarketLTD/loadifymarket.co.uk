@@ -37,6 +37,8 @@ interface RegisterRequest {
   lastName: string;
   role: 'buyer' | 'seller';
   storeName?: string;
+  /** Seller account type — captured at registration for compliance. */
+  sellerType?: 'individual' | 'sole_trader' | 'company';
   // B2B buyer fields — persisted to buyer_profiles on registration.
   companyName?: string;
   vatNumber?: string;
@@ -79,7 +81,7 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
   }
 
-  const { email, password, firstName, lastName, role, storeName, phone, vatNumber, customerType, companyName, businessAddress, middleName, newsletter, requestAssistance } = body;
+  const { email, password, firstName, lastName, role, storeName, phone, vatNumber, customerType, companyName, businessAddress, middleName, newsletter, requestAssistance, sellerType } = body;
 
   if (!email || !password || !firstName || !lastName || !role) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
@@ -310,10 +312,30 @@ export const handler: Handler = async (event) => {
   if (role === 'seller') {
     const effectiveStoreName = storeName?.trim() || `${firstName}'s Store`;
 
+    // Validate sellerType before writing — ignore unknown values.
+    const validSellerTypes = new Set(['individual', 'sole_trader', 'company']);
+    const safeSellerType =
+      sellerType && validSellerTypes.has(sellerType) ? sellerType : null;
+
+    // Determine whether this seller requires admin approval before activation.
+    // Controlled by the requireCompanyApproval platform feature flag.
+    // Only company sellers are ever flagged — individuals/sole traders are unaffected.
+    let requiresAdminApproval = false;
+    if (safeSellerType === 'company') {
+      try {
+        const flags = await getFeatureFlags(supabase);
+        requiresAdminApproval = Boolean(flags.requireCompanyApproval);
+      } catch {
+        // Non-fatal — if the flag cannot be read, default to no gate.
+      }
+    }
+
     const sellerProfileUpdate: Record<string, unknown> = {
       userId,
       fullName: `${firstName} ${lastName}`,
       storeName: effectiveStoreName,
+      ...(safeSellerType ? { sellerType: safeSellerType } : {}),
+      requiresAdminApproval,
     };
     if (phone?.trim())                                           sellerProfileUpdate.contactPhone    = phone.trim();
     if (vatNumber?.trim())                                       sellerProfileUpdate.vatNumber        = vatNumber.trim();

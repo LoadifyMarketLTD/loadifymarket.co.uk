@@ -277,9 +277,21 @@ export const handler: Handler = async (event) => {
       // ── approve ────────────────────────────────────────────────────────────
       if (op === 'approve') {
         if (!userId) return { statusCode: 400, headers: JSON_HEADERS, body: JSON.stringify({ error: 'userId required' }) };
-        const { error } = await admin.from('seller_profiles').update({ sellerStatus: 'active', isApproved: true }).eq('userId', userId);
+        // Set isApproved so the activation pipeline can promote the seller.
+        const { error } = await admin.from('seller_profiles').update({ isApproved: true }).eq('userId', userId);
         if (error) throw error;
-        return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ success: true }) };
+        // Re-run the activation pipeline so the seller becomes 'active'
+        // immediately if Stripe and profile requirements are also met, rather
+        // than waiting for the next Stripe webhook or connect-status poll.
+        let sellerStatus = 'submitted';
+        try {
+          const { tryAutoActivateSeller } = await import('./_shared/sellerActivation');
+          const result = await tryAutoActivateSeller(admin, userId);
+          if (result) sellerStatus = result.sellerStatus;
+        } catch (activationErr) {
+          console.warn('admin-sellers approve: activation pipeline failed (non-fatal):', activationErr);
+        }
+        return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ success: true, sellerStatus }) };
       }
 
       // ── reject ─────────────────────────────────────────────────────────────
