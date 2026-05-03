@@ -39,6 +39,11 @@ jobs:
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.VITE_STRIPE_PUBLISHABLE_KEY }}
+      # VITE_APP_URL is used by patchCapacitorFetch() to rewrite relative
+      # /.netlify/functions/* URLs to absolute URLs in the APK WebView.
+      # Must be the production Netlify site URL with no trailing slash,
+      # e.g. https://loadifymarket.co.uk
+      VITE_APP_URL: ${{ secrets.VITE_APP_URL }}
       # TEMPORARY: Build identity vars baked into the APK bundle so the login
       # page shows a visible build stamp for APK diagnostics.  Remove these
       # (and the corresponding UI code) once the fetch root cause is confirmed.

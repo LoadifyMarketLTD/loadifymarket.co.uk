@@ -7,10 +7,12 @@ const config: CapacitorConfig = {
   server: {
     // Use HTTPS scheme for proper cookie/auth handling in the WebView.
     androidScheme: 'https',
-    // External URLs (Stripe, Supabase auth) open in the system browser via
-    // Capacitor's default behaviour for non-matching URLs.
-    // Add the Supabase project domain so the OAuth redirect back to the app
-    // is handled correctly by the Android intent filter (deep link).
+    // allowNavigation lists external domains that the WebView is permitted to
+    // navigate to directly.  This is NOT required for @capacitor/browser
+    // (Chrome Custom Tabs) — those open outside the WebView entirely.
+    // The Supabase domain is listed so that OAuth redirects back from the
+    // Supabase Auth server work correctly when processed by the WebView before
+    // being handed off to the Android App Link / appUrlOpen listener.
     allowNavigation: ['*.supabase.co', '*.google.com', '*.accounts.google.com'],
     // Clear text for development only — keep false in production.
     cleartext: false,
