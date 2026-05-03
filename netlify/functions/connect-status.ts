@@ -40,9 +40,6 @@ export const handler: Handler = async (event) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
   const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-08-27.basil' });
 
-  // Log which Stripe account is active (key prefix only — never log the full secret).
-  console.log(`connect-status: using Stripe key ${stripeSecretKey.slice(0, 12)}…`);
-
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
     return { statusCode: 401, body: JSON.stringify({ error: 'Invalid or expired token' }) };
