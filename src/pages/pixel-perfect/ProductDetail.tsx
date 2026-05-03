@@ -418,10 +418,11 @@ const ProductDetail = () => {
     longDescriptionExcerpt ||
     categoryFallbackDescription ||
     DEFAULT_PRODUCT_SEO_DESCRIPTION;
-  // Append brand tagline so every shared preview reinforces the 0% commission message
-  const ogDescription = seoDescription.endsWith("Sell with 0% commission.")
+  // Always append the brand tagline if not already present anywhere in the text
+  const BRAND_TAGLINE = " Sell with 0% commission on Loadify Market.";
+  const ogDescription = seoDescription.includes("0% commission")
     ? seoDescription
-    : `${seoDescription} Sell with 0% commission on Loadify Market.`;
+    : seoDescription.trimEnd() + BRAND_TAGLINE;
   const primaryImageCandidate = galleryImages.find((img) => typeof img === "string" && img.trim().length > 0) || product.image;
   const seoImage = toAbsolutePublicUrl(primaryImageCandidate) ?? DEFAULT_OG_IMAGE;
   const encodedProductUrl = encodeURIComponent(currentProductUrl);

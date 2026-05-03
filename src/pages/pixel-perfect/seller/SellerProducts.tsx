@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { copyToClipboard } from "@/lib/clipboard";
+import { trackShareProduct, trackCopyLink } from "@/lib/analytics";
 
 /** Branded Loadify Market "LM" placeholder shown when a product has no image. */
 function LMPlaceholder({ size = 48 }: { size?: number }) {
@@ -140,17 +141,29 @@ const SellerProducts = () => {
         description: "Facebook will open so you can publish it to your timeline.",
       });
     }
-    // Optimistically increment shareCount in local state
-    setProducts((prev) =>
-      prev.map((p) => p.id === productId ? { ...p, shareCount: (p.shareCount ?? 0) + 1 } : p)
-    );
-    // Persist increment to DB (fire-and-forget; non-critical)
-    const currentCount = products.find((p) => p.id === productId)?.shareCount ?? 0;
-    supabase.from("products").update({ shareCount: currentCount + 1 }).eq("id", productId).then(() => {/* ignore */}).catch(() => {/* non-fatal */});
+    trackShareProduct("facebook", productId);
+    // Optimistically increment then persist — read new value from within the updater to avoid race conditions
+    setProducts((prev) => {
+      const updated = prev.map((p) =>
+        p.id === productId ? { ...p, shareCount: (p.shareCount ?? 0) + 1 } : p
+      );
+      const newCount = updated.find((p) => p.id === productId)?.shareCount ?? 1;
+      supabase.from("products").update({ shareCount: newCount }).eq("id", productId).then(() => {/* ignore */}).catch(() => {/* non-fatal */});
+      return updated;
+    });
     window.open(facebookShareUrl(productId), "_blank", "noopener,noreferrer");
   };
 
   const shareOnWhatsApp = (productId: string, title: string, price: number) => {
+    trackShareProduct("whatsapp", productId, title);
+    setProducts((prev) => {
+      const updated = prev.map((p) =>
+        p.id === productId ? { ...p, shareCount: (p.shareCount ?? 0) + 1 } : p
+      );
+      const newCount = updated.find((p) => p.id === productId)?.shareCount ?? 1;
+      supabase.from("products").update({ shareCount: newCount }).eq("id", productId).then(() => {/* ignore */}).catch(() => {/* non-fatal */});
+      return updated;
+    });
     const text = encodeURIComponent(`Check out ${title} — £${price.toLocaleString("en-GB")} on Loadify Market: ${BASE_URL}/product/${productId}`);
     window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
   };
@@ -158,6 +171,7 @@ const SellerProducts = () => {
   const copyProductLink = async (productId: string) => {
     try {
       await copyToClipboard(`${BASE_URL}/product/${productId}`);
+      trackCopyLink(productId);
       toast({ title: "Link copied", description: "Product link copied to clipboard." });
     } catch {
       toast({ title: "Could not copy link", description: "Please copy the URL manually.", variant: "destructive" });
@@ -166,7 +180,6 @@ const SellerProducts = () => {
 
   const nativeShareProduct = async (productId: string, title: string, price: number) => {
     if (typeof navigator === "undefined" || typeof navigator.share !== "function") {
-      // fallback to copy link
       await copyProductLink(productId);
       return;
     }
@@ -175,6 +188,15 @@ const SellerProducts = () => {
         title: `${title} — £${price.toLocaleString("en-GB")}`,
         text: `Check out this product on Loadify Market: ${title}`,
         url: `${BASE_URL}/product/${productId}`,
+      });
+      trackShareProduct("native", productId, title);
+      setProducts((prev) => {
+        const updated = prev.map((p) =>
+          p.id === productId ? { ...p, shareCount: (p.shareCount ?? 0) + 1 } : p
+        );
+        const newCount = updated.find((p) => p.id === productId)?.shareCount ?? 1;
+        supabase.from("products").update({ shareCount: newCount }).eq("id", productId).then(() => {/* ignore */}).catch(() => {/* non-fatal */});
+        return updated;
       });
     } catch {
       // User cancelled — non-fatal.

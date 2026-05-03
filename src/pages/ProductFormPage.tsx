@@ -10,7 +10,7 @@ import ImageUpload from '../components/ImageUpload';
 import ShippingMethodSelector from '../components/ShippingMethodSelector';
 import { toast } from '../hooks/use-toast';
 import { copyToClipboard } from '../lib/clipboard';
-import { trackPublishListing, trackStartListing } from '../lib/analytics';
+import { trackPublishListing, trackStartListing, trackShareProduct, trackCopyLink } from '../lib/analytics';
 
 // Listing types that require bulk/pallet-specific fields
 const BULK_PRODUCT_TYPES: ProductType[] = ['pallet', 'lot', 'wholesale'];
@@ -600,6 +600,7 @@ export default function ProductFormPage() {
                       type="button"
                       onClick={() => {
                         const url = `https://loadifymarket.co.uk/product/${publishedProductId}`;
+                        trackShareProduct('facebook', publishedProductId, formData.title);
                         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
                       }}
                       className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80"
@@ -612,6 +613,7 @@ export default function ProductFormPage() {
                       onClick={() => {
                         const url = `https://loadifymarket.co.uk/product/${publishedProductId}`;
                         const text = encodeURIComponent(`Check out my product on Loadify Market: ${url}`);
+                        trackShareProduct('whatsapp', publishedProductId, formData.title);
                         window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
                       }}
                       className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80"
@@ -625,6 +627,7 @@ export default function ProductFormPage() {
                         const url = `https://loadifymarket.co.uk/product/${publishedProductId}`;
                         try {
                           await copyToClipboard(url);
+                          trackCopyLink(publishedProductId);
                           toast({ title: 'Link copied', description: 'Product link copied to clipboard.' });
                         } catch {
                           toast({ title: 'Could not copy', description: 'Please copy the URL manually.', variant: 'destructive' });
