@@ -297,7 +297,6 @@ export default function MobileHeroBanner() {
                       fontWeight: 800,
                       color: '#F5C76E',
                       margin: 0,
-                      wordBreak: 'keep-all',
                       overflowWrap: 'break-word',
                       hyphens: 'none',
                     }}

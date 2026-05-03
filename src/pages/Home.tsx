@@ -82,8 +82,9 @@ function MobileHome() {
         <div
           className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1"
           style={{
-            paddingLeft: 'var(--mob-side, 16px)',
-            scrollPaddingLeft: 'var(--mob-side, 16px)',
+            paddingInlineStart: 'var(--mob-side, 16px)',
+            scrollPaddingInlineStart: 'var(--mob-side, 16px)',
+            scrollPaddingInlineEnd: 'var(--mob-side, 16px)',
           }}
         >
           {loading
@@ -130,8 +131,9 @@ function MobileHome() {
         <div
           className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1"
           style={{
-            paddingLeft: 'var(--mob-side, 16px)',
-            scrollPaddingLeft: 'var(--mob-side, 16px)',
+            paddingInlineStart: 'var(--mob-side, 16px)',
+            scrollPaddingInlineStart: 'var(--mob-side, 16px)',
+            scrollPaddingInlineEnd: 'var(--mob-side, 16px)',
           }}
         >
           {loading

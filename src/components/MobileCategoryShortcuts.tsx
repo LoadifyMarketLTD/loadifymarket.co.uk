@@ -39,6 +39,7 @@ export default function MobileCategoryShortcuts() {
       style={{
         paddingLeft: 'var(--mob-side, 16px)',
         scrollPaddingInlineStart: 'var(--mob-side, 16px)',
+        scrollPaddingInlineEnd: 'var(--mob-side, 16px)',
       }}
       aria-label="Browse by category"
     >
