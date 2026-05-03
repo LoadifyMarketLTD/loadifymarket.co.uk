@@ -31,7 +31,10 @@ export interface SellerProfileSnapshot {
   sellerType?: string | null;
   /** Required for company sellers to satisfy Phase B compliance checks. */
   companyRegistrationNumber?: string | null;
+  /** Always optional for non-VAT-registered sellers; required when isVatRegistered=true. */
   vatNumber?: string | null;
+  /** When true, the seller has declared VAT registration and vatNumber becomes required. */
+  isVatRegistered?: boolean | null;
   /** When true, admin must approve before the seller can become active. */
   requiresAdminApproval?: boolean | null;
   /** Set to true by admin approve operation. */
@@ -48,7 +51,7 @@ export interface SellerProfileSnapshot {
  *
  * Additional requirements for company sellers:
  *   - companyRegistrationNumber (non-empty)
- *   - vatNumber (non-empty)
+ *   - vatNumber (non-empty) ONLY when isVatRegistered = true
  *
  * Existing sellers whose sellerType is NULL are treated as non-company
  * and are unaffected by the additional checks.
@@ -62,6 +65,7 @@ export function isProfileComplete(
     | 'businessAddress'
     | 'companyRegistrationNumber'
     | 'vatNumber'
+    | 'isVatRegistered'
   >,
   sellerType?: string | null,
 ): boolean {
@@ -75,8 +79,12 @@ export function isProfileComplete(
 
   if (sellerType === 'company') {
     const companyReg = (profile.companyRegistrationNumber ?? '').trim();
-    const vat = (profile.vatNumber ?? '').trim();
-    return companyReg.length > 0 && vat.length > 0;
+    if (companyReg.length === 0) return false;
+    // VAT number is only required when the seller declares VAT registration.
+    if (profile.isVatRegistered) {
+      const vat = (profile.vatNumber ?? '').trim();
+      if (vat.length === 0) return false;
+    }
   }
 
   return true;
@@ -149,7 +157,7 @@ export async function tryAutoActivateSeller(
   const { data: profile, error } = await supabase
     .from('seller_profiles')
     .select(
-      'userId, sellerStatus, activatedAt, storeName, businessName, contactPhone, businessAddress, stripeAccountId, stripeConnectStatus, sellerType, companyRegistrationNumber, vatNumber, requiresAdminApproval, isApproved',
+      'userId, sellerStatus, activatedAt, storeName, businessName, contactPhone, businessAddress, stripeAccountId, stripeConnectStatus, sellerType, companyRegistrationNumber, vatNumber, isVatRegistered, requiresAdminApproval, isApproved',
     )
     .eq('userId', sellerId)
     .single<SellerProfileSnapshot>();
