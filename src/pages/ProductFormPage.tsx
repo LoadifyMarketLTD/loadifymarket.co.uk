@@ -9,6 +9,8 @@ import CategorySelector from '../components/CategorySelector';
 import ImageUpload from '../components/ImageUpload';
 import ShippingMethodSelector from '../components/ShippingMethodSelector';
 import { toast } from '../hooks/use-toast';
+import { copyToClipboard } from '../lib/clipboard';
+import { trackPublishListing, trackStartListing } from '../lib/analytics';
 
 // Listing types that require bulk/pallet-specific fields
 const BULK_PRODUCT_TYPES: ProductType[] = ['pallet', 'lot', 'wholesale'];
@@ -102,6 +104,7 @@ export default function ProductFormPage() {
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [publishedProductId, setPublishedProductId] = useState<string | null>(null);
   const [selectedShippingMethodIds, setSelectedShippingMethodIds] = useState<string[]>([]);
   const [dispatchTime, setDispatchTime] = useState('');
   // True when the product has active or completed orders — critical fields are locked for sellers
@@ -251,6 +254,9 @@ export default function ProductFormPage() {
   useEffect(() => {
     if (id) {
       fetchProduct();
+    } else {
+      // New listing — track start_listing event
+      trackStartListing();
     }
   }, [id, fetchProduct]);
 
@@ -478,6 +484,10 @@ export default function ProductFormPage() {
                 : 'Product created! It will be visible after admin approval.')
             : 'Draft saved. You can continue editing and publish when ready.'
         );
+        if (publishMode && created.id) {
+          setPublishedProductId(created.id);
+          trackPublishListing(created.id, formData.title);
+        }
       }
 
       // Brief success feedback, then navigate back
@@ -574,9 +584,60 @@ export default function ProductFormPage() {
 
           {/* Success banner */}
           {successMessage && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-300 rounded-lg flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
-              <p className="text-green-800 font-medium text-sm">{successMessage}</p>
+            <div className="mb-6 rounded-lg border overflow-hidden" style={{ borderColor: '#2a5c2a', background: '#0d1f0d' }}>
+              <div className="p-4 flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
+                <p className="text-green-300 font-medium text-sm">{successMessage}</p>
+              </div>
+              {/* Post-publish share CTA — only for newly created published products */}
+              {publishedProductId && (
+                <div className="border-t px-4 py-3 space-y-2" style={{ borderColor: '#2a5c2a', background: '#0b1a0b' }}>
+                  <p className="text-xs font-semibold text-green-200">
+                    🚀 Your product is live — share it now to get more views!
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = `https://loadifymarket.co.uk/product/${publishedProductId}`;
+                        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
+                      }}
+                      className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80"
+                      style={{ background: '#1877F2', color: '#fff' }}
+                    >
+                      Share on Facebook
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = `https://loadifymarket.co.uk/product/${publishedProductId}`;
+                        const text = encodeURIComponent(`Check out my product on Loadify Market: ${url}`);
+                        window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
+                      }}
+                      className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80"
+                      style={{ background: '#25D366', color: '#fff' }}
+                    >
+                      Share on WhatsApp
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const url = `https://loadifymarket.co.uk/product/${publishedProductId}`;
+                        try {
+                          await copyToClipboard(url);
+                          toast({ title: 'Link copied', description: 'Product link copied to clipboard.' });
+                        } catch {
+                          toast({ title: 'Could not copy', description: 'Please copy the URL manually.', variant: 'destructive' });
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80"
+                      style={{ background: '#F5B942', color: '#0B0B0F' }}
+                    >
+                      Copy Link
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

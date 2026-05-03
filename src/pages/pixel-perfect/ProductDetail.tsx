@@ -28,6 +28,13 @@ import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 import MakeOfferSheet from "@/components/MakeOfferSheet";
 import { useCart } from "@/contexts/CartContext";
+import {
+  trackProductView,
+  trackShareProduct,
+  trackCopyLink,
+  trackMessageSeller,
+  trackAddToCart,
+} from "@/lib/analytics";
 
 const BASE_URL = "https://loadifymarket.co.uk";
 const DEFAULT_PRODUCT_SEO_DESCRIPTION =
@@ -164,6 +171,9 @@ const ProductDetail = () => {
         );
         setProductSellerId(data.sellerId ?? null);
         setListingStatus((data as Record<string, unknown>).listingStatus as string ?? "active");
+
+        // Track product page view for analytics
+        trackProductView(adapted.id, adapted.title, adapted.price);
 
         // Capture category slug for breadcrumb link
         const rawCat = Array.isArray(data.category) ? data.category[0] : data.category;
@@ -346,6 +356,7 @@ const ProductDetail = () => {
 
   const handleMessageSeller = async () => {
     if (!user) { navigate("/login", { state: { from: `/product/${id}` } }); return; }
+    trackMessageSeller(product.id);
     setCtaLoading(true);
     try {
       const convId = await getOrCreateConversation();
@@ -370,6 +381,7 @@ const ProductDetail = () => {
 
   const handleBuyNow = () => {
     if (!product) return;
+    trackAddToCart(product.id, product.title, product.price);
     addToCart(product, 1);
     navigate("/checkout");
   };
@@ -406,14 +418,39 @@ const ProductDetail = () => {
     longDescriptionExcerpt ||
     categoryFallbackDescription ||
     DEFAULT_PRODUCT_SEO_DESCRIPTION;
+  // Append brand tagline so every shared preview reinforces the 0% commission message
+  const ogDescription = seoDescription.endsWith("Sell with 0% commission.")
+    ? seoDescription
+    : `${seoDescription} Sell with 0% commission on Loadify Market.`;
   const primaryImageCandidate = galleryImages.find((img) => typeof img === "string" && img.trim().length > 0) || product.image;
   const seoImage = toAbsolutePublicUrl(primaryImageCandidate) ?? DEFAULT_OG_IMAGE;
   const encodedProductUrl = encodeURIComponent(currentProductUrl);
-  const whatsappText = `Check out this product on Loadify Market: ${product.title} - ${currentProductUrl}`;
+  const whatsappText = `Check out this product on Loadify Market: ${product.title} — £${product.price.toLocaleString("en-GB")} ${currentProductUrl}`;
   const encodedWhatsAppText = encodeURIComponent(whatsappText);
   const supportsNativeShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
+  // Build Product JSON-LD for rich snippets
+  const productJsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    description: normalisedDescription || seoDescription,
+    image: seoImage,
+    url: canonicalProductUrl,
+    offers: {
+      "@type": "Offer",
+      price: product.price.toFixed(2),
+      priceCurrency: "GBP",
+      availability: "https://schema.org/InStock",
+      seller: {
+        "@type": "Organization",
+        name: product.seller || "Loadify Market Seller",
+      },
+    },
+  };
+
   const handleShareFacebook = () => {
+    trackShareProduct("facebook", product.id, product.title);
     const webSharerUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedProductUrl}`;
     if (isCapacitorNative()) {
       // On Android APK use an Intent URL so Android routes directly into the
@@ -430,7 +467,16 @@ const ProductDetail = () => {
     }
   };
 
+  const handleShareMessenger = () => {
+    trackShareProduct("messenger", product.id, product.title);
+    const messengerUrl = isCapacitorNative()
+      ? `fb-messenger://share?link=${encodedProductUrl}`
+      : `https://www.facebook.com/dialog/send?link=${encodedProductUrl}&redirect_uri=${encodedProductUrl}`;
+    window.open(messengerUrl, "_blank", "noopener,noreferrer");
+  };
+
   const handleShareWhatsApp = () => {
+    trackShareProduct("whatsapp", product.id, product.title);
     const url = `https://wa.me/?text=${encodedWhatsAppText}`;
     window.open(url, "_blank", "noopener,noreferrer");
   };
@@ -438,6 +484,7 @@ const ProductDetail = () => {
   const handleCopyLink = async () => {
     try {
       await copyToClipboard(currentProductUrl);
+      trackCopyLink(product.id);
       toast({ title: "Link copied", description: "Product link copied to clipboard." });
     } catch {
       toast({
@@ -451,6 +498,7 @@ const ProductDetail = () => {
   const handleShareInstagram = async () => {
     try {
       await copyToClipboard(currentProductUrl);
+      trackShareProduct("instagram", product.id, product.title);
       toast({
         title: "Link copied for Instagram",
         description: "Open Instagram, create a post or story, and paste the link in your caption.",
@@ -467,6 +515,7 @@ const ProductDetail = () => {
   const handleShareTikTok = async () => {
     try {
       await copyToClipboard(currentProductUrl);
+      trackShareProduct("tiktok", product.id, product.title);
       toast({
         title: "Link copied for TikTok",
         description: "Open TikTok, create a video, and paste the link in your caption or bio.",
@@ -484,10 +533,11 @@ const ProductDetail = () => {
     if (!supportsNativeShare) return;
     try {
       await navigator.share({
-        title: product.title,
+        title: `${product.title} — £${product.price.toLocaleString("en-GB")}`,
         text: `Check out this product on Loadify Market: ${product.title}`,
         url: currentProductUrl,
       });
+      trackShareProduct("native", product.id, product.title);
     } catch {
       // User cancellation is non-fatal; no toast needed.
     }
@@ -496,13 +546,14 @@ const ProductDetail = () => {
   return (
     <MainLayout>
       <SEO
-        title={`${product.title} | Loadify Market`}
-        description={seoDescription}
+        title={`${product.title} — £${product.price.toLocaleString("en-GB")}`}
+        description={ogDescription}
         canonical={canonicalProductUrl}
         ogImage={seoImage}
         ogType="product"
         ogPrice={product.price != null ? product.price.toFixed(2) : undefined}
         ogPriceCurrency="GBP"
+        structuredData={productJsonLd}
       />
       <main id="main-content" className="pt-28 pb-16">
         <div className="container mx-auto px-4">
@@ -562,6 +613,7 @@ const ProductDetail = () => {
                     listed={product.listed}
                     sellerId={productSellerId}
                     onShareFacebook={handleShareFacebook}
+                    onShareMessenger={handleShareMessenger}
                     onShareWhatsApp={handleShareWhatsApp}
                     onShareInstagram={handleShareInstagram}
                     onShareTikTok={handleShareTikTok}

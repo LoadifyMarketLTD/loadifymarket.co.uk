@@ -574,6 +574,31 @@ const SellerSettings = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── Connect your Facebook Page ─────────────────────────────── */}
+      <Card className="opacity-70">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <svg className="h-4 w-4 text-[#1877F2]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.007 1.792-4.669 4.532-4.669 1.313 0 2.686.235 2.686.235v2.953H15.83c-1.49 0-1.955.925-1.955 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+            </svg>
+            Connect your Facebook Page
+            <span className="ml-auto text-xs font-normal text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Coming Soon</span>
+          </CardTitle>
+          <CardDescription>
+            Link your business Facebook Page to auto-post new listings and promotions directly from your seller dashboard.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            This feature will allow sellers with Facebook Business Pages to automatically share their new listings,
+            price drops, and promotions to their own page — no copy-pasting required.
+          </p>
+          <Button variant="outline" size="sm" disabled className="opacity-50 cursor-not-allowed">
+            Connect Facebook Page (coming soon)
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };

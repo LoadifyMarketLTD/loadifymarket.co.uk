@@ -34,6 +34,8 @@ import SecurityTrust from "@/components/SecurityTrust";
 import SocialFollowSection from "@/components/SocialFollowSection";
 import SellerCTA from "@/components/SellerCTA";
 import LazySection from "@/components/LazySection";
+import { useEffect } from "react";
+import { trackViewHome } from "@/lib/analytics";
 
 // ── Mobile skeleton cards ─────────────────────────────────────────────────────
 function SkeletonProductCard() {
@@ -159,6 +161,8 @@ function MobileHome() {
 }
 
 export default function Home() {
+  useEffect(() => { trackViewHome(); }, []);
+
   return (
     <MainLayout>
       {/* Preload LCP hero image for desktop — WebP for capable browsers, JPEG fallback */}

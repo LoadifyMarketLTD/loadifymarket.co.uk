@@ -19,6 +19,8 @@ interface SEOProps {
   ogPrice?: string;
   /** ISO 4217 currency code for og:price, defaults to "GBP". */
   ogPriceCurrency?: string;
+  /** Structured data to inject as a JSON-LD <script> in <head>. */
+  structuredData?: Record<string, unknown>;
 }
 
 /**
@@ -37,6 +39,7 @@ export default function SEO({
   robots = "index, follow",
   ogPrice,
   ogPriceCurrency = "GBP",
+  structuredData,
 }: SEOProps) {
   const fullTitle = title.endsWith(` | ${SITE_NAME}`) || title === SITE_NAME
     ? title
@@ -77,6 +80,13 @@ export default function SEO({
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
+
+      {/* JSON-LD structured data */}
+      {structuredData && (
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      )}
     </Helmet>
   );
 }

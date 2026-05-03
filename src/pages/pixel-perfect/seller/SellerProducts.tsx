@@ -63,6 +63,7 @@ interface Product {
   isActive: boolean;
   isApproved: boolean;
   views: number;
+  shareCount?: number;
   images?: ProductImage[];
 }
 
@@ -112,7 +113,7 @@ const SellerProducts = () => {
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views, images(url, position)")
+          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views, shareCount, images(url, position)")
           .eq("sellerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
@@ -133,31 +134,50 @@ const SellerProducts = () => {
         title: "Preview may not be visible",
         description: "Facebook previews only show for active, approved products. Your link will still be shared.",
       });
+    } else {
+      toast({
+        title: "Your product is ready to share",
+        description: "Facebook will open so you can publish it to your timeline.",
+      });
     }
+    // Optimistically increment shareCount in local state
+    setProducts((prev) =>
+      prev.map((p) => p.id === productId ? { ...p, shareCount: (p.shareCount ?? 0) + 1 } : p)
+    );
+    // Persist increment to DB (fire-and-forget; non-critical)
+    const currentCount = products.find((p) => p.id === productId)?.shareCount ?? 0;
+    supabase.from("products").update({ shareCount: currentCount + 1 }).eq("id", productId).then(() => {/* ignore */}).catch(() => {/* non-fatal */});
     window.open(facebookShareUrl(productId), "_blank", "noopener,noreferrer");
   };
 
-  const copyForInstagram = async (productId: string) => {
+  const shareOnWhatsApp = (productId: string, title: string, price: number) => {
+    const text = encodeURIComponent(`Check out ${title} — £${price.toLocaleString("en-GB")} on Loadify Market: ${BASE_URL}/product/${productId}`);
+    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
+  };
+
+  const copyProductLink = async (productId: string) => {
     try {
       await copyToClipboard(`${BASE_URL}/product/${productId}`);
-      toast({
-        title: "Link copied for Instagram",
-        description: "Open Instagram, create a post or story, and paste the link in your caption.",
-      });
+      toast({ title: "Link copied", description: "Product link copied to clipboard." });
     } catch {
       toast({ title: "Could not copy link", description: "Please copy the URL manually.", variant: "destructive" });
     }
   };
 
-  const copyForTikTok = async (productId: string) => {
+  const nativeShareProduct = async (productId: string, title: string, price: number) => {
+    if (typeof navigator === "undefined" || typeof navigator.share !== "function") {
+      // fallback to copy link
+      await copyProductLink(productId);
+      return;
+    }
     try {
-      await copyToClipboard(`${BASE_URL}/product/${productId}`);
-      toast({
-        title: "Link copied for TikTok",
-        description: "Open TikTok, create a video, and paste the link in your caption or bio.",
+      await navigator.share({
+        title: `${title} — £${price.toLocaleString("en-GB")}`,
+        text: `Check out this product on Loadify Market: ${title}`,
+        url: `${BASE_URL}/product/${productId}`,
       });
     } catch {
-      toast({ title: "Could not copy link", description: "Please copy the URL manually.", variant: "destructive" });
+      // User cancelled — non-fatal.
     }
   };
 
@@ -247,7 +267,12 @@ const SellerProducts = () => {
                       <span className="text-sm font-bold text-foreground">£{p.price.toLocaleString()}</span>
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${s.className}`}>{s.label}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">Stock: {p.stockQuantity} · Views: {p.views ?? 0}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Stock: {p.stockQuantity} · Views: {p.views ?? 0} · Shares: {p.shareCount ?? 0}
+                    </p>
+                    {status === "active" && (p.views ?? 0) === 0 && (
+                      <p className="text-xs text-amber-600 font-medium mt-1">📢 Share this product to get more views</p>
+                    )}
                   </div>
                   <Button
                     variant="ghost"
@@ -273,17 +298,20 @@ const SellerProducts = () => {
                       <DropdownMenuItem onClick={() => shareOnFacebook(p.id, status)}>
                         Share on Facebook
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => shareOnWhatsApp(p.id, p.title, p.price)}>
+                        Share on WhatsApp
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => nativeShareProduct(p.id, p.title, p.price)}>
+                        Share via…
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => copyProductLink(p.id)}>
+                        Copy link
+                      </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <a href={facebookDebugUrl(p.id)} target="_blank" rel="noopener noreferrer" aria-label="Refresh Facebook Preview (opens in new tab)">
                           Refresh Facebook Preview
                         </a>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => copyForInstagram(p.id)}>
-                        Copy link for Instagram
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => copyForTikTok(p.id)}>
-                        Copy link for TikTok
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -303,19 +331,20 @@ const SellerProducts = () => {
                 <th className="text-left text-xs font-semibold text-muted-foreground p-4">Stock</th>
                 <th className="text-left text-xs font-semibold text-muted-foreground p-4">Status</th>
                 <th className="text-left text-xs font-semibold text-muted-foreground p-4">Views</th>
+                <th className="text-left text-xs font-semibold text-muted-foreground p-4">Shares</th>
                 <th className="text-right text-xs font-semibold text-muted-foreground p-4">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">
+                  <td colSpan={7} className="p-8 text-center text-muted-foreground text-sm">
                     Loading products…
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">
+                  <td colSpan={7} className="p-8 text-center text-muted-foreground text-sm">
                     <Package className="h-8 w-8 mx-auto mb-2 opacity-40" />
                     {search ? "No products match your search." : "No products yet. Add your first product!"}
                   </td>
@@ -341,7 +370,12 @@ const SellerProducts = () => {
                               <LMPlaceholder size={40} />
                             );
                           })()}
-                          <span className="text-sm font-medium text-foreground line-clamp-1">{p.title}</span>
+                          <div className="min-w-0">
+                            <span className="text-sm font-medium text-foreground line-clamp-1">{p.title}</span>
+                            {status === "active" && (p.views ?? 0) === 0 && (
+                              <p className="text-xs text-amber-600 font-medium mt-0.5">📢 Share to get views</p>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="p-4 text-sm font-semibold text-foreground">£{p.price.toLocaleString()}</td>
@@ -350,6 +384,7 @@ const SellerProducts = () => {
                         <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${s.className}`}>{s.label}</span>
                       </td>
                       <td className="p-4 text-sm text-muted-foreground">{p.views ?? 0}</td>
+                      <td className="p-4 text-sm text-muted-foreground">{p.shareCount ?? 0}</td>
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Button
@@ -375,17 +410,20 @@ const SellerProducts = () => {
                               <DropdownMenuItem onClick={() => shareOnFacebook(p.id, status)}>
                                 Share on Facebook
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => shareOnWhatsApp(p.id, p.title, p.price)}>
+                                Share on WhatsApp
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => nativeShareProduct(p.id, p.title, p.price)}>
+                                Share via…
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => copyProductLink(p.id)}>
+                                Copy link
+                              </DropdownMenuItem>
                               <DropdownMenuItem asChild>
                                 <a href={facebookDebugUrl(p.id)} target="_blank" rel="noopener noreferrer" aria-label="Refresh Facebook Preview (opens in new tab)">
                                   Refresh Facebook Preview
                                 </a>
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => copyForInstagram(p.id)}>
-                                Copy link for Instagram
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => copyForTikTok(p.id)}>
-                                Copy link for TikTok
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
