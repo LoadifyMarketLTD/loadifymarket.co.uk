@@ -52,6 +52,7 @@ interface ProductRow {
   title?: string;
   description?: string;
   images?: unknown;
+  price?: number;
 }
 
 /** Truncate to `max` characters, appending an ellipsis if shortened. */
@@ -99,7 +100,7 @@ async function fetchProductData(
       `?id=eq.${encodeURIComponent(productId)}` +
       `&isActive=eq.true` +
       `&isApproved=eq.true` +
-      `&select=title,description,images` +
+      `&select=title,description,images,price` +
       `&limit=1`;
 
     const res = await fetch(url, {
@@ -177,6 +178,10 @@ export default async function productMeta(
   const fullTitle = `${title} | ${SITE_NAME}`;
   const canonicalUrl = `${BASE_URL}/product/${productId}`;
 
+  // Numeric price — may be undefined for some listings.
+  const priceNum = typeof product.price === 'number' ? product.price : undefined;
+  const priceStr = priceNum !== undefined ? priceNum.toFixed(2) : undefined;
+
   // Escaped values safe for insertion into HTML attribute values.
   const t = escapeAttr(fullTitle);
   const d = escapeAttr(seoDesc);
@@ -224,6 +229,37 @@ export default async function productMeta(
     `<meta property="og:type" content="product"`,
   );
 
+  // Replace og:image:secure_url if already present in index.html.
+  // (index.html includes it as a static homepage fallback — always update it.)
+  if (html.includes('property="og:image:secure_url"')) {
+    html = html.replace(
+      /<meta property="og:image:secure_url" content="[^"]*"/,
+      `<meta property="og:image:secure_url" content="${img}"`,
+    );
+  }
+
+  // Replace Twitter Card tags if already present in index.html.
+  // index.html ships static Twitter tags pointing at the homepage image/title;
+  // for product pages we must update them so social crawlers see real data.
+  if (html.includes('name="twitter:title"')) {
+    html = html.replace(
+      /<meta name="twitter:title" content="[^"]*"/,
+      `<meta name="twitter:title" content="${t}"`,
+    );
+  }
+  if (html.includes('name="twitter:description"')) {
+    html = html.replace(
+      /<meta name="twitter:description" content="[^"]*"/,
+      `<meta name="twitter:description" content="${d}"`,
+    );
+  }
+  if (html.includes('name="twitter:image"')) {
+    html = html.replace(
+      /<meta name="twitter:image" content="[^"]*"/,
+      `<meta name="twitter:image" content="${img}"`,
+    );
+  }
+
   // Replace or add canonical link.
   if (/<link rel="canonical"/.test(html)) {
     html = html.replace(
@@ -232,12 +268,10 @@ export default async function productMeta(
     );
   }
 
-  // Build the block of tags that are NOT present in the static index.html:
-  //   - Twitter Card tags (react-helmet-async adds these client-side only)
-  //   - og:image:alt (accessibility + Facebook recommendation)
-  //   - canonical (if not already present)
+  // Build the block of extra tags not present in the static index.html.
   const extraLines: string[] = [];
 
+  // Twitter card type — only add if completely absent (index.html has it).
   if (!html.includes('name="twitter:card"')) {
     extraLines.push(`  <meta name="twitter:card" content="summary_large_image" />`);
     extraLines.push(`  <meta name="twitter:title" content="${t}" />`);
@@ -245,17 +279,67 @@ export default async function productMeta(
     extraLines.push(`  <meta name="twitter:image" content="${img}" />`);
   }
 
+  // og:image:secure_url — add only if entirely absent.
   if (!html.includes('property="og:image:secure_url"')) {
     extraLines.push(`  <meta property="og:image:secure_url" content="${img}" />`);
   }
 
-  if (!html.includes('property="og:image:alt"')) {
+  // og:image:alt — accessibility + Facebook recommendation.
+  if (html.includes('property="og:image:alt"')) {
+    html = html.replace(
+      /<meta property="og:image:alt" content="[^"]*"/,
+      `<meta property="og:image:alt" content="${escapeAttr(title)}"`,
+    );
+  } else {
     extraLines.push(`  <meta property="og:image:alt" content="${escapeAttr(title)}" />`);
   }
 
+  // Product price tags — add when we have a price.
+  if (priceStr) {
+    if (!html.includes('property="og:price:amount"')) {
+      extraLines.push(`  <meta property="og:price:amount" content="${escapeAttr(priceStr)}" />`);
+      extraLines.push(`  <meta property="og:price:currency" content="GBP" />`);
+    }
+    if (!html.includes('property="product:price:amount"')) {
+      extraLines.push(`  <meta property="product:price:amount" content="${escapeAttr(priceStr)}" />`);
+      extraLines.push(`  <meta property="product:price:currency" content="GBP" />`);
+    }
+  }
+
+  // Canonical — add only if entirely absent.
   if (!/<link rel="canonical"/.test(html)) {
     extraLines.push(`  <link rel="canonical" href="${u}" />`);
   }
+
+  // Product JSON-LD structured data for rich search results.
+  const productJsonLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: title,
+    description: seoDesc,
+    url: canonicalUrl,
+    ...(images.length > 0
+      ? { image: images.map((i) => toAbsoluteUrl(i)).filter(Boolean) }
+      : {}),
+    ...(priceNum !== undefined
+      ? {
+          offers: {
+            '@type': 'Offer',
+            price: priceStr,
+            priceCurrency: 'GBP',
+            availability: 'https://schema.org/InStock',
+            url: canonicalUrl,
+            seller: {
+              '@type': 'Organization',
+              name: SITE_NAME,
+            },
+          },
+        }
+      : {}),
+  };
+  extraLines.push(
+    `  <script type="application/ld+json">${JSON.stringify(productJsonLd)}</script>`,
+  );
 
   if (extraLines.length > 0) {
     html = html.replace('</head>', `${extraLines.join('\n')}\n</head>`);

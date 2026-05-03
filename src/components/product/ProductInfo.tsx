@@ -25,6 +25,7 @@ interface ProductInfoProps {
   /** The seller's user ID — used to detect if the logged-in user owns this product */
   sellerId?: string | null;
   onShareFacebook: () => void;
+  onShareMessenger?: () => void;
   onShareWhatsApp: () => void;
   onShareInstagram?: () => void;
   onShareTikTok?: () => void;
@@ -52,6 +53,7 @@ const ProductInfo = ({
   product,
   sellerId,
   onShareFacebook,
+  onShareMessenger,
   onShareWhatsApp,
   onShareInstagram,
   onShareTikTok,
@@ -324,6 +326,11 @@ const ProductInfo = ({
           <Button size="sm" variant="outline" onClick={onShareFacebook}>
             Facebook
           </Button>
+          {onShareMessenger && (
+            <Button size="sm" variant="outline" onClick={onShareMessenger}>
+              Messenger
+            </Button>
+          )}
           <Button size="sm" variant="outline" onClick={onShareWhatsApp}>
             WhatsApp
           </Button>

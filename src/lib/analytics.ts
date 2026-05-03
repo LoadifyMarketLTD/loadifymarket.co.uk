@@ -108,3 +108,80 @@ export function trackOfferPaid(params: {
     ...(params.listingId ? { items: [{ item_id: params.listingId }] } : {}),
   });
 }
+
+/** Track when a user views the home page. */
+export function trackViewHome(): void {
+  trackEvent("view_home");
+}
+
+/** Track when a product link is copied to clipboard. */
+export function trackCopyLink(productId: string): void {
+  trackEvent("copy_link", { item_id: productId });
+}
+
+/** Track when a product is shared to a social channel. */
+export function trackShareProduct(
+  channel: "facebook" | "whatsapp" | "messenger" | "native" | "instagram" | "tiktok",
+  productId: string,
+  productName?: string,
+): void {
+  trackEvent("share", {
+    method: channel,
+    item_id: productId,
+    ...(productName ? { item_name: productName } : {}),
+  });
+}
+
+/** Track when a seller begins creating a new listing. */
+export function trackStartListing(): void {
+  trackEvent("start_listing");
+}
+
+/** Track when a seller publishes a listing. */
+export function trackPublishListing(productId: string, productName?: string): void {
+  trackEvent("publish_listing", {
+    item_id: productId,
+    ...(productName ? { item_name: productName } : {}),
+  });
+}
+
+/** Track when a buyer adds a product to cart. */
+export function trackAddToCart(productId: string, productName: string, price: number): void {
+  trackEvent("add_to_cart", {
+    currency: "GBP",
+    value: price,
+    items: [{ item_id: productId, item_name: productName, price, quantity: 1 }],
+  });
+}
+
+/** Track when a buyer messages a seller from a product page. */
+export function trackMessageSeller(productId: string): void {
+  trackEvent("message_seller", { item_id: productId });
+}
+
+/** Track when a buyer starts the checkout flow. */
+export function trackStartCheckout(items: Array<{ id: string; name: string; price: number; quantity?: number }>): void {
+  trackEvent("start_checkout", {
+    currency: "GBP",
+    items: items.map((item) => ({
+      item_id: item.id,
+      item_name: item.name,
+      price: item.price,
+      quantity: item.quantity ?? 1,
+    })),
+  });
+}
+
+/** Track a completed purchase (alias for trackOfferPaid with a simpler signature for direct checkout). */
+export function trackCompletedPurchase(params: {
+  orderId: string;
+  value: number;
+  productId?: string;
+}): void {
+  trackEvent("completed_purchase", {
+    transaction_id: params.orderId,
+    value: params.value,
+    currency: "GBP",
+    ...(params.productId ? { item_id: params.productId } : {}),
+  });
+}
