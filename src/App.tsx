@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store';
 import { hasAdminAccess } from './lib/roleUtils';
@@ -6,6 +6,7 @@ import { CartProvider } from './contexts/CartContext';
 import CookieConsent from './components/CookieConsent';
 import Header from './components/Header';
 import AmbientLayer from './components/AmbientLayer';
+import { isCapacitorNative } from './lib/capacitorUtils';
 
 import RequireAdmin from './components/auth/RequireAdmin';
 import RequireSeller from './components/auth/RequireSeller';
@@ -219,6 +220,45 @@ function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
 
 function App() {
   const { setUser, setLoading } = useAuthStore();
+  const navigate = useNavigate();
+
+  // ── Deep-link handler (Capacitor APK only) ─────────────────────────────────
+  // @capacitor/app fires 'appUrlOpen' when the APK is resumed via a URL —
+  // this covers OAuth callbacks from Chrome Custom Tabs and any future
+  // Android App Link that opens loadifymarket.co.uk URLs in the APK.
+  useEffect(() => {
+    if (!isCapacitorNative()) return;
+
+    let removeListener: (() => void) | undefined;
+
+    import('@capacitor/app').then(({ App: CapApp }) => {
+      CapApp.addListener('appUrlOpen', async ({ url }) => {
+        try {
+          const parsed = new URL(url);
+
+          // OAuth callback — exchange the code/token with Supabase and
+          // let onAuthStateChange update the store automatically.
+          if (parsed.pathname.startsWith('/auth/callback')) {
+            const { supabase } = await import('./lib/supabase');
+            await supabase.auth.getSession();
+            navigate('/auth/callback' + parsed.search + parsed.hash, { replace: true });
+            return;
+          }
+
+          // For all other deep links (e.g. /order-success, /seller/setup)
+          // navigate to the in-app path so the React Router renders the right page.
+          const inAppPath = parsed.pathname + parsed.search + parsed.hash;
+          navigate(inAppPath, { replace: true });
+        } catch {
+          // Malformed URL — ignore
+        }
+      }).then((handle) => {
+        removeListener = () => handle.remove();
+      });
+    }).catch(() => { /* @capacitor/app not available — no-op */ });
+
+    return () => removeListener?.();
+  }, [navigate]);
 
   useEffect(() => {
     // Build a minimal User object from Supabase auth session metadata when the
