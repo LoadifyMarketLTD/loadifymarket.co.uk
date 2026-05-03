@@ -39,8 +39,8 @@ import LazySection from "@/components/LazySection";
 function SkeletonProductCard() {
   return (
     <div
-      className="flex-shrink-0 rounded-2xl bg-white/[0.04] animate-pulse"
-      style={{ width: 'clamp(150px, 43vw, 180px)', height: 'clamp(200px, 52vw, 220px)' }}
+      className="flex-shrink-0 snap-start rounded-2xl bg-white/[0.04] animate-pulse"
+      style={{ width: 'clamp(148px, 42vw, 180px)', height: 'clamp(200px, 52vw, 220px)' }}
     />
   );
 }
@@ -68,7 +68,7 @@ function MobileHome() {
               style={{ width: 18, height: 18, color: '#F2B84B' }}
               aria-hidden="true"
             />
-            <span className="text-[17px] font-bold text-white">Trending Now</span>
+          <span style={{ fontSize: 'clamp(15px, 4.2vw, 17px)', fontWeight: 700, color: '#FFFFFF' }}>Trending Now</span>
           </div>
           <Link
             to="/catalog?filter=trending"
@@ -118,7 +118,7 @@ function MobileHome() {
               style={{ width: 18, height: 18, color: '#F2B84B' }}
               aria-hidden="true"
             />
-            <span className="text-[17px] font-bold text-white">New Arrivals</span>
+          <span style={{ fontSize: 'clamp(15px, 4.2vw, 17px)', fontWeight: 700, color: '#FFFFFF' }}>New Arrivals</span>
           </div>
           <Link
             to="/catalog?filter=latest"

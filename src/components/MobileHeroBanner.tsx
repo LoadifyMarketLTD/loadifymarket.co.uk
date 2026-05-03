@@ -267,7 +267,12 @@ export default function MobileHeroBanner() {
   };
 
   return (
-    <div className="px-4 mt-4">
+    <div
+      style={{
+        paddingInline: 'var(--mob-side, 16px)',
+        marginTop: '16px',
+      }}
+    >
       {/* Carousel container */}
       <div
         className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-[#0F0F14] to-[#1A1A22] shadow-lg"

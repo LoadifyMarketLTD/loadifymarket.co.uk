@@ -126,13 +126,16 @@ export default function MobileAppHeader() {
           onClick={() => setSearchOpen(true)}
           aria-label="Open search"
           style={{
-            padding: '6px',
+            width: 44,
+            height: 44,
+            padding: 0,
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            flexShrink: 0,
           }}
         >
           <Search
@@ -147,13 +150,16 @@ export default function MobileAppHeader() {
           aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
           style={{
             position: 'relative',
-            padding: '6px',
+            width: 44,
+            height: 44,
+            padding: 0,
             background: 'transparent',
             border: 'none',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            flexShrink: 0,
           }}
         >
           <Bell
@@ -191,8 +197,8 @@ export default function MobileAppHeader() {
           aria-label="Filter"
           onClick={() => navigate('/catalog')}
           style={{
-            width: 36,
-            height: 36,
+            width: 44,
+            height: 44,
             background: '#1E1A0E',
             border: '1px solid rgba(242,184,75,0.4)',
             borderRadius: 12,

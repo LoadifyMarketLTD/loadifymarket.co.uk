@@ -116,7 +116,7 @@ export default function MobileSearchOverlay({ onClose }: Props) {
           onClick={onClose}
           aria-label="Close search"
           style={{
-            width: '40px', height: '40px', flexShrink: 0,
+            width: '44px', height: '44px', flexShrink: 0,
             background: 'rgba(255,255,255,0.06)',
             border: '1px solid rgba(255,255,255,0.10)',
             borderRadius: '50%',
@@ -129,7 +129,7 @@ export default function MobileSearchOverlay({ onClose }: Props) {
       </div>
 
       {/* ── Quick category chips ────────────────────────────── */}
-      <div style={{ paddingLeft: '16px', paddingRight: '16px', paddingTop: '8px' }}>
+      <div style={{ paddingInline: 'var(--mob-side, 16px)', paddingTop: '8px' }}>
         <p style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.40)',
           letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>
           Browse categories
@@ -146,8 +146,9 @@ export default function MobileSearchOverlay({ onClose }: Props) {
               role="listitem"
               onClick={() => handleCategory(value)}
               style={{
-                padding: '7px 14px',
-                borderRadius: '20px',
+                minHeight: '44px',
+                padding: '0 16px',
+                borderRadius: '22px',
                 background: 'rgba(245,185,66,0.08)',
                 border: '1px solid rgba(200,134,10,0.35)',
                 color: '#F5B942',
@@ -155,6 +156,9 @@ export default function MobileSearchOverlay({ onClose }: Props) {
                 fontWeight: 600,
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
               {label}
