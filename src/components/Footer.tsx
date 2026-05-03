@@ -44,9 +44,9 @@ const Footer = () => {
               href={APK_DOWNLOAD_URL}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ fontSize: '13px', color: 'rgba(255,255,255,0.70)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}
+              className="text-[13px] text-[rgba(255,255,255,0.70)] no-underline flex items-center gap-1"
             >
-              <Smartphone aria-hidden="true" style={{ width: 14, height: 14 }} />
+              <Smartphone className="h-[14px] w-[14px] shrink-0" aria-hidden="true" />
               Android App
             </a>
           )}
