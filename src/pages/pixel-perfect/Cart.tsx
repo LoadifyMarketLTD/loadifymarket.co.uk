@@ -1,15 +1,21 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, ShieldCheck, Truck } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, ShieldCheck, Truck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { useCart } from "@/contexts/CartContext";
 import { useAuthStore } from "@/store";
 
 const Cart = () => {
-  const { cartItems, updateQuantity, removeFromCart, subtotal } = useCart();
+  const { cartItems, updateQuantity, removeFromCart, subtotal, priceChangedBanner, dismissPriceBanner, refreshCartPrices } = useCart();
   const { user } = useAuthStore();
+
+  // Refresh prices from DB on mount — single batch query, non-blocking
+  useEffect(() => {
+    void refreshCartPrices();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Detect any own-product items in cart (should not happen via normal UI, but guard edge cases)
   const ownProductIds = user
@@ -92,6 +98,15 @@ const Cart = () => {
           </div>
 
           <div className="grid lg:grid-cols-[1fr_380px] gap-8">
+            {/* Price-changed banner */}
+            {priceChangedBanner && (
+              <div className="lg:col-span-2 flex items-start justify-between gap-3 bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
+                <span><strong>Prices updated:</strong> Some prices have been updated since you added items to your cart. Please review before checking out.</span>
+                <button onClick={dismissPriceBanner} aria-label="Dismiss" className="shrink-0 mt-0.5 text-amber-600 hover:text-amber-800">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
             {/* Own-product warning */}
             {ownProductIds.length > 0 && (
               <div className="lg:col-span-2 bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
