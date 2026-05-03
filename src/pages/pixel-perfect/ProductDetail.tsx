@@ -32,7 +32,7 @@ import { useCart } from "@/contexts/CartContext";
 const BASE_URL = "https://loadifymarket.co.uk";
 const DEFAULT_PRODUCT_SEO_DESCRIPTION =
   "Discover products from verified UK sellers on Loadify Market.";
-const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.jpg`;
+const DEFAULT_OG_IMAGE = `${BASE_URL}/og-loadify-market.png`;
 
 function toAbsolutePublicUrl(value?: string | null): string | undefined {
   if (!value) return undefined;
