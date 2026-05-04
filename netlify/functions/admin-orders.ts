@@ -107,7 +107,7 @@ export const handler: Handler = async (event) => {
           status,
           createdAt,
           buyerId,
-          product:products(title)
+          product:products!productId(title)
         `)
         .order('createdAt', { ascending: false })
         .limit(100);
@@ -212,11 +212,12 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Method not allowed' }),
     };
   } catch (err: unknown) {
-    console.error('ADMIN ORDERS ERROR:', err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('ADMIN ORDERS ERROR:', message, err);
     return {
       statusCode: 500,
       headers: JSON_HEADERS,
-      body: JSON.stringify({ error: 'Internal Server Error' }),
+      body: JSON.stringify({ error: 'Internal Server Error', detail: message }),
     };
   }
 };
