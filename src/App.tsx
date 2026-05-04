@@ -13,7 +13,6 @@ import RequireSeller from './components/auth/RequireSeller';
 import RequireSellerAny from './components/auth/RequireSellerAny';
 import RequireBuyer from './components/auth/RequireBuyer';
 import RequireEmailVerified from './components/auth/RequireEmailVerified';
-import RequireAuth from './components/auth/RequireAuth';
 import AuthPromptModal from './components/AuthPromptModal';
 
 // ─── Auth callback — OAuth redirect landing page ──────────────────────────────
