@@ -153,7 +153,7 @@ function SkeletonCard({ wide }: { wide?: boolean }) {
 function EmptyState() {
   return (
     <div className="mx-4 my-2 flex flex-col items-center justify-center gap-3 py-8 rounded-2xl border border-white/[0.06] bg-[#111827]">
-      <p className="text-sm text-white/50">No products available yet</p>
+      <p className="text-sm text-white/75">No products available yet</p>
       <Link
         to="/catalog"
         className="text-xs font-semibold text-[#FBBF24] border border-[#FBBF24]/30 px-4 py-2 rounded-lg hover:bg-[#FBBF24]/10 transition-colors"

@@ -93,7 +93,7 @@ const PlatformFeatures = () => {
           <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold text-white">
             Everything You Need — Whether You Buy or Sell
           </h2>
-          <p className="mt-2 text-sm text-white/70">
+          <p className="mt-2 text-sm text-white/75">
             Loadify Market is the UK's trusted multi-category marketplace for physical goods and service‑based commerce, supporting both standard listings and RFQ‑driven transactions.
           </p>
         </div>

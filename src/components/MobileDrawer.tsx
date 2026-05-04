@@ -60,7 +60,7 @@ const ICON_MAP: Record<string, { icon: LucideIcon; iconColor: string }> = {
   "office-business":   { icon: Briefcase,     iconColor: "text-sky-400"    },
 };
 
-const DEFAULT_ICON = { icon: Briefcase, iconColor: "text-white/50" };
+const DEFAULT_ICON = { icon: Briefcase, iconColor: "text-white/75" };
 
 // ── Main screen ────────────────────────────────────────────────────────────────
 // Categories always remain visible. When a category is hovered (desktop) or
@@ -179,7 +179,7 @@ const MainScreen = ({
                       onClick={onClose}
                       className="flex items-center px-8 h-[44px] hover:bg-white/[0.07] active:bg-white/10 transition-colors border-b border-white/[0.04] last:border-b-0"
                     >
-                      <span className="text-[14px] font-medium text-white/70">
+                      <span className="text-[14px] font-medium text-white/75">
                         {sub.name}
                       </span>
                     </Link>

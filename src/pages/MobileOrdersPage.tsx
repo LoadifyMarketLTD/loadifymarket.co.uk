@@ -416,7 +416,7 @@ export default function MobileOrdersPage() {
             <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
               <Package className="h-8 w-8 text-white/20" />
             </div>
-            <p className="text-white/50 text-sm">
+            <p className="text-white/75 text-sm">
               {activeTab === "all" ? "No orders yet" : "No orders in this category"}
             </p>
             {activeTab === "all" && (

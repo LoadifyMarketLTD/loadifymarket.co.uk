@@ -164,7 +164,7 @@ function OfferBubble({
         <span className="text-xs font-semibold text-[#FBBF24] uppercase tracking-wide">Offer</span>
       </div>
       {productTitle && (
-        <p className="text-xs text-white/50 mb-1 truncate">{productTitle}</p>
+        <p className="text-xs text-white/75 mb-1 truncate">{productTitle}</p>
       )}
       <p className="text-xl font-bold text-white">£{pounds}</p>
       <p className={`text-[11px] mt-1 ${statusColour[status] ?? "text-white/40"}`}>
