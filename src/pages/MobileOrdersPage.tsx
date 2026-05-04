@@ -2,28 +2,17 @@
  * MobileOrdersPage — /orders
  *
  * Standalone full-screen orders list for mobile users (buyers).
- * Accessible from MobileBottomNav "Account" dropdown or from a push
- * notification deep-link with ?orderId=… in the URL.
+ * Accessible from Profile or from a push notification deep-link
+ * with ?orderId=… in the URL.
  *
- * Statuses rendered:
- *   awaiting_payment → "Awaiting payment"  (amber)
- *   paid             → "Paid"              (blue)
- *   packed           → "Packed"            (amber)
- *   shipped          → "Shipped"           (purple)
- *   delivered        → "Delivered"         (orange)
- *   completed        → "Completed"         (green)
- *   cancelled        → "Cancelled"         (red)
- *   refunded         → "Refunded"          (muted)
- *
- * Deep-link: /orders?orderId=<uuid>
- *   Scrolls to (and highlights) the matching order row.
+ * Tabs: All Orders | To Pay | To Ship | Shipped | Completed | Cancelled
  *
  * Unauthenticated users are redirected to /login.
  */
 
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { ArrowLeft, Package, AlertCircle, ChevronRight } from "lucide-react";
+import { Package, AlertCircle, ChevronRight, HelpCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import MobileBottomNav from "@/components/MobileBottomNav";
@@ -36,10 +25,31 @@ interface OrderRow {
   total: number;
   status: string;
   createdAt: string;
+  quantity: number;
   productTitle: string | null;
   productImage: string | null;
   conversationId: string | null;
 }
+
+type Tab = "all" | "to_pay" | "to_ship" | "shipped" | "completed" | "cancelled";
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: "all", label: "All Orders" },
+  { id: "to_pay", label: "To Pay" },
+  { id: "to_ship", label: "To Ship" },
+  { id: "shipped", label: "Shipped" },
+  { id: "completed", label: "Completed" },
+  { id: "cancelled", label: "Cancelled" },
+];
+
+const TAB_STATUSES: Record<Tab, string[]> = {
+  all: [],
+  to_pay: ["awaiting_payment"],
+  to_ship: ["paid", "packed"],
+  shipped: ["shipped"],
+  completed: ["delivered", "completed"],
+  cancelled: ["cancelled", "refunded"],
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -58,36 +68,36 @@ const STATUS_CONFIG: Record<
 > = {
   awaiting_payment: {
     label: "Awaiting payment",
-    bg: "bg-amber-500/20",
-    text: "text-amber-400",
+    bg: "rgba(245,185,66,0.15)",
+    text: "#F5B942",
   },
-  paid: { label: "Paid", bg: "bg-blue-500/20", text: "text-blue-400" },
-  packed: { label: "Packed", bg: "bg-amber-500/20", text: "text-amber-400" },
+  paid: { label: "Paid", bg: "rgba(139,92,246,0.15)", text: "#A78BFA" },
+  packed: { label: "Packed", bg: "rgba(245,185,66,0.15)", text: "#F5B942" },
   shipped: {
     label: "Shipped",
-    bg: "bg-purple-500/20",
-    text: "text-purple-400",
+    bg: "rgba(59,130,246,0.15)",
+    text: "#60A5FA",
   },
   delivered: {
     label: "Delivered",
-    bg: "bg-orange-500/20",
-    text: "text-orange-400",
+    bg: "rgba(16,185,129,0.15)",
+    text: "#34D399",
   },
   completed: {
     label: "Completed",
-    bg: "bg-emerald-500/20",
-    text: "text-emerald-400",
+    bg: "rgba(16,185,129,0.15)",
+    text: "#34D399",
   },
-  cancelled: { label: "Cancelled", bg: "bg-red-500/20", text: "text-red-400" },
+  cancelled: { label: "Cancelled", bg: "rgba(239,68,68,0.15)", text: "#F87171" },
   refunded: {
     label: "Refunded",
-    bg: "bg-white/10",
-    text: "text-white/50",
+    bg: "rgba(255,255,255,0.08)",
+    text: "rgba(255,255,255,0.45)",
   },
   invoice_requested: {
     label: "Invoice requested",
-    bg: "bg-blue-500/20",
-    text: "text-blue-400",
+    bg: "rgba(59,130,246,0.15)",
+    text: "#60A5FA",
   },
 };
 
@@ -95,8 +105,8 @@ function statusCfg(status: string) {
   return (
     STATUS_CONFIG[status] ?? {
       label: status.replace(/_/g, " "),
-      bg: "bg-white/10",
-      text: "text-white/50",
+      bg: "rgba(255,255,255,0.08)",
+      text: "rgba(255,255,255,0.45)",
     }
   );
 }
@@ -114,68 +124,95 @@ function OrderCard({
 }) {
   const navigate = useNavigate();
   const cfg = statusCfg(order.status);
-  const isAwaitingPayment = order.status === "awaiting_payment";
 
   return (
     <div
       ref={cardRef as React.RefObject<HTMLDivElement>}
-      className={`rounded-2xl border transition-all ${
-        highlighted
-          ? "border-[#FBBF24]/60 shadow-[0_0_16px_rgba(251,191,36,0.15)]"
-          : "border-white/10"
-      } bg-white/5 overflow-hidden`}
+      role="button"
+      tabIndex={0}
+      onClick={() => navigate(`/buyer/orders?orderId=${order.id}`)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate(`/buyer/orders?orderId=${order.id}`); }}
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "12px",
+        background: highlighted ? "rgba(245,185,66,0.06)" : "#12121A",
+        border: `1px solid ${highlighted ? "rgba(245,185,66,0.35)" : "rgba(255,255,255,0.07)"}`,
+        borderRadius: "16px",
+        padding: "14px",
+        cursor: "pointer",
+        boxShadow: highlighted ? "0 0 16px rgba(245,185,66,0.12)" : "none",
+      }}
     >
-      {/* Top row */}
-      <div className="px-4 pt-3.5 pb-3 flex items-start gap-3">
-        {/* Product thumbnail */}
-        <div className="w-14 h-14 rounded-xl overflow-hidden bg-white/10 shrink-0">
-          {order.productImage ? (
-            <img
-              src={order.productImage}
-              alt={order.productTitle ?? "Product"}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Package className="h-6 w-6 text-white/30" />
-            </div>
-          )}
-        </div>
-
-        {/* Details */}
-        <div className="flex-1 min-w-0">
-          <p className="text-white text-sm font-semibold leading-tight truncate">
-            {order.productTitle ?? "Order"}
-          </p>
-          <p className="text-white/40 text-xs mt-0.5">
-            #{order.orderNumber} · {formatDate(order.createdAt)}
-          </p>
-          <div className="mt-1.5 flex items-center gap-2">
-            <span
-              className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${cfg.bg} ${cfg.text}`}
-            >
-              {cfg.label}
-            </span>
-            <span className="text-[#FBBF24] text-xs font-bold">
-              £{order.total.toFixed(2)}
-            </span>
-          </div>
-        </div>
-
-        <ChevronRight className="h-4 w-4 text-white/20 shrink-0 mt-1" />
+      {/* Product thumbnail */}
+      <div
+        style={{
+          width: "80px",
+          height: "80px",
+          borderRadius: "12px",
+          background: "#FFFFFF",
+          flexShrink: 0,
+          overflow: "hidden",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {order.productImage ? (
+          <img
+            src={order.productImage}
+            alt={order.productTitle ?? "Product"}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : (
+          <Package style={{ width: "32px", height: "32px", color: "#9CA3AF" }} />
+        )}
       </div>
 
-      {/* CTA row */}
-      {isAwaitingPayment && order.conversationId && (
-        <div className="px-4 pb-3">
-          <button
-            onClick={() => navigate(`/inbox/${order.conversationId}`)}
-            className="w-full py-2 rounded-xl bg-[#FBBF24] text-[#020617] text-sm font-bold flex items-center justify-center gap-1.5 active:bg-[#F59E0B] transition-colors"
+      {/* Details */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Order number + status badge */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontFamily: "monospace" }}>
+            #{order.orderNumber}
+          </span>
+          <span
+            style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              padding: "3px 9px",
+              borderRadius: "20px",
+              background: cfg.bg,
+              color: cfg.text,
+              flexShrink: 0,
+            }}
           >
-            Complete payment
-          </button>
+            {cfg.label}
+          </span>
         </div>
-      )}
+
+        {/* Product title */}
+        <p style={{ fontSize: "14px", fontWeight: 700, color: "#FFFFFF", lineHeight: 1.3, marginBottom: "5px" }}
+          className="line-clamp-2">
+          {order.productTitle ?? "Order"}
+        </p>
+
+        {/* Qty */}
+        <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "3px" }}>Qty: {order.quantity}</p>
+
+        {/* Date + price */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>
+            Order placed on {formatDate(order.createdAt)}
+          </span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "6px" }}>
+          <span style={{ fontSize: "15px", fontWeight: 800, color: "#F5B942" }}>
+            £{order.total.toFixed(2)}
+          </span>
+          <ChevronRight style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.25)", flexShrink: 0 }} />
+        </div>
+      </div>
     </div>
   );
 }
@@ -190,6 +227,7 @@ export default function MobileOrdersPage() {
 
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<Tab>("all");
 
   // Ref map for scroll-to on deep link
   const cardRefs = useRef<Map<string, React.RefObject<HTMLDivElement | null>>>(
@@ -205,10 +243,6 @@ export default function MobileOrdersPage() {
     const load = async () => {
       setLoading(true);
       try {
-        // Ensure the Supabase session is ready before querying.  On APK cold
-        // restart the @capacitor/preferences async restore may not have
-        // completed yet, so getSession() forces the client to finish loading
-        // the session and auto-refresh the token if it has expired.
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
           navigate("/login", { state: { from: "/orders" }, replace: true });
@@ -218,7 +252,7 @@ export default function MobileOrdersPage() {
         const { data } = await supabase
           .from("orders")
           .select(
-            `id, orderNumber, total, status, createdAt, offerId,
+            `id, orderNumber, total, status, createdAt, offerId, quantity,
              products:productId(title, images)`
           )
           .eq("buyerId", user.id)
@@ -229,7 +263,6 @@ export default function MobileOrdersPage() {
           return;
         }
 
-        // Resolve conversationId via offerId → offers.conversationId
         const offerIds = (
           data as unknown as Array<{
             id: string;
@@ -237,6 +270,7 @@ export default function MobileOrdersPage() {
             total: number;
             status: string;
             createdAt: string;
+            quantity: number;
             offerId: string | null;
             products: { title: string; images: string[] | null } | null;
           }>
@@ -264,6 +298,7 @@ export default function MobileOrdersPage() {
             total: number;
             status: string;
             createdAt: string;
+            quantity: number;
             offerId: string | null;
             products: { title: string; images: string[] | null } | null;
           }>
@@ -273,9 +308,9 @@ export default function MobileOrdersPage() {
           total: o.total,
           status: o.status,
           createdAt: o.createdAt,
+          quantity: o.quantity ?? 1,
           productTitle: o.products?.title ?? null,
-          productImage:
-            (o.products?.images ?? [])[0] ?? null,
+          productImage: (o.products?.images ?? [])[0] ?? null,
           conversationId: o.offerId ? (convMap[o.offerId] ?? null) : null,
         }));
 
@@ -297,91 +332,153 @@ export default function MobileOrdersPage() {
     }
   }, [deepLinkOrderId, loading]);
 
+  // Filter orders by active tab
+  const visibleOrders = activeTab === "all"
+    ? orders
+    : orders.filter((o) => TAB_STATUSES[activeTab].includes(o.status));
+
+  const hasAwaitingPayment = orders.some((o) => o.status === "awaiting_payment");
+
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: "#0B0F1A" }}
+      style={{ background: "#07080B" }}
     >
-      {/* Header */}
+      {/* ── Header ── */}
       <div
-        className="shrink-0 px-4 pt-4 pb-3 flex items-center gap-3 sticky top-0 z-10"
+        className="shrink-0 px-4 sticky top-0 z-10"
         style={{
-          background: "rgba(11,15,26,0.97)",
+          background: "rgba(7,8,11,0.97)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
           borderBottom: "1px solid rgba(255,255,255,0.07)",
           paddingTop: "calc(1rem + env(safe-area-inset-top, 0px))",
+          paddingBottom: "0",
         }}
       >
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 rounded-xl bg-white/5 active:bg-white/10 transition-colors"
-          aria-label="Back"
+        <h1 style={{ fontSize: "22px", fontWeight: 800, color: "#FFFFFF", marginBottom: "12px" }}>
+          My Orders
+        </h1>
+
+        {/* Tab bar */}
+        <div
+          style={{
+            display: "flex",
+            overflowX: "auto",
+            gap: "0",
+            scrollbarWidth: "none",
+            WebkitOverflowScrolling: "touch",
+          }}
+          className="[-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         >
-          <ArrowLeft className="h-5 w-5 text-white" />
-        </button>
-        <h1 className="text-white font-bold text-lg flex-1">My Orders</h1>
-        <Link
-          to="/buyer/orders"
-          className="text-xs text-[#FBBF24] font-semibold py-1 px-2 rounded-lg bg-[#FBBF24]/10 active:bg-[#FBBF24]/20"
-        >
-          Full view
-        </Link>
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: "10px 14px",
+                  fontSize: "13px",
+                  fontWeight: isActive ? 700 : 400,
+                  color: isActive ? "#F5B942" : "rgba(255,255,255,0.50)",
+                  whiteSpace: "nowrap",
+                  background: "transparent",
+                  border: "none",
+                  borderBottom: isActive ? "2px solid #F5B942" : "2px solid transparent",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  transition: "color 0.2s, border-color 0.2s",
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Content */}
+      {/* ── Content ── */}
       <div
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
+        className="flex-1 overflow-y-auto px-4 py-4"
         style={{ paddingBottom: "calc(80px + env(safe-area-inset-bottom, 0px))" }}
       >
         {loading ? (
-          /* Skeleton */
           [1, 2, 3].map((n) => (
             <div
               key={n}
-              className="h-24 rounded-2xl bg-white/5 animate-pulse"
+              style={{ height: "108px", borderRadius: "16px", background: "rgba(255,255,255,0.05)", marginBottom: "12px" }}
+              className="animate-pulse"
             />
           ))
-        ) : orders.length === 0 ? (
+        ) : visibleOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
               <Package className="h-8 w-8 text-white/20" />
             </div>
-            <p className="text-white/50 text-sm">No orders yet</p>
-            <Link
-              to="/catalog"
-              className="px-4 py-2 rounded-xl bg-[#FBBF24]/10 text-[#FBBF24] text-sm font-semibold"
-            >
-              Start browsing
-            </Link>
+            <p className="text-white/50 text-sm">
+              {activeTab === "all" ? "No orders yet" : "No orders in this category"}
+            </p>
+            {activeTab === "all" && (
+              <Link
+                to="/catalog"
+                className="px-4 py-2 rounded-xl bg-[#FBBF24]/10 text-[#FBBF24] text-sm font-semibold"
+              >
+                Start browsing
+              </Link>
+            )}
           </div>
         ) : (
-          orders.map((order) => {
-            if (!cardRefs.current.has(order.id)) {
-              cardRefs.current.set(order.id, { current: null });
-            }
-            return (
-              <OrderCard
-                key={order.id}
-                order={order}
-                highlighted={order.id === deepLinkOrderId}
-                cardRef={cardRefs.current.get(order.id)}
-              />
-            );
-          })
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            {visibleOrders.map((order) => {
+              if (!cardRefs.current.has(order.id)) {
+                cardRefs.current.set(order.id, { current: null });
+              }
+              return (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  highlighted={order.id === deepLinkOrderId}
+                  cardRef={cardRefs.current.get(order.id)}
+                />
+              );
+            })}
+          </div>
         )}
 
         {/* Awaiting payment notice */}
-        {!loading &&
-          orders.some((o) => o.status === "awaiting_payment") && (
-            <div className="flex items-start gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3">
-              <AlertCircle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-              <p className="text-amber-300 text-xs leading-relaxed">
-                You have offers awaiting payment. Tap "Complete payment" to
-                finish checkout before the reservation expires.
-              </p>
-            </div>
-          )}
+        {!loading && hasAwaitingPayment && (
+          <div className="flex items-start gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 mt-3">
+            <AlertCircle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
+            <p className="text-amber-300 text-xs leading-relaxed">
+              You have offers awaiting payment. Tap an order to complete checkout before the reservation expires.
+            </p>
+          </div>
+        )}
+
+        {/* Need help footer */}
+        {!loading && (
+          <button
+            onClick={() => navigate("/buyer/profile")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              width: "100%",
+              padding: "16px 4px",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              marginTop: "8px",
+            }}
+          >
+            <HelpCircle style={{ width: "20px", height: "20px", color: "rgba(255,255,255,0.40)", flexShrink: 0 }} />
+            <span style={{ flex: 1, fontSize: "14px", color: "rgba(255,255,255,0.55)", textAlign: "left" }}>
+              Need help with your order?
+            </span>
+            <ChevronRight style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.25)" }} />
+          </button>
+        )}
       </div>
 
       <MobileBottomNav />

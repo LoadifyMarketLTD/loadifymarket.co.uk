@@ -53,6 +53,11 @@ interface OfferRecord {
   orderStatus?: string | null;
 }
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+/** Fallback name shown when a participant has not set a display name. */
+const DEFAULT_DISPLAY_NAME = "Loadify User";
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatTime(iso: string) {
@@ -310,15 +315,15 @@ export default function MobileChatPage() {
       setOtherId(otherUserId);
 
       const { data: otherUser } = await supabase
-        .from("users")
-        .select("firstName, lastName, email")
+        .from("user_display_names")
+        .select("firstName, lastName")
         .eq("id", otherUserId)
-        .maybeSingle<{ firstName: string | null; lastName: string | null; email: string }>();
+        .maybeSingle<{ firstName: string | null; lastName: string | null }>();
 
       if (cancelled) return;
       if (otherUser) {
         const name = [otherUser.firstName, otherUser.lastName].filter(Boolean).join(" ");
-        setOtherName(name || otherUser.email);
+        setOtherName(name || DEFAULT_DISPLAY_NAME);
       }
 
       // Determine if the current user is the seller (listing owner)

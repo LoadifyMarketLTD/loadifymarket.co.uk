@@ -2,7 +2,7 @@
  * MobileBottomNav — pixel-perfect match to reference image.
  *
  * Items (left → right):
- *   Home (house) | Messages (chat + unread badge) | Sell Item (big gold circle +) | Orders (bag) | Profile (person)
+ *   Home (house) | Categories (grid) | Sell Item (big gold circle +) | Messages (chat + unread badge) | Profile (person)
  *
  * "Home" links to "/" (exact active match).
  * "Sell Item" is elevated above the bar with a large gold circle.
@@ -11,7 +11,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, MessageCircle, Plus, ShoppingBag, User } from 'lucide-react';
+import { Home, MessageCircle, Plus, LayoutGrid, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
@@ -156,11 +156,6 @@ export default function MobileBottomNav() {
   const location = useLocation();
   const { user } = useAuthStore();
 
-  const ordersPath =
-    user?.role === 'seller' ? '/seller/orders' :
-    user?.role === 'admin'  ? '/admin/orders'  :
-    '/orders';
-
   const profilePath =
     user?.role === 'seller' ? '/seller' :
     user?.role === 'admin'  ? '/admin'  :
@@ -191,8 +186,8 @@ export default function MobileBottomNav() {
         {/* Home */}
         <NavItem to="/" icon={Home} label="Home" isActive={isHomeActive} exact />
 
-        {/* Messages */}
-        <MessagesNavButton isActive={isActive('/inbox')} />
+        {/* Categories */}
+        <NavItem to="/categories" icon={LayoutGrid} label="Categories" isActive={isActive('/categories')} />
 
         {/* Sell Item — elevated large gold circle */}
         <Link
@@ -220,8 +215,8 @@ export default function MobileBottomNav() {
           </span>
         </Link>
 
-        {/* Orders */}
-        <NavItem to={ordersPath} icon={ShoppingBag} label="Orders" isActive={isActive(ordersPath)} />
+        {/* Messages */}
+        <MessagesNavButton isActive={isActive('/inbox')} />
 
         {/* Profile */}
         <NavItem to={profilePath} icon={User} label="Profile" isActive={isActive(profilePath)} />

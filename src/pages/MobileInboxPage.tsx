@@ -2,15 +2,17 @@
  * MobileInboxPage — /inbox
  *
  * Standalone full-screen conversation list for mobile users.
- * Accessible from MobileBottomNav "Inbox" tab.
+ * Accessible from MobileBottomNav "Messages" tab.
  *
+ * Tabs: Inbox | Unread | Sent | Archive
+ * Search bar filters by participant name or product title.
  * Clicking a conversation navigates to /inbox/:conversationId.
  * Unauthenticated users are redirected to /login.
  */
 
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { MessageSquare, User, ChevronRight, ArrowLeft } from "lucide-react";
+import { MessageSquare, User, ChevronRight, Search, Settings } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
@@ -22,7 +24,6 @@ interface Participant {
   id: string;
   firstName: string | null;
   lastName: string | null;
-  email: string;
 }
 
 interface ConversationRow {
@@ -32,14 +33,31 @@ interface ConversationRow {
   isArchived: boolean;
   user1Id: string;
   user2Id: string;
+  productId: string | null;
 }
 
 interface Conversation extends ConversationRow {
   other: Participant;
   unreadCount: number;
   lastMessagePreview: string | null;
+  lastMessageSenderId: string | null;
   productTitle: string | null;
+  productImage: string | null;
 }
+
+type Tab = "inbox" | "unread" | "sent" | "archive";
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: "inbox", label: "Inbox" },
+  { id: "unread", label: "Unread" },
+  { id: "sent", label: "Sent" },
+  { id: "archive", label: "Archive" },
+];
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+/** Fallback name shown when a participant has not set a display name. */
+const DEFAULT_DISPLAY_NAME = "Loadify User";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -55,7 +73,7 @@ function formatDate(iso: string) {
 
 function participantName(p: Participant) {
   const name = [p.firstName, p.lastName].filter(Boolean).join(" ");
-  return name || p.email;
+  return name || DEFAULT_DISPLAY_NAME;
 }
 
 /** Decode offer messages to a human-readable preview */
@@ -81,6 +99,8 @@ export default function MobileInboxPage() {
   const { user, isLoading } = useAuthStore();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<Tab>("inbox");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Auth guard
   useEffect(() => {
@@ -99,11 +119,10 @@ export default function MobileInboxPage() {
       try {
         const { data: rows, error } = await supabase
           .from("conversations")
-          .select("id, subject, lastMessageAt, isArchived, user1Id, user2Id")
+          .select("id, subject, lastMessageAt, isArchived, user1Id, user2Id, productId")
           .or(`user1Id.eq.${user.id},user2Id.eq.${user.id}`)
-          .eq("isArchived", false)
           .order("lastMessageAt", { ascending: false })
-          .limit(50);
+          .limit(100);
 
         if (error) throw error;
         if (cancelled) return;
@@ -115,8 +134,8 @@ export default function MobileInboxPage() {
         const userMap = new Map<string, Participant>();
         if (otherIds.length > 0) {
           const { data: users } = await supabase
-            .from("users")
-            .select("id, firstName, lastName, email")
+            .from("user_display_names")
+            .select("id, firstName, lastName")
             .in("id", otherIds);
           (users ?? []).forEach((u: Participant) => userMap.set(u.id, u));
         }
@@ -132,23 +151,36 @@ export default function MobileInboxPage() {
           unreadMap.set(r.conversationId, (unreadMap.get(r.conversationId) ?? 0) + 1);
         });
 
-        // Last message per conversation — fetch the most recent N messages where
-        // N = conversations * 5 to bound the query while still reliably getting
-        // at least one message per conversation.
+        // Last message per conversation (with senderId for "Sent" tab)
         const convIds = convRows.map((r) => r.id);
         const lastMsgMap = new Map<string, string>();
+        const lastMsgSenderMap = new Map<string, string>();
         if (convIds.length > 0) {
           const { data: lastMsgs } = await supabase
             .from("messages")
-            .select("conversationId, message")
+            .select("conversationId, message, senderId")
             .in("conversationId", convIds)
             .order("createdAt", { ascending: false })
             .limit(Math.max(convIds.length * 5, 20));
-          // Keep only the most recent message per conversation (rows are DESC)
-          (lastMsgs ?? []).forEach((m: { conversationId: string; message: string }) => {
+          (lastMsgs ?? []).forEach((m: { conversationId: string; message: string; senderId: string }) => {
             if (!lastMsgMap.has(m.conversationId)) {
               lastMsgMap.set(m.conversationId, m.message);
+              lastMsgSenderMap.set(m.conversationId, m.senderId);
             }
+          });
+        }
+
+        // Product images for conversation thumbnails
+        const productIds = [...new Set(convRows.map((r) => r.productId).filter((x): x is string => x != null))];
+        const productImageMap = new Map<string, string>();
+        if (productIds.length > 0) {
+          const { data: products } = await supabase
+            .from("products")
+            .select("id, images")
+            .in("id", productIds);
+          (products ?? []).forEach((p: { id: string; images?: string[] | null }) => {
+            const firstImg = (p.images ?? [])[0];
+            if (firstImg) productImageMap.set(p.id, firstImg);
           });
         }
 
@@ -156,10 +188,12 @@ export default function MobileInboxPage() {
           const otherId = r.user1Id === user.id ? r.user2Id : r.user1Id;
           return {
             ...r,
-            other: userMap.get(otherId) ?? { id: otherId, firstName: null, lastName: null, email: "Unknown" },
+            other: userMap.get(otherId) ?? { id: otherId, firstName: null, lastName: null },
             unreadCount: unreadMap.get(r.id) ?? 0,
             lastMessagePreview: lastMsgMap.get(r.id) ?? null,
+            lastMessageSenderId: lastMsgSenderMap.get(r.id) ?? null,
             productTitle: r.subject ?? null,
+            productImage: r.productId ? (productImageMap.get(r.productId) ?? null) : null,
           };
         });
 
@@ -175,109 +209,326 @@ export default function MobileInboxPage() {
     return () => { cancelled = true; };
   }, [user?.id]);
 
-  const totalUnread = conversations.reduce((s, c) => s + c.unreadCount, 0);
+  // Filter by tab
+  const tabFiltered = conversations.filter((c) => {
+    if (activeTab === "inbox") return !c.isArchived;
+    if (activeTab === "unread") return !c.isArchived && c.unreadCount > 0;
+    if (activeTab === "sent") return !c.isArchived && c.lastMessageSenderId === user?.id;
+    if (activeTab === "archive") return c.isArchived;
+    return true;
+  });
+
+  // Filter by search query
+  const filtered = searchQuery.trim()
+    ? tabFiltered.filter((c) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          participantName(c.other).toLowerCase().includes(q) ||
+          (c.productTitle ?? "").toLowerCase().includes(q)
+        );
+      })
+    : tabFiltered;
+
+  const inboxUnread = conversations.filter((c) => !c.isArchived && c.unreadCount > 0).length;
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#020617] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FBBF24]" />
+      <div className="min-h-screen bg-[#07080B] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F5B942]" />
       </div>
     );
   }
 
   return (
-    <div
-      className="min-h-screen bg-[#020617] flex flex-col"
-    >
-      {/* Sub-header — paddingTop includes safe-area-inset-top so it fills
-          the status-bar area with its background and content starts below it. */}
+    <div className="min-h-screen flex flex-col" style={{ background: "#07080B" }}>
+      {/* ── Header ── */}
       <div
-        className="sticky top-0 z-40 flex items-center gap-3 px-4 border-b border-white/10"
+        className="shrink-0 sticky top-0 z-40"
         style={{
-          background: "rgba(11,15,26,0.97)",
-          paddingTop: "calc(0.75rem + env(safe-area-inset-top, 0px))",
-          paddingBottom: "0.75rem",
+          background: "rgba(7,8,11,0.97)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderBottom: "1px solid rgba(255,255,255,0.07)",
         }}
       >
-        <Link to="/" className="text-white/60 hover:text-white transition-colors p-1 -ml-1">
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <h1 className="flex-1 text-base font-bold text-white flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-[#FBBF24]" />
-          Inbox
-          {totalUnread > 0 && (
-            <span className="ml-1 text-[11px] bg-[#FBBF24] text-[#020617] rounded-full px-2 py-0.5 font-bold">
-              {totalUnread}
-            </span>
-          )}
-        </h1>
+        {/* Title row */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 16px",
+            paddingTop: "calc(1rem + env(safe-area-inset-top, 0px))",
+            paddingBottom: "10px",
+          }}
+        >
+          <h1 style={{ fontSize: "24px", fontWeight: 800, color: "#FFFFFF" }}>Messages</h1>
+          <button
+            className="p-2 rounded-xl active:bg-white/10 transition-colors"
+            style={{ background: "rgba(255,255,255,0.05)" }}
+            aria-label="Settings"
+            onClick={() => navigate("/buyer/profile")}
+          >
+            <Settings style={{ width: "20px", height: "20px", color: "rgba(255,255,255,0.60)" }} />
+          </button>
+        </div>
+
+        {/* Search bar */}
+        <div style={{ padding: "0 16px 10px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.09)",
+              borderRadius: "12px",
+              padding: "10px 14px",
+            }}
+          >
+            <Search style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
+            <input
+              type="search"
+              placeholder="Search conversations"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                flex: 1,
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                fontSize: "14px",
+                color: "#FFFFFF",
+              }}
+              className="placeholder:text-white/35"
+            />
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div
+          style={{
+            display: "flex",
+            overflowX: "auto",
+            scrollbarWidth: "none",
+            WebkitOverflowScrolling: "touch",
+          }}
+          className="[-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id;
+            const badge = tab.id === "inbox" && inboxUnread > 0 ? inboxUnread : 0;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  padding: "10px 18px",
+                  fontSize: "13px",
+                  fontWeight: isActive ? 700 : 400,
+                  color: isActive ? "#F5B942" : "rgba(255,255,255,0.50)",
+                  whiteSpace: "nowrap",
+                  background: "transparent",
+                  border: "none",
+                  borderBottom: isActive ? "2px solid #F5B942" : "2px solid transparent",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  transition: "color 0.2s, border-color 0.2s",
+                }}
+              >
+                {tab.label}
+                {badge > 0 && (
+                  <span
+                    style={{
+                      minWidth: "18px",
+                      height: "18px",
+                      borderRadius: "9px",
+                      background: "#F5B942",
+                      color: "#0B0B0F",
+                      fontSize: "10px",
+                      fontWeight: 800,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "0 4px",
+                    }}
+                  >
+                    {badge > 9 ? "9+" : badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* List */}
-      <div className="flex-1 pb-[80px]">
+      {/* ── List ── */}
+      <div style={{ flex: 1, paddingBottom: "calc(80px + env(safe-area-inset-bottom, 0px))" }}>
         {loading ? (
-          <div className="p-4 space-y-3">
+          <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-[68px] rounded-xl bg-white/5 animate-pulse" />
+              <div key={i} style={{ height: "72px", borderRadius: "12px", background: "rgba(255,255,255,0.05)" }} className="animate-pulse" />
             ))}
           </div>
-        ) : conversations.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 text-center px-6">
             <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
               <MessageSquare className="h-7 w-7 text-white/30" />
             </div>
-            <p className="text-base font-semibold text-white mb-1">No conversations yet</p>
-            <p className="text-sm text-white/40 mb-6">
-              Contact a seller from a product page to start chatting.
+            <p className="text-base font-semibold text-white mb-1">
+              {searchQuery ? "No results found" : "No conversations yet"}
             </p>
-            <Link
-              to="/catalog"
-              className="px-5 py-2.5 rounded-full bg-[#FBBF24] text-[#020617] text-sm font-semibold"
-            >
-              Browse listings
-            </Link>
+            <p className="text-sm text-white/40 mb-6">
+              {searchQuery ? "Try a different search term." : "Contact a seller from a product page to start chatting."}
+            </p>
+            {!searchQuery && (
+              <Link
+                to="/catalog"
+                className="px-5 py-2.5 rounded-full text-sm font-semibold"
+                style={{ background: "#F5B942", color: "#0B0B0F" }}
+              >
+                Browse listings
+              </Link>
+            )}
           </div>
         ) : (
-          <ul className="divide-y divide-white/5">
-            {conversations.map((conv) => (
-              <li key={conv.id}>
+          <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+            {filtered.map((conv) => (
+              <li key={conv.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                 <button
                   onClick={() => navigate(`/inbox/${conv.id}`)}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-white/5 transition-colors"
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "14px 16px",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                  className="active:bg-white/5 transition-colors"
                 >
-                  {/* Avatar */}
-                  <div className="w-11 h-11 rounded-full bg-white/8 border border-white/10 flex items-center justify-center shrink-0">
-                    <User className="h-5 w-5 text-white/40" />
+                  {/* Avatar with online indicator */}
+                  <div style={{ position: "relative", flexShrink: 0 }}>
+                    <div
+                      style={{
+                        width: "48px",
+                        height: "48px",
+                        borderRadius: "50%",
+                        background: "rgba(255,255,255,0.08)",
+                        border: "1px solid rgba(255,255,255,0.10)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <User style={{ width: "22px", height: "22px", color: "rgba(255,255,255,0.40)" }} />
+                    </div>
+                    {conv.unreadCount > 0 && (
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          position: "absolute",
+                          bottom: "1px",
+                          right: "1px",
+                          width: "11px",
+                          height: "11px",
+                          borderRadius: "50%",
+                          background: "#22C55E",
+                          border: "2px solid #07080B",
+                        }}
+                      />
+                    )}
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-0.5">
-                      <span className={`text-sm font-semibold truncate ${conv.unreadCount > 0 ? "text-white" : "text-white/80"}`}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "2px" }}>
+                      <span
+                        style={{
+                          fontSize: "14px",
+                          fontWeight: conv.unreadCount > 0 ? 700 : 600,
+                          color: conv.unreadCount > 0 ? "#FFFFFF" : "rgba(255,255,255,0.80)",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
                         {participantName(conv.other)}
                       </span>
-                      <span className="text-[11px] text-white/40 shrink-0">
+                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.40)", flexShrink: 0 }}>
                         {formatDate(conv.lastMessageAt)}
                       </span>
                     </div>
-                    {conv.productTitle && (
-                      <p className="text-xs text-[#FBBF24]/70 truncate mb-0.5">{conv.productTitle}</p>
-                    )}
                     {conv.lastMessagePreview && (
-                      <p className={`text-xs truncate ${conv.unreadCount > 0 ? "text-white/70" : "text-white/40"}`}>
+                      <p
+                        style={{
+                          fontSize: "12px",
+                          color: conv.unreadCount > 0 ? "rgba(255,255,255,0.70)" : "rgba(255,255,255,0.40)",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
                         {previewText(conv.lastMessagePreview)}
                       </p>
                     )}
                   </div>
 
-                  {/* Unread badge or chevron */}
-                  {conv.unreadCount > 0 ? (
-                    <span className="shrink-0 min-w-[20px] h-5 rounded-full bg-[#FBBF24] text-[#020617] text-[10px] font-bold flex items-center justify-center px-1">
+                  {/* Unread badge */}
+                  {conv.unreadCount > 0 && (
+                    <span
+                      style={{
+                        minWidth: "22px",
+                        height: "22px",
+                        borderRadius: "11px",
+                        background: "#F5B942",
+                        color: "#0B0B0F",
+                        fontSize: "11px",
+                        fontWeight: 800,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "0 5px",
+                        flexShrink: 0,
+                      }}
+                    >
                       {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
                     </span>
-                  ) : (
-                    <ChevronRight className="h-4 w-4 text-white/20 shrink-0" />
                   )}
+
+                  {/* Product thumbnail */}
+                  <div
+                    style={{
+                      width: "52px",
+                      height: "52px",
+                      borderRadius: "10px",
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      overflow: "hidden",
+                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {conv.productImage ? (
+                      <img
+                        src={conv.productImage}
+                        alt={conv.productTitle ?? "Product"}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <MessageSquare style={{ width: "18px", height: "18px", color: "rgba(255,255,255,0.20)" }} />
+                    )}
+                  </div>
+
+                  <ChevronRight style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.20)", flexShrink: 0 }} />
                 </button>
               </li>
             ))}
