@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import MainLayout from "@/layouts/MainLayout";
+import SEO from "@/components/SEO";
 
 /* ── Password strength ─────────────────────────────────────────────── */
 const getStrength = (pw: string) => {
@@ -168,8 +169,13 @@ const Signup = () => {
 
   return (
     <MainLayout>
+      <SEO
+        title="Create an Account | Loadify Market"
+        description="Sign up to Loadify Market. Create a buyer or seller account and start buying or listing products on the UK's multi-category marketplace."
+        robots="noindex, nofollow"
+      />
       {/* ── Full-page container — light grey, NO card ────────────── */}
-      <div className="bg-[#020617] pt-28 pb-10">
+      <main id="main-content" className="bg-[#020617] pt-28 pb-10">
         <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10">
 
           {/* ══════════════════════════════════════════════════════════
@@ -681,7 +687,7 @@ const Signup = () => {
 
           </form>
         </div>
-      </div>
+      </main>
     </MainLayout>
   );
 };
