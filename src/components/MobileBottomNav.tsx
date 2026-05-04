@@ -10,10 +10,11 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, Search, Plus, Mail, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuthStore } from '@/store';
+import { useAuthPromptStore } from '@/store/authPromptStore';
 import { supabase } from '@/lib/supabase';
 
 // ── Generic nav item ──────────────────────────────────────────────────────────
@@ -154,11 +155,16 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
 
 export default function MobileBottomNav() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuthStore();
+  const promptAuth = useAuthPromptStore((s) => s.open);
 
   const profilePath = '/profile';
 
-  const sellPath = user ? '/sell' : '/register?type=seller';
+  const handleSell = () => {
+    if (!user) { promptAuth(); return; }
+    navigate('/sell');
+  };
 
   // Exact match for home ("/"), prefix match for everything else
   const isHomeActive = location.pathname === '/';
@@ -186,9 +192,9 @@ export default function MobileBottomNav() {
         <NavItem to="/categories" icon={Search} label="Search" isActive={isActive('/categories')} />
 
         {/* Sell — elevated large gold circle */}
-        <Link
-          to={sellPath}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '0 8px', textDecoration: 'none' }}
+        <button
+          onClick={handleSell}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '0 8px', background: 'none', border: 'none', cursor: 'pointer' }}
           aria-label="Sell an item"
         >
           <div
@@ -209,7 +215,7 @@ export default function MobileBottomNav() {
           <span style={{ fontSize: '10px', fontWeight: 600, color: '#F5B942', lineHeight: 1, marginTop: '1px' }}>
             Sell
           </span>
-        </Link>
+        </button>
 
         {/* Messages */}
         <MessagesNavButton isActive={isActive('/inbox')} />

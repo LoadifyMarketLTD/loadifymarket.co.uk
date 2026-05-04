@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import { adaptProduct } from "@/lib/productAdapter";
 import type { DBProduct } from "@/lib/productAdapter";
 import { useAuthStore } from "@/store";
+import { useAuthPromptStore } from "@/store/authPromptStore";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -94,6 +95,7 @@ const ProductDetail = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const promptAuth = useAuthPromptStore((s) => s.open);
   const { addToCart } = useCart();
   // State passed from listing pages (Catalog, CategoryPage, Clearance)
   const navState = (location.state ?? {}) as {
@@ -380,7 +382,7 @@ const ProductDetail = () => {
 
   /** Guards against unauthenticated access and resolves/creates the conversation id. */
   const requireConversation = async (): Promise<string | null> => {
-    if (!user) { navigate("/login", { state: { from: `/product/${id}` } }); return null; }
+    if (!user) { promptAuth(); return null; }
     setCtaLoading(true);
     try {
       const convId = await getOrCreateConversation();
@@ -392,7 +394,7 @@ const ProductDetail = () => {
   };
 
   const handleMobileToggleWishlist = async () => {
-    if (!user) { navigate("/login", { state: { from: `/product/${id}` } }); return; }
+    if (!user) { promptAuth(); return; }
     if (!product) return;
     setMobileWishlistLoading(true);
     try {
@@ -419,6 +421,7 @@ const ProductDetail = () => {
   };
 
   const handleBuyNow = () => {
+    if (!user) { promptAuth(); return; }
     if (!product) return;
     trackAddToCart(product.id, product.title, product.price);
     addToCart(product, mobileQty);

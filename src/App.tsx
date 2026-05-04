@@ -14,6 +14,7 @@ import RequireSellerAny from './components/auth/RequireSellerAny';
 import RequireBuyer from './components/auth/RequireBuyer';
 import RequireEmailVerified from './components/auth/RequireEmailVerified';
 import RequireAuth from './components/auth/RequireAuth';
+import AuthPromptModal from './components/AuthPromptModal';
 
 // ─── Auth callback — OAuth redirect landing page ──────────────────────────────
 const AuthCallbackPage    = lazy(() => import('./pages/AuthCallbackPage'));
@@ -417,6 +418,7 @@ function App() {
     <CartProvider>
       <AmbientLayer />
       <Header />
+      <AuthPromptModal />
       <MaintenanceModeGate>
         <Routes>
           {/* ── Pixel-perfect standalone pages (own Header + Footer) ─────────────── */}
