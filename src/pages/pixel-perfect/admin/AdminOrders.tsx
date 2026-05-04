@@ -13,7 +13,6 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/lib/supabase";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 import { toast } from "@/hooks/use-toast";
 
@@ -74,11 +73,12 @@ const AdminOrders = () => {
     setActionLoading(id);
     setError(null);
     try {
-      const { error: updateError } = await supabase
-        .from("orders")
-        .update({ status: newStatus })
-        .eq("id", id);
-      if (updateError) throw updateError;
+      const res = await authorizedFetch("/.netlify/functions/admin-orders", {
+        method: "POST",
+        body: JSON.stringify({ op: "update_status", orderId: id, status: newStatus }),
+      });
+      const data = await res.json() as { success?: boolean; error?: string };
+      if (!res.ok) throw new Error(data.error || "Failed to update order status");
       setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status: newStatus } : o));
       setSelected((s) => s && s.id === id ? { ...s, status: newStatus } : s);
       toast({ title: "Order status updated successfully" });
@@ -93,55 +93,12 @@ const AdminOrders = () => {
     setLoading(true);
     setError(null);
     try {
-      // Step 1: Fetch orders with product title only (no user embed)
-      const { data, error: queryError } = await supabase
-        .from("orders")
-        .select(`
-          id,
-          orderNumber,
-          total,
-          status,
-          createdAt,
-          buyerId,
-          product:products(title)
-        `)
-        .order("createdAt", { ascending: false })
-        .limit(100);
-
-      if (queryError) throw queryError;
-
-      const rows = data || [];
-
-      // Step 2: Resolve buyer names from users table
-      const buyerIds = [...new Set(rows.map((o) => o.buyerId).filter(Boolean))];
-      const buyerNames: Record<string, string> = {};
-      if (buyerIds.length > 0) {
-        const { data: buyers } = await supabase
-          .from("users")
-          .select("id, firstName, lastName")
-          .in("id", buyerIds);
-        (buyers ?? []).forEach((b: { id: string; firstName?: string; lastName?: string }) => {
-          const name = [b.firstName, b.lastName].filter(Boolean).join(" ").trim();
-          buyerNames[b.id] = name || "Customer";
-        });
-      }
-
-      const mapped: Order[] = rows.map((o) => {
-        const productObj = Array.isArray(o.product) ? o.product[0] : o.product;
-        return {
-          id: o.id,
-          orderNumber: o.orderNumber || o.id.slice(0, 8).toUpperCase(),
-          buyer: buyerNames[o.buyerId] ?? (o.buyerId ? o.buyerId.slice(0, 8).toUpperCase() : "—"),
-          product: productObj?.title || "—",
-          total: o.total ?? 0,
-          status: o.status ?? "paid",
-          date: o.createdAt
-            ? new Date(o.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })
-            : "—",
-        };
+      const res = await authorizedFetch("/.netlify/functions/admin-orders", {
+        method: "GET",
       });
-
-      setOrders(mapped);
+      const data = await res.json() as { orders?: Order[]; error?: string };
+      if (!res.ok) throw new Error(data.error || "Failed to load orders");
+      setOrders(Array.isArray(data.orders) ? data.orders : []);
     } catch (err: unknown) {
       setError((err as Error).message || "Failed to load orders");
     } finally {

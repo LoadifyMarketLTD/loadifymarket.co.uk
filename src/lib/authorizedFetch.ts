@@ -9,6 +9,31 @@
  */
 
 import { supabase } from './supabase';
+import { isCapacitorNative } from './capacitorUtils';
+
+/**
+ * The live Netlify deployment base URL, used to rewrite relative
+ * `/.netlify/functions/` paths to absolute URLs on the Capacitor APK.
+ *
+ * On APK, relative Netlify function URLs can fail in two ways:
+ * 1. Without patchCapacitorFetch: resolved to https://localhost/... (file server
+ *    returns index.html — "Empty or non-JSON response from server (200)").
+ * 2. If CapacitorHttp's JS injection overwrites our window.fetch patch after
+ *    main.tsx runs, the rewrite in patchCapacitorFetch is bypassed entirely.
+ *
+ * Applying the rewrite directly inside authorizedFetch removes the dependency
+ * on the window.fetch patch order and guarantees correctness on every APK build.
+ */
+const NETLIFY_BASE = (
+  (import.meta.env.VITE_APP_URL as string | undefined) ?? 'https://loadifymarket.co.uk'
+).replace(/\/$/, '');
+
+function resolveUrl(path: string): string {
+  if (isCapacitorNative() && path.startsWith('/.netlify/functions/')) {
+    return `${NETLIFY_BASE}${path}`;
+  }
+  return path;
+}
 
 /**
  * Make an authorized fetch to a Netlify function (or any endpoint that
@@ -20,13 +45,19 @@ import { supabase } from './supabase';
  *  - Throws a clear error if the session is missing or expired
  *
  * @param path   URL to fetch (relative /.netlify/functions/... is rewritten
- *               to absolute on APK by patchCapacitorFetch in main.tsx)
+ *               to absolute on APK both here and by patchCapacitorFetch in main.tsx)
  * @param init   Standard RequestInit — do NOT set Authorization (it is set here)
  */
 export async function authorizedFetch(
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
+  // Rewrite relative Netlify function paths to absolute URLs on Capacitor APK.
+  // This is a defensive duplicate of the rewrite in patchCapacitorFetch; it
+  // ensures correctness even if CapacitorHttp's own JS injection overwrites our
+  // window.fetch patch after main.tsx runs.
+  const url = resolveUrl(path);
+
   let { data: { session } } = await supabase.auth.getSession();
 
   // Decode the JWT payload to check the expiry time (no library needed — JWTs
@@ -59,5 +90,5 @@ export async function authorizedFetch(
   }
   headers.set('Authorization', `Bearer ${session.access_token}`);
 
-  return fetch(path, { ...init, headers });
+  return fetch(url, { ...init, headers });
 }
