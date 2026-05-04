@@ -100,7 +100,8 @@ const AdminOrders = () => {
       if (!res.ok) throw new Error(data.error || "Failed to load orders");
       setOrders(Array.isArray(data.orders) ? data.orders : []);
     } catch (err: unknown) {
-      setError((err as Error).message || "Failed to load orders");
+      console.error("[AdminOrders] fetchOrders failed:", err);
+      setError("Unable to load orders. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -179,8 +180,20 @@ const AdminOrders = () => {
       </div>
 
       {error && (
-        <div className="rounded-xl border p-4 text-sm" style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171" }}>
-          {error}
+        <div className="rounded-xl border p-4 flex items-center justify-between gap-4" style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)" }}>
+          <div className="flex items-center gap-2 text-sm" style={{ color: "#f87171" }}>
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={fetchOrders}
+            className="shrink-0 text-xs border border-red-500/40 hover:bg-red-500/10"
+            style={{ color: "#f87171" }}
+          >
+            Retry
+          </Button>
         </div>
       )}
 
