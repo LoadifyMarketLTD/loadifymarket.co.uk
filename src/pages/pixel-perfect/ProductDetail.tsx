@@ -20,7 +20,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Flag, MessageSquare, Tag, ShoppingCart } from "lucide-react";
+import { Flag, MessageSquare, Tag, ShoppingCart, ArrowLeft, Share2, Heart, Shield, Lock, Star, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { copyToClipboard } from "@/lib/clipboard";
 import { isCapacitorNative } from "@/lib/capacitorUtils";
@@ -128,6 +128,11 @@ const ProductDetail = () => {
   const [offerOpen, setOfferOpen] = useState(false);
   // Listing availability state (active | reserved | sold)
   const [listingStatus, setListingStatus] = useState<string>("active");
+  // Mobile wishlist state (mirrored for the mobile overlay header)
+  const [mobileWishlisted, setMobileWishlisted] = useState(false);
+  const [mobileWishlistLoading, setMobileWishlistLoading] = useState(false);
+  // Mobile quantity selector
+  const [mobileQty, setMobileQty] = useState(1);
 
   useEffect(() => {
     if (!id) return;
@@ -171,6 +176,19 @@ const ProductDetail = () => {
         );
         setProductSellerId(data.sellerId ?? null);
         setListingStatus((data as Record<string, unknown>).listingStatus as string ?? "active");
+
+        // Sync mobile wishlist state
+        if (user?.id) {
+          supabase
+            .from("wishlists")
+            .select("productIds")
+            .eq("userId", user.id)
+            .maybeSingle()
+            .then(({ data: wl }) => {
+              const ids: string[] = (wl as { productIds?: string[] } | null)?.productIds ?? [];
+              setMobileWishlisted(ids.includes(adapted.id));
+            });
+        }
 
         // Track product page view for analytics
         trackProductView(adapted.id, adapted.title, adapted.price);
@@ -379,10 +397,37 @@ const ProductDetail = () => {
     }
   };
 
+  const handleMobileToggleWishlist = async () => {
+    if (!user) { navigate("/login", { state: { from: `/product/${id}` } }); return; }
+    if (!product) return;
+    setMobileWishlistLoading(true);
+    try {
+      const { data: wl } = await supabase
+        .from("wishlists")
+        .select("productIds")
+        .eq("userId", user.id)
+        .maybeSingle();
+      const existing: string[] = (wl as { productIds?: string[] } | null)?.productIds ?? [];
+      const alreadyIn = existing.includes(product.id);
+      const newIds = alreadyIn ? existing.filter((x) => x !== product.id) : [...existing, product.id];
+      if (wl) {
+        await supabase.from("wishlists").update({ productIds: newIds }).eq("userId", user.id);
+      } else {
+        await supabase.from("wishlists").insert({ userId: user.id, productIds: newIds });
+      }
+      setMobileWishlisted(!alreadyIn);
+      toast({ title: alreadyIn ? "Removed from wishlist" : "Added to wishlist" });
+    } catch {
+      toast({ title: "Wishlist error", variant: "destructive" });
+    } finally {
+      setMobileWishlistLoading(false);
+    }
+  };
+
   const handleBuyNow = () => {
     if (!product) return;
     trackAddToCart(product.id, product.title, product.price);
-    addToCart(product, 1);
+    addToCart(product, mobileQty);
     navigate("/checkout");
   };
 
@@ -556,50 +601,321 @@ const ProductDetail = () => {
         ogPriceCurrency="GBP"
         structuredData={productJsonLd}
       />
-      <main id="main-content" className="pt-28 pb-16">
-        <div className="container mx-auto px-4">
-          {(() => {
-            const isClearance = navState.flow === "clearance" || navState.flow === "deals";
-            const sectionLabel = isClearance
-              ? (navState.fromLabel ?? "Deals")
-              : "Catalog";
-            const sectionPath = isClearance
-              ? (navState.from ?? "/deals")
-              : "/catalog";
-            // Category slug: prefer what was passed from CategoryPage, fall back to DB-derived
-            const catSlug = navState.categorySlug ?? productCategorySlug;
-            const catLabel = navState.categoryLabel ?? product.category;
-            const showSubcategoryCrumb =
-              !!product.subcategory &&
-              product.subcategory.trim().length > 0 &&
-              product.subcategory.trim().toLowerCase() !== (catLabel ?? "").trim().toLowerCase();
-            return (
-              <BreadcrumbNav
-                items={[
-                  { label: "Home", to: "/" },
-                  { label: sectionLabel, to: sectionPath },
-                  ...(catSlug
-                    ? [{ label: catLabel, to: `/category/${catSlug}` }]
-                    : [{ label: catLabel }]),
-                  ...(showSubcategoryCrumb ? [{ label: product.subcategory }] : []),
-                  { label: product.title },
-                ]}
-                showBack={true}
-                backLabel={isClearance ? `Back to ${sectionLabel}` : "Back to Catalog"}
-                backTo={sectionPath}
-              />
-            );
-          })()}
 
-          {/* Main content — mobile: Gallery → Info → Desc/Reviews  |  desktop: 2-column grid */}
+      {/* ── Mobile overlay header (back + share + heart) — hidden on desktop ── */}
+      <div
+        className="md:hidden fixed top-0 left-0 right-0 z-[9998] flex items-center justify-between px-4"
+        style={{
+          paddingTop: "calc(0.625rem + env(safe-area-inset-top, 0px))",
+          paddingBottom: "0.625rem",
+          background: "rgba(7,8,11,0.85)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+        }}
+      >
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 rounded-xl active:bg-white/10 transition-colors"
+          style={{ background: "rgba(255,255,255,0.10)" }}
+          aria-label="Back"
+        >
+          <ArrowLeft style={{ width: "20px", height: "20px", color: "#FFFFFF" }} />
+        </button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            onClick={handleNativeShare}
+            className="p-2 rounded-xl active:bg-white/10 transition-colors"
+            style={{ background: "rgba(255,255,255,0.10)" }}
+            aria-label="Share"
+          >
+            <Share2 style={{ width: "20px", height: "20px", color: "#FFFFFF" }} />
+          </button>
+          <button
+            onClick={() => void handleMobileToggleWishlist()}
+            disabled={mobileWishlistLoading}
+            className="p-2 rounded-xl active:bg-white/10 transition-colors"
+            style={{ background: "rgba(255,255,255,0.10)" }}
+            aria-label={mobileWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            <Heart
+              style={{
+                width: "20px",
+                height: "20px",
+                color: mobileWishlisted ? "#EF4444" : "#FFFFFF",
+                fill: mobileWishlisted ? "#EF4444" : "none",
+              }}
+            />
+          </button>
+        </div>
+      </div>
+
+      <main id="main-content" className="pt-0 md:pt-28 pb-16">
+        <div className="container mx-auto px-4">
+          {/* Breadcrumb — desktop only */}
+          <div className="hidden md:block">
+            {(() => {
+              const isClearance = navState.flow === "clearance" || navState.flow === "deals";
+              const sectionLabel = isClearance
+                ? (navState.fromLabel ?? "Deals")
+                : "Catalog";
+              const sectionPath = isClearance
+                ? (navState.from ?? "/deals")
+                : "/catalog";
+              const catSlug = navState.categorySlug ?? productCategorySlug;
+              const catLabel = navState.categoryLabel ?? product.category;
+              const showSubcategoryCrumb =
+                !!product.subcategory &&
+                product.subcategory.trim().length > 0 &&
+                product.subcategory.trim().toLowerCase() !== (catLabel ?? "").trim().toLowerCase();
+              return (
+                <BreadcrumbNav
+                  items={[
+                    { label: "Home", to: "/" },
+                    { label: sectionLabel, to: sectionPath },
+                    ...(catSlug
+                      ? [{ label: catLabel, to: `/category/${catSlug}` }]
+                      : [{ label: catLabel }]),
+                    ...(showSubcategoryCrumb ? [{ label: product.subcategory }] : []),
+                    { label: product.title },
+                  ]}
+                  showBack={true}
+                  backLabel={isClearance ? `Back to ${sectionLabel}` : "Back to Catalog"}
+                  backTo={sectionPath}
+                />
+              );
+            })()}
+          </div>
+
+          {/* Main content — mobile: Gallery → mobile info → Desc/Reviews  |  desktop: 2-column grid */}
           <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[1fr_420px]">
-            {/* Gallery — first on both mobile and desktop */}
-            <div className="order-1 lg:col-start-1 lg:row-start-1">
+            {/* Gallery — edge-to-edge on mobile (overlay header sits above it), in-flow on desktop */}
+            <div className="order-1 lg:col-start-1 lg:row-start-1 -mx-4 md:mx-0">
               <ProductGallery images={galleryImages} title={product.title} />
             </div>
 
-            {/* Info + Seller — second on mobile (above desc/reviews), right column on desktop */}
-            <div className="order-2 lg:col-start-2 lg:row-start-1 lg:row-span-2 space-y-6">
+            {/* ── Mobile-only inline product info card ── */}
+            {isMobileCtaVisible && (
+              <div
+                className="order-2 md:hidden"
+                style={{
+                  background: "#12121A",
+                  borderRadius: "16px",
+                  margin: "0 -16px",
+                  padding: "20px 16px",
+                  borderTop: "1px solid rgba(255,255,255,0.07)",
+                }}
+              >
+                {/* Title */}
+                <h1 style={{ fontSize: "20px", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.3, marginBottom: "8px" }}>
+                  {product.title}
+                </h1>
+
+                {/* Rating */}
+                {product.rating > 0 && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "12px" }}>
+                    <Star style={{ width: "16px", height: "16px", color: "#F5B942", fill: "#F5B942" }} />
+                    <span style={{ fontSize: "14px", fontWeight: 600, color: "#F5B942" }}>
+                      {product.rating.toFixed(1)}
+                    </span>
+                    {(product.reviewCount ?? 0) > 0 && (
+                      <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.50)" }}>
+                        ({product.reviewCount} reviews)
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Price */}
+                <p style={{ fontSize: "26px", fontWeight: 800, color: "#FFFFFF", marginBottom: "4px" }}>
+                  £{product.price.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
+                </p>
+                <p style={{ fontSize: "13px", color: "#22C55E", fontWeight: 600, marginBottom: "16px" }}>
+                  Free shipping
+                </p>
+
+                <div style={{ height: "1px", background: "rgba(255,255,255,0.07)" }} />
+
+                {/* Condition row */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "14px 0",
+                    borderBottom: "1px solid rgba(255,255,255,0.07)",
+                  }}
+                >
+                  <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.60)" }}>Condition</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                    <span style={{ fontSize: "14px", fontWeight: 600, color: "#FFFFFF" }}>{product.condition}</span>
+                    <ChevronRight style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.30)" }} />
+                  </div>
+                </div>
+
+                {/* Quantity row */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "14px 0",
+                    borderBottom: "1px solid rgba(255,255,255,0.07)",
+                    marginBottom: "20px",
+                  }}
+                >
+                  <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.60)" }}>Quantity</span>
+                  <select
+                    value={mobileQty}
+                    onChange={(e) => setMobileQty(Number(e.target.value))}
+                    style={{
+                      background: "rgba(255,255,255,0.08)",
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      borderRadius: "8px",
+                      color: "#FFFFFF",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      padding: "6px 10px",
+                      outline: "none",
+                      cursor: "pointer",
+                    }}
+                    aria-label="Quantity"
+                  >
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                      <option key={n} value={n} style={{ background: "#12121A" }}>{n}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {listingStatus === "reserved" && (
+                  <div className="flex items-center justify-center gap-2 rounded-xl bg-amber-500/15 border border-amber-500/25 py-3 px-4 mb-3">
+                    <span className="text-amber-400 text-sm font-semibold">⏳ Reserved — awaiting payment</span>
+                  </div>
+                )}
+                {listingStatus === "sold" && (
+                  <div className="flex items-center justify-center gap-2 rounded-xl bg-red-500/15 border border-red-500/25 py-3 px-4 mb-3">
+                    <span className="text-red-400 text-sm font-semibold">✕ This item has been sold</span>
+                  </div>
+                )}
+
+                {listingStatus === "active" && (
+                  <>
+                    {/* Buy Now */}
+                    <button
+                      onClick={handleBuyNow}
+                      style={{
+                        width: "100%",
+                        padding: "16px",
+                        borderRadius: "12px",
+                        background: "linear-gradient(135deg, #F5C842, #C8860A)",
+                        color: "#0B0B0F",
+                        fontSize: "16px",
+                        fontWeight: 800,
+                        border: "none",
+                        cursor: "pointer",
+                        marginBottom: "10px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                      }}
+                      className="active:opacity-80 transition-opacity"
+                    >
+                      <ShoppingCart style={{ width: "18px", height: "18px" }} />
+                      Buy Now
+                    </button>
+
+                    {/* Make an Offer */}
+                    <button
+                      onClick={() => void handleMakeOffer()}
+                      disabled={ctaLoading}
+                      style={{
+                        width: "100%",
+                        padding: "15px",
+                        borderRadius: "12px",
+                        background: "transparent",
+                        color: "#FFFFFF",
+                        fontSize: "16px",
+                        fontWeight: 700,
+                        border: "1px solid rgba(255,255,255,0.20)",
+                        cursor: "pointer",
+                        marginBottom: "20px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                      }}
+                      className="active:bg-white/5 transition-colors disabled:opacity-50"
+                    >
+                      <Tag style={{ width: "16px", height: "16px" }} />
+                      Make an Offer
+                    </button>
+                  </>
+                )}
+
+                {/* Buyer Protection */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "12px",
+                    padding: "14px 0",
+                    borderTop: "1px solid rgba(255,255,255,0.07)",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "36px",
+                      height: "36px",
+                      borderRadius: "50%",
+                      background: "rgba(255,255,255,0.07)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Shield style={{ width: "18px", height: "18px", color: "rgba(255,255,255,0.70)" }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "13px", fontWeight: 700, color: "#FFFFFF", marginBottom: "2px" }}>Buyer Protection</p>
+                    <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.50)" }}>Get your money back if item is not as described.</p>
+                  </div>
+                </div>
+
+                {/* Secure Payments */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "12px",
+                    padding: "14px 0",
+                    borderTop: "1px solid rgba(255,255,255,0.07)",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "36px",
+                      height: "36px",
+                      borderRadius: "50%",
+                      background: "rgba(255,255,255,0.07)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Lock style={{ width: "18px", height: "18px", color: "rgba(255,255,255,0.70)" }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "13px", fontWeight: 700, color: "#FFFFFF", marginBottom: "2px" }}>Secure Payments</p>
+                    <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.50)" }}>Your payment information is encrypted.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Info + Seller — hidden on mobile (replaced by inline section above), right column on desktop */}
+            <div className="order-2 hidden md:block lg:col-start-2 lg:row-start-1 lg:row-span-2 space-y-6">
               <div className="lg:sticky lg:top-24 space-y-6">
                 <div className="bg-card rounded-xl border border-border p-6">
                   <ProductInfo
@@ -751,65 +1067,6 @@ const ProductDetail = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* ── Mobile CTA bar — sticky at bottom, hidden on desktop ─────────── */}
-      {isMobileCtaVisible && (
-        <div
-          className="md:hidden fixed bottom-[60px] left-0 right-0 z-[9996] px-4 py-3 flex gap-2"
-          style={{
-            background: "rgba(11,15,26,0.96)",
-            backdropFilter: "blur(16px)",
-            WebkitBackdropFilter: "blur(16px)",
-            borderTop: "1px solid rgba(255,255,255,0.08)",
-            paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))",
-          }}
-        >
-          {/* Reserved / sold notice — shown in place of normal CTAs */}
-          {listingStatus === "reserved" && (
-            <div className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-amber-500/15 border border-amber-500/25 py-2.5 px-3">
-              <span className="text-amber-400 text-sm font-semibold">⏳ Reserved — awaiting payment</span>
-            </div>
-          )}
-          {listingStatus === "sold" && (
-            <div className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-red-500/15 border border-red-500/25 py-2.5 px-3">
-              <span className="text-red-400 text-sm font-semibold">✕ This item has been sold</span>
-            </div>
-          )}
-
-          {listingStatus === "active" && (
-            <>
-              {/* Message Seller */}
-              <button
-                onClick={() => void handleMessageSeller()}
-                disabled={ctaLoading}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-white/20 text-white text-sm font-semibold active:bg-white/10 transition-colors disabled:opacity-50"
-              >
-                <MessageSquare className="h-4 w-4" />
-                <span>Message</span>
-              </button>
-
-              {/* Make Offer */}
-              <button
-                onClick={() => void handleMakeOffer()}
-                disabled={ctaLoading}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-[#FBBF24]/50 text-[#FBBF24] text-sm font-semibold active:bg-[#FBBF24]/10 transition-colors disabled:opacity-50"
-              >
-                <Tag className="h-4 w-4" />
-                <span>Make Offer</span>
-              </button>
-
-              {/* Buy Now */}
-              <button
-                onClick={handleBuyNow}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#FBBF24] text-[#020617] text-sm font-bold active:bg-[#F59E0B] transition-colors"
-              >
-                <ShoppingCart className="h-4 w-4" />
-                <span>Buy Now</span>
-              </button>
-            </>
-          )}
-        </div>
-      )}
 
       {/* Make Offer sheet */}
       {offerConvId && productSellerId && (

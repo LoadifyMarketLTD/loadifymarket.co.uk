@@ -27,7 +27,7 @@ const Header = () => {
   const isShellPath = /^\/(seller|admin|buyer)(\/|$)/.test(location.pathname);
   // Mobile-standalone pages (/inbox, /orders, /categories) render their own sticky
   // sub-header and must not have the global header layered on top.
-  const isMobileStandalonePath = /^\/(inbox|orders|categories)(\/|$)/.test(location.pathname);
+  const isMobileStandalonePath = /^\/(inbox|orders|categories|product)(\/|$)/.test(location.pathname);
   const hideOnMobile = isHomeMobile || isShellPath || isMobileStandalonePath;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
