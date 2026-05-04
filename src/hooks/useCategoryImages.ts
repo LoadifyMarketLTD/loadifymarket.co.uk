@@ -77,7 +77,10 @@ export function useCategoryImages(): CategoryImageMap {
       if (!cancelled) setImageMap(map);
     }
 
-    load().catch(() => { /* non-fatal — caller uses static fallback */ });
+    load().catch((err) => {
+      // Non-fatal — caller shows static fallback images
+      if (import.meta.env.DEV) console.warn('[useCategoryImages] fetch failed:', err);
+    });
 
     return () => {
       cancelled = true;
