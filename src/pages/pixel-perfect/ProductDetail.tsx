@@ -378,13 +378,14 @@ const ProductDetail = () => {
     return created?.id ?? null;
   };
 
-  const handleMakeOffer = async () => {
-    if (!user) { navigate("/login", { state: { from: `/product/${id}` } }); return; }
+  /** Guards against unauthenticated access and resolves/creates the conversation id. */
+  const requireConversation = async (): Promise<string | null> => {
+    if (!user) { navigate("/login", { state: { from: `/product/${id}` } }); return null; }
     setCtaLoading(true);
     try {
       const convId = await getOrCreateConversation();
-      if (convId) { setOfferConvId(convId); setOfferOpen(true); }
-      else toast({ title: "Could not open conversation", variant: "destructive" });
+      if (!convId) toast({ title: "Could not open conversation", variant: "destructive" });
+      return convId;
     } finally {
       setCtaLoading(false);
     }
@@ -424,16 +425,14 @@ const ProductDetail = () => {
     navigate("/checkout");
   };
 
+  const handleMakeOffer = async () => {
+    const convId = await requireConversation();
+    if (convId) { setOfferConvId(convId); setOfferOpen(true); }
+  };
+
   const handleMessage = async () => {
-    if (!user) { navigate("/login", { state: { from: `/product/${id}` } }); return; }
-    setCtaLoading(true);
-    try {
-      const convId = await getOrCreateConversation();
-      if (convId) navigate(`/inbox/${convId}`);
-      else toast({ title: "Could not open conversation", variant: "destructive" });
-    } finally {
-      setCtaLoading(false);
-    }
+    const convId = await requireConversation();
+    if (convId) navigate(`/inbox/${convId}`);
   };
 
   // True when the logged-in user is the seller/owner of this product
