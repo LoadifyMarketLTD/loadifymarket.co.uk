@@ -790,6 +790,14 @@ const ProductDetail = () => {
                   </select>
                 </div>
 
+                {/* Activity indicator */}
+                {(product.views ?? 0) > 0 && (
+                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "12px", display: "flex", alignItems: "center", gap: "5px" }}>
+                    <span>👁️</span>
+                    <span>{product.views.toLocaleString()} {product.views === 1 ? "view" : "views"}</span>
+                  </p>
+                )}
+
                 {listingStatus === "reserved" && (
                   <div className="flex items-center justify-center gap-2 rounded-xl bg-amber-500/15 border border-amber-500/25 py-3 px-4 mb-3">
                     <span className="text-amber-400 text-sm font-semibold">⏳ Reserved — awaiting payment</span>

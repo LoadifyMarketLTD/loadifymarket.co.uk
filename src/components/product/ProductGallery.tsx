@@ -17,6 +17,7 @@ const ProductGallery = ({ images, title }: ProductGalleryProps) => {
           src={images[activeIndex]}
           alt={title}
           className="w-full h-full object-cover"
+          fetchPriority="high"
         />
         {images.length > 1 && (
           <>
@@ -50,7 +51,7 @@ const ProductGallery = ({ images, title }: ProductGalleryProps) => {
                 i === activeIndex ? "border-primary ring-1 ring-primary/30" : "border-border opacity-60 hover:opacity-100"
               }`}
             >
-              <img src={img} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" />
+              <img src={img} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
             </button>
           ))}
         </div>
