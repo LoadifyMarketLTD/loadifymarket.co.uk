@@ -90,7 +90,8 @@ export function useMobileGrid(): MobileGrid {
         setHasMore(items.length === PAGE_SIZE);
         setLoading(false);
       }
-    }).catch(() => {
+    }).catch((err) => {
+      console.error('[useMobileGrid] initial fetch failed:', err);
       if (!cancelledRef.current) setLoading(false);
     });
     return () => { cancelledRef.current = true; };
@@ -111,7 +112,8 @@ export function useMobileGrid(): MobileGrid {
         setHasMore(items.length === PAGE_SIZE);
         setLoadingMore(false);
       }
-    }).catch(() => {
+    }).catch((err) => {
+      console.error('[useMobileGrid] loadMore failed:', err);
       if (!cancelledRef.current) setLoadingMore(false);
     });
   }, [loadingMore, hasMore]);

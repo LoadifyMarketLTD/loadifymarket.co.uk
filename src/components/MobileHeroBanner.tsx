@@ -102,7 +102,7 @@ export default function MobileHeroBanner() {
               Sell now
             </button>
             <button
-              onClick={() => navigate('/how-it-works')}
+              onClick={() => navigate('/help')}
               style={{
                 height: 40,
                 paddingLeft: 0,

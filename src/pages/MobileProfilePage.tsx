@@ -30,7 +30,7 @@ function buildSections(role: string | undefined): Section[] {
     {
       title: 'My Activity',
       items: [
-        { label: 'My Listings', to: isSellerOrAdmin ? '/seller/products' : '/catalog' },
+        { label: isSellerOrAdmin ? 'My Listings' : 'Browse Listings', to: isSellerOrAdmin ? '/seller/products' : '/catalog' },
         { label: 'Saved Items', to: '/buyer/wishlist' },
         { label: 'My Orders', to: '/orders' },
         { label: 'Messages', to: '/inbox' },
