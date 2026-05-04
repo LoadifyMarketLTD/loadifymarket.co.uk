@@ -82,7 +82,6 @@ export function useMobileGrid(): MobileGrid {
 
   useEffect(() => {
     cancelledRef.current = false;
-    setLoading(true);
     fetchPage(0).then((items) => {
       if (!cancelledRef.current) {
         setProducts(items);
