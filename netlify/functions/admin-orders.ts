@@ -126,7 +126,7 @@ export const handler: Handler = async (event) => {
           .select('id, firstName, lastName')
           .in('id', buyerIds);
         (buyers ?? []).forEach((b: { id: string; firstName?: string | null; lastName?: string | null }) => {
-          const name = [b.firstName, b.lastName].filter(Boolean).join(' ').trim();
+          const name = [b.firstName, b.lastName].filter((n): n is string => !!n).join(' ').trim();
           buyerNames[b.id] = name || 'Customer';
         });
       }

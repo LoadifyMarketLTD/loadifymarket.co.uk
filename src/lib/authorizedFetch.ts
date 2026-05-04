@@ -26,6 +26,9 @@ import { isCapacitorNative } from './capacitorUtils';
  */
 const NETLIFY_BASE = (
   (import.meta.env.VITE_APP_URL as string | undefined) ?? 'https://loadifymarket.co.uk'
+// The hard-coded fallback is safe: this rewrite only runs on the native APK
+// (isCapacitorNative() guard below) where loadifymarket.co.uk is always the
+// correct backend.  Mirrors the same pattern in capacitorFetchPatch.ts.
 ).replace(/\/$/, '');
 
 function resolveUrl(path: string): string {
