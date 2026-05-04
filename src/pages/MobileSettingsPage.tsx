@@ -30,10 +30,7 @@ export default function MobileSettingsPage() {
       label: 'Account settings',
       to: isSeller ? '/seller/settings' : '/buyer/settings',
     },
-    {
-      label: 'Payments',
-      to: isSeller ? '/seller/settings' : '/buyer/payments',
-    },
+    ...(!isSeller ? [{ label: 'Payments', to: '/buyer/payments' }] : []),
     {
       label: 'Shipping',
       to: isSeller ? '/seller/shipments' : '/buyer/orders',
@@ -41,10 +38,6 @@ export default function MobileSettingsPage() {
     {
       label: 'Security',
       to: '/profile/security',
-    },
-    {
-      label: 'Notifications',
-      to: '/profile/notifications',
     },
   ];
 
