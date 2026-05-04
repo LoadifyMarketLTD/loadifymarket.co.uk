@@ -30,9 +30,12 @@ export default function MobileSettingsPage() {
       label: 'Account settings',
       to: isSeller ? '/seller/settings' : '/buyer/settings',
     },
-    ...(!isSeller ? [{ label: 'Payments', to: '/buyer/payments' }] : []),
     {
-      label: 'Shipping',
+      label: 'Payments',
+      to: isSeller ? '/seller/settings' : '/buyer/payments',
+    },
+    {
+      label: 'Postage',
       to: isSeller ? '/seller/shipments' : '/buyer/orders',
     },
     {

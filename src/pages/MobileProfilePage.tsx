@@ -49,7 +49,7 @@ function buildSections(role: string | undefined): Section[] {
       items: [
         { label: 'Settings', to: '/profile/settings' },
         { label: 'Security', to: '/profile/security' },
-        { label: 'Notifications', to: '/profile/notifications' },
+        { label: 'Activity', to: '/profile/notifications' },
       ],
     },
     {

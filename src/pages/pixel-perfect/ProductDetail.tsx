@@ -4,7 +4,6 @@ import BreadcrumbNav from "@/components/BreadcrumbNav";
 import ProductGallery from "@/components/product/ProductGallery";
 import ProductInfo from "@/components/product/ProductInfo";
 import SellerCard from "@/components/product/SellerCard";
-import ProductReviews from "@/components/product/ProductReviews";
 import ProductCard from "@/components/catalog/ProductCard";
 import type { Product } from "@/components/catalog/ProductCard";
 import { supabase } from "@/lib/supabase";
@@ -905,12 +904,7 @@ const ProductDetail = () => {
                 </div>
               )}
 
-              {/* Reviews */}
-              <ProductReviews
-                productId={id ?? ""}
-                productRating={product.rating ?? 0}
-                reviewCount={product.reviewCount ?? 0}
-              />
+
             </div>
           </div>
 
