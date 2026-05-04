@@ -20,6 +20,7 @@ import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
 import type { Shipment } from "@/types/shipping";
 import type { User } from "@/types";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 
 type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
 
@@ -115,18 +116,13 @@ const SellerShipments = () => {
     if (!createForm.orderId) return;
     setCreating(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Not authenticated");
-
       const payload: Record<string, unknown> = { order_id: createForm.orderId };
       if (createForm.courierName.trim()) payload.courier_name = createForm.courierName.trim();
       if (createForm.trackingNumber.trim()) payload.tracking_number = createForm.trackingNumber.trim();
       if (createForm.dispatchedAt) payload.dispatched_at = new Date(createForm.dispatchedAt).toISOString();
 
-      const res = await fetch("/.netlify/functions/create-shipment", {
+      const res = await authorizedFetch("/.netlify/functions/create-shipment", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
       });
       const json = await res.json() as { error?: string };
@@ -145,26 +141,52 @@ const SellerShipments = () => {
   const handleUploadProofOfDelivery = async (shipmentId: string, file: File) => {
     setUploadingPod(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Not authenticated");
+      // Step 1: Request a signed upload URL from the Netlify function.
+      // The server validates auth, ownership, and file constraints before
+      // issuing the URL. The shipment ID is embedded in the path so the
+      // server can look up the correct shipment row.
+      const initRes = await authorizedFetch(
+        `/.netlify/functions/upload-proof-of-delivery/${shipmentId}/proof`,
+        {
+          method: "POST",
+          body: JSON.stringify({ contentType: file.type, fileSize: file.size }),
+        },
+      );
+      const initJson = await initRes.json() as {
+        uploadUrl?: string;
+        path?: string;
+        token?: string;
+        error?: string;
+      };
+      if (!initRes.ok) throw new Error(initJson.error ?? "Failed to request upload URL");
+      if (!initJson.uploadUrl || !initJson.path) throw new Error("Invalid server response: missing upload URL");
 
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("shipment_id", shipmentId);
-
-      const res = await fetch("/.netlify/functions/upload-proof-of-delivery", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
+      // Step 2: Upload the file directly to Supabase Storage using the signed URL.
+      // This is a direct PUT to the storage service — no auth header needed here
+      // as the signed URL already encodes the authorisation.
+      const uploadRes = await fetch(initJson.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
       });
-      const json = await res.json() as { error?: string; url?: string };
-      if (!res.ok) throw new Error(json.error ?? "Upload failed");
+      if (!uploadRes.ok) throw new Error("File upload to storage failed");
+
+      // Step 3: Confirm the upload to the Netlify function. The server reads the
+      // public URL from Supabase Storage and saves it on the shipment row.
+      const confirmRes = await authorizedFetch(
+        `/.netlify/functions/upload-proof-of-delivery/${shipmentId}/proof`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ filePath: initJson.path }),
+        },
+      );
+      const confirmJson = await confirmRes.json() as { error?: string; shipment?: { proof_of_delivery_url?: string } };
+      if (!confirmRes.ok) throw new Error(confirmJson.error ?? "Failed to confirm upload");
 
       toast({ title: "Proof of delivery uploaded" });
       await loadShipments();
-      if (json.url) {
-        const podUrl = json.url;
+      const podUrl = confirmJson.shipment?.proof_of_delivery_url;
+      if (podUrl) {
         setSelected((prev) => (prev && prev.id === shipmentId ? { ...prev, proof_of_delivery_url: podUrl } : prev));
       }
     } catch (err) {
@@ -178,13 +200,8 @@ const SellerShipments = () => {
     if (!newStatus || newStatus === shipment.status) return;
     setUpdatingStatus(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Not authenticated");
-
-      const res = await fetch(`/.netlify/functions/update-shipment-status/${shipment.id}/status`, {
+      const res = await authorizedFetch(`/.netlify/functions/update-shipment-status/${shipment.id}/status`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status: newStatus }),
       });
       const json = await res.json() as { error?: string };

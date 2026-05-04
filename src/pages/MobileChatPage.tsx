@@ -612,15 +612,8 @@ export default function MobileChatPage() {
     const text = draft.trim();
     setDraft("");
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Not authenticated");
-
-      const res = await fetch("/.netlify/functions/send-message", {
+      const res = await authorizedFetch("/.netlify/functions/send-message", {
         method: "POST",
-        headers: {
-          "Content-Type":  "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
         body: JSON.stringify({ conversationId, receiverId: otherId, message: text }),
       });
 
@@ -678,15 +671,8 @@ export default function MobileChatPage() {
   const handleAcceptOffer = async (offerId: string) => {
     setActingOnOffer(offerId);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Not authenticated");
-
-      const res = await fetch("/.netlify/functions/offer-accept", {
+      const res = await authorizedFetch("/.netlify/functions/offer-accept", {
         method: "POST",
-        headers: {
-          "Content-Type":  "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
         body: JSON.stringify({ offerId }),
       });
 
@@ -710,15 +696,8 @@ export default function MobileChatPage() {
   const handleDeclineOffer = async (offerId: string) => {
     setActingOnOffer(offerId);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Not authenticated");
-
-      const res = await fetch("/.netlify/functions/offer-decline", {
+      const res = await authorizedFetch("/.netlify/functions/offer-decline", {
         method: "POST",
-        headers: {
-          "Content-Type":  "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
         body: JSON.stringify({ offerId }),
       });
 

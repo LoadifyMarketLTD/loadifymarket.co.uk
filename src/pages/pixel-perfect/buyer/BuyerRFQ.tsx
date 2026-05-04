@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 
 const CURRENCY_OPTIONS = ["GBP", "EUR", "USD"];
 
@@ -103,14 +104,8 @@ const BuyerRFQ = () => {
   const handleAcceptQuote = async (rfqId: string, responseId: string) => {
     setAccepting(responseId);
     try {
-      const { data: { session: authSession } } = await supabase.auth.getSession();
-      const token = authSession?.access_token;
-      const res = await fetch("/.netlify/functions/rfq", {
+      const res = await authorizedFetch("/.netlify/functions/rfq", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify({ op: "accept", rfqId, responseId }),
       });
       if (!res.ok) {
@@ -155,9 +150,6 @@ const BuyerRFQ = () => {
 
     setSubmitting(true);
     try {
-      const { data: { session: authSession } } = await supabase.auth.getSession();
-      const token = authSession?.access_token;
-
       const payload: Record<string, string | undefined> = {
         op: "create",
         product_name: form.product_name.trim(),
@@ -170,12 +162,8 @@ const BuyerRFQ = () => {
       if (form.unit.trim()) payload.unit = form.unit.trim();
       if (form.message.trim()) payload.message = form.message.trim();
 
-      const res = await fetch("/.netlify/functions/rfq", {
+      const res = await authorizedFetch("/.netlify/functions/rfq", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify(payload),
       });
 
