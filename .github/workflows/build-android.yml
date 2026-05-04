@@ -11,6 +11,8 @@ on:
       - 'copilot/build-signed-release-apk-another-one'
       # Responsive-fix branch: triggers fresh signed APK/AAB after hero layout fix.
       - 'copilot/fix-responsive-scaling-issues'
+      # Admin Orders fix + build marker branch.
+      - 'copilot/investigate-apk-changes-and-admin-orders-error'
     paths:
       - 'src/**'
       - 'public/**'
