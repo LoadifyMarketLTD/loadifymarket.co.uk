@@ -31,7 +31,7 @@ function buildSections(role: string | undefined): Section[] {
       title: 'Main',
       items: [
         { label: 'My listings', to: isSellerOrAdmin ? '/seller/products' : '/catalog' },
-        { label: 'Favourite items', to: '/buyer/wishlist' },
+        { label: 'Favourite items', to: '/profile/favourites' },
         { label: 'Orders', to: '/orders' },
         { label: 'Balance', to: '/profile/balance' },
       ],
@@ -47,7 +47,7 @@ function buildSections(role: string | undefined): Section[] {
     {
       title: 'Settings',
       items: [
-        { label: 'Settings', to: isSellerOrAdmin ? '/seller/settings' : '/buyer/settings' },
+        { label: 'Settings', to: '/profile/settings' },
         { label: 'Security', to: '/profile/security' },
         { label: 'Notifications', to: '/profile/notifications' },
       ],

@@ -7,13 +7,19 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store';
 import { hasSellerAccess } from '@/lib/roleUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuthPromptStore } from '@/store/authPromptStore';
 
 export default function MobileHeroBanner() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const isMobile = useIsMobile();
+  const promptAuth = useAuthPromptStore((s) => s.open);
 
   const handleSell = () => {
+    if (!user) {
+      promptAuth('sell');
+      return;
+    }
     if (hasSellerAccess(user)) {
       navigate(isMobile ? '/sell' : '/seller/products/new');
     } else {

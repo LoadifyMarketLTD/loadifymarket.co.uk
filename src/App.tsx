@@ -27,6 +27,9 @@ const MobileProfilePage   = lazy(() => import('./pages/MobileProfilePage'));
 const MobileNotificationsPage = lazy(() => import('./pages/MobileNotificationsPage'));
 const MobileSecurityPage  = lazy(() => import('./pages/MobileSecurityPage'));
 const MobileBalancePage   = lazy(() => import('./pages/MobileBalancePage'));
+const MobileFavouritesPage = lazy(() => import('./pages/MobileFavouritesPage'));
+const MobilePromotionalToolsPage = lazy(() => import('./pages/MobilePromotionalToolsPage'));
+const MobileSettingsPage  = lazy(() => import('./pages/MobileSettingsPage'));
 
 // ─── Homepage ─────────────────────────────────────────────────────────────────
 const Home                 = lazy(() => import('./pages/Home'));
@@ -604,6 +607,9 @@ function App() {
         <Route path="profile/notifications" element={<Suspense fallback={<PageLoader />}><MobileNotificationsPage /></Suspense>} />
         <Route path="profile/security" element={<Suspense fallback={<PageLoader />}><MobileSecurityPage /></Suspense>} />
         <Route path="profile/balance" element={<Suspense fallback={<PageLoader />}><MobileBalancePage /></Suspense>} />
+        <Route path="profile/favourites" element={<Suspense fallback={<PageLoader />}><MobileFavouritesPage /></Suspense>} />
+        <Route path="profile/settings" element={<Suspense fallback={<PageLoader />}><MobileSettingsPage /></Suspense>} />
+        <Route path="seller/promote" element={<Suspense fallback={<PageLoader />}><MobilePromotionalToolsPage /></Suspense>} />
 
         {/* ── Mobile sell wizard — simplified 4-step sell flow for the APK ──────── */}
         {/* Uses RequireSeller: unauthenticated → /login, draft → /onboarding, active → wizard */}
