@@ -1,9 +1,11 @@
 /**
  * MobileSellWizard — /sell
  *
- * A 4-step simplified sell flow for the mobile APK.
- * Desktop users who land here are silently redirected to the full
- * ProductFormPage at /seller/products/new.
+ * A 4-step simplified sell flow for mobile viewports (mobile browser, PWA, APK).
+ * Desktop users are guided to this page only via mobile-aware CTAs (MobileBottomNav,
+ * MobileHeroBanner, SellerProducts "Add Product") which route to /sell on small
+ * viewports and to /seller/products/new on large ones. This page itself renders for
+ * any authenticated seller regardless of viewport.
  *
  * Steps:
  *   1. Add photos
