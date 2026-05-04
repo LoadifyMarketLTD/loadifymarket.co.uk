@@ -479,7 +479,20 @@ jobs:
           java-version: '21'
 
       # ── Android SDK ───────────────────────────────────────────────────────────
-      - uses: android-actions/setup-android@v4
+      # ubuntu-latest runners ship with the Android SDK pre-installed at
+      # $ANDROID_SDK_ROOT (/usr/local/lib/android/sdk).  We only need to accept
+      # all SDK licenses.  We deliberately avoid `android-actions/setup-android`
+      # because its `sdkmanager tools` download step hangs on cold runners and
+      # gets cancelled, aborting the entire workflow.
+      - name: Accept Android SDK licenses
+        run: |
+          SDKMANAGER="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -f "$SDKMANAGER" ]; then
+            SDKMANAGER=$(find "${ANDROID_SDK_ROOT}/cmdline-tools" -name sdkmanager \
+              -type f | sort -V | tail -1)
+          fi
+          echo "Using sdkmanager: $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses
 
       # ── Gradle cache ──────────────────────────────────────────────────────────
       - uses: gradle/actions/setup-gradle@v6
