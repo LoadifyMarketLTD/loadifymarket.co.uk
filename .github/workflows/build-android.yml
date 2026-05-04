@@ -744,14 +744,17 @@ jobs:
       #   https://github.com/LoadifyMarketLTD/loadifymarket.co.uk/releases/latest/download/loadify-market.apk
       # Only runs on main-branch builds (push and workflow_dispatch from main)
       # to avoid cluttering releases with branch builds.
-      # The commit SHA suffix ensures the tag is unique even when a run is
-      # retried (re-runs share the same GITHUB_RUN_NUMBER).
+      # The commit SHA suffix ensures the tag is unique across runs.
+      # The run_attempt suffix (.r2, .r3, …) makes it unique on re-runs,
+      # since re-runs share the same GITHUB_RUN_NUMBER and commit SHA.
       - name: Create GitHub Release
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v0.$(date -u +'%Y%m%d').${GITHUB_RUN_NUMBER}.${GITHUB_SHA:0:7}"
+          ATTEMPT="${{ github.run_attempt }}"
+          ATTEMPT_SUFFIX=$([ "$ATTEMPT" -gt 1 ] && echo ".r${ATTEMPT}" || echo "")
+          TAG="v0.$(date -u +'%Y%m%d').${GITHUB_RUN_NUMBER}.${GITHUB_SHA:0:7}${ATTEMPT_SUFFIX}"
           gh release create "$TAG" \
             --title "Loadify Market $TAG" \
             --notes "Automated release — build #${GITHUB_RUN_NUMBER} from commit \`${GITHUB_SHA:0:7}\`." \
