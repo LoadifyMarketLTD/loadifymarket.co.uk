@@ -270,6 +270,8 @@ export default function MobileChatPage() {
   const otherTypingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Track whether the last sent message has been read by the other participant
   const [lastSentRead, setLastSentRead] = useState(false);
+  // Product preview in chat header
+  const [productPreview, setProductPreview] = useState<{ title: string; image: string | null } | null>(null);
 
   // How long to show the typing indicator after the last heartbeat (ms)
   const TYPING_INDICATOR_TIMEOUT_MS = 4000;
@@ -330,11 +332,15 @@ export default function MobileChatPage() {
       if (conv.productId) {
         const { data: listing } = await supabase
           .from("products")
-          .select("sellerId")
+          .select("sellerId, title, images")
           .eq("id", conv.productId)
-          .maybeSingle<{ sellerId: string }>();
+          .maybeSingle<{ sellerId: string; title: string; images: string[] | null }>();
         if (!cancelled && listing) {
           setIsSeller(listing.sellerId === user.id);
+          setProductPreview({
+            title: listing.title,
+            image: (listing.images ?? [])[0] ?? null,
+          });
         }
       }
     };
@@ -740,36 +746,86 @@ export default function MobileChatPage() {
       {/* Sub-header — paddingTop includes safe-area-inset-top so the background
           fills the status-bar area and content starts cleanly below it. */}
       <div
-        className="flex items-center gap-3 px-4 border-b border-white/10 shrink-0"
+        className="border-b border-white/10 shrink-0"
         style={{
           background: "rgba(11,15,26,0.97)",
           paddingTop: "calc(0.75rem + env(safe-area-inset-top, 0px))",
-          paddingBottom: "0.75rem",
+          paddingBottom: "0",
         }}
       >
-        <button
-          onClick={() => navigate("/inbox")}
-          className="text-white/80 hover:text-white transition-colors p-1 -ml-1"
-          aria-label="Back to Inbox"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white truncate">{otherName}</p>
-          {convMeta?.subject && (
-            <p className="text-xs text-[#FBBF24]/70 truncate">{convMeta.subject}</p>
+        {/* Row 1: back + name + offer button */}
+        <div className="flex items-center gap-3 px-4 pb-3">
+          <button
+            onClick={() => navigate("/inbox")}
+            className="text-white/80 hover:text-white transition-colors p-1 -ml-1"
+            aria-label="Back to Inbox"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-white truncate">{otherName}</p>
+            {convMeta?.subject && !productPreview && (
+              <p className="text-xs text-[#FBBF24]/70 truncate">{convMeta.subject}</p>
+            )}
+          </div>
+          {/* Make Offer button */}
+          {otherId && (
+            <button
+              onClick={() => setOfferOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#FBBF24]/40 text-[#FBBF24] text-xs font-semibold hover:bg-[#FBBF24]/10 transition-colors"
+              aria-label="Make an offer"
+            >
+              <Tag className="h-3.5 w-3.5" />
+              <span className="hidden xs:inline">Offer</span>
+            </button>
           )}
         </div>
-        {/* Make Offer button */}
-        {otherId && (
-          <button
-            onClick={() => setOfferOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#FBBF24]/40 text-[#FBBF24] text-xs font-semibold hover:bg-[#FBBF24]/10 transition-colors"
-            aria-label="Make an offer"
+
+        {/* Row 2: product preview strip (when conversation is linked to a listing) */}
+        {productPreview && (
+          <div
+            className="flex items-center gap-2 px-4 pb-3"
+            style={{
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+              paddingTop: "10px",
+            }}
           >
-            <Tag className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline">Offer</span>
-          </button>
+            {productPreview.image ? (
+              <img
+                src={productPreview.image}
+                alt={productPreview.title}
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "8px",
+                  objectFit: "cover",
+                  flexShrink: 0,
+                  background: "#1A1A2E",
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "8px",
+                  background: "rgba(255,255,255,0.05)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Tag className="h-4 w-4 text-white/30" />
+              </div>
+            )}
+            <p
+              className="text-xs text-white/70 truncate"
+              style={{ flex: 1, minWidth: 0, fontWeight: 500 }}
+            >
+              {productPreview.title}
+            </p>
+          </div>
         )}
       </div>
 

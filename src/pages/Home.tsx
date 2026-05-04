@@ -56,16 +56,16 @@ function MobileHome() {
       {/* 1. App Header */}
       <MobileAppHeader />
 
-      {/* 2. Hero Banner */}
-      <MobileHeroBanner />
-
-      {/* 3. Category row */}
+      {/* 2. Category row */}
       <MobileCategoryShortcuts />
 
-      {/* 4. Featured Deals */}
-      <section className="pt-5 pb-2" aria-label="Featured deals">
+      {/* 3. Hero Banner */}
+      <MobileHeroBanner />
+
+      {/* 4. Trending Products */}
+      <section className="pt-5 pb-2" aria-label="Trending products">
         <div className="flex items-center justify-between mb-3" style={{ paddingInline: 'var(--mob-side, 16px)' }}>
-          <span style={{ fontSize: 'clamp(15px, 4.2vw, 17px)', fontWeight: 700, color: '#FFFFFF' }}>Featured Deals</span>
+          <span style={{ fontSize: 'clamp(15px, 4.2vw, 17px)', fontWeight: 700, color: '#FFFFFF' }}>Trending Now</span>
           <Link
             to="/catalog?filter=trending"
             className="text-[13px] font-semibold"
@@ -102,14 +102,10 @@ function MobileHome() {
         </div>
       </section>
 
-      {/* 5. Recommended for you */}
-      <section
-        className="pt-2"
-        style={{ paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px) + 16px)' }}
-        aria-label="Recommended for you"
-      >
+      {/* 5. New Listings */}
+      <section className="pt-2 pb-2" aria-label="New listings">
         <div className="flex items-center justify-between mb-3" style={{ paddingInline: 'var(--mob-side, 16px)' }}>
-          <span style={{ fontSize: 'clamp(15px, 4.2vw, 17px)', fontWeight: 700, color: '#FFFFFF' }}>Recommended for you</span>
+          <span style={{ fontSize: 'clamp(15px, 4.2vw, 17px)', fontWeight: 700, color: '#FFFFFF' }}>New Listings</span>
           <Link
             to="/catalog?filter=latest"
             className="text-[13px] font-semibold"
@@ -131,6 +127,49 @@ function MobileHome() {
             : latest.map((p: Product) => (
                 <MobileProductCard
                   key={p.id}
+                  id={p.id}
+                  title={p.title}
+                  price={p.price}
+                  image={p.image}
+                  distance={p.location}
+                  sellerName={p.seller}
+                  rating={p.rating}
+                />
+              ))}
+          {/* Trailing spacer so last card clears the container edge */}
+          <div style={{ minWidth: 'var(--mob-side, 16px)', flexShrink: 0 }} aria-hidden="true" />
+        </div>
+      </section>
+
+      {/* 6. Recommended for you */}
+      <section
+        className="pt-2"
+        style={{ paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px) + 16px)' }}
+        aria-label="Recommended for you"
+      >
+        <div className="flex items-center justify-between mb-3" style={{ paddingInline: 'var(--mob-side, 16px)' }}>
+          <span style={{ fontSize: 'clamp(15px, 4.2vw, 17px)', fontWeight: 700, color: '#FFFFFF' }}>Recommended</span>
+          <Link
+            to="/catalog"
+            className="text-[13px] font-semibold"
+            style={{ color: '#F2B84B' }}
+          >
+            See all
+          </Link>
+        </div>
+        <div
+          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1"
+          style={{
+            paddingInlineStart: 'var(--mob-side, 16px)',
+            scrollPaddingInlineStart: 'var(--mob-side, 16px)',
+            scrollPaddingInlineEnd: 'var(--mob-side, 16px)',
+          }}
+        >
+          {loading
+            ? Array.from({ length: 4 }).map((_, i) => <SkeletonProductCard key={i} />)
+            : [...trending].reverse().map((p: Product) => (
+                <MobileProductCard
+                  key={`rec-${p.id}`}
                   id={p.id}
                   title={p.title}
                   price={p.price}

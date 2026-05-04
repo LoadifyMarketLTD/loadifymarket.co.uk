@@ -1,4 +1,4 @@
-import { ShieldCheck, Star, MapPin, Package, ExternalLink } from "lucide-react";
+import { ShieldCheck, Star, MapPin, Package, ExternalLink, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -10,9 +10,13 @@ interface SellerCardProps {
   totalListings: number;
   /** The seller's store slug — used to link to the public seller profile page */
   storeSlug?: string | null;
+  /** ISO date string for when the seller joined */
+  joinDate?: string | null;
 }
 
-const SellerCard = ({ name, verified, rating, location, totalListings, storeSlug }: SellerCardProps) => {
+const SellerCard = ({ name, verified, rating, location, totalListings, storeSlug, joinDate }: SellerCardProps) => {
+  const joinYear = joinDate ? new Date(joinDate).getFullYear() : null;
+
   return (
     <div className="bg-card rounded-xl border border-border p-5 space-y-4">
       <div className="flex items-center justify-between">
@@ -46,9 +50,17 @@ const SellerCard = ({ name, verified, rating, location, totalListings, storeSlug
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Package className="h-3.5 w-3.5" />
-        {totalListings} active {totalListings === 1 ? "listing" : "listings"}
+      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <Package className="h-3.5 w-3.5" />
+          {totalListings} active {totalListings === 1 ? "listing" : "listings"}
+        </span>
+        {joinYear && (
+          <span className="flex items-center gap-1.5">
+            <CalendarDays className="h-3.5 w-3.5" />
+            Joined {joinYear}
+          </span>
+        )}
       </div>
 
       {storeSlug ? (

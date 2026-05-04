@@ -50,6 +50,10 @@ export default function MobileProductCard({
             aspectRatio: '1 / 1',
             overflow: 'hidden',
             background: '#E0E0E0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
           }}
         >
           {image ? (
@@ -60,9 +64,32 @@ export default function MobileProductCard({
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
+                const placeholder = e.currentTarget.nextElementSibling as HTMLElement | null;
+                if (placeholder) placeholder.style.display = 'flex';
               }}
             />
           ) : null}
+          {/* Fallback placeholder — shown when no image prop or image fails to load */}
+          <div
+            aria-hidden="true"
+            style={{
+              display: image ? 'none' : 'flex',
+              position: 'absolute',
+              inset: 0,
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'linear-gradient(135deg, #E8E0D0 0%, #D4C9B0 100%)',
+              gap: '4px',
+            }}
+          >
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="3" fill="#C8A96A" opacity="0.25" />
+              <path d="M3 16l5-5 4 4 3-3 6 6" stroke="#C8A96A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="8.5" cy="8.5" r="1.5" fill="#C8A96A" opacity="0.6" />
+            </svg>
+            <span style={{ fontSize: '9px', color: '#A08050', fontWeight: 600, letterSpacing: '0.03em' }}>No Image</span>
+          </div>
         </div>
 
         {/* ── Info area ── */}
