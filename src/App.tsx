@@ -14,6 +14,7 @@ import RequireSellerAny from './components/auth/RequireSellerAny';
 import RequireBuyer from './components/auth/RequireBuyer';
 import RequireEmailVerified from './components/auth/RequireEmailVerified';
 import AuthPromptModal from './components/AuthPromptModal';
+import MobileSellGate from './components/MobileSellGate';
 
 // ─── Auth callback — OAuth redirect landing page ──────────────────────────────
 const AuthCallbackPage    = lazy(() => import('./pages/AuthCallbackPage'));
@@ -30,6 +31,7 @@ const MobileBalancePage   = lazy(() => import('./pages/MobileBalancePage'));
 const MobileFavouritesPage = lazy(() => import('./pages/MobileFavouritesPage'));
 const MobilePromotionalToolsPage = lazy(() => import('./pages/MobilePromotionalToolsPage'));
 const MobileSettingsPage  = lazy(() => import('./pages/MobileSettingsPage'));
+const MobileSellerPaymentsPage = lazy(() => import('./pages/MobileSellerPaymentsPage'));
 
 // ─── Homepage ─────────────────────────────────────────────────────────────────
 const Home                 = lazy(() => import('./pages/Home'));
@@ -610,15 +612,19 @@ function App() {
         <Route path="profile/favourites" element={<Suspense fallback={<PageLoader />}><MobileFavouritesPage /></Suspense>} />
         <Route path="profile/settings" element={<Suspense fallback={<PageLoader />}><MobileSettingsPage /></Suspense>} />
         <Route path="seller/promote" element={<Suspense fallback={<PageLoader />}><MobilePromotionalToolsPage /></Suspense>} />
+        <Route path="seller/mobile-payments" element={
+          <RequireSellerAny>
+            <Suspense fallback={<PageLoader />}><MobileSellerPaymentsPage /></Suspense>
+          </RequireSellerAny>
+        } />
 
-        {/* ── Mobile sell wizard — simplified 4-step sell flow for the APK ──────── */}
-        {/* Uses RequireSeller: unauthenticated → /login, draft → /onboarding, active → wizard */}
+        {/* ── Mobile sell wizard — guest-friendly gate (no hard redirect to /login) ─ */}
+        {/* MobileSellGate: unauthenticated → friendly auth screen + AuthPromptModal  */}
+        {/* authenticated → RequireSeller + RequireEmailVerified + MobileSellWizard   */}
         <Route path="sell" element={
-          <RequireSeller>
-            <RequireEmailVerified>
-              <Suspense fallback={<PageLoader />}><MobileSellWizard /></Suspense>
-            </RequireEmailVerified>
-          </RequireSeller>
+          <MobileSellGate>
+            <Suspense fallback={<PageLoader />}><MobileSellWizard /></Suspense>
+          </MobileSellGate>
         } />
 
         {/* ── Standalone functional pages ──────────────────────────────────────── */}

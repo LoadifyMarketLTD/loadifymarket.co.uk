@@ -32,7 +32,7 @@ export default function MobileSettingsPage() {
     },
     {
       label: 'Payments',
-      to: isSeller ? '/seller/settings' : '/buyer/payments',
+      to: isSeller ? '/seller/mobile-payments' : '/buyer/payments',
     },
     {
       label: 'Postage',
