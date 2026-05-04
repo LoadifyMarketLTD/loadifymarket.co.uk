@@ -78,6 +78,7 @@ const SellerGuidelinesPage = lazy(() => import('./pages/SellerGuidelinesPage'));
 const RoleSelection     = lazy(() => import('./pages/onboarding/RoleSelection'));
 const SellerOnboarding  = lazy(() => import('./pages/onboarding/SellerOnboarding'));
 const SellerSetupPage   = lazy(() => import('./pages/pixel-perfect/seller/SellerSetupPage'));
+const AppOnboarding     = lazy(() => import('./pages/AppOnboarding'));
 
 // ─── Pixel-perfect dashboard shells ──────────────────────────────────────────
 const PPSellerShell         = lazy(() => import('./pages/pixel-perfect/seller/SellerShell'));
@@ -459,6 +460,9 @@ function App() {
 
         {/* /pp — pixel-perfect homepage (preview/alternate root) */}
         <Route path="pp" element={<Navigate to="/" replace />} />
+
+        {/* ── App onboarding — first-launch screens (APK) ─────────────────────── */}
+        <Route path="welcome" element={<Suspense fallback={<PageLoader />}><AppOnboarding /></Suspense>} />
 
         {/* ── Onboarding flow ─────────────────────────────────────────────────── */}
         {/* Role selection — public (uid passed as query param after signup) */}

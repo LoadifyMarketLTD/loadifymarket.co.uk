@@ -109,6 +109,7 @@ const ProductDetail = () => {
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [productDescription, setProductDescription] = useState("");
   const [sellerListingCount, setSellerListingCount] = useState(0);
+  const [sellerJoinDate, setSellerJoinDate] = useState<string | null>(null);
   const [productSellerId, setProductSellerId] = useState<string | null>(null);
   const [productCategorySlug, setProductCategorySlug] = useState<string | null>(null);
   const [sellerStoreSlug, setSellerStoreSlug] = useState<string | null>(null);
@@ -229,9 +230,9 @@ const ProductDetail = () => {
           }
         }
 
-        // Fetch seller's active listing count and store slug
+        // Fetch seller's active listing count, store slug, and join date
         if (data.sellerId) {
-          const [countRes, storeRes] = await Promise.all([
+          const [countRes, storeRes, joinRes] = await Promise.all([
             supabase
               .from("products")
               .select("id", { count: "exact", head: true })
@@ -244,9 +245,15 @@ const ProductDetail = () => {
               .eq("userId", data.sellerId)
               .eq("isActive", true)
               .maybeSingle(),
+            supabase
+              .from("seller_profiles")
+              .select("createdAt")
+              .eq("userId", data.sellerId)
+              .maybeSingle(),
           ]);
           setSellerListingCount(countRes.count ?? 0);
           setSellerStoreSlug((storeRes.data as { storeSlug?: string } | null)?.storeSlug ?? null);
+          setSellerJoinDate((joinRes.data as { createdAt?: string } | null)?.createdAt ?? null);
         }
       } catch (err) {
         console.error("Error fetching product:", err);
@@ -371,13 +378,14 @@ const ProductDetail = () => {
     return created?.id ?? null;
   };
 
-  const handleMakeOffer = async () => {
-    if (!user) { navigate("/login", { state: { from: `/product/${id}` } }); return; }
+  /** Guards against unauthenticated access and resolves/creates the conversation id. */
+  const requireConversation = async (): Promise<string | null> => {
+    if (!user) { navigate("/login", { state: { from: `/product/${id}` } }); return null; }
     setCtaLoading(true);
     try {
       const convId = await getOrCreateConversation();
-      if (convId) { setOfferConvId(convId); setOfferOpen(true); }
-      else toast({ title: "Could not open conversation", variant: "destructive" });
+      if (!convId) toast({ title: "Could not open conversation", variant: "destructive" });
+      return convId;
     } finally {
       setCtaLoading(false);
     }
@@ -415,6 +423,16 @@ const ProductDetail = () => {
     trackAddToCart(product.id, product.title, product.price);
     addToCart(product, mobileQty);
     navigate("/checkout");
+  };
+
+  const handleMakeOffer = async () => {
+    const convId = await requireConversation();
+    if (convId) { setOfferConvId(convId); setOfferOpen(true); }
+  };
+
+  const handleMessage = async () => {
+    const convId = await requireConversation();
+    if (convId) navigate(`/inbox/${convId}`);
   };
 
   // True when the logged-in user is the seller/owner of this product
@@ -772,6 +790,17 @@ const ProductDetail = () => {
                   </select>
                 </div>
 
+                {/* Activity indicator */}
+                {(product.views ?? 0) > 0 && (
+                  <p
+                    style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "12px", display: "flex", alignItems: "center", gap: "5px" }}
+                    aria-label={`${product.views.toLocaleString()} ${product.views === 1 ? "view" : "views"}`}
+                  >
+                    <span aria-hidden="true">👁️</span>
+                    <span aria-hidden="true">{product.views.toLocaleString()} {product.views === 1 ? "view" : "views"}</span>
+                  </p>
+                )}
+
                 {listingStatus === "reserved" && (
                   <div className="flex items-center justify-center gap-2 rounded-xl bg-amber-500/15 border border-amber-500/25 py-3 px-4 mb-3">
                     <span className="text-amber-400 text-sm font-semibold">⏳ Reserved — awaiting payment</span>
@@ -781,61 +810,6 @@ const ProductDetail = () => {
                   <div className="flex items-center justify-center gap-2 rounded-xl bg-red-500/15 border border-red-500/25 py-3 px-4 mb-3">
                     <span className="text-red-400 text-sm font-semibold">✕ This item has been sold</span>
                   </div>
-                )}
-
-                {listingStatus === "active" && (
-                  <>
-                    {/* Buy Now */}
-                    <button
-                      onClick={handleBuyNow}
-                      style={{
-                        width: "100%",
-                        padding: "16px",
-                        borderRadius: "12px",
-                        background: "linear-gradient(135deg, #F5C842, #C8860A)",
-                        color: "#0B0B0F",
-                        fontSize: "16px",
-                        fontWeight: 800,
-                        border: "none",
-                        cursor: "pointer",
-                        marginBottom: "10px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "8px",
-                      }}
-                      className="active:opacity-80 transition-opacity"
-                    >
-                      <ShoppingCart style={{ width: "18px", height: "18px" }} />
-                      Buy Now
-                    </button>
-
-                    {/* Make an Offer */}
-                    <button
-                      onClick={() => void handleMakeOffer()}
-                      disabled={ctaLoading}
-                      style={{
-                        width: "100%",
-                        padding: "15px",
-                        borderRadius: "12px",
-                        background: "transparent",
-                        color: "#FFFFFF",
-                        fontSize: "16px",
-                        fontWeight: 700,
-                        border: "1px solid rgba(255,255,255,0.20)",
-                        cursor: "pointer",
-                        marginBottom: "20px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "8px",
-                      }}
-                      className="active:bg-white/5 transition-colors disabled:opacity-50"
-                    >
-                      <Tag style={{ width: "16px", height: "16px" }} />
-                      Make an Offer
-                    </button>
-                  </>
                 )}
 
                 {/* Buyer Protection */}
@@ -933,6 +907,7 @@ const ProductDetail = () => {
                   location={product.location}
                   totalListings={sellerListingCount}
                   storeSlug={sellerStoreSlug}
+                  joinDate={sellerJoinDate}
                 />
 
                 {/* Report Listing */}
@@ -1064,6 +1039,132 @@ const ProductDetail = () => {
           productTitle={product?.title}
           onSent={() => navigate(`/inbox/${offerConvId}`)}
         />
+      )}
+
+      {/* ── Mobile sticky bottom CTA — hidden on desktop ─────────────────────── */}
+      {isMobileCtaVisible && (
+        <div
+          className="md:hidden fixed bottom-0 left-0 right-0 z-[9996]"
+          style={{
+            background: "rgba(7,8,11,0.97)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
+            paddingBottom: "calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))",
+            padding: "12px 16px calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px) + 4px)",
+          }}
+        >
+          {listingStatus === "sold" ? (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "14px",
+                borderRadius: "12px",
+                background: "rgba(239,68,68,0.10)",
+                border: "1px solid rgba(239,68,68,0.25)",
+                color: "#F87171",
+                fontSize: "14px",
+                fontWeight: 700,
+              }}
+            >
+              ✕ This item has been sold
+            </div>
+          ) : listingStatus === "reserved" ? (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "14px",
+                borderRadius: "12px",
+                background: "rgba(245,185,66,0.10)",
+                border: "1px solid rgba(245,185,66,0.25)",
+                color: "#F5B942",
+                fontSize: "14px",
+                fontWeight: 700,
+              }}
+            >
+              ⏳ Reserved — awaiting payment
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: "8px" }}>
+              {/* Message */}
+              <button
+                onClick={() => void handleMessage()}
+                disabled={ctaLoading}
+                style={{
+                  flex: 1,
+                  padding: "14px 8px",
+                  borderRadius: "12px",
+                  background: "rgba(255,255,255,0.07)",
+                  color: "#FFFFFF",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "5px",
+                }}
+                className="active:bg-white/10 transition-colors disabled:opacity-50"
+                aria-label="Message seller"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                Message
+              </button>
+
+              {/* Make Offer */}
+              <button
+                onClick={() => void handleMakeOffer()}
+                disabled={ctaLoading}
+                style={{
+                  flex: 1,
+                  padding: "14px 8px",
+                  borderRadius: "12px",
+                  background: "rgba(255,255,255,0.07)",
+                  color: "#FFFFFF",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "5px",
+                }}
+                className="active:bg-white/10 transition-colors disabled:opacity-50"
+                aria-label="Make an offer"
+              >
+                <Tag style={{ width: "14px", height: "14px" }} />
+                Offer
+              </button>
+
+              {/* Buy Now */}
+              <button
+                onClick={handleBuyNow}
+                style={{
+                  flex: 2,
+                  padding: "14px 8px",
+                  borderRadius: "12px",
+                  background: "linear-gradient(135deg, #F5C842, #C8860A)",
+                  color: "#0B0B0F",
+                  fontSize: "14px",
+                  fontWeight: 800,
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                }}
+                className="active:opacity-80 transition-opacity"
+                aria-label="Buy now"
+              >
+                <ShoppingCart style={{ width: "16px", height: "16px" }} />
+                Buy Now
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
     </MainLayout>

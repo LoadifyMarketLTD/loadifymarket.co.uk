@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search, Pencil, Share2, Package } from "lucide-react";
+import { Plus, Search, Pencil, Share2, Package, Trash2, CheckSquare, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
@@ -108,6 +111,12 @@ const SellerProducts = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
+  // Confirm dialogs
+  const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [soldTarget, setSoldTarget] = useState<Product | null>(null);
+  const [soldLoading, setSoldLoading] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     const load = async () => {
@@ -189,6 +198,56 @@ const SellerProducts = () => {
       persistShareCount(productId);
     } catch {
       // User cancelled — non-fatal.
+    }
+  };
+
+  // ── Delete listing ────────────────────────────────────────────────────────
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget || !user) return;
+    setDeleteLoading(true);
+    try {
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", deleteTarget.id)
+        .eq("sellerId", user.id); // RLS: only owner can delete
+      if (error) throw error;
+      setProducts((prev) => prev.filter((p) => p.id !== deleteTarget.id));
+      toast({ title: "Listing deleted", description: `"${deleteTarget.title}" has been removed.` });
+    } catch (err) {
+      console.error("Delete failed:", err);
+      toast({ title: "Delete failed", description: "Could not delete this listing. Please try again.", variant: "destructive" });
+    } finally {
+      setDeleteLoading(false);
+      setDeleteTarget(null);
+    }
+  };
+
+  // ── Mark as Sold ──────────────────────────────────────────────────────────
+  const handleMarkSoldConfirm = async () => {
+    if (!soldTarget || !user) return;
+    setSoldLoading(true);
+    try {
+      const { error } = await supabase
+        .from("products")
+        .update({ isActive: false, stockQuantity: 0, stockStatus: "out_of_stock" })
+        .eq("id", soldTarget.id)
+        .eq("sellerId", user.id); // RLS: only owner can update
+      if (error) throw error;
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === soldTarget.id
+            ? { ...p, isActive: false, stockQuantity: 0, stockStatus: "out_of_stock" }
+            : p
+        )
+      );
+      toast({ title: "Listing marked as sold", description: `"${soldTarget.title}" is now marked as sold.` });
+    } catch (err) {
+      console.error("Mark as sold failed:", err);
+      toast({ title: "Update failed", description: "Could not update this listing. Please try again.", variant: "destructive" });
+    } finally {
+      setSoldLoading(false);
+      setSoldTarget(null);
     }
   };
 
@@ -300,20 +359,20 @@ const SellerProducts = () => {
                         variant="ghost"
                         size="sm"
                         className="shrink-0 h-9 w-9 p-0"
-                        aria-label="Share product"
+                        aria-label="More actions"
                       >
-                        <Share2 className="h-4 w-4" />
+                        <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => shareOnFacebook(p.id, status)}>
-                        Share on Facebook
+                        <Share2 className="h-4 w-4 mr-2" /> Share on Facebook
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => shareOnWhatsApp(p.id, p.title, p.price)}>
-                        Share on WhatsApp
+                        <Share2 className="h-4 w-4 mr-2" /> Share on WhatsApp
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => nativeShareProduct(p.id, p.title, p.price)}>
-                        Share via…
+                        <Share2 className="h-4 w-4 mr-2" /> Share via…
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => copyProductLink(p.id)}>
@@ -323,6 +382,23 @@ const SellerProducts = () => {
                         <a href={facebookDebugUrl(p.id)} target="_blank" rel="noopener noreferrer" aria-label="Refresh Facebook Preview (opens in new tab)">
                           Refresh Facebook Preview
                         </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {status !== "out_of_stock" && (
+                        <DropdownMenuItem
+                          className="text-amber-600 focus:text-amber-600"
+                          onClick={() => setSoldTarget(p)}
+                        >
+                          <CheckSquare className="h-4 w-4 mr-2" />
+                          Mark as Sold
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setDeleteTarget(p)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Listing
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -412,20 +488,20 @@ const SellerProducts = () => {
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 w-8 p-0"
-                                aria-label="Share product"
+                                aria-label="More actions"
                               >
-                                <Share2 className="h-3.5 w-3.5" />
+                                <MoreVertical className="h-3.5 w-3.5" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => shareOnFacebook(p.id, status)}>
-                                Share on Facebook
+                                <Share2 className="h-4 w-4 mr-2" /> Share on Facebook
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => shareOnWhatsApp(p.id, p.title, p.price)}>
-                                Share on WhatsApp
+                                <Share2 className="h-4 w-4 mr-2" /> Share on WhatsApp
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => nativeShareProduct(p.id, p.title, p.price)}>
-                                Share via…
+                                <Share2 className="h-4 w-4 mr-2" /> Share via…
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => copyProductLink(p.id)}>
@@ -435,6 +511,23 @@ const SellerProducts = () => {
                                 <a href={facebookDebugUrl(p.id)} target="_blank" rel="noopener noreferrer" aria-label="Refresh Facebook Preview (opens in new tab)">
                                   Refresh Facebook Preview
                                 </a>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              {status !== "out_of_stock" && (
+                                <DropdownMenuItem
+                                  className="text-amber-600 focus:text-amber-600"
+                                  onClick={() => setSoldTarget(p)}
+                                >
+                                  <CheckSquare className="h-3.5 w-3.5 mr-2" />
+                                  Mark as Sold
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => setDeleteTarget(p)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                Delete Listing
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -449,6 +542,42 @@ const SellerProducts = () => {
         </div>
 
       </div>
+
+      {/* ── Delete confirm dialog ─────────────────────────────────────────── */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete listing?</DialogTitle>
+            <DialogDescription>
+              This will permanently remove <strong>"{deleteTarget?.title}"</strong> from Loadify Market. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleteLoading}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleteLoading}>
+              {deleteLoading ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Mark as Sold confirm dialog ───────────────────────────────────── */}
+      <Dialog open={!!soldTarget} onOpenChange={(open) => { if (!open) setSoldTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Mark as sold?</DialogTitle>
+            <DialogDescription>
+              <strong>"{soldTarget?.title}"</strong> will be marked as sold and hidden from new buyers. You can re-activate it by editing the listing.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setSoldTarget(null)} disabled={soldLoading}>Cancel</Button>
+            <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={handleMarkSoldConfirm} disabled={soldLoading}>
+              {soldLoading ? "Updating…" : "Mark as Sold"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
