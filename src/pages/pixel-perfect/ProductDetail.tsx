@@ -443,11 +443,6 @@ const ProductDetail = () => {
   // True when the logged-in user is the seller/owner of this product
   const isMobileCtaVisible = !!(product && productSellerId && (!user || user.id !== productSellerId));
 
-  const normalizedCategory = (product.category ?? "").trim().toLowerCase();
-  const normalizedSubcategory = (product.subcategory ?? "").trim().toLowerCase();
-  const hasDistinctSubcategory =
-    normalizedSubcategory.length > 0 && normalizedSubcategory !== normalizedCategory;
-  const detailsCategoryLabel = hasDistinctSubcategory ? product.subcategory : product.category;
   const canonicalProductUrl = `${BASE_URL}/product/${product.id}`;
   const currentProductUrl = typeof window !== "undefined"
     ? `${window.location.origin}${window.location.pathname}`
