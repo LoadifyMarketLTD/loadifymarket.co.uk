@@ -65,6 +65,8 @@ const PPResetPassword      = lazy(() => import('./pages/pixel-perfect/ResetPassw
 const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
 // ProductFormPage: seller product create/edit — linked from pixel-perfect seller pages
 const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
+// MobileSellWizard: simplified 4-step sell flow for the mobile APK (/sell)
+const MobileSellWizard = lazy(() => import('./pages/MobileSellWizard'));
 // SellerPublicProfilePage: public-facing seller store — no pixel-perfect equivalent yet
 const SellerPublicProfilePage = lazy(() => import('./pages/SellerPublicProfilePage'));
 // AdminSellerDetailPage: admin seller detail view — no pixel-perfect equivalent yet
@@ -591,6 +593,16 @@ function App() {
 
         {/* ── Mobile categories list — public browsing, no auth required ──────── */}
         <Route path="categories" element={<Suspense fallback={<PageLoader />}><MobileCategoriesPage /></Suspense>} />
+
+        {/* ── Mobile sell wizard — simplified 4-step sell flow for the APK ──────── */}
+        {/* Uses RequireSeller: unauthenticated → /login, draft → /onboarding, active → wizard */}
+        <Route path="sell" element={
+          <RequireSeller>
+            <RequireEmailVerified>
+              <Suspense fallback={<PageLoader />}><MobileSellWizard /></Suspense>
+            </RequireEmailVerified>
+          </RequireSeller>
+        } />
 
         {/* ── Standalone functional pages ──────────────────────────────────────── */}
 

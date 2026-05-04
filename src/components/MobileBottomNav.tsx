@@ -162,7 +162,7 @@ export default function MobileBottomNav() {
     user                    ? '/buyer/profile' :
     '/login';
 
-  const sellPath = user ? '/seller/products/new' : '/register?type=seller';
+  const sellPath = user ? '/sell' : '/register?type=seller';
 
   // Exact match for home ("/"), prefix match for everything else
   const isHomeActive = location.pathname === '/';
