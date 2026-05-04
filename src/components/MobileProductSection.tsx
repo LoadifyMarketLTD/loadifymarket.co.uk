@@ -12,7 +12,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import { MapPin, BadgeCheck, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useMobileProducts } from '@/hooks/useMobileProducts';
 import { formatPrice } from '@/lib/formatPrice';
 import type { Product } from '@/components/catalog/ProductCard';
@@ -23,11 +23,12 @@ function MobileProductCard({ product }: { product: Product }) {
   return (
     <Link
       to={`/product/${product.id}`}
-      className="flex-shrink-0 w-[148px] snap-start rounded-2xl overflow-hidden border border-white/[0.07] bg-[#111827] active:scale-95 transition-transform"
+      className="flex-shrink-0 w-[148px] snap-start rounded-2xl overflow-hidden active:scale-95 transition-transform"
+      style={{ backgroundColor: '#EFEFEF', textDecoration: 'none' }}
       aria-label={product.title}
     >
       {/* Image */}
-      <div className="relative aspect-square bg-[#0B1220] overflow-hidden">
+      <div className="relative aspect-square overflow-hidden" style={{ backgroundColor: '#E0E0E0' }}>
         <img
           src={product.image}
           alt={product.title}
@@ -47,23 +48,12 @@ function MobileProductCard({ product }: { product: Product }) {
 
       {/* Info */}
       <div className="p-2.5 space-y-1">
-        <p className="text-[11px] font-semibold text-white leading-snug line-clamp-2">
+        <p className="text-[11px] font-semibold leading-snug line-clamp-2" style={{ color: '#111111' }}>
           {product.title}
         </p>
-        <p className="text-[13px] font-bold text-[#FBBF24] leading-none">
+        <p className="text-[13px] font-bold leading-none" style={{ color: '#111111' }}>
           {formatPrice(product.price)}
         </p>
-        <div className="flex items-center gap-1 text-[10px] text-white/40">
-          {product.location && (
-            <>
-              <MapPin className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
-              <span className="truncate">{product.location}</span>
-            </>
-          )}
-          {product.sellerVerified && (
-            <BadgeCheck className="h-3 w-3 text-[#FBBF24] shrink-0 ml-auto" aria-hidden="true" />
-          )}
-        </div>
       </div>
     </Link>
   );
@@ -75,11 +65,12 @@ function MobileListingCard({ product }: { product: Product }) {
   return (
     <Link
       to={`/product/${product.id}`}
-      className="rounded-2xl overflow-hidden border border-white/[0.07] bg-[#111827] active:scale-95 transition-transform"
+      className="rounded-2xl overflow-hidden active:scale-95 transition-transform"
+      style={{ backgroundColor: '#EFEFEF', textDecoration: 'none' }}
       aria-label={product.title}
     >
       {/* Image */}
-      <div className="relative aspect-[4/3] bg-[#0B1220] overflow-hidden">
+      <div className="relative aspect-[4/3] overflow-hidden" style={{ backgroundColor: '#E0E0E0' }}>
         <img
           src={product.image}
           alt={product.title}
@@ -99,23 +90,12 @@ function MobileListingCard({ product }: { product: Product }) {
 
       {/* Info */}
       <div className="p-2.5 space-y-1">
-        <p className="text-[11px] font-semibold text-white leading-snug line-clamp-2">
+        <p className="text-[11px] font-semibold leading-snug line-clamp-2" style={{ color: '#111111' }}>
           {product.title}
         </p>
-        <p className="text-sm font-bold text-[#FBBF24] leading-none">
+        <p className="text-sm font-bold leading-none" style={{ color: '#111111' }}>
           {formatPrice(product.price)}
         </p>
-        <div className="flex items-center gap-1 text-[10px] text-white/40">
-          {product.location && (
-            <>
-              <MapPin className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
-              <span className="truncate">{product.location}</span>
-            </>
-          )}
-          {product.sellerVerified && (
-            <BadgeCheck className="h-3 w-3 text-[#FBBF24] shrink-0 ml-auto" aria-hidden="true" />
-          )}
-        </div>
       </div>
     </Link>
   );
@@ -153,7 +133,7 @@ function SkeletonCard({ wide }: { wide?: boolean }) {
 function EmptyState() {
   return (
     <div className="mx-4 my-2 flex flex-col items-center justify-center gap-3 py-8 rounded-2xl border border-white/[0.06] bg-[#111827]">
-      <p className="text-sm text-white/50">No products available yet</p>
+      <p className="text-sm text-white/75">No products available yet</p>
       <Link
         to="/catalog"
         className="text-xs font-semibold text-[#FBBF24] border border-[#FBBF24]/30 px-4 py-2 rounded-lg hover:bg-[#FBBF24]/10 transition-colors"

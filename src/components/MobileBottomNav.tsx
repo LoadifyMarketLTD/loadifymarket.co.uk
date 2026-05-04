@@ -2,10 +2,10 @@
  * MobileBottomNav — pixel-perfect match to reference image.
  *
  * Items (left → right):
- *   Home (house) | Categories (grid) | Sell Item (big gold circle +) | Messages (chat + unread badge) | Profile (person)
+ *   Home (house) | Categories (grid) | Sell (big gold circle +) | Messages (chat + unread badge) | Profile (person)
  *
  * "Home" links to "/" (exact active match).
- * "Sell Item" is elevated above the bar with a large gold circle.
+ * "Sell" is elevated above the bar with a large gold circle.
  * Safe-area-inset-bottom applied via inline padding.
  */
 
@@ -189,7 +189,7 @@ export default function MobileBottomNav() {
         {/* Categories */}
         <NavItem to="/categories" icon={LayoutGrid} label="Categories" isActive={isActive('/categories')} />
 
-        {/* Sell Item — elevated large gold circle */}
+        {/* Sell — elevated large gold circle */}
         <Link
           to={sellPath}
           style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '0 8px', textDecoration: 'none' }}
@@ -211,7 +211,7 @@ export default function MobileBottomNav() {
             <Plus style={{ width: '24px', height: '24px', color: '#0B0B0F' }} strokeWidth={2.5} aria-hidden="true" />
           </div>
           <span style={{ fontSize: '10px', fontWeight: 600, color: '#F5B942', lineHeight: 1, marginTop: '1px' }}>
-            Sell Item
+            Sell
           </span>
         </Link>
 

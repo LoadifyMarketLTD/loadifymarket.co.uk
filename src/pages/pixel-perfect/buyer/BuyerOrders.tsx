@@ -20,6 +20,7 @@ import { Search, Package, Eye, RotateCcw, AlertTriangle, FileDown, CheckCheck } 
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 
 interface OrderRow {
   id: string;
@@ -126,13 +127,8 @@ const BuyerOrders = () => {
 
   const handleDownloadInvoice = async (orderId: string, orderNumber: string) => {
     try {
-      const token = (await supabase.auth.getSession()).data.session?.access_token;
-      const res = await fetch('/.netlify/functions/generate-invoice', {
+      const res = await authorizedFetch('/.netlify/functions/generate-invoice', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify({ orderId }),
       });
       if (!res.ok) {

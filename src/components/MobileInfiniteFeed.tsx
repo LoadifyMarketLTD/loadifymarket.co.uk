@@ -1,59 +1,39 @@
 /**
  * MobileInfiniteFeed — 2-column product grid with infinite scroll.
  *
- * Pixel-perfect card design matching the reference image:
- *   - Dark card (#1A1A1F), rounded-2xl, drop shadow
- *   - Image fills top (square), with:
- *       • heart icon overlay (top-right)
- *       • location distance pill overlay (bottom-left)
- *   - Below image: title (white), price (white bold)
- *   - Bottom row: seller initial avatar + seller name + ★ rating
+ * Light card design matching the reference screenshot:
+ *   - Off-white card (#EFEFEF), rounded-2xl
+ *   - Image fills top (square)
+ *   - Below image: dark title, dark bold price, gold ★ + grey rating
+ *   - Bottom row: seller initial avatar + seller name
  * - IntersectionObserver infinite scroll, no sections/titles
  */
 
 import { useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Heart, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 
 import { useMobileInfiniteFeed } from '@/hooks/useMobileInfiniteFeed';
 import { formatPrice } from '@/lib/formatPrice';
 import type { Product } from '@/components/catalog/ProductCard';
 
-// ── Deterministic avatar colour from seller name ───────────────────────────────
-
-const AVATAR_COLOURS = [
-  '#C8860A', '#2563EB', '#7C3AED', '#059669', '#DC2626',
-  '#0891B2', '#9333EA', '#D97706', '#16A34A', '#EA580C',
-];
-function avatarColour(name: string): string {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
-  return AVATAR_COLOURS[h % AVATAR_COLOURS.length];
-}
-
 // ── Individual product card ────────────────────────────────────────────────────
 
 function ProductGridCard({ product }: { product: Product }) {
-  const initials = product.seller
-    ? product.seller.trim().slice(0, 1).toUpperCase()
-    : '?';
-  const bgColour = avatarColour(product.seller ?? '');
-
   return (
     <Link
       to={`/product/${product.id}`}
       className="block active:scale-95 transition-transform"
       style={{
-        backgroundColor: '#1A1A1F',
+        backgroundColor: '#EFEFEF',
         borderRadius: '16px',
         overflow: 'hidden',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.45)',
         textDecoration: 'none',
       }}
       aria-label={product.title}
     >
-      {/* ── Product image with overlays ───────────────────────────────── */}
-      <div style={{ position: 'relative', aspectRatio: '1 / 1', backgroundColor: '#0D0D12', overflow: 'hidden' }}>
+      {/* ── Product image ──────────────────────────────────────────────── */}
+      <div style={{ aspectRatio: '1 / 1', backgroundColor: '#E0E0E0', overflow: 'hidden' }}>
         <img
           src={product.image}
           alt={product.title}
@@ -61,48 +41,6 @@ function ProductGridCard({ product }: { product: Product }) {
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
         />
-
-        {/* Heart icon — top right */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            top: '8px',
-            right: '8px',
-            width: '28px',
-            height: '28px',
-            borderRadius: '50%',
-            backgroundColor: 'rgba(0,0,0,0.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Heart style={{ width: '14px', height: '14px', color: '#FFFFFF' }} strokeWidth={1.8} />
-        </div>
-
-        {/* Location pill — bottom left */}
-        {product.location && (
-          <div
-            aria-label={`Location: ${product.location}`}
-            style={{
-              position: 'absolute',
-              bottom: '8px',
-              left: '8px',
-              backgroundColor: 'rgba(0,0,0,0.60)',
-              borderRadius: '8px',
-              padding: '3px 7px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '3px',
-            }}
-          >
-            <MapPin style={{ width: '9px', height: '9px', color: '#FFFFFF', flexShrink: 0 }} />
-            <span style={{ fontSize: '9px', color: '#FFFFFF', fontWeight: 500, whiteSpace: 'nowrap', maxWidth: '60px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {product.location}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* ── Card body ─────────────────────────────────────────────────── */}
@@ -113,8 +51,8 @@ function ProductGridCard({ product }: { product: Product }) {
           className="line-clamp-2"
           style={{
             fontSize: 'clamp(11px, 3vw, 13px)',
-            fontWeight: 500,
-            color: '#FFFFFF',
+            fontWeight: 600,
+            color: '#111111',
             lineHeight: 1.35,
             marginBottom: '4px',
           }}
@@ -122,60 +60,28 @@ function ProductGridCard({ product }: { product: Product }) {
           {product.title}
         </p>
 
-        {/* Price — white, bold */}
+        {/* Price */}
         <p
           style={{
             fontSize: 'clamp(13px, 3.8vw, 15px)',
             fontWeight: 700,
-            color: '#FFFFFF',
+            color: '#111111',
             lineHeight: 1,
-            marginBottom: '8px',
+            marginBottom: product.rating > 0 ? '6px' : '0',
           }}
         >
           {formatPrice(product.price)}
         </p>
 
-        {/* Seller row: avatar + name + star + rating */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          {/* Initial avatar */}
-          <div
-            aria-hidden="true"
-            style={{
-              width: '20px',
-              height: '20px',
-              borderRadius: '50%',
-              backgroundColor: bgColour,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <span style={{ fontSize: '9px', fontWeight: 800, color: '#FFFFFF' }}>{initials}</span>
-          </div>
-
-          {/* Seller name */}
-          <span
-            style={{
-              fontSize: 'clamp(9px, 2.5vw, 11px)',
-              color: 'rgba(255,255,255,0.55)',
-              flex: 1,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {product.seller}
-          </span>
-
-          {/* Star + rating */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
+        {/* Star + rating */}
+        {product.rating > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
             <Star style={{ width: '11px', height: '11px', color: '#F5B942', fill: '#F5B942' }} aria-hidden="true" />
-            <span style={{ fontSize: 'clamp(9px, 2.5vw, 11px)', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
-              {product.rating > 0 ? product.rating.toFixed(1) : '—'}
+            <span style={{ fontSize: 'clamp(9px, 2.5vw, 11px)', fontWeight: 500, color: '#555555' }}>
+              {product.rating.toFixed(1)}
             </span>
           </div>
-        </div>
+        )}
       </div>
     </Link>
   );
@@ -187,7 +93,7 @@ function SkeletonCard() {
   return (
     <div
       className="rounded-2xl animate-pulse"
-      style={{ backgroundColor: '#1A1A1F', aspectRatio: '3/4' }}
+      style={{ backgroundColor: '#E0E0E0', aspectRatio: '3/4' }}
       aria-hidden="true"
     />
   );
@@ -234,7 +140,7 @@ export default function MobileInfiniteFeed() {
           borderRadius: '16px',
         }}
       >
-        <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.38)' }}>No products listed yet</p>
+        <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.75)' }}>No products listed yet</p>
         <Link
           to="/catalog"
           style={{
@@ -274,7 +180,7 @@ export default function MobileInfiniteFeed() {
           style={{
             textAlign: 'center',
             fontSize: '11px',
-            color: 'rgba(255,255,255,0.22)',
+            color: 'rgba(255,255,255,0.55)',
             paddingBottom: '16px',
           }}
         >

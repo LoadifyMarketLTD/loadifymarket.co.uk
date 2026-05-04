@@ -164,7 +164,7 @@ function OfferBubble({
         <span className="text-xs font-semibold text-[#FBBF24] uppercase tracking-wide">Offer</span>
       </div>
       {productTitle && (
-        <p className="text-xs text-white/50 mb-1 truncate">{productTitle}</p>
+        <p className="text-xs text-white/75 mb-1 truncate">{productTitle}</p>
       )}
       <p className="text-xl font-bold text-white">£{pounds}</p>
       <p className={`text-[11px] mt-1 ${statusColour[status] ?? "text-white/40"}`}>
@@ -238,7 +238,7 @@ function SystemEventCard({ event, amountPence }: { event?: string; amountPence?:
     <div className="flex justify-center">
       <div className="max-w-[80%] rounded-2xl px-4 py-2.5 bg-white/5 border border-white/10 text-center">
         <span className="mr-1">{info.icon}</span>
-        <span className="text-xs text-white/60">{info.text}</span>
+        <span className="text-xs text-white/75">{info.text}</span>
       </div>
     </div>
   );
@@ -612,15 +612,8 @@ export default function MobileChatPage() {
     const text = draft.trim();
     setDraft("");
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Not authenticated");
-
-      const res = await fetch("/.netlify/functions/send-message", {
+      const res = await authorizedFetch("/.netlify/functions/send-message", {
         method: "POST",
-        headers: {
-          "Content-Type":  "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
         body: JSON.stringify({ conversationId, receiverId: otherId, message: text }),
       });
 
@@ -678,15 +671,8 @@ export default function MobileChatPage() {
   const handleAcceptOffer = async (offerId: string) => {
     setActingOnOffer(offerId);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Not authenticated");
-
-      const res = await fetch("/.netlify/functions/offer-accept", {
+      const res = await authorizedFetch("/.netlify/functions/offer-accept", {
         method: "POST",
-        headers: {
-          "Content-Type":  "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
         body: JSON.stringify({ offerId }),
       });
 
@@ -710,15 +696,8 @@ export default function MobileChatPage() {
   const handleDeclineOffer = async (offerId: string) => {
     setActingOnOffer(offerId);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error("Not authenticated");
-
-      const res = await fetch("/.netlify/functions/offer-decline", {
+      const res = await authorizedFetch("/.netlify/functions/offer-decline", {
         method: "POST",
-        headers: {
-          "Content-Type":  "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
         body: JSON.stringify({ offerId }),
       });
 
@@ -770,7 +749,7 @@ export default function MobileChatPage() {
       >
         <button
           onClick={() => navigate("/inbox")}
-          className="text-white/60 hover:text-white transition-colors p-1 -ml-1"
+          className="text-white/80 hover:text-white transition-colors p-1 -ml-1"
           aria-label="Back to Inbox"
         >
           <ArrowLeft className="h-5 w-5" />

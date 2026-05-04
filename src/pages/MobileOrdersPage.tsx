@@ -31,24 +31,18 @@ interface OrderRow {
   conversationId: string | null;
 }
 
-type Tab = "all" | "to_pay" | "to_ship" | "shipped" | "completed" | "cancelled";
+type Tab = "all" | "buying" | "selling";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "all", label: "All Orders" },
-  { id: "to_pay", label: "To Pay" },
-  { id: "to_ship", label: "To Ship" },
-  { id: "shipped", label: "Shipped" },
-  { id: "completed", label: "Completed" },
-  { id: "cancelled", label: "Cancelled" },
+  { id: "all", label: "All" },
+  { id: "buying", label: "Buying" },
+  { id: "selling", label: "Selling" },
 ];
 
 const TAB_STATUSES: Record<Tab, string[]> = {
   all: [],
-  to_pay: ["awaiting_payment"],
-  to_ship: ["paid", "packed"],
-  shipped: ["shipped"],
-  completed: ["delivered", "completed"],
-  cancelled: ["cancelled", "refunded"],
+  buying: ["awaiting_payment", "paid", "packed", "shipped", "invoice_requested"],
+  selling: ["delivered", "completed", "cancelled", "refunded"],
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -92,7 +86,7 @@ const STATUS_CONFIG: Record<
   refunded: {
     label: "Refunded",
     bg: "rgba(255,255,255,0.08)",
-    text: "rgba(255,255,255,0.45)",
+    text: "rgba(255,255,255,0.75)",
   },
   invoice_requested: {
     label: "Invoice requested",
@@ -106,7 +100,7 @@ function statusCfg(status: string) {
     STATUS_CONFIG[status] ?? {
       label: status.replace(/_/g, " "),
       bg: "rgba(255,255,255,0.08)",
-      text: "rgba(255,255,255,0.45)",
+      text: "rgba(255,255,255,0.75)",
     }
   );
 }
@@ -173,7 +167,7 @@ function OrderCard({
       <div style={{ flex: 1, minWidth: 0 }}>
         {/* Order number + status badge */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontFamily: "monospace" }}>
+          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.70)", fontFamily: "monospace" }}>
             #{order.orderNumber}
           </span>
           <span
@@ -198,11 +192,11 @@ function OrderCard({
         </p>
 
         {/* Qty */}
-        <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "3px" }}>Qty: {order.quantity}</p>
+        <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.70)", marginBottom: "3px" }}>Qty: {order.quantity}</p>
 
         {/* Date + price */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>
+          <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.70)" }}>
             Order placed on {formatDate(order.createdAt)}
           </span>
         </div>
@@ -381,7 +375,7 @@ export default function MobileOrdersPage() {
                   padding: "10px 14px",
                   fontSize: "13px",
                   fontWeight: isActive ? 700 : 400,
-                  color: isActive ? "#F5B942" : "rgba(255,255,255,0.50)",
+                  color: isActive ? "#F5B942" : "rgba(255,255,255,0.65)",
                   whiteSpace: "nowrap",
                   background: "transparent",
                   border: "none",
@@ -416,7 +410,7 @@ export default function MobileOrdersPage() {
             <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
               <Package className="h-8 w-8 text-white/20" />
             </div>
-            <p className="text-white/50 text-sm">
+            <p className="text-white/75 text-sm">
               {activeTab === "all" ? "No orders yet" : "No orders in this category"}
             </p>
             {activeTab === "all" && (
@@ -472,8 +466,8 @@ export default function MobileOrdersPage() {
               marginTop: "8px",
             }}
           >
-            <HelpCircle style={{ width: "20px", height: "20px", color: "rgba(255,255,255,0.40)", flexShrink: 0 }} />
-            <span style={{ flex: 1, fontSize: "14px", color: "rgba(255,255,255,0.55)", textAlign: "left" }}>
+            <HelpCircle style={{ width: "20px", height: "20px", color: "rgba(255,255,255,0.60)", flexShrink: 0 }} />
+            <span style={{ flex: 1, fontSize: "14px", color: "rgba(255,255,255,0.75)", textAlign: "left" }}>
               Need help with your order?
             </span>
             <ChevronRight style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.25)" }} />

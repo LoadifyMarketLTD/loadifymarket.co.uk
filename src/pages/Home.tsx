@@ -2,8 +2,9 @@
  * src/pages/Home.tsx — root "/" route
  *
  * MOBILE (< md / 768 px):
- *   MobileAppHeader → search bar → MobileCategoryShortcuts → MobileHeroBanner →
- *   Trending Now → New Arrivals → MobileBottomNav (via MainLayout)
+ *   MobileAppHeader (with inline search) → MobileHeroBanner →
+ *   MobileCategoryShortcuts → Featured Deals → Recommended for you →
+ *   MobileBottomNav (via MainLayout)
  *
  * DESKTOP (>= md / 768 px):
  *   GlobalHeader → HeroSection (full-screen) → TrustStrip → FeaturesGrid →
@@ -12,7 +13,6 @@
 
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { TrendingUp, Sparkles } from "lucide-react";
 
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
@@ -56,22 +56,16 @@ function MobileHome() {
       {/* 1. App Header */}
       <MobileAppHeader />
 
-      {/* 2. Category row */}
-      <MobileCategoryShortcuts />
-
-      {/* 3. Hero Banner */}
+      {/* 2. Hero Banner */}
       <MobileHeroBanner />
 
-      {/* 5. Trending Now */}
-      <section className="pt-5 pb-2" aria-label="Trending products">
+      {/* 3. Category row */}
+      <MobileCategoryShortcuts />
+
+      {/* 4. Featured Deals */}
+      <section className="pt-5 pb-2" aria-label="Featured deals">
         <div className="flex items-center justify-between mb-3" style={{ paddingInline: 'var(--mob-side, 16px)' }}>
-          <div className="flex items-center gap-2">
-            <TrendingUp
-              style={{ width: 18, height: 18, color: '#F2B84B' }}
-              aria-hidden="true"
-            />
-          <span style={{ fontSize: 'clamp(15px, 4.2vw, 17px)', fontWeight: 700, color: '#FFFFFF' }}>Trending Now</span>
-          </div>
+          <span style={{ fontSize: 'clamp(15px, 4.2vw, 17px)', fontWeight: 700, color: '#FFFFFF' }}>Featured Deals</span>
           <Link
             to="/catalog?filter=trending"
             className="text-[13px] font-semibold"
@@ -108,20 +102,14 @@ function MobileHome() {
         </div>
       </section>
 
-      {/* 6. New Arrivals */}
+      {/* 5. Recommended for you */}
       <section
         className="pt-2"
         style={{ paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px) + 16px)' }}
-        aria-label="New arrivals"
+        aria-label="Recommended for you"
       >
         <div className="flex items-center justify-between mb-3" style={{ paddingInline: 'var(--mob-side, 16px)' }}>
-          <div className="flex items-center gap-2">
-            <Sparkles
-              style={{ width: 18, height: 18, color: '#F2B84B' }}
-              aria-hidden="true"
-            />
-          <span style={{ fontSize: 'clamp(15px, 4.2vw, 17px)', fontWeight: 700, color: '#FFFFFF' }}>New Arrivals</span>
-          </div>
+          <span style={{ fontSize: 'clamp(15px, 4.2vw, 17px)', fontWeight: 700, color: '#FFFFFF' }}>Recommended for you</span>
           <Link
             to="/catalog?filter=latest"
             className="text-[13px] font-semibold"

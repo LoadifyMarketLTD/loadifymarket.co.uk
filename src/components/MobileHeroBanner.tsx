@@ -10,60 +10,21 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store';
 import { hasSellerAccess } from '@/lib/roleUtils';
 
-/* ─── Slide 1: 3D gold "0%" commission visual ─────────────────────────────── */
-function Commission3D() {
+/* ─── Slide 1: photo visual — yellow chair ───────────────────────────────── */
+function ChairPhotoVisual() {
   return (
-    <svg
-      viewBox="0 0 240 268"
-      xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: '100%', display: 'block', overflow: 'visible' }}
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id="s1-gold" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor="#FFF8C0" />
-          <stop offset="18%"  stopColor="#F5D06E" />
-          <stop offset="50%"  stopColor="#C8860A" />
-          <stop offset="80%"  stopColor="#8A5200" />
-          <stop offset="100%" stopColor="#3D2000" />
-        </linearGradient>
-        <linearGradient id="s1-rim" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor="#E8A820" />
-          <stop offset="50%"  stopColor="#B87010" />
-          <stop offset="100%" stopColor="#4A2800" />
-        </linearGradient>
-        <radialGradient id="s1-glow" cx="50%" cy="55%" r="52%">
-          <stop offset="0%"   stopColor="#C8860A" stopOpacity="0.50" />
-          <stop offset="70%"  stopColor="#C8860A" stopOpacity="0.12" />
-          <stop offset="100%" stopColor="#C8860A" stopOpacity="0"    />
-        </radialGradient>
-        <filter id="s1-shadow" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="6" stdDeviation="10" floodColor="#000000" floodOpacity="0.90" />
-        </filter>
-      </defs>
-
-      <ellipse cx="120" cy="168" rx="118" ry="110" fill="url(#s1-glow)" />
-
-      {/* "0" — 3D extrusion */}
-      <text x="84" y="220" fontFamily="'Arial Black','Impact','Haettenschweiler',sans-serif" fontSize="172" fontWeight="900" fill="#2A1200" textAnchor="middle">0</text>
-      <text x="82" y="218" fontFamily="'Arial Black','Impact','Haettenschweiler',sans-serif" fontSize="172" fontWeight="900" fill="#5A3200" textAnchor="middle">0</text>
-      <text x="80" y="216" fontFamily="'Arial Black','Impact','Haettenschweiler',sans-serif" fontSize="172" fontWeight="900" fill="#8A5200" textAnchor="middle">0</text>
-      <text x="78" y="214" fontFamily="'Arial Black','Impact','Haettenschweiler',sans-serif" fontSize="172" fontWeight="900" fill="url(#s1-gold)" filter="url(#s1-shadow)" textAnchor="middle">0</text>
-
-      {/* "%" — 3D extrusion */}
-      <text x="200" y="186" fontFamily="'Arial Black','Impact','Haettenschweiler',sans-serif" fontSize="92" fontWeight="900" fill="#2A1200" textAnchor="middle">%</text>
-      <text x="198" y="184" fontFamily="'Arial Black','Impact','Haettenschweiler',sans-serif" fontSize="92" fontWeight="900" fill="#5A3200" textAnchor="middle">%</text>
-      <text x="196" y="182" fontFamily="'Arial Black','Impact','Haettenschweiler',sans-serif" fontSize="92" fontWeight="900" fill="#8A5200" textAnchor="middle">%</text>
-      <text x="194" y="180" fontFamily="'Arial Black','Impact','Haettenschweiler',sans-serif" fontSize="92" fontWeight="900" fill="url(#s1-gold)" filter="url(#s1-shadow)" textAnchor="middle">%</text>
-
-      {/* Cylindrical pedestal */}
-      <path d="M 28 234 Q 28 252 120 256 Q 212 252 212 234 L 212 244 Q 212 262 120 266 Q 28 262 28 244 Z" fill="url(#s1-rim)" />
-      <ellipse cx="120" cy="234" rx="92" ry="16" fill="#130C00" />
-      <ellipse cx="120" cy="234" rx="92" ry="16" fill="none" stroke="#D4940A" strokeWidth="1.5" />
-      <ellipse cx="88" cy="230" rx="28" ry="5" fill="rgba(255,215,80,0.20)" />
-      <text x="120" y="239" fontFamily="Arial,sans-serif" fontSize="9.5" fontWeight="800" fill="#C8860A" textAnchor="middle" letterSpacing="1.4">◎ COMMISSION</text>
-      <ellipse cx="120" cy="268" rx="84" ry="11" fill="#000000" opacity="0.45" />
-    </svg>
+    <img
+      src="/images/featured/chair.jpeg"
+      alt=""
+      loading="eager"
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'contain',
+        display: 'block',
+        filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.5))',
+      }}
+    />
   );
 }
 
@@ -186,15 +147,33 @@ function TrustedShieldVisual() {
 /* ─── Slide definitions ───────────────────────────────────────────────────── */
 const SWIPE_THRESHOLD = 40;
 
-const SLIDES = [
+interface Slide {
+  title: string;
+  titleNode?: React.ReactNode;
+  subtitle: string;
+  desc: string;
+  cta: string;
+  action: string;
+  requiresSeller: boolean;
+  Visual: React.ComponentType;
+}
+
+const SLIDES: Slide[] = [
   {
-    title:          '0% COMMISSION',
-    subtitle:       'KEEP 100% OF YOUR SALE',
-    desc:           'Buy. Sell. Save more with Loadify.',
+    title:          'Sell with 0% Commission',
+    titleNode: (
+      <>
+        Sell with{' '}
+        <span style={{ color: '#F5C76E' }}>0%</span>
+        <br />Commission
+      </>
+    ),
+    subtitle:       '',
+    desc:           'List for free and keep 100% of your profit.',
     cta:            'Start Selling',
     action:         '/register?type=seller',
     requiresSeller: true,
-    Visual:         Commission3D,
+    Visual:         ChairPhotoVisual,
   },
   {
     title:          'SELL IN MINUTES',
@@ -214,7 +193,7 @@ const SLIDES = [
     requiresSeller: false,
     Visual:         TrustedShieldVisual,
   },
-] as const;
+];
 
 /* ─── Carousel component ──────────────────────────────────────────────────── */
 
@@ -311,26 +290,26 @@ export default function MobileHeroBanner() {
                     zIndex: 10,
                   }}
                 >
-                  {/* Title — whiteSpace:nowrap prevents any mid-word or inter-word
-                      line break. overflow:hidden + text-overflow:ellipsis is the
-                      absolute last-resort safety valve (font would have to be
-                      enormous for this to trigger). */}
+                  {/* Title — supports optional mixed-color titleNode */}
                   <h2
                     style={{
                       fontSize: 'clamp(14px, 4.2vw, 24px)',
-                      lineHeight: 1.12,
+                      lineHeight: 1.15,
                       fontWeight: 800,
-                      color: '#F5C76E',
+                      color: '#FFFFFF',
                       margin: 0,
-                      whiteSpace: 'nowrap',
                       overflow: 'hidden',
-                      textOverflow: 'ellipsis',
                     }}
                   >
-                    {slide.title}
+                    {slide.titleNode ?? (
+                      <span style={{ color: '#F5C76E', whiteSpace: 'nowrap', textOverflow: 'ellipsis', display: 'block', overflow: 'hidden' }}>
+                        {slide.title}
+                      </span>
+                    )}
                   </h2>
 
-                  {/* Subtitle — word wrapping OK, mid-word breaking NOT allowed */}
+                  {/* Subtitle — only shown when non-empty */}
+                  {slide.subtitle ? (
                   <p
                     style={{
                       color: '#FFFFFF',
@@ -344,11 +323,12 @@ export default function MobileHeroBanner() {
                   >
                     {slide.subtitle}
                   </p>
+                  ) : null}
 
                   {/* Desc */}
                   <p
                     style={{
-                      color: 'rgba(255,255,255,0.55)',
+                      color: 'rgba(255,255,255,0.75)',
                       marginTop: '4px',
                       fontSize: 'clamp(9px, 2.4vw, 12px)',
                       lineHeight: 1.3,

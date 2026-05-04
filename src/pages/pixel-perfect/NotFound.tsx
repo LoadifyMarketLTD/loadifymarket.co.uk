@@ -1,23 +1,22 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
-import { useEffect } from "react";
+import SEO from "@/components/SEO";
 
 const NotFound = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
-  }, [location.pathname]);
-
   return (
     <MainLayout>
+      <SEO
+        title="Page Not Found | Loadify Market"
+        description="The page you are looking for does not exist. Return to the homepage or browse products on Loadify Market."
+        robots="noindex, nofollow"
+      />
       <main id="main-content" className="flex-1 flex items-center justify-center pt-28 pb-20 px-4">
         <div className="text-center">
           <p className="text-[#FBBF24] font-bold text-lg mb-3 tracking-widest uppercase">404</p>
           <h1 className="text-4xl sm:text-5xl font-display font-extrabold text-white mb-4 leading-tight">
             Page Not Found
           </h1>
-          <p className="text-white/60 text-base mb-8 max-w-md mx-auto">
+          <p className="text-white/75 text-base mb-8 max-w-md mx-auto">
             The page you're looking for doesn't exist or may have been moved.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">

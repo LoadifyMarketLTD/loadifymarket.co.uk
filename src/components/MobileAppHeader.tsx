@@ -1,13 +1,13 @@
 /**
  * MobileAppHeader — mobile-only top header bar.
  *
- * Shows: LM logo + branding (left) | Bell notification icon + filter button (right)
- * Hidden on desktop via the parent's md:hidden wrapper.
+ * Shows: M logo + branding (left) | Bell notification icon (right)
+ *        Inline search bar + filter button (second row)
  */
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, SlidersHorizontal } from 'lucide-react';
+import { Bell, Search, Filter } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
 import MobileSearchOverlay from '@/components/MobileSearchOverlay';
@@ -38,66 +38,65 @@ export default function MobileAppHeader() {
   return (
     <>
     <header
-      className="flex items-center justify-between px-4"
       style={{
         background: '#07080B',
         paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))',
         paddingBottom: '0.75rem',
+        paddingLeft: 16,
+        paddingRight: 16,
       }}
     >
-      {/* ── Left: logo + brand name ─── */}
-      {/* overflow:hidden + flex:1 + minWidth:0 is the correct flex shrink pattern:
-          the container shrinks when the right icon group needs space, and clipping
-          prevents the nowrap brand text from overflowing. */}
-      <div className="flex items-center gap-2.5" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-        {/* Hexagonal LM badge */}
-        <div
-          style={{
-            width: 36,
-            height: 36,
-            border: '2px solid #F2B84B',
-            borderRadius: 9,
-            background: 'linear-gradient(135deg, #1E1A0E 0%, #111216 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <span
+      {/* ── Row 1: logo + brand name (left) | bell (right) ─── */}
+      <div className="flex items-center justify-between">
+        {/* Left: logo + brand */}
+        <div className="flex items-center gap-2.5" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+          {/* Hexagonal M badge */}
+          <div
             style={{
-              fontSize: 'clamp(11px, 3.2vw, 14px)',
-              fontWeight: 900,
-              color: '#F2B84B',
-              letterSpacing: 0.5,
-              fontFamily: 'var(--font-display)',
+              width: 38,
+              height: 38,
+              border: '2px solid #F2B84B',
+              borderRadius: 10,
+              background: 'linear-gradient(135deg, #1E1A0E 0%, #111216 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
-            LM
-          </span>
-        </div>
-
-        {/* Brand text — fluid font size so it never overflows on narrow screens */}
-        <div className="flex flex-col leading-none gap-0" style={{ minWidth: 0 }}>
-          <div className="flex items-baseline gap-1" style={{ flexWrap: 'nowrap' }}>
             <span
               style={{
-                fontSize: 'clamp(13px, 4vw, 18px)',
+                fontSize: 'clamp(13px, 3.6vw, 16px)',
+                fontWeight: 900,
+                color: '#F2B84B',
+                letterSpacing: 0,
+                fontFamily: 'var(--font-display)',
+              }}
+            >
+              M
+            </span>
+          </div>
+
+          {/* Brand text */}
+          <div className="flex flex-col leading-none" style={{ minWidth: 0, gap: 2 }}>
+            <span
+              style={{
+                fontSize: 'clamp(14px, 4.2vw, 19px)',
                 fontWeight: 800,
                 color: '#FFFFFF',
-                letterSpacing: 'clamp(0.5px, 0.3vw, 1.5px)',
+                letterSpacing: 'clamp(0.5px, 0.2vw, 1px)',
                 lineHeight: 1,
                 fontFamily: 'var(--font-display)',
                 whiteSpace: 'nowrap',
               }}
             >
-              LOADIFY
+              Loadify
             </span>
             <span
               style={{
-                fontSize: 'clamp(13px, 4vw, 18px)',
+                fontSize: 'clamp(10px, 2.8vw, 13px)',
                 fontWeight: 800,
-                color: '#FFFFFF',
+                color: '#F2B84B',
                 letterSpacing: 'clamp(0.5px, 0.3vw, 1.5px)',
                 lineHeight: 1,
                 fontFamily: 'var(--font-display)',
@@ -107,47 +106,9 @@ export default function MobileAppHeader() {
               MARKET
             </span>
           </div>
-          <span
-            style={{
-              fontSize: 'clamp(8px, 2.5vw, 10px)',
-              fontWeight: 600,
-              color: 'rgba(242,184,75,0.8)',
-              letterSpacing: 0.5,
-              marginTop: 2,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            0% COMMISSION
-          </span>
         </div>
-      </div>
 
-      {/* ── Right: search + bell + filter ─── */}
-      <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
-        {/* Search icon — opens full-screen overlay */}
-        <button
-          onClick={() => setSearchOpen(true)}
-          aria-label="Open search"
-          style={{
-            width: 44,
-            height: 44,
-            padding: 0,
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <Search
-            style={{ width: 20, height: 20, color: 'rgba(255,255,255,0.80)' }}
-            aria-hidden="true"
-          />
-        </button>
-
-        {/* Bell with badge — navigates to inbox */}
+        {/* Right: bell */}
         <button
           onClick={() => navigate('/inbox')}
           aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
@@ -166,7 +127,7 @@ export default function MobileAppHeader() {
           }}
         >
           <Bell
-            style={{ width: 20, height: 20, color: '#FFFFFF' }}
+            style={{ width: 22, height: 22, color: '#FFFFFF' }}
             aria-hidden="true"
           />
           {unread > 0 && (
@@ -174,10 +135,10 @@ export default function MobileAppHeader() {
               aria-hidden="true"
               style={{
                 position: 'absolute',
-                top: 0,
-                right: 0,
-                minWidth: 16,
-                height: 16,
+                top: 4,
+                right: 4,
+                minWidth: 17,
+                height: 17,
                 borderRadius: 9999,
                 background: '#F2B84B',
                 color: '#000',
@@ -194,8 +155,47 @@ export default function MobileAppHeader() {
             </span>
           )}
         </button>
+      </div>
 
-        {/* Filter button — navigates to catalog */}
+      {/* ── Row 2: search bar + filter button ─── */}
+      <div className="flex items-center gap-2" style={{ marginTop: 10 }}>
+        {/* Search bar — taps open full-screen overlay */}
+        <button
+          onClick={() => setSearchOpen(true)}
+          aria-label="Search for anything"
+          style={{
+            flex: 1,
+            height: 44,
+            background: 'rgba(255,255,255,0.07)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            borderRadius: 12,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            paddingLeft: 14,
+            paddingRight: 14,
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
+        >
+          <Search
+            style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}
+            aria-hidden="true"
+          />
+          <span
+            style={{
+              fontSize: 14,
+              color: 'rgba(255,255,255,0.40)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            Search for anything...
+          </span>
+        </button>
+
+        {/* Filter button */}
         <button
           aria-label="Filter"
           onClick={() => navigate('/catalog')}
@@ -212,7 +212,7 @@ export default function MobileAppHeader() {
             cursor: 'pointer',
           }}
         >
-          <SlidersHorizontal
+          <Filter
             style={{ width: 18, height: 18, color: '#F2B84B' }}
             aria-hidden="true"
           />

@@ -69,7 +69,7 @@ const SellerJourneySection = () => (
         <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold text-white">
           How Selling on Loadify Market Works
         </h2>
-        <p className="mt-2 text-sm text-white/70">
+        <p className="mt-2 text-sm text-white/75">
           A simple step-by-step guide to start selling.
         </p>
       </div>
@@ -92,7 +92,7 @@ const SellerJourneySection = () => (
             {/* Text */}
             <div>
               <p className="text-sm font-bold text-white leading-snug">{step.title}</p>
-              <p className="text-xs text-white/60 mt-0.5">{step.desc}</p>
+              <p className="text-xs text-white/75 mt-0.5">{step.desc}</p>
             </div>
           </div>
         ))}

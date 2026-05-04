@@ -137,7 +137,6 @@ const AdminSellerManagement = () => {
     setError(null);
     setErrorRetryable(true);
     try {
-      console.log('Calling admin-sellers API');
       const res = await authorizedFetch("/.netlify/functions/admin-sellers", {
         method: "GET",
       });

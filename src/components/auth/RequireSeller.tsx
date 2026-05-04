@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 import { hasSellerAccess, hasAdminAccess } from '../../lib/roleUtils';
+import { authorizedFetch } from '../../lib/authorizedFetch';
 
 interface Props {
   children: ReactNode;
@@ -133,21 +134,16 @@ export default function RequireSeller({ children }: Props) {
       // Step 2: Status is draft or submitted — the DB value may be stale.
       // Call recheck-activation to re-evaluate all conditions server-side.
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData.session?.access_token;
-        if (token) {
-          const res = await fetch('/.netlify/functions/recheck-activation', {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (res.ok) {
-            const recheckData = await res.json() as { sellerStatus?: string };
-            if (cancelled) return;
-            const recheckStatus = recheckData.sellerStatus as FetchState | undefined;
-            if (recheckStatus) {
-              setFetchState(recheckStatus);
-              return;
-            }
+        const res = await authorizedFetch('/.netlify/functions/recheck-activation', {
+          method: 'POST',
+        });
+        if (res.ok) {
+          const recheckData = await res.json() as { sellerStatus?: string };
+          if (cancelled) return;
+          const recheckStatus = recheckData.sellerStatus as FetchState | undefined;
+          if (recheckStatus) {
+            setFetchState(recheckStatus);
+            return;
           }
         }
       } catch (err) {

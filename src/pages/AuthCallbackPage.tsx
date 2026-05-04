@@ -16,6 +16,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import SEO from '@/components/SEO';
 
 export default function AuthCallbackPage() {
   const navigate = useNavigate();
@@ -37,11 +38,18 @@ export default function AuthCallbackPage() {
   }, [navigate]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[#020617]">
-      <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#C99A3E]" />
-        <p className="mt-4 text-slate-400 text-sm">Completing sign-in…</p>
+    <>
+      <SEO
+        title="Signing In"
+        description="Completing sign-in."
+        robots="noindex, nofollow"
+      />
+      <div className="flex items-center justify-center min-h-screen bg-[#020617]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#C99A3E]" />
+          <p className="mt-4 text-slate-400 text-sm">Completing sign-in…</p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -25,6 +25,7 @@ import {
   Send,
 } from 'lucide-react';import { formatDistanceToNow } from 'date-fns';
 import RoleBadge from '../components/RoleBadge';
+import { authorizedFetch } from '../lib/authorizedFetch';
 
 const DEFAULT_COMMISSION_RATE = 7;
 
@@ -181,16 +182,8 @@ export default function AdminSellerDetailPage() {
     setResendStatus('sending');
     setResendMessage('');
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Your session has expired. Please sign in again.');
-      }
-      const res = await fetch('/.netlify/functions/resend-verification', {
+      const res = await authorizedFetch('/.netlify/functions/resend-verification', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
         body: JSON.stringify({ userId: id }),
       });
       const json = await res.json();

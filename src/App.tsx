@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, lazy, Suspense, useState } from 'react';
 import { useAuthStore } from './store';
 import { hasAdminAccess } from './lib/roleUtils';
@@ -221,6 +221,23 @@ function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
 function App() {
   const { setUser, setLoading } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // ── Accessibility: move keyboard focus to #main-content on every route change ─
+  // Satisfies WCAG 2.1 SC 2.4.3 (Focus Order) for SPA navigation.
+  // Non-interactive elements like <main> are not in the tab order by default, so
+  // we temporarily mark the target with tabIndex="-1" (programmatic-focus only)
+  // before calling focus(). This lets screen-reader / keyboard users start at the
+  // top of the new page rather than continuing from wherever focus was left.
+  useEffect(() => {
+    const el = document.getElementById('main-content');
+    if (el) {
+      if (!el.hasAttribute('tabindex')) {
+        el.setAttribute('tabindex', '-1');
+      }
+      el.focus({ preventScroll: false });
+    }
+  }, [location.pathname]);
 
   // ── Deep-link handler (Capacitor APK only) ─────────────────────────────────
   // @capacitor/app fires 'appUrlOpen' when the APK is resumed via a URL —

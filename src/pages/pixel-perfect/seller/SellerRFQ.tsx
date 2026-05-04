@@ -17,6 +17,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
 import type { RFQRequest } from "@/types";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   pending: { label: "New", className: "bg-blue-500/10 text-blue-700" },
@@ -94,14 +95,8 @@ const SellerRFQ = () => {
     if (!responseId || !user?.id) return;
     setWithdrawing(responseId);
     try {
-      const { data: { session: authSession } } = await supabase.auth.getSession();
-      const token = authSession?.access_token;
-      const res = await fetch("/.netlify/functions/rfq", {
+      const res = await authorizedFetch("/.netlify/functions/rfq", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify({ op: "withdraw", responseId }),
       });
       if (!res.ok) {
@@ -125,14 +120,8 @@ const SellerRFQ = () => {
     setRfqError("");
     try {
       // Record the response via serverless function so rfqSystem flag is enforced.
-      const { data: { session: authSession } } = await supabase.auth.getSession();
-      const token = authSession?.access_token;
-      const res = await fetch("/.netlify/functions/rfq", {
+      const res = await authorizedFetch("/.netlify/functions/rfq", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify({
           op: "respond",
           rfqId: selected.id,
