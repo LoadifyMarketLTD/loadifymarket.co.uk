@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { useToast } from "@/hooks/use-toast";
 import { hasAdminAccess } from "@/lib/roleUtils";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 
 /** Validates a UK Companies House registration number. */
 function isValidCompanyNumber(num: string): boolean {
@@ -283,24 +284,19 @@ const SellerProfile = () => {
       // If stripeConnectStatus is already 'active' and the profile is now complete,
       // the seller will be promoted to 'active' automatically.
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData.session?.access_token;
-        if (token) {
-          const res = await fetch("/.netlify/functions/recheck-activation", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (res.ok) {
-            const data = await res.json() as { sellerStatus?: string };
-            if (data.sellerStatus) {
-              setSellerStatus(data.sellerStatus);
-              if (data.sellerStatus === "active") {
-                toast({
-                  title: "Your store is now live! 🎉",
-                  description: "Your seller account has been activated. Redirecting to your dashboard…",
-                });
-                setTimeout(() => window.location.replace("/seller"), 1800);
-              }
+        const res = await authorizedFetch("/.netlify/functions/recheck-activation", {
+          method: "POST",
+        });
+        if (res.ok) {
+          const data = await res.json() as { sellerStatus?: string };
+          if (data.sellerStatus) {
+            setSellerStatus(data.sellerStatus);
+            if (data.sellerStatus === "active") {
+              toast({
+                title: "Your store is now live! 🎉",
+                description: "Your seller account has been activated. Redirecting to your dashboard…",
+              });
+              setTimeout(() => window.location.replace("/seller"), 1800);
             }
           }
         }

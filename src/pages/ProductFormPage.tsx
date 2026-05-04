@@ -11,6 +11,7 @@ import ShippingMethodSelector from '../components/ShippingMethodSelector';
 import { toast } from '../hooks/use-toast';
 import { copyToClipboard } from '../lib/clipboard';
 import { trackPublishListing, trackStartListing, trackShareProduct, trackCopyLink } from '../lib/analytics';
+import { authorizedFetch } from '../lib/authorizedFetch';
 
 // Listing types that require bulk/pallet-specific fields
 const BULK_PRODUCT_TYPES: ProductType[] = ['pallet', 'lot', 'wholesale'];
@@ -362,20 +363,11 @@ export default function ProductFormPage() {
         isActive: publishMode,
       };
 
-      // Fetch bearer token for the serverless functions
-      const { data: { session: authSession } } = await supabase.auth.getSession();
-      if (!authSession?.access_token) throw new Error('No auth session found — please sign in again.');
-      const authHeaders = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authSession.access_token}`,
-      };
-
       if (id && hasActiveOrders && !isAdmin) {
         // Locked product — only allow non-critical fields via update-product
         const { description, images, specifications, weight, dimensions, palletInfo } = productData;
-        const res = await fetch('/.netlify/functions/update-product', {
+        const res = await authorizedFetch('/.netlify/functions/update-product', {
           method: 'POST',
-          headers: authHeaders,
           body: JSON.stringify({
             id,
             description,
@@ -396,9 +388,8 @@ export default function ProductFormPage() {
         setSuccessMessage('Product updated. Critical fields were not changed as orders exist.');
       } else if (id) {
         // Full update via update-product
-        const res = await fetch('/.netlify/functions/update-product', {
+        const res = await authorizedFetch('/.netlify/functions/update-product', {
           method: 'POST',
-          headers: authHeaders,
           body: JSON.stringify({
             id,
             ...productData,
@@ -413,9 +404,8 @@ export default function ProductFormPage() {
         setSuccessMessage(publishMode ? 'Product updated and published.' : 'Draft saved successfully.');
       } else {
         // Create new product via create-product (backend sets isApproved)
-        const res = await fetch('/.netlify/functions/create-product', {
+        const res = await authorizedFetch('/.netlify/functions/create-product', {
           method: 'POST',
-          headers: authHeaders,
           body: JSON.stringify({
             ...productData,
             listingContext,

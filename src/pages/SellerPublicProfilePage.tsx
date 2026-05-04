@@ -14,6 +14,7 @@ import type { Product as CatalogProduct } from '@/components/catalog/ProductCard
 import BreadcrumbNav from '../components/BreadcrumbNav';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuthStore } from '../store';
+import SEO from '@/components/SEO';
 
 interface SellerData extends SellerProfile {
   createdAt?: string;
@@ -131,8 +132,21 @@ export default function SellerPublicProfilePage() {
     );
   }
 
+  const sellerName = seller.businessName || seller.store?.storeName || 'Seller';
+  const sellerDescription = seller.store?.storeDescription
+    ? seller.store.storeDescription
+    : `Browse products from ${sellerName} on Loadify Market — a UK multi-category marketplace.`;
+  const sellerImage = seller.store?.storeLogo || seller.store?.storeBanner;
+
   return (
     <MainLayout>
+      <SEO
+        title={`${sellerName} | Loadify Market`}
+        description={sellerDescription}
+        canonical={`/seller/${slug}`}
+        ogType="profile"
+        {...(sellerImage ? { ogImage: sellerImage } : {})}
+      />
       <main className="flex-1 pt-28">
       {/* Breadcrumb */}
       <div className="container-cinematic py-4">
@@ -140,7 +154,7 @@ export default function SellerPublicProfilePage() {
           items={[
             { label: "Home", to: "/" },
             { label: "Catalog", to: "/catalog" },
-            { label: seller.businessName || seller.store?.storeName || "Seller" },
+            { label: sellerName },
           ]}
           showBack={true}
           backLabel="Back to Catalog"
