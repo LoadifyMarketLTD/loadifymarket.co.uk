@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, Filter } from 'lucide-react';
+import { Bell, Search, Filter, Camera } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
 import MobileSearchOverlay from '@/components/MobileSearchOverlay';
@@ -162,7 +162,7 @@ export default function MobileAppHeader() {
         {/* Search bar — taps open full-screen overlay */}
         <button
           onClick={() => setSearchOpen(true)}
-          aria-label="Search for anything"
+          aria-label="Search for items or members"
           style={{
             flex: 1,
             height: 44,
@@ -189,10 +189,15 @@ export default function MobileAppHeader() {
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
+              flex: 1,
             }}
           >
-            Search for anything...
+            Search for items or members
           </span>
+          <Camera
+            style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}
+            aria-hidden="true"
+          />
         </button>
 
         {/* Filter button */}
