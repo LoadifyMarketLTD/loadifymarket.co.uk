@@ -23,6 +23,7 @@ const MobileInboxPage     = lazy(() => import('./pages/MobileInboxPage'));
 const MobileChatPage      = lazy(() => import('./pages/MobileChatPage'));
 const MobileOrdersPage    = lazy(() => import('./pages/MobileOrdersPage'));
 const MobileCategoriesPage = lazy(() => import('./pages/MobileCategoriesPage'));
+const MobileProfilePage   = lazy(() => import('./pages/MobileProfilePage'));
 
 // ─── Homepage ─────────────────────────────────────────────────────────────────
 const Home                 = lazy(() => import('./pages/Home'));
@@ -593,6 +594,9 @@ function App() {
 
         {/* ── Mobile categories list — public browsing, no auth required ──────── */}
         <Route path="categories" element={<Suspense fallback={<PageLoader />}><MobileCategoriesPage /></Suspense>} />
+
+        {/* ── Mobile profile / account hub — public, shows login CTA for guests ─ */}
+        <Route path="profile" element={<Suspense fallback={<PageLoader />}><MobileProfilePage /></Suspense>} />
 
         {/* ── Mobile sell wizard — simplified 4-step sell flow for the APK ──────── */}
         {/* Uses RequireSeller: unauthenticated → /login, draft → /onboarding, active → wizard */}

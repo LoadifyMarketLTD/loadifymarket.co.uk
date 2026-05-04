@@ -17,14 +17,15 @@ interface Category {
 }
 
 const CATEGORIES: Category[] = [
-  { id: 'all',           label: 'All',             to: '/catalog',                    match: '' },
-  { id: 'electronics',   label: 'Electronics',     to: '/category/electrical',        match: '/category/electrical' },
-  { id: 'fashion',       label: 'Fashion',         to: '/category/wholesale-clothing', match: '/category/wholesale-clothing' },
-  { id: 'home',          label: 'Home',            to: '/category/homeware',           match: '/category/homeware' },
-  { id: 'sports',        label: 'Sports',          to: '/category/sports-fitness',     match: '/category/sports-fitness' },
-  { id: 'beauty',        label: 'Beauty',          to: '/category/health-beauty',      match: '/category/health-beauty' },
-  { id: 'collectibles',  label: 'Collectibles',    to: '/category/toys',               match: '/category/toys' },
-  { id: 'entertainment', label: 'Entertainment',   to: '/category/entertainment',      match: '/category/entertainment' },
+  { id: 'all',           label: 'All',                    to: '/catalog',                    match: '' },
+  { id: 'home',          label: 'Home',                   to: '/category/homeware',          match: '/category/homeware' },
+  { id: 'electronics',   label: 'Electronics',            to: '/category/electrical',        match: '/category/electrical' },
+  { id: 'entertainment', label: 'Entertainment',          to: '/category/entertainment',     match: '/category/entertainment' },
+  { id: 'hobbies',       label: 'Hobbies & Collectables', to: '/category/toys',              match: '/category/toys' },
+  { id: 'sports',        label: 'Sports',                 to: '/category/sports-fitness',    match: '/category/sports-fitness' },
+  { id: 'vehicles',      label: 'Vehicles',               to: '/category/vehicles',          match: '/category/vehicles' },
+  { id: 'fashion',       label: 'Fashion',                to: '/category/wholesale-clothing',match: '/category/wholesale-clothing' },
+  { id: 'kids',          label: 'Kids',                   to: '/category/kids',              match: '/category/kids' },
 ];
 
 export default function MobileCategoryShortcuts() {

@@ -1,8 +1,8 @@
 /**
- * MobileBottomNav — pixel-perfect match to reference image.
+ * MobileBottomNav — mobile bottom navigation bar.
  *
  * Items (left → right):
- *   Home (house) | Categories (grid) | Sell (big gold circle +) | Messages (chat + unread badge) | Profile (person)
+ *   Home | Search | Sell (gold circle) | Inbox (with unread badge) | Profile
  *
  * "Home" links to "/" (exact active match).
  * "Sell" is elevated above the bar with a large gold circle.
@@ -11,7 +11,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, MessageCircle, Plus, LayoutGrid, User } from 'lucide-react';
+import { Home, Search, Plus, Mail, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
@@ -94,11 +94,11 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
     <Link
       to="/inbox"
       className="flex flex-col items-center gap-1 px-3 py-2"
-      aria-label={`Messages${unread > 0 ? `, ${unread} unread` : ''}`}
+      aria-label={`Inbox${unread > 0 ? `, ${unread} unread` : ''}`}
       style={{ textDecoration: 'none', minHeight: '44px', justifyContent: 'center' }}
     >
       <div style={{ position: 'relative' }}>
-        <MessageCircle
+        <Mail
           style={{
             width: '22px',
             height: '22px',
@@ -144,7 +144,7 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
           whiteSpace: 'nowrap',
         }}
       >
-        Messages
+        Inbox
       </span>
     </Link>
   );
@@ -156,11 +156,7 @@ export default function MobileBottomNav() {
   const location = useLocation();
   const { user } = useAuthStore();
 
-  const profilePath =
-    user?.role === 'seller' ? '/seller' :
-    user?.role === 'admin'  ? '/admin'  :
-    user                    ? '/buyer/profile' :
-    '/login';
+  const profilePath = '/profile';
 
   const sellPath = user ? '/sell' : '/register?type=seller';
 
@@ -186,8 +182,8 @@ export default function MobileBottomNav() {
         {/* Home */}
         <NavItem to="/" icon={Home} label="Home" isActive={isHomeActive} exact />
 
-        {/* Categories */}
-        <NavItem to="/categories" icon={LayoutGrid} label="Categories" isActive={isActive('/categories')} />
+        {/* Search */}
+        <NavItem to="/categories" icon={Search} label="Search" isActive={isActive('/categories')} />
 
         {/* Sell — elevated large gold circle */}
         <Link
