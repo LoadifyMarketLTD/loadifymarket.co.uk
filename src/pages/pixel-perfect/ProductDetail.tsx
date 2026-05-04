@@ -20,7 +20,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Flag, MessageSquare, Tag, ShoppingCart, ArrowLeft, Share2, Heart, Shield, Lock, Star, ChevronRight } from "lucide-react";
+import { Flag, Tag, ShoppingCart, ArrowLeft, Share2, Heart, Shield, Lock, Star, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { copyToClipboard } from "@/lib/clipboard";
 import { isCapacitorNative } from "@/lib/capacitorUtils";
@@ -32,7 +32,6 @@ import {
   trackProductView,
   trackShareProduct,
   trackCopyLink,
-  trackMessageSeller,
   trackAddToCart,
 } from "@/lib/analytics";
 
@@ -258,7 +257,7 @@ const ProductDetail = () => {
     };
 
     fetchProduct();
-  }, [id]);
+  }, [id, user?.id]);
 
   if (loading) {
     return (
@@ -370,19 +369,6 @@ const ProductDetail = () => {
       return null;
     }
     return created?.id ?? null;
-  };
-
-  const handleMessageSeller = async () => {
-    if (!user) { navigate("/login", { state: { from: `/product/${id}` } }); return; }
-    trackMessageSeller(product.id);
-    setCtaLoading(true);
-    try {
-      const convId = await getOrCreateConversation();
-      if (convId) navigate(`/inbox/${convId}`);
-      else toast({ title: "Could not open conversation", variant: "destructive" });
-    } finally {
-      setCtaLoading(false);
-    }
   };
 
   const handleMakeOffer = async () => {
