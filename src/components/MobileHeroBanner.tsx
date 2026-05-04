@@ -9,6 +9,7 @@ import type React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store';
 import { hasSellerAccess } from '@/lib/roleUtils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 /* ─── Slide 1: photo visual — yellow chair ───────────────────────────────── */
 function ChairPhotoVisual() {
@@ -213,6 +214,7 @@ const dotVisualStyle = (active: boolean): React.CSSProperties => ({
 export default function MobileHeroBanner() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const isMobile = useIsMobile();
   const [current, setCurrent] = useState(0);
   const touchStartX = useRef<number | null>(null);
 
@@ -223,7 +225,9 @@ export default function MobileHeroBanner() {
 
   const handleCTA = (action: string, requiresSeller: boolean) => {
     if (requiresSeller && hasSellerAccess(user)) {
-      navigate('/seller/products/new');
+      // On mobile viewports (browser or APK) use the simplified sell wizard;
+      // desktop users go to the full product form.
+      navigate(isMobile ? '/sell' : '/seller/products/new');
     } else {
       navigate(action);
     }

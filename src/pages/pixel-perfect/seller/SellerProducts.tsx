@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { copyToClipboard } from "@/lib/clipboard";
 import { trackShareProduct, trackCopyLink } from "@/lib/analytics";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 /** Branded Loadify Market "LM" placeholder shown when a product has no image. */
 function LMPlaceholder({ size = 48 }: { size?: number }) {
@@ -106,6 +107,7 @@ function facebookDebugUrl(productId: string) {
 const SellerProducts = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -265,7 +267,7 @@ const SellerProducts = () => {
           </p>
         </div>
         <Button size="sm" className="bg-gradient-hero text-primary-foreground" asChild>
-          <Link to="/seller/products/new">
+          <Link to={isMobile ? '/sell' : '/seller/products/new'}>
             <Plus className="mr-2 h-4 w-4" /> Add Product
           </Link>
         </Button>
