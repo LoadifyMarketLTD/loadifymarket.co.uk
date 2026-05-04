@@ -792,9 +792,12 @@ const ProductDetail = () => {
 
                 {/* Activity indicator */}
                 {(product.views ?? 0) > 0 && (
-                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "12px", display: "flex", alignItems: "center", gap: "5px" }}>
-                    <span>👁️</span>
-                    <span>{product.views.toLocaleString()} {product.views === 1 ? "view" : "views"}</span>
+                  <p
+                    style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "12px", display: "flex", alignItems: "center", gap: "5px" }}
+                    aria-label={`${product.views.toLocaleString()} ${product.views === 1 ? "view" : "views"}`}
+                  >
+                    <span aria-hidden="true">👁️</span>
+                    <span aria-hidden="true">{product.views.toLocaleString()} {product.views === 1 ? "view" : "views"}</span>
                   </p>
                 )}
 

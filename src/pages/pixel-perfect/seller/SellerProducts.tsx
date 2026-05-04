@@ -202,13 +202,14 @@ const SellerProducts = () => {
 
   // ── Delete listing ────────────────────────────────────────────────────────
   const handleDeleteConfirm = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget || !user) return;
     setDeleteLoading(true);
     try {
       const { error } = await supabase
         .from("products")
         .delete()
-        .eq("id", deleteTarget.id);
+        .eq("id", deleteTarget.id)
+        .eq("sellerId", user.id); // RLS: only owner can delete
       if (error) throw error;
       setProducts((prev) => prev.filter((p) => p.id !== deleteTarget.id));
       toast({ title: "Listing deleted", description: `"${deleteTarget.title}" has been removed.` });
@@ -223,13 +224,14 @@ const SellerProducts = () => {
 
   // ── Mark as Sold ──────────────────────────────────────────────────────────
   const handleMarkSoldConfirm = async () => {
-    if (!soldTarget) return;
+    if (!soldTarget || !user) return;
     setSoldLoading(true);
     try {
       const { error } = await supabase
         .from("products")
         .update({ isActive: false, stockQuantity: 0, stockStatus: "out_of_stock" })
-        .eq("id", soldTarget.id);
+        .eq("id", soldTarget.id)
+        .eq("sellerId", user.id); // RLS: only owner can update
       if (error) throw error;
       setProducts((prev) =>
         prev.map((p) =>
