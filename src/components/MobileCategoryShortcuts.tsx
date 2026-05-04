@@ -11,7 +11,6 @@
  *  3. Unsplash product-photo URL as reliable network fallback
  */
 
-import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useCategoryImages } from '@/hooks/useCategoryImages';
 
@@ -109,8 +108,6 @@ function makeErrorHandler(staticImage: string, unsplashFallback: string) {
 
 export default function MobileCategoryShortcuts() {
   const dbImages = useCategoryImages();
-  // Track whether we've resolved each category's DB image to avoid re-rendering flicker
-  const resolvedRef = useRef<Record<string, string>>({});
 
   return (
     <section aria-label="Browse by category" style={{ paddingTop: 20 }}>
@@ -143,9 +140,7 @@ export default function MobileCategoryShortcuts() {
         <div style={{ display: 'flex', gap: 16, width: 'max-content' }}>
           {CATEGORIES.map(({ id, label, dbSlug, staticImage, unsplashFallback, to }) => {
             // DB image takes priority; fall back to static PNG path
-            const resolved = resolvedRef.current;
-            if (dbImages[dbSlug] && !resolved[id]) resolved[id] = dbImages[dbSlug];
-            const imageSrc = resolved[id] ?? dbImages[dbSlug] ?? staticImage;
+            const imageSrc = dbImages[dbSlug] ?? staticImage;
 
             return (
               <Link
