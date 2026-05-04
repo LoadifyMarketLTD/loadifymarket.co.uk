@@ -21,7 +21,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Flag, Tag, ShoppingCart, ArrowLeft, Share2, Heart, Shield, Lock, Star, ChevronRight } from "lucide-react";
+import { Flag, Tag, ShoppingCart, ArrowLeft, Share2, Heart, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { copyToClipboard } from "@/lib/clipboard";
 import { isCapacitorNative } from "@/lib/capacitorUtils";
@@ -719,21 +719,6 @@ const ProductDetail = () => {
                   {product.title}
                 </h1>
 
-                {/* Rating */}
-                {product.rating > 0 && (
-                  <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "12px" }}>
-                    <Star style={{ width: "16px", height: "16px", color: "#F5B942", fill: "#F5B942" }} />
-                    <span style={{ fontSize: "14px", fontWeight: 600, color: "#F5B942" }}>
-                      {product.rating.toFixed(1)}
-                    </span>
-                    {(product.reviewCount ?? 0) > 0 && (
-                      <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.50)" }}>
-                        ({product.reviewCount} reviews)
-                      </span>
-                    )}
-                  </div>
-                )}
-
                 {/* Price */}
                 <p style={{ fontSize: "26px", fontWeight: 800, color: "#FFFFFF", marginBottom: "4px" }}>
                   £{product.price.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
@@ -849,66 +834,6 @@ const ProductDetail = () => {
                     <span className="text-red-400 text-sm font-semibold">✕ This item has been sold</span>
                   </div>
                 )}
-
-                {/* Buyer Protection */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "12px",
-                    padding: "14px 0",
-                    borderTop: "1px solid rgba(255,255,255,0.07)",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "50%",
-                      background: "rgba(255,255,255,0.07)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Shield style={{ width: "18px", height: "18px", color: "rgba(255,255,255,0.70)" }} />
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "13px", fontWeight: 700, color: "#FFFFFF", marginBottom: "2px" }}>Buyer Protection</p>
-                    <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.50)" }}>Get your money back if item is not as described.</p>
-                  </div>
-                </div>
-
-                {/* Secure Payments */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "12px",
-                    padding: "14px 0",
-                    borderTop: "1px solid rgba(255,255,255,0.07)",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "50%",
-                      background: "rgba(255,255,255,0.07)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Lock style={{ width: "18px", height: "18px", color: "rgba(255,255,255,0.70)" }} />
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "13px", fontWeight: 700, color: "#FFFFFF", marginBottom: "2px" }}>Secure Payments</p>
-                    <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.50)" }}>Your payment information is encrypted.</p>
-                  </div>
-                </div>
               </div>
             )}
 
@@ -964,46 +889,26 @@ const ProductDetail = () => {
             {/* Description + Reviews — third on mobile, below gallery on desktop */}
             <div className="order-3 lg:col-start-1 lg:row-start-2 space-y-8">
               {/* Description */}
-              <div className="bg-card rounded-xl border border-border p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-display text-lg font-semibold text-foreground">Description</h2>
-                  <button
-                    className="md:hidden text-xs font-medium"
-                    style={{ color: "rgba(255,255,255,0.50)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
-                    onClick={() => setDescExpanded((d) => !d)}
+              {productDescription.trim().length > 0 && (
+                <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-display text-lg font-semibold text-foreground">Description</h2>
+                    <button
+                      className="md:hidden text-xs font-medium"
+                      style={{ color: "rgba(255,255,255,0.50)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                      onClick={() => setDescExpanded((d) => !d)}
+                    >
+                      {descExpanded ? "Show less" : "Show more"}
+                    </button>
+                  </div>
+                  {/* Desktop: always visible. Mobile: collapsed until expanded. */}
+                  <div
+                    className={`text-sm text-muted-foreground leading-relaxed whitespace-pre-line md:max-h-none md:overflow-visible ${!descExpanded ? "overflow-hidden max-h-[72px]" : ""}`}
                   >
-                    {descExpanded ? "Show less" : "Show more"}
-                  </button>
+                    {productDescription.trim()}
+                  </div>
                 </div>
-                {/* Desktop: always visible. Mobile: collapsed until expanded. */}
-                <div
-                  className={`text-sm text-muted-foreground leading-relaxed space-y-3 md:max-h-none md:overflow-visible ${!descExpanded ? "overflow-hidden max-h-[72px]" : ""}`}
-                >
-                  <p>
-                    This {product.condition.toLowerCase()} condition lot includes {product.unitCount}{" "}
-                    {product.unitCount === 1 ? "lot" : "lots"} of {product.category.toLowerCase()} items.
-                    {product.location ? ` Located in ${product.location}, available for collection or delivery UK-wide.` : "Available for UK-wide delivery."}
-                  </p>
-                  <p>
-                    All items have been sourced from reputable UK retailers and brands. Ideal for
-                    resellers, market traders, online sellers, and wholesale buyers looking for
-                    quality products at below-retail prices.
-                  </p>
-                  <h3 className="font-display text-sm font-semibold text-foreground pt-2">What's Included</h3>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Mixed brands and product types within {detailsCategoryLabel}</li>
-                    <li>Detailed manifest available upon request</li>
-                    <li>Condition: {product.condition}</li>
-                    <li>All items are UK sourced with full traceability</li>
-                  </ul>
-                  <h3 className="font-display text-sm font-semibold text-foreground pt-2">Shipping & Collection</h3>
-                  <ul className="list-disc list-inside space-y-1">
-                    {product.location && <li>Collection available from {product.location}</li>}
-                    <li>UK mainland delivery available (quote on request)</li>
-                    <li>Items are securely packaged and ready for dispatch</li>
-                  </ul>
-                </div>
-              </div>
+              )}
 
               {/* Reviews */}
               <ProductReviews
