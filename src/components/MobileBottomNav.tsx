@@ -2,7 +2,7 @@
  * MobileBottomNav — pixel-perfect match to reference image.
  *
  * Items (left → right):
- *   Home (house) | Messages (chat + unread badge) | Sell Item (big gold circle +) | Orders (bag) | Profile (person)
+ *   Home (house) | Categories (grid) | Sell Item (big gold circle +) | Messages (chat + unread badge) | Profile (person)
  *
  * "Home" links to "/" (exact active match).
  * "Sell Item" is elevated above the bar with a large gold circle.

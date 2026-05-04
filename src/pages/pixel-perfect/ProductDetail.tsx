@@ -729,8 +729,8 @@ const ProductDetail = () => {
                 <p style={{ fontSize: "26px", fontWeight: 800, color: "#FFFFFF", marginBottom: "4px" }}>
                   £{product.price.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
                 </p>
-                <p style={{ fontSize: "13px", color: "#22C55E", fontWeight: 600, marginBottom: "16px" }}>
-                  Free shipping
+                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", fontWeight: 500, marginBottom: "16px" }}>
+                  Shipping calculated at checkout
                 </p>
 
                 <div style={{ height: "1px", background: "rgba(255,255,255,0.07)" }} />

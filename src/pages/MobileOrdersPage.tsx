@@ -25,6 +25,7 @@ interface OrderRow {
   total: number;
   status: string;
   createdAt: string;
+  quantity: number;
   productTitle: string | null;
   productImage: string | null;
   conversationId: string | null;
@@ -197,7 +198,7 @@ function OrderCard({
         </p>
 
         {/* Qty */}
-        <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "3px" }}>Qty: 1</p>
+        <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "3px" }}>Qty: {order.quantity}</p>
 
         {/* Date + price */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -251,7 +252,7 @@ export default function MobileOrdersPage() {
         const { data } = await supabase
           .from("orders")
           .select(
-            `id, orderNumber, total, status, createdAt, offerId,
+            `id, orderNumber, total, status, createdAt, offerId, quantity,
              products:productId(title, images)`
           )
           .eq("buyerId", user.id)
@@ -269,6 +270,7 @@ export default function MobileOrdersPage() {
             total: number;
             status: string;
             createdAt: string;
+            quantity: number;
             offerId: string | null;
             products: { title: string; images: string[] | null } | null;
           }>
@@ -296,6 +298,7 @@ export default function MobileOrdersPage() {
             total: number;
             status: string;
             createdAt: string;
+            quantity: number;
             offerId: string | null;
             products: { title: string; images: string[] | null } | null;
           }>
@@ -305,6 +308,7 @@ export default function MobileOrdersPage() {
           total: o.total,
           status: o.status,
           createdAt: o.createdAt,
+          quantity: o.quantity ?? 1,
           productTitle: o.products?.title ?? null,
           productImage: (o.products?.images ?? [])[0] ?? null,
           conversationId: o.offerId ? (convMap[o.offerId] ?? null) : null,
@@ -338,13 +342,13 @@ export default function MobileOrdersPage() {
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: "#0B0F1A" }}
+      style={{ background: "#07080B" }}
     >
       {/* ── Header ── */}
       <div
         className="shrink-0 px-4 sticky top-0 z-10"
         style={{
-          background: "rgba(11,15,26,0.97)",
+          background: "rgba(7,8,11,0.97)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
           borderBottom: "1px solid rgba(255,255,255,0.07)",

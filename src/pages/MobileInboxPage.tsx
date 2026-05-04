@@ -41,6 +41,7 @@ interface Conversation extends ConversationRow {
   other: Participant;
   unreadCount: number;
   lastMessagePreview: string | null;
+  lastMessageSenderId: string | null;
   productTitle: string | null;
   productImage: string | null;
 }
@@ -146,19 +147,21 @@ export default function MobileInboxPage() {
           unreadMap.set(r.conversationId, (unreadMap.get(r.conversationId) ?? 0) + 1);
         });
 
-        // Last message per conversation
+        // Last message per conversation (with senderId for "Sent" tab)
         const convIds = convRows.map((r) => r.id);
         const lastMsgMap = new Map<string, string>();
+        const lastMsgSenderMap = new Map<string, string>();
         if (convIds.length > 0) {
           const { data: lastMsgs } = await supabase
             .from("messages")
-            .select("conversationId, message")
+            .select("conversationId, message, senderId")
             .in("conversationId", convIds)
             .order("createdAt", { ascending: false })
             .limit(Math.max(convIds.length * 5, 20));
-          (lastMsgs ?? []).forEach((m: { conversationId: string; message: string }) => {
+          (lastMsgs ?? []).forEach((m: { conversationId: string; message: string; senderId: string }) => {
             if (!lastMsgMap.has(m.conversationId)) {
               lastMsgMap.set(m.conversationId, m.message);
+              lastMsgSenderMap.set(m.conversationId, m.senderId);
             }
           });
         }
@@ -184,6 +187,7 @@ export default function MobileInboxPage() {
             other: userMap.get(otherId) ?? { id: otherId, firstName: null, lastName: null, email: "Unknown" },
             unreadCount: unreadMap.get(r.id) ?? 0,
             lastMessagePreview: lastMsgMap.get(r.id) ?? null,
+            lastMessageSenderId: lastMsgSenderMap.get(r.id) ?? null,
             productTitle: r.subject ?? null,
             productImage: r.productId ? (productImageMap.get(r.productId) ?? null) : null,
           };
@@ -205,7 +209,7 @@ export default function MobileInboxPage() {
   const tabFiltered = conversations.filter((c) => {
     if (activeTab === "inbox") return !c.isArchived;
     if (activeTab === "unread") return !c.isArchived && c.unreadCount > 0;
-    if (activeTab === "sent") return !c.isArchived;
+    if (activeTab === "sent") return !c.isArchived && c.lastMessageSenderId === user?.id;
     if (activeTab === "archive") return c.isArchived;
     return true;
   });
