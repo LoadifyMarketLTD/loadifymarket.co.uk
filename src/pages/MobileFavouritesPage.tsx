@@ -26,9 +26,16 @@ export default function MobileFavouritesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) { setLoading(false); return; }
-    (async () => {
-      setLoading(true);
+    let cancelled = false;
+
+    async function loadFavourites() {
+      if (!user) {
+        if (!cancelled) { setItems([]); setLoading(false); }
+        return;
+      }
+
+      if (!cancelled) setLoading(true);
+
       const { data: wishlist } = await supabase
         .from('wishlists')
         .select('productIds')
@@ -37,7 +44,10 @@ export default function MobileFavouritesPage() {
 
       const productIds: string[] = (wishlist as { productIds?: string[] } | null)?.productIds ?? [];
 
-      if (productIds.length === 0) { setItems([]); setLoading(false); return; }
+      if (productIds.length === 0) {
+        if (!cancelled) { setItems([]); setLoading(false); }
+        return;
+      }
 
       const { data: products } = await supabase
         .from('products')
@@ -45,10 +55,16 @@ export default function MobileFavouritesPage() {
         .in('id', productIds)
         .eq('isActive', true);
 
-      setItems((products ?? []) as FavouriteItem[]);
-      setLoading(false);
-    })();
-  }, [user?.id]);
+      if (!cancelled) {
+        setItems((products ?? []) as FavouriteItem[]);
+        setLoading(false);
+      }
+    }
+
+    void loadFavourites();
+
+    return () => { cancelled = true; };
+  }, [user]);
 
   const formatPrice = (p: number) =>
     p.toLocaleString('en-GB', { style: 'currency', currency: 'GBP' });

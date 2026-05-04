@@ -23,7 +23,7 @@ interface NotificationRow {
   createdAt: string;
 }
 
-const RELEVANT_TYPES = new Set(['message', 'order', 'new_offer', 'offer']);
+const RELEVANT_TYPES = ['message', 'order', 'new_offer', 'offer'] as const;
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', {
@@ -55,7 +55,7 @@ export default function MobileNotificationsPage() {
         .from('notifications')
         .select('id, type, title, message, link, isRead, createdAt')
         .eq('userId', user.id)
-        .in('type', ['message', 'order', 'new_offer', 'offer'])
+        .in('type', RELEVANT_TYPES)
         .order('createdAt', { ascending: false })
         .limit(50);
       setItems((data as NotificationRow[]) ?? []);
