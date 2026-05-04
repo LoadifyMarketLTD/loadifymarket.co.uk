@@ -1,9 +1,9 @@
 /**
  * MobileProfilePage — mobile profile / account hub.
  *
- * Clean sectioned menu for all user types on mobile.
+ * Sections: TOP (user card) / MAIN / TOOLS / SETTINGS / SUPPORT
  * Unauthenticated users see a login/register CTA.
- * All sections are simple list rows with a chevron — no badges or clutter.
+ * Simple list rows with chevron — no descriptions or clutter.
  */
 
 import { useNavigate, Link } from 'react-router-dom';
@@ -28,53 +28,34 @@ function buildSections(role: string | undefined): Section[] {
 
   return [
     {
-      title: 'My Activity',
+      title: 'Main',
       items: [
-        { label: isSellerOrAdmin ? 'My Listings' : 'Browse Listings', to: isSellerOrAdmin ? '/seller/products' : '/catalog' },
-        { label: 'Saved Items', to: '/buyer/wishlist' },
-        { label: 'My Orders', to: '/orders' },
-        { label: 'Messages', to: '/inbox' },
+        { label: 'My listings', to: isSellerOrAdmin ? '/seller/products' : '/catalog' },
+        { label: 'Favourite items', to: '/buyer/wishlist' },
+        { label: 'Orders', to: '/orders' },
+        { label: 'Balance', to: '/profile/balance' },
       ],
     },
     ...(isSellerOrAdmin ? [
       {
-        title: 'Earnings',
+        title: 'Tools',
         items: [
-          { label: 'Earnings', to: '/seller/earnings' },
-          { label: 'Payouts', to: '/seller/payouts' },
-        ],
-      },
-      {
-        title: 'Selling Tools',
-        items: [
-          { label: 'Promote Listings', to: '/seller/promote' },
-          { label: 'Discounts', to: '/seller/discounts' },
-          { label: 'Vacation Mode', to: '/seller/settings' },
+          { label: 'Promotional tools', to: '/seller/promote' },
         ],
       },
     ] : []),
     {
-      title: 'Account',
+      title: 'Settings',
       items: [
-        { label: 'Account Settings', to: isSellerOrAdmin ? '/seller/settings' : '/buyer/settings' },
-        ...(isSellerOrAdmin ? [{ label: 'Verification', to: '/seller/verification' }] : []),
-        { label: 'Notifications', to: isSellerOrAdmin ? '/seller/notifications' : '/buyer/notifications' },
+        { label: 'Settings', to: isSellerOrAdmin ? '/seller/settings' : '/buyer/settings' },
+        { label: 'Security', to: '/profile/security' },
+        { label: 'Notifications', to: '/profile/notifications' },
       ],
     },
     {
-      title: 'Help',
+      title: 'Support',
       items: [
-        { label: 'Help Centre', to: '/help' },
-        { label: 'Contact Support', to: '/contact' },
-      ],
-    },
-    {
-      title: 'Legal',
-      items: [
-        { label: 'Privacy Policy', to: '/privacy' },
-        { label: 'Terms & Conditions', to: '/terms' },
-        { label: 'Cookies', to: '/cookies' },
-        { label: 'About Loadify Market', to: '/about' },
+        { label: 'Help Centre', to: '/faq' },
       ],
     },
   ];
