@@ -126,7 +126,7 @@ const PlatformFeatures = () => {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-white">{b.title}</p>
-                    <p className="text-xs text-white/60 mt-0.5 leading-snug">{b.desc}</p>
+                    <p className="text-xs text-white/75 mt-0.5 leading-snug">{b.desc}</p>
                   </div>
                 </li>
               ))}
@@ -167,7 +167,7 @@ const PlatformFeatures = () => {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-white">{b.title}</p>
-                    <p className="text-xs text-white/60 mt-0.5 leading-snug">{b.desc}</p>
+                    <p className="text-xs text-white/75 mt-0.5 leading-snug">{b.desc}</p>
                   </div>
                 </li>
               ))}
@@ -193,7 +193,7 @@ const PlatformFeatures = () => {
           ].map((s) => (
             <div key={s.label}>
               <p className="text-xl sm:text-2xl font-extrabold text-white">{s.value}</p>
-              <p className="text-xs text-white/60 mt-0.5">{s.label}</p>
+              <p className="text-xs text-white/75 mt-0.5">{s.label}</p>
             </div>
           ))}
         </div>

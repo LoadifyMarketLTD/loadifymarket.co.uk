@@ -238,7 +238,7 @@ function SystemEventCard({ event, amountPence }: { event?: string; amountPence?:
     <div className="flex justify-center">
       <div className="max-w-[80%] rounded-2xl px-4 py-2.5 bg-white/5 border border-white/10 text-center">
         <span className="mr-1">{info.icon}</span>
-        <span className="text-xs text-white/60">{info.text}</span>
+        <span className="text-xs text-white/75">{info.text}</span>
       </div>
     </div>
   );
@@ -749,7 +749,7 @@ export default function MobileChatPage() {
       >
         <button
           onClick={() => navigate("/inbox")}
-          className="text-white/60 hover:text-white transition-colors p-1 -ml-1"
+          className="text-white/80 hover:text-white transition-colors p-1 -ml-1"
           aria-label="Back to Inbox"
         >
           <ArrowLeft className="h-5 w-5" />

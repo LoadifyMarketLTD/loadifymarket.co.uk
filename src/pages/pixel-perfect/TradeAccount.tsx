@@ -771,10 +771,10 @@ export default function TradeAccount() {
                   <span className="font-bold text-sm text-[#F59E0B]">Market</span>
                 </span>
               </div>
-              <p className="text-white/60 text-sm leading-relaxed">
+              <p className="text-white/75 text-sm leading-relaxed">
                 A UK marketplace for businesses and individuals to buy and sell products across all categories.
               </p>
-              <div className="space-y-1.5 text-sm text-white/60">
+              <div className="space-y-1.5 text-sm text-white/75">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-3.5 w-3.5 shrink-0" />
                   <span>United Kingdom</span>
@@ -793,7 +793,7 @@ export default function TradeAccount() {
             {/* Quick links */}
             <div>
               <h4 className="font-semibold text-white mb-3">Quick Links</h4>
-              <ul className="space-y-2 text-sm text-white/60">
+              <ul className="space-y-2 text-sm text-white/75">
                 {[
                   { to: "/about", label: "About Us" },
                   { to: "/faq", label: "FAQ" },
@@ -814,7 +814,7 @@ export default function TradeAccount() {
             {/* Account */}
             <div>
               <h4 className="font-semibold text-white mb-3">Your Account</h4>
-              <ul className="space-y-2 text-sm text-white/60">
+              <ul className="space-y-2 text-sm text-white/75">
                 {[
                   { to: "/login", label: "Sign In" },
                   { to: "/signup", label: "Create Account" },

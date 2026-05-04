@@ -92,7 +92,7 @@ const SellerJourneySection = () => (
             {/* Text */}
             <div>
               <p className="text-sm font-bold text-white leading-snug">{step.title}</p>
-              <p className="text-xs text-white/60 mt-0.5">{step.desc}</p>
+              <p className="text-xs text-white/75 mt-0.5">{step.desc}</p>
             </div>
           </div>
         ))}

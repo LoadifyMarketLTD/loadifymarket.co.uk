@@ -89,7 +89,7 @@ const MainScreen = ({
       <button
         ref={closeBtnRef}
         onClick={onClose}
-        className="p-2 text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10"
+        className="p-2 text-white/80 hover:text-white transition-colors rounded-lg hover:bg-white/10"
         aria-label="Close menu"
       >
         <X className="h-5 w-5" />
