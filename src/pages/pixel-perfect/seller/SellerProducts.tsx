@@ -10,6 +10,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { copyToClipboard } from "@/lib/clipboard";
 import { trackShareProduct, trackCopyLink } from "@/lib/analytics";

@@ -22,7 +22,7 @@ async function markOnboardingSeen(): Promise<void> {
   }
 }
 
-export async function hasSeenOnboarding(): Promise<boolean> {
+async function hasSeenOnboarding(): Promise<boolean> {
   if (isCapacitorNative()) {
     const { Preferences } = await import("@capacitor/preferences");
     const { value } = await Preferences.get({ key: ONBOARDING_KEY });
