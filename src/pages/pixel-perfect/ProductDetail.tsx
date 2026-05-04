@@ -135,6 +135,8 @@ const ProductDetail = () => {
   const [mobileWishlistLoading, setMobileWishlistLoading] = useState(false);
   // Mobile quantity selector
   const [mobileQty, setMobileQty] = useState(1);
+  // Mobile description expand/collapse (collapsed by default)
+  const [descExpanded, setDescExpanded] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -736,8 +738,11 @@ const ProductDetail = () => {
                 <p style={{ fontSize: "26px", fontWeight: 800, color: "#FFFFFF", marginBottom: "4px" }}>
                   £{product.price.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
                 </p>
-                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", fontWeight: 500, marginBottom: "16px" }}>
+                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", fontWeight: 500, marginBottom: "4px" }}>
                   Shipping calculated at checkout
+                </p>
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.30)", marginBottom: "16px" }}>
+                  Secure payments via Stripe
                 </p>
 
                 <div style={{ height: "1px", background: "rgba(255,255,255,0.07)" }} />
@@ -757,6 +762,36 @@ const ProductDetail = () => {
                     <span style={{ fontSize: "14px", fontWeight: 600, color: "#FFFFFF" }}>{product.condition}</span>
                     <ChevronRight style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.30)" }} />
                   </div>
+                </div>
+
+                {/* Location row */}
+                {product.location ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "14px 0",
+                      borderBottom: "1px solid rgba(255,255,255,0.07)",
+                    }}
+                  >
+                    <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.60)" }}>Location</span>
+                    <span style={{ fontSize: "14px", fontWeight: 600, color: "#FFFFFF" }}>{product.location}</span>
+                  </div>
+                ) : null}
+
+                {/* Seller row */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "14px 0",
+                    borderBottom: "1px solid rgba(255,255,255,0.07)",
+                  }}
+                >
+                  <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.60)" }}>Seller</span>
+                  <span style={{ fontSize: "14px", fontWeight: 600, color: "#FFFFFF" }}>{product.seller}</span>
                 </div>
 
                 {/* Quantity row */}
@@ -930,8 +965,20 @@ const ProductDetail = () => {
             <div className="order-3 lg:col-start-1 lg:row-start-2 space-y-8">
               {/* Description */}
               <div className="bg-card rounded-xl border border-border p-6 space-y-4">
-                <h2 className="font-display text-lg font-semibold text-foreground">Description</h2>
-                <div className="text-sm text-muted-foreground leading-relaxed space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-display text-lg font-semibold text-foreground">Description</h2>
+                  <button
+                    className="md:hidden text-xs font-medium"
+                    style={{ color: "rgba(255,255,255,0.50)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                    onClick={() => setDescExpanded((d) => !d)}
+                  >
+                    {descExpanded ? "Show less" : "Show more"}
+                  </button>
+                </div>
+                {/* Desktop: always visible. Mobile: collapsed until expanded. */}
+                <div
+                  className={`text-sm text-muted-foreground leading-relaxed space-y-3 md:max-h-none md:overflow-visible ${!descExpanded ? "overflow-hidden max-h-[72px]" : ""}`}
+                >
                   <p>
                     This {product.condition.toLowerCase()} condition lot includes {product.unitCount}{" "}
                     {product.unitCount === 1 ? "lot" : "lots"} of {product.category.toLowerCase()} items.
