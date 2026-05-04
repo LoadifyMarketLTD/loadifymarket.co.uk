@@ -17,18 +17,6 @@ import { useMobileInfiniteFeed } from '@/hooks/useMobileInfiniteFeed';
 import { formatPrice } from '@/lib/formatPrice';
 import type { Product } from '@/components/catalog/ProductCard';
 
-// ── Deterministic avatar colour from seller name ───────────────────────────────
-
-const AVATAR_COLOURS = [
-  '#C8860A', '#2563EB', '#7C3AED', '#059669', '#DC2626',
-  '#0891B2', '#9333EA', '#D97706', '#16A34A', '#EA580C',
-];
-function avatarColour(name: string): string {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
-  return AVATAR_COLOURS[h % AVATAR_COLOURS.length];
-}
-
 // ── Individual product card ────────────────────────────────────────────────────
 
 function ProductGridCard({ product }: { product: Product }) {
