@@ -15,6 +15,7 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Package, AlertCircle, ChevronRight, HelpCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { useAuthPromptStore } from "@/store/authPromptStore";
 import MobileBottomNav from "@/components/MobileBottomNav";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -220,6 +221,7 @@ export default function MobileOrdersPage() {
   const [searchParams] = useSearchParams();
   const deepLinkOrderId = searchParams.get("orderId");
   const { user } = useAuthStore();
+  const promptAuth = useAuthPromptStore((s) => s.open);
 
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -232,7 +234,7 @@ export default function MobileOrdersPage() {
 
   useEffect(() => {
     if (!user?.id) {
-      navigate("/login", { state: { from: "/orders" }, replace: true });
+      promptAuth();
       return;
     }
 
@@ -241,7 +243,7 @@ export default function MobileOrdersPage() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
-          navigate("/login", { state: { from: "/orders" }, replace: true });
+          promptAuth();
           return;
         }
 
@@ -317,7 +319,7 @@ export default function MobileOrdersPage() {
     };
 
     void load();
-  }, [user?.id, navigate]);
+  }, [user?.id, promptAuth]);
 
   // Scroll to deep-linked order once data is loaded
   useEffect(() => {

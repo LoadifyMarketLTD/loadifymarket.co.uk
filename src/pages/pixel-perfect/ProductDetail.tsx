@@ -381,8 +381,8 @@ const ProductDetail = () => {
   };
 
   /** Guards against unauthenticated access and resolves/creates the conversation id. */
-  const requireConversation = async (): Promise<string | null> => {
-    if (!user) { promptAuth(); return null; }
+  const requireConversation = async (context: import('@/store/authPromptStore').AuthPromptContext = null): Promise<string | null> => {
+    if (!user) { promptAuth(context); return null; }
     setCtaLoading(true);
     try {
       const convId = await getOrCreateConversation();
@@ -394,7 +394,7 @@ const ProductDetail = () => {
   };
 
   const handleMobileToggleWishlist = async () => {
-    if (!user) { promptAuth(); return; }
+    if (!user) { promptAuth('save'); return; }
     if (!product) return;
     setMobileWishlistLoading(true);
     try {
@@ -421,7 +421,7 @@ const ProductDetail = () => {
   };
 
   const handleBuyNow = () => {
-    if (!user) { promptAuth(); return; }
+    if (!user) { promptAuth('buy'); return; }
     if (!product) return;
     trackAddToCart(product.id, product.title, product.price);
     addToCart(product, mobileQty);
@@ -429,12 +429,12 @@ const ProductDetail = () => {
   };
 
   const handleMakeOffer = async () => {
-    const convId = await requireConversation();
+    const convId = await requireConversation('offer');
     if (convId) { setOfferConvId(convId); setOfferOpen(true); }
   };
 
   const handleMessage = async () => {
-    const convId = await requireConversation();
+    const convId = await requireConversation('message');
     if (convId) navigate(`/inbox/${convId}`);
   };
 

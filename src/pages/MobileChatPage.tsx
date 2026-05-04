@@ -17,6 +17,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Send, Tag, CheckCircle, XCircle, CreditCard } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { useAuthPromptStore } from "@/store/authPromptStore";
 import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 import { openExternalUrl } from "@/lib/capacitorUtils";
@@ -251,6 +252,7 @@ export default function MobileChatPage() {
 
   const navigate = useNavigate();
   const { user, isLoading } = useAuthStore();
+  const promptAuth = useAuthPromptStore((s) => s.open);
 
   const [convMeta, setConvMeta] = useState<ConversationMeta | null>(null);
   const [otherName, setOtherName] = useState<string>("…");
@@ -282,9 +284,9 @@ export default function MobileChatPage() {
   // Auth guard
   useEffect(() => {
     if (!isLoading && !user) {
-      navigate("/login", { replace: true, state: { from: `/inbox/${conversationId ?? ""}` } });
+      promptAuth('message');
     }
-  }, [user, isLoading, navigate, conversationId]);
+  }, [user, isLoading, promptAuth]);
 
   // Load conversation metadata + other participant name + seller detection
   useEffect(() => {

@@ -2,21 +2,34 @@
  * AuthPromptModal — shown when a guest tries a gated action.
  *
  * "Create an account to continue"
- *   [Create account]  [Log in]
+ *   [Create account]  [Log in]  [Continue browsing]
  *
- * Triggered via useAuthPromptStore().open() from any component.
- * Does NOT force login on browse — only actions (message/buy/sell/save).
+ * Triggered via useAuthPromptStore().open(context?) from any component.
+ * Does NOT force login on browse — only actions (message/buy/sell/save/offer).
  */
 
 import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useAuthPromptStore } from '@/store/authPromptStore';
+import type { AuthPromptContext } from '@/store/authPromptStore';
+
+const CONTEXT_MESSAGES: Record<NonNullable<AuthPromptContext>, string> = {
+  sell: 'Create an account to start selling.',
+  message: 'Create an account to message the seller.',
+  buy: 'Create an account to checkout safely.',
+  offer: 'Create an account to make an offer.',
+  save: 'Create an account to save items.',
+};
+
+const DEFAULT_MESSAGE = 'Sign up in seconds to buy, sell, or message safely.';
 
 export default function AuthPromptModal() {
-  const { isOpen, close } = useAuthPromptStore();
+  const { isOpen, context, close } = useAuthPromptStore();
   const navigate = useNavigate();
 
   if (!isOpen) return null;
+
+  const bodyText = (context && CONTEXT_MESSAGES[context]) ?? DEFAULT_MESSAGE;
 
   const handleRegister = () => {
     close();
@@ -105,7 +118,7 @@ export default function AuthPromptModal() {
             lineHeight: 1.5,
           }}
         >
-          Join Loadify Market to message sellers, buy&nbsp;items,&nbsp;and start selling.
+          {bodyText}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -141,6 +154,23 @@ export default function AuthPromptModal() {
             }}
           >
             Log in
+          </button>
+
+          <button
+            onClick={close}
+            style={{
+              height: 44,
+              borderRadius: 9999,
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 14,
+              fontWeight: 500,
+              color: 'rgba(255,255,255,0.40)',
+              width: '100%',
+            }}
+          >
+            Continue browsing
           </button>
         </div>
       </div>

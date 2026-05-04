@@ -74,6 +74,8 @@ function NavItem({
 
 function MessagesNavButton({ isActive }: { isActive: boolean }) {
   const { user } = useAuthStore();
+  const promptAuth = useAuthPromptStore((s) => s.open);
+  const navigate = useNavigate();
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
@@ -91,12 +93,17 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
     return () => { cancelled = true; };
   }, [user?.id]);
 
+  const handleInbox = () => {
+    if (!user) { promptAuth('message'); return; }
+    navigate('/inbox');
+  };
+
   return (
-    <Link
-      to="/inbox"
+    <button
+      onClick={handleInbox}
       className="flex flex-col items-center gap-1 px-3 py-2"
       aria-label={`Inbox${unread > 0 ? `, ${unread} unread` : ''}`}
-      style={{ textDecoration: 'none', minHeight: '44px', justifyContent: 'center' }}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', minHeight: '44px', justifyContent: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
     >
       <div style={{ position: 'relative' }}>
         <Mail
@@ -147,7 +154,7 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
       >
         Inbox
       </span>
-    </Link>
+    </button>
   );
 }
 
@@ -162,7 +169,7 @@ export default function MobileBottomNav() {
   const profilePath = '/profile';
 
   const handleSell = () => {
-    if (!user) { promptAuth(); return; }
+    if (!user) { promptAuth('sell'); return; }
     navigate('/sell');
   };
 

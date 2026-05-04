@@ -107,7 +107,7 @@ export default function MobileInboxPage() {
   // Auth gate — show prompt modal instead of hard redirect to /login
   useEffect(() => {
     if (!isLoading && !user) {
-      promptAuth();
+      promptAuth('message');
     }
   }, [user, isLoading, promptAuth]);
 
