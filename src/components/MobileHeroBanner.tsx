@@ -56,7 +56,7 @@ export default function MobileHeroBanner() {
               marginBottom: 6,
             }}
           >
-            0% commission
+            0% commission until 31 December 2026
           </p>
           <h2
             style={{
@@ -68,7 +68,7 @@ export default function MobileHeroBanner() {
               letterSpacing: '-0.02em',
             }}
           >
-            Turn clutter into cash
+            Sell fast. Get paid.
           </h2>
           <p
             style={{
@@ -78,7 +78,7 @@ export default function MobileHeroBanner() {
               lineHeight: 1.4,
             }}
           >
-            List anything for free, reach real buyers.
+            List anything in seconds.
           </p>
 
           {/* CTAs */}
@@ -99,7 +99,7 @@ export default function MobileHeroBanner() {
                 whiteSpace: 'nowrap',
               }}
             >
-              Sell now
+              Start selling
             </button>
             <button
               onClick={() => navigate('/help')}
