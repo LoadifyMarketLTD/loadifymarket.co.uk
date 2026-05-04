@@ -100,15 +100,7 @@ export const handler: Handler = async (event) => {
     if (event.httpMethod === 'GET') {
       const { data: rows, error: ordersErr } = await admin
         .from('orders')
-        .select(`
-          id,
-          orderNumber,
-          total,
-          status,
-          createdAt,
-          buyerId,
-          product:products!productId(title)
-        `)
+        .select('id, orderNumber, total, status, createdAt, buyerId, productId')
         .order('createdAt', { ascending: false })
         .limit(100);
 
@@ -131,6 +123,20 @@ export const handler: Handler = async (event) => {
         });
       }
 
+      // Resolve product titles in a separate query (avoids FK hint issues with camelCase columns)
+      const productIds = [...new Set(orderRows.map((o: { productId: string }) => o.productId).filter(Boolean))];
+      const productTitles: Record<string, string> = {};
+
+      if (productIds.length > 0) {
+        const { data: products } = await admin
+          .from('products')
+          .select('id, title')
+          .in('id', productIds);
+        (products ?? []).forEach((p: { id: string; title?: string | null }) => {
+          productTitles[p.id] = p.title || '—';
+        });
+      }
+
       const orders = orderRows.map((o: {
         id: string;
         orderNumber: string | null;
@@ -138,19 +144,16 @@ export const handler: Handler = async (event) => {
         status: string | null;
         createdAt: string | null;
         buyerId: string;
-        product: { title?: string } | { title?: string }[] | null;
-      }) => {
-        const productObj = Array.isArray(o.product) ? o.product[0] : o.product;
-        return {
-          id: o.id,
-          orderNumber: o.orderNumber || o.id.slice(0, 8).toUpperCase(),
-          buyer: buyerNames[o.buyerId] ?? (o.buyerId ? o.buyerId.slice(0, 8).toUpperCase() : '—'),
-          product: productObj?.title || '—',
-          total: o.total ?? 0,
-          status: o.status ?? 'paid',
-          date: formatDate(o.createdAt),
-        };
-      });
+        productId: string;
+      }) => ({
+        id: o.id,
+        orderNumber: o.orderNumber || o.id.slice(0, 8).toUpperCase(),
+        buyer: buyerNames[o.buyerId] ?? (o.buyerId ? o.buyerId.slice(0, 8).toUpperCase() : '—'),
+        product: productTitles[o.productId] ?? '—',
+        total: o.total ?? 0,
+        status: o.status ?? 'paid',
+        date: formatDate(o.createdAt),
+      }));
 
       return {
         statusCode: 200,
