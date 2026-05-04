@@ -54,7 +54,7 @@ const DrawerAccountBlock = ({
             Orders
           </Link>
           <Link
-            to="/buyer/messages"
+            to="/inbox"
             onClick={onClose}
             className="flex items-center gap-3 px-3 h-11 rounded-lg text-sm font-medium text-white/80 hover:text-[#C99A3E] hover:bg-white/[0.07] transition-colors"
           >
@@ -87,7 +87,7 @@ const DrawerAccountBlock = ({
           <Button
             variant="outline"
             size="sm"
-            className="flex-1 h-10 border-white/20 text-white/80 hover:bg-white/10 hover:text-white bg-transparent font-medium rounded-full"
+            className="flex-1 h-10 border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 bg-transparent font-semibold rounded-full"
             onClick={() => {
               onClose();
               onLogout();

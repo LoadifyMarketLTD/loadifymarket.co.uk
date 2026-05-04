@@ -70,7 +70,9 @@ function formatDate(iso: string | null | undefined): string {
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export const handler: Handler = async (event) => {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  // Support both SUPABASE_URL (Netlify dashboard convention) and the VITE_
+  // prefixed variant that build tooling also exports to the environment.
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
@@ -109,7 +111,7 @@ export const handler: Handler = async (event) => {
       const orderRows = rows || [];
 
       // Resolve buyer names from users table
-      const buyerIds = [...new Set(orderRows.map((o: { buyerId: string }) => o.buyerId).filter(Boolean))];
+      const buyerIds = [...new Set(orderRows.map((o: { buyerId: string | null }) => o.buyerId).filter((id): id is string => !!id))];
       const buyerNames: Record<string, string> = {};
 
       if (buyerIds.length > 0) {
@@ -124,7 +126,7 @@ export const handler: Handler = async (event) => {
       }
 
       // Resolve product titles in a separate query (avoids FK hint issues with camelCase columns)
-      const productIds = [...new Set(orderRows.map((o: { productId: string }) => o.productId).filter(Boolean))];
+      const productIds = [...new Set(orderRows.map((o: { productId: string | null }) => o.productId).filter((id): id is string => !!id))];
       const productTitles: Record<string, string> = {};
 
       if (productIds.length > 0) {

@@ -145,11 +145,13 @@
 }
 
 
-/* Cookie-banner safe-area offset: clears the mobile bottom nav (60 px) plus
-   any iOS home-indicator / Android gesture bar. Reset to 0 at sm+ breakpoint
-   via the sm:mb-0 Tailwind class (see CookieConsent.tsx). */
+/* Cookie-banner safe-area offset: clears the mobile bottom nav plus any iOS
+   home-indicator / Android gesture bar. Uses the same --mob-nav-h token (68px)
+   that MobileBottomNav and the product CTA bar use, so the value stays in sync
+   if the nav height ever changes. Reset to 0 at sm+ breakpoint via sm:mb-0
+   (see CookieConsent.tsx). */
 .mb-safearea-nav {
-  margin-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  margin-bottom: calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px));
 }
 
 @layer utilities {

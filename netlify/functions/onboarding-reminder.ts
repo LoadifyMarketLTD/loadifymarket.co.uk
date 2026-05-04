@@ -35,7 +35,9 @@ const WINDOWS = [
 ] as const;
 
 export const handler = schedule('0 9 * * *', async () => {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  // Support both SUPABASE_URL (Netlify dashboard convention) and the VITE_
+  // prefixed variant that build tooling also exports to the environment.
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceKey) {
@@ -65,13 +67,15 @@ export const handler = schedule('0 9 * * *', async () => {
 
     // Find sellers registered in this window who have NOT completed onboarding.
     // Include rows where onboardingCompleted is false OR NULL (pre-migration rows).
+    // NOTE: column names inside .or() filter strings use PostgREST quoting ("col"),
+    // but supabase-js .gte()/.lte() take the raw column name without extra quotes.
     const { data: sellers, error } = await supabase
       .from('users')
       .select('id, email, "firstName", "lastName", "createdAt"')
       .eq('role', 'seller')
       .or('"onboardingCompleted".eq.false,"onboardingCompleted".is.null')
-      .gte('"createdAt"', windowStart)
-      .lte('"createdAt"', windowEnd);
+      .gte('createdAt', windowStart)
+      .lte('createdAt', windowEnd);
 
     if (error) {
       console.error(`onboarding-reminder: query failed for ${window.label} window:`, error.message);
