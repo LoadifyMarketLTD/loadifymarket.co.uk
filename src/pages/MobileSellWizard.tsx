@@ -144,11 +144,13 @@ function WizardInput({
 function StepPhotos({
   photos,
   uploading,
+  uploadError,
   onAddPhotos,
   onRemovePhoto,
 }: {
   photos: string[];
   uploading: boolean;
+  uploadError: string | null;
   onAddPhotos: (files: FileList) => void;
   onRemovePhoto: (idx: number) => void;
 }) {
@@ -284,7 +286,23 @@ function StepPhotos({
         }}
       />
 
-      {photos.length === 0 && (
+      {uploadError && (
+        <p
+          style={{
+            fontSize: '13px',
+            color: '#F87171',
+            background: 'rgba(248,113,113,0.08)',
+            border: '1px solid rgba(248,113,113,0.20)',
+            borderRadius: '10px',
+            padding: '10px 14px',
+            margin: 0,
+          }}
+        >
+          {uploadError}
+        </p>
+      )}
+
+      {photos.length === 0 && !uploadError && (
         <p
           style={{
             fontSize: '12px',
@@ -703,6 +721,7 @@ export default function MobileSellWizard() {
   const [step, setStep] = useState<Step>(0);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishedId, setPublishedId] = useState<string | null>(null);
@@ -720,6 +739,7 @@ export default function MobileSellWizard() {
   const handleAddPhotos = async (files: FileList) => {
     if (!user?.id) return;
     setPhotoUploading(true);
+    setPhotoError(null);
     try {
       const remaining = MAX_PHOTOS - form.photos.length;
       const batch = Array.from(files).slice(0, remaining);
@@ -729,7 +749,7 @@ export default function MobileSellWizard() {
         photos: [...prev.photos, ...urls].slice(0, MAX_PHOTOS),
       }));
     } catch {
-      // Non-fatal: user can retry
+      setPhotoError('Photo upload failed. Please try again.');
     } finally {
       setPhotoUploading(false);
     }
@@ -792,7 +812,9 @@ export default function MobileSellWizard() {
 
       const payload = {
         title: form.title.trim(),
-        // description is optional in the backend — use title as fallback if blank
+        // description is optional in the backend (only title + price are required).
+        // We fall back to the title so the product row always has a non-empty
+        // description, which keeps listing-detail pages and search results readable.
         description: form.description.trim() || form.title.trim(),
         price,
         images: form.photos,
@@ -963,6 +985,7 @@ export default function MobileSellWizard() {
           <StepPhotos
             photos={form.photos}
             uploading={photoUploading}
+            uploadError={photoError}
             onAddPhotos={handleAddPhotos}
             onRemovePhoto={handleRemovePhoto}
           />
