@@ -24,7 +24,6 @@ interface Participant {
   id: string;
   firstName: string | null;
   lastName: string | null;
-  email: string;
 }
 
 interface ConversationRow {
@@ -69,7 +68,7 @@ function formatDate(iso: string) {
 
 function participantName(p: Participant) {
   const name = [p.firstName, p.lastName].filter(Boolean).join(" ");
-  return name || p.email;
+  return name || "Loadify User";
 }
 
 /** Decode offer messages to a human-readable preview */
@@ -130,8 +129,8 @@ export default function MobileInboxPage() {
         const userMap = new Map<string, Participant>();
         if (otherIds.length > 0) {
           const { data: users } = await supabase
-            .from("users")
-            .select("id, firstName, lastName, email")
+            .from("user_display_names")
+            .select("id, firstName, lastName")
             .in("id", otherIds);
           (users ?? []).forEach((u: Participant) => userMap.set(u.id, u));
         }
@@ -184,7 +183,7 @@ export default function MobileInboxPage() {
           const otherId = r.user1Id === user.id ? r.user2Id : r.user1Id;
           return {
             ...r,
-            other: userMap.get(otherId) ?? { id: otherId, firstName: null, lastName: null, email: "Unknown" },
+            other: userMap.get(otherId) ?? { id: otherId, firstName: null, lastName: null },
             unreadCount: unreadMap.get(r.id) ?? 0,
             lastMessagePreview: lastMsgMap.get(r.id) ?? null,
             lastMessageSenderId: lastMsgSenderMap.get(r.id) ?? null,
