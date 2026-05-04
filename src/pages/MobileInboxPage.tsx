@@ -12,7 +12,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { MessageSquare, User, ChevronRight, Search, Settings } from "lucide-react";
+import { MessageSquare, User, Search, SquarePen } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
@@ -45,13 +45,13 @@ interface Conversation extends ConversationRow {
   productImage: string | null;
 }
 
-type Tab = "inbox" | "unread" | "sent" | "archive";
+type Tab = "all" | "unread" | "buyers" | "sellers";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "inbox", label: "Inbox" },
+  { id: "all", label: "All" },
   { id: "unread", label: "Unread" },
-  { id: "sent", label: "Sent" },
-  { id: "archive", label: "Archive" },
+  { id: "buyers", label: "Buyers" },
+  { id: "sellers", label: "Sellers" },
 ];
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -99,7 +99,7 @@ export default function MobileInboxPage() {
   const { user, isLoading } = useAuthStore();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<Tab>("inbox");
+  const [activeTab, setActiveTab] = useState<Tab>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Auth guard
@@ -211,10 +211,10 @@ export default function MobileInboxPage() {
 
   // Filter by tab
   const tabFiltered = conversations.filter((c) => {
-    if (activeTab === "inbox") return !c.isArchived;
+    if (activeTab === "all") return !c.isArchived;
     if (activeTab === "unread") return !c.isArchived && c.unreadCount > 0;
-    if (activeTab === "sent") return !c.isArchived && c.lastMessageSenderId === user?.id;
-    if (activeTab === "archive") return c.isArchived;
+    if (activeTab === "buyers") return !c.isArchived && c.lastMessageSenderId !== user?.id;
+    if (activeTab === "sellers") return !c.isArchived && c.lastMessageSenderId === user?.id;
     return true;
   });
 
@@ -266,10 +266,10 @@ export default function MobileInboxPage() {
           <button
             className="p-2 rounded-xl active:bg-white/10 transition-colors"
             style={{ background: "rgba(255,255,255,0.05)" }}
-            aria-label="Settings"
-            onClick={() => navigate("/buyer/profile")}
+            aria-label="New message"
+            onClick={() => navigate("/catalog")}
           >
-            <Settings style={{ width: "20px", height: "20px", color: "rgba(255,255,255,0.60)" }} />
+            <SquarePen style={{ width: "20px", height: "20px", color: "rgba(255,255,255,0.75)" }} />
           </button>
         </div>
 
@@ -286,10 +286,10 @@ export default function MobileInboxPage() {
               padding: "10px 14px",
             }}
           >
-            <Search style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
+            <Search style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.55)", flexShrink: 0 }} />
             <input
               type="search"
-              placeholder="Search conversations"
+              placeholder="Search messages..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -317,7 +317,7 @@ export default function MobileInboxPage() {
         >
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
-            const badge = tab.id === "inbox" && inboxUnread > 0 ? inboxUnread : 0;
+            const badge = tab.id === "unread" && inboxUnread > 0 ? inboxUnread : 0;
             return (
               <button
                 key={tab.id}
@@ -326,7 +326,7 @@ export default function MobileInboxPage() {
                   padding: "10px 18px",
                   fontSize: "13px",
                   fontWeight: isActive ? 700 : 400,
-                  color: isActive ? "#F5B942" : "rgba(255,255,255,0.50)",
+                  color: isActive ? "#F5B942" : "rgba(255,255,255,0.65)",
                   whiteSpace: "nowrap",
                   background: "transparent",
                   border: "none",
@@ -381,7 +381,7 @@ export default function MobileInboxPage() {
             <p className="text-base font-semibold text-white mb-1">
               {searchQuery ? "No results found" : "No conversations yet"}
             </p>
-            <p className="text-sm text-white/40 mb-6">
+            <p className="text-sm text-white/75 mb-6">
               {searchQuery ? "Try a different search term." : "Contact a seller from a product page to start chatting."}
             </p>
             {!searchQuery && (
@@ -427,7 +427,7 @@ export default function MobileInboxPage() {
                         justifyContent: "center",
                       }}
                     >
-                      <User style={{ width: "22px", height: "22px", color: "rgba(255,255,255,0.40)" }} />
+                      <User style={{ width: "22px", height: "22px", color: "rgba(255,255,255,0.60)" }} />
                     </div>
                     {conv.unreadCount > 0 && (
                       <span
@@ -461,7 +461,7 @@ export default function MobileInboxPage() {
                       >
                         {participantName(conv.other)}
                       </span>
-                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.40)", flexShrink: 0 }}>
+                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.65)", flexShrink: 0 }}>
                         {formatDate(conv.lastMessageAt)}
                       </span>
                     </div>
@@ -469,7 +469,7 @@ export default function MobileInboxPage() {
                       <p
                         style={{
                           fontSize: "12px",
-                          color: conv.unreadCount > 0 ? "rgba(255,255,255,0.70)" : "rgba(255,255,255,0.40)",
+                          color: conv.unreadCount > 0 ? "rgba(255,255,255,0.80)" : "rgba(255,255,255,0.60)",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -503,32 +503,25 @@ export default function MobileInboxPage() {
                   )}
 
                   {/* Product thumbnail */}
-                  <div
-                    style={{
-                      width: "52px",
-                      height: "52px",
-                      borderRadius: "10px",
-                      background: "rgba(255,255,255,0.06)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      overflow: "hidden",
-                      flexShrink: 0,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {conv.productImage ? (
+                  {conv.productImage && (
+                    <div
+                      style={{
+                        width: "48px",
+                        height: "48px",
+                        borderRadius: "10px",
+                        background: "rgba(255,255,255,0.06)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        overflow: "hidden",
+                        flexShrink: 0,
+                      }}
+                    >
                       <img
                         src={conv.productImage}
                         alt={conv.productTitle ?? "Product"}
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
-                    ) : (
-                      <MessageSquare style={{ width: "18px", height: "18px", color: "rgba(255,255,255,0.20)" }} />
-                    )}
-                  </div>
-
-                  <ChevronRight style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.20)", flexShrink: 0 }} />
+                    </div>
+                  )}
                 </button>
               </li>
             ))}

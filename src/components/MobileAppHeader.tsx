@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, SlidersHorizontal } from 'lucide-react';
+import { Bell, Search, Filter } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
 import MobileSearchOverlay from '@/components/MobileSearchOverlay';
@@ -212,7 +212,7 @@ export default function MobileAppHeader() {
             cursor: 'pointer',
           }}
         >
-          <SlidersHorizontal
+          <Filter
             style={{ width: 18, height: 18, color: '#F2B84B' }}
             aria-hidden="true"
           />
