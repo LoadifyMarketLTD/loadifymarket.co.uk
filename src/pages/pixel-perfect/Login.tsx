@@ -4,6 +4,7 @@ import { Eye, EyeOff, Mail, Lock, ShieldCheck } from "lucide-react";
 import { useAuthStore } from "@/store";
 import { isCapacitorNative } from "@/lib/capacitorUtils";
 import { sanitizeRedirectUrl } from "@/lib/sanitizeRedirectUrl";
+import SEO from "@/components/SEO";
 
 /* ── Shared Google / Apple SVG logos ─────────────────────────────────── */
 const GoogleIcon = () => (
@@ -129,7 +130,13 @@ const Login = () => {
   const headerHeight = "calc(var(--header-h, 6.875rem) + env(safe-area-inset-top, 0px))";
 
   return (
-    <div className="flex bg-[#020617]" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
+    <>
+      <SEO
+        title="Sign In"
+        description="Sign in to your Loadify Market account."
+        robots="noindex, nofollow"
+      />
+      <main id="main-content" className="flex bg-[#020617]" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
 
       {/* ── LEFT — hero image (desktop only, 65%) ───────────────────────── */}
       <div className="hidden lg:flex lg:w-[65%] xl:w-[67%] relative overflow-hidden">
@@ -333,7 +340,8 @@ const Login = () => {
           </div>
         </div>
       </div>
-    </div>
+    </main>
+    </>
   );
 };
 

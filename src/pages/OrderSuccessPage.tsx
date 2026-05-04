@@ -6,6 +6,7 @@ import { useCart } from '../contexts/CartContext';
 import { BRAND } from '../constants/brand';
 import { supabase } from '../lib/supabase';
 import { trackOfferPaid } from '../lib/analytics';
+import SEO from '@/components/SEO';
 
 // Maximum number of 2-second polls before giving up and showing the safe timeout message.
 const MAX_POLLS = 15; // 30 seconds total
@@ -112,6 +113,11 @@ export default function OrderSuccessPage() {
   if (phase === 'polling') {
     return (
       <MainLayout>
+        <SEO
+          title="Order Confirmation"
+          description="Your order is being confirmed."
+          robots="noindex, nofollow"
+        />
         <main id="main-content" className="flex-1 pt-28 pb-20 px-4 flex items-start justify-center">
           <div className="w-full max-w-lg mt-10">
             <div className="bg-white border border-gray-200 rounded-xl p-10 text-center">
@@ -135,6 +141,11 @@ export default function OrderSuccessPage() {
   if (phase === 'timeout' || phase === 'not_found') {
     return (
       <MainLayout>
+        <SEO
+          title="Order Confirmation"
+          description="Your order has been received."
+          robots="noindex, nofollow"
+        />
         <main id="main-content" className="flex-1 pt-28 pb-20 px-4 flex items-start justify-center">
           <div className="w-full max-w-lg mt-10">
             <div className="bg-white border border-gray-200 rounded-xl p-10 text-center">
@@ -185,6 +196,11 @@ export default function OrderSuccessPage() {
   // ── Confirmed success page ─────────────────────────────────────────────────
   return (
     <MainLayout>
+      <SEO
+        title="Order Confirmed"
+        description="Your order has been confirmed. Thank you for shopping with Loadify Market."
+        robots="noindex, nofollow"
+      />
       <main id="main-content" className="flex-1 pt-28 pb-20 px-4 flex items-start justify-center">
         <div className="w-full max-w-lg mt-10">
           <div className="bg-white border border-gray-200 rounded-xl p-10 text-center">
