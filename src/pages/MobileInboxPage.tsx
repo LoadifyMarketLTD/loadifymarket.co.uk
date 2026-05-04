@@ -259,6 +259,7 @@ export default function MobileInboxPage() {
             className="p-2 rounded-xl active:bg-white/10 transition-colors"
             style={{ background: "rgba(255,255,255,0.05)" }}
             aria-label="Settings"
+            onClick={() => navigate("/buyer/profile")}
           >
             <Settings style={{ width: "20px", height: "20px", color: "rgba(255,255,255,0.60)" }} />
           </button>

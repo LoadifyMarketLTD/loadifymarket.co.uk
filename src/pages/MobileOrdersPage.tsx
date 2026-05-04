@@ -129,8 +129,8 @@ function OrderCard({
       ref={cardRef as React.RefObject<HTMLDivElement>}
       role="button"
       tabIndex={0}
-      onClick={() => navigate(`/buyer/orders`)}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate(`/buyer/orders`); }}
+      onClick={() => navigate(`/buyer/orders?orderId=${order.id}`)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate(`/buyer/orders?orderId=${order.id}`); }}
       style={{
         display: "flex",
         alignItems: "flex-start",
