@@ -54,6 +54,11 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "archive", label: "Archive" },
 ];
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+/** Fallback name shown when a participant has not set a display name. */
+const DEFAULT_DISPLAY_NAME = "Loadify User";
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatDate(iso: string) {
@@ -68,7 +73,7 @@ function formatDate(iso: string) {
 
 function participantName(p: Participant) {
   const name = [p.firstName, p.lastName].filter(Boolean).join(" ");
-  return name || "Loadify User";
+  return name || DEFAULT_DISPLAY_NAME;
 }
 
 /** Decode offer messages to a human-readable preview */

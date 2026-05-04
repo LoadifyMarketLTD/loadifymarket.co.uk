@@ -53,6 +53,11 @@ interface OfferRecord {
   orderStatus?: string | null;
 }
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+/** Fallback name shown when a participant has not set a display name. */
+const DEFAULT_DISPLAY_NAME = "Loadify User";
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatTime(iso: string) {
@@ -318,7 +323,7 @@ export default function MobileChatPage() {
       if (cancelled) return;
       if (otherUser) {
         const name = [otherUser.firstName, otherUser.lastName].filter(Boolean).join(" ");
-        setOtherName(name || "Loadify User");
+        setOtherName(name || DEFAULT_DISPLAY_NAME);
       }
 
       // Determine if the current user is the seller (listing owner)
