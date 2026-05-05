@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Search, ShoppingCart, Menu, LogOut, LayoutDashboard, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/loadify-logo.svg";
@@ -10,28 +10,19 @@ import { useCategories } from "@/hooks/useCategories";
 import type { CategoryNode } from "@/hooks/useCategories";
 
 /**
- * Marketplace-style header — always renders with the opaque dark-navy background.
+ * Marketplace-style desktop header — always renders with the opaque dark-navy background.
  * Fixed at top-0 on every public-marketplace page.
  * Row 1 (h-16): Hamburger (LEFT, all sizes) | Logo | Search | Cart + auth actions
  * Row 2 (h-12): Category quick-links
+ *
+ * On mobile viewports (< 768 px) this header is always hidden via `hidden md:block`.
+ * Each mobile page provides its own mobile-specific header (MobileAppHeader, back-button
+ * bar, etc.).  The MobileAppLayout shell (used automatically by MainLayout on mobile)
+ * provides MobileBottomNav for in-app navigation.
  */
 
 const Header = () => {
   const [query, setQuery] = useState("");
-  const location = useLocation();
-  // Hide this header on mobile when on the homepage — MobileTopBar renders there instead.
-  const isHomeMobile = location.pathname === '/';
-  // Also hide on mobile for the dashboard shells (/seller, /admin, /buyer) because
-  // they render their own mobile hamburger header.  On desktop (md+) the global
-  // header is always shown and the shells offset themselves with --shell-offset-h.
-  const isShellPath = /^\/(seller|admin|buyer)(\/|$)/.test(location.pathname);
-  // Mobile-standalone pages (/inbox, /orders, /categories, /product) render their own
-  // sticky sub-header and must not have the global header layered on top.
-  // NOTE: /catalog and /category/:slug intentionally keep the global header on
-  // mobile — they rely on the search bar in Row 1 (no dedicated MobileSearchBar on
-  // those pages).  MobileBottomNav remains visible via MainLayout on all those routes.
-  const isMobileStandalonePath = /^\/(inbox|orders|categories|product)(\/|$)/.test(location.pathname);
-  const hideOnMobile = isHomeMobile || isShellPath || isMobileStandalonePath;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hoveredCat, setHoveredCat] = useState<string | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -106,7 +97,7 @@ const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-40 bg-[linear-gradient(180deg,#111827,#020617)] border-b border-white/[0.06] shadow-[0_8px_25px_rgba(0,0,0,0.35)]${hideOnMobile ? ' hidden md:block' : ''}`}
+      className="fixed top-0 left-0 right-0 z-40 bg-[linear-gradient(180deg,#111827,#020617)] border-b border-white/[0.06] shadow-[0_8px_25px_rgba(0,0,0,0.35)] hidden md:block"
       style={{ willChange: "transform", paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
 

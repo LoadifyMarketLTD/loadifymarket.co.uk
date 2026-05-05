@@ -256,7 +256,7 @@ const FAQ = () => {
   return (
     <MainLayout>
       <SEO title="FAQ | Loadify Market" description="Answers to the most common questions about buying and selling on Loadify Market." canonical="/faq" />
-      <main id="main-content" className="pt-28 pb-20">
+      <main id="main-content" className="pt-4 md:pt-28 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav
             items={[{ label: "Home", to: "/" }, { label: "FAQ" }]}

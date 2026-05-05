@@ -251,7 +251,7 @@ const CategoryPage = () => {
   if (!config && dbCategoryLoading) {
     return (
       <MainLayout>
-        <main id="main-content" className="pt-28 pb-16">
+        <main id="main-content" className="pt-4 md:pt-28 pb-16">
           <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">
             Loading…
           </div>
@@ -268,7 +268,7 @@ const CategoryPage = () => {
           title="Category Not Found | Loadify Market"
           description="The category you're looking for doesn't exist. Browse all categories on Loadify Market."
         />
-        <main id="main-content" className="pt-28 pb-16">
+        <main id="main-content" className="pt-4 md:pt-28 pb-16">
           <div className="container mx-auto px-4 py-20 text-center">
             <p className="text-2xl font-display font-bold text-foreground mb-4">Category Not Found</p>
             <p className="text-muted-foreground mb-8">The category you're looking for doesn't exist.</p>
@@ -293,7 +293,7 @@ const CategoryPage = () => {
         canonical={`/category/${slug}`}
       />
 
-      <main id="main-content" className="pt-28 pb-16">
+      <main id="main-content" className="pt-4 md:pt-28 pb-16">
         <div className="container mx-auto px-4">
           <BreadcrumbNav
             items={[

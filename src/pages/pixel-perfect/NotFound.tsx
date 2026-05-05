@@ -10,7 +10,7 @@ const NotFound = () => {
         description="The page you are looking for does not exist. Return to the homepage or browse products on Loadify Market."
         robots="noindex, nofollow"
       />
-      <main id="main-content" className="flex-1 flex items-center justify-center pt-28 pb-20 px-4">
+      <main id="main-content" className="flex-1 flex items-center justify-center pt-4 md:pt-28 pb-20 px-4">
         <div className="text-center">
           <p className="text-[#FBBF24] font-bold text-lg mb-3 tracking-widest uppercase">404</p>
           <h1 className="text-4xl sm:text-5xl font-display font-extrabold text-white mb-4 leading-tight">
