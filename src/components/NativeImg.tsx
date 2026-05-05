@@ -86,15 +86,15 @@ export default function NativeImg({
       return;
     }
 
-    if (!src) {
-      setResolvedSrc('');
-      return;
-    }
-
     let cancelled = false;
 
+    if (!src) {
+      queueMicrotask(() => { if (!cancelled) setResolvedSrc(''); });
+      return () => { cancelled = true; };
+    }
+
     // Reset to loading state before the new fetch.
-    setResolvedSrc(undefined);
+    queueMicrotask(() => { if (!cancelled) setResolvedSrc(undefined); });
 
     // Revoke the previous blob URL to free memory before creating a new one.
     if (blobUrlRef.current) {
