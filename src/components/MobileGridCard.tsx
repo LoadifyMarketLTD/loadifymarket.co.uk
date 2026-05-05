@@ -3,10 +3,10 @@
  * Shows: image (square) + title + price + optional location. No badges/ratings.
  */
 
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatPrice } from '@/lib/formatPrice';
 import { productThumbnail } from '@/lib/imageOptimization';
+import NativeImg from '@/components/NativeImg';
 import ProductImagePlaceholder from '@/components/ProductImagePlaceholder';
 
 interface MobileGridCardProps {
@@ -19,9 +19,22 @@ interface MobileGridCardProps {
   priority?: boolean;
 }
 
-export default function MobileGridCard({ id, title, price, image, location, priority = false }: MobileGridCardProps) {
-  const [imgFailed, setImgFailed] = useState(false);
+const darkPlaceholder = (
+  <div
+    aria-hidden="true"
+    style={{
+      position: 'absolute',
+      inset: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}
+  >
+    <ProductImagePlaceholder theme="dark" />
+  </div>
+);
 
+export default function MobileGridCard({ id, title, price, image, location, priority = false }: MobileGridCardProps) {
   return (
     <Link
       to={`/product/${id}`}
@@ -39,29 +52,14 @@ export default function MobileGridCard({ id, title, price, image, location, prio
           position: 'relative',
         }}
       >
-        {image && !imgFailed ? (
-          <img
-            src={productThumbnail(image)}
-            alt={title}
-            loading={priority ? 'eager' : 'lazy'}
-            fetchPriority={priority ? 'high' : undefined}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            onError={() => setImgFailed(true)}
-          />
-        ) : (
-          <div
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <ProductImagePlaceholder theme="dark" />
-          </div>
-        )}
+        <NativeImg
+          src={image ? productThumbnail(image) : undefined}
+          alt={title}
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : undefined}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          fallback={darkPlaceholder}
+        />
       </div>
 
       {/* Info */}
