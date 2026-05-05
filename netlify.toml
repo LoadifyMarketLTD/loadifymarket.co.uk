@@ -2,6 +2,14 @@
   command = "npm ci && npm run build"
   publish = "dist"
 
+# ─── Image CDN — allowed remote sources ──────────────────────────────────────
+# Netlify Image CDN only proxies/transforms images from explicitly allowed
+# remote origins.  Without this, requests to /.netlify/images?url=<supabase>
+# fail with HTTP 400.  The pattern matches all objects in the Supabase project
+# storage bucket (product-images, avatars, etc.).
+[images]
+  remote_images = ["https://fwdfpmfvgygvqciecesx\\.supabase\\.co/.*"]
+
 # ─── Force HTTPS ──────────────────────────────────────────────────────────────
 [[redirects]]
   from = "http://loadifymarket.co.uk/*"

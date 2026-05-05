@@ -1,19 +1,24 @@
 /**
- * Netlify Image CDN utility — Loadify Market
+ * Image URL utilities — Loadify Market
  *
- * Wraps Netlify's built-in image transformation service
- * (https://docs.netlify.com/image-cdn/overview/) to produce optimised,
- * responsive image URLs without a separate CDN subscription.
+ * Product and user images are stored in Supabase Storage and served via the
+ * Supabase CDN.  These helpers normalise the URL (returning '' for missing
+ * values) and accept optional ImageOptions for future CDN integration.
+ *
+ * Netlify Image CDN (/.netlify/images?url=…) is intentionally disabled.
+ * Although netlify.toml contains the [images] remote_images allowlist,
+ * routing every image through the Netlify proxy was causing HTTP 400 errors
+ * in production because the allowlist must be deployed before it is active.
+ * Supabase Storage already serves images from a global CDN, so the extra
+ * proxy hop provides no meaningful benefit and adds a failure point.
  *
  * Usage:
- *   import { optimizeImage } from '@/lib/imageOptimization';
+ *   import { productThumbnail } from '@/lib/imageOptimization';
+ *   <img src={productThumbnail(rawUrl)} />
  *
- *   <img src={optimizeImage(rawUrl, { width: 400, format: 'webp' })} />
- *
- * The helper returns the original URL unchanged when:
- *  - Running in development (Netlify Image CDN is not available locally).
- *  - The source URL is a data URI, blob URL, or already a Netlify CDN URL.
- *  - The `rawUrl` is null / undefined.
+ * The helpers return '' for null / undefined input so `src` is always a
+ * valid string (React treats src="" as a relative URL, so we guard for that
+ * in callers via the `image ? <img …/> : <placeholder/>` pattern).
  */
 
 export interface ImageOptions {
@@ -29,42 +34,22 @@ export interface ImageOptions {
   quality?: number;
 }
 
-const IS_PROD = import.meta.env.PROD;
-const CDN_BASE = '/.netlify/images';
-
 /**
- * Returns an optimised Netlify Image CDN URL for `src`, or `src` unchanged
- * when transformation is unavailable or not applicable.
+ * Returns `src` unchanged, or '' when `src` is null/undefined/empty.
+ *
+ * The `opts` parameter is accepted (and ignored) to keep the call-sites
+ * compatible with a future CDN integration without requiring changes
+ * across the codebase.
  */
-export function optimizeImage(src: string | null | undefined, opts: ImageOptions = {}): string {
+export function optimizeImage(src: string | null | undefined, _opts: ImageOptions = {}): string {
   if (!src) return '';
-
-  // Skip transformation for data URIs, blob URLs, and existing CDN URLs.
-  if (
-    src.startsWith('data:') ||
-    src.startsWith('blob:') ||
-    src.includes('/.netlify/images')
-  ) {
-    return src;
-  }
-
-  // Only apply transformation in production (Netlify environment).
-  if (!IS_PROD) return src;
-
-  const params = new URLSearchParams({ url: src });
-
-  if (opts.width != null) params.set('w', String(opts.width));
-  if (opts.height != null) params.set('h', String(opts.height));
-  if (opts.format && opts.format !== 'auto') params.set('fm', opts.format);
-  if (opts.fit) params.set('fit', opts.fit);
-  if (opts.quality != null) params.set('q', String(opts.quality));
-
-  return `${CDN_BASE}?${params.toString()}`;
+  return src;
 }
 
 /**
- * Convenience preset: thumbnail suitable for product listing cards.
- * 300 × 300 px, WebP, quality 80.
+ * Convenience preset: thumbnail for product listing cards.
+ * Opts are retained for call-site compatibility; they are ignored while
+ * the Netlify Image CDN is disabled.
  */
 export function productThumbnail(src: string | null | undefined): string {
   return optimizeImage(src, { width: 300, height: 300, format: 'webp', fit: 'cover', quality: 80 });
@@ -72,7 +57,8 @@ export function productThumbnail(src: string | null | undefined): string {
 
 /**
  * Convenience preset: hero / product detail image.
- * 800 px wide, WebP, quality 85.
+ * Opts are retained for call-site compatibility; they are ignored while
+ * the Netlify Image CDN is disabled.
  */
 export function productHero(src: string | null | undefined): string {
   return optimizeImage(src, { width: 800, format: 'webp', quality: 85 });
@@ -80,7 +66,8 @@ export function productHero(src: string | null | undefined): string {
 
 /**
  * Convenience preset: seller / store avatar.
- * 64 × 64 px, WebP, quality 80.
+ * Opts are retained for call-site compatibility; they are ignored while
+ * the Netlify Image CDN is disabled.
  */
 export function sellerAvatar(src: string | null | undefined): string {
   return optimizeImage(src, { width: 64, height: 64, format: 'webp', fit: 'cover', quality: 80 });
