@@ -2,7 +2,7 @@
  * MobileCategoryShortcuts — Vinted-style horizontal pill row.
  *
  * Text-only pill chips, no images. The active pill (matched by current
- * pathname or "All" on the home page) gets a teal border highlight.
+ * pathname or "All" on the home page) gets a gold border highlight.
  */
 
 import { useLocation } from 'react-router-dom';
@@ -66,14 +66,14 @@ export default function MobileCategoryShortcuts() {
                   paddingRight: 14,
                   borderRadius: 9999,
                   background: active
-                    ? 'rgba(45,191,184,0.10)'
+                    ? 'rgba(232,160,32,0.12)'
                     : 'rgba(255,255,255,0.06)',
                   border: active
-                    ? '1.5px solid #2DBFB8'
+                    ? '1.5px solid #E8A020'
                     : '1px solid rgba(255,255,255,0.14)',
                   fontSize: 'clamp(13px, 3.6vw, 14px)',
                   fontWeight: active ? 600 : 500,
-                  color: active ? '#2DBFB8' : 'rgba(255,255,255,0.85)',
+                  color: active ? '#E8A020' : 'rgba(255,255,255,0.85)',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                   transition: 'border-color 0.15s, color 0.15s',
