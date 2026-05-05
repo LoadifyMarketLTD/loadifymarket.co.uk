@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { productHero, productThumbnail } from "@/lib/imageOptimization";
+import NativeImg from "@/components/NativeImg";
 
 interface ProductGalleryProps {
   images: string[];
@@ -14,11 +15,12 @@ const ProductGallery = ({ images, title }: ProductGalleryProps) => {
     <div className="space-y-3">
       {/* Main image */}
       <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-muted border border-border">
-        <img
+        <NativeImg
           src={productHero(images[activeIndex])}
           alt={title}
           className="w-full h-full object-cover"
           fetchPriority="high"
+          loading="eager"
         />
         {images.length > 1 && (
           <>
@@ -52,7 +54,7 @@ const ProductGallery = ({ images, title }: ProductGalleryProps) => {
                 i === activeIndex ? "border-primary ring-1 ring-primary/30" : "border-border opacity-60 hover:opacity-100"
               }`}
             >
-              <img src={productThumbnail(img)} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+              <NativeImg src={productThumbnail(img)} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
             </button>
           ))}
         </div>

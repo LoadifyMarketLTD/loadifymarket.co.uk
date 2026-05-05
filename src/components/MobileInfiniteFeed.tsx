@@ -16,6 +16,8 @@ import { Star } from 'lucide-react';
 import { useMobileInfiniteFeed } from '@/hooks/useMobileInfiniteFeed';
 import { formatPrice } from '@/lib/formatPrice';
 import type { Product } from '@/components/catalog/ProductCard';
+import NativeImg from '@/components/NativeImg';
+import ProductImagePlaceholder from '@/components/ProductImagePlaceholder';
 
 // ── Individual product card ────────────────────────────────────────────────────
 
@@ -33,13 +35,16 @@ function ProductGridCard({ product }: { product: Product }) {
       aria-label={product.title}
     >
       {/* ── Product image ──────────────────────────────────────────────── */}
-      <div style={{ aspectRatio: '1 / 1', backgroundColor: '#E0E0E0', overflow: 'hidden' }}>
-        <img
+      <div
+        className="flex items-center justify-center overflow-hidden"
+        style={{ aspectRatio: '1 / 1', backgroundColor: '#E0E0E0' }}
+      >
+        <NativeImg
           src={product.image}
           alt={product.title}
           loading="lazy"
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+          fallback={<ProductImagePlaceholder theme="light" />}
         />
       </div>
 

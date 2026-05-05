@@ -16,6 +16,14 @@ import { ArrowRight } from 'lucide-react';
 import { useMobileProducts } from '@/hooks/useMobileProducts';
 import { formatPrice } from '@/lib/formatPrice';
 import type { Product } from '@/components/catalog/ProductCard';
+import NativeImg from '@/components/NativeImg';
+import ProductImagePlaceholder from '@/components/ProductImagePlaceholder';
+
+const lightPlaceholder = (
+  <div className="w-full h-full flex items-center justify-center">
+    <ProductImagePlaceholder theme="light" />
+  </div>
+);
 
 // ── Compact product card (horizontal scroll) ──────────────────────────────────
 
@@ -29,15 +37,12 @@ function MobileProductCard({ product }: { product: Product }) {
     >
       {/* Image */}
       <div className="relative aspect-square overflow-hidden" style={{ backgroundColor: '#E0E0E0' }}>
-        <img
+        <NativeImg
           src={product.image}
           alt={product.title}
           loading="lazy"
           className="w-full h-full object-cover"
-          onError={(e) => {
-            const el = e.currentTarget;
-            el.style.display = 'none';
-          }}
+          fallback={lightPlaceholder}
         />
         {product.condition === 'New' && (
           <span className="absolute top-1.5 right-1.5 text-[9px] font-bold bg-emerald-500/90 text-white px-1.5 py-0.5 rounded-full">
@@ -71,15 +76,12 @@ function MobileListingCard({ product }: { product: Product }) {
     >
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden" style={{ backgroundColor: '#E0E0E0' }}>
-        <img
+        <NativeImg
           src={product.image}
           alt={product.title}
           loading="lazy"
           className="w-full h-full object-cover"
-          onError={(e) => {
-            const el = e.currentTarget;
-            el.style.display = 'none';
-          }}
+          fallback={lightPlaceholder}
         />
         {product.condition === 'New' && (
           <span className="absolute top-1.5 right-1.5 text-[9px] font-bold bg-emerald-500/90 text-white px-1.5 py-0.5 rounded-full">
