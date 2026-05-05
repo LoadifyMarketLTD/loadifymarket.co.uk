@@ -9,17 +9,19 @@
  * - IntersectionObserver infinite scroll, no sections/titles
  */
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Star } from 'lucide-react';
 
 import { useMobileInfiniteFeed } from '@/hooks/useMobileInfiniteFeed';
 import { formatPrice } from '@/lib/formatPrice';
 import type { Product } from '@/components/catalog/ProductCard';
+import ProductImagePlaceholder from '@/components/ProductImagePlaceholder';
 
 // ── Individual product card ────────────────────────────────────────────────────
 
 function ProductGridCard({ product }: { product: Product }) {
+  const [imgFailed, setImgFailed] = useState(false);
   return (
     <Link
       to={`/product/${product.id}`}
@@ -33,14 +35,21 @@ function ProductGridCard({ product }: { product: Product }) {
       aria-label={product.title}
     >
       {/* ── Product image ──────────────────────────────────────────────── */}
-      <div style={{ aspectRatio: '1 / 1', backgroundColor: '#E0E0E0', overflow: 'hidden' }}>
-        <img
-          src={product.image}
-          alt={product.title}
-          loading="lazy"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-        />
+      <div
+        className="flex items-center justify-center overflow-hidden"
+        style={{ aspectRatio: '1 / 1', backgroundColor: '#E0E0E0' }}
+      >
+        {product.image && !imgFailed ? (
+          <img
+            src={product.image}
+            alt={product.title}
+            loading="lazy"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <ProductImagePlaceholder theme="light" />
+        )}
       </div>
 
       {/* ── Card body ─────────────────────────────────────────────────── */}

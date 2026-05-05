@@ -11,15 +11,18 @@
  * Product images fall back gracefully on error.
  */
 
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useMobileProducts } from '@/hooks/useMobileProducts';
 import { formatPrice } from '@/lib/formatPrice';
 import type { Product } from '@/components/catalog/ProductCard';
+import ProductImagePlaceholder from '@/components/ProductImagePlaceholder';
 
 // ── Compact product card (horizontal scroll) ──────────────────────────────────
 
 function MobileProductCard({ product }: { product: Product }) {
+  const [imgFailed, setImgFailed] = useState(false);
   return (
     <Link
       to={`/product/${product.id}`}
@@ -29,16 +32,19 @@ function MobileProductCard({ product }: { product: Product }) {
     >
       {/* Image */}
       <div className="relative aspect-square overflow-hidden" style={{ backgroundColor: '#E0E0E0' }}>
-        <img
-          src={product.image}
-          alt={product.title}
-          loading="lazy"
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            const el = e.currentTarget;
-            el.style.display = 'none';
-          }}
-        />
+        {product.image && !imgFailed ? (
+          <img
+            src={product.image}
+            alt={product.title}
+            loading="lazy"
+            className="w-full h-full object-cover"
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <ProductImagePlaceholder theme="light" />
+          </div>
+        )}
         {product.condition === 'New' && (
           <span className="absolute top-1.5 right-1.5 text-[9px] font-bold bg-emerald-500/90 text-white px-1.5 py-0.5 rounded-full">
             NEW
@@ -62,6 +68,7 @@ function MobileProductCard({ product }: { product: Product }) {
 // ── Compact product card (2-column grid) ──────────────────────────────────────
 
 function MobileListingCard({ product }: { product: Product }) {
+  const [imgFailed, setImgFailed] = useState(false);
   return (
     <Link
       to={`/product/${product.id}`}
@@ -71,16 +78,19 @@ function MobileListingCard({ product }: { product: Product }) {
     >
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden" style={{ backgroundColor: '#E0E0E0' }}>
-        <img
-          src={product.image}
-          alt={product.title}
-          loading="lazy"
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            const el = e.currentTarget;
-            el.style.display = 'none';
-          }}
-        />
+        {product.image && !imgFailed ? (
+          <img
+            src={product.image}
+            alt={product.title}
+            loading="lazy"
+            className="w-full h-full object-cover"
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <ProductImagePlaceholder theme="light" />
+          </div>
+        )}
         {product.condition === 'New' && (
           <span className="absolute top-1.5 right-1.5 text-[9px] font-bold bg-emerald-500/90 text-white px-1.5 py-0.5 rounded-full">
             NEW

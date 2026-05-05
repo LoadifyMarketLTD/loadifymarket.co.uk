@@ -3,9 +3,11 @@
  * Shows: image (square) + title + price + optional location. No badges/ratings.
  */
 
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatPrice } from '@/lib/formatPrice';
 import { productThumbnail } from '@/lib/imageOptimization';
+import ProductImagePlaceholder from '@/components/ProductImagePlaceholder';
 
 interface MobileGridCardProps {
   id: string;
@@ -18,6 +20,8 @@ interface MobileGridCardProps {
 }
 
 export default function MobileGridCard({ id, title, price, image, location, priority = false }: MobileGridCardProps) {
+  const [imgFailed, setImgFailed] = useState(false);
+
   return (
     <Link
       to={`/product/${id}`}
@@ -35,14 +39,14 @@ export default function MobileGridCard({ id, title, price, image, location, prio
           position: 'relative',
         }}
       >
-        {image ? (
+        {image && !imgFailed ? (
           <img
             src={productThumbnail(image)}
             alt={title}
             loading={priority ? 'eager' : 'lazy'}
             fetchPriority={priority ? 'high' : undefined}
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            onError={() => setImgFailed(true)}
           />
         ) : (
           <div
@@ -55,11 +59,7 @@ export default function MobileGridCard({ id, title, price, image, location, prio
               justifyContent: 'center',
             }}
           >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="3" y="3" width="18" height="18" rx="3" fill="rgba(255,255,255,0.08)" />
-              <path d="M3 16l5-5 4 4 3-3 6 6" stroke="rgba(255,255,255,0.20)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="8.5" cy="8.5" r="1.5" fill="rgba(255,255,255,0.20)" />
-            </svg>
+            <ProductImagePlaceholder theme="dark" />
           </div>
         )}
       </div>
