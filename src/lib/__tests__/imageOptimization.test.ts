@@ -1,17 +1,16 @@
 /**
  * Tests for imageOptimization.ts
  *
- * In the test environment import.meta.env.PROD is false, so optimizeImage
- * always returns the source URL unchanged. The tests validate the passthrough
- * behaviour and the CDN URL structure via a manual PROD override.
+ * Netlify Image CDN is disabled — optimizeImage always returns the source URL
+ * unchanged (or '' for null/undefined).  These tests validate that behaviour
+ * in both development and production modes.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 
-// We re-import the module fresh in each group so the PROD flag can be
-// mocked at module level via vi.stubEnv.
-describe('optimizeImage – development (IS_PROD = false)', () => {
+describe('optimizeImage – passthrough (CDN disabled)', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.resetModules();
   });
 
   it('returns empty string for null src', async () => {
@@ -24,10 +23,10 @@ describe('optimizeImage – development (IS_PROD = false)', () => {
     expect(optimizeImage(undefined)).toBe('');
   });
 
-  it('returns src unchanged in development', async () => {
+  it('returns src unchanged regardless of opts', async () => {
     const { optimizeImage } = await import('../imageOptimization');
     const src = 'https://example.com/image.jpg';
-    expect(optimizeImage(src, { width: 400 })).toBe(src);
+    expect(optimizeImage(src, { width: 400, format: 'webp' })).toBe(src);
   });
 
   it('returns data URIs unchanged', async () => {
@@ -42,30 +41,24 @@ describe('optimizeImage – development (IS_PROD = false)', () => {
     expect(optimizeImage(src)).toBe(src);
   });
 
-  it('returns existing CDN URLs unchanged', async () => {
+  it('returns Supabase storage URLs unchanged', async () => {
     const { optimizeImage } = await import('../imageOptimization');
-    const src = 'https://example.com/.netlify/images?url=foo';
+    const src = 'https://fwdfpmfvgygvqciecesx.supabase.co/storage/v1/object/public/product-images/img.jpg';
     expect(optimizeImage(src)).toBe(src);
   });
-});
 
-describe('optimizeImage – production (IS_PROD = true)', () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.resetModules();
+  it('never produces a /.netlify/images URL', async () => {
+    const { optimizeImage } = await import('../imageOptimization');
+    const src = 'https://fwdfpmfvgygvqciecesx.supabase.co/storage/v1/object/public/img.jpg';
+    expect(optimizeImage(src, { width: 300, format: 'webp' })).not.toContain('/.netlify/images');
   });
 
-  it('generates a CDN URL with width and format params', async () => {
-    // Stub the PROD env flag. import.meta.env.PROD is a boolean in Vite,
-    // but vi.stubEnv injects it as a string; truthy check still works.
+  it('returns raw URL in production mode too', async () => {
     vi.stubEnv('PROD', 'true' as unknown as boolean);
-    // Force module re-evaluation with the stubbed env.
     vi.resetModules();
     const { optimizeImage } = await import('../imageOptimization');
-    const url = optimizeImage('https://cdn.example.com/photo.jpg', { width: 400, format: 'webp' });
-    expect(url).toContain('/.netlify/images');
-    expect(url).toContain('w=400');
-    expect(url).toContain('fm=webp');
+    const src = 'https://cdn.example.com/photo.jpg';
+    expect(optimizeImage(src, { width: 400, format: 'webp' })).toBe(src);
   });
 });
 
