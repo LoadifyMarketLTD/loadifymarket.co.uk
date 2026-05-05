@@ -40,8 +40,7 @@ export default function MobileGridCard({ id, title, price, image, location, prio
             src={productThumbnail(image)}
             alt={title}
             loading={priority ? 'eager' : 'lazy'}
-            // @ts-expect-error — fetchpriority is a valid HTML attr not yet in React types
-            fetchpriority={priority ? 'high' : undefined}
+            fetchPriority={priority ? 'high' : undefined}
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
