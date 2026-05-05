@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Package, ShoppingCart, PoundSterling, TrendingUp, ArrowUpRight,
-  ArrowDownRight, Eye, Users, Star, Truck, Clock, Send, Loader2
+  Package, ShoppingCart, PoundSterling, TrendingUp,
+  Eye, Users, Star, Truck, Send, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -189,8 +189,6 @@ const SellerDashboard = () => {
     }
   };
 
-  const displayName = user?.firstName ?? "Seller";
-
   const statsCards = stats
     ? [
         {
@@ -233,213 +231,169 @@ const SellerDashboard = () => {
     : [];
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-[1200px]">
-      {/* Onboarding checklist — shown only to sellers who haven't completed setup */}
+    <div className="px-3 pt-3 pb-4 sm:p-6 space-y-3 sm:space-y-6 max-w-[1200px]">
+      {/* Onboarding compact row — shown only to sellers who haven't completed setup */}
       <OnboardingChecklist />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Welcome back, {displayName}. Here's what's happening today.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/seller/products">View Products</Link>
-          </Button>
-          <Button size="sm" className="bg-gradient-hero text-primary-foreground" asChild>
-            <Link to="/seller/products/new">
-              <Package className="mr-2 h-4 w-4" /> Add Product
-            </Link>
-          </Button>
-        </div>
+      {/* Quick Actions — top priority, horizontal row */}
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        <Button size="sm" className="bg-gradient-hero text-primary-foreground h-10 text-sm font-semibold" asChild>
+          <Link to="/seller/products/new">
+            <Package className="mr-1.5 h-4 w-4" /> Add Product
+          </Link>
+        </Button>
+        <Button size="sm" variant="outline" className="h-10 text-sm font-semibold border-primary/40 hover:border-primary" asChild>
+          <Link to="/seller/shipments">
+            <Truck className="mr-1.5 h-4 w-4 text-primary" /> Log Shipment
+          </Link>
+        </Button>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid — compact 2×2 */}
       {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-card rounded-xl border border-border p-5 h-28 animate-pulse bg-muted/30" />
+            <div key={i} className="bg-card rounded-lg border border-border p-3 h-16 animate-pulse bg-muted/30" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-2">
           {statsCards.map((stat) => (
             <Link
               key={stat.label}
               to={stat.to}
               aria-label={`View ${stat.label.toLowerCase()}`}
-              className="block bg-card rounded-xl border border-border p-5 space-y-3 hover:shadow-card hover:scale-[1.02] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="flex items-center gap-3 bg-card rounded-lg border border-border px-3 py-2.5 hover:bg-muted/30 active:bg-muted/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <stat.icon className="h-5 w-5 text-primary" />
-                </div>
-                {stat.change && (
-                  <div className={`flex items-center gap-0.5 text-xs font-medium ${stat.trend === "up" ? "text-emerald-600" : "text-destructive"}`}>
-                    {stat.trend === "up" ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
-                    {stat.change}
-                  </div>
-                )}
+              <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                <stat.icon className="h-4 w-4 text-primary" />
               </div>
-              <div>
-                <div className="font-display text-2xl font-bold text-foreground">{stat.value}</div>
-                <p className="text-xs text-muted-foreground mt-0.5">{stat.label} · {stat.description}</p>
+              <div className="min-w-0">
+                <div className="font-bold text-lg leading-tight text-foreground">{stat.value}</div>
+                <p className="text-[11px] text-muted-foreground truncate">{stat.label}</p>
               </div>
             </Link>
           ))}
         </div>
       )}
 
-      {/* Two-column section */}
+      {/* Balance row — compact */}
       {balance && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-card rounded-xl border border-border p-5 space-y-3">
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Available Balance</p>
-              <p className="font-display text-2xl font-bold text-foreground">
-                £{balance.availableAmount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-              <p className="text-xs text-muted-foreground">Ready for payout</p>
-            </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-card rounded-lg border border-border p-3 space-y-1.5">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Available</p>
+            <p className="font-bold text-base text-foreground leading-tight">
+              £{balance.availableAmount.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
             <Button
               size="sm"
-              className="w-full"
+              className="h-7 text-xs w-full px-2"
               onClick={handleRequestPayout}
               disabled={payoutLoading || balance.availableAmount <= 0}
             >
               {payoutLoading ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Requesting…</>
+                <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Requesting…</>
               ) : (
-                <><Send className="mr-2 h-4 w-4" /> Request Payout</>
+                <><Send className="mr-1 h-3 w-3" /> Payout</>
               )}
             </Button>
           </div>
-          <div className="bg-card rounded-xl border border-border p-5 space-y-1">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Total Earned</p>
-            <p className="font-display text-2xl font-bold text-foreground">
+          <div className="bg-card rounded-lg border border-border p-3 space-y-1">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Total Earned</p>
+            <p className="font-bold text-base text-foreground leading-tight">
               £{balance.totalEarned.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
-            <p className="text-xs text-muted-foreground">All time</p>
+            <p className="text-[11px] text-muted-foreground">All time</p>
           </div>
         </div>
       )}
 
-      {/* Two-column section */}
-      <div className="grid lg:grid-cols-[1fr_380px] gap-6">
-        {/* Recent Orders */}
-        <div className="bg-card rounded-xl border border-border">
-          <div className="flex items-center justify-between p-5 border-b border-border">
-            <h2 className="font-display text-base font-semibold text-foreground">Recent Orders</h2>
-            <Button variant="ghost" size="sm" className="text-xs text-primary" asChild>
-              <Link to="/seller/orders">View All</Link>
-            </Button>
-          </div>
-          <div className="divide-y divide-border">
-            {loading ? (
-              <div className="p-6 text-center text-muted-foreground text-sm">Loading orders…</div>
-            ) : recentOrders.length === 0 ? (
-              <div className="p-6 text-center text-muted-foreground text-sm">No orders yet.</div>
-            ) : (
-              recentOrders.map((order) => (
-                <div key={order.id} className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors">
-                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-foreground">{order.orderNumber}</span>
-                      <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border capitalize ${statusColors[order.status] ?? "bg-muted text-muted-foreground"}`}>
-                        {order.status}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{order.buyerName}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-sm font-semibold text-foreground">£{order.total.toLocaleString()}</div>
-                    <div className="text-xs text-muted-foreground flex items-center gap-1 justify-end">
-                      <Clock className="h-3 w-3" /> {timeAgo(order.createdAt)}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+      {/* Recent Orders — mobile card list */}
+      <div className="bg-card rounded-lg border border-border">
+        <div className="flex items-center justify-between px-3 py-2.5 border-b border-border">
+          <h2 className="text-sm font-semibold text-foreground">Recent Orders</h2>
+          <Link to="/seller/orders" className="text-xs text-primary font-medium">View All</Link>
         </div>
-
-        {/* Right column */}
-        <div className="space-y-6">
-          {/* Top Products */}
-          <div className="bg-card rounded-xl border border-border">
-            <div className="flex items-center justify-between p-5 border-b border-border">
-              <h2 className="font-display text-base font-semibold text-foreground">Top Products</h2>
-              <Button variant="ghost" size="sm" className="text-xs text-primary" asChild>
-                <Link to="/seller/products">View All</Link>
-              </Button>
-            </div>
-            <div className="divide-y divide-border">
-              {loading ? (
-                <div className="p-4 text-center text-muted-foreground text-sm">Loading…</div>
-              ) : topProducts.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground text-sm">No products yet.</div>
-              ) : (
-                topProducts.map((prod, i) => (
-                  <div key={prod.id} className="flex items-center gap-3 p-4">
-                    <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0">
-                      {i + 1}
+        <div className="divide-y divide-border">
+          {loading ? (
+            <div className="px-3 py-4 text-center text-muted-foreground text-xs">Loading orders…</div>
+          ) : recentOrders.length === 0 ? (
+            <div className="px-3 py-4 text-center text-muted-foreground text-xs">No orders yet.</div>
+          ) : (
+            recentOrders.map((order) => (
+              <Link key={order.id} to={`/seller/orders`} className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30 active:bg-muted/50 transition-colors">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[13px] font-semibold text-foreground">{order.orderNumber}</span>
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full border capitalize shrink-0 ${statusColors[order.status] ?? "bg-muted text-muted-foreground"}`}>
+                      {order.status}
                     </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{prod.title}</p>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                        <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {prod.views}</span>
-                        <span className="flex items-center gap-1"><ShoppingCart className="h-3 w-3" /> {prod.addToCartCount}</span>
-                      </div>
-                    </div>
                   </div>
-                ))
-              )}
-            </div>
-          </div>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{order.buyerName}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-[13px] font-bold text-foreground">£{order.total.toLocaleString()}</div>
+                  <div className="text-[10px] text-muted-foreground">{timeAgo(order.createdAt)}</div>
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
+      </div>
 
-          {/* Quick Stats */}
-          <div className="bg-card rounded-xl border border-border p-5 space-y-4">
-            <h2 className="font-display text-base font-semibold text-foreground">Quick Stats</h2>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Star className="h-4 w-4 text-accent" /> Seller Rating
-                </div>
-                <span className="text-sm font-semibold text-foreground">
-                  {loading ? "—" : stats?.sellerRating ? `${stats.sellerRating.toFixed(1)} / 5.0` : "No ratings yet"}
+      {/* Top Products — compact list */}
+      <div className="bg-card rounded-lg border border-border">
+        <div className="flex items-center justify-between px-3 py-2.5 border-b border-border">
+          <h2 className="text-sm font-semibold text-foreground">Top Products</h2>
+          <Link to="/seller/products" className="text-xs text-primary font-medium">View All</Link>
+        </div>
+        <div className="divide-y divide-border">
+          {loading ? (
+            <div className="px-3 py-4 text-center text-muted-foreground text-xs">Loading…</div>
+          ) : topProducts.length === 0 ? (
+            <div className="px-3 py-4 text-center text-muted-foreground text-xs">No products yet.</div>
+          ) : (
+            topProducts.map((prod, i) => (
+              <div key={prod.id} className="flex items-center gap-3 px-3 py-2.5">
+                <span className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[11px] font-bold text-muted-foreground shrink-0">
+                  {i + 1}
                 </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Users className="h-4 w-4 text-primary" /> Total Customers
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium text-foreground truncate">{prod.title}</p>
+                  <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground mt-0.5">
+                    <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {prod.views}</span>
+                    <span className="flex items-center gap-1"><ShoppingCart className="h-3 w-3" /> {prod.addToCartCount}</span>
+                  </div>
                 </div>
-                <span className="text-sm font-semibold text-foreground">
-                  {loading ? "—" : stats?.totalCustomers ?? 0}
-                </span>
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Truck className="h-4 w-4 text-primary" /> Pending Shipments
-                </div>
-                <span className="text-sm font-semibold text-foreground">
-                  {loading ? "—" : stats?.pendingShipments ?? 0}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Package className="h-4 w-4 text-primary" /> Low Stock Items
-                </div>
-                <span className={`text-sm font-semibold ${(stats?.lowStockItems ?? 0) > 0 ? "text-destructive" : "text-foreground"}`}>
-                  {loading ? "—" : stats?.lowStockItems ?? 0}
-                </span>
-              </div>
-            </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Quick Stats — compact grid */}
+      <div className="bg-card rounded-lg border border-border p-3">
+        <h2 className="text-sm font-semibold text-foreground mb-2.5">Quick Stats</h2>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground"><Star className="h-3.5 w-3.5 text-accent" /> Rating</span>
+            <span className="text-[12px] font-semibold text-foreground">
+              {loading ? "—" : stats?.sellerRating ? `${stats.sellerRating.toFixed(1)}` : "—"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground"><Users className="h-3.5 w-3.5 text-primary" /> Customers</span>
+            <span className="text-[12px] font-semibold text-foreground">{loading ? "—" : stats?.totalCustomers ?? 0}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground"><Truck className="h-3.5 w-3.5 text-primary" /> Pending</span>
+            <span className="text-[12px] font-semibold text-foreground">{loading ? "—" : stats?.pendingShipments ?? 0}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground"><Package className="h-3.5 w-3.5 text-primary" /> Low Stock</span>
+            <span className={`text-[12px] font-semibold ${(stats?.lowStockItems ?? 0) > 0 ? "text-destructive" : "text-foreground"}`}>
+              {loading ? "—" : stats?.lowStockItems ?? 0}
+            </span>
           </div>
         </div>
       </div>

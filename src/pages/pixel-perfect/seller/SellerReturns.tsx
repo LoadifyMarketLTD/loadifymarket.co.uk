@@ -6,9 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
@@ -101,106 +98,90 @@ const SellerReturns = () => {
     }
   };
 
-  const renderTable = (data: Return[]) => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Return ID</TableHead>
-          <TableHead className="hidden sm:table-cell">Order</TableHead>
-          <TableHead>Reason</TableHead>
-          <TableHead>Amount</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="hidden sm:table-cell">Date</TableHead>
-          <TableHead className="text-right">Action</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {loading ? (
-          <TableRow>
-            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">Loading returns…</TableCell>
-          </TableRow>
-        ) : data.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-              <RotateCcw className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              No returns found.
-            </TableCell>
-          </TableRow>
-        ) : (
-          data.map((r) => {
-            const sc = statusConfig[r.status] ?? statusConfig["requested"];
-            return (
-              <TableRow key={r.id}>
-                <TableCell className="font-medium text-sm">{r.id.slice(0, 8).toUpperCase()}</TableCell>
-                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{r.orderId.slice(0, 8)}</TableCell>
-                <TableCell className="text-sm max-w-[180px] truncate">{r.reason}</TableCell>
-                <TableCell className="font-semibold text-sm">
-                  {r.refundAmount != null ? `£${r.refundAmount.toLocaleString()}` : "—"}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={sc.className}>{sc.label}</Badge>
-                </TableCell>
-                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">{formatDate(r.createdAt)}</TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="sm" className="text-xs" onClick={() => { setSelected(r); }}>
-                    {r.status === "requested" ? "Review" : "View"}
-                  </Button>
-                </TableCell>
-              </TableRow>
-            );
-          })
-        )}
-      </TableBody>
-    </Table>
-  );
+  const renderList = (data: Return[]) => {
+    if (loading) return <div className="px-3 py-6 text-center text-muted-foreground text-xs">Loading returns…</div>;
+    if (data.length === 0) return (
+      <div className="px-3 py-6 text-center text-muted-foreground text-xs">
+        <RotateCcw className="h-6 w-6 mx-auto mb-1.5 opacity-40" />
+        No returns found.
+      </div>
+    );
+    return (
+      <div className="divide-y divide-border">
+        {data.map((r) => {
+          const sc = statusConfig[r.status] ?? statusConfig["requested"];
+          const Icon = sc.icon;
+          return (
+            <button
+              key={r.id}
+              onClick={() => setSelected(r)}
+              className="w-full flex items-center gap-3 px-3 py-3 hover:bg-muted/30 active:bg-muted/50 transition-colors text-left"
+            >
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${sc.className}`}>
+                <Icon className="h-4 w-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[13px] font-semibold text-foreground">{r.orderId.slice(0, 8).toUpperCase()}</span>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0 ${sc.className}`}>{sc.label}</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{r.reason}</p>
+              </div>
+              <div className="text-right shrink-0">
+                {r.refundAmount != null && (
+                  <div className="text-[13px] font-bold text-foreground">£{r.refundAmount.toLocaleString()}</div>
+                )}
+                <div className="text-[10px] text-muted-foreground">{formatDate(r.createdAt)}</div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-[1200px]">
+    <div className="px-3 pt-3 pb-4 sm:p-6 space-y-3 sm:space-y-6 max-w-[1200px]">
       <div>
-        <h1 className="font-display text-2xl font-bold text-foreground">Returns</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {loading ? "Loading…" : `${returns.length} return requests · ${byStatus("requested").length} pending review`}
+        <h1 className="text-base font-bold text-foreground">Returns</h1>
+        <p className="text-[11px] text-muted-foreground">
+          {loading ? "Loading…" : `${returns.length} requests · ${byStatus("requested").length} pending`}
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Compact stats grid */}
+      <div className="grid grid-cols-4 gap-1.5">
         {[
-          { label: "Pending Review", count: byStatus("requested").length, icon: AlertCircle, color: "text-amber-600 bg-amber-500/10" },
-          { label: "Approved / In Progress", count: byStatus("approved").length, icon: Clock, color: "text-blue-600 bg-blue-500/10" },
-          { label: "Completed", count: byStatus("completed").length, icon: CheckCircle2, color: "text-emerald-600 bg-emerald-500/10" },
-          { label: "Rejected", count: byStatus("rejected").length, icon: XCircle, color: "text-red-600 bg-red-500/10" },
+          { label: "Pending", count: byStatus("requested").length, color: "text-amber-500" },
+          { label: "Approved", count: byStatus("approved").length, color: "text-blue-500" },
+          { label: "Completed", count: byStatus("completed").length, color: "text-emerald-500" },
+          { label: "Rejected", count: byStatus("rejected").length, color: "text-red-500" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card rounded-xl border border-border p-5 space-y-2">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}>
-              <stat.icon className="h-5 w-5" />
-            </div>
-            <div className="font-display text-2xl font-bold text-foreground">{stat.count}</div>
-            <p className="text-xs text-muted-foreground">{stat.label}</p>
+          <div key={stat.label} className="bg-card rounded-lg border border-border p-2 text-center">
+            <div className={`text-lg font-bold ${stat.color}`}>{stat.count}</div>
+            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{stat.label}</p>
           </div>
         ))}
       </div>
 
       {/* Search */}
-      <div className="flex gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search returns..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10" />
-        </div>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Input placeholder="Search returns..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="all">
-        <TabsList>
-          <TabsTrigger value="all">All <Badge variant="secondary" className="ml-2 text-xs">{filtered.length}</Badge></TabsTrigger>
-          <TabsTrigger value="requested">Pending</TabsTrigger>
-          <TabsTrigger value="approved">In Progress</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
+        <TabsList className="h-8">
+          <TabsTrigger value="all" className="text-xs h-7">All <Badge variant="secondary" className="ml-1 text-[10px] px-1 h-4">{filtered.length}</Badge></TabsTrigger>
+          <TabsTrigger value="requested" className="text-xs h-7">Pending</TabsTrigger>
+          <TabsTrigger value="approved" className="text-xs h-7">In Progress</TabsTrigger>
+          <TabsTrigger value="completed" className="text-xs h-7">Done</TabsTrigger>
         </TabsList>
-        <TabsContent value="all"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(filtered)}</div></CardContent></Card></TabsContent>
-        <TabsContent value="requested"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("requested"))}</div></CardContent></Card></TabsContent>
-        <TabsContent value="approved"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("approved"))}</div></CardContent></Card></TabsContent>
-        <TabsContent value="completed"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("completed"))}</div></CardContent></Card></TabsContent>
+        <TabsContent value="all"><Card><CardContent className="p-0">{renderList(filtered)}</CardContent></Card></TabsContent>
+        <TabsContent value="requested"><Card><CardContent className="p-0">{renderList(byStatus("requested"))}</CardContent></Card></TabsContent>
+        <TabsContent value="approved"><Card><CardContent className="p-0">{renderList(byStatus("approved"))}</CardContent></Card></TabsContent>
+        <TabsContent value="completed"><Card><CardContent className="p-0">{renderList(byStatus("completed"))}</CardContent></Card></TabsContent>
       </Tabs>
 
       {/* Return Detail Dialog */}

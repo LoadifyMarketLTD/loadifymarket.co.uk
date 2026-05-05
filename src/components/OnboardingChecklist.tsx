@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CheckCircle2, Circle, ChevronRight, X } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 
@@ -35,7 +35,6 @@ export function OnboardingChecklist() {
   const { user } = useAuthStore();
   const [state, setState] = useState<ChecklistState | null>(null);
   const [loading, setLoading] = useState(true);
-  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     if (!user || user.role !== "seller") return;
@@ -104,11 +103,10 @@ export function OnboardingChecklist() {
     load().catch(() => setLoading(false));
   }, [user]);
 
-  // Hide when all steps are complete, still loading, dismissed, or not a seller.
+  // Hide when all steps are complete, still loading, or not a seller.
   if (!user || user.role !== "seller") return null;
   if (loading) return null;
   if (!state) return null;
-  if (dismissed) return null;
 
   const allDone = Object.values(state).every(Boolean);
   if (allDone) return null;
@@ -117,70 +115,28 @@ export function OnboardingChecklist() {
   const total = ITEMS.length;
 
   return (
-    <div className="rounded-xl border border-white/10 p-5 mb-6 relative" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)" }}>
-      {/* Dismiss button */}
-      <button
-        type="button"
-        aria-label="Dismiss checklist"
-        onClick={() => setDismissed(true)}
-        className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
-      >
-        <X className="h-4 w-4" />
-      </button>
-
-      {/* Header */}
-      <div className="mb-4 pr-6">
-        <h3 className="font-semibold text-[#0A2239] text-sm">Complete your seller setup</h3>
-        <div className="flex items-center gap-2 mt-1.5">
-          <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+    <Link
+      to="/onboarding"
+      className="flex items-center gap-2 px-3 py-2.5 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 active:bg-primary/15 transition-colors"
+    >
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
             <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.round((completed / total) * 100)}%`, background: "#FBBF24" }}
+              className="rounded-full"
+              style={{
+                width: "10px", height: "10px",
+                background: `conic-gradient(#FBBF24 ${Math.round((completed / total) * 360)}deg, transparent 0deg)`,
+              }}
             />
           </div>
-          <span className="text-xs text-slate-400 shrink-0 font-medium">
-            {completed}/{total}
+          <span className="text-[13px] font-semibold text-foreground">
+            Complete setup ({completed}/{total})
           </span>
         </div>
       </div>
-
-      {/* Items */}
-      <ul className="space-y-2">
-        {ITEMS.map(({ key, label, href, cta }) => {
-          const done = state[key];
-          return (
-            <li key={key} className={`flex items-center gap-3 ${done ? "opacity-50" : ""}`}>
-              {done ? (
-                <CheckCircle2 className="h-4 w-4 text-[#FBBF24] shrink-0" />
-              ) : (
-                <Circle className="h-4 w-4 text-slate-400 shrink-0" />
-              )}
-              <span className={`text-sm flex-1 ${done ? "line-through text-slate-400" : "text-white font-semibold"}`}>
-                {label}
-              </span>
-              {!done && (
-                <Link
-                  to={href}
-                  className="text-xs font-medium text-[#FBBF24] hover:text-[#F59E0B] flex items-center gap-0.5 shrink-0"
-                >
-                  {cta} <ChevronRight className="h-3 w-3" />
-                </Link>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-
-      {/* Full wizard link */}
-      <div className="mt-4 pt-3 border-t border-white/10">
-        <Link
-          to="/onboarding"
-          className="text-xs font-semibold text-white hover:text-[#FBBF24] underline"
-        >
-          Open setup wizard →
-        </Link>
-      </div>
-    </div>
+      <ChevronRight className="h-4 w-4 text-primary shrink-0" />
+    </Link>
   );
 }
 

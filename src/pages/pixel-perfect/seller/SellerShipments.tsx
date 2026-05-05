@@ -1,14 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
-import { Truck, Search, MapPin, Clock, Package, CheckCircle2, Plus, Loader2, RefreshCw } from "lucide-react";
+import { Truck, Search, Clock, Package, CheckCircle2, Plus, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
@@ -238,110 +235,90 @@ const SellerShipments = () => {
   const byStatus = (status: string) => filtered.filter((s) => mapStatus(s.status) === status);
   const activeShipments = filtered.filter((s) => mapStatus(s.status) !== "delivered");
 
-  const renderTable = (data: ShipmentRow[]) => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Shipment</TableHead>
-          <TableHead className="hidden sm:table-cell">Order</TableHead>
-          <TableHead>Buyer</TableHead>
-          <TableHead className="hidden md:table-cell">Carrier</TableHead>
-          <TableHead className="hidden lg:table-cell">Tracking</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Action</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {loading ? (
-          <TableRow>
-            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-              Loading shipments…
-            </TableCell>
-          </TableRow>
-        ) : data.length === 0 ? (
-          <TableRow>
-            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-              <Truck className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              No shipments found.
-            </TableCell>
-          </TableRow>
-        ) : (
-          data.map((s) => {
-            const displayStatus = mapStatus(s.status);
-            const sc = statusConfig[displayStatus];
-            return (
-              <TableRow key={s.id}>
-                <TableCell className="font-medium text-sm">{s.id.slice(0, 8).toUpperCase()}</TableCell>
-                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">
-                  {s.orders?.orderNumber ?? s.order_id.slice(0, 8)}
-                </TableCell>
-                <TableCell className="text-sm">{buyerNames[s.buyer_id] ?? "Customer"}</TableCell>
-                <TableCell className="hidden md:table-cell text-xs text-muted-foreground">{s.courier_name ?? "—"}</TableCell>
-                <TableCell className="hidden lg:table-cell text-xs text-muted-foreground font-mono">{s.tracking_number ?? "—"}</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className={sc.className}>{sc.label}</Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="sm" className="text-xs" onClick={() => setSelected(s)}>Track</Button>
-                </TableCell>
-              </TableRow>
-            );
-          })
-        )}
-      </TableBody>
-    </Table>
-  );
+  const renderList = (data: ShipmentRow[]) => {
+    if (loading) return <div className="px-3 py-6 text-center text-muted-foreground text-xs">Loading shipments…</div>;
+    if (data.length === 0) return (
+      <div className="px-3 py-6 text-center text-muted-foreground text-xs">
+        <Truck className="h-6 w-6 mx-auto mb-1.5 opacity-40" />
+        No shipments found.
+      </div>
+    );
+    return (
+      <div className="divide-y divide-border">
+        {data.map((s) => {
+          const displayStatus = mapStatus(s.status);
+          const sc = statusConfig[displayStatus];
+          return (
+            <button
+              key={s.id}
+              onClick={() => setSelected(s)}
+              className="w-full flex items-center gap-3 px-3 py-3 hover:bg-muted/30 active:bg-muted/50 transition-colors text-left"
+            >
+              <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <Truck className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[13px] font-semibold text-foreground">{s.orders?.orderNumber ?? s.id.slice(0, 8).toUpperCase()}</span>
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0 ${sc.className}`}>{sc.label}</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{buyerNames[s.buyer_id] ?? "Customer"}{s.courier_name ? ` · ${s.courier_name}` : ""}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="text-[11px] text-muted-foreground">{s.tracking_number ? s.tracking_number.slice(0, 12) : "—"}</div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-[1200px]">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="px-3 pt-3 pb-4 sm:p-6 space-y-3 sm:space-y-6 max-w-[1200px]">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Shipments</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {loading ? "Loading…" : `${shipments.length} shipments · ${activeShipments.length} active`}
+          <h1 className="text-base font-bold text-foreground">Shipments</h1>
+          <p className="text-[11px] text-muted-foreground">
+            {loading ? "Loading…" : `${shipments.length} total · ${activeShipments.length} active`}
           </p>
         </div>
-        <Button size="sm" onClick={handleOpenCreate}>
-          <Plus className="mr-2 h-4 w-4" /> Log Shipment
+        <Button size="sm" className="h-9 text-xs" onClick={handleOpenCreate}>
+          <Plus className="mr-1.5 h-3.5 w-3.5" /> Log Shipment
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Compact stats grid */}
+      <div className="grid grid-cols-4 gap-1.5">
         {[
-          { label: "Label Created", count: byStatus("label_created").length, icon: Package, color: "text-muted-foreground bg-muted" },
-          { label: "In Transit", count: filtered.filter((s) => ["picked_up", "in_transit"].includes(mapStatus(s.status))).length, icon: Truck, color: "text-purple-600 bg-purple-500/10" },
-          { label: "Out for Delivery", count: byStatus("out_for_delivery").length, icon: MapPin, color: "text-amber-600 bg-amber-500/10" },
-          { label: "Delivered", count: byStatus("delivered").length, icon: CheckCircle2, color: "text-emerald-600 bg-emerald-500/10" },
+          { label: "Created", count: byStatus("label_created").length, color: "text-muted-foreground" },
+          { label: "In Transit", count: filtered.filter((s) => ["picked_up", "in_transit"].includes(mapStatus(s.status))).length, color: "text-purple-500" },
+          { label: "Out for Del.", count: byStatus("out_for_delivery").length, color: "text-amber-500" },
+          { label: "Delivered", count: byStatus("delivered").length, color: "text-emerald-500" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-card rounded-xl border border-border p-5 space-y-2">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}>
-              <stat.icon className="h-5 w-5" />
-            </div>
-            <div className="font-display text-2xl font-bold text-foreground">{stat.count}</div>
-            <p className="text-xs text-muted-foreground">{stat.label}</p>
+          <div key={stat.label} className="bg-card rounded-lg border border-border p-2 text-center">
+            <div className={`text-lg font-bold ${stat.color}`}>{stat.count}</div>
+            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{stat.label}</p>
           </div>
         ))}
       </div>
 
       {/* Search */}
-      <div className="flex gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search shipments or tracking..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-10" />
-        </div>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Input placeholder="Search shipments..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="all">
-        <TabsList>
-          <TabsTrigger value="all">All <Badge variant="secondary" className="ml-2 text-xs">{filtered.length}</Badge></TabsTrigger>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="delivered">Delivered</TabsTrigger>
+        <TabsList className="h-8">
+          <TabsTrigger value="all" className="text-xs h-7">All <Badge variant="secondary" className="ml-1 text-[10px] px-1 h-4">{filtered.length}</Badge></TabsTrigger>
+          <TabsTrigger value="active" className="text-xs h-7">Active</TabsTrigger>
+          <TabsTrigger value="delivered" className="text-xs h-7">Delivered</TabsTrigger>
         </TabsList>
-        <TabsContent value="all"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(filtered)}</div></CardContent></Card></TabsContent>
-        <TabsContent value="active"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(activeShipments)}</div></CardContent></Card></TabsContent>
-        <TabsContent value="delivered"><Card><CardContent className="pt-4"><div className="overflow-x-auto">{renderTable(byStatus("delivered"))}</div></CardContent></Card></TabsContent>
+        <TabsContent value="all"><Card><CardContent className="p-0">{renderList(filtered)}</CardContent></Card></TabsContent>
+        <TabsContent value="active"><Card><CardContent className="p-0">{renderList(activeShipments)}</CardContent></Card></TabsContent>
+        <TabsContent value="delivered"><Card><CardContent className="p-0">{renderList(byStatus("delivered"))}</CardContent></Card></TabsContent>
       </Tabs>
 
       {/* Tracking Dialog */}
