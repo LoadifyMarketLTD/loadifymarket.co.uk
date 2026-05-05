@@ -11,6 +11,7 @@ import { Bell, Search, Filter, Camera } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
 import MobileSearchOverlay from '@/components/MobileSearchOverlay';
+import logo from '@/assets/loadify-logo.svg';
 
 export default function MobileAppHeader() {
   const navigate = useNavigate();
@@ -50,32 +51,13 @@ export default function MobileAppHeader() {
       <div className="flex items-center justify-between">
         {/* Left: logo + brand */}
         <div className="flex items-center gap-2.5" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-          {/* Hexagonal M badge */}
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              border: '2px solid #F2B84B',
-              borderRadius: 10,
-              background: 'linear-gradient(135deg, #1E1A0E 0%, #111216 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <span
-              style={{
-                fontSize: 'clamp(13px, 3.6vw, 16px)',
-                fontWeight: 900,
-                color: '#F2B84B',
-                letterSpacing: 0,
-                fontFamily: 'var(--font-display)',
-              }}
-            >
-              M
-            </span>
-          </div>
+          {/* Logo */}
+          <img
+            src={logo}
+            alt=""
+            aria-hidden="true"
+            style={{ width: 38, height: 38, flexShrink: 0 }}
+          />
 
           {/* Brand text */}
           <div className="flex flex-col leading-none" style={{ minWidth: 0, gap: 2 }}>

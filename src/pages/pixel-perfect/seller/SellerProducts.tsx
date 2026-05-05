@@ -53,11 +53,6 @@ function LMPlaceholder({ size = 48 }: { size?: number }) {
   );
 }
 
-interface ProductImage {
-  url: string;
-  position: number;
-}
-
 interface Product {
   id: string;
   title: string;
@@ -69,7 +64,7 @@ interface Product {
   isApproved: boolean;
   views: number;
   shareCount?: number;
-  images?: ProductImage[];
+  images?: string[];
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -88,10 +83,10 @@ function deriveStatus(p: Product): string {
   return "active";
 }
 
-/** Returns the URL of the lowest-position image, or null when there are none. */
+/** Returns the URL of the first image, or null when there are none. */
 function getProductThumbnail(p: Product): string | null {
   if (!p.images || p.images.length === 0) return null;
-  return p.images.slice().sort((a, b) => a.position - b.position)[0].url;
+  return p.images[0];
 }
 
 const BASE_URL = "https://loadifymarket.co.uk";
@@ -125,7 +120,7 @@ const SellerProducts = () => {
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views, shareCount, images(url, position)")
+          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views, shareCount, images")
           .eq("sellerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;

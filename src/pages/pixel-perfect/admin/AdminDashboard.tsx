@@ -138,20 +138,8 @@ const AdminDashboard = () => {
     "Setup Incomplete":  { color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
   };
 
-  // TEMPORARY BUILD MARKER — remove once user confirms APK shows this on device
-  const _buildSha = (import.meta.env.VITE_BUILD_SHA ?? 'local').slice(0, 7);
-  const _buildNum = import.meta.env.VITE_BUILD_NUMBER ?? '0';
-
   return (
     <div className="p-4 sm:p-6 space-y-7" style={{ background: "transparent", minHeight: "100%" }}>
-      {/* TEMPORARY: Build identity banner — remove after APK visual confirmation */}
-      <div
-        className="rounded-lg px-3 py-2 text-xs font-mono font-medium text-center"
-        style={{ background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.4)", color: "#FBBF24" }}
-      >
-        BUILD CHECK: {_buildSha} #{_buildNum}
-      </div>
-
       <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <h1 className="text-2xl font-bold text-white tracking-tight">Admin Overview</h1>
         <p className="text-sm mt-1 text-slate-400">
