@@ -175,7 +175,7 @@ const Signup = () => {
         robots="noindex, nofollow"
       />
       {/* ── Full-page container — light grey, NO card ────────────── */}
-      <main id="main-content" className="bg-[#020617] pt-28 pb-10">
+      <main id="main-content" className="bg-[#020617] pt-4 md:pt-28 pb-10">
         <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10">
 
           {/* ══════════════════════════════════════════════════════════

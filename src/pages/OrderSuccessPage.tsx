@@ -118,7 +118,7 @@ export default function OrderSuccessPage() {
           description="Your order is being confirmed."
           robots="noindex, nofollow"
         />
-        <main id="main-content" className="flex-1 pt-28 pb-20 px-4 flex items-start justify-center">
+        <main id="main-content" className="flex-1 pt-4 md:pt-28 pb-20 px-4 flex items-start justify-center">
           <div className="w-full max-w-lg mt-10">
             <div className="bg-white border border-gray-200 rounded-xl p-10 text-center">
               <div className="flex items-center justify-center mb-6">
@@ -146,7 +146,7 @@ export default function OrderSuccessPage() {
           description="Your order has been received."
           robots="noindex, nofollow"
         />
-        <main id="main-content" className="flex-1 pt-28 pb-20 px-4 flex items-start justify-center">
+        <main id="main-content" className="flex-1 pt-4 md:pt-28 pb-20 px-4 flex items-start justify-center">
           <div className="w-full max-w-lg mt-10">
             <div className="bg-white border border-gray-200 rounded-xl p-10 text-center">
               <div className="flex items-center justify-center mb-6">
@@ -201,7 +201,7 @@ export default function OrderSuccessPage() {
         description="Your order has been confirmed. Thank you for shopping with Loadify Market."
         robots="noindex, nofollow"
       />
-      <main id="main-content" className="flex-1 pt-28 pb-20 px-4 flex items-start justify-center">
+      <main id="main-content" className="flex-1 pt-4 md:pt-28 pb-20 px-4 flex items-start justify-center">
         <div className="w-full max-w-lg mt-10">
           <div className="bg-white border border-gray-200 rounded-xl p-10 text-center">
             {/* Success Icon */}

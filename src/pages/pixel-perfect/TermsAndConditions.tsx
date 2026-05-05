@@ -6,7 +6,7 @@ const TermsAndConditions = () => {
   return (
     <MainLayout>
       <SEO title="Terms & Conditions | Loadify Market" description="Read the full terms and conditions for using Loadify Market — the UK's multi-category online marketplace." canonical="/terms" />
-      <main id="main-content" className="pt-28 pb-20">
+      <main id="main-content" className="pt-4 md:pt-28 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Terms & Conditions" }]} backTo="/" />
         </div>

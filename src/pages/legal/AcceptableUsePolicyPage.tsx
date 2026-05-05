@@ -10,7 +10,7 @@ export default function AcceptableUsePolicyPage() {
         description="Read the Acceptable Use Policy for Loadify Market — covering prohibited content, conduct, and enforcement procedures for all platform users."
         canonical="/acceptable-use-policy"
       />
-      <main id="main-content" className="flex-1 pt-28 pb-16">
+      <main id="main-content" className="flex-1 pt-4 md:pt-28 pb-16">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-4xl font-bold mb-6">Acceptable Use Policy</h1>
       <div className="card prose max-w-full">

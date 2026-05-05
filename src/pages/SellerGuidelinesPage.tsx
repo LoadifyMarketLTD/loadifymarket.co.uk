@@ -71,7 +71,7 @@ export default function SellerGuidelinesPage() {
         description="Read the seller guidelines for Loadify Market. Learn how to list products, manage orders, maintain high standards, and grow your business on our UK marketplace."
         canonical="/seller-guidelines"
       />
-      <main id="main-content" className="pt-28">
+      <main id="main-content" className="pt-4 md:pt-28">
       {/* Hero */}
       <section className="bg-white border-b border-gray-200 py-12">
         <div className="container-market text-center">

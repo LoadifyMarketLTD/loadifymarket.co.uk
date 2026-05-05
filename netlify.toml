@@ -34,6 +34,15 @@
   status = 200
   force  = true
 
+# ─── API proxy — routes /api/* calls to Netlify Functions ─────────────────────
+# Ensures any request to /api/<name> is served by the matching Netlify Function
+# so the frontend always receives JSON and never gets an HTML 404/redirect.
+[[redirects]]
+  from   = "/api/*"
+  to     = "/.netlify/functions/:splat"
+  status = 200
+  force  = true
+
 [functions]
   node_bundler = "esbuild"
 

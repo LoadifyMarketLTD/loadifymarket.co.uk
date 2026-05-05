@@ -33,7 +33,7 @@ const JSON_HEADERS = { ...corsHeaders, 'Content-Type': 'application/json' };
 const ALLOWED_KEYS = new Set(['feature_flags', 'maintenance_mode', 'platform_config']);
 
 async function authenticateAdmin(event: HandlerEvent) {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceRoleKey) return null;
 
@@ -77,7 +77,7 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceRoleKey) {
     return {

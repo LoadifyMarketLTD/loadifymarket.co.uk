@@ -28,7 +28,7 @@ const CheckoutError = () => {
         description="Your payment could not be processed. Return to your cart and try again."
         robots="noindex, nofollow"
       />
-      <main id="main-content" className="pt-28 pb-20 flex items-center justify-center">
+      <main id="main-content" className="pt-4 md:pt-28 pb-20 flex items-center justify-center">
         <div className="w-full max-w-lg px-4">
           <div className="bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm">
             {/* Error Icon */}

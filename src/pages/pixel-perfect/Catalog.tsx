@@ -264,7 +264,7 @@ const Catalog = () => {
         canonical="/catalog"
       />
 
-      <main id="main-content" className="pt-28 pb-16">
+      <main id="main-content" className="pt-4 md:pt-28 pb-16">
         <div className="container mx-auto px-4">
           <BreadcrumbNav
             items={[

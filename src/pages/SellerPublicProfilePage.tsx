@@ -103,7 +103,7 @@ export default function SellerPublicProfilePage() {
   if (loading) {
     return (
       <MainLayout>
-        <main id="main-content" className="flex-1 pt-28 flex items-center justify-center">
+        <main id="main-content" className="flex-1 pt-4 md:pt-28 flex items-center justify-center">
           <div className="text-center">
             <div className="w-12 h-12 border-2 border-gold border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <p className="text-gray-500">Loading seller profile...</p>
@@ -116,7 +116,7 @@ export default function SellerPublicProfilePage() {
   if (!seller) {
     return (
       <MainLayout>
-        <main id="main-content" className="flex-1 pt-28">
+        <main id="main-content" className="flex-1 pt-4 md:pt-28">
           <div className="container-cinematic py-12">
             <div className="bg-white border border-gray-200 rounded-xl p-6 text-center py-16">
               <Store className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -147,7 +147,7 @@ export default function SellerPublicProfilePage() {
         ogType="profile"
         {...(sellerImage ? { ogImage: sellerImage } : {})}
       />
-      <main className="flex-1 pt-28">
+      <main className="flex-1 pt-4 md:pt-28">
       {/* Breadcrumb */}
       <div className="container-cinematic py-4">
         <BreadcrumbNav

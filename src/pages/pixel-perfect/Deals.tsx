@@ -201,7 +201,7 @@ const Deals = () => {
     <MainLayout>
       <SEO title="Deals & Clearance | Loadify Market" description="Browse the latest deals, clearance lines, and discounted products on Loadify Market." canonical="/deals" />
 
-      <main id="main-content" className="pt-28 pb-16">
+      <main id="main-content" className="pt-4 md:pt-28 pb-16">
         {/* Hero section */}
         <div className="relative border-b border-border overflow-hidden">
           <div className="absolute inset-0">

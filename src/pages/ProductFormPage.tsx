@@ -562,7 +562,7 @@ export default function ProductFormPage() {
 
   return (
     <div className="bg-[#020617] min-h-screen">
-      <div className="container mx-auto px-4 pt-28 pb-8">
+      <div className="container mx-auto px-4 pt-4 md:pt-28 pb-8">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="mb-6">

@@ -21,7 +21,7 @@ const WholesaleInfo = () => {
         description="Learn about how Loadify Market works — buying, selling, shipping, and more. UK multi-category marketplace for independent buyers and sellers."
         canonical="/wholesale-info"
       />
-      <main id="main-content" className="pt-28 pb-20">
+      <main id="main-content" className="pt-4 md:pt-28 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav
             items={[

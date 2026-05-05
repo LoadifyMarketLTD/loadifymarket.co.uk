@@ -46,7 +46,7 @@ const Cart = () => {
           canonical="/cart"
           robots="noindex,nofollow"
         />
-        <main id="main-content" className="pt-28 pb-16">
+        <main id="main-content" className="pt-4 md:pt-28 pb-16">
           <div className="container mx-auto px-4">
             <div className="max-w-md mx-auto text-center space-y-6 py-20">
               <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto">
@@ -76,7 +76,7 @@ const Cart = () => {
         canonical="/cart"
         robots="noindex,nofollow"
       />
-      <main id="main-content" className="pt-28 pb-40 lg:pb-16">
+      <main id="main-content" className="pt-4 md:pt-28 pb-40 lg:pb-16">
         <div className="container mx-auto px-4">
           <BreadcrumbNav
             items={[

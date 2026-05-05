@@ -6,7 +6,7 @@ const PrivacyPolicy = () => {
   return (
     <MainLayout>
       <SEO title="Privacy Policy | Loadify Market" description="Understand how Loadify Market collects, uses, and protects your personal data in compliance with UK GDPR." canonical="/privacy" />
-      <main id="main-content" className="pt-28 pb-20">
+      <main id="main-content" className="pt-4 md:pt-28 pb-20">
         <div className="container mx-auto px-4 max-w-4xl">
           <BreadcrumbNav items={[{ label: "Home", to: "/" }, { label: "Legal", to: "/terms" }, { label: "Privacy Policy" }]} backTo="/" />
         </div>
