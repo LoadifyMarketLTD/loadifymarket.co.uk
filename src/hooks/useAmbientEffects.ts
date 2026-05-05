@@ -21,8 +21,8 @@ export function useAmbientEffects() {
 
     // ── 2. Card 3D parallax (event delegation) ────────────────────────────────
     const handleCardMove = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const card = target.closest<HTMLElement>('[data-parallax]');
+      if (!(e.target instanceof Element)) return;
+      const card = e.target.closest<HTMLElement>('[data-parallax]');
       if (!card) return;
 
       const rect = card.getBoundingClientRect();
@@ -32,8 +32,8 @@ export function useAmbientEffects() {
     };
 
     const handleCardLeave = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const card = target.closest<HTMLElement>('[data-parallax]');
+      if (!(e.target instanceof Element)) return;
+      const card = e.target.closest<HTMLElement>('[data-parallax]');
       if (card) card.style.transform = 'translateY(0)';
     };
 
@@ -44,8 +44,8 @@ export function useAmbientEffects() {
 
     // ── 3. Magnetic buttons (event delegation) ────────────────────────────────
     const handleBtnMove = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const btn = target.closest<HTMLElement>('[data-magnetic]');
+      if (!(e.target instanceof Element)) return;
+      const btn = e.target.closest<HTMLElement>('[data-magnetic]');
       if (!btn) return;
 
       const rect = btn.getBoundingClientRect();
@@ -55,8 +55,8 @@ export function useAmbientEffects() {
     };
 
     const handleBtnLeave = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const btn = target.closest<HTMLElement>('[data-magnetic]');
+      if (!(e.target instanceof Element)) return;
+      const btn = e.target.closest<HTMLElement>('[data-magnetic]');
       if (btn) btn.style.transform = 'translate(0, 0)';
     };
 

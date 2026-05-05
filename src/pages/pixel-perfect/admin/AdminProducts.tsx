@@ -221,7 +221,8 @@ const AdminProducts = () => {
               className="cursor-pointer hover:bg-white/5 transition-colors"
               style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
               onClick={(e) => {
-                if ((e.target as HTMLElement).closest("button,[role=menuitem]")) return;
+                const target = e.target instanceof Element ? e.target : null;
+                if (!target || target.closest("button,[role=menuitem]")) return;
                 navigate(`/product/${p.id}`);
               }}
             >

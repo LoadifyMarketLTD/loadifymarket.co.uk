@@ -70,7 +70,9 @@ function formatDate(iso: string | null | undefined): string {
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export const handler: Handler = async (event) => {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  // Support both SUPABASE_URL (Netlify dashboard convention) and the VITE_
+  // prefixed variant that build tooling also exports to the environment.
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
@@ -100,15 +102,7 @@ export const handler: Handler = async (event) => {
     if (event.httpMethod === 'GET') {
       const { data: rows, error: ordersErr } = await admin
         .from('orders')
-        .select(`
-          id,
-          orderNumber,
-          total,
-          status,
-          createdAt,
-          buyerId,
-          product:products(title)
-        `)
+        .select('id, orderNumber, total, status, createdAt, buyerId, productId')
         .order('createdAt', { ascending: false })
         .limit(100);
 
@@ -117,7 +111,7 @@ export const handler: Handler = async (event) => {
       const orderRows = rows || [];
 
       // Resolve buyer names from users table
-      const buyerIds = [...new Set(orderRows.map((o: { buyerId: string }) => o.buyerId).filter(Boolean))];
+      const buyerIds = [...new Set(orderRows.map((o: { buyerId: string | null }) => o.buyerId).filter((id): id is string => !!id))];
       const buyerNames: Record<string, string> = {};
 
       if (buyerIds.length > 0) {
@@ -131,6 +125,20 @@ export const handler: Handler = async (event) => {
         });
       }
 
+      // Resolve product titles in a separate query (avoids FK hint issues with camelCase columns)
+      const productIds = [...new Set(orderRows.map((o: { productId: string | null }) => o.productId).filter((id): id is string => !!id))];
+      const productTitles: Record<string, string> = {};
+
+      if (productIds.length > 0) {
+        const { data: products } = await admin
+          .from('products')
+          .select('id, title')
+          .in('id', productIds);
+        (products ?? []).forEach((p: { id: string; title?: string | null }) => {
+          productTitles[p.id] = p.title || '—';
+        });
+      }
+
       const orders = orderRows.map((o: {
         id: string;
         orderNumber: string | null;
@@ -138,19 +146,16 @@ export const handler: Handler = async (event) => {
         status: string | null;
         createdAt: string | null;
         buyerId: string;
-        product: { title?: string } | { title?: string }[] | null;
-      }) => {
-        const productObj = Array.isArray(o.product) ? o.product[0] : o.product;
-        return {
-          id: o.id,
-          orderNumber: o.orderNumber || o.id.slice(0, 8).toUpperCase(),
-          buyer: buyerNames[o.buyerId] ?? (o.buyerId ? o.buyerId.slice(0, 8).toUpperCase() : '—'),
-          product: productObj?.title || '—',
-          total: o.total ?? 0,
-          status: o.status ?? 'paid',
-          date: formatDate(o.createdAt),
-        };
-      });
+        productId: string;
+      }) => ({
+        id: o.id,
+        orderNumber: o.orderNumber || o.id.slice(0, 8).toUpperCase(),
+        buyer: buyerNames[o.buyerId] ?? (o.buyerId ? o.buyerId.slice(0, 8).toUpperCase() : '—'),
+        product: productTitles[o.productId] ?? '—',
+        total: o.total ?? 0,
+        status: o.status ?? 'paid',
+        date: formatDate(o.createdAt),
+      }));
 
       return {
         statusCode: 200,
@@ -212,11 +217,12 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Method not allowed' }),
     };
   } catch (err: unknown) {
-    console.error('ADMIN ORDERS ERROR:', err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('ADMIN ORDERS ERROR:', message, err);
     return {
       statusCode: 500,
       headers: JSON_HEADERS,
-      body: JSON.stringify({ error: 'Internal Server Error' }),
+      body: JSON.stringify({ error: 'Internal Server Error', detail: message }),
     };
   }
 };

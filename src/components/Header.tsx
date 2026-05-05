@@ -25,8 +25,11 @@ const Header = () => {
   // they render their own mobile hamburger header.  On desktop (md+) the global
   // header is always shown and the shells offset themselves with --shell-offset-h.
   const isShellPath = /^\/(seller|admin|buyer)(\/|$)/.test(location.pathname);
-  // Mobile-standalone pages (/inbox, /orders, /categories) render their own sticky
-  // sub-header and must not have the global header layered on top.
+  // Mobile-standalone pages (/inbox, /orders, /categories, /product) render their own
+  // sticky sub-header and must not have the global header layered on top.
+  // NOTE: /catalog and /category/:slug intentionally keep the global header on
+  // mobile — they rely on the search bar in Row 1 (no dedicated MobileSearchBar on
+  // those pages).  MobileBottomNav remains visible via MainLayout on all those routes.
   const isMobileStandalonePath = /^\/(inbox|orders|categories|product)(\/|$)/.test(location.pathname);
   const hideOnMobile = isHomeMobile || isShellPath || isMobileStandalonePath;
   const [mobileOpen, setMobileOpen] = useState(false);

@@ -15,6 +15,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { MessageSquare, User, Search, SquarePen } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
+import { useAuthPromptStore } from "@/store/authPromptStore";
 import { toast } from "@/hooks/use-toast";
 import MobileBottomNav from "@/components/MobileBottomNav";
 
@@ -97,17 +98,18 @@ function previewText(raw: string | null): string {
 export default function MobileInboxPage() {
   const navigate = useNavigate();
   const { user, isLoading } = useAuthStore();
+  const promptAuth = useAuthPromptStore((s) => s.open);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Auth guard
+  // Auth gate — show prompt modal instead of hard redirect to /login
   useEffect(() => {
     if (!isLoading && !user) {
-      navigate("/login", { replace: true, state: { from: "/inbox" } });
+      promptAuth('message');
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, promptAuth]);
 
   // Fetch conversations
   useEffect(() => {

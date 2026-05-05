@@ -37,8 +37,10 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
   const isOwner = !!user && !!product.sellerId && user.id === product.sellerId;
 
   const handleCardClick = (e: React.MouseEvent | React.KeyboardEvent) => {
-    // Only navigate if the click wasn't on a button or link already
-    const target = e.target as HTMLElement;
+    // Only navigate if the click wasn't on a button or link already.
+    // Guard against Text nodes (Capacitor WebView) which lack .closest().
+    const target = e.target instanceof Element ? e.target : null;
+    if (!target) return;
     if (target.closest("a") || target.closest("button")) return;
     if (isOwner) {
       navigate(`/seller/products/${product.id}/edit`);

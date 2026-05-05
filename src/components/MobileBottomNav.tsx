@@ -1,8 +1,8 @@
 /**
- * MobileBottomNav — pixel-perfect match to reference image.
+ * MobileBottomNav — mobile bottom navigation bar.
  *
  * Items (left → right):
- *   Home (house) | Categories (grid) | Sell (big gold circle +) | Messages (chat + unread badge) | Profile (person)
+ *   Home | Search | Sell (gold circle) | Inbox (with unread badge) | Profile
  *
  * "Home" links to "/" (exact active match).
  * "Sell" is elevated above the bar with a large gold circle.
@@ -10,10 +10,11 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Home, MessageCircle, Plus, LayoutGrid, User } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Home, Search, Plus, Mail, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuthStore } from '@/store';
+import { useAuthPromptStore } from '@/store/authPromptStore';
 import { supabase } from '@/lib/supabase';
 
 // ── Generic nav item ──────────────────────────────────────────────────────────
@@ -73,6 +74,8 @@ function NavItem({
 
 function MessagesNavButton({ isActive }: { isActive: boolean }) {
   const { user } = useAuthStore();
+  const promptAuth = useAuthPromptStore((s) => s.open);
+  const navigate = useNavigate();
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
@@ -90,15 +93,20 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
     return () => { cancelled = true; };
   }, [user?.id]);
 
+  const handleInbox = () => {
+    if (!user) { promptAuth('message'); return; }
+    navigate('/inbox');
+  };
+
   return (
-    <Link
-      to="/inbox"
+    <button
+      onClick={handleInbox}
       className="flex flex-col items-center gap-1 px-3 py-2"
-      aria-label={`Messages${unread > 0 ? `, ${unread} unread` : ''}`}
-      style={{ textDecoration: 'none', minHeight: '44px', justifyContent: 'center' }}
+      aria-label={`Inbox${unread > 0 ? `, ${unread} unread` : ''}`}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', minHeight: '44px', justifyContent: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
     >
       <div style={{ position: 'relative' }}>
-        <MessageCircle
+        <Mail
           style={{
             width: '22px',
             height: '22px',
@@ -144,9 +152,9 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
           whiteSpace: 'nowrap',
         }}
       >
-        Messages
+        Inbox
       </span>
-    </Link>
+    </button>
   );
 }
 
@@ -154,15 +162,16 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
 
 export default function MobileBottomNav() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuthStore();
+  const promptAuth = useAuthPromptStore((s) => s.open);
 
-  const profilePath =
-    user?.role === 'seller' ? '/seller' :
-    user?.role === 'admin'  ? '/admin'  :
-    user                    ? '/buyer/profile' :
-    '/login';
+  const profilePath = '/profile';
 
-  const sellPath = user ? '/seller/products/new' : '/register?type=seller';
+  const handleSell = () => {
+    if (!user) { promptAuth('sell'); return; }
+    navigate('/sell');
+  };
 
   // Exact match for home ("/"), prefix match for everything else
   const isHomeActive = location.pathname === '/';
@@ -186,13 +195,13 @@ export default function MobileBottomNav() {
         {/* Home */}
         <NavItem to="/" icon={Home} label="Home" isActive={isHomeActive} exact />
 
-        {/* Categories */}
-        <NavItem to="/categories" icon={LayoutGrid} label="Categories" isActive={isActive('/categories')} />
+        {/* Search */}
+        <NavItem to="/categories" icon={Search} label="Search" isActive={isActive('/categories')} />
 
         {/* Sell — elevated large gold circle */}
-        <Link
-          to={sellPath}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '0 8px', textDecoration: 'none' }}
+        <button
+          onClick={handleSell}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', padding: '0 8px', background: 'none', border: 'none', cursor: 'pointer' }}
           aria-label="Sell an item"
         >
           <div
@@ -213,7 +222,7 @@ export default function MobileBottomNav() {
           <span style={{ fontSize: '10px', fontWeight: 600, color: '#F5B942', lineHeight: 1, marginTop: '1px' }}>
             Sell
           </span>
-        </Link>
+        </button>
 
         {/* Messages */}
         <MessagesNavButton isActive={isActive('/inbox')} />

@@ -1,5 +1,4 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import {
+import { NavLink, Outlet, useNavigate } from "react-router-dom";import {
   LayoutDashboard, Package, ShoppingCart, Truck, FileText,
   RotateCcw, Star, Settings, UserCircle, ChevronRight, Store,
   LogOut, Menu, Bell,
@@ -138,12 +137,18 @@ const SellerShell = () => {
 
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile top header */}
-        <header className="lg:hidden flex items-center gap-3 px-4 pt-header-safe pb-3 border-b border-border bg-card shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
+        {/* Mobile top header — compact app-style bar */}
+        <header className="lg:hidden flex items-center px-2 pt-header-safe pb-2 border-b border-border bg-card shrink-0">
+          <Button variant="ghost" size="icon" className="h-10 w-10 shrink-0" onClick={() => setSidebarOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
-          <span className="font-semibold text-foreground text-sm">Seller Hub</span>
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <span className="font-bold text-foreground text-[15px] leading-tight">Seller Hub</span>
+            <span className="text-[10px] text-muted-foreground leading-tight truncate max-w-[160px]">{displayName}</span>
+          </div>
+          <NavLink to="/seller/notifications" aria-label="Notifications" className="h-10 w-10 shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground">
+            <Bell className="h-5 w-5" />
+          </NavLink>
         </header>
 
         {/* Page content — add bottom padding on mobile so content isn't hidden behind tab bar */}

@@ -96,12 +96,16 @@ const AdminOrders = () => {
       const res = await authorizedFetch("/.netlify/functions/admin-orders", {
         method: "GET",
       });
-      const data = await res.json() as { orders?: Order[]; error?: string };
-      if (!res.ok) throw new Error(data.error || "Failed to load orders");
+      const data = await res.json() as { orders?: Order[]; error?: string; detail?: string };
+      if (!res.ok) {
+        const msg = [data.error, data.detail].filter(Boolean).join(" — ") || "Failed to load orders";
+        throw new Error(msg);
+      }
       setOrders(Array.isArray(data.orders) ? data.orders : []);
     } catch (err: unknown) {
-      console.error("[AdminOrders] fetchOrders failed:", err);
-      setError("Unable to load orders. Please try again.");
+      const msg = (err as Error).message || "Unable to load orders. Please try again.";
+      console.error("[AdminOrders] fetchOrders failed:", msg);
+      setError(msg);
     } finally {
       setLoading(false);
     }

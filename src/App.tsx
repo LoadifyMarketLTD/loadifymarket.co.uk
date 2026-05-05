@@ -13,7 +13,8 @@ import RequireSeller from './components/auth/RequireSeller';
 import RequireSellerAny from './components/auth/RequireSellerAny';
 import RequireBuyer from './components/auth/RequireBuyer';
 import RequireEmailVerified from './components/auth/RequireEmailVerified';
-import RequireAuth from './components/auth/RequireAuth';
+import AuthPromptModal from './components/AuthPromptModal';
+import MobileSellGate from './components/MobileSellGate';
 
 // ─── Auth callback — OAuth redirect landing page ──────────────────────────────
 const AuthCallbackPage    = lazy(() => import('./pages/AuthCallbackPage'));
@@ -23,6 +24,14 @@ const MobileInboxPage     = lazy(() => import('./pages/MobileInboxPage'));
 const MobileChatPage      = lazy(() => import('./pages/MobileChatPage'));
 const MobileOrdersPage    = lazy(() => import('./pages/MobileOrdersPage'));
 const MobileCategoriesPage = lazy(() => import('./pages/MobileCategoriesPage'));
+const MobileProfilePage   = lazy(() => import('./pages/MobileProfilePage'));
+const MobileNotificationsPage = lazy(() => import('./pages/MobileNotificationsPage'));
+const MobileSecurityPage  = lazy(() => import('./pages/MobileSecurityPage'));
+const MobileBalancePage   = lazy(() => import('./pages/MobileBalancePage'));
+const MobileFavouritesPage = lazy(() => import('./pages/MobileFavouritesPage'));
+const MobilePromotionalToolsPage = lazy(() => import('./pages/MobilePromotionalToolsPage'));
+const MobileSettingsPage  = lazy(() => import('./pages/MobileSettingsPage'));
+const MobileSellerPaymentsPage = lazy(() => import('./pages/MobileSellerPaymentsPage'));
 
 // ─── Homepage ─────────────────────────────────────────────────────────────────
 const Home                 = lazy(() => import('./pages/Home'));
@@ -65,6 +74,8 @@ const PPResetPassword      = lazy(() => import('./pages/pixel-perfect/ResetPassw
 const OrderSuccessPage = lazy(() => import('./pages/OrderSuccessPage'));
 // ProductFormPage: seller product create/edit — linked from pixel-perfect seller pages
 const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
+// MobileSellWizard: simplified 4-step sell flow for the mobile APK (/sell)
+const MobileSellWizard = lazy(() => import('./pages/MobileSellWizard'));
 // SellerPublicProfilePage: public-facing seller store — no pixel-perfect equivalent yet
 const SellerPublicProfilePage = lazy(() => import('./pages/SellerPublicProfilePage'));
 // AdminSellerDetailPage: admin seller detail view — no pixel-perfect equivalent yet
@@ -414,6 +425,7 @@ function App() {
     <CartProvider>
       <AmbientLayer />
       <Header />
+      <AuthPromptModal />
       <MaintenanceModeGate>
         <Routes>
           {/* ── Pixel-perfect standalone pages (own Header + Footer) ─────────────── */}
@@ -583,14 +595,37 @@ function App() {
         </Route>
 
         {/* ── Mobile inbox + chat ─────────────────────────────────────────────── */}
-        <Route path="inbox" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileInboxPage /></Suspense></RequireAuth>} />
-        <Route path="inbox/:conversationId" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileChatPage /></Suspense></RequireAuth>} />
+        <Route path="inbox" element={<Suspense fallback={<PageLoader />}><MobileInboxPage /></Suspense>} />
+        <Route path="inbox/:conversationId" element={<Suspense fallback={<PageLoader />}><MobileChatPage /></Suspense>} />
 
         {/* ── Mobile orders (buyer) — also handles push notification deep-links ── */}
-        <Route path="orders" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileOrdersPage /></Suspense></RequireAuth>} />
+        <Route path="orders" element={<Suspense fallback={<PageLoader />}><MobileOrdersPage /></Suspense>} />
 
         {/* ── Mobile categories list — public browsing, no auth required ──────── */}
         <Route path="categories" element={<Suspense fallback={<PageLoader />}><MobileCategoriesPage /></Suspense>} />
+
+        {/* ── Mobile profile / account hub — public, shows login CTA for guests ─ */}
+        <Route path="profile" element={<Suspense fallback={<PageLoader />}><MobileProfilePage /></Suspense>} />
+        <Route path="profile/notifications" element={<Suspense fallback={<PageLoader />}><MobileNotificationsPage /></Suspense>} />
+        <Route path="profile/security" element={<Suspense fallback={<PageLoader />}><MobileSecurityPage /></Suspense>} />
+        <Route path="profile/balance" element={<Suspense fallback={<PageLoader />}><MobileBalancePage /></Suspense>} />
+        <Route path="profile/favourites" element={<Suspense fallback={<PageLoader />}><MobileFavouritesPage /></Suspense>} />
+        <Route path="profile/settings" element={<Suspense fallback={<PageLoader />}><MobileSettingsPage /></Suspense>} />
+        <Route path="seller/promote" element={<Suspense fallback={<PageLoader />}><MobilePromotionalToolsPage /></Suspense>} />
+        <Route path="seller/mobile-payments" element={
+          <RequireSellerAny>
+            <Suspense fallback={<PageLoader />}><MobileSellerPaymentsPage /></Suspense>
+          </RequireSellerAny>
+        } />
+
+        {/* ── Mobile sell wizard — guest-friendly gate (no hard redirect to /login) ─ */}
+        {/* MobileSellGate: unauthenticated → friendly auth screen + AuthPromptModal  */}
+        {/* authenticated → RequireSeller + RequireEmailVerified + MobileSellWizard   */}
+        <Route path="sell" element={
+          <MobileSellGate>
+            <Suspense fallback={<PageLoader />}><MobileSellWizard /></Suspense>
+          </MobileSellGate>
+        } />
 
         {/* ── Standalone functional pages ──────────────────────────────────────── */}
 

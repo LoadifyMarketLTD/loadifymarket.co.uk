@@ -5,12 +5,14 @@ import ProductGallery from "@/components/product/ProductGallery";
 import ProductInfo from "@/components/product/ProductInfo";
 import SellerCard from "@/components/product/SellerCard";
 import ProductReviews from "@/components/product/ProductReviews";
+
 import ProductCard from "@/components/catalog/ProductCard";
 import type { Product } from "@/components/catalog/ProductCard";
 import { supabase } from "@/lib/supabase";
 import { adaptProduct } from "@/lib/productAdapter";
 import type { DBProduct } from "@/lib/productAdapter";
 import { useAuthStore } from "@/store";
+import { useAuthPromptStore } from "@/store/authPromptStore";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -20,7 +22,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Flag, Tag, ShoppingCart, ArrowLeft, Share2, Heart, Shield, Lock, Star, ChevronRight } from "lucide-react";
+import { Flag, Tag, ShoppingCart, ArrowLeft, Share2, Heart, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { copyToClipboard } from "@/lib/clipboard";
 import { isCapacitorNative } from "@/lib/capacitorUtils";
@@ -94,6 +96,7 @@ const ProductDetail = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const promptAuth = useAuthPromptStore((s) => s.open);
   const { addToCart } = useCart();
   // State passed from listing pages (Catalog, CategoryPage, Clearance)
   const navState = (location.state ?? {}) as {
@@ -133,6 +136,8 @@ const ProductDetail = () => {
   const [mobileWishlistLoading, setMobileWishlistLoading] = useState(false);
   // Mobile quantity selector
   const [mobileQty, setMobileQty] = useState(1);
+  // Mobile description expand/collapse (collapsed by default)
+  const [descExpanded, setDescExpanded] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -379,8 +384,8 @@ const ProductDetail = () => {
   };
 
   /** Guards against unauthenticated access and resolves/creates the conversation id. */
-  const requireConversation = async (): Promise<string | null> => {
-    if (!user) { navigate("/login", { state: { from: `/product/${id}` } }); return null; }
+  const requireConversation = async (context: import('@/store/authPromptStore').AuthPromptContext = null): Promise<string | null> => {
+    if (!user) { promptAuth(context); return null; }
     setCtaLoading(true);
     try {
       const convId = await getOrCreateConversation();
@@ -392,7 +397,7 @@ const ProductDetail = () => {
   };
 
   const handleMobileToggleWishlist = async () => {
-    if (!user) { navigate("/login", { state: { from: `/product/${id}` } }); return; }
+    if (!user) { promptAuth('save'); return; }
     if (!product) return;
     setMobileWishlistLoading(true);
     try {
@@ -419,6 +424,7 @@ const ProductDetail = () => {
   };
 
   const handleBuyNow = () => {
+    if (!user) { promptAuth('buy'); return; }
     if (!product) return;
     trackAddToCart(product.id, product.title, product.price);
     addToCart(product, mobileQty);
@@ -426,23 +432,18 @@ const ProductDetail = () => {
   };
 
   const handleMakeOffer = async () => {
-    const convId = await requireConversation();
+    const convId = await requireConversation('offer');
     if (convId) { setOfferConvId(convId); setOfferOpen(true); }
   };
 
   const handleMessage = async () => {
-    const convId = await requireConversation();
+    const convId = await requireConversation('message');
     if (convId) navigate(`/inbox/${convId}`);
   };
 
   // True when the logged-in user is the seller/owner of this product
   const isMobileCtaVisible = !!(product && productSellerId && (!user || user.id !== productSellerId));
 
-  const normalizedCategory = (product.category ?? "").trim().toLowerCase();
-  const normalizedSubcategory = (product.subcategory ?? "").trim().toLowerCase();
-  const hasDistinctSubcategory =
-    normalizedSubcategory.length > 0 && normalizedSubcategory !== normalizedCategory;
-  const detailsCategoryLabel = hasDistinctSubcategory ? product.subcategory : product.category;
   const canonicalProductUrl = `${BASE_URL}/product/${product.id}`;
   const currentProductUrl = typeof window !== "undefined"
     ? `${window.location.origin}${window.location.pathname}`
@@ -714,27 +715,15 @@ const ProductDetail = () => {
                   {product.title}
                 </h1>
 
-                {/* Rating */}
-                {product.rating > 0 && (
-                  <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "12px" }}>
-                    <Star style={{ width: "16px", height: "16px", color: "#F5B942", fill: "#F5B942" }} />
-                    <span style={{ fontSize: "14px", fontWeight: 600, color: "#F5B942" }}>
-                      {product.rating.toFixed(1)}
-                    </span>
-                    {(product.reviewCount ?? 0) > 0 && (
-                      <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.50)" }}>
-                        ({product.reviewCount} reviews)
-                      </span>
-                    )}
-                  </div>
-                )}
-
                 {/* Price */}
                 <p style={{ fontSize: "26px", fontWeight: 800, color: "#FFFFFF", marginBottom: "4px" }}>
                   £{product.price.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
                 </p>
-                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", fontWeight: 500, marginBottom: "16px" }}>
+                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", fontWeight: 500, marginBottom: "4px" }}>
                   Shipping calculated at checkout
+                </p>
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.30)", marginBottom: "16px" }}>
+                  Secure payments via Stripe
                 </p>
 
                 <div style={{ height: "1px", background: "rgba(255,255,255,0.07)" }} />
@@ -754,6 +743,36 @@ const ProductDetail = () => {
                     <span style={{ fontSize: "14px", fontWeight: 600, color: "#FFFFFF" }}>{product.condition}</span>
                     <ChevronRight style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.30)" }} />
                   </div>
+                </div>
+
+                {/* Location row */}
+                {product.location ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "14px 0",
+                      borderBottom: "1px solid rgba(255,255,255,0.07)",
+                    }}
+                  >
+                    <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.60)" }}>Location</span>
+                    <span style={{ fontSize: "14px", fontWeight: 600, color: "#FFFFFF" }}>{product.location}</span>
+                  </div>
+                ) : null}
+
+                {/* Seller row */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "14px 0",
+                    borderBottom: "1px solid rgba(255,255,255,0.07)",
+                  }}
+                >
+                  <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.60)" }}>Seller</span>
+                  <span style={{ fontSize: "14px", fontWeight: 600, color: "#FFFFFF" }}>{product.seller}</span>
                 </div>
 
                 {/* Quantity row */}
@@ -811,66 +830,6 @@ const ProductDetail = () => {
                     <span className="text-red-400 text-sm font-semibold">✕ This item has been sold</span>
                   </div>
                 )}
-
-                {/* Buyer Protection */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "12px",
-                    padding: "14px 0",
-                    borderTop: "1px solid rgba(255,255,255,0.07)",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "50%",
-                      background: "rgba(255,255,255,0.07)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Shield style={{ width: "18px", height: "18px", color: "rgba(255,255,255,0.70)" }} />
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "13px", fontWeight: 700, color: "#FFFFFF", marginBottom: "2px" }}>Buyer Protection</p>
-                    <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.50)" }}>Get your money back if item is not as described.</p>
-                  </div>
-                </div>
-
-                {/* Secure Payments */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "12px",
-                    padding: "14px 0",
-                    borderTop: "1px solid rgba(255,255,255,0.07)",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "50%",
-                      background: "rgba(255,255,255,0.07)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Lock style={{ width: "18px", height: "18px", color: "rgba(255,255,255,0.70)" }} />
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "13px", fontWeight: 700, color: "#FFFFFF", marginBottom: "2px" }}>Secure Payments</p>
-                    <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.50)" }}>Your payment information is encrypted.</p>
-                  </div>
-                </div>
               </div>
             )}
 
@@ -926,41 +885,36 @@ const ProductDetail = () => {
             {/* Description + Reviews — third on mobile, below gallery on desktop */}
             <div className="order-3 lg:col-start-1 lg:row-start-2 space-y-8">
               {/* Description */}
-              <div className="bg-card rounded-xl border border-border p-6 space-y-4">
-                <h2 className="font-display text-lg font-semibold text-foreground">Description</h2>
-                <div className="text-sm text-muted-foreground leading-relaxed space-y-3">
-                  <p>
-                    This {product.condition.toLowerCase()} condition lot includes {product.unitCount}{" "}
-                    {product.unitCount === 1 ? "lot" : "lots"} of {product.category.toLowerCase()} items.
-                    {product.location ? ` Located in ${product.location}, available for collection or delivery UK-wide.` : "Available for UK-wide delivery."}
-                  </p>
-                  <p>
-                    All items have been sourced from reputable UK retailers and brands. Ideal for
-                    resellers, market traders, online sellers, and wholesale buyers looking for
-                    quality products at below-retail prices.
-                  </p>
-                  <h3 className="font-display text-sm font-semibold text-foreground pt-2">What's Included</h3>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Mixed brands and product types within {detailsCategoryLabel}</li>
-                    <li>Detailed manifest available upon request</li>
-                    <li>Condition: {product.condition}</li>
-                    <li>All items are UK sourced with full traceability</li>
-                  </ul>
-                  <h3 className="font-display text-sm font-semibold text-foreground pt-2">Shipping & Collection</h3>
-                  <ul className="list-disc list-inside space-y-1">
-                    {product.location && <li>Collection available from {product.location}</li>}
-                    <li>UK mainland delivery available (quote on request)</li>
-                    <li>Items are securely packaged and ready for dispatch</li>
-                  </ul>
+              {productDescription.trim().length > 0 && (
+                <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-display text-lg font-semibold text-foreground">Description</h2>
+                    <button
+                      className="md:hidden text-xs font-medium"
+                      style={{ color: "rgba(255,255,255,0.50)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                      onClick={() => setDescExpanded((d) => !d)}
+                    >
+                      {descExpanded ? "Show less" : "Show more"}
+                    </button>
+                  </div>
+                  {/* Desktop: always visible. Mobile: collapsed until expanded. */}
+                  <div
+                    className={`text-sm text-muted-foreground leading-relaxed whitespace-pre-line md:max-h-none md:overflow-visible ${!descExpanded ? "overflow-hidden max-h-[72px]" : ""}`}
+                  >
+                    {productDescription.trim()}
+                  </div>
                 </div>
+              )}
+
+              {/* Reviews — desktop only (hidden on mobile per product page spec) */}
+              <div className="hidden md:block">
+                <ProductReviews
+                  productId={id ?? ""}
+                  productRating={product.rating ?? 0}
+                  reviewCount={product.reviewCount ?? 0}
+                />
               </div>
 
-              {/* Reviews */}
-              <ProductReviews
-                productId={id ?? ""}
-                productRating={product.rating ?? 0}
-                reviewCount={product.reviewCount ?? 0}
-              />
             </div>
           </div>
 

@@ -2,17 +2,16 @@
  * src/pages/Home.tsx — root "/" route
  *
  * MOBILE (< md / 768 px):
- *   MobileAppHeader (with inline search) → MobileHeroBanner →
- *   MobileCategoryShortcuts → Featured Deals → Recommended for you →
- *   MobileBottomNav (via MainLayout)
+ *   MobileAppHeader → MobileCategoryShortcuts → MobileHeroBanner →
+ *   2-col product grid (infinite scroll) → MobileBottomNav (via MainLayout)
  *
  * DESKTOP (>= md / 768 px):
  *   GlobalHeader → HeroSection (full-screen) → TrustStrip → FeaturesGrid →
  *   SocialFollowSection → HowItWorksSection → SecurityTrust → SellerCTA → Footer
  */
 
+import { useEffect, useRef } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link } from "react-router-dom";
 
 import SEO from "@/components/SEO";
 import MainLayout from "@/layouts/MainLayout";
@@ -21,9 +20,8 @@ import MainLayout from "@/layouts/MainLayout";
 import MobileAppHeader from "@/components/MobileAppHeader";
 import MobileCategoryShortcuts from "@/components/MobileCategoryShortcuts";
 import MobileHeroBanner from "@/components/MobileHeroBanner";
-import MobileProductCard from "@/components/MobileProductCard";
-import { useMobileProducts } from "@/hooks/useMobileProducts";
-import type { Product } from "@/components/catalog/ProductCard";
+import MobileGridCard from "@/components/MobileGridCard";
+import { useMobileGrid } from "@/hooks/useMobileGrid";
 
 // Desktop-only components
 import HeroSection from "@/components/HeroSection";
@@ -34,154 +32,90 @@ import SecurityTrust from "@/components/SecurityTrust";
 import SocialFollowSection from "@/components/SocialFollowSection";
 import SellerCTA from "@/components/SellerCTA";
 import LazySection from "@/components/LazySection";
-import { useEffect } from "react";
 import { trackViewHome } from "@/lib/analytics";
 
 // ── Mobile skeleton cards ─────────────────────────────────────────────────────
-function SkeletonProductCard() {
+function SkeletonGridCard() {
   return (
     <div
-      className="flex-shrink-0 snap-start rounded-2xl bg-white/[0.04] animate-pulse"
-      style={{ width: 'clamp(148px, 42vw, 180px)', height: 'clamp(200px, 52vw, 220px)' }}
-    />
+      className="animate-pulse"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+      }}
+    >
+      <div style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 12, background: 'rgba(255,255,255,0.06)' }} />
+      <div style={{ height: 12, borderRadius: 6, background: 'rgba(255,255,255,0.06)', width: '80%' }} />
+      <div style={{ height: 14, borderRadius: 6, background: 'rgba(255,255,255,0.06)', width: '50%' }} />
+    </div>
   );
 }
 
 // ── Mobile home section ───────────────────────────────────────────────────────
 function MobileHome() {
-  const { trending, latest, loading } = useMobileProducts();
+  const { products, loading, loadingMore, hasMore, loadMore } = useMobileGrid();
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // Infinite scroll via IntersectionObserver
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMore(); },
+      { rootMargin: '200px' },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   return (
     <div className="md:hidden min-h-screen" style={{ background: '#07080B' }}>
       {/* 1. App Header */}
       <MobileAppHeader />
 
-      {/* 2. Category row */}
+      {/* 2. Category chips */}
       <MobileCategoryShortcuts />
 
-      {/* 3. Hero Banner */}
+      {/* 3. Simple hero */}
       <MobileHeroBanner />
 
-      {/* 4. Trending Products */}
-      <section className="pt-5 pb-2" aria-label="Trending products">
-        <div className="flex items-center justify-between mb-3" style={{ paddingInline: 'var(--mob-side, 16px)' }}>
-          <span style={{ fontSize: 'clamp(15px, 4.2vw, 17px)', fontWeight: 700, color: '#FFFFFF' }}>Trending Now</span>
-          <Link
-            to="/catalog?filter=trending"
-            className="text-[13px] font-semibold"
-            style={{ color: '#F2B84B' }}
-          >
-            See all
-          </Link>
-        </div>
-        {/* overflow-x scroll with proper snap + leading/trailing padding via spacers */}
-        <div
-          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1"
-          style={{
-            paddingInlineStart: 'var(--mob-side, 16px)',
-            scrollPaddingInlineStart: 'var(--mob-side, 16px)',
-            scrollPaddingInlineEnd: 'var(--mob-side, 16px)',
-          }}
-        >
-          {loading
-            ? Array.from({ length: 4 }).map((_, i) => <SkeletonProductCard key={i} />)
-            : trending.map((p: Product) => (
-                <MobileProductCard
-                  key={p.id}
-                  id={p.id}
-                  title={p.title}
-                  price={p.price}
-                  image={p.image}
-                  distance={p.location}
-                  sellerName={p.seller}
-                  rating={p.rating}
-                />
-              ))}
-          {/* Trailing spacer so last card clears the container edge */}
-          <div style={{ minWidth: 'var(--mob-side, 16px)', flexShrink: 0 }} aria-hidden="true" />
-        </div>
-      </section>
-
-      {/* 5. New Listings */}
-      <section className="pt-2 pb-2" aria-label="New listings">
-        <div className="flex items-center justify-between mb-3" style={{ paddingInline: 'var(--mob-side, 16px)' }}>
-          <span style={{ fontSize: 'clamp(15px, 4.2vw, 17px)', fontWeight: 700, color: '#FFFFFF' }}>New Listings</span>
-          <Link
-            to="/catalog?filter=latest"
-            className="text-[13px] font-semibold"
-            style={{ color: '#F2B84B' }}
-          >
-            See all
-          </Link>
-        </div>
-        <div
-          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1"
-          style={{
-            paddingInlineStart: 'var(--mob-side, 16px)',
-            scrollPaddingInlineStart: 'var(--mob-side, 16px)',
-            scrollPaddingInlineEnd: 'var(--mob-side, 16px)',
-          }}
-        >
-          {loading
-            ? Array.from({ length: 4 }).map((_, i) => <SkeletonProductCard key={i} />)
-            : latest.map((p: Product) => (
-                <MobileProductCard
-                  key={p.id}
-                  id={p.id}
-                  title={p.title}
-                  price={p.price}
-                  image={p.image}
-                  distance={p.location}
-                  sellerName={p.seller}
-                  rating={p.rating}
-                />
-              ))}
-          {/* Trailing spacer so last card clears the container edge */}
-          <div style={{ minWidth: 'var(--mob-side, 16px)', flexShrink: 0 }} aria-hidden="true" />
-        </div>
-      </section>
-
-      {/* 6. Recommended for you */}
+      {/* 4. 2-column product grid */}
       <section
-        className="pt-2"
-        style={{ paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px) + 16px)' }}
-        aria-label="Recommended for you"
+        aria-label="Products"
+        style={{
+          paddingInline: 'var(--mob-side, 16px)',
+          paddingTop: 12,
+          paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px) + 20px)',
+        }}
       >
-        <div className="flex items-center justify-between mb-3" style={{ paddingInline: 'var(--mob-side, 16px)' }}>
-          <span style={{ fontSize: 'clamp(15px, 4.2vw, 17px)', fontWeight: 700, color: '#FFFFFF' }}>Recommended</span>
-          <Link
-            to="/catalog"
-            className="text-[13px] font-semibold"
-            style={{ color: '#F2B84B' }}
-          >
-            See all
-          </Link>
-        </div>
         <div
-          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1"
           style={{
-            paddingInlineStart: 'var(--mob-side, 16px)',
-            scrollPaddingInlineStart: 'var(--mob-side, 16px)',
-            scrollPaddingInlineEnd: 'var(--mob-side, 16px)',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 'clamp(10px, 3vw, 14px)',
           }}
         >
           {loading
-            ? Array.from({ length: 4 }).map((_, i) => <SkeletonProductCard key={i} />)
-            : [...trending].reverse().map((p: Product) => (
-                <MobileProductCard
-                  key={`rec-${p.id}`}
+            ? Array.from({ length: 8 }).map((_, i) => <SkeletonGridCard key={i} />)
+            : products.map((p) => (
+                <MobileGridCard
+                  key={p.id}
                   id={p.id}
                   title={p.title}
                   price={p.price}
                   image={p.image}
-                  distance={p.location}
-                  sellerName={p.seller}
-                  rating={p.rating}
+                  location={p.location}
                 />
               ))}
-          {/* Trailing spacer so last card clears the container edge */}
-          <div style={{ minWidth: 'var(--mob-side, 16px)', flexShrink: 0 }} aria-hidden="true" />
+          {/* Loading-more skeletons */}
+          {loadingMore && Array.from({ length: 4 }).map((_, i) => <SkeletonGridCard key={`more-${i}`} />)}
         </div>
+
+        {/* Infinite-scroll sentinel */}
+        {!loading && hasMore && (
+          <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />
+        )}
       </section>
     </div>
   );
@@ -192,13 +126,15 @@ export default function Home() {
 
   return (
     <MainLayout>
-      {/* Preload LCP hero image for desktop — WebP for capable browsers, JPEG fallback */}
+      {/* Preload LCP hero image for desktop only — WebP for capable browsers, JPEG fallback.
+          HeroSection is inside `hidden md:block` so the image is only used on desktop. */}
       <Helmet>
         <link
           rel="preload"
           as="image"
           href="/hero-gold.webp"
           type="image/webp"
+          media="(min-width: 768px)"
           // @ts-expect-error — fetchpriority is a valid HTML attr not yet in React types
           fetchpriority="high"
         />
@@ -207,6 +143,7 @@ export default function Home() {
           as="image"
           href="/hero-gold.jpeg"
           type="image/jpeg"
+          media="(min-width: 768px)"
           // @ts-expect-error — fetchpriority is a valid HTML attr not yet in React types
           fetchpriority="high"
         />

@@ -1,208 +1,97 @@
 /**
- * MobileCategoryShortcuts — horizontal scroll category row with section header.
+ * MobileCategoryShortcuts — Vinted-style horizontal pill row.
  *
- * Premium white-circle design: each category is a 68px white circle with a
- * centered product image (object-fit: contain, 65% of the circle) and a
- * text label below.
- *
- * Image priority order:
- *  1. Real product image fetched from the database (useCategoryImages hook)
- *  2. Static PNG from /categories/ directory (user-provided product cutouts)
- *  3. Unsplash product-photo URL as reliable network fallback
+ * Text-only pill chips, no images. The active pill (matched by current
+ * pathname or "All" on the home page) gets a teal border highlight.
  */
 
+import { useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import { useCategoryImages } from '@/hooks/useCategoryImages';
 
 interface Category {
   id: string;
   label: string;
-  /** DB category slug used to look up a real product image */
-  dbSlug: string;
-  /**
-   * Path to a user-provided product-cutout PNG (place in /public/categories/).
-   * Used when the DB has no products for this category.
-   */
-  staticImage: string;
-  /**
-   * Reliable Unsplash product-photo URL — last-resort fallback if both the DB
-   * image and the local PNG are unavailable.
-   */
-  unsplashFallback: string;
   to: string;
+  /** URL fragment to match for active detection (e.g. "/category/electrical") */
+  match: string;
 }
 
 const CATEGORIES: Category[] = [
-  {
-    id: 'electronics',
-    label: 'Electronics',
-    dbSlug: 'electrical',
-    staticImage: '/categories/electronics.png',
-    unsplashFallback: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=300&q=80',
-    to: '/category/electrical',
-  },
-  {
-    id: 'fashion',
-    label: 'Fashion',
-    dbSlug: 'wholesale-clothing',
-    staticImage: '/categories/fashion.png',
-    unsplashFallback: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=300&q=80',
-    to: '/category/wholesale-clothing',
-  },
-  {
-    id: 'home',
-    label: 'Home',
-    dbSlug: 'homeware',
-    staticImage: '/categories/home.png',
-    unsplashFallback: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=300&q=80',
-    to: '/category/homeware',
-  },
-  {
-    id: 'collectibles',
-    label: 'Collectibles',
-    // The platform's closest DB category slug is 'toys' (covers figures, models,
-    // board games etc.).  Update this if a dedicated 'collectibles' category is
-    // added to the database.
-    dbSlug: 'toys',
-    staticImage: '/categories/collectibles.png',
-    unsplashFallback: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?auto=format&fit=crop&w=300&q=80',
-    to: '/category/toys',
-  },
-  {
-    id: 'sports',
-    label: 'Sports',
-    dbSlug: 'sports-fitness',
-    staticImage: '/categories/sports.png',
-    unsplashFallback: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=300&q=80',
-    to: '/category/sports-fitness',
-  },
-  {
-    id: 'beauty',
-    label: 'Beauty',
-    dbSlug: 'health-beauty',
-    staticImage: '/categories/beauty.png',
-    unsplashFallback: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=300&q=80',
-    to: '/category/health-beauty',
-  },
+  { id: 'all',           label: 'All',                    to: '/catalog',                    match: '' },
+  { id: 'home',          label: 'Home',                   to: '/category/homeware',          match: '/category/homeware' },
+  { id: 'electronics',   label: 'Electronics',            to: '/category/electrical',        match: '/category/electrical' },
+  { id: 'entertainment', label: 'Entertainment',          to: '/category/entertainment',     match: '/category/entertainment' },
+  { id: 'hobbies',       label: 'Hobbies & Collectables', to: '/category/toys',              match: '/category/toys' },
+  { id: 'sports',        label: 'Sports',                 to: '/category/sports-fitness',    match: '/category/sports-fitness' },
+  { id: 'vehicles',      label: 'Vehicles',               to: '/category/vehicles',          match: '/category/vehicles' },
+  { id: 'fashion',       label: 'Fashion',                to: '/category/wholesale-clothing',match: '/category/wholesale-clothing' },
+  { id: 'kids',          label: 'Kids',                   to: '/category/kids',              match: '/category/kids' },
 ];
 
-/** Builds a three-level onError handler: DB image → static PNG → Unsplash */
-function makeErrorHandler(staticImage: string, unsplashFallback: string) {
-  return (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const img = e.currentTarget;
-    // Already at last resort — stop to avoid an infinite loop
-    if (img.src === unsplashFallback) {
-      img.onerror = null;
-      return;
-    }
-    // If the static PNG also fails, go to Unsplash
-    if (img.src.endsWith(staticImage) || img.src.includes('/categories/')) {
-      img.onerror = null;
-      img.src = unsplashFallback;
-      return;
-    }
-    // DB image failed — try static PNG first
-    img.src = staticImage;
-  };
-}
-
 export default function MobileCategoryShortcuts() {
-  const dbImages = useCategoryImages();
+  const { pathname } = useLocation();
+
+  // "All" is active when on the home page or catalog root
+  const activePill =
+    pathname === '/' || pathname === '/catalog'
+      ? 'all'
+      : (CATEGORIES.find(c => c.match && pathname.startsWith(c.match))?.id ?? '');
 
   return (
-    <section aria-label="Browse by category" style={{ paddingTop: 20 }}>
-      {/* ── Section header ─────────────────────────────────────────── */}
-      <div
-        className="flex items-center justify-between"
-        style={{ paddingInline: 'var(--mob-side, 16px)', marginBottom: 14 }}
-      >
-        <span style={{ fontSize: 'clamp(15px, 4.2vw, 17px)', fontWeight: 700, color: '#FFFFFF' }}>
-          Categories
-        </span>
-        <Link
-          to="/categories"
-          className="text-[13px] font-semibold"
-          style={{ color: '#F2B84B', textDecoration: 'none' }}
-        >
-          See all
-        </Link>
-      </div>
-
-      {/* ── Scrollable row ─────────────────────────────────────────── */}
+    <section
+      aria-label="Browse by category"
+      style={{ paddingTop: 12, paddingBottom: 4 }}
+    >
       <div
         className="overflow-x-auto scrollbar-hide"
         style={{
           paddingLeft: 'var(--mob-side, 16px)',
           scrollPaddingInlineStart: 'var(--mob-side, 16px)',
-          scrollPaddingInlineEnd: 'var(--mob-side, 16px)',
         }}
       >
-        <div style={{ display: 'flex', gap: 16, width: 'max-content' }}>
-          {CATEGORIES.map(({ id, label, dbSlug, staticImage, unsplashFallback, to }) => {
-            // DB image takes priority; fall back to static PNG path
-            const imageSrc = dbImages[dbSlug] ?? staticImage;
-
+        <div style={{ display: 'flex', gap: 8, width: 'max-content' }}>
+          {CATEGORIES.map(({ id, label, to }) => {
+            const active = id === activePill;
             return (
               <Link
                 key={id}
                 to={to}
-                className="flex flex-col items-center active:scale-95 transition-transform"
-                style={{
-                  gap: 8,
-                  textDecoration: 'none',
-                  // Minimum 48px touch target height satisfied by 68px circle + 8px gap + label
-                }}
                 aria-label={`Browse ${label}`}
+                style={{
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  height: 36,
+                  paddingLeft: 14,
+                  paddingRight: 14,
+                  borderRadius: 9999,
+                  background: active
+                    ? 'rgba(45,191,184,0.10)'
+                    : 'rgba(255,255,255,0.06)',
+                  border: active
+                    ? '1.5px solid #2DBFB8'
+                    : '1px solid rgba(255,255,255,0.14)',
+                  fontSize: 'clamp(13px, 3.6vw, 14px)',
+                  fontWeight: active ? 600 : 500,
+                  color: active ? '#2DBFB8' : 'rgba(255,255,255,0.85)',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  transition: 'border-color 0.15s, color 0.15s',
+                  WebkitTapHighlightColor: 'transparent',
+                }}
               >
-                {/* ── White circle ───────────────────────────────── */}
-                <div
-                  style={{
-                    width: 68,
-                    height: 68,
-                    borderRadius: '50%',
-                    background: '#FFFFFF',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    overflow: 'hidden',
-                  }}
-                >
-                  <img
-                    src={imageSrc}
-                    alt={label}
-                    loading="lazy"
-                    style={{
-                      width: '65%',
-                      height: '65%',
-                      objectFit: 'contain',
-                      display: 'block',
-                    }}
-                    onError={makeErrorHandler(staticImage, unsplashFallback)}
-                  />
-                </div>
-
-                {/* ── Label ──────────────────────────────────────── */}
-                <span
-                  style={{
-                    fontSize: 'clamp(11px, 2.9vw, 13px)',
-                    fontWeight: 500,
-                    color: 'rgba(255,255,255,0.80)',
-                    lineHeight: 1,
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {label}
-                </span>
+                {label}
               </Link>
             );
           })}
-          {/* Trailing spacer so last card clears the container edge */}
-          <div style={{ minWidth: 'var(--mob-side, 16px)', flexShrink: 0 }} aria-hidden="true" />
+          {/* Trailing spacer so last pill clears the container edge */}
+          <div
+            style={{ minWidth: 'var(--mob-side, 16px)', flexShrink: 0 }}
+            aria-hidden="true"
+          />
         </div>
       </div>
     </section>
   );
 }
+
