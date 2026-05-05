@@ -6,6 +6,7 @@ import ProductInfo from "@/components/product/ProductInfo";
 import SellerCard from "@/components/product/SellerCard";
 import ProductReviews from "@/components/product/ProductReviews";
 
+import ProductCard from "@/components/catalog/ProductCard";
 import type { Product } from "@/components/catalog/ProductCard";
 import { supabase } from "@/lib/supabase";
 import { adaptProduct } from "@/lib/productAdapter";
