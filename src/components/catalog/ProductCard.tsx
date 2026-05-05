@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store";
 import { productThumbnail } from "@/lib/imageOptimization";
 import NativeImg from "@/components/NativeImg";
+import ProductImagePlaceholder from "@/components/ProductImagePlaceholder";
 
 export interface Product {
   id: string;
@@ -66,6 +67,11 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
           alt={product.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
+          fallback={
+            <div className="w-full h-full flex items-center justify-center">
+              <ProductImagePlaceholder theme="light" />
+            </div>
+          }
         />
         <div className={`absolute top-3 right-3 text-xs font-medium px-2 py-1 rounded-full border ${conditionColor[product.condition] || ""}`}>
           {product.condition}
