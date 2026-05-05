@@ -126,7 +126,8 @@ export default function Home() {
 
   return (
     <MainLayout>
-      {/* Preload LCP hero image for desktop only — WebP for capable browsers, JPEG fallback.
+      {/* Preload LCP hero image for desktop only — WebP only; JPEG is never used since
+          all browsers that support <picture> also support WebP.
           HeroSection is inside `hidden md:block` so the image is only used on desktop. */}
       <Helmet>
         <link
@@ -134,15 +135,6 @@ export default function Home() {
           as="image"
           href="/hero-gold.webp"
           type="image/webp"
-          media="(min-width: 768px)"
-          // @ts-expect-error — fetchpriority is a valid HTML attr not yet in React types
-          fetchpriority="high"
-        />
-        <link
-          rel="preload"
-          as="image"
-          href="/hero-gold.jpeg"
-          type="image/jpeg"
           media="(min-width: 768px)"
           // @ts-expect-error — fetchpriority is a valid HTML attr not yet in React types
           fetchpriority="high"
