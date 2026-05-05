@@ -167,7 +167,7 @@ export default function MobileAppHeader() {
           <span
             style={{
               fontSize: 14,
-              color: 'rgba(255,255,255,0.40)',
+              color: 'rgba(255,255,255,0.55)',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',

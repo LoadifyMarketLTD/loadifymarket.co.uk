@@ -96,7 +96,7 @@ export default function MobileGridCard({ id, title, price, image, location, prio
           <p
             style={{
               fontSize: 11,
-              color: 'rgba(255,255,255,0.35)',
+              color: 'rgba(255,255,255,0.50)',
               margin: '3px 0 0',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
