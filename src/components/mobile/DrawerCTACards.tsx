@@ -32,7 +32,7 @@ const CTA_CARDS = [
   },
   {
     icon: Package,
-    label: "Pallet Deals",
+    label: "Bulk Listings",
     route: "/catalog?filter=pallet-deals",
     iconClass: "text-orange-400",
   },

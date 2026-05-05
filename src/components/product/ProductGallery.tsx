@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { productHero, productThumbnail } from "@/lib/imageOptimization";
 
 interface ProductGalleryProps {
   images: string[];
@@ -14,7 +15,7 @@ const ProductGallery = ({ images, title }: ProductGalleryProps) => {
       {/* Main image */}
       <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-muted border border-border">
         <img
-          src={images[activeIndex]}
+          src={productHero(images[activeIndex])}
           alt={title}
           className="w-full h-full object-cover"
           fetchPriority="high"
@@ -51,7 +52,7 @@ const ProductGallery = ({ images, title }: ProductGalleryProps) => {
                 i === activeIndex ? "border-primary ring-1 ring-primary/30" : "border-border opacity-60 hover:opacity-100"
               }`}
             >
-              <img src={img} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+              <img src={productThumbnail(img)} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
             </button>
           ))}
         </div>

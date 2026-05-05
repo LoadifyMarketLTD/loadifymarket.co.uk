@@ -98,7 +98,7 @@ function MobileHome() {
         >
           {loading
             ? Array.from({ length: 8 }).map((_, i) => <SkeletonGridCard key={i} />)
-            : products.map((p) => (
+            : products.map((p, i) => (
                 <MobileGridCard
                   key={p.id}
                   id={p.id}
@@ -106,6 +106,7 @@ function MobileHome() {
                   price={p.price}
                   image={p.image}
                   location={p.location}
+                  priority={i < 4}
                 />
               ))}
           {/* Loading-more skeletons */}

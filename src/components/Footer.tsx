@@ -112,7 +112,7 @@ const Footer = () => {
             <ul className="space-y-2.5">
               <FooterLink to="/catalog">Browse Marketplace</FooterLink>
               <FooterLink to="/category/health-beauty">Health &amp; Beauty</FooterLink>
-              <FooterLink to="/wholesale-info">Wholesale Clothing</FooterLink>
+              <FooterLink to="/wholesale-info">Marketplace Info</FooterLink>
               <FooterLink to="/category/kitchen-dining">Kitchenware</FooterLink>
               <FooterLink to="/catalog">All Categories</FooterLink>
               <FooterLink to="/track-order">Track Order</FooterLink>

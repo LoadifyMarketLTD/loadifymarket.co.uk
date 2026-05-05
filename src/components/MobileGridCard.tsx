@@ -5,6 +5,7 @@
 
 import { Link } from 'react-router-dom';
 import { formatPrice } from '@/lib/formatPrice';
+import { productThumbnail } from '@/lib/imageOptimization';
 
 interface MobileGridCardProps {
   id: string;
@@ -12,9 +13,11 @@ interface MobileGridCardProps {
   price: number;
   image?: string;
   location?: string;
+  /** Set to true for above-the-fold cards to avoid lazy-loading the LCP image. */
+  priority?: boolean;
 }
 
-export default function MobileGridCard({ id, title, price, image, location }: MobileGridCardProps) {
+export default function MobileGridCard({ id, title, price, image, location, priority = false }: MobileGridCardProps) {
   return (
     <Link
       to={`/product/${id}`}
@@ -34,9 +37,10 @@ export default function MobileGridCard({ id, title, price, image, location }: Mo
       >
         {image ? (
           <img
-            src={image}
+            src={productThumbnail(image)}
             alt={title}
-            loading="lazy"
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : undefined}
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
@@ -91,7 +95,7 @@ export default function MobileGridCard({ id, title, price, image, location }: Mo
           <p
             style={{
               fontSize: 11,
-              color: 'rgba(255,255,255,0.35)',
+              color: 'rgba(255,255,255,0.50)',
               margin: '3px 0 0',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
