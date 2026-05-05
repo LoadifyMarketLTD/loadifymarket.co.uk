@@ -9,6 +9,7 @@
 import { Link } from 'react-router-dom';
 import { Star } from 'lucide-react';
 import { formatPrice } from '@/lib/formatPrice';
+import { productThumbnail } from '@/lib/imageOptimization';
 
 interface MobileProductCardProps {
   id: string;
@@ -58,7 +59,7 @@ export default function MobileProductCard({
         >
           {image ? (
             <img
-              src={image}
+              src={productThumbnail(image)}
               alt={title}
               loading="lazy"
               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
