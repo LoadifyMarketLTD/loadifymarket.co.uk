@@ -80,8 +80,9 @@ export default function NativeImg({
 
   useEffect(() => {
     if (!IS_NATIVE) {
-      // Web: just mirror the src prop synchronously.
-      setResolvedSrc(src ?? '');
+      // Web: mirror the src prop, deferred to avoid synchronous setState in effect.
+      const v = src ?? '';
+      queueMicrotask(() => setResolvedSrc(v));
       return;
     }
 
