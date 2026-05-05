@@ -35,8 +35,8 @@ const WholesaleInfo = () => {
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed mb-10">
             Loadify Market is a multi-category online marketplace connecting UK sellers and
-            buyers. Whether you sell individual items or bulk stock, buy one unit or a full
-            pallet — there are no restrictions on what you can list or purchase. This page
+            buyers. Whether you sell individual items or bulk stock, buy one unit or order
+            in quantity — there are no restrictions on what you can list or purchase. This page
             explains how the platform works for both buyers and sellers.
           </p>
 
@@ -48,7 +48,7 @@ const WholesaleInfo = () => {
               </h2>
               <p className="text-muted-foreground leading-relaxed">
                 Loadify Market carries products across every major category — from single
-                consumer items to bulk case packs, pallets and job lots. Buyers can purchase
+                consumer items to multi-packs, job lots and bulk orders. Buyers can purchase
                 at any quantity. There is no requirement to buy in bulk and no minimum order
                 set by the platform. Each seller sets their own terms, prices and quantities.
               </p>
@@ -91,7 +91,7 @@ const WholesaleInfo = () => {
                 <li>Connect your Stripe account for secure payment processing.</li>
                 <li>
                   List your products — set your own prices, quantities and delivery terms.
-                  You can sell single items, multipacks, job lots or full pallets.
+                  You can sell single items, multipacks, job lots or bulk orders.
                 </li>
                 <li>
                   Once your profile is verified, your listings go live and are visible to
