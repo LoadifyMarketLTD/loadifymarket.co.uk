@@ -49,7 +49,7 @@ const supabase =
 interface EmailRequest {
   to: string;
   subject: string;
-  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry' | 'admin_new_buyer' | 'admin_new_seller' | 'admin_seller_active' | 'seller_welcome' | 'seller_account_active' | 'buyer_welcome' | 'resend_verification' | 'onboarding_reminder' | 'confirm_email';
+  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry' | 'admin_new_buyer' | 'admin_new_seller' | 'admin_seller_active' | 'seller_welcome' | 'seller_account_active' | 'buyer_welcome' | 'resend_verification' | 'onboarding_reminder' | 'stripe_connect_reminder' | 'confirm_email';
   data: Record<string, unknown>;
 }
 
@@ -480,6 +480,30 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <p>${reminderMessage}</p>
         <p>Finish setting up your account to start listing products and receiving payments via Stripe.</p>
         <a href="${escapeHtml((data.onboardingUrl as string) || `${appBaseUrl}/onboarding`)}" style="display: inline-block; background-color: #22c55e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Complete My Setup →</a>
+        <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at contact@loadifymarket.co.uk</p>
+      `;
+      break;
+    }
+
+    case 'stripe_connect_reminder': {
+      const windowLabel = escapeHtml((data.windowLabel as string) || '');
+      const stripeMessage =
+        windowLabel === '2day'
+          ? "It's been 2 days since you registered — your store is almost ready, just one step left."
+          : windowLabel === '5day'
+          ? "It's been 5 days since you registered. Don't let your store sit idle — connect Stripe to start receiving payments."
+          : "It's been 10 days since you registered. Your payout account is still not connected — complete this step so your store can go live.";
+      const appBaseUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
+      content = `
+        <h2 style="color: #243b53;">Connect your Stripe account to start selling</h2>
+        <p>Hi ${escapeHtml((data.sellerName as string) || 'there')},</p>
+        <p>${stripeMessage}</p>
+        <div style="background-color: #fff8e1; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 0 5px 5px 0;">
+          <p style="margin: 0; font-size: 14px; color: #374151;"><strong>Why do I need Stripe?</strong></p>
+          <p style="margin: 8px 0 0 0; font-size: 13px; color: #555;">Stripe Connect is how we send you payouts for every sale. Without it, your store cannot accept payments. The setup takes around 5 minutes.</p>
+        </div>
+        <p>Your profile is complete — all that's left is to connect your Stripe account and your store will go live automatically.</p>
+        <a href="${escapeHtml((data.onboardingUrl as string) || `${appBaseUrl}/seller/settings`)}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Connect Stripe Now →</a>
         <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at contact@loadifymarket.co.uk</p>
       `;
       break;
