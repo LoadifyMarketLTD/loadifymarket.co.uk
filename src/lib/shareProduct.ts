@@ -1,7 +1,7 @@
 /**
  * shareProduct — cross-platform product share helper.
  *
- * On Android/iOS APK (Capacitor native): uses @capacitor/share which opens
+ * On native platforms (Capacitor APK/IPA): uses @capacitor/share which opens
  * the OS native share sheet.  Facebook, WhatsApp, Messenger etc. appear
  * automatically as available targets — no custom intent URL needed.
  *
@@ -39,7 +39,9 @@ export async function shareProduct(product: ShareProductOptions): Promise<void> 
     return;
   }
 
-  await navigator.clipboard.writeText(url);
+  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    await navigator.clipboard.writeText(url);
+  }
 }
 
 /** Returns true when the share sheet can be triggered (native or Web Share API). */
