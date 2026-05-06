@@ -18,7 +18,7 @@
  * before any component or hook runs.
  */
 
-import { isCapacitorNative } from './capacitorUtils';
+import { isCapacitorContext } from './capacitorUtils';
 
 /**
  * The production Netlify deployment URL.  Sourced from the VITE_APP_URL env
@@ -51,7 +51,7 @@ function rewriteUrl(url: string): string {
  */
 export function patchCapacitorFetch(): void {
   // Only patch inside the native APK; leave the web browser untouched.
-  if (!isCapacitorNative()) return;
+  if (!isCapacitorContext()) return;
   if (typeof window === 'undefined' || typeof window.fetch !== 'function') return;
 
   const originalFetch: typeof fetch = window.fetch.bind(window);

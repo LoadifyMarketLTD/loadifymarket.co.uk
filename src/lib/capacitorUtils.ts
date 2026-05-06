@@ -22,6 +22,30 @@ export function isCapacitorNative(): boolean {
 }
 
 /**
+ * Returns true when the current page is running inside a Capacitor WebView,
+ * using two independent signals so the check is reliable even during the rare
+ * edge-case where the Capacitor bridge hasn't finished attaching
+ * `window.Capacitor` before the first JavaScript code runs:
+ *
+ *   1. `isCapacitorNative()` — the preferred explicit bridge API.
+ *   2. `window.location.origin === 'https://localhost'` — Capacitor's
+ *      `androidScheme: 'https'` always serves the WebView from this origin,
+ *      while Vite dev-servers use `http://localhost:PORT` (different scheme +
+ *      port) and production web uses the real domain.
+ *
+ * Use this instead of `isCapacitorNative()` for URL-rewriting logic where a
+ * false-negative would cause relative `/.netlify/functions/` paths to resolve
+ * against `https://localhost` (the Capacitor file server), returning the SPA
+ * `index.html` shell (HTTP 200, HTML body) instead of the real API response.
+ */
+export function isCapacitorContext(): boolean {
+  if (isCapacitorNative()) return true;
+  if (typeof window === 'undefined') return false;
+  const origin = window.location.origin;
+  return origin === 'https://localhost' || origin === 'capacitor://localhost';
+}
+
+/**
  * Navigate to an external URL (Stripe Checkout, Stripe Connect onboarding, etc.).
  *
  * On web:            uses `window.location.href` (standard full-page redirect).
