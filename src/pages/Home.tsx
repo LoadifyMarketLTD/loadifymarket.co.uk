@@ -7,7 +7,7 @@
  *
  * DESKTOP (>= md / 768 px):
  *   GlobalHeader → HeroSection (full-screen) → TrustStrip → FeaturesGrid →
- *   SocialFollowSection → HowItWorksSection → SecurityTrust → SellerCTA → Footer
+ *   HowItWorksSection → SecurityTrust → SellerCTA → Footer
  */
 
 import { useEffect, useRef } from "react";
@@ -29,7 +29,6 @@ import TrustStrip from "@/components/TrustStrip";
 import HowItWorksSection from "@/components/HowItWorksSection";
 import FeaturesGrid from "@/components/FeaturesGrid";
 import SecurityTrust from "@/components/SecurityTrust";
-import SocialFollowSection from "@/components/SocialFollowSection";
 import SellerCTA from "@/components/SellerCTA";
 import LazySection from "@/components/LazySection";
 import { trackViewHome } from "@/lib/analytics";
@@ -167,10 +166,6 @@ export default function Home() {
 
             <div className="mt-8">
               <FeaturesGrid />
-            </div>
-
-            <div className="mt-8">
-              <SocialFollowSection />
             </div>
 
             <LazySection rootMargin="300px">

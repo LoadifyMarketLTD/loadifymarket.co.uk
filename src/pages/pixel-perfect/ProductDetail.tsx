@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import { Flag, Tag, ShoppingCart, ArrowLeft, Share2, Heart, ChevronRight } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { copyToClipboard } from "@/lib/clipboard";
+import { shareProduct, canShare } from "@/lib/shareProduct";
 import { isCapacitorNative } from "@/lib/capacitorUtils";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
@@ -478,7 +479,7 @@ const ProductDetail = () => {
   const encodedProductUrl = encodeURIComponent(currentProductUrl);
   const whatsappText = `Check out this product on Loadify Market: ${product.title} — £${product.price.toLocaleString("en-GB")} ${currentProductUrl}`;
   const encodedWhatsAppText = encodeURIComponent(whatsappText);
-  const supportsNativeShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
+  const supportsNativeShare = canShare();
 
   // Build Product JSON-LD for rich snippets
   const productJsonLd: Record<string, unknown> = {
@@ -583,11 +584,7 @@ const ProductDetail = () => {
   const handleNativeShare = async () => {
     if (!supportsNativeShare) return;
     try {
-      await navigator.share({
-        title: `${product.title} — £${product.price.toLocaleString("en-GB")}`,
-        text: `Check out this product on Loadify Market: ${product.title}`,
-        url: currentProductUrl,
-      });
+      await shareProduct({ id: product.id, title: product.title, price: product.price });
       trackShareProduct("native", product.id, product.title);
     } catch {
       // User cancellation is non-fatal; no toast needed.
