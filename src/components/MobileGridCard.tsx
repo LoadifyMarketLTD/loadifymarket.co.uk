@@ -57,6 +57,7 @@ export default function MobileGridCard({ id, title, price, image, location, prio
           alt={title}
           loading={priority ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : undefined}
+          decoding={priority ? 'auto' : 'async'}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           fallback={darkPlaceholder}
         />

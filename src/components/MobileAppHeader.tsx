@@ -56,6 +56,8 @@ export default function MobileAppHeader() {
             src={logo}
             alt=""
             aria-hidden="true"
+            width={38}
+            height={38}
             style={{ width: 38, height: 38, flexShrink: 0 }}
           />
 

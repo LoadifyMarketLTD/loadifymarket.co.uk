@@ -10,7 +10,7 @@ import { adaptProducts } from '@/lib/productAdapter';
 import type { DBProduct } from '@/lib/productAdapter';
 import type { Product } from '@/components/catalog/ProductCard';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 12;
 
 const PRODUCT_QUERY = `
   *,
