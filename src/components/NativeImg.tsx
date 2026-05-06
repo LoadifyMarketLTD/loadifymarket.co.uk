@@ -53,6 +53,12 @@ export interface NativeImgProps {
   loading?: 'lazy' | 'eager';
   /** Fetch priority hint for above-the-fold images (web only; ignored on native). */
   fetchPriority?: 'high' | 'low' | 'auto';
+  /**
+   * Image decoding hint.  Defaults to 'async' so off-screen image decoding
+   * does not block the main thread.  Use 'auto' for above-the-fold / LCP
+   * images to let the browser decide the optimal strategy.
+   */
+  decoding?: 'async' | 'sync' | 'auto';
   /** Rendered when src is empty, still loading (native), or the load fails. */
   fallback?: React.ReactNode;
 }
@@ -64,6 +70,7 @@ export default function NativeImg({
   style,
   loading: loadingAttr = 'lazy',
   fetchPriority,
+  decoding = 'async',
   fallback = null,
 }: NativeImgProps) {
   /**
@@ -143,6 +150,7 @@ export default function NativeImg({
       style={style}
       loading={loadingAttr}
       fetchPriority={fetchPriority}
+      decoding={decoding}
       onError={() => setResolvedSrc('')}
     />
   );

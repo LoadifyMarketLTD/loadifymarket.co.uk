@@ -97,7 +97,7 @@ function MobileHome() {
           }}
         >
           {loading
-            ? Array.from({ length: 8 }).map((_, i) => <SkeletonGridCard key={i} />)
+            ? Array.from({ length: 12 }).map((_, i) => <SkeletonGridCard key={i} />)
             : products.map((p, i) => (
                 <MobileGridCard
                   key={p.id}
