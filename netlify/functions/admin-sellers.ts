@@ -1,7 +1,15 @@
 import { Handler, HandlerEvent } from '@netlify/functions';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const JSON_HEADERS = { 'Content-Type': 'application/json' };
+const ALLOWED_ORIGIN = process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+const JSON_HEADERS = { ...corsHeaders, 'Content-Type': 'application/json' };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -121,6 +129,11 @@ function sellerDisplayName(user: { firstName?: string | null; lastName?: string 
 const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
 
 export const handler: Handler = async (event) => {
+  // Handle CORS preflight (OPTIONS) before any auth or business logic.
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers: corsHeaders, body: '' };
+  }
+
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
