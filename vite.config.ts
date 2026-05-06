@@ -39,10 +39,9 @@ export default defineConfig({
         passes: 2,
       },
     },
-    // Hidden source maps: generated but not referenced in output files,
-    // so they are available for debugging/error-tracking without being
-    // publicly discoverable via the browser DevTools Sources panel.
-    sourcemap: 'hidden',
+    // No source maps in production — keeps the APK smaller and avoids
+    // shipping source code inside the distributed binary.
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks: {
