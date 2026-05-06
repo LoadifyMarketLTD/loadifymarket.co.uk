@@ -34,6 +34,13 @@ const WINDOWS = [
   { days: 7,  label: '7day' },
 ] as const;
 
+/** Time windows for Stripe Connect-specific reminders (separate from general onboarding). */
+const STRIPE_WINDOWS = [
+  { days: 2,  label: '2day'  },
+  { days: 5,  label: '5day'  },
+  { days: 10, label: '10day' },
+] as const;
+
 export const handler = schedule('0 9 * * *', async () => {
   // Support both SUPABASE_URL (Netlify dashboard convention) and the VITE_
   // prefixed variant that build tooling also exports to the environment.
@@ -121,6 +128,81 @@ export const handler = schedule('0 9 * * *', async () => {
     ).length;
     console.log(
       `onboarding-reminder: ${window.label} window — sent ${sellers.length - failed}/${sellers.length} emails`
+    );
+  }
+
+  // ── Stripe Connect-specific reminders ─────────────────────────────────────
+  // These fire for sellers who have been registered for 2, 5, or 10 days but
+  // still have no Stripe account connected (stripeConnectStatus IS NULL or
+  // 'pending'). They are sent regardless of whether general onboarding is done
+  // because a seller may have completed their profile but stalled on Stripe.
+
+  for (const window of STRIPE_WINDOWS) {
+    const windowStart = new Date(now.getTime() - (window.days * 24 + 1) * 60 * 60 * 1000).toISOString();
+    const windowEnd   = new Date(now.getTime() - window.days * 24 * 60 * 60 * 1000).toISOString();
+
+    // Fetch sellers registered in this window who have NOT completed Stripe Connect.
+    // Join seller_profiles to check stripeConnectStatus.
+    const { data: sellerRows, error: stripeErr } = await supabase
+      .from('users')
+      .select('id, email, "firstName", "lastName", "createdAt", seller_profiles!userId(stripeConnectStatus)')
+      .eq('role', 'seller')
+      .gte('createdAt', windowStart)
+      .lte('createdAt', windowEnd);
+
+    if (stripeErr) {
+      console.error(`onboarding-reminder: Stripe query failed for ${window.label} window:`, stripeErr.message);
+      continue;
+    }
+
+    if (!sellerRows || sellerRows.length === 0) continue;
+
+    // Filter to only those whose Stripe Connect is incomplete.
+    const stripeIncomplete = (sellerRows as {
+      id: string;
+      email: string;
+      firstName?: string | null;
+      lastName?: string | null;
+      seller_profiles?: { stripeConnectStatus?: string | null } | null;
+    }[]).filter((row) => {
+      const status = row.seller_profiles?.stripeConnectStatus ?? null;
+      return status === null || status === 'pending';
+    });
+
+    if (stripeIncomplete.length === 0) continue;
+
+    console.log(`onboarding-reminder: sending stripe ${window.label} reminders to ${stripeIncomplete.length} sellers`);
+
+    const stripeEmailPromises = stripeIncomplete.map((seller) => {
+      const sellerName = [seller.firstName, seller.lastName].filter(Boolean).join(' ') || seller.email;
+      return fetch(`${appUrl}/.netlify/functions/send-email`, {
+        method: 'POST',
+        headers: internalHeaders,
+        body: JSON.stringify({
+          to: seller.email,
+          subject: 'Connect your Stripe account to start selling on Loadify Market',
+          template: 'stripe_connect_reminder',
+          data: {
+            sellerName,
+            windowLabel: window.label,
+            onboardingUrl: `${appUrl}/seller/settings`,
+          },
+        }),
+      }).then((res) => {
+        if (!res.ok) return { email: seller.email, ok: false, status: res.status };
+        return { email: seller.email, ok: true };
+      }).catch((err: unknown) => {
+        console.warn(`onboarding-reminder: Stripe email failed for ${seller.email}:`, err);
+        return { email: seller.email, ok: false };
+      });
+    });
+
+    const stripeResults = await Promise.allSettled(stripeEmailPromises);
+    const stripeFailed = stripeResults.filter(
+      (r) => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.ok)
+    ).length;
+    console.log(
+      `onboarding-reminder: stripe ${window.label} window — sent ${stripeIncomplete.length - stripeFailed}/${stripeIncomplete.length} emails`
     );
   }
 

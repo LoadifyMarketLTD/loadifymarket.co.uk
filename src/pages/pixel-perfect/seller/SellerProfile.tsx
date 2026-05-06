@@ -134,6 +134,11 @@ const SellerProfile = () => {
       setSellerStatus(p?.sellerStatus ?? "draft");
       setSellerType((p as Record<string, string | null> | null)?.sellerType ?? null);
       setIsVatRegistered(Boolean((p as Record<string, unknown> | null)?.isVatRegistered));
+      // If the profile already has a valid UK postcode saved, treat it as
+      // verified so sellers can re-save without re-clicking the lookup button.
+      if (addr.postcode && isValidUKPostcode(addr.postcode)) {
+        setPostcodeVerified(true);
+      }
     };
     load();
   }, [user]);

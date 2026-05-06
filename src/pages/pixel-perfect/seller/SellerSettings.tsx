@@ -576,7 +576,7 @@ const SellerSettings = () => {
       </Card>
 
       {/* ── Connect your Facebook Page ─────────────────────────────── */}
-      <Card className="opacity-70">
+      <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <svg className="h-4 w-4 text-[#1877F2]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -594,7 +594,7 @@ const SellerSettings = () => {
             This feature will allow sellers with Facebook Business Pages to automatically share their new listings,
             price drops, and promotions to their own page — no copy-pasting required.
           </p>
-          <Button variant="outline" size="sm" disabled className="opacity-50 cursor-not-allowed">
+          <Button variant="outline" size="sm" disabled>
             Connect Facebook Page (coming soon)
           </Button>
         </CardContent>

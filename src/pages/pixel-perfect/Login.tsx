@@ -6,7 +6,7 @@ import { isCapacitorNative } from "@/lib/capacitorUtils";
 import { sanitizeRedirectUrl } from "@/lib/sanitizeRedirectUrl";
 import SEO from "@/components/SEO";
 
-/* ── Shared Google / Apple SVG logos ─────────────────────────────────── */
+/* ── Shared Google / Facebook SVG logos ─────────────────────────────────── */
 const GoogleIcon = () => (
   <svg className="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" aria-hidden="true">
     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -16,9 +16,9 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const AppleIcon = () => (
-  <svg className="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+const FacebookIcon = () => (
+  <svg className="w-[18px] h-[18px] shrink-0" viewBox="0 0 24 24" fill="#1877F2" aria-hidden="true">
+    <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.007 1.792-4.669 4.532-4.669 1.313 0 2.686.235 2.686.235v2.953H15.83c-1.49 0-1.955.925-1.955 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
   </svg>
 );
 
@@ -28,6 +28,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [facebookLoading, setFacebookLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -124,6 +125,41 @@ const Login = () => {
     }
   };
 
+  const handleFacebookLogin = async () => {
+    setError("");
+    setFacebookLoading(true);
+    try {
+      const { supabase } = await import("@/lib/supabase");
+
+      if (isCapacitorNative()) {
+        const { data, error: oauthErr } = await supabase.auth.signInWithOAuth({
+          provider: "facebook",
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`,
+            skipBrowserRedirect: true,
+          },
+        });
+        if (oauthErr) throw oauthErr;
+        if (data?.url) {
+          const { Browser } = await import("@capacitor/browser");
+          await Browser.open({ url: data.url, windowName: "_self" });
+        }
+      } else {
+        const { error: oauthErr } = await supabase.auth.signInWithOAuth({
+          provider: "facebook",
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
+        if (oauthErr) throw oauthErr;
+      }
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : String(err);
+      setError(raw || "Facebook sign-in failed. Please try again.");
+      setFacebookLoading(false);
+    }
+  };
+
   /* Header height: Row1 72px + Row2 50px = 122px, plus iOS safe-area */
   // Uses --header-h CSS variable (6.875rem on mobile, 7.625rem on md+) so the
   // page content starts directly below the global Header on every screen size.
@@ -197,7 +233,7 @@ const Login = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <p className="text-[13px] text-red-700 leading-snug">
-                    Google sign-in was not completed or failed. Please try again, or sign in with email below.
+                    Social sign-in was not completed or failed. Please try again, or sign in with email below.
                   </p>
                 </div>
               )}
@@ -207,7 +243,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={handleGoogleLogin}
-                  disabled={googleLoading || loading}
+                  disabled={googleLoading || facebookLoading || loading}
                   aria-label="Sign in with Google"
                   className="relative flex items-center justify-center gap-2 h-10 rounded-lg border border-white/10 bg-white/5 text-[13px] font-medium text-white hover:bg-white/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
@@ -223,11 +259,20 @@ const Login = () => {
                 </button>
                 <button
                   type="button"
-                  disabled
-                  aria-disabled="true"
-                  className="relative flex items-center justify-center gap-2 h-10 rounded-lg border border-white/10 bg-white/5 text-[13px] font-medium text-slate-500 cursor-not-allowed select-none"
+                  onClick={handleFacebookLogin}
+                  disabled={facebookLoading || googleLoading || loading}
+                  aria-label="Sign in with Facebook"
+                  className="relative flex items-center justify-center gap-2 h-10 rounded-lg border border-white/10 bg-white/5 text-[13px] font-medium text-white hover:bg-white/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <AppleIcon /> Apple
+                  {facebookLoading ? (
+                    <svg className="w-4 h-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                  ) : (
+                    <FacebookIcon />
+                  )}
+                  Facebook
                 </button>
               </div>
 
