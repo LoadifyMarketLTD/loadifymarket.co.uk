@@ -37,7 +37,7 @@
   force = true
 
 [build.environment]
-  NODE_VERSION = "22"
+  NODE_VERSION = "20"
 
 # ── Dynamic sitemap (includes product pages) ──────────────────────────────────
 # The static public/sitemap.xml only covers static pages.  This redirect
