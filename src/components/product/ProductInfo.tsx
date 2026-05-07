@@ -296,12 +296,13 @@ const ProductInfo = ({
           <Button
             size="lg"
             variant="outline"
-            className={`shrink-0 ${isWishlisted ? "text-rose-500 border-rose-300 hover:bg-rose-50" : ""}`}
+            className={`shrink-0 inline-flex items-center gap-2 ${isWishlisted ? "text-rose-500 border-rose-300 hover:bg-rose-50" : ""}`}
             onClick={handleToggleWishlist}
             disabled={wishlistLoading}
             aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
             <Heart className={`h-5 w-5 ${isWishlisted ? "fill-rose-500" : ""}`} />
+            <span className="text-sm font-semibold">{isWishlisted ? "Saved" : "Save"}</span>
           </Button>
           <Button
             size="lg"

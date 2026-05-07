@@ -635,18 +635,21 @@ const ProductDetail = () => {
           <button
             onClick={() => void handleMobileToggleWishlist()}
             disabled={mobileWishlistLoading}
-            className="p-2 rounded-xl active:bg-white/10 transition-colors"
+            className="px-3 py-2 rounded-xl active:bg-white/10 transition-colors inline-flex items-center gap-1.5"
             style={{ background: "rgba(255,255,255,0.10)" }}
             aria-label={mobileWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
             <Heart
               style={{
-                width: "20px",
-                height: "20px",
+                width: "18px",
+                height: "18px",
                 color: mobileWishlisted ? "#EF4444" : "#FFFFFF",
                 fill: mobileWishlisted ? "#EF4444" : "none",
               }}
             />
+            <span style={{ fontSize: "12px", fontWeight: 700, color: "#FFFFFF" }}>
+              {mobileWishlisted ? "Saved" : "Save"}
+            </span>
           </button>
         </div>
       </div>
