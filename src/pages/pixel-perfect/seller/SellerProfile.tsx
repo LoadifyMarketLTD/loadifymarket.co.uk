@@ -317,6 +317,12 @@ const SellerProfile = () => {
     }
   };
 
+  const profileSaveButton = (
+    <Button className="w-full sm:w-auto bg-gradient-hero text-primary-foreground" onClick={handleSave} disabled={saving}>
+      <Save className="mr-2 h-4 w-4" /> {saving ? "Saving…" : "Save Changes"}
+    </Button>
+  );
+
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[900px]">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -324,9 +330,7 @@ const SellerProfile = () => {
           <h1 className="font-display text-2xl font-bold text-foreground">Seller Profile</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your public seller profile and business information.</p>
         </div>
-        <Button className="w-full sm:w-auto bg-gradient-hero text-primary-foreground" onClick={handleSave} disabled={saving}>
-          <Save className="mr-2 h-4 w-4" /> {saving ? "Saving…" : "Save Changes"}
-        </Button>
+        {profileSaveButton}
       </div>
 
       {/* Profile Header Card */}
@@ -528,9 +532,7 @@ const SellerProfile = () => {
       </Card>
 
       <div className="pt-1">
-        <Button className="w-full sm:w-auto bg-gradient-hero text-primary-foreground" onClick={handleSave} disabled={saving}>
-          <Save className="mr-2 h-4 w-4" /> {saving ? "Saving…" : "Save Changes"}
-        </Button>
+        {profileSaveButton}
       </div>
     </div>
   );

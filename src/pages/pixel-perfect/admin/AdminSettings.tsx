@@ -170,6 +170,19 @@ const AdminSettings = () => {
     }
   };
 
+  const saveSettingsButton = (
+    <Button
+      size="sm"
+      className="w-full sm:w-auto"
+      onClick={handleSave}
+      disabled={saveLoading || settingsLoading}
+      style={{ background: "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)", color: "#fff", border: "none" }}
+    >
+      {saveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+      {settingsLoading ? "Loading…" : "Save Settings"}
+    </Button>
+  );
+
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[900px]" style={{ background: "transparent", minHeight: "100%" }}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
@@ -181,16 +194,7 @@ const AdminSettings = () => {
           {saveMsg && (
             <p className={`text-xs ${saveMsg.ok ? "text-emerald-400" : "text-red-400"}`}>{saveMsg.text}</p>
           )}
-          <Button
-            size="sm"
-            className="w-full sm:w-auto"
-            onClick={handleSave}
-            disabled={saveLoading || settingsLoading}
-            style={{ background: "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)", color: "#fff", border: "none" }}
-          >
-            {saveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            {settingsLoading ? "Loading…" : "Save Settings"}
-          </Button>
+          {saveSettingsButton}
         </div>
       </div>
 
@@ -412,16 +416,7 @@ const AdminSettings = () => {
       </div>
 
       <div className="pt-1">
-        <Button
-          size="sm"
-          className="w-full sm:w-auto"
-          onClick={handleSave}
-          disabled={saveLoading || settingsLoading}
-          style={{ background: "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)", color: "#fff", border: "none" }}
-        >
-          {saveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-          {settingsLoading ? "Loading…" : "Save Settings"}
-        </Button>
+        {saveSettingsButton}
       </div>
     </div>
   );

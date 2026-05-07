@@ -204,6 +204,11 @@ const BuyerProfile = () => {
   };
 
   const initials = `${form.firstName?.[0] ?? ""}${form.lastName?.[0] ?? ""}`.toUpperCase() || "?";
+  const profileSaveButton = (
+    <Button size="sm" className="w-full sm:w-auto" onClick={handleSave} disabled={saving || loading}>
+      <Save className="mr-2 h-4 w-4" />{saving ? "Saving…" : "Save Changes"}
+    </Button>
+  );
 
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-[900px]">
@@ -212,9 +217,7 @@ const BuyerProfile = () => {
           <h1 className="text-2xl font-bold text-foreground">My Profile</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your personal information.</p>
         </div>
-        <Button size="sm" className="w-full sm:w-auto" onClick={handleSave} disabled={saving || loading}>
-          <Save className="mr-2 h-4 w-4" />{saving ? "Saving…" : "Save Changes"}
-        </Button>
+        {profileSaveButton}
       </div>
 
       {/* Profile Header */}
@@ -377,9 +380,7 @@ const BuyerProfile = () => {
       </Card>
 
       <div className="pt-1">
-        <Button size="sm" className="w-full sm:w-auto" onClick={handleSave} disabled={saving || loading}>
-          <Save className="mr-2 h-4 w-4" />{saving ? "Saving…" : "Save Changes"}
-        </Button>
+        {profileSaveButton}
       </div>
     </div>
   );
