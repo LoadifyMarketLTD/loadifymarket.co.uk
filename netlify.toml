@@ -2,6 +2,9 @@
   command = "npm ci && npm run build"
   publish = "dist"
 
+[context.production.build]
+  edge_functions = "netlify/edge-functions-production"
+
 # ─── Image CDN — allowed remote sources ──────────────────────────────────────
 # Netlify Image CDN only proxies/transforms images from explicitly allowed
 # remote origins.  Without this, requests to /.netlify/images?url=<supabase>
