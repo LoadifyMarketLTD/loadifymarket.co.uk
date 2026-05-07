@@ -1,6 +1,13 @@
 [build]
   command = "npm ci && npm run build"
   publish = "dist"
+  edge_functions = "netlify/edge-functions"
+
+[context.deploy-preview.build]
+  # Deploy previews must not fail if edge bundling has transient remote-fetch
+  # issues. Keep edge functions enabled for production while using an empty
+  # directory during preview builds.
+  edge_functions = "netlify/edge-functions-disabled"
 
 # ─── Image CDN — allowed remote sources ──────────────────────────────────────
 # Netlify Image CDN only proxies/transforms images from explicitly allowed
