@@ -28,7 +28,11 @@ import { isCapacitorContext } from './capacitorUtils';
  * the Android APK where loadifymarket.co.uk is always the correct backend.
  */
 const NETLIFY_BASE: string = (
-  (import.meta.env.VITE_APP_URL as string | undefined) ?? 'https://loadifymarket.co.uk'
+  (() => {
+    const envBase = import.meta.env.VITE_APP_URL as string | undefined;
+    const trimmed = typeof envBase === 'string' ? envBase.trim() : '';
+    return trimmed || 'https://loadifymarket.co.uk';
+  })()
 ).replace(/\/$/, '');
 
 /**

@@ -25,7 +25,11 @@ import { isCapacitorContext } from './capacitorUtils';
  * on the window.fetch patch order and guarantees correctness on every APK build.
  */
 const NETLIFY_BASE = (
-  (import.meta.env.VITE_APP_URL as string | undefined) ?? 'https://loadifymarket.co.uk'
+  (() => {
+    const envBase = import.meta.env.VITE_APP_URL as string | undefined;
+    const trimmed = typeof envBase === 'string' ? envBase.trim() : '';
+    return trimmed || 'https://loadifymarket.co.uk';
+  })()
 // The hard-coded fallback is safe: this rewrite only runs on the native APK
 // (isCapacitorContext() guard below) where loadifymarket.co.uk is always the
 // correct backend.  Mirrors the same pattern in capacitorFetchPatch.ts.
