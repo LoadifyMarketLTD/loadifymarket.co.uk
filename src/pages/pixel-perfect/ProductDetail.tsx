@@ -448,14 +448,12 @@ const ProductDetail = () => {
     if (convId) {
       setOfferConvId(convId);
       setOfferOpen(true);
-      toast({ title: "Offer form opened" });
     }
   };
 
   const handleMessage = async () => {
     const convId = await requireConversation("message", "message");
     if (convId) {
-      toast({ title: "Opening chat…" });
       navigate(`/inbox/${convId}`);
     }
   };
