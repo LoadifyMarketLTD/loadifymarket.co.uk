@@ -217,7 +217,7 @@ const BuyerSettings = () => {
           <h1 className="text-2xl font-bold text-foreground">Account Settings</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your preferences, notifications, and security.</p>
         </div>
-        <Button size="sm" onClick={handleSaveSettings} disabled={savingSettings}>
+        <Button size="sm" className="w-full sm:w-auto" onClick={handleSaveSettings} disabled={savingSettings}>
           {savingSettings ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
           Save Settings
         </Button>
@@ -393,6 +393,13 @@ const BuyerSettings = () => {
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-stretch sm:justify-end">
+        <Button size="sm" className="w-full sm:w-auto" onClick={handleSaveSettings} disabled={savingSettings}>
+          {savingSettings ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          Save Settings
+        </Button>
+      </div>
     </div>
   );
 };
