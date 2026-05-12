@@ -1015,8 +1015,10 @@ const ProductDetail = () => {
       {/* ── Mobile sticky bottom CTA — hidden on desktop ─────────────────────── */}
       {isMobileCtaVisible && (
         <div
-          className="md:hidden fixed bottom-0 left-0 right-0 z-[9998]"
+          className="md:hidden fixed left-0 right-0 z-[9998]"
           style={{
+            // Keep the CTA above the mobile bottom nav so its touch targets
+            // remain clickable on small screens and inside the APK webview.
             bottom: mobileBottomNavOffset,
             background: "rgba(7,8,11,0.97)",
             backdropFilter: "blur(16px)",
