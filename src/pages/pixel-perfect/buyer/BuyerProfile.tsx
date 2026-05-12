@@ -213,7 +213,7 @@ const BuyerProfile = () => {
           <p className="text-sm text-muted-foreground mt-1">Manage your personal information.</p>
         </div>
         <Button size="sm" className="w-full sm:w-auto" onClick={handleSave} disabled={saving || loading}>
-          <Save className="mr-2 h-4 w-4" />{saving ? "Saving…" : "Save Changes"}
+          <Save className="mr-2 h-4 w-4" /> {saving ? "Saving…" : "Save Changes"}
         </Button>
       </div>
 
@@ -378,7 +378,7 @@ const BuyerProfile = () => {
 
       <div className="flex justify-stretch sm:justify-end">
         <Button size="sm" className="w-full sm:w-auto" onClick={handleSave} disabled={saving || loading}>
-          <Save className="mr-2 h-4 w-4" />{saving ? "Saving…" : "Save Changes"}
+          <Save className="mr-2 h-4 w-4" /> {saving ? "Saving…" : "Save Changes"}
         </Button>
       </div>
     </div>
