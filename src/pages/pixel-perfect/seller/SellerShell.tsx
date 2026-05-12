@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";import {
   LayoutDashboard, Package, ShoppingCart, Truck, FileText,
   RotateCcw, Star, Settings, UserCircle, ChevronRight, Store,
-  LogOut, Menu, Bell,
+  LogOut, Menu, Bell, MessageSquare,
 } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -15,6 +15,7 @@ const navItems = [
   { to: "/seller/shipments", label: "Shipments", icon: Truck },
   { to: "/seller/returns", label: "Returns", icon: RotateCcw },
   { to: "/seller/rfq", label: "RFQ / Quotes", icon: FileText },
+  { to: "/seller/messages", label: "Messages", icon: MessageSquare },
   { to: "/seller/reviews", label: "Reviews", icon: Star },
   { to: "/seller/notifications", label: "Notifications", icon: Bell },
   { to: "/seller/profile", label: "Profile", icon: UserCircle },
