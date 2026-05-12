@@ -560,7 +560,7 @@ export default function DesktopConversationView() {
               .eq("id", msg.id);
           }
           // Refresh offers when a system message arrives (offer accepted/declined)
-          if (msg.message.startsWith('{"_t":"system"')) {
+          if (parseMessage(msg.message).type === "system") {
             void loadOffers();
           }
         },
@@ -606,12 +606,14 @@ export default function DesktopConversationView() {
         { event: "UPDATE", schema: "public", table: "orders", filter: `buyerId=eq.${user.id}` },
         (payload) => {
           const updated = payload.new as { id: string; status: string; offerId: string | null };
-          if (!updated.offerId) return;
+          const offerId = updated.offerId;
+          if (!offerId) return;
           setOfferMap((prev) => {
-            const existing = prev.get(updated.offerId!);
+            const existing = prev.get(offerId);
+            // Only update when this order event belongs to the offer's linked order
             if (!existing || existing.orderId !== updated.id) return prev;
             const next = new Map(prev);
-            next.set(updated.offerId!, { ...existing, orderStatus: updated.status });
+            next.set(offerId, { ...existing, orderStatus: updated.status });
             return next;
           });
         },
