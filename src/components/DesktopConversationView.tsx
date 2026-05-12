@@ -645,13 +645,16 @@ export default function DesktopConversationView() {
         isRead?: boolean; createdAt?: string; error?: string;
       };
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      if (!json.id || !json.senderId || !json.message || !json.createdAt) {
+        throw new Error("Unexpected response from server");
+      }
 
       const msg: Message = {
-        id:        json.id!,
-        senderId:  json.senderId!,
-        message:   json.message!,
+        id:        json.id,
+        senderId:  json.senderId,
+        message:   json.message,
         isRead:    json.isRead ?? false,
-        createdAt: json.createdAt!,
+        createdAt: json.createdAt,
       };
       setMessages((prev) => {
         if (prev.some((m) => m.id === msg.id)) return prev;
