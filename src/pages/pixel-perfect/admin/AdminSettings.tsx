@@ -26,6 +26,11 @@ interface PlatformConfig {
   productsPerPage: number;
 }
 
+// Supabase persists auth tokens in localStorage with keys prefixed 'sb-'.
+// We intentionally preserve these keys during cache clearing so the admin
+// session is not terminated by the Clear Cache action.
+const SUPABASE_STORAGE_PREFIX = 'sb-';
+
 const DEFAULT_FEATURES: Features = {
   sellerRegistration: true,
   buyerRegistration: true,
@@ -67,7 +72,7 @@ const AdminSettings = () => {
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && !key.startsWith('sb-')) {
+        if (key && !key.startsWith(SUPABASE_STORAGE_PREFIX)) {
           keysToRemove.push(key);
         }
       }

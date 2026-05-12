@@ -100,8 +100,15 @@ const BuyerOrders = () => {
       });
 
       if (!res.ok) {
-        const errBody = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(errBody.error ?? `Server error ${res.status}`);
+        let serverMessage: string | undefined;
+        try {
+          const errBody = await res.json() as { error?: string };
+          serverMessage = errBody.error;
+        } catch {
+          // Response body was not valid JSON — use status text instead
+          serverMessage = res.statusText || undefined;
+        }
+        throw new Error(serverMessage ?? `Server error ${res.status}`);
       }
 
       setOrders((prev) =>

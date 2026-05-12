@@ -21,6 +21,10 @@ import type { Handler } from '@netlify/functions';
 const RELEASABLE_STATUSES = new Set(['shipped', 'delivered']);
 
 const ALLOWED_ORIGIN = process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
+// Note: If VITE_APP_URL is unset we intentionally fall back to the production
+// origin (consistent with every other Netlify function in this codebase). The
+// Access-Control-Allow-Origin header is a browser hint, not a security barrier —
+// server-side JWT authentication is the actual security mechanism.
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
