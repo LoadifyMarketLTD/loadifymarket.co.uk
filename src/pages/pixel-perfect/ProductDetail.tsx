@@ -22,7 +22,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Flag, Tag, ShoppingCart, ArrowLeft, Share2, Heart, ChevronRight } from "lucide-react";
+import { Flag, Tag, ShoppingCart, ArrowLeft, Share2, Heart, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { copyToClipboard } from "@/lib/clipboard";
 import { shareProduct, canShare } from "@/lib/shareProduct";
@@ -127,7 +127,7 @@ const ProductDetail = () => {
   const [reportLoading, setReportLoading] = useState(false);
 
   // Mobile CTA state
-  const [ctaLoading, setCtaLoading] = useState(false);
+  const [ctaLoadingAction, setCtaLoadingAction] = useState<"message" | "offer" | null>(null);
   const [offerConvId, setOfferConvId] = useState<string | null>(null);
   const [offerOpen, setOfferOpen] = useState(false);
   // Listing availability state (active | reserved | sold)
@@ -385,15 +385,26 @@ const ProductDetail = () => {
   };
 
   /** Guards against unauthenticated access and resolves/creates the conversation id. */
-  const requireConversation = async (context: import('@/store/authPromptStore').AuthPromptContext = null): Promise<string | null> => {
+  const requireConversation = async (
+    action: "message" | "offer",
+    context: import('@/store/authPromptStore').AuthPromptContext = null,
+  ): Promise<string | null> => {
     if (!user) { promptAuth(context); return null; }
-    setCtaLoading(true);
+    setCtaLoadingAction(action);
     try {
       const convId = await getOrCreateConversation();
       if (!convId) toast({ title: "Could not open conversation", variant: "destructive" });
       return convId;
+    } catch (err) {
+      console.error("Failed to open conversation:", err);
+      toast({
+        title: "Unable to open chat",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+      return null;
     } finally {
-      setCtaLoading(false);
+      setCtaLoadingAction(null);
     }
   };
 
@@ -433,17 +444,23 @@ const ProductDetail = () => {
   };
 
   const handleMakeOffer = async () => {
-    const convId = await requireConversation('offer');
-    if (convId) { setOfferConvId(convId); setOfferOpen(true); }
+    const convId = await requireConversation("offer", "offer");
+    if (convId) {
+      setOfferConvId(convId);
+      setOfferOpen(true);
+    }
   };
 
   const handleMessage = async () => {
-    const convId = await requireConversation('message');
-    if (convId) navigate(`/inbox/${convId}`);
+    const convId = await requireConversation("message", "message");
+    if (convId) {
+      navigate(`/inbox/${convId}`);
+    }
   };
 
   // True when the logged-in user is the seller/owner of this product
   const isMobileCtaVisible = !!(product && productSellerId && (!user || user.id !== productSellerId));
+  const mobileBottomNavOffset = "calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))";
 
   const canonicalProductUrl = `${BASE_URL}/product/${product.id}`;
   const currentProductUrl = typeof window !== "undefined"
@@ -853,6 +870,9 @@ const ProductDetail = () => {
                     onCopyLink={handleCopyLink}
                     onNativeShare={handleNativeShare}
                     supportsNativeShare={supportsNativeShare}
+                    onMessageSeller={() => void handleMessage()}
+                    onMakeOffer={() => void handleMakeOffer()}
+                    contactActionLoading={ctaLoadingAction}
                   />
                 </div>
 
@@ -995,14 +1015,17 @@ const ProductDetail = () => {
       {/* ── Mobile sticky bottom CTA — hidden on desktop ─────────────────────── */}
       {isMobileCtaVisible && (
         <div
-          className="md:hidden fixed bottom-0 left-0 right-0 z-[9996]"
+          className="md:hidden fixed left-0 right-0 z-[9998]"
           style={{
+            // Keep the CTA above the mobile bottom nav so its touch targets
+            // remain clickable on small screens and inside the APK webview.
+            bottom: mobileBottomNavOffset,
             background: "rgba(7,8,11,0.97)",
             backdropFilter: "blur(16px)",
             WebkitBackdropFilter: "blur(16px)",
             borderTop: "1px solid rgba(255,255,255,0.08)",
-            paddingBottom: "calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))",
-            padding: "12px 16px calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px) + 4px)",
+            padding: "12px 16px",
+            pointerEvents: "auto",
           }}
         >
           {listingStatus === "sold" ? (
@@ -1040,7 +1063,8 @@ const ProductDetail = () => {
               {/* Message */}
               <button
                 onClick={() => void handleMessage()}
-                disabled={ctaLoading}
+                disabled={ctaLoadingAction !== null}
+                aria-busy={ctaLoadingAction === "message"}
                 style={{
                   flex: 1,
                   padding: "14px 8px",
@@ -1059,14 +1083,24 @@ const ProductDetail = () => {
                 className="active:bg-white/10 transition-colors disabled:opacity-50"
                 aria-label="Message seller"
               >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                Message
+                {ctaLoadingAction === "message" ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Opening…
+                  </>
+                ) : (
+                  <>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                    Message
+                  </>
+                )}
               </button>
 
               {/* Make Offer */}
               <button
                 onClick={() => void handleMakeOffer()}
-                disabled={ctaLoading}
+                disabled={ctaLoadingAction !== null}
+                aria-busy={ctaLoadingAction === "offer"}
                 style={{
                   flex: 1,
                   padding: "14px 8px",
@@ -1085,8 +1119,17 @@ const ProductDetail = () => {
                 className="active:bg-white/10 transition-colors disabled:opacity-50"
                 aria-label="Make an offer"
               >
-                <Tag style={{ width: "14px", height: "14px" }} />
-                Offer
+                {ctaLoadingAction === "offer" ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Preparing…
+                  </>
+                ) : (
+                  <>
+                    <Tag style={{ width: "14px", height: "14px" }} />
+                    Offer
+                  </>
+                )}
               </button>
 
               {/* Buy Now */}
