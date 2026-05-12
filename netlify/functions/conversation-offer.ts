@@ -45,6 +45,11 @@ interface ProductRow {
   listingContext: string;
 }
 
+function isOffersTableMissing(error: { code?: string; message?: string } | null | undefined): boolean {
+  if (!error) return false;
+  return error.code === '42P01' || error.code === 'PGRST205';
+}
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -143,13 +148,55 @@ export const handler: Handler = async (event) => {
     return { statusCode: 409, body: JSON.stringify({ error: 'This listing is no longer available for offers' }) };
   }
 
+  const sendLegacyOfferMessage = async () => {
+    const displayMessage = JSON.stringify({
+      _t: 'offer',
+      amount_pence: amountPence,
+      productTitle: listing.title,
+    });
+
+    const { error: messageError } = await supabase
+      .from('messages')
+      .insert({
+        conversationId,
+        senderId: callerId,
+        receiverId: recipientId,
+        message: displayMessage,
+      });
+
+    if (messageError) {
+      console.error('conversation-offer: legacy message insert failed:', messageError.message);
+      return { statusCode: 500, body: JSON.stringify({ error: 'Failed to create offer' }) };
+    }
+
+    const pounds = (amountPence / 100).toFixed(2);
+    await sendPushToUser(supabase, recipientId, {
+      title: 'New offer received',
+      body: `Someone offered £${pounds} for ${listing.title}`,
+      data: { type: 'offer_received', conversationId },
+    });
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ offerId: null, legacy: true }),
+    };
+  };
+
   // ── Check for existing pending offer ───────────────────────────────────────
-  const { data: existingOffer } = await supabase
+  const { data: existingOffer, error: existingOfferError } = await supabase
     .from('offers')
     .select('id')
     .eq('conversationId', conversationId)
     .eq('status', 'pending')
     .maybeSingle<{ id: string }>();
+
+  if (isOffersTableMissing(existingOfferError)) {
+    return await sendLegacyOfferMessage();
+  }
+  if (existingOfferError) {
+    console.error('conversation-offer: pending offer check failed:', existingOfferError.message);
+    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to create offer' }) };
+  }
 
   if (existingOffer) {
     return {
@@ -173,6 +220,9 @@ export const handler: Handler = async (event) => {
 
   if (offerError || !offer) {
     console.error('conversation-offer: insert failed:', offerError?.message);
+    if (isOffersTableMissing(offerError)) {
+      return await sendLegacyOfferMessage();
+    }
     // Unique violation on one_pending_offer_per_conversation — race condition.
     if (offerError?.code === '23505') {
       return {

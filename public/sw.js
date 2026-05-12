@@ -3,7 +3,7 @@
 // Caching strategy:
 //   /assets/*             Cache-first (Vite content-hashed JS/CSS bundles — immutable)
 //   fonts.gstatic.com     Cache-first (woff2 font files — immutable)
-//   fonts.googleapis.com  Cache-first (font CSS — versioned URL)
+//   fonts.googleapis.com  Network pass-through (honours page CSP style loading)
 //   Everything else       Network-first with cache fallback
 //
 // API calls (Supabase, Netlify Functions, Stripe, Google Analytics) are always
@@ -53,7 +53,6 @@ function isCacheFirst(url) {
   if (url.pathname.startsWith('/assets/')) return true;
   // Google Fonts woff2 files and font CSS are versioned by URL — cache forever.
   if (url.hostname === 'fonts.gstatic.com') return true;
-  if (url.hostname === 'fonts.googleapis.com') return true;
   return false;
 }
 
@@ -81,10 +80,12 @@ self.addEventListener('fetch', (event) => {
       caches.open(CACHE_NAME).then((cache) =>
         cache.match(request).then((cached) => {
           if (cached) return cached;
-          return fetch(request).then((response) => {
-            if (response.ok) cache.put(request, response.clone());
-            return response;
-          });
+          return fetch(request)
+            .then((response) => {
+              if (response.ok) cache.put(request, response.clone());
+              return response;
+            })
+            .catch(() => new Response('', { status: 504, statusText: 'Gateway Timeout' }));
         }),
       ),
     );

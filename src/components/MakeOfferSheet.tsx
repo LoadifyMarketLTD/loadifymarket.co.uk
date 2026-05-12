@@ -16,7 +16,7 @@
  */
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
@@ -105,6 +105,9 @@ export default function MakeOfferSheet({
             <Tag className="h-4 w-4 text-[#FBBF24]" />
             Make an Offer
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Enter an amount and send an offer to the seller for this listing.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
