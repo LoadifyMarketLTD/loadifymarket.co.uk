@@ -85,7 +85,7 @@ self.addEventListener('fetch', (event) => {
               if (response.ok) cache.put(request, response.clone());
               return response;
             })
-            .catch(() => cached ?? new Response('', { status: 504, statusText: 'Gateway Timeout' }));
+            .catch(() => new Response('', { status: 504, statusText: 'Gateway Timeout' }));
         }),
       ),
     );

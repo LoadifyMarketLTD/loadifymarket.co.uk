@@ -508,7 +508,7 @@ export default function DesktopConversationView() {
 
   // ── Load messages ────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!selectedId || !user?.id || offersFeatureUnavailable) return;
+    if (!selectedId || !user?.id) return;
     let cancelled = false;
 
     const load = async () => {
@@ -547,11 +547,11 @@ export default function DesktopConversationView() {
 
     load();
     return () => { cancelled = true; };
-  }, [selectedId, user?.id, offersFeatureUnavailable]);
+  }, [selectedId, user?.id]);
 
   // ── Supabase Realtime: messages ──────────────────────────────────────────────
   useEffect(() => {
-    if (!selectedId || !user?.id) return;
+    if (!selectedId || !user?.id || offersFeatureUnavailable) return;
 
     const channel = supabase
       .channel(`desktop-chat-msgs:${selectedId}`)
@@ -579,7 +579,7 @@ export default function DesktopConversationView() {
       .subscribe();
 
     return () => { void supabase.removeChannel(channel); };
-  }, [selectedId, user?.id, loadOffers]);
+  }, [selectedId, user?.id, loadOffers, offersFeatureUnavailable]);
 
   // ── Supabase Realtime: offers ────────────────────────────────────────────────
   useEffect(() => {
@@ -604,7 +604,7 @@ export default function DesktopConversationView() {
       .subscribe();
 
     return () => { void supabase.removeChannel(channel); };
-  }, [selectedId, user?.id]);
+  }, [selectedId, user?.id, offersFeatureUnavailable]);
 
   // ── Supabase Realtime: orders (Pay Now / payment-confirmed live update) ──────
   useEffect(() => {

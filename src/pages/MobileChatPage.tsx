@@ -413,7 +413,7 @@ export default function MobileChatPage() {
 
   // Load messages
   useEffect(() => {
-    if (!conversationId || !user?.id || offersFeatureUnavailable) return;
+    if (!conversationId || !user?.id) return;
     let cancelled = false;
 
     const load = async () => {
@@ -447,11 +447,11 @@ export default function MobileChatPage() {
 
     load();
     return () => { cancelled = true; };
-  }, [conversationId, user?.id, offersFeatureUnavailable]);
+  }, [conversationId, user?.id]);
 
   // Supabase Realtime
   useEffect(() => {
-    if (!conversationId || !user?.id) return;
+    if (!conversationId || !user?.id || offersFeatureUnavailable) return;
 
     const channel = supabase
       .channel(`mobile-chat:${conversationId}`)
@@ -484,7 +484,7 @@ export default function MobileChatPage() {
       .subscribe();
 
     return () => { void supabase.removeChannel(channel); };
-  }, [conversationId, user?.id, loadOffers]);
+  }, [conversationId, user?.id, loadOffers, offersFeatureUnavailable]);
 
   // Offers table Realtime — catch direct status changes (accepted / declined /
   // cancelled) without relying solely on system messages.
@@ -515,7 +515,7 @@ export default function MobileChatPage() {
       .subscribe();
 
     return () => { void supabase.removeChannel(offersChannel); };
-  }, [conversationId, user?.id]);
+  }, [conversationId, user?.id, offersFeatureUnavailable]);
 
   // Orders table Realtime — update the Pay Now / payment-confirmed state live
   // when an order's status changes (e.g. awaiting_payment → paid after webhook).
