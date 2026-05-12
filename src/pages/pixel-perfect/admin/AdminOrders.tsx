@@ -29,7 +29,7 @@ interface Order {
 const statusConfig: Record<string, { label: string; className: string }> = {
   paid: { label: "Paid", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
   packed: { label: "Packed", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
-  shipped: { label: "Shipped", className: "border-[#0A2239]/30 text-[#0A2239] bg-[#0A2239]/10" },
+  shipped: { label: "Shipped", className: "border-sky-500/30 text-sky-400 bg-sky-500/10" },
   delivered: { label: "Delivered", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
   cancelled: { label: "Cancelled", className: "border-slate-200 text-slate-400" },
   refunded: { label: "Refunded", className: "border-slate-200 text-slate-400" },

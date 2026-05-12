@@ -101,8 +101,11 @@ const SellerDashboard = () => {
 
         // Stats
         const activeOrders = orders.filter((o) => ["paid", "packed", "shipped"].includes(o.status)).length;
+        // Only count revenue from orders that have actually been paid — exclude
+        // awaiting_payment, cancelled and refunded so the KPI reflects real income.
+        const PAID_STATUSES = ["paid", "packed", "shipped", "delivered", "completed"];
         const totalRevenue = orders
-          .filter((o) => o.status !== "cancelled" && o.status !== "refunded")
+          .filter((o) => PAID_STATUSES.includes(o.status))
           .reduce((sum, o) => sum + (o.total || 0), 0);
         const productsListed = products.filter((p) => p.isActive).length;
         const lowStockItems = products.filter((p) => p.stockQuantity !== null && p.stockQuantity > 0 && p.stockQuantity <= 5).length;

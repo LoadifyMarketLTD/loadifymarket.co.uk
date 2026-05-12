@@ -61,6 +61,20 @@ const AdminSettings = () => {
     } catch {
       // Ignore — session storage may not be available
     }
+    try {
+      // Also clear app-level localStorage entries (cart, search history, etc.)
+      // without removing Supabase auth tokens so the admin stays logged in.
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && !key.startsWith('sb-')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
+    } catch {
+      // Ignore — localStorage may not be available
+    }
     setCacheCleared(true);
     setTimeout(() => setCacheCleared(false), 3000);
   };

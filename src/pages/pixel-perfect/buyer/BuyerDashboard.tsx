@@ -58,13 +58,20 @@ const BuyerDashboard = () => {
             .from("wishlists")
             .select("productIds")
             .eq("userId", user.id)
-            .single(),
+            .maybeSingle(),
         ]);
 
         const allOrders = (ordersRes.data as unknown as OrderRow[]) || [];
         setRecentOrders(allOrders.slice(0, 5));
         setTotalOrders(allOrders.length);
-        setTotalSpent(allOrders.reduce((sum, o) => sum + (o.total || 0), 0));
+        // Only count orders that have actually been paid/fulfilled — exclude
+        // cancelled and refunded orders so the "Total Spent" stat is accurate.
+        const completedStatuses = ["paid", "packed", "shipped", "delivered", "completed"];
+        setTotalSpent(
+          allOrders
+            .filter((o) => completedStatuses.includes(o.status))
+            .reduce((sum, o) => sum + (o.total || 0), 0)
+        );
 
         const productIds: string[] =
           wishlistRes.data?.productIds || [];

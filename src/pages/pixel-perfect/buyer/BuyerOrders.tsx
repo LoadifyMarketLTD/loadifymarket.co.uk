@@ -89,26 +89,19 @@ const BuyerOrders = () => {
     if (!confirmDeliveryOrder || !user) return;
     setConfirmDeliveryLoading(true);
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          status: "completed",
-          escrowStatus: "released",
-          escrowReleasedAt: new Date().toISOString(),
-        })
-        .eq("id", confirmDeliveryOrder.id)
-        .eq("buyerId", user.id);
-      if (error) throw error;
+      // Route escrow release through the server-side function so it can enforce
+      // pre-conditions (order must belong to this buyer, status must be
+      // shipped/delivered, no double-release) and handle seller notification
+      // safely server-side rather than writing escrow fields from the browser.
+      const res = await authorizedFetch("/.netlify/functions/confirm-delivery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: confirmDeliveryOrder.id }),
+      });
 
-      // Notify the seller that the buyer has confirmed and funds are released.
-      if (confirmDeliveryOrder.sellerId) {
-        await supabase.from("notifications").insert({
-          userId: confirmDeliveryOrder.sellerId,
-          type: "payment",
-          title: "Job confirmed — funds released",
-          message: `The buyer has confirmed completion of order ${confirmDeliveryOrder.orderNumber || confirmDeliveryOrder.id.slice(0, 8).toUpperCase()}. Escrow has been released.`,
-          link: "/seller/orders",
-        });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(errBody.error ?? `Server error ${res.status}`);
       }
 
       setOrders((prev) =>
