@@ -18,7 +18,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
 import { Tag } from "lucide-react";
@@ -71,17 +71,8 @@ export default function MakeOfferSheet({
 
     setSending(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error("No active session — please sign in again");
-      }
-
-      const res = await fetch("/.netlify/functions/conversation-offer", {
+      const res = await authorizedFetch("/.netlify/functions/conversation-offer", {
         method: "POST",
-        headers: {
-          "Content-Type":  "application/json",
-          "Authorization": `Bearer ${session.access_token}`,
-        },
         body: JSON.stringify({ conversationId, amountPence }),
       });
 
@@ -165,4 +156,3 @@ export default function MakeOfferSheet({
     </Dialog>
   );
 }
-

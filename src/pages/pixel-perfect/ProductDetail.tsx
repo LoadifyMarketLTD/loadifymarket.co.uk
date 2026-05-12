@@ -433,13 +433,29 @@ const ProductDetail = () => {
   };
 
   const handleMakeOffer = async () => {
-    const convId = await requireConversation('offer');
-    if (convId) { setOfferConvId(convId); setOfferOpen(true); }
+    try {
+      const convId = await requireConversation('offer');
+      if (convId) { setOfferConvId(convId); setOfferOpen(true); }
+    } catch (err) {
+      toast({
+        title: "Could not open offer",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleMessage = async () => {
-    const convId = await requireConversation('message');
-    if (convId) navigate(`/inbox/${convId}`);
+    try {
+      const convId = await requireConversation('message');
+      if (convId) navigate(`/inbox/${convId}`);
+    } catch (err) {
+      toast({
+        title: "Could not open conversation",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // True when the logged-in user is the seller/owner of this product
@@ -853,6 +869,10 @@ const ProductDetail = () => {
                     onCopyLink={handleCopyLink}
                     onNativeShare={handleNativeShare}
                     supportsNativeShare={supportsNativeShare}
+                    onMessageSeller={() => void handleMessage()}
+                    onMakeOffer={() => void handleMakeOffer()}
+                    ctaLoading={ctaLoading}
+                    listingStatus={listingStatus}
                   />
                 </div>
 
@@ -995,7 +1015,7 @@ const ProductDetail = () => {
       {/* ── Mobile sticky bottom CTA — hidden on desktop ─────────────────────── */}
       {isMobileCtaVisible && (
         <div
-          className="md:hidden fixed bottom-0 left-0 right-0 z-[9996]"
+          className="md:hidden fixed bottom-0 left-0 right-0 z-[9999]"
           style={{
             background: "rgba(7,8,11,0.97)",
             backdropFilter: "blur(16px)",
@@ -1051,16 +1071,17 @@ const ProductDetail = () => {
                   fontWeight: 700,
                   border: "1px solid rgba(255,255,255,0.15)",
                   cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "5px",
-                }}
-                className="active:bg-white/10 transition-colors disabled:opacity-50"
-                aria-label="Message seller"
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                Message
+                   display: "flex",
+                   alignItems: "center",
+                   justifyContent: "center",
+                    gap: "5px",
+                    touchAction: "manipulation",
+                 }}
+                 className="active:bg-white/10 transition-colors disabled:opacity-50"
+                 aria-label="Message seller"
+               >
+                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                {ctaLoading ? "Opening…" : "Message"}
               </button>
 
               {/* Make Offer */}
@@ -1077,16 +1098,17 @@ const ProductDetail = () => {
                   fontWeight: 700,
                   border: "1px solid rgba(255,255,255,0.15)",
                   cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "5px",
-                }}
-                className="active:bg-white/10 transition-colors disabled:opacity-50"
-                aria-label="Make an offer"
-              >
-                <Tag style={{ width: "14px", height: "14px" }} />
-                Offer
+                   display: "flex",
+                   alignItems: "center",
+                   justifyContent: "center",
+                    gap: "5px",
+                    touchAction: "manipulation",
+                 }}
+                 className="active:bg-white/10 transition-colors disabled:opacity-50"
+                 aria-label="Make an offer"
+               >
+                 <Tag style={{ width: "14px", height: "14px" }} />
+                {ctaLoading ? "Opening…" : "Offer"}
               </button>
 
               {/* Buy Now */}

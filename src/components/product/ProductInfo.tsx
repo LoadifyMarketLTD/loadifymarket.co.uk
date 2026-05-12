@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowRight, Package, MapPin, Clock, Eye, Tag,
+  ArrowRight, Package, MapPin, Clock, Eye, Tag, MessageSquare,
   Truck, ShieldCheck, ShoppingCart, Heart, Settings, Share2
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
@@ -32,6 +32,10 @@ interface ProductInfoProps {
   onCopyLink: () => void;
   onNativeShare?: () => void;
   supportsNativeShare?: boolean;
+  onMessageSeller?: () => void;
+  onMakeOffer?: () => void;
+  ctaLoading?: boolean;
+  listingStatus?: string;
 }
 
 const conditionColor: Record<string, string> = {
@@ -60,6 +64,10 @@ const ProductInfo = ({
   onCopyLink,
   onNativeShare,
   supportsNativeShare = false,
+  onMessageSeller,
+  onMakeOffer,
+  ctaLoading = false,
+  listingStatus = "active",
 }: ProductInfoProps) => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
@@ -276,42 +284,68 @@ const ProductInfo = ({
           </Button>
         </div>
       ) : (
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button
-            size="lg"
-            className="flex-1 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
-            onClick={handleBuyNow}
-          >
-            Buy from Seller <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="flex-1 text-base"
-            onClick={handleAddToCart}
-          >
-            <ShoppingCart className="mr-2 h-5 w-5" />
-            Add to Cart
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className={`shrink-0 ${isWishlisted ? "text-rose-500 border-rose-300 hover:bg-rose-50" : ""}`}
-            onClick={handleToggleWishlist}
-            disabled={wishlistLoading}
-            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          >
-            <Heart className={`h-5 w-5 ${isWishlisted ? "fill-rose-500" : ""}`} />
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="shrink-0"
-            onClick={handleShare}
-            aria-label="Share listing"
-          >
-            <Share2 className="h-5 w-5" />
-          </Button>
+        <div className="space-y-3">
+          {listingStatus === "active" && onMessageSeller && onMakeOffer && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Button
+                size="lg"
+                variant="outline"
+                className="text-base"
+                onClick={onMessageSeller}
+                disabled={ctaLoading}
+              >
+                <MessageSquare className="mr-2 h-5 w-5" />
+                {ctaLoading ? "Opening…" : "Message"}
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="text-base"
+                onClick={onMakeOffer}
+                disabled={ctaLoading}
+              >
+                <Tag className="mr-2 h-5 w-5" />
+                {ctaLoading ? "Opening…" : "Offer"}
+              </Button>
+            </div>
+          )}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              size="lg"
+              className="flex-1 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
+              onClick={handleBuyNow}
+            >
+              Buy from Seller <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="flex-1 text-base"
+              onClick={handleAddToCart}
+            >
+              <ShoppingCart className="mr-2 h-5 w-5" />
+              Add to Cart
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className={`shrink-0 ${isWishlisted ? "text-rose-500 border-rose-300 hover:bg-rose-50" : ""}`}
+              onClick={handleToggleWishlist}
+              disabled={wishlistLoading}
+              aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            >
+              <Heart className={`h-5 w-5 ${isWishlisted ? "fill-rose-500" : ""}`} />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="shrink-0"
+              onClick={handleShare}
+              aria-label="Share listing"
+            >
+              <Share2 className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       )}
 
