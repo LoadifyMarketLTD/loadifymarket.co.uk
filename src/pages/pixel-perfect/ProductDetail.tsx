@@ -27,6 +27,7 @@ import { toast } from "@/hooks/use-toast";
 import { copyToClipboard } from "@/lib/clipboard";
 import { shareProduct, canShare } from "@/lib/shareProduct";
 import { isCapacitorNative } from "@/lib/capacitorUtils";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
 import MakeOfferSheet from "@/components/MakeOfferSheet";
@@ -329,59 +330,17 @@ const ProductDetail = () => {
     }
   };
 
-  /**
-   * Finds or creates a conversation between the current buyer and the seller
-   * for this product, then returns the conversation id.
-   *
-   * Handles the UNIQUE (user1Id, user2Id, productId) constraint race by
-   * catching error code 23505 and re-querying for the existing row.
-   */
   const getOrCreateConversation = async (): Promise<string | null> => {
     if (!user?.id || !productSellerId || !id) return null;
-
-    // Check both orderings because user1Id/user2Id is set at creation time
-    const { data: existing } = await supabase
-      .from("conversations")
-      .select("id")
-      .eq("productId", id)
-      .or(
-        `and(user1Id.eq.${user.id},user2Id.eq.${productSellerId}),` +
-        `and(user1Id.eq.${productSellerId},user2Id.eq.${user.id})`
-      )
-      .maybeSingle<{ id: string }>();
-
-    if (existing?.id) return existing.id;
-
-    // Create new conversation
-    const { data: created, error } = await supabase
-      .from("conversations")
-      .insert({
-        user1Id: user.id,
-        user2Id: productSellerId,
-        productId: id,
-        subject: product.title ? `Re: ${product.title}` : null,
-      })
-      .select("id")
-      .single<{ id: string }>();
-
-    // 23505 = unique_violation: a concurrent request already created the row
-    if (error) {
-      if (error.code === "23505") {
-        const { data: raceWinner } = await supabase
-          .from("conversations")
-          .select("id")
-          .eq("productId", id)
-          .or(
-            `and(user1Id.eq.${user.id},user2Id.eq.${productSellerId}),` +
-            `and(user1Id.eq.${productSellerId},user2Id.eq.${user.id})`
-          )
-          .maybeSingle<{ id: string }>();
-        return raceWinner?.id ?? null;
-      }
-      console.error("Failed to create conversation:", error.message);
-      return null;
+    const res = await authorizedFetch("/.netlify/functions/conversation-get-or-create", {
+      method: "POST",
+      body: JSON.stringify({ productId: id, sellerId: productSellerId }),
+    });
+    const json = await res.json().catch(() => ({})) as { conversationId?: string; error?: string };
+    if (!res.ok) {
+      throw new Error(json.error ?? `HTTP ${res.status}`);
     }
-    return created?.id ?? null;
+    return typeof json.conversationId === "string" ? json.conversationId : null;
   };
 
   /** Guards against unauthenticated access and resolves/creates the conversation id. */
