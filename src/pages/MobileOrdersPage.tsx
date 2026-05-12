@@ -32,20 +32,22 @@ interface OrderRow {
   conversationId: string | null;
 }
 
-type Tab = "all" | "pending" | "shipped" | "delivered";
+type Tab = "all" | "pending" | "shipped" | "delivered" | "cancelled";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "all", label: "All" },
   { id: "pending", label: "Pending" },
   { id: "shipped", label: "Shipped" },
   { id: "delivered", label: "Delivered" },
+  { id: "cancelled", label: "Cancelled" },
 ];
 
 const TAB_STATUSES: Record<Tab, string[]> = {
   all: [],
   pending: ["awaiting_payment", "paid", "packed", "invoice_requested"],
   shipped: ["shipped"],
-  delivered: ["delivered", "completed", "cancelled", "refunded"],
+  delivered: ["delivered", "completed"],
+  cancelled: ["cancelled", "refunded"],
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

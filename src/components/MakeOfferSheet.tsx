@@ -18,11 +18,11 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { authorizedFetch } from "@/lib/authorizedFetch";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
-import { Tag } from "lucide-react";
+import { Loader2, Tag } from "lucide-react";
 import { trackOfferCreated } from "@/lib/analytics";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 
 interface MakeOfferSheetProps {
   open: boolean;
@@ -149,7 +149,12 @@ export default function MakeOfferSheet({
             onClick={() => void handleSubmit()}
             disabled={sending || !pounds}
           >
-            {sending ? "Sending…" : "Send Offer"}
+            {sending ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Sending…
+              </span>
+            ) : "Send Offer"}
           </Button>
         </div>
       </DialogContent>

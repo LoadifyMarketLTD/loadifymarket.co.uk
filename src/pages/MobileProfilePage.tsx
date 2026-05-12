@@ -30,7 +30,10 @@ function buildSections(role: string | undefined): Section[] {
     {
       title: 'Main',
       items: [
-        { label: 'My listings', to: isSellerOrAdmin ? '/seller/products' : '/catalog' },
+        // "My listings" is only meaningful for sellers and admins — hide for buyers
+        ...(isSellerOrAdmin
+          ? [{ label: 'My listings', to: '/seller/products' }]
+          : []),
         { label: 'Favourite items', to: '/profile/favourites' },
         { label: 'Orders', to: '/orders' },
         { label: 'Balance', to: '/profile/balance' },

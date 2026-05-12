@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowRight, Package, MapPin, Clock, Eye, Tag, MessageSquare,
-  Truck, ShieldCheck, ShoppingCart, Heart, Settings, Share2
+  ArrowRight, Package, MapPin, Clock, Eye, Tag,
+  Truck, ShieldCheck, ShoppingCart, Heart, Settings, Share2, Loader2, MessageSquare
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import type { Product } from "@/components/catalog/ProductCard";
@@ -34,8 +34,7 @@ interface ProductInfoProps {
   supportsNativeShare?: boolean;
   onMessageSeller?: () => void;
   onMakeOffer?: () => void;
-  ctaLoading?: boolean;
-  listingStatus?: string;
+  contactActionLoading?: "message" | "offer" | null;
 }
 
 const conditionColor: Record<string, string> = {
@@ -66,8 +65,7 @@ const ProductInfo = ({
   supportsNativeShare = false,
   onMessageSeller,
   onMakeOffer,
-  ctaLoading = false,
-  listingStatus = "active",
+  contactActionLoading = null,
 }: ProductInfoProps) => {
   const { addToCart } = useCart();
   const navigate = useNavigate();
@@ -285,30 +283,6 @@ const ProductInfo = ({
         </div>
       ) : (
         <div className="space-y-3">
-          {listingStatus === "active" && onMessageSeller && onMakeOffer && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button
-                size="lg"
-                variant="outline"
-                className="text-base"
-                onClick={onMessageSeller}
-                disabled={ctaLoading}
-              >
-                <MessageSquare className="mr-2 h-5 w-5" />
-                {ctaLoading ? "Opening…" : "Message"}
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="text-base"
-                onClick={onMakeOffer}
-                disabled={ctaLoading}
-              >
-                <Tag className="mr-2 h-5 w-5" />
-                {ctaLoading ? "Opening…" : "Offer"}
-              </Button>
-            </div>
-          )}
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               size="lg"
@@ -346,6 +320,55 @@ const ProductInfo = ({
               <Share2 className="h-5 w-5" />
             </Button>
           </div>
+
+          {(onMessageSeller || onMakeOffer) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {onMessageSeller && (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-base"
+                  onClick={onMessageSeller}
+                  disabled={contactActionLoading !== null}
+                  aria-busy={contactActionLoading === "message"}
+                >
+                  {contactActionLoading === "message" ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Opening…
+                    </>
+                  ) : (
+                    <>
+                      <MessageSquare className="mr-2 h-5 w-5" />
+                      Message
+                    </>
+                  )}
+                </Button>
+              )}
+              {onMakeOffer && (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-base"
+                  onClick={onMakeOffer}
+                  disabled={contactActionLoading !== null}
+                  aria-busy={contactActionLoading === "offer"}
+                >
+                  {contactActionLoading === "offer" ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Preparing…
+                    </>
+                  ) : (
+                    <>
+                      <Tag className="mr-2 h-5 w-5" />
+                      Offer
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
