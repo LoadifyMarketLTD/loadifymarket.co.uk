@@ -460,6 +460,7 @@ const ProductDetail = () => {
 
   // True when the logged-in user is the seller/owner of this product
   const isMobileCtaVisible = !!(product && productSellerId && (!user || user.id !== productSellerId));
+  const mobileBottomNavOffset = "calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))";
 
   const canonicalProductUrl = `${BASE_URL}/product/${product.id}`;
   const currentProductUrl = typeof window !== "undefined"
@@ -869,6 +870,9 @@ const ProductDetail = () => {
                     onCopyLink={handleCopyLink}
                     onNativeShare={handleNativeShare}
                     supportsNativeShare={supportsNativeShare}
+                    onMessageSeller={() => void handleMessage()}
+                    onMakeOffer={() => void handleMakeOffer()}
+                    contactActionLoading={ctaLoadingAction}
                   />
                 </div>
 
@@ -1013,12 +1017,13 @@ const ProductDetail = () => {
         <div
           className="md:hidden fixed bottom-0 left-0 right-0 z-[9998]"
           style={{
-            bottom: "calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))",
+            bottom: mobileBottomNavOffset,
             background: "rgba(7,8,11,0.97)",
             backdropFilter: "blur(16px)",
             WebkitBackdropFilter: "blur(16px)",
             borderTop: "1px solid rgba(255,255,255,0.08)",
             padding: "12px 16px",
+            pointerEvents: "auto",
           }}
         >
           {listingStatus === "sold" ? (
