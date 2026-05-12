@@ -510,7 +510,6 @@ const ProductDetail = () => {
     alignItems: "center",
     justifyContent: "center",
     gap: "5px",
-    touchAction: "manipulation" as const,
   };
 
   // Build Product JSON-LD for rich snippets
