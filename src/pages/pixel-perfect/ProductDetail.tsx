@@ -496,6 +496,22 @@ const ProductDetail = () => {
   const whatsappText = `Check out this product on Loadify Market: ${product.title} — £${product.price.toLocaleString("en-GB")} ${currentProductUrl}`;
   const encodedWhatsAppText = encodeURIComponent(whatsappText);
   const supportsNativeShare = canShare();
+  const mobileSecondaryCtaStyle = {
+    flex: 1,
+    padding: "14px 8px",
+    borderRadius: "12px",
+    background: "rgba(255,255,255,0.07)",
+    color: "#FFFFFF",
+    fontSize: "13px",
+    fontWeight: 700,
+    border: "1px solid rgba(255,255,255,0.15)",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "5px",
+    touchAction: "manipulation" as const,
+  };
 
   // Build Product JSON-LD for rich snippets
   const productJsonLd: Record<string, unknown> = {
@@ -1061,26 +1077,11 @@ const ProductDetail = () => {
               <button
                 onClick={() => void handleMessage()}
                 disabled={ctaLoading}
-                style={{
-                  flex: 1,
-                  padding: "14px 8px",
-                  borderRadius: "12px",
-                  background: "rgba(255,255,255,0.07)",
-                  color: "#FFFFFF",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  cursor: "pointer",
-                   display: "flex",
-                   alignItems: "center",
-                   justifyContent: "center",
-                    gap: "5px",
-                    touchAction: "manipulation",
-                 }}
-                 className="active:bg-white/10 transition-colors disabled:opacity-50"
-                 aria-label="Message seller"
-               >
-                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                style={mobileSecondaryCtaStyle}
+                className="active:bg-white/10 transition-colors disabled:opacity-50"
+                aria-label="Message seller"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
                 {ctaLoading ? "Opening…" : "Message"}
               </button>
 
@@ -1088,26 +1089,11 @@ const ProductDetail = () => {
               <button
                 onClick={() => void handleMakeOffer()}
                 disabled={ctaLoading}
-                style={{
-                  flex: 1,
-                  padding: "14px 8px",
-                  borderRadius: "12px",
-                  background: "rgba(255,255,255,0.07)",
-                  color: "#FFFFFF",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  cursor: "pointer",
-                   display: "flex",
-                   alignItems: "center",
-                   justifyContent: "center",
-                    gap: "5px",
-                    touchAction: "manipulation",
-                 }}
-                 className="active:bg-white/10 transition-colors disabled:opacity-50"
-                 aria-label="Make an offer"
-               >
-                 <Tag style={{ width: "14px", height: "14px" }} />
+                style={mobileSecondaryCtaStyle}
+                className="active:bg-white/10 transition-colors disabled:opacity-50"
+                aria-label="Make an offer"
+              >
+                <Tag style={{ width: "14px", height: "14px" }} />
                 {ctaLoading ? "Opening…" : "Offer"}
               </button>
 
