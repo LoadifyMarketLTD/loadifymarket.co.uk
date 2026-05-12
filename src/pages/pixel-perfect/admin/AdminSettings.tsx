@@ -202,6 +202,7 @@ const AdminSettings = () => {
           )}
           <Button
             size="sm"
+            className="w-full sm:w-auto"
             onClick={handleSave}
             disabled={saveLoading || settingsLoading}
             style={{ background: "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)", color: "#fff", border: "none" }}
@@ -427,6 +428,19 @@ const AdminSettings = () => {
             </Button>
           </div>
         </div>
+      </div>
+
+      <div className="flex justify-stretch sm:justify-end">
+        <Button
+          size="sm"
+          className="w-full sm:w-auto"
+          onClick={handleSave}
+          disabled={saveLoading || settingsLoading}
+          style={{ background: "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)", color: "#fff", border: "none" }}
+        >
+          {saveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          {settingsLoading ? "Loading…" : "Save Settings"}
+        </Button>
       </div>
     </div>
   );
