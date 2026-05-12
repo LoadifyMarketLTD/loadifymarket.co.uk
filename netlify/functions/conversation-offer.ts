@@ -175,7 +175,7 @@ export const handler: Handler = async (event) => {
     await sendPushToUser(supabase, recipientId, {
       title: 'New offer received',
       body: `Someone offered £${pounds} for ${listing.title}`,
-      data: { type: 'offer_received', conversationId, legacy: true },
+      data: { type: 'offer_received', conversationId },
     });
 
     return {
