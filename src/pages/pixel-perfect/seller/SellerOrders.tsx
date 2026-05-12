@@ -44,17 +44,27 @@ const SellerOrders = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await supabase
+      setLoadError(null);
+      const { data, error: fetchError } = await supabase
         .from("orders")
         .select(`id, orderNumber, total, status, createdAt, buyerId`)
         .eq("sellerId", user.id)
         .order("createdAt", { ascending: false });
+
+      if (fetchError) {
+        console.error("SellerOrders: fetch error", fetchError);
+        setLoadError("Failed to load orders. Please refresh the page.");
+        setLoading(false);
+        return;
+      }
+
       const rows = (data ?? []) as Array<{
         id: string; orderNumber: string; total: number; status: string; createdAt: string; buyerId: string;
       }>;
@@ -221,6 +231,8 @@ const SellerOrders = () => {
         <div className="sm:hidden divide-y divide-border">
           {loading ? (
             <div className="p-8 text-center text-muted-foreground text-sm">Loading orders…</div>
+          ) : loadError ? (
+            <div className="p-8 text-center text-sm text-red-500">{loadError}</div>
           ) : filtered.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground text-sm">
               <ShoppingCart className="h-8 w-8 mx-auto mb-2 opacity-40" />
@@ -305,6 +317,10 @@ const SellerOrders = () => {
               {loading ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">Loading orders…</td>
+                </tr>
+              ) : loadError ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-sm text-red-500">{loadError}</td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>

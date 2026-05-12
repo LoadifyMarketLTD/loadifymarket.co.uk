@@ -613,7 +613,11 @@ function App() {
         <Route path="profile/balance" element={<Suspense fallback={<PageLoader />}><MobileBalancePage /></Suspense>} />
         <Route path="profile/favourites" element={<Suspense fallback={<PageLoader />}><MobileFavouritesPage /></Suspense>} />
         <Route path="profile/settings" element={<Suspense fallback={<PageLoader />}><MobileSettingsPage /></Suspense>} />
-        <Route path="seller/promote" element={<Suspense fallback={<PageLoader />}><MobilePromotionalToolsPage /></Suspense>} />
+        <Route path="seller/promote" element={
+          <RequireSellerAny>
+            <Suspense fallback={<PageLoader />}><MobilePromotionalToolsPage /></Suspense>
+          </RequireSellerAny>
+        } />
         <Route path="seller/mobile-payments" element={
           <RequireSellerAny>
             <Suspense fallback={<PageLoader />}><MobileSellerPaymentsPage /></Suspense>
