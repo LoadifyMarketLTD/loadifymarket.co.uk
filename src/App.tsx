@@ -103,6 +103,7 @@ const PPSellerProfile       = lazy(() => import('./pages/pixel-perfect/seller/Se
 const PPSellerSettings      = lazy(() => import('./pages/pixel-perfect/seller/SellerSettings'));
 const PPSellerReviews       = lazy(() => import('./pages/pixel-perfect/seller/SellerReviewsPage'));
 const PPSellerNotifications = lazy(() => import('./pages/pixel-perfect/seller/SellerNotifications'));
+const PPSellerMessages      = lazy(() => import('./pages/pixel-perfect/seller/SellerMessages'));
 
 const PPBuyerShell     = lazy(() => import('./pages/pixel-perfect/buyer/BuyerShell'));
 const PPBuyerDashboard     = lazy(() => import('./pages/pixel-perfect/buyer/BuyerDashboard'));
@@ -548,6 +549,7 @@ function App() {
           <Route path="reviews" element={<Suspense fallback={<PageLoader />}><PPSellerReviews /></Suspense>} />
           <Route path="settings" element={<Suspense fallback={<PageLoader />}><PPSellerSettings /></Suspense>} />
           <Route path="notifications" element={<Suspense fallback={<PageLoader />}><PPSellerNotifications /></Suspense>} />
+          <Route path="messages" element={<Suspense fallback={<PageLoader />}><PPSellerMessages /></Suspense>} />
         </Route>
 
         {/* /buyer – RequireBuyer (buyer role only; sellers→/seller, admins→/admin) */}

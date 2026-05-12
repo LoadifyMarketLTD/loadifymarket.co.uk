@@ -770,8 +770,8 @@ export default function MobileChatPage() {
               <p className="text-xs text-[#FBBF24]/70 truncate">{convMeta.subject}</p>
             )}
           </div>
-          {/* Make Offer button */}
-          {otherId && (
+          {/* Make Offer button — buyers only (not the listing seller) */}
+          {otherId && !isSeller && (
             <button
               onClick={() => setOfferOpen(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#FBBF24]/40 text-[#FBBF24] text-xs font-semibold hover:bg-[#FBBF24]/10 transition-colors"
@@ -963,8 +963,8 @@ export default function MobileChatPage() {
         </div>
       </div>
 
-      {/* Make Offer Sheet */}
-      {otherId && (
+      {/* Make Offer Sheet — buyers only */}
+      {otherId && !isSeller && (
         <MakeOfferSheet
           open={offerOpen}
           onOpenChange={setOfferOpen}
