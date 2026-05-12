@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS products (
   "isFeatured"     BOOLEAN      NOT NULL DEFAULT FALSE,
   views            INTEGER      NOT NULL DEFAULT 0,
   "addToCartCount" INTEGER      NOT NULL DEFAULT 0,
+  "shareCount"     INTEGER      NOT NULL DEFAULT 0,
   rating           DECIMAL(3,2) NOT NULL DEFAULT 0.00,
   "reviewCount"    INTEGER      NOT NULL DEFAULT 0,
   "lastViewedAt"   TIMESTAMPTZ,
