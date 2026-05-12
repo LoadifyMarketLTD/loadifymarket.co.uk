@@ -262,6 +262,7 @@ export default function MobileChatPage() {
   const [loadingMsgs, setLoadingMsgs] = useState(true);
   const [sending, setSending] = useState(false);
   const [offerOpen, setOfferOpen] = useState(false);
+  const [offersFeatureUnavailable, setOffersFeatureUnavailable] = useState(false);
   // Map of offerId → OfferRecord for live status display
   const [offerMap, setOfferMap] = useState<Map<string, OfferRecord>>(new Map());
   // True when the current user is the seller (listing owner) in this conversation
@@ -355,16 +356,26 @@ export default function MobileChatPage() {
   // We join the linked order so OfferBubble has the orderId it needs for
   // the "Pay Now" button without relying on message JSON.
   const loadOffers = useCallback(async () => {
-    if (!conversationId) return;
+    if (!conversationId || offersFeatureUnavailable) return;
 
     // PostgREST foreign-key join: orders.offerId → offers.id
     // `orders(id, status)` returns an array; we normalise to the first element.
-    const { data: offers } = await supabase
+    const { data: offers, error } = await supabase
       .from("offers")
       .select("id, amountPence, status, proposedById, recipientId, orders(id, status)")
       .eq("conversationId", conversationId)
       .order("createdAt", { ascending: false })
       .limit(50);
+
+    if (error) {
+      if (error.code === "42P01") {
+        setOffersFeatureUnavailable(true);
+        setOfferMap(new Map());
+        return;
+      }
+      console.warn("mobile chat: failed to load offers:", error.message);
+      return;
+    }
 
     if (offers) {
       const mapped = (offers as Array<{
@@ -391,7 +402,7 @@ export default function MobileChatPage() {
       }));
       setOfferMap(new Map(mapped.map((o) => [o.id, o])));
     }
-  }, [conversationId]);
+  }, [conversationId, offersFeatureUnavailable]);
 
   useEffect(() => {
     void loadOffers();
@@ -402,7 +413,7 @@ export default function MobileChatPage() {
 
   // Load messages
   useEffect(() => {
-    if (!conversationId || !user?.id) return;
+    if (!conversationId || !user?.id || offersFeatureUnavailable) return;
     let cancelled = false;
 
     const load = async () => {
@@ -436,7 +447,7 @@ export default function MobileChatPage() {
 
     load();
     return () => { cancelled = true; };
-  }, [conversationId, user?.id]);
+  }, [conversationId, user?.id, offersFeatureUnavailable]);
 
   // Supabase Realtime
   useEffect(() => {

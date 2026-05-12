@@ -321,6 +321,7 @@ export default function DesktopConversationView() {
   const [offerMap, setOfferMap] = useState<Map<string, OfferRecord>>(new Map());
   const [actingOnOffer, setActingOnOffer] = useState<string | null>(null);
   const [offerOpen, setOfferOpen] = useState(false);
+  const [offersFeatureUnavailable, setOffersFeatureUnavailable] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const selectedConv = conversations.find((c) => c.id === selectedId) ?? null;
@@ -461,14 +462,24 @@ export default function DesktopConversationView() {
 
   // ── Load offers for selected conversation ───────────────────────────────────
   const loadOffers = useCallback(async () => {
-    if (!selectedId) return;
+    if (!selectedId || offersFeatureUnavailable) return;
 
-    const { data: offers } = await supabase
+    const { data: offers, error } = await supabase
       .from("offers")
       .select("id, amountPence, status, proposedById, recipientId, orders(id, status)")
       .eq("conversationId", selectedId)
       .order("createdAt", { ascending: false })
       .limit(50);
+
+    if (error) {
+      if (error.code === "42P01") {
+        setOffersFeatureUnavailable(true);
+        setOfferMap(new Map());
+        return;
+      }
+      console.warn("desktop chat: failed to load offers:", error.message);
+      return;
+    }
 
     if (offers) {
       const mapped = (offers as Array<{
@@ -489,7 +500,7 @@ export default function DesktopConversationView() {
       }));
       setOfferMap(new Map(mapped.map((o) => [o.id, o])));
     }
-  }, [selectedId]);
+  }, [selectedId, offersFeatureUnavailable]);
 
   useEffect(() => {
     void loadOffers();
@@ -497,7 +508,7 @@ export default function DesktopConversationView() {
 
   // ── Load messages ────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!selectedId || !user?.id) return;
+    if (!selectedId || !user?.id || offersFeatureUnavailable) return;
     let cancelled = false;
 
     const load = async () => {
@@ -536,7 +547,7 @@ export default function DesktopConversationView() {
 
     load();
     return () => { cancelled = true; };
-  }, [selectedId, user?.id]);
+  }, [selectedId, user?.id, offersFeatureUnavailable]);
 
   // ── Supabase Realtime: messages ──────────────────────────────────────────────
   useEffect(() => {
