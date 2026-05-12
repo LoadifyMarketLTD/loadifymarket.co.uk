@@ -47,9 +47,7 @@ interface ProductRow {
 
 function isOffersTableMissing(error: { code?: string; message?: string } | null | undefined): boolean {
   if (!error) return false;
-  if (error.code === '42P01' || error.code === 'PGRST205') return true;
-  const msg = (error.message ?? '').toLowerCase();
-  return msg.includes('offers') && (msg.includes('does not exist') || msg.includes('not found'));
+  return error.code === '42P01' || error.code === 'PGRST205';
 }
 
 export const handler: Handler = async (event) => {
