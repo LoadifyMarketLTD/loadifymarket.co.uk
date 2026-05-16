@@ -14,7 +14,7 @@ import { useAuthPromptStore } from '@/store/authPromptStore';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import type { AppNotification } from '@/types';
 
-const RELEVANT_TYPES = ['message', 'order', 'new_offer', 'offer'] as const;
+const RELEVANT_TYPES = ['message', 'order', 'offer_received', 'new_offer', 'offer'] as const;
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', {

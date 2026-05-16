@@ -69,11 +69,14 @@ async function sendInternalEmail(appUrl: string, payload: Record<string, unknown
       ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET }
       : {}),
   };
-  await fetch(`${appUrl}/.netlify/functions/send-email`, {
+  const response = await fetch(`${appUrl}/.netlify/functions/send-email`, {
     method: 'POST',
     headers: internalHeaders,
     body: JSON.stringify(payload),
   });
+  if (!response.ok) {
+    throw new Error(`send-email returned ${response.status}: ${await response.text()}`);
+  }
 }
 
 export const handler: Handler = async (event) => {
@@ -266,7 +269,7 @@ export const handler: Handler = async (event) => {
     .from('notifications')
     .insert({
       userId: recipientId,
-      type: 'new_offer',
+      type: 'offer_received',
       title: 'New offer received',
       message: `Offer £${pounds} received for ${listing.title}`,
       link: `/inbox/${conversationId}`,
@@ -305,19 +308,23 @@ export const handler: Handler = async (event) => {
       const buyerName = buyer
         ? ([buyer.firstName, buyer.lastName].filter(Boolean).join(' ') || buyer.email)
         : 'A buyer';
-      void sendInternalEmail(appUrl, {
-        to: recipient.email,
-        subject: `New offer received for ${listing.title}`,
-        template: 'seller_new_offer',
-        data: {
-          sellerName,
-          buyerName,
-          productTitle: listing.title,
-          offerAmount: pounds,
-          conversationId,
-          inboxUrl: `${appUrl}/inbox/${conversationId}`,
-        },
-      }).catch((err) => console.warn('conversation-offer: seller email send failed (non-fatal):', err));
+      try {
+        await sendInternalEmail(appUrl, {
+          to: recipient.email,
+          subject: `New offer received for ${listing.title}`,
+          template: 'seller_new_offer',
+          data: {
+            sellerName,
+            buyerName,
+            productTitle: listing.title,
+            offerAmount: pounds,
+            conversationId,
+            inboxUrl: `${appUrl}/inbox/${conversationId}`,
+          },
+        });
+      } catch (err) {
+        console.warn('conversation-offer: seller email send failed (non-fatal):', err);
+      }
     }
   }
 

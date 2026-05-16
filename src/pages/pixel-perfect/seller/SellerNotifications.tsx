@@ -13,6 +13,7 @@ const typeColor: Record<string, string> = {
   shipment:         "bg-indigo-500/10 text-indigo-700",
   product_question: "bg-amber-500/10 text-amber-700",
   message:          "bg-amber-500/10 text-amber-700",
+  offer_received:   "bg-violet-500/10 text-violet-700",
   new_offer:        "bg-violet-500/10 text-violet-700",
   listing_published: "bg-emerald-500/10 text-emerald-700",
   listing_sold:      "bg-emerald-500/10 text-emerald-700",
