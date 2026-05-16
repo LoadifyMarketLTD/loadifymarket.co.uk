@@ -32,6 +32,10 @@ import { checkRateLimit } from './_shared/rateLimiter';
 
 const RFQ_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// ISO 4217 currency codes accepted for RFQ submissions and responses.
+// Extend this list as the platform expands to new markets.
+const ALLOWED_RFQ_CURRENCIES = new Set(['GBP', 'USD', 'EUR']);
+
 function isValidRfqEmail(value: unknown): boolean {
   return typeof value === 'string' && RFQ_EMAIL_RE.test(value.trim()) && value.trim().length <= 254;
 }
@@ -182,13 +186,21 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'message must be 5000 characters or fewer' }) };
     }
 
+    const resolvedCurrency = (currency ?? 'GBP').toUpperCase().trim();
+    if (!ALLOWED_RFQ_CURRENCIES.has(resolvedCurrency)) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: `currency must be one of: ${[...ALLOWED_RFQ_CURRENCIES].join(', ')}` }),
+      };
+    }
+
     const rfqRow: Record<string, unknown> = {
       product_name,
       quantity,
       destination_country,
       estimated_budget,
       buyer_email,
-      currency: currency || 'GBP',
+      currency: resolvedCurrency,
       status: 'pending',
     };
     if (unit) rfqRow.unit = unit;
@@ -238,6 +250,14 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'message must be 5000 characters or fewer' }) };
     }
 
+    const resolvedResponseCurrency = (currency ?? 'GBP').toUpperCase().trim();
+    if (!ALLOWED_RFQ_CURRENCIES.has(resolvedResponseCurrency)) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: `currency must be one of: ${[...ALLOWED_RFQ_CURRENCIES].join(', ')}` }),
+      };
+    }
+
     // Verify the RFQ exists
     const { data: rfq } = await supabase
       .from('rfq_requests')
@@ -257,7 +277,7 @@ export const handler: Handler = async (event) => {
       sellerId: callerId,
       quotedPrice,
       message: responseMessage,
-      currency: currency || 'GBP',
+      currency: resolvedResponseCurrency,
       status: 'submitted',
     };
     if (typeof leadTimeDays === 'number') responseRow.leadTimeDays = leadTimeDays;

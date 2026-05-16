@@ -110,6 +110,13 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'Message is too long (max 4000 characters)' }) };
   }
 
+  // Reject messages containing HTML tags to prevent stored XSS.
+  // System/offer messages use a JSON envelope (see isStructuredJson below) and
+  // are handled separately; plain-text human messages must never contain markup.
+  if (/<[a-z!/?][^>]{0,2000}>/i.test(message)) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Message must not contain HTML markup' }) };
+  }
+
   // ── Verify caller is a conversation participant ─────────────────────────────
   const { data: conv, error: convError } = await supabase
     .from('conversations')
