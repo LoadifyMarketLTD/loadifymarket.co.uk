@@ -32,6 +32,16 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# ── Social Commerce Product Feed ─────────────────────────────────────────────
+# Routes /product-feed.xml to the Netlify Function that generates a live
+# Google Merchant Center / Meta / TikTok compatible RSS 2.0 product feed.
+# Accepts an optional ?page=N query parameter for pagination.
+[[redirects]]
+  from   = "/product-feed.xml"
+  to     = "/.netlify/functions/product-feed"
+  status = 200
+  force  = true
+
 # ── Dynamic sitemap (includes product pages) ──────────────────────────────────
 # The static public/sitemap.xml only covers static pages.  This redirect
 # routes /sitemap.xml to a Netlify Function that appends every active product

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Settings, Globe, Database, Save, Key,
-  Eye, EyeOff, RefreshCw, Loader2, CheckCircle2,
+  Eye, EyeOff, RefreshCw, Loader2, CheckCircle2, Share2, Copy, Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +51,7 @@ const DEFAULT_CONFIG: PlatformConfig = {
 
 const AdminSettings = () => {
   const [showKey, setShowKey] = useState(false);
+  const [feedCopied, setFeedCopied] = useState(false);
   const [features, setFeatures] = useState<Features>(DEFAULT_FEATURES);
   const [config, setConfig] = useState<PlatformConfig>(DEFAULT_CONFIG);
   const [settingsLoading, setSettingsLoading] = useState(true);
@@ -109,6 +110,17 @@ const AdminSettings = () => {
     } finally {
       setCheckingStripe(false);
     }
+  };
+
+  const FEED_URL = 'https://loadifymarket.co.uk/product-feed.xml';
+
+  const handleCopyFeedUrl = () => {
+    navigator.clipboard.writeText(FEED_URL).then(() => {
+      setFeedCopied(true);
+      setTimeout(() => setFeedCopied(false), 2000);
+    }).catch(() => {
+      toast({ title: "Copy failed", description: "Please copy the URL manually.", variant: "destructive" });
+    });
   };
 
   // Load persisted settings from platform_settings on mount
@@ -395,6 +407,52 @@ const AdminSettings = () => {
                 {stripeConnectStatus.message}
               </div>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Social Commerce Feed */}
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
+      >
+        <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+            <Share2 className="h-4 w-4" style={{ color: "#FBBF24" }} /> Social Commerce Feed
+          </h2>
+          <p className="text-xs mt-0.5" style={{ color: "rgba(148,163,184,0.85)" }}>
+            Submit this URL to Facebook/Instagram Commerce Manager, TikTok for Business, or Google Merchant Center to sync your product catalog automatically.
+          </p>
+        </div>
+        <div className="px-6 py-4 space-y-4">
+          <div>
+            <Label className="text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>Product Feed URL</Label>
+            <div className="flex items-center gap-2 mt-1">
+              <Input
+                value={FEED_URL}
+                readOnly
+                className="text-white flex-1"
+                style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(148,163,184,0.85)" }}
+              />
+              <Button
+                size="sm"
+                variant="ghost"
+                className="shrink-0 h-9 px-3 text-xs"
+                style={{ background: "rgba(148,163,184,0.15)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+                onClick={handleCopyFeedUrl}
+              >
+                {feedCopied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+          <div className="rounded-xl p-3 space-y-2" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <p className="text-xs font-semibold" style={{ color: "rgba(255,255,255,0.6)" }}>Setup instructions</p>
+            <ul className="text-xs space-y-1.5 list-disc list-inside" style={{ color: "rgba(148,163,184,0.85)" }}>
+              <li><span className="text-white font-medium">Facebook &amp; Instagram:</span> Business Manager → Commerce Manager → Catalog → Data Sources → Scheduled Feed → paste URL above.</li>
+              <li><span className="text-white font-medium">TikTok:</span> TikTok for Business → Catalog → Add Products → URL Feed → paste URL above.</li>
+              <li><span className="text-white font-medium">Google Merchant Center:</span> Products → Feeds → Add Feed → Google Sheets or Scheduled Fetch → paste URL above.</li>
+              <li>For large catalogs use pagination: <code className="text-yellow-300">/product-feed.xml?page=2</code>, <code className="text-yellow-300">?page=3</code>, etc. (500 products per page).</li>
+            </ul>
           </div>
         </div>
       </div>
