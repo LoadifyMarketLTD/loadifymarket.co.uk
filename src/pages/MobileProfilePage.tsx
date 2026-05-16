@@ -11,11 +11,13 @@ import { ChevronRight, LogOut, User } from 'lucide-react';
 import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabase';
 import MobileBottomNav from '@/components/MobileBottomNav';
+import { useUnreadNotificationsCount } from '@/hooks/useUnreadNotificationsCount';
 
 interface SectionItem {
   label: string;
   to: string;
   external?: boolean;
+  badgeCount?: number;
 }
 
 interface Section {
@@ -65,7 +67,7 @@ function buildSections(role: string | undefined): Section[] {
 }
 
 // ── Row component ──────────────────────────────────────────────────────────────
-function MenuRow({ label, to, external }: SectionItem) {
+function MenuRow({ label, to, external, badgeCount }: SectionItem) {
   const inner = (
     <div
       style={{
@@ -81,7 +83,28 @@ function MenuRow({ label, to, external }: SectionItem) {
       <span style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.90)' }}>
         {label}
       </span>
-      <ChevronRight style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.30)', flexShrink: 0 }} aria-hidden="true" />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {badgeCount && badgeCount > 0 ? (
+          <span
+            style={{
+              minWidth: 20,
+              height: 20,
+              borderRadius: 999,
+              background: '#F2B84B',
+              color: '#07080B',
+              fontSize: 11,
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingInline: 6,
+            }}
+          >
+            {badgeCount > 99 ? '99+' : badgeCount}
+          </span>
+        ) : null}
+        <ChevronRight style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.30)', flexShrink: 0 }} aria-hidden="true" />
+      </div>
     </div>
   );
 
@@ -228,6 +251,7 @@ export default function MobileProfilePage() {
     : null;
 
   const sections = buildSections(user?.role as string | undefined);
+  const unreadNotifications = useUnreadNotificationsCount(user?.id);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -303,7 +327,15 @@ export default function MobileProfilePage() {
 
           {/* ── Sections ────────────────────────────────────────────────────── */}
           {sections.map((section) => (
-            <MenuSection key={section.title} {...section} />
+            <MenuSection
+              key={section.title}
+              {...section}
+              items={section.items.map((item) =>
+                item.to === '/profile/notifications'
+                  ? { ...item, badgeCount: unreadNotifications }
+                  : item,
+              )}
+            />
           ))}
 
           {/* ── Sign out ────────────────────────────────────────────────────── */}

@@ -160,9 +160,6 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: 'This conversation is not linked to a listing' }) };
   }
 
-  // The proposer is the buyer (caller); recipient is the other participant (seller).
-  const recipientId = conv.user1Id === callerId ? conv.user2Id : conv.user1Id;
-
   // ── Validate listing ────────────────────────────────────────────────────────
   const { data: listing, error: listingError } = await supabase
     .from('products')
@@ -177,6 +174,16 @@ export const handler: Handler = async (event) => {
   if (listing.listingStatus !== 'active') {
     return { statusCode: 409, body: JSON.stringify({ error: 'This listing is no longer available for offers' }) };
   }
+
+  if (listing.sellerId === callerId) {
+    return { statusCode: 403, body: JSON.stringify({ error: 'Sellers cannot send offers on their own listing' }) };
+  }
+
+  if (conv.user1Id !== listing.sellerId && conv.user2Id !== listing.sellerId) {
+    return { statusCode: 409, body: JSON.stringify({ error: 'Conversation is not linked to the listing seller' }) };
+  }
+
+  const recipientId = listing.sellerId;
 
   // ── Check for existing pending offer ───────────────────────────────────────
   const { data: existingOffer, error: existingOfferError } = await supabase
@@ -222,7 +229,12 @@ export const handler: Handler = async (event) => {
   if (offerError || !offer) {
     console.error('conversation-offer: insert failed:', offerError?.message);
     if (isOffersTableMissing(offerError)) {
-      return await sendLegacyOfferMessage();
+      return {
+        statusCode: 503,
+        body: JSON.stringify({
+          error: 'Offers engine is not available in this environment. Apply migration 480_offers_engine.sql.',
+        }),
+      };
     }
     // Unique violation on one_pending_offer_per_conversation — race condition.
     if (offerError?.code === '23505') {
@@ -244,7 +256,7 @@ export const handler: Handler = async (event) => {
     productTitle: listing.title,
   });
 
-  await supabase
+  const { data: insertedMessage, error: displayMessageError } = await supabase
     .from('messages')
     .insert({
       conversationId,
@@ -252,20 +264,25 @@ export const handler: Handler = async (event) => {
       receiverId: recipientId,
       message:    displayMessage,
     })
-    .then(({ error }) => {
-      if (error) console.warn('conversation-offer: display message insert failed (non-fatal):', error.message);
-    });
+    .select('id')
+    .single<{ id: string }>();
+
+  if (displayMessageError || !insertedMessage) {
+    console.error('conversation-offer: display message insert failed:', displayMessageError?.message);
+    await supabase
+      .from('offers')
+      .delete()
+      .eq('id', offer.id)
+      .then(({ error }) => {
+        if (error) console.warn('conversation-offer: rollback offer delete failed (non-fatal):', error.message);
+      });
+
+    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to create offer chat message' }) };
+  }
 
   // ── Push notification to seller ─────────────────────────────────────────────
   const pounds = (amountPence / 100).toFixed(2);
-  await sendPushToUser(supabase, recipientId, {
-    title: 'New offer received',
-    body:  `Someone offered £${pounds} for ${listing.title}`,
-    data:  { type: 'offer_received', offerId: offer.id, conversationId },
-  });
-
-  // In-app notification in website account.
-  await supabase
+  const { error: notificationError } = await supabase
     .from('notifications')
     .insert({
       userId: recipientId,
@@ -274,9 +291,30 @@ export const handler: Handler = async (event) => {
       message: `Offer £${pounds} received for ${listing.title}`,
       link: `/inbox/${conversationId}`,
     })
-    .then(({ error }) => {
-      if (error) console.warn('conversation-offer: notifications insert failed (non-fatal):', error.message);
-    });
+    .select('id')
+    .single<{ id: string }>();
+
+  if (notificationError) {
+    console.error('conversation-offer: notifications insert failed:', notificationError.message);
+    await Promise.allSettled([
+      supabase
+        .from('messages')
+        .delete()
+        .eq('id', insertedMessage.id),
+      supabase
+        .from('offers')
+        .delete()
+        .eq('id', offer.id),
+    ]);
+
+    return { statusCode: 500, body: JSON.stringify({ error: 'Failed to create seller notification' }) };
+  }
+
+  await sendPushToUser(supabase, recipientId, {
+    title: 'New offer received',
+    body:  `Someone offered £${pounds} for ${listing.title}`,
+    data:  { type: 'offer_received', offerId: offer.id, conversationId },
+  });
 
   // Transactional seller email notification (respects notification_settings.orderConfirmation).
   const [{ data: recipient }, { data: buyer }] = await Promise.all([

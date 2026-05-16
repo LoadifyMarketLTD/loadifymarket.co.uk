@@ -7,6 +7,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { Button } from "@/components/ui/button";
+import { useUnreadNotificationsCount } from "@/hooks/useUnreadNotificationsCount";
 
 const navItems = [
   { to: "/seller", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -102,6 +103,7 @@ const SellerShell = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const unreadNotifications = useUnreadNotificationsCount(user?.id);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -148,7 +150,14 @@ const SellerShell = () => {
             <span className="text-[10px] text-muted-foreground leading-tight truncate max-w-[160px]">{displayName}</span>
           </div>
           <NavLink to="/seller/notifications" aria-label="Notifications" className="h-10 w-10 shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground">
-            <Bell className="h-5 w-5" />
+            <span className="relative inline-flex">
+              <Bell className="h-5 w-5" />
+              {unreadNotifications > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 min-w-[1rem] rounded-full bg-primary px-1 text-[10px] font-semibold leading-4 text-primary-foreground">
+                  {unreadNotifications > 99 ? "99+" : unreadNotifications}
+                </span>
+              )}
+            </span>
           </NavLink>
         </header>
 
