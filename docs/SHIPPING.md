@@ -129,6 +129,16 @@ Generates a signed upload URL for proof of delivery.
 
 **Authentication:** Required (seller or admin)
 
+**Request Body:**
+```json
+{
+  "contentType": "image/jpeg",
+  "fileSize": 204800
+}
+```
+
+> Both `contentType` and `fileSize` are **required**. Allowed MIME types: `image/jpeg`, `image/jpg`, `image/png`, `image/webp`. Maximum file size: **10 MB**.
+
 **Response:**
 ```json
 {
@@ -159,14 +169,16 @@ Confirms the upload and saves the public URL.
 }
 ```
 
-### GET `/.netlify/functions/track-shipment`
+### POST `/.netlify/functions/track-shipment`
 
 Public endpoint for tracking shipments.
 
-**Query Parameters:**
+**Request Body (JSON):**
 - `orderNumber` (required if order_id not provided) - Order number to track
 - `order_id` (required if orderNumber not provided) - Order UUID
-- `email` (optional) - Buyer email for verification
+- `email` (required) - Buyer email address used when placing the order
+
+> **Security note:** email is sent in the POST body (never in the URL) to prevent PII leakage via browser history, server access logs, or Referer headers. Both fields must match a real order — the endpoint always returns a generic 404 when lookup fails to prevent order enumeration.
 
 **Response:**
 ```json
@@ -313,7 +325,7 @@ ALTER TABLE shipment_events ENABLE ROW LEVEL SECURITY;
 ### Buyer Workflow
 
 1. Navigate to `/track-order`
-2. Enter order number (optionally email)
+2. Enter order number and the email address used when placing the order (both required)
 3. View shipment status and timeline
 4. Check tracking events history
 

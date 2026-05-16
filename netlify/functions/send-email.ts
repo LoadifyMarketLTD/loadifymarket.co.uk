@@ -294,12 +294,11 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ success: true, message: 'Email sent' }),
     };
   } catch (error) {
+    // Log full error server-side but never expose internal details to callers.
     console.error('Email sending error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        error: error instanceof Error ? error.message : 'Failed to send email',
-      }),
+      body: JSON.stringify({ error: 'Failed to send email' }),
     };
   }
 };

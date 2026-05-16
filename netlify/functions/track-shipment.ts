@@ -23,7 +23,7 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  if (event.httpMethod !== 'GET') {
+  if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method not allowed' }),
@@ -50,8 +50,22 @@ export const handler: Handler = async (event) => {
   // ─────────────────────────────────────────────────────────────────────────
 
   try {
-    const params = event.queryStringParameters || {};
-    const { orderNumber, order_id, email } = params;
+    const genericLookupFailure = {
+      statusCode: 404,
+      body: JSON.stringify({ error: 'Order not found for the provided details' }),
+    };
+
+    let body: { orderNumber?: string; order_id?: string; email?: string };
+    try {
+      body = JSON.parse(event.body || '{}') as { orderNumber?: string; order_id?: string; email?: string };
+    } catch {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid request body' }),
+      };
+    }
+
+    const { orderNumber, order_id, email } = body;
 
     if (!orderNumber && !order_id) {
       return {
@@ -105,10 +119,7 @@ export const handler: Handler = async (event) => {
     const { data: order, error: orderError } = await query.single();
 
     if (orderError || !order) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'Order not found' }),
-      };
+      return genericLookupFailure;
     }
 
     // Mandatory email verification — email is required by the handler above.
@@ -121,10 +132,7 @@ export const handler: Handler = async (event) => {
         .single();
 
       if (!buyer || buyer.email.toLowerCase() !== email.toLowerCase()) {
-        return {
-          statusCode: 403,
-          body: JSON.stringify({ error: 'Email does not match order' }),
-        };
+        return genericLookupFailure;
       }
     }
 

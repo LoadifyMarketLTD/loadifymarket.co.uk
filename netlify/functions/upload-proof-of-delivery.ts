@@ -15,6 +15,30 @@ const supabase = createClient(
 );
 
 const BUCKET_NAME = process.env.SUPABASE_BUCKET_NAME || 'proof-of-delivery';
+const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp']);
+const ALLOWED_EXTENSIONS = new Set(['jpg', 'png', 'webp']);
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function isSafeProofPath(shipmentId: string, filePath: string): boolean {
+  if (!filePath || filePath.includes('..') || filePath.includes('\\') || filePath.startsWith('/')) {
+    return false;
+  }
+  const pattern = new RegExp(`^${escapeRegex(shipmentId)}/${escapeRegex(shipmentId)}-\\d+\\.(jpg|png|webp)$`);
+  return pattern.test(filePath);
+}
+
+function deriveMimeFromPath(filePath: string): string | null {
+  const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
+  if (!ALLOWED_EXTENSIONS.has(ext)) return null;
+  if (ext === 'jpg') return 'image/jpeg';
+  if (ext === 'png') return 'image/png';
+  if (ext === 'webp') return 'image/webp';
+  return null;
+}
 
 // Helper to get user from Authorization header
 async function getAuthUser(event: HandlerEvent) {
@@ -115,12 +139,6 @@ export const handler: Handler = async (event) => {
     }
 
     if (event.httpMethod === 'POST') {
-      // Validate content-type and file size before generating the signed URL.
-      // The client MUST send Content-Type and Content-Length headers in the
-      // request body JSON so the server can enforce policy before any upload.
-      const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-      const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
-
       // Extension map derived from ALLOWED_MIME_TYPES to keep a single source of truth.
       const MIME_TO_EXT: Record<string, string> = {
         'image/jpeg': 'jpg',
@@ -142,13 +160,21 @@ export const handler: Handler = async (event) => {
       }
 
       const contentType = requestBody.contentType ?? '';
-      const fileSize = typeof requestBody.fileSize === 'number' ? requestBody.fileSize : 0;
+      const fileSize = typeof requestBody.fileSize === 'number' ? requestBody.fileSize : NaN;
+      const normalizedContentType = contentType.toLowerCase().trim();
 
-      if (contentType && !ALLOWED_MIME_TYPES.includes(contentType.toLowerCase())) {
+      if (!normalizedContentType || !Number.isFinite(fileSize) || fileSize <= 0) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'contentType and fileSize are required' }),
+        };
+      }
+
+      if (!ALLOWED_MIME_TYPES.has(normalizedContentType)) {
         return {
           statusCode: 400,
           body: JSON.stringify({
-            error: `File type not allowed. Accepted types: ${ALLOWED_MIME_TYPES.join(', ')}`,
+            error: `File type not allowed. Accepted types: ${Array.from(ALLOWED_MIME_TYPES).join(', ')}`,
           }),
         };
       }
@@ -161,7 +187,7 @@ export const handler: Handler = async (event) => {
       }
 
       // Derive a safe file extension from the declared content type.
-      const ext = MIME_TO_EXT[contentType.toLowerCase()] ?? 'jpg';
+      const ext = MIME_TO_EXT[normalizedContentType] ?? 'jpg';
       const fileName = `${shipmentId}-${Date.now()}.${ext}`;
       const filePath = `${shipmentId}/${fileName}`;
 
@@ -200,6 +226,79 @@ export const handler: Handler = async (event) => {
         return {
           statusCode: 400,
           body: JSON.stringify({ error: 'filePath is required' }),
+        };
+      }
+
+      // Strict path validation: only shipment-scoped, server-issued naming format.
+      if (!isSafeProofPath(shipmentId, filePath)) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'Invalid upload path' }),
+        };
+      }
+
+      // Server-side post-upload validation of stored object (actual size + MIME).
+      const fileName = filePath.split('/').pop() ?? '';
+      const { data: listedObjects, error: listError } = await supabase
+        .storage
+        .from(BUCKET_NAME)
+        .list(shipmentId, { limit: 100, search: fileName });
+
+      if (listError) {
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: 'Failed to validate uploaded file' }),
+        };
+      }
+
+      const matched = (listedObjects ?? []).find((entry) => entry.name === fileName) as
+        | { name: string; metadata?: { size?: number; mimetype?: string; contentType?: string }; size?: number; mimetype?: string }
+        | undefined;
+
+      if (!matched) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'Uploaded file was not found' }),
+        };
+      }
+
+      let actualSize = Number(matched.metadata?.size ?? matched.size ?? 0);
+      let actualMime = String(
+        matched.metadata?.mimetype ??
+        matched.metadata?.contentType ??
+        matched.mimetype ??
+        ''
+      ).toLowerCase();
+
+      if (!Number.isFinite(actualSize) || actualSize <= 0 || !actualMime) {
+        const { data: downloaded, error: downloadError } = await supabase
+          .storage
+          .from(BUCKET_NAME)
+          .download(filePath);
+        if (downloadError || !downloaded) {
+          return {
+            statusCode: 500,
+            body: JSON.stringify({ error: 'Failed to validate uploaded file metadata' }),
+          };
+        }
+        actualSize = downloaded.size;
+        actualMime = downloaded.type.toLowerCase();
+      }
+
+      if (actualSize > MAX_FILE_SIZE_BYTES) {
+        await supabase.storage.from(BUCKET_NAME).remove([filePath]).catch(() => undefined);
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'Uploaded file exceeds the maximum allowed size (10 MB).' }),
+        };
+      }
+
+      const expectedMimeFromPath = deriveMimeFromPath(filePath);
+      if (!expectedMimeFromPath || !ALLOWED_MIME_TYPES.has(actualMime) || actualMime !== expectedMimeFromPath) {
+        await supabase.storage.from(BUCKET_NAME).remove([filePath]).catch(() => undefined);
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: 'Uploaded file type is invalid or does not match file extension.' }),
         };
       }
 
@@ -254,9 +353,7 @@ export const handler: Handler = async (event) => {
     console.error('Error handling proof of delivery:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        error: error instanceof Error ? error.message : 'Failed to handle proof of delivery',
-      }),
+      body: JSON.stringify({ error: 'Failed to handle proof of delivery' }),
     };
   }
 };

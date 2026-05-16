@@ -30,6 +30,16 @@ import { createClient } from '@supabase/supabase-js';
 import { getFeatureFlags, isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 
+const RFQ_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// ISO 4217 currency codes accepted for RFQ submissions and responses.
+// Extend this list as the platform expands to new markets.
+const ALLOWED_RFQ_CURRENCIES = new Set(['GBP', 'USD', 'EUR']);
+
+function isValidRfqEmail(value: unknown): boolean {
+  return typeof value === 'string' && RFQ_EMAIL_RE.test(value.trim()) && value.trim().length <= 254;
+}
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -154,13 +164,43 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    if (!isValidRfqEmail(buyer_email)) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid buyer_email address' }) };
+    }
+    if (product_name.trim().length > 300) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'product_name must be 300 characters or fewer' }) };
+    }
+    if (quantity.trim().length > 100) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'quantity must be 100 characters or fewer' }) };
+    }
+    if (destination_country.trim().length > 100) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'destination_country must be 100 characters or fewer' }) };
+    }
+    if (estimated_budget.trim().length > 100) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'estimated_budget must be 100 characters or fewer' }) };
+    }
+    if (unit && unit.trim().length > 50) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'unit must be 50 characters or fewer' }) };
+    }
+    if (message && message.trim().length > 5000) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'message must be 5000 characters or fewer' }) };
+    }
+
+    const resolvedCurrency = (currency ?? 'GBP').toUpperCase().trim();
+    if (!ALLOWED_RFQ_CURRENCIES.has(resolvedCurrency)) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: `currency must be one of: ${[...ALLOWED_RFQ_CURRENCIES].join(', ')}` }),
+      };
+    }
+
     const rfqRow: Record<string, unknown> = {
       product_name,
       quantity,
       destination_country,
       estimated_budget,
       buyer_email,
-      currency: currency || 'GBP',
+      currency: resolvedCurrency,
       status: 'pending',
     };
     if (unit) rfqRow.unit = unit;
@@ -203,6 +243,21 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    if (!Number.isFinite(quotedPrice) || quotedPrice <= 0) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'quotedPrice must be a positive number' }) };
+    }
+    if (responseMessage.trim().length > 5000) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'message must be 5000 characters or fewer' }) };
+    }
+
+    const resolvedResponseCurrency = (currency ?? 'GBP').toUpperCase().trim();
+    if (!ALLOWED_RFQ_CURRENCIES.has(resolvedResponseCurrency)) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: `currency must be one of: ${[...ALLOWED_RFQ_CURRENCIES].join(', ')}` }),
+      };
+    }
+
     // Verify the RFQ exists
     const { data: rfq } = await supabase
       .from('rfq_requests')
@@ -222,7 +277,7 @@ export const handler: Handler = async (event) => {
       sellerId: callerId,
       quotedPrice,
       message: responseMessage,
-      currency: currency || 'GBP',
+      currency: resolvedResponseCurrency,
       status: 'submitted',
     };
     if (typeof leadTimeDays === 'number') responseRow.leadTimeDays = leadTimeDays;

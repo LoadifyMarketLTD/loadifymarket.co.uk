@@ -67,6 +67,22 @@ function formatDate(iso: string | null | undefined): string {
   });
 }
 
+// ── Valid order statuses ──────────────────────────────────────────────────────
+// Must match the status values used throughout the platform. Any value not
+// in this set is rejected before hitting the database so that admin tooling
+// cannot silently set arbitrary, platform-breaking status strings.
+const VALID_ORDER_STATUSES = new Set([
+  'pending',
+  'paid',
+  'packed',
+  'shipped',
+  'delivered',
+  'completed',
+  'disputed',
+  'refunded',
+  'cancelled',
+]);
+
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export const handler: Handler = async (event) => {
@@ -190,6 +206,16 @@ export const handler: Handler = async (event) => {
           };
         }
 
+        if (!VALID_ORDER_STATUSES.has(status)) {
+          return {
+            statusCode: 400,
+            headers: JSON_HEADERS,
+            body: JSON.stringify({
+              error: `Invalid status value. Allowed values: ${[...VALID_ORDER_STATUSES].join(', ')}`,
+            }),
+          };
+        }
+
         const { error: updateErr } = await admin
           .from('orders')
           .update({ status })
@@ -222,7 +248,7 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 500,
       headers: JSON_HEADERS,
-      body: JSON.stringify({ error: 'Internal Server Error', detail: message }),
+      body: JSON.stringify({ error: 'Internal Server Error' }),
     };
   }
 };
