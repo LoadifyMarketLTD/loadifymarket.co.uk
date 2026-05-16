@@ -13,6 +13,8 @@ Independent and company UK sellers list and sell physical products across all co
 | [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | System architecture, domain model, data flow |
 | [docs/openapi.yaml](./docs/openapi.yaml) | API reference (OpenAPI 3.0) |
 | [docs/SHIPPING.md](./docs/SHIPPING.md) | Shipment and tracking system |
+| [docs/audit/MASTER_FRAMEWORK.md](./docs/audit/MASTER_FRAMEWORK.md) | Audit operating model: surfaces, levels, evidence, and definition of done |
+| [docs/audit/COVERAGE_MATRIX.md](./docs/audit/COVERAGE_MATRIX.md) | Current critical-flow coverage and control gaps |
 
 ---
 
