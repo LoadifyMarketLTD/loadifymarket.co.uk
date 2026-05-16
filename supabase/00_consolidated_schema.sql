@@ -4,7 +4,7 @@
 -- ================================================================
 -- Single-file version. Run in Supabase SQL Editor to bootstrap.
 --
--- Owner email: loadifymarket.co.uk@gmail.com
+-- Owner-equivalent admin contact email: contact@loadifymarket.co.uk
 --
 -- NAMING CONVENTION:
 --   • Most tables: camelCase quoted identifiers matching the
@@ -1158,7 +1158,7 @@ INSERT INTO platform_settings (key, value, description) VALUES
   ('rfq_expiry_days',         '30',                                'Days before RFQ expires'),
   ('offer_expiry_hours',      '48',                                'Hours before offer expires'),
   ('maintenance_mode',        'false',                             'Maintenance mode toggle'),
-  ('owner_email',             '"loadifymarket.co.uk@gmail.com"',   'Platform owner email')
+  ('owner_email',             '"contact@loadifymarket.co.uk"',      'Platform owner-equivalent admin email')
 ON CONFLICT (key) DO NOTHING;
 
 -- ──────────────────────────────────────────────────────────────
@@ -1525,7 +1525,7 @@ CREATE POLICY "orders_delete" ON orders FOR DELETE USING (is_admin());
 CREATE POLICY "order_items_select" ON order_items FOR SELECT
   USING (EXISTS(SELECT 1 FROM orders o WHERE o.id="orderId"
                 AND(o."buyerId"=auth.uid() OR o."sellerId"=auth.uid())) OR is_admin());
--- Only the buyer/seller of the parent order (or admin/owner) may insert items.
+-- Only the buyer/seller of the parent order (or admin) may insert items.
 -- The stripe-webhook uses the service role key which bypasses RLS.
 CREATE POLICY "order_items_insert" ON order_items FOR INSERT
   WITH CHECK (
@@ -1895,9 +1895,9 @@ GRANT INSERT ON public.product_analytics TO anon;
 -- ──────────────────────────────────────────────────────────────
 -- ADMIN SETUP
 -- The platform uses three roles: buyer, seller, admin.
--- To grant admin access to the platform owner, run:
+-- To grant admin access to the owner-equivalent account, run:
 --
 --   UPDATE users SET role = 'admin'
---   WHERE email = 'loadifymarket.co.uk@gmail.com';
+--   WHERE email = 'contact@loadifymarket.co.uk';
 --
 -- ──────────────────────────────────────────────────────────────
