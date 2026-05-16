@@ -50,6 +50,11 @@ export const handler: Handler = async (event) => {
   // ─────────────────────────────────────────────────────────────────────────
 
   try {
+    const genericLookupFailure = {
+      statusCode: 404,
+      body: JSON.stringify({ error: 'Order not found for the provided details' }),
+    };
+
     const params = event.queryStringParameters || {};
     const { orderNumber, order_id, email } = params;
 
@@ -105,10 +110,7 @@ export const handler: Handler = async (event) => {
     const { data: order, error: orderError } = await query.single();
 
     if (orderError || !order) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'Order not found' }),
-      };
+      return genericLookupFailure;
     }
 
     // Mandatory email verification — email is required by the handler above.
@@ -121,10 +123,7 @@ export const handler: Handler = async (event) => {
         .single();
 
       if (!buyer || buyer.email.toLowerCase() !== email.toLowerCase()) {
-        return {
-          statusCode: 403,
-          body: JSON.stringify({ error: 'Email does not match order' }),
-        };
+        return genericLookupFailure;
       }
     }
 
