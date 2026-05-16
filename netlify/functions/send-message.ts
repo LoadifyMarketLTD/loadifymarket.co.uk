@@ -76,11 +76,14 @@ async function sendInternalEmail(appUrl: string, payload: Record<string, unknown
       : {}),
   };
 
-  await fetch(`${appUrl}/.netlify/functions/send-email`, {
+  const response = await fetch(`${appUrl}/.netlify/functions/send-email`, {
     method: 'POST',
     headers: internalHeaders,
     body: JSON.stringify(payload),
   });
+  if (!response.ok) {
+    throw new Error(`send-email returned ${response.status}: ${await response.text()}`);
+  }
 }
 
 export const handler: Handler = async (event) => {
@@ -251,18 +254,23 @@ export const handler: Handler = async (event) => {
       if (allowEmail) {
         const receiverName = [receiver.firstName, receiver.lastName].filter(Boolean).join(' ') || receiver.email;
         const subjectListing = conv.subject ? ` · ${conv.subject}` : '';
-        void sendInternalEmail(appUrl, {
-          to: receiver.email,
-          subject: `New message from ${senderName}${subjectListing}`,
-          template: 'seller_new_message',
-          data: {
-            sellerName: receiverName,
-            senderName,
-            messagePreview: safeMessagePreview(message),
-            conversationId,
-            inboxUrl: `${appUrl}/inbox/${conversationId}`,
-          },
-        }).catch((err) => console.warn('send-message: seller email send failed (non-fatal):', err));
+        try {
+          await sendInternalEmail(appUrl, {
+            to: receiver.email,
+            subject: `New message from ${senderName}${subjectListing}`,
+            template: 'seller_new_message',
+            data: {
+              sellerName: receiverName,
+              senderName,
+              productTitle: conv.subject,
+              messagePreview: safeMessagePreview(message),
+              conversationId,
+              inboxUrl: `${appUrl}/inbox/${conversationId}`,
+            },
+          });
+        } catch (err) {
+          console.warn('send-message: seller email send failed (non-fatal):', err);
+        }
       }
     }
   }
