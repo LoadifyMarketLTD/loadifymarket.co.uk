@@ -69,7 +69,9 @@ type EmailTemplate =
   | 'resend_verification'
   | 'onboarding_reminder'
   | 'stripe_connect_reminder'
-  | 'confirm_email';
+  | 'confirm_email'
+  | 'seller_new_message'
+  | 'seller_new_offer';
 
 interface EmailRequest {
   to: string;
@@ -342,6 +344,8 @@ function isValidTemplate(value: unknown): value is EmailTemplate {
     'onboarding_reminder',
     'stripe_connect_reminder',
     'confirm_email',
+    'seller_new_message',
+    'seller_new_offer',
   ].includes(value);
 }
 
@@ -664,6 +668,36 @@ function generateEmailHTML(template: string, data: Record<string, unknown>): str
         <p>Your profile is complete — all that's left is to connect your Stripe account and your store will go live automatically.</p>
         <a href="${escapeHtml((data.onboardingUrl as string) || `${appBaseUrl}/seller/settings`)}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Connect Stripe Now →</a>
         <p style="margin-top: 20px; color: #888; font-size: 13px;">If you have any questions please contact us at contact@loadifymarket.co.uk</p>
+      `;
+      break;
+    }
+
+    case 'seller_new_message': {
+      const dashboardUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
+      content = `
+        <h2 style="color: #243b53;">New message from a buyer</h2>
+        <p>Hi ${escapeHtml((data.sellerName as string) || 'there')},</p>
+        <p>You received a new message from ${escapeHtml((data.senderName as string) || 'a buyer')}.</p>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Listing:</strong> ${escapeHtml((data.productTitle as string) || 'Conversation')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Preview:</strong> ${escapeHtml((data.messagePreview as string) || 'Open your inbox to view the full message.')}</p>
+        </div>
+        <a href="${escapeHtml((data.inboxUrl as string) || `${dashboardUrl}/inbox/${escapeHtml(data.conversationId || '')}`)}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Open Inbox</a>
+      `;
+      break;
+    }
+
+    case 'seller_new_offer': {
+      const dashboardUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
+      content = `
+        <h2 style="color: #243b53;">New offer received</h2>
+        <p>Hi ${escapeHtml((data.sellerName as string) || 'there')},</p>
+        <p>${escapeHtml((data.buyerName as string) || 'A buyer')} sent you a new offer.</p>
+        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 5px;">
+          <p style="margin: 0;"><strong>Listing:</strong> ${escapeHtml((data.productTitle as string) || 'Listing')}</p>
+          <p style="margin: 10px 0 0 0;"><strong>Offer amount:</strong> £${escapeHtml((data.offerAmount as string) || '0.00')}</p>
+        </div>
+        <a href="${escapeHtml((data.inboxUrl as string) || `${dashboardUrl}/inbox/${escapeHtml(data.conversationId || '')}`)}" style="display: inline-block; background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Review Offer</a>
       `;
       break;
     }

@@ -5,16 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
-
-interface Notification {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  link: string | null;
-  isRead: boolean;
-  createdAt: string;
-}
+import type { AppNotification } from "@/types";
 
 const typeColor: Record<string, string> = {
   order:    "bg-blue-500/10 text-blue-700",
@@ -36,7 +27,7 @@ function formatDate(iso: string) {
 
 const BuyerNotifications = () => {
   const { user } = useAuthStore();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
 
@@ -50,7 +41,7 @@ const BuyerNotifications = () => {
         .eq("userId", user.id)
         .order("createdAt", { ascending: false })
         .limit(50);
-      setNotifications((data as Notification[]) ?? []);
+      setNotifications((data as AppNotification[]) ?? []);
     } catch {
       // Silently fail — empty list shown instead.
     } finally {

@@ -37,6 +37,7 @@ interface ConversationRow {
   id: string;
   user1Id: string;
   user2Id: string;
+  subject: string | null;
 }
 
 interface MessageRow {
@@ -45,6 +46,41 @@ interface MessageRow {
   message: string;
   isRead: boolean;
   createdAt: string;
+}
+
+interface UserProfileRow {
+  id: string;
+  email: string;
+  role: string;
+  firstName: string | null;
+  lastName: string | null;
+}
+
+interface NotificationSettingsRow {
+  orderConfirmation: boolean;
+}
+
+const EMAIL_PREVIEW_MAX_LEN = 120;
+
+function safeMessagePreview(message: string): string {
+  const compact = message.replace(/\s+/g, ' ').trim();
+  if (compact.length <= EMAIL_PREVIEW_MAX_LEN) return compact;
+  return compact.substring(0, EMAIL_PREVIEW_MAX_LEN) + '…';
+}
+
+async function sendInternalEmail(appUrl: string, payload: Record<string, unknown>): Promise<void> {
+  const internalHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(process.env.NETLIFY_INTERNAL_SECRET
+      ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET }
+      : {}),
+  };
+
+  await fetch(`${appUrl}/.netlify/functions/send-email`, {
+    method: 'POST',
+    headers: internalHeaders,
+    body: JSON.stringify(payload),
+  });
 }
 
 export const handler: Handler = async (event) => {
@@ -74,6 +110,7 @@ export const handler: Handler = async (event) => {
     return { statusCode: 401, body: JSON.stringify({ error: 'Invalid authentication token' }) };
   }
   const callerId = authUser.id;
+  const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
 
   // ── Rate limiting — 60 messages per minute per user ────────────────────────
   const rl = await checkRateLimit({
@@ -120,7 +157,7 @@ export const handler: Handler = async (event) => {
   // ── Verify caller is a conversation participant ─────────────────────────────
   const { data: conv, error: convError } = await supabase
     .from('conversations')
-    .select('id, user1Id, user2Id')
+    .select('id, user1Id, user2Id, subject')
     .eq('id', conversationId)
     .maybeSingle<ConversationRow>();
 
@@ -161,9 +198,15 @@ export const handler: Handler = async (event) => {
     // Fetch sender name for the notification title.
     const { data: sender } = await supabase
       .from('users')
-      .select('firstName, lastName, email')
+      .select('id, firstName, lastName, email, role')
       .eq('id', callerId)
-      .maybeSingle<{ firstName: string | null; lastName: string | null; email: string }>();
+      .maybeSingle<UserProfileRow>();
+
+    const { data: receiver } = await supabase
+      .from('users')
+      .select('id, firstName, lastName, email, role')
+      .eq('id', receiverId)
+      .maybeSingle<UserProfileRow>();
 
     const senderName = sender
       ? ([sender.firstName, sender.lastName].filter(Boolean).join(' ') || sender.email)
@@ -178,6 +221,50 @@ export const handler: Handler = async (event) => {
       body:  preview,
       data:  { type: 'new_message', conversationId },
     });
+
+    // In-app notification in website account.
+    await supabase
+      .from('notifications')
+      .insert({
+        userId: receiverId,
+        type: 'message',
+        title: `New message from ${senderName}`,
+        message: preview,
+        link: `/inbox/${conversationId}`,
+      })
+      .then(({ error }) => {
+        if (error) console.warn('send-message: notifications insert failed (non-fatal):', error.message);
+      });
+
+    // Transactional email for sellers (opt-in gate via notification_settings.orderConfirmation).
+    if (receiver?.role === 'seller' && receiver.email) {
+      let allowEmail = true;
+      const { data: settings } = await supabase
+        .from('notification_settings')
+        .select('orderConfirmation')
+        .eq('userId', receiverId)
+        .maybeSingle<NotificationSettingsRow>();
+      if (settings && settings.orderConfirmation === false) {
+        allowEmail = false;
+      }
+
+      if (allowEmail) {
+        const receiverName = [receiver.firstName, receiver.lastName].filter(Boolean).join(' ') || receiver.email;
+        const subjectListing = conv.subject ? ` · ${conv.subject}` : '';
+        void sendInternalEmail(appUrl, {
+          to: receiver.email,
+          subject: `New message from ${senderName}${subjectListing}`,
+          template: 'seller_new_message',
+          data: {
+            sellerName: receiverName,
+            senderName,
+            messagePreview: safeMessagePreview(message),
+            conversationId,
+            inboxUrl: `${appUrl}/inbox/${conversationId}`,
+          },
+        }).catch((err) => console.warn('send-message: seller email send failed (non-fatal):', err));
+      }
+    }
   }
 
   return {

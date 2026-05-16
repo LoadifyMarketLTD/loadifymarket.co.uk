@@ -10,7 +10,7 @@
  * Unauthenticated users are redirected to /login.
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { MessageSquare, User, Search, SquarePen } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -18,14 +18,9 @@ import { useAuthStore } from "@/store";
 import { useAuthPromptStore } from "@/store/authPromptStore";
 import { toast } from "@/hooks/use-toast";
 import MobileBottomNav from "@/components/MobileBottomNav";
+import type { ConversationParticipant, InboxConversation } from "@/types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-
-interface Participant {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-}
 
 interface ConversationRow {
   id: string;
@@ -37,14 +32,7 @@ interface ConversationRow {
   productId: string | null;
 }
 
-interface Conversation extends ConversationRow {
-  other: Participant;
-  unreadCount: number;
-  lastMessagePreview: string | null;
-  lastMessageSenderId: string | null;
-  productTitle: string | null;
-  productImage: string | null;
-}
+type Conversation = InboxConversation & ConversationRow;
 
 type Tab = "all" | "unread" | "buyers" | "sellers";
 
@@ -72,7 +60,7 @@ function formatDate(iso: string) {
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
-function participantName(p: Participant) {
+function participantName(p: ConversationParticipant) {
   const name = [p.firstName, p.lastName].filter(Boolean).join(" ");
   return name || DEFAULT_DISPLAY_NAME;
 }
@@ -111,105 +99,135 @@ export default function MobileInboxPage() {
     }
   }, [user, isLoading, promptAuth]);
 
+  const loadConversations = useCallback(async () => {
+    if (!user?.id) return;
+    setLoading(true);
+    try {
+      const { data: rows, error } = await supabase
+        .from("conversations")
+        .select("id, subject, lastMessageAt, isArchived, user1Id, user2Id, productId")
+        .or(`user1Id.eq.${user.id},user2Id.eq.${user.id}`)
+        .order("lastMessageAt", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      const convRows = (rows ?? []) as ConversationRow[];
+
+      // Resolve other participants
+      const otherIds = [...new Set(convRows.map((r) => r.user1Id === user.id ? r.user2Id : r.user1Id))];
+      const userMap = new Map<string, ConversationParticipant>();
+      if (otherIds.length > 0) {
+        const { data: users } = await supabase
+          .from("user_display_names")
+          .select("id, firstName, lastName")
+          .in("id", otherIds);
+        (users ?? []).forEach((u: ConversationParticipant) => userMap.set(u.id, u));
+      }
+
+      // Unread counts
+      const { data: unreadRows } = await supabase
+        .from("messages")
+        .select("conversationId")
+        .eq("receiverId", user.id)
+        .eq("isRead", false);
+      const unreadMap = new Map<string, number>();
+      (unreadRows ?? []).forEach((r: { conversationId: string }) => {
+        unreadMap.set(r.conversationId, (unreadMap.get(r.conversationId) ?? 0) + 1);
+      });
+
+      // Last message per conversation (with senderId for "Sent" tab)
+      const convIds = convRows.map((r) => r.id);
+      const lastMsgMap = new Map<string, string>();
+      const lastMsgSenderMap = new Map<string, string>();
+      if (convIds.length > 0) {
+        const { data: lastMsgs } = await supabase
+          .from("messages")
+          .select("conversationId, message, senderId")
+          .in("conversationId", convIds)
+          .order("createdAt", { ascending: false })
+          .limit(Math.max(convIds.length * 5, 20));
+        (lastMsgs ?? []).forEach((m: { conversationId: string; message: string; senderId: string }) => {
+          if (!lastMsgMap.has(m.conversationId)) {
+            lastMsgMap.set(m.conversationId, m.message);
+            lastMsgSenderMap.set(m.conversationId, m.senderId);
+          }
+        });
+      }
+
+      // Product images for conversation thumbnails
+      const productIds = [...new Set(convRows.map((r) => r.productId).filter((x): x is string => x != null))];
+      const productImageMap = new Map<string, string>();
+      if (productIds.length > 0) {
+        const { data: products } = await supabase
+          .from("products")
+          .select("id, images")
+          .in("id", productIds);
+        (products ?? []).forEach((p: { id: string; images?: string[] | null }) => {
+          const firstImg = (p.images ?? [])[0];
+          if (firstImg) productImageMap.set(p.id, firstImg);
+        });
+      }
+
+      const enriched: Conversation[] = convRows.map((r) => {
+        const otherId = r.user1Id === user.id ? r.user2Id : r.user1Id;
+        return {
+          ...r,
+          other: userMap.get(otherId) ?? { id: otherId, firstName: null, lastName: null },
+          unreadCount: unreadMap.get(r.id) ?? 0,
+          lastMessagePreview: lastMsgMap.get(r.id) ?? null,
+          lastMessageSenderId: lastMsgSenderMap.get(r.id) ?? null,
+          productTitle: r.subject ?? null,
+          productImage: r.productId ? (productImageMap.get(r.productId) ?? null) : null,
+        };
+      });
+
+      setConversations(enriched);
+    } catch {
+      toast({ title: "Failed to load conversations", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
   // Fetch conversations
   useEffect(() => {
+    void loadConversations();
+  }, [loadConversations]);
+
+  // Realtime refresh for inbox list (new messages + read-state changes + new conversations)
+  useEffect(() => {
     if (!user?.id) return;
-    let cancelled = false;
+    const channel = supabase
+      .channel(`mobile-inbox-live:${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `receiverId=eq.${user.id}` },
+        () => { void loadConversations(); },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `senderId=eq.${user.id}` },
+        () => { void loadConversations(); },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "messages", filter: `receiverId=eq.${user.id}` },
+        () => { void loadConversations(); },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "conversations", filter: `user1Id=eq.${user.id}` },
+        () => { void loadConversations(); },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "conversations", filter: `user2Id=eq.${user.id}` },
+        () => { void loadConversations(); },
+      )
+      .subscribe();
 
-    const load = async () => {
-      setLoading(true);
-      try {
-        const { data: rows, error } = await supabase
-          .from("conversations")
-          .select("id, subject, lastMessageAt, isArchived, user1Id, user2Id, productId")
-          .or(`user1Id.eq.${user.id},user2Id.eq.${user.id}`)
-          .order("lastMessageAt", { ascending: false })
-          .limit(100);
-
-        if (error) throw error;
-        if (cancelled) return;
-
-        const convRows = (rows ?? []) as ConversationRow[];
-
-        // Resolve other participants
-        const otherIds = [...new Set(convRows.map((r) => r.user1Id === user.id ? r.user2Id : r.user1Id))];
-        const userMap = new Map<string, Participant>();
-        if (otherIds.length > 0) {
-          const { data: users } = await supabase
-            .from("user_display_names")
-            .select("id, firstName, lastName")
-            .in("id", otherIds);
-          (users ?? []).forEach((u: Participant) => userMap.set(u.id, u));
-        }
-
-        // Unread counts
-        const { data: unreadRows } = await supabase
-          .from("messages")
-          .select("conversationId")
-          .eq("receiverId", user.id)
-          .eq("isRead", false);
-        const unreadMap = new Map<string, number>();
-        (unreadRows ?? []).forEach((r: { conversationId: string }) => {
-          unreadMap.set(r.conversationId, (unreadMap.get(r.conversationId) ?? 0) + 1);
-        });
-
-        // Last message per conversation (with senderId for "Sent" tab)
-        const convIds = convRows.map((r) => r.id);
-        const lastMsgMap = new Map<string, string>();
-        const lastMsgSenderMap = new Map<string, string>();
-        if (convIds.length > 0) {
-          const { data: lastMsgs } = await supabase
-            .from("messages")
-            .select("conversationId, message, senderId")
-            .in("conversationId", convIds)
-            .order("createdAt", { ascending: false })
-            .limit(Math.max(convIds.length * 5, 20));
-          (lastMsgs ?? []).forEach((m: { conversationId: string; message: string; senderId: string }) => {
-            if (!lastMsgMap.has(m.conversationId)) {
-              lastMsgMap.set(m.conversationId, m.message);
-              lastMsgSenderMap.set(m.conversationId, m.senderId);
-            }
-          });
-        }
-
-        // Product images for conversation thumbnails
-        const productIds = [...new Set(convRows.map((r) => r.productId).filter((x): x is string => x != null))];
-        const productImageMap = new Map<string, string>();
-        if (productIds.length > 0) {
-          const { data: products } = await supabase
-            .from("products")
-            .select("id, images")
-            .in("id", productIds);
-          (products ?? []).forEach((p: { id: string; images?: string[] | null }) => {
-            const firstImg = (p.images ?? [])[0];
-            if (firstImg) productImageMap.set(p.id, firstImg);
-          });
-        }
-
-        const enriched: Conversation[] = convRows.map((r) => {
-          const otherId = r.user1Id === user.id ? r.user2Id : r.user1Id;
-          return {
-            ...r,
-            other: userMap.get(otherId) ?? { id: otherId, firstName: null, lastName: null },
-            unreadCount: unreadMap.get(r.id) ?? 0,
-            lastMessagePreview: lastMsgMap.get(r.id) ?? null,
-            lastMessageSenderId: lastMsgSenderMap.get(r.id) ?? null,
-            productTitle: r.subject ?? null,
-            productImage: r.productId ? (productImageMap.get(r.productId) ?? null) : null,
-          };
-        });
-
-        if (!cancelled) setConversations(enriched);
-      } catch {
-        toast({ title: "Failed to load conversations", variant: "destructive" });
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    load();
-    return () => { cancelled = true; };
-  }, [user?.id]);
+    return () => { void supabase.removeChannel(channel); };
+  }, [user?.id, loadConversations]);
 
   // Filter by tab
   const tabFiltered = conversations.filter((c) => {

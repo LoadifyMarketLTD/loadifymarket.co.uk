@@ -45,9 +45,35 @@ interface ProductRow {
   listingContext: string;
 }
 
+interface UserProfileRow {
+  id: string;
+  email: string;
+  role: string;
+  firstName: string | null;
+  lastName: string | null;
+}
+
+interface NotificationSettingsRow {
+  orderConfirmation: boolean;
+}
+
 function isOffersTableMissing(error: { code?: string; message?: string } | null | undefined): boolean {
   if (!error) return false;
   return error.code === '42P01' || error.code === 'PGRST205';
+}
+
+async function sendInternalEmail(appUrl: string, payload: Record<string, unknown>): Promise<void> {
+  const internalHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(process.env.NETLIFY_INTERNAL_SECRET
+      ? { 'x-internal-secret': process.env.NETLIFY_INTERNAL_SECRET }
+      : {}),
+  };
+  await fetch(`${appUrl}/.netlify/functions/send-email`, {
+    method: 'POST',
+    headers: internalHeaders,
+    body: JSON.stringify(payload),
+  });
 }
 
 export const handler: Handler = async (event) => {
@@ -77,6 +103,7 @@ export const handler: Handler = async (event) => {
     return { statusCode: 401, body: JSON.stringify({ error: 'Invalid authentication token' }) };
   }
   const callerId = authUser.id;
+  const appUrl = (process.env.URL || process.env.VITE_APP_URL || 'https://loadifymarket.co.uk').replace(/\/$/, '');
 
   // ── Rate limiting — 10 offers per hour per user ─────────────────────────────
   const rl = await checkRateLimit({
@@ -233,6 +260,66 @@ export const handler: Handler = async (event) => {
     body:  `Someone offered £${pounds} for ${listing.title}`,
     data:  { type: 'offer_received', offerId: offer.id, conversationId },
   });
+
+  // In-app notification in website account.
+  await supabase
+    .from('notifications')
+    .insert({
+      userId: recipientId,
+      type: 'new_offer',
+      title: 'New offer received',
+      message: `Offer £${pounds} received for ${listing.title}`,
+      link: `/inbox/${conversationId}`,
+    })
+    .then(({ error }) => {
+      if (error) console.warn('conversation-offer: notifications insert failed (non-fatal):', error.message);
+    });
+
+  // Transactional seller email notification (respects notification_settings.orderConfirmation).
+  const [{ data: recipient }, { data: buyer }] = await Promise.all([
+    supabase
+      .from('users')
+      .select('id, email, role, firstName, lastName')
+      .eq('id', recipientId)
+      .maybeSingle<UserProfileRow>(),
+    supabase
+      .from('users')
+      .select('id, email, role, firstName, lastName')
+      .eq('id', callerId)
+      .maybeSingle<UserProfileRow>(),
+  ]);
+
+  if (recipient?.role === 'seller' && recipient.email) {
+    let allowEmail = true;
+    const { data: settings } = await supabase
+      .from('notification_settings')
+      .select('orderConfirmation')
+      .eq('userId', recipientId)
+      .maybeSingle<NotificationSettingsRow>();
+    if (settings && settings.orderConfirmation === false) {
+      allowEmail = false;
+    }
+
+    if (allowEmail) {
+      const sellerName = [recipient.firstName, recipient.lastName].filter(Boolean).join(' ') || recipient.email;
+      const buyerName = buyer
+        ? ([buyer.firstName, buyer.lastName].filter(Boolean).join(' ') || buyer.email)
+        : 'A buyer';
+      void sendInternalEmail(appUrl, {
+        to: recipient.email,
+        subject: `New offer received for ${listing.title}`,
+        template: 'seller_new_offer',
+        data: {
+          sellerName,
+          buyerName,
+          productTitle: listing.title,
+          offerAmount: pounds,
+          conversationId,
+          inboxUrl: `${appUrl}/inbox/${conversationId}`,
+        },
+      }).catch((err) => console.warn('conversation-offer: seller email send failed (non-fatal):', err));
+    }
+  }
 
   return {
     statusCode: 200,
