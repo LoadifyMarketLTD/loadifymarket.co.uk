@@ -73,11 +73,11 @@ export const handler: Handler = async (event) => {
     .maybeSingle<{ role: string | null }>();
   const role = userRow?.role ?? null;
 
-  if (role !== 'seller' && role !== 'admin' && role !== 'owner') {
+  if (role !== 'seller' && role !== 'admin') {
     return { statusCode: 403, body: JSON.stringify({ error: 'Only sellers can create listings' }) };
   }
 
-  const isAdmin = role === 'admin' || role === 'owner';
+  const isAdmin = role === 'admin';
 
   // ── Maintenance mode (Step 5.2) ───────────────────────────────────────────
   const maintenance = await isMaintenanceMode(supabase);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import MainLayout from "@/layouts/MainLayout";
 import BreadcrumbNav from "@/components/BreadcrumbNav";
 import { Mail, MapPin, Clock, Phone, Loader2 } from "lucide-react";
@@ -9,13 +9,11 @@ import SEO from "@/components/SEO";
 import { Label } from "@/components/ui/label";
 import { BRAND } from "@/constants/brand";
 import { formatPhoneNumber } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
-import { useAuthStore } from "@/store";
 
 const SUPPORT_EMAIL = BRAND.supportEmail;
 
 const ContactUs = () => {
-  const { user } = useAuthStore();
+  const formOpenedAt = useMemo(() => Date.now(), []);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -34,43 +32,29 @@ const ContactUs = () => {
     setStatus("loading");
 
     try {
-      // Primary capture: create a support ticket so the enquiry is always recorded
-      // in the admin support queue even if the email notification cannot be delivered.
-      const { error: ticketError } = await supabase.from("support_tickets").insert({
-        userId: user?.id ?? null,
-        guestEmail: user ? null : formData.email,
-        guestName: user ? null : formData.name,
-        subject: formData.subject || "Contact Form Enquiry",
-        message: formData.message || null,
-        category: "general",
-        priority: "normal",
-        status: "open",
-      });
+      const authHeader = await (async () => {
+        const { supabase } = await import("@/lib/supabase");
+        const { data } = await supabase.auth.getSession();
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (data.session?.access_token) {
+          headers.Authorization = `Bearer ${data.session.access_token}`;
+        }
+        return headers;
+      })();
 
-      if (ticketError) throw new Error(ticketError.message);
-
-      // Best-effort email notification — Cloudflare WAF, SendGrid errors or missing
-      // environment variables must not block the form from confirming receipt to
-      // the user.  The support ticket above is the reliable capture mechanism.
-      fetch("/.netlify/functions/send-email", {
+      const response = await fetch("/.netlify/functions/support-ticket-create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeader,
         body: JSON.stringify({
-          to: SUPPORT_EMAIL,
-          subject: `Contact Form: ${formData.subject || "New Enquiry"}`,
-          template: "contact_enquiry",
-          data: {
-            name: formData.name,
-            email: formData.email,
-            subject: formData.subject,
-            message: formData.message,
-          },
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          "bot-field": formData["bot-field"],
+          submittedAt: formOpenedAt,
         }),
-      }).then(res => {
-        if (!res.ok) console.warn("Contact email notification failed:", res.status);
-      }).catch(err => {
-        console.warn("Contact email notification error (non-fatal):", err);
       });
+      if (!response.ok) throw new Error("Failed to submit support ticket");
 
       setFormData({ name: "", email: "", subject: "", message: "", "bot-field": "" });
       setStatus("success");

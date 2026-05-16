@@ -149,7 +149,7 @@ export const handler: Handler = async (event) => {
       .select('role')
       .eq('id', verifiedBuyerId)
       .maybeSingle<{ role: string | null }>();
-    const isAdmin = callerRow?.role === 'admin' || callerRow?.role === 'owner';
+    const isAdmin = callerRow?.role === 'admin';
     if (!isAdmin) {
       return { statusCode: 503, body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }) };
     }

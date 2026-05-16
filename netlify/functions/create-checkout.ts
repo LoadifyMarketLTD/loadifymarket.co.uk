@@ -147,7 +147,7 @@ export const handler: Handler = async (event) => {
   }
 
   // 5a-b. Maintenance mode guard — block buyers when the platform is under
-  //       maintenance.  Admins (role = 'admin' | 'owner') bypass this gate.
+  //       maintenance. Admins bypass this gate.
   const maintenance = await isMaintenanceMode(supabase);
   if (maintenance) {
     const { data: callerRow } = await supabase
@@ -155,7 +155,7 @@ export const handler: Handler = async (event) => {
       .select('role')
       .eq('id', verifiedBuyerId)
       .maybeSingle<{ role: string | null }>();
-    const isAdmin = callerRow?.role === 'admin' || callerRow?.role === 'owner';
+    const isAdmin = callerRow?.role === 'admin';
     if (!isAdmin) {
       return {
         statusCode: 503,
