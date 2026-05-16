@@ -7,6 +7,7 @@ import CookieConsent from './components/CookieConsent';
 import Header from './components/Header';
 import AmbientLayer from './components/AmbientLayer';
 import { isCapacitorNative } from './lib/capacitorUtils';
+import { usePushTokenRegistration } from './hooks/usePushTokenRegistration';
 
 import RequireAdmin from './components/auth/RequireAdmin';
 import RequireAuth from './components/auth/RequireAuth';
@@ -233,9 +234,10 @@ function MaintenanceModeGate({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const { setUser, setLoading } = useAuthStore();
+  const { user, setUser, setLoading } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  usePushTokenRegistration(user?.id);
 
   // ── Accessibility: move keyboard focus to #main-content on every route change ─
   // Satisfies WCAG 2.1 SC 2.4.3 (Focus Order) for SPA navigation.

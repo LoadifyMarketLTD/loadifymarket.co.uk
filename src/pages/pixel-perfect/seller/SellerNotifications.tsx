@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
+import { formatNotificationTypeLabel, normalizeNotification } from "@/lib/notificationUtils";
 import type { AppNotification } from "@/types";
 
 const typeColor: Record<string, string> = {
@@ -14,7 +15,6 @@ const typeColor: Record<string, string> = {
   product_question: "bg-amber-500/10 text-amber-700",
   message:          "bg-amber-500/10 text-amber-700",
   offer_received:   "bg-violet-500/10 text-violet-700",
-  new_offer:        "bg-violet-500/10 text-violet-700",
   listing_published: "bg-emerald-500/10 text-emerald-700",
   listing_sold:      "bg-emerald-500/10 text-emerald-700",
   share_reminder:   "bg-yellow-500/10 text-yellow-700",
@@ -48,7 +48,7 @@ const SellerNotifications = () => {
         .eq("userId", user.id)
         .order("createdAt", { ascending: false })
         .limit(50);
-      setNotifications((data as AppNotification[]) ?? []);
+      setNotifications(((data as AppNotification[]) ?? []).map(normalizeNotification));
     } catch {
       // Silently fail — empty list shown instead.
     } finally {
@@ -58,6 +58,31 @@ const SellerNotifications = () => {
 
   useEffect(() => {
     fetchNotifications();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`seller-notifications:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "notifications",
+          filter: `userId=eq.${user.id}`,
+        },
+        () => {
+          void fetchNotifications();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
@@ -152,7 +177,7 @@ const SellerNotifications = () => {
                       variant="outline"
                       className={`text-[10px] px-1.5 py-0 ${typeColor[n.type] ?? typeColor.general}`}
                     >
-                      {n.type.replace("_", " ")}
+                      {formatNotificationTypeLabel(n.type)}
                     </Badge>
                     {!n.isRead && (
                       <span className="w-2 h-2 rounded-full bg-primary shrink-0" />

@@ -9,6 +9,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
+import { authorizedFetch } from "@/lib/authorizedFetch";
 import type { User } from "@/types";
 
 type BuyerData = Pick<User, "id" | "firstName" | "lastName">;
@@ -108,38 +109,12 @@ const SellerOrders = () => {
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     setActionLoading(orderId);
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: newStatus })
-        .eq("id", orderId)
-        .eq("sellerId", user!.id);
-      if (error) throw error;
-
-      const order = orders.find((o) => o.id === orderId);
-
-      // Notify the buyer about status changes they care about.
-      if (order?.buyerId && (newStatus === "packed" || newStatus === "shipped")) {
-        const notifMap: Record<string, { title: string; message: string; link: string }> = {
-          packed: {
-            title: "Your order is being packed",
-            message: `Order ${order.orderNumber} is being packed and will be dispatched soon.`,
-            link: "/buyer/orders",
-          },
-          shipped: {
-            title: "Your order is on its way!",
-            message: `Order ${order.orderNumber} has been dispatched and is heading to you. Check your orders page to confirm delivery once it arrives.`,
-            link: "/buyer/orders",
-          },
-        };
-        const notif = notifMap[newStatus];
-        await supabase.from("notifications").insert({
-          userId: order.buyerId,
-          type: "shipment",
-          title: notif.title,
-          message: notif.message,
-          link: notif.link,
-        });
-      }
+      const res = await authorizedFetch("/.netlify/functions/seller-order-status", {
+        method: "POST",
+        body: JSON.stringify({ orderId, status: newStatus }),
+      });
+      const json = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Failed to update order status");
 
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
@@ -155,23 +130,12 @@ const SellerOrders = () => {
   const markJobDone = async (orderId: string) => {
     setActionLoading(orderId);
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: "delivered", serviceCompletedAt: new Date().toISOString() })
-        .eq("id", orderId)
-        .eq("sellerId", user!.id);
-      if (error) throw error;
-
-      const order = orders.find((o) => o.id === orderId);
-      if (order?.buyerId) {
-        await supabase.from("notifications").insert({
-          userId: order.buyerId,
-          type: "delivery",
-          title: "Job completed — please confirm",
-          message: `${order.orderNumber}: your provider has marked this job as complete. Please confirm or open a dispute within 7 days.`,
-          link: "/buyer/orders",
-        });
-      }
+      const res = await authorizedFetch("/.netlify/functions/seller-order-status", {
+        method: "POST",
+        body: JSON.stringify({ orderId, status: "delivered" }),
+      });
+      const json = await res.json() as { error?: string };
+      if (!res.ok) throw new Error(json.error ?? "Failed to complete job");
 
       setOrders((prev) =>
         prev.map((o) => (o.id === orderId ? { ...o, status: "delivered" } : o))

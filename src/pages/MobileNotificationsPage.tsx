@@ -9,12 +9,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Bell } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import {
+  MOBILE_NOTIFICATION_QUERY_TYPES,
+  normalizeNotification,
+} from '@/lib/notificationUtils';
 import { useAuthStore } from '@/store';
 import { useAuthPromptStore } from '@/store/authPromptStore';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import type { AppNotification } from '@/types';
-
-const RELEVANT_TYPES = ['message', 'order', 'offer_received', 'new_offer', 'offer'] as const;
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-GB', {
@@ -46,13 +48,45 @@ export default function MobileNotificationsPage() {
         .from('notifications')
         .select('id, type, title, message, link, isRead, createdAt')
         .eq('userId', user.id)
-        .in('type', RELEVANT_TYPES)
+        .in('type', MOBILE_NOTIFICATION_QUERY_TYPES)
         .order('createdAt', { ascending: false })
         .limit(50);
-      setItems((data as AppNotification[]) ?? []);
+      setItems(((data as AppNotification[]) ?? []).map(normalizeNotification));
       setLoading(false);
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`mobile-notifications:${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `userId=eq.${user.id}`,
+        },
+        async () => {
+          const { data } = await supabase
+            .from('notifications')
+            .select('id, type, title, message, link, isRead, createdAt')
+            .eq('userId', user.id)
+            .in('type', MOBILE_NOTIFICATION_QUERY_TYPES)
+            .order('createdAt', { ascending: false })
+            .limit(50);
+
+          setItems(((data as AppNotification[]) ?? []).map(normalizeNotification));
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, [user?.id]);
 
   const markRead = async (id: string) => {

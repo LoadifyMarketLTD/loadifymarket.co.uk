@@ -253,7 +253,8 @@ CREATE POLICY "orders_select" ON orders FOR SELECT
 CREATE POLICY "orders_insert" ON orders FOR INSERT
   WITH CHECK (auth.uid() = "buyerId" OR is_admin());
 CREATE POLICY "orders_update" ON orders FOR UPDATE
-  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin());
+  USING (is_admin())
+  WITH CHECK (is_admin());
 CREATE POLICY "orders_delete" ON orders FOR DELETE USING (is_admin());
 
 -- ── ORDER ITEMS ──────────────────────────────────────────────────
@@ -329,7 +330,14 @@ CREATE POLICY "disputes_select" ON disputes FOR SELECT
 CREATE POLICY "disputes_insert" ON disputes FOR INSERT
   WITH CHECK (auth.uid() = "buyerId");
 CREATE POLICY "disputes_update" ON disputes FOR UPDATE
-  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin());
+  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin())
+  WITH CHECK (
+    is_admin()
+    OR (
+      (auth.uid() = "buyerId" OR auth.uid() = "sellerId")
+      AND status NOT IN ('resolved', 'closed')
+    )
+  );
 
 -- ── DISPUTE MESSAGES ─────────────────────────────────────────────
 CREATE POLICY "dispute_messages_select" ON dispute_messages FOR SELECT

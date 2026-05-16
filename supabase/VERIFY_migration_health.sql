@@ -166,6 +166,64 @@ SELECT check_name, status FROM (
          CASE WHEN EXISTS (SELECT 1 FROM information_schema.routines WHERE routine_schema='public' AND routine_name='reject_payout')
               THEN '✅ OK' ELSE '❌ MISSING' END
 
+  -- ── 480_offers_engine: offers flow schema/RPC ─────────────────
+  UNION ALL SELECT '480_offers_engine | table: offers',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='offers')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '480_offers_engine | table: order_events',
+         CASE WHEN EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='order_events')
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '480_offers_engine | column: orders.offerId',
+         CASE WHEN EXISTS (
+           SELECT 1 FROM information_schema.columns
+           WHERE table_schema='public' AND table_name='orders' AND column_name='offerId'
+         )
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '480_offers_engine | column: orders.stripePaymentIntentId',
+         CASE WHEN EXISTS (
+           SELECT 1 FROM information_schema.columns
+           WHERE table_schema='public' AND table_name='orders' AND column_name='stripePaymentIntentId'
+         )
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '480_offers_engine | function: accept_offer',
+         CASE WHEN EXISTS (
+           SELECT 1
+           FROM information_schema.routines
+           WHERE routine_schema='public' AND routine_name='accept_offer'
+         )
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '480_offers_engine | index: one_pending_offer_per_conversation',
+         CASE WHEN EXISTS (
+           SELECT 1 FROM pg_indexes
+           WHERE schemaname='public' AND indexname='one_pending_offer_per_conversation'
+         )
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '480_offers_engine | index: one_active_order_per_listing',
+         CASE WHEN EXISTS (
+           SELECT 1 FROM pg_indexes
+           WHERE schemaname='public' AND indexname='one_active_order_per_listing'
+         )
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
+  UNION ALL SELECT '480_offers_engine | orders status includes awaiting_payment',
+         CASE WHEN EXISTS (
+           SELECT 1
+           FROM pg_constraint c
+           JOIN pg_class t ON t.oid = c.conrelid
+           JOIN pg_namespace n ON n.oid = t.relnamespace
+           WHERE n.nspname='public'
+             AND t.relname='orders'
+             AND c.contype='c'
+             AND pg_get_constraintdef(c.oid) LIKE '%awaiting_payment%'
+         )
+              THEN '✅ OK' ELSE '❌ MISSING' END
+
   -- ── 95_stripe_connect: Stripe Connect columns ────────────────
   UNION ALL SELECT '95_stripe_connect | column: seller_profiles.stripeConnectStatus',
          CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns
