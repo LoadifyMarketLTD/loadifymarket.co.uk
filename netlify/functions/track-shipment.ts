@@ -23,7 +23,7 @@ export const handler: Handler = async (event) => {
     };
   }
 
-  if (event.httpMethod !== 'GET') {
+  if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method not allowed' }),
@@ -55,8 +55,17 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Order not found for the provided details' }),
     };
 
-    const params = event.queryStringParameters || {};
-    const { orderNumber, order_id, email } = params;
+    let body: { orderNumber?: string; order_id?: string; email?: string };
+    try {
+      body = JSON.parse(event.body || '{}') as { orderNumber?: string; order_id?: string; email?: string };
+    } catch {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid request body' }),
+      };
+    }
+
+    const { orderNumber, order_id, email } = body;
 
     if (!orderNumber && !order_id) {
       return {

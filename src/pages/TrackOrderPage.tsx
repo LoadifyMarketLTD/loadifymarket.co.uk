@@ -61,9 +61,11 @@ export default function TrackOrderPage() {
     setError('');
 
     try {
-      const params = new URLSearchParams({ orderNumber: trackOrderNumber, email: trackEmail });
-
-      const response = await fetch(`/.netlify/functions/track-shipment?${params}`);
+      const response = await fetch('/.netlify/functions/track-shipment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderNumber: trackOrderNumber, email: trackEmail }),
+      });
       const data = await response.json();
 
       if (!response.ok) {
