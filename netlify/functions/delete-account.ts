@@ -104,7 +104,7 @@ export const handler: Handler = async (event) => {
     .eq('id', callerAuth.id)
     .maybeSingle<{ role: string | null }>();
 
-  const isAdmin = callerRow?.role === 'admin' || callerRow?.role === 'owner';
+  const isAdmin = callerRow?.role === 'admin';
   const targetUserId: string = body.targetUserId && isAdmin ? body.targetUserId : callerAuth.id;
 
   if (body.targetUserId && body.targetUserId !== callerAuth.id && !isAdmin) {
@@ -126,12 +126,12 @@ export const handler: Handler = async (event) => {
     return { statusCode: 404, headers: corsHeaders, body: JSON.stringify({ error: 'User not found' }) };
   }
 
-  // Prevent accidental deletion of the owner / another admin by a non-owner admin.
-  if (targetUser.role === 'owner' && callerAuth.id !== targetUserId) {
+  // Prevent accidental deletion of another admin account.
+  if (targetUser.role === 'admin' && callerAuth.id !== targetUserId) {
     return {
       statusCode: 403,
       headers: corsHeaders,
-      body: JSON.stringify({ error: 'Owner accounts cannot be deleted via this endpoint' }),
+      body: JSON.stringify({ error: 'Admin accounts cannot be deleted via this endpoint' }),
     };
   }
 

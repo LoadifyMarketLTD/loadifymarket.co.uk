@@ -26,6 +26,7 @@ import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { getClientIp } from './_shared/getClientIp';
+import { verifyCaptchaToken } from './_shared/verifyCaptcha';
 
 const sendgridApiKey = process.env.SENDGRID_API_KEY;
 if (!sendgridApiKey) {
@@ -36,6 +37,9 @@ sgMail.setApiKey(sendgridApiKey!);
 // Templates that public (unauthenticated) users may trigger directly.
 // All other templates require the X-Internal-Secret header.
 const PUBLIC_TEMPLATES = new Set(['contact_enquiry']);
+const PUBLIC_SUPPORT_RECIPIENT = (process.env.SUPPORT_INBOX_EMAIL || 'contact@loadifymarket.co.uk').trim().toLowerCase();
+const MIN_CONTACT_SUBMIT_MS = 1_500;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const supabase =
   process.env.VITE_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -46,11 +50,39 @@ const supabase =
       )
     : null;
 
+type EmailTemplate =
+  | 'order_confirmation'
+  | 'order_shipped'
+  | 'order_delivered'
+  | 'return_requested'
+  | 'dispute_opened'
+  | 'seller_new_order'
+  | 'seller_shipping_reminder'
+  | 'admin_seller_verification'
+  | 'contact_enquiry'
+  | 'admin_new_buyer'
+  | 'admin_new_seller'
+  | 'admin_seller_active'
+  | 'seller_welcome'
+  | 'seller_account_active'
+  | 'buyer_welcome'
+  | 'resend_verification'
+  | 'onboarding_reminder'
+  | 'stripe_connect_reminder'
+  | 'confirm_email';
+
 interface EmailRequest {
   to: string;
   subject: string;
-  template: 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'return_requested' | 'dispute_opened' | 'seller_new_order' | 'seller_shipping_reminder' | 'admin_seller_verification' | 'contact_enquiry' | 'admin_new_buyer' | 'admin_new_seller' | 'admin_seller_active' | 'seller_welcome' | 'seller_account_active' | 'buyer_welcome' | 'resend_verification' | 'onboarding_reminder' | 'stripe_connect_reminder' | 'confirm_email';
+  template: EmailTemplate;
   data: Record<string, unknown>;
+  // Public anti-spam fields (optional for internal server-to-server calls)
+  captchaToken?: string;
+  // Honeypot aliases to support multiple form conventions
+  honeypot?: string;
+  botField?: string;
+  ['bot-field']?: string;
+  submittedAt?: number;
 }
 
 export const handler: Handler = async (event) => {
@@ -72,14 +104,31 @@ export const handler: Handler = async (event) => {
   // Function-to-function calls (stripe-webhook, register, connect-status, etc.)
   // must include the X-Internal-Secret header.  Public callers may only use
   // templates listed in PUBLIC_TEMPLATES (e.g. the contact form).
-  let body: EmailRequest;
+  let bodyRaw: unknown;
   try {
-    body = JSON.parse(event.body || '{}') as EmailRequest;
+    bodyRaw = JSON.parse(event.body || '{}');
   } catch {
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
   }
 
+  if (!isPlainObject(bodyRaw)) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid payload type' }) };
+  }
+  const body = bodyRaw as EmailRequest;
   const { to, subject, template, data } = body;
+
+  if (!isValidTemplate(template)) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid template' }) };
+  }
+  if (!isValidEmail(to)) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid recipient email' }) };
+  }
+  if (!isSafeSubject(subject)) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid subject' }) };
+  }
+  if (!isPlainObject(data)) {
+    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid data payload' }) };
+  }
 
   const internalSecret = process.env.NETLIFY_INTERNAL_SECRET;
   const providedSecret = event.headers['x-internal-secret'];
@@ -126,25 +175,87 @@ export const handler: Handler = async (event) => {
       body: JSON.stringify({ error: 'Forbidden' }),
     };
   }
+
+  if (!isInternalCall && template === 'contact_enquiry') {
+    const honeypotValue = body.honeypot || body.botField || body['bot-field'] || '';
+    if (typeof honeypotValue === 'string' && honeypotValue.trim().length > 0) {
+      return { statusCode: 200, body: JSON.stringify({ success: true }) };
+    }
+
+    if (typeof body.submittedAt === 'number') {
+      const elapsed = Date.now() - body.submittedAt;
+      if (elapsed >= 0 && elapsed < MIN_CONTACT_SUBMIT_MS) {
+        return { statusCode: 429, body: JSON.stringify({ error: 'Spam protection triggered' }) };
+      }
+    }
+
+    const contactEmail = asTrimmed(data.email);
+    const contactName = asTrimmed(data.name);
+    const contactMessage = asTrimmed(data.message);
+    const contactSubject = asTrimmed(data.subject);
+
+    if (!isValidEmail(contactEmail)) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid contact email' }) };
+    }
+    if (!contactName || contactName.length < 2 || contactName.length > 120) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid contact name' }) };
+    }
+    if (!contactMessage || contactMessage.length < 10 || contactMessage.length > 5000) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid contact message length' }) };
+    }
+    if (contactSubject.length > 200) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Invalid contact subject length' }) };
+    }
+
+    const captcha = await verifyCaptchaToken({
+      token: asTrimmed(body.captchaToken),
+      remoteIp: getClientIp(event),
+    });
+    if (!captcha.ok) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Captcha verification failed' }) };
+    }
+  }
   // ─────────────────────────────────────────────────────────────────────────
 
-  // ── Rate limiting: 20 emails per IP per 15 minutes ───────────────────────
+  // ── Rate limiting ──────────────────────────────────────────────────────────
+  // Public contact form traffic gets strict quotas by IP + contact email.
+  // Internal server-to-server calls keep a higher threshold.
   if (supabase) {
     const ip = getClientIp(event);
+    const isPublicContact = !isInternalCall && template === 'contact_enquiry';
 
     if (ip) {
       const rl = await checkRateLimit({
         supabase,
         tableName: 'email_rate_limits',
-        identifier: ip,
+        identifier: `${isPublicContact ? 'public' : 'internal'}:ip:${ip}`,
         windowMinutes: 15,
-        maxAttempts: 20,
+        maxAttempts: isPublicContact ? 5 : 40,
       });
       if (rl.exceeded) {
         return {
           statusCode: 429,
           body: JSON.stringify({ error: 'Too many email requests. Please try again later.' }),
         };
+      }
+    }
+
+    if (isPublicContact) {
+      const contactEmail = asTrimmed(data.email).toLowerCase();
+      if (contactEmail) {
+        const byEmail = await checkRateLimit({
+          supabase,
+          tableName: 'email_rate_limits',
+          identifier: `public:email:${contactEmail}`,
+          windowMinutes: 15,
+          maxAttempts: 3,
+        });
+        if (byEmail.exceeded) {
+          return {
+            statusCode: 429,
+            body: JSON.stringify({ error: 'Too many requests from this email. Please try again later.' }),
+          };
+        }
       }
     }
   }
@@ -161,11 +272,18 @@ export const handler: Handler = async (event) => {
 
     const htmlContent = generateEmailHTML(template, data);
 
+    const isPublicContact = !isInternalCall && template === 'contact_enquiry';
+    const normalizedTo = isPublicContact ? PUBLIC_SUPPORT_RECIPIENT : to.trim();
+    const normalizedSubject = isPublicContact
+      ? `Contact Form: ${asTrimmed(data.subject) || 'New Enquiry'}`
+      : subject.trim();
+    const replyTo = isPublicContact ? asTrimmed(data.email) || fromEmail : fromEmail;
+
     const msg = {
-      to,
+      to: normalizedTo,
       from: fromEmail,
-      replyTo: fromEmail,
-      subject,
+      replyTo,
+      subject: normalizedSubject,
       html: htmlContent,
     };
 
@@ -185,6 +303,48 @@ export const handler: Handler = async (event) => {
     };
   }
 };
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function asTrimmed(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function isValidEmail(value: string): boolean {
+  return EMAIL_RE.test(value.trim()) && value.length <= 254;
+}
+
+function isSafeSubject(value: string): boolean {
+  const s = value.trim();
+  if (!s || s.length < 1 || s.length > 200) return false;
+  return !/[\r\n]/.test(s);
+}
+
+function isValidTemplate(value: unknown): value is EmailTemplate {
+  return typeof value === 'string' && [
+    'order_confirmation',
+    'order_shipped',
+    'order_delivered',
+    'return_requested',
+    'dispute_opened',
+    'seller_new_order',
+    'seller_shipping_reminder',
+    'admin_seller_verification',
+    'contact_enquiry',
+    'admin_new_buyer',
+    'admin_new_seller',
+    'admin_seller_active',
+    'seller_welcome',
+    'seller_account_active',
+    'buyer_welcome',
+    'resend_verification',
+    'onboarding_reminder',
+    'stripe_connect_reminder',
+    'confirm_email',
+  ].includes(value);
+}
 
 /** Escape a string for safe embedding in HTML to prevent HTML injection. */
 function escapeHtml(value: unknown): string {

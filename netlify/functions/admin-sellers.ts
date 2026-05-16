@@ -1,5 +1,6 @@
 import { Handler, HandlerEvent } from '@netlify/functions';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { getBearerToken } from './_shared/http';
 
 const ALLOWED_ORIGIN = process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
 
@@ -36,13 +37,10 @@ interface SellerRow {
 // ── Auth helper ────────────────────────────────────────────────────────────────
 
 async function authenticateAdmin(event: HandlerEvent, admin: SupabaseClient): Promise<AuthResult> {
-  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const token = getBearerToken(event);
+  if (!token) {
     return { ok: false, status: 401 };
   }
-
-  const token = authHeader.substring(7).trim();
 
   const { data, error } = await admin.auth.getUser(token);
 

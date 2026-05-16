@@ -9,6 +9,7 @@ import AmbientLayer from './components/AmbientLayer';
 import { isCapacitorNative } from './lib/capacitorUtils';
 
 import RequireAdmin from './components/auth/RequireAdmin';
+import RequireAuth from './components/auth/RequireAuth';
 import RequireSeller from './components/auth/RequireSeller';
 import RequireSellerAny from './components/auth/RequireSellerAny';
 import RequireBuyer from './components/auth/RequireBuyer';
@@ -597,22 +598,22 @@ function App() {
         </Route>
 
         {/* ── Mobile inbox + chat ─────────────────────────────────────────────── */}
-        <Route path="inbox" element={<Suspense fallback={<PageLoader />}><MobileInboxPage /></Suspense>} />
-        <Route path="inbox/:conversationId" element={<Suspense fallback={<PageLoader />}><MobileChatPage /></Suspense>} />
+        <Route path="inbox" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileInboxPage /></Suspense></RequireAuth>} />
+        <Route path="inbox/:conversationId" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileChatPage /></Suspense></RequireAuth>} />
 
         {/* ── Mobile orders (buyer) — also handles push notification deep-links ── */}
-        <Route path="orders" element={<Suspense fallback={<PageLoader />}><MobileOrdersPage /></Suspense>} />
+        <Route path="orders" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileOrdersPage /></Suspense></RequireAuth>} />
 
         {/* ── Mobile categories list — public browsing, no auth required ──────── */}
         <Route path="categories" element={<Suspense fallback={<PageLoader />}><MobileCategoriesPage /></Suspense>} />
 
         {/* ── Mobile profile / account hub — public, shows login CTA for guests ─ */}
         <Route path="profile" element={<Suspense fallback={<PageLoader />}><MobileProfilePage /></Suspense>} />
-        <Route path="profile/notifications" element={<Suspense fallback={<PageLoader />}><MobileNotificationsPage /></Suspense>} />
-        <Route path="profile/security" element={<Suspense fallback={<PageLoader />}><MobileSecurityPage /></Suspense>} />
-        <Route path="profile/balance" element={<Suspense fallback={<PageLoader />}><MobileBalancePage /></Suspense>} />
-        <Route path="profile/favourites" element={<Suspense fallback={<PageLoader />}><MobileFavouritesPage /></Suspense>} />
-        <Route path="profile/settings" element={<Suspense fallback={<PageLoader />}><MobileSettingsPage /></Suspense>} />
+        <Route path="profile/notifications" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileNotificationsPage /></Suspense></RequireAuth>} />
+        <Route path="profile/security" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileSecurityPage /></Suspense></RequireAuth>} />
+        <Route path="profile/balance" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileBalancePage /></Suspense></RequireAuth>} />
+        <Route path="profile/favourites" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileFavouritesPage /></Suspense></RequireAuth>} />
+        <Route path="profile/settings" element={<RequireAuth><Suspense fallback={<PageLoader />}><MobileSettingsPage /></Suspense></RequireAuth>} />
         <Route path="seller/promote" element={
           <RequireSellerAny>
             <Suspense fallback={<PageLoader />}><MobilePromotionalToolsPage /></Suspense>

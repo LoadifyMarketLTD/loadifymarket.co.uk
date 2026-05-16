@@ -77,7 +77,7 @@ export const handler: Handler = async (event) => {
     }
   }
 
-  const isAdmin = userRole === 'admin' || userRole === 'owner';
+  const isAdmin = userRole === 'admin';
 
   // ── RFQ system flag (Step 5.4) ────────────────────────────────────────────
   const flags = await getFeatureFlags(supabase);

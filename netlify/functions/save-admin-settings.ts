@@ -18,16 +18,9 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Handler, HandlerEvent } from '@netlify/functions';
+import { getBearerToken, jsonResponse, optionsResponse } from './_shared/http';
 
-const ALLOWED_ORIGIN = process.env.VITE_APP_URL || 'https://loadifymarket.co.uk';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
-
-const JSON_HEADERS = { ...corsHeaders, 'Content-Type': 'application/json' };
+const METHODS = 'POST, OPTIONS';
 
 // Only these keys may be upserted via this endpoint.
 const ALLOWED_KEYS = new Set(['feature_flags', 'maintenance_mode', 'platform_config']);
@@ -37,10 +30,8 @@ async function authenticateAdmin(event: HandlerEvent) {
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceRoleKey) return null;
 
-  const authHeader = event.headers['authorization'] || event.headers['Authorization'];
-  if (!authHeader?.startsWith('Bearer ')) return null;
-
-  const token = authHeader.substring(7).trim();
+  const token = getBearerToken(event);
+  if (!token) return null;
   const admin = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false },
   });
@@ -67,63 +58,39 @@ async function authenticateAdmin(event: HandlerEvent) {
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers: corsHeaders, body: '' };
+    return optionsResponse(METHODS);
   }
   if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers: JSON_HEADERS,
-      body: JSON.stringify({ error: 'Method not allowed' }),
-    };
+    return jsonResponse(405, { error: 'Method not allowed' }, METHODS);
   }
 
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !serviceRoleKey) {
-    return {
-      statusCode: 500,
-      headers: JSON_HEADERS,
-      body: JSON.stringify({ error: 'Server configuration error' }),
-    };
+    return jsonResponse(500, { error: 'Server configuration error' }, METHODS);
   }
 
   const auth = await authenticateAdmin(event);
   if (!auth) {
-    return {
-      statusCode: 401,
-      headers: JSON_HEADERS,
-      body: JSON.stringify({ error: 'Unauthorized' }),
-    };
+    return jsonResponse(401, { error: 'Unauthorized' }, METHODS);
   }
 
   let body: { settings?: Array<{ key: string; value: unknown }> } = {};
   try {
     body = JSON.parse(event.body || '{}');
   } catch {
-    return {
-      statusCode: 400,
-      headers: JSON_HEADERS,
-      body: JSON.stringify({ error: 'Invalid JSON body' }),
-    };
+    return jsonResponse(400, { error: 'Invalid JSON body' }, METHODS);
   }
 
   const { settings } = body;
   if (!Array.isArray(settings) || settings.length === 0) {
-    return {
-      statusCode: 400,
-      headers: JSON_HEADERS,
-      body: JSON.stringify({ error: 'settings must be a non-empty array' }),
-    };
+    return jsonResponse(400, { error: 'settings must be a non-empty array' }, METHODS);
   }
 
   // Validate all keys before writing anything
   for (const row of settings) {
     if (!ALLOWED_KEYS.has(row.key)) {
-      return {
-        statusCode: 400,
-        headers: JSON_HEADERS,
-        body: JSON.stringify({ error: `Unknown settings key: ${row.key}` }),
-      };
+      return jsonResponse(400, { error: `Unknown settings key: ${row.key}` }, METHODS);
     }
   }
 
@@ -140,16 +107,8 @@ export const handler: Handler = async (event) => {
   }
 
   if (errors.length > 0) {
-    return {
-      statusCode: 500,
-      headers: JSON_HEADERS,
-      body: JSON.stringify({ error: errors.join('; ') }),
-    };
+    return jsonResponse(500, { error: errors.join('; ') }, METHODS);
   }
 
-  return {
-    statusCode: 200,
-    headers: JSON_HEADERS,
-    body: JSON.stringify({ ok: true }),
-  };
+  return jsonResponse(200, { ok: true }, METHODS);
 };
