@@ -12,16 +12,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store';
 import { useAuthPromptStore } from '@/store/authPromptStore';
 import MobileBottomNav from '@/components/MobileBottomNav';
-
-interface NotificationRow {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  link: string | null;
-  isRead: boolean;
-  createdAt: string;
-}
+import type { AppNotification } from '@/types';
 
 const RELEVANT_TYPES = ['message', 'order', 'new_offer', 'offer'] as const;
 
@@ -40,7 +31,7 @@ export default function MobileNotificationsPage() {
   const { user } = useAuthStore();
   const { open: promptAuth } = useAuthPromptStore();
 
-  const [items, setItems] = useState<NotificationRow[]>([]);
+  const [items, setItems] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -58,7 +49,7 @@ export default function MobileNotificationsPage() {
         .in('type', RELEVANT_TYPES)
         .order('createdAt', { ascending: false })
         .limit(50);
-      setItems((data as NotificationRow[]) ?? []);
+      setItems((data as AppNotification[]) ?? []);
       setLoading(false);
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -72,7 +63,7 @@ export default function MobileNotificationsPage() {
     setItems((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
   };
 
-  const handleTap = (item: NotificationRow) => {
+  const handleTap = (item: AppNotification) => {
     if (!item.isRead) markRead(item.id);
     if (item.link) navigate(item.link);
   };

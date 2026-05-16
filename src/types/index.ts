@@ -405,6 +405,35 @@ export interface NotificationSettings {
   updatedAt?: string;
 }
 
+export type AppNotificationType =
+  | 'order'
+  | 'payment'
+  | 'shipment'
+  | 'delivery'
+  | 'return'
+  | 'dispute'
+  | 'message'
+  | 'new_offer'
+  | 'offer'
+  | 'system'
+  | 'general'
+  | 'product_question'
+  | 'listing_published'
+  | 'listing_sold'
+  | 'share_reminder'
+  | 'rfq'
+  | 'review';
+
+export interface AppNotification {
+  id: string;
+  type: AppNotificationType | string;
+  title: string;
+  message: string;
+  link: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
 export interface Message {
   id: string;
   conversationId: string;
@@ -425,6 +454,28 @@ export interface Conversation {
   productId?: string;
   lastMessageAt: string;
   createdAt: string;
+}
+
+export interface ConversationParticipant {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+}
+
+export interface InboxConversation {
+  id: string;
+  user1Id: string;
+  user2Id: string;
+  productId?: string | null;
+  lastMessageAt: string;
+  subject?: string | null;
+  isArchived?: boolean;
+  other: ConversationParticipant;
+  unreadCount: number;
+  lastMessagePreview: string | null;
+  lastMessageSenderId?: string | null;
+  productTitle?: string | null;
+  productImage?: string | null;
 }
 
 export interface Cart {
