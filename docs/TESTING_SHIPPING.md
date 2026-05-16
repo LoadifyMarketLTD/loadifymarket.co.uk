@@ -78,7 +78,7 @@
 **Steps:**
 1. Navigate to `/track-order` (no login required)
 2. Enter order number (e.g., "ORD-1234567890-ABC")
-3. Optionally enter email for verification
+3. Enter the email address used when placing the order (required)
 4. Click "Track Order"
 
 **Expected Results:**
@@ -87,6 +87,8 @@
 - Courier name and tracking number visible
 - Event timeline displayed in chronological order
 - If no shipment: "Your order is being prepared" message
+
+> **Note:** Email is mandatory. The backend rejects requests without a valid matching email to prevent order enumeration attacks.
 
 ### Scenario 6: Admin Shipment Management
 
@@ -160,7 +162,12 @@ curl -X PUT https://your-site.com/.netlify/functions/update-shipment-status/SHIP
 
 #### Track Shipment (Public)
 ```bash
-curl "https://your-site.com/.netlify/functions/track-shipment?orderNumber=ORD-123"
+curl -X POST https://your-site.com/.netlify/functions/track-shipment \
+  -H "Content-Type: application/json" \
+  -d '{
+    "orderNumber": "ORD-123",
+    "email": "buyer@example.com"
+  }'
 ```
 
 ## Database Testing
