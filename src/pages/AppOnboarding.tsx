@@ -56,7 +56,7 @@ const SLIDES: Slide[] = [
   {
     emoji: "💰",
     title: "Sell Easily",
-    subtitle: "List your products in minutes. 0% commission until December 2026.",
+    subtitle: "List your products in minutes. 0% commission until 31 December 2026.",
     accentColor: "#34D399",
   },
   {

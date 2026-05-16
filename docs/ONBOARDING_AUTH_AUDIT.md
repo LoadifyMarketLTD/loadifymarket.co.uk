@@ -69,7 +69,7 @@
 3. On success, fetches `role` from `public.users` table.
 4. Redirects based on role:
    - `seller` → `/seller`
-   - `admin` or `owner` → `/admin`
+   - `admin` → `/admin`
    - all others → `/dashboard`
 5. Honours a `?next=<url>` query parameter if present (used by `RequireAuth` guard).
 
@@ -135,8 +135,8 @@ Three guard components exist:
 | Component | File | Protects | Redirect if unauthorized |
 |-----------|------|----------|--------------------------|
 | `RequireAuth` | `src/components/auth/RequireAuth.tsx` | Any logged-in user | Redirects to `/login?next=<current-path>` |
-| `RequireSeller` | `src/components/auth/RequireSeller.tsx` | seller, admin, or owner roles + `isApproved=true` | Shows inline error card (not a redirect) |
-| `RequireAdmin` | `src/components/auth/RequireAdmin.tsx` | admin or owner roles | Shows inline "Access Denied" card (not a redirect) |
+| `RequireSeller` | `src/components/auth/RequireSeller.tsx` | seller or admin roles + `isApproved=true` | Shows inline error card (not a redirect) |
+| `RequireAdmin` | `src/components/auth/RequireAdmin.tsx` | admin role | Shows inline "Access Denied" card (not a redirect) |
 
 All guards nest `RequireAuth` so unauthenticated users always get redirected to `/login`.
 
@@ -161,7 +161,7 @@ All guards nest `RequireAuth` so unauthenticated users always get redirected to 
 | `buyer` | `users.role` constraint in DB | Default role. Access to `/dashboard/*` and `/pp/buyer/*` |
 | `seller` | `users.role` constraint in DB | Access to `/seller/*` and `/pp/seller/*` (subject to `isApproved`) |
 | `admin` | `users.role` constraint in DB | Access to `/admin/*` and `/pp/admin/*` |
-| `owner` | `users.role` constraint in DB | Same access as admin; treated as admin bypass |
+| `owner` | Deprecated legacy value (no longer active) | Removed from active role model; use `admin` |
 
 **Source:** `src/types/index.ts` line 1, `supabase/00_consolidated_schema.sql` lines 95-96.
 
@@ -176,13 +176,13 @@ There is also a `marketplaceRole` column (values: `carrier`, `broker`, `seller`)
 
 - At registration via `register.ts`: accepted roles are `'buyer'` or `'seller'` (validated server-side). However, the UI always sends `role: "buyer"` (see Section 1.1).
 - Admin can toggle user `isActive` via `AdminUsers.tsx` but **there is no UI to change a user's role**. Role promotion (e.g. buyer → seller, or promoting to admin) requires direct database access.
-- The DB comment in `00_consolidated_schema.sql` line 1702 notes: `-- UPDATE users SET role = 'owner'` — confirming the owner role is set manually.
+- Legacy SQL comments may still mention `owner`, but the active runtime role model is `buyer | seller | admin`.
 
 ### 2.4 Role access functions
 
 `src/lib/roleUtils.ts`:
-- `hasAdminAccess(user)` → `role === 'admin' || role === 'owner'`
-- `hasSellerAccess(user)` → `role === 'seller' || role === 'admin' || role === 'owner'`
+- `hasAdminAccess(user)` → `role === 'admin'`
+- `hasSellerAccess(user)` → `role === 'seller' || role === 'admin'`
 
 Mirrors RLS helper functions in the database (`is_admin_or_owner()`, `is_seller()`).
 
@@ -343,13 +343,13 @@ However, the signup page creates all users as buyers by default — there is no 
 
 ### 6.1 Where admin logs in
 
-Same `/login` page as all users. After login, `Login.tsx` checks `users.role` and redirects `admin` or `owner` to `/admin`.
+Same `/login` page as all users. After login, `Login.tsx` checks `users.role` and redirects `admin` to `/admin`.
 
 ### 6.2 Admin route protection
 
 `RequireAdmin` component (`src/components/auth/RequireAdmin.tsx`):
 - Wraps `RequireAuth` (redirects unauthenticated users to `/login`)
-- Checks `hasAdminAccess(user)` which returns `true` for `role === 'admin'` or `role === 'owner'`
+- Checks `hasAdminAccess(user)` which returns `true` for `role === 'admin'`
 - If authenticated but not admin: shows inline "Access Denied" card (does NOT redirect)
 
 ### 6.3 Admin dashboard
@@ -391,7 +391,7 @@ Admin **cannot** (missing features):
 
 ### 6.7 Owner bypass / master admin
 
-The `owner` role is treated identically to `admin` by all frontend guards (`hasAdminAccess` returns true for both). No special "owner-only" routes exist. The owner role must be set manually in the database (`UPDATE users SET role = 'owner' WHERE …`).
+The active role model is `buyer | seller | admin`. Legacy `owner` mentions are deprecated and should not be used for new users or policies.
 
 ### 6.8 AdminShell navigation items
 
@@ -490,7 +490,7 @@ supabase.auth.signInWithPassword()
        ├─ ?next= present → navigate to ?next= URL
        └─ ?next= absent → Fetch public.users.role
             ├─ role === 'seller' → /seller
-            ├─ role === 'admin' or 'owner' → /admin
+            ├─ role === 'admin' → /admin
             └─ any other role (buyer, guest, unknown) → /dashboard
 ```
 
@@ -531,7 +531,7 @@ POST /.netlify/functions/register
 id               UUID  PRIMARY KEY REFERENCES auth.users(id)
 email            TEXT  UNIQUE NOT NULL
 role             TEXT  NOT NULL DEFAULT 'buyer'
-                   CHECK (role IN ('guest','buyer','seller','admin','owner'))
+                   CHECK (legacy schema note; active app roles are buyer/seller/admin)
 marketplaceRole  TEXT  CHECK (value IN ('carrier','broker','seller'))
 firstName        TEXT
 lastName         TEXT
@@ -651,10 +651,10 @@ Exists in schema (`00_consolidated_schema.sql` line 987) for logging admin actio
 | Table | Policy | Rule |
 |-------|--------|------|
 | `seller_profiles` | SELECT | `USING (TRUE)` — publicly readable |
-| `seller_profiles` | UPDATE | Owner of row OR admin/owner role |
-| `seller_profiles` | INSERT | Admin/owner only |
-| `seller_profiles` | DELETE | Admin/owner only |
-| `users` | Policies | Owner of row OR admin/owner (from migration 100) |
+| `seller_profiles` | UPDATE | Owner of row OR admin role |
+| `seller_profiles` | INSERT | Admin only |
+| `seller_profiles` | DELETE | Admin only |
+| `users` | Policies | Owner of row OR admin (from migration 100) |
 
 **Key note:** `seller_profiles` SELECT is publicly readable (`USING TRUE`). This means any frontend code can read `isApproved` and `verificationStatus` without authentication — including the `RequireSeller` guard.
 

@@ -89,7 +89,7 @@
 ### 2.10 Admin
 - **Responsibility:** moderate listings, approve sellers, manage disputes, view reports.
 - **Implementation:** Pixel-perfect admin dashboard (`/admin/*`).
-- **Access:** `role = 'admin'` or `role = 'owner'`.
+- **Access:** `role = 'admin'`.
 
 ---
 
@@ -192,7 +192,7 @@ src/
 | API access | Row-Level Security (RLS) on every Postgres table |
 | Public data | `USING TRUE` or `status = 'active'` RLS policies |
 | Seller data | `USING (auth.uid() = seller_id)` |
-| Admin data | `USING (role IN ('admin','owner'))` |
+| Admin data | `USING (role = 'admin')` |
 | Payments | Stripe signature verification on every webhook |
 | Rate limiting | `checkRateLimit()` in shared Netlify function module |
 | Input validation | Zod schemas on form inputs; DB constraints as last line |

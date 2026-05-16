@@ -673,6 +673,8 @@ function App() {
         <Route path="dashboard" element={<DashboardRedirect />} />
         <Route path="shop" element={<Navigate to="/catalog" replace />} />
         <Route path="products" element={<Navigate to="/catalog" replace />} />
+        <Route path="blog" element={<Navigate to="/deals" replace />} />
+        <Route path="pricing" element={<Navigate to="/seller-terms" replace />} />
         <Route path="seller-register" element={<Navigate to="/register?type=seller" replace />} />
         <Route path="seller-dashboard" element={<Navigate to="/seller" replace />} />
         <Route path="admin-dashboard" element={<Navigate to="/admin" replace />} />

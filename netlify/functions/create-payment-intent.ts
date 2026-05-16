@@ -42,7 +42,10 @@ interface PaymentIntentBody {
   buyerId: string;
   shippingAddress?: Record<string, string>;
   billingAddress: Record<string, string>;
+  /** Client-provided shipping amount is intentionally ignored. */
   shippingAmount?: number;
+  /** UUID of the selected shipping method (required for goods carts). */
+  shippingMethodId?: string;
   shippingMethod?: string;
 }
 
@@ -93,15 +96,13 @@ export const handler: Handler = async (event) => {
     buyerId,
     shippingAddress,
     billingAddress,
-    shippingAmount: rawShippingAmount,
+    shippingMethodId,
     shippingMethod,
   } = body;
 
   if (!items?.length || !billingAddress) {
     return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
   }
-  const shippingAmount = typeof rawShippingAmount === 'number' ? rawShippingAmount : 0;
-
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
   // 5a. JWT verification — authentication is required for mobile payments.
@@ -206,6 +207,79 @@ export const handler: Handler = async (event) => {
       statusCode: 400,
       body: JSON.stringify({ error: 'Shipping address is required for physical product orders.' }),
     };
+  }
+
+  // Resolve shipping cost server-side from DB only (never trust client pricing).
+  // Physical-goods carts must provide a selected shipping method UUID.
+  let shippingAmount = 0;
+  let resolvedShippingMethodLabel = 'Standard';
+  const hasUUIDFormat = (v: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+
+  if (!isServiceOnlyCart) {
+    if (!shippingMethodId || !hasUUIDFormat(shippingMethodId)) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Please select a valid shipping method.' }),
+      };
+    }
+
+    const goodsProductIds = items
+      .filter((item) => productMap.get(item.productId)?.listingContext !== 'service')
+      .map((item) => item.productId);
+
+    const { data: productShippingRows, error: psError } = await supabase
+      .from('product_shipping')
+      .select('product_id, shipping_methods!method_id(id, active, name, shipping_rates(price))')
+      .eq('method_id', shippingMethodId)
+      .in('product_id', goodsProductIds);
+
+    if (psError) {
+      console.error('create-payment-intent: shipping method validation failed:', psError.message);
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Unable to validate shipping method. Please try again.' }),
+      };
+    }
+
+    if (!productShippingRows || productShippingRows.length === 0) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'The selected shipping method is not available for these products.' }),
+      };
+    }
+
+    const matchedGoodsProducts = new Set(productShippingRows.map((row) => row.product_id));
+    if (matchedGoodsProducts.size !== goodsProductIds.length) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'The selected shipping method is not available for all products in your cart.' }),
+      };
+    }
+
+    type ShippingMethodRow = {
+      id: string;
+      active: boolean;
+      name?: string | null;
+      shipping_rates: Array<{ price: number }> | null;
+    };
+    const rawMethod = (productShippingRows[0] as Record<string, unknown>)['shipping_methods'];
+    const method: ShippingMethodRow | null = Array.isArray(rawMethod)
+      ? (rawMethod[0] as ShippingMethodRow) ?? null
+      : (rawMethod as ShippingMethodRow | null);
+
+    if (!method || !method.active) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'The selected shipping method is no longer available.' }),
+      };
+    }
+
+    const rates = Array.isArray(method.shipping_rates) ? method.shipping_rates : [];
+    shippingAmount = rates.length > 0
+      ? Math.min(...rates.map((r) => Number(r.price)))
+      : 0;
+    resolvedShippingMethodLabel = method.name?.trim() || 'Standard';
   }
 
   // Build enriched items — price and sellerId come from the DB only.
@@ -316,7 +390,8 @@ export const handler: Handler = async (event) => {
           billingAddress,
           subtotal,
           shippingAmount,
-          shippingMethod: shippingMethod ?? 'Standard',
+          shippingMethodId: shippingMethodId ?? null,
+          shippingMethod: resolvedShippingMethodLabel || shippingMethod || 'Standard',
           total,
           buyerId: verifiedBuyerId,
           transferGroup,

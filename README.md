@@ -52,7 +52,7 @@ Independent and company UK sellers list and sell physical products across all co
 
 The platform charges a **7% commission** on each completed transaction, deducted before the seller's payout is processed via Stripe Connect. The platform acts solely as an intermediary — it does not own products, hold inventory, or operate a fulfilment depot. Sellers are responsible for their own inventory management and order fulfilment.
 
-> **Launch promotion:** 0% commission on all transactions until 1 July 2026. The standard 7% rate resumes automatically after that date.
+> **Launch promotion:** 0% commission on all transactions until **31 December 2026 23:59:59 UTC**. The standard 7% rate resumes automatically after that date.
 
 All prices are in **GBP**. VAT is calculated and displayed separately (flat-rate scheme, `GB375949535`). Sellers receive weekly payouts via Stripe Connect Express.
 
@@ -236,4 +236,3 @@ After running the seed scripts:
 ## 📄 License
 
 Copyright © 2025 XDrive Logistics Ltd. All rights reserved.
-
