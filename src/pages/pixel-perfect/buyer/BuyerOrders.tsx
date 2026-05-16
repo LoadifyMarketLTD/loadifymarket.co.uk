@@ -142,7 +142,14 @@ const BuyerOrders = () => {
       const url = URL.createObjectURL(blob);
       const win = window.open(url, '_blank', 'noopener,noreferrer');
       if (!win) {
-        // Fallback: download as .html if pop-up was blocked
+        // Popup was blocked — inform the user and fall back to direct download
+        toast({
+          title: 'Pop-up blocked',
+          description:
+            'Your browser blocked the invoice from opening. Please allow pop-ups for this site and try again. ' +
+            'The invoice has been downloaded as an HTML file as a fallback.',
+          variant: 'destructive',
+        });
         const a = document.createElement('a');
         a.href = url;
         a.download = `invoice-${orderNumber || orderId.slice(0, 8)}.html`;

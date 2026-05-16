@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import MainLayout from "@/layouts/MainLayout";
 import SEO from "@/components/SEO";
+import { supabase } from "@/lib/supabase";
 
 /* ── Password strength ─────────────────────────────────────────────── */
 const getStrength = (pw: string) => {
@@ -56,6 +57,7 @@ const Signup = () => {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [registrationDisabled, setRegistrationDisabled] = useState(false);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -89,6 +91,22 @@ const Signup = () => {
   const strength = getStrength(f.password);
   const passwordsMatch = f.confirmPassword.length > 0 && f.password === f.confirmPassword;
   const passwordsMismatch = f.confirmPassword.length > 0 && f.password !== f.confirmPassword;
+
+  // Check registration feature flags on mount and whenever the role toggle changes
+  useEffect(() => {
+    void supabase
+      .from("platform_settings")
+      .select("value")
+      .eq("key", "feature_flags")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.value && typeof data.value === "object") {
+          const flags = data.value as Record<string, boolean>;
+          const flag = isSeller ? flags.sellerRegistration : flags.buyerRegistration;
+          setRegistrationDisabled(flag === false);
+        }
+      });
+  }, [isSeller]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -280,6 +298,18 @@ const Signup = () => {
             </div>
 
           </div>
+
+          {/* ── REGISTRATION DISABLED BANNER ──────────────────────── */}
+          {registrationDisabled && (
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-300 px-4 py-3 mt-2">
+              <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-800">
+                <strong>{isSeller ? "Seller" : "Buyer"} registration is currently disabled.</strong>{" "}
+                New accounts cannot be created at this time. Please check back later or{" "}
+                <Link to="/login" className="underline font-semibold hover:text-amber-900">sign in</Link> if you already have an account.
+              </p>
+            </div>
+          )}
 
           {/* ── ERROR BANNER ──────────────────────────────────────── */}
           {error && (
@@ -658,7 +688,7 @@ const Signup = () => {
                 <div className="flex flex-col items-start lg:items-end gap-2 shrink-0">
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || registrationDisabled}
                     className="px-14 py-3 text-white text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full lg:min-w-[280px]"
                     style={{ background: "linear-gradient(135deg, #B45309, #FBBF24)" }}
                   >
