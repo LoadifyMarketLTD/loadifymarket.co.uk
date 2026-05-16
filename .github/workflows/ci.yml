@@ -77,10 +77,66 @@ jobs:
         run: npm test
 
   # ── 4. Build ───────────────────────────────────────────────────────────────
+  migration-health:
+    name: Migration Health
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Validate migration inventory and health script
+        run: |
+          set -euo pipefail
+          test -s supabase/VERIFY_migration_health.sql
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          migrations = sorted(Path('supabase').glob('[0-9]*_*.sql'))
+          if not migrations:
+              raise SystemExit('No numbered migration files found in supabase/')
+          nums = []
+          for m in migrations:
+              mm = re.match(r'^(\d+)_', m.name)
+              if not mm:
+                  continue
+              nums.append(int(mm.group(1)))
+          if not nums:
+              raise SystemExit('No numeric migration prefixes found.')
+          if nums != sorted(nums):
+              raise SystemExit('Migration prefixes are not sorted.')
+          print(f'Migration files checked: {len(nums)}; first={nums[0]} last={nums[-1]}')
+          PY
+
+  smoke-critical:
+    name: Critical Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [test]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Stripe/Auth/Orders smoke tests
+        run: >
+          npx vitest run
+          netlify/functions/__tests__/register.test.ts
+          netlify/functions/__tests__/create-checkout.test.ts
+          netlify/functions/__tests__/checkout-safety.test.ts
+          netlify/functions/__tests__/stripe-webhook-commission.test.ts
+
   build:
     name: Production Build
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test]
+    needs: [lint, typecheck, test, migration-health, smoke-critical]
     permissions:
       contents: read
     env:
@@ -110,4 +166,3 @@ jobs:
           name: dist
           path: dist/
           retention-days: 7
-

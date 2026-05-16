@@ -52,7 +52,7 @@ const HeroSection = () => (
 
           {/* Description */}
           <p className="text-lg text-[#C9D0D6] mb-7">
-            Sell with 0% commission until 2026 or discover products from trusted UK sellers — all in one secure platform.
+            Sell with 0% commission until 31 December 2026 or discover products from trusted UK sellers — all in one secure platform.
           </p>
 
           {/* CTAs */}
