@@ -208,12 +208,18 @@ export const handler: Handler = async (event) => {
       authError.message.toLowerCase().includes('already exists') ||
       authError.message.toLowerCase().includes('duplicate');
 
+    // Log the raw Supabase error server-side for diagnostics; never expose it
+    // to the client to avoid leaking internal API error details.
+    if (!isDuplicate) {
+      console.error('register: auth.admin.createUser failed:', authError.message);
+    }
+
     return {
       statusCode: isDuplicate ? 200 : 400,
       body: JSON.stringify(
         isDuplicate
           ? { message: "We've received your registration request. If this email address is not already in use, your account has been created. Please check your inbox." }
-          : { error: authError.message }
+          : { error: 'Registration failed. Please check your details and try again.' }
       ),
     };
   }

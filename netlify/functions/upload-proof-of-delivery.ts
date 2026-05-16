@@ -353,9 +353,7 @@ export const handler: Handler = async (event) => {
     console.error('Error handling proof of delivery:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        error: error instanceof Error ? error.message : 'Failed to handle proof of delivery',
-      }),
+      body: JSON.stringify({ error: 'Failed to handle proof of delivery' }),
     };
   }
 };
