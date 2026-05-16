@@ -253,7 +253,8 @@ CREATE POLICY "orders_select" ON orders FOR SELECT
 CREATE POLICY "orders_insert" ON orders FOR INSERT
   WITH CHECK (auth.uid() = "buyerId" OR is_admin());
 CREATE POLICY "orders_update" ON orders FOR UPDATE
-  USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin());
+  USING (is_admin())
+  WITH CHECK (is_admin());
 CREATE POLICY "orders_delete" ON orders FOR DELETE USING (is_admin());
 
 -- ── ORDER ITEMS ──────────────────────────────────────────────────
