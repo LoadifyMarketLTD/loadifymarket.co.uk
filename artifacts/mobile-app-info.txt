@@ -1,0 +1,4 @@
+version: 0.0.0
+commit hash: 9870ee7b6a1801f5016a52a21ae9729e6926b2f3
+build date: 2026-05-17T15:35:01Z
+environment: sandbox-local-agent

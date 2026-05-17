@@ -205,7 +205,7 @@ function GuestView() {
           height: 48,
           paddingInline: 40,
           borderRadius: 9999,
-          background: 'linear-gradient(135deg, rgba(212,175,55,1) 0%, rgba(212,175,55,1) 100%)',
+          background: 'hsl(var(--primary))',
           border: 'none',
           cursor: 'pointer',
           fontSize: 15,

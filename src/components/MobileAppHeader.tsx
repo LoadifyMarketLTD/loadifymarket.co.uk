@@ -124,7 +124,6 @@ export default function MobileAppHeader() {
                 minWidth: 17,
                 height: 17,
                 borderRadius: 9999,
-                color: '#000',
                 fontSize: 9,
                 fontWeight: 700,
                 display: 'flex',
@@ -133,7 +132,7 @@ export default function MobileAppHeader() {
                 paddingLeft: 2,
                 paddingRight: 2,
               }}
-              className="bg-primary"
+              className="bg-primary text-black"
             >
               {unread > 9 ? '9+' : unread}
             </span>

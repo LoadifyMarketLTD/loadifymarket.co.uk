@@ -65,12 +65,12 @@ export default function MobileCategoryShortcuts() {
                   paddingLeft: 14,
                   paddingRight: 14,
                   borderRadius: 9999,
-                  background: active
-                    ? 'rgba(232,160,32,0.12)'
-                    : 'rgba(255,255,255,0.06)',
-                  border: active
-                    ? '1.5px solid #E8A020'
-                    : '1px solid rgba(255,255,255,0.14)',
+                   background: active
+                     ? 'rgba(232,160,32,0.12)'
+                     : 'rgba(255,255,255,0.06)',
+                   border: active
+                     ? '1.5px solid rgba(212,175,55,1)'
+                     : '1px solid rgba(255,255,255,0.14)',
                   fontSize: 'clamp(13px, 3.6vw, 14px)',
                   fontWeight: active ? 600 : 500,
                   color: active ? 'rgba(212,175,55,1)' : 'rgba(255,255,255,0.85)',
@@ -94,4 +94,3 @@ export default function MobileCategoryShortcuts() {
     </section>
   );
 }
-

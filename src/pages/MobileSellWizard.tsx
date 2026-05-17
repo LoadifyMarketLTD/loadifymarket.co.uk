@@ -87,7 +87,7 @@ function FieldInput({
   const baseStyle: React.CSSProperties = {
     width: '100%',
     background: 'rgba(23,24,30,1)',
-    border: `1px solid ${error ? '#F87171' : 'rgba(255,255,255,0.12)'}`,
+    border: `1px solid ${error ? 'hsl(var(--danger))' : 'rgba(255,255,255,0.12)'}`,
     borderRadius: '14px',
     color: 'rgba(255,255,255,1)',
     fontSize: '15px',
@@ -519,7 +519,7 @@ export default function MobileSellWizard() {
                 style={{
                   aspectRatio: '1',
                   borderRadius: '14px',
-                  border: `2px dashed ${fieldErrors.photos ? '#F87171' : 'rgba(212,175,55,0.35)'}`,
+                  border: `2px dashed ${fieldErrors.photos ? 'hsl(var(--danger))' : 'rgba(212,175,55,0.35)'}`,
                   background: fieldErrors.photos ? 'rgba(248,113,113,0.04)' : 'rgba(212,175,55,0.04)',
                   display: 'flex',
                   flexDirection: 'column',
@@ -692,7 +692,7 @@ export default function MobileSellWizard() {
                     background: 'rgba(23,24,30,1)',
                     border: '1px solid rgba(255,255,255,0.12)',
                     borderRadius: '14px',
-                    color: form.condition ? '#FFFFFF' : 'rgba(255,255,255,0.40)',
+                    color: form.condition ? 'hsl(var(--foreground))' : 'rgba(255,255,255,0.40)',
                     fontSize: '15px',
                     padding: '14px 16px',
                     outline: 'none',
@@ -742,7 +742,7 @@ export default function MobileSellWizard() {
             borderRadius: '16px',
             background: busy
               ? 'rgba(212,175,55,0.40)'
-              : 'linear-gradient(135deg, #D4AF37, #D4AF37)',
+              : 'hsl(var(--primary))',
             border: 'none',
             fontSize: '16px',
             fontWeight: 700,
