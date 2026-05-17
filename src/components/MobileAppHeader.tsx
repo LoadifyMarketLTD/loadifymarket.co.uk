@@ -96,19 +96,7 @@ export default function MobileAppHeader() {
         <button
           onClick={() => navigate('/inbox')}
           aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
-          style={{
-            position: 'relative',
-            width: 44,
-            height: 44,
-            padding: 0,
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
+          className="relative h-11 w-11 shrink-0 cursor-pointer border-0 bg-transparent p-0 flex items-center justify-center"
         >
           <Bell
             style={{ width: 22, height: 22 }} className="text-white"
@@ -146,20 +134,7 @@ export default function MobileAppHeader() {
         <button
           onClick={() => setSearchOpen(true)}
           aria-label="Search for items or members"
-          className="bg-white/[0.07]"
-          style={{
-            flex: 1,
-            height: 44,
-            border: '1px solid rgba(255,255,255,0.10)',
-            borderRadius: 12,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            paddingLeft: 14,
-            paddingRight: 14,
-            cursor: 'pointer',
-            textAlign: 'left',
-          }}
+          className="h-11 flex-1 rounded-xl border border-white/10 bg-white/[0.07] px-3.5 text-left flex items-center gap-2.5 cursor-pointer"
         >
           <Search
             style={{ width: 18, height: 18, flexShrink: 0 }} className="text-white/45"
@@ -187,11 +162,7 @@ export default function MobileAppHeader() {
         <button
           aria-label="Filter"
           onClick={() => navigate('/catalog')}
-          className="bg-primary/10 border border-primary/40 rounded-xl flex items-center justify-center shrink-0 cursor-pointer"
-          style={{
-            width: 44,
-            height: 44,
-          }}
+          className="h-11 w-11 shrink-0 rounded-xl border border-[#f2b84b66] bg-[#1c1400] flex items-center justify-center cursor-pointer"
         >
           <Filter
             style={{ width: 18, height: 18 }}

@@ -21,6 +21,8 @@ interface DashboardStats {
   pendingShipments: number;
   lowStockItems: number;
   sellerRating: number;
+  todayOrders: number;
+  todayMessages: number | null;
 }
 
 interface RecentOrder {
@@ -72,7 +74,10 @@ const SellerDashboard = () => {
     if (!user) return;
     const load = async () => {
       try {
-        const [productsRes, allOrdersRes, profileRes, balanceRes] = await Promise.all([
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+
+        const [productsRes, allOrdersRes, profileRes, balanceRes, todayMessagesRes] = await Promise.all([
           supabase
             .from("products")
             .select("id, title, views, addToCartCount, stockQuantity, isActive")
@@ -92,6 +97,11 @@ const SellerDashboard = () => {
             .select("availableAmount, totalEarned")
             .eq("sellerId", user.id)
             .maybeSingle(),
+          supabase
+            .from("messages")
+            .select("id", { count: "exact", head: true })
+            .eq("receiverId", user.id)
+            .gte("createdAt", startOfToday.toISOString()),
         ]);
 
         const products = productsRes.data ?? [];
@@ -111,6 +121,8 @@ const SellerDashboard = () => {
         const lowStockItems = products.filter((p) => p.stockQuantity !== null && p.stockQuantity > 0 && p.stockQuantity <= 5).length;
 
         const uniqueBuyerIds = [...new Set(orders.map((o) => o.buyerId).filter(Boolean))];
+        const todayOrders = orders.filter((o) => new Date(o.createdAt) >= startOfToday).length;
+
         setStats({
           totalRevenue,
           activeOrders,
@@ -119,6 +131,8 @@ const SellerDashboard = () => {
           pendingShipments: orders.filter((o) => o.status === "paid" || o.status === "packed").length,
           lowStockItems,
           sellerRating: profileRes.data?.rating ?? 0,
+          todayOrders,
+          todayMessages: todayMessagesRes.count ?? null,
         });
 
         // Resolve buyer names for recent orders
@@ -195,7 +209,7 @@ const SellerDashboard = () => {
   const statsCards = stats
     ? [
         {
-          label: "Total Revenue",
+          label: "Total Revenue (All Time)",
           value: `£${stats.totalRevenue.toLocaleString("en-GB", { maximumFractionDigits: 0 })}`,
           change: "",
           trend: "up" as const,
@@ -204,7 +218,7 @@ const SellerDashboard = () => {
           to: "/seller/orders",
         },
         {
-          label: "Active Orders",
+          label: "Active Orders (Current)",
           value: String(stats.activeOrders),
           change: "",
           trend: "up" as const,
@@ -213,7 +227,7 @@ const SellerDashboard = () => {
           to: "/seller/orders",
         },
         {
-          label: "Products Listed",
+          label: "Products Listed (Total)",
           value: String(stats.productsListed),
           change: "",
           trend: "up" as const,
@@ -240,7 +254,7 @@ const SellerDashboard = () => {
 
       {/* Quick Actions — top priority, horizontal row */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
-        <Button size="sm" className="bg-primary hover:bg-primary-hover text-black h-10 text-sm font-semibold" asChild>
+        <Button size="sm" className="bg-primary hover:bg-primary-hover text-black h-10 text-sm font-extrabold shadow-[0_0_18px_rgba(212,175,55,0.35)] ring-1 ring-primary/40" asChild>
           <Link to="/seller/products/new">
             <Package className="mr-1.5 h-4 w-4" /> Add Product
           </Link>
@@ -311,6 +325,21 @@ const SellerDashboard = () => {
         </div>
       )}
 
+      {/* Today mini block */}
+      <div className="bg-card rounded-lg border border-border p-3">
+        <h2 className="text-sm font-semibold text-foreground mb-2">Today</h2>
+        {loading || !stats ? (
+          <p className="text-xs text-muted-foreground">No activity yet today</p>
+        ) : stats.todayOrders === 0 && (stats.todayMessages ?? 0) === 0 ? (
+          <p className="text-xs text-muted-foreground">No activity yet today</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <p className="text-muted-foreground">Orders: <span className="text-foreground font-semibold">{stats.todayOrders}</span></p>
+            <p className="text-muted-foreground">Messages: <span className="text-foreground font-semibold">{stats.todayMessages ?? 0}</span></p>
+          </div>
+        )}
+      </div>
+
       {/* Recent Orders — mobile card list */}
       <div className="bg-card rounded-lg border border-border">
         <div className="flex items-center justify-between px-3 py-2.5 border-b border-border">
@@ -321,7 +350,10 @@ const SellerDashboard = () => {
           {loading ? (
             <div className="px-3 py-4 text-center text-muted-foreground text-xs">Loading orders…</div>
           ) : recentOrders.length === 0 ? (
-            <div className="px-3 py-4 text-center text-muted-foreground text-xs">No orders yet.</div>
+            <div className="px-3 py-4 text-center text-muted-foreground text-xs">
+              <p>No orders yet.</p>
+              <p className="mt-1">Start by listing your first product.</p>
+            </div>
           ) : (
             recentOrders.map((order) => (
               <Link key={order.id} to={`/seller/orders`} className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30 active:bg-muted/50 transition-colors">
@@ -354,7 +386,10 @@ const SellerDashboard = () => {
           {loading ? (
             <div className="px-3 py-4 text-center text-muted-foreground text-xs">Loading…</div>
           ) : topProducts.length === 0 ? (
-            <div className="px-3 py-4 text-center text-muted-foreground text-xs">No products yet.</div>
+            <div className="px-3 py-4 text-center text-muted-foreground text-xs">
+              <p>No products yet.</p>
+              <p className="mt-1">Start by listing your first product.</p>
+            </div>
           ) : (
             topProducts.map((prod, i) => (
               <div key={prod.id} className="flex items-center gap-3 px-3 py-2.5">
@@ -364,8 +399,8 @@ const SellerDashboard = () => {
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-foreground truncate">{prod.title}</p>
                   <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground mt-0.5">
-                    <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {prod.views}</span>
-                    <span className="flex items-center gap-1"><ShoppingCart className="h-3 w-3" /> {prod.addToCartCount}</span>
+                    <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> Sales: £{prod.revenue.toLocaleString("en-GB", { maximumFractionDigits: 0 })}</span>
+                    <span className="flex items-center gap-1"><ShoppingCart className="h-3 w-3" /> Orders: {prod.addToCartCount}</span>
                   </div>
                 </div>
               </div>

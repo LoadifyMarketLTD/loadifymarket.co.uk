@@ -66,6 +66,8 @@ function categoryIcon(slug: string): LucideIcon {
 export default function MobileCategoriesPage() {
   const navigate = useNavigate();
   const { categories, loading } = useCategories();
+  const visibleCategories = categories.slice(0, 12);
+  const hasMoreCategories = categories.length > visibleCategories.length;
 
   return (
     <div
@@ -138,7 +140,7 @@ export default function MobileCategoriesPage() {
 
         {/* DB-driven category rows */}
         {!loading &&
-          categories.map((cat) => {
+          visibleCategories.map((cat) => {
             const Icon = categoryIcon(cat.slug);
             return (
               <Link
@@ -160,11 +162,34 @@ export default function MobileCategoriesPage() {
                 </span>
                 <ChevronRight
                   className="h-[18px] w-[18px] shrink-0 text-foreground/30"
-                aria-hidden="true"
-              />
-            </Link>
-          );
-        })}
+                  aria-hidden="true"
+                />
+              </Link>
+            );
+          })}
+        {!loading && hasMoreCategories && (
+          <Link
+            to="/catalog"
+            className="flex items-center px-4 active:bg-white/[0.03] transition-colors"
+            style={{
+              height: 56,
+              borderBottom: '1px solid rgba(255,255,255,0.05)',
+              textDecoration: 'none',
+            }}
+          >
+            <LayoutGrid
+              className="h-[22px] w-[22px] shrink-0 text-primary"
+              aria-hidden="true"
+            />
+            <span className="flex-1 ml-3 text-[16px] font-medium text-white">
+              View All Categories
+            </span>
+            <ChevronRight
+              className="h-[18px] w-[18px] shrink-0 text-foreground/30"
+              aria-hidden="true"
+            />
+          </Link>
+        )}
       </div>
 
       <MobileBottomNav />

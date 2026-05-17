@@ -36,32 +36,17 @@ function NavItem({
   return (
     <Link
       to={to}
-      className="flex flex-col items-center gap-1 px-3 py-2"
+      className="flex min-h-11 flex-col items-center justify-center gap-1 px-3 py-2 no-underline"
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}
-      style={{ textDecoration: 'none', minHeight: '44px', justifyContent: 'center' }}
     >
       <Icon
-        className={isActive ? 'text-primary' : 'text-muted-foreground'}
-        style={{
-          width: '22px',
-          height: '22px',
-          transition: 'color 0.2s',
-        }}
+        className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-primary' : 'text-white/45'}`}
         strokeWidth={isActive ? 2.2 : 1.8}
         aria-hidden="true"
       />
       <span
-        className={isActive ? 'text-primary font-bold' : 'text-foreground/40 font-normal'}
-        style={{
-          fontSize: '10px',
-          lineHeight: 1,
-          transition: 'color 0.2s',
-          maxWidth: '52px',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
+        className={`max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap text-[10px] leading-none transition-colors ${isActive ? 'font-bold text-primary' : 'font-normal text-white/40'}`}
       >
         {label}
       </span>
@@ -102,12 +87,11 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
       onClick={handleInbox}
       className="flex flex-col items-center gap-1 px-3 py-2"
       aria-label={`Inbox${unread > 0 ? `, ${unread} unread` : ''}`}
-      style={{ background: 'none', border: 'none', cursor: 'pointer', minHeight: '44px', justifyContent: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', minHeight: '44px' }}
     >
-      <div style={{ position: 'relative' }}>
+      <div className="relative">
         <Mail
-          className={isActive ? 'text-primary' : 'text-muted-foreground'}
-          style={{ width: '22px', height: '22px', transition: 'color 0.2s' }}
+          className={`h-[22px] w-[22px] transition-colors ${isActive ? 'text-primary' : 'text-white/45'}`}
           strokeWidth={isActive ? 2.2 : 1.8}
           aria-hidden="true"
         />
@@ -132,15 +116,7 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
         )}
       </div>
       <span
-        className={isActive ? 'text-primary font-bold' : 'text-foreground/40'}
-        style={{
-          fontSize: '10px',
-          lineHeight: 1,
-          maxWidth: '52px',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
+        className={`max-w-[52px] overflow-hidden text-ellipsis whitespace-nowrap text-[10px] leading-none ${isActive ? 'font-bold text-primary' : 'font-normal text-white/40'}`}
       >
         Inbox
       </span>
@@ -203,7 +179,7 @@ export default function MobileBottomNav() {
               boxShadow: '0 0 24px rgba(200,134,10,0.50), 0 6px 16px rgba(0,0,0,0.65)',
             }}
           >
-            <Plus style={{ width: '24px', height: '24px' }} strokeWidth={2.5} aria-hidden="true" />
+            <Plus className="h-6 w-6" strokeWidth={2.5} aria-hidden="true" />
           </div>
           <span style={{ fontSize: '10px', fontWeight: 600, lineHeight: 1, marginTop: '1px' }}>
             Sell

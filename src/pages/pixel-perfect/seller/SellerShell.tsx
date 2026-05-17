@@ -48,6 +48,7 @@ const SidebarContent = ({ displayName, onNavClick, onLogout }: SidebarContentPro
         <div>
           <p className="text-sm font-semibold text-foreground leading-none">Seller Hub</p>
           <p className="text-[10px] text-muted-foreground mt-0.5 truncate max-w-[140px]">{displayName}</p>
+          <p className="text-[10px] text-muted-foreground/80 mt-0.5">Your seller dashboard</p>
         </div>
       </div>
     </div>
@@ -148,6 +149,7 @@ const SellerShell = () => {
           <div className="flex-1 flex flex-col items-center justify-center">
             <span className="font-bold text-foreground text-[15px] leading-tight">Seller Hub</span>
             <span className="text-[10px] text-muted-foreground leading-tight truncate max-w-[160px]">{displayName}</span>
+            <span className="text-[10px] text-muted-foreground/80 leading-tight">Your seller dashboard</span>
           </div>
           <NavLink to="/seller/notifications" aria-label="Notifications" className="h-10 w-10 shrink-0 flex items-center justify-center text-muted-foreground hover:text-foreground">
             <span className="relative inline-flex">

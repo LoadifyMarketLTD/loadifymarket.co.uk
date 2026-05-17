@@ -8,7 +8,7 @@ interface DrawerCTACardsProps {
 const CTA_CARDS = [
   {
     icon: Tag,
-    label: "Price Crunch",
+    label: "Insights",
     route: "/catalog?filter=price-crunch",
     iconClass: "text-primary",
   },
@@ -32,13 +32,13 @@ const CTA_CARDS = [
   },
   {
     icon: Package,
-    label: "Bulk Listings",
+    label: "Add Products",
     route: "/catalog?filter=pallet-deals",
     iconClass: "text-orange-400",
   },
   {
     icon: XCircle,
-    label: "Delisted",
+    label: "Inactive Products",
     route: "/catalog?filter=delisted",
     iconClass: "text-danger",
   },
