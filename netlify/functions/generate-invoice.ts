@@ -233,13 +233,13 @@ export const handler: Handler = async (event) => {
   <title>Invoice ${escapeHtml(orderNum)} — Loadify Market</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; color: #111827; background: #fff; padding: 40px; max-width: 800px; margin: 0 auto; font-size: 14px; }
+    body { font-family: system-ui, -apple-system, sans-serif; color: #121A2B; background: #fff; padding: 40px; max-width: 800px; margin: 0 auto; font-size: 14px; }
     h1 { font-size: 28px; font-weight: 700; color: #0A1930; }
     .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
     .brand { color: #0A1930; }
     .brand span { display: block; font-size: 11px; color: #6b7280; margin-top: 4px; }
     .invoice-meta { text-align: right; }
-    .invoice-meta h2 { font-size: 20px; font-weight: 600; color: #111827; margin-bottom: 6px; }
+    .invoice-meta h2 { font-size: 20px; font-weight: 600; color: #121A2B; margin-bottom: 6px; }
     .invoice-meta p { font-size: 12px; color: #6b7280; line-height: 1.6; }
     .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 32px; }
     .party h3 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; margin-bottom: 8px; }
@@ -251,7 +251,7 @@ export const handler: Handler = async (event) => {
     .totals table { margin-bottom: 0; }
     .totals td { padding: 6px 12px; font-size: 13px; }
     .totals td:last-child { text-align: right; }
-    .totals .grand-total td { font-weight: 700; font-size: 15px; border-top: 2px solid #111827; padding-top: 10px; }
+    .totals .grand-total td { font-weight: 700; font-size: 15px; border-top: 2px solid #121A2B; padding-top: 10px; }
     .footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #9ca3af; text-align: center; line-height: 1.8; }
     .status-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; text-transform: capitalize; background: #dcfce7; color: #166534; }
     @media print {

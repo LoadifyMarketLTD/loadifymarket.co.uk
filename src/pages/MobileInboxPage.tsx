@@ -346,7 +346,7 @@ export default function MobileInboxPage() {
                   padding: "10px 18px",
                   fontSize: "13px",
                   fontWeight: isActive ? 700 : 400,
-                  color: isActive ? "#D4AF37" : "rgba(255,255,255,0.65)",
+                  color: isActive ? "hsl(var(--primary))" : "rgba(255,255,255,0.65)",
                   whiteSpace: "nowrap",
                   background: "transparent",
                   border: "none",
@@ -472,7 +472,7 @@ export default function MobileInboxPage() {
                         style={{
                           fontSize: "14px",
                           fontWeight: conv.unreadCount > 0 ? 700 : 600,
-                          color: conv.unreadCount > 0 ? "#FFFFFF" : "rgba(255,255,255,0.80)",
+                          color: conv.unreadCount > 0 ? "hsl(var(--foreground))" : "rgba(255,255,255,0.80)",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",

@@ -86,7 +86,7 @@ export default function MobileProductCard({
           >
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <rect x="3" y="3" width="18" height="18" rx="3" fill="rgba(200,169,106,1)" opacity="0.25" />
-              <path d="M3 16l5-5 4 4 3-3 6 6" stroke="#C8A96A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3 16l5-5 4 4 3-3 6 6" stroke="rgba(200,169,106,1)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               <circle cx="8.5" cy="8.5" r="1.5" fill="rgba(200,169,106,1)" opacity="0.6" />
             </svg>
             <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.03em' }} className="text-muted-foreground">No Image</span>
