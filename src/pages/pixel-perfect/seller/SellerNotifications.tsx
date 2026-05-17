@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Bell, CheckCheck, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,11 +25,31 @@ const typeColor: Record<string, string> = {
   general:          "bg-muted text-muted-foreground",
 };
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", {
-    day: "numeric", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
-  });
+function formatRelativeTime(iso: string) {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffMinutes = Math.max(0, Math.floor(diffMs / 60000));
+  if (diffMinutes < 1) return "just now";
+  if (diffMinutes < 60) return `${diffMinutes} min ago`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays}d ago`;
+  const diffWeeks = Math.floor(diffDays / 7);
+  return `${diffWeeks}w ago`;
+}
+
+function extractConversationId(link?: string | null) {
+  if (!link) return null;
+  const match = link.match(/\/inbox\/([^/?#]+)/);
+  return match?.[1] ?? null;
+}
+
+interface NotificationGroup {
+  key: string;
+  latest: AppNotification;
+  items: AppNotification[];
+  count: number;
+  unreadCount: number;
 }
 
 const SellerNotifications = () => {
@@ -86,15 +106,16 @@ const SellerNotifications = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  const markAsRead = async (id: string) => {
+  const markAsRead = async (ids: string[]) => {
+    if (ids.length === 0) return;
     try {
       const { error } = await supabase
         .from("notifications")
         .update({ isRead: true, readAt: new Date().toISOString() })
-        .eq("id", id);
+        .in("id", ids);
       if (error) throw error;
       setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+        prev.map((n) => (ids.includes(n.id) ? { ...n, isRead: true } : n))
       );
     } catch {
       toast({ title: "Failed to mark notification as read", variant: "destructive" });
@@ -120,6 +141,37 @@ const SellerNotifications = () => {
   };
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const groupedNotifications = useMemo<NotificationGroup[]>(() => {
+    const groups = new Map<string, AppNotification[]>();
+
+    notifications.forEach((n) => {
+      const conversationId = extractConversationId(n.link);
+      const key = conversationId
+        ? `conversation:${conversationId}:${n.type}`
+        : `text:${n.type}:${n.title.trim().toLowerCase()}:${n.message.trim().toLowerCase()}`;
+      const existing = groups.get(key);
+      if (existing) {
+        existing.push(n);
+      } else {
+        groups.set(key, [n]);
+      }
+    });
+
+    return Array.from(groups.entries())
+      .map(([key, items]) => {
+        const sorted = [...items].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        return {
+          key,
+          latest: sorted[0],
+          items: sorted,
+          count: sorted.length,
+          unreadCount: sorted.filter((i) => !i.isRead).length,
+        };
+      })
+      .sort((a, b) => new Date(b.latest.createdAt).getTime() - new Date(a.latest.createdAt).getTime());
+  }, [notifications]);
 
   return (
     <div className="p-6 max-w-3xl space-y-6">
@@ -161,11 +213,23 @@ const SellerNotifications = () => {
         </div>
       ) : (
         <div className="space-y-2">
-          {notifications.map((n) => (
+          {groupedNotifications.map((group) => {
+            const n = group.latest;
+            const isRead = group.unreadCount === 0;
+            const groupedTitle =
+              group.count === 1
+                ? n.title
+                : n.type === "offer_received"
+                  ? `${group.count} offers received for this conversation`
+                  : n.type === "message"
+                    ? `${group.count} new messages in this conversation`
+                    : `${group.count} similar notifications`;
+
+            return (
             <div
-              key={n.id}
+              key={group.key}
               className={`rounded-lg border p-4 transition-colors ${
-                n.isRead
+                isRead
                   ? "border-border bg-card"
                   : "border-primary/20 bg-primary/5"
               }`}
@@ -179,29 +243,37 @@ const SellerNotifications = () => {
                     >
                       {formatNotificationTypeLabel(n.type)}
                     </Badge>
-                    {!n.isRead && (
+                    {!isRead && (
                       <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
                     )}
+                    {group.count > 1 && (
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        {group.count} items
+                      </Badge>
+                    )}
                   </div>
-                  <p className="text-sm font-medium text-foreground mt-1">{n.title}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
+                  <p className="text-sm font-medium text-foreground mt-1">{groupedTitle}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {group.count > 1 ? `Latest: ${n.message}` : n.message}
+                  </p>
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    {formatDate(n.createdAt)}
+                    {formatRelativeTime(n.createdAt)}
                   </p>
                 </div>
-                {!n.isRead && (
+                {!isRead && (
                   <Button
                     variant="ghost"
                     size="sm"
                     className="text-xs shrink-0"
-                    onClick={() => markAsRead(n.id)}
+                    onClick={() => markAsRead(group.items.map((item) => item.id))}
                   >
                     Mark read
                   </Button>
                 )}
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
     </div>

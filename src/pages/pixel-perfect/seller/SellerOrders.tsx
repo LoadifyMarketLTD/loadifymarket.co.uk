@@ -200,7 +200,7 @@ const SellerOrders = () => {
           ) : filtered.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground text-sm">
               <ShoppingCart className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              {search ? "No orders match your search." : "No orders yet."}
+              {search ? "No orders match your search." : "No orders yet. Start by listing your first product."}
             </div>
           ) : (
             filtered.map((o) => (
@@ -290,7 +290,7 @@ const SellerOrders = () => {
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-muted-foreground text-sm">
                     <ShoppingCart className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                    {search ? "No orders match your search." : "No orders yet."}
+                    {search ? "No orders match your search." : "No orders yet. Start by listing your first product."}
                   </td>
                 </tr>
               ) : (
