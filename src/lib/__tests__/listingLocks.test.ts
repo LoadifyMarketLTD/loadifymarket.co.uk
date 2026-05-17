@@ -47,7 +47,7 @@ describe('deriveSellerListingLocks', () => {
     expect(locks).toHaveLength(0);
   });
 
-  it('classifies paid/in-progress and delivered history locks distinctly', () => {
+  it('locks only active paid order flows and ignores delivered history', () => {
     const locks = deriveSellerListingLocks({
       orders: [
         {
@@ -68,8 +68,7 @@ describe('deriveSellerListingLocks', () => {
       now: new Date('2026-05-17T20:05:00.000Z'),
     });
 
-    expect(locks).toHaveLength(2);
+    expect(locks).toHaveLength(1);
     expect(locks[0].type).toBe('active_paid_flow');
-    expect(locks[1].type).toBe('fulfilled_history');
   });
 });
