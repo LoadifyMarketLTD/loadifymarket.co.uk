@@ -356,7 +356,7 @@ export default function MobileSellWizard() {
         categoryId: form.categoryId || null,
         subcategoryId: form.subcategoryId || null,
         specifications: Object.keys(specs).length > 0 ? specs : undefined,
-        listingContext: 'goods',
+        listingContext: 'product',
         stockQuantity: 1,
         stockStatus: 'in_stock',
         isActive: true,

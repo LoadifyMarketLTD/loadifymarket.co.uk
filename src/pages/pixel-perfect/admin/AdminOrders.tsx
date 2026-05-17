@@ -24,7 +24,7 @@ interface Order {
   total: number;
   status: string;
   date: string;
-  listingContext?: "goods" | "service" | null;
+  listingContext?: "product" | "service" | null;
   hasValidPaymentEvidence?: boolean;
   paymentEvidenceSource?: string | null;
   allowedNonStripeFlow?: string | null;

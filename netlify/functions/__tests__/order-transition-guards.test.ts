@@ -13,7 +13,7 @@ describe('orderTransitionGuards', () => {
         rfqId: null,
         rfqResponseId: null,
       },
-      listingContext: 'goods',
+      listingContext: 'product',
       paymentSession: null,
     });
 
@@ -29,7 +29,7 @@ describe('orderTransitionGuards', () => {
         rfqId: null,
         rfqResponseId: null,
       },
-      listingContext: 'goods',
+      listingContext: 'product',
       paymentSession: {
         status: 'completed',
         stripePaymentIntent: 'pi_legacy_456',
@@ -80,7 +80,7 @@ describe('orderTransitionGuards', () => {
       },
       product: {
         id: 'product-1',
-        listingContext: 'goods',
+        listingContext: 'product',
       },
       nextStatus: 'shipped',
       actorRole: 'seller',

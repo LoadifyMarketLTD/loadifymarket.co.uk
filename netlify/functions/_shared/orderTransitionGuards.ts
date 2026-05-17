@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export type GuardedOrderStatus = 'packed' | 'shipped' | 'delivered';
-export type ListingContext = 'goods' | 'service' | null;
+export type ListingContext = 'product' | 'service' | null;
 
 export interface GuardOrderRow {
   id: string;

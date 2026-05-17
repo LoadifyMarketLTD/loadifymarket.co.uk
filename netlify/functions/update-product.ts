@@ -21,6 +21,33 @@ import { createClient } from '@supabase/supabase-js';
 import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
 
+const ALLOWED_UPDATE_FIELDS = new Set([
+  'title',
+  'description',
+  'type',
+  'condition',
+  'price',
+  'priceExVat',
+  'vatRate',
+  'stockQuantity',
+  'stockStatus',
+  'categoryId',
+  'subcategoryId',
+  'images',
+  'specifications',
+  'weight',
+  'dimensions',
+  'palletInfo',
+  'isActive',
+  'listingContext',
+]);
+
+function normalizeListingContext(value: unknown): 'product' | 'service' | null {
+  if (value === 'service') return 'service';
+  if (value === 'product' || value === 'goods' || value == null) return 'product';
+  return null;
+}
+
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -126,6 +153,31 @@ export const handler: Handler = async (event) => {
   delete updateData.isApproved; // approval status is admin-managed
   delete updateData.createdAt;
   delete updateData.updatedAt;
+  delete updateData.shippingMethodIds;
+  delete updateData.dispatchTime;
+  delete updateData.lockedFieldsOnly;
+
+  if (Object.prototype.hasOwnProperty.call(updateData, 'listingContext')) {
+    const normalized = normalizeListingContext(updateData.listingContext);
+    if (!normalized) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid listingContext. Allowed values: product, service.' }),
+      };
+    }
+    updateData.listingContext = normalized;
+  }
+
+  const unsupportedFields = Object.keys(updateData).filter((key) => !ALLOWED_UPDATE_FIELDS.has(key));
+  if (unsupportedFields.length > 0) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: 'Unsupported fields in update-product payload',
+        unsupportedFields,
+      }),
+    };
+  }
 
   // When only non-critical fields can change (active orders exist), whitelist them
   let dataToUpdate: Record<string, unknown> = updateData;
@@ -151,8 +203,28 @@ export const handler: Handler = async (event) => {
       .eq('id', productId);
 
     if (updateError) {
-      console.error('update-product: update error:', updateError.message);
-      return { statusCode: 500, body: JSON.stringify({ error: 'Failed to update listing. Please try again.' }) };
+      console.error('update-product: update error:', {
+        message: updateError.message,
+        code: updateError.code,
+        details: updateError.details,
+        hint: updateError.hint,
+        payloadKeys: Object.keys(dataToUpdate),
+        listingContext: dataToUpdate.listingContext,
+      });
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: 'Supabase update error',
+          supabase: {
+            message: updateError.message,
+            code: updateError.code,
+            details: updateError.details,
+            hint: updateError.hint,
+          },
+          payloadKeys: Object.keys(dataToUpdate),
+          listingContext: dataToUpdate.listingContext ?? null,
+        }),
+      };
     }
   }
 

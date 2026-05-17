@@ -13,7 +13,7 @@
  *    stockQuantity, stockStatus?, categoryId?, subcategoryId?,
  *    images?, specifications?, weight?, dimensions?, palletInfo?,
  *    isActive (boolean — publish vs draft),
- *    listingContext? ('goods' | 'service', default 'goods'),
+ *    listingContext? ('product' | 'service', default 'product'),
  *    shippingMethodIds? (string[]),
  *    dispatchTime? (string),
  *    // any other valid products column
@@ -118,6 +118,20 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: '"title" and a positive "price" are required' }) };
   }
 
+  const normalizedListingContext =
+    listingContext === 'service'
+      ? 'service'
+      : listingContext === 'product' || listingContext === 'goods' || listingContext == null
+        ? 'product'
+        : null;
+
+  if (!normalizedListingContext) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Invalid listingContext. Allowed values: product, service.' }),
+    };
+  }
+
   // ── autoApproveProducts (Step 5.5) ────────────────────────────────────────
   const flags = await getFeatureFlags(supabase);
   // Admin creates are always approved; sellers depend on the flag
@@ -170,7 +184,7 @@ export const handler: Handler = async (event) => {
     isActive: Boolean(isActive),
     isApproved,              // backend-only; overrides any value from client
     sellerId: callerId,
-    listingContext: listingContext === 'service' ? 'service' : 'goods',
+    listingContext: normalizedListingContext,
   };
   // Prevent client from sneaking in fields that would break integrity
   delete productData.id;
