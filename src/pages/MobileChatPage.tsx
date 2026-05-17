@@ -13,7 +13,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Send, Tag, CheckCircle, XCircle, CreditCard } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
@@ -79,6 +79,7 @@ function parseMessage(raw: string): {
   amount_pence?: number;
   offerId?: string;
   productTitle?: string;
+  note?: string;
   // system event fields
   event?: string;
   orderId?: string;
@@ -92,6 +93,7 @@ function parseMessage(raw: string): {
           amount_pence: parsed.amount_pence as number,
           offerId:      typeof parsed.offerId === "string" ? parsed.offerId : undefined,
           productTitle: typeof parsed.productTitle === "string" ? parsed.productTitle : undefined,
+          note:         typeof parsed.note === "string" ? parsed.note : undefined,
         };
       }
       if (parsed._t === "system") {
@@ -119,9 +121,12 @@ function OfferBubble({
   isSeller,
   currentUserId,
   productTitle,
+  note,
   offerRecord,
   onAccept,
   onDecline,
+  onCounter,
+  highlightedOfferId,
   onPayNow,
 }: {
   amount_pence: number;
@@ -130,25 +135,35 @@ function OfferBubble({
   isSeller: boolean;
   currentUserId?: string;
   productTitle?: string;
+  note?: string;
   offerRecord?: OfferRecord | null;
   onAccept?: () => void;
   onDecline?: () => void;
+  onCounter?: (amountPence: number, message?: string) => void;
+  highlightedOfferId?: string | null;
   onPayNow?: () => void;
 }) {
   const pounds = (amount_pence / 100).toFixed(2);
   const status = offerRecord?.status ?? "pending";
-  const canSellerRespond = Boolean(
+  const [counterOpen, setCounterOpen] = useState(false);
+  const [customCounter, setCustomCounter] = useState("");
+  const [counterMessage, setCounterMessage] = useState("");
+  const canRecipientRespond = Boolean(
     offerId &&
     status === "pending" &&
-    (
-      (currentUserId && offerRecord?.recipientId === currentUserId && offerRecord?.proposedById !== currentUserId) ||
-      (isSeller && !isMine)
-    )
+    currentUserId &&
+    offerRecord?.recipientId === currentUserId &&
+    offerRecord?.proposedById !== currentUserId
+  );
+  const canSellerRespond = Boolean(
+    canRecipientRespond || (isSeller && !isMine && status === "pending")
   );
 
   const statusLabel: Record<string, string> = {
     pending:   isMine ? "You offered · Pending" : "Offer received · Pending",
+    countered: "Countered",
     accepted:  "Accepted ✓",
+    rejected:  "Rejected",
     declined:  "Declined",
     expired:   "Expired",
     cancelled: "Cancelled",
@@ -156,7 +171,9 @@ function OfferBubble({
 
   const statusColour: Record<string, string> = {
     pending:   "text-warning",
+    countered: "text-primary",
     accepted:  "text-success",
+    rejected:  "text-danger",
     declined:  "text-danger",
     expired:   "text-white/30",
     cancelled: "text-white/30",
@@ -164,11 +181,12 @@ function OfferBubble({
 
   return (
     <div
+      data-offer-id={offerId}
       className={`rounded-2xl px-4 py-3 max-w-[80%] ${
         isMine
           ? "bg-primary/15 border border-primary/30 rounded-br-sm"
           : "bg-primary/10 border border-primary/20 rounded-bl-sm"
-      }`}
+      } ${offerId && highlightedOfferId === offerId ? "ring-2 ring-primary/80" : ""}`}
     >
       <div className="flex items-center gap-2 mb-1">
         <Tag className="h-3.5 w-3.5 text-primary" />
@@ -176,6 +194,9 @@ function OfferBubble({
       </div>
       {productTitle && (
         <p className="text-xs text-white/75 mb-1 truncate">{productTitle}</p>
+      )}
+      {note && (
+        <p className="text-xs text-white/70 mb-1 whitespace-pre-wrap break-words">{note}</p>
       )}
       <p className="text-xl font-bold text-white">£{pounds}</p>
       <p className={`text-[11px] mt-1 ${statusColour[status] ?? "text-white/40"}`}>
@@ -197,13 +218,61 @@ function OfferBubble({
             className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-danger/100/20 border border-red-500/40 text-danger text-xs font-semibold active:bg-danger/100/30 transition-colors"
           >
             <XCircle className="h-3.5 w-3.5" />
-            Decline
+            Reject
           </button>
+          <button
+            onClick={() => setCounterOpen((v) => !v)}
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-primary/20 border border-primary/40 text-primary text-xs font-semibold active:bg-primary/30 transition-colors"
+          >
+            Counter
+          </button>
+        </div>
+      )}
+      {canSellerRespond && counterOpen && (
+        <div className="mt-2 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            {[1.05, 1.1, 1.15].map((factor) => {
+              const suggested = Math.round(amount_pence * factor);
+              return (
+                <button
+                  key={factor}
+                  onClick={() => onCounter?.(suggested, counterMessage || undefined)}
+                  className="rounded-lg border border-white/20 px-2 py-1 text-xs font-medium text-white/90"
+                >
+                  Counter £{(suggested / 100).toFixed(2)}
+                </button>
+              );
+            })}
+            <input
+              value={customCounter}
+              onChange={(e) => setCustomCounter(e.target.value)}
+              placeholder="Custom £"
+              className="rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white"
+            />
+            <button
+              onClick={() => {
+                const poundsValue = Number(customCounter);
+                if (!Number.isFinite(poundsValue) || poundsValue <= 0) return;
+                onCounter?.(Math.round(poundsValue * 100), counterMessage || undefined);
+              }}
+              className="rounded-lg border border-primary/40 px-2 py-1 text-xs font-semibold text-primary"
+            >
+              Send custom
+            </button>
+          </div>
+          <textarea
+            value={counterMessage}
+            onChange={(e) => setCounterMessage(e.target.value)}
+            placeholder="Optional message"
+            maxLength={500}
+            rows={2}
+            className="w-full rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white"
+          />
         </div>
       )}
 
       {/* Buyer: Pay Now button for accepted offers awaiting payment */}
-      {!isSeller && isMine && status === "accepted" && offerRecord?.orderStatus !== "paid" && (
+      {!isSeller && status === "accepted" && offerRecord?.orderStatus !== "paid" && (
         <button
           onClick={onPayNow}
           className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-black text-sm font-bold transition-colors"
@@ -214,7 +283,7 @@ function OfferBubble({
       )}
 
       {/* Buyer: payment confirmed state */}
-      {!isSeller && isMine && status === "accepted" && offerRecord?.orderStatus === "paid" && (
+      {!isSeller && status === "accepted" && offerRecord?.orderStatus === "paid" && (
         <p className="mt-3 text-center text-xs font-semibold text-success">
           ✓ Payment confirmed
         </p>
@@ -235,6 +304,10 @@ function SystemEventCard({ event, amountPence }: { event?: string; amountPence?:
     offer_declined: {
       icon: "❌",
       text: pounds ? `Your offer of ${pounds} was declined.` : "Offer declined.",
+    },
+    offer_rejected: {
+      icon: "❌",
+      text: pounds ? `Your offer of ${pounds} was rejected.` : "Offer rejected.",
     },
     listing_unavailable: {
       icon: "🔒",
@@ -261,6 +334,8 @@ export default function MobileChatPage() {
   const { conversationId } = useParams<{ conversationId: string }>();
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const routeOfferId = new URLSearchParams(location.search).get("offerId");
   const { user, isLoading } = useAuthStore();
   const promptAuth = useAuthPromptStore((s) => s.open);
 
@@ -771,6 +846,32 @@ export default function MobileChatPage() {
     }
   };
 
+  const handleCounterOffer = async (offerId: string, amountPence: number, message?: string) => {
+    setActingOnOffer(offerId);
+    try {
+      const res = await authorizedFetch("/.netlify/functions/offer-counter", {
+        method: "POST",
+        body: JSON.stringify({ offerId, amountPence, message }),
+      });
+      const json = await res.json() as { offerId?: string; error?: string };
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+
+      toast({ title: "Counter offer sent." });
+      void loadOffers();
+    } catch (err) {
+      toast({ title: "Failed to send counter offer", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setActingOnOffer(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!routeOfferId || !conversationId) return;
+    const el = document.querySelector(`[data-offer-id="${routeOfferId}"]`) as HTMLElement | null;
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [routeOfferId, conversationId, messages, offerMap]);
+
   return (
     <div
       className="flex flex-col bg-background"
@@ -903,6 +1004,7 @@ export default function MobileChatPage() {
                     isSeller={isSeller}
                     currentUserId={user?.id}
                     productTitle={parsed.productTitle}
+                    note={parsed.note}
                     offerRecord={parsed.offerId ? offerMap.get(parsed.offerId) ?? null : null}
                     onAccept={parsed.offerId && actingOnOffer !== parsed.offerId
                       ? () => void handleAcceptOffer(parsed.offerId!)
@@ -910,6 +1012,10 @@ export default function MobileChatPage() {
                     onDecline={parsed.offerId && actingOnOffer !== parsed.offerId
                       ? () => void handleDeclineOffer(parsed.offerId!)
                       : undefined}
+                    onCounter={parsed.offerId && actingOnOffer !== parsed.offerId
+                      ? (amountPence, message) => void handleCounterOffer(parsed.offerId!, amountPence, message)
+                      : undefined}
+                    highlightedOfferId={routeOfferId}
                     onPayNow={(() => {
                       // Source of truth for orderId is the offers table (via
                       // offerRecord.orderId from the orders FK join), not the

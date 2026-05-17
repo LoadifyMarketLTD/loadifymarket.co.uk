@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Bell, CheckCheck, Inbox } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
@@ -15,6 +16,8 @@ const typeColor: Record<string, string> = {
   product_question: "bg-primary/10 text-primary",
   message:          "bg-primary/10 text-primary",
   offer_received:   "bg-violet-500/10 text-violet-700",
+  offer_accepted:   "bg-success/10 text-success",
+  offer_rejected:   "bg-danger/100/10 text-danger",
   listing_published: "bg-success/10 text-success",
   listing_sold:      "bg-success/10 text-success",
   share_reminder:   "bg-primary/10 text-primary",
@@ -44,6 +47,17 @@ function extractConversationId(link?: string | null) {
   return match?.[1] ?? null;
 }
 
+function buildSellerMessageRoute(link?: string | null) {
+  if (!link) return null;
+  const conversationId = extractConversationId(link);
+  if (!conversationId) return link;
+  const url = new URL(link, "https://loadifymarket.co.uk");
+  const offerId = url.searchParams.get("offerId");
+  const query = new URLSearchParams({ conversationId });
+  if (offerId) query.set("offerId", offerId);
+  return `/seller/messages?${query.toString()}`;
+}
+
 interface NotificationGroup {
   key: string;
   latest: AppNotification;
@@ -53,6 +67,7 @@ interface NotificationGroup {
 }
 
 const SellerNotifications = () => {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -173,6 +188,14 @@ const SellerNotifications = () => {
       .sort((a, b) => new Date(b.latest.createdAt).getTime() - new Date(a.latest.createdAt).getTime());
   }, [notifications]);
 
+  const handleOpen = (group: NotificationGroup) => {
+    const target = buildSellerMessageRoute(group.latest.link);
+    void markAsRead(group.items.map((item) => item.id));
+    if (target) {
+      navigate(target);
+    }
+  };
+
   return (
     <div className="p-6 max-w-3xl space-y-6">
       <div className="flex items-center justify-between">
@@ -228,11 +251,20 @@ const SellerNotifications = () => {
             return (
             <div
               key={group.key}
+              onClick={() => handleOpen(group)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleOpen(group);
+                }
+              }}
               className={`rounded-lg border p-4 transition-colors ${
                 isRead
                   ? "border-border bg-card"
                   : "border-primary/20 bg-primary/5"
-              }`}
+              } w-full text-left cursor-pointer`}
             >
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">
@@ -265,7 +297,10 @@ const SellerNotifications = () => {
                     variant="ghost"
                     size="sm"
                     className="text-xs shrink-0"
-                    onClick={() => markAsRead(group.items.map((item) => item.id))}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void markAsRead(group.items.map((item) => item.id));
+                    }}
                   >
                     Mark read
                   </Button>

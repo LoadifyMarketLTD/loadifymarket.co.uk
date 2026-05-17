@@ -15,6 +15,7 @@ import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { sendPushToUser } from './_shared/pushNotifications';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { buildOfferLink, buildOfferPushData } from './_shared/offerLinks';
 
 interface RequestBody {
   offerId?: string;
@@ -32,6 +33,7 @@ interface OfferRow {
 
 interface ProductRow {
   title: string;
+  sellerId: string;
 }
 
 export const handler: Handler = async (event) => {
@@ -99,13 +101,13 @@ export const handler: Handler = async (event) => {
   }
 
   if (offer.recipientId !== callerId) {
-    return { statusCode: 403, body: JSON.stringify({ error: 'Only the seller may decline this offer' }) };
+    return { statusCode: 403, body: JSON.stringify({ error: 'Only the offer recipient may reject this offer' }) };
   }
 
   if (offer.status !== 'pending') {
     return {
       statusCode: 409,
-      body: JSON.stringify({ error: `Offer cannot be declined (current status: ${offer.status})` }),
+      body: JSON.stringify({ error: `Offer cannot be rejected (current status: ${offer.status})` }),
     };
   }
 
@@ -124,7 +126,7 @@ export const handler: Handler = async (event) => {
   // ── Insert system message ───────────────────────────────────────────────────
   const systemMsg = JSON.stringify({
     _t:    'system',
-    event: 'offer_declined',
+    event: 'offer_rejected',
     offerId,
     amountPence: offer.amountPence,
   });
@@ -144,17 +146,49 @@ export const handler: Handler = async (event) => {
   // ── Push notification to buyer ──────────────────────────────────────────────
   const { data: listing } = await supabase
     .from('products')
-    .select('title')
+    .select('title, sellerId')
     .eq('id', offer.listingId)
     .maybeSingle<ProductRow>();
 
   const pounds = (offer.amountPence / 100).toFixed(2);
   const title  = listing?.title ?? 'your item';
+  const sellerId = listing?.sellerId ?? offer.recipientId;
+  const buyerId = sellerId === offer.proposedById ? offer.recipientId : offer.proposedById;
+  const link = buildOfferLink({
+    conversationId: offer.conversationId,
+    offerId,
+    listingId: offer.listingId,
+    buyerId,
+    sellerId,
+    amountPence: offer.amountPence,
+    status: 'rejected',
+  });
+
+  await supabase
+    .from('notifications')
+    .insert({
+      userId: offer.proposedById,
+      type: 'offer_rejected',
+      title: 'Offer rejected',
+      message: `Your £${pounds} offer for ${title} was rejected.`,
+      link,
+    });
 
   await sendPushToUser(supabase, offer.proposedById, {
-    title: 'Offer declined',
-    body:  `Your £${pounds} offer for ${title} was declined. You can make a new offer.`,
-    data:  { type: 'offer_declined', offerId, conversationId: offer.conversationId },
+    title: 'Offer rejected',
+    body:  `Your £${pounds} offer for ${title} was rejected.`,
+    data:  {
+      ...buildOfferPushData({
+        conversationId: offer.conversationId,
+        offerId,
+        listingId: offer.listingId,
+        buyerId,
+        sellerId,
+        amountPence: offer.amountPence,
+        status: 'rejected',
+      }),
+      type: 'offer_rejected',
+    },
   });
 
   return {
