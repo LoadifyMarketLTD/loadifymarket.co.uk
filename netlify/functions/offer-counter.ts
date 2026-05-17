@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { sendPushToUser } from './_shared/pushNotifications';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { buildOfferLink, buildOfferPushData } from './_shared/offerLinks';
+import { expireStaleOffers } from './_shared/offerLifecycle';
 
 interface RequestBody {
   offerId?: string;
@@ -18,6 +19,7 @@ interface OfferRow {
   recipientId: string;
   amountPence: number;
   status: string;
+  expiresAt?: string | null;
 }
 
 interface ProductRow {
@@ -90,7 +92,7 @@ export const handler: Handler = async (event) => {
 
   const { data: originalOffer, error: offerError } = await supabase
     .from('offers')
-    .select('id, conversationId, listingId, proposedById, recipientId, amountPence, status')
+    .select('id, conversationId, listingId, proposedById, recipientId, amountPence, status, expiresAt')
     .eq('id', offerId)
     .maybeSingle<OfferRow>();
 
@@ -99,6 +101,12 @@ export const handler: Handler = async (event) => {
   }
   if (originalOffer.recipientId !== callerId) {
     return { statusCode: 403, body: JSON.stringify({ error: 'Only the offer recipient can send a counter offer' }) };
+  }
+  if (originalOffer.status === 'pending' && originalOffer.expiresAt && new Date(originalOffer.expiresAt).getTime() <= Date.now()) {
+    await expireStaleOffers(supabase, { conversationId: originalOffer.conversationId }).catch((err: unknown) => {
+      console.warn('offer-counter: expireStaleOffers failed (non-fatal):', err);
+    });
+    return { statusCode: 409, body: JSON.stringify({ error: 'Offer has already expired' }) };
   }
   if (originalOffer.status !== 'pending') {
     return { statusCode: 409, body: JSON.stringify({ error: `Offer cannot be countered (current status: ${originalOffer.status})` }) };

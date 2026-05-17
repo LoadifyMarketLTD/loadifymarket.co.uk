@@ -24,6 +24,7 @@ import { createClient } from '@supabase/supabase-js';
 import { sendPushToUser } from './_shared/pushNotifications';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { buildOfferLink, buildOfferPushData } from './_shared/offerLinks';
+import { expireStaleOffers } from './_shared/offerLifecycle';
 
 interface RequestBody {
   conversationId?: string;
@@ -185,6 +186,10 @@ export const handler: Handler = async (event) => {
   }
 
   const recipientId = listing.sellerId;
+
+  await expireStaleOffers(supabase, { conversationId }).catch((err: unknown) => {
+    console.warn('conversation-offer: expireStaleOffers failed (non-fatal):', err);
+  });
 
   // ── Check for existing pending offer ───────────────────────────────────────
   const { data: existingOffer, error: existingOfferError } = await supabase

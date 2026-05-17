@@ -20,6 +20,7 @@ import { createClient } from '@supabase/supabase-js';
 import { sendPushToUser } from './_shared/pushNotifications';
 import { checkRateLimit } from './_shared/rateLimiter';
 import { buildOfferLink, buildOfferPushData } from './_shared/offerLinks';
+import { expireStaleOffers } from './_shared/offerLifecycle';
 
 interface RequestBody {
   offerId?: string;
@@ -33,6 +34,7 @@ interface OfferRow {
   recipientId: string;
   amountPence: number;
   status: string;
+  expiresAt?: string | null;
 }
 
 interface ProductRow {
@@ -98,7 +100,7 @@ export const handler: Handler = async (event) => {
   // round-trip for non-recipients.
   const { data: offer, error: fetchError } = await supabase
     .from('offers')
-    .select('id, conversationId, listingId, proposedById, recipientId, amountPence, status')
+    .select('id, conversationId, listingId, proposedById, recipientId, amountPence, status, expiresAt')
     .eq('id', offerId)
     .maybeSingle<OfferRow>();
 
@@ -108,6 +110,13 @@ export const handler: Handler = async (event) => {
 
   if (offer.recipientId !== callerId) {
     return { statusCode: 403, body: JSON.stringify({ error: 'Only the offer recipient may accept this offer' }) };
+  }
+
+  if (offer.status === 'pending' && offer.expiresAt && new Date(offer.expiresAt).getTime() <= Date.now()) {
+    await expireStaleOffers(supabase, { conversationId: offer.conversationId }).catch((err: unknown) => {
+      console.warn('offer-accept: expireStaleOffers failed (non-fatal):', err);
+    });
+    return { statusCode: 409, body: JSON.stringify({ error: 'Offer has already expired' }) };
   }
 
   if (offer.status !== 'pending' && offer.status !== 'accepted') {

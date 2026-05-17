@@ -28,6 +28,7 @@ import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 import { openExternalUrl } from "@/lib/capacitorUtils";
+import { getOfferActionAvailability } from "@/lib/offerActions";
 import MakeOfferSheet from "@/components/MakeOfferSheet";
 import { trackOfferAccepted } from "@/lib/analytics";
 import type { ConversationParticipant, InboxConversation } from "@/types";
@@ -99,6 +100,8 @@ function previewText(raw: string | null): string {
           offer_accepted: "✓ Offer accepted",
           offer_declined: "✗ Offer declined",
           offer_rejected: "✗ Offer rejected",
+          offer_cancelled: "↺ Offer cancelled",
+          offer_expired: "⌛ Offer expired",
           listing_unavailable: "🔒 Listing unavailable",
         };
         if (typeof parsed.event === "string" && events[parsed.event]) {
@@ -166,6 +169,7 @@ function OfferBubble({
   onAccept,
   onDecline,
   onCounter,
+  onCancel,
   highlightedOfferId,
   onPayNow,
 }: {
@@ -181,6 +185,7 @@ function OfferBubble({
   onAccept?: () => void;
   onDecline?: () => void;
   onCounter?: (amountPence: number, message?: string) => void;
+  onCancel?: () => void;
   highlightedOfferId?: string | null;
   onPayNow?: () => void;
 }) {
@@ -189,16 +194,12 @@ function OfferBubble({
   const [counterOpen, setCounterOpen] = useState(false);
   const [customCounter, setCustomCounter] = useState("");
   const [counterMessage, setCounterMessage] = useState("");
-  const canRecipientRespond = Boolean(
-    offerId &&
-    status === "pending" &&
-    currentUserId &&
-    offerRecord?.recipientId === currentUserId &&
-    offerRecord?.proposedById !== currentUserId
-  );
-  const canSellerRespond = Boolean(
-    canRecipientRespond || (isSeller && !isMine && status === "pending")
-  );
+  const actions = getOfferActionAvailability({
+    status,
+    currentUserId,
+    proposedById: offerRecord?.proposedById,
+    recipientId: offerRecord?.recipientId,
+  });
 
   const statusLabel: Record<string, string> = {
     pending:   isMine ? "You offered · Pending" : "Offer received · Pending",
@@ -246,8 +247,7 @@ function OfferBubble({
         {statusLabel[status] ?? status}
       </p>
 
-      {/* Seller: accept / decline buttons for pending offers */}
-      {canSellerRespond && (
+      {actions.canAccept && (
         <div className="flex gap-2 mt-3">
           <button
             onClick={onAccept}
@@ -274,7 +274,7 @@ function OfferBubble({
           </button>
         </div>
       )}
-      {canSellerRespond && counterOpen && (
+      {actions.canCounter && counterOpen && (
         <div className="mt-2 space-y-2">
           <div className="grid grid-cols-2 gap-2">
             {[1.05, 1.1, 1.15].map((factor) => {
@@ -318,6 +318,15 @@ function OfferBubble({
           />
         </div>
       )}
+      {actions.canCancel && (
+        <button
+          onClick={onCancel}
+          disabled={busy}
+          className="mt-3 w-full rounded-xl border border-border px-3 py-2 text-xs font-semibold text-muted-foreground hover:bg-muted disabled:opacity-40 transition-colors"
+        >
+          {busy ? "…" : "Cancel offer"}
+        </button>
+      )}
 
       {/* Buyer: Pay Now button for accepted offers awaiting payment */}
       {!isSeller && status === "accepted" && offerRecord?.orderStatus !== "paid" && (
@@ -358,6 +367,14 @@ function SystemEventCard({ event, amountPence }: { event?: string; amountPence?:
     offer_rejected: {
       icon: "❌",
       text: pounds ? `Offer of ${pounds} was rejected.` : "Offer rejected.",
+    },
+    offer_cancelled: {
+      icon: "↺",
+      text: pounds ? `Offer of ${pounds} was cancelled.` : "Offer cancelled.",
+    },
+    offer_expired: {
+      icon: "⌛",
+      text: pounds ? `Offer of ${pounds} expired before anyone responded.` : "Offer expired.",
     },
     listing_unavailable: {
       icon: "🔒",
@@ -650,7 +667,14 @@ export default function DesktopConversationView() {
 
   // ── Load offers for selected conversation ───────────────────────────────────
   const loadOffers = useCallback(async () => {
-    if (!selectedId || offersFeatureUnavailable) return;
+    if (!selectedId || offersFeatureUnavailable || !user?.id) return;
+
+    await authorizedFetch("/.netlify/functions/offer-sync", {
+      method: "POST",
+      body: JSON.stringify({ conversationId: selectedId }),
+    }).catch((error) => {
+      console.warn("desktop chat: offer-sync failed (non-fatal):", error);
+    });
 
     const { data: offers, error } = await supabase
       .from("offers")
@@ -688,7 +712,7 @@ export default function DesktopConversationView() {
       }));
       setOfferMap(new Map(mapped.map((o) => [o.id, o])));
     }
-  }, [selectedId, offersFeatureUnavailable]);
+  }, [selectedId, offersFeatureUnavailable, user?.id]);
 
   useEffect(() => {
     void loadOffers();
@@ -949,6 +973,25 @@ export default function DesktopConversationView() {
     }
   };
 
+  const handleCancelOffer = async (offerId: string) => {
+    setActingOnOffer(offerId);
+    try {
+      const res = await authorizedFetch("/.netlify/functions/offer-cancel", {
+        method: "POST",
+        body: JSON.stringify({ offerId }),
+      });
+      const json = await res.json() as { success?: boolean; error?: string };
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+
+      toast({ title: "Offer cancelled." });
+      void loadOffers();
+    } catch (err) {
+      toast({ title: "Failed to cancel offer", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setActingOnOffer(null);
+    }
+  };
+
   useEffect(() => {
     if (!routeOfferId || !selectedId) return;
     const el = document.querySelector(`[data-offer-id="${routeOfferId}"]`) as HTMLElement | null;
@@ -1133,6 +1176,7 @@ export default function DesktopConversationView() {
                         onAccept={parsed.offerId ? () => void handleAcceptOffer(parsed.offerId!) : undefined}
                         onDecline={parsed.offerId ? () => void handleDeclineOffer(parsed.offerId!) : undefined}
                         onCounter={parsed.offerId ? (amountPence, message) => void handleCounterOffer(parsed.offerId!, amountPence, message) : undefined}
+                        onCancel={parsed.offerId ? () => void handleCancelOffer(parsed.offerId!) : undefined}
                         highlightedOfferId={routeOfferId}
                         onPayNow={(() => {
                           const rec = parsed.offerId ? offerMap.get(parsed.offerId) : undefined;

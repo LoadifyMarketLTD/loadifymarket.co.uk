@@ -21,6 +21,7 @@ import { useAuthPromptStore } from "@/store/authPromptStore";
 import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 import { openExternalUrl } from "@/lib/capacitorUtils";
+import { getOfferActionAvailability } from "@/lib/offerActions";
 import MakeOfferSheet from "@/components/MakeOfferSheet";
 import { trackOfferAccepted } from "@/lib/analytics";
 
@@ -123,9 +124,11 @@ function OfferBubble({
   productTitle,
   note,
   offerRecord,
+  actingOnOffer,
   onAccept,
   onDecline,
   onCounter,
+  onCancel,
   highlightedOfferId,
   onPayNow,
 }: {
@@ -137,9 +140,11 @@ function OfferBubble({
   productTitle?: string;
   note?: string;
   offerRecord?: OfferRecord | null;
+  actingOnOffer: string | null;
   onAccept?: () => void;
   onDecline?: () => void;
   onCounter?: (amountPence: number, message?: string) => void;
+  onCancel?: () => void;
   highlightedOfferId?: string | null;
   onPayNow?: () => void;
 }) {
@@ -148,16 +153,13 @@ function OfferBubble({
   const [counterOpen, setCounterOpen] = useState(false);
   const [customCounter, setCustomCounter] = useState("");
   const [counterMessage, setCounterMessage] = useState("");
-  const canRecipientRespond = Boolean(
-    offerId &&
-    status === "pending" &&
-    currentUserId &&
-    offerRecord?.recipientId === currentUserId &&
-    offerRecord?.proposedById !== currentUserId
-  );
-  const canSellerRespond = Boolean(
-    canRecipientRespond || (isSeller && !isMine && status === "pending")
-  );
+  const actions = getOfferActionAvailability({
+    status,
+    currentUserId,
+    proposedById: offerRecord?.proposedById,
+    recipientId: offerRecord?.recipientId,
+  });
+  const busy = offerId ? actingOnOffer === offerId : false;
 
   const statusLabel: Record<string, string> = {
     pending:   isMine ? "You offered · Pending" : "Offer received · Pending",
@@ -203,32 +205,34 @@ function OfferBubble({
         {statusLabel[status] ?? status}
       </p>
 
-      {/* Seller: accept / decline buttons for pending offers */}
-      {canSellerRespond && (
+      {actions.canAccept && (
         <div className="flex gap-2 mt-3">
           <button
             onClick={onAccept}
+            disabled={busy}
             className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-success/100/20 border border-green-500/40 text-success text-xs font-semibold active:bg-success/100/30 transition-colors"
           >
             <CheckCircle className="h-3.5 w-3.5" />
-            Accept
+            {busy ? "…" : "Accept"}
           </button>
           <button
             onClick={onDecline}
+            disabled={busy}
             className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-danger/100/20 border border-red-500/40 text-danger text-xs font-semibold active:bg-danger/100/30 transition-colors"
           >
             <XCircle className="h-3.5 w-3.5" />
-            Reject
+            {busy ? "…" : "Reject"}
           </button>
           <button
             onClick={() => setCounterOpen((v) => !v)}
+            disabled={busy}
             className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-primary/20 border border-primary/40 text-primary text-xs font-semibold active:bg-primary/30 transition-colors"
           >
-            Counter
+            {busy ? "…" : "Counter"}
           </button>
         </div>
       )}
-      {canSellerRespond && counterOpen && (
+      {actions.canCounter && counterOpen && (
         <div className="mt-2 space-y-2">
           <div className="grid grid-cols-2 gap-2">
             {[1.05, 1.1, 1.15].map((factor) => {
@@ -237,6 +241,7 @@ function OfferBubble({
                 <button
                   key={factor}
                   onClick={() => onCounter?.(suggested, counterMessage || undefined)}
+                  disabled={busy}
                   className="rounded-lg border border-white/20 px-2 py-1 text-xs font-medium text-white/90"
                 >
                   Counter £{(suggested / 100).toFixed(2)}
@@ -249,15 +254,16 @@ function OfferBubble({
               placeholder="Custom £"
               className="rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white"
             />
-            <button
-              onClick={() => {
-                const poundsValue = Number(customCounter);
-                if (!Number.isFinite(poundsValue) || poundsValue <= 0) return;
-                onCounter?.(Math.round(poundsValue * 100), counterMessage || undefined);
-              }}
-              className="rounded-lg border border-primary/40 px-2 py-1 text-xs font-semibold text-primary"
-            >
-              Send custom
+              <button
+                onClick={() => {
+                  const poundsValue = Number(customCounter);
+                  if (!Number.isFinite(poundsValue) || poundsValue <= 0) return;
+                  onCounter?.(Math.round(poundsValue * 100), counterMessage || undefined);
+                }}
+                disabled={busy}
+                className="rounded-lg border border-primary/40 px-2 py-1 text-xs font-semibold text-primary"
+              >
+                Send custom
             </button>
           </div>
           <textarea
@@ -269,6 +275,15 @@ function OfferBubble({
             className="w-full rounded-lg border border-white/20 bg-white/5 px-2 py-1 text-xs text-white"
           />
         </div>
+      )}
+      {actions.canCancel && (
+        <button
+          onClick={onCancel}
+          disabled={busy}
+          className="mt-3 w-full rounded-xl border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 active:bg-white/10 disabled:opacity-40"
+        >
+          {busy ? "…" : "Cancel offer"}
+        </button>
       )}
 
       {/* Buyer: Pay Now button for accepted offers awaiting payment */}
@@ -308,6 +323,14 @@ function SystemEventCard({ event, amountPence }: { event?: string; amountPence?:
     offer_rejected: {
       icon: "❌",
       text: pounds ? `Your offer of ${pounds} was rejected.` : "Offer rejected.",
+    },
+    offer_cancelled: {
+      icon: "↺",
+      text: pounds ? `Offer of ${pounds} was cancelled.` : "Offer cancelled.",
+    },
+    offer_expired: {
+      icon: "⌛",
+      text: pounds ? `Offer of ${pounds} expired before anyone responded.` : "Offer expired.",
     },
     listing_unavailable: {
       icon: "🔒",
@@ -441,7 +464,14 @@ export default function MobileChatPage() {
   // We join the linked order so OfferBubble has the orderId it needs for
   // the "Pay Now" button without relying on message JSON.
   const loadOffers = useCallback(async () => {
-    if (!conversationId || offersFeatureUnavailable) return;
+    if (!conversationId || offersFeatureUnavailable || !user?.id) return;
+
+    await authorizedFetch("/.netlify/functions/offer-sync", {
+      method: "POST",
+      body: JSON.stringify({ conversationId }),
+    }).catch((error) => {
+      console.warn("mobile chat: offer-sync failed (non-fatal):", error);
+    });
 
     // PostgREST foreign-key join: orders.offerId → offers.id
     // `orders(id, status)` returns an array; we normalise to the first element.
@@ -487,7 +517,7 @@ export default function MobileChatPage() {
       }));
       setOfferMap(new Map(mapped.map((o) => [o.id, o])));
     }
-  }, [conversationId, offersFeatureUnavailable]);
+  }, [conversationId, offersFeatureUnavailable, user?.id]);
 
   useEffect(() => {
     void loadOffers();
@@ -865,6 +895,25 @@ export default function MobileChatPage() {
     }
   };
 
+  const handleCancelOffer = async (offerId: string) => {
+    setActingOnOffer(offerId);
+    try {
+      const res = await authorizedFetch("/.netlify/functions/offer-cancel", {
+        method: "POST",
+        body: JSON.stringify({ offerId }),
+      });
+      const json = await res.json() as { success?: boolean; error?: string };
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+
+      toast({ title: "Offer cancelled." });
+      void loadOffers();
+    } catch (err) {
+      toast({ title: "Failed to cancel offer", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setActingOnOffer(null);
+    }
+  };
+
   useEffect(() => {
     if (!routeOfferId || !conversationId) return;
     const el = document.querySelector(`[data-offer-id="${routeOfferId}"]`) as HTMLElement | null;
@@ -1004,18 +1053,22 @@ export default function MobileChatPage() {
                     isSeller={isSeller}
                     currentUserId={user?.id}
                     productTitle={parsed.productTitle}
-                    note={parsed.note}
-                    offerRecord={parsed.offerId ? offerMap.get(parsed.offerId) ?? null : null}
-                    onAccept={parsed.offerId && actingOnOffer !== parsed.offerId
-                      ? () => void handleAcceptOffer(parsed.offerId!)
-                      : undefined}
+                     note={parsed.note}
+                     offerRecord={parsed.offerId ? offerMap.get(parsed.offerId) ?? null : null}
+                     actingOnOffer={actingOnOffer}
+                     onAccept={parsed.offerId && actingOnOffer !== parsed.offerId
+                       ? () => void handleAcceptOffer(parsed.offerId!)
+                       : undefined}
                     onDecline={parsed.offerId && actingOnOffer !== parsed.offerId
                       ? () => void handleDeclineOffer(parsed.offerId!)
                       : undefined}
-                    onCounter={parsed.offerId && actingOnOffer !== parsed.offerId
-                      ? (amountPence, message) => void handleCounterOffer(parsed.offerId!, amountPence, message)
-                      : undefined}
-                    highlightedOfferId={routeOfferId}
+                     onCounter={parsed.offerId && actingOnOffer !== parsed.offerId
+                       ? (amountPence, message) => void handleCounterOffer(parsed.offerId!, amountPence, message)
+                       : undefined}
+                     onCancel={parsed.offerId && actingOnOffer !== parsed.offerId
+                       ? () => void handleCancelOffer(parsed.offerId!)
+                       : undefined}
+                     highlightedOfferId={routeOfferId}
                     onPayNow={(() => {
                       // Source of truth for orderId is the offers table (via
                       // offerRecord.orderId from the orders FK join), not the
