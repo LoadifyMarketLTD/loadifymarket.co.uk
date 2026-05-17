@@ -19,6 +19,7 @@ import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { sendPushToUser } from './_shared/pushNotifications';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { buildOfferLink, buildOfferPushData } from './_shared/offerLinks';
 
 interface RequestBody {
   offerId?: string;
@@ -36,6 +37,7 @@ interface OfferRow {
 
 interface ProductRow {
   title: string;
+  sellerId: string;
 }
 
 export const handler: Handler = async (event) => {
@@ -105,7 +107,7 @@ export const handler: Handler = async (event) => {
   }
 
   if (offer.recipientId !== callerId) {
-    return { statusCode: 403, body: JSON.stringify({ error: 'Only the seller may accept this offer' }) };
+    return { statusCode: 403, body: JSON.stringify({ error: 'Only the offer recipient may accept this offer' }) };
   }
 
   if (offer.status !== 'pending' && offer.status !== 'accepted') {
@@ -142,17 +144,50 @@ export const handler: Handler = async (event) => {
   if (!alreadyDone) {
     const { data: listing } = await supabase
       .from('products')
-      .select('title')
+      .select('title, sellerId')
       .eq('id', offer.listingId)
       .maybeSingle<ProductRow>();
 
     const pounds = (offer.amountPence / 100).toFixed(2);
     const title  = listing?.title ?? 'your item';
+    const sellerId = listing?.sellerId ?? offer.recipientId;
+    const buyerId = sellerId === offer.proposedById ? offer.recipientId : offer.proposedById;
+    const link = buildOfferLink({
+      conversationId: offer.conversationId,
+      offerId: offer.id,
+      listingId: offer.listingId,
+      buyerId,
+      sellerId,
+      amountPence: offer.amountPence,
+      status: 'accepted',
+    });
+
+    await supabase
+      .from('notifications')
+      .insert({
+        userId: offer.proposedById,
+        type: 'offer_accepted',
+        title: 'Your offer was accepted',
+        message: `Your £${pounds} offer for ${title} was accepted.`,
+        link,
+      });
 
     await sendPushToUser(supabase, offer.proposedById, {
       title: 'Your offer was accepted! 🎉',
       body:  `Your £${pounds} offer for ${title} was accepted. Tap to pay.`,
-      data:  { type: 'offer_accepted', orderId, conversationId: offer.conversationId },
+      data:  {
+        ...buildOfferPushData({
+          conversationId: offer.conversationId,
+          offerId: offer.id,
+          listingId: offer.listingId,
+          buyerId,
+          sellerId,
+          amountPence: offer.amountPence,
+          status: 'accepted',
+        }),
+        type: 'offer_accepted',
+        orderId,
+      },
     });
   }
 

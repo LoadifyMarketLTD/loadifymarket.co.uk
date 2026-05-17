@@ -23,6 +23,7 @@ import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { sendPushToUser } from './_shared/pushNotifications';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { buildOfferLink, buildOfferPushData } from './_shared/offerLinks';
 
 interface RequestBody {
   conversationId?: string;
@@ -282,6 +283,15 @@ export const handler: Handler = async (event) => {
 
   // ── Push notification to seller ─────────────────────────────────────────────
   const pounds = (amountPence / 100).toFixed(2);
+  const offerLink = buildOfferLink({
+    conversationId,
+    offerId: offer.id,
+    listingId: conv.productId,
+    buyerId: callerId,
+    sellerId: recipientId,
+    amountPence,
+    status: 'pending',
+  });
   const { error: notificationError } = await supabase
     .from('notifications')
     .insert({
@@ -289,7 +299,7 @@ export const handler: Handler = async (event) => {
       type: 'offer_received',
       title: 'New offer received',
       message: `Offer £${pounds} received for ${listing.title}`,
-      link: `/inbox/${conversationId}`,
+      link: offerLink,
     })
     .select('id')
     .single<{ id: string }>();
@@ -313,7 +323,18 @@ export const handler: Handler = async (event) => {
   await sendPushToUser(supabase, recipientId, {
     title: 'New offer received',
     body:  `Someone offered £${pounds} for ${listing.title}`,
-    data:  { type: 'offer_received', offerId: offer.id, conversationId },
+    data:  {
+      ...buildOfferPushData({
+        conversationId,
+        offerId: offer.id,
+        listingId: conv.productId,
+        buyerId: callerId,
+        sellerId: recipientId,
+        amountPence,
+        status: 'pending',
+      }),
+      type: 'offer_received',
+    },
   });
 
   // Transactional seller email notification (respects notification_settings.orderConfirmation).

@@ -21,6 +21,7 @@ import {
   MessageSquare, Send, User, Tag,
   CheckCircle, XCircle, CreditCard,
 } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
@@ -97,6 +98,7 @@ function previewText(raw: string | null): string {
         const events: Record<string, string> = {
           offer_accepted: "✓ Offer accepted",
           offer_declined: "✗ Offer declined",
+          offer_rejected: "✗ Offer rejected",
           listing_unavailable: "🔒 Listing unavailable",
         };
         if (typeof parsed.event === "string" && events[parsed.event]) {
@@ -117,6 +119,7 @@ function parseMessage(raw: string): {
   amount_pence?: number;
   offerId?: string;
   productTitle?: string;
+  note?: string;
   event?: string;
   orderId?: string;
   amountPence?: number;
@@ -130,6 +133,7 @@ function parseMessage(raw: string): {
           amount_pence: parsed.amount_pence as number,
           offerId:      typeof parsed.offerId === "string" ? parsed.offerId : undefined,
           productTitle: typeof parsed.productTitle === "string" ? parsed.productTitle : undefined,
+          note:         typeof parsed.note === "string" ? parsed.note : undefined,
         };
       }
       if (parsed._t === "system") {
@@ -154,30 +158,53 @@ function OfferBubble({
   offerId,
   isMine,
   isSeller,
+  currentUserId,
   productTitle,
+  note,
   offerRecord,
   actingOnOffer,
   onAccept,
   onDecline,
+  onCounter,
+  highlightedOfferId,
   onPayNow,
 }: {
   amount_pence: number;
   offerId?: string;
   isMine: boolean;
   isSeller: boolean;
+  currentUserId?: string;
   productTitle?: string;
+  note?: string;
   offerRecord?: OfferRecord | null;
   actingOnOffer: string | null;
   onAccept?: () => void;
   onDecline?: () => void;
+  onCounter?: (amountPence: number, message?: string) => void;
+  highlightedOfferId?: string | null;
   onPayNow?: () => void;
 }) {
   const pounds = (amount_pence / 100).toFixed(2);
   const status = offerRecord?.status ?? "pending";
+  const [counterOpen, setCounterOpen] = useState(false);
+  const [customCounter, setCustomCounter] = useState("");
+  const [counterMessage, setCounterMessage] = useState("");
+  const canRecipientRespond = Boolean(
+    offerId &&
+    status === "pending" &&
+    currentUserId &&
+    offerRecord?.recipientId === currentUserId &&
+    offerRecord?.proposedById !== currentUserId
+  );
+  const canSellerRespond = Boolean(
+    canRecipientRespond || (isSeller && !isMine && status === "pending")
+  );
 
   const statusLabel: Record<string, string> = {
     pending:   isMine ? "You offered · Pending" : "Offer received · Pending",
+    countered: "Countered",
     accepted:  "Accepted ✓",
+    rejected:  "Rejected",
     declined:  "Declined",
     expired:   "Expired",
     cancelled: "Cancelled",
@@ -185,7 +212,9 @@ function OfferBubble({
 
   const statusColour: Record<string, string> = {
     pending:   "text-muted-foreground",
+    countered: "text-primary",
     accepted:  "text-success dark:text-success",
+    rejected:  "text-destructive",
     declined:  "text-destructive",
     expired:   "text-muted-foreground",
     cancelled: "text-muted-foreground",
@@ -195,11 +224,12 @@ function OfferBubble({
 
   return (
     <div
+      data-offer-id={offerId}
       className={`rounded-2xl px-4 py-3 max-w-[80%] border ${
         isMine
           ? "bg-primary/10 border-primary/30 rounded-br-sm ml-auto"
           : "bg-muted border-border rounded-bl-sm"
-      }`}
+      } ${offerId && highlightedOfferId === offerId ? "ring-2 ring-primary/70" : ""}`}
     >
       <div className="flex items-center gap-1.5 mb-1">
         <Tag className="h-3.5 w-3.5 text-primary" />
@@ -208,13 +238,16 @@ function OfferBubble({
       {productTitle && (
         <p className="text-xs text-muted-foreground mb-1 truncate">{productTitle}</p>
       )}
+      {note && (
+        <p className="text-xs text-muted-foreground mb-1 whitespace-pre-wrap break-words">{note}</p>
+      )}
       <p className="text-xl font-bold text-foreground">£{pounds}</p>
       <p className={`text-[11px] mt-1 ${statusColour[status] ?? "text-muted-foreground"}`}>
         {statusLabel[status] ?? status}
       </p>
 
       {/* Seller: accept / decline buttons for pending offers */}
-      {isSeller && !isMine && offerId && status === "pending" && (
+      {canSellerRespond && (
         <div className="flex gap-2 mt-3">
           <button
             onClick={onAccept}
@@ -230,13 +263,64 @@ function OfferBubble({
             className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-danger/10 border border-danger/30 text-danger text-xs font-semibold hover:bg-red-100 disabled:opacity-40 transition-colors dark:bg-danger/100/10 dark:border-danger/30 dark:text-danger dark:hover:bg-danger/100/20"
           >
             <XCircle className="h-3.5 w-3.5" />
-            {busy ? "…" : "Decline"}
+            {busy ? "…" : "Reject"}
           </button>
+          <button
+            onClick={() => setCounterOpen((v) => !v)}
+            disabled={busy}
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-primary/10 border border-primary/30 text-primary text-xs font-semibold hover:bg-primary/20 disabled:opacity-40 transition-colors"
+          >
+            {busy ? "…" : "Counter"}
+          </button>
+        </div>
+      )}
+      {canSellerRespond && counterOpen && (
+        <div className="mt-2 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            {[1.05, 1.1, 1.15].map((factor) => {
+              const suggested = Math.round(amount_pence * factor);
+              return (
+                <button
+                  key={factor}
+                  onClick={() => onCounter?.(suggested, counterMessage || undefined)}
+                  disabled={busy}
+                  className="rounded-lg border border-border px-2 py-1 text-xs font-medium hover:bg-muted disabled:opacity-40"
+                >
+                  Counter £{(suggested / 100).toFixed(2)}
+                </button>
+              );
+            })}
+            <input
+              value={customCounter}
+              onChange={(e) => setCustomCounter(e.target.value)}
+              placeholder="Custom £"
+              className="rounded-lg border border-border bg-background px-2 py-1 text-xs"
+            />
+            <button
+              onClick={() => {
+                const poundsValue = Number(customCounter);
+                if (!Number.isFinite(poundsValue) || poundsValue <= 0) return;
+                onCounter?.(Math.round(poundsValue * 100), counterMessage || undefined);
+              }}
+              disabled={busy}
+              className="rounded-lg border border-primary/40 px-2 py-1 text-xs font-semibold text-primary hover:bg-primary/10 disabled:opacity-40"
+            >
+              Send custom
+            </button>
+          </div>
+          <textarea
+            value={counterMessage}
+            onChange={(e) => setCounterMessage(e.target.value)}
+            placeholder="Optional message"
+            maxLength={500}
+            rows={2}
+            className="w-full rounded-lg border border-border bg-background px-2 py-1 text-xs"
+          />
         </div>
       )}
 
       {/* Buyer: Pay Now button for accepted offers awaiting payment */}
-      {!isSeller && isMine && status === "accepted" && offerRecord?.orderStatus !== "paid" && (
+      {!isSeller && status === "accepted" && offerRecord?.orderStatus !== "paid" && (
         <Button
           size="sm"
           className="mt-3 w-full gap-1.5"
@@ -248,7 +332,7 @@ function OfferBubble({
       )}
 
       {/* Buyer: payment confirmed state */}
-      {!isSeller && isMine && status === "accepted" && offerRecord?.orderStatus === "paid" && (
+      {!isSeller && status === "accepted" && offerRecord?.orderStatus === "paid" && (
         <p className="mt-3 text-center text-xs font-semibold text-success dark:text-success">
           ✓ Payment confirmed
         </p>
@@ -270,6 +354,10 @@ function SystemEventCard({ event, amountPence }: { event?: string; amountPence?:
     offer_declined: {
       icon: "❌",
       text: pounds ? `Offer of ${pounds} was declined.` : "Offer declined.",
+    },
+    offer_rejected: {
+      icon: "❌",
+      text: pounds ? `Offer of ${pounds} was rejected.` : "Offer rejected.",
     },
     listing_unavailable: {
       icon: "🔒",
@@ -294,6 +382,9 @@ function SystemEventCard({ event, amountPence }: { event?: string; amountPence?:
 
 export default function DesktopConversationView() {
   const { user } = useAuthStore();
+  const location = useLocation();
+  const routeConversationId = new URLSearchParams(location.search).get("conversationId");
+  const routeOfferId = new URLSearchParams(location.search).get("offerId");
 
   // ── Conversation list state ──────────────────────────────────────────────────
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -405,6 +496,16 @@ export default function DesktopConversationView() {
   useEffect(() => {
     void loadConversations();
   }, [loadConversations]);
+
+  useEffect(() => {
+    if (routeConversationId && conversations.some((c) => c.id === routeConversationId)) {
+      setSelectedId(routeConversationId);
+      return;
+    }
+    if (!selectedId && conversations.length > 0) {
+      setSelectedId(conversations[0].id);
+    }
+  }, [routeConversationId, conversations, selectedId]);
 
   // ── Realtime refresh for conversation list ───────────────────────────────────
   useEffect(() => {
@@ -763,6 +864,31 @@ export default function DesktopConversationView() {
     }
   };
 
+  const handleCounterOffer = async (offerId: string, amountPence: number, message?: string) => {
+    setActingOnOffer(offerId);
+    try {
+      const res = await authorizedFetch("/.netlify/functions/offer-counter", {
+        method: "POST",
+        body: JSON.stringify({ offerId, amountPence, message }),
+      });
+      const json = await res.json() as { offerId?: string; error?: string };
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      toast({ title: "Counter offer sent." });
+      void loadOffers();
+    } catch (err) {
+      toast({ title: "Failed to send counter offer", description: (err as Error).message, variant: "destructive" });
+    } finally {
+      setActingOnOffer(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!routeOfferId || !selectedId) return;
+    const el = document.querySelector(`[data-offer-id="${routeOfferId}"]`) as HTMLElement | null;
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [routeOfferId, selectedId, messages, offerMap]);
+
   const totalUnread = conversations.reduce((sum, c) => sum + c.unreadCount, 0);
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -932,11 +1058,15 @@ export default function DesktopConversationView() {
                         offerId={parsed.offerId}
                         isMine={isMine}
                         isSeller={isSeller}
+                        currentUserId={user?.id}
                         productTitle={parsed.productTitle}
+                        note={parsed.note}
                         offerRecord={parsed.offerId ? offerMap.get(parsed.offerId) ?? null : null}
                         actingOnOffer={actingOnOffer}
                         onAccept={parsed.offerId ? () => void handleAcceptOffer(parsed.offerId!) : undefined}
                         onDecline={parsed.offerId ? () => void handleDeclineOffer(parsed.offerId!) : undefined}
+                        onCounter={parsed.offerId ? (amountPence, message) => void handleCounterOffer(parsed.offerId!, amountPence, message) : undefined}
+                        highlightedOfferId={routeOfferId}
                         onPayNow={(() => {
                           const rec = parsed.offerId ? offerMap.get(parsed.offerId) : undefined;
                           const oid = rec?.orderId;

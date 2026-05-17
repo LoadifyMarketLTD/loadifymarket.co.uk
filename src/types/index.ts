@@ -414,6 +414,8 @@ export type AppNotificationType =
   | 'dispute'
   | 'message'
   | 'offer_received'
+  | 'offer_accepted'
+  | 'offer_rejected'
   | 'system'
   | 'general'
   | 'product_question'

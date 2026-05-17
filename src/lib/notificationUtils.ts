@@ -14,6 +14,8 @@ export const MOBILE_NOTIFICATION_QUERY_TYPES = [
   CANONICAL_OFFER_NOTIFICATION_TYPE,
   'new_offer',
   'offer',
+  'offer_accepted',
+  'offer_rejected',
 ] as const;
 
 export function normalizeNotificationType(type: string): string {
