@@ -590,8 +590,8 @@ export default function MobileChatPage() {
               .update({ isRead: true, readAt: new Date().toISOString() })
               .eq("id", msg.id);
           }
-          // If a system message arrives (offer accepted/declined), refresh offers
-          if (msg.message.startsWith('{"_t":"system"')) {
+          const parsed = parseMessage(msg.message);
+          if (parsed.type === "offer" || parsed.type === "system") {
             void loadOffers();
           }
         },
@@ -630,13 +630,18 @@ export default function MobileChatPage() {
         },
         (payload) => {
           const updated = payload.new as { id: string; status: string };
+          let found = false;
           setOfferMap((prev) => {
             const existing = prev.get(updated.id);
             if (!existing) return prev;
+            found = true;
             const next = new Map(prev);
             next.set(updated.id, { ...existing, status: updated.status });
             return next;
           });
+          if (!found) {
+            void loadOffers();
+          }
         },
       )
       .subscribe();

@@ -15,12 +15,12 @@
  *   onSent         – optional callback after the offer is created
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Tag } from "lucide-react";
+import { Check, Loader2, Tag } from "lucide-react";
 import { trackOfferCreated } from "@/lib/analytics";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 
@@ -33,6 +33,10 @@ interface MakeOfferSheetProps {
   onSent?: () => void;
 }
 
+type SubmitState = "idle" | "loading" | "success";
+
+const SUCCESS_STATE_DURATION_MS = 2500;
+
 export default function MakeOfferSheet({
   open,
   onOpenChange,
@@ -42,17 +46,46 @@ export default function MakeOfferSheet({
 }: MakeOfferSheetProps) {
   const { user } = useAuthStore();
   const [pounds, setPounds] = useState("");
-  const [sending, setSending] = useState(false);
+  const [submitState, setSubmitState] = useState<SubmitState>("idle");
+  const submitLockedRef = useRef(false);
+  const successTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearSuccessTimeout = () => {
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
+    }
+  };
+
+  const resetSubmitState = ({ clearAmount = false }: { clearAmount?: boolean } = {}) => {
+    clearSuccessTimeout();
+    submitLockedRef.current = false;
+    setSubmitState("idle");
+    if (clearAmount) {
+      setPounds("");
+    }
+  };
+
+  useEffect(() => () => {
+    clearSuccessTimeout();
+  }, []);
 
   /** Reset local state whenever the sheet closes, regardless of how it's dismissed. */
   const handleOpenChange = (next: boolean) => {
+    if (!next && submitState !== "idle") {
+      return;
+    }
     if (!next) {
-      setPounds("");
+      resetSubmitState({ clearAmount: true });
     }
     onOpenChange(next);
   };
 
   const handleSubmit = async () => {
+    if (submitLockedRef.current || submitState !== "idle") {
+      return;
+    }
+
     if (!user?.id) {
       toast({ title: "Please sign in to make an offer", variant: "destructive" });
       return;
@@ -69,7 +102,9 @@ export default function MakeOfferSheet({
     }
     const amountPence = Math.round(numPounds * 100);
 
-    setSending(true);
+    submitLockedRef.current = true;
+    setSubmitState("loading");
+
     try {
       const res = await authorizedFetch("/.netlify/functions/conversation-offer", {
         method: "POST",
@@ -81,25 +116,69 @@ export default function MakeOfferSheet({
         throw new Error(err.error ?? `HTTP ${res.status}`);
       }
 
-      toast({ title: `Offer of £${numPounds.toFixed(2)} sent!` });
-      trackOfferCreated({ conversationId, amountPence });
-      setPounds("");
-      handleOpenChange(false);
-      onSent?.();
+      setSubmitState("success");
+      toast({ title: "Your offer has been sent successfully." });
+
+      try {
+        trackOfferCreated({ conversationId, amountPence });
+        onSent?.();
+      } catch (callbackError) {
+        console.warn("MakeOfferSheet: non-fatal success callback error", callbackError);
+      }
+
+      clearSuccessTimeout();
+      successTimeoutRef.current = setTimeout(() => {
+        resetSubmitState({ clearAmount: true });
+        onOpenChange(false);
+      }, SUCCESS_STATE_DURATION_MS);
     } catch (err) {
+      resetSubmitState();
       toast({
         title: "Failed to send offer",
         description: (err as Error).message,
         variant: "destructive",
       });
-    } finally {
-      setSending(false);
     }
   };
 
+  const isLocked = submitState !== "idle";
+  const submitButtonLabel = (() => {
+    if (submitState === "loading") {
+      return (
+        <span className="inline-flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Sending…
+        </span>
+      );
+    }
+
+    if (submitState === "success") {
+      return (
+        <span className="inline-flex items-center gap-2">
+          <Check className="h-4 w-4" />
+          Offer Sent
+        </span>
+      );
+    }
+
+    return "Send Offer";
+  })();
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent
+        className="max-w-[calc(100vw-1.5rem)] sm:max-w-sm"
+        onEscapeKeyDown={(event) => {
+          if (isLocked) {
+            event.preventDefault();
+          }
+        }}
+        onPointerDownOutside={(event) => {
+          if (isLocked) {
+            event.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Tag className="h-4 w-4 text-primary" />
@@ -127,12 +206,14 @@ export default function MakeOfferSheet({
               min="0.01"
               max="99999"
               step="0.01"
+              inputMode="decimal"
               placeholder="0.00"
               value={pounds}
               onChange={(e) => setPounds(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") void handleSubmit();
               }}
+              disabled={isLocked}
               className="w-full rounded-xl border border-border bg-background pl-8 pr-4 py-3 text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
@@ -143,21 +224,20 @@ export default function MakeOfferSheet({
             variant="outline"
             className="flex-1"
             onClick={() => handleOpenChange(false)}
-            disabled={sending}
+            disabled={isLocked}
           >
             Cancel
           </Button>
           <Button
-            className="flex-1 bg-primary hover:bg-primary-hover text-black font-semibold"
+            className={`flex-1 font-semibold ${
+              submitState === "success"
+                ? "bg-emerald-600 text-white hover:bg-emerald-600"
+                : "bg-primary text-black hover:bg-primary-hover"
+            }`}
             onClick={() => void handleSubmit()}
-            disabled={sending || !pounds}
+            disabled={isLocked || !pounds}
           >
-            {sending ? (
-              <span className="inline-flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Sending…
-              </span>
-            ) : "Send Offer"}
+            {submitButtonLabel}
           </Button>
         </div>
       </DialogContent>
