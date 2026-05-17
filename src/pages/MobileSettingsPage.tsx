@@ -46,9 +46,8 @@ export default function MobileSettingsPage() {
 
   return (
     <div
-      className="md:hidden min-h-screen"
+      className="md:hidden min-h-screen bg-background"
       style={{
-        background: 'rgba(10,14,26,1)',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
@@ -69,9 +68,9 @@ export default function MobileSettingsPage() {
           aria-label="Back"
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, marginLeft: -4 }}
         >
-          <ChevronLeft style={{ width: 22, height: 22, color: 'rgba(255,255,255,0.70)' }} />
+          <ChevronLeft className="text-foreground/70" style={{ width: 22, height: 22 }} />
         </button>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0 }}>Settings</h1>
+        <h1 className="text-xl font-extrabold text-foreground m-0">Settings</h1>
       </div>
 
       {!user ? (
@@ -82,21 +81,18 @@ export default function MobileSettingsPage() {
             textAlign: 'center',
           }}
         >
-          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', marginBottom: 20 }}>
+          <p className="text-[15px] text-muted-foreground" style={{ marginBottom: 20 }}>
             Sign in to manage your settings.
           </p>
           <button
             onClick={() => navigate('/login')}
+            className="text-sm font-bold"
             style={{
               height: 44,
               paddingInline: 32,
               borderRadius: 9999,
-              
               border: 'none',
               cursor: 'pointer',
-              fontSize: 14,
-              fontWeight: 700,
-              
             }}
           >
             Sign in
@@ -104,8 +100,8 @@ export default function MobileSettingsPage() {
         </div>
       ) : (
         <div
+          className="bg-white/[0.04]"
           style={{
-            background: 'rgba(255,255,255,0.04)',
             borderTop: '1px solid rgba(255,255,255,0.06)',
             borderBottom: '1px solid rgba(255,255,255,0.06)',
             marginTop: 8,
@@ -128,11 +124,12 @@ export default function MobileSettingsPage() {
                     cursor: 'pointer',
                   }}
                 >
-                  <span style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.90)' }}>
+                  <span className="text-[15px] font-medium text-foreground/90">
                     {row.label}
                   </span>
                   <ChevronRight
-                    style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.30)', flexShrink: 0 }}
+                    className="text-foreground/30"
+                    style={{ width: 18, height: 18, flexShrink: 0 }}
                     aria-hidden="true"
                   />
                 </div>
@@ -140,9 +137,9 @@ export default function MobileSettingsPage() {
               {i < rows.length - 1 && (
                 <div
                   aria-hidden="true"
+                  className="bg-white/[0.05]"
                   style={{
                     height: 1,
-                    background: 'rgba(255,255,255,0.05)',
                     marginInlineStart: 'var(--mob-side, 16px)',
                   }}
                 />

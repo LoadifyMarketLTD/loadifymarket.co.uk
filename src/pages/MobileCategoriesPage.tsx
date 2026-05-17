@@ -71,14 +71,12 @@ export default function MobileCategoriesPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col"
-      style={{ background: 'rgba(10,14,26,1)' }}
+      className="min-h-screen flex flex-col bg-background"
     >
       {/* ── Sticky header ── */}
       <div
-        className="shrink-0 flex items-center gap-3 px-4 sticky top-0 z-10"
+        className="shrink-0 flex items-center gap-3 px-4 sticky top-0 z-10 bg-background/[0.97]"
         style={{
-          background: 'rgba(7,8,11,0.97)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderBottom: '1px solid rgba(255,255,255,0.07)',
@@ -88,8 +86,7 @@ export default function MobileCategoriesPage() {
       >
         <button
           onClick={() => navigate(-1)}
-          className="p-2 rounded-xl active:bg-white/10 transition-colors"
-          style={{ background: 'rgba(255,255,255,0.05)' }}
+          className="p-2 rounded-xl active:bg-white/10 transition-colors bg-white/[0.05]"
           aria-label="Back"
         >
           <ArrowLeft className="h-5 w-5 text-white" aria-hidden="true" />
@@ -123,8 +120,7 @@ export default function MobileCategoriesPage() {
             All Categories
           </span>
           <ChevronRight
-            className="h-[18px] w-[18px] shrink-0"
-            style={{ color: 'rgba(255,255,255,0.3)' }}
+            className="h-[18px] w-[18px] shrink-0 text-foreground/30"
             aria-hidden="true"
           />
         </Link>
@@ -165,8 +161,7 @@ export default function MobileCategoriesPage() {
                   {cat.name}
                 </span>
                 <ChevronRight
-                  className="h-[18px] w-[18px] shrink-0"
-                  style={{ color: 'rgba(255,255,255,0.3)' }}
+                  className="h-[18px] w-[18px] shrink-0 text-foreground/30"
                   aria-hidden="true"
                 />
               </Link>
@@ -190,8 +185,7 @@ export default function MobileCategoriesPage() {
               View All Categories
             </span>
             <ChevronRight
-              className="h-[18px] w-[18px] shrink-0"
-              style={{ color: 'rgba(255,255,255,0.3)' }}
+              className="h-[18px] w-[18px] shrink-0 text-foreground/30"
               aria-hidden="true"
             />
           </Link>

@@ -40,7 +40,7 @@ export default function MobileProductCard({
       <div
         style={{
           width: '100%',
-          background: 'rgba(239,239,239,1)',
+          background: '#EFEFEF',
           borderRadius: 16,
           overflow: 'hidden',
         }}
@@ -50,7 +50,7 @@ export default function MobileProductCard({
           style={{
             aspectRatio: '1 / 1',
             overflow: 'hidden',
-            background: 'rgba(224,224,224,1)',
+            background: '#E0E0E0',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -80,7 +80,7 @@ export default function MobileProductCard({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'rgba(232,224,208,1)',
+              background: '#E8E0D0',
               gap: '4px',
             }}
           >
@@ -97,11 +97,9 @@ export default function MobileProductCard({
         <div style={{ padding: '10px 12px 12px' }}>
           {/* Title */}
           <p
-            className="line-clamp-2"
+            className="line-clamp-2 font-semibold text-[#111]"
             style={{
               fontSize: 'clamp(11px, 3vw, 13px)',
-              fontWeight: 600,
-              color: 'rgba(17,17,17,1)',
               margin: 0,
               lineHeight: 1.35,
             }}
@@ -111,10 +109,9 @@ export default function MobileProductCard({
 
           {/* Price */}
           <p
+            className="font-bold text-[#111]"
             style={{
               fontSize: 'clamp(13px, 3.8vw, 15px)',
-              fontWeight: 700,
-              color: 'rgba(17,17,17,1)',
               margin: '5px 0 0',
             }}
           >

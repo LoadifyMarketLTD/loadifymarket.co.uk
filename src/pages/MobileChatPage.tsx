@@ -771,9 +771,8 @@ export default function MobileChatPage() {
       {/* Sub-header — paddingTop includes safe-area-inset-top so the background
           fills the status-bar area and content starts cleanly below it. */}
       <div
-        className="border-b border-white/10 shrink-0"
+        className="border-b border-white/10 shrink-0 bg-background/[0.97]"
         style={{
-          background: "rgba(11,15,26,0.97)",
           paddingTop: "calc(0.75rem + env(safe-area-inset-top, 0px))",
           paddingBottom: "0",
         }}
@@ -823,21 +822,18 @@ export default function MobileChatPage() {
                   width: "36px",
                   height: "36px",
                   borderRadius: "8px",
-                  objectFit: "cover",
+                  objectFit: "cover" as const,
                   flexShrink: 0,
-                  background: "rgba(26,26,46,1)",
                 }}
+                className="bg-elevated"
               />
             ) : (
               <div
+                className="bg-white/[0.05] flex items-center justify-center"
                 style={{
                   width: "36px",
                   height: "36px",
                   borderRadius: "8px",
-                  background: "rgba(255,255,255,0.05)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
                   flexShrink: 0,
                 }}
               >
@@ -958,10 +954,9 @@ export default function MobileChatPage() {
 
       {/* Compose bar */}
       <div
-        className="shrink-0 px-4 py-3 border-t border-white/10"
+        className="shrink-0 px-4 py-3 border-t border-white/10 bg-background/[0.97]"
         style={{
           paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))",
-          background: "rgba(11,15,26,0.97)",
         }}
       >
         <div className="flex items-end gap-2">

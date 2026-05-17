@@ -26,7 +26,7 @@ const FooterLink = ({ to, children }: { to: string; children: React.ReactNode })
 
 const Footer = () => {
   return (
-    <footer className="bg-[linear-gradient(180deg,#121A2B,#0A0E1A)] text-muted-foreground border-t border-white/[0.06]">
+    <footer className="bg-surface text-muted-foreground border-t border-white/[0.06]">
 
       {/* ── Mobile: compact footer ───────────────────────────────────────── */}
       <div

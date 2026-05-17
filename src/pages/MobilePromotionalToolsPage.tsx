@@ -18,9 +18,8 @@ export default function MobilePromotionalToolsPage() {
 
   return (
     <div
-      className="md:hidden min-h-screen"
+      className="md:hidden min-h-screen bg-background"
       style={{
-        background: 'rgba(10,14,26,1)',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
@@ -41,9 +40,9 @@ export default function MobilePromotionalToolsPage() {
           aria-label="Back"
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, marginLeft: -4 }}
         >
-          <ChevronLeft style={{ width: 22, height: 22, color: 'rgba(255,255,255,0.70)' }} />
+          <ChevronLeft className="text-foreground/70" style={{ width: 22, height: 22 }} />
         </button>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0 }}>Promotional Tools</h1>
+        <h1 className="text-xl font-extrabold text-foreground m-0">Promotional Tools</h1>
       </div>
 
       {/* Body */}
@@ -59,54 +58,43 @@ export default function MobilePromotionalToolsPage() {
         }}
       >
         <div
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: '50%',
-            background: 'rgba(242,184,75,0.10)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          className="bg-primary/10 flex items-center justify-center"
+          style={{ width: 64, height: 64, borderRadius: '50%' }}
         >
           <Megaphone style={{ width: 28, height: 28 }} aria-hidden="true" />
         </div>
 
         {isSeller ? (
           <>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'rgba(255,255,255,1)', margin: 0 }}>
+            <h2 className="text-[18px] font-bold text-foreground m-0">
               Promotional Tools
             </h2>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.50)', margin: 0, maxWidth: 280, lineHeight: 1.5 }}>
+            <p className="text-sm text-foreground/50 m-0" style={{ maxWidth: 280, lineHeight: 1.5 }}>
               Boost your listings and reach more buyers. Promotional tools are coming soon.
             </p>
             <div
+              className="bg-white/[0.04] w-full"
               style={{
-                background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.07)',
                 borderRadius: 12,
                 paddingInline: 20,
                 paddingBlock: 14,
-                width: '100%',
                 maxWidth: 320,
               }}
             >
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+              <p className="text-[13px] text-muted-foreground m-0">
                 In the meantime, keep your listings active and up to date to attract buyers.
               </p>
             </div>
             <button
               onClick={() => navigate('/seller/products')}
+              className="text-sm font-bold"
               style={{
                 height: 44,
                 paddingInline: 28,
                 borderRadius: 9999,
-                
                 border: 'none',
                 cursor: 'pointer',
-                fontSize: 14,
-                fontWeight: 700,
-                
                 marginTop: 8,
               }}
             >
@@ -115,24 +103,21 @@ export default function MobilePromotionalToolsPage() {
           </>
         ) : (
           <>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'rgba(255,255,255,1)', margin: 0 }}>
+            <h2 className="text-[18px] font-bold text-foreground m-0">
               Seller feature
             </h2>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.50)', margin: 0, maxWidth: 280, lineHeight: 1.5 }}>
+            <p className="text-sm text-foreground/50 m-0" style={{ maxWidth: 280, lineHeight: 1.5 }}>
               Promotional tools are only available to sellers.
             </p>
             <button
               onClick={() => navigate('/profile')}
+              className="text-sm font-semibold text-foreground/80 bg-white/[0.07]"
               style={{
                 height: 44,
                 paddingInline: 28,
                 borderRadius: 9999,
-                background: 'rgba(255,255,255,0.07)',
                 border: '1px solid rgba(255,255,255,0.12)',
                 cursor: 'pointer',
-                fontSize: 14,
-                fontWeight: 600,
-                color: 'rgba(255,255,255,0.80)',
                 marginTop: 8,
               }}
             >

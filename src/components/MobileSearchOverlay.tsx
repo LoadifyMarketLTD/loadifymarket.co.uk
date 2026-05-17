@@ -70,11 +70,11 @@ export default function MobileSearchOverlay({ onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label="Search marketplace"
+      className="bg-background/[0.97]"
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        background: 'rgba(7,8,11,0.97)',
         display: 'flex',
         flexDirection: 'column',
         paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
@@ -98,12 +98,12 @@ export default function MobileSearchOverlay({ onClose }: Props) {
             type="search"
             placeholder="Search items, brands, keywords…"
             aria-label="Search items, brands, keywords"
+            className="text-foreground"
             style={{
               flex: 1,
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              color: 'rgba(255,255,255,1)',
               fontSize: '15px',
               lineHeight: 1.2,
               minWidth: 0,
@@ -115,9 +115,9 @@ export default function MobileSearchOverlay({ onClose }: Props) {
           type="button"
           onClick={onClose}
           aria-label="Close search"
+          className="bg-white/[0.06]"
           style={{
             width: '44px', height: '44px', flexShrink: 0,
-            background: 'rgba(255,255,255,0.06)',
             border: '1px solid rgba(255,255,255,0.10)',
             borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -130,7 +130,7 @@ export default function MobileSearchOverlay({ onClose }: Props) {
 
       {/* ── Quick category chips ────────────────────────────── */}
       <div style={{ paddingInline: 'var(--mob-side, 16px)', paddingTop: '8px' }}>
-        <p style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.40)',
+        <p className="text-foreground/40" style={{ fontSize: '11px', fontWeight: 600,
           letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>
           Browse categories
         </p>
@@ -145,13 +145,12 @@ export default function MobileSearchOverlay({ onClose }: Props) {
               type="button"
               role="listitem"
               onClick={() => handleCategory(value)}
+              className="bg-primary/[0.08] text-primary"
               style={{
                 minHeight: '44px',
                 padding: '0 16px',
                 borderRadius: '22px',
-                background: 'rgba(212,175,55,0.08)',
                 border: '1px solid rgba(200,134,10,0.35)',
-                
                 fontSize: '13px',
                 fontWeight: 600,
                 cursor: 'pointer',

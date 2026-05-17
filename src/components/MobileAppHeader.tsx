@@ -64,10 +64,10 @@ export default function MobileAppHeader() {
           {/* Brand text */}
           <div className="flex flex-col leading-none" style={{ minWidth: 0, gap: 2 }}>
             <span
+              className="text-foreground"
               style={{
                 fontSize: 'clamp(14px, 4.2vw, 19px)',
                 fontWeight: 800,
-                color: 'rgba(255,255,255,1)',
                 letterSpacing: 'clamp(0.5px, 0.2vw, 1px)',
                 lineHeight: 1,
                 fontFamily: 'var(--font-display)',
@@ -141,9 +141,9 @@ export default function MobileAppHeader() {
             aria-hidden="true"
           />
           <span
+            className="text-foreground/55"
             style={{
               fontSize: 14,
-              color: 'rgba(255,255,255,0.55)',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
