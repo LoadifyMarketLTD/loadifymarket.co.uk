@@ -38,7 +38,7 @@ export default function VerificationBadge({
 
   return (
     <div
-      className={`inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 font-semibold ${sizeClasses[size]}`}
+      className={`inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/40 text-primary font-semibold ${sizeClasses[size]}`}
       title="Unverified seller"
       aria-label="Unverified seller"
     >

@@ -162,7 +162,7 @@ const SellerShell = () => {
         </header>
 
         {/* Page content — add bottom padding on mobile so content isn't hidden behind tab bar */}
-        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0 bg-[#020617]">
+        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0 bg-[#0A0E1A]">
           <Outlet />
         </main>
       </div>

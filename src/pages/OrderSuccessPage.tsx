@@ -150,8 +150,8 @@ export default function OrderSuccessPage() {
           <div className="w-full max-w-lg mt-10">
             <div className="bg-white border border-gray-200 rounded-xl p-10 text-center">
               <div className="flex items-center justify-center mb-6">
-                <div className="w-20 h-20 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-                  <Clock className="w-10 h-10 text-amber-400" />
+                <div className="w-20 h-20 rounded-full bg-primary/10 border border-primary/40 flex items-center justify-center">
+                  <Clock className="w-10 h-10 text-primary" />
                 </div>
               </div>
               <h1 className="text-2xl font-bold text-slate-900 mb-3">Payment Received</h1>

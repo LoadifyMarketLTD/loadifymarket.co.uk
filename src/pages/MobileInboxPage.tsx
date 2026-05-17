@@ -253,14 +253,14 @@ export default function MobileInboxPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#07080B] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F5B942]" />
+      <div className="min-h-screen bg-[#0A0E1A] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37]" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#07080B" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: "#0A0E1A" }}>
       {/* ── Header ── */}
       <div
         className="shrink-0 sticky top-0 z-40"
@@ -346,11 +346,11 @@ export default function MobileInboxPage() {
                   padding: "10px 18px",
                   fontSize: "13px",
                   fontWeight: isActive ? 700 : 400,
-                  color: isActive ? "#F5B942" : "rgba(255,255,255,0.65)",
+                  color: isActive ? "#D4AF37" : "rgba(255,255,255,0.65)",
                   whiteSpace: "nowrap",
                   background: "transparent",
                   border: "none",
-                  borderBottom: isActive ? "2px solid #F5B942" : "2px solid transparent",
+                  borderBottom: isActive ? "2px solid #D4AF37" : "2px solid transparent",
                   cursor: "pointer",
                   flexShrink: 0,
                   display: "flex",
@@ -366,8 +366,8 @@ export default function MobileInboxPage() {
                       minWidth: "18px",
                       height: "18px",
                       borderRadius: "9px",
-                      background: "#F5B942",
-                      color: "#0B0B0F",
+                      background: "#D4AF37",
+                      color: "#121A2B",
                       fontSize: "10px",
                       fontWeight: 800,
                       display: "flex",
@@ -408,7 +408,7 @@ export default function MobileInboxPage() {
               <Link
                 to="/catalog"
                 className="px-5 py-2.5 rounded-full text-sm font-semibold"
-                style={{ background: "#F5B942", color: "#0B0B0F" }}
+                style={{ background: "#D4AF37", color: "#121A2B" }}
               >
                 Browse listings
               </Link>
@@ -460,7 +460,7 @@ export default function MobileInboxPage() {
                           height: "11px",
                           borderRadius: "50%",
                           background: "#22C55E",
-                          border: "2px solid #07080B",
+                          border: "2px solid #0A0E1A",
                         }}
                       />
                     )}
@@ -507,8 +507,8 @@ export default function MobileInboxPage() {
                         minWidth: "22px",
                         height: "22px",
                         borderRadius: "11px",
-                        background: "#F5B942",
-                        color: "#0B0B0F",
+                        background: "#D4AF37",
+                        color: "#121A2B",
                         fontSize: "11px",
                         fontWeight: 800,
                         display: "flex",

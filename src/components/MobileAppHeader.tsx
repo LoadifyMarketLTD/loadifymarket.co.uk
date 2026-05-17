@@ -40,7 +40,7 @@ export default function MobileAppHeader() {
     <>
     <header
       style={{
-        background: '#07080B',
+        background: '#0A0E1A',
         paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))',
         paddingBottom: '0.75rem',
         paddingLeft: 16,

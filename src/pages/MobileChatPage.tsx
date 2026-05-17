@@ -156,13 +156,13 @@ function OfferBubble({
     <div
       className={`rounded-2xl px-4 py-3 max-w-[80%] ${
         isMine
-          ? "bg-[#FBBF24]/15 border border-[#FBBF24]/30 rounded-br-sm"
-          : "bg-[#FBBF24]/10 border border-[#FBBF24]/20 rounded-bl-sm"
+          ? "bg-[#D4AF37]/15 border border-[#D4AF37]/30 rounded-br-sm"
+          : "bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-bl-sm"
       }`}
     >
       <div className="flex items-center gap-2 mb-1">
-        <Tag className="h-3.5 w-3.5 text-[#FBBF24]" />
-        <span className="text-xs font-semibold text-[#FBBF24] uppercase tracking-wide">Offer</span>
+        <Tag className="h-3.5 w-3.5 text-[#D4AF37]" />
+        <span className="text-xs font-semibold text-[#D4AF37] uppercase tracking-wide">Offer</span>
       </div>
       {productTitle && (
         <p className="text-xs text-white/75 mb-1 truncate">{productTitle}</p>
@@ -196,7 +196,7 @@ function OfferBubble({
       {!isSeller && isMine && status === "accepted" && offerRecord?.orderStatus !== "paid" && (
         <button
           onClick={onPayNow}
-          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#FBBF24] text-[#020617] text-sm font-bold active:bg-[#F59E0B] transition-colors"
+          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#D4AF37] text-[#0A0E1A] text-sm font-bold active:bg-[#F59E0B] transition-colors"
         >
           <CreditCard className="h-4 w-4" />
           Pay Now
@@ -751,7 +751,7 @@ export default function MobileChatPage() {
 
   return (
     <div
-      className="flex flex-col bg-[#020617]"
+      className="flex flex-col bg-[#0A0E1A]"
       style={{
         height: "100dvh",
       }}
@@ -778,14 +778,14 @@ export default function MobileChatPage() {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-white truncate">{otherName}</p>
             {convMeta?.subject && !productPreview && (
-              <p className="text-xs text-[#FBBF24]/70 truncate">{convMeta.subject}</p>
+              <p className="text-xs text-[#D4AF37]/70 truncate">{convMeta.subject}</p>
             )}
           </div>
           {/* Make Offer button — buyers only (not the listing seller) */}
           {otherId && !isSeller && (
             <button
               onClick={() => setOfferOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#FBBF24]/40 text-[#FBBF24] text-xs font-semibold hover:bg-[#FBBF24]/10 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#D4AF37]/40 text-[#D4AF37] text-xs font-semibold hover:bg-[#D4AF37]/10 transition-colors"
               aria-label="Make an offer"
             >
               <Tag className="h-3.5 w-3.5" />
@@ -904,14 +904,14 @@ export default function MobileChatPage() {
                   <div
                     className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
                       isMine
-                        ? "bg-[#FBBF24] text-[#020617] rounded-br-sm"
+                        ? "bg-[#D4AF37] text-[#0A0E1A] rounded-br-sm"
                         : "bg-white/10 text-white rounded-bl-sm"
                     }`}
                   >
                     <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                       {parsed.text}
                     </p>
-                    <p className={`text-[10px] mt-1 ${isMine ? "text-[#020617]/60" : "text-white/40"}`}>
+                    <p className={`text-[10px] mt-1 ${isMine ? "text-[#0A0E1A]/60" : "text-white/40"}`}>
                       {formatTime(msg.createdAt)}
                     </p>
                   </div>
@@ -960,16 +960,16 @@ export default function MobileChatPage() {
             onKeyDown={handleKeyDown}
             placeholder="Type a message…"
             rows={1}
-            className="flex-1 resize-none rounded-2xl border border-white/15 bg-white/5 text-white placeholder:text-white/30 px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#FBBF24]/60 max-h-32"
+            className="flex-1 resize-none rounded-2xl border border-white/15 bg-white/5 text-white placeholder:text-white/30 px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4AF37]/60 max-h-32"
             style={{ lineHeight: "1.4" }}
           />
           <button
             onClick={() => void handleSend()}
             disabled={!draft.trim() || sending}
-            className="w-10 h-10 rounded-full bg-[#FBBF24] flex items-center justify-center shrink-0 disabled:opacity-40 transition-opacity"
+            className="w-10 h-10 rounded-full bg-[#D4AF37] flex items-center justify-center shrink-0 disabled:opacity-40 transition-opacity"
             aria-label="Send message"
           >
-            <Send className="h-4 w-4 text-[#020617]" />
+            <Send className="h-4 w-4 text-[#0A0E1A]" />
           </button>
         </div>
       </div>

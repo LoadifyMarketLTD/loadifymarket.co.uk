@@ -28,7 +28,7 @@ interface Order {
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   paid: { label: "Paid", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
-  packed: { label: "Packed", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
+  packed: { label: "Packed", className: "border-primary/40 text-primary bg-primary/10" },
   shipped: { label: "Shipped", className: "border-sky-500/30 text-sky-400 bg-sky-500/10" },
   delivered: { label: "Delivered", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
   cancelled: { label: "Cancelled", className: "border-slate-200 text-slate-400" },
@@ -203,7 +203,7 @@ const AdminOrders = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Orders", count: orders.length, value: `£${totalValue.toLocaleString()}`, color: "#FBBF24", bg: "rgba(251,191,36,0.12)", tab: "all" },
+          { label: "Total Orders", count: orders.length, value: `£${totalValue.toLocaleString()}`, color: "#D4AF37", bg: "rgba(251,191,36,0.12)", tab: "all" },
           { label: "Active", count: activeOrders.length, value: "In progress", color: "#60A5FA", bg: "rgba(96,165,250,0.12)", tab: "active" },
           { label: "Delivered", count: byStatus("delivered").length, value: "Completed", color: "#0A2239", bg: "rgba(10,34,57,0.08)", tab: "delivered" },
           { label: "Disputed", count: byStatus("disputed").length, value: "Needs attention", color: "#F87171", bg: "rgba(248,113,113,0.12)", tab: "disputed" },
@@ -212,9 +212,9 @@ const AdminOrders = () => {
             key={stat.label}
             type="button"
             onClick={() => setActiveTab(stat.tab)}
-            className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FBBF24]"
+            className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
             style={{
-              background: "linear-gradient(145deg, #0B1220, #0F172A)",
+              background: "linear-gradient(145deg, #121A2B, #182235)",
               border: activeTab === stat.tab ? `2px solid ${stat.color}` : "1px solid rgba(255,255,255,0.05)",
               boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
             }}
@@ -251,7 +251,7 @@ const AdminOrders = () => {
         </TabsList>
         {(["all", "active", "delivered", "disputed"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(
                   tab === "all" ? filtered :

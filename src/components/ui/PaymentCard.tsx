@@ -33,13 +33,13 @@ export default function PaymentCard({ variant, size = 'default' }: PaymentCardPr
     `shadow-[0_10px_24px_rgba(0,0,0,0.42),inset_0_1px_0_rgba(255,255,255,0.05)] ` +
     `transition-all duration-[280ms] ease-out ` +
     `hover:-translate-y-1 ` +
-    `hover:border-yellow-400/[0.35] ` +
+    `hover:border-primary/40/[0.35] ` +
     `hover:shadow-[0_0_26px_rgba(251,191,36,0.16),0_16px_36px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.07)]`;
 
   if (variant === 'visa') {
     return (
       <div className={`${base} ${sizeClass} ${bgClass}`} role="img" aria-label="Visa accepted">
-        <span className="relative z-10 text-base font-extrabold tracking-[0.10em] text-white group-hover:text-[#FBBF24] transition-colors leading-none select-none">
+        <span className="relative z-10 text-base font-extrabold tracking-[0.10em] text-white group-hover:text-[#D4AF37] transition-colors leading-none select-none">
           VISA
         </span>
       </div>
@@ -49,7 +49,7 @@ export default function PaymentCard({ variant, size = 'default' }: PaymentCardPr
   if (variant === 'stripe') {
     return (
       <div className={`${base} ${sizeClass} ${bgClass}`} role="img" aria-label="Stripe accepted">
-        <span className="relative z-10 text-[17px] font-extrabold lowercase text-white group-hover:text-[#FBBF24] transition-colors leading-none select-none">
+        <span className="relative z-10 text-[17px] font-extrabold lowercase text-white group-hover:text-[#D4AF37] transition-colors leading-none select-none">
           stripe
         </span>
       </div>
@@ -64,7 +64,7 @@ export default function PaymentCard({ variant, size = 'default' }: PaymentCardPr
         <span className="absolute left-0 w-[18px] h-[18px] rounded-full bg-[rgba(251,191,36,0.95)]" />
         <span className="absolute left-[10px] w-[18px] h-[18px] rounded-full bg-[rgba(217,119,6,0.95)]" />
       </div>
-      <span className="relative z-10 text-[13px] font-bold text-[#F8FAFC] group-hover:text-[#FBBF24] transition-colors leading-none select-none">
+      <span className="relative z-10 text-[13px] font-bold text-[#F8FAFC] group-hover:text-[#D4AF37] transition-colors leading-none select-none">
         Mastercard
       </span>
     </div>

@@ -349,7 +349,7 @@ const SellerProfile = () => {
                   </Badge>
                 )}
                 {sellerStatus === "submitted" && (
-                  <Badge className="bg-amber-500/10 text-amber-700 border-amber-200" variant="outline">
+                  <Badge className="bg-primary/10 text-primary border-primary/40" variant="outline">
                     Pending Verification
                   </Badge>
                 )}
@@ -365,7 +365,7 @@ const SellerProfile = () => {
                 )}
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500" /> {stats.rating ? stats.rating.toFixed(1) : "—"}</span>
+                <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-primary" /> {stats.rating ? stats.rating.toFixed(1) : "—"}</span>
                 <span className="flex items-center gap-1"><Package className="h-3.5 w-3.5" /> {stats.totalSales} sales</span>
                 <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {stats.memberSince ? `Since ${stats.memberSince}` : ""}</span>
               </div>
@@ -399,7 +399,7 @@ const SellerProfile = () => {
               <Label className="text-xs">Business Name <span className="text-red-500">*</span></Label>
               <Input value={form.businessName} onChange={(e) => updateField("businessName", e.target.value)} className="mt-1" />
               {businessNameWarning && (
-                <div className="flex items-start gap-1.5 mt-1.5 text-amber-600 text-xs">
+                <div className="flex items-start gap-1.5 mt-1.5 text-primary text-xs">
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                   <span>{businessNameWarning}</span>
                 </div>

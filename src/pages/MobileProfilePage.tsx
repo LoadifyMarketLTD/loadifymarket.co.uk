@@ -91,7 +91,7 @@ function MenuRow({ label, to, external, badgeCount }: SectionItem) {
               height: 20,
               borderRadius: 999,
               background: '#F2B84B',
-              color: '#07080B',
+              color: '#0A0E1A',
               fontSize: 11,
               fontWeight: 700,
               display: 'inline-flex',
@@ -205,12 +205,12 @@ function GuestView() {
           height: 48,
           paddingInline: 40,
           borderRadius: 9999,
-          background: 'linear-gradient(135deg, #F5C842 0%, #C8860A 100%)',
+          background: 'linear-gradient(135deg, #D4AF37 0%, #D4AF37 100%)',
           border: 'none',
           cursor: 'pointer',
           fontSize: 15,
           fontWeight: 700,
-          color: '#0B0B0F',
+          color: '#121A2B',
           marginTop: 8,
         }}
       >
@@ -262,7 +262,7 @@ export default function MobileProfilePage() {
     <div
       className="md:hidden min-h-screen"
       style={{
-        background: '#07080B',
+        background: '#0A0E1A',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
@@ -299,14 +299,14 @@ export default function MobileProfilePage() {
                 width: 60,
                 height: 60,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #F5C842 0%, #C8860A 100%)',
+                background: 'linear-gradient(135deg, #D4AF37 0%, #D4AF37 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
               }}
             >
-              <span style={{ fontSize: 22, fontWeight: 700, color: '#0B0B0F' }}>
+              <span style={{ fontSize: 22, fontWeight: 700, color: '#121A2B' }}>
                 {initials}
               </span>
             </div>

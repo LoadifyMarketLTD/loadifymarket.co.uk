@@ -52,7 +52,7 @@ const ForgotPassword = () => {
   const headerHeight = "calc(var(--header-h, 6.875rem) + env(safe-area-inset-top, 0px))";
 
   return (
-    <div className="flex bg-[#020617]" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
+    <div className="flex bg-[#0A0E1A]" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
       {/* Left — hero image (desktop only) */}
       <div className="hidden lg:flex lg:w-[65%] xl:w-[67%] relative overflow-hidden">
         <img
@@ -64,10 +64,10 @@ const ForgotPassword = () => {
       </div>
 
       {/* Right — form panel */}
-      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col bg-[#020617]" style={{ minHeight: `calc(100vh - ${headerHeight})` }}>
+      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col bg-[#0A0E1A]" style={{ minHeight: `calc(100vh - ${headerHeight})` }}>
         <div className="flex-1 flex items-center justify-center px-4 py-8 sm:px-8">
           <div className="w-full">
-            <div className="rounded-2xl p-7 sm:p-8 space-y-6" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="rounded-2xl p-7 sm:p-8 space-y-6" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.08)" }}>
 
               {!submitted ? (
                 <>
@@ -85,7 +85,7 @@ const ForgotPassword = () => {
                           id="email"
                           type="email"
                           placeholder="name@company.com"
-                          className="h-11 pl-10 bg-[#0F172A] border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-[#FBBF24]/25 focus-visible:border-[#FBBF24]"
+                          className="h-11 pl-10 bg-[#182235] border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-[#D4AF37]/25 focus-visible:border-[#D4AF37]"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           required
@@ -104,8 +104,8 @@ const ForgotPassword = () => {
               ) : (
                 <div className="space-y-4 text-center py-2">
                   <div className="flex justify-center">
-                    <div className="h-16 w-16 rounded-full bg-[#FBBF24]/10 flex items-center justify-center">
-                      <CheckCircle2 className="h-8 w-8 text-[#FBBF24]" />
+                    <div className="h-16 w-16 rounded-full bg-[#D4AF37]/10 flex items-center justify-center">
+                      <CheckCircle2 className="h-8 w-8 text-[#D4AF37]" />
                     </div>
                   </div>
                   <h1 className="text-[22px] font-bold text-white leading-tight" style={{ letterSpacing: "-0.02em" }}>Check your email</h1>
@@ -117,7 +117,7 @@ const ForgotPassword = () => {
                     <button
                       type="button"
                       onClick={() => setSubmitted(false)}
-                      className="text-[#FBBF24] font-medium hover:underline"
+                      className="text-[#D4AF37] font-medium hover:underline"
                     >
                       Try again
                     </button>

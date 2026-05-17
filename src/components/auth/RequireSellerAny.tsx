@@ -53,8 +53,8 @@ export default function RequireSellerAny({ children }: Props) {
 
   // Buyer or any other authenticated non-seller — show access denied
   return (
-    <div className="min-h-screen bg-[#020617] flex items-center justify-center px-4">
-      <div className="rounded-xl p-10 max-w-md w-full text-center" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}>
+    <div className="min-h-screen bg-[#0A0E1A] flex items-center justify-center px-4">
+      <div className="rounded-xl p-10 max-w-md w-full text-center" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}>
         <p className="text-5xl mb-4">🏪</p>
         <h2 className="text-2xl font-bold text-white mb-2">Seller Account Required</h2>
         <p className="text-slate-400 mb-6">

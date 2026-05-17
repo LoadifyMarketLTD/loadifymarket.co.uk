@@ -12,7 +12,7 @@ const typeColor: Record<string, string> = {
   payment:  "bg-emerald-500/10 text-emerald-700",
   shipment: "bg-indigo-500/10 text-indigo-700",
   delivery: "bg-emerald-500/10 text-emerald-700",
-  return:   "bg-amber-500/10 text-amber-700",
+  return:   "bg-primary/10 text-primary",
   dispute:  "bg-red-500/10 text-red-700",
   system:   "bg-muted text-muted-foreground",
   general:  "bg-muted text-muted-foreground",

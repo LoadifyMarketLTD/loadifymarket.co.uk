@@ -88,7 +88,7 @@ function passwordStrength(pw: string): { label: string; width: string; color: st
   if (/[^A-Za-z0-9]/.test(pw)) score++;
   if (score <= 1) return { label: "Weak", width: "25%", color: "bg-red-500", score };
   if (score === 2) return { label: "Fair", width: "50%", color: "bg-orange-400", score };
-  if (score === 3) return { label: "Good", width: "75%", color: "bg-yellow-500", score };
+  if (score === 3) return { label: "Good", width: "75%", color: "bg-primary", score };
   return { label: "Strong", width: "100%", color: "bg-green-500", score };
 }
 
@@ -258,9 +258,9 @@ export default function TradeAccount() {
       <div className="bg-white/80 border-b border-gray-200/70 py-6 px-4 sm:px-8">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-2xl sm:text-3xl font-bold text-[#0B1D3A]">Trade Account</h1>
-          <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 inline-flex items-start gap-2 max-w-2xl">
-            <span className="text-amber-500 mt-0.5 shrink-0">⚠️</span>
-            <p className="text-sm text-amber-800">
+          <div className="mt-2 bg-primary-soft border border-primary/40 rounded-lg px-4 py-2 inline-flex items-start gap-2 max-w-2xl">
+            <span className="text-primary mt-0.5 shrink-0">⚠️</span>
+            <p className="text-sm text-primary">
               <strong>IMPORTANT:</strong> Please ensure all details are correct before submitting.
               Your business details will be used for account verification and order processing.
             </p>

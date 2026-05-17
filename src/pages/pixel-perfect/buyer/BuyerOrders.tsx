@@ -33,9 +33,9 @@ interface OrderRow {
 }
 
 const statusColor: Record<string, string> = {
-  pending: "bg-amber-500/15 text-amber-700 border-amber-200",
-  paid: "bg-amber-500/15 text-amber-700 border-amber-200",
-  packed: "bg-amber-500/15 text-amber-700 border-amber-200",
+  pending: "bg-primary/15 text-primary border-primary/40",
+  paid: "bg-primary/15 text-primary border-primary/40",
+  packed: "bg-primary/15 text-primary border-primary/40",
   shipped: "bg-blue-500/15 text-blue-700 border-blue-200",
   delivered: "bg-orange-500/15 text-orange-700 border-orange-200",
   completed: "bg-emerald-500/15 text-emerald-700 border-emerald-200",
@@ -346,7 +346,7 @@ const BuyerOrders = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-amber-600"
+                    className="h-8 w-8 text-primary"
                     title={["paid", "packed", "shipped", "delivered"].includes(o.status) ? "Open dispute" : "Disputes available after payment"}
                     disabled={!["paid", "packed", "shipped", "delivered"].includes(o.status)}
                     onClick={() => {

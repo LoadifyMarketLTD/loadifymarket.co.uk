@@ -6,7 +6,7 @@ export default function CategoriesOverview() {
   const { categories, loading } = useCategories();
 
   return (
-    <section className="py-20 bg-[#020617]" aria-labelledby="categories-heading">
+    <section className="py-20 bg-[#0A0E1A]" aria-labelledby="categories-heading">
       <div className="max-w-6xl mx-auto px-4">
 
         <div className="text-center mb-12">
@@ -39,17 +39,17 @@ export default function CategoriesOverview() {
                 <Link
                   key={cat.slug}
                   to={`/catalog?category=${encodeURIComponent(cat.name)}`}
-                  className="flex flex-col items-center gap-3 p-5 rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#111827,#020617)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_22px_rgba(251,191,36,0.15)] hover:border-yellow-400/25 group text-center"
+                  className="flex flex-col items-center gap-3 p-5 rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#121A2B,#0A0E1A)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_22px_rgba(251,191,36,0.15)] hover:border-primary/40 group text-center"
                 >
                   {Icon ? (
                     <Icon
-                      className="w-7 h-7 text-[#FBBF24] shrink-0"
+                      className="w-7 h-7 text-[#D4AF37] shrink-0"
                       style={{ filter: 'drop-shadow(0 0 6px rgba(251,191,36,0.35))' }}
                       aria-hidden="true"
                     />
                   ) : (
                     <span
-                      className="text-[#FBBF24] font-bold text-lg"
+                      className="text-[#D4AF37] font-bold text-lg"
                       style={{ filter: 'drop-shadow(0 0 6px rgba(251,191,36,0.35))' }}
                       aria-hidden="true"
                     >
@@ -68,7 +68,7 @@ export default function CategoriesOverview() {
         <div className="text-center mt-10">
           <Link
             to="/catalog"
-            className="inline-flex items-center gap-2 text-[#FBBF24] font-semibold hover:underline"
+            className="inline-flex items-center gap-2 text-[#D4AF37] font-semibold hover:underline"
           >
             Browse All Listings →
           </Link>

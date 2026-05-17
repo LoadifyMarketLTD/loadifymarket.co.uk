@@ -36,7 +36,7 @@ function LMPlaceholder({ size = 48 }: { size?: number }) {
         fontFamily="'Arial Black','Impact',sans-serif"
         fontSize="22"
         fontWeight="900"
-        fill="#F5B942"
+        fill="#D4AF37"
         opacity="0.85"
       >L</text>
       {/* Stylised "M" */}
@@ -46,7 +46,7 @@ function LMPlaceholder({ size = 48 }: { size?: number }) {
         fontFamily="'Arial Black','Impact',sans-serif"
         fontSize="22"
         fontWeight="900"
-        fill="#F5B942"
+        fill="#D4AF37"
         opacity="0.55"
       >M</text>
     </svg>
@@ -69,9 +69,9 @@ interface Product {
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   active: { label: "Active", className: "bg-emerald-500/10 text-emerald-700" },
-  pending_review: { label: "Pending Review", className: "bg-amber-500/10 text-amber-700" },
+  pending_review: { label: "Pending Review", className: "bg-primary/10 text-primary" },
   out_of_stock: { label: "Out of Stock", className: "bg-red-500/10 text-red-700" },
-  low_stock: { label: "Low Stock", className: "bg-amber-500/10 text-amber-700" },
+  low_stock: { label: "Low Stock", className: "bg-primary/10 text-primary" },
   draft: { label: "Draft", className: "bg-muted text-muted-foreground" },
 };
 
@@ -338,7 +338,7 @@ const SellerProducts = () => {
                       Stock: {p.stockQuantity} · Views: {p.views ?? 0} · Shares: {p.shareCount ?? 0}
                     </p>
                     {status === "active" && (p.views ?? 0) === 0 && (
-                      <p className="text-xs text-amber-600 font-medium mt-1">📢 Share this product to get more views</p>
+                      <p className="text-xs text-primary font-medium mt-1">📢 Share this product to get more views</p>
                     )}
                   </div>
                   <Button
@@ -383,7 +383,7 @@ const SellerProducts = () => {
                       <DropdownMenuSeparator />
                       {status !== "out_of_stock" && (
                         <DropdownMenuItem
-                          className="text-amber-600 focus:text-amber-600"
+                          className="text-primary focus:text-primary"
                           onClick={() => setSoldTarget(p)}
                         >
                           <CheckSquare className="h-4 w-4 mr-2" />
@@ -457,7 +457,7 @@ const SellerProducts = () => {
                           <div className="min-w-0">
                             <span className="text-sm font-medium text-foreground line-clamp-1">{p.title}</span>
                             {status === "active" && (p.views ?? 0) === 0 && (
-                              <p className="text-xs text-amber-600 font-medium mt-0.5">📢 Share to get views</p>
+                              <p className="text-xs text-primary font-medium mt-0.5">📢 Share to get views</p>
                             )}
                           </div>
                         </div>
@@ -512,7 +512,7 @@ const SellerProducts = () => {
                               <DropdownMenuSeparator />
                               {status !== "out_of_stock" && (
                                 <DropdownMenuItem
-                                  className="text-amber-600 focus:text-amber-600"
+                                  className="text-primary focus:text-primary"
                                   onClick={() => setSoldTarget(p)}
                                 >
                                   <CheckSquare className="h-3.5 w-3.5 mr-2" />
@@ -569,7 +569,7 @@ const SellerProducts = () => {
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setSoldTarget(null)} disabled={soldLoading}>Cancel</Button>
-            <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={handleMarkSoldConfirm} disabled={soldLoading}>
+            <Button className="bg-primary hover:bg-primary text-white" onClick={handleMarkSoldConfirm} disabled={soldLoading}>
               {soldLoading ? "Updating…" : "Mark as Sold"}
             </Button>
           </DialogFooter>

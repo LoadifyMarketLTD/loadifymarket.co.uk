@@ -81,7 +81,7 @@ function ProductGridCard({ product }: { product: Product }) {
         {/* Star + rating */}
         {product.rating > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-            <Star style={{ width: '11px', height: '11px', color: '#F5B942', fill: '#F5B942' }} aria-hidden="true" />
+            <Star style={{ width: '11px', height: '11px', color: '#D4AF37', fill: '#D4AF37' }} aria-hidden="true" />
             <span style={{ fontSize: 'clamp(9px, 2.5vw, 11px)', fontWeight: 500, color: '#555555' }}>
               {product.rating.toFixed(1)}
             </span>
@@ -151,7 +151,7 @@ export default function MobileInfiniteFeed() {
           style={{
             fontSize: '12px',
             fontWeight: 600,
-            color: '#F5B942',
+            color: '#D4AF37',
             border: '1px solid rgba(245,185,66,0.3)',
             padding: '7px 18px',
             borderRadius: '10px',

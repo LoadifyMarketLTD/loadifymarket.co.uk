@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 export default function SellerCTA() {
   return (
     <section
-      className="sm:bg-[linear-gradient(135deg,#111827,#020617)] sm:border-y sm:border-yellow-400/20"
-      style={{ backgroundColor: '#0B0B0F' }}
+      className="sm:bg-[linear-gradient(135deg,#121A2B,#0A0E1A)] sm:border-y sm:border-primary/40"
+      style={{ backgroundColor: '#121A2B' }}
     >
       {/* ── Mobile: card with margin/radius ───────────────────────── */}
       <div className="sm:hidden" style={{ padding: '24px 16px' }}>
@@ -20,7 +20,7 @@ export default function SellerCTA() {
           {/* Heading */}
           <p style={{ color: '#FFFFFF', fontWeight: 800, fontSize: '24px', lineHeight: 1.2, marginBottom: '10px' }}>
             Start Selling for{' '}
-            <span style={{ color: '#F5B942' }}>FREE</span>
+            <span style={{ color: '#D4AF37' }}>FREE</span>
           </p>
 
           {/* Subtext */}
@@ -36,8 +36,8 @@ export default function SellerCTA() {
               alignItems: 'center',
               justifyContent: 'center',
               height: '52px',
-              background: '#F5B942',
-              color: '#0B0B0F',
+              background: '#D4AF37',
+              color: '#121A2B',
               fontWeight: 700,
               fontSize: '16px',
               borderRadius: '14px',
@@ -64,7 +64,7 @@ export default function SellerCTA() {
             <Link
               to="/register?type=seller"
               data-magnetic
-              className="bg-[linear-gradient(135deg,#FBBF24,#D97706)] hover:shadow-[0_0_22px_rgba(251,191,36,0.25)] hover:-translate-y-0.5 text-[#020617] font-bold px-6 py-2.5 rounded-xl transition-all duration-300 text-sm whitespace-nowrap"
+              className="bg-[linear-gradient(135deg,#D4AF37,#D4AF37)] hover:shadow-[0_0_22px_rgba(251,191,36,0.25)] hover:-translate-y-0.5 text-[#0A0E1A] font-bold px-6 py-2.5 rounded-xl transition-all duration-300 text-sm whitespace-nowrap"
             >
               Create Your Free Seller Account
             </Link>

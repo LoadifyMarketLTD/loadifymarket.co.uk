@@ -142,8 +142,8 @@ const CATEGORY_CONFIG: readonly CategoryConfig[] = [
     subcategories: ['Power Tools', 'Hand Tools', 'Fixings & Fastenings', 'Safety Equipment', 'Paint & Decorating', 'Plumbing', 'Electrical Supplies', 'Storage Solutions'],
     subtitle: 'Power tools, hand tools, fixings, paint, plumbing and home improvement supplies',
     icon: Wrench,
-    iconColor: 'text-amber-600',
-    accentBg: 'bg-amber-600/10',
+    iconColor: 'text-primary',
+    accentBg: 'bg-primary/10',
     chips: [
       { label: 'All DIY' },
       { label: 'Power Tools',         subSlug: 'power-tools',         searchTerm: 'power drill saw grinder sander jigsaw router' },
@@ -226,8 +226,8 @@ const CATEGORY_CONFIG: readonly CategoryConfig[] = [
     subcategories: ['Toy Pound Lines', 'Stationery Pound Lines', 'DIY Pound Lines', 'Homeware Pound Lines', 'Garden Pound Lines', 'Pet Pound Lines', 'Baby Pound Lines', 'Clothing Pound Lines', 'Health & Beauty Pound Lines', 'Kitchenware Pound Lines', 'Party & Gift Pound Lines', 'Electrical Pound Lines', 'Seasonal Pound Lines', 'Leisure & Hobbies Pound Lines', 'Cleaning Pound Lines'],
     subtitle: 'High-volume wholesale pound-line products for retailers across all key categories',
     icon: Tag,
-    iconColor: 'text-yellow-500',
-    accentBg: 'bg-yellow-500/10',
+    iconColor: 'text-primary',
+    accentBg: 'bg-primary/10',
     chips: [
       { label: 'Toy Pound Lines',               subSlug: 'toy-pound-lines',               searchTerm: 'toy pound line budget wholesale' },
       { label: 'Stationery Pound Lines',         subSlug: 'stationery-pound-lines',        searchTerm: 'stationery pen notepad pound line' },
@@ -428,8 +428,8 @@ const CATEGORY_CONFIG: readonly CategoryConfig[] = [
     subcategories: ['LED Lighting', 'Phone Accessories', 'Cables & Adapters', 'Smart Home', 'Batteries', 'Audio', 'Small Appliances', 'Computer Accessories'],
     subtitle: 'LED lighting, phone accessories, cables, smart home, audio and computer accessories',
     icon: Zap,
-    iconColor: 'text-yellow-400',
-    accentBg: 'bg-yellow-400/10',
+    iconColor: 'text-primary',
+    accentBg: 'bg-primary/10',
     chips: [
       { label: 'All Electrical' },
       { label: 'LED Lighting',         subSlug: 'led-lighting',         searchTerm: 'led bulb strip light fitting downlight desk lamp' },
@@ -456,8 +456,8 @@ const CATEGORY_CONFIG: readonly CategoryConfig[] = [
     subcategories: ['Dog Supplies', 'Cat Supplies', 'Small Animal Supplies', 'Bird Supplies', 'Fish & Aquatics', 'Pet Food', 'Pet Toys', 'Grooming'],
     subtitle: 'Dog, cat, small animal, bird and fish supplies, food, toys and grooming products',
     icon: PawPrint,
-    iconColor: 'text-amber-500',
-    accentBg: 'bg-amber-500/10',
+    iconColor: 'text-primary',
+    accentBg: 'bg-primary/10',
     chips: [
       { label: 'All Pet Supplies' },
       { label: 'Dog Supplies',          subSlug: 'dog-supplies',          searchTerm: 'dog lead collar harness bed bowl toy treat' },

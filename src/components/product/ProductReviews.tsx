@@ -33,7 +33,7 @@ const StarRating = ({ rating, size = "sm" }: { rating: number; size?: "sm" | "md
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          className={`${s} ${i <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
+          className={`${s} ${i <= rating ? "fill-amber-400 text-primary" : "text-muted-foreground/30"}`}
         />
       ))}
     </div>
@@ -60,7 +60,7 @@ const InteractiveStarRating = ({ value, onChange }: InteractiveStarRatingProps) 
         >
           <Star
             className={`h-6 w-6 transition-colors ${
-              i <= (hover || value) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
+              i <= (hover || value) ? "fill-amber-400 text-primary" : "text-muted-foreground/30"
             }`}
           />
         </button>

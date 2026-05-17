@@ -221,7 +221,7 @@ function StepStripe({
           <p className="text-sm text-[#16A34A] font-medium">Stripe fully connected ✓</p>
         </div>
       ) : incomplete ? (
-        <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-700">
+        <div className="rounded-xl bg-primary-soft border border-primary/40 p-4 text-sm text-primary">
           Your Stripe account is connected but not yet fully verified. Continue setup to enable
           charges and payouts.
         </div>

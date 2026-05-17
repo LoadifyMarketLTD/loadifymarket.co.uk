@@ -794,8 +794,8 @@ const ProductDetail = () => {
                 )}
 
                 {listingStatus === "reserved" && (
-                  <div className="flex items-center justify-center gap-2 rounded-xl bg-amber-500/15 border border-amber-500/25 py-3 px-4 mb-3">
-                    <span className="text-amber-400 text-sm font-semibold">⏳ Reserved — awaiting payment</span>
+                  <div className="flex items-center justify-center gap-2 rounded-xl bg-primary/15 border border-primary/40 py-3 px-4 mb-3">
+                    <span className="text-primary text-sm font-semibold">⏳ Reserved — awaiting payment</span>
                   </div>
                 )}
                 {listingStatus === "sold" && (
@@ -1010,7 +1010,7 @@ const ProductDetail = () => {
                 borderRadius: "12px",
                 background: "rgba(245,185,66,0.10)",
                 border: "1px solid rgba(245,185,66,0.25)",
-                color: "#F5B942",
+                color: "#D4AF37",
                 fontSize: "14px",
                 fontWeight: 700,
               }}
@@ -1098,8 +1098,8 @@ const ProductDetail = () => {
                   flex: 2,
                   padding: "14px 8px",
                   borderRadius: "12px",
-                  background: "linear-gradient(135deg, #F5C842, #C8860A)",
-                  color: "#0B0B0F",
+                  background: "linear-gradient(135deg, #D4AF37, #D4AF37)",
+                  color: "#121A2B",
                   fontSize: "14px",
                   fontWeight: 800,
                   border: "none",

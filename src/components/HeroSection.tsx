@@ -40,14 +40,14 @@ const HeroSection = () => (
         <div className="flex flex-col text-center sm:text-left items-center sm:items-start max-w-[500px]">
 
           {/* Promo badge */}
-          <div className="inline-flex items-center bg-[#C99A3E] text-[#0B1016] text-sm font-bold rounded-full px-4 py-1.5 tracking-wide uppercase mb-5">
+          <div className="inline-flex items-center bg-[#D4AF37] text-[#0B1016] text-sm font-bold rounded-full px-4 py-1.5 tracking-wide uppercase mb-5">
             0% Commission Until 31 December 2026
           </div>
 
           {/* H1 */}
           <h1 className="text-[2.7rem] sm:text-5xl font-extrabold leading-[1.2] text-[#F5F1E8] mb-5">
             The UK Marketplace<br />
-            <span className="text-[#C99A3E]">for Buyers &amp; Sellers</span>
+            <span className="text-[#D4AF37]">for Buyers &amp; Sellers</span>
           </h1>
 
           {/* Description */}
@@ -60,7 +60,7 @@ const HeroSection = () => (
             <Link
               to="/register?type=seller"
               data-magnetic
-              className="w-full sm:w-auto bg-[#C99A3E] hover:bg-[#D8AE57] text-[#0B1016] font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
+              className="w-full sm:w-auto bg-[#D4AF37] hover:bg-[#D8AE57] text-[#0B1016] font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
             >
               Start Selling Today
             </Link>

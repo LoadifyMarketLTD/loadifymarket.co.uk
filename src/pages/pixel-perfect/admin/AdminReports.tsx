@@ -231,7 +231,7 @@ const AdminReports = () => {
               <div
                 key={i}
                 className="rounded-2xl p-5 flex items-center justify-center h-28"
-                style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}
+                style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}
               >
                 <Loader2 className="h-6 w-6 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />
               </div>
@@ -240,13 +240,13 @@ const AdminReports = () => {
               <div
                 key={k.label}
                 className="rounded-2xl p-5"
-                style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
+                style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
               >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(251,191,36,0.12)" }}>
-                    <k.icon className="h-5 w-5" style={{ color: "#FBBF24" }} />
+                    <k.icon className="h-5 w-5" style={{ color: "#D4AF37" }} />
                   </div>
-                  <span className="text-xs font-medium flex items-center gap-1" style={{ color: k.up ? "#FBBF24" : "#F87171" }}>
+                  <span className="text-xs font-medium flex items-center gap-1" style={{ color: k.up ? "#D4AF37" : "#F87171" }}>
                     {k.up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                     {k.change}
                   </span>
@@ -261,7 +261,7 @@ const AdminReports = () => {
         {/* Order Breakdown */}
         <div
           className="rounded-2xl overflow-hidden"
-          style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
+          style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
         >
           <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
             <h2 className="text-sm font-semibold text-white">Order Breakdown</h2>
@@ -297,7 +297,7 @@ const AdminReports = () => {
         {/* Top Sellers */}
         <div
           className="rounded-2xl overflow-hidden"
-          style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
+          style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
         >
           <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
             <h2 className="text-sm font-semibold text-white">Top Sellers</h2>

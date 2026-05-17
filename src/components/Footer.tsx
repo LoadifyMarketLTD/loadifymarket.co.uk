@@ -6,7 +6,7 @@ import TikTokIcon from "@/components/ui/TikTokIcon";
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 const ColHeading = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[11px] font-bold tracking-widest uppercase text-[#FFD77A] mb-4">
+  <p className="text-[11px] font-bold tracking-widest uppercase text-[#D4AF37] mb-4">
     {children}
   </p>
 );
@@ -15,7 +15,7 @@ const FooterLink = ({ to, children }: { to: string; children: React.ReactNode })
   <li>
     <Link
       to={to}
-      className="text-[13px] text-[#B8BCC6] hover:text-[#FFD77A] transition-colors duration-150"
+      className="text-[13px] text-[#B8BCC6] hover:text-[#D4AF37] transition-colors duration-150"
     >
       {children}
     </Link>
@@ -26,12 +26,12 @@ const FooterLink = ({ to, children }: { to: string; children: React.ReactNode })
 
 const Footer = () => {
   return (
-    <footer className="bg-[linear-gradient(180deg,#0B1220,#020617)] text-[#C9D0D6] border-t border-white/[0.06]">
+    <footer className="bg-[linear-gradient(180deg,#121A2B,#0A0E1A)] text-[#C9D0D6] border-t border-white/[0.06]">
 
       {/* ── Mobile: compact footer ───────────────────────────────────────── */}
       <div
         className="sm:hidden flex flex-col items-center gap-3"
-        style={{ backgroundColor: '#0B0B0F', padding: '20px 16px' }}
+        style={{ backgroundColor: '#121A2B', padding: '20px 16px' }}
       >
         <div className="flex items-center gap-5 flex-wrap justify-center">
           <Link to="/terms"   style={{ fontSize: '13px', color: 'rgba(255,255,255,0.70)', textDecoration: 'none' }}>Terms</Link>
@@ -48,19 +48,19 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-6">
             <div className="flex items-center gap-2 text-sm font-medium text-[#B8BCC6]">
-              <ShieldCheck className="h-5 w-5 text-[#FFD77A] shrink-0" />
+              <ShieldCheck className="h-5 w-5 text-[#D4AF37] shrink-0" />
               Registered Sellers
             </div>
             <div className="flex items-center gap-2 text-sm font-medium text-[#B8BCC6]">
-              <ShieldCheck className="h-5 w-5 text-[#FFD77A] shrink-0" />
+              <ShieldCheck className="h-5 w-5 text-[#D4AF37] shrink-0" />
               Secure Platform
             </div>
             <div className="flex items-center gap-2 text-sm font-medium text-[#B8BCC6]">
-              <Truck className="h-5 w-5 text-[#FFD77A] shrink-0" />
+              <Truck className="h-5 w-5 text-[#D4AF37] shrink-0" />
               UK Delivery Support
             </div>
             <div className="flex items-center gap-2 text-sm font-medium text-[#B8BCC6]">
-              <Store className="h-5 w-5 text-[#FFD77A] shrink-0" />
+              <Store className="h-5 w-5 text-[#D4AF37] shrink-0" />
               Independent UK Marketplace
             </div>
           </div>
@@ -144,7 +144,7 @@ const Footer = () => {
               <FooterLink to="/contact">Report a Problem</FooterLink>
             </ul>
 
-            <p className="text-[11px] font-bold tracking-widest uppercase text-[#FFD77A] mt-7 mb-4">
+            <p className="text-[11px] font-bold tracking-widest uppercase text-[#D4AF37] mt-7 mb-4">
               Company
             </p>
             <ul className="space-y-2.5">

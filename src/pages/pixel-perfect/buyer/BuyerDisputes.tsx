@@ -33,7 +33,7 @@ interface BuyerOrder {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  open:      { label: "Open",      className: "border-amber-500/30 text-amber-600 bg-amber-50" },
+  open:      { label: "Open",      className: "border-primary/40 text-primary bg-primary-soft" },
   in_review: { label: "In Review", className: "border-blue-500/30 text-blue-600 bg-blue-50" },
   resolved:  { label: "Resolved",  className: "border-emerald-500/30 text-emerald-700 bg-emerald-50" },
   closed:    { label: "Closed",    className: "border-slate-300 text-slate-500 bg-transparent" },
@@ -176,7 +176,7 @@ const BuyerDisputes = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <ShieldAlert className="h-6 w-6 text-amber-500" />
+            <ShieldAlert className="h-6 w-6 text-primary" />
             Disputes
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
@@ -189,11 +189,11 @@ const BuyerDisputes = () => {
       </div>
 
       {/* Notice */}
-      <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+      <div className="rounded-lg bg-primary-soft border border-primary/40 p-4 flex items-start gap-3">
+        <AlertTriangle className="h-5 w-5 text-primary mt-0.5 shrink-0" />
         <div>
-          <p className="text-sm font-medium text-amber-800">Dispute process</p>
-          <p className="text-xs text-amber-700 mt-0.5">
+          <p className="text-sm font-medium text-primary">Dispute process</p>
+          <p className="text-xs text-primary mt-0.5">
             Disputes must be raised within 30 days of delivery. Our team will review your case and
             contact both parties within 2–3 business days. Funds remain in escrow until resolution.
           </p>

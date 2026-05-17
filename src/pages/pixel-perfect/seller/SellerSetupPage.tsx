@@ -21,7 +21,7 @@ interface SetupStatus {
 
 const statusColors: Record<string, string> = {
   active:    "bg-emerald-500/15 text-emerald-700 border-emerald-200",
-  submitted: "bg-amber-500/15 text-amber-700 border-amber-200",
+  submitted: "bg-primary/15 text-primary border-primary/40",
   draft:     "bg-muted text-muted-foreground border-border",
   suspended: "bg-red-500/15 text-red-700 border-red-200",
 };
@@ -212,7 +212,7 @@ const SellerSetupPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#020617] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0A0E1A] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -220,7 +220,7 @@ const SellerSetupPage = () => {
 
   if (!status) {
     return (
-      <div className="min-h-screen bg-[#020617] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[#0A0E1A] flex items-center justify-center px-4">
         <Card className="max-w-md w-full text-center">
           <CardContent className="p-10">
             <p className="text-muted-foreground">Unable to load seller status. Please refresh the page.</p>
@@ -238,7 +238,7 @@ const SellerSetupPage = () => {
   const stripeIncomplete = stripeConnected && !stripeReady;
 
   return (
-    <div className="min-h-screen bg-[#020617] pt-28 pb-12 px-4">
+    <div className="min-h-screen bg-[#0A0E1A] pt-28 pb-12 px-4">
       <div className="max-w-lg mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
@@ -313,9 +313,9 @@ const SellerSetupPage = () => {
           <div className="space-y-3">
             {/* Step 1: Complete profile */}
             {!status.profileComplete && (
-              <Card className="border-amber-200">
+              <Card className="border-primary/40">
                 <CardContent className="p-5 flex items-start gap-4">
-                  <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0 text-sm font-bold text-amber-700">
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 text-sm font-bold text-primary">
                     1
                   </div>
                   <div className="flex-1">
@@ -335,9 +335,9 @@ const SellerSetupPage = () => {
 
             {/* Step 2: Connect Stripe */}
             {status.profileComplete && !stripeReady && (
-              <Card className="border-amber-200">
+              <Card className="border-primary/40">
                 <CardContent className="p-5 flex items-start gap-4">
-                  <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0 text-sm font-bold text-amber-700">
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0 text-sm font-bold text-primary">
                     2
                   </div>
                   <div className="flex-1">

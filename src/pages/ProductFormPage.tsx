@@ -77,7 +77,7 @@ type FormErrors = Partial<Record<string, string>>;
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 function Section({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-[#0B1220] border border-white/10 rounded-xl p-6 mb-6 shadow-lg shadow-black/20 ${className}`}>
+    <div className={`bg-[#121A2B] border border-white/10 rounded-xl p-6 mb-6 shadow-lg shadow-black/20 ${className}`}>
       <h2 className="text-lg font-semibold text-white mb-4 pb-3 border-b border-white/10">{title}</h2>
       {children}
     </div>
@@ -561,7 +561,7 @@ export default function ProductFormPage() {
   const isBulkType = BULK_PRODUCT_TYPES.includes(formData.type);
 
   return (
-    <div className="bg-[#020617] min-h-screen">
+    <div className="bg-[#0A0E1A] min-h-screen">
       <div className="container mx-auto px-4 pt-4 md:pt-28 pb-8">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
@@ -624,7 +624,7 @@ export default function ProductFormPage() {
                         }
                       }}
                       className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80"
-                      style={{ background: '#F5B942', color: '#0B0B0F' }}
+                      style={{ background: '#D4AF37', color: '#121A2B' }}
                     >
                       Copy Link
                     </button>
@@ -644,11 +644,11 @@ export default function ProductFormPage() {
 
           {/* Active orders lock banner */}
           {hasActiveOrders && (
-            <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="mb-6 p-4 bg-primary-soft border border-primary/40 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-amber-800 font-semibold text-sm">Some fields are locked</p>
-                <p className="text-amber-700 text-xs mt-0.5">
+                <p className="text-primary font-semibold text-sm">Some fields are locked</p>
+                <p className="text-primary text-xs mt-0.5">
                   This product has active or completed orders. Title, price, stock quantity, and condition cannot be changed.
                   You can still edit the description, images, specifications, and shipping details.
                 </p>
@@ -660,32 +660,32 @@ export default function ProductFormPage() {
 
             {/* ─── LISTING CONTEXT SELECTOR ─────────────────────────────── */}
             {!id && (
-              <div className="bg-[#0B1220] border border-white/10 rounded-xl p-6 mb-6">
+              <div className="bg-[#121A2B] border border-white/10 rounded-xl p-6 mb-6">
                 <h2 className="text-lg font-semibold text-white mb-1">Listing Type</h2>
                 <p className="text-sm text-slate-400 mb-4">Choose whether you are listing a service or a physical product.</p>
                 <div className="flex gap-4">
-                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'service' ? 'border-[#FBBF24] bg-[#FBBF24]/10' : 'border-white/10 hover:border-white/20'}`}>
+                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'service' ? 'border-[#D4AF37] bg-[#D4AF37]/10' : 'border-white/10 hover:border-white/20'}`}>
                     <input
                       type="radio"
                       name="listingContext"
                       value="service"
                       checked={listingContext === 'service'}
                       onChange={() => setListingContext('service')}
-                      className="mt-0.5 accent-[#FBBF24]"
+                      className="mt-0.5 accent-[#D4AF37]"
                     />
                     <div>
                       <p className="font-semibold text-white text-sm">Service</p>
                       <p className="text-xs text-slate-400 mt-0.5">Digital or in-person service — no stock, no shipping required. Reusable listing.</p>
                     </div>
                   </label>
-                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'goods' ? 'border-[#FBBF24] bg-[#FBBF24]/10' : 'border-white/10 hover:border-white/20'}`}>
+                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'goods' ? 'border-[#D4AF37] bg-[#D4AF37]/10' : 'border-white/10 hover:border-white/20'}`}>
                     <input
                       type="radio"
                       name="listingContext"
                       value="goods"
                       checked={listingContext === 'goods'}
                       onChange={() => setListingContext('goods')}
-                      className="mt-0.5 accent-[#FBBF24]"
+                      className="mt-0.5 accent-[#D4AF37]"
                     />
                     <div>
                       <p className="font-semibold text-white text-sm">Physical Product</p>
@@ -700,7 +700,7 @@ export default function ProductFormPage() {
             <Section title="1. Basic Information">
               <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
-                  Product Title {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-amber-500" /> : <span className="text-red-500">*</span>}
+                  Product Title {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}
                 </label>
                 <input
                   type="text"
@@ -743,7 +743,7 @@ export default function ProductFormPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
-                    Listing Type {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-amber-500" /> : <span className="text-red-500">*</span>}
+                    Listing Type {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}
                   </label>
                   <select
                     value={formData.type}
@@ -764,7 +764,7 @@ export default function ProductFormPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
-                    Condition {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-amber-500" /> : <span className="text-red-500">*</span>}
+                    Condition {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}
                   </label>
                   <select
                     value={formData.condition}
@@ -781,7 +781,7 @@ export default function ProductFormPage() {
                     <option value="other">Other</option>
                   </select>
                   {hasActiveOrders && (
-                    <p className="text-xs text-amber-600 mt-1">Locked — product has active orders</p>
+                    <p className="text-xs text-primary mt-1">Locked — product has active orders</p>
                   )}
                 </div>
               </div>
@@ -810,7 +810,7 @@ export default function ProductFormPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
-                    Price (£) {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-amber-500" /> : <span className="text-red-500">*</span>}
+                    Price (£) {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}
                   </label>
                   <input
                     type="text"
@@ -866,7 +866,7 @@ export default function ProductFormPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-1">
-                    Stock Quantity {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-amber-500" /> : <span className="text-red-500">*</span>}
+                    Stock Quantity {hasActiveOrders ? <Lock className="h-3.5 w-3.5 text-primary" /> : <span className="text-red-500">*</span>}
                   </label>
                   <input
                     type="number"
@@ -990,7 +990,7 @@ export default function ProductFormPage() {
                     type="checkbox"
                     checked={formData.collectionAvailable}
                     onChange={(e) => setFormData(prev => ({ ...prev, collectionAvailable: e.target.checked }))}
-                    className="w-4 h-4 rounded border-white/20 text-[#FBBF24] focus:ring-[#F2B84B]/40"
+                    className="w-4 h-4 rounded border-white/20 text-[#D4AF37] focus:ring-[#F2B84B]/40"
                   />
                   <span className="text-sm text-slate-300">Collection available</span>
                 </label>
@@ -999,7 +999,7 @@ export default function ProductFormPage() {
                     type="checkbox"
                     checked={formData.deliveryAvailable}
                     onChange={(e) => setFormData(prev => ({ ...prev, deliveryAvailable: e.target.checked }))}
-                    className="w-4 h-4 rounded border-white/20 text-[#FBBF24] focus:ring-[#F2B84B]/40"
+                    className="w-4 h-4 rounded border-white/20 text-[#D4AF37] focus:ring-[#F2B84B]/40"
                   />
                   <span className="text-sm text-slate-300">Delivery available</span>
                 </label>
@@ -1078,7 +1078,7 @@ export default function ProductFormPage() {
                   <button
                     type="button"
                     onClick={addCustomSpec}
-                    className="text-xs text-[#FBBF24] hover:text-yellow-300 flex items-center gap-1 font-medium"
+                    className="text-xs text-[#D4AF37] hover:text-primary flex items-center gap-1 font-medium"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Add Spec
@@ -1239,7 +1239,7 @@ export default function ProductFormPage() {
             )}
 
             {/* ─── SECTION 9: Publish / Save ────────────────────────────── */}
-            <div className="bg-[#0B1220] border border-white/10 rounded-xl p-6">
+            <div className="bg-[#121A2B] border border-white/10 rounded-xl p-6">
               <h2 className="text-lg font-semibold text-white mb-4 pb-3 border-b border-white/10">
                 {id ? '9. Save Changes' : '9. Publish Listing'}
               </h2>
@@ -1278,7 +1278,7 @@ export default function ProductFormPage() {
                     type="submit"
                     disabled={saving || savingDraft}
                     className="px-4 py-2 rounded-lg text-white text-sm font-semibold disabled:opacity-50 transition-all"
-                    style={{ background: "linear-gradient(135deg, #B45309, #FBBF24)" }}
+                    style={{ background: "linear-gradient(135deg, #B45309, #D4AF37)" }}
                   >
                     {saving
                       ? (id && hasActiveOrders ? 'Saving...' : 'Publishing...')
@@ -1325,7 +1325,7 @@ export default function ProductFormPage() {
                         Delete this listing
                       </button>
                       {hasActiveOrders && (
-                        <p className="text-xs text-amber-600">
+                        <p className="text-xs text-primary">
                           Cannot delete — this product has active or completed orders.
                         </p>
                       )}

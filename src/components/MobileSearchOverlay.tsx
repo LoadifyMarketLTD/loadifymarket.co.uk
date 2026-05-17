@@ -151,7 +151,7 @@ export default function MobileSearchOverlay({ onClose }: Props) {
                 borderRadius: '22px',
                 background: 'rgba(245,185,66,0.08)',
                 border: '1px solid rgba(200,134,10,0.35)',
-                color: '#F5B942',
+                color: '#D4AF37',
                 fontSize: '13px',
                 fontWeight: 600,
                 cursor: 'pointer',

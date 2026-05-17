@@ -28,7 +28,7 @@ interface FlaggedItem {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  pending: { label: "Pending", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
+  pending: { label: "Pending", className: "border-primary/40 text-primary bg-primary/10" },
   reviewed: { label: "Reviewed", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
   resolved: { label: "Resolved", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
   dismissed: { label: "Dismissed", className: "border-slate-200 text-slate-400" },
@@ -246,7 +246,7 @@ const AdminFlagged = () => {
         {[
           { label: "Pending", count: byStatus("pending").length, icon: AlertTriangle, color: "#F59E0B", bg: "rgba(245,158,11,0.12)", tab: "pending" },
           { label: "Reviewed", count: byStatus("reviewed").length, icon: Flag, color: "#60A5FA", bg: "rgba(96,165,250,0.12)", tab: "reviewed" },
-          { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "#FBBF24", bg: "rgba(251,191,36,0.12)", tab: "resolved" },
+          { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "#D4AF37", bg: "rgba(251,191,36,0.12)", tab: "resolved" },
           { label: "Dismissed", count: byStatus("dismissed").length, icon: Ban, color: "rgba(148,163,184,0.85)", bg: "rgba(148,163,184,0.3)", tab: "dismissed" },
         ].map((stat) => (
           <button
@@ -255,7 +255,7 @@ const AdminFlagged = () => {
             onClick={() => setActiveTab(stat.tab)}
             className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             style={{
-              background: "linear-gradient(145deg, #0B1220, #0F172A)",
+              background: "linear-gradient(145deg, #121A2B, #182235)",
               border: activeTab === stat.tab ? `2px solid ${stat.color}` : "1px solid rgba(255,255,255,0.05)",
               boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
             }}
@@ -294,7 +294,7 @@ const AdminFlagged = () => {
         </TabsList>
         {(["pending", "reviewed", "resolved", "dismissed", "all"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(tab === "all" ? filtered : byStatus(tab))}
               </div>
@@ -321,7 +321,7 @@ const AdminFlagged = () => {
                   </Badge></p>
                 </div>
               </div>
-              <div className="rounded-xl p-3" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="rounded-xl p-3" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}>
                 <p className="text-xs font-semibold mb-1" style={{ color: "rgba(148,163,184,0.85)" }}>DETAILS</p>
                 <p className="text-sm text-white">{selected.description}</p>
               </div>

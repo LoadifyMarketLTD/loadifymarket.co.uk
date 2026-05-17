@@ -106,7 +106,7 @@ export default function MobileNotificationsPage() {
     <div
       className="md:hidden min-h-screen"
       style={{
-        background: '#07080B',
+        background: '#0A0E1A',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}

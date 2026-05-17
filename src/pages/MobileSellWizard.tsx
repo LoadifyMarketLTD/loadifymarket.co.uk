@@ -102,7 +102,7 @@ function FieldInput({
       {label && (
         <label style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
           {label}
-          {required && <span style={{ color: '#F5B942', marginLeft: '3px' }}>*</span>}
+          {required && <span style={{ color: '#D4AF37', marginLeft: '3px' }}>*</span>}
         </label>
       )}
       {multiline ? (
@@ -147,7 +147,7 @@ function SuccessSheet({
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        background: '#07080B',
+        background: '#0A0E1A',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -209,11 +209,11 @@ function SuccessSheet({
             width: '100%',
             padding: '16px',
             borderRadius: '16px',
-            background: 'linear-gradient(135deg, #F5C842, #C8860A)',
+            background: 'linear-gradient(135deg, #D4AF37, #D4AF37)',
             border: 'none',
             fontSize: '16px',
             fontWeight: 700,
-            color: '#0B0B0F',
+            color: '#121A2B',
             cursor: 'pointer',
           }}
         >
@@ -409,7 +409,7 @@ export default function MobileSellWizard() {
   const busy = publishing || photoUploading;
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#07080B', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100dvh', background: '#0A0E1A', display: 'flex', flexDirection: 'column' }}>
       {/* ── Header ── */}
       <div
         style={{
@@ -469,7 +469,7 @@ export default function MobileSellWizard() {
         {/* Photos */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <label style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
-            Photos <span style={{ color: '#F5B942' }}>*</span>
+            Photos <span style={{ color: '#D4AF37' }}>*</span>
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
             {form.photos.map((url, idx) => (
@@ -535,14 +535,14 @@ export default function MobileSellWizard() {
                     style={{
                       width: '24px',
                       height: '24px',
-                      color: '#F5B942',
+                      color: '#D4AF37',
                       animation: 'spin 1s linear infinite',
                     }}
                   />
                 ) : (
                   <>
-                    <Camera style={{ width: '24px', height: '24px', color: fieldErrors.photos ? '#F87171' : '#F5B942' }} />
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: fieldErrors.photos ? '#F87171' : '#F5B942' }}>
+                    <Camera style={{ width: '24px', height: '24px', color: fieldErrors.photos ? '#F87171' : '#D4AF37' }} />
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: fieldErrors.photos ? '#F87171' : '#D4AF37' }}>
                       Add photo
                     </span>
                   </>
@@ -742,11 +742,11 @@ export default function MobileSellWizard() {
             borderRadius: '16px',
             background: busy
               ? 'rgba(245,185,66,0.40)'
-              : 'linear-gradient(135deg, #F5C842, #C8860A)',
+              : 'linear-gradient(135deg, #D4AF37, #D4AF37)',
             border: 'none',
             fontSize: '16px',
             fontWeight: 700,
-            color: '#0B0B0F',
+            color: '#121A2B',
             cursor: busy ? 'not-allowed' : 'pointer',
             display: 'flex',
             alignItems: 'center',

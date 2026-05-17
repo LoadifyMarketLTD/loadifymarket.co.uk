@@ -100,22 +100,22 @@ const Cart = () => {
           <div className="grid lg:grid-cols-[1fr_380px] gap-8">
             {/* Price-changed banner */}
             {priceChangedBanner && (
-              <div className="lg:col-span-2 flex items-start justify-between gap-3 bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
+              <div className="lg:col-span-2 flex items-start justify-between gap-3 bg-primary-soft border border-primary/40 rounded-xl p-4 text-sm text-primary">
                 <span><strong>Prices updated:</strong> Some prices have been updated since you added items to your cart. Please review before checking out.</span>
-                <button onClick={dismissPriceBanner} aria-label="Dismiss" className="shrink-0 mt-0.5 text-amber-600 hover:text-amber-800">
+                <button onClick={dismissPriceBanner} aria-label="Dismiss" className="shrink-0 mt-0.5 text-primary hover:text-primary">
                   <X className="h-4 w-4" />
                 </button>
               </div>
             )}
             {/* Own-product warning */}
             {ownProductIds.length > 0 && (
-              <div className="lg:col-span-2 bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
+              <div className="lg:col-span-2 bg-primary-soft border border-primary/40 rounded-xl p-4 text-sm text-primary">
                 <strong>Notice:</strong> You cannot purchase your own products. Please remove the highlighted items before checking out.
               </div>
             )}
             {/* Multi-seller warning */}
             {isMultiSellerCart && (
-              <div className="lg:col-span-2 bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
+              <div className="lg:col-span-2 bg-primary-soft border border-primary/40 rounded-xl p-4 text-sm text-primary">
                 <strong>Multiple sellers detected:</strong> Your cart contains items from {uniqueSellerIds.size} different sellers. Please remove items until only one seller remains before checking out.
               </div>
             )}
@@ -131,7 +131,7 @@ const Cart = () => {
                 return (
                   <div
                     key={product.id}
-                    className={`bg-card rounded-xl border p-4 sm:p-5 flex gap-4 group transition-all ${isOwnProduct ? "border-amber-400 bg-amber-50/50" : "border-border hover:border-primary/20 hover:shadow-card"}`}
+                    className={`bg-card rounded-xl border p-4 sm:p-5 flex gap-4 group transition-all ${isOwnProduct ? "border-primary/40 bg-primary-soft" : "border-border hover:border-primary/20 hover:shadow-card"}`}
                   >
                     {/* Image */}
                     <Link to={`/product/${product.id}`} className="shrink-0">

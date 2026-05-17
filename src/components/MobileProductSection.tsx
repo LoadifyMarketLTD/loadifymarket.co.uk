@@ -111,7 +111,7 @@ function SectionHeader({ title, viewAllTo }: { title: string; viewAllTo: string 
       <h2 className="text-[15px] font-bold text-white tracking-tight">{title}</h2>
       <Link
         to={viewAllTo}
-        className="flex items-center gap-1 text-[11px] font-semibold text-[#FBBF24] hover:text-[#D8AE57] transition-colors"
+        className="flex items-center gap-1 text-[11px] font-semibold text-[#D4AF37] hover:text-[#D8AE57] transition-colors"
       >
         View all <ArrowRight className="h-3 w-3" aria-hidden="true" />
       </Link>
@@ -134,11 +134,11 @@ function SkeletonCard({ wide }: { wide?: boolean }) {
 
 function EmptyState() {
   return (
-    <div className="mx-4 my-2 flex flex-col items-center justify-center gap-3 py-8 rounded-2xl border border-white/[0.06] bg-[#111827]">
+    <div className="mx-4 my-2 flex flex-col items-center justify-center gap-3 py-8 rounded-2xl border border-white/[0.06] bg-[#121A2B]">
       <p className="text-sm text-white/75">No products available yet</p>
       <Link
         to="/catalog"
-        className="text-xs font-semibold text-[#FBBF24] border border-[#FBBF24]/30 px-4 py-2 rounded-lg hover:bg-[#FBBF24]/10 transition-colors"
+        className="text-xs font-semibold text-[#D4AF37] border border-[#D4AF37]/30 px-4 py-2 rounded-lg hover:bg-[#D4AF37]/10 transition-colors"
       >
         Browse Marketplace
       </Link>

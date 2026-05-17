@@ -108,7 +108,7 @@ export default function TrackOrderPage() {
         return <Truck className="w-6 h-6 text-blue-600" aria-hidden="true" />;
       case 'pending':
       case 'processing':
-        return <Clock className="w-6 h-6 text-yellow-600" aria-hidden="true" />;
+        return <Clock className="w-6 h-6 text-primary" aria-hidden="true" />;
       default:
         return <AlertCircle className="w-6 h-6 text-gray-600" aria-hidden="true" />;
     }
@@ -243,11 +243,11 @@ export default function TrackOrderPage() {
             <h2 className="text-xl font-bold text-navy-800 mb-4">Shipment Status</h2>
             
             {trackingData.state === 'being_prepared' ? (
-              <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <Package className="w-8 h-8 text-yellow-600" aria-hidden="true" />
+              <div className="flex items-center gap-3 p-4 bg-primary-soft border border-primary/40 rounded-lg">
+                <Package className="w-8 h-8 text-primary" aria-hidden="true" />
                 <div>
-                  <p className="font-semibold text-yellow-800">Your order is being prepared</p>
-                  <p className="text-sm text-yellow-700">
+                  <p className="font-semibold text-primary">Your order is being prepared</p>
+                  <p className="text-sm text-primary">
                     The seller is preparing your order for shipment. You'll receive tracking information soon.
                   </p>
                 </div>

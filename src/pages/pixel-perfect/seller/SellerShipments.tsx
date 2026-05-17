@@ -43,7 +43,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   label_created: { label: "Label Created", className: "bg-muted text-muted-foreground" },
   picked_up: { label: "Picked Up", className: "bg-blue-500/10 text-blue-700" },
   in_transit: { label: "In Transit", className: "bg-purple-500/10 text-purple-700" },
-  out_for_delivery: { label: "Out for Delivery", className: "bg-amber-500/10 text-amber-700" },
+  out_for_delivery: { label: "Out for Delivery", className: "bg-primary/10 text-primary" },
   delivered: { label: "Delivered", className: "bg-emerald-500/10 text-emerald-700" },
 };
 
@@ -293,7 +293,7 @@ const SellerShipments = () => {
         {[
           { label: "Created", count: byStatus("label_created").length, color: "text-muted-foreground" },
           { label: "In Transit", count: filtered.filter((s) => ["picked_up", "in_transit"].includes(mapStatus(s.status))).length, color: "text-purple-500" },
-          { label: "Out for Del.", count: byStatus("out_for_delivery").length, color: "text-amber-500" },
+          { label: "Out for Del.", count: byStatus("out_for_delivery").length, color: "text-primary" },
           { label: "Delivered", count: byStatus("delivered").length, color: "text-emerald-500" },
         ].map((stat) => (
           <div key={stat.label} className="bg-card rounded-lg border border-border p-2 text-center">

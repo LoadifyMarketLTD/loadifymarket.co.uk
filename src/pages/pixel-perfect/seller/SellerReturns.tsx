@@ -13,7 +13,7 @@ import { useAuthStore } from "@/store";
 import type { Return } from "@/types";
 
 const statusConfig: Record<string, { label: string; className: string; icon: React.ElementType }> = {
-  requested:  { label: "Requested",  className: "bg-amber-500/10 text-amber-700",   icon: AlertCircle },
+  requested:  { label: "Requested",  className: "bg-primary/10 text-primary",   icon: AlertCircle },
   approved:   { label: "Approved",   className: "bg-blue-500/10 text-blue-700",     icon: CheckCircle2 },
   completed:  { label: "Completed",  className: "bg-emerald-500/10 text-emerald-700", icon: CheckCircle2 },
   rejected:   { label: "Rejected",   className: "bg-red-500/10 text-red-700",       icon: XCircle },
@@ -152,7 +152,7 @@ const SellerReturns = () => {
       {/* Compact stats grid */}
       <div className="grid grid-cols-4 gap-1.5">
         {[
-          { label: "Pending", count: byStatus("requested").length, color: "text-amber-500" },
+          { label: "Pending", count: byStatus("requested").length, color: "text-primary" },
           { label: "Approved", count: byStatus("approved").length, color: "text-blue-500" },
           { label: "Completed", count: byStatus("completed").length, color: "text-emerald-500" },
           { label: "Rejected", count: byStatus("rejected").length, color: "text-red-500" },

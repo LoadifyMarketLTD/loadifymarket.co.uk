@@ -93,12 +93,12 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
                   height: 40,
                   paddingInline: 20,
                   borderRadius: 9999,
-                  background: 'linear-gradient(135deg, #F5C842 0%, #C8860A 100%)',
+                  background: 'linear-gradient(135deg, #D4AF37 0%, #D4AF37 100%)',
                   border: 'none',
                   cursor: 'pointer',
                   fontSize: 14,
                   fontWeight: 700,
-                  color: '#0B0B0F',
+                  color: '#121A2B',
                   opacity: status === 'saving' ? 0.6 : 1,
                 }}
               >
@@ -184,7 +184,7 @@ function PasswordSection() {
               <button
                 onClick={handleSave}
                 disabled={status === 'saving'}
-                style={{ height: 40, paddingInline: 20, borderRadius: 9999, background: 'linear-gradient(135deg, #F5C842 0%, #C8860A 100%)', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#0B0B0F', opacity: status === 'saving' ? 0.6 : 1 }}
+                style={{ height: 40, paddingInline: 20, borderRadius: 9999, background: 'linear-gradient(135deg, #D4AF37 0%, #D4AF37 100%)', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#121A2B', opacity: status === 'saving' ? 0.6 : 1 }}
               >
                 {status === 'saving' ? 'Saving…' : 'Update password'}
               </button>
@@ -221,7 +221,7 @@ export default function MobileSecurityPage() {
     <div
       className="md:hidden min-h-screen"
       style={{
-        background: '#07080B',
+        background: '#0A0E1A',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}

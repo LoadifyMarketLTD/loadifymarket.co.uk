@@ -44,9 +44,9 @@ export default function AuthCallbackPage() {
         description="Completing sign-in."
         robots="noindex, nofollow"
       />
-      <div className="flex items-center justify-center min-h-screen bg-[#020617]">
+      <div className="flex items-center justify-center min-h-screen bg-[#0A0E1A]">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#C99A3E]" />
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#D4AF37]" />
           <p className="mt-4 text-slate-400 text-sm">Completing sign-in…</p>
         </div>
       </div>

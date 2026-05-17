@@ -119,8 +119,8 @@ const RoleSelection = () => {
             {selected === "seller" && (
               <CheckCircle2 className="absolute top-4 right-4 h-5 w-5 text-[#22C55E]" />
             )}
-            <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center mb-4">
-              <Store className="h-6 w-6 text-amber-600" />
+            <div className="w-12 h-12 rounded-xl bg-primary-soft flex items-center justify-center mb-4">
+              <Store className="h-6 w-6 text-primary" />
             </div>
             <h2 className="text-lg font-bold text-gray-900 mb-1">I'm a Seller</h2>
             <p className="text-sm text-gray-500 leading-snug">

@@ -38,14 +38,14 @@ const features: Feature[] = [
 
 export default function FeaturesGrid() {
   return (
-    <div className="sm:flex-1 sm:rounded-2xl sm:border sm:border-white/5 sm:bg-[linear-gradient(145deg,#0F172A,#020617)] sm:p-6 lg:p-8 sm:flex sm:flex-col">
+    <div className="sm:flex-1 sm:rounded-2xl sm:border sm:border-white/5 sm:bg-[linear-gradient(145deg,#182235,#0A0E1A)] sm:p-6 lg:p-8 sm:flex sm:flex-col">
 
       {/* Section heading */}
       <h2
         className="text-[17px] sm:text-xl font-semibold text-white mb-3 sm:mb-1"
       >
         Everything you need to{' '}
-        <span style={{ color: '#F5B942' }} className="sm:text-[#FBBF24]">buy and sell</span>
+        <span style={{ color: '#D4AF37' }} className="sm:text-[#D4AF37]">buy and sell</span>
       </h2>
 
       {/* ── Mobile: spec-exact card list ────────────────────────────── */}
@@ -80,7 +80,7 @@ export default function FeaturesGrid() {
                   flexShrink: 0,
                 }}
               >
-                <Icon style={{ width: '18px', height: '18px', color: '#F5B942' }} aria-hidden="true" />
+                <Icon style={{ width: '18px', height: '18px', color: '#D4AF37' }} aria-hidden="true" />
               </div>
               {/* Text */}
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -106,10 +106,10 @@ export default function FeaturesGrid() {
             <div
               key={feature.title}
               data-parallax
-              className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#0F172A,#020617)] p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(251,191,36,0.15)] hover:border-yellow-400/25"
+              className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#182235,#0A0E1A)] p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(251,191,36,0.15)] hover:border-primary/40"
             >
               <Icon
-                className="w-7 h-7 text-[#FBBF24] shrink-0 icon-pulse"
+                className="w-7 h-7 text-[#D4AF37] shrink-0 icon-pulse"
                 aria-hidden="true"
               />
               <p className="text-base font-semibold text-white leading-tight">{feature.title}</p>

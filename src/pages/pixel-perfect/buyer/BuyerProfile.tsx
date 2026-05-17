@@ -234,7 +234,7 @@ const BuyerProfile = () => {
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> Since {memberSince}</span>
                 <span className="flex items-center gap-1"><ShoppingBag className="h-3.5 w-3.5" /> {totalOrders} orders</span>
-                <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500" /> Buyer</span>
+                <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-primary" /> Buyer</span>
               </div>
             </div>
           </div>
@@ -357,7 +357,7 @@ const BuyerProfile = () => {
                   <ShieldCheck className="h-4 w-4" /> VAT Verified
                 </span>
               ) : b2bForm.vatNumber && b2bForm.accountType !== "individual" ? (
-                <span className="text-xs text-amber-700">
+                <span className="text-xs text-primary">
                   VAT verification pending admin review
                 </span>
               ) : null}

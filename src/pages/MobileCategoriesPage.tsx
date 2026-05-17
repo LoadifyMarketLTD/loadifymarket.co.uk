@@ -70,7 +70,7 @@ export default function MobileCategoriesPage() {
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: '#07080B' }}
+      style={{ background: '#0A0E1A' }}
     >
       {/* ── Sticky header ── */}
       <div

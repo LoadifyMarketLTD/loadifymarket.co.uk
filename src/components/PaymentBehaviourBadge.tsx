@@ -37,7 +37,7 @@ export default function PaymentBehaviourBadge({
         return {
           icon: Clock,
           label: 'Sometimes late',
-          className: 'bg-yellow-500/20 border border-yellow-500/40 text-yellow-300',
+          className: 'bg-primary/20 border border-primary/40 text-primary',
           title: 'This seller sometimes pays late',
         };
       case 'repeated_delays':

@@ -50,7 +50,7 @@ interface PayoutRequest {
 const statusConfig: Record<string, { label: string; className: string }> = {
   requested: {
     label: "Requested",
-    className: "border-amber-500/30 text-amber-400 bg-amber-500/10",
+    className: "border-primary/40 text-primary bg-primary/10",
   },
   approved: {
     label: "Approved",
@@ -352,15 +352,15 @@ const AdminPayouts = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Pending", value: byStatus("requested").length, accent: "text-amber-400" },
+          { label: "Pending", value: byStatus("requested").length, accent: "text-primary" },
           { label: "Approved", value: byStatus("approved").length, accent: "text-blue-400" },
-          { label: "Pending GBP", value: fmtGBP(totalPending), accent: "text-amber-400" },
+          { label: "Pending GBP", value: fmtGBP(totalPending), accent: "text-primary" },
           { label: "Approved GBP", value: fmtGBP(totalApproved), accent: "text-blue-400" },
         ].map((stat) => (
           <div
             key={stat.label}
             className="rounded-xl p-4"
-            style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}
+            style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}
           >
             <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{stat.label}</p>
             <p className={`text-xl font-bold mt-1 ${stat.accent}`}>{stat.value}</p>
@@ -410,7 +410,7 @@ const AdminPayouts = () => {
                 <Loader2 className="h-8 w-8 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />
               </div>
             ) : (
-              <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}>
                 <div className="px-2 py-2 overflow-x-auto">
                   {renderTable(
                     tab === "pending" ? pending :

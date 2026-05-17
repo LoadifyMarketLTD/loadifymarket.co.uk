@@ -149,7 +149,7 @@ const AdminStripeEvents = () => {
           <TableRow>
             <TableCell colSpan={6} className="py-12 text-center">
               <div className="flex flex-col items-center gap-3 max-w-sm mx-auto">
-                <Zap className="h-10 w-10 text-amber-300/40" />
+                <Zap className="h-10 w-10 text-primary/40" />
                 <p className="text-sm font-semibold text-slate-300">
                   {search || events.length > 0
                     ? "No events match your filter"
@@ -225,7 +225,7 @@ const AdminStripeEvents = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Zap className="h-6 w-6 text-amber-400" />
+            <Zap className="h-6 w-6 text-primary" />
             Stripe Events
           </h1>
           <p className="text-sm mt-1" style={{ color: "rgba(148,163,184,0.85)" }}>
@@ -255,7 +255,7 @@ const AdminStripeEvents = () => {
           <div
             key={stat.label}
             className="rounded-xl p-4"
-            style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}
+            style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}
           >
             <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{stat.label}</p>
             <p className={`text-xl font-bold mt-1 ${stat.accent}`}>{stat.value}</p>
@@ -310,7 +310,7 @@ const AdminStripeEvents = () => {
                 <Loader2 className="h-8 w-8 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />
               </div>
             ) : (
-              <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}>
                 <div className="px-2 py-2 overflow-x-auto">
                   {renderTable(tab === "all" ? filtered : byStatus(tab))}
                 </div>
@@ -364,7 +364,7 @@ const AdminStripeEvents = () => {
                 {selected.metadata && Object.keys(selected.metadata).length > 0 && (
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Metadata</p>
-                    <pre className="text-xs rounded-lg p-3 overflow-x-auto" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.7)" }}>
+                    <pre className="text-xs rounded-lg p-3 overflow-x-auto" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.7)" }}>
                       {JSON.stringify(selected.metadata, null, 2)}
                     </pre>
                   </div>

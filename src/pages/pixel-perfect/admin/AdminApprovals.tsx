@@ -46,7 +46,7 @@ interface SellerDetail extends Seller {
 
 const statusColor: Record<string, string> = {
   active:    "border-emerald-500/30 text-emerald-400 bg-emerald-500/10",
-  submitted: "border-amber-500/30 text-amber-400 bg-amber-500/10",
+  submitted: "border-primary/40 text-primary bg-primary/10",
   draft:     "border-slate-200 text-slate-400",
   suspended: "border-red-500/30 text-red-400 bg-red-500/10",
 };
@@ -60,8 +60,8 @@ const statusLabel: Record<string, string> = {
 
 const stripeStatusColor: Record<string, string> = {
   active:     "border-emerald-500/30 text-emerald-400 bg-emerald-500/10",
-  restricted: "border-amber-500/30 text-amber-400 bg-amber-500/10",
-  pending:    "border-amber-500/30 text-amber-400 bg-amber-500/10",
+  restricted: "border-primary/40 text-primary bg-primary/10",
+  pending:    "border-primary/40 text-primary bg-primary/10",
 };
 
 const stripeStatusLabel: Record<string, string> = {
@@ -457,7 +457,7 @@ const AdminSellerManagement = () => {
                   {/* Send Warning */}
                   <Button
                     variant="ghost" size="icon"
-                    className="h-8 w-8 text-amber-400 hover:bg-amber-500/10"
+                    className="h-8 w-8 text-primary hover:bg-primary/10"
                     onClick={() => handleSendWarning(s.userId)}
                     disabled={actionLoading === s.userId}
                     title="Send warning email"
@@ -509,7 +509,7 @@ const AdminSellerManagement = () => {
                   ) : (
                     <Button
                       variant="ghost" size="icon"
-                      className="h-8 w-8 text-amber-400 hover:bg-amber-500/10"
+                      className="h-8 w-8 text-primary hover:bg-primary/10"
                       onClick={() => handleReactivate(s.userId)}
                       disabled={actionLoading === s.userId}
                       title="Lift suspension (returns to submitted)"
@@ -596,7 +596,7 @@ const AdminSellerManagement = () => {
 
         {(["all", "active", "in-progress", "suspended"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(
                   tab === "all" ? filtered :

@@ -113,7 +113,7 @@ export default function SocialFollowSection() {
                 flexShrink: 0,
                 fontSize: '12px',
                 fontWeight: 600,
-                color: '#F5B942',
+                color: '#D4AF37',
                 background: 'transparent',
                 border: '1px solid rgba(245,185,66,0.4)',
                 borderRadius: '10px',
@@ -142,7 +142,7 @@ export default function SocialFollowSection() {
               `hover:shadow-[0_0_25px_rgba(251,191,36,0.15),0_16px_40px_rgba(0,0,0,0.55)]`
             }
             style={{
-              background: "linear-gradient(145deg, #0F172A, #020617)",
+              background: "linear-gradient(145deg, #182235, #0A0E1A)",
               border: "1px solid rgba(255,255,255,0.05)",
               boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
             }}
@@ -156,7 +156,7 @@ export default function SocialFollowSection() {
               }}
             >
               <Icon
-                className="w-7 h-7 text-slate-400 group-hover:text-[#FBBF24] transition-colors duration-300"
+                className="w-7 h-7 text-slate-400 group-hover:text-[#D4AF37] transition-colors duration-300"
                 aria-hidden="true"
               />
             </div>
@@ -173,8 +173,8 @@ export default function SocialFollowSection() {
               className={
                 "inline-flex items-center justify-center gap-2 " +
                 "px-5 py-2.5 rounded-lg text-[13px] font-semibold " +
-                "border border-[#FBBF24]/30 text-[#FBBF24] " +
-                "hover:bg-[#FBBF24] hover:text-[#020617] hover:border-[#FBBF24] " +
+                "border border-[#D4AF37]/30 text-[#D4AF37] " +
+                "hover:bg-[#D4AF37] hover:text-[#0A0E1A] hover:border-[#D4AF37] " +
                 "transition-all duration-200 " +
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/60"
               }

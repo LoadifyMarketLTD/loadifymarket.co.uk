@@ -92,11 +92,11 @@ export default function RequireEmailVerified({ children }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#0A0E1A] flex items-center justify-center px-4">
       <div
         className="rounded-xl p-8 sm:p-10 max-w-md w-full text-center"
         style={{
-          background: 'linear-gradient(145deg, #0B1220, #0F172A)',
+          background: 'linear-gradient(145deg, #121A2B, #182235)',
           border: '1px solid rgba(255,255,255,0.07)',
         }}
       >
@@ -159,11 +159,11 @@ export default function RequireEmailVerified({ children }: Props) {
         <div className="border-t border-white/5 pt-4">
           <p className="text-slate-500 text-xs">
             Wrong email?{' '}
-            <Link to="/signup" className="text-[#FBBF24] hover:underline">
+            <Link to="/signup" className="text-[#D4AF37] hover:underline">
               Create a new account
             </Link>{' '}
             or{' '}
-            <Link to="/contact" className="text-[#FBBF24] hover:underline">
+            <Link to="/contact" className="text-[#D4AF37] hover:underline">
               contact support
             </Link>
             .

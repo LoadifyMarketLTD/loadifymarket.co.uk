@@ -282,7 +282,7 @@ export default function AdminSellerDetailPage() {
                   Seller account suspended
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
+                <span className="inline-flex items-center gap-1 bg-primary text-primary text-xs px-2 py-1 rounded">
                   <ShieldAlert className="w-3 h-3" />
                   Setup in progress
                 </span>
@@ -423,7 +423,7 @@ export default function AdminSellerDetailPage() {
                     {sellerUser.isEmailVerified ? (
                       <span className="text-green-700 font-medium">Yes</span>
                     ) : (
-                      <span className="text-yellow-700 font-medium">No</span>
+                      <span className="text-primary font-medium">No</span>
                     )}
                   </dd>
                 </div>
@@ -569,7 +569,7 @@ export default function AdminSellerDetailPage() {
               <p className="text-xs text-gray-500 mb-4">
                 <span className="text-green-700 font-medium">{approvedProducts.length} active</span>
                 {' · '}
-                <span className="text-yellow-700 font-medium">{pendingProducts.length} pending</span>
+                <span className="text-primary font-medium">{pendingProducts.length} pending</span>
                 {' · '}
                 <span className="text-gray-500">{inactiveProducts.length} inactive</span>
               </p>
@@ -603,7 +603,7 @@ export default function AdminSellerDetailPage() {
                         {product.isApproved && product.isActive ? (
                           <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">Active</span>
                         ) : !product.isApproved ? (
-                          <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">Pending</span>
+                          <span className="bg-primary text-primary text-xs px-2 py-0.5 rounded">Pending</span>
                         ) : (
                           <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded">Inactive</span>
                         )}
@@ -636,7 +636,7 @@ export default function AdminSellerDetailPage() {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500 flex items-center gap-1">
-                    <Star className="w-4 h-4 text-amber-400" /> Rating
+                    <Star className="w-4 h-4 text-primary" /> Rating
                   </span>
                   <span className="font-semibold text-gray-900">
                     {profile.rating.toFixed(1)} / 5.0
@@ -702,7 +702,7 @@ export default function AdminSellerDetailPage() {
                         </span>
                       )}
                       {(profile.stripeConnectStatus === 'pending' || !profile.stripeConnectStatus) && (
-                        <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">
+                        <span className="inline-flex items-center gap-1 bg-primary text-primary text-xs px-2 py-0.5 rounded">
                           <ShieldAlert className="w-3 h-3" /> Pending Setup
                         </span>
                       )}

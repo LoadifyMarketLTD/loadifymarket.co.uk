@@ -68,10 +68,10 @@ const STATUS_CONFIG: Record<
   awaiting_payment: {
     label: "Awaiting payment",
     bg: "rgba(245,185,66,0.15)",
-    text: "#F5B942",
+    text: "#D4AF37",
   },
   paid: { label: "Paid", bg: "rgba(139,92,246,0.15)", text: "#A78BFA" },
-  packed: { label: "Packed", bg: "rgba(245,185,66,0.15)", text: "#F5B942" },
+  packed: { label: "Packed", bg: "rgba(245,185,66,0.15)", text: "#D4AF37" },
   shipped: {
     label: "Shipped",
     bg: "rgba(59,130,246,0.15)",
@@ -206,7 +206,7 @@ function OrderCard({
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "6px" }}>
-          <span style={{ fontSize: "15px", fontWeight: 800, color: "#F5B942" }}>
+          <span style={{ fontSize: "15px", fontWeight: 800, color: "#D4AF37" }}>
             £{order.total.toFixed(2)}
           </span>
           <ChevronRight style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.25)", flexShrink: 0 }} />
@@ -342,7 +342,7 @@ export default function MobileOrdersPage() {
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: "#07080B" }}
+      style={{ background: "#0A0E1A" }}
     >
       {/* ── Header ── */}
       <div
@@ -381,11 +381,11 @@ export default function MobileOrdersPage() {
                   padding: "10px 14px",
                   fontSize: "13px",
                   fontWeight: isActive ? 700 : 400,
-                  color: isActive ? "#F5B942" : "rgba(255,255,255,0.65)",
+                  color: isActive ? "#D4AF37" : "rgba(255,255,255,0.65)",
                   whiteSpace: "nowrap",
                   background: "transparent",
                   border: "none",
-                  borderBottom: isActive ? "2px solid #F5B942" : "2px solid transparent",
+                  borderBottom: isActive ? "2px solid #D4AF37" : "2px solid transparent",
                   cursor: "pointer",
                   flexShrink: 0,
                   transition: "color 0.2s, border-color 0.2s",
@@ -422,7 +422,7 @@ export default function MobileOrdersPage() {
             {activeTab === "all" && (
               <Link
                 to="/catalog"
-                className="px-4 py-2 rounded-xl bg-[#FBBF24]/10 text-[#FBBF24] text-sm font-semibold"
+                className="px-4 py-2 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] text-sm font-semibold"
               >
                 Start browsing
               </Link>
@@ -448,9 +448,9 @@ export default function MobileOrdersPage() {
 
         {/* Awaiting payment notice */}
         {!loading && hasAwaitingPayment && (
-          <div className="flex items-start gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 mt-3">
-            <AlertCircle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-            <p className="text-amber-300 text-xs leading-relaxed">
+          <div className="flex items-start gap-2 rounded-xl bg-primary/10 border border-primary/40 p-3 mt-3">
+            <AlertCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+            <p className="text-primary text-xs leading-relaxed">
               You have offers awaiting payment. Tap an order to complete checkout before the reservation expires.
             </p>
           </div>

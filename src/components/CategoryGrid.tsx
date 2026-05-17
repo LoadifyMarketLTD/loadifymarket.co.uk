@@ -11,7 +11,7 @@ const CategoryGrid = () => {
 
   return (
     <section
-    className="bg-[#020617] border-b border-white/10"
+    className="bg-[#0A0E1A] border-b border-white/10"
       aria-labelledby="cats-heading"
     >
       <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-7">
@@ -53,7 +53,7 @@ const CategoryGrid = () => {
                 <Link
                   key={cat.slug}
                   to={`/catalog?category=${encodeURIComponent(cat.name)}`}
-                  className="flex flex-col items-start gap-1.5 px-3 py-4 bg-[#0B1220] hover:bg-[#0F172A] transition-colors group"
+                  className="flex flex-col items-start gap-1.5 px-3 py-4 bg-[#121A2B] hover:bg-[#182235] transition-colors group"
                 >
                   <span className="text-[11px] font-bold text-white leading-tight line-clamp-2 w-full">
                     {cat.name}

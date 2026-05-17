@@ -12,7 +12,7 @@ const NotFound = () => {
       />
       <main id="main-content" className="flex-1 flex items-center justify-center pt-4 md:pt-28 pb-20 px-4">
         <div className="text-center">
-          <p className="text-[#FBBF24] font-bold text-lg mb-3 tracking-widest uppercase">404</p>
+          <p className="text-[#D4AF37] font-bold text-lg mb-3 tracking-widest uppercase">404</p>
           <h1 className="text-4xl sm:text-5xl font-display font-extrabold text-white mb-4 leading-tight">
             Page Not Found
           </h1>
@@ -24,7 +24,7 @@ const NotFound = () => {
               to="/"
               className="inline-flex items-center justify-center font-bold rounded-full px-8 py-3 text-white"
               style={{
-                background: "linear-gradient(90deg,#FBBF24 0%,#D97706 100%)",
+                background: "linear-gradient(90deg,#D4AF37 0%,#D4AF37 100%)",
                 boxShadow: "0 4px 20px rgba(251,191,36,0.40)",
               }}
             >

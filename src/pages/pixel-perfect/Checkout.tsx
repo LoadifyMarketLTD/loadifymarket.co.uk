@@ -420,9 +420,9 @@ const Checkout = () => {
           <div className="grid lg:grid-cols-[1fr_380px] gap-8">
             {/* Price-changed banner */}
             {priceChangedBanner && (
-              <div className="lg:col-span-2 flex items-start justify-between gap-3 bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
+              <div className="lg:col-span-2 flex items-start justify-between gap-3 bg-primary-soft border border-primary/40 rounded-xl p-4 text-sm text-primary">
                 <span><strong>Prices updated:</strong> Some prices have been updated since you added items to your cart. Please review the totals below before proceeding.</span>
-                <button onClick={dismissPriceBanner} aria-label="Dismiss" className="shrink-0 mt-0.5 text-amber-600 hover:text-amber-800">
+                <button onClick={dismissPriceBanner} aria-label="Dismiss" className="shrink-0 mt-0.5 text-primary hover:text-primary">
                   <X className="h-4 w-4" />
                 </button>
               </div>

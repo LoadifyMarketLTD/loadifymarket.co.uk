@@ -459,7 +459,7 @@ const SellerSettings = () => {
                     </span>
                   )}
                   {stripeConnectStatus === "pending" && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                       <Clock className="h-3 w-3" /> Onboarding Incomplete
                     </span>
                   )}

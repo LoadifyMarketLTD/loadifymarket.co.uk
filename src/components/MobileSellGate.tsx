@@ -23,7 +23,7 @@ function GuestSellScreen() {
     <div
       className="md:hidden min-h-screen flex flex-col items-center justify-center gap-5 px-6 text-center"
       style={{
-        background: '#07080B',
+        background: '#0A0E1A',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
@@ -73,10 +73,10 @@ function GuestSellScreen() {
             lineHeight: '50px',
             textAlign: 'center',
             borderRadius: 9999,
-            background: 'linear-gradient(135deg, #F5C842 0%, #C8860A 100%)',
+            background: 'linear-gradient(135deg, #D4AF37 0%, #D4AF37 100%)',
             fontSize: 15,
             fontWeight: 700,
-            color: '#0B0B0F',
+            color: '#121A2B',
             textDecoration: 'none',
           }}
         >
@@ -139,7 +139,7 @@ export default function MobileSellGate({ children }: { children: ReactNode }) {
     return (
       <div
         className="md:hidden flex items-center justify-center min-h-screen"
-        style={{ background: '#07080B' }}
+        style={{ background: '#0A0E1A' }}
       >
         <div
           style={{
@@ -147,7 +147,7 @@ export default function MobileSellGate({ children }: { children: ReactNode }) {
             height: 40,
             borderRadius: '50%',
             border: '3px solid rgba(255,255,255,0.10)',
-            borderTopColor: '#F5C842',
+            borderTopColor: '#D4AF37',
             animation: 'spin 0.8s linear infinite',
           }}
         />

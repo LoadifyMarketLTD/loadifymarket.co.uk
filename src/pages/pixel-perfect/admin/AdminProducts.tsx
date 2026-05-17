@@ -251,7 +251,7 @@ const AdminProducts = () => {
                   className={
                     p.isApproved
                       ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
-                      : "border-amber-500/30 text-amber-400 bg-amber-500/10"
+                      : "border-primary/40 text-primary bg-primary/10"
                   }
                 >
                   {p.isApproved ? "Approved" : "Pending"}
@@ -273,7 +273,7 @@ const AdminProducts = () => {
                       <Eye className="h-3.5 w-3.5 mr-2" /> View Listing
                     </DropdownMenuItem>
                     {p.isApproved ? (
-                      <DropdownMenuItem onClick={() => toggleApprove(p.id, p.isApproved)} className="text-amber-500">
+                      <DropdownMenuItem onClick={() => toggleApprove(p.id, p.isApproved)} className="text-primary">
                         <ShieldX className="h-3.5 w-3.5 mr-2" /> Revoke Approval
                       </DropdownMenuItem>
                     ) : (
@@ -323,7 +323,7 @@ const AdminProducts = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           className="pl-9 h-10"
-          style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", color: "#ffffff" }}
+          style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", color: "#ffffff" }}
           />
         </div>
       </div>
@@ -336,7 +336,7 @@ const AdminProducts = () => {
         </TabsList>
         {(["all", "active", "inactive"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(tab === "all" ? filtered : tab === "active" ? activeProducts : inactiveProducts)}
               </div>

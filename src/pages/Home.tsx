@@ -69,7 +69,7 @@ function MobileHome() {
   }, [loadMore]);
 
   return (
-    <div className="md:hidden min-h-screen" style={{ background: '#07080B' }}>
+    <div className="md:hidden min-h-screen" style={{ background: '#0A0E1A' }}>
       {/* 1. App Header */}
       <MobileAppHeader />
 
@@ -159,7 +159,7 @@ export default function Home() {
 
           {/* Platform overview section */}
           <section
-            className="bg-[#020617] py-6 px-8"
+            className="bg-[#0A0E1A] py-6 px-8"
             aria-label="Platform overview"
           >
             <TrustStrip />

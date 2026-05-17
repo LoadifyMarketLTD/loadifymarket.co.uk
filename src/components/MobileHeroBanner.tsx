@@ -96,12 +96,12 @@ export default function MobileHeroBanner() {
                 paddingLeft: 20,
                 paddingRight: 20,
                 borderRadius: 9999,
-                background: 'linear-gradient(135deg, #F5C842 0%, #C8860A 100%)',
+                background: 'linear-gradient(135deg, #D4AF37 0%, #D4AF37 100%)',
                 border: 'none',
                 cursor: 'pointer',
                 fontSize: 'clamp(13px, 3.6vw, 14px)',
                 fontWeight: 700,
-                color: '#0B0B0F',
+                color: '#121A2B',
                 whiteSpace: 'nowrap',
               }}
             >

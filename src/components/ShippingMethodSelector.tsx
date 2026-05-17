@@ -69,7 +69,7 @@ export default function ShippingMethodSelector({
             onClick={() => toggle(method.id)}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-colors ${
               isSelected
-                ? 'border-[#22C55E] bg-green-50 text-[#0F172A]'
+                ? 'border-[#22C55E] bg-green-50 text-[#182235]'
                 : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
             }`}
           >
