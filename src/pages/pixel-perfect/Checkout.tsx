@@ -322,7 +322,7 @@ const Checkout = () => {
             <h1 className="font-display text-2xl font-bold text-foreground mb-4">Your cart is empty</h1>
             <p className="text-muted-foreground mb-6">Add some items before checking out.</p>
             <Link to="/catalog">
-              <Button className="bg-gradient-hero text-primary-foreground font-semibold">
+              <Button className="bg-primary hover:bg-primary-hover text-black font-semibold">
                 Browse Catalog <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
@@ -356,7 +356,7 @@ const Checkout = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link to={`/login?next=${encodeURIComponent('/checkout')}`}>
-                <Button className="bg-gradient-hero text-primary-foreground font-semibold w-full sm:w-auto">
+                <Button className="bg-primary hover:bg-primary-hover text-black font-semibold w-full sm:w-auto">
                   Sign In
                 </Button>
               </Link>
@@ -400,7 +400,7 @@ const Checkout = () => {
                   onClick={() => i <= currentStep && setCurrentStep(i)}
                   className={`flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-full text-sm font-medium transition-all ${
                     i === currentStep
-                      ? "bg-gradient-hero text-primary-foreground shadow-elevated"
+                      ? "bg-primary hover:bg-primary-hover text-black shadow-elevated"
                       : i < currentStep
                       ? "bg-primary/10 text-primary"
                       : "bg-muted text-muted-foreground"
@@ -420,9 +420,9 @@ const Checkout = () => {
           <div className="grid lg:grid-cols-[1fr_380px] gap-8">
             {/* Price-changed banner */}
             {priceChangedBanner && (
-              <div className="lg:col-span-2 flex items-start justify-between gap-3 bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm text-amber-800">
+              <div className="lg:col-span-2 flex items-start justify-between gap-3 bg-primary-soft border border-primary/40 rounded-xl p-4 text-sm text-primary">
                 <span><strong>Prices updated:</strong> Some prices have been updated since you added items to your cart. Please review the totals below before proceeding.</span>
-                <button onClick={dismissPriceBanner} aria-label="Dismiss" className="shrink-0 mt-0.5 text-amber-600 hover:text-amber-800">
+                <button onClick={dismissPriceBanner} aria-label="Dismiss" className="shrink-0 mt-0.5 text-primary hover:text-primary">
                   <X className="h-4 w-4" />
                 </button>
               </div>
@@ -563,7 +563,7 @@ const Checkout = () => {
 
                   <Button
                     onClick={handleContinueToPayment}
-                    className="w-full sm:w-auto h-11 bg-gradient-hero text-primary-foreground font-semibold px-8"
+                    className="w-full sm:w-auto h-11 bg-primary hover:bg-primary-hover text-black font-semibold px-8"
                   >
                     Continue to Payment <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -609,7 +609,7 @@ const Checkout = () => {
                     </Button>
                     <Button
                       onClick={() => setCurrentStep(2)}
-                      className="flex-1 h-11 bg-gradient-hero text-primary-foreground font-semibold"
+                      className="flex-1 h-11 bg-primary hover:bg-primary-hover text-black font-semibold"
                     >
                       Review Order <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
@@ -702,7 +702,7 @@ const Checkout = () => {
                     <Button
                       onClick={handlePlaceOrder}
                       disabled={isSubmitting}
-                      className="flex-1 h-12 bg-gradient-accent text-accent-foreground font-bold text-base hover:opacity-90 transition-opacity"
+                      className="flex-1 h-12 bg-primary hover:bg-primary-hover text-black font-bold text-base hover:opacity-90 transition-opacity"
                     >
                       {isSubmitting ? (
                         <>

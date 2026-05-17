@@ -45,7 +45,7 @@ const SLIDES: Slide[] = [
     emoji: "🛍️",
     title: "Welcome to Loadify Market",
     subtitle: "The UK marketplace built for modern buyers and sellers.",
-    accentColor: "#F5B942",
+    accentColor: "#D4AF37",
   },
   {
     emoji: "🔍",
@@ -63,7 +63,7 @@ const SLIDES: Slide[] = [
     emoji: "🚀",
     title: "Ready to Start?",
     subtitle: "Create your account and join the Loadify community today.",
-    accentColor: "#F5B942",
+    accentColor: "#D4AF37",
   },
 ];
 
@@ -79,7 +79,7 @@ function DotIndicator({ total, active }: { total: number; active: number }) {
             width: i === active ? "20px" : "6px",
             height: "6px",
             borderRadius: "3px",
-            background: i === active ? "#F5B942" : "rgba(255,255,255,0.25)",
+            background: i === active ? "#D4AF37" : "rgba(255,255,255,0.25)",
             transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             display: "block",
           }}
@@ -126,7 +126,7 @@ export default function AppOnboarding() {
       style={{
         position: "fixed",
         inset: 0,
-        background: "#07080B",
+        background: "rgba(10,14,26,1)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -201,7 +201,7 @@ export default function AppOnboarding() {
           style={{
             fontSize: "clamp(24px, 6vw, 30px)",
             fontWeight: 800,
-            color: "#FFFFFF",
+            color: "rgba(255,255,255,1)",
             lineHeight: 1.2,
             marginBottom: "14px",
           }}
@@ -242,8 +242,8 @@ export default function AppOnboarding() {
             maxWidth: "360px",
             padding: "17px",
             borderRadius: "14px",
-            background: "linear-gradient(135deg, #F5C842, #C8860A)",
-            color: "#0B0B0F",
+            background: "rgba(212,175,55,1)",
+            color: "rgba(18,26,43,1)",
             fontSize: "16px",
             fontWeight: 800,
             border: "none",
@@ -270,7 +270,7 @@ export default function AppOnboarding() {
               padding: "4px 0",
             }}
           >
-            Already have an account? <span style={{ color: "#F5B942", fontWeight: 700 }}>Sign in</span>
+            Already have an account? <span style={{ color: "rgba(212,175,55,1)", fontWeight: 700 }}>Sign in</span>
           </button>
         )}
       </div>

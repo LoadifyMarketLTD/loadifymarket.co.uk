@@ -40,12 +40,12 @@ export default function MobileAppHeader() {
     <>
     <header
       style={{
-        background: '#07080B',
         paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))',
         paddingBottom: '0.75rem',
         paddingLeft: 16,
         paddingRight: 16,
       }}
+      className="bg-background"
     >
       {/* ── Row 1: logo + brand name (left) | bell (right) ─── */}
       <div className="flex items-center justify-between">
@@ -67,7 +67,7 @@ export default function MobileAppHeader() {
               style={{
                 fontSize: 'clamp(14px, 4.2vw, 19px)',
                 fontWeight: 800,
-                color: '#FFFFFF',
+                color: 'rgba(255,255,255,1)',
                 letterSpacing: 'clamp(0.5px, 0.2vw, 1px)',
                 lineHeight: 1,
                 fontFamily: 'var(--font-display)',
@@ -80,12 +80,12 @@ export default function MobileAppHeader() {
               style={{
                 fontSize: 'clamp(10px, 2.8vw, 13px)',
                 fontWeight: 800,
-                color: '#F2B84B',
                 letterSpacing: 'clamp(0.5px, 0.3vw, 1.5px)',
                 lineHeight: 1,
                 fontFamily: 'var(--font-display)',
                 whiteSpace: 'nowrap',
               }}
+              className="text-primary"
             >
               MARKET
             </span>
@@ -111,7 +111,7 @@ export default function MobileAppHeader() {
           }}
         >
           <Bell
-            style={{ width: 22, height: 22, color: '#FFFFFF' }}
+            style={{ width: 22, height: 22 }} className="text-white"
             aria-hidden="true"
           />
           {unread > 0 && (
@@ -124,7 +124,6 @@ export default function MobileAppHeader() {
                 minWidth: 17,
                 height: 17,
                 borderRadius: 9999,
-                background: '#F2B84B',
                 color: '#000',
                 fontSize: 9,
                 fontWeight: 700,
@@ -134,6 +133,7 @@ export default function MobileAppHeader() {
                 paddingLeft: 2,
                 paddingRight: 2,
               }}
+              className="bg-primary"
             >
               {unread > 9 ? '9+' : unread}
             </span>
@@ -163,7 +163,7 @@ export default function MobileAppHeader() {
           }}
         >
           <Search
-            style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}
+            style={{ width: 18, height: 18, flexShrink: 0 }} className="text-white/45"
             aria-hidden="true"
           />
           <span
@@ -179,7 +179,7 @@ export default function MobileAppHeader() {
             Search for items or members
           </span>
           <Camera
-            style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}
+            style={{ width: 18, height: 18, flexShrink: 0 }} className="text-white/45"
             aria-hidden="true"
           />
         </button>
@@ -191,7 +191,7 @@ export default function MobileAppHeader() {
           style={{
             width: 44,
             height: 44,
-            background: '#1E1A0E',
+            background: 'rgba(28,20,0,1)',
             border: '1px solid rgba(242,184,75,0.4)',
             borderRadius: 12,
             display: 'flex',
@@ -202,7 +202,8 @@ export default function MobileAppHeader() {
           }}
         >
           <Filter
-            style={{ width: 18, height: 18, color: '#F2B84B' }}
+            style={{ width: 18, height: 18 }}
+            className="text-primary"
             aria-hidden="true"
           />
         </button>

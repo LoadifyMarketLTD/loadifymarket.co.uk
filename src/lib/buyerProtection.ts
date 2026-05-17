@@ -178,15 +178,15 @@ export interface EscrowInfo {
 export function getEscrowInfo(status: EscrowStatus | undefined): EscrowInfo {
   switch (status) {
     case 'held':
-      return { status: 'held',          label: 'Pending',           description: 'Payment is pending delivery confirmation.',                  color: 'text-yellow-400' };
+      return { status: 'held',          label: 'Pending',           description: 'Payment is pending delivery confirmation.',                  color: 'text-primary' };
     case 'released':
-      return { status: 'released',      label: 'Released',          description: 'Payment has been released to the seller.',                   color: 'text-green-400' };
+      return { status: 'released',      label: 'Released',          description: 'Payment has been released to the seller.',                   color: 'text-success' };
     case 'refunded':
       return { status: 'refunded',      label: 'Refund Issued',     description: 'Full payment has been refunded to your original method.',     color: 'text-blue-400' };
     case 'partial_refund':
       return { status: 'partial_refund', label: 'Partial Refund',   description: 'A partial refund has been issued to your account.',           color: 'text-purple-400' };
     default:
-      return { status: 'held',          label: 'Pending',           description: 'Payment is pending.',                                        color: 'text-yellow-400' };
+      return { status: 'held',          label: 'Pending',           description: 'Payment is pending.',                                        color: 'text-primary' };
   }
 }
 

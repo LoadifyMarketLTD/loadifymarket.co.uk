@@ -33,7 +33,7 @@ const StarRating = ({ rating, size = "sm" }: { rating: number; size?: "sm" | "md
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          className={`${s} ${i <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
+          className={`${s} ${i <= rating ? "fill-amber-400 text-primary" : "text-muted-foreground/30"}`}
         />
       ))}
     </div>
@@ -60,7 +60,7 @@ const InteractiveStarRating = ({ value, onChange }: InteractiveStarRatingProps) 
         >
           <Star
             className={`h-6 w-6 transition-colors ${
-              i <= (hover || value) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"
+              i <= (hover || value) ? "fill-amber-400 text-primary" : "text-muted-foreground/30"
             }`}
           />
         </button>
@@ -353,7 +353,7 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-foreground">{authorName}</span>
                         {review.isVerifiedPurchase && (
-                          <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-200">
+                          <Badge variant="outline" className="text-[10px] bg-success/10 text-success border-success/40">
                             Confirmed Purchase
                           </Badge>
                         )}

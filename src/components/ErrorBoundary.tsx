@@ -44,8 +44,8 @@ export default class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#020617] flex items-center justify-center px-4">
-          <div className="rounded-xl p-6 max-w-md w-full text-center p-10" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}>
+        <div className="min-h-screen bg-background flex items-center justify-center px-4">
+          <div className="rounded-xl p-6 max-w-md w-full text-center p-10" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
             <p className="text-5xl mb-4">⚠️</p>
             <h2 className="text-2xl font-bold text-white mb-2">Something went wrong</h2>
             <p className="text-slate-400 mb-2">

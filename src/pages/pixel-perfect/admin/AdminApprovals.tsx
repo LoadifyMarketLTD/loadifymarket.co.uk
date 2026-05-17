@@ -45,10 +45,10 @@ interface SellerDetail extends Seller {
 }
 
 const statusColor: Record<string, string> = {
-  active:    "border-emerald-500/30 text-emerald-400 bg-emerald-500/10",
-  submitted: "border-amber-500/30 text-amber-400 bg-amber-500/10",
+  active:    "border-emerald-500/30 text-success bg-success/10",
+  submitted: "border-warning/40 text-warning bg-warning/10",
   draft:     "border-slate-200 text-slate-400",
-  suspended: "border-red-500/30 text-red-400 bg-red-500/10",
+  suspended: "border-danger/30 text-danger bg-danger/100/10",
 };
 
 const statusLabel: Record<string, string> = {
@@ -59,9 +59,9 @@ const statusLabel: Record<string, string> = {
 };
 
 const stripeStatusColor: Record<string, string> = {
-  active:     "border-emerald-500/30 text-emerald-400 bg-emerald-500/10",
-  restricted: "border-amber-500/30 text-amber-400 bg-amber-500/10",
-  pending:    "border-amber-500/30 text-amber-400 bg-amber-500/10",
+  active:     "border-emerald-500/30 text-success bg-success/10",
+  restricted: "border-warning/40 text-warning bg-warning/10",
+  pending:    "border-warning/40 text-warning bg-warning/10",
 };
 
 const stripeStatusLabel: Record<string, string> = {
@@ -457,7 +457,7 @@ const AdminSellerManagement = () => {
                   {/* Send Warning */}
                   <Button
                     variant="ghost" size="icon"
-                    className="h-8 w-8 text-amber-400 hover:bg-amber-500/10"
+                    className="h-8 w-8 text-primary hover:bg-primary/10"
                     onClick={() => handleSendWarning(s.userId)}
                     disabled={actionLoading === s.userId}
                     title="Send warning email"
@@ -470,7 +470,7 @@ const AdminSellerManagement = () => {
                   {(s.sellerStatus === "submitted" || s.sellerStatus === "draft") && (
                     <Button
                       variant="ghost" size="icon"
-                      className="h-8 w-8 text-emerald-400 hover:bg-emerald-500/10"
+                      className="h-8 w-8 text-success hover:bg-success/10"
                       onClick={() => handleApprove(s.userId)}
                       disabled={actionLoading === s.userId}
                       title="Approve seller"
@@ -484,7 +484,7 @@ const AdminSellerManagement = () => {
                   {canForceActivate(s) && (
                     <Button
                       variant="ghost" size="icon"
-                      className="h-8 w-8 text-emerald-400 hover:bg-emerald-500/10"
+                      className="h-8 w-8 text-success hover:bg-success/10"
                       onClick={() => handleForceActivate(s.userId)}
                       disabled={actionLoading === s.userId}
                       title="Force activate (Stripe is ready)"
@@ -497,7 +497,7 @@ const AdminSellerManagement = () => {
                   {s.sellerStatus !== "suspended" ? (
                     <Button
                       variant="ghost" size="icon"
-                      className="h-8 w-8 text-red-400 hover:bg-red-500/10"
+                      className="h-8 w-8 text-danger hover:bg-danger/100/10"
                       onClick={() => handleSuspend(s.userId)}
                       disabled={actionLoading === s.userId}
                       title="Suspend seller"
@@ -509,7 +509,7 @@ const AdminSellerManagement = () => {
                   ) : (
                     <Button
                       variant="ghost" size="icon"
-                      className="h-8 w-8 text-amber-400 hover:bg-amber-500/10"
+                      className="h-8 w-8 text-primary hover:bg-primary/10"
                       onClick={() => handleReactivate(s.userId)}
                       disabled={actionLoading === s.userId}
                       title="Lift suspension (returns to submitted)"
@@ -596,7 +596,7 @@ const AdminSellerManagement = () => {
 
         {(["all", "active", "in-progress", "suspended"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(
                   tab === "all" ? filtered :
@@ -620,7 +620,7 @@ const AdminSellerManagement = () => {
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 bg-purple-100 text-purple-700">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 bg-admin/10 text-admin">
                   {selectedSeller.name.split(" ").filter((n) => n).map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "S"}
                 </div>
                 {selectedSeller.company || selectedSeller.name}
@@ -667,13 +667,13 @@ const AdminSellerManagement = () => {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground mb-0.5">Account Status</p>
-                      <Badge variant="outline" className={sellerDetail?.isActive !== false ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" : "border-red-500/30 text-red-400 bg-red-500/10"}>
+                      <Badge variant="outline" className={sellerDetail?.isActive !== false ? "border-emerald-500/30 text-success bg-success/10" : "border-danger/30 text-danger bg-danger/100/10"}>
                         {sellerDetail?.isActive !== false ? "Active" : "Suspended"}
                       </Badge>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground mb-0.5">Role</p>
-                      <Badge variant="outline" className="border-purple-500/30 text-purple-400 bg-purple-500/10">
+                      <Badge variant="outline" className="border-admin/30 text-admin bg-admin/10">
                         Seller
                       </Badge>
                     </div>
@@ -686,7 +686,7 @@ const AdminSellerManagement = () => {
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Activity</h3>
                     <div className="grid grid-cols-3 gap-3">
                       <div className="rounded-xl p-4 flex flex-col gap-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-purple-100 text-purple-600">
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-admin/10 text-admin">
                           <Package className="h-3.5 w-3.5" />
                         </div>
                         <div className="text-xl font-bold text-white mt-1">{sellerDetail.listingsCount}</div>
@@ -700,7 +700,7 @@ const AdminSellerManagement = () => {
                         <p className="text-xs text-muted-foreground">Orders</p>
                       </div>
                       <div className="rounded-xl p-4 flex flex-col gap-1" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-red-100 text-red-600">
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-red-100 text-danger">
                           <Flag className="h-3.5 w-3.5" />
                         </div>
                         <div className="text-xl font-bold text-white mt-1">{sellerDetail.reportsCount}</div>

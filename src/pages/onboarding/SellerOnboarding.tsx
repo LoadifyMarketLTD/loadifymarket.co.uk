@@ -75,15 +75,15 @@ function StepDot({ step, current, done }: { step: number; current: number; done:
       <div
         className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all ${
           done
-            ? "bg-[#22C55E] border-[#22C55E] text-white"
+            ? "bg-success border-success text-white"
             : isActive
-            ? "bg-white border-[#22C55E] text-[#22C55E]"
+            ? "bg-white border-success text-success"
             : "bg-white border-gray-200 text-gray-400"
         }`}
       >
         {done ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-4 w-4" />}
       </div>
-      <span className={`text-[10px] font-medium hidden sm:block ${isActive ? "text-[#16A34A]" : "text-gray-400"}`}>
+      <span className={`text-[10px] font-medium hidden sm:block ${isActive ? "text-success" : "text-gray-400"}`}>
         {STEPS[step - 1].label}
       </span>
     </div>
@@ -119,8 +119,8 @@ function StepAccountType({
             onClick={() => onSelect(v)}
             className={`rounded-xl border-2 p-5 text-left transition-all ${
               value === v
-                ? "border-[#22C55E] bg-[#f0fdf4]"
-                : "border-gray-200 bg-white hover:border-[#86efac]"
+                ? "border-success bg-success/10"
+                : "border-gray-200 bg-white hover:border-success/40"
             }`}
           >
             <p className="font-semibold text-gray-900">{label}</p>
@@ -131,7 +131,7 @@ function StepAccountType({
       <Button
         onClick={onNext}
         disabled={!value || saving}
-        className="w-full bg-gradient-to-r from-[#16A34A] to-[#22C55E] text-white"
+        className="w-full bg-success hover:bg-success/90 text-white"
       >
         {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
         Continue <ChevronRight className="h-4 w-4 ml-1" />
@@ -157,14 +157,14 @@ function StepProfile({
         </p>
       </div>
       {done ? (
-        <div className="flex items-center gap-3 rounded-xl bg-[#f0fdf4] border border-[#86efac] p-4">
-          <CheckCircle2 className="h-5 w-5 text-[#22C55E] shrink-0" />
-          <p className="text-sm text-[#16A34A] font-medium">Profile completed ✓</p>
+        <div className="flex items-center gap-3 rounded-xl bg-success/10 border border-success/40 p-4">
+          <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+          <p className="text-sm text-success font-medium">Profile completed ✓</p>
         </div>
       ) : (
         <p className="text-sm text-gray-500">
           Head to your{" "}
-          <a href="/seller/profile" className="text-[#16A34A] underline font-medium">
+          <a href="/seller/profile" className="text-success underline font-medium">
             Seller Profile
           </a>{" "}
           page and fill in the required fields.
@@ -173,7 +173,7 @@ function StepProfile({
       <Button
         onClick={onNext}
         disabled={!done}
-        className="w-full bg-gradient-to-r from-[#16A34A] to-[#22C55E] text-white disabled:opacity-40"
+        className="w-full bg-success hover:bg-success/90 text-white disabled:opacity-40"
       >
         Continue <ChevronRight className="h-4 w-4 ml-1" />
       </Button>
@@ -216,12 +216,12 @@ function StepStripe({
       </div>
 
       {fullyActive ? (
-        <div className="flex items-center gap-3 rounded-xl bg-[#f0fdf4] border border-[#86efac] p-4">
-          <CheckCircle2 className="h-5 w-5 text-[#22C55E] shrink-0" />
-          <p className="text-sm text-[#16A34A] font-medium">Stripe fully connected ✓</p>
+        <div className="flex items-center gap-3 rounded-xl bg-success/10 border border-success/40 p-4">
+          <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+          <p className="text-sm text-success font-medium">Stripe fully connected ✓</p>
         </div>
       ) : incomplete ? (
-        <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm text-amber-700">
+        <div className="rounded-xl bg-primary-soft border border-primary/40 p-4 text-sm text-primary">
           Your Stripe account is connected but not yet fully verified. Continue setup to enable
           charges and payouts.
         </div>
@@ -232,7 +232,7 @@ function StepStripe({
           <Button
             onClick={onConnect}
             disabled={connecting}
-            className="w-full bg-gradient-to-r from-[#16A34A] to-[#22C55E] text-white"
+            className="w-full bg-success hover:bg-success/90 text-white"
           >
             {connecting ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -246,7 +246,7 @@ function StepStripe({
           onClick={onNext}
           disabled={!fullyActive}
           variant={fullyActive ? "default" : "outline"}
-          className={`w-full ${fullyActive ? "bg-gradient-to-r from-[#16A34A] to-[#22C55E] text-white" : ""}`}
+          className={`w-full ${fullyActive ? "bg-success hover:bg-success/90 text-white" : ""}`}
         >
           Continue <ChevronRight className="h-4 w-4 ml-1" />
         </Button>
@@ -271,9 +271,9 @@ function StepStore({
       </div>
 
       <div className="space-y-3">
-        <div className={`flex items-center gap-3 rounded-xl border p-4 ${storeCreated ? "bg-[#f0fdf4] border-[#86efac]" : "border-gray-200"}`}>
+        <div className={`flex items-center gap-3 rounded-xl border p-4 ${storeCreated ? "bg-success/10 border-success/40" : "border-gray-200"}`}>
           {storeCreated ? (
-            <CheckCircle2 className="h-5 w-5 text-[#22C55E] shrink-0" />
+            <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
           ) : (
             <Circle className="h-5 w-5 text-gray-300 shrink-0" />
           )}
@@ -282,7 +282,7 @@ function StepStore({
             <p className="text-xs text-gray-500">Name, logo, description</p>
           </div>
           {!storeCreated && (
-            <a href="/seller/settings" className="text-xs text-[#16A34A] underline shrink-0">
+            <a href="/seller/settings" className="text-xs text-success underline shrink-0">
               Configure →
             </a>
           )}
@@ -292,7 +292,7 @@ function StepStore({
       <Button
         onClick={onNext}
         disabled={!storeCreated}
-        className="w-full bg-gradient-to-r from-[#16A34A] to-[#22C55E] text-white disabled:opacity-40"
+        className="w-full bg-success hover:bg-success/90 text-white disabled:opacity-40"
       >
         Continue <ChevronRight className="h-4 w-4 ml-1" />
       </Button>
@@ -320,9 +320,9 @@ function StepServiceListing({
       </div>
 
       {done ? (
-        <div className="flex items-center gap-3 rounded-xl bg-[#f0fdf4] border border-[#86efac] p-4">
-          <CheckCircle2 className="h-5 w-5 text-[#22C55E] shrink-0" />
-          <p className="text-sm text-[#16A34A] font-medium">First listing created ✓</p>
+        <div className="flex items-center gap-3 rounded-xl bg-success/10 border border-success/40 p-4">
+          <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+          <p className="text-sm text-success font-medium">First listing created ✓</p>
         </div>
       ) : (
         <Button asChild variant="outline" className="w-full">
@@ -333,7 +333,7 @@ function StepServiceListing({
       <Button
         onClick={onFinish}
         disabled={!done || finishing}
-        className="w-full bg-gradient-to-r from-[#16A34A] to-[#22C55E] text-white disabled:opacity-40"
+        className="w-full bg-success hover:bg-success/90 text-white disabled:opacity-40"
       >
         {finishing ? (
           <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -530,7 +530,7 @@ const SellerOnboarding = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[#22C55E]" />
+        <Loader2 className="h-8 w-8 animate-spin text-success" />
       </div>
     );
   }

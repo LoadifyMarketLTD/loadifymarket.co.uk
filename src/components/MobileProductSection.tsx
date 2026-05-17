@@ -32,11 +32,11 @@ function MobileProductCard({ product }: { product: Product }) {
     <Link
       to={`/product/${product.id}`}
       className="flex-shrink-0 w-[148px] snap-start rounded-2xl overflow-hidden active:scale-95 transition-transform"
-      style={{ backgroundColor: '#EFEFEF', textDecoration: 'none' }}
+      style={{ backgroundColor: 'rgba(239,239,239,1)', textDecoration: 'none' }}
       aria-label={product.title}
     >
       {/* Image */}
-      <div className="relative aspect-square overflow-hidden" style={{ backgroundColor: '#E0E0E0' }}>
+      <div className="relative aspect-square overflow-hidden" style={{ backgroundColor: 'rgba(224,224,224,1)' }}>
         <NativeImg
           src={product.image}
           alt={product.title}
@@ -45,7 +45,7 @@ function MobileProductCard({ product }: { product: Product }) {
           fallback={lightPlaceholder}
         />
         {product.condition === 'New' && (
-          <span className="absolute top-1.5 right-1.5 text-[9px] font-bold bg-emerald-500/90 text-white px-1.5 py-0.5 rounded-full">
+          <span className="absolute top-1.5 right-1.5 text-[9px] font-bold bg-success text-white px-1.5 py-0.5 rounded-full">
             NEW
           </span>
         )}
@@ -53,10 +53,10 @@ function MobileProductCard({ product }: { product: Product }) {
 
       {/* Info */}
       <div className="p-2.5 space-y-1">
-        <p className="text-[11px] font-semibold leading-snug line-clamp-2" style={{ color: '#111111' }}>
+        <p className="text-[11px] font-semibold leading-snug line-clamp-2 text-foreground"  >
           {product.title}
         </p>
-        <p className="text-[13px] font-bold leading-none" style={{ color: '#111111' }}>
+        <p className="text-[13px] font-bold leading-none text-foreground"  >
           {formatPrice(product.price)}
         </p>
       </div>
@@ -71,11 +71,11 @@ function MobileListingCard({ product }: { product: Product }) {
     <Link
       to={`/product/${product.id}`}
       className="rounded-2xl overflow-hidden active:scale-95 transition-transform"
-      style={{ backgroundColor: '#EFEFEF', textDecoration: 'none' }}
+      style={{ backgroundColor: 'rgba(239,239,239,1)', textDecoration: 'none' }}
       aria-label={product.title}
     >
       {/* Image */}
-      <div className="relative aspect-[4/3] overflow-hidden" style={{ backgroundColor: '#E0E0E0' }}>
+      <div className="relative aspect-[4/3] overflow-hidden" style={{ backgroundColor: 'rgba(224,224,224,1)' }}>
         <NativeImg
           src={product.image}
           alt={product.title}
@@ -84,7 +84,7 @@ function MobileListingCard({ product }: { product: Product }) {
           fallback={lightPlaceholder}
         />
         {product.condition === 'New' && (
-          <span className="absolute top-1.5 right-1.5 text-[9px] font-bold bg-emerald-500/90 text-white px-1.5 py-0.5 rounded-full">
+          <span className="absolute top-1.5 right-1.5 text-[9px] font-bold bg-success text-white px-1.5 py-0.5 rounded-full">
             NEW
           </span>
         )}
@@ -92,10 +92,10 @@ function MobileListingCard({ product }: { product: Product }) {
 
       {/* Info */}
       <div className="p-2.5 space-y-1">
-        <p className="text-[11px] font-semibold leading-snug line-clamp-2" style={{ color: '#111111' }}>
+        <p className="text-[11px] font-semibold leading-snug line-clamp-2 text-foreground"  >
           {product.title}
         </p>
-        <p className="text-sm font-bold leading-none" style={{ color: '#111111' }}>
+        <p className="text-sm font-bold leading-none text-foreground"  >
           {formatPrice(product.price)}
         </p>
       </div>
@@ -111,7 +111,7 @@ function SectionHeader({ title, viewAllTo }: { title: string; viewAllTo: string 
       <h2 className="text-[15px] font-bold text-white tracking-tight">{title}</h2>
       <Link
         to={viewAllTo}
-        className="flex items-center gap-1 text-[11px] font-semibold text-[#FBBF24] hover:text-[#D8AE57] transition-colors"
+        className="flex items-center gap-1 text-[11px] font-semibold text-primary hover:text-primary-hover transition-colors"
       >
         View all <ArrowRight className="h-3 w-3" aria-hidden="true" />
       </Link>
@@ -134,11 +134,11 @@ function SkeletonCard({ wide }: { wide?: boolean }) {
 
 function EmptyState() {
   return (
-    <div className="mx-4 my-2 flex flex-col items-center justify-center gap-3 py-8 rounded-2xl border border-white/[0.06] bg-[#111827]">
+    <div className="mx-4 my-2 flex flex-col items-center justify-center gap-3 py-8 rounded-2xl border border-white/[0.06] bg-surface">
       <p className="text-sm text-white/75">No products available yet</p>
       <Link
         to="/catalog"
-        className="text-xs font-semibold text-[#FBBF24] border border-[#FBBF24]/30 px-4 py-2 rounded-lg hover:bg-[#FBBF24]/10 transition-colors"
+        className="text-xs font-semibold text-primary border border-primary/30 px-4 py-2 rounded-lg hover:bg-primary/10 transition-colors"
       >
         Browse Marketplace
       </Link>

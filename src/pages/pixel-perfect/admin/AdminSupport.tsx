@@ -44,24 +44,24 @@ interface DisputeRow {
 
 const disputeStatusConfig: Record<string, { label: string; className: string }> = {
   open:        { label: "Open", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
-  under_review:{ label: "Under Review", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
-  resolved:    { label: "Resolved", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+  under_review:{ label: "Under Review", className: "border-primary/40 text-primary bg-primary/10" },
+  resolved:    { label: "Resolved", className: "border-emerald-500/30 text-success bg-success/10" },
   closed:      { label: "Closed", className: "border-slate-200 text-slate-400" },
 };
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   open: { label: "Open", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
-  in_progress: { label: "In Progress", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
-  waiting_customer: { label: "Waiting", className: "border-purple-500/30 text-purple-400 bg-purple-500/10" },
-  resolved: { label: "Resolved", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+  in_progress: { label: "In Progress", className: "border-primary/40 text-primary bg-primary/10" },
+  waiting_customer: { label: "Waiting", className: "border-admin/30 text-admin bg-admin/10" },
+  resolved: { label: "Resolved", className: "border-emerald-500/30 text-success bg-success/10" },
   closed: { label: "Closed", className: "border-slate-200 text-slate-400" },
 };
 
 const priorityConfig: Record<string, { label: string; className: string }> = {
   low: { label: "Low", className: "border-slate-200 text-slate-400" },
   medium: { label: "Medium", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
-  high: { label: "High", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
-  urgent: { label: "Urgent", className: "border-red-500/30 text-red-400 bg-red-500/10" },
+  high: { label: "High", className: "border-primary/40 text-primary bg-primary/10" },
+  urgent: { label: "Urgent", className: "border-danger/30 text-danger bg-danger/100/10" },
 };
 
 const AdminSupport = () => {
@@ -281,25 +281,25 @@ const AdminSupport = () => {
     <Table>
       <TableHeader>
         <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Ticket</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>User</TableHead>
-          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Category</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Priority</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Status</TableHead>
-          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Updated</TableHead>
-          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Action</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Ticket</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">User</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Category</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Priority</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Status</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Updated</TableHead>
+          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Action</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
             <TableCell colSpan={7} className="text-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(100,116,139,0.65)" }} />
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground/65" />
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="text-center py-8" style={{ color: "rgba(100,116,139,0.65)" }}>
+            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground/65">
               <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-40" />No tickets found.
             </TableCell>
           </TableRow>
@@ -311,16 +311,16 @@ const AdminSupport = () => {
               <TableRow key={t.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                 <TableCell>
                   <p className="text-sm font-medium text-white">{t.id.slice(0, 8).toUpperCase()}</p>
-                  <p className="text-xs max-w-[200px] truncate" style={{ color: "rgba(148,163,184,0.85)" }}>{t.subject}</p>
+                  <p className="text-xs max-w-[200px] truncate text-muted-foreground/85">{t.subject}</p>
                 </TableCell>
                 <TableCell>
                   <p className="text-sm text-white">{t.userName}</p>
-                  <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{t.userEmail}</p>
+                  <p className="text-xs text-muted-foreground/85">{t.userEmail}</p>
                 </TableCell>
-                <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{t.category}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground/85">{t.category}</TableCell>
                 <TableCell><Badge variant="outline" className={priCfg.className}>{priCfg.label}</Badge></TableCell>
                 <TableCell><Badge variant="outline" className={stCfg.className}>{stCfg.label}</Badge></TableCell>
-                <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{t.updatedAt}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground/85">{t.updatedAt}</TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"
@@ -343,13 +343,13 @@ const AdminSupport = () => {
     <div className="p-4 sm:p-6 space-y-6" style={{ background: "transparent", minHeight: "100%" }}>
       <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <h1 className="text-2xl font-bold text-white tracking-tight">Support Tickets</h1>
-        <p className="text-sm mt-1" style={{ color: "rgba(148,163,184,0.85)" }}>
+        <p className="text-sm mt-1 text-muted-foreground/85">
           {tickets.length} total · {openTickets.length} open
         </p>
       </div>
 
       {error && (
-        <div className="rounded-xl border p-4 text-sm" style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171" }}>
+        <div className="rounded-xl border p-4 text-sm border-danger/30 bg-danger/10 text-danger">
           {error}
         </div>
       )}
@@ -358,32 +358,31 @@ const AdminSupport = () => {
         {[
           { label: "Open", count: byStatus("open").length, icon: AlertCircle, color: "#60A5FA", bg: "rgba(96,165,250,0.12)" },
           { label: "In Progress", count: byStatus("in_progress").length, icon: Clock, color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
-          { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "#FBBF24", bg: "rgba(251,191,36,0.12)" },
-          { label: "Urgent", count: urgentOpen.length, icon: AlertCircle, color: "#F87171", bg: "rgba(248,113,113,0.12)" },
+          { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "rgba(212,175,55,1)", bg: "rgba(212,175,55,0.12)" },
+          { label: "Urgent", count: urgentOpen.length, icon: AlertCircle, color: "rgba(248,113,113,1)", bg: "rgba(248,113,113,0.12)" },
         ].map((stat) => (
           <div
             key={stat.label}
             className="rounded-2xl p-5"
-            style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
+            style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
           >
             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: stat.bg }}>
               <stat.icon className="h-5 w-5" style={{ color: stat.color }} />
             </div>
             <div className="text-3xl font-bold text-white">{stat.count}</div>
-            <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(148,163,184,0.85)" }}>{stat.label}</p>
+            <p className="text-xs mt-1.5 font-medium text-muted-foreground/85">{stat.label}</p>
           </div>
         ))}
       </div>
 
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(100,116,139,0.65)" }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/65" />
           <Input
             placeholder="Search tickets..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-10"
-            style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+            className="pl-9 h-10 bg-muted-foreground/30 border border-white/10 text-white"
           />
         </div>
       </div>
@@ -398,7 +397,7 @@ const AdminSupport = () => {
           <TabsTrigger value="disputes" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">
             Disputes
             {disputes.filter((d) => d.status === "open").length > 0 && (
-              <Badge variant="outline" className="ml-2 text-xs border-red-500/30 text-red-400 bg-red-500/10">
+              <Badge variant="outline" className="ml-2 text-xs border-danger/30 text-danger bg-danger/100/10">
                 {disputes.filter((d) => d.status === "open").length}
               </Badge>
             )}
@@ -406,7 +405,7 @@ const AdminSupport = () => {
         </TabsList>
         {(["open", "resolved", "all"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2">
                 {renderTable(
                   tab === "open" ? openTickets :
@@ -418,29 +417,29 @@ const AdminSupport = () => {
           </TabsContent>
         ))}
         <TabsContent value="disputes">
-          <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
             <Table>
               <TableHeader>
                 <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>ID</TableHead>
-                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Buyer</TableHead>
-                  <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Subject</TableHead>
-                  <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Reason</TableHead>
-                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Status</TableHead>
-                  <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Date</TableHead>
-                  <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Action</TableHead>
+                  <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">ID</TableHead>
+                  <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Buyer</TableHead>
+                  <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Subject</TableHead>
+                  <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Reason</TableHead>
+                  <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Status</TableHead>
+                  <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Date</TableHead>
+                  <TableHead className="text-right text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {disputeLoading ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(100,116,139,0.65)" }} />
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground/65" />
                     </TableCell>
                   </TableRow>
                 ) : disputes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8" style={{ color: "rgba(100,116,139,0.65)" }}>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground/65">
                       <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-40" />No disputes found.
                     </TableCell>
                   </TableRow>
@@ -451,13 +450,13 @@ const AdminSupport = () => {
                       <TableRow key={d.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                         <TableCell>
                           <p className="text-sm font-medium text-white">{d.id.slice(0, 8).toUpperCase()}</p>
-                          <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>Order: {d.orderId.slice(0, 8).toUpperCase()}</p>
+                          <p className="text-xs text-muted-foreground/85">Order: {d.orderId.slice(0, 8).toUpperCase()}</p>
                         </TableCell>
                         <TableCell className="text-sm text-white">{d.buyerName}</TableCell>
                         <TableCell className="hidden sm:table-cell text-xs max-w-[200px] truncate" style={{ color: "rgba(255,255,255,0.7)" }}>{d.subject}</TableCell>
-                        <TableCell className="hidden md:table-cell text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{d.protectionReason.replace(/_/g, " ")}</TableCell>
+                        <TableCell className="hidden md:table-cell text-xs text-muted-foreground/85">{d.protectionReason.replace(/_/g, " ")}</TableCell>
                         <TableCell><Badge variant="outline" className={stCfg.className}>{stCfg.label}</Badge></TableCell>
-                        <TableCell className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{d.createdAt}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground/85">{d.createdAt}</TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"
@@ -487,26 +486,26 @@ const AdminSupport = () => {
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>User</span><p className="font-medium text-white">{selected.userName}</p></div>
-                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Email</span><p className="font-medium text-white">{selected.userEmail}</p></div>
-                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Priority</span>
+                <div><span className="text-muted-foreground/85">User</span><p className="font-medium text-white">{selected.userName}</p></div>
+                <div><span className="text-muted-foreground/85">Email</span><p className="font-medium text-white">{selected.userEmail}</p></div>
+                <div><span className="text-muted-foreground/85">Priority</span>
                   <p><Badge variant="outline" className={(priorityConfig[selected.priority] ?? { className: "border-slate-200 text-slate-400" }).className}>
                     {(priorityConfig[selected.priority] ?? { label: selected.priority }).label}
                   </Badge></p>
                 </div>
-                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Status</span>
+                <div><span className="text-muted-foreground/85">Status</span>
                   <p><Badge variant="outline" className={(statusConfig[selected.status] ?? { className: "border-slate-200 text-slate-400" }).className}>
                     {(statusConfig[selected.status] ?? { label: selected.status }).label}
                   </Badge></p>
                 </div>
-                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Created</span><p className="font-medium text-white">{selected.createdAt}</p></div>
-                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Updated</span><p className="font-medium text-white">{selected.updatedAt}</p></div>
+                <div><span className="text-muted-foreground/85">Created</span><p className="font-medium text-white">{selected.createdAt}</p></div>
+                <div><span className="text-muted-foreground/85">Updated</span><p className="font-medium text-white">{selected.updatedAt}</p></div>
               </div>
 
               {/* Message body — shown when the ticket has a saved message (e.g. contact form) */}
               {selected.message && (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold" style={{ color: "rgba(148,163,184,0.85)" }}>MESSAGE</p>
+                  <p className="text-xs font-semibold text-muted-foreground/85">MESSAGE</p>
                   <div
                     className="rounded-lg p-3 text-sm whitespace-pre-wrap"
                     style={{ background: "rgba(15,23,42,0.6)", border: "1px solid rgba(255,255,255,0.06)", color: "rgba(226,232,240,0.9)" }}
@@ -518,7 +517,7 @@ const AdminSupport = () => {
 
               {["open", "in_progress", "waiting_customer"].includes(selected.status) && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold" style={{ color: "rgba(148,163,184,0.85)" }}>UPDATE STATUS</p>
+                  <p className="text-xs font-semibold text-muted-foreground/85">UPDATE STATUS</p>
                   <div className="flex items-center gap-2">
                     <Select
                       defaultValue={selected.status}
@@ -536,14 +535,14 @@ const AdminSupport = () => {
                         <SelectItem value="closed">Closed</SelectItem>
                       </SelectContent>
                     </Select>
-                    {actionLoading === selected.id && <Loader2 className="h-4 w-4 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />}
+                    {actionLoading === selected.id && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/65" />}
                   </div>
                 </div>
               )}
 
               {/* Admin reply */}
               <div className="space-y-2 pt-2" style={{ borderTop: "1px solid rgba(148,163,184,0.3)" }}>
-                <p className="text-xs font-semibold" style={{ color: "rgba(148,163,184,0.85)" }}>SEND REPLY</p>
+                <p className="text-xs font-semibold text-muted-foreground/85">SEND REPLY</p>
                 <Textarea
                   placeholder="Type your reply..."
                   rows={3}
@@ -553,7 +552,7 @@ const AdminSupport = () => {
                   className="resize-none text-sm"
                 />
                 {replyMsg && (
-                  <p className={`text-xs ${replyMsg.ok ? "text-emerald-400" : "text-red-400"}`}>{replyMsg.text}</p>
+                  <p className={`text-xs ${replyMsg.ok ? "text-success" : "text-danger"}`}>{replyMsg.text}</p>
                 )}
               </div>
             </div>
@@ -603,23 +602,23 @@ const AdminSupport = () => {
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Buyer</span><p className="font-medium text-white">{selectedDispute.buyerName}</p></div>
-                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Order</span><p className="font-medium text-white">{selectedDispute.orderId.slice(0, 8).toUpperCase()}</p></div>
-                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Reason</span><p className="font-medium text-white">{selectedDispute.protectionReason.replace(/_/g, " ")}</p></div>
-                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Status</span>
+                <div><span className="text-muted-foreground/85">Buyer</span><p className="font-medium text-white">{selectedDispute.buyerName}</p></div>
+                <div><span className="text-muted-foreground/85">Order</span><p className="font-medium text-white">{selectedDispute.orderId.slice(0, 8).toUpperCase()}</p></div>
+                <div><span className="text-muted-foreground/85">Reason</span><p className="font-medium text-white">{selectedDispute.protectionReason.replace(/_/g, " ")}</p></div>
+                <div><span className="text-muted-foreground/85">Status</span>
                   <p><Badge variant="outline" className={(disputeStatusConfig[selectedDispute.status] ?? { className: "border-slate-200 text-slate-400" }).className}>
                     {(disputeStatusConfig[selectedDispute.status] ?? { label: selectedDispute.status }).label}
                   </Badge></p>
                 </div>
               </div>
-              <div className="rounded-xl p-3" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                <p className="text-xs font-semibold mb-1" style={{ color: "rgba(148,163,184,0.85)" }}>SUBJECT</p>
+              <div className="rounded-xl p-3" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
+                <p className="text-xs font-semibold mb-1 text-muted-foreground/85">SUBJECT</p>
                 <p className="text-sm font-medium text-white mb-3">{selectedDispute.subject}</p>
-                <p className="text-xs font-semibold mb-1" style={{ color: "rgba(148,163,184,0.85)" }}>DESCRIPTION</p>
+                <p className="text-xs font-semibold mb-1 text-muted-foreground/85">DESCRIPTION</p>
                 <p className="text-sm text-white">{selectedDispute.description}</p>
               </div>
               <div className="space-y-2">
-                <p className="text-xs font-semibold" style={{ color: "rgba(148,163,184,0.85)" }}>UPDATE STATUS</p>
+                <p className="text-xs font-semibold text-muted-foreground/85">UPDATE STATUS</p>
                 <Select
                   value={selectedDispute.status}
                   onValueChange={(val) => updateDisputeStatus(selectedDispute.id, val)}
@@ -639,7 +638,7 @@ const AdminSupport = () => {
             </div>
             <DialogFooter className="gap-2">
               {disputeActionLoading === selectedDispute.id && (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" style={{ color: "rgba(148,163,184,0.85)" }} />
+                <Loader2 className="h-4 w-4 animate-spin mr-1 text-muted-foreground/85" />
               )}
               <Button
                 variant="outline"

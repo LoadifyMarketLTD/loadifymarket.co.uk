@@ -42,10 +42,10 @@ interface TopProduct {
 
 const statusColors: Record<string, string> = {
   paid: "bg-blue-500/10 text-blue-700 border-blue-200",
-  packed: "bg-amber-500/10 text-amber-700 border-amber-200",
-  shipped: "bg-[#0A2239]/10 text-[#0A2239] border-[#0A2239]/20",
-  delivered: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
-  cancelled: "bg-red-500/10 text-red-700 border-red-200",
+  packed: "bg-primary/10 text-primary border-primary/40",
+  shipped: "bg-secondary/10 text-secondary border-secondary/20",
+  delivered: "bg-success/10 text-success border-success/40",
+  cancelled: "bg-danger/100/10 text-danger border-danger/30",
   refunded: "bg-muted text-muted-foreground border-border",
 };
 
@@ -240,7 +240,7 @@ const SellerDashboard = () => {
 
       {/* Quick Actions — top priority, horizontal row */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
-        <Button size="sm" className="bg-gradient-hero text-primary-foreground h-10 text-sm font-semibold" asChild>
+        <Button size="sm" className="bg-primary hover:bg-primary-hover text-black h-10 text-sm font-semibold" asChild>
           <Link to="/seller/products/new">
             <Package className="mr-1.5 h-4 w-4" /> Add Product
           </Link>

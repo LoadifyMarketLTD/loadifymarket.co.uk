@@ -15,102 +15,33 @@ export default {
     },
     extend: {
       colors: {
-        // ── shadcn/ui CSS-variable tokens ────────────────────────────────
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-          dark: "hsl(var(--primary-dark))",
-          light: "hsl(var(--primary-light))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-        surface: "hsl(var(--surface))",
-        sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
-          foreground: "hsl(var(--sidebar-foreground))",
-          primary: "hsl(var(--sidebar-primary))",
-          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
-          accent: "hsl(var(--sidebar-accent))",
-          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
-          border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))",
-        },
-        // ── Brand palette ────────────────────────────────────────────────
-        // Brand Green (primary actions)
-        'brand-green': {
-          DEFAULT: '#22C55E',
-          hover: '#16A34A',
-          light: '#DCFCE7',
-          dark: '#15803D',
-        },
-        // Brand Purple (secondary / accents)
-        'brand-purple': {
-          DEFAULT: '#7C3AED',
-          hover: '#5B21B6',
-          light: '#EDE9FE',
-          dark: '#4C1D95',
-        },
-        smoke: {
-          DEFAULT: '#F2F2F2',
-          50: '#FFFFFF',
-          100: '#FAFAFA',
-          200: '#F7F7F7',
-          300: '#F2F2F2',
-          400: '#E8E8E8',
-          500: '#DEDEDE',
-          600: '#D4D4D4',
-          700: '#C7C7C7',
-          800: '#B8B8B8',
-          900: '#A8A8A8',
-        },
-        // Marketplace navy (header/footer)
-        navy: {
-          DEFAULT: '#1E3A5F',
-          light: '#2C4E73',
-          dark: '#152D4A',
-          50: '#f0f4f8',
-          100: '#d9e2ec',
-          200: '#bcccdc',
-          300: '#9fb3c8',
-          400: '#829ab1',
-          500: '#627d98',
-          600: '#486581',
-          700: '#334e68',
-          800: '#243b53',
-          900: '#102a43',
-        },
-        // Marketplace section backgrounds
-        marketplace: '#F5F6F7',
-        'section-light': '#F8F9FA',
-        // Deal badge orange
-        'deal-orange': '#C2410C',
+        background: "#0A0E1A",
+        surface: "#121A2B",
+        elevated: "#182235",
+
+        primary: "#D4AF37",
+        "primary-hover": "#C69B2D",
+        "primary-soft": "rgba(212,175,55,0.15)",
+
+        secondary: "#2E4F9B",
+        accent: "#1F8A70",
+        admin: "#7C3AED",
+
+        foreground: "#F5F7FA",
+        "muted-foreground": "#A7B0C0",
+
+        border: "#2A344A",
+        input: "#2A344A",
+        ring: "#D4AF37",
+
+        success: "#22C55E",
+        warning: "#F59E0B",
+        danger: "#D64545",
+
+        card: "#121A2B",
+        popover: "#182235",
+        muted: "#121A2B",
+        destructive: "#D64545",
       },
       fontFamily: {
         display: ['Inter', 'SF Pro Display', 'system-ui', 'sans-serif'],
@@ -125,21 +56,21 @@ export default {
         'premium-lg': '32px',
       },
       boxShadow: {
-        'cinematic': '0 25px 50px -12px rgba(251, 191, 36, 0.25)',
-        'cinematic-lg': '0 35px 60px -15px rgba(251, 191, 36, 0.35)',
-        'cinematic-gold': '0 25px 50px -12px rgba(251, 191, 36, 0.25)',
-        'cinematic-blue': '0 25px 50px -12px rgba(251, 191, 36, 0.15)',
-        'glass': '0 8px 32px 0 rgba(251, 191, 36, 0.15)',
+        'cinematic': '0 25px 50px -12px rgba(212, 175, 55, 0.25)',
+        'cinematic-lg': '0 35px 60px -15px rgba(212, 175, 55, 0.35)',
+        'cinematic-gold': '0 25px 50px -12px rgba(212, 175, 55, 0.25)',
+        'cinematic-blue': '0 25px 50px -12px rgba(212, 175, 55, 0.15)',
+        'glass': '0 8px 32px 0 rgba(212, 175, 55, 0.15)',
         'premium-card': '0 10px 40px rgba(0,0,0,0.6)',
-        'premium-hover': '0 0 20px rgba(251,191,36,0.15), 0 10px 40px rgba(0,0,0,0.8)',
+        'premium-hover': '0 0 20px rgba(212,175,55,0.15), 0 10px 40px rgba(0,0,0,0.8)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-cinematic': 'linear-gradient(135deg, #020617 0%, #0F172A 50%, #020617 100%)',
-        'gradient-gold': 'linear-gradient(135deg, #B45309 0%, #FBBF24 100%)',
-        'gradient-primary': 'linear-gradient(135deg, #B45309 0%, #FBBF24 100%)',
-        'gradient-overlay': 'linear-gradient(to top, rgba(2, 6, 23, 0.95) 0%, rgba(2, 6, 23, 0.5) 50%, transparent 100%)',
-        'gradient-overlay-light': 'linear-gradient(to top, rgba(2, 6, 23, 0.8) 0%, transparent 100%)',
+        'gradient-cinematic': 'linear-gradient(135deg, #0A0E1A 0%, #182235 50%, #0A0E1A 100%)',
+        'gradient-gold': 'linear-gradient(135deg, #C69B2D 0%, #D4AF37 100%)',
+        'gradient-primary': 'linear-gradient(135deg, #C69B2D 0%, #D4AF37 100%)',
+        'gradient-overlay': 'linear-gradient(to top, rgba(10, 14, 26, 0.95) 0%, rgba(10, 14, 26, 0.5) 50%, transparent 100%)',
+        'gradient-overlay-light': 'linear-gradient(to top, rgba(10, 14, 26, 0.8) 0%, transparent 100%)',
       },
       backdropBlur: {
         'glass': '20px',
@@ -184,9 +115,9 @@ export default {
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
         glow: {
-          /* gold accent: #FBBF24 = rgb(251, 191, 36) */
-          '0%': { boxShadow: '0 0 20px rgba(251, 191, 36, 0.4)' },
-          '100%': { boxShadow: '0 0 50px rgba(251, 191, 36, 0.7)' },
+          /* gold accent: #D4AF37 = rgb(212, 175, 55) */
+          '0%': { boxShadow: '0 0 20px rgba(212, 175, 55, 0.4)' },
+          '100%': { boxShadow: '0 0 50px rgba(212, 175, 55, 0.7)' },
         },
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },

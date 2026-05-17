@@ -210,14 +210,14 @@ const AdminSettings = () => {
         </div>
         <div className="flex items-center gap-3">
           {saveMsg && (
-            <p className={`text-xs ${saveMsg.ok ? "text-emerald-400" : "text-red-400"}`}>{saveMsg.text}</p>
+            <p className={`text-xs ${saveMsg.ok ? "text-success" : "text-danger"}`}>{saveMsg.text}</p>
           )}
           <Button
             size="sm"
             className="w-full sm:w-auto"
             onClick={handleSave}
             disabled={saveLoading || settingsLoading}
-            style={{ background: "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)", color: "#fff", border: "none" }}
+            style={{ background: "rgba(212,175,55,1)", color: "rgba(255,255,255,1)", border: "none" }}
           >
             {saveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             {settingsLoading ? "Loading…" : "Save Settings"}
@@ -228,11 +228,11 @@ const AdminSettings = () => {
       {/* Feature Toggles */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
+        style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
       >
         <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
           <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Settings className="h-4 w-4" style={{ color: "#FBBF24" }} /> Feature Toggles
+            <Settings className="h-4 w-4" style={{ color: "rgba(212,175,55,1)" }} /> Feature Toggles
           </h2>
           <p className="text-xs mt-0.5" style={{ color: "rgba(148,163,184,0.85)" }}>Enable or disable platform features.</p>
         </div>
@@ -259,11 +259,11 @@ const AdminSettings = () => {
       {/* Platform Config */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
+        style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
       >
         <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
           <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Globe className="h-4 w-4" style={{ color: "#FBBF24" }} /> Platform Configuration
+            <Globe className="h-4 w-4" style={{ color: "rgba(212,175,55,1)" }} /> Platform Configuration
           </h2>
         </div>
         <div className="px-6 py-4">
@@ -339,11 +339,11 @@ const AdminSettings = () => {
       {/* API Keys */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
+        style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
       >
         <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
           <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Key className="h-4 w-4" style={{ color: "#FBBF24" }} /> API Keys & Integrations
+            <Key className="h-4 w-4" style={{ color: "rgba(212,175,55,1)" }} /> API Keys & Integrations
           </h2>
           <p className="text-xs mt-0.5" style={{ color: "rgba(148,163,184,0.85)" }}>Manage external service connections.</p>
         </div>
@@ -402,8 +402,8 @@ const AdminSettings = () => {
               </Button>
             </div>
             {stripeConnectStatus && (
-              <div className={`flex items-center gap-2 text-xs ${stripeConnectStatus.configured ? "text-emerald-400" : "text-red-400"}`}>
-                <CheckCircle2 className={`h-3.5 w-3.5 shrink-0 ${stripeConnectStatus.configured ? "text-emerald-400" : "text-red-400"}`} />
+              <div className={`flex items-center gap-2 text-xs ${stripeConnectStatus.configured ? "text-success" : "text-danger"}`}>
+                <CheckCircle2 className={`h-3.5 w-3.5 shrink-0 ${stripeConnectStatus.configured ? "text-success" : "text-danger"}`} />
                 {stripeConnectStatus.message}
               </div>
             )}
@@ -414,11 +414,11 @@ const AdminSettings = () => {
       {/* Social Commerce Feed */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
+        style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
       >
         <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
           <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Share2 className="h-4 w-4" style={{ color: "#FBBF24" }} /> Social Commerce Feed
+            <Share2 className="h-4 w-4" style={{ color: "rgba(212,175,55,1)" }} /> Social Commerce Feed
           </h2>
           <p className="text-xs mt-0.5" style={{ color: "rgba(148,163,184,0.85)" }}>
             Submit this URL to Facebook/Instagram Commerce Manager, TikTok for Business, or Google Merchant Center to sync your product catalog automatically.
@@ -441,7 +441,7 @@ const AdminSettings = () => {
                 style={{ background: "rgba(148,163,184,0.15)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
                 onClick={handleCopyFeedUrl}
               >
-                {feedCopied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                {feedCopied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
           </div>
@@ -451,7 +451,7 @@ const AdminSettings = () => {
               <li><span className="text-white font-medium">Facebook &amp; Instagram:</span> Business Manager → Commerce Manager → Catalog → Data Sources → Scheduled Feed → paste URL above.</li>
               <li><span className="text-white font-medium">TikTok:</span> TikTok for Business → Catalog → Add Products → URL Feed → paste URL above.</li>
               <li><span className="text-white font-medium">Google Merchant Center:</span> Products → Feeds → Add Feed → Google Sheets or Scheduled Fetch → paste URL above.</li>
-              <li>For large catalogs use pagination: <code className="text-yellow-300">/product-feed.xml?page=2</code>, <code className="text-yellow-300">?page=3</code>, etc. (500 products per page).</li>
+              <li>For large catalogs use pagination: <code className="text-primary">/product-feed.xml?page=2</code>, <code className="text-primary">?page=3</code>, etc. (500 products per page).</li>
             </ul>
           </div>
         </div>
@@ -460,11 +460,11 @@ const AdminSettings = () => {
       {/* Database */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
+        style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
       >
         <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
           <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Database className="h-4 w-4" style={{ color: "#FBBF24" }} /> Database & Cache
+            <Database className="h-4 w-4" style={{ color: "rgba(212,175,55,1)" }} /> Database & Cache
           </h2>
         </div>
         <div className="px-6 py-4 space-y-3">
@@ -480,7 +480,7 @@ const AdminSettings = () => {
               style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
             >
               {cacheCleared
-                ? <><CheckCircle2 className="h-3.5 w-3.5 mr-1 text-emerald-400" /> Cleared</>
+                ? <><CheckCircle2 className="h-3.5 w-3.5 mr-1 text-success" /> Cleared</>
                 : <><RefreshCw className="h-3.5 w-3.5 mr-1" /> Clear Cache</>
               }
             </Button>
@@ -494,7 +494,7 @@ const AdminSettings = () => {
           className="w-full sm:w-auto"
           onClick={handleSave}
           disabled={saveLoading || settingsLoading}
-          style={{ background: "linear-gradient(135deg, #FBBF24 0%, #D97706 100%)", color: "#fff", border: "none" }}
+          style={{ background: "rgba(212,175,55,1)", color: "rgba(255,255,255,1)", border: "none" }}
         >
           {saveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
           {settingsLoading ? "Loading…" : "Save Settings"}

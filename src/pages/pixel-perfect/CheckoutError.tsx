@@ -33,7 +33,7 @@ const CheckoutError = () => {
           <div className="bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm">
             {/* Error Icon */}
             <div className="flex items-center justify-center mb-6">
-              <div className="w-20 h-20 rounded-full bg-red-50 border border-red-200 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-danger/10 border border-danger/30 flex items-center justify-center">
                 <XCircle className="w-10 h-10 text-red-500" />
               </div>
             </div>

@@ -86,10 +86,10 @@ function passwordStrength(pw: string): { label: string; width: string; color: st
   if (/[A-Z]/.test(pw)) score++;
   if (/[0-9]/.test(pw)) score++;
   if (/[^A-Za-z0-9]/.test(pw)) score++;
-  if (score <= 1) return { label: "Weak", width: "25%", color: "bg-red-500", score };
+  if (score <= 1) return { label: "Weak", width: "25%", color: "bg-danger/100", score };
   if (score === 2) return { label: "Fair", width: "50%", color: "bg-orange-400", score };
-  if (score === 3) return { label: "Good", width: "75%", color: "bg-yellow-500", score };
-  return { label: "Strong", width: "100%", color: "bg-green-500", score };
+  if (score === 3) return { label: "Good", width: "75%", color: "bg-primary", score };
+  return { label: "Strong", width: "100%", color: "bg-success/100", score };
 }
 
 // ─── Field component helpers ──────────────────────────────────────────────────
@@ -257,10 +257,10 @@ export default function TradeAccount() {
       {/* ── Page title ─────────────────────────────────────────────────────── */}
       <div className="bg-white/80 border-b border-gray-200/70 py-6 px-4 sm:px-8">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#0B1D3A]">Trade Account</h1>
-          <div className="mt-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 inline-flex items-start gap-2 max-w-2xl">
-            <span className="text-amber-500 mt-0.5 shrink-0">⚠️</span>
-            <p className="text-sm text-amber-800">
+          <h1 className="text-2xl sm:text-3xl font-bold text-secondary">Trade Account</h1>
+          <div className="mt-2 bg-primary-soft border border-primary/40 rounded-lg px-4 py-2 inline-flex items-start gap-2 max-w-2xl">
+            <span className="text-primary mt-0.5 shrink-0">⚠️</span>
+            <p className="text-sm text-primary">
               <strong>IMPORTANT:</strong> Please ensure all details are correct before submitting.
               Your business details will be used for account verification and order processing.
             </p>
@@ -716,7 +716,7 @@ export default function TradeAccount() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 text-base font-semibold bg-[#22C55E] hover:bg-[#16a34a] text-white rounded-xl shadow-md transition-colors"
+                className="w-full h-12 text-base font-semibold bg-success hover:bg-success/90 text-white rounded-xl shadow-md transition-colors"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -748,8 +748,8 @@ export default function TradeAccount() {
                 key={point.text}
                 className="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-3 shadow-sm"
               >
-                <div className="h-8 w-8 rounded-full bg-[#22C55E] flex items-center justify-center shrink-0">
-                  <CheckCircle2 className="h-4 w-4 text-[#F59E0B]" />
+                <div className="h-8 w-8 rounded-full bg-success flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="h-4 w-4 text-warning" />
                 </div>
                 <p className="font-medium text-gray-800 text-sm">{point.text}</p>
               </div>
@@ -768,7 +768,7 @@ export default function TradeAccount() {
                 <img src={logo} alt="Loadify Market" className="h-8 w-8" />
                 <span className="flex flex-col leading-tight">
                   <span className="font-bold text-white">Loadify</span>
-                  <span className="font-bold text-sm text-[#F59E0B]">Market</span>
+                  <span className="font-bold text-sm text-warning">Market</span>
                 </span>
               </div>
               <p className="text-white/75 text-sm leading-relaxed">

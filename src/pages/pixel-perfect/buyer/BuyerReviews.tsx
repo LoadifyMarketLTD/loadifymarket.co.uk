@@ -49,7 +49,7 @@ const StarPicker = ({ value, onChange }: { value: number; onChange: (v: number) 
         className="focus:outline-none"
         aria-label={`Rate ${i} stars`}
       >
-        <Star className={`h-6 w-6 transition-colors ${i <= value ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30 hover:text-amber-300"}`} />
+        <Star className={`h-6 w-6 transition-colors ${i <= value ? "fill-amber-400 text-primary" : "text-muted-foreground/30 hover:text-primary"}`} />
       </button>
     ))}
   </div>
@@ -58,7 +58,7 @@ const StarPicker = ({ value, onChange }: { value: number; onChange: (v: number) 
 const StarDisplay = ({ rating }: { rating: number }) => (
   <div className="flex items-center gap-0.5">
     {[1, 2, 3, 4, 5].map((i) => (
-      <Star key={i} className={`h-3.5 w-3.5 ${i <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} />
+      <Star key={i} className={`h-3.5 w-3.5 ${i <= rating ? "fill-amber-400 text-primary" : "text-muted-foreground/30"}`} />
     ))}
   </div>
 );
@@ -220,8 +220,8 @@ const BuyerReviews = () => {
               </TableCell>
               <TableCell>
                 <Badge variant="outline" className={r.status === "published" || r.status === "approved"
-                  ? "bg-emerald-500/15 text-emerald-700 border-emerald-200"
-                  : "bg-amber-500/15 text-amber-700 border-amber-200"}>
+                  ? "bg-success/15 text-success border-success/40"
+                  : "bg-primary/15 text-primary border-primary/40"}>
                   {r.status}
                 </Badge>
               </TableCell>
@@ -254,8 +254,8 @@ const BuyerReviews = () => {
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                <Star className="h-5 w-5 text-amber-500" />
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Star className="h-5 w-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{loading ? "—" : avgRating}</p>
@@ -280,7 +280,7 @@ const BuyerReviews = () => {
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
                 <ThumbsUp className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
@@ -306,7 +306,7 @@ const BuyerReviews = () => {
                 <div key={d.stars} className="flex sm:flex-col items-center gap-2">
                   <div className="flex items-center gap-1">
                     <span className="text-sm font-medium text-foreground">{d.stars}</span>
-                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    <Star className="h-3.5 w-3.5 fill-amber-400 text-primary" />
                   </div>
                   <Progress value={d.pct} className="h-2 flex-1 sm:w-full" />
                   <span className="text-xs text-muted-foreground w-8 text-right sm:text-center">{d.count}</span>
@@ -349,8 +349,8 @@ const BuyerReviews = () => {
               <div className="flex items-center justify-between">
                 <StarDisplay rating={selected.rating} />
                 <Badge variant="outline" className={selected.status === "published" || selected.status === "approved"
-                  ? "bg-emerald-500/15 text-emerald-700 border-emerald-200"
-                  : "bg-amber-500/15 text-amber-700 border-amber-200"}>
+                  ? "bg-success/15 text-success border-success/40"
+                  : "bg-primary/15 text-primary border-primary/40"}>
                   {selected.status}
                 </Badge>
               </div>

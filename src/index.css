@@ -4,55 +4,57 @@
 
 @layer base {
   :root {
-    /* ── Dark/gold global design system ───────────────────────────────── */
-    --background: 228 84% 5%;        /* #020617 */
-    --foreground: 210 40% 98%;       /* near-white */
+    /* ── Master color system ───────────────────────────────────────────── */
+    --background: 225 44% 7%;        /* #0A0E1A */
+    --foreground: 213 27% 97%;       /* #F5F7FA */
 
-    --card: 222 47% 8%;              /* #0B1220 */
-    --card-foreground: 210 40% 98%;
+    --card: 220 40% 12%;             /* #121A2B */
+    --card-foreground: 213 27% 97%;
 
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 32% 16%;          /* #182235 */
+    --popover-foreground: 213 27% 97%;
 
-    --primary: 43 96% 56%;           /* #FBBF24 gold */
-    --primary-foreground: 0 0% 5%;   /* dark text on gold */
+    --primary: 45 64% 52%;           /* #D4AF37 */
+    --primary-foreground: 0 0% 5%;
+    --primary-hover: 39 63% 48%;     /* #C69B2D */
+    --primary-soft: 45 64% 52%;
 
-    --secondary: 218 40% 13%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 220 54% 40%;        /* #2E4F9B */
+    --secondary-foreground: 213 27% 97%;
 
-    --muted: 218 40% 13%;
-    --muted-foreground: 215 15% 52%;  /* slate-400 */
+    --muted: 220 40% 12%;
+    --muted-foreground: 217 18% 70%; /* #A7B0C0 */
 
-    --accent: 43 96% 56%;            /* gold accent */
-    --accent-foreground: 0 0% 5%;
+    --accent: 166 63% 33%;           /* #1F8A70 */
+    --accent-foreground: 213 27% 97%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 62% 56%;        /* #D64545 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 218 40% 13%;           /* dark border (rgba white/5 equiv) */
-    --input: 218 40% 13%;
-    --ring: 43 96% 56%;              /* gold focus ring */
+    --border: 221 28% 23%;           /* #2A344A */
+    --input: 221 28% 23%;
+    --ring: 45 64% 52%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 228 84% 3%;
-    --sidebar-foreground: 210 40% 80%;
-    --sidebar-primary: 43 96% 56%;
+    --sidebar-background: 225 44% 7%;
+    --sidebar-foreground: 217 18% 70%;
+    --sidebar-primary: 45 64% 52%;
     --sidebar-primary-foreground: 0 0% 5%;
-    --sidebar-accent: 218 40% 11%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 218 40% 11%;
-    --sidebar-ring: 43 96% 56%;
+    --sidebar-accent: 220 40% 12%;
+    --sidebar-accent-foreground: 213 27% 97%;
+    --sidebar-border: 221 28% 23%;
+    --sidebar-ring: 45 64% 52%;
 
     /* Custom tokens */
-    --primary-dark: 43 96% 42%;
-    --primary-light: 43 96% 68%;
-    --surface: 222 47% 8%;
-    --surface-raised: 222 47% 11%;
-    --gradient-hero: linear-gradient(135deg, hsl(43 96% 38%) 0%, hsl(43 96% 56%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(43 96% 56%) 0%, hsl(43 96% 42%) 100%);
+    --primary-dark: 39 63% 48%;
+    --primary-light: 45 64% 58%;
+    --surface: 220 40% 12%;
+    --surface-raised: 220 32% 16%;
+    --gradient-hero: linear-gradient(135deg, #C69B2D 0%, #D4AF37 100%);
+    --gradient-accent: linear-gradient(135deg, #D4AF37 0%, #C69B2D 100%);
     --shadow-card: 0 10px 40px rgba(0,0,0,0.6);
-    --shadow-elevated: 0 0 20px rgba(251,191,36,0.15), 0 10px 40px rgba(0,0,0,0.8);
+    --shadow-elevated: 0 0 20px rgba(212,175,55,0.15), 0 10px 40px rgba(0,0,0,0.8);
 
     --font-display: 'Space Grotesk', sans-serif;
     --font-body: 'Inter', sans-serif;
@@ -104,7 +106,7 @@
     /* Ensure full-width on all devices */
     min-width: 320px;
     position: relative;
-    background: radial-gradient(circle at top, #0F172A, #020617);
+    background: radial-gradient(circle at top, #182235, #0A0E1A);
     background-attachment: fixed;
   }
   h1, h2, h3, h4, h5, h6 {
@@ -197,7 +199,7 @@ body::before {
 
   background: radial-gradient(
     400px circle at var(--cursor-x, 50%) var(--cursor-y, 50%),
-    rgba(251, 191, 36, 0.08),
+    rgba(212, 175, 55, 0.08),
     transparent 60%
   );
 }
@@ -230,10 +232,10 @@ body::before {
 /* ── Gold icon pulse — applied only to card icon wrappers via .icon-pulse ─── */
 @keyframes goldPulse {
   0%, 100% {
-    filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.25));
+    filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.25));
   }
   50% {
-    filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.4));
+    filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4));
   }
 }
 
@@ -297,7 +299,7 @@ body::before {
 .social-card.facebook:hover {
   box-shadow:
     0 0 20px rgba(24, 119, 242, 0.18),
-    0 0 22px rgba(251, 191, 36, 0.10),
+    0 0 22px rgba(212, 175, 55, 0.10),
     0 16px 34px rgba(0, 0, 0, 0.52),
     inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
@@ -305,7 +307,7 @@ body::before {
 .social-card.twitter:hover {
   box-shadow:
     0 0 20px rgba(29, 161, 242, 0.18),
-    0 0 22px rgba(251, 191, 36, 0.10),
+    0 0 22px rgba(212, 175, 55, 0.10),
     0 16px 34px rgba(0, 0, 0, 0.52),
     inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
@@ -313,7 +315,7 @@ body::before {
 .social-card.instagram:hover {
   box-shadow:
     0 0 20px rgba(225, 48, 108, 0.18),
-    0 0 22px rgba(251, 191, 36, 0.10),
+    0 0 22px rgba(212, 175, 55, 0.10),
     0 16px 34px rgba(0, 0, 0, 0.52),
     inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
@@ -321,7 +323,7 @@ body::before {
 .social-card.linkedin:hover {
   box-shadow:
     0 0 20px rgba(10, 102, 194, 0.18),
-    0 0 22px rgba(251, 191, 36, 0.10),
+    0 0 22px rgba(212, 175, 55, 0.10),
     0 16px 34px rgba(0, 0, 0, 0.52),
     inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
@@ -329,7 +331,7 @@ body::before {
 .social-card.tiktok:hover {
   box-shadow:
     0 0 20px rgba(105, 201, 208, 0.18),
-    0 0 22px rgba(251, 191, 36, 0.10),
+    0 0 22px rgba(212, 175, 55, 0.10),
     0 16px 34px rgba(0, 0, 0, 0.52),
     inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
@@ -349,7 +351,7 @@ body::before {
   bottom: -6px;
   width: 0%;
   height: 2px;
-  background: #FBBF24;
+  background: #D4AF37;
   border-radius: 999px;
   transition: width 0.3s ease;
 }

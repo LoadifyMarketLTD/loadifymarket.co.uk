@@ -318,7 +318,7 @@ const SellerSettings = () => {
           <h1 className="font-display text-2xl font-bold text-foreground">Settings</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your account preferences and security.</p>
         </div>
-        <Button className="w-full sm:w-auto bg-gradient-hero text-primary-foreground" onClick={handleSaveSettings} disabled={saveLoading}>
+        <Button className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-black" onClick={handleSaveSettings} disabled={saveLoading}>
           {saveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
           Save Settings
         </Button>
@@ -454,17 +454,17 @@ const SellerSettings = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm font-semibold text-foreground">Stripe Connect</p>
                   {stripeConnectStatus === "active" && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-success/10 text-success">
                       <CheckCircle className="h-3 w-3" /> Connected
                     </span>
                   )}
                   {stripeConnectStatus === "pending" && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                       <Clock className="h-3 w-3" /> Onboarding Incomplete
                     </span>
                   )}
                   {stripeConnectStatus === "restricted" && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-red-500/10 text-red-700">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-danger/100/10 text-danger">
                       <XCircle className="h-3 w-3" /> Restricted
                     </span>
                   )}
@@ -601,7 +601,7 @@ const SellerSettings = () => {
       </Card>
 
       <div className="flex justify-stretch sm:justify-end">
-        <Button className="w-full sm:w-auto bg-gradient-hero text-primary-foreground" onClick={handleSaveSettings} disabled={saveLoading}>
+        <Button className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-black" onClick={handleSaveSettings} disabled={saveLoading}>
           {saveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
           Save Settings
         </Button>

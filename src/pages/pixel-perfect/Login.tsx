@@ -172,7 +172,7 @@ const Login = () => {
         description="Sign in to your Loadify Market account."
         robots="noindex, nofollow"
       />
-      <main id="main-content" className="flex bg-[#020617]" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
+      <main id="main-content" className="flex bg-background" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
 
       {/* ── LEFT — hero image (desktop only, 65%) ───────────────────────── */}
       <div className="hidden lg:flex lg:w-[65%] xl:w-[67%] relative overflow-hidden">
@@ -185,14 +185,14 @@ const Login = () => {
       </div>
 
       {/* ── RIGHT — login card panel (full height under navbar) ─────────── */}
-      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col bg-[#020617]" style={{ minHeight: `calc(100vh - ${headerHeight})` }}>
+      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col bg-background" style={{ minHeight: `calc(100vh - ${headerHeight})` }}>
 
         {/* Centered form — vertically centred inside the right column */}
         <div className="flex-1 flex items-center justify-center px-4 py-8 sm:px-8">
           <div className="w-full">
 
             {/* Form card */}
-            <div className="rounded-2xl p-7 sm:p-8" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="rounded-2xl p-7 sm:p-8" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
 
               {/* Email confirmation banner — shown after successful registration */}
               {justRegistered && (
@@ -208,7 +208,7 @@ const Login = () => {
 
               {/* Email confirmed banner — shown after clicking the confirmation link */}
               {justConfirmed && (
-                <div className="flex items-start gap-2.5 rounded-lg bg-green-50 border border-green-200 px-3.5 py-3 mb-5">
+                <div className="flex items-start gap-2.5 rounded-lg bg-success/10 border border-success/30 px-3.5 py-3 mb-5">
                   <svg className="h-4 w-4 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
@@ -228,11 +228,11 @@ const Login = () => {
 
               {/* OAuth error banner */}
               {oauthFailed && (
-                <div className="flex items-start gap-2.5 rounded-lg bg-red-50 border border-red-200 px-3.5 py-3 mb-5">
+                <div className="flex items-start gap-2.5 rounded-lg bg-danger/10 border border-danger/30 px-3.5 py-3 mb-5">
                   <svg className="h-4 w-4 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <p className="text-[13px] text-red-700 leading-snug">
+                  <p className="text-[13px] text-danger leading-snug">
                     Social sign-in was not completed or failed. Please try again, or sign in with email below.
                   </p>
                 </div>
@@ -282,7 +282,7 @@ const Login = () => {
                   <span className="w-full border-t border-white/10" />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="bg-[#0B1220] px-3 text-[11px] text-slate-500 uppercase tracking-wide">or continue with email</span>
+                  <span className="bg-surface px-3 text-[11px] text-slate-500 uppercase tracking-wide">or continue with email</span>
                 </div>
               </div>
 
@@ -304,7 +304,7 @@ const Login = () => {
                       placeholder="name@company.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full h-11 pl-10 pr-3.5 rounded-lg border border-white/10 bg-[#0F172A] text-[14px] text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                      className="w-full h-11 pl-10 pr-3.5 rounded-lg border border-white/10 bg-elevated text-[14px] text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary transition-all"
                     />
                   </div>
                 </div>
@@ -315,7 +315,7 @@ const Login = () => {
                     <label htmlFor="login-password" className="block text-[13px] font-medium text-slate-300">
                       Password
                     </label>
-                    <Link to="/forgot-password" className="text-[12px] text-[#FBBF24] hover:text-yellow-300 hover:underline transition-colors">
+                    <Link to="/forgot-password" className="text-[12px] text-primary hover:text-primary hover:underline transition-colors">
                       Forgot password?
                     </Link>
                   </div>
@@ -329,7 +329,7 @@ const Login = () => {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full h-11 pl-10 pr-10 rounded-lg border border-white/10 bg-[#0F172A] text-[14px] text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/25 focus:border-[#FBBF24] transition-all"
+                      className="w-full h-11 pl-10 pr-10 rounded-lg border border-white/10 bg-elevated text-[14px] text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/25 focus:border-primary transition-all"
                     />
                     <button
                       type="button"
@@ -344,11 +344,11 @@ const Login = () => {
 
                 {/* Error */}
                 {error && (
-                  <div className="flex items-start gap-2.5 rounded-lg bg-red-50 border border-red-200 px-3.5 py-3">
+                  <div className="flex items-start gap-2.5 rounded-lg bg-danger/10 border border-danger/30 px-3.5 py-3">
                     <svg className="h-4 w-4 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
-                    <p className="text-[13px] text-red-600 leading-snug">{error}</p>
+                    <p className="text-[13px] text-danger leading-snug">{error}</p>
                   </div>
                 )}
 
@@ -358,8 +358,8 @@ const Login = () => {
                   disabled={loading}
                   className="w-full h-11 rounded-lg text-white text-[14px] font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
-                    background: "linear-gradient(135deg, #B45309 0%, #FBBF24 100%)",
-                    boxShadow: "0 2px 12px rgba(251,191,36,0.35)",
+                    background: "rgba(212,175,55,1)",
+                    boxShadow: "0 2px 12px rgba(212,175,55,0.35)",
                   }}
                 >
                   {loading ? "Signing in…" : "Sign In"}
@@ -378,7 +378,7 @@ const Login = () => {
             {/* Footer */}
             <p className="text-center text-[13px] text-slate-500 mt-5">
               Don't have an account?{" "}
-              <Link to="/signup" className="text-[#FBBF24] font-semibold hover:text-yellow-300 hover:underline transition-colors">
+              <Link to="/signup" className="text-primary font-semibold hover:text-primary hover:underline transition-colors">
                 Create account
               </Link>
             </p>

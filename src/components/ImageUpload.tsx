@@ -167,7 +167,7 @@ export default function ImageUpload({
 
       {/* Upload Error */}
       {uploadError && (
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-3 py-2 rounded text-sm">
+        <div className="bg-primary-soft border border-primary/40 text-primary px-3 py-2 rounded text-sm">
           {uploadError}
         </div>
       )}

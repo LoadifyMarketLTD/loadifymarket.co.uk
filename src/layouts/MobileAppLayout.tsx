@@ -2,7 +2,7 @@
  * MobileAppLayout — mobile-first shell used on viewports < 768 px.
  *
  * Provides:
- *  - Dark app background (#07080B) consistent with the APK
+ *  - Dark app background (#0A0E1A) consistent with the APK
  *  - Bottom safe-area padding so content is never hidden behind the nav bar
  *  - MobileBottomNav fixed at the bottom
  *  - A spacer element above MobileBottomNav so the last piece of content is reachable
@@ -24,7 +24,7 @@ interface MobileAppLayoutProps {
 
 export default function MobileAppLayout({ children }: MobileAppLayoutProps) {
   return (
-    <div className="min-h-screen" style={{ background: "#07080B" }}>
+    <div className="min-h-screen bg-background">
       {/* Skip-to-content link — visible only on keyboard focus (WCAG 2.1 SC 2.4.1) */}
       <a
         href="#main-content"

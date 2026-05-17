@@ -43,7 +43,7 @@ const SidebarContent = memo(({ displayName, onNavClick, onLogout }: SidebarConte
   <div className="flex flex-col h-full">
     <div className="p-5 border-b border-border">
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-lg bg-gradient-hero flex items-center justify-center shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-primary hover:bg-primary-hover flex items-center justify-center shrink-0">
           <ShieldCheck className="h-4 w-4 text-white" />
         </div>
         <div>
@@ -139,7 +139,7 @@ const AdminShell = () => {
           <span className="font-semibold text-foreground text-sm">Admin Hub</span>
         </header>
         {/* Page content — add bottom padding on mobile so content isn't hidden behind tab bar */}
-        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0 bg-[#020617]">
+        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0 bg-background">
           <Outlet />
         </main>
       </div>

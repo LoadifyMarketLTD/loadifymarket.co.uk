@@ -11,24 +11,24 @@ const STEPS = [
   {
     id: "step-1",
     Icon: ShoppingBag,
-    iconBg: "rgba(99,102,241,0.20)",
-    iconColor: "#818CF8",
+    iconBgClass: "bg-admin/20",
+    iconColorClass: "text-admin",
     title: "Create Your Seller Account",
     desc: "Sign up and get started on the platform in minutes.",
   },
   {
     id: "step-2",
     Icon: UserCheck,
-    iconBg: "rgba(251,191,36,0.20)",
-    iconColor: "#FBBF24",
+    iconBgClass: "bg-primary/20",
+    iconColorClass: "text-primary",
     title: "Set Up Your Store",
     desc: "Add your business details and prepare your seller profile.",
   },
   {
     id: "step-3",
     Icon: TrendingUp,
-    iconBg: "rgba(251,191,36,0.20)",
-    iconColor: "#FBBF24",
+    iconBgClass: "bg-primary/20",
+    iconColorClass: "text-primary",
     title: "Connect Stripe & Go Live",
     desc: "Link your Stripe account securely to receive payouts.",
   },
@@ -37,13 +37,12 @@ const STEPS = [
 const SellerJourneySection = () => (
   <section
     id="how-to-sell"
-    className="relative overflow-hidden px-4 sm:px-6 py-12 lg:py-16"
-    style={{ background: "linear-gradient(to bottom, #0F2A4A, #081426, #0A1930)" }}
+    className="relative overflow-hidden px-4 sm:px-6 py-12 lg:py-16 bg-background"
   >
     {/* Ambient glow */}
     <div
       className="absolute inset-0 pointer-events-none"
-      style={{ background: "radial-gradient(circle at 50% 50%, rgba(0,255,150,0.07), transparent 50%)" }}
+      style={{ background: "radial-gradient(circle at 50% 50%, rgba(31,138,112,0.07), transparent 50%)" }}
     />
     {/* Dot texture */}
     <div
@@ -63,7 +62,7 @@ const SellerJourneySection = () => (
     <div className="relative w-full max-w-7xl mx-auto">
       {/* Centered header */}
       <div className="text-center mb-10">
-        <span className="text-xs font-semibold uppercase tracking-wider text-[#FBBF24]">
+        <span className="text-xs font-semibold uppercase tracking-wider text-primary">
           For Sellers
         </span>
         <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold text-white">
@@ -79,15 +78,13 @@ const SellerJourneySection = () => (
         {STEPS.map((step) => (
           <div
             key={step.id}
-            className="flex items-center gap-4 rounded-2xl px-5 py-5 border border-white/5 transition-all duration-300 hover:border-white/20 hover:shadow-[0_20px_60px_rgba(251,191,36,0.1)]"
-            style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)" }}
+            className="flex items-center gap-4 rounded-2xl px-5 py-5 border border-white/5 transition-all duration-300 hover:border-white/20 hover:shadow-[0_20px_60px_rgba(212,175,55,0.1)] bg-elevated"
           >
             {/* Icon badge */}
             <div
-              className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: step.iconBg }}
+              className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${step.iconBgClass}`}
             >
-              <step.Icon className="h-5 w-5" style={{ color: step.iconColor }} aria-hidden="true" />
+              <step.Icon className={`h-5 w-5 ${step.iconColorClass}`} aria-hidden="true" />
             </div>
             {/* Text */}
             <div>
@@ -101,7 +98,7 @@ const SellerJourneySection = () => (
       {/* Prominent centered CTA */}
       <div className="flex justify-center">
         <Link to="/signup?type=seller">
-          <button className="inline-flex items-center gap-2 px-10 py-3.5 bg-gradient-to-r from-[#FBBF24] to-[#F59E0B] text-black font-bold text-sm rounded-full shadow-lg shadow-yellow-500/30 transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(251,191,36,0.4)]">
+          <button className="inline-flex items-center gap-2 px-10 py-3.5 bg-primary hover:bg-primary-hover text-black font-bold text-sm rounded-full shadow-lg shadow-yellow-500/30 transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(212,175,55,0.4)]">
             Start Selling Today <ArrowRight className="h-4 w-4" />
           </button>
         </Link>

@@ -150,8 +150,8 @@ export default function OrderSuccessPage() {
           <div className="w-full max-w-lg mt-10">
             <div className="bg-white border border-gray-200 rounded-xl p-10 text-center">
               <div className="flex items-center justify-center mb-6">
-                <div className="w-20 h-20 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
-                  <Clock className="w-10 h-10 text-amber-400" />
+                <div className="w-20 h-20 rounded-full bg-primary/10 border border-primary/40 flex items-center justify-center">
+                  <Clock className="w-10 h-10 text-primary" />
                 </div>
               </div>
               <h1 className="text-2xl font-bold text-slate-900 mb-3">Payment Received</h1>
@@ -173,7 +173,7 @@ export default function OrderSuccessPage() {
                 <Link
                   to="/buyer/orders"
                   className="flex-1 flex items-center justify-center gap-2 font-bold rounded-full py-3 px-6 text-white"
-                  style={{ background: "linear-gradient(90deg,#22c55e 0%,#16a34a 100%)" }}
+                  style={{ background: "rgba(34,197,94,1)" }}
                 >
                   <ShoppingBag className="w-5 h-5" />
                   View My Orders
@@ -206,8 +206,8 @@ export default function OrderSuccessPage() {
           <div className="bg-white border border-gray-200 rounded-xl p-10 text-center">
             {/* Success Icon */}
             <div className="flex items-center justify-center mb-6">
-              <div className="w-20 h-20 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center">
-                <CheckCircle className="w-10 h-10 text-green-400" />
+              <div className="w-20 h-20 rounded-full bg-success/10 border border-success/30 flex items-center justify-center">
+                <CheckCircle className="w-10 h-10 text-success" />
               </div>
             </div>
 
@@ -225,8 +225,8 @@ export default function OrderSuccessPage() {
             {/* Info Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 text-left">
               <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-start gap-3">
-                <div className="p-2 bg-green-500/10 rounded-lg flex-shrink-0">
-                  <Package className="w-5 h-5 text-green-400" />
+                <div className="p-2 bg-success/10 rounded-lg flex-shrink-0">
+                  <Package className="w-5 h-5 text-success" />
                 </div>
                 <div>
                   <p className="text-slate-900 font-semibold text-sm">Order Processing</p>
@@ -236,8 +236,8 @@ export default function OrderSuccessPage() {
                 </div>
               </div>
               <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-start gap-3">
-                <div className="p-2 bg-green-500/10 rounded-lg flex-shrink-0">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
+                <div className="p-2 bg-success/10 rounded-lg flex-shrink-0">
+                  <CheckCircle className="w-5 h-5 text-success" />
                 </div>
                 <div>
                   <p className="text-slate-900 font-semibold text-sm">Confirmation Email</p>
@@ -253,15 +253,15 @@ export default function OrderSuccessPage() {
               <p className="text-slate-900 text-sm font-semibold mb-3">Marketplace Checkout Complete</p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-green-400 flex-shrink-0" />
+                  <Shield className="w-4 h-4 text-success flex-shrink-0" />
                   <span className="text-slate-600 text-xs">Secure Marketplace Checkout</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Truck className="w-4 h-4 text-green-400 flex-shrink-0" />
+                  <Truck className="w-4 h-4 text-success flex-shrink-0" />
                   <span className="text-slate-600 text-xs">Seller Fulfilled Shipping</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 text-green-400 flex-shrink-0" />
+                  <Star className="w-4 h-4 text-success flex-shrink-0" />
                   <span className="text-slate-600 text-xs">Independent Marketplace Sellers</span>
                 </div>
               </div>
@@ -276,7 +276,7 @@ export default function OrderSuccessPage() {
               <Link
                 to="/buyer/orders"
                 className="flex-1 flex items-center justify-center gap-2 font-bold rounded-full py-3 px-6 text-white"
-                style={{ background: "linear-gradient(90deg,#22c55e 0%,#16a34a 100%)" }}
+                style={{ background: "rgba(34,197,94,1)" }}
               >
                 <ShoppingBag className="w-5 h-5" />
                 View My Orders

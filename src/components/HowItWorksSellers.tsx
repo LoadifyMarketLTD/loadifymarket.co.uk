@@ -21,7 +21,7 @@ export default function HowItWorksSellers() {
   ];
 
   return (
-    <section id="how-it-works-sellers" className="py-20 bg-[#020617]">
+    <section id="how-it-works-sellers" className="py-20 bg-background">
       <h2 className="text-3xl font-bold text-white text-center mb-12">
         How It Works for Sellers
       </h2>
@@ -30,10 +30,9 @@ export default function HowItWorksSellers() {
         {steps.map((step) => (
           <div
             key={step.number}
-            className="rounded-xl p-8 flex flex-col items-start gap-4 border border-white/5"
-            style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)" }}
+            className="rounded-xl p-8 flex flex-col items-start gap-4 border border-white/5 bg-surface"
           >
-            <div className="w-10 h-10 rounded-full bg-[#FBBF24] text-black font-semibold text-lg flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-primary text-black font-semibold text-lg flex items-center justify-center">
               {step.number}
             </div>
             <h3 className="text-xl font-semibold text-white">{step.title}</h3>

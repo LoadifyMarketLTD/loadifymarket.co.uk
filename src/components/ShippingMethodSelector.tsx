@@ -69,14 +69,14 @@ export default function ShippingMethodSelector({
             onClick={() => toggle(method.id)}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-colors ${
               isSelected
-                ? 'border-[#22C55E] bg-green-50 text-[#0F172A]'
+                ? 'border-success bg-success/10 text-elevated'
                 : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
             }`}
           >
             {/* Checkbox indicator */}
             <span className="flex-shrink-0">
               {isSelected ? (
-                <CheckSquare className="w-5 h-5 text-[#22C55E]" />
+                <CheckSquare className="w-5 h-5 text-success" />
               ) : (
                 <Square className="w-5 h-5 text-gray-400" />
               )}
@@ -102,7 +102,7 @@ export default function ShippingMethodSelector({
             {/* Price badge */}
             <span
               className={`flex-shrink-0 text-sm font-semibold ${
-                isSelected ? 'text-[#16A34A]' : 'text-gray-600'
+                isSelected ? 'text-success' : 'text-gray-600'
               }`}
             >
               {price}

@@ -73,7 +73,7 @@ export default function MobileFavouritesPage() {
     <div
       className="md:hidden min-h-screen"
       style={{
-        background: '#07080B',
+        background: 'rgba(10,14,26,1)',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
@@ -96,7 +96,7 @@ export default function MobileFavouritesPage() {
         >
           <ChevronLeft style={{ width: 22, height: 22, color: 'rgba(255,255,255,0.70)' }} />
         </button>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', margin: 0 }}>Favourite Items</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0 }}>Favourite Items</h1>
       </div>
 
       {!user ? (
@@ -122,12 +122,12 @@ export default function MobileFavouritesPage() {
               height: 44,
               paddingInline: 32,
               borderRadius: 9999,
-              background: 'linear-gradient(135deg, #F5C842 0%, #C8860A 100%)',
+              
               border: 'none',
               cursor: 'pointer',
               fontSize: 14,
               fontWeight: 700,
-              color: '#0B0B0F',
+              
             }}
           >
             Sign in
@@ -157,7 +157,7 @@ export default function MobileFavouritesPage() {
           }}
         >
           <Heart style={{ width: 40, height: 40, color: 'rgba(255,255,255,0.20)' }} aria-hidden="true" />
-          <p style={{ fontSize: 16, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>No saved items yet</p>
+          <p style={{ fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,1)', margin: 0 }}>No saved items yet</p>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
             Tap the heart on any listing to save it here.
           </p>
@@ -234,7 +234,7 @@ export default function MobileFavouritesPage() {
                   >
                     {item.title}
                   </p>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: '#F2B84B', margin: '4px 0 0' }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, margin: '4px 0 0' }}>
                     {formatPrice(item.price)}
                   </p>
                 </div>

@@ -20,8 +20,8 @@ import type { RFQRequest } from "@/types";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  pending: { label: "New", className: "bg-blue-500/10 text-blue-700" },
-  replied: { label: "Replied", className: "bg-emerald-500/10 text-emerald-700" },
+  pending: { label: "New", className: "bg-warning/10 text-warning" },
+  replied: { label: "Replied", className: "bg-success/10 text-success" },
 };
 
 function formatDate(dateStr: string): string {
@@ -224,10 +224,10 @@ const SellerRFQ = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "New Requests", count: pending.length, icon: MessageSquare, color: "text-blue-600 bg-blue-500/10" },
-          { label: "You Replied", count: replied.length, icon: CheckCircle2, color: "text-emerald-600 bg-emerald-500/10" },
+          { label: "New Requests", count: pending.length, icon: MessageSquare, color: "text-warning bg-warning/10" },
+          { label: "You Replied", count: replied.length, icon: CheckCircle2, color: "text-emerald-600 bg-success/10" },
           { label: "Total", count: filtered.length, icon: FileText, color: "text-muted-foreground bg-muted" },
-          { label: "This Month", count: filtered.filter((q) => new Date(q.created_at).getMonth() === new Date().getMonth()).length, icon: Clock, color: "text-amber-600 bg-amber-500/10" },
+          { label: "This Month", count: filtered.filter((q) => new Date(q.created_at).getMonth() === new Date().getMonth()).length, icon: Clock, color: "text-primary bg-primary/10" },
         ].map((stat) => (
           <div key={stat.label} className="bg-card rounded-xl border border-border p-5 space-y-2">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.color}`}>
@@ -299,15 +299,15 @@ const SellerRFQ = () => {
                         className="mt-1"
                       />
                     </div>
-                    <div className="rounded-lg bg-amber-50 border border-amber-200 p-3">
-                      <p className="text-xs text-amber-800">
+                    <div className="rounded-lg bg-primary-soft border border-primary/40 p-3">
+                      <p className="text-xs text-primary">
                         <strong>How this works:</strong> Clicking "Open Email Client" saves your reply and opens your email client pre-filled with the buyer's address and message. The request is marked as replied once your email client opens. If no email client is configured, copy the buyer's address ({selected.buyer_email}) and contact them directly.
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3">
-                    <p className="text-xs font-semibold text-emerald-700 mb-1">YOU HAVE REPLIED</p>
+                  <div className="rounded-lg bg-emerald-50 border border-success/40 p-3">
+                    <p className="text-xs font-semibold text-success mb-1">YOU HAVE REPLIED</p>
                     <p className="text-sm text-muted-foreground">Your reply to this request has been recorded. The buyer was contacted via email.</p>
                   </div>
                 )}

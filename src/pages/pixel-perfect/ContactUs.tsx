@@ -137,7 +137,7 @@ const ContactUs = () => {
                 </Button>
 
                 {status === "success" && (
-                  <p className="text-sm text-green-600 font-medium pt-1">
+                  <p className="text-sm text-success font-medium pt-1">
                     Thank you. Your message has been sent successfully.
                   </p>
                 )}

@@ -324,7 +324,7 @@ const SellerProfile = () => {
           <h1 className="font-display text-2xl font-bold text-foreground">Seller Profile</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your public seller profile and business information.</p>
         </div>
-        <Button className="w-full sm:w-auto bg-gradient-hero text-primary-foreground" onClick={handleSave} disabled={saving}>
+        <Button className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-black" onClick={handleSave} disabled={saving}>
           <Save className="mr-2 h-4 w-4" /> {saving ? "Saving…" : "Save Changes"}
         </Button>
       </div>
@@ -333,7 +333,7 @@ const SellerProfile = () => {
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start gap-5">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-hero flex items-center justify-center text-primary-foreground text-2xl font-bold shrink-0">
+            <div className="w-20 h-20 rounded-2xl bg-primary hover:bg-primary-hover flex items-center justify-center text-primary-foreground text-2xl font-bold shrink-0">
               {form.businessName
                 ? form.businessName.slice(0, 2).toUpperCase()
                 : form.contactName
@@ -344,12 +344,12 @@ const SellerProfile = () => {
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold text-foreground">{form.businessName || "Your Business"}</h2>
                 {sellerStatus === "active" && (
-                  <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200" variant="outline">
+                  <Badge className="bg-success/10 text-success border-success/40" variant="outline">
                     <ShieldCheck className="h-3 w-3 mr-1" /> Verified Seller
                   </Badge>
                 )}
                 {sellerStatus === "submitted" && (
-                  <Badge className="bg-amber-500/10 text-amber-700 border-amber-200" variant="outline">
+                  <Badge className="bg-primary/10 text-primary border-primary/40" variant="outline">
                     Pending Verification
                   </Badge>
                 )}
@@ -359,13 +359,13 @@ const SellerProfile = () => {
                   </Badge>
                 )}
                 {sellerStatus === "suspended" && (
-                  <Badge className="bg-red-500/10 text-red-700 border-red-200" variant="outline">
+                  <Badge className="bg-danger/100/10 text-danger border-danger/30" variant="outline">
                     Restricted
                   </Badge>
                 )}
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-500" /> {stats.rating ? stats.rating.toFixed(1) : "—"}</span>
+                <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-primary" /> {stats.rating ? stats.rating.toFixed(1) : "—"}</span>
                 <span className="flex items-center gap-1"><Package className="h-3.5 w-3.5" /> {stats.totalSales} sales</span>
                 <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" /> {stats.memberSince ? `Since ${stats.memberSince}` : ""}</span>
               </div>
@@ -399,7 +399,7 @@ const SellerProfile = () => {
               <Label className="text-xs">Business Name <span className="text-red-500">*</span></Label>
               <Input value={form.businessName} onChange={(e) => updateField("businessName", e.target.value)} className="mt-1" />
               {businessNameWarning && (
-                <div className="flex items-start gap-1.5 mt-1.5 text-amber-600 text-xs">
+                <div className="flex items-start gap-1.5 mt-1.5 text-primary text-xs">
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                   <span>{businessNameWarning}</span>
                 </div>
@@ -528,7 +528,7 @@ const SellerProfile = () => {
       </Card>
 
       <div className="flex justify-stretch sm:justify-end">
-        <Button className="w-full sm:w-auto bg-gradient-hero text-primary-foreground" onClick={handleSave} disabled={saving}>
+        <Button className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-black" onClick={handleSave} disabled={saving}>
           <Save className="mr-2 h-4 w-4" /> {saving ? "Saving…" : "Save Changes"}
         </Button>
       </div>

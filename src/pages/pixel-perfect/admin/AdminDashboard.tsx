@@ -29,10 +29,10 @@ interface DashboardStats {
 const DEFAULT_STATUS_COLOR = "border-slate-200 text-slate-400";
 
 const statusColor: Record<string, string> = {
-  active:    "border-emerald-500/30 text-emerald-400 bg-emerald-500/10",
-  submitted: "border-amber-500/30 text-amber-400 bg-amber-500/10",
+  active:    "border-emerald-500/30 text-success bg-success/10",
+  submitted: "border-primary/40 text-primary bg-primary/10",
   draft:     DEFAULT_STATUS_COLOR,
-  suspended: "border-red-500/30 text-red-400 bg-red-500/10",
+  suspended: "border-danger/30 text-danger bg-danger/100/10",
 };
 
 const statusLabel: Record<string, string> = {
@@ -132,9 +132,9 @@ const AdminDashboard = () => {
   ];
 
   const cardIconTheme: Record<string, { color: string; bg: string }> = {
-    "Total Users":       { color: "#FBBF24", bg: "rgba(251,191,36,0.12)" },
-    "Total Products":    { color: "#FBBF24", bg: "rgba(251,191,36,0.12)" },
-    "Total Orders":      { color: "#FBBF24", bg: "rgba(251,191,36,0.12)" },
+    "Total Users":       { color: "rgba(212,175,55,1)", bg: "rgba(212,175,55,0.12)" },
+    "Total Products":    { color: "rgba(212,175,55,1)", bg: "rgba(212,175,55,0.12)" },
+    "Total Orders":      { color: "rgba(212,175,55,1)", bg: "rgba(212,175,55,0.12)" },
     "Setup Incomplete":  { color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
   };
 
@@ -149,8 +149,7 @@ const AdminDashboard = () => {
 
       {error && (
         <div
-          className="rounded-xl border p-4 text-sm"
-          style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171" }}
+          className="rounded-xl border p-4 text-sm border-danger/30 bg-danger/10 text-danger"
         >
           {error}
         </div>
@@ -159,14 +158,14 @@ const AdminDashboard = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statsCards.map((s) => {
-          const theme = cardIconTheme[s.label] ?? { color: "#FBBF24", bg: "rgba(251,191,36,0.12)" };
+          const theme = cardIconTheme[s.label] ?? { color: "rgba(212,175,55,1)", bg: "rgba(212,175,55,0.12)" };
           return (
             <Link
               key={s.label}
               to={s.to}
-              className="block rounded-2xl p-5 transition-all hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FBBF24]"
+              className="block rounded-2xl p-5 transition-all hover:-translate-y-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               style={{
-                background: "linear-gradient(145deg, #0B1220, #0F172A)",
+                
                 border: "1px solid rgba(255,255,255,0.05)",
                 boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
               }}
@@ -183,8 +182,7 @@ const AdminDashboard = () => {
                   )}
                 </div>
                 <span
-                  className="text-xs font-medium flex items-center gap-1"
-                  style={{ color: s.up ? "#FBBF24" : "#F59E0B" }}
+                  className="text-xs font-medium flex items-center gap-1 text-primary"
                 >
                   {s.up
                     ? <TrendingUp className="h-3 w-3" />
@@ -208,7 +206,7 @@ const AdminDashboard = () => {
         <div
           className="lg:col-span-2 rounded-2xl overflow-hidden"
           style={{
-            background: "linear-gradient(145deg, #0B1220, #0F172A)",
+            
             border: "1px solid rgba(255,255,255,0.05)",
             boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
           }}
@@ -225,9 +223,9 @@ const AdminDashboard = () => {
               size="sm"
               className="text-xs font-medium transition-all"
               style={{
-                background: "rgba(251,191,36,0.12)",
-                color: "#FBBF24",
-                border: "1px solid rgba(251,191,36,0.3)",
+                background: "rgba(212,175,55,0.12)",
+                color: "rgba(212,175,55,1)",
+                border: "1px solid rgba(212,175,55,0.3)",
               }}
               asChild
             >
@@ -285,7 +283,7 @@ const AdminDashboard = () => {
         <div
           className="rounded-2xl overflow-hidden"
           style={{
-            background: "linear-gradient(145deg, #0B1220, #0F172A)",
+            
             border: "1px solid rgba(255,255,255,0.05)",
             boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
           }}
@@ -311,7 +309,7 @@ const AdminDashboard = () => {
                     a.type === "warning"
                       ? { border: "1px solid rgba(245,158,11,0.3)", background: "rgba(245,158,11,0.08)", color: "#FBD760" }
                       : a.type === "success"
-                      ? { border: "1px solid rgba(251,191,36,0.3)", background: "rgba(251,191,36,0.08)", color: "#FBBF24" }
+                      ? { border: "1px solid rgba(212,175,55,0.3)", background: "rgba(212,175,55,0.08)", color: "rgba(212,175,55,1)" }
                       : { border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "rgba(148,163,184,0.85)" }
                   }
                 >

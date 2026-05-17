@@ -102,7 +102,7 @@ export default function MakeOfferSheet({
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Tag className="h-4 w-4 text-[#FBBF24]" />
+            <Tag className="h-4 w-4 text-primary" />
             Make an Offer
           </DialogTitle>
           <DialogDescription className="sr-only">
@@ -148,7 +148,7 @@ export default function MakeOfferSheet({
             Cancel
           </Button>
           <Button
-            className="flex-1 bg-[#FBBF24] hover:bg-[#F59E0B] text-[#020617] font-semibold"
+            className="flex-1 bg-primary hover:bg-primary-hover text-black font-semibold"
             onClick={() => void handleSubmit()}
             disabled={sending || !pounds}
           >

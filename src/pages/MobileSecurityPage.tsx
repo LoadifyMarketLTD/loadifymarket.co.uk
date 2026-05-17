@@ -59,7 +59,7 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
       {open && (
         <div style={{ paddingInline: 'var(--mob-side, 16px)', paddingBottom: 16 }}>
           {status === 'done' ? (
-            <p style={{ fontSize: 13, color: '#4ADE80', margin: 0 }}>
+            <p style={{ fontSize: 13, color: 'rgba(74,222,128,1)', margin: 0 }}>
               Confirmation sent to your new address. Check your inbox.
             </p>
           ) : (
@@ -75,7 +75,7 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
                   borderRadius: 10,
                   border: '1.5px solid rgba(255,255,255,0.14)',
                   background: 'rgba(255,255,255,0.05)',
-                  color: '#FFFFFF',
+                  color: 'rgba(255,255,255,1)',
                   fontSize: 14,
                   paddingInline: 14,
                   outline: 'none',
@@ -84,7 +84,7 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
                 }}
               />
               {status === 'error' && (
-                <p style={{ fontSize: 12, color: '#EF4444', margin: '0 0 8px' }}>{errorMsg}</p>
+                <p style={{ fontSize: 12, color: 'rgba(239,68,68,1)', margin: '0 0 8px' }}>{errorMsg}</p>
               )}
               <button
                 onClick={handleSave}
@@ -93,12 +93,12 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
                   height: 40,
                   paddingInline: 20,
                   borderRadius: 9999,
-                  background: 'linear-gradient(135deg, #F5C842 0%, #C8860A 100%)',
+                  
                   border: 'none',
                   cursor: 'pointer',
                   fontSize: 14,
                   fontWeight: 700,
-                  color: '#0B0B0F',
+                  
                   opacity: status === 'saving' ? 0.6 : 1,
                 }}
               >
@@ -161,7 +161,7 @@ function PasswordSection() {
       {open && (
         <div style={{ paddingInline: 'var(--mob-side, 16px)', paddingBottom: 16 }}>
           {status === 'done' ? (
-            <p style={{ fontSize: 13, color: '#4ADE80', margin: 0 }}>Password updated successfully.</p>
+            <p style={{ fontSize: 13, color: 'rgba(74,222,128,1)', margin: 0 }}>Password updated successfully.</p>
           ) : (
             <>
               <input
@@ -169,22 +169,22 @@ function PasswordSection() {
                 value={pw}
                 onChange={(e) => setPw(e.target.value)}
                 placeholder="New password"
-                style={{ width: '100%', height: 44, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.05)', color: '#FFFFFF', fontSize: 14, paddingInline: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }}
+                style={{ width: '100%', height: 44, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,1)', fontSize: 14, paddingInline: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }}
               />
               <input
                 type="password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="Confirm new password"
-                style={{ width: '100%', height: 44, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.05)', color: '#FFFFFF', fontSize: 14, paddingInline: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 10 }}
+                style={{ width: '100%', height: 44, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,1)', fontSize: 14, paddingInline: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 10 }}
               />
               {status === 'error' && (
-                <p style={{ fontSize: 12, color: '#EF4444', margin: '0 0 8px' }}>{errorMsg}</p>
+                <p style={{ fontSize: 12, color: 'rgba(239,68,68,1)', margin: '0 0 8px' }}>{errorMsg}</p>
               )}
               <button
                 onClick={handleSave}
                 disabled={status === 'saving'}
-                style={{ height: 40, paddingInline: 20, borderRadius: 9999, background: 'linear-gradient(135deg, #F5C842 0%, #C8860A 100%)', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#0B0B0F', opacity: status === 'saving' ? 0.6 : 1 }}
+                style={{ height: 40, paddingInline: 20, borderRadius: 9999, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, opacity: status === 'saving' ? 0.6 : 1 }}
               >
                 {status === 'saving' ? 'Saving…' : 'Update password'}
               </button>
@@ -221,7 +221,7 @@ export default function MobileSecurityPage() {
     <div
       className="md:hidden min-h-screen"
       style={{
-        background: '#07080B',
+        background: 'rgba(10,14,26,1)',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
@@ -235,7 +235,7 @@ export default function MobileSecurityPage() {
         >
           <ChevronLeft style={{ width: 22, height: 22, color: 'rgba(255,255,255,0.70)' }} />
         </button>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', margin: 0 }}>Security</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0 }}>Security</h1>
       </div>
 
       <div

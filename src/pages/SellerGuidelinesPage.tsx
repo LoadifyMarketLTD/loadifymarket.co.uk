@@ -75,7 +75,7 @@ export default function SellerGuidelinesPage() {
       {/* Hero */}
       <section className="bg-white border-b border-gray-200 py-12">
         <div className="container-market text-center">
-          <div className="inline-flex items-center gap-2 bg-[#1E3A5F]/10 text-[#1E3A5F] text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
+          <div className="inline-flex items-center gap-2 bg-secondary/10 text-secondary text-xs font-semibold px-3 py-1.5 rounded-full mb-4">
             For Sellers
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Seller Guidelines</h1>
@@ -86,14 +86,14 @@ export default function SellerGuidelinesPage() {
           <div className="flex flex-wrap gap-3 justify-center mt-6">
             <Link
               to="/register?type=seller"
-              className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-6 py-3 rounded transition-colors"
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-6 py-3 rounded transition-colors"
             >
               <Store className="w-4 h-4" />
               Start Selling
             </Link>
             <Link
               to="/pricing"
-              className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-6 py-3 rounded transition-colors"
+              className="inline-flex items-center gap-2 border-2 border-secondary text-secondary hover:bg-secondary hover:text-white font-semibold px-6 py-3 rounded transition-colors"
             >
               View Fees &amp; Pricing
             </Link>
@@ -102,7 +102,7 @@ export default function SellerGuidelinesPage() {
       </section>
 
       {/* Guidelines Grid */}
-      <section className="py-12 bg-[#F8F9FA]">
+      <section className="py-12 bg-foreground/5">
         <div className="container-market">
           <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
             Seller Rules &amp; Best Practices
@@ -115,8 +115,8 @@ export default function SellerGuidelinesPage() {
                   key={item.title}
                   className="bg-white border border-gray-200 rounded-lg p-6 flex gap-4"
                 >
-                  <div className="flex-shrink-0 w-11 h-11 bg-[#1E3A5F]/10 rounded-full flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-[#1E3A5F]" />
+                  <div className="flex-shrink-0 w-11 h-11 bg-secondary/10 rounded-full flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-secondary" />
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-gray-900 mb-1">{item.title}</h3>
@@ -148,11 +148,11 @@ export default function SellerGuidelinesPage() {
           <p className="text-gray-600 text-sm mt-4">
             Violations may result in listing removal, account suspension, or legal action. For the full
             policy, please review our{' '}
-            <Link to="/acceptable-use-policy" className="text-[#1E3A5F] hover:underline font-medium">
+            <Link to="/acceptable-use-policy" className="text-secondary hover:underline font-medium">
               Acceptable Use Policy
             </Link>{' '}
             and{' '}
-            <Link to="/terms" className="text-[#1E3A5F] hover:underline font-medium">
+            <Link to="/terms" className="text-secondary hover:underline font-medium">
               Terms &amp; Conditions
             </Link>
             .
@@ -161,7 +161,7 @@ export default function SellerGuidelinesPage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-[#F8F9FA] py-10 border-t border-gray-200">
+      <section className="bg-foreground/5 py-10 border-t border-gray-200">
         <div className="container-market text-center">
           <h2 className="text-xl font-bold text-gray-900 mb-2">Ready to start selling?</h2>
           <p className="text-gray-600 text-sm mb-5">
@@ -170,14 +170,14 @@ export default function SellerGuidelinesPage() {
           <div className="flex flex-wrap gap-3 justify-center">
             <Link
               to="/register?type=seller"
-              className="inline-flex items-center gap-2 bg-[#F4C400] hover:bg-[#EAB308] text-gray-900 font-semibold px-6 py-3 rounded transition-colors"
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-6 py-3 rounded transition-colors"
             >
               <Store className="w-4 h-4" />
               Create Seller Account
             </Link>
             <Link
               to="/contact"
-              className="inline-flex items-center gap-2 border-2 border-[#1E3A5F] text-[#1E3A5F] hover:bg-[#1E3A5F] hover:text-white font-semibold px-6 py-3 rounded transition-colors"
+              className="inline-flex items-center gap-2 border-2 border-secondary text-secondary hover:bg-secondary hover:text-white font-semibold px-6 py-3 rounded transition-colors"
             >
               Contact Us
             </Link>

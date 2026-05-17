@@ -24,11 +24,11 @@ interface WishlistProduct {
 }
 
 const statusColor: Record<string, string> = {
-  pending: "bg-amber-500/15 text-amber-700 border-amber-200",
-  paid: "bg-amber-500/15 text-amber-700 border-amber-200",
-  packed: "bg-amber-500/15 text-amber-700 border-amber-200",
+  pending: "bg-primary/15 text-primary border-primary/40",
+  paid: "bg-primary/15 text-primary border-primary/40",
+  packed: "bg-primary/15 text-primary border-primary/40",
   shipped: "bg-blue-500/15 text-blue-700 border-blue-200",
-  delivered: "bg-emerald-500/15 text-emerald-700 border-emerald-200",
+  delivered: "bg-success/15 text-success border-success/40",
   cancelled: "bg-destructive/15 text-destructive border-destructive/20",
   refunded: "bg-destructive/15 text-destructive border-destructive/20",
 };

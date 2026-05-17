@@ -77,7 +77,7 @@ export default function SocialFollowSection() {
               display: 'flex',
               alignItems: 'center',
               gap: '14px',
-              backgroundColor: '#12121A',
+              
               border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: '16px',
               padding: '16px',
@@ -97,12 +97,12 @@ export default function SocialFollowSection() {
                 flexShrink: 0,
               }}
             >
-              <Icon style={{ width: '22px', height: '22px', color: '#A0A0A0' }} aria-hidden="true" />
+              <Icon style={{ width: '22px', height: '22px' }} className="text-muted-foreground" aria-hidden="true" />
             </div>
             {/* Text */}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: '14px', fontWeight: 600, color: '#FFFFFF', lineHeight: 1.2 }}>{title}</p>
-              <p style={{ fontSize: '12px', color: '#A0A0A0', lineHeight: 1.4, marginTop: '3px' }}>{description}</p>
+              <p style={{ fontSize: '14px', fontWeight: 600, lineHeight: 1.2 }} className="text-white">{title}</p>
+              <p style={{ fontSize: '12px', lineHeight: 1.4, marginTop: '3px' }} className="text-muted-foreground">{description}</p>
             </div>
             {/* Follow button — gold outline */}
             <a
@@ -113,9 +113,9 @@ export default function SocialFollowSection() {
                 flexShrink: 0,
                 fontSize: '12px',
                 fontWeight: 600,
-                color: '#F5B942',
+                
                 background: 'transparent',
-                border: '1px solid rgba(245,185,66,0.4)',
+                border: '1px solid rgba(212,175,55,0.4)',
                 borderRadius: '10px',
                 padding: '6px 14px',
                 textDecoration: 'none',
@@ -139,24 +139,24 @@ export default function SocialFollowSection() {
               `flex flex-col gap-5 ` +
               `transition-all duration-300 ease-out ` +
               `hover:-translate-y-[6px] ` +
-              `hover:shadow-[0_0_25px_rgba(251,191,36,0.15),0_16px_40px_rgba(0,0,0,0.55)]`
+              `hover:shadow-[0_0_25px_rgba(212,175,55,0.15),0_16px_40px_rgba(0,0,0,0.55)]`
             }
             style={{
-              background: "linear-gradient(145deg, #0F172A, #020617)",
+              background: "rgba(10,14,26,1)",
               border: "1px solid rgba(255,255,255,0.05)",
               boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
             }}
           >
             {/* Platform icon */}
             <div
-              className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:shadow-[0_0_18px_rgba(251,191,36,0.22)]"
+              className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:shadow-[0_0_18px_rgba(212,175,55,0.22)]"
               style={{
                 background: "linear-gradient(145deg, rgba(17,24,39,0.98), rgba(2,6,23,0.98))",
                 border: "1px solid rgba(255,255,255,0.07)",
               }}
             >
               <Icon
-                className="w-7 h-7 text-slate-400 group-hover:text-[#FBBF24] transition-colors duration-300"
+                className="w-7 h-7 text-slate-400 group-hover:text-primary transition-colors duration-300"
                 aria-hidden="true"
               />
             </div>
@@ -173,8 +173,8 @@ export default function SocialFollowSection() {
               className={
                 "inline-flex items-center justify-center gap-2 " +
                 "px-5 py-2.5 rounded-lg text-[13px] font-semibold " +
-                "border border-[#FBBF24]/30 text-[#FBBF24] " +
-                "hover:bg-[#FBBF24] hover:text-[#020617] hover:border-[#FBBF24] " +
+                "border border-primary/30 text-primary " +
+                "hover:bg-primary hover:text-background hover:border-primary " +
                 "transition-all duration-200 " +
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400/60"
               }

@@ -215,7 +215,7 @@ const WholesaleInfo = () => {
             <div className="flex flex-wrap gap-3">
               <Link
                 to="/catalog"
-                className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+                className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-black text-sm font-medium hover:bg-primary-hover transition-colors"
               >
                 Browse Products
               </Link>

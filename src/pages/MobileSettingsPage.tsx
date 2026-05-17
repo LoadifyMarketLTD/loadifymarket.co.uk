@@ -48,7 +48,7 @@ export default function MobileSettingsPage() {
     <div
       className="md:hidden min-h-screen"
       style={{
-        background: '#07080B',
+        background: 'rgba(10,14,26,1)',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
@@ -71,7 +71,7 @@ export default function MobileSettingsPage() {
         >
           <ChevronLeft style={{ width: 22, height: 22, color: 'rgba(255,255,255,0.70)' }} />
         </button>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', margin: 0 }}>Settings</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0 }}>Settings</h1>
       </div>
 
       {!user ? (
@@ -91,12 +91,12 @@ export default function MobileSettingsPage() {
               height: 44,
               paddingInline: 32,
               borderRadius: 9999,
-              background: 'linear-gradient(135deg, #F5C842 0%, #C8860A 100%)',
+              
               border: 'none',
               cursor: 'pointer',
               fontSize: 14,
               fontWeight: 700,
-              color: '#0B0B0F',
+              
             }}
           >
             Sign in

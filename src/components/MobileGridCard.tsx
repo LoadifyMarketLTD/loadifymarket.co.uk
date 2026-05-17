@@ -84,7 +84,7 @@ export default function MobileGridCard({ id, title, price, image, location, prio
           style={{
             fontSize: 'clamp(13px, 3.8vw, 15px)',
             fontWeight: 700,
-            color: '#FFFFFF',
+            color: 'rgba(255,255,255,1)',
             margin: '4px 0 0',
           }}
         >

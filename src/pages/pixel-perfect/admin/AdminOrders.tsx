@@ -28,12 +28,12 @@ interface Order {
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   paid: { label: "Paid", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
-  packed: { label: "Packed", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
+  packed: { label: "Packed", className: "border-primary/40 text-primary bg-primary/10" },
   shipped: { label: "Shipped", className: "border-sky-500/30 text-sky-400 bg-sky-500/10" },
-  delivered: { label: "Delivered", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+  delivered: { label: "Delivered", className: "border-emerald-500/30 text-success bg-success/10" },
   cancelled: { label: "Cancelled", className: "border-slate-200 text-slate-400" },
   refunded: { label: "Refunded", className: "border-slate-200 text-slate-400" },
-  disputed: { label: "Disputed", className: "border-red-500/30 text-red-400 bg-red-500/10" },
+  disputed: { label: "Disputed", className: "border-danger/30 text-danger bg-danger/100/10" },
 };
 
 const AdminOrders = () => {
@@ -185,7 +185,7 @@ const AdminOrders = () => {
 
       {error && (
         <div className="rounded-xl border p-4 flex items-center justify-between gap-4" style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)" }}>
-          <div className="flex items-center gap-2 text-sm" style={{ color: "#f87171" }}>
+          <div className="flex items-center gap-2 text-sm text-danger">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -193,8 +193,7 @@ const AdminOrders = () => {
             variant="ghost"
             size="sm"
             onClick={fetchOrders}
-            className="shrink-0 text-xs border border-red-500/40 hover:bg-red-500/10"
-            style={{ color: "#f87171" }}
+            className="shrink-0 text-xs border border-red-500/40 hover:bg-danger/100/10 text-danger"
           >
             Retry
           </Button>
@@ -203,18 +202,18 @@ const AdminOrders = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Orders", count: orders.length, value: `£${totalValue.toLocaleString()}`, color: "#FBBF24", bg: "rgba(251,191,36,0.12)", tab: "all" },
+          { label: "Total Orders", count: orders.length, value: `£${totalValue.toLocaleString()}`, color: "rgba(212,175,55,1)", bg: "rgba(212,175,55,0.12)", tab: "all" },
           { label: "Active", count: activeOrders.length, value: "In progress", color: "#60A5FA", bg: "rgba(96,165,250,0.12)", tab: "active" },
           { label: "Delivered", count: byStatus("delivered").length, value: "Completed", color: "#0A2239", bg: "rgba(10,34,57,0.08)", tab: "delivered" },
-          { label: "Disputed", count: byStatus("disputed").length, value: "Needs attention", color: "#F87171", bg: "rgba(248,113,113,0.12)", tab: "disputed" },
+          { label: "Disputed", count: byStatus("disputed").length, value: "Needs attention", color: "rgba(248,113,113,1)", bg: "rgba(248,113,113,0.12)", tab: "disputed" },
         ].map((stat) => (
           <button
             key={stat.label}
             type="button"
             onClick={() => setActiveTab(stat.tab)}
-            className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FBBF24]"
+            className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             style={{
-              background: "linear-gradient(145deg, #0B1220, #0F172A)",
+              
               border: activeTab === stat.tab ? `2px solid ${stat.color}` : "1px solid rgba(255,255,255,0.05)",
               boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
             }}
@@ -251,7 +250,7 @@ const AdminOrders = () => {
         </TabsList>
         {(["all", "active", "delivered", "disputed"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(
                   tab === "all" ? filtered :
@@ -314,7 +313,7 @@ const AdminOrders = () => {
                     This will issue a real Stripe refund and mark the order as refunded.
                   </p>
                   {refundError && (
-                    <div className="flex items-center gap-2 text-xs text-red-400">
+                    <div className="flex items-center gap-2 text-xs text-danger">
                       <AlertCircle className="h-3 w-3 shrink-0" />
                       <span>{refundError}</span>
                     </div>
@@ -322,7 +321,7 @@ const AdminOrders = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/60"
+                    className="border-red-500/40 text-danger hover:bg-danger/100/10 hover:border-red-500/60"
                     disabled={refundLoading}
                     onClick={() => issueRefund(selected)}
                   >

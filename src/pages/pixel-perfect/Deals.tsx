@@ -240,13 +240,13 @@ const Deals = () => {
                   </Button>
                 </a>
                 <Link to="/signup">
-                  <Button variant="default" size="sm" className="text-xs bg-gradient-hero text-primary-foreground shadow-md">
+                  <Button variant="default" size="sm" className="text-xs bg-primary hover:bg-primary-hover text-black shadow-md">
                     Start Selling <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                   </Button>
                 </Link>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-[#22C55E] font-semibold mt-3">
-                <span className="w-4 h-4 rounded-full bg-[#22C55E]/20 flex items-center justify-center text-[10px]">✔</span>
+              <div className="flex items-center gap-1.5 text-xs text-success font-semibold mt-3">
+                <span className="w-4 h-4 rounded-full bg-success/20 flex items-center justify-center text-[10px]">✔</span>
                 0% Commission Until 31 December 2026
               </div>
             </div>
@@ -421,7 +421,7 @@ const Deals = () => {
               Free to create an account — you only pay when you sell.
             </p>
             <Link to="/signup">
-              <Button className="bg-gradient-hero text-primary-foreground">
+              <Button className="bg-primary hover:bg-primary-hover text-black">
                 Start Selling <ArrowRight className="ml-1.5 h-4 w-4" />
               </Button>
             </Link>

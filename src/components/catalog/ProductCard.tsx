@@ -28,9 +28,9 @@ export interface Product {
 }
 
 const conditionColor: Record<string, string> = {
-  New: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
+  New: "bg-success/10 text-success border-success/40",
   "Like New": "bg-violet-500/10 text-violet-700 border-violet-200",
-  Mixed: "bg-amber-500/10 text-amber-700 border-amber-200",
+  Mixed: "bg-primary/10 text-primary border-primary/40",
   Unchecked: "bg-purple-500/10 text-purple-700 border-purple-200",
 };
 
@@ -56,7 +56,7 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
     <div
       role="button"
       tabIndex={0}
-      className="group bg-card rounded-xl border border-border hover:border-yellow-400/35 hover:shadow-[0_0_22px_rgba(251,191,36,0.14),0_12px_28px_rgba(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer"
+      className="group bg-card rounded-xl border border-border hover:border-primary/40 hover:shadow-[0_0_22px_rgba(212,175,55,0.14),0_12px_28px_rgba(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer"
       onClick={handleCardClick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleCardClick(e); } }}
     >
@@ -116,7 +116,7 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
             <span className="text-xs font-medium text-foreground">{product.seller}</span>
             {product.sellerVerified ? (
               <span
-                className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-1.5 py-0.5"
+                className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-success bg-success/10 border border-emerald-500/30 rounded-full px-1.5 py-0.5"
                 title="Verified Seller"
                 aria-label="Verified Seller"
               >
@@ -127,7 +127,7 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
               </span>
             ) : (
               <span
-                className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-500 bg-amber-500/10 border border-amber-500/30 rounded-full px-1.5 py-0.5"
+                className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-primary bg-primary/10 border border-primary/40 rounded-full px-1.5 py-0.5"
                 title="Unverified seller"
                 aria-label="Unverified seller"
               >
@@ -152,7 +152,7 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
           </Link>
         ) : (
           <Link to={`/product/${product.id}`} state={linkState ?? undefined}>
-            <Button className="w-full bg-[linear-gradient(135deg,#FBBF24,#D97706)] text-[#020617] font-bold hover:shadow-[0_0_18px_rgba(251,191,36,0.28)] hover:opacity-90 transition-all duration-250 text-sm" size="sm">
+            <Button className="w-full bg-primary hover:bg-primary-hover text-black font-bold hover:shadow-[0_0_18px_rgba(212,175,55,0.28)] hover:opacity-90 transition-all duration-250 text-sm" size="sm">
               View Details
             </Button>
           </Link>

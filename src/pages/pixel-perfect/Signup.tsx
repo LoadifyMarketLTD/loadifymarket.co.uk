@@ -9,24 +9,24 @@ import { supabase } from "@/lib/supabase";
 /* ── Password strength ─────────────────────────────────────────────── */
 const getStrength = (pw: string) => {
   if (!pw) return { label: "", pct: 0, color: "bg-gray-300" };
-  if (pw.length < 6) return { label: "Too short", pct: 20, color: "bg-red-500" };
+  if (pw.length < 6) return { label: "Too short", pct: 20, color: "bg-danger/100" };
   if (pw.length < 8) return { label: "Weak", pct: 40, color: "bg-orange-400" };
   const hasUpper = /[A-Z]/.test(pw);
   const hasNum = /[0-9]/.test(pw);
   const hasSpecial = /[^A-Za-z0-9]/.test(pw);
   const score = [hasUpper, hasNum, hasSpecial].filter(Boolean).length;
-  if (score === 0) return { label: "Moderate", pct: 60, color: "bg-yellow-400" };
+  if (score === 0) return { label: "Moderate", pct: 60, color: "bg-primary" };
   if (score === 1) return { label: "Good", pct: 75, color: "bg-lime-500" };
   return { label: "Strong", pct: 100, color: "bg-green-600" };
 };
 
 /* ── Shared primitives ─────────────────────────────────────────────── */
 const lbl = "block text-[13px] font-semibold text-slate-300 uppercase tracking-wide mb-0.5";
-const req = <span className="text-red-600"> *</span>;
+const req = <span className="text-danger"> *</span>;
 
 /* Touch-friendly input — h-11 (44px) meets Apple/Google touch-target spec */
 const inputBase =
-  "block w-full h-11 rounded-lg border border-white/10 bg-[#0F172A] text-white text-sm px-3 focus:outline-none focus:border-[#FBBF24] focus:ring-0";
+  "block w-full h-11 rounded-lg border border-white/10 bg-elevated text-white text-sm px-3 focus:outline-none focus:border-primary focus:ring-0";
 
 /* Select wrapper adds the caret manually */
 const SelectField = ({
@@ -193,7 +193,7 @@ const Signup = () => {
         robots="noindex, nofollow"
       />
       {/* ── Full-page container — light grey, NO card ────────────── */}
-      <main id="main-content" className="bg-[#020617] pt-4 md:pt-28 pb-10">
+      <main id="main-content" className="bg-background pt-4 md:pt-28 pb-10">
         <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10">
 
           {/* ══════════════════════════════════════════════════════════
@@ -202,7 +202,7 @@ const Signup = () => {
           <div className="mb-3">
 
             {/* Primary heading bar */}
-            <div className="bg-[#0B1220] border border-white/10 px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="bg-surface border border-white/10 px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
                 <h1 className="text-white text-xl font-black uppercase tracking-widest leading-tight">
                   {isPrivate ? "Personal Account Registration" : "Business Account Registration"}
@@ -224,7 +224,7 @@ const Signup = () => {
                       setSearchParams(p);
                     }}
                     className={`px-3 min-h-[44px] text-[11px] font-bold uppercase tracking-wide border border-white/10 transition-colors ${
-                      !isSeller ? "bg-[#FBBF24] text-white" : "bg-transparent text-slate-500 hover:text-white"
+                      !isSeller ? "bg-primary text-white" : "bg-transparent text-slate-500 hover:text-white"
                     }`}
                   >
                     Buyer
@@ -237,7 +237,7 @@ const Signup = () => {
                       setSearchParams(p);
                     }}
                     className={`px-3 min-h-[44px] text-[11px] font-bold uppercase tracking-wide border border-l-0 border-white/10 transition-colors ${
-                      isSeller ? "bg-[#FBBF24] text-white" : "bg-transparent text-slate-500 hover:text-white"
+                      isSeller ? "bg-primary text-white" : "bg-transparent text-slate-500 hover:text-white"
                     }`}
                   >
                     Supplier
@@ -253,7 +253,7 @@ const Signup = () => {
                       setSearchParams(p);
                     }}
                     className={`px-3 min-h-[44px] text-[11px] font-bold uppercase tracking-wide border border-white/10 transition-colors ${
-                      !isPrivate ? "bg-[#0d2240] text-white" : "bg-transparent text-slate-500 hover:text-white"
+                      !isPrivate ? "bg-secondary text-white" : "bg-transparent text-slate-500 hover:text-white"
                     }`}
                   >
                     Company
@@ -266,7 +266,7 @@ const Signup = () => {
                       setSearchParams(p);
                     }}
                     className={`px-3 min-h-[44px] text-[11px] font-bold uppercase tracking-wide border border-l-0 border-white/10 transition-colors ${
-                      isPrivate ? "bg-[#0d2240] text-white" : "bg-transparent text-slate-500 hover:text-white"
+                      isPrivate ? "bg-secondary text-white" : "bg-transparent text-slate-500 hover:text-white"
                     }`}
                   >
                     Private
@@ -274,7 +274,7 @@ const Signup = () => {
                 </div>
                 <span className="text-slate-500 text-[11px] hidden sm:block">
                   Registered?{" "}
-                  <Link to="/login" className="text-[#FBBF24] hover:underline font-semibold">
+                  <Link to="/login" className="text-primary hover:underline font-semibold">
                     Sign In
                   </Link>
                 </span>
@@ -282,18 +282,18 @@ const Signup = () => {
             </div>
 
             {/* IMPORTANT notice bar — like reference */}
-            <div className="bg-[#fef3c7] border-l-4 border-[#d97706] px-5 py-2.5 flex items-start gap-3">
-              <span className="text-[#92400e] text-[11px] font-black uppercase tracking-widest shrink-0 mt-0.5">
+            <div className="bg-warning/10 border-l-4 border-warning px-5 py-2.5 flex items-start gap-3">
+              <span className="text-warning text-[11px] font-black uppercase tracking-widest shrink-0 mt-0.5">
                 Important:
               </span>
-              <p className="text-[#78350f] text-[11px] leading-snug">
+              <p className="text-warning text-[11px] leading-snug">
                 {isPrivate
                   ? <>This registration is for <strong>individual buyers and sellers</strong>. All accounts are subject to review.</>
                   : <>Create an account to buy or sell on Loadify Market. Available for <strong>individuals and businesses</strong>.</>
 
                 }
-                {" "}Fields marked <span className="text-red-700 font-bold">*</span> are mandatory. Already have an account?{" "}
-                <Link to="/login" className="underline font-semibold hover:text-[#92400e]">Sign in here</Link>.
+                {" "}Fields marked <span className="text-danger font-bold">*</span> are mandatory. Already have an account?{" "}
+                <Link to="/login" className="underline font-semibold hover:text-warning">Sign in here</Link>.
               </p>
             </div>
 
@@ -301,21 +301,21 @@ const Signup = () => {
 
           {/* ── REGISTRATION DISABLED BANNER ──────────────────────── */}
           {registrationDisabled && (
-            <div className="flex items-start gap-2 bg-amber-50 border border-amber-300 px-4 py-3 mt-2">
-              <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-sm text-amber-800">
+            <div className="flex items-start gap-2 bg-primary-soft border border-primary/40 px-4 py-3 mt-2">
+              <AlertCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <p className="text-sm text-primary">
                 <strong>{isSeller ? "Seller" : "Buyer"} registration is currently disabled.</strong>{" "}
                 New accounts cannot be created at this time. Please check back later or{" "}
-                <Link to="/login" className="underline font-semibold hover:text-amber-900">sign in</Link> if you already have an account.
+                <Link to="/login" className="underline font-semibold hover:text-primary">sign in</Link> if you already have an account.
               </p>
             </div>
           )}
 
           {/* ── ERROR BANNER ──────────────────────────────────────── */}
           {error && (
-            <div className="flex items-start gap-2 bg-red-50 border border-red-300 px-4 py-2.5 mt-0">
-              <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="flex items-start gap-2 bg-danger/10 border border-danger/30 px-4 py-2.5 mt-0">
+              <AlertCircle className="h-4 w-4 text-danger shrink-0 mt-0.5" />
+              <p className="text-sm text-danger">{error}</p>
             </div>
           )}
 
@@ -329,9 +329,9 @@ const Signup = () => {
               {/* ╔══════════════════════════════════════════════════╗
                   ║  COLUMN 1 — Personal / Business Information      ║
                   ╚══════════════════════════════════════════════════╝ */}
-              <div className="bg-[#0B1220] border-b md:border-b-0 md:border-r border-white/10">
+              <div className="bg-surface border-b md:border-b-0 md:border-r border-white/10">
                 {/* Column header */}
-                <div className="bg-[#1e3a5f] border-b border-white/10 px-4 py-2">
+                <div className="bg-secondary/30 border-b border-white/10 px-4 py-2">
                   <span className="text-[11px] font-black text-white uppercase tracking-widest">
                     Personal / Business Information
                   </span>
@@ -460,9 +460,9 @@ const Signup = () => {
               {/* ╔══════════════════════════════════════════════════╗
                   ║  COLUMN 2 — Address Information                  ║
                   ╚══════════════════════════════════════════════════╝ */}
-              <div className="bg-[#0F172A] border-b md:border-b-0 md:border-r-0 lg:border-r border-white/10">
+              <div className="bg-elevated border-b md:border-b-0 md:border-r-0 lg:border-r border-white/10">
                 {/* Column header */}
-                <div className="bg-[#1e3a5f] border-b border-white/10 px-4 py-2">
+                <div className="bg-secondary/30 border-b border-white/10 px-4 py-2">
                   <span className="text-[11px] font-black text-white uppercase tracking-widest">
                     Address Information
                   </span>
@@ -516,7 +516,7 @@ const Signup = () => {
                       />
                       <button
                         type="button"
-                        className="px-3 h-11 bg-[#FBBF24] hover:bg-[#B45309] text-white text-[11px] font-black uppercase tracking-wide border border-[#B45309] transition-colors whitespace-nowrap rounded-r-lg"
+                        className="px-3 h-11 bg-primary hover:bg-primary-hover text-black text-[11px] font-black uppercase tracking-wide border border-primary-hover transition-colors whitespace-nowrap rounded-r-lg"
                       >
                         Find Address
                       </button>
@@ -550,9 +550,9 @@ const Signup = () => {
               {/* ╔══════════════════════════════════════════════════╗
                   ║  COLUMN 3 — Sign-in Information                  ║
                   ╚══════════════════════════════════════════════════╝ */}
-              <div className="bg-[#0B1220] md:col-span-2 lg:col-span-1">
+              <div className="bg-surface md:col-span-2 lg:col-span-1">
                 {/* Column header */}
-                <div className="bg-[#1e3a5f] border-b border-white/10 px-4 py-2">
+                <div className="bg-secondary/30 border-b border-white/10 px-4 py-2">
                   <span className="text-[11px] font-black text-white uppercase tracking-widest">
                     Sign-in Information
                   </span>
@@ -612,7 +612,7 @@ const Signup = () => {
                       className={`${inputBase} ${passwordsMismatch ? "border-red-500" : ""}`}
                     />
                     {passwordsMatch && (
-                      <p className="text-[11px] text-green-600 mt-0.5 font-medium">
+                      <p className="text-[11px] text-success mt-0.5 font-medium">
                         ✓ Passwords match
                       </p>
                     )}
@@ -647,7 +647,7 @@ const Signup = () => {
             {/* ════════════════════════════════════════════════════════
                 BOTTOM SECTION — reCAPTCHA · Terms · Submit
             ════════════════════════════════════════════════════════ */}
-            <div className="bg-[#0B1220] border border-t-4 border-t-[#FBBF24] border-x-white/10 border-b-white/10">
+            <div className="bg-surface border border-t-4 border-t-primary border-x-white/10 border-b-white/10">
 
               <div className="px-5 py-4 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
 
@@ -656,8 +656,8 @@ const Signup = () => {
 
                   {/* Mandatory terms checkbox */}
                   <div>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Legal Agreement <span className="text-red-600">*</span></p>
-                    <div className="flex items-start gap-2 border border-white/10 bg-[#0F172A] px-3 py-2.5 max-w-lg">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Legal Agreement <span className="text-danger">*</span></p>
+                    <div className="flex items-start gap-2 border border-white/10 bg-elevated px-3 py-2.5 max-w-lg">
                       <input
                         id="agreeTerms" name="agreeTerms" type="checkbox"
                         required checked={f.agreeTerms} onChange={set}
@@ -667,13 +667,13 @@ const Signup = () => {
                         htmlFor="agreeTerms"
                         className="text-xs text-slate-300 leading-relaxed cursor-pointer"
                       >
-                        <span className="text-red-600 font-bold">*</span>{" "}
+                        <span className="text-danger font-bold">*</span>{" "}
                         I have read and agree to the{" "}
-                        <Link to="/privacy" className="text-[#FBBF24] underline font-semibold">
+                        <Link to="/privacy" className="text-primary underline font-semibold">
                           Privacy Policy
                         </Link>{" "}
                         and{" "}
-                        <Link to="/terms" className="text-[#FBBF24] underline font-semibold">
+                        <Link to="/terms" className="text-primary underline font-semibold">
                           Terms and Conditions of Use
                         </Link>
                         . I confirm I am registering for <strong>business use only</strong> and am
@@ -690,7 +690,7 @@ const Signup = () => {
                     type="submit"
                     disabled={loading || registrationDisabled}
                     className="px-14 py-3 text-white text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full lg:min-w-[280px]"
-                    style={{ background: "linear-gradient(135deg, #B45309, #FBBF24)" }}
+                    style={{ background: "linear-gradient(135deg, rgba(212,175,55,0.8), rgba(212,175,55,1))" }}
                   >
                     {loading
                       ? "Submitting…"
@@ -699,12 +699,12 @@ const Signup = () => {
                       : isPrivate ? "▶  Create Personal Account" : "▶  Create Business Account"}
                   </button>
                   <p className="text-[10px] text-slate-500 lg:text-right leading-relaxed">
-                    Fields marked <span className="text-red-600 font-bold">*</span> are mandatory.
+                    Fields marked <span className="text-danger font-bold">*</span> are mandatory.
                     <br />
                     You will receive a confirmation email once your application is reviewed.
                     <br />
                     Already have an account?{" "}
-                    <Link to="/login" className="text-[#FBBF24] underline font-semibold">
+                    <Link to="/login" className="text-primary underline font-semibold">
                       Sign in here
                     </Link>
                     .

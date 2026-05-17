@@ -21,9 +21,8 @@ import RequireEmailVerified from './auth/RequireEmailVerified';
 function GuestSellScreen() {
   return (
     <div
-      className="md:hidden min-h-screen flex flex-col items-center justify-center gap-5 px-6 text-center"
+      className="md:hidden min-h-screen flex flex-col items-center justify-center gap-5 px-6 text-center bg-background"
       style={{
-        background: '#07080B',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
@@ -46,10 +45,10 @@ function GuestSellScreen() {
       </div>
 
       <div style={{ maxWidth: 300 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF', margin: '0 0 10px' }}>
+        <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 10px' }} className="text-white">
           Create an account to sell
         </h2>
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.50)', margin: 0, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 14, margin: 0, lineHeight: 1.6 }} className="text-white/50">
           List your items and reach buyers across the UK — 0% commission on Loadify Market.
         </p>
       </div>
@@ -67,16 +66,15 @@ function GuestSellScreen() {
         {/* Primary CTA */}
         <Link
           to="/register?type=seller"
+          className="text-surface bg-primary"
           style={{
             display: 'block',
             height: 50,
             lineHeight: '50px',
             textAlign: 'center',
             borderRadius: 9999,
-            background: 'linear-gradient(135deg, #F5C842 0%, #C8860A 100%)',
             fontSize: 15,
             fontWeight: 700,
-            color: '#0B0B0F',
             textDecoration: 'none',
           }}
         >
@@ -138,8 +136,7 @@ export default function MobileSellGate({ children }: { children: ReactNode }) {
   if (isLoading) {
     return (
       <div
-        className="md:hidden flex items-center justify-center min-h-screen"
-        style={{ background: '#07080B' }}
+        className="md:hidden flex items-center justify-center min-h-screen bg-background"
       >
         <div
           style={{
@@ -147,7 +144,7 @@ export default function MobileSellGate({ children }: { children: ReactNode }) {
             height: 40,
             borderRadius: '50%',
             border: '3px solid rgba(255,255,255,0.10)',
-            borderTopColor: '#F5C842',
+            borderTopColor: 'rgba(212,175,55,1)',
             animation: 'spin 0.8s linear infinite',
           }}
         />

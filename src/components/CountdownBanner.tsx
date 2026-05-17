@@ -44,7 +44,7 @@ const CountdownBanner = () => {
       </div>
 
       <Link to="/signup" className="sm:ml-auto shrink-0">
-        <Button size="sm" className="bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90">
+        <Button size="sm" className="bg-primary text-black text-xs font-semibold hover:bg-primary-hover">
           Start Selling <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
         </Button>
       </Link>

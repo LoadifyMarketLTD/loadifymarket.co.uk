@@ -65,13 +65,13 @@ const CatalogHeader = ({
         <div className="hidden sm:flex items-center border border-border rounded-lg overflow-hidden">
           <button
             onClick={() => setViewMode("grid")}
-            className={`p-2 transition-colors ${viewMode === "grid" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"}`}
+            className={`p-2 transition-colors ${viewMode === "grid" ? "bg-primary text-black" : "bg-card text-muted-foreground hover:text-foreground"}`}
           >
             <LayoutGrid className="h-4 w-4" />
           </button>
           <button
             onClick={() => setViewMode("list")}
-            className={`p-2 transition-colors ${viewMode === "list" ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground"}`}
+            className={`p-2 transition-colors ${viewMode === "list" ? "bg-primary text-black" : "bg-card text-muted-foreground hover:text-foreground"}`}
           >
             <List className="h-4 w-4" />
           </button>

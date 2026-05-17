@@ -90,12 +90,12 @@ const RoleSelection = () => {
             onClick={() => setSelected("buyer")}
             className={`relative rounded-2xl border-2 p-7 text-left transition-all focus:outline-none ${
               selected === "buyer"
-                ? "border-[#22C55E] bg-[#f0fdf4] shadow-lg shadow-green-100"
-                : "border-gray-200 bg-white hover:border-[#86efac] hover:shadow-md"
+                ? "border-success bg-success/10 shadow-lg shadow-green-100"
+                : "border-gray-200 bg-white hover:border-success/40 hover:shadow-md"
             }`}
           >
             {selected === "buyer" && (
-              <CheckCircle2 className="absolute top-4 right-4 h-5 w-5 text-[#22C55E]" />
+              <CheckCircle2 className="absolute top-4 right-4 h-5 w-5 text-success" />
             )}
             <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
               <ShoppingBag className="h-6 w-6 text-blue-600" />
@@ -112,15 +112,15 @@ const RoleSelection = () => {
             onClick={() => setSelected("seller")}
             className={`relative rounded-2xl border-2 p-7 text-left transition-all focus:outline-none ${
               selected === "seller"
-                ? "border-[#22C55E] bg-[#f0fdf4] shadow-lg shadow-green-100"
-                : "border-gray-200 bg-white hover:border-[#86efac] hover:shadow-md"
+                ? "border-success bg-success/10 shadow-lg shadow-green-100"
+                : "border-gray-200 bg-white hover:border-success/40 hover:shadow-md"
             }`}
           >
             {selected === "seller" && (
-              <CheckCircle2 className="absolute top-4 right-4 h-5 w-5 text-[#22C55E]" />
+              <CheckCircle2 className="absolute top-4 right-4 h-5 w-5 text-success" />
             )}
-            <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center mb-4">
-              <Store className="h-6 w-6 text-amber-600" />
+            <div className="w-12 h-12 rounded-xl bg-primary-soft flex items-center justify-center mb-4">
+              <Store className="h-6 w-6 text-primary" />
             </div>
             <h2 className="text-lg font-bold text-gray-900 mb-1">I'm a Seller</h2>
             <p className="text-sm text-gray-500 leading-snug">

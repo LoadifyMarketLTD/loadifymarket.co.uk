@@ -48,27 +48,27 @@ interface UserDetail extends User {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  active: { label: "Active", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
-  inactive: { label: "Suspended", className: "border-red-500/30 text-red-400 bg-red-500/10" },
+  active: { label: "Active", className: "border-emerald-500/30 text-success bg-success/10" },
+  inactive: { label: "Suspended", className: "border-danger/30 text-danger bg-danger/100/10" },
 };
 
 const roleConfig: Record<string, { label: string; className: string }> = {
   buyer: { label: "Buyer", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
-  seller: { label: "Seller", className: "border-purple-500/30 text-purple-400 bg-purple-500/10" },
-  admin: { label: "Admin", className: "border-red-500/30 text-red-400 bg-red-500/10" },
+  seller: { label: "Seller", className: "border-admin/30 text-admin bg-admin/10" },
+  admin: { label: "Admin", className: "border-danger/30 text-danger bg-danger/100/10" },
 };
 
 const stripeStatusConfig: Record<string, { label: string; className: string }> = {
-  active:     { label: "Active",      className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
-  pending:    { label: "Pending",     className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
-  restricted: { label: "Restricted",  className: "border-red-500/30 text-red-400 bg-red-500/10" },
+  active:     { label: "Active",      className: "border-emerald-500/30 text-success bg-success/10" },
+  pending:    { label: "Pending",     className: "border-warning/40 text-warning bg-warning/10" },
+  restricted: { label: "Restricted",  className: "border-danger/30 text-danger bg-danger/100/10" },
 };
 
 const sellerStatusConfig: Record<string, { label: string; className: string }> = {
-  active:    { label: "Active",      className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
-  submitted: { label: "Submitted",   className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
+  active:    { label: "Active",      className: "border-emerald-500/30 text-success bg-success/10" },
+  submitted: { label: "Submitted",   className: "border-warning/40 text-warning bg-warning/10" },
   draft:     { label: "Draft",       className: "border-slate-500/30 text-slate-400 bg-slate-500/10" },
-  suspended: { label: "Suspended",   className: "border-red-500/30 text-red-400 bg-red-500/10" },
+  suspended: { label: "Suspended",   className: "border-danger/30 text-danger bg-danger/100/10" },
 };
 
 const AdminUsers = () => {
@@ -289,23 +289,23 @@ const AdminUsers = () => {
     <Table>
       <TableHeader>
         <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>User</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Role</TableHead>
-          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Joined</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Status</TableHead>
-          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Actions</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">User</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Role</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Joined</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Status</TableHead>
+          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
             <TableCell colSpan={5} className="text-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(100,116,139,0.65)" }} />
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground/65" />
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center py-8" style={{ color: "rgba(100,116,139,0.65)" }}>
+            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground/65">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />No users found.
             </TableCell>
           </TableRow>
@@ -327,12 +327,12 @@ const AdminUsers = () => {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-white">{u.name}</p>
-                      <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{u.email}</p>
+                      <p className="text-xs text-muted-foreground/85">{u.email}</p>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell><Badge variant="outline" className={roleCfg.className}>{roleCfg.label}</Badge></TableCell>
-                <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{u.createdAt}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs text-muted-foreground/85">{u.createdAt}</TableCell>
                 <TableCell><Badge variant="outline" className={statusConfig[statusKey].className}>{statusConfig[statusKey].label}</Badge></TableCell>
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
@@ -377,51 +377,46 @@ const AdminUsers = () => {
     <div className="p-4 sm:p-6 space-y-6" style={{ background: "transparent", minHeight: "100%" }}>
       <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <h1 className="text-2xl font-bold text-white tracking-tight">User Management</h1>
-        <p className="text-sm mt-1" style={{ color: "rgba(148,163,184,0.85)" }}>{users.length} registered users</p>
+        <p className="text-sm mt-1 text-muted-foreground/85">{users.length} registered users</p>
       </div>
 
       {error && (
-        <div className="rounded-xl border p-4 text-sm" style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171" }}>
+        <div className="rounded-xl border p-4 text-sm border-danger/30 bg-danger/10 text-danger">
           {error}
         </div>
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Users", count: users.length, color: "#FBBF24", bg: "rgba(251,191,36,0.12)", tab: "all" as const },
-          { label: "Buyers", count: users.filter((u) => u.role === "buyer").length, color: "#60A5FA", bg: "rgba(96,165,250,0.12)", tab: "buyer" as const },
-          { label: "Sellers", count: users.filter((u) => u.role === "seller").length, color: "#A78BFA", bg: "rgba(167,139,250,0.12)", tab: "seller" as const },
-          { label: "Suspended", count: users.filter((u) => !u.isActive).length, color: "#F87171", bg: "rgba(248,113,113,0.12)", tab: "suspended" as const },
+          { label: "Total Users", count: users.length, colorClass: "text-primary", bgClass: "bg-primary/15", activeBorderClass: "border-primary", tab: "all" as const },
+          { label: "Buyers", count: users.filter((u) => u.role === "buyer").length, colorClass: "text-accent", bgClass: "bg-accent/15", activeBorderClass: "border-accent", tab: "buyer" as const },
+          { label: "Sellers", count: users.filter((u) => u.role === "seller").length, colorClass: "text-secondary", bgClass: "bg-secondary/15", activeBorderClass: "border-secondary", tab: "seller" as const },
+          { label: "Suspended", count: users.filter((u) => !u.isActive).length, colorClass: "text-danger", bgClass: "bg-danger/15", activeBorderClass: "border-danger", tab: "suspended" as const },
         ].map((stat) => (
           <button
             key={stat.label}
             type="button"
             onClick={() => setActiveTab(stat.tab)}
-            className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            style={{
-              background: "linear-gradient(145deg, #0B1220, #0F172A)",
-              border: activeTab === stat.tab ? `2px solid ${stat.color}` : "1px solid rgba(255,255,255,0.05)",
-              boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
-            }}
+            className={`rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${activeTab === stat.tab ? `border-2 ${stat.activeBorderClass}` : "border border-white/5"}`}
+            style={{ boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
           >
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: stat.bg }}>
-              <Users className="h-5 w-5" style={{ color: stat.color }} />
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${stat.bgClass}`}>
+              <Users className={`h-5 w-5 ${stat.colorClass}`} />
             </div>
             <div className="text-3xl font-bold text-white">{loading ? "—" : stat.count}</div>
-            <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(148,163,184,0.85)" }}>{stat.label}</p>
+            <p className="text-xs mt-1.5 font-medium text-muted-foreground">{stat.label}</p>
           </button>
         ))}
       </div>
 
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(100,116,139,0.65)" }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/65" />
           <Input
             placeholder="Search users..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-10"
-            style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+            className="pl-9 h-10 bg-muted-foreground/30 border border-white/10 text-white"
           />
         </div>
       </div>
@@ -436,7 +431,7 @@ const AdminUsers = () => {
         </TabsList>
         {(["all", "buyer", "seller", "admin", "suspended"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "var(--color-surface)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(
                   tab === "all" ? filtered :
@@ -495,9 +490,9 @@ const AdminUsers = () => {
                 <section>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Activity</h3>
                   <div className="grid grid-cols-3 gap-3">
-                    <StatCard icon={<Package className="h-4 w-4" />} label="Listings" value={detail.listingsCount} color="#A78BFA" />
-                    <StatCard icon={<ShoppingBag className="h-4 w-4" />} label="Orders" value={detail.ordersCount} color="#60A5FA" />
-                    <StatCard icon={<Flag className="h-4 w-4" />} label="Reports Filed" value={detail.reportsCount} color="#F87171" />
+                    <StatCard icon={<Package className="h-4 w-4" />} label="Listings" value={detail.listingsCount} colorClass="text-admin" bgClass="bg-admin/15" />
+                    <StatCard icon={<ShoppingBag className="h-4 w-4" />} label="Orders" value={detail.ordersCount} colorClass="text-secondary" bgClass="bg-secondary/15" />
+                    <StatCard icon={<Flag className="h-4 w-4" />} label="Reports Filed" value={detail.reportsCount} colorClass="text-danger" bgClass="bg-danger/15" />
                   </div>
                 </section>
 
@@ -611,10 +606,10 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 }
 
 /** Small stat card for activity counts */
-function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
+function StatCard({ icon, label, value, colorClass, bgClass }: { icon: React.ReactNode; label: string; value: number; colorClass: string; bgClass: string }) {
   return (
-    <div className="rounded-xl p-4 flex flex-col gap-2" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}>
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${color}20`, color }}>
+    <div className="rounded-xl p-4 flex flex-col gap-2 bg-surface border border-white/5">
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${bgClass} ${colorClass}`}>
         {icon}
       </div>
       <div className="text-2xl font-bold text-white">{value}</div>

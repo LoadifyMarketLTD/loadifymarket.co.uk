@@ -25,13 +25,13 @@ interface Order {
 }
 
 const statusColors: Record<string, string> = {
-  awaiting_payment: "bg-amber-500/20 text-amber-700 ring-1 ring-amber-400/40",
+  awaiting_payment: "bg-primary/20 text-primary ring-1 ring-amber-400/40",
   paid: "bg-blue-500/10 text-blue-700",
-  packed: "bg-amber-500/10 text-amber-700",
+  packed: "bg-primary/10 text-primary",
   shipped: "bg-purple-500/10 text-purple-700",
   delivered: "bg-orange-500/10 text-orange-700",
-  completed: "bg-emerald-500/10 text-emerald-700",
-  cancelled: "bg-red-500/10 text-red-700",
+  completed: "bg-success/10 text-success",
+  cancelled: "bg-danger/100/10 text-danger",
   refunded: "bg-muted text-muted-foreground",
   invoice_requested: "bg-blue-500/10 text-blue-700",
 };
@@ -159,18 +159,18 @@ const SellerOrders = () => {
 
       {/* Awaiting-payment highlight banner */}
       {!loading && orders.some((o) => o.status === "awaiting_payment") && (
-        <div className="flex items-start gap-3 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3.5">
-          <span className="text-amber-500 text-xl leading-none mt-0.5">⚠</span>
+        <div className="flex items-start gap-3 rounded-xl bg-primary/10 border border-primary/40 p-3.5">
+          <span className="text-primary text-xl leading-none mt-0.5">⚠</span>
           <div>
             {(() => {
               const awaitingCount = orders.filter((o) => o.status === "awaiting_payment").length;
               return (
-                <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                <p className="text-sm font-semibold text-primary dark:text-primary">
                   {awaitingCount} accepted offer{awaitingCount > 1 ? "s" : ""} awaiting buyer payment
                 </p>
               );
             })()}
-            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+            <p className="text-xs text-primary dark:text-primary mt-0.5">
               Items are reserved for 15 minutes. If payment isn't completed the reservation expires automatically.
             </p>
           </div>

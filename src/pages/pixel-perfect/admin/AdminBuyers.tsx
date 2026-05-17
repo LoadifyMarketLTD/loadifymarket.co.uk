@@ -35,8 +35,8 @@ interface BuyerDetail extends Buyer {
 }
 
 const statusConfig = {
-  active:   { label: "Active",    className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
-  inactive: { label: "Suspended", className: "border-red-500/30 text-red-400 bg-red-500/10" },
+  active:   { label: "Active",    className: "border-emerald-500/30 text-success bg-success/10" },
+  inactive: { label: "Suspended", className: "border-danger/30 text-danger bg-danger/100/10" },
 };
 
 const DetailRow = ({ label, children }: { label: string; children: React.ReactNode }) => (
@@ -47,17 +47,16 @@ const DetailRow = ({ label, children }: { label: string; children: React.ReactNo
 );
 
 const StatCard = ({
-  icon, label, value, color,
-}: { icon: React.ReactNode; label: string; value: number; color: string }) => (
+  icon, label, value, colorClass,
+}: { icon: React.ReactNode; label: string; value: number; colorClass: string }) => (
   <div
-    className="rounded-xl p-4 flex flex-col gap-1"
-    style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}
+    className="rounded-xl p-4 flex flex-col gap-1 border border-white/5"
   >
-    <div className="flex items-center gap-2 mb-1" style={{ color }}>
+    <div className={`flex items-center gap-2 mb-1 ${colorClass}`}>
       {icon}
     </div>
     <div className="text-2xl font-bold text-white">{value}</div>
-    <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{label}</p>
+    <p className="text-xs text-muted-foreground">{label}</p>
   </div>
 );
 
@@ -183,15 +182,14 @@ const AdminBuyers = () => {
     <div className="p-4 sm:p-6 space-y-6" style={{ background: "transparent", minHeight: "100%" }}>
       <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <h1 className="text-2xl font-bold text-white tracking-tight">Buyer Management</h1>
-        <p className="text-sm mt-1" style={{ color: "rgba(148,163,184,0.85)" }}>
+        <p className="text-sm mt-1 text-muted-foreground/85">
           {buyers.length} registered buyer{buyers.length !== 1 ? "s" : ""}
         </p>
       </div>
 
       {error && (
         <div
-          className="rounded-xl border p-4 text-sm"
-          style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171" }}
+          className="rounded-xl border p-4 text-sm border-danger/30 bg-danger/10 text-danger"
         >
           {error}
         </div>
@@ -201,8 +199,8 @@ const AdminBuyers = () => {
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {[
           { label: "Total Buyers", count: buyers.length, color: "#60A5FA", bg: "rgba(96,165,250,0.12)", filter: "all" as const },
-          { label: "Active",       count: active.length, color: "#FBBF24", bg: "rgba(251,191,36,0.12)",  filter: "active" as const },
-          { label: "Suspended",   count: suspended.length, color: "#F87171", bg: "rgba(248,113,113,0.12)", filter: "suspended" as const },
+          { label: "Active",       count: active.length, color: "rgba(212,175,55,1)", bg: "rgba(212,175,55,0.12)",  filter: "active" as const },
+          { label: "Suspended",   count: suspended.length, color: "rgba(248,113,113,1)", bg: "rgba(248,113,113,0.12)", filter: "suspended" as const },
         ].map((stat) => (
           <button
             key={stat.label}
@@ -210,7 +208,7 @@ const AdminBuyers = () => {
             onClick={() => setStatusFilter(stat.filter)}
             className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             style={{
-              background: "linear-gradient(145deg, #0B1220, #0F172A)",
+              
               border: statusFilter === stat.filter ? `2px solid ${stat.color}` : "1px solid rgba(255,255,255,0.05)",
               boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
             }}
@@ -222,48 +220,47 @@ const AdminBuyers = () => {
               <Users className="h-5 w-5" style={{ color: stat.color }} />
             </div>
             <div className="text-3xl font-bold text-white">{loading ? "—" : stat.count}</div>
-            <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(148,163,184,0.85)" }}>{stat.label}</p>
+            <p className="text-xs mt-1.5 font-medium text-muted-foreground/85">{stat.label}</p>
           </button>
         ))}
       </div>
 
       {/* Search */}
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(100,116,139,0.65)" }} />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/65" />
         <Input
           placeholder="Search buyers..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-9 h-10"
-          style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", color: "#ffffff" }}
+          className="pl-9 h-10 border border-white/5 text-white"
         />
       </div>
 
       {/* Table */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
+        style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
       >
         <div className="px-2 py-2 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Buyer</TableHead>
-                <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Joined</TableHead>
-                <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Status</TableHead>
-                <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Actions</TableHead>
+                <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Buyer</TableHead>
+                <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Joined</TableHead>
+                <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Status</TableHead>
+                <TableHead className="text-right text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(100,116,139,0.65)" }} />
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground/65" />
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8" style={{ color: "rgba(100,116,139,0.65)" }}>
+                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground/65">
                     <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
                     No buyers found.
                   </TableCell>
@@ -281,18 +278,17 @@ const AdminBuyers = () => {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                            style={{ background: "rgba(96,165,250,0.15)", color: "#60A5FA" }}
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 bg-secondary/15 text-secondary"
                           >
                             {b.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                           </div>
                           <div>
                             <p className="text-sm font-medium text-white">{b.name}</p>
-                            <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{b.email}</p>
+                            <p className="text-xs text-muted-foreground/85">{b.email}</p>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{b.createdAt}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-xs text-muted-foreground/85">{b.createdAt}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className={statusConfig[statusKey].className}>
                           {statusConfig[statusKey].label}
@@ -354,8 +350,7 @@ const AdminBuyers = () => {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-3">
                 <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-                  style={{ background: "rgba(96,165,250,0.15)", color: "#60A5FA" }}
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 bg-secondary/15 text-secondary"
                 >
                   {selected.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
                 </div>
@@ -389,9 +384,9 @@ const AdminBuyers = () => {
                 <section>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Activity</h3>
                   <div className="grid grid-cols-3 gap-3">
-                    <StatCard icon={<ShoppingBag className="h-4 w-4" />} label="Orders" value={detail.ordersCount} color="#60A5FA" />
-                    <StatCard icon={<Package className="h-4 w-4" />} label="Wishlist" value={detail.wishlistCount} color="#A78BFA" />
-                    <StatCard icon={<Flag className="h-4 w-4" />} label="Reports Filed" value={detail.reportsCount} color="#F87171" />
+                    <StatCard icon={<ShoppingBag className="h-4 w-4" />} label="Orders" value={detail.ordersCount} colorClass="text-secondary" />
+                    <StatCard icon={<Package className="h-4 w-4" />} label="Wishlist" value={detail.wishlistCount} colorClass="text-admin" />
+                    <StatCard icon={<Flag className="h-4 w-4" />} label="Reports Filed" value={detail.reportsCount} colorClass="text-danger" />
                   </div>
                 </section>
 

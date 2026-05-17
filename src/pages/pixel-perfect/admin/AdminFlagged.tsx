@@ -28,9 +28,9 @@ interface FlaggedItem {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  pending: { label: "Pending", className: "border-amber-500/30 text-amber-400 bg-amber-500/10" },
+  pending: { label: "Pending", className: "border-warning/40 text-warning bg-warning/10" },
   reviewed: { label: "Reviewed", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
-  resolved: { label: "Resolved", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+  resolved: { label: "Resolved", className: "border-emerald-500/30 text-success bg-success/10" },
   dismissed: { label: "Dismissed", className: "border-slate-200 text-slate-400" },
 };
 
@@ -146,23 +146,23 @@ const AdminFlagged = () => {
     <Table>
       <TableHeader>
         <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Product</TableHead>
-          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Reported By</TableHead>
-          <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Reason</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Status</TableHead>
-          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Actions</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Product</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Reported By</TableHead>
+          <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Reason</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Status</TableHead>
+          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
             <TableCell colSpan={5} className="text-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(100,116,139,0.65)" }} />
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground/65" />
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center py-8" style={{ color: "rgba(100,116,139,0.65)" }}>
+            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground/65">
               <Flag className="h-8 w-8 mx-auto mb-2 opacity-40" />No flagged items.
             </TableCell>
           </TableRow>
@@ -171,10 +171,10 @@ const AdminFlagged = () => {
             <TableRow key={f.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
               <TableCell>
                 <p className="text-sm font-medium text-white">{f.productTitle}</p>
-                <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{f.date}</p>
+                <p className="text-xs text-muted-foreground/85">{f.date}</p>
               </TableCell>
-              <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{f.reportedBy}</TableCell>
-              <TableCell className="hidden md:table-cell text-xs max-w-[150px] truncate" style={{ color: "rgba(148,163,184,0.85)" }}>{f.reason}</TableCell>
+              <TableCell className="hidden sm:table-cell text-xs text-muted-foreground/85">{f.reportedBy}</TableCell>
+              <TableCell className="hidden md:table-cell text-xs max-w-[150px] truncate text-muted-foreground/85">{f.reason}</TableCell>
               <TableCell>
                 <Badge variant="outline" className={statusConfig[f.status]?.className ?? "border-slate-200 text-slate-400"}>
                   {statusConfig[f.status]?.label ?? f.status}
@@ -212,7 +212,7 @@ const AdminFlagged = () => {
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      className="text-red-400 focus:text-red-400"
+                      className="text-danger focus:text-danger"
                       onClick={() => deactivateProduct(f)}
                     >
                       <ShieldOff className="h-3.5 w-3.5 mr-2" /> Deactivate Product
@@ -231,13 +231,13 @@ const AdminFlagged = () => {
     <div className="p-4 sm:p-6 space-y-6" style={{ background: "transparent", minHeight: "100%" }}>
       <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <h1 className="text-2xl font-bold text-white tracking-tight">Flagged Content</h1>
-        <p className="text-sm mt-1" style={{ color: "rgba(148,163,184,0.85)" }}>
+        <p className="text-sm mt-1 text-muted-foreground/85">
           {items.length} reports · {pendingCount} pending review
         </p>
       </div>
 
       {error && (
-        <div className="rounded-xl border p-4 text-sm" style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171" }}>
+        <div className="rounded-xl border p-4 text-sm border-danger/30 bg-danger/10 text-danger">
           {error}
         </div>
       )}
@@ -246,7 +246,7 @@ const AdminFlagged = () => {
         {[
           { label: "Pending", count: byStatus("pending").length, icon: AlertTriangle, color: "#F59E0B", bg: "rgba(245,158,11,0.12)", tab: "pending" },
           { label: "Reviewed", count: byStatus("reviewed").length, icon: Flag, color: "#60A5FA", bg: "rgba(96,165,250,0.12)", tab: "reviewed" },
-          { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "#FBBF24", bg: "rgba(251,191,36,0.12)", tab: "resolved" },
+          { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "rgba(212,175,55,1)", bg: "rgba(212,175,55,0.12)", tab: "resolved" },
           { label: "Dismissed", count: byStatus("dismissed").length, icon: Ban, color: "rgba(148,163,184,0.85)", bg: "rgba(148,163,184,0.3)", tab: "dismissed" },
         ].map((stat) => (
           <button
@@ -255,7 +255,7 @@ const AdminFlagged = () => {
             onClick={() => setActiveTab(stat.tab)}
             className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             style={{
-              background: "linear-gradient(145deg, #0B1220, #0F172A)",
+              
               border: activeTab === stat.tab ? `2px solid ${stat.color}` : "1px solid rgba(255,255,255,0.05)",
               boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
             }}
@@ -264,20 +264,19 @@ const AdminFlagged = () => {
               <stat.icon className="h-5 w-5" style={{ color: stat.color }} />
             </div>
             <div className="text-3xl font-bold text-white">{stat.count}</div>
-            <p className="text-xs mt-1.5 font-medium" style={{ color: "rgba(148,163,184,0.85)" }}>{stat.label}</p>
+            <p className="text-xs mt-1.5 font-medium text-muted-foreground/85">{stat.label}</p>
           </button>
         ))}
       </div>
 
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(100,116,139,0.65)" }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/65" />
           <Input
             placeholder="Search flagged items..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-10"
-            style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+            className="pl-9 h-10 bg-muted-foreground/30 border border-white/10 text-white"
           />
         </div>
       </div>
@@ -294,7 +293,7 @@ const AdminFlagged = () => {
         </TabsList>
         {(["pending", "reviewed", "resolved", "dismissed", "all"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(tab === "all" ? filtered : byStatus(tab))}
               </div>
@@ -312,17 +311,17 @@ const AdminFlagged = () => {
             </DialogHeader>
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Reported By</span><p className="font-medium text-white">{selected.reportedBy}</p></div>
-                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Reason</span><p className="font-medium text-white">{selected.reason}</p></div>
-                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Date</span><p className="font-medium text-white">{selected.date}</p></div>
-                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Status</span>
+                <div><span className="text-muted-foreground/85">Reported By</span><p className="font-medium text-white">{selected.reportedBy}</p></div>
+                <div><span className="text-muted-foreground/85">Reason</span><p className="font-medium text-white">{selected.reason}</p></div>
+                <div><span className="text-muted-foreground/85">Date</span><p className="font-medium text-white">{selected.date}</p></div>
+                <div><span className="text-muted-foreground/85">Status</span>
                   <p><Badge variant="outline" className={statusConfig[selected.status]?.className ?? "border-slate-200 text-slate-400"}>
                     {statusConfig[selected.status]?.label ?? selected.status}
                   </Badge></p>
                 </div>
               </div>
-              <div className="rounded-xl p-3" style={{ background: "linear-gradient(145deg, #0B1220, #0F172A)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                <p className="text-xs font-semibold mb-1" style={{ color: "rgba(148,163,184,0.85)" }}>DETAILS</p>
+              <div className="rounded-xl p-3" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
+                <p className="text-xs font-semibold mb-1 text-muted-foreground/85">DETAILS</p>
                 <p className="text-sm text-white">{selected.description}</p>
               </div>
               {selected.productId && (

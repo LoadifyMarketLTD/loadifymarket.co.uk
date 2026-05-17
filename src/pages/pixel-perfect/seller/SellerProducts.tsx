@@ -27,8 +27,8 @@ function LMPlaceholder({ size = 48 }: { size?: number }) {
       aria-hidden="true"
       style={{ borderRadius: '8px', display: 'block', flexShrink: 0 }}
     >
-      <rect width="48" height="48" rx="8" fill="#12121A" />
-      <rect width="48" height="48" rx="8" fill="none" stroke="rgba(245,185,66,0.18)" strokeWidth="1" />
+      <rect width="48" height="48" rx="8" fill="rgba(18,18,26,1)" />
+      <rect width="48" height="48" rx="8" fill="none" stroke="rgba(212,175,55,0.18)" strokeWidth="1" />
       {/* Stylised "L" */}
       <text
         x="10"
@@ -36,7 +36,7 @@ function LMPlaceholder({ size = 48 }: { size?: number }) {
         fontFamily="'Arial Black','Impact',sans-serif"
         fontSize="22"
         fontWeight="900"
-        fill="#F5B942"
+        fill="rgba(212,175,55,1)"
         opacity="0.85"
       >L</text>
       {/* Stylised "M" */}
@@ -46,7 +46,7 @@ function LMPlaceholder({ size = 48 }: { size?: number }) {
         fontFamily="'Arial Black','Impact',sans-serif"
         fontSize="22"
         fontWeight="900"
-        fill="#F5B942"
+        fill="rgba(212,175,55,1)"
         opacity="0.55"
       >M</text>
     </svg>
@@ -68,10 +68,10 @@ interface Product {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  active: { label: "Active", className: "bg-emerald-500/10 text-emerald-700" },
-  pending_review: { label: "Pending Review", className: "bg-amber-500/10 text-amber-700" },
-  out_of_stock: { label: "Out of Stock", className: "bg-red-500/10 text-red-700" },
-  low_stock: { label: "Low Stock", className: "bg-amber-500/10 text-amber-700" },
+  active: { label: "Active", className: "bg-success/10 text-success" },
+  pending_review: { label: "Pending Review", className: "bg-primary/10 text-primary" },
+  out_of_stock: { label: "Out of Stock", className: "bg-danger/100/10 text-danger" },
+  low_stock: { label: "Low Stock", className: "bg-primary/10 text-primary" },
   draft: { label: "Draft", className: "bg-muted text-muted-foreground" },
 };
 
@@ -261,7 +261,7 @@ const SellerProducts = () => {
             {loading ? "Loading…" : `${products.length} products listed`}
           </p>
         </div>
-        <Button size="sm" className="bg-gradient-hero text-primary-foreground" asChild>
+        <Button size="sm" className="bg-primary hover:bg-primary-hover text-black" asChild>
           <Link to={isMobile ? '/sell' : '/seller/products/new'}>
             <Plus className="mr-2 h-4 w-4" /> Add Product
           </Link>
@@ -286,7 +286,7 @@ const SellerProducts = () => {
               onClick={() => setStatusFilter(s)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                 statusFilter === s
-                  ? "bg-primary text-primary-foreground border-primary"
+                  ? "bg-primary text-black border-primary"
                   : "bg-background text-muted-foreground border-border hover:border-primary/40"
               }`}
             >
@@ -338,7 +338,7 @@ const SellerProducts = () => {
                       Stock: {p.stockQuantity} · Views: {p.views ?? 0} · Shares: {p.shareCount ?? 0}
                     </p>
                     {status === "active" && (p.views ?? 0) === 0 && (
-                      <p className="text-xs text-amber-600 font-medium mt-1">📢 Share this product to get more views</p>
+                      <p className="text-xs text-primary font-medium mt-1">📢 Share this product to get more views</p>
                     )}
                   </div>
                   <Button
@@ -383,7 +383,7 @@ const SellerProducts = () => {
                       <DropdownMenuSeparator />
                       {status !== "out_of_stock" && (
                         <DropdownMenuItem
-                          className="text-amber-600 focus:text-amber-600"
+                          className="text-primary focus:text-primary"
                           onClick={() => setSoldTarget(p)}
                         >
                           <CheckSquare className="h-4 w-4 mr-2" />
@@ -457,7 +457,7 @@ const SellerProducts = () => {
                           <div className="min-w-0">
                             <span className="text-sm font-medium text-foreground line-clamp-1">{p.title}</span>
                             {status === "active" && (p.views ?? 0) === 0 && (
-                              <p className="text-xs text-amber-600 font-medium mt-0.5">📢 Share to get views</p>
+                              <p className="text-xs text-primary font-medium mt-0.5">📢 Share to get views</p>
                             )}
                           </div>
                         </div>
@@ -512,7 +512,7 @@ const SellerProducts = () => {
                               <DropdownMenuSeparator />
                               {status !== "out_of_stock" && (
                                 <DropdownMenuItem
-                                  className="text-amber-600 focus:text-amber-600"
+                                  className="text-primary focus:text-primary"
                                   onClick={() => setSoldTarget(p)}
                                 >
                                   <CheckSquare className="h-3.5 w-3.5 mr-2" />
@@ -569,7 +569,7 @@ const SellerProducts = () => {
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setSoldTarget(null)} disabled={soldLoading}>Cancel</Button>
-            <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={handleMarkSoldConfirm} disabled={soldLoading}>
+            <Button className="bg-primary hover:bg-primary-hover text-black" onClick={handleMarkSoldConfirm} disabled={soldLoading}>
               {soldLoading ? "Updating…" : "Mark as Sold"}
             </Button>
           </DialogFooter>

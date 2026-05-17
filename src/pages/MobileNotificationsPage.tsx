@@ -104,9 +104,8 @@ export default function MobileNotificationsPage() {
 
   return (
     <div
-      className="md:hidden min-h-screen"
+      className="md:hidden min-h-screen bg-background"
       style={{
-        background: '#07080B',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
@@ -129,7 +128,7 @@ export default function MobileNotificationsPage() {
         >
           <ChevronLeft style={{ width: 22, height: 22, color: 'rgba(255,255,255,0.70)' }} />
         </button>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', margin: 0 }}>Activity</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0 }}>Activity</h1>
       </div>
 
       {/* Content */}
@@ -185,7 +184,7 @@ export default function MobileNotificationsPage() {
                   paddingInline: 'var(--mob-side, 16px)',
                   paddingTop: 14,
                   paddingBottom: 14,
-                  background: item.isRead ? 'transparent' : 'rgba(242,184,75,0.04)',
+                  background: item.isRead ? 'transparent' : 'rgba(212,175,55,0.04)',
                   border: 'none',
                   cursor: item.link ? 'pointer' : 'default',
                   textAlign: 'left',
@@ -193,7 +192,7 @@ export default function MobileNotificationsPage() {
                 }}
               >
                 {/* Unread dot */}
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.isRead ? 'transparent' : '#F2B84B', flexShrink: 0, marginTop: 6 }} />
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.isRead ? 'transparent' : 'rgba(212,175,55,1)', flexShrink: 0, marginTop: 6 }} className={item.isRead ? '' : 'bg-primary'} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 14, fontWeight: item.isRead ? 500 : 700, color: 'rgba(255,255,255,0.90)', margin: 0, lineHeight: 1.3 }}>
                     {item.title}

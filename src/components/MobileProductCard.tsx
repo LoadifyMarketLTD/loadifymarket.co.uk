@@ -40,7 +40,7 @@ export default function MobileProductCard({
       <div
         style={{
           width: '100%',
-          background: '#EFEFEF',
+          background: 'rgba(239,239,239,1)',
           borderRadius: 16,
           overflow: 'hidden',
         }}
@@ -50,7 +50,7 @@ export default function MobileProductCard({
           style={{
             aspectRatio: '1 / 1',
             overflow: 'hidden',
-            background: '#E0E0E0',
+            background: 'rgba(224,224,224,1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -80,16 +80,16 @@ export default function MobileProductCard({
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'linear-gradient(135deg, #E8E0D0 0%, #D4C9B0 100%)',
+              background: 'rgba(232,224,208,1)',
               gap: '4px',
             }}
           >
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="3" y="3" width="18" height="18" rx="3" fill="#C8A96A" opacity="0.25" />
+              <rect x="3" y="3" width="18" height="18" rx="3" fill="rgba(200,169,106,1)" opacity="0.25" />
               <path d="M3 16l5-5 4 4 3-3 6 6" stroke="#C8A96A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="8.5" cy="8.5" r="1.5" fill="#C8A96A" opacity="0.6" />
+              <circle cx="8.5" cy="8.5" r="1.5" fill="rgba(200,169,106,1)" opacity="0.6" />
             </svg>
-            <span style={{ fontSize: '9px', color: '#A08050', fontWeight: 600, letterSpacing: '0.03em' }}>No Image</span>
+            <span style={{ fontSize: '9px', fontWeight: 600, letterSpacing: '0.03em' }} className="text-muted-foreground">No Image</span>
           </div>
         </div>
 
@@ -101,7 +101,7 @@ export default function MobileProductCard({
             style={{
               fontSize: 'clamp(11px, 3vw, 13px)',
               fontWeight: 600,
-              color: '#111111',
+              color: 'rgba(17,17,17,1)',
               margin: 0,
               lineHeight: 1.35,
             }}
@@ -114,7 +114,7 @@ export default function MobileProductCard({
             style={{
               fontSize: 'clamp(13px, 3.8vw, 15px)',
               fontWeight: 700,
-              color: '#111111',
+              color: 'rgba(17,17,17,1)',
               margin: '5px 0 0',
             }}
           >
@@ -132,10 +132,11 @@ export default function MobileProductCard({
               }}
             >
               <Star
-                style={{ width: 11, height: 11, color: '#F2B84B', fill: '#F2B84B' }}
+                style={{ width: 11, height: 11 }}
+                className="text-primary fill-primary"
                 aria-hidden="true"
               />
-              <span style={{ fontSize: 'clamp(10px, 2.8vw, 11px)', color: '#555555', fontWeight: 500 }}>
+              <span style={{ fontSize: 'clamp(10px, 2.8vw, 11px)', fontWeight: 500 }} className="text-muted-foreground">
                 {rating.toFixed(1)}
               </span>
             </div>

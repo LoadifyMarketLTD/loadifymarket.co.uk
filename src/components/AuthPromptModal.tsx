@@ -66,7 +66,7 @@ export default function AuthPromptModal() {
           left: 0,
           right: 0,
           zIndex: 99991,
-          background: '#10111A',
+          
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
           padding: '28px 20px',
@@ -93,7 +93,7 @@ export default function AuthPromptModal() {
             cursor: 'pointer',
           }}
         >
-          <X style={{ width: 16, height: 16, color: 'rgba(255,255,255,0.60)' }} aria-hidden="true" />
+          <X style={{ width: 16, height: 16 }} className="text-white/60" aria-hidden="true" />
         </button>
 
         <h2
@@ -101,7 +101,7 @@ export default function AuthPromptModal() {
           style={{
             fontSize: 20,
             fontWeight: 800,
-            color: '#FFFFFF',
+            color: 'rgba(255,255,255,1)',
             margin: '0 0 8px 0',
             textAlign: 'center',
           }}
@@ -127,12 +127,12 @@ export default function AuthPromptModal() {
             style={{
               height: 50,
               borderRadius: 9999,
-              background: 'linear-gradient(135deg, #F5C842 0%, #C8860A 100%)',
+              
               border: 'none',
               cursor: 'pointer',
               fontSize: 15,
               fontWeight: 700,
-              color: '#0B0B0F',
+              
               width: '100%',
             }}
           >

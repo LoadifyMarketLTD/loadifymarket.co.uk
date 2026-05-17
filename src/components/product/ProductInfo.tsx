@@ -38,9 +38,9 @@ interface ProductInfoProps {
 }
 
 const conditionColor: Record<string, string> = {
-  New: "bg-emerald-500/10 text-emerald-700 border-emerald-200",
+  New: "bg-success/10 text-success border-success/40",
   "Like New": "bg-violet-500/10 text-violet-700 border-violet-200",
-  Mixed: "bg-amber-500/10 text-amber-700 border-amber-200",
+  Mixed: "bg-primary/10 text-primary border-primary/40",
   Unchecked: "bg-purple-500/10 text-purple-700 border-purple-200",
 };
 
@@ -261,7 +261,7 @@ const ProductInfo = ({
           <Link to={`/seller/products/${product.id}/edit`} className="flex-1">
             <Button
               size="lg"
-              className="w-full bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
+              className="w-full bg-primary hover:bg-primary-hover text-black font-semibold text-base hover:opacity-90 transition-opacity"
             >
               <Settings className="mr-2 h-5 w-5" /> Manage This Listing
             </Button>
@@ -286,7 +286,7 @@ const ProductInfo = ({
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               size="lg"
-              className="flex-1 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
+              className="flex-1 bg-primary hover:bg-primary-hover text-black font-semibold text-base hover:opacity-90 transition-opacity"
               onClick={handleBuyNow}
             >
               Buy from Seller <ArrowRight className="ml-2 h-5 w-5" />

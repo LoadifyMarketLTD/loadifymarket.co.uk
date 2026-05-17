@@ -86,10 +86,10 @@ function FieldInput({
 }) {
   const baseStyle: React.CSSProperties = {
     width: '100%',
-    background: '#17181E',
+    background: 'rgba(23,24,30,1)',
     border: `1px solid ${error ? '#F87171' : 'rgba(255,255,255,0.12)'}`,
     borderRadius: '14px',
-    color: '#FFFFFF',
+    color: 'rgba(255,255,255,1)',
     fontSize: '15px',
     padding: '14px 16px',
     outline: 'none',
@@ -102,7 +102,7 @@ function FieldInput({
       {label && (
         <label style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
           {label}
-          {required && <span style={{ color: '#F5B942', marginLeft: '3px' }}>*</span>}
+          {required && <span style={{ marginLeft: '3px' }}>*</span>}
         </label>
       )}
       {multiline ? (
@@ -123,7 +123,7 @@ function FieldInput({
           style={baseStyle}
         />
       )}
-      {error && <p style={{ fontSize: '12px', color: '#F87171', margin: 0 }}>{error}</p>}
+      {error && <p style={{ fontSize: '12px', color: 'rgba(248,113,113,1)', margin: 0 }}>{error}</p>}
       {hint && !error && (
         <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.40)', margin: 0 }}>{hint}</p>
       )}
@@ -147,7 +147,7 @@ function SuccessSheet({
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        background: '#07080B',
+        background: 'rgba(10,14,26,1)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -168,14 +168,14 @@ function SuccessSheet({
           marginBottom: '24px',
         }}
       >
-        <CheckCircle2 style={{ width: '44px', height: '44px', color: '#34D399' }} />
+        <CheckCircle2 style={{ width: '44px', height: '44px', color: 'rgba(52,211,153,1)' }} />
       </div>
 
       <h2
         style={{
           fontSize: '26px',
           fontWeight: 800,
-          color: '#FFFFFF',
+          color: 'rgba(255,255,255,1)',
           textAlign: 'center',
           marginBottom: '10px',
         }}
@@ -209,11 +209,11 @@ function SuccessSheet({
             width: '100%',
             padding: '16px',
             borderRadius: '16px',
-            background: 'linear-gradient(135deg, #F5C842, #C8860A)',
+            background: 'rgba(212,175,55,1)',
             border: 'none',
             fontSize: '16px',
             fontWeight: 700,
-            color: '#0B0B0F',
+            
             cursor: 'pointer',
           }}
         >
@@ -230,7 +230,7 @@ function SuccessSheet({
             border: '1px solid rgba(255,255,255,0.10)',
             fontSize: '15px',
             fontWeight: 600,
-            color: '#FFFFFF',
+            color: 'rgba(255,255,255,1)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -409,7 +409,7 @@ export default function MobileSellWizard() {
   const busy = publishing || photoUploading;
 
   return (
-    <div style={{ minHeight: '100dvh', background: '#07080B', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100dvh', background: 'rgba(10,14,26,1)', display: 'flex', flexDirection: 'column' }}>
       {/* ── Header ── */}
       <div
         style={{
@@ -447,9 +447,9 @@ export default function MobileSellWizard() {
             flexShrink: 0,
           }}
         >
-          <ArrowLeft style={{ width: '18px', height: '18px', color: '#FFFFFF' }} />
+          <ArrowLeft style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,1)' }} />
         </button>
-        <h1 style={{ fontSize: '17px', fontWeight: 700, color: '#FFFFFF', flex: 1 }}>
+        <h1 style={{ fontSize: '17px', fontWeight: 700, color: 'rgba(255,255,255,1)', flex: 1 }}>
           Sell an item
         </h1>
       </div>
@@ -469,7 +469,7 @@ export default function MobileSellWizard() {
         {/* Photos */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <label style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
-            Photos <span style={{ color: '#F5B942' }}>*</span>
+            Photos <span className="text-primary">*</span>
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
             {form.photos.map((url, idx) => (
@@ -480,7 +480,7 @@ export default function MobileSellWizard() {
                   aspectRatio: '1',
                   borderRadius: '14px',
                   overflow: 'hidden',
-                  background: '#17181E',
+                  background: 'rgba(23,24,30,1)',
                 }}
               >
                 <img
@@ -506,7 +506,7 @@ export default function MobileSellWizard() {
                     cursor: 'pointer',
                   }}
                 >
-                  <X style={{ width: '14px', height: '14px', color: '#FFFFFF' }} />
+                  <X style={{ width: '14px', height: '14px', color: 'rgba(255,255,255,1)' }} />
                 </button>
               </div>
             ))}
@@ -519,8 +519,8 @@ export default function MobileSellWizard() {
                 style={{
                   aspectRatio: '1',
                   borderRadius: '14px',
-                  border: `2px dashed ${fieldErrors.photos ? '#F87171' : 'rgba(245,185,66,0.35)'}`,
-                  background: fieldErrors.photos ? 'rgba(248,113,113,0.04)' : 'rgba(245,185,66,0.04)',
+                  border: `2px dashed ${fieldErrors.photos ? '#F87171' : 'rgba(212,175,55,0.35)'}`,
+                  background: fieldErrors.photos ? 'rgba(248,113,113,0.04)' : 'rgba(212,175,55,0.04)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -535,14 +535,14 @@ export default function MobileSellWizard() {
                     style={{
                       width: '24px',
                       height: '24px',
-                      color: '#F5B942',
+                      
                       animation: 'spin 1s linear infinite',
                     }}
                   />
                 ) : (
                   <>
-                    <Camera style={{ width: '24px', height: '24px', color: fieldErrors.photos ? '#F87171' : '#F5B942' }} />
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: fieldErrors.photos ? '#F87171' : '#F5B942' }}>
+                    <Camera style={{ width: '24px', height: '24px', color: fieldErrors.photos ? 'rgba(248,113,113,1)' : 'rgba(212,175,55,1)' }} />
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: fieldErrors.photos ? 'rgba(248,113,113,1)' : 'rgba(212,175,55,1)' }}>
                       Add photo
                     </span>
                   </>
@@ -552,13 +552,13 @@ export default function MobileSellWizard() {
           </div>
 
           {fieldErrors.photos && (
-            <p style={{ fontSize: '12px', color: '#F87171', margin: 0 }}>{fieldErrors.photos}</p>
+            <p style={{ fontSize: '12px', color: 'rgba(248,113,113,1)', margin: 0 }}>{fieldErrors.photos}</p>
           )}
           {photoError && (
             <p
               style={{
                 fontSize: '13px',
-                color: '#F87171',
+                color: 'rgba(248,113,113,1)',
                 background: 'rgba(248,113,113,0.08)',
                 border: '1px solid rgba(248,113,113,0.20)',
                 borderRadius: '10px',
@@ -631,7 +631,7 @@ export default function MobileSellWizard() {
               background: 'rgba(255,255,255,0.03)',
               border: 'none',
               cursor: 'pointer',
-              color: '#FFFFFF',
+              color: 'rgba(255,255,255,1)',
               fontSize: '14px',
               fontWeight: 600,
             }}
@@ -689,7 +689,7 @@ export default function MobileSellWizard() {
                   onChange={(e) => setForm((p) => ({ ...p, condition: e.target.value }))}
                   style={{
                     width: '100%',
-                    background: '#17181E',
+                    background: 'rgba(23,24,30,1)',
                     border: '1px solid rgba(255,255,255,0.12)',
                     borderRadius: '14px',
                     color: form.condition ? '#FFFFFF' : 'rgba(255,255,255,0.40)',
@@ -702,7 +702,7 @@ export default function MobileSellWizard() {
                   }}
                 >
                   {CONDITION_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value} style={{ background: '#17181E', color: '#FFFFFF' }}>
+                    <option key={opt.value} value={opt.value} style={{ background: 'rgba(23,24,30,1)', color: 'rgba(255,255,255,1)' }}>
                       {opt.label}
                     </option>
                   ))}
@@ -728,7 +728,7 @@ export default function MobileSellWizard() {
         }}
       >
         {publishError && (
-          <p style={{ fontSize: '13px', color: '#F87171', marginBottom: '10px', textAlign: 'center' }}>
+          <p style={{ fontSize: '13px', color: 'rgba(248,113,113,1)', marginBottom: '10px', textAlign: 'center' }}>
             {publishError}
           </p>
         )}
@@ -741,12 +741,12 @@ export default function MobileSellWizard() {
             padding: '16px',
             borderRadius: '16px',
             background: busy
-              ? 'rgba(245,185,66,0.40)'
-              : 'linear-gradient(135deg, #F5C842, #C8860A)',
+              ? 'rgba(212,175,55,0.40)'
+              : 'linear-gradient(135deg, #D4AF37, #D4AF37)',
             border: 'none',
             fontSize: '16px',
             fontWeight: 700,
-            color: '#0B0B0F',
+            
             cursor: busy ? 'not-allowed' : 'pointer',
             display: 'flex',
             alignItems: 'center',
