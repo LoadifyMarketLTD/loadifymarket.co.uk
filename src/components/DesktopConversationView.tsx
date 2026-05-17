@@ -154,6 +154,7 @@ function OfferBubble({
   offerId,
   isMine,
   isSeller,
+  currentUserId,
   productTitle,
   offerRecord,
   actingOnOffer,
@@ -165,6 +166,7 @@ function OfferBubble({
   offerId?: string;
   isMine: boolean;
   isSeller: boolean;
+  currentUserId?: string;
   productTitle?: string;
   offerRecord?: OfferRecord | null;
   actingOnOffer: string | null;
@@ -174,6 +176,14 @@ function OfferBubble({
 }) {
   const pounds = (amount_pence / 100).toFixed(2);
   const status = offerRecord?.status ?? "pending";
+  const canSellerRespond = Boolean(
+    offerId &&
+    status === "pending" &&
+    (
+      (currentUserId && offerRecord?.recipientId === currentUserId && offerRecord?.proposedById !== currentUserId) ||
+      (isSeller && !isMine)
+    )
+  );
 
   const statusLabel: Record<string, string> = {
     pending:   isMine ? "You offered · Pending" : "Offer received · Pending",
@@ -214,7 +224,7 @@ function OfferBubble({
       </p>
 
       {/* Seller: accept / decline buttons for pending offers */}
-      {isSeller && !isMine && offerId && status === "pending" && (
+      {canSellerRespond && (
         <div className="flex gap-2 mt-3">
           <button
             onClick={onAccept}
@@ -932,6 +942,7 @@ export default function DesktopConversationView() {
                         offerId={parsed.offerId}
                         isMine={isMine}
                         isSeller={isSeller}
+                        currentUserId={user?.id}
                         productTitle={parsed.productTitle}
                         offerRecord={parsed.offerId ? offerMap.get(parsed.offerId) ?? null : null}
                         actingOnOffer={actingOnOffer}
