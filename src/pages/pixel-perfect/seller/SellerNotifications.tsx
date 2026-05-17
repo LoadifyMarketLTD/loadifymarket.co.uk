@@ -72,6 +72,7 @@ const SellerNotifications = () => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
+  const [openingGroupKey, setOpeningGroupKey] = useState<string | null>(null);
 
   const fetchNotifications = async () => {
     if (!user?.id) return;
@@ -188,11 +189,17 @@ const SellerNotifications = () => {
       .sort((a, b) => new Date(b.latest.createdAt).getTime() - new Date(a.latest.createdAt).getTime());
   }, [notifications]);
 
-  const handleOpen = (group: NotificationGroup) => {
+  const handleOpen = async (group: NotificationGroup) => {
+    if (openingGroupKey === group.key) return;
+    setOpeningGroupKey(group.key);
     const target = buildSellerMessageRoute(group.latest.link);
-    void markAsRead(group.items.map((item) => item.id));
-    if (target) {
-      navigate(target);
+    try {
+      await markAsRead(group.items.map((item) => item.id));
+      if (target) {
+        navigate(target);
+      }
+    } finally {
+      setOpeningGroupKey((prev) => (prev === group.key ? null : prev));
     }
   };
 
@@ -251,20 +258,23 @@ const SellerNotifications = () => {
             return (
             <div
               key={group.key}
-              onClick={() => handleOpen(group)}
+              onClick={() => {
+                void handleOpen(group);
+              }}
               role="button"
               tabIndex={0}
+              aria-disabled={openingGroupKey === group.key}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  handleOpen(group);
+                  void handleOpen(group);
                 }
               }}
               className={`rounded-lg border p-4 transition-colors ${
                 isRead
                   ? "border-border bg-card"
                   : "border-primary/20 bg-primary/5"
-              } w-full text-left cursor-pointer`}
+              } w-full text-left ${openingGroupKey === group.key ? "cursor-wait opacity-85" : "cursor-pointer"}`}
             >
               <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">

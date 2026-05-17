@@ -116,7 +116,7 @@ export default function ProductFormPage() {
   const [customSpecs, setCustomSpecs] = useState<CustomSpec[]>([]);
 
   // 'service' = no stock/shipping; 'goods' = physical product with stock + shipping
-  const [listingContext, setListingContext] = useState<'service' | 'goods'>('service');
+  const [listingContext, setListingContext] = useState<'service' | 'goods'>('goods');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -175,10 +175,10 @@ export default function ProductFormPage() {
       }
 
       if (data) {
-        // Restore listing context from the saved product
-        if (data.listingContext === 'goods' || data.listingContext === 'service') {
-          setListingContext(data.listingContext);
-        }
+        // Restore listing context from the saved product.
+        // Legacy rows may have null listingContext; default them to goods so
+        // physical product stock controls remain visible/editable.
+        setListingContext(data.listingContext === 'service' ? 'service' : 'goods');
         const specs = data.specifications || {};
         setFormData({
           title: data.title || '',
@@ -343,6 +343,8 @@ export default function ProductFormPage() {
     if (publishMode) setSaving(true); else setSavingDraft(true);
     try {
       const price = parseFloat(formData.price);
+      const parsedStockQuantity = Number.parseInt(formData.stockQuantity || '0', 10);
+      const safeStockQuantity = Number.isFinite(parsedStockQuantity) ? parsedStockQuantity : 0;
 
       // When critical fields are locked (orders exist) and the user is a seller,
       // only allow non-critical fields to be updated.
@@ -356,10 +358,11 @@ export default function ProductFormPage() {
         type: formData.type,
         condition: formData.condition,
         price,
-        stockQuantity: listingContext === 'service' ? 0 : parseInt(formData.stockQuantity),
+        listingContext,
+        stockQuantity: listingContext === 'service' ? 0 : safeStockQuantity,
         stockStatus: listingContext === 'service' ? 'in_stock' :
-                    (parseInt(formData.stockQuantity) > 10 ? 'in_stock' :
-                    parseInt(formData.stockQuantity) > 0 ? 'low_stock' : 'out_of_stock'),
+                    (safeStockQuantity > 10 ? 'in_stock' :
+                    safeStockQuantity > 0 ? 'low_stock' : 'out_of_stock'),
         categoryId: formData.categoryId || null,
         subcategoryId: formData.subcategoryId || null,
         images: formData.images,
@@ -387,8 +390,8 @@ export default function ProductFormPage() {
             weight,
             dimensions,
             palletInfo,
-            shippingMethodIds: selectedShippingMethodIds,
-            dispatchTime: dispatchTime || null,
+            shippingMethodIds: listingContext === 'goods' ? selectedShippingMethodIds : [],
+            dispatchTime: listingContext === 'goods' ? (dispatchTime || null) : null,
             lockedFieldsOnly: true,
           }),
         });
@@ -409,8 +412,8 @@ export default function ProductFormPage() {
           body: JSON.stringify({
             id,
             ...productData,
-            shippingMethodIds: selectedShippingMethodIds,
-            dispatchTime: dispatchTime || null,
+            shippingMethodIds: listingContext === 'goods' ? selectedShippingMethodIds : [],
+            dispatchTime: listingContext === 'goods' ? (dispatchTime || null) : null,
           }),
         });
         if (!res.ok) {
