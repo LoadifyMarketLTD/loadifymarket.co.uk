@@ -117,6 +117,10 @@ export const handler: Handler = async (event) => {
     };
   }
 
+  await supabase.rpc('release_stale_unpaid_listing_locks').catch((err: unknown) => {
+    console.warn('offer-accept: release_stale_unpaid_listing_locks RPC failed (non-fatal):', err);
+  });
+
   // ── Call the atomic accept_offer RPC ───────────────────────────────────────
   const { data: rpcResult, error: rpcError } = await supabase
     .rpc('accept_offer', { p_offer_id: offerId, p_actor_id: callerId })

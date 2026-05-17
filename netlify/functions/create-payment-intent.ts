@@ -162,6 +162,9 @@ export const handler: Handler = async (event) => {
   await supabase.rpc('release_expired_reservations').catch((err: unknown) => {
     console.warn('create-payment-intent: release_expired_reservations RPC failed (non-fatal):', err);
   });
+  await supabase.rpc('release_stale_unpaid_listing_locks').catch((err: unknown) => {
+    console.warn('create-payment-intent: release_stale_unpaid_listing_locks RPC failed (non-fatal):', err);
+  });
 
   // 6. Validate products from DB (price integrity + availability)
   const productIds = items.map((i) => i.productId);

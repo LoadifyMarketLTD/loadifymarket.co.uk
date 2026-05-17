@@ -24,9 +24,16 @@ interface Order {
   total: number;
   status: string;
   date: string;
+  listingContext?: "goods" | "service" | null;
+  hasValidPaymentEvidence?: boolean;
+  paymentEvidenceSource?: string | null;
+  allowedNonStripeFlow?: string | null;
+  releaseEligible?: boolean;
+  releaseEligibilityReason?: string | null;
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
+  awaiting_payment: { label: "Awaiting Payment", className: "border-amber-500/30 text-amber-300 bg-amber-500/10" },
   paid: { label: "Paid", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
   packed: { label: "Packed", className: "border-primary/40 text-primary bg-primary/10" },
   shipped: { label: "Shipped", className: "border-sky-500/30 text-sky-400 bg-sky-500/10" },
@@ -46,6 +53,9 @@ const AdminOrders = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [refundLoading, setRefundLoading] = useState(false);
   const [refundError, setRefundError] = useState<string | null>(null);
+  const [releaseReason, setReleaseReason] = useState("");
+  const [releaseLoading, setReleaseLoading] = useState(false);
+  const [releaseError, setReleaseError] = useState<string | null>(null);
 
   const issueRefund = async (order: Order) => {
     setRefundLoading(true);
@@ -86,6 +96,36 @@ const AdminOrders = () => {
       setError((err as Error).message || "Failed to update order status");
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const releaseUnpaidLock = async (order: Order) => {
+    setReleaseLoading(true);
+    setReleaseError(null);
+    try {
+      const res = await authorizedFetch("/.netlify/functions/admin-orders", {
+        method: "POST",
+        body: JSON.stringify({ op: "release_unpaid_lock", orderId: order.id, reason: releaseReason }),
+      });
+      const data = await res.json() as { success?: boolean; error?: string };
+      if (!res.ok) throw new Error(data.error || "Failed to release lock");
+
+      setOrders((prev) => prev.map((o) => (
+        o.id === order.id
+          ? { ...o, status: "cancelled", releaseEligible: false, releaseEligibilityReason: "Lock released by admin." }
+          : o
+      )));
+      setSelected((current) => current && current.id === order.id
+        ? { ...current, status: "cancelled", releaseEligible: false, releaseEligibilityReason: "Lock released by admin." }
+        : current);
+      setReleaseReason("");
+      toast({ title: "Lock released", description: "The unpaid/test order was cancelled and any stale listing lock was released." });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to release lock";
+      setReleaseError(msg);
+      toast({ title: "Release failed", description: msg, variant: "destructive" });
+    } finally {
+      setReleaseLoading(false);
     }
   };
 
@@ -262,7 +302,7 @@ const AdminOrders = () => {
         ))}
       </Tabs>
 
-      <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
+      <Dialog open={!!selected} onOpenChange={() => { setSelected(null); setReleaseReason(""); setReleaseError(null); }}>
         {selected && (
           <DialogContent className="max-w-lg">
             <DialogHeader>
@@ -279,6 +319,15 @@ const AdminOrders = () => {
                   <p><Badge variant="outline" className={(statusConfig[selected.status] ?? { className: "border-slate-200 text-slate-400" }).className}>
                     {(statusConfig[selected.status] ?? { label: selected.status }).label}
                   </Badge></p>
+                </div>
+                <div><span style={{ color: "rgba(148,163,184,0.85)" }}>Payment</span>
+                  <p className="font-medium text-white">
+                    {selected.allowedNonStripeFlow
+                      ? `Allowed non-Stripe flow (${selected.allowedNonStripeFlow.replace(/_/g, " ")})`
+                      : selected.hasValidPaymentEvidence
+                        ? `Verified (${selected.paymentEvidenceSource ?? "Stripe"})`
+                        : "Missing Stripe payment evidence"}
+                  </p>
                 </div>
               </div>
               <div className="space-y-2 pt-2" style={{ borderTop: "1px solid rgba(148,163,184,0.3)" }}>
@@ -305,6 +354,48 @@ const AdminOrders = () => {
                   {actionLoading === selected.id && <Loader2 className="h-4 w-4 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />}
                 </div>
               </div>
+              {!selected.hasValidPaymentEvidence && (
+                <div className="space-y-2 pt-2" style={{ borderTop: "1px solid rgba(148,163,184,0.3)" }}>
+                  <p className="text-xs font-semibold" style={{ color: "rgba(148,163,184,0.85)" }}>SAFE UNPAID/TEST RELEASE</p>
+                  <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>
+                    Cancel this unpaid/test order and release any stale listing lock without deleting rows.
+                  </p>
+                  {selected.releaseEligibilityReason && !selected.releaseEligible && (
+                    <div className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>
+                      {selected.releaseEligibilityReason}
+                    </div>
+                  )}
+                  {selected.releaseEligible && (
+                    <>
+                      <textarea
+                        value={releaseReason}
+                        onChange={(e) => setReleaseReason(e.target.value)}
+                        placeholder="Reason for release (required for audit trail)"
+                        className="min-h-[88px] w-full rounded-md border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-white"
+                      />
+                      {releaseError && (
+                        <div className="flex items-center gap-2 text-xs text-danger">
+                          <AlertCircle className="h-3 w-3 shrink-0" />
+                          <span>{releaseError}</span>
+                        </div>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10 hover:border-amber-500/60"
+                        disabled={releaseLoading || releaseReason.trim().length < 8}
+                        onClick={() => releaseUnpaidLock(selected)}
+                      >
+                        {releaseLoading ? (
+                          <><Loader2 className="h-4 w-4 animate-spin mr-2" />Releasing…</>
+                        ) : (
+                          "Cancel unpaid order and release lock"
+                        )}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
               {["paid", "packed", "shipped", "delivered", "disputed"].includes(selected.status) && (
                 <div className="space-y-2 pt-2" style={{ borderTop: "1px solid rgba(148,163,184,0.3)" }}>
                   <p className="text-xs font-semibold" style={{ color: "rgba(148,163,184,0.85)" }}>STRIPE REFUND</p>
@@ -334,7 +425,7 @@ const AdminOrders = () => {
               )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => { setSelected(null); setRefundError(null); }}>Close</Button>
+              <Button variant="outline" onClick={() => { setSelected(null); setRefundError(null); setReleaseReason(""); setReleaseError(null); }}>Close</Button>
             </DialogFooter>
           </DialogContent>
         )}
