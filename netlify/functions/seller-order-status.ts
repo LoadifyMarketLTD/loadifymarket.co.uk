@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Handler } from '@netlify/functions';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { enforcePaymentBackedTransition } from './_shared/orderTransitionGuards';
 
 type SellerStatusUpdate = 'packed' | 'shipped' | 'delivered';
 
@@ -16,6 +17,9 @@ interface OrderRow {
   sellerId: string;
   status: string;
   productId: string;
+  stripePaymentIntentId?: string | null;
+  rfqId?: string | null;
+  rfqResponseId?: string | null;
 }
 
 interface ProductRow {
@@ -102,7 +106,7 @@ export const handler: Handler = async (event) => {
 
   const { data: order, error: orderError } = await supabase
     .from('orders')
-    .select('id, orderNumber, buyerId, sellerId, status, productId')
+    .select('id, orderNumber, buyerId, sellerId, status, productId, stripePaymentIntentId, rfqId, rfqResponseId')
     .eq('id', orderId)
     .maybeSingle<OrderRow>();
 
@@ -127,6 +131,24 @@ export const handler: Handler = async (event) => {
     return {
       statusCode: 409,
       body: JSON.stringify({ error: `Order cannot move from ${order.status} to ${status}` }),
+    };
+  }
+
+  const paymentGuard = await enforcePaymentBackedTransition({
+    supabase,
+    order,
+    product: {
+      id: order.productId,
+      listingContext,
+    },
+    nextStatus: status,
+    actorRole: caller.role === 'admin' ? 'admin' : 'seller',
+  });
+
+  if (!paymentGuard.ok) {
+    return {
+      statusCode: paymentGuard.statusCode,
+      body: JSON.stringify({ error: paymentGuard.error }),
     };
   }
 

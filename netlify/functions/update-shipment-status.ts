@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { Handler, HandlerEvent } from '@netlify/functions';
 import { checkRateLimit } from './_shared/rateLimiter';
+import { enforcePaymentBackedTransition, type GuardedOrderStatus } from './_shared/orderTransitionGuards';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -211,6 +212,47 @@ export const handler: Handler = async (event) => {
         statusCode: 403,
         body: JSON.stringify({ error: 'Not authorized' }),
       };
+    }
+
+    let targetOrderStatus: GuardedOrderStatus | null = null;
+    if (status === 'Delivered') {
+      targetOrderStatus = 'delivered';
+    } else if (status === 'Dispatched' || status === 'In Transit') {
+      targetOrderStatus = 'shipped';
+    }
+
+    if (targetOrderStatus && shipment.orders?.id && shipment.orders?.productId) {
+      const { data: product } = await supabase
+        .from('products')
+        .select('id, listingContext')
+        .eq('id', shipment.orders.productId)
+        .maybeSingle<{ id: string; listingContext: 'goods' | 'service' | null }>();
+
+      const paymentGuard = await enforcePaymentBackedTransition({
+        supabase,
+        order: {
+          id: shipment.orders.id,
+          orderNumber: shipment.orders.orderNumber,
+          status: shipment.orders.status,
+          productId: shipment.orders.productId,
+          stripePaymentIntentId: shipment.orders.stripePaymentIntentId ?? null,
+          rfqId: shipment.orders.rfqId ?? null,
+          rfqResponseId: shipment.orders.rfqResponseId ?? null,
+        },
+        product: {
+          id: shipment.orders.productId,
+          listingContext: product?.listingContext ?? null,
+        },
+        nextStatus: targetOrderStatus,
+        actorRole: user.role === 'admin' ? 'admin' : 'seller',
+      });
+
+      if (!paymentGuard.ok) {
+        return {
+          statusCode: paymentGuard.statusCode,
+          body: JSON.stringify({ error: paymentGuard.error }),
+        };
+      }
     }
 
     // Update shipment status

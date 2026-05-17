@@ -12,6 +12,7 @@ import { toast } from '../hooks/use-toast';
 import { copyToClipboard } from '../lib/clipboard';
 import { trackPublishListing, trackStartListing, trackShareProduct, trackCopyLink } from '../lib/analytics';
 import { authorizedFetch } from '../lib/authorizedFetch';
+import { deriveSellerListingLocks, type SellerListingLock } from '../lib/listingLocks';
 
 // Listing types that require bulk/pallet-specific fields
 const BULK_PRODUCT_TYPES: ProductType[] = ['pallet', 'lot', 'wholesale'];
@@ -110,6 +111,7 @@ export default function ProductFormPage() {
   const [dispatchTime, setDispatchTime] = useState('');
   // True when the product has active or completed orders — critical fields are locked for sellers
   const [hasActiveOrders, setHasActiveOrders] = useState(false);
+  const [listingLocks, setListingLocks] = useState<SellerListingLock[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [customSpecs, setCustomSpecs] = useState<CustomSpec[]>([]);
 
@@ -232,16 +234,25 @@ export default function ProductFormPage() {
           }
         }
 
-        // Check for active or completed orders — sellers cannot edit critical fields once ordered.
-        // Only paid/in-progress orders count; 'pending' (unpaid/abandoned checkouts) does not lock the product.
-        // Admins/owners bypass this restriction.
+        // Check for blocking listing locks — sellers cannot edit critical fields once an order or
+        // active reservation is attached to the listing. Expired unpaid reservations are ignored.
         if (data.sellerId === user?.id) {
-          const { count } = await supabase
+          const { data: orderLocks } = await supabase
             .from('orders')
-            .select('id', { count: 'exact', head: true })
+            .select('id, orderNumber, status, createdAt')
             .eq('productId', id)
-            .in('status', ['paid', 'packed', 'shipped', 'delivered']);
-          setHasActiveOrders((count ?? 0) > 0);
+            .in('status', ['awaiting_payment', 'paid', 'packed', 'shipped', 'delivered', 'completed']);
+
+          const derivedLocks = deriveSellerListingLocks({
+            orders: orderLocks ?? [],
+            product: {
+              listingStatus: data.listingStatus ?? null,
+              reservedUntil: data.reservedUntil ?? null,
+            },
+          });
+
+          setListingLocks(derivedLocks);
+          setHasActiveOrders(derivedLocks.length > 0);
         }
       }
     } catch (error) {
@@ -385,7 +396,12 @@ export default function ProductFormPage() {
           const payload = await res.json().catch(() => ({}));
           throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
         }
-        setSuccessMessage('Product updated. Critical fields were not changed as orders exist.');
+        const blockingOrders = listingLocks.map((lock) => lock.orderLabel).join(', ');
+        setSuccessMessage(
+          blockingOrders
+            ? `Product updated. Critical fields were not changed because this listing is locked by ${blockingOrders}.`
+            : 'Product updated. Critical fields were not changed because this listing has active order locks.',
+        );
       } else if (id) {
         // Full update via update-product
         const res = await authorizedFetch('/.netlify/functions/update-product', {
@@ -639,19 +655,31 @@ export default function ProductFormPage() {
             </div>
           )}
 
-          {/* Active orders lock banner */}
-          {hasActiveOrders && (
-            <div className="mb-6 p-4 bg-primary-soft border border-primary/40 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-primary font-semibold text-sm">Some fields are locked</p>
-                <p className="text-primary text-xs mt-0.5">
-                  This product has active or completed orders. Title, price, stock quantity, and condition cannot be changed.
-                  You can still edit the description, images, specifications, and shipping details.
-                </p>
-              </div>
-            </div>
-          )}
+           {/* Listing lock banner */}
+           {hasActiveOrders && (
+             <div className="mb-6 p-4 bg-primary-soft border border-primary/40 rounded-lg flex items-start gap-3">
+               <AlertCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+               <div>
+                 <p className="text-primary font-semibold text-sm">This listing is locked by order activity</p>
+                 <p className="text-primary text-xs mt-0.5">
+                   Title, price, stock quantity, condition, and listing type cannot be changed while a blocking order or reservation exists.
+                   You can still edit the description, images, specifications, and shipping details.
+                 </p>
+                 <ul className="mt-3 space-y-2 text-xs text-primary">
+                   {listingLocks.map((lock) => (
+                     <li key={`${lock.orderId}-${lock.type}`} className="rounded-md border border-primary/25 bg-primary/5 px-3 py-2">
+                       <span className="font-semibold">{lock.orderLabel}</span>
+                       <span className="mx-1.5">•</span>
+                       <span className="capitalize">{lock.status.replace(/_/g, ' ')}</span>
+                       <span className="mx-1.5">•</span>
+                       <span>{lock.typeLabel}</span>
+                       <div className="mt-1 text-[11px] text-primary/90">{lock.message}</div>
+                     </li>
+                   ))}
+                 </ul>
+               </div>
+             </div>
+           )}
 
           <form onSubmit={handleSubmit} noValidate>
 
