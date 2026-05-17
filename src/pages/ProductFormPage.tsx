@@ -593,8 +593,7 @@ export default function ProductFormPage() {
                         trackShareProduct('facebook', publishedProductId, formData.title);
                         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
                       }}
-                      className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80"
-                      style={{ background: 'rgba(24,119,242,1)', color: 'rgba(255,255,255,1)' }}
+                      className="px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-[#1877F2] transition-opacity hover:opacity-80"
                     >
                       Share on Facebook
                     </button>
@@ -606,8 +605,7 @@ export default function ProductFormPage() {
                         trackShareProduct('whatsapp', publishedProductId, formData.title);
                         window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
                       }}
-                      className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80"
-                      style={{ background: 'rgba(37,211,102,1)', color: 'rgba(255,255,255,1)' }}
+                      className="px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-[#25D366] transition-opacity hover:opacity-80"
                     >
                       Share on WhatsApp
                     </button>

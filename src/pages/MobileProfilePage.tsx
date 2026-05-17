@@ -80,30 +80,24 @@ function MenuRow({ label, to, external, badgeCount }: SectionItem) {
         cursor: 'pointer',
       }}
     >
-      <span style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.90)' }}>
+      <span className="text-[15px] font-medium text-foreground/90">
         {label}
       </span>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {badgeCount && badgeCount > 0 ? (
           <span
+            className="bg-primary text-background text-[11px] font-bold inline-flex items-center justify-center"
             style={{
               minWidth: 20,
               height: 20,
               borderRadius: 999,
-              background: 'rgba(212,175,55,1)',
-              color: 'rgba(10,14,26,1)',
-              fontSize: 11,
-              fontWeight: 700,
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               paddingInline: 6,
             }}
           >
             {badgeCount > 99 ? '99+' : badgeCount}
           </span>
         ) : null}
-        <ChevronRight style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.30)', flexShrink: 0 }} aria-hidden="true" />
+        <ChevronRight className="text-foreground/30" style={{ width: 18, height: 18, flexShrink: 0 }} aria-hidden="true" />
       </div>
     </div>
   );
@@ -128,23 +122,18 @@ function MenuSection({ title, items }: Section) {
   return (
     <div style={{ marginBottom: 8 }}>
       <p
+        className="text-xs font-semibold text-foreground/35 uppercase tracking-[0.07em] m-0"
         style={{
-          fontSize: 12,
-          fontWeight: 600,
-          color: 'rgba(255,255,255,0.35)',
-          letterSpacing: '0.07em',
-          textTransform: 'uppercase',
           paddingInline: 'var(--mob-side, 16px)',
           paddingTop: 20,
           paddingBottom: 4,
-          margin: 0,
         }}
       >
         {title}
       </p>
       <div
+        className="bg-white/[0.04]"
         style={{
-          background: 'rgba(255,255,255,0.04)',
           borderTop: '1px solid rgba(255,255,255,0.06)',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}
@@ -155,7 +144,8 @@ function MenuSection({ title, items }: Section) {
             {i < items.length - 1 && (
               <div
                 aria-hidden="true"
-                style={{ height: 1, background: 'rgba(255,255,255,0.05)', marginInlineStart: 'var(--mob-side, 16px)' }}
+                className="bg-white/[0.05]"
+                style={{ height: 1, marginInlineStart: 'var(--mob-side, 16px)' }}
               />
             )}
           </div>
@@ -181,26 +171,20 @@ function GuestView() {
       }}
     >
       <div
-        style={{
-          width: 72,
-          height: 72,
-          borderRadius: '50%',
-          background: 'rgba(255,255,255,0.06)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        className="bg-white/[0.06] flex items-center justify-center"
+        style={{ width: 72, height: 72, borderRadius: '50%' }}
       >
-        <User style={{ width: 32, height: 32, color: 'rgba(255,255,255,0.40)' }} aria-hidden="true" />
+        <User className="text-foreground/40" style={{ width: 32, height: 32 }} aria-hidden="true" />
       </div>
-      <h2 style={{ fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,1)', margin: 0 }}>
+      <h2 className="text-xl font-bold text-foreground m-0">
         Sign in to your account
       </h2>
-      <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.50)', margin: 0, maxWidth: 280 }}>
+      <p className="text-sm text-foreground/50 m-0" style={{ maxWidth: 280 }}>
         Access your listings, orders, messages and more.
       </p>
       <button
         onClick={() => navigate('/login')}
+        className="text-[15px] font-bold text-surface"
         style={{
           height: 48,
           paddingInline: 40,
@@ -208,9 +192,6 @@ function GuestView() {
           background: 'hsl(var(--primary))',
           border: 'none',
           cursor: 'pointer',
-          fontSize: 15,
-          fontWeight: 700,
-          color: 'rgba(18,26,43,1)',
           marginTop: 8,
         }}
       >
@@ -218,6 +199,7 @@ function GuestView() {
       </button>
       <button
         onClick={() => navigate('/register')}
+        className="text-[15px] font-semibold text-foreground/80"
         style={{
           height: 48,
           paddingInline: 40,
@@ -225,9 +207,6 @@ function GuestView() {
           background: 'transparent',
           border: '1.5px solid rgba(255,255,255,0.18)',
           cursor: 'pointer',
-          fontSize: 15,
-          fontWeight: 600,
-          color: 'rgba(255,255,255,0.80)',
         }}
       >
         Create account
@@ -274,7 +253,7 @@ export default function MobileProfilePage() {
           paddingBottom: 8,
         }}
       >
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0 }}>Profile</h1>
+        <h1 className="text-[22px] font-extrabold text-foreground m-0">Profile</h1>
       </div>
 
       {!user ? (
@@ -312,7 +291,7 @@ export default function MobileProfilePage() {
 
             {/* Name + listings link */}
             <div style={{ minWidth: 0 }}>
-              <p style={{ fontSize: 18, fontWeight: 700, color: 'rgba(255,255,255,1)', margin: 0, lineHeight: 1.2 }}>
+              <p className="text-[18px] font-bold text-foreground m-0" style={{ lineHeight: 1.2 }}>
                 {displayName}
               </p>
               <Link
@@ -356,8 +335,8 @@ export default function MobileProfilePage() {
                 textAlign: 'left',
               }}
             >
-              <LogOut style={{ width: 18, height: 18, color: 'rgba(239,68,68,1)', flexShrink: 0 }} aria-hidden="true" />
-              <span style={{ fontSize: 15, fontWeight: 500, color: 'rgba(239,68,68,1)' }}>Sign out</span>
+              <LogOut className="text-danger" style={{ width: 18, height: 18, flexShrink: 0 }} aria-hidden="true" />
+              <span className="text-[15px] font-medium text-danger">Sign out</span>
             </button>
           </div>
         </>

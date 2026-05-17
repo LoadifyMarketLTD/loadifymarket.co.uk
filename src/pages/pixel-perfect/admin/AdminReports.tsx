@@ -243,10 +243,10 @@ const AdminReports = () => {
                 style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
               >
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(212,175,55,0.12)" }}>
-                    <k.icon className="h-5 w-5" style={{ color: "rgba(212,175,55,1)" }} />
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/[0.12]">
+                    <k.icon className="h-5 w-5 text-primary" />
                   </div>
-                  <span className="text-xs font-medium flex items-center gap-1" style={{ color: k.up ? 'rgba(212,175,55,1)' : 'rgba(248,113,113,1)' }}>
+                  <span className={`text-xs font-medium flex items-center gap-1 ${k.up ? 'text-primary' : 'text-danger'}`}>
                     {k.up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                     {k.change}
                   </span>

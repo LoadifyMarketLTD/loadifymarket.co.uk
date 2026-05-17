@@ -42,20 +42,19 @@ function NavItem({
       style={{ textDecoration: 'none', minHeight: '44px', justifyContent: 'center' }}
     >
       <Icon
+        className={isActive ? 'text-primary' : 'text-muted-foreground'}
         style={{
           width: '22px',
           height: '22px',
-          color: isActive ? 'rgba(212,175,55,1)' : 'rgba(255,255,255,0.45)',
           transition: 'color 0.2s',
         }}
         strokeWidth={isActive ? 2.2 : 1.8}
         aria-hidden="true"
       />
       <span
+        className={isActive ? 'text-primary font-bold' : 'text-foreground/40 font-normal'}
         style={{
           fontSize: '10px',
-          fontWeight: isActive ? 700 : 400,
-          color: isActive ? 'rgba(212,175,55,1)' : 'rgba(255,255,255,0.40)',
           lineHeight: 1,
           transition: 'color 0.2s',
           maxWidth: '52px',
@@ -107,32 +106,24 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
     >
       <div style={{ position: 'relative' }}>
         <Mail
-          style={{
-            width: '22px',
-            height: '22px',
-            color: isActive ? 'rgba(212,175,55,1)' : 'rgba(255,255,255,0.45)',
-            transition: 'color 0.2s',
-          }}
+          className={isActive ? 'text-primary' : 'text-muted-foreground'}
+          style={{ width: '22px', height: '22px', transition: 'color 0.2s' }}
           strokeWidth={isActive ? 2.2 : 1.8}
           aria-hidden="true"
         />
         {unread > 0 && (
           <span
             aria-hidden="true"
+            className="bg-primary flex items-center justify-center"
             style={{
               position: 'absolute',
               top: '-4px',
               right: '-6px',
               minWidth: '16px',
               height: '16px',
-              backgroundColor: 'rgba(212,175,55,1)',
-              
               fontSize: '9px',
               fontWeight: 800,
               borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               padding: '0 2px',
             }}
           >
@@ -141,10 +132,9 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
         )}
       </div>
       <span
+        className={isActive ? 'text-primary font-bold' : 'text-foreground/40'}
         style={{
           fontSize: '10px',
-          fontWeight: isActive ? 700 : 400,
-          color: isActive ? 'rgba(212,175,55,1)' : 'rgba(255,255,255,0.40)',
           lineHeight: 1,
           maxWidth: '52px',
           overflow: 'hidden',
@@ -181,9 +171,8 @@ export default function MobileBottomNav() {
   return (
     <nav
       aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 z-[9997] md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-[9997] md:hidden bg-background/[0.97]"
       style={{
-        background: 'rgba(11,11,15,0.97)',
         backdropFilter: 'blur(18px)',
         WebkitBackdropFilter: 'blur(18px)',
         borderTop: '1px solid rgba(255,255,255,0.07)',
@@ -205,14 +194,11 @@ export default function MobileBottomNav() {
           aria-label="Sell an item"
         >
           <div
+            className="bg-primary flex items-center justify-center"
             style={{
               width: '52px',
               height: '52px',
               borderRadius: '50%',
-              background: 'rgba(212,175,55,1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
               marginTop: '-26px',
               boxShadow: '0 0 24px rgba(200,134,10,0.50), 0 6px 16px rgba(0,0,0,0.65)',
             }}

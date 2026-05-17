@@ -86,10 +86,8 @@ function FieldInput({
 }) {
   const baseStyle: React.CSSProperties = {
     width: '100%',
-    background: 'rgba(23,24,30,1)',
     border: `1px solid ${error ? 'hsl(var(--danger))' : 'rgba(255,255,255,0.12)'}`,
     borderRadius: '14px',
-    color: 'rgba(255,255,255,1)',
     fontSize: '15px',
     padding: '14px 16px',
     outline: 'none',
@@ -97,10 +95,11 @@ function FieldInput({
     resize: 'none',
     boxSizing: 'border-box',
   };
+  const inputClass = 'text-foreground bg-surface';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       {label && (
-        <label style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
+        <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
           {label}
           {required && <span style={{ marginLeft: '3px' }}>*</span>}
         </label>
@@ -111,6 +110,7 @@ function FieldInput({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           rows={3}
+          className={inputClass}
           style={baseStyle}
         />
       ) : (
@@ -120,12 +120,13 @@ function FieldInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
+          className={inputClass}
           style={baseStyle}
         />
       )}
-      {error && <p style={{ fontSize: '12px', color: 'rgba(248,113,113,1)', margin: 0 }}>{error}</p>}
+      {error && <p className="text-danger" style={{ fontSize: '12px', margin: 0 }}>{error}</p>}
       {hint && !error && (
-        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.40)', margin: 0 }}>{hint}</p>
+        <p className="text-foreground/40" style={{ fontSize: '12px', margin: 0 }}>{hint}</p>
       )}
     </div>
   );
@@ -143,11 +144,11 @@ function SuccessSheet({
   const navigate = useNavigate();
   return (
     <div
+      className="bg-background"
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        background: 'rgba(10,14,26,1)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -157,25 +158,22 @@ function SuccessSheet({
       }}
     >
       <div
+        className="bg-success/[0.15] flex items-center justify-center"
         style={{
           width: '80px',
           height: '80px',
           borderRadius: '50%',
-          background: 'rgba(16,185,129,0.15)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
           marginBottom: '24px',
         }}
       >
-        <CheckCircle2 style={{ width: '44px', height: '44px', color: 'rgba(52,211,153,1)' }} />
+        <CheckCircle2 className="text-success" style={{ width: '44px', height: '44px' }} />
       </div>
 
       <h2
+        className="text-foreground"
         style={{
           fontSize: '26px',
           fontWeight: 800,
-          color: 'rgba(255,255,255,1)',
           textAlign: 'center',
           marginBottom: '10px',
         }}
@@ -183,9 +181,9 @@ function SuccessSheet({
         Your item is live! 🎉
       </h2>
       <p
+        className="text-foreground/55"
         style={{
           fontSize: '15px',
-          color: 'rgba(255,255,255,0.55)',
           textAlign: 'center',
           marginBottom: '36px',
           maxWidth: '300px',
@@ -205,15 +203,14 @@ function SuccessSheet({
       >
         <button
           onClick={() => navigate(`/product/${productId}`)}
+          className="bg-primary"
           style={{
             width: '100%',
             padding: '16px',
             borderRadius: '16px',
-            background: 'rgba(212,175,55,1)',
             border: 'none',
             fontSize: '16px',
             fontWeight: 700,
-            
             cursor: 'pointer',
           }}
         >
@@ -222,15 +219,14 @@ function SuccessSheet({
 
         <button
           onClick={() => navigate('/seller/setup')}
+          className="text-foreground bg-white/[0.06]"
           style={{
             width: '100%',
             padding: '16px',
             borderRadius: '16px',
-            background: 'rgba(255,255,255,0.06)',
             border: '1px solid rgba(255,255,255,0.10)',
             fontSize: '15px',
             fontWeight: 600,
-            color: 'rgba(255,255,255,1)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -244,6 +240,7 @@ function SuccessSheet({
 
         <button
           onClick={onSellAnother}
+          className="text-muted-foreground"
           style={{
             width: '100%',
             padding: '14px',
@@ -252,7 +249,6 @@ function SuccessSheet({
             border: 'none',
             fontSize: '14px',
             fontWeight: 600,
-            color: 'rgba(255,255,255,0.45)',
             cursor: 'pointer',
           }}
         >
@@ -409,14 +405,13 @@ export default function MobileSellWizard() {
   const busy = publishing || photoUploading;
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'rgba(10,14,26,1)', display: 'flex', flexDirection: 'column' }}>
+    <div className="bg-background" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
       {/* ── Header ── */}
       <div
         style={{
           position: 'sticky',
           top: 0,
           zIndex: 10,
-          background: 'rgba(7,8,11,0.97)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderBottom: '1px solid rgba(255,255,255,0.07)',
@@ -429,27 +424,25 @@ export default function MobileSellWizard() {
           alignItems: 'center',
           gap: '12px',
         }}
+        className="bg-background/[0.97]"
       >
         <button
           aria-label="Go back"
           onClick={() => navigate(-1)}
           disabled={busy}
+          className="bg-white/[0.07] flex items-center justify-center"
           style={{
             width: '36px',
             height: '36px',
             borderRadius: '50%',
-            background: 'rgba(255,255,255,0.07)',
             border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             cursor: 'pointer',
             flexShrink: 0,
           }}
         >
-          <ArrowLeft style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,1)' }} />
+          <ArrowLeft className="text-foreground" style={{ width: '18px', height: '18px' }} />
         </button>
-        <h1 style={{ fontSize: '17px', fontWeight: 700, color: 'rgba(255,255,255,1)', flex: 1 }}>
+        <h1 className="text-foreground" style={{ fontSize: '17px', fontWeight: 700, flex: 1 }}>
           Sell an item
         </h1>
       </div>
@@ -468,7 +461,7 @@ export default function MobileSellWizard() {
       >
         {/* Photos */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <label style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
+          <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
             Photos <span className="text-primary">*</span>
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
@@ -480,33 +473,19 @@ export default function MobileSellWizard() {
                   aspectRatio: '1',
                   borderRadius: '14px',
                   overflow: 'hidden',
-                  background: 'rgba(23,24,30,1)',
                 }}
-              >
+                className="bg-surface"              >
                 <img
                   src={url}
                   alt={`Photo ${idx + 1}`}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
                 <button
+                  className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/70 border-none flex items-center justify-center cursor-pointer"
                   aria-label={`Remove photo ${idx + 1}`}
                   onClick={() => handleRemovePhoto(idx)}
-                  style={{
-                    position: 'absolute',
-                    top: '6px',
-                    right: '6px',
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    background: 'rgba(0,0,0,0.70)',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                  }}
                 >
-                  <X style={{ width: '14px', height: '14px', color: 'rgba(255,255,255,1)' }} />
+                  <X className="text-foreground" style={{ width: '14px', height: '14px' }} />
                 </button>
               </div>
             ))}
@@ -520,7 +499,6 @@ export default function MobileSellWizard() {
                   aspectRatio: '1',
                   borderRadius: '14px',
                   border: `2px dashed ${fieldErrors.photos ? 'hsl(var(--danger))' : 'rgba(212,175,55,0.35)'}`,
-                  background: fieldErrors.photos ? 'rgba(248,113,113,0.04)' : 'rgba(212,175,55,0.04)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -529,6 +507,7 @@ export default function MobileSellWizard() {
                   cursor: photoUploading ? 'not-allowed' : 'pointer',
                   opacity: photoUploading ? 0.6 : 1,
                 }}
+                className={fieldErrors.photos ? 'bg-danger/[0.04]' : 'bg-primary/[0.04]'}
               >
                 {photoUploading ? (
                   <Loader2
@@ -541,8 +520,8 @@ export default function MobileSellWizard() {
                   />
                 ) : (
                   <>
-                    <Camera style={{ width: '24px', height: '24px', color: fieldErrors.photos ? 'rgba(248,113,113,1)' : 'rgba(212,175,55,1)' }} />
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: fieldErrors.photos ? 'rgba(248,113,113,1)' : 'rgba(212,175,55,1)' }}>
+                    <Camera className={fieldErrors.photos ? 'text-danger' : 'text-primary'} style={{ width: '24px', height: '24px' }} />
+                    <span className={fieldErrors.photos ? 'text-danger' : 'text-primary'} style={{ fontSize: '11px', fontWeight: 600 }}>
                       Add photo
                     </span>
                   </>
@@ -552,14 +531,13 @@ export default function MobileSellWizard() {
           </div>
 
           {fieldErrors.photos && (
-            <p style={{ fontSize: '12px', color: 'rgba(248,113,113,1)', margin: 0 }}>{fieldErrors.photos}</p>
+            <p className="text-danger" style={{ fontSize: '12px', margin: 0 }}>{fieldErrors.photos}</p>
           )}
           {photoError && (
             <p
+              className="text-danger bg-danger/[0.08]"
               style={{
                 fontSize: '13px',
-                color: 'rgba(248,113,113,1)',
-                background: 'rgba(248,113,113,0.08)',
                 border: '1px solid rgba(248,113,113,0.20)',
                 borderRadius: '10px',
                 padding: '10px 14px',
@@ -622,26 +600,25 @@ export default function MobileSellWizard() {
         >
           <button
             onClick={() => setMoreDetailsOpen((o) => !o)}
+            className="text-foreground bg-white/[0.03]"
             style={{
               width: '100%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '14px 16px',
-              background: 'rgba(255,255,255,0.03)',
               border: 'none',
               cursor: 'pointer',
-              color: 'rgba(255,255,255,1)',
               fontSize: '14px',
               fontWeight: 600,
             }}
           >
             <span>More details</span>
             <ChevronDown
+              className="text-foreground/50"
               style={{
                 width: '18px',
                 height: '18px',
-                color: 'rgba(255,255,255,0.50)',
                 transform: moreDetailsOpen ? 'rotate(180deg)' : 'none',
                 transition: 'transform 0.2s ease',
               }}
@@ -668,7 +645,7 @@ export default function MobileSellWizard() {
 
               {/* Category */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
+                <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
                   Category
                 </label>
                 <CategorySelector
@@ -681,18 +658,17 @@ export default function MobileSellWizard() {
 
               {/* Condition */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
+                <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
                   Condition
                 </label>
                 <select
                   value={form.condition}
                   onChange={(e) => setForm((p) => ({ ...p, condition: e.target.value }))}
+                  className={`bg-surface ${form.condition ? 'text-foreground' : 'text-foreground/40'}`}
                   style={{
                     width: '100%',
-                    background: 'rgba(23,24,30,1)',
                     border: '1px solid rgba(255,255,255,0.12)',
                     borderRadius: '14px',
-                    color: form.condition ? 'hsl(var(--foreground))' : 'rgba(255,255,255,0.40)',
                     fontSize: '15px',
                     padding: '14px 16px',
                     outline: 'none',
@@ -702,7 +678,7 @@ export default function MobileSellWizard() {
                   }}
                 >
                   {CONDITION_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value} style={{ background: 'rgba(23,24,30,1)', color: 'rgba(255,255,255,1)' }}>
+                    <option key={opt.value} value={opt.value} className="bg-surface text-foreground">
                       {opt.label}
                     </option>
                   ))}
@@ -715,10 +691,10 @@ export default function MobileSellWizard() {
 
       {/* ── Sticky CTA ── */}
       <div
+        className="bg-background/[0.97]"
         style={{
           position: 'sticky',
           bottom: 0,
-          background: 'rgba(7,8,11,0.97)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderTop: '1px solid rgba(255,255,255,0.07)',
@@ -728,32 +704,15 @@ export default function MobileSellWizard() {
         }}
       >
         {publishError && (
-          <p style={{ fontSize: '13px', color: 'rgba(248,113,113,1)', marginBottom: '10px', textAlign: 'center' }}>
+          <p className="text-danger" style={{ fontSize: '13px', marginBottom: '10px', textAlign: 'center' }}>
             {publishError}
           </p>
         )}
 
         <button
+          className={`text-base font-bold text-black flex items-center justify-center gap-2 w-full py-4 rounded-2xl border-none transition-colors ${busy ? 'bg-primary/40 cursor-not-allowed' : 'bg-primary cursor-pointer hover:bg-primary-hover'}`}
           onClick={handlePublish}
           disabled={busy}
-          style={{
-            width: '100%',
-            padding: '16px',
-            borderRadius: '16px',
-            background: busy
-              ? 'rgba(212,175,55,0.40)'
-              : 'hsl(var(--primary))',
-            border: 'none',
-            fontSize: '16px',
-            fontWeight: 700,
-            
-            cursor: busy ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            transition: 'background 0.2s',
-          }}
         >
           {publishing ? (
             <>

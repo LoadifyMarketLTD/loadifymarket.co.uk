@@ -126,9 +126,9 @@ export default function MobileNotificationsPage() {
           aria-label="Back"
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, marginLeft: -4 }}
         >
-          <ChevronLeft style={{ width: 22, height: 22, color: 'rgba(255,255,255,0.70)' }} />
+          <ChevronLeft className="text-foreground/70" style={{ width: 22, height: 22 }} />
         </button>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0 }}>Activity</h1>
+        <h1 className="text-xl font-extrabold text-foreground m-0">Activity</h1>
       </div>
 
       {/* Content */}
@@ -137,12 +137,8 @@ export default function MobileNotificationsPage() {
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              style={{
-                height: 56,
-                borderRadius: 12,
-                background: 'rgba(255,255,255,0.05)',
-                marginBottom: 8,
-              }}
+              className="bg-white/[0.05]"
+              style={{ height: 56, borderRadius: 12, marginBottom: 8 }}
             />
           ))}
         </div>
@@ -157,18 +153,18 @@ export default function MobileNotificationsPage() {
             textAlign: 'center',
           }}
         >
-          <Bell style={{ width: 36, height: 36, color: 'rgba(255,255,255,0.20)' }} aria-hidden="true" />
-          <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.40)', margin: 0 }}>
+          <Bell className="text-foreground/20" style={{ width: 36, height: 36 }} aria-hidden="true" />
+          <p className="text-[15px] font-semibold text-foreground/40 m-0">
             No notifications yet
           </p>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)', margin: 0, maxWidth: 240 }}>
+          <p className="text-[13px] text-foreground/25 m-0" style={{ maxWidth: 240 }}>
             Messages, orders, and offers will appear here.
           </p>
         </div>
       ) : (
         <div
+          className="bg-white/[0.04]"
           style={{
-            background: 'rgba(255,255,255,0.04)',
             borderTop: '1px solid rgba(255,255,255,0.06)',
             borderBottom: '1px solid rgba(255,255,255,0.06)',
           }}
@@ -177,6 +173,7 @@ export default function MobileNotificationsPage() {
             <div key={item.id}>
               <button
                 onClick={() => handleTap(item)}
+                className={item.isRead ? 'bg-transparent' : 'bg-primary/[0.04]'}
                 style={{
                   display: 'flex',
                   alignItems: 'flex-start',
@@ -184,7 +181,6 @@ export default function MobileNotificationsPage() {
                   paddingInline: 'var(--mob-side, 16px)',
                   paddingTop: 14,
                   paddingBottom: 14,
-                  background: item.isRead ? 'transparent' : 'rgba(212,175,55,0.04)',
                   border: 'none',
                   cursor: item.link ? 'pointer' : 'default',
                   textAlign: 'left',
@@ -192,17 +188,20 @@ export default function MobileNotificationsPage() {
                 }}
               >
                 {/* Unread dot */}
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: item.isRead ? 'transparent' : 'rgba(212,175,55,1)', flexShrink: 0, marginTop: 6 }} className={item.isRead ? '' : 'bg-primary'} />
+                <div
+                  className={item.isRead ? '' : 'bg-primary'}
+                  style={{ width: 8, height: 8, borderRadius: '50%', background: item.isRead ? 'transparent' : undefined, flexShrink: 0, marginTop: 6 }}
+                />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: 14, fontWeight: item.isRead ? 500 : 700, color: 'rgba(255,255,255,0.90)', margin: 0, lineHeight: 1.3 }}>
+                  <p className={`text-sm text-foreground/90 m-0 ${item.isRead ? 'font-medium' : 'font-bold'}`} style={{ lineHeight: 1.3 }}>
                     {item.title}
                   </p>
                   {item.message ? (
-                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: '3px 0 0', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                    <p className="text-[13px] text-muted-foreground" style={{ margin: '3px 0 0', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                       {item.message}
                     </p>
                   ) : null}
-                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', margin: '4px 0 0' }}>
+                  <p className="text-[11px] text-foreground/25" style={{ margin: '4px 0 0' }}>
                     {formatDate(item.createdAt)}
                   </p>
                 </div>
@@ -210,7 +209,8 @@ export default function MobileNotificationsPage() {
               {i < items.length - 1 && (
                 <div
                   aria-hidden="true"
-                  style={{ height: 1, background: 'rgba(255,255,255,0.05)', marginInlineStart: 'var(--mob-side, 16px)' }}
+                  className="bg-white/[0.05]"
+                  style={{ height: 1, marginInlineStart: 'var(--mob-side, 16px)' }}
                 />
               )}
             </div>

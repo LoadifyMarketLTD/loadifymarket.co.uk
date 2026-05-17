@@ -39,17 +39,13 @@ export default function SocialCard({ href, label, Icon, platform, size = 'defaul
       className={
         `social-card ${platform} group ` +
         `${sizeClass} inline-flex items-center justify-center rounded-full ` +
+        `bg-elevated ` +
         `border border-white/[0.07] ` +
         `shadow-[0_10px_24px_rgba(0,0,0,0.42),inset_0_1px_0_rgba(255,255,255,0.05)] ` +
         `transition-all duration-[280ms] ease-out ` +
         `hover:-translate-y-1 hover:scale-[1.04] ` +
         `hover:border-primary/40/[0.34]`
       }
-      style={{
-        background:
-          'radial-gradient(circle at 30% 20%, rgba(255,255,255,0.10), transparent 32%), ' +
-          'linear-gradient(145deg, rgba(17,24,39,0.98), rgba(2,6,23,0.98))',
-      }}
     >
       <Icon
         className={

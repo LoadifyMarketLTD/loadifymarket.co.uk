@@ -97,7 +97,7 @@ const Header = () => {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-40 bg-[linear-gradient(180deg,#121A2B,#0A0E1A)] border-b border-white/[0.06] shadow-[0_8px_25px_rgba(0,0,0,0.35)] hidden md:block"
+      className="fixed top-0 left-0 right-0 z-40 bg-surface border-b border-white/[0.06] shadow-[0_8px_25px_rgba(0,0,0,0.35)] hidden md:block"
       style={{ willChange: "transform", paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
 

@@ -64,10 +64,10 @@ export default function MobileAppHeader() {
           {/* Brand text */}
           <div className="flex flex-col leading-none" style={{ minWidth: 0, gap: 2 }}>
             <span
+              className="text-foreground"
               style={{
                 fontSize: 'clamp(14px, 4.2vw, 19px)',
                 fontWeight: 800,
-                color: 'rgba(255,255,255,1)',
                 letterSpacing: 'clamp(0.5px, 0.2vw, 1px)',
                 lineHeight: 1,
                 fontFamily: 'var(--font-display)',
@@ -146,10 +146,10 @@ export default function MobileAppHeader() {
         <button
           onClick={() => setSearchOpen(true)}
           aria-label="Search for items or members"
+          className="bg-white/[0.07]"
           style={{
             flex: 1,
             height: 44,
-            background: 'rgba(255,255,255,0.07)',
             border: '1px solid rgba(255,255,255,0.10)',
             borderRadius: 12,
             display: 'flex',
@@ -166,9 +166,9 @@ export default function MobileAppHeader() {
             aria-hidden="true"
           />
           <span
+            className="text-foreground/55"
             style={{
               fontSize: 14,
-              color: 'rgba(255,255,255,0.55)',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -187,17 +187,10 @@ export default function MobileAppHeader() {
         <button
           aria-label="Filter"
           onClick={() => navigate('/catalog')}
+          className="bg-primary/10 border border-primary/40 rounded-xl flex items-center justify-center shrink-0 cursor-pointer"
           style={{
             width: 44,
             height: 44,
-            background: 'rgba(28,20,0,1)',
-            border: '1px solid rgba(242,184,75,0.4)',
-            borderRadius: 12,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            cursor: 'pointer',
           }}
         >
           <Filter

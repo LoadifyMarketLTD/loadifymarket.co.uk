@@ -46,7 +46,7 @@ paths:
   /register:
     post:
       tags: [Auth]
-      summary: Register buyer/seller/admin user
+      summary: Register buyer or seller user
       requestBody:
         required: true
         content:
@@ -344,7 +344,8 @@ components:
         lastName: { type: string }
         role:
           type: string
-          enum: [buyer, seller, admin]
+          enum: [buyer, seller]
+          description: "Allowed values: buyer, seller. Admin accounts are created via internal tooling only."
         storeName:
           type: string
           description: Required when role is seller.

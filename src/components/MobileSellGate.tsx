@@ -29,14 +29,11 @@ function GuestSellScreen() {
     >
       {/* Icon */}
       <div
+        className="bg-primary/10 flex items-center justify-center"
         style={{
           width: 80,
           height: 80,
           borderRadius: '50%',
-          background: 'rgba(245,200,66,0.10)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
           fontSize: 36,
         }}
         aria-hidden="true"
@@ -84,6 +81,7 @@ function GuestSellScreen() {
         {/* Secondary CTA */}
         <Link
           to="/login"
+          className="text-foreground/80"
           style={{
             display: 'block',
             height: 50,
@@ -94,7 +92,6 @@ function GuestSellScreen() {
             border: '1.5px solid rgba(255,255,255,0.18)',
             fontSize: 15,
             fontWeight: 600,
-            color: 'rgba(255,255,255,0.80)',
             textDecoration: 'none',
           }}
         >
@@ -104,11 +101,11 @@ function GuestSellScreen() {
         {/* Tertiary: continue browsing */}
         <Link
           to="/"
+          className="text-foreground/35"
           style={{
             display: 'block',
             paddingTop: 8,
             fontSize: 14,
-            color: 'rgba(255,255,255,0.35)',
             textDecoration: 'none',
             textAlign: 'center',
           }}

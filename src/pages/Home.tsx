@@ -44,9 +44,9 @@ function SkeletonGridCard() {
         gap: 8,
       }}
     >
-      <div style={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 12, background: 'rgba(255,255,255,0.06)' }} />
-      <div style={{ height: 12, borderRadius: 6, background: 'rgba(255,255,255,0.06)', width: '80%' }} />
-      <div style={{ height: 14, borderRadius: 6, background: 'rgba(255,255,255,0.06)', width: '50%' }} />
+      <div className="rounded-xl animate-pulse flex flex-col gap-2 w-full aspect-square bg-white/[0.06]" />
+      <div className="h-3 rounded-md bg-white/[0.06] w-[80%]" />
+      <div className="h-3.5 rounded-md bg-white/[0.06] w-[50%]" />
     </div>
   );
 }
@@ -69,7 +69,7 @@ function MobileHome() {
   }, [loadMore]);
 
   return (
-    <div className="md:hidden min-h-screen" style={{ background: 'rgba(10,14,26,1)' }}>
+    <div className="md:hidden min-h-screen bg-background">
       {/* 1. App Header */}
       <MobileAppHeader />
 

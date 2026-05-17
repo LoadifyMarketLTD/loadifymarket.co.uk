@@ -32,11 +32,11 @@ function MobileProductCard({ product }: { product: Product }) {
     <Link
       to={`/product/${product.id}`}
       className="flex-shrink-0 w-[148px] snap-start rounded-2xl overflow-hidden active:scale-95 transition-transform"
-      style={{ backgroundColor: 'rgba(239,239,239,1)', textDecoration: 'none' }}
+      style={{ backgroundColor: '#EFEFEF', textDecoration: 'none' }}
       aria-label={product.title}
     >
       {/* Image */}
-      <div className="relative aspect-square overflow-hidden" style={{ backgroundColor: 'rgba(224,224,224,1)' }}>
+      <div className="relative aspect-square overflow-hidden" style={{ backgroundColor: '#E0E0E0' }}>
         <NativeImg
           src={product.image}
           alt={product.title}
@@ -71,11 +71,11 @@ function MobileListingCard({ product }: { product: Product }) {
     <Link
       to={`/product/${product.id}`}
       className="rounded-2xl overflow-hidden active:scale-95 transition-transform"
-      style={{ backgroundColor: 'rgba(239,239,239,1)', textDecoration: 'none' }}
+      style={{ backgroundColor: '#EFEFEF', textDecoration: 'none' }}
       aria-label={product.title}
     >
       {/* Image */}
-      <div className="relative aspect-[4/3] overflow-hidden" style={{ backgroundColor: 'rgba(224,224,224,1)' }}>
+      <div className="relative aspect-[4/3] overflow-hidden" style={{ backgroundColor: '#E0E0E0' }}>
         <NativeImg
           src={product.image}
           alt={product.title}

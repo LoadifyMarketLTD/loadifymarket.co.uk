@@ -689,8 +689,7 @@ const Signup = () => {
                   <button
                     type="submit"
                     disabled={loading || registrationDisabled}
-                    className="px-14 py-3 text-white text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full lg:min-w-[280px]"
-                    style={{ background: "linear-gradient(135deg, rgba(212,175,55,0.8), rgba(212,175,55,1))" }}
+                    className="px-14 py-3 text-black text-sm font-black uppercase tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full lg:min-w-[280px] bg-primary hover:bg-primary-hover"
                   >
                     {loading
                       ? "Submitting…"
