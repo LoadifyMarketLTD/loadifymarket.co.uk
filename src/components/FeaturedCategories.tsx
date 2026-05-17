@@ -108,7 +108,7 @@ const FeaturedCategories = () => (
             />
 
             {/* Bottom gradient + label */}
-            <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-2/5 bg-background/70" />
             <span className="absolute bottom-3 left-4 text-white text-base sm:text-lg font-bold drop-shadow-sm">
               {cat.label}
             </span>

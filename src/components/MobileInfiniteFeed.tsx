@@ -1,8 +1,8 @@
 /**
  * MobileInfiniteFeed — 2-column product grid with infinite scroll.
  *
- * Light card design matching the reference screenshot:
- *   - Off-white card (#EFEFEF), rounded-2xl
+ * Mobile card design for the dark design system:
+ *   - Surface card, rounded-2xl
  *   - Image fills top (square)
  *   - Below image: dark title, dark bold price, gold ★ + grey rating
  *   - Bottom row: seller initial avatar + seller name
@@ -25,64 +25,38 @@ function ProductGridCard({ product }: { product: Product }) {
   return (
     <Link
       to={`/product/${product.id}`}
-      className="block active:scale-95 transition-transform"
-      style={{
-        backgroundColor: 'rgba(239,239,239,1)',
-        borderRadius: '16px',
-        overflow: 'hidden',
-        textDecoration: 'none',
-      }}
+      className="block active:scale-95 transition-transform bg-surface rounded-2xl overflow-hidden no-underline"
       aria-label={product.title}
     >
       {/* ── Product image ──────────────────────────────────────────────── */}
-      <div
-        className="flex items-center justify-center overflow-hidden bg-border/40"
-        style={{ aspectRatio: '1 / 1' }}
-      >
+      <div className="flex items-center justify-center overflow-hidden bg-border/40 aspect-square">
         <NativeImg
           src={product.image}
           alt={product.title}
           loading="lazy"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          className="w-full h-full object-cover block"
           fallback={<ProductImagePlaceholder theme="light" />}
         />
       </div>
 
       {/* ── Card body ─────────────────────────────────────────────────── */}
-      <div style={{ padding: '10px 10px 10px 10px' }}>
+      <div className="p-2.5">
 
         {/* Title */}
-        <p
-          className="line-clamp-2"
-          style={{
-            fontSize: 'clamp(11px, 3vw, 13px)',
-            fontWeight: 600,
-            color: 'rgba(17,17,17,1)',
-            lineHeight: 1.35,
-            marginBottom: '4px',
-          }}
-        >
+        <p className="line-clamp-2 text-foreground leading-[1.35] text-[clamp(11px,3vw,13px)] font-semibold mb-1">
           {product.title}
         </p>
 
         {/* Price */}
-        <p
-          style={{
-            fontSize: 'clamp(13px, 3.8vw, 15px)',
-            fontWeight: 700,
-            color: 'rgba(17,17,17,1)',
-            lineHeight: 1,
-            marginBottom: product.rating > 0 ? '6px' : '0',
-          }}
-        >
+        <p className={`text-foreground leading-none text-[clamp(13px,3.8vw,15px)] font-bold ${product.rating > 0 ? 'mb-1.5' : 'mb-0'}`}>
           {formatPrice(product.price)}
         </p>
 
         {/* Star + rating */}
         {product.rating > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-            <Star style={{ width: '11px', height: '11px' }} className="text-primary fill-primary" aria-hidden="true" />
-            <span style={{ fontSize: 'clamp(9px, 2.5vw, 11px)', fontWeight: 500 }} className="text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Star className="w-[11px] h-[11px] text-primary fill-primary" aria-hidden="true" />
+            <span className="text-muted-foreground text-[clamp(9px,2.5vw,11px)] font-medium">
               {product.rating.toFixed(1)}
             </span>
           </div>
@@ -98,7 +72,7 @@ function SkeletonCard() {
   return (
     <div
       className="rounded-2xl animate-pulse bg-border/40"
-      style={{ aspectRatio: '3/4' }}
+      style={{ aspectRatio: '3 / 4' }}
       aria-hidden="true"
     />
   );
@@ -123,7 +97,7 @@ export default function MobileInfiniteFeed() {
 
   if (loading) {
     return (
-      <div style={{ padding: '12px var(--mob-side, 16px) 0' }}>
+      <div className="px-[var(--mob-side,16px)] pt-3">
         <div className="grid grid-cols-2 gap-3">
           {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
@@ -133,30 +107,11 @@ export default function MobileInfiniteFeed() {
 
   if (!products.length) {
     return (
-      <div
-        style={{
-          margin: '12px var(--mob-side, 16px) 0',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '40px 0',
-          backgroundColor: 'rgba(26,26,31,1)',
-          borderRadius: '16px',
-        }}
-      >
-        <p style={{ fontSize: '14px' }} className="text-white/75">No products listed yet</p>
+      <div className="mx-[var(--mob-side,16px)] mt-3 flex flex-col items-center gap-3 py-10 bg-surface rounded-2xl">
+        <p className="text-sm text-white/75">No products listed yet</p>
         <Link
           to="/catalog"
-          style={{
-            fontSize: '12px',
-            fontWeight: 600,
-            
-            border: '1px solid rgba(212,175,55,0.3)',
-            padding: '7px 18px',
-            borderRadius: '10px',
-            textDecoration: 'none',
-          }}
+          className="text-xs font-semibold border border-primary/30 px-[18px] py-[7px] rounded-[10px] no-underline text-primary hover:bg-primary/10 transition-colors"
         >
           Browse Marketplace
         </Link>
@@ -165,12 +120,7 @@ export default function MobileInfiniteFeed() {
   }
 
   return (
-    <div
-      style={{
-        padding: '12px var(--mob-side, 16px) 0',
-        paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px) + 16px)',
-      }}
-    >
+    <div className="px-[var(--mob-side,16px)] pt-3 pb-[calc(var(--mob-nav-h,68px)+env(safe-area-inset-bottom,0px)+16px)]">
       <div className="grid grid-cols-2 gap-3">
         {products.map((p: Product) => (
           <ProductGridCard key={p.id} product={p} />
@@ -178,17 +128,10 @@ export default function MobileInfiniteFeed() {
         {loadingMore && Array.from({ length: 2 }).map((_, i) => <SkeletonCard key={`more-${i}`} />)}
       </div>
 
-      <div ref={sentinelRef} aria-hidden="true" style={{ height: '1px', marginTop: '48px' }} />
+      <div ref={sentinelRef} aria-hidden="true" className="h-px mt-12" />
 
       {!hasMore && products.length > 0 && (
-        <p
-          style={{
-            textAlign: 'center',
-            fontSize: '11px',
-            color: 'rgba(255,255,255,0.55)',
-            paddingBottom: '16px',
-          }}
-        >
+        <p className="text-center text-[11px] text-white/55 pb-4">
           You've seen all listings
         </p>
       )}

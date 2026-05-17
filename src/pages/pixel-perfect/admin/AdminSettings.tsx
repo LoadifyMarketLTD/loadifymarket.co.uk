@@ -437,8 +437,7 @@ const AdminSettings = () => {
               <Button
                 size="sm"
                 variant="ghost"
-                className="shrink-0 h-9 px-3 text-xs"
-                style={{ background: "rgba(148,163,184,0.15)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+                className="shrink-0 h-9 px-3 text-xs bg-slate-400/15 border border-white/10 text-white hover:bg-slate-400/25"
                 onClick={handleCopyFeedUrl}
               >
                 {feedCopied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
@@ -477,7 +476,7 @@ const AdminSettings = () => {
               size="sm"
               onClick={handleClearCache}
               disabled={cacheCleared}
-              style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+              className="bg-slate-400/30 border border-white/10 text-white hover:bg-slate-400/40"
             >
               {cacheCleared
                 ? <><CheckCircle2 className="h-3.5 w-3.5 mr-1 text-success" /> Cleared</>
