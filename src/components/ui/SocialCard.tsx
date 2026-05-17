@@ -54,7 +54,7 @@ export default function SocialCard({ href, label, Icon, platform, size = 'defaul
       <Icon
         className={
           `relative z-10 ${iconSize} text-slate-400 ` +
-          `group-hover:text-[#D4AF37] group-hover:scale-110 ` +
+          `group-hover:text-primary group-hover:scale-110 ` +
           `transition-all duration-[280ms]`
         }
         style={{ filter: 'none' }}

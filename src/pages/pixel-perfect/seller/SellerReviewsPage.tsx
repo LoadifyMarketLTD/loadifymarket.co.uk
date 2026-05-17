@@ -32,10 +32,10 @@ interface Review {
 }
 
 const statusColor: Record<string, string> = {
-  published: "bg-emerald-500/15 text-emerald-700 border-emerald-200",
+  published: "bg-success/15 text-success border-success/40",
   hidden: "bg-primary/15 text-primary border-primary/40",
   flagged: "bg-orange-500/15 text-orange-700 border-orange-200",
-  removed: "bg-red-500/15 text-red-700 border-red-200",
+  removed: "bg-danger/100/15 text-danger border-danger/30",
 };
 
 const StarDisplay = ({ rating }: { rating: number }) => (
@@ -246,7 +246,7 @@ const SellerReviewsPage = () => {
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
                 <ThumbsUp className="h-5 w-5 text-emerald-600" />
               </div>
               <div>

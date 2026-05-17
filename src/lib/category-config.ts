@@ -115,7 +115,7 @@ const CATEGORY_CONFIG: readonly CategoryConfig[] = [
     subtitle: 'Garden tools, outdoor furniture, planters, BBQ equipment and garden décor for retail and trade',
     icon: Leaf,
     iconColor: 'text-green-500',
-    accentBg: 'bg-green-500/10',
+    accentBg: 'bg-success/10',
     chips: [
       { label: 'All Garden' },
       { label: 'Garden Tools',          subSlug: 'garden-tools',         searchTerm: 'garden spade fork hoe trowel rake pruner' },
@@ -345,7 +345,7 @@ const CATEGORY_CONFIG: readonly CategoryConfig[] = [
     subtitle: 'Cookware, bakeware, kitchen tools, storage containers, cutlery and small appliances',
     icon: ChefHat,
     iconColor: 'text-emerald-500',
-    accentBg: 'bg-emerald-500/10',
+    accentBg: 'bg-success/10',
     chips: [
       { label: 'All Kitchenware' },
       { label: 'Cookware',            subSlug: 'cookware',           searchTerm: 'cookware pan pot frying saucepan wok non-stick' },
@@ -512,7 +512,7 @@ const CATEGORY_CONFIG: readonly CategoryConfig[] = [
     subcategories: ['Christmas', 'Easter', 'Halloween', "Valentine's Day", 'Summer', 'Back to School', 'Spring', 'Diwali & Eid'],
     subtitle: 'Christmas, Easter, Halloween, Valentine\'s, summer ranges and all seasonal stock',
     icon: Calendar,
-    iconColor: 'text-red-400',
+    iconColor: 'text-danger',
     accentBg: 'bg-red-400/10',
     chips: [
       { label: 'All Seasonal' },

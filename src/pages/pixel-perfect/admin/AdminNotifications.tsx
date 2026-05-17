@@ -18,11 +18,11 @@ interface Notification {
 
 const typeColor: Record<string, string> = {
   order:            "bg-blue-500/10 text-blue-700",
-  seller_approved:  "bg-emerald-500/10 text-emerald-700",
-  seller_rejected:  "bg-red-500/10 text-red-700",
-  product_approved: "bg-emerald-500/10 text-emerald-700",
-  product_rejected: "bg-red-500/10 text-red-700",
-  dispute:          "bg-red-500/10 text-red-700",
+  seller_approved:  "bg-success/10 text-success",
+  seller_rejected:  "bg-danger/100/10 text-danger",
+  product_approved: "bg-success/10 text-success",
+  product_rejected: "bg-danger/100/10 text-danger",
+  dispute:          "bg-danger/100/10 text-danger",
   system:           "bg-muted text-muted-foreground",
   general:          "bg-muted text-muted-foreground",
 };

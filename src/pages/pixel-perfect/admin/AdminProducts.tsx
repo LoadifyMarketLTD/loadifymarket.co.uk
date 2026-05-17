@@ -238,7 +238,7 @@ const AdminProducts = () => {
                   variant="outline"
                   className={
                     p.isActive
-                      ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
+                      ? "border-emerald-500/30 text-success bg-success/10"
                       : "border-slate-200 text-slate-400"
                   }
                 >
@@ -250,7 +250,7 @@ const AdminProducts = () => {
                   variant="outline"
                   className={
                     p.isApproved
-                      ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
+                      ? "border-emerald-500/30 text-success bg-success/10"
                       : "border-primary/40 text-primary bg-primary/10"
                   }
                 >
@@ -323,7 +323,7 @@ const AdminProducts = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           className="pl-9 h-10"
-          style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", color: "#ffffff" }}
+          style={{ border: "1px solid rgba(255,255,255,0.05)", color: "#ffffff" }}
           />
         </div>
       </div>
@@ -336,7 +336,7 @@ const AdminProducts = () => {
         </TabsList>
         {(["all", "active", "inactive"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(tab === "all" ? filtered : tab === "active" ? activeProducts : inactiveProducts)}
               </div>

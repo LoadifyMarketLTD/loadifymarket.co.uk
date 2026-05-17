@@ -21,7 +21,7 @@ import { authorizedFetch } from "@/lib/authorizedFetch";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   pending: { label: "New", className: "bg-blue-500/10 text-blue-700" },
-  replied: { label: "Replied", className: "bg-emerald-500/10 text-emerald-700" },
+  replied: { label: "Replied", className: "bg-success/10 text-success" },
 };
 
 function formatDate(dateStr: string): string {
@@ -225,7 +225,7 @@ const SellerRFQ = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "New Requests", count: pending.length, icon: MessageSquare, color: "text-blue-600 bg-blue-500/10" },
-          { label: "You Replied", count: replied.length, icon: CheckCircle2, color: "text-emerald-600 bg-emerald-500/10" },
+          { label: "You Replied", count: replied.length, icon: CheckCircle2, color: "text-emerald-600 bg-success/10" },
           { label: "Total", count: filtered.length, icon: FileText, color: "text-muted-foreground bg-muted" },
           { label: "This Month", count: filtered.filter((q) => new Date(q.created_at).getMonth() === new Date().getMonth()).length, icon: Clock, color: "text-primary bg-primary/10" },
         ].map((stat) => (
@@ -306,8 +306,8 @@ const SellerRFQ = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3">
-                    <p className="text-xs font-semibold text-emerald-700 mb-1">YOU HAVE REPLIED</p>
+                  <div className="rounded-lg bg-emerald-50 border border-success/40 p-3">
+                    <p className="text-xs font-semibold text-success mb-1">YOU HAVE REPLIED</p>
                     <p className="text-sm text-muted-foreground">Your reply to this request has been recorded. The buyer was contacted via email.</p>
                   </div>
                 )}

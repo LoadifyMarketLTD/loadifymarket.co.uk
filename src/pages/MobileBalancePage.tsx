@@ -40,9 +40,8 @@ export default function MobileBalancePage() {
 
   return (
     <div
-      className="md:hidden min-h-screen"
+      className="md:hidden min-h-screen bg-background"
       style={{
-        background: '#0A0E1A',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
@@ -56,7 +55,7 @@ export default function MobileBalancePage() {
         >
           <ChevronLeft style={{ width: 22, height: 22, color: 'rgba(255,255,255,0.70)' }} />
         </button>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', margin: 0 }}>Balance</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0 }}>Balance</h1>
       </div>
 
       {/* Balance card */}
@@ -73,7 +72,7 @@ export default function MobileBalancePage() {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Wallet style={{ width: 20, height: 20, color: '#F2B84B', flexShrink: 0 }} aria-hidden="true" />
+            <Wallet style={{ width: 20, height: 20, flexShrink: 0 }} aria-hidden="true" />
             <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.45)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Available balance
             </p>
@@ -82,7 +81,7 @@ export default function MobileBalancePage() {
           {loading ? (
             <div style={{ height: 40, width: 120, borderRadius: 8, background: 'rgba(255,255,255,0.06)' }} />
           ) : isSeller ? (
-            <p style={{ fontSize: 'clamp(28px, 8vw, 36px)', fontWeight: 800, color: '#FFFFFF', margin: 0, letterSpacing: '-0.02em' }}>
+            <p style={{ fontSize: 'clamp(28px, 8vw, 36px)', fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0, letterSpacing: '-0.02em' }}>
               {formatBalance(balance ?? 0)}
             </p>
           ) : (

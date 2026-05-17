@@ -20,7 +20,7 @@ export default function MobilePromotionalToolsPage() {
     <div
       className="md:hidden min-h-screen"
       style={{
-        background: '#0A0E1A',
+        background: 'rgba(10,14,26,1)',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
@@ -43,7 +43,7 @@ export default function MobilePromotionalToolsPage() {
         >
           <ChevronLeft style={{ width: 22, height: 22, color: 'rgba(255,255,255,0.70)' }} />
         </button>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', margin: 0 }}>Promotional Tools</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0 }}>Promotional Tools</h1>
       </div>
 
       {/* Body */}
@@ -69,12 +69,12 @@ export default function MobilePromotionalToolsPage() {
             justifyContent: 'center',
           }}
         >
-          <Megaphone style={{ width: 28, height: 28, color: '#F2B84B' }} aria-hidden="true" />
+          <Megaphone style={{ width: 28, height: 28 }} aria-hidden="true" />
         </div>
 
         {isSeller ? (
           <>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'rgba(255,255,255,1)', margin: 0 }}>
               Promotional Tools
             </h2>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.50)', margin: 0, maxWidth: 280, lineHeight: 1.5 }}>
@@ -101,12 +101,12 @@ export default function MobilePromotionalToolsPage() {
                 height: 44,
                 paddingInline: 28,
                 borderRadius: 9999,
-                background: 'linear-gradient(135deg, #D4AF37 0%, #D4AF37 100%)',
+                
                 border: 'none',
                 cursor: 'pointer',
                 fontSize: 14,
                 fontWeight: 700,
-                color: '#121A2B',
+                
                 marginTop: 8,
               }}
             >
@@ -115,7 +115,7 @@ export default function MobilePromotionalToolsPage() {
           </>
         ) : (
           <>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'rgba(255,255,255,1)', margin: 0 }}>
               Seller feature
             </h2>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.50)', margin: 0, maxWidth: 280, lineHeight: 1.5 }}>

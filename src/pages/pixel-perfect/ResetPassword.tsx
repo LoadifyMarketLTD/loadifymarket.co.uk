@@ -92,7 +92,7 @@ const ResetPassword = () => {
   const headerHeight = "calc(var(--header-h, 6.875rem) + env(safe-area-inset-top, 0px))";
 
   return (
-    <div className="flex bg-[#0A0E1A]" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
+    <div className="flex bg-background" style={{ minHeight: `calc(100vh - ${headerHeight})`, marginTop: headerHeight }}>
       {/* Left — hero image (desktop only) */}
       <div className="hidden lg:flex lg:w-[65%] xl:w-[67%] relative overflow-hidden">
         <img
@@ -104,14 +104,14 @@ const ResetPassword = () => {
       </div>
 
       {/* Right — form panel */}
-      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col bg-[#0A0E1A]" style={{ minHeight: `calc(100vh - ${headerHeight})` }}>
+      <div className="flex-1 lg:w-[35%] xl:w-[33%] flex flex-col bg-background" style={{ minHeight: `calc(100vh - ${headerHeight})` }}>
         <div className="flex-1 flex items-center justify-center px-4 py-8 sm:px-8">
           <div className="w-full">
-            <div className="rounded-2xl p-7 sm:p-8 space-y-6" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="rounded-2xl p-7 sm:p-8 space-y-6" style={{ border: "1px solid rgba(255,255,255,0.08)" }}>
 
               {sessionChecking ? (
                 <div className="flex items-center justify-center py-16">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#D4AF37]"></div>
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
                 </div>
               ) : !submitted ? (
                 <>
@@ -129,7 +129,7 @@ const ResetPassword = () => {
                           id="password"
                           type={showPassword ? "text" : "password"}
                           placeholder="••••••••"
-                          className="h-11 pl-10 pr-10 bg-[#182235] border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-[#D4AF37]/25 focus-visible:border-[#D4AF37]"
+                          className="h-11 pl-10 pr-10 bg-elevated border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-primary/25 focus-visible:border-primary"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           required
@@ -152,7 +152,7 @@ const ResetPassword = () => {
                           id="confirm-password"
                           type={showConfirm ? "text" : "password"}
                           placeholder="••••••••"
-                          className="h-11 pl-10 pr-10 bg-[#182235] border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-[#D4AF37]/25 focus-visible:border-[#D4AF37]"
+                          className="h-11 pl-10 pr-10 bg-elevated border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-primary/25 focus-visible:border-primary"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           required
@@ -168,7 +168,7 @@ const ResetPassword = () => {
                     </div>
 
                     {error && (
-                      <p className="text-sm text-red-400">{error}</p>
+                      <p className="text-sm text-danger">{error}</p>
                     )}
 
                     <Button type="submit" disabled={loading || !hasSession} className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
@@ -179,8 +179,8 @@ const ResetPassword = () => {
               ) : (
                 <div className="space-y-4 text-center py-2">
                   <div className="flex justify-center">
-                    <div className="h-16 w-16 rounded-full bg-[#D4AF37]/10 flex items-center justify-center">
-                      <CheckCircle2 className="h-8 w-8 text-[#D4AF37]" />
+                    <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                      <CheckCircle2 className="h-8 w-8 text-primary" />
                     </div>
                   </div>
                   <h1 className="text-[22px] font-bold text-white leading-tight" style={{ letterSpacing: "-0.02em" }}>Password updated</h1>

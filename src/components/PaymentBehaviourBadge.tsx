@@ -30,7 +30,7 @@ export default function PaymentBehaviourBadge({
         return {
           icon: CheckCircle,
           label: 'Pays on time',
-          className: 'bg-green-500/20 border border-green-500/40 text-green-300',
+          className: 'bg-success/100/20 border border-green-500/40 text-success',
           title: 'This seller typically pays on time',
         };
       case 'sometimes_late':
@@ -44,7 +44,7 @@ export default function PaymentBehaviourBadge({
         return {
           icon: AlertTriangle,
           label: 'Repeated delays',
-          className: 'bg-red-500/20 border border-red-500/40 text-red-300',
+          className: 'bg-danger/100/20 border border-red-500/40 text-red-300',
           title: 'This seller has repeated payment delays',
         };
       default:

@@ -35,7 +35,7 @@ interface BuyerOrder {
 const statusConfig: Record<string, { label: string; className: string }> = {
   open:      { label: "Open",      className: "border-primary/40 text-primary bg-primary-soft" },
   in_review: { label: "In Review", className: "border-blue-500/30 text-blue-600 bg-blue-50" },
-  resolved:  { label: "Resolved",  className: "border-emerald-500/30 text-emerald-700 bg-emerald-50" },
+  resolved:  { label: "Resolved",  className: "border-emerald-500/30 text-success bg-emerald-50" },
   closed:    { label: "Closed",    className: "border-slate-300 text-slate-500 bg-transparent" },
 };
 
@@ -286,7 +286,7 @@ const BuyerDisputes = () => {
               {selected.resolution && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Resolution</p>
-                  <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800">
+                  <div className="rounded-lg bg-emerald-50 border border-success/40 p-3 text-sm text-emerald-800">
                     {selected.resolution}
                     {selected.resolutionType && (
                       <p className="text-xs text-emerald-600 mt-1 capitalize">

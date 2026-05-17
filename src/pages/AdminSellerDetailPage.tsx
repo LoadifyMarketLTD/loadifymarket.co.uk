@@ -204,7 +204,7 @@ export default function AdminSellerDetailPage() {
         <main className="flex-1 pt-4 md:pt-28">
           <div className="container mx-auto px-4 py-8">
             <div className="card text-center py-12">
-              <p className="text-red-600">Access Denied: Admin only</p>
+              <p className="text-danger">Access Denied: Admin only</p>
             </div>
           </div>
         </main>
@@ -277,7 +277,7 @@ export default function AdminSellerDetailPage() {
                   Seller account active
                 </span>
               ) : (profile.sellerStatus === 'suspended') ? (
-                <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+                <span className="inline-flex items-center gap-1 bg-red-100 text-danger text-xs px-2 py-1 rounded">
                   <Ban className="w-3 h-3" />
                   Seller account suspended
                 </span>
@@ -288,7 +288,7 @@ export default function AdminSellerDetailPage() {
                 </span>
               )}
               {!sellerUser.isActive && (
-                <span className="inline-flex items-center gap-1 bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+                <span className="inline-flex items-center gap-1 bg-red-100 text-danger text-xs px-2 py-1 rounded">
                   <Ban className="w-3 h-3" />
                   Blocked
                 </span>
@@ -362,7 +362,7 @@ export default function AdminSellerDetailPage() {
           {/* Resend status toast */}
           {resendStatus !== 'idle' && resendStatus !== 'sending' && (
             <div className={`mt-2 text-sm px-3 py-2 rounded flex items-center gap-2 ${
-              resendStatus === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              resendStatus === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-danger'
             }`}>
               {resendStatus === 'success' ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
               {resendMessage}
@@ -413,7 +413,7 @@ export default function AdminSellerDetailPage() {
                     {sellerUser.isActive ? (
                       <span className="text-green-700 font-medium">Active</span>
                     ) : (
-                      <span className="text-red-700 font-medium">Blocked</span>
+                      <span className="text-danger font-medium">Blocked</span>
                     )}
                   </dd>
                 </div>
@@ -546,7 +546,7 @@ export default function AdminSellerDetailPage() {
                       {store.isActive ? (
                         <span className="text-green-700 font-medium">Yes</span>
                       ) : (
-                        <span className="text-red-700 font-medium">No</span>
+                        <span className="text-danger font-medium">No</span>
                       )}
                     </dd>
                   </div>

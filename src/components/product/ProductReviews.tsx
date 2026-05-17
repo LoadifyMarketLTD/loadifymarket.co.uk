@@ -353,7 +353,7 @@ const ProductReviews = ({ productId, productRating, reviewCount }: ProductReview
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-foreground">{authorName}</span>
                         {review.isVerifiedPurchase && (
-                          <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-700 border-emerald-200">
+                          <Badge variant="outline" className="text-[10px] bg-success/10 text-success border-success/40">
                             Confirmed Purchase
                           </Badge>
                         )}

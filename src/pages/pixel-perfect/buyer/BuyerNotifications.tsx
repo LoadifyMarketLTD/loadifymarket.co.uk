@@ -9,11 +9,11 @@ import type { AppNotification } from "@/types";
 
 const typeColor: Record<string, string> = {
   order:    "bg-blue-500/10 text-blue-700",
-  payment:  "bg-emerald-500/10 text-emerald-700",
+  payment:  "bg-success/10 text-success",
   shipment: "bg-indigo-500/10 text-indigo-700",
-  delivery: "bg-emerald-500/10 text-emerald-700",
+  delivery: "bg-success/10 text-success",
   return:   "bg-primary/10 text-primary",
-  dispute:  "bg-red-500/10 text-red-700",
+  dispute:  "bg-danger/100/10 text-danger",
   system:   "bg-muted text-muted-foreground",
   general:  "bg-muted text-muted-foreground",
 };

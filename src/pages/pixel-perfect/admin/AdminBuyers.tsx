@@ -35,8 +35,8 @@ interface BuyerDetail extends Buyer {
 }
 
 const statusConfig = {
-  active:   { label: "Active",    className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
-  inactive: { label: "Suspended", className: "border-red-500/30 text-red-400 bg-red-500/10" },
+  active:   { label: "Active",    className: "border-emerald-500/30 text-success bg-success/10" },
+  inactive: { label: "Suspended", className: "border-danger/30 text-danger bg-danger/100/10" },
 };
 
 const DetailRow = ({ label, children }: { label: string; children: React.ReactNode }) => (
@@ -51,7 +51,7 @@ const StatCard = ({
 }: { icon: React.ReactNode; label: string; value: number; color: string }) => (
   <div
     className="rounded-xl p-4 flex flex-col gap-1"
-    style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}
+    style={{ border: "1px solid rgba(255,255,255,0.05)" }}
   >
     <div className="flex items-center gap-2 mb-1" style={{ color }}>
       {icon}
@@ -201,8 +201,8 @@ const AdminBuyers = () => {
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {[
           { label: "Total Buyers", count: buyers.length, color: "#60A5FA", bg: "rgba(96,165,250,0.12)", filter: "all" as const },
-          { label: "Active",       count: active.length, color: "#D4AF37", bg: "rgba(251,191,36,0.12)",  filter: "active" as const },
-          { label: "Suspended",   count: suspended.length, color: "#F87171", bg: "rgba(248,113,113,0.12)", filter: "suspended" as const },
+          { label: "Active",       count: active.length, color: "rgba(212,175,55,1)", bg: "rgba(212,175,55,0.12)",  filter: "active" as const },
+          { label: "Suspended",   count: suspended.length, color: "rgba(248,113,113,1)", bg: "rgba(248,113,113,0.12)", filter: "suspended" as const },
         ].map((stat) => (
           <button
             key={stat.label}
@@ -210,7 +210,7 @@ const AdminBuyers = () => {
             onClick={() => setStatusFilter(stat.filter)}
             className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             style={{
-              background: "linear-gradient(145deg, #121A2B, #182235)",
+              
               border: statusFilter === stat.filter ? `2px solid ${stat.color}` : "1px solid rgba(255,255,255,0.05)",
               boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
             }}
@@ -235,14 +235,14 @@ const AdminBuyers = () => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9 h-10"
-          style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", color: "#ffffff" }}
+          style={{ border: "1px solid rgba(255,255,255,0.05)", color: "#ffffff" }}
         />
       </div>
 
       {/* Table */}
       <div
         className="rounded-2xl overflow-hidden"
-        style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
+        style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
       >
         <div className="px-2 py-2 overflow-x-auto">
           <Table>
@@ -390,7 +390,7 @@ const AdminBuyers = () => {
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Activity</h3>
                   <div className="grid grid-cols-3 gap-3">
                     <StatCard icon={<ShoppingBag className="h-4 w-4" />} label="Orders" value={detail.ordersCount} color="#60A5FA" />
-                    <StatCard icon={<Package className="h-4 w-4" />} label="Wishlist" value={detail.wishlistCount} color="#A78BFA" />
+                    <StatCard icon={<Package className="h-4 w-4" />} label="Wishlist" value={detail.wishlistCount} color="rgba(124,58,237,1)" />
                     <StatCard icon={<Flag className="h-4 w-4" />} label="Reports Filed" value={detail.reportsCount} color="#F87171" />
                   </div>
                 </section>

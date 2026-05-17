@@ -27,7 +27,7 @@ function ProductGridCard({ product }: { product: Product }) {
       to={`/product/${product.id}`}
       className="block active:scale-95 transition-transform"
       style={{
-        backgroundColor: '#EFEFEF',
+        backgroundColor: 'rgba(239,239,239,1)',
         borderRadius: '16px',
         overflow: 'hidden',
         textDecoration: 'none',
@@ -36,8 +36,8 @@ function ProductGridCard({ product }: { product: Product }) {
     >
       {/* ── Product image ──────────────────────────────────────────────── */}
       <div
-        className="flex items-center justify-center overflow-hidden"
-        style={{ aspectRatio: '1 / 1', backgroundColor: '#E0E0E0' }}
+        className="flex items-center justify-center overflow-hidden bg-border/40"
+        style={{ aspectRatio: '1 / 1' }}
       >
         <NativeImg
           src={product.image}
@@ -57,7 +57,7 @@ function ProductGridCard({ product }: { product: Product }) {
           style={{
             fontSize: 'clamp(11px, 3vw, 13px)',
             fontWeight: 600,
-            color: '#111111',
+            color: 'rgba(17,17,17,1)',
             lineHeight: 1.35,
             marginBottom: '4px',
           }}
@@ -70,7 +70,7 @@ function ProductGridCard({ product }: { product: Product }) {
           style={{
             fontSize: 'clamp(13px, 3.8vw, 15px)',
             fontWeight: 700,
-            color: '#111111',
+            color: 'rgba(17,17,17,1)',
             lineHeight: 1,
             marginBottom: product.rating > 0 ? '6px' : '0',
           }}
@@ -81,8 +81,8 @@ function ProductGridCard({ product }: { product: Product }) {
         {/* Star + rating */}
         {product.rating > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-            <Star style={{ width: '11px', height: '11px', color: '#D4AF37', fill: '#D4AF37' }} aria-hidden="true" />
-            <span style={{ fontSize: 'clamp(9px, 2.5vw, 11px)', fontWeight: 500, color: '#555555' }}>
+            <Star style={{ width: '11px', height: '11px' }} className="text-primary fill-primary" aria-hidden="true" />
+            <span style={{ fontSize: 'clamp(9px, 2.5vw, 11px)', fontWeight: 500 }} className="text-muted-foreground">
               {product.rating.toFixed(1)}
             </span>
           </div>
@@ -97,8 +97,8 @@ function ProductGridCard({ product }: { product: Product }) {
 function SkeletonCard() {
   return (
     <div
-      className="rounded-2xl animate-pulse"
-      style={{ backgroundColor: '#E0E0E0', aspectRatio: '3/4' }}
+      className="rounded-2xl animate-pulse bg-border/40"
+      style={{ aspectRatio: '3/4' }}
       aria-hidden="true"
     />
   );
@@ -141,7 +141,7 @@ export default function MobileInfiniteFeed() {
           alignItems: 'center',
           gap: '12px',
           padding: '40px 0',
-          backgroundColor: '#1A1A1F',
+          backgroundColor: 'rgba(26,26,31,1)',
           borderRadius: '16px',
         }}
       >
@@ -151,8 +151,8 @@ export default function MobileInfiniteFeed() {
           style={{
             fontSize: '12px',
             fontWeight: 600,
-            color: '#D4AF37',
-            border: '1px solid rgba(245,185,66,0.3)',
+            
+            border: '1px solid rgba(212,175,55,0.3)',
             padding: '7px 18px',
             borderRadius: '10px',
             textDecoration: 'none',

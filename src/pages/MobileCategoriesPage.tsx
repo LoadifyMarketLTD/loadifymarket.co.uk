@@ -70,7 +70,7 @@ export default function MobileCategoriesPage() {
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: '#0A0E1A' }}
+      style={{ background: 'rgba(10,14,26,1)' }}
     >
       {/* ── Sticky header ── */}
       <div
@@ -114,8 +114,7 @@ export default function MobileCategoriesPage() {
           }}
         >
           <LayoutGrid
-            className="h-[22px] w-[22px] shrink-0"
-            style={{ color: '#F2B84B' }}
+            className="h-[22px] w-[22px] shrink-0 text-primary"
             aria-hidden="true"
           />
           <span className="flex-1 ml-3 text-[16px] font-medium text-white">
@@ -157,8 +156,7 @@ export default function MobileCategoriesPage() {
                 }}
               >
                 <Icon
-                  className="h-[22px] w-[22px] shrink-0"
-                  style={{ color: '#F2B84B' }}
+                  className="h-[22px] w-[22px] shrink-0 text-primary"
                   aria-hidden="true"
                 />
                 <span className="flex-1 ml-3 text-[16px] font-medium text-white">

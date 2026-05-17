@@ -37,7 +37,7 @@ export default function RoleBadge({ role, size = 'sm' }: RoleBadgeProps) {
         return {
           icon: Package,
           label: 'Seller',
-          className: 'bg-green-500/20 border border-green-500/40 text-green-300',
+          className: 'bg-success/100/20 border border-green-500/40 text-success',
         };
       default:
         return null;

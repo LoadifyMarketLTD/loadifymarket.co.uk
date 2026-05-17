@@ -44,14 +44,14 @@ const TrustStrip = () => (
           /* shape — mobile: 16px radius; desktop: 2xl */
           "rounded-2xl",
           /* background — mobile: #12121A solid; desktop: gradient */
-          "bg-[#12121A] sm:bg-[linear-gradient(145deg,#182235,#0A0E1A)]",
+          "bg-surface sm:bg-elevated",
           /* border — mobile: faint white; desktop: same then hover changes it */
           "border border-white/[0.07] sm:border-white/5",
           /* padding — mobile: 14px; desktop: px-5 py-4 */
           "p-[14px] sm:px-5 sm:py-4",
           /* desktop hover */
           "transition-all duration-300",
-          "sm:hover:-translate-y-1 sm:hover:shadow-[0_0_25px_rgba(251,191,36,0.15)] sm:hover:border-primary/40",
+          "sm:hover:-translate-y-1 sm:hover:shadow-[0_0_25px_rgba(212,175,55,0.15)] sm:hover:border-primary/40",
         ].join(" ")}
       >
         <span className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0 overflow-hidden">
@@ -59,8 +59,8 @@ const TrustStrip = () => (
             ? <UKFlag />
             : Icon && (
                 <Icon
-                  className="h-[18px] w-[18px] sm:h-6 sm:w-6 text-[#D4AF37] sm:text-[#D4AF37]"
-                  style={{ filter: 'drop-shadow(0 0 6px rgba(245,185,66,0.4))' }}
+                  className="h-[18px] w-[18px] sm:h-6 sm:w-6 text-primary sm:text-primary"
+                  style={{ filter: 'drop-shadow(0 0 6px rgba(212,175,55,0.4))' }}
                   aria-hidden="true"
                 />
               )
@@ -68,7 +68,7 @@ const TrustStrip = () => (
         </span>
         <div className="min-w-0">
           <p className="text-[13px] sm:text-sm font-semibold text-white leading-tight">{label}</p>
-          <p className="text-[11px] sm:text-xs text-[#A0A0A0] sm:text-slate-400 leading-tight mt-0.5">{sub}</p>
+          <p className="text-[11px] sm:text-xs text-muted-foreground sm:text-slate-400 leading-tight mt-0.5">{sub}</p>
         </div>
       </div>
     ))}

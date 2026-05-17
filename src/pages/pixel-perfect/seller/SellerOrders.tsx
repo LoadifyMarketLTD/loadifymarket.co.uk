@@ -30,8 +30,8 @@ const statusColors: Record<string, string> = {
   packed: "bg-primary/10 text-primary",
   shipped: "bg-purple-500/10 text-purple-700",
   delivered: "bg-orange-500/10 text-orange-700",
-  completed: "bg-emerald-500/10 text-emerald-700",
-  cancelled: "bg-red-500/10 text-red-700",
+  completed: "bg-success/10 text-success",
+  cancelled: "bg-danger/100/10 text-danger",
   refunded: "bg-muted text-muted-foreground",
   invoice_requested: "bg-blue-500/10 text-blue-700",
 };

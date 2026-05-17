@@ -27,8 +27,8 @@ function LMPlaceholder({ size = 48 }: { size?: number }) {
       aria-hidden="true"
       style={{ borderRadius: '8px', display: 'block', flexShrink: 0 }}
     >
-      <rect width="48" height="48" rx="8" fill="#12121A" />
-      <rect width="48" height="48" rx="8" fill="none" stroke="rgba(245,185,66,0.18)" strokeWidth="1" />
+      <rect width="48" height="48" rx="8" fill="rgba(18,18,26,1)" />
+      <rect width="48" height="48" rx="8" fill="none" stroke="rgba(212,175,55,0.18)" strokeWidth="1" />
       {/* Stylised "L" */}
       <text
         x="10"
@@ -36,7 +36,7 @@ function LMPlaceholder({ size = 48 }: { size?: number }) {
         fontFamily="'Arial Black','Impact',sans-serif"
         fontSize="22"
         fontWeight="900"
-        fill="#D4AF37"
+        fill="rgba(212,175,55,1)"
         opacity="0.85"
       >L</text>
       {/* Stylised "M" */}
@@ -46,7 +46,7 @@ function LMPlaceholder({ size = 48 }: { size?: number }) {
         fontFamily="'Arial Black','Impact',sans-serif"
         fontSize="22"
         fontWeight="900"
-        fill="#D4AF37"
+        fill="rgba(212,175,55,1)"
         opacity="0.55"
       >M</text>
     </svg>
@@ -68,9 +68,9 @@ interface Product {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  active: { label: "Active", className: "bg-emerald-500/10 text-emerald-700" },
+  active: { label: "Active", className: "bg-success/10 text-success" },
   pending_review: { label: "Pending Review", className: "bg-primary/10 text-primary" },
-  out_of_stock: { label: "Out of Stock", className: "bg-red-500/10 text-red-700" },
+  out_of_stock: { label: "Out of Stock", className: "bg-danger/100/10 text-danger" },
   low_stock: { label: "Low Stock", className: "bg-primary/10 text-primary" },
   draft: { label: "Draft", className: "bg-muted text-muted-foreground" },
 };

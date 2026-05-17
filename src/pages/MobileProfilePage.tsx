@@ -90,8 +90,8 @@ function MenuRow({ label, to, external, badgeCount }: SectionItem) {
               minWidth: 20,
               height: 20,
               borderRadius: 999,
-              background: '#F2B84B',
-              color: '#0A0E1A',
+              background: 'rgba(212,175,55,1)',
+              color: 'rgba(10,14,26,1)',
               fontSize: 11,
               fontWeight: 700,
               display: 'inline-flex',
@@ -193,7 +193,7 @@ function GuestView() {
       >
         <User style={{ width: 32, height: 32, color: 'rgba(255,255,255,0.40)' }} aria-hidden="true" />
       </div>
-      <h2 style={{ fontSize: 20, fontWeight: 700, color: '#FFFFFF', margin: 0 }}>
+      <h2 style={{ fontSize: 20, fontWeight: 700, color: 'rgba(255,255,255,1)', margin: 0 }}>
         Sign in to your account
       </h2>
       <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.50)', margin: 0, maxWidth: 280 }}>
@@ -205,12 +205,12 @@ function GuestView() {
           height: 48,
           paddingInline: 40,
           borderRadius: 9999,
-          background: 'linear-gradient(135deg, #D4AF37 0%, #D4AF37 100%)',
+          background: 'linear-gradient(135deg, rgba(212,175,55,1) 0%, rgba(212,175,55,1) 100%)',
           border: 'none',
           cursor: 'pointer',
           fontSize: 15,
           fontWeight: 700,
-          color: '#121A2B',
+          color: 'rgba(18,26,43,1)',
           marginTop: 8,
         }}
       >
@@ -260,9 +260,8 @@ export default function MobileProfilePage() {
 
   return (
     <div
-      className="md:hidden min-h-screen"
+      className="md:hidden min-h-screen bg-background"
       style={{
-        background: '#0A0E1A',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
@@ -275,7 +274,7 @@ export default function MobileProfilePage() {
           paddingBottom: 8,
         }}
       >
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF', margin: 0 }}>Profile</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0 }}>Profile</h1>
       </div>
 
       {!user ? (
@@ -299,26 +298,27 @@ export default function MobileProfilePage() {
                 width: 60,
                 height: 60,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #D4AF37 0%, #D4AF37 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0,
               }}
+              className="bg-primary"
             >
-              <span style={{ fontSize: 22, fontWeight: 700, color: '#121A2B' }}>
+              <span style={{ fontSize: 22, fontWeight: 700 }} className="text-surface">
                 {initials}
               </span>
             </div>
 
             {/* Name + listings link */}
             <div style={{ minWidth: 0 }}>
-              <p style={{ fontSize: 18, fontWeight: 700, color: '#FFFFFF', margin: 0, lineHeight: 1.2 }}>
+              <p style={{ fontSize: 18, fontWeight: 700, color: 'rgba(255,255,255,1)', margin: 0, lineHeight: 1.2 }}>
                 {displayName}
               </p>
               <Link
                 to={user.role === 'seller' || user.role === 'admin' ? '/seller/products' : '/catalog'}
-                style={{ fontSize: 13, color: '#F2B84B', textDecoration: 'none', fontWeight: 600 }}
+                style={{ fontSize: 13, textDecoration: 'none', fontWeight: 600 }}
+                className="text-primary"
               >
                 View my listings →
               </Link>
@@ -356,8 +356,8 @@ export default function MobileProfilePage() {
                 textAlign: 'left',
               }}
             >
-              <LogOut style={{ width: 18, height: 18, color: '#EF4444', flexShrink: 0 }} aria-hidden="true" />
-              <span style={{ fontSize: 15, fontWeight: 500, color: '#EF4444' }}>Sign out</span>
+              <LogOut style={{ width: 18, height: 18, color: 'rgba(239,68,68,1)', flexShrink: 0 }} aria-hidden="true" />
+              <span style={{ fontSize: 15, fontWeight: 500, color: 'rgba(239,68,68,1)' }}>Sign out</span>
             </button>
           </div>
         </>

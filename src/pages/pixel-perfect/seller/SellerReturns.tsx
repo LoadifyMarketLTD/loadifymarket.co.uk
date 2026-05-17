@@ -15,8 +15,8 @@ import type { Return } from "@/types";
 const statusConfig: Record<string, { label: string; className: string; icon: React.ElementType }> = {
   requested:  { label: "Requested",  className: "bg-primary/10 text-primary",   icon: AlertCircle },
   approved:   { label: "Approved",   className: "bg-blue-500/10 text-blue-700",     icon: CheckCircle2 },
-  completed:  { label: "Completed",  className: "bg-emerald-500/10 text-emerald-700", icon: CheckCircle2 },
-  rejected:   { label: "Rejected",   className: "bg-red-500/10 text-red-700",       icon: XCircle },
+  completed:  { label: "Completed",  className: "bg-success/10 text-success", icon: CheckCircle2 },
+  rejected:   { label: "Rejected",   className: "bg-danger/100/10 text-danger",       icon: XCircle },
 };
 
 function formatDate(dateStr: string): string {

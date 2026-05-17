@@ -54,7 +54,7 @@ export default function MobileHeroBanner() {
             style={{
               fontSize: 'clamp(11px, 3vw, 13px)',
               fontWeight: 600,
-              color: '#F2B84B',
+              
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
               margin: 0,
@@ -68,7 +68,7 @@ export default function MobileHeroBanner() {
             style={{
               fontSize: 'clamp(18px, 5.2vw, 24px)',
               fontWeight: 800,
-              color: '#FFFFFF',
+              color: 'rgba(255,255,255,1)',
               margin: 0,
               lineHeight: 1.2,
               letterSpacing: '-0.02em',
@@ -96,12 +96,12 @@ export default function MobileHeroBanner() {
                 paddingLeft: 20,
                 paddingRight: 20,
                 borderRadius: 9999,
-                background: 'linear-gradient(135deg, #D4AF37 0%, #D4AF37 100%)',
+                
                 border: 'none',
                 cursor: 'pointer',
                 fontSize: 'clamp(13px, 3.6vw, 14px)',
                 fontWeight: 700,
-                color: '#121A2B',
+                
                 whiteSpace: 'nowrap',
               }}
             >

@@ -10,17 +10,17 @@ import type { AppNotification } from "@/types";
 
 const typeColor: Record<string, string> = {
   order:            "bg-blue-500/10 text-blue-700",
-  payment:          "bg-emerald-500/10 text-emerald-700",
+  payment:          "bg-success/10 text-success",
   shipment:         "bg-indigo-500/10 text-indigo-700",
   product_question: "bg-primary/10 text-primary",
   message:          "bg-primary/10 text-primary",
   offer_received:   "bg-violet-500/10 text-violet-700",
-  listing_published: "bg-emerald-500/10 text-emerald-700",
-  listing_sold:      "bg-emerald-500/10 text-emerald-700",
+  listing_published: "bg-success/10 text-success",
+  listing_sold:      "bg-success/10 text-success",
   share_reminder:   "bg-primary/10 text-primary",
   rfq:              "bg-violet-500/10 text-violet-700",
   review:           "bg-rose-500/10 text-rose-700",
-  dispute:          "bg-red-500/10 text-red-700",
+  dispute:          "bg-danger/100/10 text-danger",
   system:           "bg-muted text-muted-foreground",
   general:          "bg-muted text-muted-foreground",
 };

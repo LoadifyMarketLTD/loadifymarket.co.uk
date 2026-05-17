@@ -353,7 +353,7 @@ const BuyerProfile = () => {
             </div>
             <div className="flex items-end pb-1">
               {b2bForm.isVatVerified ? (
-                <span className="flex items-center gap-1.5 text-sm text-emerald-700 font-medium">
+                <span className="flex items-center gap-1.5 text-sm text-success font-medium">
                   <ShieldCheck className="h-4 w-4" /> VAT Verified
                 </span>
               ) : b2bForm.vatNumber && b2bForm.accountType !== "individual" ? (

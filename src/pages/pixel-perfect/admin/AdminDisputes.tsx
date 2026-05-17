@@ -42,7 +42,7 @@ interface Dispute {
 const statusConfig: Record<string, { label: string; className: string }> = {
   open:      { label: "Open",      className: "border-primary/40 text-primary bg-primary-soft" },
   in_review: { label: "In Review", className: "border-blue-500/30 text-blue-600 bg-blue-50" },
-  resolved:  { label: "Resolved",  className: "border-emerald-500/30 text-emerald-700 bg-emerald-50" },
+  resolved:  { label: "Resolved",  className: "border-emerald-500/30 text-success bg-emerald-50" },
   closed:    { label: "Closed",    className: "border-slate-300 text-slate-500 bg-slate-50" },
 };
 
@@ -345,13 +345,13 @@ const AdminDisputes = () => {
         {[
           { label: "Open",      count: byStatus("open").length,      color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
           { label: "In Review", count: byStatus("in_review").length, color: "#60A5FA", bg: "rgba(96,165,250,0.12)" },
-          { label: "Resolved",  count: byStatus("resolved").length,  color: "#D4AF37", bg: "rgba(251,191,36,0.12)" },
+          { label: "Resolved",  count: byStatus("resolved").length,  color: "rgba(212,175,55,1)", bg: "rgba(212,175,55,0.12)" },
           { label: "Closed",    count: byStatus("closed").length,    color: "rgba(148,163,184,0.85)", bg: "rgba(148,163,184,0.3)" },
         ].map((stat) => (
           <div
             key={stat.label}
             className="rounded-2xl p-4"
-            style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
+            style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
           >
             <div className="w-8 h-8 rounded-lg flex items-center justify-center mb-2" style={{ background: stat.bg }}>
               <ShieldAlert className="h-4 w-4" style={{ color: stat.color }} />
@@ -386,7 +386,7 @@ const AdminDisputes = () => {
         </TabsList>
         {(["open", "in_review", "resolved", "closed", "all"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(tab === "all" ? filtered : byStatus(tab))}
               </div>
@@ -443,7 +443,7 @@ const AdminDisputes = () => {
               {selected.resolution && (
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Resolution</p>
-                  <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-800">
+                  <div className="rounded-lg bg-emerald-50 border border-success/40 p-3 text-sm text-emerald-800">
                     {selected.resolution}
                     {selected.resolutionType && (
                       <p className="text-xs text-emerald-600 mt-1 capitalize">

@@ -330,7 +330,7 @@ const BuyerRFQ = () => {
           const isExpanded = expandedRfq === rfq.id;
           const statusColors: Record<string, string> = {
             pending: "bg-blue-500/10 text-blue-700",
-            closed: "bg-emerald-500/10 text-emerald-700",
+            closed: "bg-success/10 text-success",
             expired: "bg-gray-200 text-gray-600",
           };
           return (
@@ -367,8 +367,8 @@ const BuyerRFQ = () => {
                       responses.map((resp) => {
                         const respStatusColors: Record<string, string> = {
                           submitted: "bg-blue-500/10 text-blue-700",
-                          accepted: "bg-emerald-500/10 text-emerald-700",
-                          rejected: "bg-red-500/10 text-red-600",
+                          accepted: "bg-success/10 text-success",
+                          rejected: "bg-danger/100/10 text-danger",
                           withdrawn: "bg-gray-200 text-gray-500",
                         };
                         return (

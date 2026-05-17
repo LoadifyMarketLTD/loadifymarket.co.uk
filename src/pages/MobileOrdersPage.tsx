@@ -67,11 +67,11 @@ const STATUS_CONFIG: Record<
 > = {
   awaiting_payment: {
     label: "Awaiting payment",
-    bg: "rgba(245,185,66,0.15)",
+    bg: "rgba(212,175,55,0.15)",
     text: "#D4AF37",
   },
   paid: { label: "Paid", bg: "rgba(139,92,246,0.15)", text: "#A78BFA" },
-  packed: { label: "Packed", bg: "rgba(245,185,66,0.15)", text: "#D4AF37" },
+  packed: { label: "Packed", bg: "rgba(212,175,55,0.15)", text: "#D4AF37" },
   shipped: {
     label: "Shipped",
     bg: "rgba(59,130,246,0.15)",
@@ -135,12 +135,12 @@ function OrderCard({
         display: "flex",
         alignItems: "flex-start",
         gap: "12px",
-        background: highlighted ? "rgba(245,185,66,0.06)" : "#12121A",
-        border: `1px solid ${highlighted ? "rgba(245,185,66,0.35)" : "rgba(255,255,255,0.07)"}`,
+        background: highlighted ? "rgba(212,175,55,0.06)" : "#12121A",
+        border: `1px solid ${highlighted ? "rgba(212,175,55,0.35)" : "rgba(255,255,255,0.07)"}`,
         borderRadius: "16px",
         padding: "14px",
         cursor: "pointer",
-        boxShadow: highlighted ? "0 0 16px rgba(245,185,66,0.12)" : "none",
+        boxShadow: highlighted ? "0 0 16px rgba(212,175,55,0.12)" : "none",
       }}
     >
       {/* Product thumbnail */}
@@ -149,7 +149,7 @@ function OrderCard({
           width: "80px",
           height: "80px",
           borderRadius: "12px",
-          background: "#FFFFFF",
+          background: "rgba(255,255,255,1)",
           flexShrink: 0,
           overflow: "hidden",
           display: "flex",
@@ -164,7 +164,7 @@ function OrderCard({
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         ) : (
-          <Package style={{ width: "32px", height: "32px", color: "#9CA3AF" }} />
+          <Package style={{ width: "32px", height: "32px", color: "rgba(156,163,175,1)" }} />
         )}
       </div>
 
@@ -191,7 +191,7 @@ function OrderCard({
         </div>
 
         {/* Product title */}
-        <p style={{ fontSize: "14px", fontWeight: 700, color: "#FFFFFF", lineHeight: 1.3, marginBottom: "5px" }}
+        <p style={{ fontSize: "14px", fontWeight: 700, color: "rgba(255,255,255,1)", lineHeight: 1.3, marginBottom: "5px" }}
           className="line-clamp-2">
           {order.productTitle ?? "Order"}
         </p>
@@ -206,7 +206,7 @@ function OrderCard({
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "6px" }}>
-          <span style={{ fontSize: "15px", fontWeight: 800, color: "#D4AF37" }}>
+          <span style={{ fontSize: "15px", fontWeight: 800, color: "rgba(212,175,55,1)" }}>
             £{order.total.toFixed(2)}
           </span>
           <ChevronRight style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.25)", flexShrink: 0 }} />
@@ -342,7 +342,7 @@ export default function MobileOrdersPage() {
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: "#0A0E1A" }}
+      style={{ background: "rgba(10,14,26,1)" }}
     >
       {/* ── Header ── */}
       <div
@@ -356,7 +356,7 @@ export default function MobileOrdersPage() {
           paddingBottom: "0",
         }}
       >
-        <h1 style={{ fontSize: "22px", fontWeight: 800, color: "#FFFFFF", marginBottom: "12px" }}>
+        <h1 style={{ fontSize: "22px", fontWeight: 800, color: "rgba(255,255,255,1)", marginBottom: "12px" }}>
           My Orders
         </h1>
 
@@ -422,7 +422,7 @@ export default function MobileOrdersPage() {
             {activeTab === "all" && (
               <Link
                 to="/catalog"
-                className="px-4 py-2 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37] text-sm font-semibold"
+                className="px-4 py-2 rounded-xl bg-primary/10 text-primary text-sm font-semibold"
               >
                 Start browsing
               </Link>

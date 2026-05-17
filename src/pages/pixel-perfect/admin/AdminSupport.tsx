@@ -45,15 +45,15 @@ interface DisputeRow {
 const disputeStatusConfig: Record<string, { label: string; className: string }> = {
   open:        { label: "Open", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
   under_review:{ label: "Under Review", className: "border-primary/40 text-primary bg-primary/10" },
-  resolved:    { label: "Resolved", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+  resolved:    { label: "Resolved", className: "border-emerald-500/30 text-success bg-success/10" },
   closed:      { label: "Closed", className: "border-slate-200 text-slate-400" },
 };
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   open: { label: "Open", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
   in_progress: { label: "In Progress", className: "border-primary/40 text-primary bg-primary/10" },
-  waiting_customer: { label: "Waiting", className: "border-purple-500/30 text-purple-400 bg-purple-500/10" },
-  resolved: { label: "Resolved", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+  waiting_customer: { label: "Waiting", className: "border-admin/30 text-admin bg-admin/10" },
+  resolved: { label: "Resolved", className: "border-emerald-500/30 text-success bg-success/10" },
   closed: { label: "Closed", className: "border-slate-200 text-slate-400" },
 };
 
@@ -61,7 +61,7 @@ const priorityConfig: Record<string, { label: string; className: string }> = {
   low: { label: "Low", className: "border-slate-200 text-slate-400" },
   medium: { label: "Medium", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
   high: { label: "High", className: "border-primary/40 text-primary bg-primary/10" },
-  urgent: { label: "Urgent", className: "border-red-500/30 text-red-400 bg-red-500/10" },
+  urgent: { label: "Urgent", className: "border-danger/30 text-danger bg-danger/100/10" },
 };
 
 const AdminSupport = () => {
@@ -358,13 +358,13 @@ const AdminSupport = () => {
         {[
           { label: "Open", count: byStatus("open").length, icon: AlertCircle, color: "#60A5FA", bg: "rgba(96,165,250,0.12)" },
           { label: "In Progress", count: byStatus("in_progress").length, icon: Clock, color: "#F59E0B", bg: "rgba(245,158,11,0.12)" },
-          { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "#D4AF37", bg: "rgba(251,191,36,0.12)" },
-          { label: "Urgent", count: urgentOpen.length, icon: AlertCircle, color: "#F87171", bg: "rgba(248,113,113,0.12)" },
+          { label: "Resolved", count: byStatus("resolved").length, icon: CheckCircle2, color: "rgba(212,175,55,1)", bg: "rgba(212,175,55,0.12)" },
+          { label: "Urgent", count: urgentOpen.length, icon: AlertCircle, color: "rgba(248,113,113,1)", bg: "rgba(248,113,113,0.12)" },
         ].map((stat) => (
           <div
             key={stat.label}
             className="rounded-2xl p-5"
-            style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
+            style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}
           >
             <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ background: stat.bg }}>
               <stat.icon className="h-5 w-5" style={{ color: stat.color }} />
@@ -398,7 +398,7 @@ const AdminSupport = () => {
           <TabsTrigger value="disputes" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">
             Disputes
             {disputes.filter((d) => d.status === "open").length > 0 && (
-              <Badge variant="outline" className="ml-2 text-xs border-red-500/30 text-red-400 bg-red-500/10">
+              <Badge variant="outline" className="ml-2 text-xs border-danger/30 text-danger bg-danger/100/10">
                 {disputes.filter((d) => d.status === "open").length}
               </Badge>
             )}
@@ -406,7 +406,7 @@ const AdminSupport = () => {
         </TabsList>
         {(["open", "resolved", "all"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2">
                 {renderTable(
                   tab === "open" ? openTickets :
@@ -418,7 +418,7 @@ const AdminSupport = () => {
           </TabsContent>
         ))}
         <TabsContent value="disputes">
-          <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
+          <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
             <Table>
               <TableHeader>
                 <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
@@ -553,7 +553,7 @@ const AdminSupport = () => {
                   className="resize-none text-sm"
                 />
                 {replyMsg && (
-                  <p className={`text-xs ${replyMsg.ok ? "text-emerald-400" : "text-red-400"}`}>{replyMsg.text}</p>
+                  <p className={`text-xs ${replyMsg.ok ? "text-success" : "text-danger"}`}>{replyMsg.text}</p>
                 )}
               </div>
             </div>
@@ -612,7 +612,7 @@ const AdminSupport = () => {
                   </Badge></p>
                 </div>
               </div>
-              <div className="rounded-xl p-3" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="rounded-xl p-3" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
                 <p className="text-xs font-semibold mb-1" style={{ color: "rgba(148,163,184,0.85)" }}>SUBJECT</p>
                 <p className="text-sm font-medium text-white mb-3">{selectedDispute.subject}</p>
                 <p className="text-xs font-semibold mb-1" style={{ color: "rgba(148,163,184,0.85)" }}>DESCRIPTION</p>

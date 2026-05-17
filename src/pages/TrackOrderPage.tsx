@@ -101,7 +101,7 @@ export default function TrackOrderPage() {
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case 'delivered':
-        return <CheckCircle className="w-6 h-6 text-green-600" aria-hidden="true" />;
+        return <CheckCircle className="w-6 h-6 text-success" aria-hidden="true" />;
       case 'in transit':
       case 'out for delivery':
       case 'dispatched':
@@ -172,7 +172,7 @@ export default function TrackOrderPage() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="bg-danger/10 border border-danger/30 text-danger px-4 py-3 rounded-lg">
               {error}
             </div>
           )}

@@ -46,12 +46,12 @@ const statusConfig: Record<string, { label: string; icon: typeof CheckCircle2; c
   processed: {
     label: "Processed",
     icon: CheckCircle2,
-    className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10",
+    className: "border-emerald-500/30 text-success bg-success/10",
   },
   failed: {
     label: "Failed",
     icon: AlertCircle,
-    className: "border-red-500/30 text-red-400 bg-red-500/10",
+    className: "border-danger/30 text-danger bg-danger/100/10",
   },
   skipped: {
     label: "Skipped",
@@ -248,14 +248,14 @@ const AdminStripeEvents = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Total",    value: events.length,          accent: "text-white" },
-          { label: "Failed",   value: failedCount,            accent: failedCount > 0 ? "text-red-400" : "text-emerald-400" },
+          { label: "Failed",   value: failedCount,            accent: failedCount > 0 ? "text-danger" : "text-success" },
           { label: "Live",     value: liveCount,              accent: "text-orange-400" },
           { label: "Test",     value: testCount,              accent: "text-slate-400" },
         ].map((stat) => (
           <div
             key={stat.label}
             className="rounded-xl p-4"
-            style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}
+            style={{ border: "1px solid rgba(255,255,255,0.05)" }}
           >
             <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{stat.label}</p>
             <p className={`text-xl font-bold mt-1 ${stat.accent}`}>{stat.value}</p>
@@ -265,7 +265,7 @@ const AdminStripeEvents = () => {
 
       {/* Error */}
       {error && (
-        <div className="rounded-xl p-4 text-sm text-red-400" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}>
+        <div className="rounded-xl p-4 text-sm text-danger" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}>
           {error}
         </div>
       )}
@@ -293,7 +293,7 @@ const AdminStripeEvents = () => {
           <TabsTrigger value="failed" className="data-[state=active]:text-white data-[state=active]:bg-white/10 text-slate-500">
             Failed
             {failedCount > 0 && (
-              <Badge variant="outline" className="ml-2 text-xs border-red-500/30 text-red-400 bg-red-500/10">
+              <Badge variant="outline" className="ml-2 text-xs border-danger/30 text-danger bg-danger/100/10">
                 {failedCount}
               </Badge>
             )}
@@ -310,7 +310,7 @@ const AdminStripeEvents = () => {
                 <Loader2 className="h-8 w-8 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />
               </div>
             ) : (
-              <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
                 <div className="px-2 py-2 overflow-x-auto">
                   {renderTable(tab === "all" ? filtered : byStatus(tab))}
                 </div>
@@ -356,7 +356,7 @@ const AdminStripeEvents = () => {
 
                 {selected.error_message && (
                   <div className="rounded-lg p-3" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                    <p className="text-xs font-semibold text-red-400 mb-1">Error</p>
+                    <p className="text-xs font-semibold text-danger mb-1">Error</p>
                     <p className="text-xs text-red-300 font-mono break-all">{selected.error_message}</p>
                   </div>
                 )}
@@ -364,7 +364,7 @@ const AdminStripeEvents = () => {
                 {selected.metadata && Object.keys(selected.metadata).length > 0 && (
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Metadata</p>
-                    <pre className="text-xs rounded-lg p-3 overflow-x-auto" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.7)" }}>
+                    <pre className="text-xs rounded-lg p-3 overflow-x-auto" style={{ border: "1px solid rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.7)" }}>
                       {JSON.stringify(selected.metadata, null, 2)}
                     </pre>
                   </div>

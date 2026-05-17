@@ -17,7 +17,7 @@ export default function MobileSellerPaymentsPage() {
     <div
       className="md:hidden min-h-screen"
       style={{
-        background: '#0A0E1A',
+        background: 'rgba(10,14,26,1)',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
@@ -40,7 +40,7 @@ export default function MobileSellerPaymentsPage() {
         >
           <ChevronLeft style={{ width: 22, height: 22, color: 'rgba(255,255,255,0.70)' }} />
         </button>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: '#FFFFFF', margin: 0 }}>Payments</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0 }}>Payments</h1>
       </div>
 
       {/* Info card */}
@@ -53,7 +53,7 @@ export default function MobileSellerPaymentsPage() {
           padding: '20px var(--mob-side, 16px)',
         }}
       >
-        <p style={{ fontSize: 15, fontWeight: 600, color: '#FFFFFF', margin: '0 0 8px' }}>
+        <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,1)', margin: '0 0 8px' }}>
           Stripe payments &amp; payouts
         </p>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', margin: '0 0 20px', lineHeight: 1.6 }}>
@@ -71,12 +71,12 @@ export default function MobileSellerPaymentsPage() {
             width: '100%',
             height: 48,
             borderRadius: 9999,
-            background: 'linear-gradient(135deg, #D4AF37 0%, #D4AF37 100%)',
+            
             border: 'none',
             cursor: 'pointer',
             fontSize: 15,
             fontWeight: 700,
-            color: '#121A2B',
+            
           }}
         >
           <ExternalLink style={{ width: 16, height: 16, flexShrink: 0 }} aria-hidden="true" />

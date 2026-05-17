@@ -77,7 +77,7 @@ type FormErrors = Partial<Record<string, string>>;
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 function Section({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={`bg-[#121A2B] border border-white/10 rounded-xl p-6 mb-6 shadow-lg shadow-black/20 ${className}`}>
+    <div className={`bg-surface border border-white/10 rounded-xl p-6 mb-6 shadow-lg shadow-black/20 ${className}`}>
       <h2 className="text-lg font-semibold text-white mb-4 pb-3 border-b border-white/10">{title}</h2>
       {children}
     </div>
@@ -88,7 +88,7 @@ function Section({ title, children, className = '' }: { title: string; children:
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
   return (
-    <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+    <p className="mt-1 text-xs text-danger flex items-center gap-1">
       <AlertCircle className="h-3 w-3 flex-shrink-0" />
       {msg}
     </p>
@@ -561,7 +561,7 @@ export default function ProductFormPage() {
   const isBulkType = BULK_PRODUCT_TYPES.includes(formData.type);
 
   return (
-    <div className="bg-[#0A0E1A] min-h-screen">
+    <div className="bg-background min-h-screen">
       <div className="container mx-auto px-4 pt-4 md:pt-28 pb-8">
         <div className="max-w-3xl mx-auto">
           {/* Header */}
@@ -574,14 +574,14 @@ export default function ProductFormPage() {
 
           {/* Success banner */}
           {successMessage && (
-            <div className="mb-6 rounded-lg border overflow-hidden" style={{ borderColor: '#2a5c2a', background: '#0d1f0d' }}>
+            <div className="mb-6 rounded-lg border overflow-hidden" style={{ borderColor: "rgba(42,92,42,1)", background: 'rgba(13,31,13,1)' }}>
               <div className="p-4 flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0 mt-0.5" />
-                <p className="text-green-300 font-medium text-sm">{successMessage}</p>
+                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <p className="text-success font-medium text-sm">{successMessage}</p>
               </div>
               {/* Post-publish share CTA — only for newly created published products */}
               {publishedProductId && (
-                <div className="border-t px-4 py-3 space-y-2" style={{ borderColor: '#2a5c2a', background: '#0b1a0b' }}>
+                <div className="border-t px-4 py-3 space-y-2" style={{ borderColor: "rgba(42,92,42,1)", background: 'rgba(11,26,11,1)' }}>
                   <p className="text-xs font-semibold text-green-200">
                     🚀 Your product is live — share it now to get more views!
                   </p>
@@ -594,7 +594,7 @@ export default function ProductFormPage() {
                         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank', 'noopener,noreferrer');
                       }}
                       className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80"
-                      style={{ background: '#1877F2', color: '#fff' }}
+                      style={{ background: 'rgba(24,119,242,1)', color: 'rgba(255,255,255,1)' }}
                     >
                       Share on Facebook
                     </button>
@@ -607,7 +607,7 @@ export default function ProductFormPage() {
                         window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
                       }}
                       className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80"
-                      style={{ background: '#25D366', color: '#fff' }}
+                      style={{ background: 'rgba(37,211,102,1)', color: 'rgba(255,255,255,1)' }}
                     >
                       Share on WhatsApp
                     </button>
@@ -624,7 +624,7 @@ export default function ProductFormPage() {
                         }
                       }}
                       className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80"
-                      style={{ background: '#D4AF37', color: '#121A2B' }}
+                      style={{ background: 'rgba(212,175,55,1)' }}
                     >
                       Copy Link
                     </button>
@@ -636,9 +636,9 @@ export default function ProductFormPage() {
 
           {/* Form-level error */}
           {errors._form && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-300 rounded-lg flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
-              <p className="text-red-800 font-medium text-sm">{errors._form}</p>
+            <div className="mb-6 p-4 bg-danger/10 border border-danger/30 rounded-lg flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-danger flex-shrink-0" />
+              <p className="text-danger font-medium text-sm">{errors._form}</p>
             </div>
           )}
 
@@ -660,11 +660,11 @@ export default function ProductFormPage() {
 
             {/* ─── LISTING CONTEXT SELECTOR ─────────────────────────────── */}
             {!id && (
-              <div className="bg-[#121A2B] border border-white/10 rounded-xl p-6 mb-6">
+              <div className="bg-surface border border-white/10 rounded-xl p-6 mb-6">
                 <h2 className="text-lg font-semibold text-white mb-1">Listing Type</h2>
                 <p className="text-sm text-slate-400 mb-4">Choose whether you are listing a service or a physical product.</p>
                 <div className="flex gap-4">
-                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'service' ? 'border-[#D4AF37] bg-[#D4AF37]/10' : 'border-white/10 hover:border-white/20'}`}>
+                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'service' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'}`}>
                     <input
                       type="radio"
                       name="listingContext"
@@ -678,7 +678,7 @@ export default function ProductFormPage() {
                       <p className="text-xs text-slate-400 mt-0.5">Digital or in-person service — no stock, no shipping required. Reusable listing.</p>
                     </div>
                   </label>
-                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'goods' ? 'border-[#D4AF37] bg-[#D4AF37]/10' : 'border-white/10 hover:border-white/20'}`}>
+                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'goods' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'}`}>
                     <input
                       type="radio"
                       name="listingContext"
@@ -707,7 +707,7 @@ export default function ProductFormPage() {
                   value={formData.title}
                   onChange={(e) => handleChange('title', e.target.value)}
                   disabled={hasActiveOrders}
-                  className={`w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.title ? 'border-red-400' : ''}`}
+                  className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.title ? 'border-red-400' : ''}`}
                   placeholder="e.g., 100x Mixed Electronics Bundle — Various Brands"
                 />
                 <FieldError msg={errors.title} />
@@ -720,7 +720,7 @@ export default function ProductFormPage() {
                   value={formData.shortDescription}
                   onChange={(e) => handleChange('shortDescription', e.target.value)}
                   maxLength={160}
-                  className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                  className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                   placeholder="One-line summary shown in search results (max 160 characters)"
                 />
                 <p className="text-xs text-slate-500 mt-1">{formData.shortDescription.length}/160</p>
@@ -734,7 +734,7 @@ export default function ProductFormPage() {
                   value={formData.description}
                   onChange={(e) => handleChange('description', e.target.value)}
                   rows={6}
-                  className={`w-full rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all resize-y ${errors.description ? 'border-red-400' : ''}`}
+                  className={`w-full rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all resize-y ${errors.description ? 'border-red-400' : ''}`}
                   placeholder="Describe your product in detail — condition, contents, brand mix, origin, etc."
                 />
                 <FieldError msg={errors.description} />
@@ -750,7 +750,7 @@ export default function ProductFormPage() {
                     onChange={(e) => handleChange('type', e.target.value)}
                     disabled={hasActiveOrders}
                     style={{ colorScheme: 'dark' }}
-                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <option value="product">Single Item</option>
                     <option value="retail">Retail Product</option>
@@ -771,7 +771,7 @@ export default function ProductFormPage() {
                     onChange={(e) => handleChange('condition', e.target.value)}
                     disabled={hasActiveOrders}
                     style={{ colorScheme: 'dark' }}
-                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <option value="new">New</option>
                     <option value="used">Used</option>
@@ -790,9 +790,9 @@ export default function ProductFormPage() {
             {/* ─── SECTION 2: Category ──────────────────────────────────── */}
             <Section title="2. Category">
               {errors.categoryId && (
-                <div className="mb-3 p-2 bg-red-950/30 border border-red-500/30 rounded flex items-center gap-2">
+                <div className="mb-3 p-2 bg-red-950/30 border border-danger/30 rounded flex items-center gap-2">
                   <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
-                  <p className="text-xs text-red-600">{errors.categoryId}</p>
+                  <p className="text-xs text-danger">{errors.categoryId}</p>
                 </div>
               )}
               <CategorySelector
@@ -818,7 +818,7 @@ export default function ProductFormPage() {
                     value={formData.price}
                     onChange={(e) => handleChange('price', normalizeDecimal(e.target.value))}
                     disabled={hasActiveOrders}
-                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.price ? 'border-red-400' : ''}`}
+                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.price ? 'border-red-400' : ''}`}
                     placeholder="0.00"
                   />
                   <p className="text-xs text-slate-500 mt-1">Enter the VAT-inclusive price (20% VAT applied)</p>
@@ -834,7 +834,7 @@ export default function ProductFormPage() {
                     inputMode="decimal"
                     value={formData.salePrice}
                     onChange={(e) => handleChange('salePrice', normalizeDecimal(e.target.value))}
-                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all ${errors.salePrice ? 'border-red-400' : ''}`}
+                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${errors.salePrice ? 'border-red-400' : ''}`}
                     placeholder="Optional — leave blank if no discount"
                   />
                   <p className="text-xs text-slate-500 mt-1">Optional. Must be lower than the regular price.</p>
@@ -843,7 +843,7 @@ export default function ProductFormPage() {
               </div>
 
               {formData.price && (
-                <div className="mt-3 p-3 bg-[#17181E] border border-white/10 rounded-[14px] text-sm text-slate-400">
+                <div className="mt-3 p-3 bg-surface border border-white/10 rounded-[14px] text-sm text-slate-400">
                   {(() => {
                     const priceNum = parseFloat(formData.price || '0');
                     const exVat = priceNum / 1.2;
@@ -874,7 +874,7 @@ export default function ProductFormPage() {
                     value={formData.stockQuantity}
                     onChange={(e) => handleChange('stockQuantity', e.target.value)}
                     disabled={hasActiveOrders}
-                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.stockQuantity ? 'border-red-400' : ''}`}
+                    className={`w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all ${hasActiveOrders ? 'opacity-50 cursor-not-allowed' : ''} ${errors.stockQuantity ? 'border-red-400' : ''}`}
                     placeholder="0"
                   />
                   <FieldError msg={errors.stockQuantity} />
@@ -882,7 +882,7 @@ export default function ProductFormPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">Stock Status</label>
-                  <div className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E]/50 cursor-default text-sm text-slate-400 flex items-center px-3">
+                  <div className="w-full h-12 rounded-[14px] border border-white/10 bg-surface/50 cursor-default text-sm text-slate-400 flex items-center px-3">
                     {(() => {
                       const qty = parseInt(formData.stockQuantity || '0', 10);
                       if (isNaN(qty)) return '— Enter quantity above';
@@ -905,7 +905,7 @@ export default function ProductFormPage() {
                     min="1"
                     value={formData.moq}
                     onChange={(e) => setFormData(prev => ({ ...prev, moq: e.target.value }))}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all max-w-xs"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all max-w-xs"
                     placeholder="e.g., 10"
                   />
                   <p className="text-xs text-slate-500 mt-1">Minimum units a buyer must order</p>
@@ -937,7 +937,7 @@ export default function ProductFormPage() {
                     type="text" inputMode="decimal"
                     value={formData.dimensions.length}
                     onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, length: normalizeDecimal(e.target.value) } }))}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                     placeholder="0"
                   />
                 </div>
@@ -947,7 +947,7 @@ export default function ProductFormPage() {
                     type="text" inputMode="decimal"
                     value={formData.dimensions.width}
                     onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, width: normalizeDecimal(e.target.value) } }))}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                     placeholder="0"
                   />
                 </div>
@@ -957,7 +957,7 @@ export default function ProductFormPage() {
                     type="text" inputMode="decimal"
                     value={formData.dimensions.height}
                     onChange={(e) => setFormData(prev => ({ ...prev, dimensions: { ...prev.dimensions, height: normalizeDecimal(e.target.value) } }))}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                     placeholder="0"
                   />
                 </div>
@@ -967,7 +967,7 @@ export default function ProductFormPage() {
                     type="text" inputMode="decimal"
                     value={formData.weight}
                     onChange={(e) => handleChange('weight', normalizeDecimal(e.target.value))}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                     placeholder="0"
                   />
                 </div>
@@ -979,7 +979,7 @@ export default function ProductFormPage() {
                   type="text"
                   value={formData.shippingNotes}
                   onChange={(e) => handleChange('shippingNotes', e.target.value)}
-                  className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                  className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                   placeholder="e.g., Fragile — handle with care, collection preferred for large items"
                 />
               </div>
@@ -990,7 +990,7 @@ export default function ProductFormPage() {
                     type="checkbox"
                     checked={formData.collectionAvailable}
                     onChange={(e) => setFormData(prev => ({ ...prev, collectionAvailable: e.target.checked }))}
-                    className="w-4 h-4 rounded border-white/20 text-[#D4AF37] focus:ring-[#F2B84B]/40"
+                    className="w-4 h-4 rounded border-white/20 text-primary focus:ring-primary/40"
                   />
                   <span className="text-sm text-slate-300">Collection available</span>
                 </label>
@@ -999,7 +999,7 @@ export default function ProductFormPage() {
                     type="checkbox"
                     checked={formData.deliveryAvailable}
                     onChange={(e) => setFormData(prev => ({ ...prev, deliveryAvailable: e.target.checked }))}
-                    className="w-4 h-4 rounded border-white/20 text-[#D4AF37] focus:ring-[#F2B84B]/40"
+                    className="w-4 h-4 rounded border-white/20 text-primary focus:ring-primary/40"
                   />
                   <span className="text-sm text-slate-300">Delivery available</span>
                 </label>
@@ -1020,7 +1020,7 @@ export default function ProductFormPage() {
                         type="text"
                         value={dispatchTime}
                         onChange={(e) => setDispatchTime(e.target.value)}
-                        className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                        className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                         placeholder="e.g. 1–2 working days"
                       />
                     </div>
@@ -1045,7 +1045,7 @@ export default function ProductFormPage() {
                     type="text"
                     value={formData.brand}
                     onChange={(e) => handleChange('brand', e.target.value)}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                     placeholder="e.g., Samsung"
                   />
                 </div>
@@ -1055,7 +1055,7 @@ export default function ProductFormPage() {
                     type="text"
                     value={formData.model}
                     onChange={(e) => handleChange('model', e.target.value)}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                     placeholder="e.g., Galaxy S23"
                   />
                 </div>
@@ -1065,7 +1065,7 @@ export default function ProductFormPage() {
                     type="text"
                     value={formData.sku}
                     onChange={(e) => handleChange('sku', e.target.value)}
-                    className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                    className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                     placeholder="Your ref code"
                   />
                 </div>
@@ -1078,7 +1078,7 @@ export default function ProductFormPage() {
                   <button
                     type="button"
                     onClick={addCustomSpec}
-                    className="text-xs text-[#D4AF37] hover:text-primary flex items-center gap-1 font-medium"
+                    className="text-xs text-primary hover:text-primary flex items-center gap-1 font-medium"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     Add Spec
@@ -1096,20 +1096,20 @@ export default function ProductFormPage() {
                         type="text"
                         value={spec.key}
                         onChange={(e) => updateCustomSpec(i, 'key', e.target.value)}
-                        className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all flex-1"
+                        className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all flex-1"
                         placeholder="Attribute name (e.g., Colour)"
                       />
                       <input
                         type="text"
                         value={spec.value}
                         onChange={(e) => updateCustomSpec(i, 'value', e.target.value)}
-                        className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all flex-1"
+                        className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all flex-1"
                         placeholder="Value (e.g., Black)"
                       />
                       <button
                         type="button"
                         onClick={() => removeCustomSpec(i)}
-                        className="p-2 text-red-500 hover:text-red-700 flex-shrink-0"
+                        className="p-2 text-red-500 hover:text-danger flex-shrink-0"
                         aria-label="Remove spec"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -1134,7 +1134,7 @@ export default function ProductFormPage() {
                           type="number" min="0"
                           value={formData.palletInfo.palletCount}
                           onChange={(e) => setFormData(prev => ({ ...prev, palletInfo: { ...prev.palletInfo, palletCount: e.target.value } }))}
-                          className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                          className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                           placeholder="1"
                         />
                       </div>
@@ -1144,7 +1144,7 @@ export default function ProductFormPage() {
                           type="number" min="0"
                           value={formData.palletInfo.itemsPerPallet}
                           onChange={(e) => setFormData(prev => ({ ...prev, palletInfo: { ...prev.palletInfo, itemsPerPallet: e.target.value } }))}
-                          className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                          className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                           placeholder="e.g., 100"
                         />
                       </div>
@@ -1154,7 +1154,7 @@ export default function ProductFormPage() {
                           type="text"
                           value={formData.palletInfo.palletType}
                           onChange={(e) => setFormData(prev => ({ ...prev, palletInfo: { ...prev.palletInfo, palletType: e.target.value } }))}
-                          className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                          className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                           placeholder="e.g., Euro pallet"
                         />
                       </div>
@@ -1173,7 +1173,7 @@ export default function ProductFormPage() {
                           type="number" min="1"
                           value={formData.moq}
                           onChange={(e) => setFormData(prev => ({ ...prev, moq: e.target.value }))}
-                          className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                          className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                           placeholder="e.g., 10"
                         />
                         <p className="text-xs text-slate-500 mt-1">Minimum units a buyer must order</p>
@@ -1184,7 +1184,7 @@ export default function ProductFormPage() {
                           type="number" min="1"
                           value={formData.lotQuantity}
                           onChange={(e) => setFormData(prev => ({ ...prev, lotQuantity: e.target.value }))}
-                          className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                          className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                           placeholder="e.g., 100"
                         />
                         <p className="text-xs text-slate-500 mt-1">Total units available in this lot</p>
@@ -1203,7 +1203,7 @@ export default function ProductFormPage() {
                         type="number" min="1"
                         value={formData.lotQuantity}
                         onChange={(e) => setFormData(prev => ({ ...prev, lotQuantity: e.target.value }))}
-                        className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                        className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                         placeholder="e.g., 50"
                       />
                       <p className="text-xs text-slate-500 mt-1">Total items sold as one lot</p>
@@ -1219,7 +1219,7 @@ export default function ProductFormPage() {
                       type="number" step="0.01" min="0"
                       value={formData.estimatedRetailValue}
                       onChange={(e) => handleChange('estimatedRetailValue', e.target.value)}
-                      className="w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all"
+                      className="w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
                       placeholder="Optional RRP estimate"
                     />
                     <p className="text-xs text-slate-500 mt-1">Approximate total retail value of the lot</p>
@@ -1230,7 +1230,7 @@ export default function ProductFormPage() {
                       value={formData.manifestNotes}
                       onChange={(e) => handleChange('manifestNotes', e.target.value)}
                       rows={2}
-                      className="w-full rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all resize-y"
+                      className="w-full rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all resize-y"
                       placeholder="e.g., Mixed electronics — approx 40% Grade A, 40% Grade B, 20% parts"
                     />
                   </div>
@@ -1239,7 +1239,7 @@ export default function ProductFormPage() {
             )}
 
             {/* ─── SECTION 9: Publish / Save ────────────────────────────── */}
-            <div className="bg-[#121A2B] border border-white/10 rounded-xl p-6">
+            <div className="bg-surface border border-white/10 rounded-xl p-6">
               <h2 className="text-lg font-semibold text-white mb-4 pb-3 border-b border-white/10">
                 {id ? '9. Save Changes' : '9. Publish Listing'}
               </h2>
@@ -1278,7 +1278,7 @@ export default function ProductFormPage() {
                     type="submit"
                     disabled={saving || savingDraft}
                     className="px-4 py-2 rounded-lg text-white text-sm font-semibold disabled:opacity-50 transition-all"
-                    style={{ background: "linear-gradient(135deg, #B45309, #D4AF37)" }}
+                    style={{ background: "rgba(212,175,55,1)" }}
                   >
                     {saving
                       ? (id && hasActiveOrders ? 'Saving...' : 'Publishing...')
@@ -1291,7 +1291,7 @@ export default function ProductFormPage() {
               {id && (
                 <div className="mt-6 pt-4 border-t border-white/10">
                   {showDeleteConfirm ? (
-                    <div className="p-4 bg-red-950/30 border border-red-500/30 rounded-lg">
+                    <div className="p-4 bg-red-950/30 border border-danger/30 rounded-lg">
                       <p className="text-sm font-medium text-red-300 mb-3">
                         Permanently delete this listing? This cannot be undone.
                       </p>
@@ -1319,7 +1319,7 @@ export default function ProductFormPage() {
                         type="button"
                         onClick={() => setShowDeleteConfirm(true)}
                         disabled={hasActiveOrders}
-                        className="flex items-center gap-2 text-sm text-red-600 hover:text-red-800 font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 text-sm text-danger hover:text-danger font-medium disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <Trash2 className="h-4 w-4" />
                         Delete this listing

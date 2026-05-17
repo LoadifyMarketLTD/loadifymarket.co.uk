@@ -10,7 +10,7 @@ const CTA_CARDS = [
     icon: Tag,
     label: "Price Crunch",
     route: "/catalog?filter=price-crunch",
-    iconClass: "text-[#D4AF37]",
+    iconClass: "text-primary",
   },
   {
     icon: RefreshCw,
@@ -40,7 +40,7 @@ const CTA_CARDS = [
     icon: XCircle,
     label: "Delisted",
     route: "/catalog?filter=delisted",
-    iconClass: "text-red-400",
+    iconClass: "text-danger",
   },
   {
     icon: ShoppingBag,
@@ -63,7 +63,7 @@ const DrawerCTACards = ({ onClose }: DrawerCTACardsProps) => (
         key={label}
         to={route}
         onClick={onClose}
-        className="bg-[linear-gradient(145deg,#121A2B,#0A0E1A)] border border-white/5 rounded-xl p-3 flex flex-col items-start gap-1.5 h-[68px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(251,191,36,0.15)] hover:border-primary/40 active:scale-[0.97]"
+        className="bg-surface border border-white/5 rounded-xl p-3 flex flex-col items-start gap-1.5 h-[68px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_20px_rgba(212,175,55,0.15)] hover:border-primary/40 active:scale-[0.97]"
       >
         <Icon className={`h-5 w-5 ${iconClass}`} aria-hidden="true" />
         <span className="text-xs font-semibold text-white/80 leading-tight">{label}</span>

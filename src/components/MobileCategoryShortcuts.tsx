@@ -73,7 +73,7 @@ export default function MobileCategoryShortcuts() {
                     : '1px solid rgba(255,255,255,0.14)',
                   fontSize: 'clamp(13px, 3.6vw, 14px)',
                   fontWeight: active ? 600 : 500,
-                  color: active ? '#E8A020' : 'rgba(255,255,255,0.85)',
+                  color: active ? 'rgba(212,175,55,1)' : 'rgba(255,255,255,0.85)',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                   transition: 'border-color 0.15s, color 0.15s',

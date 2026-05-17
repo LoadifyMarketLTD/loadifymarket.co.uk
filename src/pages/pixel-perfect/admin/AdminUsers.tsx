@@ -48,27 +48,27 @@ interface UserDetail extends User {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  active: { label: "Active", className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
-  inactive: { label: "Suspended", className: "border-red-500/30 text-red-400 bg-red-500/10" },
+  active: { label: "Active", className: "border-emerald-500/30 text-success bg-success/10" },
+  inactive: { label: "Suspended", className: "border-danger/30 text-danger bg-danger/100/10" },
 };
 
 const roleConfig: Record<string, { label: string; className: string }> = {
   buyer: { label: "Buyer", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
-  seller: { label: "Seller", className: "border-purple-500/30 text-purple-400 bg-purple-500/10" },
-  admin: { label: "Admin", className: "border-red-500/30 text-red-400 bg-red-500/10" },
+  seller: { label: "Seller", className: "border-admin/30 text-admin bg-admin/10" },
+  admin: { label: "Admin", className: "border-danger/30 text-danger bg-danger/100/10" },
 };
 
 const stripeStatusConfig: Record<string, { label: string; className: string }> = {
-  active:     { label: "Active",      className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+  active:     { label: "Active",      className: "border-emerald-500/30 text-success bg-success/10" },
   pending:    { label: "Pending",     className: "border-primary/40 text-primary bg-primary/10" },
-  restricted: { label: "Restricted",  className: "border-red-500/30 text-red-400 bg-red-500/10" },
+  restricted: { label: "Restricted",  className: "border-danger/30 text-danger bg-danger/100/10" },
 };
 
 const sellerStatusConfig: Record<string, { label: string; className: string }> = {
-  active:    { label: "Active",      className: "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" },
+  active:    { label: "Active",      className: "border-emerald-500/30 text-success bg-success/10" },
   submitted: { label: "Submitted",   className: "border-primary/40 text-primary bg-primary/10" },
   draft:     { label: "Draft",       className: "border-slate-500/30 text-slate-400 bg-slate-500/10" },
-  suspended: { label: "Suspended",   className: "border-red-500/30 text-red-400 bg-red-500/10" },
+  suspended: { label: "Suspended",   className: "border-danger/30 text-danger bg-danger/100/10" },
 };
 
 const AdminUsers = () => {
@@ -388,10 +388,10 @@ const AdminUsers = () => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Users", count: users.length, color: "#D4AF37", bg: "rgba(251,191,36,0.12)", tab: "all" as const },
+          { label: "Total Users", count: users.length, color: "rgba(212,175,55,1)", bg: "rgba(212,175,55,0.12)", tab: "all" as const },
           { label: "Buyers", count: users.filter((u) => u.role === "buyer").length, color: "#60A5FA", bg: "rgba(96,165,250,0.12)", tab: "buyer" as const },
-          { label: "Sellers", count: users.filter((u) => u.role === "seller").length, color: "#A78BFA", bg: "rgba(167,139,250,0.12)", tab: "seller" as const },
-          { label: "Suspended", count: users.filter((u) => !u.isActive).length, color: "#F87171", bg: "rgba(248,113,113,0.12)", tab: "suspended" as const },
+          { label: "Sellers", count: users.filter((u) => u.role === "seller").length, color: "rgba(124,58,237,1)", bg: "rgba(124,58,237,0.12)", tab: "seller" as const },
+          { label: "Suspended", count: users.filter((u) => !u.isActive).length, color: "rgba(248,113,113,1)", bg: "rgba(248,113,113,0.12)", tab: "suspended" as const },
         ].map((stat) => (
           <button
             key={stat.label}
@@ -399,7 +399,7 @@ const AdminUsers = () => {
             onClick={() => setActiveTab(stat.tab)}
             className="rounded-2xl p-5 text-left transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             style={{
-              background: "linear-gradient(145deg, #121A2B, #182235)",
+              
               border: activeTab === stat.tab ? `2px solid ${stat.color}` : "1px solid rgba(255,255,255,0.05)",
               boxShadow: "0 10px 40px rgba(0,0,0,0.6)",
             }}
@@ -436,7 +436,7 @@ const AdminUsers = () => {
         </TabsList>
         {(["all", "buyer", "seller", "admin", "suspended"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
+            <div className="rounded-2xl overflow-hidden" style={{ background: "var(--color-surface)", border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 10px 40px rgba(0,0,0,0.6)" }}>
               <div className="px-2 py-2 overflow-x-auto">
                 {renderTable(
                   tab === "all" ? filtered :
@@ -495,7 +495,7 @@ const AdminUsers = () => {
                 <section>
                   <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Activity</h3>
                   <div className="grid grid-cols-3 gap-3">
-                    <StatCard icon={<Package className="h-4 w-4" />} label="Listings" value={detail.listingsCount} color="#A78BFA" />
+                    <StatCard icon={<Package className="h-4 w-4" />} label="Listings" value={detail.listingsCount} color="rgba(124,58,237,1)" />
                     <StatCard icon={<ShoppingBag className="h-4 w-4" />} label="Orders" value={detail.ordersCount} color="#60A5FA" />
                     <StatCard icon={<Flag className="h-4 w-4" />} label="Reports Filed" value={detail.reportsCount} color="#F87171" />
                   </div>
@@ -613,7 +613,7 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 /** Small stat card for activity counts */
 function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number; color: string }) {
   return (
-    <div className="rounded-xl p-4 flex flex-col gap-2" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}>
+    <div className="rounded-xl p-4 flex flex-col gap-2" style={{ background: "var(--color-surface)", border: "1px solid rgba(255,255,255,0.05)" }}>
       <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${color}20`, color }}>
         {icon}
       </div>

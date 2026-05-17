@@ -220,7 +220,7 @@ const BuyerReviews = () => {
               </TableCell>
               <TableCell>
                 <Badge variant="outline" className={r.status === "published" || r.status === "approved"
-                  ? "bg-emerald-500/15 text-emerald-700 border-emerald-200"
+                  ? "bg-success/15 text-success border-success/40"
                   : "bg-primary/15 text-primary border-primary/40"}>
                   {r.status}
                 </Badge>
@@ -280,7 +280,7 @@ const BuyerReviews = () => {
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
                 <ThumbsUp className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
@@ -349,7 +349,7 @@ const BuyerReviews = () => {
               <div className="flex items-center justify-between">
                 <StarDisplay rating={selected.rating} />
                 <Badge variant="outline" className={selected.status === "published" || selected.status === "approved"
-                  ? "bg-emerald-500/15 text-emerald-700 border-emerald-200"
+                  ? "bg-success/15 text-success border-success/40"
                   : "bg-primary/15 text-primary border-primary/40"}>
                   {selected.status}
                 </Badge>

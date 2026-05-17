@@ -21,10 +21,10 @@ const resolveParentId = (category: DbCategory): string | undefined => category.p
 
 // ── Shared select styling constants ──────────────────────────────────────────
 const SELECT_CLASS =
-  'w-full h-12 rounded-[14px] border border-white/10 bg-[#17181E] text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-[#F2B84B]/40 focus:border-[#F2B84B] transition-all';
+  'w-full h-12 rounded-[14px] border border-white/10 bg-surface text-white text-sm px-3 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all';
 const SELECT_STYLE: React.CSSProperties = { colorScheme: 'dark' };
-const OPTION_PLACEHOLDER_STYLE: React.CSSProperties = { background: '#17181E', color: '#8E929A' };
-const OPTION_ITEM_STYLE: React.CSSProperties = { background: '#17181E', color: '#FFFFFF' };
+const OPTION_PLACEHOLDER_STYLE: React.CSSProperties = { background: 'rgba(23,24,30,1)', color: 'rgba(142,146,154,1)' };
+const OPTION_ITEM_STYLE: React.CSSProperties = { background: 'rgba(23,24,30,1)', color: 'rgba(255,255,255,1)' };
 
 export default function CategorySelector({
   selectedCategoryId,

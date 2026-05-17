@@ -454,7 +454,7 @@ const SellerSettings = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm font-semibold text-foreground">Stripe Connect</p>
                   {stripeConnectStatus === "active" && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-success/10 text-success">
                       <CheckCircle className="h-3 w-3" /> Connected
                     </span>
                   )}
@@ -464,7 +464,7 @@ const SellerSettings = () => {
                     </span>
                   )}
                   {stripeConnectStatus === "restricted" && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-red-500/10 text-red-700">
+                    <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-danger/100/10 text-danger">
                       <XCircle className="h-3 w-3" /> Restricted
                     </span>
                   )}

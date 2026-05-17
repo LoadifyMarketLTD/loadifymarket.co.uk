@@ -597,7 +597,7 @@ const ProductDetail = () => {
           style={{ background: "rgba(255,255,255,0.10)" }}
           aria-label="Back"
         >
-          <ArrowLeft style={{ width: "20px", height: "20px", color: "#FFFFFF" }} />
+          <ArrowLeft style={{ width: "20px", height: "20px", color: "rgba(255,255,255,1)" }} />
         </button>
         <div style={{ display: "flex", gap: "8px" }}>
           <button
@@ -606,7 +606,7 @@ const ProductDetail = () => {
             style={{ background: "rgba(255,255,255,0.10)" }}
             aria-label="Share"
           >
-            <Share2 style={{ width: "20px", height: "20px", color: "#FFFFFF" }} />
+            <Share2 style={{ width: "20px", height: "20px", color: "rgba(255,255,255,1)" }} />
           </button>
           <button
             onClick={() => void handleMobileToggleWishlist()}
@@ -619,8 +619,8 @@ const ProductDetail = () => {
               style={{
                 width: "20px",
                 height: "20px",
-                color: mobileWishlisted ? "#EF4444" : "#FFFFFF",
-                fill: mobileWishlisted ? "#EF4444" : "none",
+                color: mobileWishlisted ? "rgba(239,68,68,1)" : "rgba(255,255,255,1)",
+                fill: mobileWishlisted ? "rgba(239,68,68,1)" : "none",
               }}
             />
           </button>
@@ -676,7 +676,7 @@ const ProductDetail = () => {
               <div
                 className="order-2 md:hidden"
                 style={{
-                  background: "#12121A",
+                  background: "rgba(18,18,26,1)",
                   borderRadius: "16px",
                   margin: "0 -16px",
                   padding: "20px 16px",
@@ -684,12 +684,12 @@ const ProductDetail = () => {
                 }}
               >
                 {/* Title */}
-                <h1 style={{ fontSize: "20px", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.3, marginBottom: "8px" }}>
+                <h1 style={{ fontSize: "20px", fontWeight: 800, color: "rgba(255,255,255,1)", lineHeight: 1.3, marginBottom: "8px" }}>
                   {product.title}
                 </h1>
 
                 {/* Price */}
-                <p style={{ fontSize: "26px", fontWeight: 800, color: "#FFFFFF", marginBottom: "4px" }}>
+                <p style={{ fontSize: "26px", fontWeight: 800, color: "rgba(255,255,255,1)", marginBottom: "4px" }}>
                   £{product.price.toLocaleString("en-GB", { minimumFractionDigits: 2 })}
                 </p>
                 <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", fontWeight: 500, marginBottom: "4px" }}>
@@ -713,7 +713,7 @@ const ProductDetail = () => {
                 >
                   <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.60)" }}>Condition</span>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                    <span style={{ fontSize: "14px", fontWeight: 600, color: "#FFFFFF" }}>{product.condition}</span>
+                    <span style={{ fontSize: "14px", fontWeight: 600, color: "rgba(255,255,255,1)" }}>{product.condition}</span>
                     <ChevronRight style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.30)" }} />
                   </div>
                 </div>
@@ -730,7 +730,7 @@ const ProductDetail = () => {
                     }}
                   >
                     <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.60)" }}>Location</span>
-                    <span style={{ fontSize: "14px", fontWeight: 600, color: "#FFFFFF" }}>{product.location}</span>
+                    <span style={{ fontSize: "14px", fontWeight: 600, color: "rgba(255,255,255,1)" }}>{product.location}</span>
                   </div>
                 ) : null}
 
@@ -745,7 +745,7 @@ const ProductDetail = () => {
                   }}
                 >
                   <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.60)" }}>Seller</span>
-                  <span style={{ fontSize: "14px", fontWeight: 600, color: "#FFFFFF" }}>{product.seller}</span>
+                  <span style={{ fontSize: "14px", fontWeight: 600, color: "rgba(255,255,255,1)" }}>{product.seller}</span>
                 </div>
 
                 {/* Quantity row */}
@@ -767,7 +767,7 @@ const ProductDetail = () => {
                       background: "rgba(255,255,255,0.08)",
                       border: "1px solid rgba(255,255,255,0.15)",
                       borderRadius: "8px",
-                      color: "#FFFFFF",
+                      color: "rgba(255,255,255,1)",
                       fontSize: "14px",
                       fontWeight: 600,
                       padding: "6px 10px",
@@ -777,7 +777,7 @@ const ProductDetail = () => {
                     aria-label="Quantity"
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                      <option key={n} value={n} style={{ background: "#12121A" }}>{n}</option>
+                      <option key={n} value={n} style={{ background: "rgba(18,18,26,1)" }}>{n}</option>
                     ))}
                   </select>
                 </div>
@@ -799,8 +799,8 @@ const ProductDetail = () => {
                   </div>
                 )}
                 {listingStatus === "sold" && (
-                  <div className="flex items-center justify-center gap-2 rounded-xl bg-red-500/15 border border-red-500/25 py-3 px-4 mb-3">
-                    <span className="text-red-400 text-sm font-semibold">✕ This item has been sold</span>
+                  <div className="flex items-center justify-center gap-2 rounded-xl bg-danger/100/15 border border-red-500/25 py-3 px-4 mb-3">
+                    <span className="text-danger text-sm font-semibold">✕ This item has been sold</span>
                   </div>
                 )}
               </div>
@@ -995,7 +995,7 @@ const ProductDetail = () => {
                 borderRadius: "12px",
                 background: "rgba(239,68,68,0.10)",
                 border: "1px solid rgba(239,68,68,0.25)",
-                color: "#F87171",
+                color: "rgba(248,113,113,1)",
                 fontSize: "14px",
                 fontWeight: 700,
               }}
@@ -1008,9 +1008,9 @@ const ProductDetail = () => {
                 textAlign: "center",
                 padding: "14px",
                 borderRadius: "12px",
-                background: "rgba(245,185,66,0.10)",
-                border: "1px solid rgba(245,185,66,0.25)",
-                color: "#D4AF37",
+                background: "rgba(212,175,55,0.10)",
+                border: "1px solid rgba(212,175,55,0.25)",
+                color: "rgba(212,175,55,1)",
                 fontSize: "14px",
                 fontWeight: 700,
               }}
@@ -1029,7 +1029,7 @@ const ProductDetail = () => {
                   padding: "14px 8px",
                   borderRadius: "12px",
                   background: "rgba(255,255,255,0.07)",
-                  color: "#FFFFFF",
+                  color: "rgba(255,255,255,1)",
                   fontSize: "13px",
                   fontWeight: 700,
                   border: "1px solid rgba(255,255,255,0.15)",
@@ -1065,7 +1065,7 @@ const ProductDetail = () => {
                   padding: "14px 8px",
                   borderRadius: "12px",
                   background: "rgba(255,255,255,0.07)",
-                  color: "#FFFFFF",
+                  color: "rgba(255,255,255,1)",
                   fontSize: "13px",
                   fontWeight: 700,
                   border: "1px solid rgba(255,255,255,0.15)",
@@ -1098,8 +1098,8 @@ const ProductDetail = () => {
                   flex: 2,
                   padding: "14px 8px",
                   borderRadius: "12px",
-                  background: "linear-gradient(135deg, #D4AF37, #D4AF37)",
-                  color: "#121A2B",
+                  background: "rgba(212,175,55,1)",
+                  color: "rgba(18,26,43,1)",
                   fontSize: "14px",
                   fontWeight: 800,
                   border: "none",

@@ -126,7 +126,7 @@ export function OnboardingChecklist() {
               className="rounded-full"
               style={{
                 width: "10px", height: "10px",
-                background: `conic-gradient(#D4AF37 ${Math.round((completed / total) * 360)}deg, transparent 0deg)`,
+                background: `conic-gradient(rgba(212,175,55,1) ${Math.round((completed / total) * 360)}deg, transparent 0deg)`,
               }}
             />
           </div>

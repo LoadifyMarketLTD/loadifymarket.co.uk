@@ -86,7 +86,7 @@ export default function MobileSearchOverlay({ onClose }: Props) {
         <form
           onSubmit={handleSubmit}
           style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '10px',
-            background: '#1A1A24', border: '1px solid rgba(255,255,255,0.10)',
+            border: '1px solid rgba(255,255,255,0.10)',
             borderRadius: '14px', padding: '13px 16px' }}
         >
           <Search
@@ -103,7 +103,7 @@ export default function MobileSearchOverlay({ onClose }: Props) {
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              color: '#FFFFFF',
+              color: 'rgba(255,255,255,1)',
               fontSize: '15px',
               lineHeight: 1.2,
               minWidth: 0,
@@ -149,9 +149,9 @@ export default function MobileSearchOverlay({ onClose }: Props) {
                 minHeight: '44px',
                 padding: '0 16px',
                 borderRadius: '22px',
-                background: 'rgba(245,185,66,0.08)',
+                background: 'rgba(212,175,55,0.08)',
                 border: '1px solid rgba(200,134,10,0.35)',
-                color: '#D4AF37',
+                
                 fontSize: '13px',
                 fontWeight: 600,
                 cursor: 'pointer',

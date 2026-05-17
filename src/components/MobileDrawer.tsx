@@ -48,7 +48,7 @@ interface MainScreenProps {
 /** Icon / colour overrides for known category slugs. */
 const ICON_MAP: Record<string, { icon: LucideIcon; iconColor: string }> = {
   "electronics":       { icon: Smartphone,    iconColor: "text-cyan-400"   },
-  "home-garden":       { icon: Home,          iconColor: "text-green-400"  },
+  "home-garden":       { icon: Home,          iconColor: "text-success"  },
   "clothing-fashion":  { icon: Shirt,         iconColor: "text-blue-400"   },
   "toys-games":        { icon: Gamepad2,      iconColor: "text-purple-400" },
   "sports-fitness":    { icon: Dumbbell,      iconColor: "text-primary" },
@@ -56,7 +56,7 @@ const ICON_MAP: Record<string, { icon: LucideIcon; iconColor: string }> = {
   "health-beauty":     { icon: HeartPulse,    iconColor: "text-rose-400"   },
   "pets":              { icon: PawPrint,      iconColor: "text-orange-400" },
   "pet-supplies":      { icon: PawPrint,      iconColor: "text-primary"  },
-  "food-drink":        { icon: UtensilsCrossed, iconColor: "text-red-400"  },
+  "food-drink":        { icon: UtensilsCrossed, iconColor: "text-danger"  },
   "office-business":   { icon: Briefcase,     iconColor: "text-sky-400"    },
 };
 
@@ -83,7 +83,7 @@ const MainScreen = ({
       <Link to="/" onClick={onClose} className="flex items-center gap-2" aria-label="Loadify Market — Home">
         <img src={logo} alt="" aria-hidden="true" className="h-7 w-7" />
         <span className="font-display text-base font-bold text-white leading-none">
-          Loadify <span className="text-[#D4AF37]">Market</span>
+          Loadify <span className="text-primary">Market</span>
         </span>
       </Link>
       <button
@@ -166,7 +166,7 @@ const MainScreen = ({
                     onClick={onClose}
                     className="flex items-center px-6 h-[46px] border-b border-white/[0.06] hover:bg-white/[0.07] active:bg-white/10 transition-colors"
                   >
-                    <span className="text-[14px] font-semibold text-[#D4AF37]">
+                    <span className="text-[14px] font-semibold text-primary">
                       View All {cat.name}
                     </span>
                   </Link>
@@ -199,21 +199,21 @@ const MainScreen = ({
         <Link
           to="/wholesale-info"
           onClick={onClose}
-          className="px-4 h-11 flex items-center text-sm font-medium text-[#9CA3AF] hover:text-[#D4AF37] hover:bg-[rgba(251,191,36,0.08)] transition-colors"
+          className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors"
         >
           Marketplace Information
         </Link>
         <Link
           to="/blog"
           onClick={onClose}
-          className="px-4 h-11 flex items-center text-sm font-medium text-[#9CA3AF] hover:text-[#D4AF37] hover:bg-[rgba(251,191,36,0.08)] transition-colors"
+          className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors"
         >
           Blog
         </Link>
         <Link
           to="/about"
           onClick={onClose}
-          className="px-4 h-11 flex items-center text-sm font-medium text-[#9CA3AF] hover:text-[#D4AF37] hover:bg-[rgba(251,191,36,0.08)] transition-colors"
+          className="px-4 h-11 flex items-center text-sm font-medium text-muted-foreground hover:text-primary hover:bg-[rgba(212,175,55,0.08)] transition-colors"
         >
           About Us
         </Link>
@@ -310,7 +310,7 @@ const MobileDrawer = ({ open, onClose, user, dashboardPath, onLogout }: MobileDr
         ref={panelRef}
         className={[
           "fixed top-0 left-0 z-[9999] h-[100dvh] w-[85vw] max-w-[380px]",
-          "bg-[#0E1520] border-r border-white/[0.12] shadow-2xl flex flex-col",
+          "bg-background border-r border-white/[0.12] shadow-2xl flex flex-col",
           "transition-transform duration-300 ease-in-out",
           open ? "translate-x-0" : "-translate-x-full",
         ].join(" ")}

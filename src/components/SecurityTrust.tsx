@@ -32,7 +32,7 @@ const items: TrustItem[] = [
 
 export default function SecurityTrust() {
   return (
-    <div className="flex-1 rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#182235,#0A0E1A)] p-6 lg:p-8 flex flex-col">
+    <div className="flex-1 rounded-2xl border border-white/5 bg-elevated p-6 lg:p-8 flex flex-col">
       <h2 className="text-xl font-semibold text-white mb-4">
         Security &amp; Trust You Can Rely On
       </h2>
@@ -43,10 +43,10 @@ export default function SecurityTrust() {
             <div
               key={item.title}
               data-parallax
-              className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-[linear-gradient(145deg,#182235,#0A0E1A)] p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(251,191,36,0.15)] hover:border-primary/40"
+              className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-elevated p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_25px_rgba(212,175,55,0.15)] hover:border-primary/40"
             >
               <Icon
-                className="w-7 h-7 text-[#D4AF37] shrink-0 icon-pulse"
+                className="w-7 h-7 text-primary shrink-0 icon-pulse"
                 aria-hidden="true"
               />
               <p className="text-base font-semibold text-white leading-tight">{item.title}</p>

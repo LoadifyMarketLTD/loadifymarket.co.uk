@@ -21,9 +21,8 @@ import RequireEmailVerified from './auth/RequireEmailVerified';
 function GuestSellScreen() {
   return (
     <div
-      className="md:hidden min-h-screen flex flex-col items-center justify-center gap-5 px-6 text-center"
+      className="md:hidden min-h-screen flex flex-col items-center justify-center gap-5 px-6 text-center bg-background"
       style={{
-        background: '#0A0E1A',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
@@ -46,7 +45,7 @@ function GuestSellScreen() {
       </div>
 
       <div style={{ maxWidth: 300 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: '#FFFFFF', margin: '0 0 10px' }}>
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: '0 0 10px' }}>
           Create an account to sell
         </h2>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.50)', margin: 0, lineHeight: 1.6 }}>
@@ -67,16 +66,15 @@ function GuestSellScreen() {
         {/* Primary CTA */}
         <Link
           to="/register?type=seller"
+          className="text-surface bg-primary"
           style={{
             display: 'block',
             height: 50,
             lineHeight: '50px',
             textAlign: 'center',
             borderRadius: 9999,
-            background: 'linear-gradient(135deg, #D4AF37 0%, #D4AF37 100%)',
             fontSize: 15,
             fontWeight: 700,
-            color: '#121A2B',
             textDecoration: 'none',
           }}
         >
@@ -138,8 +136,7 @@ export default function MobileSellGate({ children }: { children: ReactNode }) {
   if (isLoading) {
     return (
       <div
-        className="md:hidden flex items-center justify-center min-h-screen"
-        style={{ background: '#0A0E1A' }}
+        className="md:hidden flex items-center justify-center min-h-screen bg-background"
       >
         <div
           style={{
@@ -147,7 +144,7 @@ export default function MobileSellGate({ children }: { children: ReactNode }) {
             height: 40,
             borderRadius: '50%',
             border: '3px solid rgba(255,255,255,0.10)',
-            borderTopColor: '#D4AF37',
+            borderTopColor: 'rgba(212,175,55,1)',
             animation: 'spin 0.8s linear infinite',
           }}
         />

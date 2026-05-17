@@ -86,10 +86,10 @@ function passwordStrength(pw: string): { label: string; width: string; color: st
   if (/[A-Z]/.test(pw)) score++;
   if (/[0-9]/.test(pw)) score++;
   if (/[^A-Za-z0-9]/.test(pw)) score++;
-  if (score <= 1) return { label: "Weak", width: "25%", color: "bg-red-500", score };
+  if (score <= 1) return { label: "Weak", width: "25%", color: "bg-danger/100", score };
   if (score === 2) return { label: "Fair", width: "50%", color: "bg-orange-400", score };
   if (score === 3) return { label: "Good", width: "75%", color: "bg-primary", score };
-  return { label: "Strong", width: "100%", color: "bg-green-500", score };
+  return { label: "Strong", width: "100%", color: "bg-success/100", score };
 }
 
 // ─── Field component helpers ──────────────────────────────────────────────────
@@ -716,7 +716,7 @@ export default function TradeAccount() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 text-base font-semibold bg-[#22C55E] hover:bg-[#16a34a] text-white rounded-xl shadow-md transition-colors"
+                className="w-full h-12 text-base font-semibold bg-success hover:bg-[#16a34a] text-white rounded-xl shadow-md transition-colors"
               >
                 {loading ? (
                   <span className="flex items-center gap-2">
@@ -748,7 +748,7 @@ export default function TradeAccount() {
                 key={point.text}
                 className="bg-white rounded-xl border border-gray-200 p-5 flex items-center gap-3 shadow-sm"
               >
-                <div className="h-8 w-8 rounded-full bg-[#22C55E] flex items-center justify-center shrink-0">
+                <div className="h-8 w-8 rounded-full bg-success flex items-center justify-center shrink-0">
                   <CheckCircle2 className="h-4 w-4 text-[#F59E0B]" />
                 </div>
                 <p className="font-medium text-gray-800 text-sm">{point.text}</p>

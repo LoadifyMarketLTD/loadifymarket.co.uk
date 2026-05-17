@@ -344,7 +344,7 @@ const SellerProfile = () => {
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-bold text-foreground">{form.businessName || "Your Business"}</h2>
                 {sellerStatus === "active" && (
-                  <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200" variant="outline">
+                  <Badge className="bg-success/10 text-success border-success/40" variant="outline">
                     <ShieldCheck className="h-3 w-3 mr-1" /> Verified Seller
                   </Badge>
                 )}
@@ -359,7 +359,7 @@ const SellerProfile = () => {
                   </Badge>
                 )}
                 {sellerStatus === "suspended" && (
-                  <Badge className="bg-red-500/10 text-red-700 border-red-200" variant="outline">
+                  <Badge className="bg-danger/100/10 text-danger border-danger/30" variant="outline">
                     Restricted
                   </Badge>
                 )}

@@ -185,7 +185,7 @@ function OfferBubble({
 
   const statusColour: Record<string, string> = {
     pending:   "text-muted-foreground",
-    accepted:  "text-green-600 dark:text-green-400",
+    accepted:  "text-success dark:text-success",
     declined:  "text-destructive",
     expired:   "text-muted-foreground",
     cancelled: "text-muted-foreground",
@@ -219,7 +219,7 @@ function OfferBubble({
           <button
             onClick={onAccept}
             disabled={busy}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-green-50 border border-green-200 text-green-700 text-xs font-semibold hover:bg-green-100 disabled:opacity-40 transition-colors dark:bg-green-500/10 dark:border-green-500/30 dark:text-green-400 dark:hover:bg-green-500/20"
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-success/10 border border-success/30 text-green-700 text-xs font-semibold hover:bg-green-100 disabled:opacity-40 transition-colors dark:bg-success/10 dark:border-success/30 dark:text-success dark:hover:bg-success/100/20"
           >
             <CheckCircle className="h-3.5 w-3.5" />
             {busy ? "…" : "Accept"}
@@ -227,7 +227,7 @@ function OfferBubble({
           <button
             onClick={onDecline}
             disabled={busy}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold hover:bg-red-100 disabled:opacity-40 transition-colors dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/20"
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-danger/10 border border-danger/30 text-danger text-xs font-semibold hover:bg-red-100 disabled:opacity-40 transition-colors dark:bg-danger/100/10 dark:border-danger/30 dark:text-danger dark:hover:bg-danger/100/20"
           >
             <XCircle className="h-3.5 w-3.5" />
             {busy ? "…" : "Decline"}
@@ -249,7 +249,7 @@ function OfferBubble({
 
       {/* Buyer: payment confirmed state */}
       {!isSeller && isMine && status === "accepted" && offerRecord?.orderStatus === "paid" && (
-        <p className="mt-3 text-center text-xs font-semibold text-green-600 dark:text-green-400">
+        <p className="mt-3 text-center text-xs font-semibold text-success dark:text-success">
           ✓ Payment confirmed
         </p>
       )}

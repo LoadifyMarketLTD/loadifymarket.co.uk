@@ -45,7 +45,7 @@ function NavItem({
         style={{
           width: '22px',
           height: '22px',
-          color: isActive ? '#D4AF37' : 'rgba(255,255,255,0.45)',
+          color: isActive ? 'rgba(212,175,55,1)' : 'rgba(255,255,255,0.45)',
           transition: 'color 0.2s',
         }}
         strokeWidth={isActive ? 2.2 : 1.8}
@@ -55,7 +55,7 @@ function NavItem({
         style={{
           fontSize: '10px',
           fontWeight: isActive ? 700 : 400,
-          color: isActive ? '#D4AF37' : 'rgba(255,255,255,0.40)',
+          color: isActive ? 'rgba(212,175,55,1)' : 'rgba(255,255,255,0.40)',
           lineHeight: 1,
           transition: 'color 0.2s',
           maxWidth: '52px',
@@ -110,7 +110,7 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
           style={{
             width: '22px',
             height: '22px',
-            color: isActive ? '#D4AF37' : 'rgba(255,255,255,0.45)',
+            color: isActive ? 'rgba(212,175,55,1)' : 'rgba(255,255,255,0.45)',
             transition: 'color 0.2s',
           }}
           strokeWidth={isActive ? 2.2 : 1.8}
@@ -125,8 +125,8 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
               right: '-6px',
               minWidth: '16px',
               height: '16px',
-              backgroundColor: '#D4AF37',
-              color: '#121A2B',
+              backgroundColor: 'rgba(212,175,55,1)',
+              
               fontSize: '9px',
               fontWeight: 800,
               borderRadius: '8px',
@@ -144,7 +144,7 @@ function MessagesNavButton({ isActive }: { isActive: boolean }) {
         style={{
           fontSize: '10px',
           fontWeight: isActive ? 700 : 400,
-          color: isActive ? '#D4AF37' : 'rgba(255,255,255,0.40)',
+          color: isActive ? 'rgba(212,175,55,1)' : 'rgba(255,255,255,0.40)',
           lineHeight: 1,
           maxWidth: '52px',
           overflow: 'hidden',
@@ -209,7 +209,7 @@ export default function MobileBottomNav() {
               width: '52px',
               height: '52px',
               borderRadius: '50%',
-              background: 'linear-gradient(145deg, #D4AF37, #D4AF37)',
+              background: 'rgba(212,175,55,1)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -217,9 +217,9 @@ export default function MobileBottomNav() {
               boxShadow: '0 0 24px rgba(200,134,10,0.50), 0 6px 16px rgba(0,0,0,0.65)',
             }}
           >
-            <Plus style={{ width: '24px', height: '24px', color: '#121A2B' }} strokeWidth={2.5} aria-hidden="true" />
+            <Plus style={{ width: '24px', height: '24px' }} strokeWidth={2.5} aria-hidden="true" />
           </div>
-          <span style={{ fontSize: '10px', fontWeight: 600, color: '#D4AF37', lineHeight: 1, marginTop: '1px' }}>
+          <span style={{ fontSize: '10px', fontWeight: 600, lineHeight: 1, marginTop: '1px' }}>
             Sell
           </span>
         </button>

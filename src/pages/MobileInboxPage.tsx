@@ -253,19 +253,19 @@ export default function MobileInboxPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0A0E1A] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D4AF37]" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#0A0E1A" }}>
+    <div className="min-h-screen flex flex-col bg-background">
       {/* ── Header ── */}
       <div
         className="shrink-0 sticky top-0 z-40"
         style={{
-          background: "rgba(7,8,11,0.97)",
+          background: "rgba(10,14,26,0.97)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
           borderBottom: "1px solid rgba(255,255,255,0.07)",
@@ -282,7 +282,7 @@ export default function MobileInboxPage() {
             paddingBottom: "10px",
           }}
         >
-          <h1 style={{ fontSize: "24px", fontWeight: 800, color: "#FFFFFF" }}>Messages</h1>
+          <h1 style={{ fontSize: "24px", fontWeight: 800, color: "rgba(255,255,255,1)" }}>Messages</h1>
           <button
             className="p-2 rounded-xl active:bg-white/10 transition-colors"
             style={{ background: "rgba(255,255,255,0.05)" }}
@@ -318,7 +318,7 @@ export default function MobileInboxPage() {
                 border: "none",
                 outline: "none",
                 fontSize: "14px",
-                color: "#FFFFFF",
+                color: "rgba(255,255,255,1)",
               }}
               className="placeholder:text-white/35"
             />
@@ -350,7 +350,7 @@ export default function MobileInboxPage() {
                   whiteSpace: "nowrap",
                   background: "transparent",
                   border: "none",
-                  borderBottom: isActive ? "2px solid #D4AF37" : "2px solid transparent",
+                  borderBottom: isActive ? "2px solid rgba(212,175,55,1)" : "2px solid transparent",
                   cursor: "pointer",
                   flexShrink: 0,
                   display: "flex",
@@ -366,8 +366,8 @@ export default function MobileInboxPage() {
                       minWidth: "18px",
                       height: "18px",
                       borderRadius: "9px",
-                      background: "#D4AF37",
-                      color: "#121A2B",
+                      background: "rgba(212,175,55,1)",
+                      color: "rgba(18,26,43,1)",
                       fontSize: "10px",
                       fontWeight: 800,
                       display: "flex",
@@ -408,7 +408,7 @@ export default function MobileInboxPage() {
               <Link
                 to="/catalog"
                 className="px-5 py-2.5 rounded-full text-sm font-semibold"
-                style={{ background: "#D4AF37", color: "#121A2B" }}
+                style={{ background: "rgba(212,175,55,1)", color: "rgba(18,26,43,1)" }}
               >
                 Browse listings
               </Link>
@@ -459,8 +459,8 @@ export default function MobileInboxPage() {
                           width: "11px",
                           height: "11px",
                           borderRadius: "50%",
-                          background: "#22C55E",
-                          border: "2px solid #0A0E1A",
+                          background: "rgba(34,197,94,1)",
+                          border: "2px solid rgba(10,14,26,1)",
                         }}
                       />
                     )}
@@ -507,8 +507,8 @@ export default function MobileInboxPage() {
                         minWidth: "22px",
                         height: "22px",
                         borderRadius: "11px",
-                        background: "#D4AF37",
-                        color: "#121A2B",
+                        background: "rgba(212,175,55,1)",
+                        color: "rgba(18,26,43,1)",
                         fontSize: "11px",
                         fontWeight: 800,
                         display: "flex",

@@ -146,8 +146,8 @@ function OfferBubble({
 
   const statusColour: Record<string, string> = {
     pending:   "text-white/40",
-    accepted:  "text-green-400",
-    declined:  "text-red-400",
+    accepted:  "text-success",
+    declined:  "text-danger",
     expired:   "text-white/30",
     cancelled: "text-white/30",
   };
@@ -156,13 +156,13 @@ function OfferBubble({
     <div
       className={`rounded-2xl px-4 py-3 max-w-[80%] ${
         isMine
-          ? "bg-[#D4AF37]/15 border border-[#D4AF37]/30 rounded-br-sm"
-          : "bg-[#D4AF37]/10 border border-[#D4AF37]/20 rounded-bl-sm"
+          ? "bg-primary/15 border border-primary/30 rounded-br-sm"
+          : "bg-primary/10 border border-primary/20 rounded-bl-sm"
       }`}
     >
       <div className="flex items-center gap-2 mb-1">
-        <Tag className="h-3.5 w-3.5 text-[#D4AF37]" />
-        <span className="text-xs font-semibold text-[#D4AF37] uppercase tracking-wide">Offer</span>
+        <Tag className="h-3.5 w-3.5 text-primary" />
+        <span className="text-xs font-semibold text-primary uppercase tracking-wide">Offer</span>
       </div>
       {productTitle && (
         <p className="text-xs text-white/75 mb-1 truncate">{productTitle}</p>
@@ -177,14 +177,14 @@ function OfferBubble({
         <div className="flex gap-2 mt-3">
           <button
             onClick={onAccept}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-green-500/20 border border-green-500/40 text-green-400 text-xs font-semibold active:bg-green-500/30 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-success/100/20 border border-green-500/40 text-success text-xs font-semibold active:bg-success/100/30 transition-colors"
           >
             <CheckCircle className="h-3.5 w-3.5" />
             Accept
           </button>
           <button
             onClick={onDecline}
-            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-red-500/20 border border-red-500/40 text-red-400 text-xs font-semibold active:bg-red-500/30 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-xl bg-danger/100/20 border border-red-500/40 text-danger text-xs font-semibold active:bg-danger/100/30 transition-colors"
           >
             <XCircle className="h-3.5 w-3.5" />
             Decline
@@ -196,7 +196,7 @@ function OfferBubble({
       {!isSeller && isMine && status === "accepted" && offerRecord?.orderStatus !== "paid" && (
         <button
           onClick={onPayNow}
-          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#D4AF37] text-[#0A0E1A] text-sm font-bold active:bg-[#F59E0B] transition-colors"
+          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary text-background text-sm font-bold active:bg-[#F59E0B] transition-colors"
         >
           <CreditCard className="h-4 w-4" />
           Pay Now
@@ -205,7 +205,7 @@ function OfferBubble({
 
       {/* Buyer: payment confirmed state */}
       {!isSeller && isMine && status === "accepted" && offerRecord?.orderStatus === "paid" && (
-        <p className="mt-3 text-center text-xs font-semibold text-green-400">
+        <p className="mt-3 text-center text-xs font-semibold text-success">
           ✓ Payment confirmed
         </p>
       )}
@@ -751,7 +751,7 @@ export default function MobileChatPage() {
 
   return (
     <div
-      className="flex flex-col bg-[#0A0E1A]"
+      className="flex flex-col bg-background"
       style={{
         height: "100dvh",
       }}
@@ -778,14 +778,14 @@ export default function MobileChatPage() {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-white truncate">{otherName}</p>
             {convMeta?.subject && !productPreview && (
-              <p className="text-xs text-[#D4AF37]/70 truncate">{convMeta.subject}</p>
+              <p className="text-xs text-primary/70 truncate">{convMeta.subject}</p>
             )}
           </div>
           {/* Make Offer button — buyers only (not the listing seller) */}
           {otherId && !isSeller && (
             <button
               onClick={() => setOfferOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#D4AF37]/40 text-[#D4AF37] text-xs font-semibold hover:bg-[#D4AF37]/10 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/40 text-primary text-xs font-semibold hover:bg-primary/10 transition-colors"
               aria-label="Make an offer"
             >
               <Tag className="h-3.5 w-3.5" />
@@ -813,7 +813,7 @@ export default function MobileChatPage() {
                   borderRadius: "8px",
                   objectFit: "cover",
                   flexShrink: 0,
-                  background: "#1A1A2E",
+                  background: "rgba(26,26,46,1)",
                 }}
               />
             ) : (
@@ -904,14 +904,14 @@ export default function MobileChatPage() {
                   <div
                     className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
                       isMine
-                        ? "bg-[#D4AF37] text-[#0A0E1A] rounded-br-sm"
+                        ? "bg-primary text-background rounded-br-sm"
                         : "bg-white/10 text-white rounded-bl-sm"
                     }`}
                   >
                     <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                       {parsed.text}
                     </p>
-                    <p className={`text-[10px] mt-1 ${isMine ? "text-[#0A0E1A]/60" : "text-white/40"}`}>
+                    <p className={`text-[10px] mt-1 ${isMine ? "text-background/60" : "text-white/40"}`}>
                       {formatTime(msg.createdAt)}
                     </p>
                   </div>
@@ -960,16 +960,16 @@ export default function MobileChatPage() {
             onKeyDown={handleKeyDown}
             placeholder="Type a message…"
             rows={1}
-            className="flex-1 resize-none rounded-2xl border border-white/15 bg-white/5 text-white placeholder:text-white/30 px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4AF37]/60 max-h-32"
+            className="flex-1 resize-none rounded-2xl border border-white/15 bg-white/5 text-white placeholder:text-white/30 px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary/60 max-h-32"
             style={{ lineHeight: "1.4" }}
           />
           <button
             onClick={() => void handleSend()}
             disabled={!draft.trim() || sending}
-            className="w-10 h-10 rounded-full bg-[#D4AF37] flex items-center justify-center shrink-0 disabled:opacity-40 transition-opacity"
+            className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0 disabled:opacity-40 transition-opacity"
             aria-label="Send message"
           >
-            <Send className="h-4 w-4 text-[#0A0E1A]" />
+            <Send className="h-4 w-4 text-background" />
           </button>
         </div>
       </div>

@@ -44,7 +44,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   picked_up: { label: "Picked Up", className: "bg-blue-500/10 text-blue-700" },
   in_transit: { label: "In Transit", className: "bg-purple-500/10 text-purple-700" },
   out_for_delivery: { label: "Out for Delivery", className: "bg-primary/10 text-primary" },
-  delivered: { label: "Delivered", className: "bg-emerald-500/10 text-emerald-700" },
+  delivered: { label: "Delivered", className: "bg-success/10 text-success" },
 };
 
 const SellerShipments = () => {

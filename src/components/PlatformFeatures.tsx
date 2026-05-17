@@ -12,7 +12,7 @@ const buyerBenefits = [
   },
   {
     icon: ShieldCheck,
-    iconBg: "rgba(251,191,36,0.20)",
+    iconBg: "rgba(212,175,55,0.20)",
     iconColor: "#D4AF37",
     title: "Active Seller Accounts",
     desc: "Sellers complete their profile and Stripe setup before listing on the marketplace.",
@@ -36,21 +36,21 @@ const buyerBenefits = [
 const sellerBenefits = [
   {
     icon: PackagePlus,
-    iconBg: "rgba(251,191,36,0.20)",
+    iconBg: "rgba(212,175,55,0.20)",
     iconColor: "#D4AF37",
     title: "List for Free",
     desc: "Create your seller account and list your first products at zero cost — no setup fees.",
   },
   {
     icon: Users,
-    iconBg: "rgba(251,191,36,0.20)",
+    iconBg: "rgba(212,175,55,0.20)",
     iconColor: "#D4AF37",
     title: "Reach Real UK Buyers",
     desc: "Access a growing base of registered buyers actively searching for products across all categories.",
   },
   {
     icon: Banknote,
-    iconBg: "rgba(251,191,36,0.20)",
+    iconBg: "rgba(212,175,55,0.20)",
     iconColor: "#FCD34D",
     title: "Fast Stripe Payouts",
     desc: "Payments processed securely via Stripe. 0% Commission until 31 December 2026, then 7% on completed sales with fast payouts.",
@@ -67,13 +67,12 @@ const sellerBenefits = [
 const PlatformFeatures = () => {
   return (
     <section
-      className="relative overflow-hidden px-4 sm:px-6 py-10 sm:py-16 lg:py-20"
-      style={{ background: "linear-gradient(to bottom, #081426, #0A1930, #0F2A4A)" }}
+      className="relative overflow-hidden px-4 sm:px-6 py-10 sm:py-16 lg:py-20 bg-background"
     >
       {/* Ambient glow */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: "radial-gradient(circle at 20% 50%, rgba(0,255,150,0.07), transparent 40%)" }}
+        style={{ background: "radial-gradient(circle at 20% 50%, rgba(31,138,112,0.07), transparent 40%)" }}
       />
       {/* Dot texture */}
       <div
@@ -87,7 +86,7 @@ const PlatformFeatures = () => {
       <div className="relative max-w-[1280px] mx-auto w-full">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#D4AF37]">
+          <span className="text-xs font-semibold uppercase tracking-wider text-primary">
             Built for UK Buyers &amp; Sellers
           </span>
           <h2 className="mt-2 text-3xl md:text-4xl font-display font-bold text-white">
@@ -101,16 +100,15 @@ const PlatformFeatures = () => {
         {/* Two-column comparison */}
         <div className="grid lg:grid-cols-2 gap-5">
           {/* For Buyers */}
-          <div className="rounded-3xl p-7 flex flex-col gap-5" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}>
+          <div className="rounded-3xl p-7 flex flex-col gap-5 bg-surface" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
             <div className="flex items-center gap-3">
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "rgba(124,58,237,0.20)" }}
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-admin/20"
               >
-                <Search className="h-5 w-5" style={{ color: "#A78BFA" }} />
+                <Search className="h-5 w-5 text-admin" />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-purple-400">For Buyers</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-admin">For Buyers</p>
                 <h3 className="text-lg font-display font-bold text-white">Find What You're Looking For</h3>
               </div>
             </div>
@@ -134,7 +132,7 @@ const PlatformFeatures = () => {
 
             <div className="mt-auto pt-1">
               <Link to="/catalog">
-                <Button className="w-full h-11 bg-gradient-to-r from-[#D4AF37] to-[#F59E0B] text-black font-semibold rounded-full hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(251,191,36,0.3)] transition-all duration-300">
+                <Button className="w-full h-11 bg-gradient-to-r from-primary to-warning text-black font-semibold rounded-full hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] transition-all duration-300">
                   Browse Marketplace <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -142,16 +140,16 @@ const PlatformFeatures = () => {
           </div>
 
           {/* For Sellers */}
-          <div className="rounded-3xl p-7 flex flex-col gap-5" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}>
+          <div className="rounded-3xl p-7 flex flex-col gap-5 bg-surface" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "rgba(251,191,36,0.20)" }}
+                style={{ background: "rgba(212,175,55,0.20)" }}
               >
-                <PackagePlus className="h-5 w-5 text-[#D4AF37]" />
+                <PackagePlus className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#D4AF37]">For Sellers</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-primary">For Sellers</p>
                 <h3 className="text-lg font-display font-bold text-white">Sell Your Products</h3>
               </div>
             </div>
@@ -175,7 +173,7 @@ const PlatformFeatures = () => {
 
             <div className="mt-auto pt-1">
               <Link to="/signup">
-                <Button className="w-full h-11 bg-gradient-to-r from-[#D4AF37] to-[#F59E0B] text-black font-semibold rounded-full hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(251,191,36,0.3)] transition-all duration-300">
+                <Button className="w-full h-11 bg-gradient-to-r from-primary to-warning text-black font-semibold rounded-full hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] transition-all duration-300">
                   Start Selling Today <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -184,7 +182,7 @@ const PlatformFeatures = () => {
         </div>
 
         {/* Trust stats bar */}
-        <div className="mt-5 rounded-2xl py-4 px-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center" style={{ background: "linear-gradient(145deg, #121A2B, #182235)", border: "1px solid rgba(255,255,255,0.05)" }}>
+        <div className="mt-5 rounded-2xl py-4 px-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center bg-surface" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
           {[
             { value: "UK", label: "Marketplace" },
             { value: "Early", label: "Seller Launch" },

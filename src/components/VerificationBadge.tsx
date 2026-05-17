@@ -26,7 +26,7 @@ export default function VerificationBadge({
   if (isVerified) {
     return (
       <div
-        className={`inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 font-semibold ${sizeClasses[size]}`}
+        className={`inline-flex items-center gap-1.5 rounded-full bg-success/15 border border-success/40 text-success font-semibold ${sizeClasses[size]}`}
         title="Verified Seller"
         aria-label="Verified Seller"
       >

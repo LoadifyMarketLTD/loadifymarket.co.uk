@@ -20,10 +20,10 @@ interface SetupStatus {
 }
 
 const statusColors: Record<string, string> = {
-  active:    "bg-emerald-500/15 text-emerald-700 border-emerald-200",
+  active:    "bg-success/15 text-success border-success/40",
   submitted: "bg-primary/15 text-primary border-primary/40",
   draft:     "bg-muted text-muted-foreground border-border",
-  suspended: "bg-red-500/15 text-red-700 border-red-200",
+  suspended: "bg-danger/100/15 text-danger border-danger/30",
 };
 
 const statusLabels: Record<string, string> = {
@@ -212,7 +212,7 @@ const SellerSetupPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0E1A] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -220,7 +220,7 @@ const SellerSetupPage = () => {
 
   if (!status) {
     return (
-      <div className="min-h-screen bg-[#0A0E1A] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <Card className="max-w-md w-full text-center">
           <CardContent className="p-10">
             <p className="text-muted-foreground">Unable to load seller status. Please refresh the page.</p>
@@ -238,7 +238,7 @@ const SellerSetupPage = () => {
   const stripeIncomplete = stripeConnected && !stripeReady;
 
   return (
-    <div className="min-h-screen bg-[#0A0E1A] pt-28 pb-12 px-4">
+    <div className="min-h-screen bg-background pt-28 pb-12 px-4">
       <div className="max-w-lg mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
@@ -260,10 +260,10 @@ const SellerSetupPage = () => {
 
         {/* Active state — brief confirmation before redirect */}
         {status.sellerStatus === "active" && (
-          <Card className="border-emerald-200 bg-emerald-50">
+          <Card className="border-success/40 bg-emerald-50">
             <CardContent className="p-6 text-center space-y-3">
               <CheckCircle2 className="h-10 w-10 text-emerald-600 mx-auto" />
-              <p className="font-semibold text-emerald-700">Your seller account is active!</p>
+              <p className="font-semibold text-success">Your seller account is active!</p>
               <p className="text-sm text-emerald-600">Redirecting you to your seller dashboard…</p>
               <Button asChild className="bg-gradient-hero text-primary-foreground">
                 <Link to="/seller">
@@ -276,10 +276,10 @@ const SellerSetupPage = () => {
 
         {/* Suspended state */}
         {status.sellerStatus === "suspended" && (
-          <Card className="border-red-200 bg-red-50">
+          <Card className="border-danger/30 bg-danger/10">
             <CardContent className="p-6 text-center space-y-3">
-              <p className="font-semibold text-red-700">Your seller account has been suspended.</p>
-              <p className="text-sm text-red-600">
+              <p className="font-semibold text-danger">Your seller account has been suspended.</p>
+              <p className="text-sm text-danger">
                 Please contact our support team if you believe this is an error.
               </p>
               <Button asChild variant="outline">
