@@ -221,7 +221,7 @@ const BuyerProfile = () => {
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start gap-5">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground text-2xl font-bold shrink-0">
+            <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground text-2xl font-bold shrink-0">
               {loading ? "…" : initials}
             </div>
             <div className="flex-1 space-y-2">

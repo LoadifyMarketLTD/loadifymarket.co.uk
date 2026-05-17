@@ -74,12 +74,12 @@ const RoleSelection = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f0fdf4] to-[#dcfce7] flex items-center justify-center px-4 py-16">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-lg">
         {/* Header */}
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">How will you use Loadify Market?</h1>
-          <p className="text-gray-500 text-base">Choose your account type to get started.</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">How will you use Loadify Market?</h1>
+          <p className="text-muted-foreground text-base">Choose your account type to get started.</p>
         </div>
 
         {/* Role cards */}
@@ -90,18 +90,18 @@ const RoleSelection = () => {
             onClick={() => setSelected("buyer")}
             className={`relative rounded-2xl border-2 p-7 text-left transition-all focus:outline-none ${
               selected === "buyer"
-                ? "border-success bg-success/10 shadow-lg shadow-green-100"
-                : "border-gray-200 bg-white hover:border-success/40 hover:shadow-md"
+                ? "border-success bg-success/10 shadow-lg shadow-success/20"
+                : "border-white/10 bg-surface hover:border-success/40 hover:shadow-md"
             }`}
           >
             {selected === "buyer" && (
               <CheckCircle2 className="absolute top-4 right-4 h-5 w-5 text-success" />
             )}
-            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
-              <ShoppingBag className="h-6 w-6 text-blue-600" />
+            <div className="w-12 h-12 rounded-xl bg-secondary/20 flex items-center justify-center mb-4">
+              <ShoppingBag className="h-6 w-6 text-secondary" />
             </div>
-            <h2 className="text-lg font-bold text-gray-900 mb-1">I'm a Buyer</h2>
-            <p className="text-sm text-gray-500 leading-snug">
+            <h2 className="text-lg font-bold text-foreground mb-1">I'm a Buyer</h2>
+            <p className="text-sm text-muted-foreground leading-snug">
               Browse products, place orders, and manage your purchases.
             </p>
           </button>
@@ -112,8 +112,8 @@ const RoleSelection = () => {
             onClick={() => setSelected("seller")}
             className={`relative rounded-2xl border-2 p-7 text-left transition-all focus:outline-none ${
               selected === "seller"
-                ? "border-success bg-success/10 shadow-lg shadow-green-100"
-                : "border-gray-200 bg-white hover:border-success/40 hover:shadow-md"
+                ? "border-success bg-success/10 shadow-lg shadow-success/20"
+                : "border-white/10 bg-surface hover:border-success/40 hover:shadow-md"
             }`}
           >
             {selected === "seller" && (
@@ -122,8 +122,8 @@ const RoleSelection = () => {
             <div className="w-12 h-12 rounded-xl bg-primary-soft flex items-center justify-center mb-4">
               <Store className="h-6 w-6 text-primary" />
             </div>
-            <h2 className="text-lg font-bold text-gray-900 mb-1">I'm a Seller</h2>
-            <p className="text-sm text-gray-500 leading-snug">
+            <h2 className="text-lg font-bold text-foreground mb-1">I'm a Seller</h2>
+            <p className="text-sm text-muted-foreground leading-snug">
               List products, manage your store, and receive payments via Stripe.
             </p>
           </button>
@@ -134,11 +134,7 @@ const RoleSelection = () => {
           type="button"
           disabled={!selected || loading}
           onClick={handleContinue}
-          className="w-full h-12 rounded-xl text-white text-[15px] font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          style={{
-            background: "linear-gradient(135deg, #16A34A 0%, #22C55E 100%)",
-            boxShadow: selected ? "0 4px 16px rgba(34,197,94,0.4)" : "none",
-          }}
+          className="w-full h-12 rounded-xl bg-primary hover:bg-primary-hover text-black text-[15px] font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md shadow-primary/20"
         >
           {loading ? (
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -148,7 +144,7 @@ const RoleSelection = () => {
         </button>
 
         {/* Note */}
-        <p className="text-center text-xs text-gray-400 mt-4">
+        <p className="text-center text-xs text-muted-foreground mt-4">
           You can update your account type later in Settings.
         </p>
       </div>

@@ -235,8 +235,7 @@ const AdminOrders = () => {
             placeholder="Search orders..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-10"
-            style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+            className="pl-9 h-10 bg-slate-400/30 border-white/10 text-white"
           />
         </div>
       </div>
