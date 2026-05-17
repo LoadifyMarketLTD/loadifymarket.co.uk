@@ -496,6 +496,18 @@ export default function MobileChatPage() {
       .on(
         "postgres_changes",
         {
+          event:  "INSERT",
+          schema: "public",
+          table:  "offers",
+          filter: `conversationId=eq.${conversationId}`,
+        },
+        () => {
+          void loadOffers();
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
           event:  "UPDATE",
           schema: "public",
           table:  "offers",
@@ -515,7 +527,7 @@ export default function MobileChatPage() {
       .subscribe();
 
     return () => { void supabase.removeChannel(offersChannel); };
-  }, [conversationId, user?.id, offersFeatureUnavailable]);
+  }, [conversationId, user?.id, offersFeatureUnavailable, loadOffers]);
 
   // Orders table Realtime — update the Pay Now / payment-confirmed state live
   // when an order's status changes (e.g. awaiting_payment → paid after webhook).
@@ -982,6 +994,7 @@ export default function MobileChatPage() {
           conversationId={conversationId ?? ""}
           receiverId={otherId}
           productTitle={convMeta?.subject ?? undefined}
+          onSent={() => void loadOffers()}
         />
       )}
     </div>
