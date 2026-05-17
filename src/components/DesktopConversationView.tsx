@@ -1188,6 +1188,12 @@ export default function DesktopConversationView() {
             </div>
           </div>
         </div>
+      ) : selectedId && !selectedConv ? (
+        /* selectedId is set (deep-link from notification) but the conversation
+           is not in the list yet — fallback single-fetch is in progress. */
+        <div className="hidden lg:flex flex-1 items-center justify-center">
+          <div className="h-8 w-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+        </div>
       ) : (
         <div className="hidden lg:flex flex-1 items-center justify-center text-center">
           <div>

@@ -80,7 +80,7 @@ const SellerDashboard = () => {
         const [productsRes, allOrdersRes, profileRes, balanceRes, todayMessagesRes] = await Promise.all([
           supabase
             .from("products")
-            .select("id, title, views, addToCartCount, stockQuantity, isActive")
+            .select("id, title, views, addToCartCount, stockQuantity, isActive, listingContext")
             .eq("sellerId", user.id),
           supabase
             .from("orders")
@@ -118,7 +118,10 @@ const SellerDashboard = () => {
           .filter((o) => PAID_STATUSES.includes(o.status))
           .reduce((sum, o) => sum + (o.total || 0), 0);
         const productsListed = products.filter((p) => p.isActive).length;
-        const lowStockItems = products.filter((p) => p.stockQuantity !== null && p.stockQuantity > 0 && p.stockQuantity <= 5).length;
+        const lowStockItems = products.filter((p) =>
+          p.listingContext !== "service" &&
+          p.stockQuantity !== null && p.stockQuantity > 0 && p.stockQuantity <= 5
+        ).length;
 
         const uniqueBuyerIds = [...new Set(orders.map((o) => o.buyerId).filter(Boolean))];
         const todayOrders = orders.filter((o) => new Date(o.createdAt) >= startOfToday).length;
