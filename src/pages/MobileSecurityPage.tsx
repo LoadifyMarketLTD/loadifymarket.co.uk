@@ -48,18 +48,18 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
           textAlign: 'left',
         }}
       >
-        <Mail style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.45)', flexShrink: 0 }} aria-hidden="true" />
+        <Mail className="text-muted-foreground" style={{ width: 18, height: 18, flexShrink: 0 }} aria-hidden="true" />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Email</p>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: 0 }}>{currentEmail}</p>
+          <p className="text-[15px] font-medium text-foreground/90 m-0">Email</p>
+          <p className="text-xs text-muted-foreground m-0">{currentEmail}</p>
         </div>
-        <ChevronRight style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.30)', flexShrink: 0, transform: open ? 'rotate(90deg)' : undefined, transition: 'transform 0.15s' }} aria-hidden="true" />
+        <ChevronRight className="text-foreground/30" style={{ width: 18, height: 18, flexShrink: 0, transform: open ? 'rotate(90deg)' : undefined, transition: 'transform 0.15s' }} aria-hidden="true" />
       </button>
 
       {open && (
         <div style={{ paddingInline: 'var(--mob-side, 16px)', paddingBottom: 16 }}>
           {status === 'done' ? (
-            <p style={{ fontSize: 13, color: 'rgba(74,222,128,1)', margin: 0 }}>
+            <p className="text-[13px] text-success m-0">
               Confirmation sent to your new address. Check your inbox.
             </p>
           ) : (
@@ -69,14 +69,12 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 placeholder="New email address"
+                className="text-foreground text-sm bg-white/[0.05]"
                 style={{
                   width: '100%',
                   height: 44,
                   borderRadius: 10,
                   border: '1.5px solid rgba(255,255,255,0.14)',
-                  background: 'rgba(255,255,255,0.05)',
-                  color: 'rgba(255,255,255,1)',
-                  fontSize: 14,
                   paddingInline: 14,
                   outline: 'none',
                   boxSizing: 'border-box',
@@ -84,21 +82,18 @@ function EmailSection({ currentEmail }: { currentEmail: string }) {
                 }}
               />
               {status === 'error' && (
-                <p style={{ fontSize: 12, color: 'rgba(239,68,68,1)', margin: '0 0 8px' }}>{errorMsg}</p>
+                <p className="text-xs text-danger" style={{ margin: '0 0 8px' }}>{errorMsg}</p>
               )}
               <button
                 onClick={handleSave}
                 disabled={status === 'saving'}
+                className="text-sm font-bold"
                 style={{
                   height: 40,
                   paddingInline: 20,
                   borderRadius: 9999,
-                  
                   border: 'none',
                   cursor: 'pointer',
-                  fontSize: 14,
-                  fontWeight: 700,
-                  
                   opacity: status === 'saving' ? 0.6 : 1,
                 }}
               >
@@ -153,15 +148,15 @@ function PasswordSection() {
           textAlign: 'left',
         }}
       >
-        <Lock style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.45)', flexShrink: 0 }} aria-hidden="true" />
-        <p style={{ flex: 1, fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Password</p>
-        <ChevronRight style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.30)', flexShrink: 0, transform: open ? 'rotate(90deg)' : undefined, transition: 'transform 0.15s' }} aria-hidden="true" />
+        <Lock className="text-muted-foreground" style={{ width: 18, height: 18, flexShrink: 0 }} aria-hidden="true" />
+        <p className="text-[15px] font-medium text-foreground/90 m-0" style={{ flex: 1 }}>Password</p>
+        <ChevronRight className="text-foreground/30" style={{ width: 18, height: 18, flexShrink: 0, transform: open ? 'rotate(90deg)' : undefined, transition: 'transform 0.15s' }} aria-hidden="true" />
       </button>
 
       {open && (
         <div style={{ paddingInline: 'var(--mob-side, 16px)', paddingBottom: 16 }}>
           {status === 'done' ? (
-            <p style={{ fontSize: 13, color: 'rgba(74,222,128,1)', margin: 0 }}>Password updated successfully.</p>
+            <p className="text-[13px] text-success m-0">Password updated successfully.</p>
           ) : (
             <>
               <input
@@ -169,22 +164,25 @@ function PasswordSection() {
                 value={pw}
                 onChange={(e) => setPw(e.target.value)}
                 placeholder="New password"
-                style={{ width: '100%', height: 44, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,1)', fontSize: 14, paddingInline: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }}
+                className="text-foreground text-sm bg-white/[0.05]"
+                style={{ width: '100%', height: 44, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.14)', paddingInline: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 8 }}
               />
               <input
                 type="password"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="Confirm new password"
-                style={{ width: '100%', height: 44, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,1)', fontSize: 14, paddingInline: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 10 }}
+                className="text-foreground text-sm bg-white/[0.05]"
+                style={{ width: '100%', height: 44, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.14)', paddingInline: 14, outline: 'none', boxSizing: 'border-box', marginBottom: 10 }}
               />
               {status === 'error' && (
-                <p style={{ fontSize: 12, color: 'rgba(239,68,68,1)', margin: '0 0 8px' }}>{errorMsg}</p>
+                <p className="text-xs text-danger" style={{ margin: '0 0 8px' }}>{errorMsg}</p>
               )}
               <button
                 onClick={handleSave}
                 disabled={status === 'saving'}
-                style={{ height: 40, paddingInline: 20, borderRadius: 9999, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, opacity: status === 'saving' ? 0.6 : 1 }}
+                className="text-sm font-bold"
+                style={{ height: 40, paddingInline: 20, borderRadius: 9999, border: 'none', cursor: 'pointer', opacity: status === 'saving' ? 0.6 : 1 }}
               >
                 {status === 'saving' ? 'Saving…' : 'Update password'}
               </button>
@@ -213,15 +211,13 @@ export default function MobileSecurityPage() {
 
   const dividerStyle: React.CSSProperties = {
     height: 1,
-    background: 'rgba(255,255,255,0.05)',
     marginInlineStart: 'var(--mob-side, 16px)',
   };
 
   return (
     <div
-      className="md:hidden min-h-screen"
+      className="md:hidden min-h-screen bg-background"
       style={{
-        background: 'rgba(10,14,26,1)',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
@@ -233,14 +229,14 @@ export default function MobileSecurityPage() {
           aria-label="Back"
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, marginLeft: -4 }}
         >
-          <ChevronLeft style={{ width: 22, height: 22, color: 'rgba(255,255,255,0.70)' }} />
+          <ChevronLeft className="text-foreground/70" style={{ width: 22, height: 22 }} />
         </button>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0 }}>Security</h1>
+        <h1 className="text-xl font-extrabold text-foreground m-0">Security</h1>
       </div>
 
       <div
+        className="bg-white/[0.04]"
         style={{
-          background: 'rgba(255,255,255,0.04)',
           borderTop: '1px solid rgba(255,255,255,0.06)',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}
@@ -248,30 +244,30 @@ export default function MobileSecurityPage() {
         {/* Email */}
         <EmailSection currentEmail={email} />
 
-        <div aria-hidden="true" style={dividerStyle} />
+        <div aria-hidden="true" className="bg-white/[0.05]" style={dividerStyle} />
 
         {/* Password */}
         <PasswordSection />
 
-        <div aria-hidden="true" style={dividerStyle} />
+        <div aria-hidden="true" className="bg-white/[0.05]" style={dividerStyle} />
 
         {/* 2FA — placeholder */}
         <div style={rowStyle}>
-          <Shield style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.45)', flexShrink: 0 }} aria-hidden="true" />
+          <Shield className="text-muted-foreground" style={{ width: 18, height: 18, flexShrink: 0 }} aria-hidden="true" />
           <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Two-factor authentication</p>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: 0 }}>Coming soon</p>
+            <p className="text-[15px] font-medium text-foreground/90 m-0">Two-factor authentication</p>
+            <p className="text-xs text-muted-foreground m-0">Coming soon</p>
           </div>
         </div>
 
-        <div aria-hidden="true" style={dividerStyle} />
+        <div aria-hidden="true" className="bg-white/[0.05]" style={dividerStyle} />
 
         {/* Login activity — placeholder */}
         <div style={rowStyle}>
-          <Activity style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.45)', flexShrink: 0 }} aria-hidden="true" />
+          <Activity className="text-muted-foreground" style={{ width: 18, height: 18, flexShrink: 0 }} aria-hidden="true" />
           <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.90)', margin: 0 }}>Login activity</p>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: 0 }}>Coming soon</p>
+            <p className="text-[15px] font-medium text-foreground/90 m-0">Login activity</p>
+            <p className="text-xs text-muted-foreground m-0">Coming soon</p>
           </div>
         </div>
       </div>

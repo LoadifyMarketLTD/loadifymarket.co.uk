@@ -69,8 +69,7 @@ export default function MobileCategoriesPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col"
-      style={{ background: 'rgba(10,14,26,1)' }}
+      className="min-h-screen flex flex-col bg-background"
     >
       {/* ── Sticky header ── */}
       <div
@@ -86,8 +85,7 @@ export default function MobileCategoriesPage() {
       >
         <button
           onClick={() => navigate(-1)}
-          className="p-2 rounded-xl active:bg-white/10 transition-colors"
-          style={{ background: 'rgba(255,255,255,0.05)' }}
+          className="p-2 rounded-xl active:bg-white/10 transition-colors bg-white/[0.05]"
           aria-label="Back"
         >
           <ArrowLeft className="h-5 w-5 text-white" aria-hidden="true" />
@@ -121,8 +119,7 @@ export default function MobileCategoriesPage() {
             All Categories
           </span>
           <ChevronRight
-            className="h-[18px] w-[18px] shrink-0"
-            style={{ color: 'rgba(255,255,255,0.3)' }}
+            className="h-[18px] w-[18px] shrink-0 text-foreground/30"
             aria-hidden="true"
           />
         </Link>
@@ -163,13 +160,12 @@ export default function MobileCategoriesPage() {
                   {cat.name}
                 </span>
                 <ChevronRight
-                  className="h-[18px] w-[18px] shrink-0"
-                  style={{ color: 'rgba(255,255,255,0.3)' }}
-                  aria-hidden="true"
-                />
-              </Link>
-            );
-          })}
+                  className="h-[18px] w-[18px] shrink-0 text-foreground/30"
+                aria-hidden="true"
+              />
+            </Link>
+          );
+        })}
       </div>
 
       <MobileBottomNav />

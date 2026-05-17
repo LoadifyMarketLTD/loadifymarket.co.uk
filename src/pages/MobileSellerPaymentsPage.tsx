@@ -15,9 +15,8 @@ export default function MobileSellerPaymentsPage() {
 
   return (
     <div
-      className="md:hidden min-h-screen"
+      className="md:hidden min-h-screen bg-background"
       style={{
-        background: 'rgba(10,14,26,1)',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'calc(var(--mob-nav-h, 68px) + env(safe-area-inset-bottom, 0px))',
       }}
@@ -38,45 +37,38 @@ export default function MobileSellerPaymentsPage() {
           aria-label="Back"
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, marginLeft: -4 }}
         >
-          <ChevronLeft style={{ width: 22, height: 22, color: 'rgba(255,255,255,0.70)' }} />
+          <ChevronLeft className="text-foreground/70" style={{ width: 22, height: 22 }} />
         </button>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0 }}>Payments</h1>
+        <h1 className="text-xl font-extrabold text-foreground m-0">Payments</h1>
       </div>
 
       {/* Info card */}
       <div
+        className="bg-white/[0.04]"
         style={{
-          background: 'rgba(255,255,255,0.04)',
           borderTop: '1px solid rgba(255,255,255,0.06)',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
           marginTop: 8,
           padding: '20px var(--mob-side, 16px)',
         }}
       >
-        <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,1)', margin: '0 0 8px' }}>
+        <p className="text-[15px] font-semibold text-foreground" style={{ margin: '0 0 8px' }}>
           Stripe payments &amp; payouts
         </p>
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', margin: '0 0 20px', lineHeight: 1.6 }}>
+        <p className="text-sm text-foreground/55" style={{ margin: '0 0 20px', lineHeight: 1.6 }}>
           Payments and payouts are handled securely through Stripe. Connect your Stripe account
           to receive payments from buyers and manage your payout schedule.
         </p>
 
         <button
           onClick={() => navigate('/seller/setup')}
+          className="text-[15px] font-bold flex items-center justify-center gap-2"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
             width: '100%',
             height: 48,
             borderRadius: 9999,
-            
             border: 'none',
             cursor: 'pointer',
-            fontSize: 15,
-            fontWeight: 700,
-            
           }}
         >
           <ExternalLink style={{ width: 16, height: 16, flexShrink: 0 }} aria-hidden="true" />
@@ -86,10 +78,8 @@ export default function MobileSellerPaymentsPage() {
 
       {/* Trust note */}
       <p
+        className="text-xs text-foreground/25 text-center"
         style={{
-          fontSize: 12,
-          color: 'rgba(255,255,255,0.25)',
-          textAlign: 'center',
           paddingTop: 16,
           paddingInline: 'var(--mob-side, 16px)',
           lineHeight: 1.5,

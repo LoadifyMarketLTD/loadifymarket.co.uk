@@ -89,7 +89,6 @@ function FieldInput({
     background: 'rgba(23,24,30,1)',
     border: `1px solid ${error ? 'hsl(var(--danger))' : 'rgba(255,255,255,0.12)'}`,
     borderRadius: '14px',
-    color: 'rgba(255,255,255,1)',
     fontSize: '15px',
     padding: '14px 16px',
     outline: 'none',
@@ -97,10 +96,11 @@ function FieldInput({
     resize: 'none',
     boxSizing: 'border-box',
   };
+  const inputClass = 'text-foreground';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       {label && (
-        <label style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
+        <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
           {label}
           {required && <span style={{ marginLeft: '3px' }}>*</span>}
         </label>
@@ -111,6 +111,7 @@ function FieldInput({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           rows={3}
+          className={inputClass}
           style={baseStyle}
         />
       ) : (
@@ -120,12 +121,13 @@ function FieldInput({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
+          className={inputClass}
           style={baseStyle}
         />
       )}
-      {error && <p style={{ fontSize: '12px', color: 'rgba(248,113,113,1)', margin: 0 }}>{error}</p>}
+      {error && <p className="text-danger" style={{ fontSize: '12px', margin: 0 }}>{error}</p>}
       {hint && !error && (
-        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.40)', margin: 0 }}>{hint}</p>
+        <p className="text-foreground/40" style={{ fontSize: '12px', margin: 0 }}>{hint}</p>
       )}
     </div>
   );
@@ -143,11 +145,11 @@ function SuccessSheet({
   const navigate = useNavigate();
   return (
     <div
+      className="bg-background"
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        background: 'rgba(10,14,26,1)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -157,25 +159,22 @@ function SuccessSheet({
       }}
     >
       <div
+        className="bg-success/[0.15] flex items-center justify-center"
         style={{
           width: '80px',
           height: '80px',
           borderRadius: '50%',
-          background: 'rgba(16,185,129,0.15)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
           marginBottom: '24px',
         }}
       >
-        <CheckCircle2 style={{ width: '44px', height: '44px', color: 'rgba(52,211,153,1)' }} />
+        <CheckCircle2 className="text-success" style={{ width: '44px', height: '44px' }} />
       </div>
 
       <h2
+        className="text-foreground"
         style={{
           fontSize: '26px',
           fontWeight: 800,
-          color: 'rgba(255,255,255,1)',
           textAlign: 'center',
           marginBottom: '10px',
         }}
@@ -183,9 +182,9 @@ function SuccessSheet({
         Your item is live! 🎉
       </h2>
       <p
+        className="text-foreground/55"
         style={{
           fontSize: '15px',
-          color: 'rgba(255,255,255,0.55)',
           textAlign: 'center',
           marginBottom: '36px',
           maxWidth: '300px',
@@ -205,15 +204,14 @@ function SuccessSheet({
       >
         <button
           onClick={() => navigate(`/product/${productId}`)}
+          className="bg-primary"
           style={{
             width: '100%',
             padding: '16px',
             borderRadius: '16px',
-            background: 'rgba(212,175,55,1)',
             border: 'none',
             fontSize: '16px',
             fontWeight: 700,
-            
             cursor: 'pointer',
           }}
         >
@@ -222,15 +220,14 @@ function SuccessSheet({
 
         <button
           onClick={() => navigate('/seller/setup')}
+          className="text-foreground bg-white/[0.06]"
           style={{
             width: '100%',
             padding: '16px',
             borderRadius: '16px',
-            background: 'rgba(255,255,255,0.06)',
             border: '1px solid rgba(255,255,255,0.10)',
             fontSize: '15px',
             fontWeight: 600,
-            color: 'rgba(255,255,255,1)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -244,6 +241,7 @@ function SuccessSheet({
 
         <button
           onClick={onSellAnother}
+          className="text-muted-foreground"
           style={{
             width: '100%',
             padding: '14px',
@@ -252,7 +250,6 @@ function SuccessSheet({
             border: 'none',
             fontSize: '14px',
             fontWeight: 600,
-            color: 'rgba(255,255,255,0.45)',
             cursor: 'pointer',
           }}
         >
@@ -409,7 +406,7 @@ export default function MobileSellWizard() {
   const busy = publishing || photoUploading;
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'rgba(10,14,26,1)', display: 'flex', flexDirection: 'column' }}>
+    <div className="bg-background" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
       {/* ── Header ── */}
       <div
         style={{
@@ -434,22 +431,19 @@ export default function MobileSellWizard() {
           aria-label="Go back"
           onClick={() => navigate(-1)}
           disabled={busy}
+          className="bg-white/[0.07] flex items-center justify-center"
           style={{
             width: '36px',
             height: '36px',
             borderRadius: '50%',
-            background: 'rgba(255,255,255,0.07)',
             border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             cursor: 'pointer',
             flexShrink: 0,
           }}
         >
-          <ArrowLeft style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,1)' }} />
+          <ArrowLeft className="text-foreground" style={{ width: '18px', height: '18px' }} />
         </button>
-        <h1 style={{ fontSize: '17px', fontWeight: 700, color: 'rgba(255,255,255,1)', flex: 1 }}>
+        <h1 className="text-foreground" style={{ fontSize: '17px', fontWeight: 700, flex: 1 }}>
           Sell an item
         </h1>
       </div>
@@ -468,7 +462,7 @@ export default function MobileSellWizard() {
       >
         {/* Photos */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <label style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
+          <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
             Photos <span className="text-primary">*</span>
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
@@ -481,8 +475,7 @@ export default function MobileSellWizard() {
                   borderRadius: '14px',
                   overflow: 'hidden',
                   background: 'rgba(23,24,30,1)',
-                }}
-              >
+                }}              >
                 <img
                   src={url}
                   alt={`Photo ${idx + 1}`}
@@ -506,7 +499,7 @@ export default function MobileSellWizard() {
                     cursor: 'pointer',
                   }}
                 >
-                  <X style={{ width: '14px', height: '14px', color: 'rgba(255,255,255,1)' }} />
+                  <X className="text-foreground" style={{ width: '14px', height: '14px' }} />
                 </button>
               </div>
             ))}
@@ -541,8 +534,8 @@ export default function MobileSellWizard() {
                   />
                 ) : (
                   <>
-                    <Camera style={{ width: '24px', height: '24px', color: fieldErrors.photos ? 'rgba(248,113,113,1)' : 'rgba(212,175,55,1)' }} />
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: fieldErrors.photos ? 'rgba(248,113,113,1)' : 'rgba(212,175,55,1)' }}>
+                    <Camera className={fieldErrors.photos ? 'text-danger' : 'text-primary'} style={{ width: '24px', height: '24px' }} />
+                    <span className={fieldErrors.photos ? 'text-danger' : 'text-primary'} style={{ fontSize: '11px', fontWeight: 600 }}>
                       Add photo
                     </span>
                   </>
@@ -552,14 +545,13 @@ export default function MobileSellWizard() {
           </div>
 
           {fieldErrors.photos && (
-            <p style={{ fontSize: '12px', color: 'rgba(248,113,113,1)', margin: 0 }}>{fieldErrors.photos}</p>
+            <p className="text-danger" style={{ fontSize: '12px', margin: 0 }}>{fieldErrors.photos}</p>
           )}
           {photoError && (
             <p
+              className="text-danger bg-danger/[0.08]"
               style={{
                 fontSize: '13px',
-                color: 'rgba(248,113,113,1)',
-                background: 'rgba(248,113,113,0.08)',
                 border: '1px solid rgba(248,113,113,0.20)',
                 borderRadius: '10px',
                 padding: '10px 14px',
@@ -622,26 +614,25 @@ export default function MobileSellWizard() {
         >
           <button
             onClick={() => setMoreDetailsOpen((o) => !o)}
+            className="text-foreground bg-white/[0.03]"
             style={{
               width: '100%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '14px 16px',
-              background: 'rgba(255,255,255,0.03)',
               border: 'none',
               cursor: 'pointer',
-              color: 'rgba(255,255,255,1)',
               fontSize: '14px',
               fontWeight: 600,
             }}
           >
             <span>More details</span>
             <ChevronDown
+              className="text-foreground/50"
               style={{
                 width: '18px',
                 height: '18px',
-                color: 'rgba(255,255,255,0.50)',
                 transform: moreDetailsOpen ? 'rotate(180deg)' : 'none',
                 transition: 'transform 0.2s ease',
               }}
@@ -668,7 +659,7 @@ export default function MobileSellWizard() {
 
               {/* Category */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
+                <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
                   Category
                 </label>
                 <CategorySelector
@@ -681,7 +672,7 @@ export default function MobileSellWizard() {
 
               {/* Condition */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.75)' }}>
+                <label className="text-foreground/75" style={{ fontSize: '13px', fontWeight: 600 }}>
                   Condition
                 </label>
                 <select
@@ -728,7 +719,7 @@ export default function MobileSellWizard() {
         }}
       >
         {publishError && (
-          <p style={{ fontSize: '13px', color: 'rgba(248,113,113,1)', marginBottom: '10px', textAlign: 'center' }}>
+          <p className="text-danger" style={{ fontSize: '13px', marginBottom: '10px', textAlign: 'center' }}>
             {publishError}
           </p>
         )}

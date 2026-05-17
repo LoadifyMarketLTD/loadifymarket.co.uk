@@ -282,45 +282,39 @@ export default function MobileInboxPage() {
             paddingBottom: "10px",
           }}
         >
-          <h1 style={{ fontSize: "24px", fontWeight: 800, color: "rgba(255,255,255,1)" }}>Messages</h1>
+          <h1 className="text-2xl font-extrabold text-foreground">Messages</h1>
           <button
-            className="p-2 rounded-xl active:bg-white/10 transition-colors"
-            style={{ background: "rgba(255,255,255,0.05)" }}
+            className="p-2 rounded-xl active:bg-white/10 transition-colors bg-white/[0.05]"
             aria-label="New message"
             onClick={() => navigate("/catalog")}
           >
-            <SquarePen style={{ width: "20px", height: "20px", color: "rgba(255,255,255,0.75)" }} />
+            <SquarePen className="text-foreground/75" style={{ width: "20px", height: "20px" }} />
           </button>
         </div>
 
         {/* Search bar */}
         <div style={{ padding: "0 16px 10px" }}>
           <div
+            className="bg-white/[0.06] flex items-center gap-2"
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              background: "rgba(255,255,255,0.06)",
               border: "1px solid rgba(255,255,255,0.09)",
               borderRadius: "12px",
               padding: "10px 14px",
             }}
           >
-            <Search style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.55)", flexShrink: 0 }} />
+            <Search className="text-foreground/55" style={{ width: "16px", height: "16px", flexShrink: 0 }} />
             <input
               type="search"
               placeholder="Search messages..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              className="text-foreground text-sm placeholder:text-white/35"
               style={{
                 flex: 1,
                 background: "transparent",
                 border: "none",
                 outline: "none",
-                fontSize: "14px",
-                color: "rgba(255,255,255,1)",
               }}
-              className="placeholder:text-white/35"
             />
           </div>
         </div>
@@ -350,8 +344,7 @@ export default function MobileInboxPage() {
                   whiteSpace: "nowrap",
                   background: "transparent",
                   border: "none",
-                  borderBottom: isActive ? "2px solid rgba(212,175,55,1)" : "2px solid transparent",
-                  cursor: "pointer",
+                  borderBottom: isActive ? "2px solid rgba(212,175,55,1)" : "2px solid transparent",                  cursor: "pointer",
                   flexShrink: 0,
                   display: "flex",
                   alignItems: "center",
@@ -362,17 +355,11 @@ export default function MobileInboxPage() {
                 {tab.label}
                 {badge > 0 && (
                   <span
+                    className="bg-primary text-surface text-[10px] font-extrabold flex items-center justify-center"
                     style={{
                       minWidth: "18px",
                       height: "18px",
                       borderRadius: "9px",
-                      background: "rgba(212,175,55,1)",
-                      color: "rgba(18,26,43,1)",
-                      fontSize: "10px",
-                      fontWeight: 800,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
                       padding: "0 4px",
                     }}
                   >
@@ -390,7 +377,7 @@ export default function MobileInboxPage() {
         {loading ? (
           <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
             {[...Array(6)].map((_, i) => (
-              <div key={i} style={{ height: "72px", borderRadius: "12px", background: "rgba(255,255,255,0.05)" }} className="animate-pulse" />
+              <div key={i} className="animate-pulse bg-white/[0.05]" style={{ height: "72px", borderRadius: "12px" }} />
             ))}
           </div>
         ) : filtered.length === 0 ? (
@@ -435,22 +422,20 @@ export default function MobileInboxPage() {
                   {/* Avatar with online indicator */}
                   <div style={{ position: "relative", flexShrink: 0 }}>
                     <div
+                      className="bg-white/[0.08] flex items-center justify-center"
                       style={{
                         width: "48px",
                         height: "48px",
                         borderRadius: "50%",
-                        background: "rgba(255,255,255,0.08)",
                         border: "1px solid rgba(255,255,255,0.10)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
                       }}
                     >
-                      <User style={{ width: "22px", height: "22px", color: "rgba(255,255,255,0.60)" }} />
+                      <User className="text-foreground/60" style={{ width: "22px", height: "22px" }} />
                     </div>
                     {conv.unreadCount > 0 && (
                       <span
                         aria-hidden="true"
+                        className="bg-success border-background"
                         style={{
                           position: "absolute",
                           bottom: "1px",
@@ -458,8 +443,8 @@ export default function MobileInboxPage() {
                           width: "11px",
                           height: "11px",
                           borderRadius: "50%",
-                          background: "rgba(34,197,94,1)",
-                          border: "2px solid rgba(10,14,26,1)",
+                          borderWidth: "2px",
+                          borderStyle: "solid",
                         }}
                       />
                     )}
@@ -469,30 +454,17 @@ export default function MobileInboxPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginBottom: "2px" }}>
                       <span
-                        style={{
-                          fontSize: "14px",
-                          fontWeight: conv.unreadCount > 0 ? 700 : 600,
-                          color: conv.unreadCount > 0 ? "hsl(var(--foreground))" : "rgba(255,255,255,0.80)",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
+                        className={`text-sm overflow-hidden text-ellipsis whitespace-nowrap ${conv.unreadCount > 0 ? 'font-bold text-foreground' : 'font-semibold text-foreground/80'}`}
                       >
                         {participantName(conv.other)}
                       </span>
-                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.65)", flexShrink: 0 }}>
+                      <span className="text-[11px] text-foreground/65 shrink-0">
                         {formatDate(conv.lastMessageAt)}
                       </span>
                     </div>
                     {conv.lastMessagePreview && (
                       <p
-                        style={{
-                          fontSize: "12px",
-                          color: conv.unreadCount > 0 ? "rgba(255,255,255,0.80)" : "rgba(255,255,255,0.60)",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
+                        className={`text-xs overflow-hidden text-ellipsis whitespace-nowrap ${conv.unreadCount > 0 ? 'text-foreground/80' : 'text-foreground/60'}`}
                       >
                         {previewText(conv.lastMessagePreview)}
                       </p>
@@ -502,19 +474,12 @@ export default function MobileInboxPage() {
                   {/* Unread badge */}
                   {conv.unreadCount > 0 && (
                     <span
+                      className="bg-primary text-surface text-[11px] font-extrabold flex items-center justify-center shrink-0"
                       style={{
                         minWidth: "22px",
                         height: "22px",
                         borderRadius: "11px",
-                        background: "rgba(212,175,55,1)",
-                        color: "rgba(18,26,43,1)",
-                        fontSize: "11px",
-                        fontWeight: 800,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
                         padding: "0 5px",
-                        flexShrink: 0,
                       }}
                     >
                       {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
@@ -524,14 +489,12 @@ export default function MobileInboxPage() {
                   {/* Product thumbnail */}
                   {conv.productImage && (
                     <div
+                      className="bg-white/[0.06] shrink-0 overflow-hidden"
                       style={{
                         width: "48px",
                         height: "48px",
                         borderRadius: "10px",
-                        background: "rgba(255,255,255,0.06)",
                         border: "1px solid rgba(255,255,255,0.08)",
-                        overflow: "hidden",
-                        flexShrink: 0,
                       }}
                     >
                       <img

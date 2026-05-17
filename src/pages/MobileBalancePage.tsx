@@ -53,16 +53,16 @@ export default function MobileBalancePage() {
           aria-label="Back"
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, marginLeft: -4 }}
         >
-          <ChevronLeft style={{ width: 22, height: 22, color: 'rgba(255,255,255,0.70)' }} />
+          <ChevronLeft className="text-foreground/70" style={{ width: 22, height: 22 }} />
         </button>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0 }}>Balance</h1>
+        <h1 className="text-xl font-extrabold text-foreground m-0">Balance</h1>
       </div>
 
       {/* Balance card */}
       <div style={{ paddingInline: 'var(--mob-side, 16px)', marginTop: 8 }}>
         <div
+          className="bg-white/[0.04]"
           style={{
-            background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: 16,
             padding: 'clamp(20px, 5vw, 28px)',
@@ -73,19 +73,19 @@ export default function MobileBalancePage() {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Wallet style={{ width: 20, height: 20, flexShrink: 0 }} aria-hidden="true" />
-            <p style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.45)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <p className="text-[13px] font-semibold text-muted-foreground uppercase m-0" style={{ letterSpacing: '0.06em' }}>
               Available balance
             </p>
           </div>
 
           {loading ? (
-            <div style={{ height: 40, width: 120, borderRadius: 8, background: 'rgba(255,255,255,0.06)' }} />
+            <div className="bg-white/[0.06]" style={{ height: 40, width: 120, borderRadius: 8 }} />
           ) : isSeller ? (
-            <p style={{ fontSize: 'clamp(28px, 8vw, 36px)', fontWeight: 800, color: 'rgba(255,255,255,1)', margin: 0, letterSpacing: '-0.02em' }}>
+            <p className="text-foreground font-extrabold m-0" style={{ fontSize: 'clamp(28px, 8vw, 36px)', letterSpacing: '-0.02em' }}>
               {formatBalance(balance ?? 0)}
             </p>
           ) : (
-            <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+            <p className="text-[15px] text-muted-foreground m-0">
               Balance is available to sellers only.
             </p>
           )}
@@ -96,8 +96,8 @@ export default function MobileBalancePage() {
       {isSeller && (
         <div style={{ marginTop: 16 }}>
           <div
+            className="bg-white/[0.04]"
             style={{
-              background: 'rgba(255,255,255,0.04)',
               borderTop: '1px solid rgba(255,255,255,0.06)',
               borderBottom: '1px solid rgba(255,255,255,0.06)',
             }}
@@ -118,10 +118,10 @@ export default function MobileBalancePage() {
                 textAlign: 'left',
               }}
             >
-              <span style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.90)' }}>
+              <span className="text-[15px] font-medium text-foreground/90">
                 Payout settings
               </span>
-              <ChevronLeft style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.30)', transform: 'rotate(180deg)' }} aria-hidden="true" />
+              <ChevronLeft className="text-foreground/30" style={{ width: 18, height: 18, transform: 'rotate(180deg)' }} aria-hidden="true" />
             </button>
           </div>
         </div>

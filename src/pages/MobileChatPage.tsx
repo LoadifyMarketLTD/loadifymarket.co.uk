@@ -818,14 +818,11 @@ export default function MobileChatPage() {
               />
             ) : (
               <div
+                className="bg-white/[0.05] flex items-center justify-center"
                 style={{
                   width: "36px",
                   height: "36px",
                   borderRadius: "8px",
-                  background: "rgba(255,255,255,0.05)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
                   flexShrink: 0,
                 }}
               >

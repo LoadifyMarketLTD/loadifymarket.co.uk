@@ -172,7 +172,7 @@ function OrderCard({
       <div style={{ flex: 1, minWidth: 0 }}>
         {/* Order number + status badge */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
-          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.70)", fontFamily: "monospace" }}>
+          <span className="text-[11px] text-foreground/70 font-mono">
             #{order.orderNumber}
           </span>
           <span
@@ -191,25 +191,24 @@ function OrderCard({
         </div>
 
         {/* Product title */}
-        <p style={{ fontSize: "14px", fontWeight: 700, color: "rgba(255,255,255,1)", lineHeight: 1.3, marginBottom: "5px" }}
-          className="line-clamp-2">
+        <p className="text-sm font-bold text-foreground line-clamp-2" style={{ lineHeight: 1.3, marginBottom: "5px" }}>
           {order.productTitle ?? "Order"}
         </p>
 
         {/* Qty */}
-        <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.70)", marginBottom: "3px" }}>Qty: {order.quantity}</p>
+        <p className="text-xs text-foreground/70" style={{ marginBottom: "3px" }}>Qty: {order.quantity}</p>
 
         {/* Date + price */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.70)" }}>
+          <span className="text-xs text-foreground/70">
             Order placed on {formatDate(order.createdAt)}
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "6px" }}>
-          <span style={{ fontSize: "15px", fontWeight: 800, color: "rgba(212,175,55,1)" }}>
+          <span className="text-[15px] font-extrabold text-primary">
             £{order.total.toFixed(2)}
           </span>
-          <ChevronRight style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.25)", flexShrink: 0 }} />
+          <ChevronRight className="text-foreground/25" style={{ width: "16px", height: "16px", flexShrink: 0 }} />
         </div>
       </div>
     </div>
@@ -341,8 +340,7 @@ export default function MobileOrdersPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col"
-      style={{ background: "rgba(10,14,26,1)" }}
+      className="min-h-screen flex flex-col bg-background"
     >
       {/* ── Header ── */}
       <div
@@ -356,7 +354,7 @@ export default function MobileOrdersPage() {
           paddingBottom: "0",
         }}
       >
-        <h1 style={{ fontSize: "22px", fontWeight: 800, color: "rgba(255,255,255,1)", marginBottom: "12px" }}>
+        <h1 className="text-[22px] font-extrabold text-foreground" style={{ marginBottom: "12px" }}>
           My Orders
         </h1>
 
@@ -407,8 +405,8 @@ export default function MobileOrdersPage() {
           [1, 2, 3].map((n) => (
             <div
               key={n}
-              style={{ height: "108px", borderRadius: "16px", background: "rgba(255,255,255,0.05)", marginBottom: "12px" }}
-              className="animate-pulse"
+              className="animate-pulse bg-white/[0.05]"
+              style={{ height: "108px", borderRadius: "16px", marginBottom: "12px" }}
             />
           ))
         ) : visibleOrders.length === 0 ? (
@@ -472,11 +470,11 @@ export default function MobileOrdersPage() {
               marginTop: "8px",
             }}
           >
-            <HelpCircle style={{ width: "20px", height: "20px", color: "rgba(255,255,255,0.60)", flexShrink: 0 }} />
-            <span style={{ flex: 1, fontSize: "14px", color: "rgba(255,255,255,0.75)", textAlign: "left" }}>
+            <HelpCircle className="text-foreground/60" style={{ width: "20px", height: "20px", flexShrink: 0 }} />
+            <span className="text-sm text-foreground/75" style={{ flex: 1, textAlign: "left" }}>
               Need help with your order?
             </span>
-            <ChevronRight style={{ width: "16px", height: "16px", color: "rgba(255,255,255,0.25)" }} />
+            <ChevronRight className="text-foreground/25" style={{ width: "16px", height: "16px" }} />
           </button>
         )}
       </div>

@@ -43,12 +43,12 @@ export default function MobileGridCard({ id, title, price, image, location, prio
     >
       {/* Image */}
       <div
+        className="bg-white/[0.05]"
         style={{
           width: '100%',
           aspectRatio: '1 / 1',
           borderRadius: 12,
           overflow: 'hidden',
-          background: 'rgba(255,255,255,0.05)',
           position: 'relative',
         }}
       >
@@ -66,10 +66,10 @@ export default function MobileGridCard({ id, title, price, image, location, prio
       {/* Info */}
       <div style={{ paddingTop: 8, paddingBottom: 4 }}>
         <p
+          className="text-foreground/90"
           style={{
             fontSize: 'clamp(12px, 3.2vw, 13px)',
             fontWeight: 500,
-            color: 'rgba(255,255,255,0.90)',
             margin: 0,
             lineHeight: 1.35,
             overflow: 'hidden',
@@ -81,10 +81,10 @@ export default function MobileGridCard({ id, title, price, image, location, prio
           {title}
         </p>
         <p
+          className="text-foreground"
           style={{
             fontSize: 'clamp(13px, 3.8vw, 15px)',
             fontWeight: 700,
-            color: 'rgba(255,255,255,1)',
             margin: '4px 0 0',
           }}
         >
@@ -92,9 +92,9 @@ export default function MobileGridCard({ id, title, price, image, location, prio
         </p>
         {location && (
           <p
+            className="text-foreground/50"
             style={{
               fontSize: 11,
-              color: 'rgba(255,255,255,0.50)',
               margin: '3px 0 0',
               overflow: 'hidden',
               textOverflow: 'ellipsis',

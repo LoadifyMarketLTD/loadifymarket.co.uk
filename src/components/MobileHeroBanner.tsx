@@ -36,8 +36,8 @@ export default function MobileHeroBanner() {
       }}
     >
       <div
+        className="bg-white/[0.04]"
         style={{
-          background: 'rgba(255,255,255,0.04)',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: 16,
           padding: 'clamp(16px, 5vw, 24px)',
@@ -51,10 +51,10 @@ export default function MobileHeroBanner() {
         {/* Text */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <p
+            className="text-primary"
             style={{
               fontSize: 'clamp(11px, 3vw, 13px)',
               fontWeight: 600,
-              
               letterSpacing: '0.06em',
               textTransform: 'uppercase',
               margin: 0,
@@ -65,10 +65,10 @@ export default function MobileHeroBanner() {
             0% commission until 31 December 2026
           </p>
           <h2
+            className="text-foreground"
             style={{
               fontSize: 'clamp(18px, 5.2vw, 24px)',
               fontWeight: 800,
-              color: 'rgba(255,255,255,1)',
               margin: 0,
               lineHeight: 1.2,
               letterSpacing: '-0.02em',
@@ -77,9 +77,9 @@ export default function MobileHeroBanner() {
             Sell fast. Get paid.
           </h2>
           <p
+            className="text-foreground/55"
             style={{
               fontSize: 'clamp(12px, 3.4vw, 14px)',
-              color: 'rgba(255,255,255,0.55)',
               margin: '6px 0 0',
               lineHeight: 1.4,
             }}
@@ -96,12 +96,10 @@ export default function MobileHeroBanner() {
                 paddingLeft: 20,
                 paddingRight: 20,
                 borderRadius: 9999,
-                
                 border: 'none',
                 cursor: 'pointer',
                 fontSize: 'clamp(13px, 3.6vw, 14px)',
                 fontWeight: 700,
-                
                 whiteSpace: 'nowrap',
               }}
             >
@@ -109,6 +107,7 @@ export default function MobileHeroBanner() {
             </button>
             <button
               onClick={() => navigate('/help')}
+              className="text-foreground/50"
               style={{
                 height: 40,
                 paddingLeft: 0,
@@ -118,7 +117,6 @@ export default function MobileHeroBanner() {
                 cursor: 'pointer',
                 fontSize: 'clamp(12px, 3.2vw, 13px)',
                 fontWeight: 600,
-                color: 'rgba(255,255,255,0.50)',
                 whiteSpace: 'nowrap',
               }}
             >

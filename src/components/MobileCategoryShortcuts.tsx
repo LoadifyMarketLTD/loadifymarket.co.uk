@@ -57,6 +57,7 @@ export default function MobileCategoryShortcuts() {
                 key={id}
                 to={to}
                 aria-label={`Browse ${label}`}
+              className={`${active ? 'bg-primary/[0.12] border-primary text-primary font-semibold' : 'bg-white/[0.06] border-white/[0.14] text-foreground/85 font-medium'}`}
                 style={{
                   textDecoration: 'none',
                   display: 'flex',
@@ -65,15 +66,9 @@ export default function MobileCategoryShortcuts() {
                   paddingLeft: 14,
                   paddingRight: 14,
                   borderRadius: 9999,
-                   background: active
-                     ? 'rgba(232,160,32,0.12)'
-                     : 'rgba(255,255,255,0.06)',
-                   border: active
-                     ? '1.5px solid rgba(212,175,55,1)'
-                     : '1px solid rgba(255,255,255,0.14)',
+                  borderWidth: active ? '1.5px' : '1px',
+                  borderStyle: 'solid',
                   fontSize: 'clamp(13px, 3.6vw, 14px)',
-                  fontWeight: active ? 600 : 500,
-                  color: active ? 'rgba(212,175,55,1)' : 'rgba(255,255,255,0.85)',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                   transition: 'border-color 0.15s, color 0.15s',
