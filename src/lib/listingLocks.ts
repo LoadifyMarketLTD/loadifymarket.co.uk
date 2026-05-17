@@ -21,6 +21,8 @@ export interface SellerListingLock {
   message: string;
 }
 
+export const SELLER_LISTING_LOCK_STATUSES = ['awaiting_payment', 'paid', 'packed', 'shipped'] as const;
+
 const ACTIVE_PAID_FLOW_STATUSES = new Set(['paid', 'packed', 'shipped']);
 const FULFILLED_HISTORY_STATUSES = new Set(['delivered', 'completed']);
 
@@ -90,4 +92,14 @@ export function deriveSellerListingLocks(args: {
 
     return [];
   });
+}
+
+export function formatSellerListingLockReason(locks: SellerListingLock[]): string {
+  if (locks.length === 0) {
+    return 'an active order or reservation';
+  }
+
+  return locks
+    .map((lock) => `${lock.orderLabel} (${lock.message})`)
+    .join('; ');
 }

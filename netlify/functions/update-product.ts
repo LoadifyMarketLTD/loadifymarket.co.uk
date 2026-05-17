@@ -5,6 +5,8 @@
  * Enforces:
  *  - maintenanceMode → 503 for non-admin sellers
  *  - Ownership: only the seller who created the product (or admin) may update
+ *  - Stock derivation: stockStatus is auto-computed from listingContext + stockQuantity
+ *  - Listing lock enforcement: critical fields cannot change when paid/packed/shipped orders exist
  *
  * Payload (JSON body, POST only):
  *  {
@@ -14,38 +16,80 @@
  *    dispatchTime? (string),
  *    lockedFieldsOnly? (boolean) — when true only non-critical fields are updated
  *  }
+ *
+ * listingContext accepted values:
+ *   'product' — canonical physical listing (production DB value)
+ *   'goods'   — legacy alias accepted as a physical listing (stored as-is)
+ *   'service' — no stock or shipping required
  */
 
 import type { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 import { isMaintenanceMode } from './_shared/platformFlags';
 import { checkRateLimit } from './_shared/rateLimiter';
+import {
+  deriveSellerListingLocks,
+  formatSellerListingLockReason,
+  SELLER_LISTING_LOCK_STATUSES,
+} from '../../src/lib/listingLocks';
 
-const ALLOWED_UPDATE_FIELDS = new Set([
-  'title',
-  'description',
-  'type',
-  'condition',
-  'price',
-  'priceExVat',
-  'vatRate',
-  'stockQuantity',
-  'stockStatus',
-  'categoryId',
-  'subcategoryId',
-  'images',
-  'specifications',
-  'weight',
-  'dimensions',
-  'palletInfo',
-  'isActive',
-  'listingContext',
-]);
+const LOCKED_CRITICAL_FIELDS = ['title', 'type', 'condition', 'price', 'listingContext', 'stockQuantity', 'stockStatus'] as const;
 
-function normalizeListingContext(value: unknown): 'product' | 'service' | null {
-  if (value === 'service') return 'service';
-  if (value === 'product' || value === 'goods' || value == null) return 'product';
+function hasOwn(obj: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+function parseStockQuantity(raw: unknown): number | null {
+  if (typeof raw === 'number') {
+    return Number.isInteger(raw) ? raw : null;
+  }
+
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (!trimmed || !/^-?\d+$/.test(trimmed)) {
+      return null;
+    }
+
+    return Number.parseInt(trimmed, 10);
+  }
+
   return null;
+}
+
+/**
+ * Returns true for physical listing contexts ('product' and the legacy alias 'goods').
+ * Returns false for 'service'.
+ */
+function isPhysicalContext(value: unknown): boolean {
+  return value === 'product' || value === 'goods';
+}
+
+/**
+ * Validates the raw listingContext value.
+ * Accepts 'product', 'goods' (legacy alias), and 'service'.
+ * Returns the value unchanged so callers preserve the original string.
+ */
+function validateListingContext(value: unknown): 'product' | 'goods' | 'service' | null {
+  if (value === 'service') return 'service';
+  if (value === 'product') return 'product';
+  if (value === 'goods') return 'goods';
+  return null;
+}
+
+function calculateStockStatus(listingContext: string, stockQuantity: number): 'in_stock' | 'low_stock' | 'out_of_stock' {
+  if (listingContext === 'service') {
+    return 'in_stock';
+  }
+
+  if (stockQuantity > 10) {
+    return 'in_stock';
+  }
+
+  if (stockQuantity > 0) {
+    return 'low_stock';
+  }
+
+  return 'out_of_stock';
 }
 
 export const handler: Handler = async (event) => {
@@ -101,7 +145,7 @@ export const handler: Handler = async (event) => {
 
   const isAdmin = role === 'admin';
 
-  // ── Maintenance mode (Step 5.2) ───────────────────────────────────────────
+  // ── Maintenance mode ──────────────────────────────────────────────────────
   const maintenance = await isMaintenanceMode(supabase);
   if (maintenance && !isAdmin) {
     return {
@@ -130,12 +174,23 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: '"id" is required' }) };
   }
 
-  // ── Ownership check ───────────────────────────────────────────────────────
+  // ── Ownership + stock/lock context fetch ──────────────────────────────────
   const { data: existingProduct, error: fetchError } = await supabase
     .from('products')
-    .select('sellerId')
+    .select('sellerId, title, type, condition, price, listingContext, stockQuantity, stockStatus, listingStatus, reservedUntil')
     .eq('id', productId)
-    .maybeSingle<{ sellerId: string }>();
+    .maybeSingle<{
+      sellerId: string;
+      title: string | null;
+      type: string | null;
+      condition: string | null;
+      price: number | null;
+      listingContext: string | null;
+      stockQuantity: number | null;
+      stockStatus: string | null;
+      listingStatus: string | null;
+      reservedUntil: string | null;
+    }>();
 
   if (fetchError || !existingProduct) {
     return { statusCode: 404, body: JSON.stringify({ error: 'Product not found' }) };
@@ -153,35 +208,96 @@ export const handler: Handler = async (event) => {
   delete updateData.isApproved; // approval status is admin-managed
   delete updateData.createdAt;
   delete updateData.updatedAt;
-  delete updateData.shippingMethodIds;
-  delete updateData.dispatchTime;
-  delete updateData.lockedFieldsOnly;
 
-  if (Object.prototype.hasOwnProperty.call(updateData, 'listingContext')) {
-    const normalized = normalizeListingContext(updateData.listingContext);
-    if (!normalized) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Invalid listingContext. Allowed values: product, service.' }),
-      };
-    }
-    updateData.listingContext = normalized;
-  }
+  // ── Validate and resolve listingContext ───────────────────────────────────
+  // The incoming listingContext (if provided) is validated but kept as-is.
+  // 'product' is the canonical DB value; 'goods' is a supported legacy alias.
+  const incomingContext = hasOwn(updateData, 'listingContext')
+    ? validateListingContext(updateData.listingContext)
+    : validateListingContext(existingProduct.listingContext ?? 'product');
 
-  const unsupportedFields = Object.keys(updateData).filter((key) => !ALLOWED_UPDATE_FIELDS.has(key));
-  if (unsupportedFields.length > 0) {
+  if (!incomingContext) {
     return {
       statusCode: 400,
+      body: JSON.stringify({ error: 'listingContext must be either "product" or "service"' }),
+    };
+  }
+
+  const nextListingContext = incomingContext;
+
+  // ── Stock quantity derivation ─────────────────────────────────────────────
+  const stockQuantityWasProvided = hasOwn(updateData, 'stockQuantity');
+  let normalizedStockQuantity = existingProduct.stockQuantity ?? 0;
+
+  if (nextListingContext === 'service') {
+    normalizedStockQuantity = 0;
+  } else if (stockQuantityWasProvided) {
+    const parsedStockQuantity = parseStockQuantity(updateData.stockQuantity);
+    if (parsedStockQuantity === null || parsedStockQuantity < 0) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'stockQuantity must be a valid integer greater than or equal to 0 for product listings' }),
+      };
+    }
+    normalizedStockQuantity = parsedStockQuantity;
+  }
+
+  const stockFieldsWereRequested = hasOwn(updateData, 'listingContext') || stockQuantityWasProvided || hasOwn(updateData, 'stockStatus');
+
+  if (hasOwn(updateData, 'listingContext')) {
+    updateData.listingContext = nextListingContext;
+  }
+
+  if (stockFieldsWereRequested) {
+    updateData.stockQuantity = normalizedStockQuantity;
+    updateData.stockStatus = calculateStockStatus(nextListingContext, normalizedStockQuantity);
+  }
+
+  // ── Listing lock enforcement ──────────────────────────────────────────────
+  const { data: orderLocks } = await supabase
+    .from('orders')
+    .select('id, orderNumber, status, createdAt')
+    .eq('productId', productId)
+    .in('status', [...SELLER_LISTING_LOCK_STATUSES]);
+
+  const listingLocks = isAdmin
+    ? []
+    : deriveSellerListingLocks({
+        orders: orderLocks ?? [],
+        product: {
+          listingStatus: existingProduct.listingStatus ?? null,
+          reservedUntil: existingProduct.reservedUntil ?? null,
+        },
+      });
+
+  const criticalFieldChanged = LOCKED_CRITICAL_FIELDS.some((field) => {
+    if (!hasOwn(updateData, field)) return false;
+
+    const nextValue = updateData[field];
+    const currentValue = existingProduct[field] ?? null;
+
+    // Treat 'product' and 'goods' as equivalent for the listingContext lock check
+    if (field === 'listingContext') {
+      return !(isPhysicalContext(nextValue) && isPhysicalContext(currentValue));
+    }
+
+    return nextValue !== currentValue;
+  });
+
+  if (!isAdmin && listingLocks.length > 0 && criticalFieldChanged) {
+    return {
+      statusCode: 409,
       body: JSON.stringify({
-        error: 'Unsupported fields in update-product payload',
-        unsupportedFields,
+        error: `Stock quantity cannot be changed because this listing is locked by ${formatSellerListingLockReason(listingLocks)}.`,
+        code: 'LISTING_LOCKED',
+        locks: listingLocks,
       }),
     };
   }
 
   // When only non-critical fields can change (active orders exist), whitelist them
   let dataToUpdate: Record<string, unknown> = updateData;
-  if (lockedFieldsOnly) {
+  if (lockedFieldsOnly && listingLocks.length > 0 && !isAdmin) {
     dataToUpdate = {
       description: updateData.description,
       images: updateData.images,
@@ -203,28 +319,8 @@ export const handler: Handler = async (event) => {
       .eq('id', productId);
 
     if (updateError) {
-      console.error('update-product: update error:', {
-        message: updateError.message,
-        code: updateError.code,
-        details: updateError.details,
-        hint: updateError.hint,
-        payloadKeys: Object.keys(dataToUpdate),
-        listingContext: dataToUpdate.listingContext,
-      });
-      return {
-        statusCode: 500,
-        body: JSON.stringify({
-          error: 'Supabase update error',
-          supabase: {
-            message: updateError.message,
-            code: updateError.code,
-            details: updateError.details,
-            hint: updateError.hint,
-          },
-          payloadKeys: Object.keys(dataToUpdate),
-          listingContext: dataToUpdate.listingContext ?? null,
-        }),
-      };
+      console.error('update-product: update error:', updateError.message);
+      return { statusCode: 500, body: JSON.stringify({ error: 'Failed to update listing. Please try again.' }) };
     }
   }
 
