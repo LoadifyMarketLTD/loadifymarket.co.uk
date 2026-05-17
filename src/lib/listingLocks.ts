@@ -50,7 +50,7 @@ export function deriveSellerListingLocks(args: {
   const { orders, product, now = new Date() } = args;
   const reservationActive = product.listingStatus === 'reserved' && isFutureIso(product.reservedUntil, now);
 
-  return orders.flatMap((order) => {
+  return orders.flatMap<SellerListingLock>((order) => {
     if (order.status === 'awaiting_payment') {
       if (!reservationActive && !isRecentAwaitingPayment(order, now)) {
         return [];
