@@ -782,8 +782,8 @@ export default function DesktopConversationView() {
               .update({ isRead: true, readAt: new Date().toISOString() })
               .eq("id", msg.id);
           }
-          // Refresh offers when a system message arrives (offer accepted/declined)
-          if (parseMessage(msg.message).type === "system") {
+          const parsed = parseMessage(msg.message);
+          if (parsed.type === "offer" || parsed.type === "system") {
             void loadOffers();
           }
         },
@@ -801,22 +801,34 @@ export default function DesktopConversationView() {
       .channel(`desktop-chat-offers:${selectedId}`)
       .on(
         "postgres_changes",
+        { event: "INSERT", schema: "public", table: "offers", filter: `conversationId=eq.${selectedId}` },
+        () => {
+          void loadOffers();
+        },
+      )
+      .on(
+        "postgres_changes",
         { event: "UPDATE", schema: "public", table: "offers", filter: `conversationId=eq.${selectedId}` },
         (payload) => {
           const updated = payload.new as { id: string; status: string };
+          let found = false;
           setOfferMap((prev) => {
             const existing = prev.get(updated.id);
             if (!existing) return prev;
+            found = true;
             const next = new Map(prev);
             next.set(updated.id, { ...existing, status: updated.status });
             return next;
           });
+          if (!found) {
+            void loadOffers();
+          }
         },
       )
       .subscribe();
 
     return () => { void supabase.removeChannel(channel); };
-  }, [selectedId, user?.id, offersFeatureUnavailable]);
+  }, [selectedId, user?.id, offersFeatureUnavailable, loadOffers]);
 
   // ── Supabase Realtime: orders (Pay Now / payment-confirmed live update) ──────
   useEffect(() => {

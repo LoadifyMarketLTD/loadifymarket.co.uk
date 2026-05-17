@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import MakeOfferSheet from "@/components/MakeOfferSheet";
 
@@ -46,7 +46,6 @@ describe("MakeOfferSheet", () => {
 
     const onOpenChange = vi.fn();
     const onSent = vi.fn();
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
 
     render(
       <MakeOfferSheet
@@ -59,10 +58,14 @@ describe("MakeOfferSheet", () => {
       />,
     );
 
-    await user.type(screen.getByPlaceholderText("0.00"), "12.34");
-    await user.click(screen.getByRole("button", { name: "Send Offer" }));
+    fireEvent.change(screen.getByPlaceholderText("0.00"), { target: { value: "12.34" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send Offer" }));
 
-    const successButton = await screen.findByRole("button", { name: /offer sent/i });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    const successButton = screen.getByRole("button", { name: /offer sent/i });
 
     expect(successButton).toBeDisabled();
     expect(successButton.className).toContain("bg-emerald-600");
@@ -71,11 +74,15 @@ describe("MakeOfferSheet", () => {
     expect(mockTrackOfferCreated).toHaveBeenCalledWith({ conversationId: "conversation-1", amountPence: 1234 });
     expect(onSent).toHaveBeenCalledTimes(1);
 
-    vi.advanceTimersByTime(2400);
+    act(() => {
+      vi.advanceTimersByTime(2400);
+    });
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
 
-    vi.advanceTimersByTime(100);
-    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(onOpenChange).toHaveBeenCalledWith(false);
     expect((screen.getByPlaceholderText("0.00") as HTMLInputElement).value).toBe("");
   });
 
