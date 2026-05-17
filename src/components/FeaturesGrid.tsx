@@ -84,7 +84,7 @@ export default function FeaturesGrid() {
               </div>
               {/* Text */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,1)', lineHeight: 1.2 }}>
+                <p style={{ fontSize: '14px', fontWeight: 600, lineHeight: 1.2 }} className="text-white">
                   {feature.title}
                 </p>
                 <p style={{ fontSize: '12px', lineHeight: 1.4, marginTop: '3px' }} className="text-muted-foreground">

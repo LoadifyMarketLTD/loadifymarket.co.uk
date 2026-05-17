@@ -196,11 +196,11 @@ const AdminReports = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Reports & Analytics</h1>
-          <p className="text-sm mt-1" style={{ color: "rgba(148,163,184,0.85)" }}>Platform performance overview and insights.</p>
+          <p className="text-sm mt-1 text-muted-foreground/85">Platform performance overview and insights.</p>
         </div>
         <div className="flex gap-2">
           <Select value={period} onValueChange={(v) => setPeriod(v as "all" | "7d" | "30d")}>
-            <SelectTrigger className="w-[140px]" style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[140px] bg-muted-foreground/30 border border-white/10 text-white"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All time</SelectItem>
               <SelectItem value="7d">Last 7 days</SelectItem>
@@ -211,7 +211,7 @@ const AdminReports = () => {
             size="default"
             onClick={handleExport}
             disabled={loading}
-            style={{ background: "rgba(148,163,184,0.3)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff" }}
+            className="bg-muted-foreground/30 border border-white/10 text-white"
           >
             <Download className="mr-2 h-4 w-4" /> Export
           </Button>
@@ -219,7 +219,7 @@ const AdminReports = () => {
       </div>
 
       {error && (
-        <div className="rounded-xl border p-4 text-sm" style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171" }}>
+        <div className="rounded-xl border p-4 text-sm border-danger/30 bg-danger/10 text-danger">
           {error}
         </div>
       )}
@@ -233,7 +233,7 @@ const AdminReports = () => {
                 className="rounded-2xl p-5 flex items-center justify-center h-28"
                 style={{ border: "1px solid rgba(255,255,255,0.05)" }}
               >
-                <Loader2 className="h-6 w-6 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/65" />
               </div>
             ))
           : kpis.map((k) => (
@@ -252,7 +252,7 @@ const AdminReports = () => {
                   </span>
                 </div>
                 <p className="text-3xl font-bold text-white mt-3">{k.value}</p>
-                <p className="text-xs mt-1" style={{ color: "rgba(148,163,184,0.85)" }}>{k.label} · {k.period}</p>
+                <p className="text-xs mt-1 text-muted-foreground/85">{k.label} · {k.period}</p>
               </div>
             ))}
       </div>
@@ -265,15 +265,15 @@ const AdminReports = () => {
         >
           <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
             <h2 className="text-sm font-semibold text-white">Order Breakdown</h2>
-            <p className="text-xs mt-0.5" style={{ color: "rgba(148,163,184,0.85)" }}>Orders by status</p>
+            <p className="text-xs mt-0.5 text-muted-foreground/85">Orders by status</p>
           </div>
           <div className="px-6 py-4">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/65" />
               </div>
             ) : orderBreakdown.length === 0 ? (
-              <p className="text-sm text-center py-6" style={{ color: "rgba(100,116,139,0.65)" }}>No order data yet.</p>
+              <p className="text-sm text-center py-6 text-muted-foreground/65">No order data yet.</p>
             ) : (
               <div className="space-y-3">
                 {orderBreakdown.map((o) => (
@@ -283,7 +283,7 @@ const AdminReports = () => {
                     style={{ border: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.03)" }}
                   >
                     <div className="flex items-center gap-3">
-                      <Calendar className="h-4 w-4" style={{ color: "rgba(100,116,139,0.65)" }} />
+                      <Calendar className="h-4 w-4 text-muted-foreground/65" />
                       <span className="text-sm font-medium text-white capitalize">{o.status}</span>
                     </div>
                     <Badge variant="outline" className="text-xs border-white/20 text-slate-500">{o.count} orders</Badge>
@@ -301,15 +301,15 @@ const AdminReports = () => {
         >
           <div className="px-6 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
             <h2 className="text-sm font-semibold text-white">Top Sellers</h2>
-            <p className="text-xs mt-0.5" style={{ color: "rgba(148,163,184,0.85)" }}>By total sales volume</p>
+            <p className="text-xs mt-0.5 text-muted-foreground/85">By total sales volume</p>
           </div>
           <div className="px-6 py-4">
             {loading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" style={{ color: "rgba(100,116,139,0.65)" }} />
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/65" />
               </div>
             ) : topSellers.length === 0 ? (
-              <p className="text-sm text-center py-6" style={{ color: "rgba(100,116,139,0.65)" }}>No seller data yet.</p>
+              <p className="text-sm text-center py-6 text-muted-foreground/65">No seller data yet.</p>
             ) : (
               <div className="space-y-3">
                 {topSellers.map((s, i) => (
@@ -323,7 +323,7 @@ const AdminReports = () => {
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-white truncate">{s.name}</p>
-                      <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>⭐ {s.rating.toFixed(1)} rating</p>
+                      <p className="text-xs text-muted-foreground/85">⭐ {s.rating.toFixed(1)} rating</p>
                     </div>
                     <span className="text-sm font-semibold text-white shrink-0">
                       {s.totalSales} sales

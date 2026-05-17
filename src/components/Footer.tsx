@@ -34,11 +34,11 @@ const Footer = () => {
         style={{ padding: '20px 16px' }}
       >
         <div className="flex items-center gap-5 flex-wrap justify-center">
-          <Link to="/terms"   style={{ fontSize: '13px', color: 'rgba(255,255,255,0.70)', textDecoration: 'none' }}>Terms</Link>
-          <Link to="/privacy" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.70)', textDecoration: 'none' }}>Privacy</Link>
-          <Link to="/contact" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.70)', textDecoration: 'none' }}>Support</Link>
+          <Link to="/terms"   style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/70">Terms</Link>
+          <Link to="/privacy" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/70">Privacy</Link>
+          <Link to="/contact" style={{ fontSize: '13px', textDecoration: 'none' }} className="text-white/70">Support</Link>
         </div>
-        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', textAlign: 'center' }}>
+        <p style={{ fontSize: '12px', textAlign: 'center' }} className="text-white/45">
           &copy; {new Date().getFullYear()} Loadify Market
         </p>
       </div>

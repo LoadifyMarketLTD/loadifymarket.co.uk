@@ -119,8 +119,8 @@ function StepAccountType({
             onClick={() => onSelect(v)}
             className={`rounded-xl border-2 p-5 text-left transition-all ${
               value === v
-                ? "border-success bg-[#f0fdf4]"
-                : "border-gray-200 bg-white hover:border-[#86efac]"
+                ? "border-success bg-success/10"
+                : "border-gray-200 bg-white hover:border-success/40"
             }`}
           >
             <p className="font-semibold text-gray-900">{label}</p>
@@ -157,7 +157,7 @@ function StepProfile({
         </p>
       </div>
       {done ? (
-        <div className="flex items-center gap-3 rounded-xl bg-[#f0fdf4] border border-[#86efac] p-4">
+        <div className="flex items-center gap-3 rounded-xl bg-success/10 border border-success/40 p-4">
           <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
           <p className="text-sm text-success font-medium">Profile completed ✓</p>
         </div>
@@ -216,7 +216,7 @@ function StepStripe({
       </div>
 
       {fullyActive ? (
-        <div className="flex items-center gap-3 rounded-xl bg-[#f0fdf4] border border-[#86efac] p-4">
+        <div className="flex items-center gap-3 rounded-xl bg-success/10 border border-success/40 p-4">
           <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
           <p className="text-sm text-success font-medium">Stripe fully connected ✓</p>
         </div>
@@ -271,7 +271,7 @@ function StepStore({
       </div>
 
       <div className="space-y-3">
-        <div className={`flex items-center gap-3 rounded-xl border p-4 ${storeCreated ? "bg-[#f0fdf4] border-[#86efac]" : "border-gray-200"}`}>
+        <div className={`flex items-center gap-3 rounded-xl border p-4 ${storeCreated ? "bg-success/10 border-success/40" : "border-gray-200"}`}>
           {storeCreated ? (
             <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
           ) : (
@@ -320,7 +320,7 @@ function StepServiceListing({
       </div>
 
       {done ? (
-        <div className="flex items-center gap-3 rounded-xl bg-[#f0fdf4] border border-[#86efac] p-4">
+        <div className="flex items-center gap-3 rounded-xl bg-success/10 border border-success/40 p-4">
           <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
           <p className="text-sm text-success font-medium">First listing created ✓</p>
         </div>

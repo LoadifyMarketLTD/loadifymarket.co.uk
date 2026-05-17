@@ -5,29 +5,29 @@ import { Button } from "@/components/ui/button";
 const buyerBenefits = [
   {
     icon: Search,
-    iconBg: "rgba(124,58,237,0.20)",
-    iconColor: "#A78BFA",
+    iconBgClass: "bg-admin/20",
+    iconColorClass: "text-admin",
     title: "Browse Marketplace Listings",
     desc: "Find products across all categories from registered UK sellers — electronics, fashion, home & garden, handmade and more.",
   },
   {
     icon: ShieldCheck,
-    iconBg: "rgba(212,175,55,0.20)",
-    iconColor: "#D4AF37",
+    iconBgClass: "bg-primary/20",
+    iconColorClass: "text-primary",
     title: "Active Seller Accounts",
     desc: "Sellers complete their profile and Stripe setup before listing on the marketplace.",
   },
   {
     icon: CreditCard,
-    iconBg: "rgba(99,102,241,0.20)",
-    iconColor: "#818CF8",
+    iconBgClass: "bg-secondary/20",
+    iconColorClass: "text-secondary",
     title: "Secure Stripe Checkout",
     desc: "Pay safely via Stripe with full transaction transparency.",
   },
   {
     icon: HeadphonesIcon,
-    iconBg: "rgba(14,165,233,0.20)",
-    iconColor: "#38BDF8",
+    iconBgClass: "bg-accent/20",
+    iconColorClass: "text-accent",
     title: "Buyer Support",
     desc: "Dedicated support team to help resolve disputes and answer questions quickly.",
   },
@@ -36,29 +36,29 @@ const buyerBenefits = [
 const sellerBenefits = [
   {
     icon: PackagePlus,
-    iconBg: "rgba(212,175,55,0.20)",
-    iconColor: "#D4AF37",
+    iconBgClass: "bg-primary/20",
+    iconColorClass: "text-primary",
     title: "List for Free",
     desc: "Create your seller account and list your first products at zero cost — no setup fees.",
   },
   {
     icon: Users,
-    iconBg: "rgba(212,175,55,0.20)",
-    iconColor: "#D4AF37",
+    iconBgClass: "bg-primary/20",
+    iconColorClass: "text-primary",
     title: "Reach Real UK Buyers",
     desc: "Access a growing base of registered buyers actively searching for products across all categories.",
   },
   {
     icon: Banknote,
-    iconBg: "rgba(212,175,55,0.20)",
-    iconColor: "#FCD34D",
+    iconBgClass: "bg-warning/20",
+    iconColorClass: "text-warning",
     title: "Fast Stripe Payouts",
     desc: "Payments processed securely via Stripe. 0% Commission until 31 December 2026, then 7% on completed sales with fast payouts.",
   },
   {
     icon: TrendingUp,
-    iconBg: "rgba(244,63,94,0.20)",
-    iconColor: "#FB7185",
+    iconBgClass: "bg-danger/20",
+    iconColorClass: "text-danger",
     title: "Seller Dashboard",
     desc: "Manage listings, track orders, view analytics and grow your sales — all from one dashboard.",
   },
@@ -117,10 +117,9 @@ const PlatformFeatures = () => {
               {buyerBenefits.map((b) => (
                 <li key={b.title} className="flex items-start gap-3">
                   <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: b.iconBg }}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${b.iconBgClass}`}
                   >
-                    <b.icon className="h-4 w-4" style={{ color: b.iconColor }} aria-hidden="true" />
+                    <b.icon className={`h-4 w-4 ${b.iconColorClass}`} aria-hidden="true" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-white">{b.title}</p>
@@ -143,8 +142,7 @@ const PlatformFeatures = () => {
           <div className="rounded-3xl p-7 flex flex-col gap-5 bg-surface" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
             <div className="flex items-center gap-3">
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "rgba(212,175,55,0.20)" }}
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-primary/20"
               >
                 <PackagePlus className="h-5 w-5 text-primary" />
               </div>
@@ -158,10 +156,9 @@ const PlatformFeatures = () => {
               {sellerBenefits.map((b) => (
                 <li key={b.title} className="flex items-start gap-3">
                   <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: b.iconBg }}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${b.iconBgClass}`}
                   >
-                    <b.icon className="h-4 w-4" style={{ color: b.iconColor }} aria-hidden="true" />
+                    <b.icon className={`h-4 w-4 ${b.iconColorClass}`} aria-hidden="true" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-white">{b.title}</p>

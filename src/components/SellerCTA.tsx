@@ -17,7 +17,7 @@ export default function SellerCTA() {
           }}
         >
           {/* Heading */}
-          <p style={{ color: 'rgba(255,255,255,1)', fontWeight: 800, fontSize: '24px', lineHeight: 1.2, marginBottom: '10px' }}>
+          <p style={{ fontWeight: 800, fontSize: '24px', lineHeight: 1.2, marginBottom: '10px' }} className="text-white">
             Start Selling for{' '}
             <span className="text-primary" style={{}}>FREE</span>
           </p>

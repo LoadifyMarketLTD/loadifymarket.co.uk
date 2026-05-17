@@ -145,7 +145,7 @@ export default function MobileInfiniteFeed() {
           borderRadius: '16px',
         }}
       >
-        <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.75)' }}>No products listed yet</p>
+        <p style={{ fontSize: '14px' }} className="text-white/75">No products listed yet</p>
         <Link
           to="/catalog"
           style={{

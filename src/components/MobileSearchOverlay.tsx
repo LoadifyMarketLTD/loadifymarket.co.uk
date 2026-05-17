@@ -90,7 +90,7 @@ export default function MobileSearchOverlay({ onClose }: Props) {
             borderRadius: '14px', padding: '13px 16px' }}
         >
           <Search
-            style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.40)', flexShrink: 0 }}
+            style={{ width: '18px', height: '18px', flexShrink: 0 }} className="text-white/40"
             aria-hidden="true"
           />
           <input
@@ -124,7 +124,7 @@ export default function MobileSearchOverlay({ onClose }: Props) {
             cursor: 'pointer',
           }}
         >
-          <X style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.70)' }} aria-hidden="true" />
+          <X style={{ width: '18px', height: '18px' }} className="text-white/70" aria-hidden="true" />
         </button>
       </div>
 

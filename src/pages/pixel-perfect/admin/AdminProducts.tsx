@@ -192,25 +192,25 @@ const AdminProducts = () => {
     <Table>
       <TableHeader>
         <TableRow style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Product</TableHead>
-          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Seller</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Price</TableHead>
-          <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Stock</TableHead>
-          <TableHead className="text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Published</TableHead>
-          <TableHead className="hidden lg:table-cell text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Approved</TableHead>
-          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase" style={{ color: "rgba(148,163,184,0.85)" }}>Actions</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Product</TableHead>
+          <TableHead className="hidden sm:table-cell text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Seller</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Price</TableHead>
+          <TableHead className="hidden md:table-cell text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Stock</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Published</TableHead>
+          <TableHead className="hidden lg:table-cell text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Approved</TableHead>
+          <TableHead className="text-right text-xs font-semibold tracking-wide uppercase text-muted-foreground/85">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {loading ? (
           <TableRow>
             <TableCell colSpan={7} className="text-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto" style={{ color: "rgba(100,116,139,0.65)" }} />
+              <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground/65" />
             </TableCell>
           </TableRow>
         ) : data.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={7} className="text-center py-8" style={{ color: "rgba(100,116,139,0.65)" }}>
+            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground/65">
               <Package className="h-8 w-8 mx-auto mb-2 opacity-40" />No products found.
             </TableCell>
           </TableRow>
@@ -228,11 +228,11 @@ const AdminProducts = () => {
             >
               <TableCell className="max-w-[250px]">
                 <p className="text-sm font-medium text-white truncate">{p.title}</p>
-                <p className="text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{p.createdAt}</p>
+                <p className="text-xs text-muted-foreground/85">{p.createdAt}</p>
               </TableCell>
-              <TableCell className="hidden sm:table-cell text-xs" style={{ color: "rgba(148,163,184,0.85)" }}>{p.seller}</TableCell>
+              <TableCell className="hidden sm:table-cell text-xs text-muted-foreground/85">{p.seller}</TableCell>
               <TableCell className="text-sm font-semibold text-white">£{p.price.toLocaleString()}</TableCell>
-              <TableCell className="hidden md:table-cell text-sm" style={{ color: "rgba(148,163,184,0.85)" }}>{p.stockQuantity}</TableCell>
+              <TableCell className="hidden md:table-cell text-sm text-muted-foreground/85">{p.stockQuantity}</TableCell>
               <TableCell>
                 <Badge
                   variant="outline"
@@ -304,26 +304,25 @@ const AdminProducts = () => {
     <div className="p-4 sm:p-6 space-y-6" style={{ background: "transparent", minHeight: "100%" }}>
       <div className="pb-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
         <h1 className="text-2xl font-bold text-white tracking-tight">Product Moderation</h1>
-        <p className="text-sm mt-1" style={{ color: "rgba(148,163,184,0.85)" }}>
+        <p className="text-sm mt-1 text-muted-foreground/85">
           {products.length} total listings · {activeProducts.length} published · {inactiveProducts.length} unpublished · {products.filter(p => !p.isApproved).length} pending approval
         </p>
       </div>
 
       {error && (
-        <div className="rounded-xl border p-4 text-sm" style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171" }}>
+        <div className="rounded-xl border p-4 text-sm border-danger/30 bg-danger/10 text-danger">
           {error}
         </div>
       )}
 
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "rgba(100,116,139,0.65)" }} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/65" />
           <Input
             placeholder="Search products or sellers..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-          className="pl-9 h-10"
-          style={{ border: "1px solid rgba(255,255,255,0.05)", color: "#ffffff" }}
+          className="pl-9 h-10 border border-white/5 text-white"
           />
         </div>
       </div>

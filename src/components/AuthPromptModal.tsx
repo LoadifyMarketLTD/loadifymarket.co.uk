@@ -93,7 +93,7 @@ export default function AuthPromptModal() {
             cursor: 'pointer',
           }}
         >
-          <X style={{ width: 16, height: 16, color: 'rgba(255,255,255,0.60)' }} aria-hidden="true" />
+          <X style={{ width: 16, height: 16 }} className="text-white/60" aria-hidden="true" />
         </button>
 
         <h2

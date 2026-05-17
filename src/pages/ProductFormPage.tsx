@@ -574,14 +574,14 @@ export default function ProductFormPage() {
 
           {/* Success banner */}
           {successMessage && (
-            <div className="mb-6 rounded-lg border overflow-hidden" style={{ borderColor: "rgba(42,92,42,1)", background: 'rgba(13,31,13,1)' }}>
+            <div className="mb-6 rounded-lg border overflow-hidden border-success/50 bg-success/10">
               <div className="p-4 flex items-start gap-3">
                 <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
                 <p className="text-success font-medium text-sm">{successMessage}</p>
               </div>
               {/* Post-publish share CTA — only for newly created published products */}
               {publishedProductId && (
-                <div className="border-t px-4 py-3 space-y-2" style={{ borderColor: "rgba(42,92,42,1)", background: 'rgba(11,26,11,1)' }}>
+                <div className="border-t px-4 py-3 space-y-2 border-success/40 bg-success/8">
                   <p className="text-xs font-semibold text-green-200">
                     🚀 Your product is live — share it now to get more views!
                   </p>
@@ -623,8 +623,7 @@ export default function ProductFormPage() {
                           toast({ title: 'Could not copy', description: 'Please copy the URL manually.', variant: 'destructive' });
                         }
                       }}
-                      className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80"
-                      style={{ background: 'rgba(212,175,55,1)' }}
+                      className="px-3 py-1.5 rounded-md text-xs font-semibold transition-opacity hover:opacity-80 bg-primary"
                     >
                       Copy Link
                     </button>
@@ -1277,8 +1276,7 @@ export default function ProductFormPage() {
                   <button
                     type="submit"
                     disabled={saving || savingDraft}
-                    className="px-4 py-2 rounded-lg text-white text-sm font-semibold disabled:opacity-50 transition-all"
-                    style={{ background: "rgba(212,175,55,1)" }}
+                    className="px-4 py-2 rounded-lg text-white text-sm font-semibold disabled:opacity-50 transition-all bg-primary"
                   >
                     {saving
                       ? (id && hasActiveOrders ? 'Saving...' : 'Publishing...')

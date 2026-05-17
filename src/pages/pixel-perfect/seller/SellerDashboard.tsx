@@ -43,7 +43,7 @@ interface TopProduct {
 const statusColors: Record<string, string> = {
   paid: "bg-blue-500/10 text-blue-700 border-blue-200",
   packed: "bg-primary/10 text-primary border-primary/40",
-  shipped: "bg-[#0A2239]/10 text-secondary border-[#0A2239]/20",
+  shipped: "bg-secondary/10 text-secondary border-secondary/20",
   delivered: "bg-success/10 text-success border-success/40",
   cancelled: "bg-danger/100/10 text-danger border-danger/30",
   refunded: "bg-muted text-muted-foreground border-border",

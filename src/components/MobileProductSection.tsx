@@ -53,10 +53,10 @@ function MobileProductCard({ product }: { product: Product }) {
 
       {/* Info */}
       <div className="p-2.5 space-y-1">
-        <p className="text-[11px] font-semibold leading-snug line-clamp-2" style={{ color: 'rgba(17,17,17,1)' }}>
+        <p className="text-[11px] font-semibold leading-snug line-clamp-2 text-foreground"  >
           {product.title}
         </p>
-        <p className="text-[13px] font-bold leading-none" style={{ color: 'rgba(17,17,17,1)' }}>
+        <p className="text-[13px] font-bold leading-none text-foreground"  >
           {formatPrice(product.price)}
         </p>
       </div>
@@ -92,10 +92,10 @@ function MobileListingCard({ product }: { product: Product }) {
 
       {/* Info */}
       <div className="p-2.5 space-y-1">
-        <p className="text-[11px] font-semibold leading-snug line-clamp-2" style={{ color: 'rgba(17,17,17,1)' }}>
+        <p className="text-[11px] font-semibold leading-snug line-clamp-2 text-foreground"  >
           {product.title}
         </p>
-        <p className="text-sm font-bold leading-none" style={{ color: 'rgba(17,17,17,1)' }}>
+        <p className="text-sm font-bold leading-none text-foreground"  >
           {formatPrice(product.price)}
         </p>
       </div>
@@ -111,7 +111,7 @@ function SectionHeader({ title, viewAllTo }: { title: string; viewAllTo: string 
       <h2 className="text-[15px] font-bold text-white tracking-tight">{title}</h2>
       <Link
         to={viewAllTo}
-        className="flex items-center gap-1 text-[11px] font-semibold text-primary hover:text-[#D8AE57] transition-colors"
+        className="flex items-center gap-1 text-[11px] font-semibold text-primary hover:text-primary-hover transition-colors"
       >
         View all <ArrowRight className="h-3 w-3" aria-hidden="true" />
       </Link>

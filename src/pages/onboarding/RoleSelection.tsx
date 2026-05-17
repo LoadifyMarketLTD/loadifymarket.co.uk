@@ -90,8 +90,8 @@ const RoleSelection = () => {
             onClick={() => setSelected("buyer")}
             className={`relative rounded-2xl border-2 p-7 text-left transition-all focus:outline-none ${
               selected === "buyer"
-                ? "border-success bg-[#f0fdf4] shadow-lg shadow-green-100"
-                : "border-gray-200 bg-white hover:border-[#86efac] hover:shadow-md"
+                ? "border-success bg-success/10 shadow-lg shadow-green-100"
+                : "border-gray-200 bg-white hover:border-success/40 hover:shadow-md"
             }`}
           >
             {selected === "buyer" && (
@@ -112,8 +112,8 @@ const RoleSelection = () => {
             onClick={() => setSelected("seller")}
             className={`relative rounded-2xl border-2 p-7 text-left transition-all focus:outline-none ${
               selected === "seller"
-                ? "border-success bg-[#f0fdf4] shadow-lg shadow-green-100"
-                : "border-gray-200 bg-white hover:border-[#86efac] hover:shadow-md"
+                ? "border-success bg-success/10 shadow-lg shadow-green-100"
+                : "border-gray-200 bg-white hover:border-success/40 hover:shadow-md"
             }`}
           >
             {selected === "seller" && (

@@ -149,8 +149,7 @@ const AdminDashboard = () => {
 
       {error && (
         <div
-          className="rounded-xl border p-4 text-sm"
-          style={{ border: "1px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171" }}
+          className="rounded-xl border p-4 text-sm border-danger/30 bg-danger/10 text-danger"
         >
           {error}
         </div>

@@ -196,7 +196,7 @@ function OfferBubble({
       {!isSeller && isMine && status === "accepted" && offerRecord?.orderStatus !== "paid" && (
         <button
           onClick={onPayNow}
-          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary text-background text-sm font-bold active:bg-[#F59E0B] transition-colors"
+          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary text-background text-sm font-bold active:bg-warning transition-colors"
         >
           <CreditCard className="h-4 w-4" />
           Pay Now

@@ -11,24 +11,24 @@ const STEPS = [
   {
     id: "step-1",
     Icon: ShoppingBag,
-    iconBg: "rgba(99,102,241,0.20)",
-    iconColor: "#818CF8",
+    iconBgClass: "bg-admin/20",
+    iconColorClass: "text-admin",
     title: "Create Your Seller Account",
     desc: "Sign up and get started on the platform in minutes.",
   },
   {
     id: "step-2",
     Icon: UserCheck,
-    iconBg: "rgba(212,175,55,0.20)",
-    iconColor: "#D4AF37",
+    iconBgClass: "bg-primary/20",
+    iconColorClass: "text-primary",
     title: "Set Up Your Store",
     desc: "Add your business details and prepare your seller profile.",
   },
   {
     id: "step-3",
     Icon: TrendingUp,
-    iconBg: "rgba(212,175,55,0.20)",
-    iconColor: "#D4AF37",
+    iconBgClass: "bg-primary/20",
+    iconColorClass: "text-primary",
     title: "Connect Stripe & Go Live",
     desc: "Link your Stripe account securely to receive payouts.",
   },
@@ -82,10 +82,9 @@ const SellerJourneySection = () => (
           >
             {/* Icon badge */}
             <div
-              className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: step.iconBg }}
+              className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${step.iconBgClass}`}
             >
-              <step.Icon className="h-5 w-5" style={{ color: step.iconColor }} aria-hidden="true" />
+              <step.Icon className={`h-5 w-5 ${step.iconColorClass}`} aria-hidden="true" />
             </div>
             {/* Text */}
             <div>

@@ -111,7 +111,7 @@ export default function MobileAppHeader() {
           }}
         >
           <Bell
-            style={{ width: 22, height: 22, color: 'rgba(255,255,255,1)' }}
+            style={{ width: 22, height: 22 }} className="text-white"
             aria-hidden="true"
           />
           {unread > 0 && (
@@ -163,7 +163,7 @@ export default function MobileAppHeader() {
           }}
         >
           <Search
-            style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}
+            style={{ width: 18, height: 18, flexShrink: 0 }} className="text-white/45"
             aria-hidden="true"
           />
           <span
@@ -179,7 +179,7 @@ export default function MobileAppHeader() {
             Search for items or members
           </span>
           <Camera
-            style={{ width: 18, height: 18, color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}
+            style={{ width: 18, height: 18, flexShrink: 0 }} className="text-white/45"
             aria-hidden="true"
           />
         </button>

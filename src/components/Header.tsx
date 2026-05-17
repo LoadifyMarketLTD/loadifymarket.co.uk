@@ -235,7 +235,7 @@ const Header = () => {
                     <Link
                       to={link.to}
                       className={[
-                        "nav-cat-link text-[13px] font-semibold text-[#E5E7EB] hover:text-primary hover:-translate-y-px hover:[text-shadow:0_0_8px_rgba(212,175,55,0.25)] hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap text-center w-full",
+                        "nav-cat-link text-[13px] font-semibold text-foreground/80 hover:text-primary hover:-translate-y-px hover:[text-shadow:0_0_8px_rgba(212,175,55,0.25)] hover:bg-white/[0.08] px-3 py-2 rounded-lg transition-all duration-200 whitespace-nowrap text-center w-full",
                         isHovered ? "bg-white/[0.08] text-primary" : "",
                       ].join(" ")}
                     >

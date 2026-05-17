@@ -45,10 +45,10 @@ function GuestSellScreen() {
       </div>
 
       <div style={{ maxWidth: 300 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: 'rgba(255,255,255,1)', margin: '0 0 10px' }}>
+        <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 10px' }} className="text-white">
           Create an account to sell
         </h2>
-        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.50)', margin: 0, lineHeight: 1.6 }}>
+        <p style={{ fontSize: 14, margin: 0, lineHeight: 1.6 }} className="text-white/50">
           List your items and reach buyers across the UK — 0% commission on Loadify Market.
         </p>
       </div>

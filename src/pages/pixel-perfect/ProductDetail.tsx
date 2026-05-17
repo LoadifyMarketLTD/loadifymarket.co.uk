@@ -777,7 +777,7 @@ const ProductDetail = () => {
                     aria-label="Quantity"
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                      <option key={n} value={n} style={{ background: "rgba(18,18,26,1)" }}>{n}</option>
+                      <option key={n} value={n} className="bg-surface">{n}</option>
                     ))}
                   </select>
                 </div>
