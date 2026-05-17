@@ -5,6 +5,8 @@
  * Enforces:
  *  - maintenanceMode → 503 for non-admin sellers
  *  - Ownership: only the seller who created the product (or admin) may update
+ *  - Stock derivation: stockStatus is auto-computed from listingContext + stockQuantity
+ *  - Listing lock enforcement: critical fields cannot change when paid/packed/shipped orders exist
  *
  * Payload (JSON body, POST only):
  *  {
@@ -14,6 +16,11 @@
  *    dispatchTime? (string),
  *    lockedFieldsOnly? (boolean) — when true only non-critical fields are updated
  *  }
+ *
+ * listingContext accepted values:
+ *   'product' — canonical physical listing (production DB value)
+ *   'goods'   — legacy alias accepted as a physical listing (stored as-is)
+ *   'service' — no stock or shipping required
  */
 
 import type { Handler } from '@netlify/functions';
@@ -49,7 +56,27 @@ function parseStockQuantity(raw: unknown): number | null {
   return null;
 }
 
-function calculateStockStatus(listingContext: 'goods' | 'service', stockQuantity: number): 'in_stock' | 'low_stock' | 'out_of_stock' {
+/**
+ * Returns true for physical listing contexts ('product' and the legacy alias 'goods').
+ * Returns false for 'service'.
+ */
+function isPhysicalContext(value: unknown): boolean {
+  return value === 'product' || value === 'goods';
+}
+
+/**
+ * Validates the raw listingContext value.
+ * Accepts 'product', 'goods' (legacy alias), and 'service'.
+ * Returns the value unchanged so callers preserve the original string.
+ */
+function validateListingContext(value: unknown): 'product' | 'goods' | 'service' | null {
+  if (value === 'service') return 'service';
+  if (value === 'product') return 'product';
+  if (value === 'goods') return 'goods';
+  return null;
+}
+
+function calculateStockStatus(listingContext: string, stockQuantity: number): 'in_stock' | 'low_stock' | 'out_of_stock' {
   if (listingContext === 'service') {
     return 'in_stock';
   }
@@ -118,7 +145,7 @@ export const handler: Handler = async (event) => {
 
   const isAdmin = role === 'admin';
 
-  // ── Maintenance mode (Step 5.2) ───────────────────────────────────────────
+  // ── Maintenance mode ──────────────────────────────────────────────────────
   const maintenance = await isMaintenanceMode(supabase);
   if (maintenance && !isAdmin) {
     return {
@@ -147,7 +174,7 @@ export const handler: Handler = async (event) => {
     return { statusCode: 400, body: JSON.stringify({ error: '"id" is required' }) };
   }
 
-  // ── Ownership check ───────────────────────────────────────────────────────
+  // ── Ownership + stock/lock context fetch ──────────────────────────────────
   const { data: existingProduct, error: fetchError } = await supabase
     .from('products')
     .select('sellerId, title, type, condition, price, listingContext, stockQuantity, stockStatus, listingStatus, reservedUntil')
@@ -182,15 +209,23 @@ export const handler: Handler = async (event) => {
   delete updateData.createdAt;
   delete updateData.updatedAt;
 
-  const nextListingContextRaw = hasOwn(updateData, 'listingContext')
-    ? updateData.listingContext
-    : (existingProduct.listingContext === 'service' ? 'service' : 'goods');
+  // ── Validate and resolve listingContext ───────────────────────────────────
+  // The incoming listingContext (if provided) is validated but kept as-is.
+  // 'product' is the canonical DB value; 'goods' is a supported legacy alias.
+  const incomingContext = hasOwn(updateData, 'listingContext')
+    ? validateListingContext(updateData.listingContext)
+    : validateListingContext(existingProduct.listingContext ?? 'product');
 
-  if (nextListingContextRaw !== 'goods' && nextListingContextRaw !== 'service') {
-    return { statusCode: 400, body: JSON.stringify({ error: 'listingContext must be either "goods" or "service"' }) };
+  if (!incomingContext) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'listingContext must be either "product" or "service"' }),
+    };
   }
 
-  const nextListingContext = nextListingContextRaw;
+  const nextListingContext = incomingContext;
+
+  // ── Stock quantity derivation ─────────────────────────────────────────────
   const stockQuantityWasProvided = hasOwn(updateData, 'stockQuantity');
   let normalizedStockQuantity = existingProduct.stockQuantity ?? 0;
 
@@ -199,7 +234,10 @@ export const handler: Handler = async (event) => {
   } else if (stockQuantityWasProvided) {
     const parsedStockQuantity = parseStockQuantity(updateData.stockQuantity);
     if (parsedStockQuantity === null || parsedStockQuantity < 0) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'stockQuantity must be a valid integer greater than or equal to 0 for goods listings' }) };
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'stockQuantity must be a valid integer greater than or equal to 0 for product listings' }),
+      };
     }
     normalizedStockQuantity = parsedStockQuantity;
   }
@@ -215,6 +253,7 @@ export const handler: Handler = async (event) => {
     updateData.stockStatus = calculateStockStatus(nextListingContext, normalizedStockQuantity);
   }
 
+  // ── Listing lock enforcement ──────────────────────────────────────────────
   const { data: orderLocks } = await supabase
     .from('orders')
     .select('id, orderNumber, status, createdAt')
@@ -236,6 +275,12 @@ export const handler: Handler = async (event) => {
 
     const nextValue = updateData[field];
     const currentValue = existingProduct[field] ?? null;
+
+    // Treat 'product' and 'goods' as equivalent for the listingContext lock check
+    if (field === 'listingContext') {
+      return !(isPhysicalContext(nextValue) && isPhysicalContext(currentValue));
+    }
+
 
     return nextValue !== currentValue;
   });

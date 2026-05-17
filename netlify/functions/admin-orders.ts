@@ -38,7 +38,7 @@ interface OrderListRow {
 interface ProductMetaRow {
   id: string;
   title?: string | null;
-  listingContext?: 'goods' | 'service' | null;
+  listingContext?: 'product' | 'service' | null;
   listingStatus?: string | null;
   reservedUntil?: string | null;
 }

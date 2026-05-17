@@ -222,11 +222,11 @@ export const handler: Handler = async (event) => {
     }
 
     if (targetOrderStatus && shipment.orders?.id && shipment.orders?.productId) {
-      const { data: product } = await supabase
-        .from('products')
-        .select('id, listingContext')
-        .eq('id', shipment.orders.productId)
-        .maybeSingle<{ id: string; listingContext: 'goods' | 'service' | null }>();
+        const { data: product } = await supabase
+          .from('products')
+          .select('id, listingContext')
+          .eq('id', shipment.orders.productId)
+          .maybeSingle<{ id: string; listingContext: 'product' | 'service' | null }>();
 
       const paymentGuard = await enforcePaymentBackedTransition({
         supabase,

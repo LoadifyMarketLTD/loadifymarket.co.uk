@@ -120,8 +120,8 @@ export default function ProductFormPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [customSpecs, setCustomSpecs] = useState<CustomSpec[]>([]);
 
-  // 'service' = no stock/shipping; 'goods' = physical product with stock + shipping
-  const [listingContext, setListingContext] = useState<'service' | 'goods'>('goods');
+  // 'service' = no stock/shipping; 'product' = physical listing with stock + shipping
+  const [listingContext, setListingContext] = useState<'service' | 'product'>('product');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -192,9 +192,9 @@ export default function ProductFormPage() {
 
       if (data) {
         // Restore listing context from the saved product.
-        // Legacy rows may have null listingContext; default them to goods so
-        // physical product stock controls remain visible/editable.
-        setListingContext(data.listingContext === 'service' ? 'service' : 'goods');
+        // Production physical listings use listingContext='product'.
+        // Any non-service legacy value is treated as physical product.
+        setListingContext(data.listingContext === 'service' ? 'service' : 'product');
         const specs = data.specifications || {};
         setFormData({
           title: data.title || '',
@@ -303,8 +303,8 @@ export default function ProductFormPage() {
     if (formData.salePrice && formData.price && parseFloat(formData.salePrice) >= parseFloat(formData.price)) {
       e.salePrice = 'Sale price must be less than the regular price.';
     }
-    // Stock quantity only required for physical goods
-    if (listingContext === 'goods') {
+    // Stock quantity only required for physical products
+    if (listingContext === 'product') {
       if (!formData.stockQuantity || isNaN(parseInt(formData.stockQuantity)) || parseInt(formData.stockQuantity) < 0) {
         e.stockQuantity = 'Please enter a valid stock quantity (0 or more).';
       }
@@ -406,8 +406,8 @@ export default function ProductFormPage() {
             weight,
             dimensions,
             palletInfo,
-            shippingMethodIds: listingContext === 'goods' ? selectedShippingMethodIds : [],
-            dispatchTime: listingContext === 'goods' ? (dispatchTime || null) : null,
+            shippingMethodIds: listingContext === 'product' ? selectedShippingMethodIds : [],
+            dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null,
             lockedFieldsOnly: true,
           }),
         });
@@ -426,8 +426,8 @@ export default function ProductFormPage() {
           body: JSON.stringify({
             id,
             ...productData,
-            shippingMethodIds: listingContext === 'goods' ? selectedShippingMethodIds : [],
-            dispatchTime: listingContext === 'goods' ? (dispatchTime || null) : null,
+            shippingMethodIds: listingContext === 'product' ? selectedShippingMethodIds : [],
+            dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null,
           }),
         });
         if (!res.ok) {
@@ -442,8 +442,8 @@ export default function ProductFormPage() {
           body: JSON.stringify({
             ...productData,
             listingContext,
-            shippingMethodIds: listingContext === 'goods' ? selectedShippingMethodIds : [],
-            dispatchTime: listingContext === 'goods' ? (dispatchTime || null) : null,
+            shippingMethodIds: listingContext === 'product' ? selectedShippingMethodIds : [],
+            dispatchTime: listingContext === 'product' ? (dispatchTime || null) : null,
           }),
         });
         if (!res.ok) {
@@ -720,13 +720,13 @@ export default function ProductFormPage() {
                       <p className="text-xs text-slate-400 mt-0.5">Digital or in-person service — no stock, no shipping required. Reusable listing.</p>
                     </div>
                   </label>
-                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'goods' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'}`}>
+                  <label className={`flex-1 flex items-start gap-3 p-4 border-2 rounded-xl cursor-pointer transition-colors ${listingContext === 'product' ? 'border-primary bg-primary/10' : 'border-white/10 hover:border-white/20'}`}>
                     <input
                       type="radio"
                       name="listingContext"
-                      value="goods"
-                      checked={listingContext === 'goods'}
-                      onChange={() => setListingContext('goods')}
+                      value="product"
+                      checked={listingContext === 'product'}
+                      onChange={() => setListingContext('product')}
                       className="mt-0.5 accent-[#D4AF37]"
                     />
                     <div>
@@ -903,7 +903,7 @@ export default function ProductFormPage() {
             </Section>
 
             {/* ─── SECTION 4: Inventory ─────────────────────────────────── */}
-            {listingContext === 'goods' && (
+            {listingContext === 'product' && (
             <Section title="4. Inventory">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -954,7 +954,7 @@ export default function ProductFormPage() {
                 </div>
               )}
             </Section>
-            )} {/* end listingContext === 'goods' — Inventory section */}
+            )} {/* end listingContext === 'product' — Inventory section */}
 
             {/* ─── SECTION 5: Media ─────────────────────────────────────── */}
             <Section title="5. Product Images">
@@ -970,7 +970,7 @@ export default function ProductFormPage() {
             </Section>
 
             {/* ─── SECTION 6: Dimensions & Shipping ────────────────────── */}
-            {listingContext === 'goods' && (
+            {listingContext === 'product' && (
             <Section title="6. Dimensions &amp; Shipping">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div>
@@ -1076,7 +1076,7 @@ export default function ProductFormPage() {
                 </div>
               )}
             </Section>
-            )} {/* end listingContext === 'goods' — Dimensions & Shipping section */}
+            )} {/* end listingContext === 'product' — Dimensions & Shipping section */}
 
             {/* ─── SECTION 7: Specifications ────────────────────────────── */}
             <Section title="7. Specifications">

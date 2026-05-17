@@ -31,7 +31,7 @@ const productRow = {
   isActive: true,
   isApproved: true,
   stockQuantity: 5,
-  listingContext: 'goods',
+  listingContext: 'product',
   listingStatus: 'active',
 };
 
