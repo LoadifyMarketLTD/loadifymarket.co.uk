@@ -136,24 +136,16 @@ export default function SocialFollowSection() {
             className={
               `social-card ${platform} group ` +
               `relative rounded-xl p-7 text-left ` +
-              `flex flex-col gap-5 ` +
+              `flex flex-col gap-5 bg-background border border-white/[0.05] ` +
+              `shadow-[0_10px_30px_rgba(0,0,0,0.4)] ` +
               `transition-all duration-300 ease-out ` +
               `hover:-translate-y-[6px] ` +
               `hover:shadow-[0_0_25px_rgba(212,175,55,0.15),0_16px_40px_rgba(0,0,0,0.55)]`
             }
-            style={{
-              background: "rgba(10,14,26,1)",
-              border: "1px solid rgba(255,255,255,0.05)",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
-            }}
           >
             {/* Platform icon */}
             <div
-              className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:shadow-[0_0_18px_rgba(212,175,55,0.22)]"
-              style={{
-                background: "linear-gradient(145deg, rgba(17,24,39,0.98), rgba(2,6,23,0.98))",
-                border: "1px solid rgba(255,255,255,0.07)",
-              }}
+              className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 bg-elevated border border-white/[0.07] transition-all duration-300 group-hover:shadow-[0_0_18px_rgba(212,175,55,0.22)]"
             >
               <Icon
                 className="w-7 h-7 text-slate-400 group-hover:text-primary transition-colors duration-300"

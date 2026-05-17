@@ -57,10 +57,9 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
   return (
     <div className="w-full bg-gray-100 rounded-full h-2">
       <div
-        className="h-2 rounded-full transition-all duration-500"
+        className="h-2 rounded-full transition-all duration-500 bg-success"
         style={{
           width: `${Math.round((current / total) * 100)}%`,
-          background: "linear-gradient(90deg, #16A34A, #22C55E)",
         }}
       />
     </div>

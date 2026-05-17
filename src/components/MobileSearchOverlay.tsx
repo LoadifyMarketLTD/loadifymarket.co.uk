@@ -70,11 +70,11 @@ export default function MobileSearchOverlay({ onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label="Search marketplace"
+      className="bg-background/[0.97]"
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        background: 'rgba(7,8,11,0.97)',
         display: 'flex',
         flexDirection: 'column',
         paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',

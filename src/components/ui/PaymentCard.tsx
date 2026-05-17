@@ -13,9 +13,9 @@ const sizeTokens: Record<PaymentSize, { card: string; mc: string }> = {
 };
 
 const bgTokens: Record<PaymentSize, string> = {
-  default: 'bg-[linear-gradient(145deg,rgba(17,24,39,0.98),rgba(2,6,23,0.98))]',
-  hero:    'bg-[linear-gradient(145deg,rgba(17,24,39,0.78),rgba(2,6,23,0.78))] backdrop-blur-[10px]',
-  footer:  'bg-[linear-gradient(145deg,rgba(17,24,39,0.98),rgba(2,6,23,0.98))]',
+  default: 'bg-elevated',
+  hero:    'bg-elevated/80 backdrop-blur-[10px]',
+  footer:  'bg-elevated',
 };
 
 /**

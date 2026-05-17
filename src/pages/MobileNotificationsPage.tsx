@@ -173,6 +173,7 @@ export default function MobileNotificationsPage() {
             <div key={item.id}>
               <button
                 onClick={() => handleTap(item)}
+                className={item.isRead ? 'bg-transparent' : 'bg-primary/[0.04]'}
                 style={{
                   display: 'flex',
                   alignItems: 'flex-start',
@@ -180,7 +181,6 @@ export default function MobileNotificationsPage() {
                   paddingInline: 'var(--mob-side, 16px)',
                   paddingTop: 14,
                   paddingBottom: 14,
-                  background: item.isRead ? 'transparent' : 'rgba(212,175,55,0.04)',
                   border: 'none',
                   cursor: item.link ? 'pointer' : 'default',
                   textAlign: 'left',

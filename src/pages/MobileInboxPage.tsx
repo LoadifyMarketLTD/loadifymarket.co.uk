@@ -263,9 +263,8 @@ export default function MobileInboxPage() {
     <div className="min-h-screen flex flex-col bg-background">
       {/* ── Header ── */}
       <div
-        className="shrink-0 sticky top-0 z-40"
+        className="shrink-0 sticky top-0 z-40 bg-background/[0.97]"
         style={{
-          background: "rgba(10,14,26,0.97)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
           borderBottom: "1px solid rgba(255,255,255,0.07)",
@@ -336,19 +335,9 @@ export default function MobileInboxPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
+                className={`text-[13px] whitespace-nowrap bg-transparent border-none cursor-pointer shrink-0 flex items-center gap-1.5 transition-colors duration-200 ${isActive ? 'text-primary font-bold border-b-2 border-primary' : 'text-foreground/65 font-normal border-b-2 border-transparent'}`}
                 style={{
                   padding: "10px 18px",
-                  fontSize: "13px",
-                  fontWeight: isActive ? 700 : 400,
-                  color: isActive ? "hsl(var(--primary))" : "rgba(255,255,255,0.65)",
-                  whiteSpace: "nowrap",
-                  background: "transparent",
-                  border: "none",
-                  borderBottom: isActive ? "2px solid rgba(212,175,55,1)" : "2px solid transparent",                  cursor: "pointer",
-                  flexShrink: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
                   transition: "color 0.2s, border-color 0.2s",
                 }}
               >

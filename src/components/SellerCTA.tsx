@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 export default function SellerCTA() {
   return (
     <section
-      className="sm:bg-[linear-gradient(135deg,#121A2B,#0A0E1A)] sm:border-y sm:border-primary/40 bg-surface"
+      className="sm:bg-surface sm:border-y sm:border-primary/40 bg-surface"
     >
       {/* ── Mobile: card with margin/radius ───────────────────────── */}
       <div className="sm:hidden" style={{ padding: '24px 16px' }}>

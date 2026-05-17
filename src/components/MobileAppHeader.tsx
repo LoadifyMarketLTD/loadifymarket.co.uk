@@ -187,17 +187,10 @@ export default function MobileAppHeader() {
         <button
           aria-label="Filter"
           onClick={() => navigate('/catalog')}
+          className="bg-primary/10 border border-primary/40 rounded-xl flex items-center justify-center shrink-0 cursor-pointer"
           style={{
             width: 44,
             height: 44,
-            background: 'rgba(28,20,0,1)',
-            border: '1px solid rgba(242,184,75,0.4)',
-            borderRadius: 12,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            cursor: 'pointer',
           }}
         >
           <Filter

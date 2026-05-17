@@ -73,9 +73,8 @@ export default function MobileCategoriesPage() {
     >
       {/* ── Sticky header ── */}
       <div
-        className="shrink-0 flex items-center gap-3 px-4 sticky top-0 z-10"
+        className="shrink-0 flex items-center gap-3 px-4 sticky top-0 z-10 bg-background/[0.97]"
         style={{
-          background: 'rgba(7,8,11,0.97)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderBottom: '1px solid rgba(255,255,255,0.07)',

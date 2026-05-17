@@ -63,49 +63,24 @@ function formatDate(iso: string) {
 // Status display config
 const STATUS_CONFIG: Record<
   string,
-  { label: string; bg: string; text: string }
+  { label: string; className: string }
 > = {
-  awaiting_payment: {
-    label: "Awaiting payment",
-    bg: "rgba(212,175,55,0.15)",
-    text: "hsl(var(--primary))",
-  },
-  paid: { label: "Paid", bg: "rgba(124,58,237,0.15)", text: "hsl(var(--admin))" },
-  packed: { label: "Packed", bg: "rgba(212,175,55,0.15)", text: "hsl(var(--primary))" },
-  shipped: {
-    label: "Shipped",
-    bg: "rgba(59,130,246,0.15)",
-    text: "hsl(var(--secondary))",
-  },
-  delivered: {
-    label: "Delivered",
-    bg: "rgba(16,185,129,0.15)",
-    text: "hsl(var(--accent))",
-  },
-  completed: {
-    label: "Completed",
-    bg: "rgba(16,185,129,0.15)",
-    text: "hsl(var(--accent))",
-  },
-  cancelled: { label: "Cancelled", bg: "rgba(214,69,69,0.15)", text: "hsl(var(--danger))" },
-  refunded: {
-    label: "Refunded",
-    bg: "rgba(255,255,255,0.08)",
-    text: "rgba(255,255,255,0.75)",
-  },
-  invoice_requested: {
-    label: "Invoice requested",
-    bg: "rgba(59,130,246,0.15)",
-    text: "hsl(var(--secondary))",
-  },
+  awaiting_payment: { label: "Awaiting payment", className: "bg-primary/15 text-primary" },
+  paid:             { label: "Paid",              className: "bg-admin/15 text-admin" },
+  packed:           { label: "Packed",            className: "bg-primary/15 text-primary" },
+  shipped:          { label: "Shipped",           className: "bg-secondary/15 text-secondary" },
+  delivered:        { label: "Delivered",         className: "bg-accent/15 text-accent" },
+  completed:        { label: "Completed",         className: "bg-accent/15 text-accent" },
+  cancelled:        { label: "Cancelled",         className: "bg-danger/15 text-danger" },
+  refunded:         { label: "Refunded",          className: "bg-white/[0.08] text-foreground/75" },
+  invoice_requested:{ label: "Invoice requested", className: "bg-secondary/15 text-secondary" },
 };
 
 function statusCfg(status: string) {
   return (
     STATUS_CONFIG[status] ?? {
       label: status.replace(/_/g, " "),
-      bg: "rgba(255,255,255,0.08)",
-      text: "rgba(255,255,255,0.75)",
+      className: "bg-white/[0.08] text-foreground/75",
     }
   );
 }
@@ -131,32 +106,10 @@ function OrderCard({
       tabIndex={0}
       onClick={() => navigate(`/buyer/orders?orderId=${order.id}`)}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") navigate(`/buyer/orders?orderId=${order.id}`); }}
-      style={{
-        display: "flex",
-        alignItems: "flex-start",
-        gap: "12px",
-        background: highlighted ? "rgba(212,175,55,0.06)" : "hsl(var(--card))",
-        border: `1px solid ${highlighted ? "rgba(212,175,55,0.35)" : "rgba(255,255,255,0.07)"}`,
-        borderRadius: "16px",
-        padding: "14px",
-        cursor: "pointer",
-        boxShadow: highlighted ? "0 0 16px rgba(212,175,55,0.12)" : "none",
-      }}
+      className={`flex items-start gap-3 rounded-2xl p-3.5 cursor-pointer border transition-shadow ${highlighted ? 'bg-primary/[0.06] border-primary/35 shadow-[0_0_16px_rgba(212,175,55,0.12)]' : 'bg-card border-white/[0.07]'}`}
     >
       {/* Product thumbnail */}
-      <div
-        style={{
-          width: "80px",
-          height: "80px",
-          borderRadius: "12px",
-          background: "rgba(255,255,255,1)",
-          flexShrink: 0,
-          overflow: "hidden",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+      <div className="w-20 h-20 rounded-xl bg-white shrink-0 overflow-hidden flex items-center justify-center">
         {order.productImage ? (
           <img
             src={order.productImage}
@@ -164,7 +117,7 @@ function OrderCard({
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         ) : (
-          <Package style={{ width: "32px", height: "32px", color: "rgba(156,163,175,1)" }} />
+          <Package className="w-8 h-8 text-muted-foreground" />
         )}
       </div>
 
@@ -176,15 +129,7 @@ function OrderCard({
             #{order.orderNumber}
           </span>
           <span
-            style={{
-              fontSize: "11px",
-              fontWeight: 700,
-              padding: "3px 9px",
-              borderRadius: "20px",
-              background: cfg.bg,
-              color: cfg.text,
-              flexShrink: 0,
-            }}
+            className={`text-[11px] font-bold px-2 py-0.5 rounded-[20px] shrink-0 ${cfg.className}`}
           >
             {cfg.label}
           </span>
@@ -344,9 +289,8 @@ export default function MobileOrdersPage() {
     >
       {/* ── Header ── */}
       <div
-        className="shrink-0 px-4 sticky top-0 z-10"
+        className="shrink-0 px-4 sticky top-0 z-10 bg-background/[0.97]"
         style={{
-          background: "rgba(7,8,11,0.97)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
           borderBottom: "1px solid rgba(255,255,255,0.07)",
@@ -375,19 +319,8 @@ export default function MobileOrdersPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: "10px 14px",
-                  fontSize: "13px",
-                  fontWeight: isActive ? 700 : 400,
-                  color: isActive ? "hsl(var(--primary))" : "rgba(255,255,255,0.65)",
-                  whiteSpace: "nowrap",
-                  background: "transparent",
-                  border: "none",
-                  borderBottom: isActive ? "2px solid hsl(var(--primary))" : "2px solid transparent",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                  transition: "color 0.2s, border-color 0.2s",
-                }}
+                className={`text-[13px] whitespace-nowrap bg-transparent border-none cursor-pointer shrink-0 transition-colors duration-200 ${isActive ? 'text-primary font-bold border-b-2 border-primary' : 'text-foreground/65 font-normal border-b-2 border-transparent'}`}
+                style={{ padding: "10px 14px" }}
               >
                 {tab.label}
               </button>

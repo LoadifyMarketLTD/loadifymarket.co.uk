@@ -86,7 +86,6 @@ function FieldInput({
 }) {
   const baseStyle: React.CSSProperties = {
     width: '100%',
-    background: 'rgba(23,24,30,1)',
     border: `1px solid ${error ? 'hsl(var(--danger))' : 'rgba(255,255,255,0.12)'}`,
     borderRadius: '14px',
     fontSize: '15px',
@@ -96,7 +95,7 @@ function FieldInput({
     resize: 'none',
     boxSizing: 'border-box',
   };
-  const inputClass = 'text-foreground';
+  const inputClass = 'text-foreground bg-surface';
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
       {label && (
@@ -413,7 +412,6 @@ export default function MobileSellWizard() {
           position: 'sticky',
           top: 0,
           zIndex: 10,
-          background: 'rgba(7,8,11,0.97)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderBottom: '1px solid rgba(255,255,255,0.07)',
@@ -426,6 +424,7 @@ export default function MobileSellWizard() {
           alignItems: 'center',
           gap: '12px',
         }}
+        className="bg-background/[0.97]"
       >
         <button
           aria-label="Go back"
@@ -474,30 +473,17 @@ export default function MobileSellWizard() {
                   aspectRatio: '1',
                   borderRadius: '14px',
                   overflow: 'hidden',
-                  background: 'rgba(23,24,30,1)',
-                }}              >
+                }}
+                className="bg-surface"              >
                 <img
                   src={url}
                   alt={`Photo ${idx + 1}`}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
                 <button
+                  className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/70 border-none flex items-center justify-center cursor-pointer"
                   aria-label={`Remove photo ${idx + 1}`}
                   onClick={() => handleRemovePhoto(idx)}
-                  style={{
-                    position: 'absolute',
-                    top: '6px',
-                    right: '6px',
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    background: 'rgba(0,0,0,0.70)',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                  }}
                 >
                   <X className="text-foreground" style={{ width: '14px', height: '14px' }} />
                 </button>
@@ -513,7 +499,6 @@ export default function MobileSellWizard() {
                   aspectRatio: '1',
                   borderRadius: '14px',
                   border: `2px dashed ${fieldErrors.photos ? 'hsl(var(--danger))' : 'rgba(212,175,55,0.35)'}`,
-                  background: fieldErrors.photos ? 'rgba(248,113,113,0.04)' : 'rgba(212,175,55,0.04)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -522,6 +507,7 @@ export default function MobileSellWizard() {
                   cursor: photoUploading ? 'not-allowed' : 'pointer',
                   opacity: photoUploading ? 0.6 : 1,
                 }}
+                className={fieldErrors.photos ? 'bg-danger/[0.04]' : 'bg-primary/[0.04]'}
               >
                 {photoUploading ? (
                   <Loader2
@@ -678,12 +664,11 @@ export default function MobileSellWizard() {
                 <select
                   value={form.condition}
                   onChange={(e) => setForm((p) => ({ ...p, condition: e.target.value }))}
+                  className={`bg-surface ${form.condition ? 'text-foreground' : 'text-foreground/40'}`}
                   style={{
                     width: '100%',
-                    background: 'rgba(23,24,30,1)',
                     border: '1px solid rgba(255,255,255,0.12)',
                     borderRadius: '14px',
-                    color: form.condition ? 'hsl(var(--foreground))' : 'rgba(255,255,255,0.40)',
                     fontSize: '15px',
                     padding: '14px 16px',
                     outline: 'none',
@@ -693,7 +678,7 @@ export default function MobileSellWizard() {
                   }}
                 >
                   {CONDITION_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value} style={{ background: 'rgba(23,24,30,1)', color: 'rgba(255,255,255,1)' }}>
+                    <option key={opt.value} value={opt.value} className="bg-surface text-foreground">
                       {opt.label}
                     </option>
                   ))}
@@ -706,10 +691,10 @@ export default function MobileSellWizard() {
 
       {/* ── Sticky CTA ── */}
       <div
+        className="bg-background/[0.97]"
         style={{
           position: 'sticky',
           bottom: 0,
-          background: 'rgba(7,8,11,0.97)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderTop: '1px solid rgba(255,255,255,0.07)',
@@ -725,26 +710,9 @@ export default function MobileSellWizard() {
         )}
 
         <button
+          className={`text-base font-bold text-black flex items-center justify-center gap-2 w-full py-4 rounded-2xl border-none transition-colors ${busy ? 'bg-primary/40 cursor-not-allowed' : 'bg-primary cursor-pointer hover:bg-primary-hover'}`}
           onClick={handlePublish}
           disabled={busy}
-          style={{
-            width: '100%',
-            padding: '16px',
-            borderRadius: '16px',
-            background: busy
-              ? 'rgba(212,175,55,0.40)'
-              : 'hsl(var(--primary))',
-            border: 'none',
-            fontSize: '16px',
-            fontWeight: 700,
-            
-            cursor: busy ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            transition: 'background 0.2s',
-          }}
         >
           {publishing ? (
             <>
