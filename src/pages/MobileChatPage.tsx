@@ -145,7 +145,7 @@ function OfferBubble({
   };
 
   const statusColour: Record<string, string> = {
-    pending:   "text-white/40",
+    pending:   "text-warning",
     accepted:  "text-success",
     declined:  "text-danger",
     expired:   "text-white/30",
@@ -196,7 +196,7 @@ function OfferBubble({
       {!isSeller && isMine && status === "accepted" && offerRecord?.orderStatus !== "paid" && (
         <button
           onClick={onPayNow}
-          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary text-background text-sm font-bold active:bg-warning transition-colors"
+          className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary hover:bg-primary-hover text-black text-sm font-bold transition-colors"
         >
           <CreditCard className="h-4 w-4" />
           Pay Now
@@ -904,7 +904,7 @@ export default function MobileChatPage() {
                   <div
                     className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
                       isMine
-                        ? "bg-primary text-background rounded-br-sm"
+                        ? "bg-primary text-black rounded-br-sm"
                         : "bg-white/10 text-white rounded-bl-sm"
                     }`}
                   >

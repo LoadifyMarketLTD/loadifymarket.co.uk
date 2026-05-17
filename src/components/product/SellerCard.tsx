@@ -30,7 +30,7 @@ const SellerCard = ({ name, verified, rating, location, totalListings, storeSlug
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-full bg-gradient-hero flex items-center justify-center text-primary-foreground font-display font-bold text-sm">
+        <div className="w-11 h-11 rounded-full bg-primary hover:bg-primary-hover flex items-center justify-center text-primary-foreground font-display font-bold text-sm">
           {name.charAt(0)}
         </div>
         <div>

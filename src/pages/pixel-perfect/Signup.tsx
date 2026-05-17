@@ -516,7 +516,7 @@ const Signup = () => {
                       />
                       <button
                         type="button"
-                        className="px-3 h-11 bg-primary hover:bg-primary-hover text-white text-[11px] font-black uppercase tracking-wide border border-primary-hover transition-colors whitespace-nowrap rounded-r-lg"
+                        className="px-3 h-11 bg-primary hover:bg-primary-hover text-black text-[11px] font-black uppercase tracking-wide border border-primary-hover transition-colors whitespace-nowrap rounded-r-lg"
                       >
                         Find Address
                       </button>

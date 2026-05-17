@@ -138,7 +138,7 @@ const Header = () => {
             />
             <button
               type="submit"
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 sm:h-[34px] px-3 sm:px-5 bg-primary hover:-translate-y-0.5 hover:shadow-[0_0_18px_rgba(212,175,55,0.25)] text-background text-xs sm:text-[13px] font-bold rounded-xl transition-all duration-250"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 sm:h-[34px] px-3 sm:px-5 bg-primary hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-[0_0_18px_rgba(212,175,55,0.25)] text-black text-xs sm:text-[13px] font-bold rounded-xl transition-all duration-250"
               aria-label="Search"
             >
               <span className="hidden sm:inline">Search</span>
@@ -204,7 +204,7 @@ const Header = () => {
               </Button>
               <Button
                 size="sm"
-                className="h-9 bg-primary border border-[rgba(212,175,55,0.35)] text-background font-bold px-5 rounded-xl shadow-[0_6px_16px_rgba(212,175,55,0.25)] hover:-translate-y-0.5 hover:shadow-[0_0_22px_rgba(212,175,55,0.28),0_10px_24px_rgba(0,0,0,0.40)] transition-all duration-250 ml-1"
+                className="h-9 bg-primary hover:bg-primary-hover border border-[rgba(212,175,55,0.35)] text-black font-bold px-5 rounded-xl shadow-[0_6px_16px_rgba(212,175,55,0.25)] hover:-translate-y-0.5 hover:shadow-[0_0_22px_rgba(212,175,55,0.28),0_10px_24px_rgba(0,0,0,0.40)] transition-all duration-250 ml-1"
                 asChild
               >
                 <Link to="/register">Register</Link>

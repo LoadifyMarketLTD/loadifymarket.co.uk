@@ -240,7 +240,7 @@ const SellerDashboard = () => {
 
       {/* Quick Actions — top priority, horizontal row */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
-        <Button size="sm" className="bg-gradient-hero text-primary-foreground h-10 text-sm font-semibold" asChild>
+        <Button size="sm" className="bg-primary hover:bg-primary-hover text-black h-10 text-sm font-semibold" asChild>
           <Link to="/seller/products/new">
             <Package className="mr-1.5 h-4 w-4" /> Add Product
           </Link>

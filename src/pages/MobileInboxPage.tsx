@@ -407,7 +407,7 @@ export default function MobileInboxPage() {
             {!searchQuery && (
               <Link
                 to="/catalog"
-                className="px-5 py-2.5 rounded-full text-sm font-semibold bg-primary text-background"
+                className="px-5 py-2.5 rounded-full text-sm font-semibold bg-primary text-black"
               >
                 Browse listings
               </Link>

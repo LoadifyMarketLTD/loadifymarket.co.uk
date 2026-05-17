@@ -261,7 +261,7 @@ const ProductInfo = ({
           <Link to={`/seller/products/${product.id}/edit`} className="flex-1">
             <Button
               size="lg"
-              className="w-full bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
+              className="w-full bg-primary hover:bg-primary-hover text-black font-semibold text-base hover:opacity-90 transition-opacity"
             >
               <Settings className="mr-2 h-5 w-5" /> Manage This Listing
             </Button>
@@ -286,7 +286,7 @@ const ProductInfo = ({
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               size="lg"
-              className="flex-1 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity"
+              className="flex-1 bg-primary hover:bg-primary-hover text-black font-semibold text-base hover:opacity-90 transition-opacity"
               onClick={handleBuyNow}
             >
               Buy from Seller <ArrowRight className="ml-2 h-5 w-5" />

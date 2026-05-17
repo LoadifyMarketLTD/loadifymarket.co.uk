@@ -240,7 +240,7 @@ const Deals = () => {
                   </Button>
                 </a>
                 <Link to="/signup">
-                  <Button variant="default" size="sm" className="text-xs bg-gradient-hero text-primary-foreground shadow-md">
+                  <Button variant="default" size="sm" className="text-xs bg-primary hover:bg-primary-hover text-black shadow-md">
                     Start Selling <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
                   </Button>
                 </Link>
@@ -421,7 +421,7 @@ const Deals = () => {
               Free to create an account — you only pay when you sell.
             </p>
             <Link to="/signup">
-              <Button className="bg-gradient-hero text-primary-foreground">
+              <Button className="bg-primary hover:bg-primary-hover text-black">
                 Start Selling <ArrowRight className="ml-1.5 h-4 w-4" />
               </Button>
             </Link>

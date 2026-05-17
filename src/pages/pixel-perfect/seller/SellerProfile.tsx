@@ -324,7 +324,7 @@ const SellerProfile = () => {
           <h1 className="font-display text-2xl font-bold text-foreground">Seller Profile</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your public seller profile and business information.</p>
         </div>
-        <Button className="w-full sm:w-auto bg-gradient-hero text-primary-foreground" onClick={handleSave} disabled={saving}>
+        <Button className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-black" onClick={handleSave} disabled={saving}>
           <Save className="mr-2 h-4 w-4" /> {saving ? "Saving…" : "Save Changes"}
         </Button>
       </div>
@@ -333,7 +333,7 @@ const SellerProfile = () => {
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row items-start gap-5">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-hero flex items-center justify-center text-primary-foreground text-2xl font-bold shrink-0">
+            <div className="w-20 h-20 rounded-2xl bg-primary hover:bg-primary-hover flex items-center justify-center text-primary-foreground text-2xl font-bold shrink-0">
               {form.businessName
                 ? form.businessName.slice(0, 2).toUpperCase()
                 : form.contactName
@@ -528,7 +528,7 @@ const SellerProfile = () => {
       </Card>
 
       <div className="flex justify-stretch sm:justify-end">
-        <Button className="w-full sm:w-auto bg-gradient-hero text-primary-foreground" onClick={handleSave} disabled={saving}>
+        <Button className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-black" onClick={handleSave} disabled={saving}>
           <Save className="mr-2 h-4 w-4" /> {saving ? "Saving…" : "Save Changes"}
         </Button>
       </div>

@@ -131,7 +131,7 @@ function StepAccountType({
       <Button
         onClick={onNext}
         disabled={!value || saving}
-        className="w-full bg-gradient-to-r from-success to-success text-white"
+        className="w-full bg-success hover:bg-success/90 text-white"
       >
         {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
         Continue <ChevronRight className="h-4 w-4 ml-1" />
@@ -173,7 +173,7 @@ function StepProfile({
       <Button
         onClick={onNext}
         disabled={!done}
-        className="w-full bg-gradient-to-r from-success to-success text-white disabled:opacity-40"
+        className="w-full bg-success hover:bg-success/90 text-white disabled:opacity-40"
       >
         Continue <ChevronRight className="h-4 w-4 ml-1" />
       </Button>
@@ -232,7 +232,7 @@ function StepStripe({
           <Button
             onClick={onConnect}
             disabled={connecting}
-            className="w-full bg-gradient-to-r from-success to-success text-white"
+            className="w-full bg-success hover:bg-success/90 text-white"
           >
             {connecting ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -246,7 +246,7 @@ function StepStripe({
           onClick={onNext}
           disabled={!fullyActive}
           variant={fullyActive ? "default" : "outline"}
-          className={`w-full ${fullyActive ? "bg-gradient-to-r from-success to-success text-white" : ""}`}
+          className={`w-full ${fullyActive ? "bg-success hover:bg-success/90 text-white" : ""}`}
         >
           Continue <ChevronRight className="h-4 w-4 ml-1" />
         </Button>
@@ -292,7 +292,7 @@ function StepStore({
       <Button
         onClick={onNext}
         disabled={!storeCreated}
-        className="w-full bg-gradient-to-r from-success to-success text-white disabled:opacity-40"
+        className="w-full bg-success hover:bg-success/90 text-white disabled:opacity-40"
       >
         Continue <ChevronRight className="h-4 w-4 ml-1" />
       </Button>
@@ -333,7 +333,7 @@ function StepServiceListing({
       <Button
         onClick={onFinish}
         disabled={!done || finishing}
-        className="w-full bg-gradient-to-r from-success to-success text-white disabled:opacity-40"
+        className="w-full bg-success hover:bg-success/90 text-white disabled:opacity-40"
       >
         {finishing ? (
           <Loader2 className="h-4 w-4 animate-spin mr-2" />

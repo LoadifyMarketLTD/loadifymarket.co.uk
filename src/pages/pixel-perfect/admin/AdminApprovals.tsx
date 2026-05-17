@@ -46,7 +46,7 @@ interface SellerDetail extends Seller {
 
 const statusColor: Record<string, string> = {
   active:    "border-emerald-500/30 text-success bg-success/10",
-  submitted: "border-primary/40 text-primary bg-primary/10",
+  submitted: "border-warning/40 text-warning bg-warning/10",
   draft:     "border-slate-200 text-slate-400",
   suspended: "border-danger/30 text-danger bg-danger/100/10",
 };
@@ -60,8 +60,8 @@ const statusLabel: Record<string, string> = {
 
 const stripeStatusColor: Record<string, string> = {
   active:     "border-emerald-500/30 text-success bg-success/10",
-  restricted: "border-primary/40 text-primary bg-primary/10",
-  pending:    "border-primary/40 text-primary bg-primary/10",
+  restricted: "border-warning/40 text-warning bg-warning/10",
+  pending:    "border-warning/40 text-warning bg-warning/10",
 };
 
 const stripeStatusLabel: Record<string, string> = {

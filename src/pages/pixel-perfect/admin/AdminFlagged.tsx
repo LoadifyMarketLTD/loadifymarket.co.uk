@@ -28,7 +28,7 @@ interface FlaggedItem {
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  pending: { label: "Pending", className: "border-primary/40 text-primary bg-primary/10" },
+  pending: { label: "Pending", className: "border-warning/40 text-warning bg-warning/10" },
   reviewed: { label: "Reviewed", className: "border-blue-500/30 text-blue-400 bg-blue-500/10" },
   resolved: { label: "Resolved", className: "border-emerald-500/30 text-success bg-success/10" },
   dismissed: { label: "Dismissed", className: "border-slate-200 text-slate-400" },

@@ -265,7 +265,7 @@ const SellerSetupPage = () => {
               <CheckCircle2 className="h-10 w-10 text-emerald-600 mx-auto" />
               <p className="font-semibold text-success">Your seller account is active!</p>
               <p className="text-sm text-emerald-600">Redirecting you to your seller dashboard…</p>
-              <Button asChild className="bg-gradient-hero text-primary-foreground">
+              <Button asChild className="bg-primary hover:bg-primary-hover text-black">
                 <Link to="/seller">
                   Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
@@ -354,7 +354,7 @@ const SellerSetupPage = () => {
                     size="sm"
                     onClick={handleConnectStripe}
                     disabled={stripeLoading}
-                    className="bg-gradient-hero text-primary-foreground"
+                    className="bg-primary hover:bg-primary-hover text-black"
                   >
                     {stripeLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

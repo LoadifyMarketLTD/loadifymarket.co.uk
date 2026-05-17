@@ -20,7 +20,7 @@ import type { RFQRequest } from "@/types";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  pending: { label: "New", className: "bg-blue-500/10 text-blue-700" },
+  pending: { label: "New", className: "bg-warning/10 text-warning" },
   replied: { label: "Replied", className: "bg-success/10 text-success" },
 };
 
@@ -224,7 +224,7 @@ const SellerRFQ = () => {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "New Requests", count: pending.length, icon: MessageSquare, color: "text-blue-600 bg-blue-500/10" },
+          { label: "New Requests", count: pending.length, icon: MessageSquare, color: "text-warning bg-warning/10" },
           { label: "You Replied", count: replied.length, icon: CheckCircle2, color: "text-emerald-600 bg-success/10" },
           { label: "Total", count: filtered.length, icon: FileText, color: "text-muted-foreground bg-muted" },
           { label: "This Month", count: filtered.filter((q) => new Date(q.created_at).getMonth() === new Date().getMonth()).length, icon: Clock, color: "text-primary bg-primary/10" },

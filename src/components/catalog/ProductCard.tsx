@@ -152,7 +152,7 @@ const ProductCard = ({ product, linkState }: { product: Product; linkState?: Rec
           </Link>
         ) : (
           <Link to={`/product/${product.id}`} state={linkState ?? undefined}>
-            <Button className="w-full bg-primary text-background font-bold hover:shadow-[0_0_18px_rgba(212,175,55,0.28)] hover:opacity-90 transition-all duration-250 text-sm" size="sm">
+            <Button className="w-full bg-primary hover:bg-primary-hover text-black font-bold hover:shadow-[0_0_18px_rgba(212,175,55,0.28)] hover:opacity-90 transition-all duration-250 text-sm" size="sm">
               View Details
             </Button>
           </Link>

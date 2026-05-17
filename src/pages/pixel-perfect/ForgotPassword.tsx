@@ -96,7 +96,7 @@ const ForgotPassword = () => {
                     {error && (
                       <p className="text-sm text-danger text-center">{error}</p>
                     )}
-                    <Button type="submit" disabled={loading} className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
+                    <Button type="submit" disabled={loading} className="w-full h-11 bg-primary hover:bg-primary-hover text-black font-semibold">
                       {loading ? "Sending…" : "Send Reset Link"}
                     </Button>
                   </form>

@@ -261,7 +261,7 @@ const SellerProducts = () => {
             {loading ? "Loading…" : `${products.length} products listed`}
           </p>
         </div>
-        <Button size="sm" className="bg-gradient-hero text-primary-foreground" asChild>
+        <Button size="sm" className="bg-primary hover:bg-primary-hover text-black" asChild>
           <Link to={isMobile ? '/sell' : '/seller/products/new'}>
             <Plus className="mr-2 h-4 w-4" /> Add Product
           </Link>
@@ -286,7 +286,7 @@ const SellerProducts = () => {
               onClick={() => setStatusFilter(s)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                 statusFilter === s
-                  ? "bg-primary text-primary-foreground border-primary"
+                  ? "bg-primary text-black border-primary"
                   : "bg-background text-muted-foreground border-border hover:border-primary/40"
               }`}
             >
@@ -569,7 +569,7 @@ const SellerProducts = () => {
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setSoldTarget(null)} disabled={soldLoading}>Cancel</Button>
-            <Button className="bg-primary hover:bg-primary text-white" onClick={handleMarkSoldConfirm} disabled={soldLoading}>
+            <Button className="bg-primary hover:bg-primary-hover text-black" onClick={handleMarkSoldConfirm} disabled={soldLoading}>
               {soldLoading ? "Updating…" : "Mark as Sold"}
             </Button>
           </DialogFooter>

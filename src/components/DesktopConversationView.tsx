@@ -779,7 +779,7 @@ export default function DesktopConversationView() {
             <MessageSquare className="h-5 w-5 text-primary" />
             Messages
             {totalUnread > 0 && (
-              <span className="ml-auto text-xs bg-primary text-primary-foreground rounded-full px-2 py-0.5 font-medium">
+              <span className="ml-auto text-xs bg-primary text-black rounded-full px-2 py-0.5 font-medium">
                 {totalUnread}
               </span>
             )}
@@ -838,7 +838,7 @@ export default function DesktopConversationView() {
                     )}
                   </div>
                   {conv.unreadCount > 0 && (
-                    <span className="shrink-0 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-medium flex items-center justify-center">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-primary text-black text-[10px] font-medium flex items-center justify-center">
                       {conv.unreadCount}
                     </span>
                   )}
@@ -947,7 +947,7 @@ export default function DesktopConversationView() {
                       <div
                         className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                           isMine
-                            ? "bg-primary text-primary-foreground rounded-br-sm"
+                            ? "bg-primary text-black rounded-br-sm"
                             : "bg-muted text-foreground rounded-bl-sm"
                         }`}
                       >

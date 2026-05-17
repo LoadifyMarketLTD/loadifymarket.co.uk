@@ -148,7 +148,7 @@ export default function MakeOfferSheet({
             Cancel
           </Button>
           <Button
-            className="flex-1 bg-primary hover:bg-warning text-background font-semibold"
+            className="flex-1 bg-primary hover:bg-primary-hover text-black font-semibold"
             onClick={() => void handleSubmit()}
             disabled={sending || !pounds}
           >

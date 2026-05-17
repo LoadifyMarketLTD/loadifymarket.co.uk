@@ -119,7 +119,7 @@ function CookieConsentBanner() {
               <Button
                 size="sm"
                 onClick={handleAcceptAll}
-                className="flex-1 sm:flex-none bg-primary text-primary-foreground text-sm font-semibold"
+                className="flex-1 sm:flex-none bg-primary hover:bg-primary-hover text-black text-sm font-semibold"
               >
                 Accept All
               </Button>

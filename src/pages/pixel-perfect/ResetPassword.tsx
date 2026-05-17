@@ -171,7 +171,7 @@ const ResetPassword = () => {
                       <p className="text-sm text-danger">{error}</p>
                     )}
 
-                    <Button type="submit" disabled={loading || !hasSession} className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold">
+                    <Button type="submit" disabled={loading || !hasSession} className="w-full h-11 bg-primary hover:bg-primary-hover text-black font-semibold">
                       {loading ? "Resetting…" : "Reset Password"}
                     </Button>
                   </form>
@@ -188,7 +188,7 @@ const ResetPassword = () => {
                     Your password has been successfully reset. You can now sign in with your new password.
                   </p>
                   <Link to="/login">
-                    <Button className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold mt-2">
+                    <Button className="w-full h-11 bg-primary hover:bg-primary-hover text-black font-semibold mt-2">
                       Sign In
                     </Button>
                   </Link>

@@ -57,7 +57,7 @@ const Cart = () => {
                 Looks like you haven't added any items yet. Browse our catalog to find great deals.
               </p>
               <Link to="/catalog">
-                <Button size="lg" className="bg-gradient-hero text-primary-foreground font-semibold">
+                <Button size="lg" className="bg-primary hover:bg-primary-hover text-black font-semibold">
                   Browse Catalog <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -241,7 +241,7 @@ const Cart = () => {
 
                 {isMultiSellerCart ? (
                   <Button
-                    className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base opacity-50 cursor-not-allowed"
+                    className="w-full h-12 bg-primary hover:bg-primary-hover text-black font-semibold text-base opacity-50 cursor-not-allowed"
                     disabled
                     aria-disabled="true"
                   >
@@ -249,7 +249,7 @@ const Cart = () => {
                   </Button>
                 ) : (
                   <Link to="/checkout">
-                    <Button className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity">
+                    <Button className="w-full h-12 bg-primary hover:bg-primary-hover text-black font-semibold text-base hover:opacity-90 transition-opacity">
                       Proceed to Checkout <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                   </Link>
@@ -283,7 +283,7 @@ const Cart = () => {
       >
         {isMultiSellerCart ? (
           <Button
-            className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base opacity-50 cursor-not-allowed"
+            className="w-full h-12 bg-primary hover:bg-primary-hover text-black font-semibold text-base opacity-50 cursor-not-allowed"
             disabled
             aria-disabled="true"
           >
@@ -291,7 +291,7 @@ const Cart = () => {
           </Button>
         ) : (
           <Link to="/checkout">
-            <Button className="w-full h-12 bg-gradient-accent text-accent-foreground font-semibold text-base hover:opacity-90 transition-opacity">
+            <Button className="w-full h-12 bg-primary hover:bg-primary-hover text-black font-semibold text-base hover:opacity-90 transition-opacity">
               Checkout · £{total.toLocaleString()} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>

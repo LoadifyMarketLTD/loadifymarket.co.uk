@@ -414,7 +414,7 @@ const CategoryPage = () => {
                     availableCategories={[]}
                   />
                   <div className="mt-6 pb-2">
-                    <Button className="w-full h-11 bg-gradient-hero text-primary-foreground font-semibold" onClick={() => setFiltersVisible(false)}>
+                    <Button className="w-full h-11 bg-primary hover:bg-primary-hover text-black font-semibold" onClick={() => setFiltersVisible(false)}>
                       Apply Filters
                     </Button>
                   </div>

@@ -86,7 +86,7 @@ export default function SellerGuidelinesPage() {
           <div className="flex flex-wrap gap-3 justify-center mt-6">
             <Link
               to="/register?type=seller"
-              className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-background font-semibold px-6 py-3 rounded transition-colors"
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-6 py-3 rounded transition-colors"
             >
               <Store className="w-4 h-4" />
               Start Selling
@@ -170,7 +170,7 @@ export default function SellerGuidelinesPage() {
           <div className="flex flex-wrap gap-3 justify-center">
             <Link
               to="/register?type=seller"
-              className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-background font-semibold px-6 py-3 rounded transition-colors"
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-6 py-3 rounded transition-colors"
             >
               <Store className="w-4 h-4" />
               Create Seller Account

@@ -108,7 +108,7 @@ export default function TrackOrderPage() {
         return <Truck className="w-6 h-6 text-blue-600" aria-hidden="true" />;
       case 'pending':
       case 'processing':
-        return <Clock className="w-6 h-6 text-primary" aria-hidden="true" />;
+        return <Clock className="w-6 h-6 text-warning" aria-hidden="true" />;
       default:
         return <AlertCircle className="w-6 h-6 text-gray-600" aria-hidden="true" />;
     }
@@ -244,7 +244,7 @@ export default function TrackOrderPage() {
             
             {trackingData.state === 'being_prepared' ? (
               <div className="flex items-center gap-3 p-4 bg-primary-soft border border-primary/40 rounded-lg">
-                <Package className="w-8 h-8 text-primary" aria-hidden="true" />
+                <Package className="w-8 h-8 text-warning" aria-hidden="true" />
                 <div>
                   <p className="font-semibold text-primary">Your order is being prepared</p>
                   <p className="text-sm text-primary">

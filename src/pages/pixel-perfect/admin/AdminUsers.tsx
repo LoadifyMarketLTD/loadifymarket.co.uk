@@ -60,13 +60,13 @@ const roleConfig: Record<string, { label: string; className: string }> = {
 
 const stripeStatusConfig: Record<string, { label: string; className: string }> = {
   active:     { label: "Active",      className: "border-emerald-500/30 text-success bg-success/10" },
-  pending:    { label: "Pending",     className: "border-primary/40 text-primary bg-primary/10" },
+  pending:    { label: "Pending",     className: "border-warning/40 text-warning bg-warning/10" },
   restricted: { label: "Restricted",  className: "border-danger/30 text-danger bg-danger/100/10" },
 };
 
 const sellerStatusConfig: Record<string, { label: string; className: string }> = {
   active:    { label: "Active",      className: "border-emerald-500/30 text-success bg-success/10" },
-  submitted: { label: "Submitted",   className: "border-primary/40 text-primary bg-primary/10" },
+  submitted: { label: "Submitted",   className: "border-warning/40 text-warning bg-warning/10" },
   draft:     { label: "Draft",       className: "border-slate-500/30 text-slate-400 bg-slate-500/10" },
   suspended: { label: "Suspended",   className: "border-danger/30 text-danger bg-danger/100/10" },
 };

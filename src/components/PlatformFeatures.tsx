@@ -100,7 +100,7 @@ const PlatformFeatures = () => {
         {/* Two-column comparison */}
         <div className="grid lg:grid-cols-2 gap-5">
           {/* For Buyers */}
-          <div className="rounded-3xl p-7 flex flex-col gap-5 bg-surface" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
+          <div className="rounded-3xl p-7 flex flex-col gap-5 bg-elevated" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-admin/20"
@@ -131,7 +131,7 @@ const PlatformFeatures = () => {
 
             <div className="mt-auto pt-1">
               <Link to="/catalog">
-                <Button className="w-full h-11 bg-gradient-to-r from-primary to-warning text-black font-semibold rounded-full hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] transition-all duration-300">
+                <Button className="w-full h-11 bg-primary hover:bg-primary-hover text-black font-semibold rounded-full hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] transition-all duration-300">
                   Browse Marketplace <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -139,7 +139,7 @@ const PlatformFeatures = () => {
           </div>
 
           {/* For Sellers */}
-          <div className="rounded-3xl p-7 flex flex-col gap-5 bg-surface" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
+          <div className="rounded-3xl p-7 flex flex-col gap-5 bg-elevated" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-primary/20"
@@ -170,7 +170,7 @@ const PlatformFeatures = () => {
 
             <div className="mt-auto pt-1">
               <Link to="/signup">
-                <Button className="w-full h-11 bg-gradient-to-r from-primary to-warning text-black font-semibold rounded-full hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] transition-all duration-300">
+                <Button className="w-full h-11 bg-primary hover:bg-primary-hover text-black font-semibold rounded-full hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(212,175,55,0.3)] transition-all duration-300">
                   Start Selling Today <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -179,7 +179,7 @@ const PlatformFeatures = () => {
         </div>
 
         {/* Trust stats bar */}
-        <div className="mt-5 rounded-2xl py-4 px-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center bg-surface" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
+        <div className="mt-5 rounded-2xl py-4 px-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center bg-elevated" style={{ border: "1px solid rgba(255,255,255,0.05)" }}>
           {[
             { value: "UK", label: "Marketplace" },
             { value: "Early", label: "Seller Launch" },

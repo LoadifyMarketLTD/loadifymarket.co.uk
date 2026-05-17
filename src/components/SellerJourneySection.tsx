@@ -78,7 +78,7 @@ const SellerJourneySection = () => (
         {STEPS.map((step) => (
           <div
             key={step.id}
-            className="flex items-center gap-4 rounded-2xl px-5 py-5 border border-white/5 transition-all duration-300 hover:border-white/20 hover:shadow-[0_20px_60px_rgba(212,175,55,0.1)] bg-surface"
+            className="flex items-center gap-4 rounded-2xl px-5 py-5 border border-white/5 transition-all duration-300 hover:border-white/20 hover:shadow-[0_20px_60px_rgba(212,175,55,0.1)] bg-elevated"
           >
             {/* Icon badge */}
             <div
@@ -98,7 +98,7 @@ const SellerJourneySection = () => (
       {/* Prominent centered CTA */}
       <div className="flex justify-center">
         <Link to="/signup?type=seller">
-          <button className="inline-flex items-center gap-2 px-10 py-3.5 bg-gradient-to-r from-primary to-warning text-black font-bold text-sm rounded-full shadow-lg shadow-yellow-500/30 transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(212,175,55,0.4)]">
+          <button className="inline-flex items-center gap-2 px-10 py-3.5 bg-primary hover:bg-primary-hover text-black font-bold text-sm rounded-full shadow-lg shadow-yellow-500/30 transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_30px_rgba(212,175,55,0.4)]">
             Start Selling Today <ArrowRight className="h-4 w-4" />
           </button>
         </Link>

@@ -40,7 +40,7 @@ const HeroSection = () => (
         <div className="flex flex-col text-center sm:text-left items-center sm:items-start max-w-[500px]">
 
           {/* Promo badge */}
-          <div className="inline-flex items-center bg-primary text-background text-sm font-bold rounded-full px-4 py-1.5 tracking-wide uppercase mb-5">
+          <div className="inline-flex items-center bg-primary text-black text-sm font-bold rounded-full px-4 py-1.5 tracking-wide uppercase mb-5">
             0% Commission Until 31 December 2026
           </div>
 
@@ -60,7 +60,7 @@ const HeroSection = () => (
             <Link
               to="/register?type=seller"
               data-magnetic
-              className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-background font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
+              className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-black font-semibold px-7 py-3.5 rounded-lg text-center transition-colors text-sm"
             >
               Start Selling Today
             </Link>

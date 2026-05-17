@@ -154,7 +154,7 @@ const FeaturedProducts = () => {
             </p>
             <Link
               to="/register?type=seller"
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-black text-xs font-bold uppercase tracking-wide hover:bg-warning transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-black text-xs font-bold uppercase tracking-wide hover:bg-primary-hover transition-colors"
             >
               Register as Supplier <ArrowRight className="h-3.5 w-3.5" />
             </Link>
