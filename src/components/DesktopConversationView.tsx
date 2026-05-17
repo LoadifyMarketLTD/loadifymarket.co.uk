@@ -405,6 +405,9 @@ export default function DesktopConversationView() {
   const [offersFeatureUnavailable, setOffersFeatureUnavailable] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  // Track which route conversation ID has already been auto-selected so that
+  // user-initiated conversation clicks are not silently overridden by the effect.
+  const lastAutoSelectedRouteRef = useRef<string | null>(null);
   const selectedConv = conversations.find((c) => c.id === selectedId) ?? null;
 
   const loadConversations = useCallback(async () => {
@@ -497,12 +500,76 @@ export default function DesktopConversationView() {
     void loadConversations();
   }, [loadConversations]);
 
+  // ── Fallback: fetch a single conversation by ID when it is not in the list ──
+  // This covers the edge case where a notification deep-link targets a conversation
+  // that is not yet visible in the paginated list (e.g., first message ever sent).
   useEffect(() => {
-    if (routeConversationId && conversations.some((c) => c.id === routeConversationId)) {
+    if (!routeConversationId || !user?.id) return;
+    if (conversations.some((c) => c.id === routeConversationId)) return;
+    if (loadingConvs) return;
+
+    const fetchSingle = async () => {
+      try {
+        const { data } = await supabase
+          .from("conversations")
+          .select("id, subject, lastMessageAt, isArchived, user1Id, user2Id, productId")
+          .eq("id", routeConversationId)
+          .maybeSingle<ConversationRow>();
+
+        if (!data) return;
+
+        const otherId = data.user1Id === user.id ? data.user2Id : data.user1Id;
+        const { data: users } = await supabase
+          .from("user_display_names")
+          .select("id, firstName, lastName")
+          .eq("id", otherId)
+          .limit(1);
+        const other: ConversationParticipant = (users ?? [])[0] ?? { id: otherId, firstName: null, lastName: null };
+
+        let productImage: string | null = null;
+        if (data.productId) {
+          const { data: prod } = await supabase
+            .from("products")
+            .select("images")
+            .eq("id", data.productId)
+            .maybeSingle<{ images?: string[] | null }>();
+          productImage = (prod?.images ?? [])[0] ?? null;
+        }
+
+        const conv: Conversation = {
+          ...data,
+          other,
+          unreadCount: 0,
+          lastMessagePreview: null,
+          productImage,
+        };
+        setConversations((prev) => {
+          if (prev.some((c) => c.id === conv.id)) return prev;
+          return [conv, ...prev];
+        });
+      } catch {
+        // Non-fatal — the conversation list without this entry is still usable.
+      }
+    };
+
+    void fetchSingle();
+  }, [routeConversationId, user?.id, conversations, loadingConvs]);
+
+  useEffect(() => {
+    // Auto-select the conversation specified in the URL — but only once per
+    // unique conversationId so that subsequent user-initiated clicks are NOT
+    // overridden by this effect re-firing (e.g. when Realtime refreshes the list).
+    if (
+      routeConversationId &&
+      lastAutoSelectedRouteRef.current !== routeConversationId &&
+      conversations.some((c) => c.id === routeConversationId)
+    ) {
       setSelectedId(routeConversationId);
+      lastAutoSelectedRouteRef.current = routeConversationId;
       return;
     }
-    if (!selectedId && conversations.length > 0) {
+    // Default: when there is no route-specified conversation, pick the first one.
+    if (!selectedId && !routeConversationId && conversations.length > 0) {
       setSelectedId(conversations[0].id);
     }
   }, [routeConversationId, conversations, selectedId]);
@@ -1120,6 +1187,12 @@ export default function DesktopConversationView() {
               </Button>
             </div>
           </div>
+        </div>
+      ) : selectedId && !selectedConv ? (
+        /* selectedId is set (deep-link from notification) but the conversation
+           is not in the list yet — fallback single-fetch is in progress. */
+        <div className="hidden lg:flex flex-1 items-center justify-center">
+          <div className="h-8 w-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
         </div>
       ) : (
         <div className="hidden lg:flex flex-1 items-center justify-center text-center">

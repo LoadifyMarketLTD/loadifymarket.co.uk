@@ -35,6 +35,7 @@ export default function MobileNotificationsPage() {
 
   const [items, setItems] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openingNotificationId, setOpeningNotificationId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -97,9 +98,15 @@ export default function MobileNotificationsPage() {
     setItems((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
   };
 
-  const handleTap = (item: AppNotification) => {
-    if (!item.isRead) markRead(item.id);
-    if (item.link) navigate(item.link);
+  const handleTap = async (item: AppNotification) => {
+    if (openingNotificationId === item.id) return;
+    setOpeningNotificationId(item.id);
+    try {
+      if (!item.isRead) await markRead(item.id);
+      if (item.link) navigate(item.link);
+    } finally {
+      setOpeningNotificationId((prev) => (prev === item.id ? null : prev));
+    }
   };
 
   return (
@@ -171,21 +178,25 @@ export default function MobileNotificationsPage() {
         >
           {items.map((item, i) => (
             <div key={item.id}>
-              <button
-                onClick={() => handleTap(item)}
-                className={item.isRead ? 'bg-transparent' : 'bg-primary/[0.04]'}
-                style={{
-                  display: 'flex',
+                <button
+                  onClick={() => {
+                    void handleTap(item);
+                  }}
+                  disabled={openingNotificationId === item.id}
+                  className={item.isRead ? 'bg-transparent' : 'bg-primary/[0.04]'}
+                  style={{
+                    display: 'flex',
                   alignItems: 'flex-start',
                   width: '100%',
                   paddingInline: 'var(--mob-side, 16px)',
                   paddingTop: 14,
                   paddingBottom: 14,
                   border: 'none',
-                  cursor: item.link ? 'pointer' : 'default',
-                  textAlign: 'left',
-                  gap: 10,
-                }}
+                    cursor: openingNotificationId === item.id ? 'wait' : (item.link ? 'pointer' : 'default'),
+                    opacity: openingNotificationId === item.id ? 0.85 : 1,
+                    textAlign: 'left',
+                    gap: 10,
+                  }}
               >
                 {/* Unread dot */}
                 <div

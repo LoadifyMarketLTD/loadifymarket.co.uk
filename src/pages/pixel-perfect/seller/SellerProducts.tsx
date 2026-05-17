@@ -65,6 +65,7 @@ interface Product {
   views: number;
   shareCount?: number;
   images?: string[];
+  listingContext?: string | null;
 }
 
 const statusConfig: Record<string, { label: string; className: string }> = {
@@ -78,8 +79,11 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 function deriveStatus(p: Product): string {
   if (!p.isActive) return "draft";
   if (!p.isApproved) return "pending_review";
-  if (p.stockQuantity === 0) return "out_of_stock";
-  if (p.stockQuantity <= 5) return "low_stock";
+  // Service listings are reusable — skip stock checks entirely.
+  if (p.listingContext === "service") return "active";
+  const qty = p.stockQuantity ?? 0;
+  if (qty === 0) return "out_of_stock";
+  if (qty <= 5) return "low_stock";
   return "active";
 }
 
@@ -120,7 +124,7 @@ const SellerProducts = () => {
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views, shareCount, images")
+          .select("id, title, categoryId, price, stockQuantity, stockStatus, isActive, isApproved, views, shareCount, images, listingContext")
           .eq("sellerId", user.id)
           .order("createdAt", { ascending: false });
         if (error) throw error;
