@@ -12,7 +12,12 @@ import { toast } from '../hooks/use-toast';
 import { copyToClipboard } from '../lib/clipboard';
 import { trackPublishListing, trackStartListing, trackShareProduct, trackCopyLink } from '../lib/analytics';
 import { authorizedFetch } from '../lib/authorizedFetch';
-import { deriveSellerListingLocks, type SellerListingLock } from '../lib/listingLocks';
+import {
+  deriveSellerListingLocks,
+  formatSellerListingLockReason,
+  SELLER_LISTING_LOCK_STATUSES,
+  type SellerListingLock,
+} from '../lib/listingLocks';
 
 // Listing types that require bulk/pallet-specific fields
 const BULK_PRODUCT_TYPES: ProductType[] = ['pallet', 'lot', 'wholesale'];
@@ -109,7 +114,7 @@ export default function ProductFormPage() {
   const [publishedProductId, setPublishedProductId] = useState<string | null>(null);
   const [selectedShippingMethodIds, setSelectedShippingMethodIds] = useState<string[]>([]);
   const [dispatchTime, setDispatchTime] = useState('');
-  // True when the product has active or completed orders — critical fields are locked for sellers
+  // True when the product has active reservation/paid-order locks — critical fields are locked for sellers
   const [hasActiveOrders, setHasActiveOrders] = useState(false);
   const [listingLocks, setListingLocks] = useState<SellerListingLock[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -153,6 +158,17 @@ export default function ProductFormPage() {
     collectionAvailable: false,
     deliveryAvailable: true,
   });
+
+  const extractUpdateError = async (res: Response) => {
+    const payload = await res.json().catch(() => ({})) as { error?: string; code?: string; locks?: SellerListingLock[] };
+
+    if (payload.code === 'LISTING_LOCKED' && Array.isArray(payload.locks)) {
+      setListingLocks(payload.locks);
+      setHasActiveOrders(payload.locks.length > 0);
+    }
+
+    return payload;
+  };
 
   const fetchProduct = useCallback(async () => {
     if (!id) return;
@@ -241,7 +257,7 @@ export default function ProductFormPage() {
             .from('orders')
             .select('id, orderNumber, status, createdAt')
             .eq('productId', id)
-            .in('status', ['awaiting_payment', 'paid', 'packed', 'shipped', 'delivered', 'completed']);
+            .in('status', [...SELLER_LISTING_LOCK_STATUSES]);
 
           const derivedLocks = deriveSellerListingLocks({
             orders: orderLocks ?? [],
@@ -396,14 +412,12 @@ export default function ProductFormPage() {
           }),
         });
         if (!res.ok) {
-          const payload = await res.json().catch(() => ({}));
+          const payload = await extractUpdateError(res);
           throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
         }
-        const blockingOrders = listingLocks.map((lock) => lock.orderLabel).join(', ');
+        const lockReason = formatSellerListingLockReason(listingLocks);
         setSuccessMessage(
-          blockingOrders
-            ? `Product updated. Critical fields were not changed because this listing is locked by ${blockingOrders}.`
-            : 'Product updated. Critical fields were not changed because this listing has active order locks.',
+          `Only unlocked fields were saved. Stock quantity and other locked fields could not be changed because this listing is locked by ${lockReason}.`,
         );
       } else if (id) {
         // Full update via update-product
@@ -417,7 +431,7 @@ export default function ProductFormPage() {
           }),
         });
         if (!res.ok) {
-          const payload = await res.json().catch(() => ({}));
+          const payload = await extractUpdateError(res);
           throw new Error((payload as { error?: string }).error ?? `Server returned ${res.status}`);
         }
         setSuccessMessage(publishMode ? 'Product updated and published.' : 'Draft saved successfully.');
@@ -665,7 +679,7 @@ export default function ProductFormPage() {
                <div>
                  <p className="text-primary font-semibold text-sm">This listing is locked by order activity</p>
                  <p className="text-primary text-xs mt-0.5">
-                   Title, price, stock quantity, condition, and listing type cannot be changed while a blocking order or reservation exists.
+                   Title, price, stock quantity, condition, and listing type cannot be changed while an active reservation or paid order exists.
                    You can still edit the description, images, specifications, and shipping details.
                  </p>
                  <ul className="mt-3 space-y-2 text-xs text-primary">

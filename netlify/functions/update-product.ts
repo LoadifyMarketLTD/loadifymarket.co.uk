@@ -281,6 +281,7 @@ export const handler: Handler = async (event) => {
       return !(isPhysicalContext(nextValue) && isPhysicalContext(currentValue));
     }
 
+
     return nextValue !== currentValue;
   });
 

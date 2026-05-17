@@ -5,7 +5,7 @@ function makeEvent(body: unknown, method = 'POST'): HandlerEvent {
   return {
     httpMethod: method,
     body: JSON.stringify(body),
-    headers: { authorization: 'Bearer test-token' },
+    headers: { authorization: 'Bearer valid-token' },
     multiValueHeaders: {},
     isBase64Encoded: false,
     path: '/.netlify/functions/update-product',
@@ -140,7 +140,7 @@ describe('update-product', () => {
 
   it('persists stock when a goods listing changes from 0 to 10', async () => {
     const { productUpdates } = mockSupabase();
-    const { handler } = await import('/home/runner/work/loadifymarket.co.uk/loadifymarket.co.uk/netlify/functions/update-product');
+    const { handler } = await import('../update-product');
 
     const res = await handler(
       makeEvent({
@@ -170,7 +170,7 @@ describe('update-product', () => {
         stockStatus: 'low_stock',
       },
     });
-    const { handler } = await import('/home/runner/work/loadifymarket.co.uk/loadifymarket.co.uk/netlify/functions/update-product');
+    const { handler } = await import('../update-product');
 
     const res = await handler(
       makeEvent({
@@ -198,7 +198,7 @@ describe('update-product', () => {
         stockStatus: 'in_stock',
       },
     });
-    const { handler } = await import('/home/runner/work/loadifymarket.co.uk/loadifymarket.co.uk/netlify/functions/update-product');
+    const { handler } = await import('../update-product');
 
     const res = await handler(
       makeEvent({
@@ -220,7 +220,7 @@ describe('update-product', () => {
 
   it('rejects invalid goods stock quantities', async () => {
     mockSupabase();
-    const { handler } = await import('/home/runner/work/loadifymarket.co.uk/loadifymarket.co.uk/netlify/functions/update-product');
+    const { handler } = await import('../update-product');
 
     const res = await handler(
       makeEvent({
@@ -246,7 +246,7 @@ describe('update-product', () => {
         },
       ],
     });
-    const { handler } = await import('/home/runner/work/loadifymarket.co.uk/loadifymarket.co.uk/netlify/functions/update-product');
+    const { handler } = await import('../update-product');
 
     const res = await handler(
       makeEvent({
