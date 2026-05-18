@@ -52,148 +52,199 @@ interface SellerProfileRow {
   sellerStatus: string | null;
 }
 
-export const handler: Handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
+function jsonResponse(statusCode: number, payload: Record<string, unknown>) {
+  return {
+    statusCode,
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  };
+}
 
-  // ── Environment guards ──────────────────────────────────────────────────────
-  const stripeKey = process.env.STRIPE_SECRET_KEY ?? '';
+function isCheckoutFromOfferDebugEnabled(): boolean {
+  const raw = (process.env.CHECKOUT_FROM_OFFER_DEBUG ?? '').trim().toLowerCase();
+  return raw === '1' || raw === 'true' || raw === 'yes';
+}
+
+function getServerConfig():
+  | { stripeKey: string; supabaseUrl: string; serviceRoleKey: string }
+  | { errorResponse: { statusCode: number; headers: Record<string, string>; body: string } } {
+  const stripeKey = (process.env.STRIPE_SECRET_KEY ?? '').trim();
   if (!stripeKey) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Payment provider configuration is missing' }) };
+    return { errorResponse: jsonResponse(500, { error: 'Payment provider configuration is missing' }) };
   }
   if (!stripeKey.startsWith('sk_')) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Payment provider key is invalid' }) };
+    return { errorResponse: jsonResponse(500, { error: 'Payment provider key is invalid' }) };
   }
 
-  const supabaseUrl = process.env.VITE_SUPABASE_URL ?? '';
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+  const supabaseUrl = (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? '').trim();
+  const serviceRoleKey = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? '').trim();
   if (!supabaseUrl || !serviceRoleKey) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Database configuration is missing' }) };
+    return { errorResponse: jsonResponse(500, { error: 'Database configuration is missing' }) };
   }
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
-  });
-
-  // ── Auth ────────────────────────────────────────────────────────────────────
-  const authHeader = event.headers['authorization'] ?? '';
-  if (!authHeader.startsWith('Bearer ')) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Authentication required' }) };
-  }
-  const token = authHeader.substring(7);
-  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !authUser) {
-    return { statusCode: 401, body: JSON.stringify({ error: 'Invalid authentication token' }) };
-  }
-  const callerId = authUser.id;
-
-  // ── Rate limiting — 10 checkout initiations per hour per user ───────────────
-  const rl = await checkRateLimit({
-    supabase,
-    tableName:     'checkout_offer_rate_limits',
-    identifier:    callerId,
-    windowMinutes: 60,
-    maxAttempts:   10,
-  });
-  if (rl.exceeded) {
-    return { statusCode: 429, body: JSON.stringify({ error: 'Too many checkout attempts. Please try again later.' }) };
-  }
-
-  // ── Parse body ──────────────────────────────────────────────────────────────
-  let body: RequestBody;
   try {
-    body = JSON.parse(event.body ?? '{}') as RequestBody;
-  } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body' }) };
-  }
-
-  const { orderId } = body;
-  if (!orderId || typeof orderId !== 'string') {
-    return { statusCode: 400, body: JSON.stringify({ error: 'orderId is required' }) };
-  }
-
-  // ── Maintenance mode ────────────────────────────────────────────────────────
-  const maintenance = await isMaintenanceMode(supabase);
-  if (maintenance) {
-    const { data: callerRow } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', callerId)
-      .maybeSingle<{ role: string | null }>();
-    const isAdmin = callerRow?.role === 'admin';
-    if (!isAdmin) {
-      return { statusCode: 503, body: JSON.stringify({ error: 'Platform is temporarily under maintenance' }) };
+    const parsed = new URL(supabaseUrl);
+    if (parsed.protocol !== 'https:') {
+      return { errorResponse: jsonResponse(500, { error: 'Database URL must use https' }) };
     }
+  } catch {
+    return { errorResponse: jsonResponse(500, { error: 'Database URL is invalid' }) };
   }
 
-  await supabase.rpc('release_stale_unpaid_listing_locks').catch((err: unknown) => {
-    console.warn('checkout-from-offer: release_stale_unpaid_listing_locks RPC failed (non-fatal):', err);
-  });
-
-  // ── Validate order ──────────────────────────────────────────────────────────
-  const { data: order, error: orderError } = await supabase
-    .from('orders')
-    .select('id, buyerId, sellerId, productId, total, status, offerId')
-    .eq('id', orderId)
-    .maybeSingle<OrderRow>();
-
-  if (orderError || !order) {
-    return { statusCode: 404, body: JSON.stringify({ error: 'Order not found' }) };
+  if (serviceRoleKey.length < 20 || /\s/.test(serviceRoleKey)) {
+    return { errorResponse: jsonResponse(500, { error: 'Database service role key is invalid' }) };
   }
 
-  if (order.buyerId !== callerId) {
-    return { statusCode: 403, body: JSON.stringify({ error: 'This order does not belong to you' }) };
-  }
+  return { stripeKey, supabaseUrl, serviceRoleKey };
+}
 
-  if (order.status !== 'awaiting_payment') {
-    return {
-      statusCode: 409,
-      body: JSON.stringify({ error: `Order cannot be checked out (current status: ${order.status})` }),
-    };
-  }
-
-  // ── Validate listing ────────────────────────────────────────────────────────
-  const { data: listing, error: listingError } = await supabase
-    .from('products')
-    .select('id, title, sellerId, listingContext')
-    .eq('id', order.productId)
-    .maybeSingle<ProductRow>();
-
-  if (listingError || !listing) {
-    return { statusCode: 404, body: JSON.stringify({ error: 'Listing not found' }) };
-  }
-
-  // ── Seller Stripe-readiness check ───────────────────────────────────────────
-  const { data: sellerProfile, error: sellerProfileError } = await supabase
-    .from('seller_profiles')
-    .select('stripeAccountId, stripeConnectStatus, sellerStatus')
-    .eq('userId', order.sellerId)
-    .maybeSingle<SellerProfileRow>();
-
-  if (sellerProfileError) {
-    console.error('checkout-from-offer: seller profile query failed:', sellerProfileError.message);
-    return { statusCode: 500, body: JSON.stringify({ error: 'Unable to verify seller status. Please try again.' }) };
-  }
-
-  if (sellerProfile?.sellerStatus === 'suspended') {
-    return { statusCode: 400, body: JSON.stringify({ error: 'This seller is currently unavailable.' }) };
-  }
-
-  if (!sellerProfile?.stripeAccountId || sellerProfile.stripeConnectStatus !== 'active') {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'This seller is not ready to accept payments yet. Please try again later.' }),
-    };
-  }
-
-  // ── Create Stripe Checkout Session ─────────────────────────────────────────
-  const appUrl = (process.env.URL ?? process.env.VITE_APP_URL ?? 'https://loadifymarket.co.uk').replace(/\/$/, '');
-  const transferGroup = randomUUID();
-  const amountPence = Math.round(order.total * 100);
-
+export const handler: Handler = async (event) => {
   try {
-    const stripe = new Stripe(stripeKey, { apiVersion: '2025-08-27.basil' });
+    if (event.httpMethod !== 'POST') {
+      return jsonResponse(405, { error: 'Method not allowed' });
+    }
+
+    const config = getServerConfig();
+    if ('errorResponse' in config) {
+      return config.errorResponse;
+    }
+
+    const supabase = createClient(config.supabaseUrl, config.serviceRoleKey, {
+      auth: { persistSession: false },
+    });
+
+    // ── Auth ──────────────────────────────────────────────────────────────────
+    const headers = event.headers ?? {};
+    const authHeader = headers.authorization ?? headers.Authorization ?? '';
+    if (!authHeader.startsWith('Bearer ')) {
+      return jsonResponse(401, { error: 'Authentication required' });
+    }
+    const token = authHeader.slice(7).trim();
+    if (!token) {
+      return jsonResponse(401, { error: 'Authentication required' });
+    }
+
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !authUser) {
+      return jsonResponse(401, { error: 'Invalid authentication token' });
+    }
+    const callerId = authUser.id;
+
+    // ── Rate limiting — 10 checkout initiations per hour per user ───────────
+    const rl = await checkRateLimit({
+      supabase,
+      tableName:     'checkout_offer_rate_limits',
+      identifier:    callerId,
+      windowMinutes: 60,
+      maxAttempts:   10,
+    });
+    if (rl.exceeded) {
+      return jsonResponse(429, { error: 'Too many checkout attempts. Please try again later.' });
+    }
+
+    // ── Parse body ────────────────────────────────────────────────────────────
+    let body: RequestBody;
+    try {
+      body = JSON.parse(event.body ?? '{}') as RequestBody;
+    } catch {
+      return jsonResponse(400, { error: 'Invalid JSON body' });
+    }
+
+    const { orderId } = body;
+    if (!orderId || typeof orderId !== 'string') {
+      return jsonResponse(400, { error: 'orderId is required' });
+    }
+
+    // ── Maintenance mode ──────────────────────────────────────────────────────
+    const maintenance = await isMaintenanceMode(supabase);
+    if (maintenance) {
+      const { data: callerRow } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', callerId)
+        .maybeSingle<{ role: string | null }>();
+      const isAdmin = callerRow?.role === 'admin';
+      if (!isAdmin) {
+        return jsonResponse(503, { error: 'Platform is temporarily under maintenance' });
+      }
+    }
+
+    await supabase.rpc('release_stale_unpaid_listing_locks').catch((err: unknown) => {
+      console.warn('checkout-from-offer: release_stale_unpaid_listing_locks RPC failed (non-fatal):', err);
+    });
+
+    // ── Validate order ────────────────────────────────────────────────────────
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('id, buyerId, sellerId, productId, total, status, offerId')
+      .eq('id', orderId)
+      .maybeSingle<OrderRow>();
+
+    if (orderError) {
+      console.error('checkout-from-offer: order lookup failed:', {
+        code: orderError.code,
+        message: orderError.message,
+        details: orderError.details,
+        orderId,
+      });
+    }
+    if (!order) {
+      return jsonResponse(404, { error: 'Order not found' });
+    }
+
+    if (order.buyerId !== callerId) {
+      return jsonResponse(403, { error: 'This order does not belong to you' });
+    }
+
+    if (order.status !== 'awaiting_payment') {
+      return jsonResponse(409, { error: `Order cannot be checked out (current status: ${order.status})` });
+    }
+
+    // ── Validate listing ──────────────────────────────────────────────────────
+    const { data: listing, error: listingError } = await supabase
+      .from('products')
+      .select('id, title, sellerId, listingContext')
+      .eq('id', order.productId)
+      .maybeSingle<ProductRow>();
+
+    if (listingError) {
+      console.error('checkout-from-offer: listing lookup failed:', {
+        code: listingError.code,
+        message: listingError.message,
+        details: listingError.details,
+        orderId,
+        productId: order.productId,
+      });
+    }
+    if (!listing) {
+      return jsonResponse(404, { error: 'Listing not found' });
+    }
+
+    // ── Seller Stripe-readiness check ─────────────────────────────────────────
+    const { data: sellerProfile, error: sellerProfileError } = await supabase
+      .from('seller_profiles')
+      .select('stripeAccountId, stripeConnectStatus, sellerStatus')
+      .eq('userId', order.sellerId)
+      .maybeSingle<SellerProfileRow>();
+
+    if (sellerProfileError) {
+      console.error('checkout-from-offer: seller profile query failed:', sellerProfileError.message);
+      return jsonResponse(500, { error: 'Unable to verify seller status. Please try again.' });
+    }
+
+    if (sellerProfile?.sellerStatus === 'suspended') {
+      return jsonResponse(400, { error: 'This seller is currently unavailable.' });
+    }
+
+    if (!sellerProfile?.stripeAccountId || sellerProfile.stripeConnectStatus !== 'active') {
+      return jsonResponse(400, { error: 'This seller is not ready to accept payments yet. Please try again later.' });
+    }
+
+    // ── Create Stripe Checkout Session ───────────────────────────────────────
+    const appUrl = (process.env.URL ?? process.env.VITE_APP_URL ?? 'https://loadifymarket.co.uk').replace(/\/$/, '');
+    const transferGroup = randomUUID();
+    const amountPence = Math.round(order.total * 100);
+    const stripe = new Stripe(config.stripeKey, { apiVersion: '2025-08-27.basil' });
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -223,14 +274,14 @@ export const handler: Handler = async (event) => {
       },
     });
 
-    // ── Insert payment_sessions row ─────────────────────────────────────────
+    // ── Insert payment_sessions row ───────────────────────────────────────────
     const { error: sessionInsertError } = await supabase
       .from('payment_sessions')
       .insert({
         stripeSessionId:     session.id,
-        stripePaymentIntent: null,           // set by handleCheckoutCompleted
+        stripePaymentIntent: null, // set by handleCheckoutCompleted
         userId:              callerId,
-        orderId,                             // pre-link to the existing order
+        orderId,
         status:              'pending',
         amount:              order.total,
         currency:            'GBP',
@@ -251,15 +302,22 @@ export const handler: Handler = async (event) => {
       await stripe.checkout.sessions.expire(session.id).catch((e: unknown) =>
         console.error('checkout-from-offer: failed to expire orphaned session:', e),
       );
-      return { statusCode: 500, body: JSON.stringify({ error: 'Checkout initialisation failed. Please try again.' }) };
+      return jsonResponse(500, { error: 'Checkout initialisation failed. Please try again.' });
     }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ checkoutUrl: session.url }),
-    };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Checkout session creation failed';
-    return { statusCode: 500, body: JSON.stringify({ error: message }) };
+    return jsonResponse(200, { checkoutUrl: session.url });
+  } catch (error) {
+    const stack = error instanceof Error ? error.stack ?? 'stack_unavailable' : 'stack_unavailable';
+    console.error('checkout-from-offer unhandled error:', error, stack);
+    return jsonResponse(500, {
+      error: error instanceof Error ? error.message : 'Checkout session creation failed',
+      ...(isCheckoutFromOfferDebugEnabled()
+        ? {
+            debug: {
+              stack,
+            },
+          }
+        : {}),
+    });
   }
 };
