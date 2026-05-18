@@ -107,14 +107,14 @@ function mockCheckoutDependencies(options?: {
   const stripeExpire = vi.fn().mockResolvedValue({ id: 'cs_test_123', status: 'expired' });
 
   vi.doMock('stripe', () => ({
-    default: vi.fn().mockImplementation(() => ({
-      checkout: {
+    default: class StripeMock {
+      checkout = {
         sessions: {
           create: stripeCreate,
           expire: stripeExpire,
         },
-      },
-    })),
+      };
+    },
   }));
 
   return {
