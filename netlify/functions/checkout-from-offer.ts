@@ -65,6 +65,28 @@ function isCheckoutFromOfferDebugEnabled(): boolean {
   return raw === '1' || raw === 'true' || raw === 'yes';
 }
 
+function tryGetOrigin(value: string | undefined | null): string | null {
+  const raw = value?.trim();
+  if (!raw) return null;
+
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return null;
+    return parsed.origin;
+  } catch {
+    return null;
+  }
+}
+
+function resolveAppUrl(rawUrl?: string): string {
+  return (
+    tryGetOrigin(process.env.URL)
+    ?? tryGetOrigin(process.env.VITE_APP_URL)
+    ?? tryGetOrigin(rawUrl)
+    ?? 'https://loadifymarket.co.uk'
+  );
+}
+
 function getServerConfig():
   | { stripeKey: string; supabaseUrl: string; serviceRoleKey: string }
   | { errorResponse: { statusCode: number; headers: Record<string, string>; body: string } } {
@@ -241,9 +263,17 @@ export const handler: Handler = async (event) => {
     }
 
     // ── Create Stripe Checkout Session ───────────────────────────────────────
-    const appUrl = (process.env.URL ?? process.env.VITE_APP_URL ?? 'https://loadifymarket.co.uk').replace(/\/$/, '');
+    const appUrl = resolveAppUrl(event.rawUrl);
     const transferGroup = randomUUID();
     const amountPence = Math.round(order.total * 100);
+    if (!Number.isFinite(amountPence) || amountPence <= 0) {
+      console.error('checkout-from-offer: invalid order total for checkout session', {
+        orderId,
+        total: order.total,
+        amountPence,
+      });
+      return jsonResponse(409, { error: 'Order total is invalid for checkout' });
+    }
     const stripe = new Stripe(config.stripeKey, { apiVersion: '2025-08-27.basil' });
 
     const session = await stripe.checkout.sessions.create({
@@ -273,6 +303,16 @@ export const handler: Handler = async (event) => {
         transfer_group: transferGroup,
       },
     });
+    if (!session.url) {
+      console.error('checkout-from-offer: Stripe Checkout Session missing URL', {
+        orderId,
+        sessionId: session.id,
+      });
+      await stripe.checkout.sessions.expire(session.id).catch((e: unknown) =>
+        console.error('checkout-from-offer: failed to expire url-less session:', e),
+      );
+      return jsonResponse(500, { error: 'Checkout initialisation failed. Please try again.' });
+    }
 
     // ── Insert payment_sessions row ───────────────────────────────────────────
     const { error: sessionInsertError } = await supabase
