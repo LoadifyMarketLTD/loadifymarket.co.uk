@@ -37,6 +37,20 @@ type SubmitState = "idle" | "loading" | "success";
 
 const SUCCESS_STATE_DURATION_MS = 2500;
 
+async function getResponseErrorMessage(response: Response): Promise<string | null> {
+  const jsonError = await response
+    .clone()
+    .json()
+    .then((data) => (typeof data?.error === "string" ? data.error : null))
+    .catch(() => null);
+
+  if (jsonError) return jsonError;
+
+  const textError = await response.text().catch(() => "");
+  const trimmed = textError.trim();
+  return trimmed || null;
+}
+
 export default function MakeOfferSheet({
   open,
   onOpenChange,
@@ -112,8 +126,17 @@ export default function MakeOfferSheet({
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Request failed" })) as { error?: string };
-        throw new Error(err.error ?? `HTTP ${res.status}`);
+        const errorMessage = await getResponseErrorMessage(res);
+        if (res.status === 409) {
+          resetSubmitState();
+          toast({
+            title: "Offer already pending",
+            description: errorMessage ?? "There is already a pending offer in this conversation. Please wait for a response before sending another.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw new Error(errorMessage ?? `HTTP ${res.status}`);
       }
 
       setSubmitState("success");
