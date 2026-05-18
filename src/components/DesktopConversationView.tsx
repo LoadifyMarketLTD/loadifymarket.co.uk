@@ -29,6 +29,7 @@ import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 import { openExternalUrl } from "@/lib/capacitorUtils";
 import { getOfferActionAvailability } from "@/lib/offerActions";
+import { parseConversationRouteSearch } from "@/lib/routeSearch";
 import MakeOfferSheet from "@/components/MakeOfferSheet";
 import { trackOfferAccepted } from "@/lib/analytics";
 import type { ConversationParticipant, InboxConversation } from "@/types";
@@ -84,24 +85,6 @@ function formatDate(iso: string) {
 function participantName(p: ConversationParticipant) {
   const name = [p.firstName, p.lastName].filter(Boolean).join(" ");
   return name || DEFAULT_DISPLAY_NAME;
-}
-
-export function parseRouteSearch(search: string) {
-  let normalized = search;
-  try {
-    normalized = decodeURIComponent(search);
-  } catch {
-    normalized = search;
-  }
-  normalized = normalized.replace(/&amp;/gi, "&");
-  const params = new URLSearchParams(normalized.startsWith("?") ? normalized.slice(1) : normalized);
-  const rawConversationId = params.get("conversationId");
-  const conversationId = rawConversationId ? rawConversationId.split("&")[0].trim() : null;
-  const offerId = params.get("offerId");
-  return {
-    conversationId: conversationId || null,
-    offerId: offerId || null,
-  };
 }
 
 /** Decode offer/system message JSON to a human-readable inbox preview. */
@@ -425,7 +408,7 @@ function SystemEventCard({ event, amountPence }: { event?: string; amountPence?:
 export default function DesktopConversationView() {
   const { user } = useAuthStore();
   const location = useLocation();
-  const { conversationId: routeConversationId, offerId: routeOfferId } = parseRouteSearch(location.search);
+  const { conversationId: routeConversationId, offerId: routeOfferId } = parseConversationRouteSearch(location.search);
 
   // ── Conversation list state ──────────────────────────────────────────────────
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -520,6 +503,7 @@ export default function DesktopConversationView() {
         const otherId = r.user1Id === user.id ? r.user2Id : r.user1Id;
         return {
           ...r,
+          isArchived: r.isArchived === true,
           other: userMap.get(otherId) ?? { id: otherId, firstName: null, lastName: null },
           unreadCount: unreadMap.get(r.id) ?? 0,
           lastMessagePreview: previewText(lastMsgMap.get(r.id) ?? null),
@@ -579,6 +563,7 @@ export default function DesktopConversationView() {
 
         const conv: Conversation = {
           ...data,
+          isArchived: false,
           other,
           unreadCount: 0,
           lastMessagePreview: null,
