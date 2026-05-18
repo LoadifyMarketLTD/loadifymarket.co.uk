@@ -5,7 +5,8 @@
  *  1. Orphan pending offer auto-recovery (offer exists but no matching message)
  *  2. Message insert failure → offer rollback → 500
  *  3. Notification insert failure → message + offer rollback → 500
- *  4. Non-orphan pending offer returns 409 without mutation
+ *  4. Non-orphan pending offer: Option A – still inserts message + notification, returns 200
+ *  5. Message insert failure for existing offer → 500, but existing offer is NOT rolled back
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { HandlerEvent } from '@netlify/functions';
@@ -41,7 +42,7 @@ const validBody = { conversationId: CONV_ID, amountPence: 1000 };
 
 /** Build a supabase mock where each .from(table) call returns a fluent stub. */
 function makeSupabaseMock(opts: {
-  pendingOffer?: { id: string } | null;
+  pendingOffer?: { id: string; amountPence: number } | null;
   orphanMessageRows?: { id: string }[];
   offerInsertError?: string | null;
   messageInsertError?: string | null;
@@ -79,9 +80,13 @@ function makeSupabaseMock(opts: {
     };
   });
 
+  // Track how many times offers.insert was called.
+  let offerInsertCount = 0;
+
   const mock = {
     deletedOfferIds,
     deletedMessageIds,
+    get offerInsertCount() { return offerInsertCount; },
     client: {
       auth: {
         getUser: vi.fn().mockResolvedValue({
@@ -135,6 +140,7 @@ function makeSupabaseMock(opts: {
               error: null,
             }),
             insert: vi.fn().mockImplementation(() => {
+              offerInsertCount++;
               const insertResult = offerInsertError
                 ? { data: null, error: { code: '500', message: offerInsertError } }
                 : { data: { id: OFFER_ID }, error: null };
@@ -263,10 +269,10 @@ describe('conversation-offer handler', () => {
     expect(res!.statusCode).toBe(401);
   });
 
-  // ── Non-orphan pending offer ──────────────────────────────────────────────────
-  it('returns 409 when a non-orphan pending offer already exists', async () => {
+  // ── Non-orphan pending offer (Option A) ──────────────────────────────────────
+  it('returns 200 with existing offerId and still notifies seller when non-orphan pending offer exists', async () => {
     const mock = makeSupabaseMock({
-      pendingOffer: { id: OFFER_ID },
+      pendingOffer: { id: OFFER_ID, amountPence: 1000 },
       // Message exists for the pending offer → not an orphan
       orphanMessageRows: [{ id: MSG_ID }],
     });
@@ -290,16 +296,53 @@ describe('conversation-offer handler', () => {
 
     const { handler } = await import('../conversation-offer');
     const res = await handler(makeEvent(validBody), {} as never);
-    expect(res!.statusCode).toBe(409);
-    expect(JSON.parse(res!.body as string).error).toMatch(/pending offer/i);
-    // Orphan cleanup must NOT have been attempted.
+    // Option A: must succeed and return the existing offer id
+    expect(res!.statusCode).toBe(200);
+    const body = JSON.parse(res!.body as string);
+    expect(body.offerId).toBe(OFFER_ID);
+    // No new offer row must have been inserted
+    expect(mock.offerInsertCount).toBe(0);
+    // Existing offer must NOT have been deleted
+    expect(mock.deletedOfferIds).toHaveLength(0);
+  });
+
+  // ── Message insert failure for existing offer ─────────────────────────────
+  it('returns 500 on message failure for existing offer but does NOT roll back the existing offer', async () => {
+    const mock = makeSupabaseMock({
+      pendingOffer: { id: OFFER_ID, amountPence: 1000 },
+      orphanMessageRows: [{ id: MSG_ID }],
+      messageInsertError: 'simulated message insert failure',
+    });
+
+    vi.doMock('@supabase/supabase-js', () => ({
+      createClient: vi.fn(() => mock.client),
+    }));
+    vi.doMock('../_shared/rateLimiter', () => ({
+      checkRateLimit: vi.fn().mockResolvedValue({ exceeded: false }),
+    }));
+    vi.doMock('../_shared/offerLifecycle', () => ({
+      expireStaleOffers: vi.fn().mockResolvedValue([]),
+    }));
+    vi.doMock('../_shared/offerLinks', () => ({
+      buildOfferLink: vi.fn().mockReturnValue('/offer-link'),
+      buildOfferPushData: vi.fn().mockReturnValue({}),
+    }));
+    vi.doMock('../_shared/pushNotifications', () => ({
+      sendPushToUser: vi.fn().mockResolvedValue(undefined),
+    }));
+
+    const { handler } = await import('../conversation-offer');
+    const res = await handler(makeEvent(validBody), {} as never);
+    expect(res!.statusCode).toBe(500);
+    expect(JSON.parse(res!.body as string).error).toMatch(/offer chat message/i);
+    // The pre-existing offer must NOT have been deleted
     expect(mock.deletedOfferIds).toHaveLength(0);
   });
 
   // ── Orphan offer auto-recovery ────────────────────────────────────────────────
   it('auto-recovers from an orphan pending offer (no matching message) and returns 200', async () => {
     const mock = makeSupabaseMock({
-      pendingOffer: { id: ORPHAN_OFFER_ID },
+      pendingOffer: { id: ORPHAN_OFFER_ID, amountPence: 500 },
       // No message exists for the orphan offer.
       orphanMessageRows: [],
     });
