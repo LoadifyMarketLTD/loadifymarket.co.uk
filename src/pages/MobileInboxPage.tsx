@@ -10,8 +10,8 @@
  * Unauthenticated users are redirected to /login.
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { MessageSquare, User, Search, SquarePen } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/store";
@@ -85,12 +85,18 @@ function previewText(raw: string | null): string {
 
 export default function MobileInboxPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoading } = useAuthStore();
   const promptAuth = useAuthPromptStore((s) => s.open);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  // Retry counter and one-shot post-hydration re-fetch gate
+  const hydrationRetryRef = useRef(0);
+  const postHydrationRefetchFired = useRef(false);
+  // Show debug state panel when ?debug=1 is in the URL (or in dev mode)
+  const showDebug = new URLSearchParams(location.search).get("debug") === "1" || import.meta.env.DEV;
 
   // Auth gate — show prompt modal instead of hard redirect to /login
   useEffect(() => {
@@ -102,16 +108,48 @@ export default function MobileInboxPage() {
   const loadConversations = useCallback(async () => {
     if (!user?.id) return;
     setLoading(true);
+    // Force-verify auth session before RLS-protected queries.
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    console.info("[MobileInboxPage] session check", {
+      userId: user.id,
+      hasSession: !!session,
+      sessionUserId: session?.user?.id,
+      sessionMatchesStore: session?.user?.id === user.id,
+      expiresAt: session?.expires_at ?? null,
+      sessionError: sessionError?.message ?? null,
+      retryAttempt: hydrationRetryRef.current,
+    });
+    if (!session?.user) {
+      console.warn("[MobileInboxPage] No valid session — conversations query skipped", {
+        userId: user.id,
+        sessionError: sessionError?.message ?? null,
+      });
+      setLoading(false);
+      return;
+    }
     try {
       const { data: rows, error } = await supabase
         .from("conversations")
         .select("id, subject, lastMessageAt, isArchived, user1Id, user2Id, productId")
         .or(`user1Id.eq.${user.id},user2Id.eq.${user.id}`)
+        .not("isArchived", "is", true)
         .order("lastMessageAt", { ascending: false })
         .limit(100);
 
       if (error) throw error;
       const convRows = (rows ?? []) as ConversationRow[];
+      console.info("[MobileInboxPage] conversations loaded", {
+        userId: user.id,
+        count: convRows.length,
+        sessionUserId: session?.user?.id,
+      });
+      if (convRows.length === 0) {
+        console.warn("[MobileInboxPage] RLS returned empty conversations list", {
+          userId: user.id,
+          sessionUserId: session?.user?.id,
+          supabasePayload: rows,
+        });
+      }
 
       // Resolve other participants
       const otherIds = [...new Set(convRows.map((r) => r.user1Id === user.id ? r.user2Id : r.user1Id))];
@@ -228,6 +266,33 @@ export default function MobileInboxPage() {
 
     return () => { void supabase.removeChannel(channel); };
   }, [user?.id, loadConversations]);
+
+  // ── Timeout protection — prevent infinite loading spinner ───────────────────
+  useEffect(() => {
+    if (!loading) return;
+    const timeout = setTimeout(() => {
+      console.warn("[MobileInboxPage] Loading timeout — forcing off after 10s", {
+        userId: user?.id,
+      });
+      setLoading(false);
+    }, 10_000);
+    return () => clearTimeout(timeout);
+  }, [loading, user?.id]);
+
+  // ── Post-auth-hydration delayed re-fetch (catches auth race conditions) ──────
+  useEffect(() => {
+    if (!user?.id || postHydrationRefetchFired.current) return;
+    postHydrationRefetchFired.current = true;
+    const timer = setTimeout(() => {
+      console.info("[MobileInboxPage] Post-auth-hydration delayed re-fetch", {
+        userId: user.id,
+        currentCount: conversations.length,
+      });
+      void loadConversations();
+    }, 2000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   // Filter by tab
   const tabFiltered = conversations.filter((c) => {
@@ -360,6 +425,16 @@ export default function MobileInboxPage() {
           })}
         </div>
       </div>
+
+      {/* ── Debug state panel — activate with ?debug=1 in the URL ── */}
+      {showDebug && (
+        <div
+          style={{ padding: "6px 12px", background: "rgba(234,179,8,0.08)", borderBottom: "1px solid rgba(234,179,8,0.18)" }}
+          className="text-[10px] font-mono text-yellow-400"
+        >
+          uid: {user?.id ?? "—"} | convs: {conversations.length} | loading: {String(loading)}
+        </div>
+      )}
 
       {/* ── List ── */}
       <div style={{ flex: 1, paddingBottom: "calc(80px + env(safe-area-inset-bottom, 0px))" }}>
