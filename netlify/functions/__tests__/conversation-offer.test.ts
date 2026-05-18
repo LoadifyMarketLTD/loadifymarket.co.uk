@@ -43,7 +43,6 @@ const validBody = { conversationId: CONV_ID, amountPence: 1000 };
 function makeSupabaseMock(opts: {
   pendingOffer?: { id: string } | null;
   orphanMessageRows?: { id: string }[];
-  orphanDeleteError?: string | null;
   offerInsertError?: string | null;
   messageInsertError?: string | null;
   notificationInsertError?: string | null;
@@ -52,7 +51,6 @@ function makeSupabaseMock(opts: {
   const {
     pendingOffer = null,
     orphanMessageRows = [],
-    orphanDeleteError = null,
     offerInsertError = null,
     messageInsertError = null,
     notificationInsertError = null,
@@ -128,7 +126,6 @@ function makeSupabaseMock(opts: {
         }
         // ── offers ─────────────────────────────────────────────────────────────
         if (table === 'offers') {
-          let insertCalled = false;
           return {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
@@ -138,7 +135,6 @@ function makeSupabaseMock(opts: {
               error: null,
             }),
             insert: vi.fn().mockImplementation(() => {
-              insertCalled = true;
               const insertResult = offerInsertError
                 ? { data: null, error: { code: '500', message: offerInsertError } }
                 : { data: { id: OFFER_ID }, error: null };
