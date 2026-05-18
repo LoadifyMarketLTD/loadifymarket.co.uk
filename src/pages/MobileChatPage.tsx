@@ -890,8 +890,8 @@ export default function MobileChatPage() {
         body: JSON.stringify({ offerId }),
       });
 
-      const json = await res.json() as { orderId?: string; error?: string };
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      const json = await res.json() as { orderId?: string; error?: string; details?: string };
+      if (!res.ok) throw new Error(json.details ?? json.error ?? `HTTP ${res.status}`);
 
       toast({ title: "Offer accepted! Buyer has been notified to pay." });
       // Track analytics event
@@ -915,8 +915,8 @@ export default function MobileChatPage() {
         body: JSON.stringify({ offerId }),
       });
 
-      const json = await res.json() as { success?: boolean; error?: string };
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      const json = await res.json() as { success?: boolean; error?: string; details?: string };
+      if (!res.ok) throw new Error(json.details ?? json.error ?? `HTTP ${res.status}`);
 
       toast({ title: "Offer declined." });
       void loadOffers();
@@ -951,8 +951,8 @@ export default function MobileChatPage() {
         method: "POST",
         body: JSON.stringify({ offerId, amountPence, message }),
       });
-      const json = await res.json() as { offerId?: string; error?: string };
-      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      const json = await res.json() as { offerId?: string; error?: string; details?: string };
+      if (!res.ok) throw new Error(json.details ?? json.error ?? `HTTP ${res.status}`);
 
       toast({ title: "Counter offer sent." });
       void loadOffers();
