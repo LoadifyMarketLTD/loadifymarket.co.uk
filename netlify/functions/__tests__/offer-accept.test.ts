@@ -334,4 +334,58 @@ describe('offer action handlers', () => {
       details: 'P0001: offer_not_pending: countered',
     });
   });
+
+  it('decline accepts legacy snake_case payload shape', async () => {
+    createClientMock.mockReturnValue(
+      makeSupabaseMock({
+        rpcData: {
+          already_done: false,
+        },
+      }),
+    );
+
+    const { handler } = await import('../offer-decline');
+    const response = await handler(
+      makeEvent({ path: '/.netlify/functions/offer-decline', body: { offerId: 'offer-decline-legacy-1' } }),
+      {} as never,
+    );
+
+    expect(response?.statusCode).toBe(200);
+    expect(JSON.parse(response!.body)).toEqual({
+      ok: true,
+      offerId: 'offer-decline-legacy-1',
+      status: 'declined',
+      orderId: null,
+      alreadyDone: false,
+    });
+  });
+
+  it('counter accepts legacy snake_case payload shape', async () => {
+    createClientMock.mockReturnValue(
+      makeSupabaseMock({
+        rpcData: {
+          offer_id: 'offer-counter-legacy-1',
+          already_done: true,
+        },
+      }),
+    );
+
+    const { handler } = await import('../offer-counter');
+    const response = await handler(
+      makeEvent({
+        path: '/.netlify/functions/offer-counter',
+        body: { offerId: 'offer-original-legacy-1', amountPence: 3250 },
+      }),
+      {} as never,
+    );
+
+    expect(response?.statusCode).toBe(200);
+    expect(JSON.parse(response!.body)).toEqual({
+      ok: true,
+      offerId: 'offer-counter-legacy-1',
+      status: 'pending',
+      orderId: null,
+      alreadyDone: true,
+    });
+  });
 });
