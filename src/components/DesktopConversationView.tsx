@@ -823,7 +823,9 @@ export default function DesktopConversationView() {
     return () => { cancelled = true; };
   }, [selectedId, user?.id, conversations]);
 
-  // ── Load offers for selected conversation ───────────────────────────────────
+  // Load offers for selected conversation and keep offerMap up-to-date.
+  // Orders are fetched in a separate query to avoid PostgREST embedded-resource
+  // relationship resolution (PGRST200) errors when the schema cache is stale.
   const loadOffers = useCallback(async () => {
     if (!selectedId || offersFeatureUnavailable || !user?.id) return;
 
@@ -834,9 +836,9 @@ export default function DesktopConversationView() {
       console.warn("desktop chat: offer-sync failed (non-fatal):", error);
     });
 
-    const { data: offers, error } = await supabase
+    const { data: offerRows, error } = await supabase
       .from("offers")
-      .select("id, amountPence, status, proposedById, recipientId, orders(id, status)")
+      .select("id, amountPence, status, proposedById, recipientId")
       .eq("conversationId", selectedId)
       .order("createdAt", { ascending: false })
       .limit(50);
@@ -851,25 +853,38 @@ export default function DesktopConversationView() {
       return;
     }
 
-    if (offers) {
-      const mapped = (offers as Array<{
-        id: string;
-        amountPence: number;
-        status: string;
-        proposedById: string;
-        recipientId: string;
-        orders: Array<{ id: string; status: string }> | null;
-      }>).map((o) => ({
-        id:           o.id,
-        amountPence:  o.amountPence,
-        status:       o.status,
-        proposedById: o.proposedById,
-        recipientId:  o.recipientId,
-        orderId:      Array.isArray(o.orders) && o.orders.length > 0 ? o.orders[0].id : null,
-        orderStatus:  Array.isArray(o.orders) && o.orders.length > 0 ? o.orders[0].status : null,
-      }));
-      setOfferMap(new Map(mapped.map((o) => [o.id, o])));
+    if (!offerRows?.length) {
+      setOfferMap(new Map());
+      return;
     }
+
+    // Fetch related orders via explicit FK column query — no PostgREST join needed.
+    const offerIds = offerRows.map((o) => o.id);
+    const { data: orderRows } = await supabase
+      .from("orders")
+      .select("id, status, offerId")
+      .in("offerId", offerIds);
+
+    const orderByOfferId = new Map(
+      (orderRows ?? []).map((o) => [o.offerId as string, { orderId: o.id as string, orderStatus: o.status as string }]),
+    );
+
+    const mapped = (offerRows as Array<{
+      id: string;
+      amountPence: number;
+      status: string;
+      proposedById: string;
+      recipientId: string;
+    }>).map((o) => ({
+      id:           o.id,
+      amountPence:  o.amountPence,
+      status:       o.status,
+      proposedById: o.proposedById,
+      recipientId:  o.recipientId,
+      orderId:      orderByOfferId.get(o.id)?.orderId ?? null,
+      orderStatus:  orderByOfferId.get(o.id)?.orderStatus ?? null,
+    }));
+    setOfferMap(new Map(mapped.map((o) => [o.id, o])));
   }, [selectedId, offersFeatureUnavailable, user?.id]);
 
   useEffect(() => {

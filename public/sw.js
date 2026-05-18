@@ -11,7 +11,7 @@
 //
 // Bump CACHE_NAME when deploying a breaking change to force cache eviction.
 
-const CACHE_NAME = 'loadify-v2';
+const CACHE_NAME = 'loadify-v3';
 
 // ── Install: activate immediately without waiting for existing clients ────────
 self.addEventListener('install', () => {
