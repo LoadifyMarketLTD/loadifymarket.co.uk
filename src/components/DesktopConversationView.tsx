@@ -29,6 +29,7 @@ import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 import { openExternalUrl } from "@/lib/capacitorUtils";
 import { getOfferActionAvailability } from "@/lib/offerActions";
+import { parseConversationRouteSearch } from "@/lib/routeSearch";
 import MakeOfferSheet from "@/components/MakeOfferSheet";
 import { trackOfferAccepted } from "@/lib/analytics";
 import type { ConversationParticipant, InboxConversation } from "@/types";
@@ -39,7 +40,7 @@ interface ConversationRow {
   id: string;
   subject: string | null;
   lastMessageAt: string;
-  isArchived: boolean;
+  isArchived: boolean | null;
   user1Id: string;
   user2Id: string;
   productId: string | null;
@@ -407,8 +408,7 @@ function SystemEventCard({ event, amountPence }: { event?: string; amountPence?:
 export default function DesktopConversationView() {
   const { user } = useAuthStore();
   const location = useLocation();
-  const routeConversationId = new URLSearchParams(location.search).get("conversationId");
-  const routeOfferId = new URLSearchParams(location.search).get("offerId");
+  const { conversationId: routeConversationId, offerId: routeOfferId } = parseConversationRouteSearch(location.search);
 
   // ── Conversation list state ──────────────────────────────────────────────────
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -442,12 +442,11 @@ export default function DesktopConversationView() {
         .from("conversations")
         .select("id, subject, lastMessageAt, isArchived, user1Id, user2Id, productId")
         .or(`user1Id.eq.${user.id},user2Id.eq.${user.id}`)
-        .eq("isArchived", false)
         .order("lastMessageAt", { ascending: false })
         .limit(100);
 
       if (error) throw error;
-      const rows = (data ?? []) as ConversationRow[];
+      const rows = ((data ?? []) as ConversationRow[]).filter((row) => row.isArchived !== true);
 
       // Resolve other participants
       const otherIds = [...new Set(rows.map((r) => r.user1Id === user.id ? r.user2Id : r.user1Id))];
@@ -504,6 +503,7 @@ export default function DesktopConversationView() {
         const otherId = r.user1Id === user.id ? r.user2Id : r.user1Id;
         return {
           ...r,
+          isArchived: r.isArchived === true,
           other: userMap.get(otherId) ?? { id: otherId, firstName: null, lastName: null },
           unreadCount: unreadMap.get(r.id) ?? 0,
           lastMessagePreview: previewText(lastMsgMap.get(r.id) ?? null),
@@ -541,6 +541,7 @@ export default function DesktopConversationView() {
           .maybeSingle<ConversationRow>();
 
         if (!data) return;
+        if (data.isArchived === true) return;
 
         const otherId = data.user1Id === user.id ? data.user2Id : data.user1Id;
         const { data: users } = await supabase
@@ -562,6 +563,7 @@ export default function DesktopConversationView() {
 
         const conv: Conversation = {
           ...data,
+          isArchived: false,
           other,
           unreadCount: 0,
           lastMessagePreview: null,
