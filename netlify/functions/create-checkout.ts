@@ -306,26 +306,31 @@ export const handler: Handler = async (event) => {
   // ── Server-side shipping cost resolution ────────────────────────────────
   // The client-provided shippingAmount is NEVER trusted. We derive the
   // authoritative shipping cost entirely server-side.
-  //
-  // Two cases:
-  //  1. shippingMethodId is a valid UUID → look up the rate from shipping_rates
-  //     and verify the method is active and linked to at least one product in
-  //     the cart (preventing a buyer from picking an arbitrary method UUID).
-  //  2. shippingMethodId is absent / "seller-arranged" → service-only cart or
-  //     no DB methods configured; shipping cost is £0.
   let shippingAmount = 0;
-  const SELLER_ARRANGED_SENTINEL = 'seller-arranged';
+  let resolvedShippingMethodLabel = 'Standard';
   const hasUUIDFormat = (v: string) =>
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
-  if (shippingMethodId && shippingMethodId !== SELLER_ARRANGED_SENTINEL && hasUUIDFormat(shippingMethodId)) {
-    // Verify the method exists, is active, and is linked to at least one
-    // product in the cart (so buyers cannot inject arbitrary method IDs).
+  if (!isServiceOnlyCart) {
+    if (!shippingMethodId || !hasUUIDFormat(shippingMethodId)) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Please select a valid shipping method.' }),
+      };
+    }
+
+    const goodsProductIds = items
+      .filter((item) => productMap.get(item.productId)?.listingContext !== 'service')
+      .map((item) => item.productId);
+
+    // Verify the method exists, is active, and is linked to every physical
+    // product in the cart (so buyers cannot inject arbitrary method IDs or
+    // silently downgrade to free shipping).
     const { data: productShippingRows, error: psError } = await supabase
       .from('product_shipping')
-      .select('product_id, shipping_methods!method_id(id, active, shipping_rates(price))')
+      .select('product_id, shipping_methods!method_id(id, active, name, shipping_rates(price))')
       .eq('method_id', shippingMethodId)
-      .in('product_id', productIds);
+      .in('product_id', goodsProductIds);
 
     if (psError) {
       console.error('create-checkout: shipping method validation failed:', psError.message);
@@ -342,9 +347,22 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    const matchedGoodsProducts = new Set(productShippingRows.map((row) => row.product_id));
+    if (matchedGoodsProducts.size !== goodsProductIds.length) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'The selected shipping method is not available for all products in your cart.' }),
+      };
+    }
+
     // Extract the method record — Supabase can return a single object or a
     // one-element array depending on the join type. Normalise to a single value.
-    type ShippingMethodRow = { id: string; active: boolean; shipping_rates: Array<{ price: number }> | null };
+    type ShippingMethodRow = {
+      id: string;
+      active: boolean;
+      name?: string | null;
+      shipping_rates: Array<{ price: number }> | null;
+    };
     const rawMethod = (productShippingRows[0] as Record<string, unknown>)['shipping_methods'];
     const method: ShippingMethodRow | null = Array.isArray(rawMethod)
       ? (rawMethod[0] as ShippingMethodRow) ?? null
@@ -364,6 +382,7 @@ export const handler: Handler = async (event) => {
     shippingAmount = rates.length > 0
       ? Math.min(...rates.map((r) => Number(r.price)))
       : 0;
+    resolvedShippingMethodLabel = method.name?.trim() || 'Standard';
   }
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -463,7 +482,7 @@ export const handler: Handler = async (event) => {
           subtotal,
           shippingAmount,
           shippingMethodId: shippingMethodId ?? null,
-          shippingMethod: shippingMethod ?? 'Standard',
+          shippingMethod: resolvedShippingMethodLabel || shippingMethod || 'Standard',
           total,
           buyerId: verifiedBuyerId,
           transferGroup,

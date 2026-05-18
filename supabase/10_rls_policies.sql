@@ -167,7 +167,9 @@ CREATE POLICY "products_delete" ON products FOR DELETE
 
 -- ── PRODUCT ANALYTICS ────────────────────────────────────────────
 CREATE POLICY "product_analytics_select" ON product_analytics FOR SELECT USING (TRUE);
-CREATE POLICY "product_analytics_write"  ON product_analytics FOR ALL USING (TRUE) WITH CHECK (TRUE);
+CREATE POLICY "product_analytics_insert" ON product_analytics FOR INSERT WITH CHECK (TRUE);
+CREATE POLICY "product_analytics_update" ON product_analytics FOR UPDATE USING (is_admin());
+CREATE POLICY "product_analytics_delete" ON product_analytics FOR DELETE USING (is_admin());
 
 -- ── RECENTLY VIEWED ──────────────────────────────────────────────
 CREATE POLICY "recently_viewed_select" ON recently_viewed FOR SELECT
@@ -251,7 +253,7 @@ CREATE POLICY "cart_items_own" ON cart_items FOR ALL
 CREATE POLICY "orders_select" ON orders FOR SELECT
   USING (auth.uid() = "buyerId" OR auth.uid() = "sellerId" OR is_admin());
 CREATE POLICY "orders_insert" ON orders FOR INSERT
-  WITH CHECK (auth.uid() = "buyerId" OR is_admin());
+  WITH CHECK (is_admin());
 CREATE POLICY "orders_update" ON orders FOR UPDATE
   USING (is_admin())
   WITH CHECK (is_admin());
@@ -309,7 +311,18 @@ CREATE POLICY "coupon_usage_insert" ON coupon_usage FOR INSERT WITH CHECK (TRUE)
 CREATE POLICY "reviews_select" ON reviews FOR SELECT
   USING (status = 'published' OR auth.uid() = "userId" OR is_admin());
 CREATE POLICY "reviews_insert" ON reviews FOR INSERT
-  WITH CHECK (auth.uid() = "userId");
+  WITH CHECK (
+    auth.uid() = "userId"
+    AND EXISTS (
+      SELECT 1
+      FROM orders o
+      JOIN order_items oi ON oi."orderId" = o.id
+      WHERE o.id = reviews."orderId"
+        AND o."buyerId" = auth.uid()
+        AND o.status IN ('delivered', 'completed')
+        AND oi."productId" = reviews."productId"
+    )
+  );
 CREATE POLICY "reviews_update" ON reviews FOR UPDATE
   USING (auth.uid() = "userId"
     OR EXISTS (SELECT 1 FROM products p WHERE p.id = "productId" AND p."sellerId" = auth.uid())
