@@ -16,7 +16,7 @@
  * conversation's linked product.
  */
 
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   MessageSquare, Send, User, Tag,
   CheckCircle, XCircle, CreditCard,
@@ -29,6 +29,7 @@ import { toast } from "@/hooks/use-toast";
 import { authorizedFetch } from "@/lib/authorizedFetch";
 import { openExternalUrl } from "@/lib/capacitorUtils";
 import { getOfferActionAvailability } from "@/lib/offerActions";
+import { parseConversationRouteSearch } from "@/lib/routeSearch";
 import MakeOfferSheet from "@/components/MakeOfferSheet";
 import { trackOfferAccepted } from "@/lib/analytics";
 import type { ConversationParticipant, InboxConversation } from "@/types";
@@ -407,10 +408,7 @@ function SystemEventCard({ event, amountPence }: { event?: string; amountPence?:
 export default function DesktopConversationView() {
   const { user } = useAuthStore();
   const location = useLocation();
-  const normalizedSearch = useMemo(() => location.search.replaceAll("&amp;", "&"), [location.search]);
-  const routeParams = useMemo(() => new URLSearchParams(normalizedSearch), [normalizedSearch]);
-  const routeConversationId = routeParams.get("conversationId");
-  const routeOfferId = routeParams.get("offerId");
+  const { conversationId: routeConversationId, offerId: routeOfferId } = parseConversationRouteSearch(location.search);
 
   // ── Conversation list state ──────────────────────────────────────────────────
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -443,7 +441,6 @@ export default function DesktopConversationView() {
       userId: user.id,
       routeConversationId,
       rawSearch: location.search,
-      normalizedSearch,
     });
     try {
       const { data, error } = await supabase
@@ -519,7 +516,7 @@ export default function DesktopConversationView() {
         const otherId = r.user1Id === user.id ? r.user2Id : r.user1Id;
         return {
           ...r,
-          isArchived: r.isArchived ?? false,
+          isArchived: r.isArchived === true,
           other: userMap.get(otherId) ?? { id: otherId, firstName: null, lastName: null },
           unreadCount: unreadMap.get(r.id) ?? 0,
           lastMessagePreview: previewText(lastMsgMap.get(r.id) ?? null),
@@ -538,7 +535,7 @@ export default function DesktopConversationView() {
     } finally {
       setLoadingConvs(false);
     }
-  }, [user?.id, routeConversationId, location.search, normalizedSearch]);
+  }, [user?.id, routeConversationId, location.search]);
 
   // ── Fetch conversation list ──────────────────────────────────────────────────
   useEffect(() => {
@@ -573,6 +570,13 @@ export default function DesktopConversationView() {
           });
           return;
         }
+        if (data.isArchived === true) {
+          console.warn("[DesktopConversationView] fetchSingle:archived", {
+            userId: user.id,
+            routeConversationId,
+          });
+          return;
+        }
         console.info("[DesktopConversationView] fetchSingle:found", {
           userId: user.id,
           routeConversationId,
@@ -601,7 +605,7 @@ export default function DesktopConversationView() {
 
         const conv: Conversation = {
           ...data,
-          isArchived: data.isArchived ?? false,
+          isArchived: false,
           other,
           unreadCount: 0,
           lastMessagePreview: null,
