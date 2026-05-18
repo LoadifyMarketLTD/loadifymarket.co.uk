@@ -44,8 +44,8 @@ export const handler: Handler = async (event) => {
   }
 
   // ── Environment guards ──────────────────────────────────────────────────────
-  const supabaseUrl = process.env.VITE_SUPABASE_URL ?? '';
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+  const supabaseUrl = (process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? '').trim();
+  const serviceRoleKey = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? '').trim();
   if (!supabaseUrl || !serviceRoleKey) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Server misconfiguration' }) };
   }
@@ -128,7 +128,7 @@ export const handler: Handler = async (event) => {
     .eq('status', 'pending'); // idempotency guard
 
   if (updateError) {
-    console.error('offer-decline: update failed:', updateError.message);
+    console.error('offer-decline: update failed:', updateError.code, updateError.message, updateError.details, updateError.hint);
     return { statusCode: 500, body: JSON.stringify({ error: 'Failed to decline offer' }) };
   }
 
