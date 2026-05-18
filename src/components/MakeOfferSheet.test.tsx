@@ -90,6 +90,10 @@ describe("MakeOfferSheet", () => {
     mockAuthorizedFetch.mockResolvedValue({
       ok: false,
       status: 500,
+      clone: () => ({
+        json: async () => ({ error: "Request failed" }),
+      }),
+      text: async () => "",
       json: async () => ({ error: "Request failed" }),
     });
 
@@ -120,11 +124,14 @@ describe("MakeOfferSheet", () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 
-  it("shows a conflict-specific toast when the API returns 409", async () => {
+  it("shows a specific message when the server returns 409 conflict", async () => {
     mockAuthorizedFetch.mockResolvedValue({
       ok: false,
       status: 409,
-      json: async () => ({ error: "There is already a pending offer in this conversation." }),
+      clone: () => ({
+        json: async () => ({ error: "There is already a pending offer in this conversation." }),
+      }),
+      text: async () => "",
     });
 
     const user = userEvent.setup();
