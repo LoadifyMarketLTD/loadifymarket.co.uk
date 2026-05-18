@@ -169,9 +169,15 @@ export const handler: Handler = async (event) => {
       }
     }
 
-    await supabase.rpc('release_stale_unpaid_listing_locks').catch((err: unknown) => {
-      console.warn('checkout-from-offer: release_stale_unpaid_listing_locks RPC failed (non-fatal):', err);
-    });
+    const { data, error } = await supabase.rpc('release_stale_unpaid_listing_locks');
+    if (error) {
+      console.error('checkout-from-offer RPC error', error);
+      return jsonResponse(500, {
+        error: 'RPC failed',
+        details: `${error.code ?? 'rpc_error'}: ${error.message ?? 'Unknown RPC error'}`,
+      });
+    }
+    void data;
 
     // ── Validate order ────────────────────────────────────────────────────────
     const { data: order, error: orderError } = await supabase
